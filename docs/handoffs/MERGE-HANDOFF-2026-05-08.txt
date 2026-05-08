@@ -366,6 +366,8 @@ Normal cross-location workflow
   - restored one missing closing </div> so the footer sits outside .app-scale-wrap in:
     - index.html
     - Active-Edit.html
+  - changed the footer from a centered card to a full-width footer bar in:
+    - app.css
 
 Why this matters
 - This should reduce the chance that the app shell loses layout or hit-target behavior after the footer was added below the fixed-height app viewport.
