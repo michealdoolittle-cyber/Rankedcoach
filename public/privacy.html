@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy | RankedCoach</title>
+  <meta name="description" content="Privacy Policy for RankedCoach, a VALORANT coaching and self-review app focused on personal match analysis and opt-in Riot-linked data use.">
+  <link rel="canonical" href="https://rankedcoach.gg/privacy">
   <style>
     :root {
       color-scheme: dark;
@@ -41,14 +43,54 @@
     p, li { color: var(--muted); line-height: 1.7; }
     a { color: var(--accent); }
     .meta { margin-top: -8px; color: var(--muted); }
+    .page-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .page-nav a {
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .page-note {
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+    }
+    .legal-footer {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      gap: 12px;
+    }
+    .legal-footer__links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .legal-footer__note {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
   </style>
 </head>
 <body>
   <main>
+    <nav class="page-nav" aria-label="Policy navigation">
+      <a href="/">Home</a>
+      <a href="/terms">Terms</a>
+      <a href="mailto:support@rankedcoach.gg">Support</a>
+    </nav>
     <h1>Privacy Policy</h1>
     <p class="meta">Last updated: May 6, 2026</p>
 
     <p>RankedCoach provides match review, improvement tracking, and coaching-oriented analytics for competitive players. This policy explains what information we collect, how we use it, and the choices available to you.</p>
+    <p class="page-note">RankedCoach is intended for personal performance review, self-reflection, and user-authorized coaching workflows. Riot-linked access is opt-in and limited to the features you choose to use.</p>
 
     <h2>Information We Collect</h2>
     <ul>
@@ -73,7 +115,7 @@
     <p>We use third-party infrastructure providers to run RankedCoach. These may include Supabase for authentication and database storage, Cloudflare for hosting and delivery, and additional payment or communication services if enabled later.</p>
 
     <h2>Cookies and Local Storage</h2>
-    <p>RankedCoach may use browser local storage or similar technologies to preserve settings, theme state, demo data, and session-related preferences. These technologies help the site function and improve usability.</p>
+    <p>RankedCoach may use browser local storage or similar technologies to preserve settings, local app state, and session-related preferences. These technologies help the site function and improve usability.</p>
 
     <h2>Data Sharing</h2>
     <p>We do not sell your personal information. We may share limited data with service providers that help us operate the app, and we may disclose information if required by law or to protect the integrity and security of the service.</p>
@@ -89,6 +131,15 @@
 
     <h2>Contact</h2>
     <p>Questions about this policy can be sent to <a href="mailto:support@rankedcoach.gg">support@rankedcoach.gg</a>.</p>
+
+    <footer class="legal-footer">
+      <div class="legal-footer__links">
+        <a href="/">Back to RankedCoach</a>
+        <a href="/terms">Terms of Service</a>
+        <a href="mailto:support@rankedcoach.gg">Support</a>
+      </div>
+      <div class="legal-footer__note">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
+    </footer>
   </main>
 </body>
 </html>
