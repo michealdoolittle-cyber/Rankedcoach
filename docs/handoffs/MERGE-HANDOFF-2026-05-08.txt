@@ -368,6 +368,19 @@ Why this matters
 - This should reduce the chance that the app shell loses layout or hit-target behavior after the footer was added below the fixed-height app viewport.
 - This fix has been applied locally in Live-App-33, but still needs to be copied into the repo clone and pushed through git after verification.
 
+14. Wrangler config should be committed into the repo
+- Local wrangler.toml exists in Live-App-33 and should be added to the GitHub repo root.
+- Updated local file:
+  - name = "rankedcoach"
+  - compatibility_date = "2026-05-08"
+  - [assets]
+  - directory = "./public"
 
+Why this matters
+- Cloudflare preview builds only worked after dashboard command overrides explicitly provided:
+  - --assets ./public
+  - --compatibility-date 2026-05-08
+- Committing wrangler.toml into the repo will make the build self-describing and reduce dashboard-only drift.
 
-
+Recommended next repo addition
+- Add wrangler.toml to the root of the Rankedcoach repo on riot-review-pass.
