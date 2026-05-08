@@ -1,0 +1,306 @@
+RankedCoach Merge Handoff
+Date: 2026-05-08
+
+Purpose
+- This file is for later manual merge work into the newer home-machine version of the app.
+- Treat the home-machine copy as the source of truth for deployment timing.
+- Use this handoff to identify which changes from this workspace should be transplanted.
+
+Files changed in this session so far
+- index.html
+- Active-Edit.html
+- app.js
+- app.css
+- privacy.html
+- terms.html
+- CLOUDFLARE-DEPLOY.md
+- RIOT-REVIEW-CHECKLIST.md
+- scripts/prepare-public.ps1
+
+What changed
+
+1. index.html
+- Updated the page title from a generic "Valorant Coach" label to:
+  - "RankedCoach | VALORANT Coaching and Match Review"
+- Added a canonical URL:
+  - https://rankedcoach.gg/
+- Added a meta description that frames the product as:
+  - coaching-focused
+  - match tracking / review
+  - reflection-oriented
+  - opt-in Riot-linked analysis
+- Updated the auth modal headline from "Start Your Tracker" to "Start Your Coaching Workspace".
+- Rewrote the auth modal body copy to frame the product as:
+  - personal match review
+  - reflection
+  - coaching-focused improvement
+  - syncing your own Riot data
+- Updated the guest note to say guest mode starts with local-only data and no imported match history until the user chooses to connect their own Riot profile.
+- Added an opt-in explanation line inside the Riot profile modal.
+
+Why this matters
+- Gives Riot reviewers and any public visitors a clearer top-level description of the product.
+- Reinforces self-review / coaching framing instead of anything that could read like a generic tracker or scouting tool.
+
+2. Active-Edit.html
+- Applied the same page-title, canonical URL, and meta description updates as index.html.
+- Updated the auth modal headline from "Start Your Tracker" to "Start Your Coaching Workspace".
+- Rewrote the auth modal body copy to frame the product as:
+  - personal match review
+  - reflection
+  - coaching-focused improvement
+  - syncing your own Riot data
+- Updated the guest note to say guest mode starts with local-only data and no imported match history until the user chooses to connect their own Riot profile.
+- Added an opt-in explanation line inside the Riot profile modal.
+
+Why this matters
+- Keeps the alternate app entry file aligned with the same public-facing product framing.
+- Prevents inconsistent metadata if this file is still opened directly in some workflows.
+- Reinforces self-review / opt-in language in a place Riot reviewers are likely to see immediately.
+
+3. app.js
+- Updated guest-flow UI copy from "Opening App..." to "Opening Workspace...".
+- Updated the guest fallback alert from "Unable to continue as guest" to "Unable to open guest mode".
+- Updated Riot sync/setup text to remove public-facing demo references and make the sync path more clearly opt-in:
+  - "Enter Riot ID" -> "Enter your Riot ID"
+  - "Set Riot ID first" -> "Add your Riot ID before syncing"
+  - "Riot sync is not configured" -> "Riot sync is not configured for this environment"
+  - "Riot sync is unavailable" -> "Riot sync is currently unavailable"
+  - "Add a Riot ID or load the demo dataset" -> "Add your Riot ID to enable opt-in match sync"
+  - "Sync requires either a logged-in account or a Riot ID on the active profile." -> "Sync requires a signed-in account or a Riot ID on the active profile."
+  - "Add a Riot ID to the active profile before syncing." -> "Add your Riot ID to the active profile before syncing."
+
+Why this matters
+- Removes demo-oriented wording from the normal user-facing sync flow.
+- Makes the product read more like an opt-in personal coaching workspace instead of a prototype with demo fallback paths.
+
+4. index.html and Active-Edit.html footer cleanup
+- Removed the placeholder `Support Development` footer link that pointed to a generic `https://ko-fi.com/` URL.
+- Added dedicated footer mail links for:
+  - `support@rankedcoach.gg`
+  - `feedback@rankedcoach.gg`
+  - `business@rankedcoach.gg`
+- Added a new footer policy line:
+  - "Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access."
+
+Why this matters
+- Removes an unfinished public-facing link that could weaken a reviewer impression.
+- Makes Riot-safe product boundaries visible without requiring the reviewer to open legal pages.
+
+5. app.css
+- Added styling for the new `.site-footer__policy` text line.
+
+Why this matters
+- Keeps the added policy note visually integrated with the existing footer rather than looking bolted on.
+
+6. privacy.html
+- Added a meta description and canonical URL.
+- Added top-of-page navigation links back to Home, Terms, and Support.
+- Expanded legal-page navigation/footer contact links to include Support, Feedback, and Business.
+- Removed named infrastructure vendors from the privacy policy and replaced them with architecture-level wording about authentication, storage, hosting, delivery, communications, and payments.
+- Moved the main footer outside the locked app shell so the browser can scroll from the fixed viewport app down to the footer without changing the in-app layout behavior.
+- Added footer CTA buttons for:
+  - `Donate to RankedCoach`
+  - `Business Support`
+- The donation CTA is currently a temporary mailto-based placeholder and should be replaced with the final hosted payment link after checkout setup.
+- Added a short review-facing note clarifying personal review, self-reflection, and opt-in Riot-linked use.
+- Reworded the local storage section to remove explicit public-facing mention of demo data.
+- Added a consistent legal footer with:
+  - Back to RankedCoach
+  - Terms of Service
+  - Support
+  - Riot non-affiliation disclaimer
+
+Why this matters
+- Makes the Privacy page feel more complete and public-ready for Riot review.
+- Removes demo-oriented wording from a policy page likely to be inspected during review.
+
+7. terms.html
+- Added a meta description and canonical URL.
+- Added top-of-page navigation links back to Home, Privacy, and Support.
+- Expanded legal-page navigation/footer contact links to include Support, Feedback, and Business.
+- Clarified in Terms that official donation/support channels will be clearly identified by RankedCoach.
+- Added a short review-facing note clarifying that the product is not intended for opponent scouting or hidden-data access.
+- Added a dedicated `No Opponent Scouting` section.
+- Added a consistent legal footer with:
+  - Back to RankedCoach
+  - Privacy Policy
+  - Support
+  - Riot non-affiliation disclaimer
+
+Why this matters
+- Makes Riot policy alignment explicit in the public legal surface.
+- Gives reviewers a direct statement that the app is not meant for prohibited scouting use cases.
+
+8. scripts/prepare-public.ps1
+- Added a PowerShell script that creates a fresh public/ directory.
+- The script copies current deploy-relevant root files into public/.
+- The script also copies:
+  - assets/
+  - output/
+
+Primary files copied by the script
+- _redirects
+- 404.html
+- index.html
+- Active-Edit.html
+- privacy.html
+- terms.html
+- app.css
+- app.js
+- agent-effects-data.js
+- sandbox-fx.engine.js
+- sandbox-fx.primitives.js
+- sandbox-fx-engine.css
+- reaver-card-concepts.png
+- reaver-hover-smoke.png
+- reaver-modal-hands.svg
+- reaver-runic-strip.svg
+
+Why this matters
+- wrangler.toml currently points at:
+  - [assets]
+  - directory = "./public"
+- Before today, this workspace did not contain a public/ directory even though wrangler.toml expected one.
+- This script reduces the chance of future deploy mismatch and makes Cloudflare prep repeatable.
+
+How to use later
+- Run:
+  - powershell -ExecutionPolicy Bypass -File .\scripts\prepare-public.ps1
+- Then confirm the generated public/ folder contains the latest merged files before deploy.
+
+9. RIOT-REVIEW-CHECKLIST.md
+- Added a dedicated checklist for Riot review prep and pre-deploy QA.
+- Expanded the checklist to explicitly verify that there are no placeholder footer links and that the app visibly states it is not for opponent scouting.
+
+Checklist focus
+- Product framing
+- Riot policy alignment
+- Public legal/support page checks
+- Deploy prep
+- Post-deploy smoke testing
+
+Why this matters
+- Gives a repeatable checklist before public deploy and before Production key application.
+- Helps verify we are not forgetting legal, guest flow, or anti-demo checks.
+
+10. CLOUDFLARE-DEPLOY.md
+- Updated deploy notes to match the current wrangler.toml public/ asset structure.
+- Added a step to run scripts/prepare-public.ps1 before local Cloudflare testing or deploy prep.
+- Updated local Wrangler dev guidance to use the generated public/ asset set.
+- Added a short review-safe deploy reminder.
+
+Why this matters
+- The previous deploy notes still described root-level output assumptions that no longer cleanly match wrangler.toml.
+- This reduces confusion when preparing the next upload.
+
+Important environment observations from this session
+- wrangler.toml currently contains:
+  - name = "rankedcoach"
+  - compatibility_date = "2026-05-07"
+  - [assets]
+  - directory = "./public"
+- This workspace did not have git available in the shell, so no git diff/status was used here.
+- The app already appears to include:
+  - footer links for Privacy / Terms / Support
+  - Riot non-affiliation disclaimer
+  - guest copy that says guest mode starts without imported matches
+
+Transfer guidance for the later merge session
+- Compare the newer home-machine versions of these files against this workspace:
+  - index.html
+  - Active-Edit.html
+  - app.js
+  - app.css
+  - privacy.html
+  - terms.html
+  - CLOUDFLARE-DEPLOY.md
+  - RIOT-REVIEW-CHECKLIST.md
+  - scripts/prepare-public.ps1
+- For app.js, prefer cherry-picking only the user-facing copy changes unless the home machine is otherwise in sync with this workspace.
+- If the home machine has newer logic/UI changes in app.js or app.css, do not overwrite them from this workspace unless we intentionally decide to take a broader merge.
+- Prefer manual merge over blind replace if the home machine has newer app-shell work.
+
+Suggested merge order later
+1. Merge index.html metadata updates.
+2. Merge Active-Edit.html metadata updates.
+3. Merge the auth modal, guest note, and Riot modal copy updates in index.html.
+4. Merge the auth modal, guest note, and Riot modal copy updates in Active-Edit.html.
+5. Cherry-pick the app.js user-facing wording updates around guest mode and Riot sync.
+6. Merge the footer cleanup and visible anti-scouting line in index.html and Active-Edit.html.
+7. Merge the matching `.site-footer__policy` styles from app.css.
+8. Merge the public-page updates in privacy.html.
+9. Merge the public-page updates in terms.html.
+10. Add RIOT-REVIEW-CHECKLIST.md.
+11. Add scripts/prepare-public.ps1.
+12. Update CLOUDFLARE-DEPLOY.md.
+13. Run the prepare-public script after all merged app files are in place.
+
+If continuing work in this workspace later
+- Append any new transfer-worthy app changes to this handoff file.
+- Especially document future changes to:
+  - app.js
+  - app.css
+  - index.html
+  - Active-Edit.html
+- For each change, capture:
+  - what changed
+  - why it matters for Riot review
+  - whether it is safe to cherry-pick independently
+
+11. Cross-location Git and GitHub status update
+- The repo to use going forward is:
+  - https://github.com/michealdoolittle-cyber/Rankedcoach
+- The intended deploy-facing paths in GitHub are:
+  - public/index.html
+  - public/Active-Edit.html
+  - public/app.css
+  - public/app.js
+  - public/privacy.html
+  - public/terms.html
+
+What happened in this session
+- GitHub connector access was successfully installed and confirmed.
+- public/privacy.html and public/terms.html were updated successfully in GitHub earlier in the session.
+- A later attempt was made to sync public/index.html directly through the GitHub contents API.
+- That write created commit:
+  - 5c891d35916e004330e8e9fdca6dae23c62481cf
+- After verification, the GitHub copy of public/index.html was found to be truncated.
+- The file currently cuts off around the insightFocusWhy section and should be treated as broken until restored.
+- To avoid further damage, public/Active-Edit.html and public/app.css were not pushed after that issue was discovered.
+
+Why this matters
+- GitHub access is now working, which is useful long term.
+- But this workspace does not have git or gh installed, so large-file sync through the connector is not reliable enough for the app shell files.
+- The safest future process is to use real git on both machines instead of direct full-file API replacement for large HTML/CSS/JS files.
+
+Current repo caution
+- Do not deploy from the current GitHub main branch until public/index.html is restored.
+- Treat the home machine or this local workspace as the safer source for the current full index.html content.
+
+Recommended cross-location workflow going forward
+1. Install git on both the work machine and home machine.
+2. Clone the Rankedcoach repo on both machines.
+3. Use GitHub as the transfer layer between locations.
+4. Make edits locally, commit locally, then push through git.
+5. Pull at the other location, review visually, then continue or deploy.
+
+Suggested branch workflow
+- Keep main as the stable branch.
+- Do active work in a feature branch, such as:
+  - review-polish
+  - riot-review-pass
+  - footer-contact-pass
+- Merge to main only after a visual pass confirms the public/ files are healthy.
+
+Immediate next steps
+1. Restore GitHub public/index.html from a known-good local or home copy.
+2. Install git on this work machine.
+3. Clone the repo locally here.
+4. Resume future syncs through git instead of the GitHub contents API for large files.
+
+Question about storing this handoff in GitHub
+- Yes, this handoff file should be added to GitHub.
+- Best location:
+  - docs/handoffs/MERGE-HANDOFF-2026-05-08.txt
+- If you want to keep things simpler, the repo root is acceptable too, but a docs/handoffs folder will scale better.

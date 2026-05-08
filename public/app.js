@@ -32630,14 +32630,14 @@ document.addEventListener("click", async (e) => {
     try{
       if (guestBtn) {
         guestBtn.disabled = true;
-        guestBtn.textContent = "Opening App...";
+        guestBtn.textContent = "Opening Workspace...";
       }
 
       setAppEntryChoice("guest");
       closeAuthModal();
     } catch (error) {
       localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
-      alert(error?.message || "Unable to continue as guest");
+      alert(error?.message || "Unable to open guest mode");
     } finally {
       if (guestBtn) {
         guestBtn.disabled = false;
@@ -32666,7 +32666,7 @@ if (!window.__vt_riotProfileSaveBound) {
     const region = document.getElementById("riotRegionInput")?.value?.trim();
 
     if(!riotId){
-      alert("Enter Riot ID");
+      alert("Enter your Riot ID");
       return;
     }
 
@@ -32901,17 +32901,17 @@ async function fetchWithTimeout(resource, options = {}, timeoutMs = RIOT_SYNC_FE
 async function importActiveProfileMatches(options = {}){
   const profile = getActiveProfile();
   if(!profile) throw new Error("No active profile");
-  if(!profile.riotId) throw new Error("Set Riot ID first");
+  if(!profile.riotId) throw new Error("Add your Riot ID before syncing");
 
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
     const health = await healthRes.json().catch(() => ({}));
 
     if (!healthRes.ok || health?.configured === false) {
-      throw new Error("Riot sync is not configured");
+      throw new Error("Riot sync is not configured for this environment");
     }
   } catch (_error) {
-    throw new Error("Riot sync is unavailable");
+    throw new Error("Riot sync is currently unavailable");
   }
 
   try {
@@ -33023,7 +33023,7 @@ function refreshProfileSyncCountdown() {
 
   if (!riotAutoSyncDeadline) {
     if (!hasSyncableRiotProfile()) {
-      setProfileSyncStatus("", "needs-setup", "Add a Riot ID or load the demo dataset", false);
+      setProfileSyncStatus("", "needs-setup", "Add your Riot ID to enable opt-in match sync", false);
       return;
     }
 
@@ -33100,7 +33100,7 @@ async function performRiotSync(options = {}) {
 
   if (!hasIdentityAccess) {
     if (!silent) {
-      alert("Sync requires either a logged-in account or a Riot ID on the active profile.");
+      alert("Sync requires a signed-in account or a Riot ID on the active profile.");
       if (!currentAuthUser) {
         openAuthModal?.();
       } else {
@@ -33114,7 +33114,7 @@ async function performRiotSync(options = {}) {
 
   if (!hasRiotId) {
     if (!silent) {
-      alert("Add a Riot ID to the active profile before syncing.");
+      alert("Add your Riot ID to the active profile before syncing.");
       openRiotModal?.();
     }
     clearRiotAutoSyncTimer();

@@ -3,8 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Valorant Coach</title>
+  <title>RankedCoach | VALORANT Coaching and Match Review</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="RankedCoach is a coaching-focused VALORANT review app for personal match tracking, reflection, and opt-in Riot-linked performance analysis.">
+  <link rel="canonical" href="https://rankedcoach.gg/">
   <meta name="vip-theme-snapshot" content="2026-04-21T15:57:15.117Z">
   <link rel="stylesheet" href="app.css">
   <link rel="icon" href="data:,">
@@ -23,8 +25,8 @@ AUTH MODAL
 
     <form class="lens-modal-body" id="authForm">
       <div class="auth-launch-copy">
-        <div class="profile-edit-panel-title">Start Your Tracker</div>
-        <div class="profile-edit-panel-copy">Sign in to sync your Riot account and save progress, or continue as a guest to explore the app locally.</div>
+        <div class="profile-edit-panel-title">Start Your Coaching Workspace</div>
+        <div class="profile-edit-panel-copy">Use RankedCoach for personal match review, reflection, and coaching-focused improvement. Sign in to save progress and sync your own Riot data, or continue as a guest to explore locally.</div>
       </div>
       <input id="authEmail" type="email" placeholder="Email" autocomplete="email" />
       <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
@@ -32,7 +34,7 @@ AUTH MODAL
       <button id="authLoginBtn" type="button" class="pd-item auth-action-btn">Login</button>
       <button id="authSignupBtn" type="button" class="pd-item auth-action-btn">Sign Up</button>
       <button id="authGuestBtn" type="button" class="pd-item auth-action-btn auth-guest-btn">Continue as Guest</button>
-      <div class="auth-guest-note">Guest mode starts without imported matches until you connect a Riot account.</div>
+      <div class="auth-guest-note">Guest mode starts with local-only data and no imported match history until you choose to connect your own Riot profile.</div>
     </form>
   </div>
 </div>
@@ -48,7 +50,7 @@ RIOT PROFILE MODAL
     </div>
 
     <div class="lens-modal-body">
-
+      <div class="profile-edit-panel-copy">Link only your own Riot profile for opt-in performance review. RankedCoach uses this information for your personal coaching workspace.</div>
       <input id="riotIdInput" placeholder="RiotID#TAG" />
       <input id="riotRegionInput" placeholder="Region (NA/EU/AP)" />
 
@@ -220,6 +222,7 @@ RIOT PROFILE MODAL
 
 <body>
 
+  <div class="site-shell">
   <div class="app-scale-wrap">
     <div class="app-root">
 
@@ -1342,6 +1345,8 @@ stroke-linejoin="round"/>
 
 </section>
   </div>
+  </div>
+  </div>
 
 <div id="goalRankModal" class="lens-modal-overlay">
   <div class="lens-modal">
@@ -1437,15 +1442,22 @@ stroke-linejoin="round"/>
     <button id="presetDeleteBtn" type="button"></button>
   </div>
 
-  <footer class="site-footer">
+  <footer class="site-footer" id="siteFooter">
     <div class="site-footer__brand">RankedCoach</div>
     <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
+    <div class="site-footer__actions">
+      <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
+      <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
+    </div>
+    <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
     <nav class="site-footer__links" aria-label="Legal and support links">
       <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>
       <a href="/terms" target="_blank" rel="noopener">Terms of Service</a>
       <a href="mailto:support@rankedcoach.gg">Support</a>
-      <a href="https://ko-fi.com/" target="_blank" rel="noopener">Support Development</a>
+      <a href="mailto:feedback@rankedcoach.gg">Feedback</a>
+      <a href="mailto:business@rankedcoach.gg">Business</a>
     </nav>
+    <div class="site-footer__policy">Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access.</div>
     <div class="site-footer__disclaimer">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
   </footer>
 
