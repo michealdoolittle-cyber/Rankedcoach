@@ -367,3 +367,4 @@ Normal cross-location workflow
 Why this matters
 - This should reduce the chance that the app shell loses layout or hit-target behavior after the footer was added below the fixed-height app viewport.
 - This fix has been applied locally in Live-App-33, but still needs to be copied into the repo clone and pushed through git after verification.
+
