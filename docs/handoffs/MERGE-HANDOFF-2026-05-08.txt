@@ -363,6 +363,9 @@ Normal cross-location workflow
     - app.css
   - removed the temporary .site-shell rule in:
     - app.css
+  - restored one missing closing </div> so the footer sits outside .app-scale-wrap in:
+    - index.html
+    - Active-Edit.html
 
 Why this matters
 - This should reduce the chance that the app shell loses layout or hit-target behavior after the footer was added below the fixed-height app viewport.
