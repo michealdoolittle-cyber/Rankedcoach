@@ -304,3 +304,66 @@ Question about storing this handoff in GitHub
 - Best location:
   - docs/handoffs/MERGE-HANDOFF-2026-05-08.txt
 - If you want to keep things simpler, the repo root is acceptable too, but a docs/handoffs folder will scale better.
+
+12. Home-machine Git setup and pull instructions
+- A working Git branch was created and pushed from the work machine:
+  - branch: riot-review-pass
+- The branch now contains:
+  - public/index.html
+  - public/Active-Edit.html
+  - public/app.css
+  - public/app.js
+  - docs/handoffs/MERGE-HANDOFF-2026-05-08.txt
+- The push commit created from the work-machine repo clone was:
+  - afd10ce
+
+How to set up at home
+1. Install Git if it is not already installed:
+   - https://git-scm.com/
+2. Open Git Bash.
+3. Set identity if needed:
+   - git config --global user.name "Micheal Doolittle"
+   - git config --global user.email "michealdoolittle@gmail.com"
+4. Clone the repo:
+   - git clone https://github.com/michealdoolittle-cyber/Rankedcoach.git
+5. Enter the repo:
+   - cd Rankedcoach
+6. Check out the working branch:
+   - git checkout riot-review-pass
+7. Pull the latest branch state:
+   - git pull
+
+Normal cross-location workflow
+- At work:
+  - edit files
+  - git add .
+  - git commit -m "message"
+  - git push
+- At home:
+  - git pull
+  - review or continue editing
+  - git add .
+  - git commit -m "message"
+  - git push
+- When returning to work:
+  - git pull
+
+13. Footer/app-shell regression fix started locally
+- After the first Git-based sync, the app was reported as no longer displaying or receiving clicks properly after the footer/scroll change.
+- A likely structural cause was identified in the HTML shell:
+  - the body tag placement and the extra site-shell wrapper were complicating the viewport structure
+- Local fixes applied in this workspace:
+  - moved <body> to directly after </head> in:
+    - index.html
+    - Active-Edit.html
+  - removed the extra site-shell wrapper from:
+    - index.html
+    - Active-Edit.html
+  - changed .app-scale-wrap width from 100vw to 100% in:
+    - app.css
+  - removed the temporary .site-shell rule in:
+    - app.css
+
+Why this matters
+- This should reduce the chance that the app shell loses layout or hit-target behavior after the footer was added below the fixed-height app viewport.
+- This fix has been applied locally in Live-App-33, but still needs to be copied into the repo clone and pushed through git after verification.

@@ -48,16 +48,12 @@ html, body{
   overflow-y:auto;
 }
 
-.site-shell{
-  min-height:100vh;
-}
-
 .app {
   margin: 0 auto;
 }
 
 .app-scale-wrap{
-  width:100vw;
+  width:100%;
   height:100vh;
   display:flex;
   align-items:stretch;
