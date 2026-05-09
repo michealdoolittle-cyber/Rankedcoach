@@ -6446,7 +6446,7 @@ function renderTrendBreakdown() {
     performance: [
       `Current KD: ${document.getElementById("statKD")?.textContent || "--"}`,
       `Current win rate: ${document.getElementById("statWinrate")?.textContent || "--"}`,
-      analytics?.overview?.adr ? `Current ADR this act: ${Math.round(analytics.overview.adr)}` : "ADR trend builds as more demo/live imports are added."
+      analytics?.overview?.adr ? `Current ADR this act: ${Math.round(analytics.overview.adr)}` : "ADR trend will appear after enough match data is available."
     ],
     behavior: [
       `Weekly sessions counted: ${getWeeklySessions().length}`,
