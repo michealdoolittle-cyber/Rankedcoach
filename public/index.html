@@ -3,17 +3,13 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>RankedCoach | VALORANT Coaching and Match Review</title>
+  <title>Valorant Coach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="RankedCoach is a coaching-focused VALORANT review app for personal match tracking, reflection, and opt-in Riot-linked performance analysis.">
-  <link rel="canonical" href="https://rankedcoach.gg/">
-  <meta name="vip-theme-snapshot" content="2026-04-21T15:57:15.117Z">
+  <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
   <link rel="stylesheet" href="app.css">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
-<body>
 
 <!-- =========================
 AUTH MODAL
@@ -27,8 +23,8 @@ AUTH MODAL
 
     <form class="lens-modal-body" id="authForm">
       <div class="auth-launch-copy">
-        <div class="profile-edit-panel-title">Start Your Coaching Workspace</div>
-        <div class="profile-edit-panel-copy">Use RankedCoach for personal match review, reflection, and coaching-focused improvement. Sign in to save progress and sync your own Riot data, or continue as a guest to explore locally.</div>
+        <div class="profile-edit-panel-title">Start Your Tracker</div>
+        <div class="profile-edit-panel-copy">Sign in to sync your Riot account and save progress, or continue as a guest with demo match imports.</div>
       </div>
       <input id="authEmail" type="email" placeholder="Email" autocomplete="email" />
       <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
@@ -36,7 +32,7 @@ AUTH MODAL
       <button id="authLoginBtn" type="button" class="pd-item auth-action-btn">Login</button>
       <button id="authSignupBtn" type="button" class="pd-item auth-action-btn">Sign Up</button>
       <button id="authGuestBtn" type="button" class="pd-item auth-action-btn auth-guest-btn">Continue as Guest</button>
-      <div class="auth-guest-note">Guest mode starts with local-only data and no imported match history until you choose to connect your own Riot profile.</div>
+      <div class="auth-guest-note">Guest mode loads demo match imports so the full experience is visible immediately.</div>
     </form>
   </div>
 </div>
@@ -52,7 +48,7 @@ RIOT PROFILE MODAL
     </div>
 
     <div class="lens-modal-body">
-      <div class="profile-edit-panel-copy">Link only your own Riot profile for opt-in performance review. RankedCoach uses this information for your personal coaching workspace.</div>
+
       <input id="riotIdInput" placeholder="RiotID#TAG" />
       <input id="riotRegionInput" placeholder="Region (NA/EU/AP)" />
 
@@ -221,6 +217,8 @@ RIOT PROFILE MODAL
 
   </div>
 </div>
+
+<body>
 
   <div class="app-scale-wrap">
     <div class="app-root">
@@ -454,21 +452,23 @@ INSIGHTS PAGE
       <div class="insights-layout">
 
         <div class="card insights-top-card">
-          <div class="insights-top-header">
-            <div class="card-sub">Top Insights</div>
-            <div class="insight-filter-bar" id="insightFilterBar">
-              <button class="insight-filter-btn active" data-filter="all">All</button>
-              <button class="insight-filter-btn" data-filter="bad">Bad</button>
-              <button class="insight-filter-btn" data-filter="warn">Warn</button>
-              <button class="insight-filter-btn" data-filter="good">Good</button>
+          <div class="insights-top-shell">
+            <div class="insights-top-header">
+              <div class="card-sub">Top Insights</div>
+              <div class="insight-filter-bar" id="insightFilterBar">
+                <button class="insight-filter-btn active" data-filter="all">All</button>
+                <button class="insight-filter-btn" data-filter="bad">Bad</button>
+                <button class="insight-filter-btn" data-filter="warn">Warn</button>
+                <button class="insight-filter-btn" data-filter="good">Good</button>
+              </div>
             </div>
-          </div>
 
-          <div id="insightsList" class="insights-list"></div>
+            <div id="insightsList" class="insights-list"></div>
+          </div>
         </div>
 
         <div class="card insights-action-card">
-          <div class="card-sub">Priority This Week</div>
+          <div class="card-sub">This Weeks Priority</div>
 
           <div class="insight-action">
           <div class="insight-action-hero">
@@ -503,43 +503,39 @@ INSIGHTS PAGE
         </div>
 
         <div class="card insights-trends-card">
-          <div class="card-sub">Coaching Signals</div>
-          <div class="insights-trends-intro">Open a signal group to see what the current model is actually reading from your imported matches and logs.</div>
+          <div class="card-sub">Coaching Insights</div>
+          <div class="insights-trends-intro">Open an insight group to see what the current model is actually reading from your imported matches and logs.</div>
 
           <div class="insight-trends">
             <div class="insight-trend-row" data-trend="performance">
               <div class="insight-trend-copy">
                 <span class="insight-trend-kicker">Performance</span>
-                <span class="insight-trend-title">Match Signals</span>
+                <span class="insight-trend-title">Match Insights</span>
               </div>
-              <span class="insight-trend-chevron">&rarr;</span>
             </div>
             <div class="trend-content" data-trend-content="performance"></div>
 
             <div class="insight-trend-row" data-trend="behavior">
               <div class="insight-trend-copy">
                 <span class="insight-trend-kicker">Behavior</span>
-                <span class="insight-trend-title">Behavior Signals</span>
+                <span class="insight-trend-title">Behavior Insights</span>
               </div>
-              <span class="insight-trend-chevron">&rarr;</span>
             </div>
             <div class="trend-content" data-trend-content="behavior"></div>
 
             <div class="insight-trend-row" data-trend="role">
               <div class="insight-trend-copy">
                 <span class="insight-trend-kicker">Role Fit</span>
-                <span class="insight-trend-title">Role Signals</span>
+                <span class="insight-trend-title">Role Insights</span>
               </div>
-              <span class="insight-trend-chevron">&rarr;</span>
             </div>
             <div class="trend-content" data-trend-content="role"></div>
 
             <div class="insight-trend-row" data-trend="consistency">
               <div class="insight-trend-copy">
                 <span class="insight-trend-kicker">Consistency</span>
-                <span class="insight-trend-title">Stability Signals</span>
+                <span class="insight-trend-title">Stability Insights</span>
               </div>
-              <span class="insight-trend-chevron">&rarr;</span>
             </div>
             <div class="trend-content" data-trend-content="consistency"></div>
           </div>
@@ -554,49 +550,58 @@ STATS PAGE
       <div class="stats-layout">
 
         <div class="card stats-summary-card">
-          <div class="stats-summary-grid">
-            <div class="stat-block">
-              <span class="stat-label">KD</span>
-              <span class="stat-value" id="statKD">--</span>
-            </div>
+          <div class="stats-summary-layout">
+            <div class="stats-summary-left">
+              <div class="stats-summary-grid">
+                <div class="stat-block">
+                  <span class="stat-label">KD</span>
+                  <span class="stat-value" id="statKD">--</span>
+                </div>
 
-            <div class="stat-block">
-              <span class="stat-label">Win %</span>
-              <span class="stat-value" id="statWinrate">--</span>
-            </div>
+                <div class="stat-block">
+                  <span class="stat-label">Win %</span>
+                  <span class="stat-value" id="statWinrate">--</span>
+                </div>
 
-            <div class="stat-block">
-              <span class="stat-label">ADR</span>
-              <span class="stat-value" id="statADR">--</span>
-            </div>
+                <div class="stat-block">
+                  <span class="stat-label">ADR</span>
+                  <span class="stat-value" id="statADR">--</span>
+                </div>
 
-            <div class="stat-block">
-              <span class="stat-label">HS %</span>
-              <span class="stat-value" id="statHS">--</span>
-            </div>
-          </div>
-          <div class="stats-summary-selector-row">
-            <label class="stats-act-select-wrap">
-              <span class="stats-act-label">Act</span>
-              <select id="statsActSelector" class="stats-act-select"></select>
-            </label>
-          </div>
-          <div class="stats-proof-row">
-            <div class="stats-proof-card">
-              <div class="stats-proof-kicker">Peak Progress</div>
-              <div class="stats-proof-rank-row">
-                <img id="statsPeakRankIcon" class="stats-proof-rank-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/iron_1_rank.png" alt="Peak rank">
-                <div class="stats-proof-rank-copy">
-                  <strong id="statsPeakRankText">Iron 1</strong>
-                  <span id="statsPeakRRText">0 RR peak</span>
+                <div class="stat-block">
+                  <span class="stat-label">HS %</span>
+                  <span class="stat-value" id="statHS">--</span>
                 </div>
               </div>
-              <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile timeline.</div>
             </div>
 
-            <div class="stats-role-progress-card">
-              <div class="stats-proof-kicker">Role Win Rate Progress</div>
-              <div id="statsRoleProgressRow" class="stats-role-progress-row"></div>
+            <div class="stats-summary-right">
+              <div class="stats-proof-row">
+                <div class="stats-proof-card">
+                  <div class="stats-proof-card-head">
+                    <div class="stats-proof-kicker">Peak Progress</div>
+                    <div class="stats-summary-selector-row">
+                      <label class="stats-act-select-wrap">
+                        <span class="stats-act-label">Season</span>
+                        <select id="statsActSelector" class="stats-act-select"></select>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="stats-proof-rank-row">
+                    <img id="statsPeakRankIcon" class="stats-proof-rank-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/iron_1_rank.png" alt="Peak rank">
+                    <div class="stats-proof-rank-copy">
+                      <strong id="statsPeakRankText">Iron 1</strong>
+                      <span id="statsPeakRRText">0 RR peak</span>
+                    </div>
+                  </div>
+                  <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile timeline.</div>
+                </div>
+
+                <div class="stats-role-progress-card">
+                  <div class="stats-proof-kicker">Role Win Rate Progress</div>
+                  <div id="statsRoleProgressRow" class="stats-role-progress-row"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -607,18 +612,24 @@ STATS PAGE
             <div id="statsPerformanceChart" class="stats-chart-wrap"></div>
           </div>
 
-          <div class="card stats-agents-card">
-            <div id="statsAgentsList" class="stats-agent-list"></div>
-          </div>
-
-          <div class="card stats-maps-card">
-            <div class="card-sub">Map Signals</div>
-            <div id="statsMapsList" class="stats-map-list"></div>
-          </div>
-
           <div class="card stats-breakdown-card">
             <div class="card-sub">Coaching Breakdown</div>
             <div id="statsBreakdown" class="stats-breakdown"></div>
+          </div>
+
+          <div class="card stats-maps-card">
+            <div class="card-sub">Map Stats</div>
+            <div id="statsMapsList" class="stats-map-list"></div>
+          </div>
+
+          <div class="card stats-agents-card">
+            <div class="card-sub">Agent Stats</div>
+            <div id="statsAgentsList" class="stats-agent-list"></div>
+          </div>
+
+          <div class="card stats-weapons-card">
+            <div class="card-sub">Weapon Stats</div>
+            <div id="statsWeaponsList" class="stats-weapon-list"></div>
           </div>
         </div>
       </div>
@@ -935,88 +946,90 @@ stroke-linejoin="round"/>
 </div>
 
 <div class="compass-summary-shell">
-  <div class="compass-summary-copy">
-    <div class="compass-profile-kicker">Current Profile</div>
-    <div class="compass-profile-title" id="compassProfileTitle">Balanced Build</div>
-    <div class="compass-profile-meta">
-      <span id="compassAverageScore">Avg 0</span>
-      <span id="compassStrongestCallout">Strongest: Aim</span>
-      <span id="compassWeakestCallout">Weakest: Teamwork</span>
+  <div class="compass-summary-top-shell">
+    <div class="compass-summary-copy">
+      <div class="compass-profile-kicker">Current Profile</div>
+      <div class="compass-profile-title" id="compassProfileTitle">Balanced Build</div>
+      <div class="compass-profile-meta">
+        <span id="compassAverageScore">Avg 0</span>
+        <span id="compassStrongestCallout">Strongest: Aim</span>
+        <span id="compassWeakestCallout">Weakest: Teamwork</span>
+      </div>
+      <div class="compass-profile-description" id="compassProfileDescription">
+        Current rank, role mix, and the four coaching lenses combine here to show how this profile is most likely winning or losing value right now.
+      </div>
+      <button id="compassDescriptionToggle" class="compass-description-toggle" type="button" aria-expanded="false">Show description</button>
     </div>
   </div>
 
-  <div class="compass-svg-wrap">
-    <svg class="sw-compass-mini" viewBox="0 0 200 200" id="compassSvg">
-      <polygon class="compass-perimeter" points="100,20 180,100 100,180 20,100"></polygon>
-      <polygon class="compass-tier" points="100,44 156,100 100,156 44,100"></polygon>
-      <polygon class="compass-tier" points="100,68 132,100 100,132 68,100"></polygon>
-      <line class="compass-axis-line" x1="100" y1="20" x2="100" y2="180"></line>
-      <line class="compass-axis-line" x1="20" y1="100" x2="180" y2="100"></line>
-      <polygon id="compassPolygon" class="core-inner-sigil" points="100,100 100,100 100,100 100,100"></polygon>
-      <circle id="coreNodeAim" class="core-node core-node-aim" cx="100" cy="100" r="5"></circle>
-      <circle id="coreNodeSense" class="core-node core-node-sense" cx="100" cy="100" r="5"></circle>
-      <circle id="coreNodeTeam" class="core-node core-node-team" cx="100" cy="100" r="5"></circle>
-      <circle id="coreNodeDiscipline" class="core-node core-node-discipline" cx="100" cy="100" r="5"></circle>
-      <text class="axis-percent percent-aim" x="100" y="12">0</text>
-      <text class="axis-percent percent-sense" x="188" y="104">0</text>
-      <text class="axis-percent percent-team" x="100" y="196">0</text>
-      <text class="axis-percent percent-discipline" x="12" y="104">0</text>
-    </svg>
+  <div class="compass-summary-bottom-shell">
+    <div class="compass-summary-body">
+      <div class="compass-cards-grid">
+        <button class="compass-score-card compass-score-card-aim" data-lens="aim" id="compassCardAim" type="button">
+          <div class="compass-card-top">
+            <span class="compass-card-label">Aim</span>
+          </div>
+          <div class="compass-card-score-row">
+            <strong id="compassScoreAim">0</strong>
+            <span>/100</span>
+          </div>
+          <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarAim"></div></div>
+        </button>
+
+        <button class="compass-score-card compass-score-card-sense" data-lens="gamesense" id="compassCardSense" type="button">
+          <div class="compass-card-top">
+            <span class="compass-card-label">Game Sense</span>
+          </div>
+          <div class="compass-card-score-row">
+            <strong id="compassScoreSense">0</strong>
+            <span>/100</span>
+          </div>
+          <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarSense"></div></div>
+        </button>
+
+        <button class="compass-score-card compass-score-card-team" data-lens="teamplay" id="compassCardTeam" type="button">
+          <div class="compass-card-top">
+            <span class="compass-card-label">Teamwork</span>
+          </div>
+          <div class="compass-card-score-row">
+            <strong id="compassScoreTeam">0</strong>
+            <span>/100</span>
+          </div>
+          <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarTeam"></div></div>
+        </button>
+
+        <button class="compass-score-card compass-score-card-discipline" data-lens="discipline" id="compassCardDiscipline" type="button">
+          <div class="compass-card-top">
+            <span class="compass-card-label">Discipline</span>
+          </div>
+          <div class="compass-card-score-row">
+            <strong id="compassScoreDiscipline">0</strong>
+            <span>/100</span>
+          </div>
+          <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarDiscipline"></div></div>
+        </button>
+      </div>
+
+      <div class="compass-svg-wrap">
+        <svg class="sw-compass-mini" viewBox="0 0 200 200" id="compassSvg">
+          <polygon class="compass-perimeter" points="100,20 180,100 100,180 20,100"></polygon>
+          <polygon class="compass-tier" points="100,44 156,100 100,156 44,100"></polygon>
+          <polygon class="compass-tier" points="100,68 132,100 100,132 68,100"></polygon>
+          <line class="compass-axis-line" x1="100" y1="20" x2="100" y2="180"></line>
+          <line class="compass-axis-line" x1="20" y1="100" x2="180" y2="100"></line>
+          <polygon id="compassPolygon" class="core-inner-sigil" points="100,100 100,100 100,100 100,100"></polygon>
+          <circle id="coreNodeAim" class="core-node core-node-aim" cx="100" cy="100" r="5"></circle>
+          <circle id="coreNodeSense" class="core-node core-node-sense" cx="100" cy="100" r="5"></circle>
+          <circle id="coreNodeTeam" class="core-node core-node-team" cx="100" cy="100" r="5"></circle>
+          <circle id="coreNodeDiscipline" class="core-node core-node-discipline" cx="100" cy="100" r="5"></circle>
+          <text class="axis-percent percent-aim" x="100" y="12">0</text>
+          <text class="axis-percent percent-sense" x="188" y="104">0</text>
+          <text class="axis-percent percent-team" x="100" y="196">0</text>
+          <text class="axis-percent percent-discipline" x="12" y="104">0</text>
+        </svg>
+      </div>
+    </div>
   </div>
-</div>
-
-<div class="compass-cards-grid">
-  <button class="compass-score-card compass-score-card-aim" data-lens="aim" id="compassCardAim" type="button">
-    <div class="compass-card-top">
-      <span class="compass-card-label">Aim</span>
-      <span class="compass-card-tier" id="compassTierAim">Developing</span>
-    </div>
-    <div class="compass-card-score-row">
-      <strong id="compassScoreAim">0</strong>
-      <span>/100</span>
-    </div>
-    <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarAim"></div></div>
-    <div class="compass-card-meta" id="compassMetaAim">Profile share 0%</div>
-  </button>
-
-  <button class="compass-score-card compass-score-card-sense" data-lens="gamesense" id="compassCardSense" type="button">
-    <div class="compass-card-top">
-      <span class="compass-card-label">Game Sense</span>
-      <span class="compass-card-tier" id="compassTierSense">Developing</span>
-    </div>
-    <div class="compass-card-score-row">
-      <strong id="compassScoreSense">0</strong>
-      <span>/100</span>
-    </div>
-    <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarSense"></div></div>
-    <div class="compass-card-meta" id="compassMetaSense">Profile share 0%</div>
-  </button>
-
-  <button class="compass-score-card compass-score-card-team" data-lens="teamplay" id="compassCardTeam" type="button">
-    <div class="compass-card-top">
-      <span class="compass-card-label">Teamwork</span>
-      <span class="compass-card-tier" id="compassTierTeam">Developing</span>
-    </div>
-    <div class="compass-card-score-row">
-      <strong id="compassScoreTeam">0</strong>
-      <span>/100</span>
-    </div>
-    <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarTeam"></div></div>
-    <div class="compass-card-meta" id="compassMetaTeam">Profile share 0%</div>
-  </button>
-
-  <button class="compass-score-card compass-score-card-discipline" data-lens="discipline" id="compassCardDiscipline" type="button">
-    <div class="compass-card-top">
-      <span class="compass-card-label">Discipline</span>
-      <span class="compass-card-tier" id="compassTierDiscipline">Developing</span>
-    </div>
-    <div class="compass-card-score-row">
-      <strong id="compassScoreDiscipline">0</strong>
-      <span>/100</span>
-    </div>
-    <div class="compass-bar-track"><div class="compass-bar-fill" id="compassBarDiscipline"></div></div>
-    <div class="compass-card-meta" id="compassMetaDiscipline">Profile share 0%</div>
-  </button>
 </div>
 </div>
 </div>
@@ -1134,6 +1147,24 @@ stroke-linejoin="round"/>
 
       </div>
 
+      <footer class="site-footer" id="siteFooter">
+        <div class="site-footer__brand">RankedCoach</div>
+        <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
+        <div class="site-footer__actions">
+          <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
+          <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
+        </div>
+        <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
+        <nav class="site-footer__links" aria-label="Legal and support links">
+          <a href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
+          <a href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Inquiry">Business</a>
+          <a href="https://playvalorant.com/" target="_blank" rel="noreferrer">VALORANT</a>
+          <a href="https://www.riotgames.com/" target="_blank" rel="noreferrer">Riot Games</a>
+        </nav>
+        <div class="site-footer__policy">Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access.</div>
+        <div class="site-footer__disclaimer">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
+      </footer>
+
       <!-- Lens Modal Overlay -->
       <div id="lensModalOverlay" class="lens-modal-overlay" style="display:none;">
         <div class="lens-modal">
@@ -1183,30 +1214,42 @@ stroke-linejoin="round"/>
         </div>
 
    <div class="logging-row">
-  <div class="logging-pill home-loadout-pill">
-    <span class="pill-label">Agent</span>
-<span id="logAgentDisplay" class="pill-value log-agent-display log-agent-click">
-  <span class="agent-select-symbol">v</span>
-  <img id="logAgentImg" class="log-agent-img" />
-  <span id="logAgentText" class="log-agent-text"></span>
-</span>
+  <div class="logging-pill home-loadout-pill log-agent-pill">
+<div id="logAgentDisplay" class="pill-value log-agent-display" aria-label="Selected agent">
+  <span class="log-agent-leading">
+    <img id="logAgentImg" class="log-agent-img" alt="">
+    <span id="logAgentText" class="log-agent-text">Choose agent</span>
+  </span>
+</div>
+<button id="logAgentBrowseBtn" class="agent-select-symbol logging-select-trigger" type="button" aria-label="Choose agent">
+  <span class="agent-select-text">Browse</span>
+  <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+    <path d="M4 7.5L10 13l6-5.5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
   </div>
 
 <div class="logging-pill home-loadout-pill">
-  <span class="pill-label">Focus</span>
-
 <div class="focus-wrapper">
 
-  <span id="focusPreviewText" class="focus-preview-text"></span>
+  <span id="focusPreviewText" class="focus-preview-text">Focus</span>
 
-  <select id="logFocusSelect" class="ui-interactive" class="logging-input pill-value">
-    <option value="">Select Focus</option>
-    <option value="Aim">Aim</option>
-    <option value="Positioning">Positioning</option>
-    <option value="Utility">Utility</option>
-    <option value="Game Sense">Game Sense</option>
-    <option value="Other">Other</option>
-  </select>
+  <div class="focus-select-shell">
+    <span class="agent-select-symbol focus-select-symbol" aria-hidden="true">
+      <span class="agent-select-text">Browse</span>
+      <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+        <path d="M4 7.5L10 13l6-5.5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+    <select id="logFocusSelect" class="ui-interactive logging-input pill-value" aria-label="Focus">
+      <option value="">Focus</option>
+      <option value="Aim">Aim</option>
+      <option value="Positioning">Positioning</option>
+      <option value="Utility">Utility</option>
+      <option value="Game Sense">Game Sense</option>
+      <option value="Other">Other</option>
+    </select>
+  </div>
 
   <div class="focus-other-wrap" id="focusOtherWrap">
     <input id="logFocusOther" placeholder="Custom focus">
@@ -1237,6 +1280,17 @@ stroke-linejoin="round"/>
     </div>
   </div>
 
+  <div class="logging-row logging-score-cell logging-score-cell-mood">
+    <span class="logging-label">Mood</span>
+    <div class="logging-moods" id="logMoodRow">
+      <button type="button" class="logging-chip ui-interactive" data-mood="Tilted" data-mood-label="Tilted" title="Tilted" aria-label="1 - Tilted">1</button>
+      <button type="button" class="logging-chip ui-interactive" data-mood="Annoyed" data-mood-label="Annoyed" title="Annoyed" aria-label="2 - Annoyed">2</button>
+      <button type="button" class="logging-chip ui-interactive" data-mood="Calm" data-mood-label="Calm" title="Calm" aria-label="3 - Calm">3</button>
+      <button type="button" class="logging-chip ui-interactive" data-mood="Fun" data-mood-label="Fun" title="Fun" aria-label="4 - Fun">4</button>
+      <button type="button" class="logging-chip ui-interactive" data-mood="Focused" data-mood-label="Focused" title="Focused" aria-label="5 - Focused">5</button>
+    </div>
+  </div>
+
   <div class="logging-row logging-score-cell">
     <span class="logging-label">Team Comms</span>
     <div class="logging-rating" id="logTeamCommsRow">
@@ -1259,17 +1313,6 @@ stroke-linejoin="round"/>
       <button type="button" class="logging-chip ui-interactive" data-self-comms="4">4</button>
       <button type="button" class="logging-chip ui-interactive" data-self-comms="5">5</button>
     </div>
-  </div>
-</div>
-
-<div class="logging-row">
-  <span class="logging-label">Mood</span>
-  <div class="logging-moods" id="logMoodRow">
-    <button type="button" class="logging-chip" data-mood="Focused">Focused</button>
-    <button type="button" class="logging-chip" data-mood="Fun">Fun</button>
-    <button type="button" class="logging-chip" data-mood="Calm">Calm</button>
-    <button type="button" class="logging-chip" data-mood="Annoyed">Annoyed</button>
-    <button type="button" class="logging-chip" data-mood="Tilted">Tilted</button>
   </div>
 </div>
 
@@ -1343,8 +1386,6 @@ stroke-linejoin="round"/>
   </div>
 
 </section>
-  </div>
-  </div>
   </div>
 
 <div id="goalRankModal" class="lens-modal-overlay">
@@ -1440,25 +1481,6 @@ stroke-linejoin="round"/>
     <button id="presetRenameBtn" type="button"></button>
     <button id="presetDeleteBtn" type="button"></button>
   </div>
-
-  <footer class="site-footer" id="siteFooter">
-    <div class="site-footer__brand">RankedCoach</div>
-    <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
-    <div class="site-footer__actions">
-      <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
-      <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
-    </div>
-    <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
-    <nav class="site-footer__links" aria-label="Legal and support links">
-      <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>
-      <a href="/terms" target="_blank" rel="noopener">Terms of Service</a>
-      <a href="mailto:support@rankedcoach.gg">Support</a>
-      <a href="mailto:feedback@rankedcoach.gg">Feedback</a>
-      <a href="mailto:business@rankedcoach.gg">Business</a>
-    </nav>
-    <div class="site-footer__policy">Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access.</div>
-    <div class="site-footer__disclaimer">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
-  </footer>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>

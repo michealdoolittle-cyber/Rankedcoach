@@ -91,7 +91,19 @@ function uuid() {
   return "m_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+function shouldIgnoreGlobalErrorMessage(message = "") {
+  const normalized = String(message || "");
+  return (
+    normalized.includes("ResizeObserver loop completed with undelivered notifications") ||
+    normalized.includes("ResizeObserver loop limit exceeded")
+  );
+}
+
 window.addEventListener("error", (e) => {
+  if (shouldIgnoreGlobalErrorMessage(e?.message)) {
+    e.preventDefault?.();
+    return;
+  }
   console.error("GLOBAL ERROR:", e.message, e.filename, e.lineno);
 });
 
@@ -226,6 +238,10 @@ const LARGE_VIEWPORT_SCALE_THRESHOLD = 0.9;
 const ULTRA_VIEWPORT_WIDTH_THRESHOLD = 3300;
 const ULTRA_VIEWPORT_HEIGHT_THRESHOLD = 1800;
 const ULTRA_VIEWPORT_DEVICE_PIXEL_BUDGET = 7000000;
+let themeBuilderState = {};
+let themeBuilderNeedsSave = false;
+let themeBuilderSaveTimer = 0;
+let themeBuilderFxListenersAttached = false;
 
 function supportsCssDeclaration(property, value) {
   const css = window.CSS;
@@ -365,6 +381,7 @@ function flushViewportRefresh() {
   if (shouldRefreshThemeBuilder && typeof applyThemeBuilderRuntimeStyles === "function") {
     applyThemeBuilderRuntimeStyles();
   }
+  scheduleLoadoutValueTextFit();
 }
 
 function scheduleViewportRefresh({
@@ -415,6 +432,7 @@ function getMatchCore(match = {}) {
   const deaths = safeNumber(stats.deaths?.value);
   const assists = safeNumber(stats.assists?.value);
   const acs = safeNumber(stats.scorePerRound?.value);
+  const adr = safeNumber(stats.damagePerRound?.value, safeNumber(match?.adr));
   const hs = safeNumber(stats.headshotsPercentage?.value);
 
   return {
@@ -426,6 +444,7 @@ function getMatchCore(match = {}) {
     deaths,
     assists,
     acs,
+    adr,
     hs,
     createdAt: match?.createdAt || metadata.playedAt || nowISO()
   };
@@ -1013,6 +1032,42 @@ function buildRecentImprovementCandidates(context = {}) {
       formula: getImprovementFormulaText(def.key, Math.round(delta * 10) / 10)
     };
   }).filter(Boolean);
+}
+
+function normalizeDisplayDedupKeyFragment(value = "") {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function dedupeDisplayItems(items = [], fields = []) {
+  const seen = new Set();
+
+  return (Array.isArray(items) ? items : []).filter((item) => {
+    if (!item) return false;
+
+    const rawKey = typeof item === "string"
+      ? normalizeDisplayDedupKeyFragment(item)
+      : (
+          fields
+            .map((field) => normalizeDisplayDedupKeyFragment(item?.[field]))
+            .filter(Boolean)
+            .join(" | ")
+          || normalizeDisplayDedupKeyFragment(
+            item?.id ||
+            item?.key ||
+            item?.label ||
+            item?.title ||
+            item?.value
+          )
+        );
+
+    if (!rawKey) return true;
+    if (seen.has(rawKey)) return false;
+    seen.add(rawKey);
+    return true;
+  });
 }
 
 function getImpactTierMeta(score) {
@@ -2042,12 +2097,23 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     }
   ].sort((a, b) => b.score - a.score);
 
-  weekly.mostPracticed = weeklyCandidates[0]?.label || weekly.mostPracticed;
-  weekly.weakestTheme = weeklyCandidates[1]?.label || weekly.weakestTheme;
-  weekly.topMood = weeklyCandidates[2]?.label || weekly.topMood;
-  weekly.cards.primary.label = weeklyCandidates[0]?.confidence || weekly.cards.primary.label;
-  weekly.cards.secondary.label = weeklyCandidates[1]?.confidence || weekly.cards.secondary.label;
-  weekly.cards.tertiary.label = weeklyCandidates[2]?.confidence || weekly.cards.tertiary.label;
+  const uniqueTrends = dedupeDisplayItems(trends, ["id", "label", "value"]);
+  const uniqueBreakdown = dedupeDisplayItems(breakdown, ["label", "value"]);
+  const uniqueTrendBreakdown = Object.fromEntries(
+    Object.entries(trendBreakdown).map(([key, items]) => [
+      key,
+      dedupeDisplayItems(items, ["kicker", "title", "value"])
+    ])
+  );
+  const uniqueRecentImprovements = dedupeDisplayItems(recentImprovements, ["key", "label", "value"]);
+  const uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"]);
+
+  weekly.mostPracticed = uniqueWeeklyCandidates[0]?.label || weekly.mostPracticed;
+  weekly.weakestTheme = uniqueWeeklyCandidates[1]?.label || weekly.weakestTheme;
+  weekly.topMood = uniqueWeeklyCandidates[2]?.label || weekly.topMood;
+  weekly.cards.primary.label = uniqueWeeklyCandidates[0]?.confidence || weekly.cards.primary.label;
+  weekly.cards.secondary.label = uniqueWeeklyCandidates[1]?.confidence || weekly.cards.secondary.label;
+  weekly.cards.tertiary.label = uniqueWeeklyCandidates[2]?.confidence || weekly.cards.tertiary.label;
 
   const contextCompassShares = normalizeDistributionTo100({
     aim: contextAimScore,
@@ -2082,9 +2148,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     maps: maps.length ? maps : (importedAnalytics?.maps || []),
     agents: agents.length ? agents : (importedAnalytics?.agents || []),
     roles: roles.length ? roles : (importedAnalytics?.roles || []),
-    trends,
-    breakdown,
-    trendBreakdown,
+    trends: uniqueTrends,
+    breakdown: uniqueBreakdown,
+    trendBreakdown: uniqueTrendBreakdown,
     insights: topInsights,
     focus,
     weekly,
@@ -2100,9 +2166,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       activeAgentName,
       metricScores,
       impactSnapshots,
-      recentImprovements,
-      recentImprovementMetricCount: recentImprovements.length,
-      weeklyCandidates,
+      recentImprovements: uniqueRecentImprovements,
+      recentImprovementMetricCount: uniqueRecentImprovements.length,
+      weeklyCandidates: uniqueWeeklyCandidates,
       contextCompass: {
         aim: contextAimScore,
         gamesense: contextSenseScore,
@@ -2124,6 +2190,10 @@ function renderStatsAgents() {
 
 function renderStatsMaps() {
   return renderStatsMapsModel();
+}
+
+function renderStatsWeapons() {
+  return renderStatsWeaponsModel();
 }
 
 function renderStatsSummaryMeta() {
@@ -2268,6 +2338,204 @@ function getWeaponRoundRates(rounds = []) {
       conversionPct: safeDivide(entry.wins, entry.rounds) * 100
     }))
     .sort((a, b) => b.conversionPct - a.conversionPct || b.rounds - a.rounds);
+}
+
+function getWeaponTypeMeta(weaponName = "") {
+  const raw = String(weaponName || "").trim();
+  const key = raw.toLowerCase();
+
+  if (["classic", "shorty", "frenzy", "ghost", "sheriff"].includes(key)) {
+    return { key: "sidearm", label: "Sidearm" };
+  }
+  if (["stinger", "spectre"].includes(key)) {
+    return { key: "smg", label: "SMG" };
+  }
+  if (["bucky", "judge"].includes(key)) {
+    return { key: "shotgun", label: "Shotgun" };
+  }
+  if (["bulldog", "guardian", "phantom", "vandal"].includes(key)) {
+    return { key: "rifle", label: "Rifle" };
+  }
+  if (["marshal", "operator", "outlaw"].includes(key)) {
+    return { key: "sniper", label: "Sniper" };
+  }
+  if (["ares", "odin"].includes(key)) {
+    return { key: "machine-gun", label: "Machine Gun" };
+  }
+
+  return raw
+    ? { key: "other", label: "Other" }
+    : { key: "", label: "" };
+}
+
+function summarizeWeaponRounds(matchEntries = matches) {
+  const buckets = new Map();
+
+  (matchEntries || []).forEach((match) => {
+    const rounds = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
+    if (!rounds.length) return;
+
+    const core = getMatchCore(match);
+    const localBuckets = new Map();
+
+    rounds.forEach((round) => {
+      const weaponName = String(round?.weapon || "").trim();
+      const typeMeta = getWeaponTypeMeta(weaponName);
+      if (!typeMeta.key) return;
+
+      const current = localBuckets.get(typeMeta.key) || {
+        typeKey: typeMeta.key,
+        label: typeMeta.label,
+        rounds: 0,
+        wins: 0,
+        attackRounds: 0,
+        attackWins: 0,
+        defenseRounds: 0,
+        defenseWins: 0,
+        weapons: new Map(),
+        roundEntries: []
+      };
+
+      current.rounds += 1;
+      current.wins += round?.roundWon ? 1 : 0;
+      if (String(round?.side || "").toLowerCase() === "attack") {
+        current.attackRounds += 1;
+        current.attackWins += round?.roundWon ? 1 : 0;
+      } else if (String(round?.side || "").toLowerCase() === "defense") {
+        current.defenseRounds += 1;
+        current.defenseWins += round?.roundWon ? 1 : 0;
+      }
+      current.weapons.set(weaponName, (current.weapons.get(weaponName) || 0) + 1);
+      current.roundEntries.push(round);
+      localBuckets.set(typeMeta.key, current);
+    });
+
+    const totalTaggedRounds = [...localBuckets.values()].reduce((sum, entry) => sum + entry.rounds, 0);
+    if (!totalTaggedRounds) return;
+
+    localBuckets.forEach((entry) => {
+      const share = entry.rounds / totalTaggedRounds;
+      const target = buckets.get(entry.typeKey) || {
+        typeKey: entry.typeKey,
+        label: entry.label,
+        rounds: 0,
+        wins: 0,
+        attackRounds: 0,
+        attackWins: 0,
+        defenseRounds: 0,
+        defenseWins: 0,
+        matches: 0,
+        kills: 0,
+        deaths: 0,
+        adrWeighted: 0,
+        weapons: new Map(),
+        roundEntries: []
+      };
+
+      target.rounds += entry.rounds;
+      target.wins += entry.wins;
+      target.attackRounds += entry.attackRounds;
+      target.attackWins += entry.attackWins;
+      target.defenseRounds += entry.defenseRounds;
+      target.defenseWins += entry.defenseWins;
+      target.matches += 1;
+      target.kills += safeNumber(core.kills) * share;
+      target.deaths += safeNumber(core.deaths) * share;
+      target.adrWeighted += safeNumber(core.adr) * entry.rounds;
+      entry.weapons.forEach((count, weaponName) => {
+        target.weapons.set(weaponName, (target.weapons.get(weaponName) || 0) + count);
+      });
+      target.roundEntries.push(...entry.roundEntries);
+      buckets.set(entry.typeKey, target);
+    });
+  });
+
+  return [...buckets.values()]
+    .map((entry) => {
+      const weaponUsage = [...entry.weapons.entries()].sort((a, b) => b[1] - a[1]);
+      const primaryWeapon = weaponUsage[0]?.[0] || "--";
+      return {
+        typeKey: entry.typeKey,
+        label: entry.label,
+        primaryWeapon,
+        rounds: entry.rounds,
+        matches: entry.matches,
+        winrate: safeDivide(entry.wins * 100, entry.rounds),
+        attackWinrate: safeDivide(entry.attackWins * 100, entry.attackRounds),
+        defenseWinrate: safeDivide(entry.defenseWins * 100, entry.defenseRounds),
+        kills: entry.kills,
+        deaths: entry.deaths,
+        adr: safeDivide(entry.adrWeighted, entry.rounds),
+        killsPerRound: safeDivide(entry.kills, entry.rounds),
+        deathsPerRound: safeDivide(entry.deaths, entry.rounds),
+        usage: weaponUsage,
+        roundEntries: entry.roundEntries
+      };
+    })
+    .sort((a, b) => b.winrate - a.winrate || b.rounds - a.rounds || a.label.localeCompare(b.label));
+}
+
+function buildWeaponDetailTabs(weaponTypeKey = "") {
+  const weapon = summarizeWeaponRounds(matches).find(entry => entry.typeKey === String(weaponTypeKey || "").toLowerCase());
+  const rounds = weapon?.roundEntries || [];
+  const attackRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "attack");
+  const defenseRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "defense");
+  const buyCounts = {
+    eco: rounds.filter(round => String(round?.buyType || "").toLowerCase().includes("eco")),
+    light: rounds.filter(round => String(round?.buyType || "").toLowerCase().includes("light")),
+    full: rounds.filter(round => String(round?.buyType || "").toLowerCase().includes("full"))
+  };
+  const topUsage = (weapon?.usage || []).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(", ");
+
+  return [
+    {
+      key: "overview",
+      label: "Overview",
+      items: [
+        statItem("Weapon Type", weapon?.label || "Weapon", "Grouped from imported round-by-round weapon usage."),
+        statItem("Primary Weapon", weapon?.primaryWeapon || "--", "Most-used weapon inside this weapon class."),
+        statItem("Round Win Rate", formatPercent(weapon?.winrate), `rounds won with ${weapon?.label || "this class"} / total rounds on that class = ${Math.round(safeNumber(weapon?.winrate) * safeNumber(weapon?.rounds) / 100)} / ${Math.round(safeNumber(weapon?.rounds))}`),
+        statItem("Estimated Kills", weapon ? `${Math.round(weapon.kills)}` : "--", "Kills are proportionally derived from match combat totals based on this class's share of tracked rounds."),
+        statItem("Estimated Deaths", weapon ? `${Math.round(weapon.deaths)}` : "--", "Deaths are proportionally derived from match combat totals based on this class's share of tracked rounds."),
+        statItem("Estimated ADR", weapon ? `${Math.round(weapon.adr)}` : "--", "ADR is weighted from imported match damage-per-round across rounds using this class."),
+        statItem("Kills / Round", weapon ? Number(weapon.killsPerRound || 0).toFixed(2) : "--", "Estimated kills divided by tracked rounds on this class."),
+        statItem("Tracked Rounds", weapon ? `${Math.round(weapon.rounds)}` : "--", "Imported rounds tagged with a weapon inside this class."),
+        statItem("Most Used Guns", topUsage || "--", "Top specific weapons inside this class by tracked round count.")
+      ]
+    },
+    {
+      key: "attack",
+      label: "Attack",
+      items: [
+        statItem("Attack Win Rate", formatPercent(safeDivide(attackRounds.filter(round => round?.roundWon).length * 100, attackRounds.length)), `attack rounds won / attack rounds with ${weapon?.label || "this class"} = ${attackRounds.filter(round => round?.roundWon).length} / ${attackRounds.length || 1}`),
+        statItem("Attack Share", formatPercent(safeDivide(attackRounds.length * 100, rounds.length)), "Attack rounds on this class divided by all tracked rounds on this class."),
+        statItem("Most Common First Blood Lane", getMostCommonValue(attackRounds.map(round => round.firstKillLocation)), "Most common opening lane when this class was used on attack."),
+        statItem("Most Common Buy Type", getMostCommonValue(attackRounds.map(round => round.buyType)), "Most common attack economy state when this class was used.")
+      ]
+    },
+    {
+      key: "defense",
+      label: "Defense",
+      items: [
+        statItem("Defense Win Rate", formatPercent(safeDivide(defenseRounds.filter(round => round?.roundWon).length * 100, defenseRounds.length)), `defense rounds won / defense rounds with ${weapon?.label || "this class"} = ${defenseRounds.filter(round => round?.roundWon).length} / ${defenseRounds.length || 1}`),
+        statItem("Defense Share", formatPercent(safeDivide(defenseRounds.length * 100, rounds.length)), "Defense rounds on this class divided by all tracked rounds on this class."),
+        statItem("Most Common First Death Lane", getMostCommonValue(defenseRounds.map(round => round.firstDeathLocation)), "Most common first-death lane when this class was used on defense."),
+        statItem("Most Common Buy Type", getMostCommonValue(defenseRounds.map(round => round.buyType)), "Most common defense economy state when this class was used.")
+      ]
+    },
+    {
+      key: "economy",
+      label: "Economy",
+      items: [
+        statItem("Eco Usage", `${buyCounts.eco.length} rounds`, "Tracked eco rounds on this class."),
+        statItem("Light Usage", `${buyCounts.light.length} rounds`, "Tracked light-buy rounds on this class."),
+        statItem("Full Usage", `${buyCounts.full.length} rounds`, "Tracked full-buy rounds on this class."),
+        statItem("Eco Conversion", formatPercent(safeDivide(buyCounts.eco.filter(round => round?.roundWon).length * 100, buyCounts.eco.length)), "Eco round wins divided by eco rounds on this class."),
+        statItem("Light Conversion", formatPercent(safeDivide(buyCounts.light.filter(round => round?.roundWon).length * 100, buyCounts.light.length)), "Light-buy round wins divided by light-buy rounds on this class."),
+        statItem("Full Conversion", formatPercent(safeDivide(buyCounts.full.filter(round => round?.roundWon).length * 100, buyCounts.full.length)), "Full-buy round wins divided by full-buy rounds on this class.")
+      ]
+    }
+  ];
 }
 
 function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "attack") {
@@ -2655,15 +2923,15 @@ function normalizeSignalTone(tone = "") {
 function getSignalToneMeta(tone = "") {
   const normalized = normalizeSignalTone(tone);
   if (normalized === "up") {
-    return { tone: "up", label: "Positive", glyph: "&uarr;" };
+    return { tone: "up", label: "Positive", glyph: "" };
   }
   if (normalized === "warn") {
-    return { tone: "warn", label: "Watch", glyph: "&bull;" };
+    return { tone: "warn", label: "Watch", glyph: "" };
   }
   if (normalized === "down") {
-    return { tone: "down", label: "Regression", glyph: "&darr;" };
+    return { tone: "down", label: "Regression", glyph: "" };
   }
-  return { tone: "neutral", label: "Neutral", glyph: "&bull;" };
+  return { tone: "neutral", label: "Neutral", glyph: "" };
 }
 
 function getInsightMetaToneClass(kind = "", label = "", fallbackTone = "neutral") {
@@ -2714,7 +2982,7 @@ function getTrendSignalMediaLabel(item = {}) {
   const kicker = String(item?.kicker || "").trim();
   if (kicker) return kicker;
 
-  return "Signal";
+  return "Insight";
 }
 
 function getTrendSignalBadgeSymbol(item = {}) {
@@ -2766,8 +3034,8 @@ function renderTrendBreakdownCard(item = {}) {
         ${getTrendSignalMediaMarkup(item)}
         <span class="trend-signal-tone">${toneMeta.label}</span>
       </div>
-      <div class="trend-signal-kicker">${escapeHtml(item?.kicker || "Signal")}</div>
-      <div class="trend-signal-title">${escapeHtml(item?.title || "Waiting for signal")}</div>
+      <div class="trend-signal-kicker">${escapeHtml(item?.kicker || "Insight")}</div>
+      <div class="trend-signal-title">${escapeHtml(item?.title || "Waiting for insight")}</div>
       <div class="trend-signal-value">${escapeHtml(item?.value || "--")}</div>
       <div class="trend-signal-detail">${escapeHtml(item?.detail || "No additional read available yet.")}</div>
     </article>
@@ -2863,6 +3131,12 @@ function openStatsDetailModal(kind, value) {
     const trend = (analytics?.trends || []).find(item => String(item?.id || "").toLowerCase() === String(value || "").toLowerCase()) || null;
     title.textContent = `${trend?.label || "Performance Signal"} Breakdown`;
     renderSecondaryLensTabs(tabsHost, list, buildPerformanceTrendDetailTabs(trend || {}, analytics));
+    showModalById("lensModal");
+    return;
+  } else if (kind === "weapon") {
+    const weapon = summarizeWeaponRounds(matches).find(entry => String(entry.typeKey || "").toLowerCase() === String(value || "").toLowerCase()) || null;
+    title.textContent = `${weapon?.label || "Weapon"} Signals Breakdown`;
+    renderSecondaryLensTabs(tabsHost, list, buildWeaponDetailTabs(value));
     showModalById("lensModal");
     return;
   } else if (kind === "role") {
@@ -3807,7 +4081,27 @@ function setAppEntryChoice(mode = "guest") {
 }
 
 async function ensureGuestDemoMatches() {
-  return null;
+  if (window.__vtGuestDemoHydrationPromise) {
+    return window.__vtGuestDemoHydrationPromise;
+  }
+
+  const entryChoice = localStorage.getItem(APP_ENTRY_CHOICE_KEY);
+  const active = getActiveProfile();
+  const hasMatches = Array.isArray(active?.matches) && active.matches.length > 0;
+
+  if (entryChoice !== "guest" || hasMatches) {
+    return null;
+  }
+
+  window.__vtGuestDemoHydrationPromise = (async () => {
+    try {
+      await importDemoMatches();
+    } catch (error) {
+      console.warn("Guest demo hydration failed", error);
+    }
+  })();
+
+  return window.__vtGuestDemoHydrationPromise;
 }
 
 function maybeOpenInitialAuthGate() {
@@ -3862,6 +4156,10 @@ let crestCycleBtn, crestCycleLabelEl;
 let agentFrameArt, agentFxBehind, agentFxFront, agentRevealArt;
 let agentCustomFxCleanup = null;
 let agentFrameResizeObserver = null;
+let agentFrameResizeAnimationFrame = 0;
+let loadoutValueTextMutationObserver = null;
+let loadoutValueTextResizeObserver = null;
+let loadoutValueTextFitRaf = 0;
 let silhouetteShuffleTimer = null;
 let impactRolePill;
 let goalRRWidget;
@@ -3922,6 +4220,7 @@ let chartAnimFrame = null;
 let isUndoAnimating = false;
 let undoDirection = false;
 let skipNextChartAnimation = false;
+let forceChartIntroAnimation = false;
 let pendingUndoCommit = false;
 
 let selectedDot = null;
@@ -4042,7 +4341,20 @@ function ensureChartTooltipLayer(){
   return tooltip;
 }
 
+function canRenderChartTooltip() {
+  const chartPage = chartRow?.closest?.(".page");
+  if (!chartPage || chartPage.id !== "page-home") return false;
+  if (!chartPage.classList.contains("active")) return false;
+  if (chartPage.classList.contains("exiting")) return false;
+  if (document.body.classList.contains("has-active-modal")) return false;
+  return true;
+}
+
 function hideChartTooltip(){
+  if (selectedChartTooltipRaf) {
+    window.cancelAnimationFrame(selectedChartTooltipRaf);
+    selectedChartTooltipRaf = 0;
+  }
   const tip = tooltip || document.getElementById("chartTooltip");
   if (tip) {
     tip.style.opacity = 0;
@@ -4058,6 +4370,10 @@ function positionTooltipToHit(hit){
 
   const tip = ensureChartTooltipLayer();
   if(!tip || !chartRow || !hit) return;
+  if (!canRenderChartTooltip()) {
+    hideChartTooltip();
+    return;
+  }
   const svg = chartRow.querySelector("svg");
   if(!svg) return;
   const anchorEl = getChartDotFromHit(hit) || hit;
@@ -4103,6 +4419,9 @@ function positionTooltipToHit(hit){
 function openLensModal(lens){
 
   hideChartTooltip();
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
 
   const overlay = document.getElementById("lensModalOverlay");
   const title = document.getElementById("lensModalTitle");
@@ -4267,7 +4586,13 @@ function applyPersistentAccountState(state = {}) {
     }
 
     if (state.themeBuilderState && typeof state.themeBuilderState === "object" && typeof themeBuilderState !== "undefined") {
-      themeBuilderState = mergeBakedThemeBuilderState(state.themeBuilderState);
+      const mergedThemeBuilderState = mergeLocalAndRemoteThemeBuilderState(
+        themeBuilderState,
+        state.themeBuilderState
+      );
+      themeBuilderState = normalizeLoadedThemeBuilderState(
+        mergeBakedThemeBuilderState(mergedThemeBuilderState)
+      );
       localStorage.setItem(THEME_BUILDER_STORAGE_KEY, JSON.stringify(themeBuilderState));
       applyThemeBuilderFontImports?.();
       applyThemeBuilderRuntimeStyles?.();
@@ -4774,6 +5099,107 @@ function getCompassProfileLabel(values = {}) {
   return `${COMPASS_LENS_META[top]?.label || "Skill"} Primary`;
 }
 
+const COMPASS_RANK_AVERAGE_TARGETS = {
+  iron: 36,
+  bronze: 40,
+  silver: 46,
+  gold: 54,
+  platinum: 62,
+  diamond: 70,
+  ascendant: 77,
+  immortal: 84,
+  radiant: 90
+};
+
+function getCompassRankExpectation(tierLabel = "") {
+  const key = String(tierLabel || "").trim().toLowerCase().split(/\s+/)[0] || "iron";
+  const order = ["iron", "bronze", "silver", "gold", "platinum", "diamond", "ascendant", "immortal", "radiant"];
+  const index = Math.max(0, order.indexOf(key));
+  const currentKey = order[index] || "iron";
+  const nextKey = order[index + 1] || null;
+
+  return {
+    key: currentKey,
+    currentTarget: COMPASS_RANK_AVERAGE_TARGETS[currentKey] || 36,
+    nextKey,
+    nextTarget: nextKey ? COMPASS_RANK_AVERAGE_TARGETS[nextKey] || null : null,
+    nextLabel: nextKey ? nextKey.charAt(0).toUpperCase() + nextKey.slice(1) : ""
+  };
+}
+
+function getCompassRoleContext(roleName = "", strongestLens = "", weakestLens = "") {
+  const roleKey = String(roleName || "").trim().toLowerCase();
+  const comboKey = `${roleKey}:${strongestLens}:${weakestLens}`;
+  const comboMap = {
+    "duelist:aim:teamplay": "On a duelist-leaning sample, that usually means you can open fights but still bleed rounds when trades and follow-through are not synced.",
+    "duelist:aim:discipline": "On a duelist-leaning sample, that often looks like strong first-fight mechanics getting wasted by overpeeks or forcing one fight too many.",
+    "controller:gamesense:discipline": "On a controller-leaning sample, that usually shows up as good reads that still need cleaner utility pacing and economy discipline.",
+    "initiator:gamesense:teamplay": "On an initiator-leaning sample, it often means your reads are solid but the setup timing is not always turning into full team value.",
+    "sentinel:discipline:aim": "On a sentinel-leaning sample, that usually means your structure is stable but your punish damage still needs to convert more cleanly."
+  };
+
+  if (comboMap[comboKey]) {
+    return comboMap[comboKey];
+  }
+
+  const roleMap = {
+    duelist: "Because the recent sample leans duelist, entry pressure, follow-through, and self-created fights weigh heavily in this read.",
+    initiator: "Because the recent sample leans initiator, setup timing, info value, and teammate conversion weigh heavily in this read.",
+    controller: "Because the recent sample leans controller, utility pacing, map control, and round structure weigh heavily in this read.",
+    sentinel: "Because the recent sample leans sentinel, anchor stability, survival value, and punish timing weigh heavily in this read."
+  };
+
+  return roleMap[roleKey] || "";
+}
+
+function buildCompassProfileDescription(values = {}, model = null) {
+  const strongestLens = values?.strongestLens || "aim";
+  const weakestLens = values?.weakestLens || "discipline";
+  const averageScore = Math.round(averageValue([
+    safeNumber(values?.aim),
+    safeNumber(values?.gamesense),
+    safeNumber(values?.teamplay),
+    safeNumber(values?.discipline)
+  ]));
+  const currentRank = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "Iron 1";
+  const rankExpectation = getCompassRankExpectation(currentRank);
+  const roleName = String(model?.scoring?.activeRoleName || model?.roles?.[0]?.role || "").trim();
+  const agentName = String(model?.scoring?.activeAgentName || model?.agents?.[0]?.agent || "").trim();
+  const strongestReadMap = {
+    aim: "Your biggest edge is raw mechanical conversion and direct duel pressure.",
+    gamesense: "Your biggest edge is timing, round awareness, and better decision flow.",
+    teamplay: "Your biggest edge is spacing, trade value, and coordinated round play.",
+    discipline: "Your biggest edge is steadiness, restraint, and repeatable round structure."
+  };
+  const weakestReadMap = {
+    aim: "The main leak is still finishing fights cleanly enough to cash those rounds in.",
+    gamesense: "The main leak is still reading the round early enough to turn good spots into cleaner outcomes.",
+    teamplay: "The main leak is still linking your value with teammates through trades, timing, and follow-through.",
+    discipline: "The main leak is still protecting value through patience, economy control, and fewer unnecessary commits."
+  };
+  const baselineGap = averageScore - rankExpectation.currentTarget;
+  const nextGap = rankExpectation.nextTarget == null
+    ? null
+    : Math.max(0, Math.round(rankExpectation.nextTarget - averageScore));
+  const lowRankNote = ["iron", "bronze", "silver"].includes(rankExpectation.key)
+    ? "Lower ranks naturally run lower four-lens averages, so the goal is steady improvement rather than forcing every category into elite territory immediately."
+    : "";
+  const agentRoleLabel = [agentName, roleName].filter(Boolean).join(" / ");
+  const benchmarkSentence = baselineGap >= 0
+    ? `At ${averageScore} average, this profile is about ${Math.abs(Math.round(baselineGap))} points above the usual ${currentRank} benchmark.`
+    : `At ${averageScore} average, this profile is about ${Math.abs(Math.round(baselineGap))} points below the usual ${currentRank} benchmark.`;
+  const nextRankSentence = rankExpectation.nextTarget == null
+    ? "At the top end, progress usually comes from shaving down the last weak lens rather than adding one more specialty."
+    : `${rankExpectation.nextLabel} profiles tend to be closer to ${rankExpectation.nextTarget} average, so roughly ${nextGap} more average points is the next rung to chase.`;
+  const roleSentence = getCompassRoleContext(roleName, strongestLens, weakestLens);
+
+  return [
+    `${agentRoleLabel ? `${agentRoleLabel} is reading as a ` : "This is a "}${COMPASS_LENS_META[strongestLens]?.label || "core"}-leaning profile. ${strongestReadMap[strongestLens] || ""} ${weakestReadMap[weakestLens] || ""}`.trim(),
+    roleSentence || benchmarkSentence,
+    roleSentence ? `${benchmarkSentence} ${nextRankSentence} ${lowRankNote}`.trim() : `${nextRankSentence} ${lowRankNote}`.trim()
+  ].filter(Boolean).join(" ");
+}
+
 function updateBuildCoreVisual(aim, sense, team, discipline) {
   const values = {
     aim: clampPercent(aim),
@@ -4825,7 +5251,8 @@ function getLiveCompassValues() {
     source: model?.compass?.source || model?.currentAct || "Current Window",
     profileShare: model?.compass?.profileShare || {},
     strongestLens: model?.compass?.strongestLens,
-    weakestLens: model?.compass?.weakestLens
+    weakestLens: model?.compass?.weakestLens,
+    model
   };
 }
 
@@ -4880,6 +5307,7 @@ function applyCompassVisual(values = {}) {
   const averageScoreEl = document.getElementById("compassAverageScore");
   const strongestEl = document.getElementById("compassStrongestCallout");
   const weakestEl = document.getElementById("compassWeakestCallout");
+  const profileDescriptionEl = document.getElementById("compassProfileDescription");
 
   if (sourcePill) sourcePill.textContent = values?.source || "Current Window";
   if (profileTitle) profileTitle.textContent = profileLabel;
@@ -4890,6 +5318,10 @@ function applyCompassVisual(values = {}) {
   if (averageScoreEl) averageScoreEl.textContent = `Avg ${averageScore}`;
   if (strongestEl) strongestEl.textContent = `Strongest: ${COMPASS_LENS_META[strongestLens]?.label || "Aim"}`;
   if (weakestEl) weakestEl.textContent = `Weakest: ${COMPASS_LENS_META[weakestLens]?.label || "Teamwork"}`;
+  if (profileDescriptionEl) {
+    profileDescriptionEl.textContent = values?.description || buildCompassProfileDescription(values, values?.model || null);
+  }
+  syncCompassDescriptionToggleState(false);
 
   [
     { key: "aim", suffix: "Aim" },
@@ -5093,14 +5525,14 @@ function buildChartPoints(slice, y) {
   });
 }
 
-function buildDotMarkup(point, { final = false } = {}) {
+function buildDotMarkup(point, { final = false, intro = false, introDelayMs = 0 } = {}) {
   if (!point || !Number.isInteger(point.matchIndex) || point.matchIndex < 0) {
     return "";
   }
 
   const snapshot = point.snapshot || {};
   const fill = snapshot?.impactColor || (final ? "#facc15" : "#e5e7eb");
-  const dotClass = final ? "final-end" : "rr-dot";
+  const dotClass = `${final ? "final-end" : "rr-dot"}${intro ? " chart-intro-dot" : ""}`;
   const matchStats = {
     kills: Number.isFinite(Number(snapshot?.kills)) ? Number(snapshot.kills) : getMatchPanelStats(point.match || {}).kills,
     deaths: Number.isFinite(Number(snapshot?.deaths)) ? Number(snapshot.deaths) : getMatchPanelStats(point.match || {}).deaths,
@@ -5145,7 +5577,8 @@ data-match-id="${escapeHtml(point?.matchId || snapshot?.id || point?.match?.id |
 data-match-key="${escapeHtml(point?.matchKey || "")}"
 data-impact-tier="${escapeHtml(snapshot?.impactTier || "")}"
 data-impact-score="${Number.isFinite(Number(snapshot?.impactScore)) ? Math.round(Number(snapshot?.impactScore)) : ""}"
-fill="${fill}"/>`;
+fill="${fill}"
+style="${intro ? `--intro-delay:${introDelayMs}ms;` : ""}"/>`;
 }
 
 function buildXTicks(points, sliceLength, matchCount) {
@@ -5346,6 +5779,98 @@ function animateText(el, value) {
   el.classList.remove("text-anim");
   void el.offsetWidth;
   el.classList.add("text-anim");
+  scheduleLoadoutValueTextFit();
+}
+
+function fitLoadoutValueText(el, { maxPx = 40, minPx = 14 } = {}) {
+  if (!el || !el.isConnected) return;
+
+  const availableWidth = Math.max(
+    el.clientWidth || 0,
+    Math.floor(el.getBoundingClientRect?.().width || 0)
+  );
+
+  if (!availableWidth) return;
+
+  el.style.fontSize = `${maxPx}px`;
+
+  if (el.scrollWidth <= availableWidth + 1) {
+    return;
+  }
+
+  let low = minPx;
+  let high = maxPx;
+  let best = minPx;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    el.style.fontSize = `${mid}px`;
+
+    if (el.scrollWidth <= availableWidth + 1) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  el.style.fontSize = `${best}px`;
+}
+
+function flushLoadoutValueTextFit() {
+  loadoutValueTextFitRaf = 0;
+  fitLoadoutValueText(agentName);
+  fitLoadoutValueText(focusDisplay);
+}
+
+function scheduleLoadoutValueTextFit() {
+  if (loadoutValueTextFitRaf) return;
+  loadoutValueTextFitRaf = window.requestAnimationFrame(flushLoadoutValueTextFit);
+}
+
+function bindLoadoutValueTextFitObservers() {
+  if (loadoutValueTextMutationObserver) {
+    loadoutValueTextMutationObserver.disconnect();
+    loadoutValueTextMutationObserver = null;
+  }
+
+  if (loadoutValueTextResizeObserver) {
+    loadoutValueTextResizeObserver.disconnect();
+    loadoutValueTextResizeObserver = null;
+  }
+
+  const targets = [agentName, focusDisplay].filter(Boolean);
+  if (!targets.length) return;
+
+  if (typeof MutationObserver === "function") {
+    loadoutValueTextMutationObserver = new MutationObserver(() => {
+      scheduleLoadoutValueTextFit();
+    });
+
+    targets.forEach((target) => {
+      loadoutValueTextMutationObserver.observe(target, {
+        childList: true,
+        characterData: true,
+        subtree: true
+      });
+    });
+  }
+
+  if (typeof ResizeObserver === "function") {
+    loadoutValueTextResizeObserver = new ResizeObserver(() => {
+      scheduleLoadoutValueTextFit();
+    });
+
+    targets.forEach((target) => {
+      loadoutValueTextResizeObserver.observe(target);
+      const pill = target.closest(".home-loadout-pill");
+      if (pill) {
+        loadoutValueTextResizeObserver.observe(pill);
+      }
+    });
+  }
+
+  scheduleLoadoutValueTextFit();
 }
 
 function chartY(v, minVal, maxVal) {
@@ -5641,19 +6166,43 @@ function getAgentFrameUnitSize(frame = document.getElementById("agentFrame")) {
   return Math.max(1, Math.round(size || 232));
 }
 
+function getAgentFrameScaleCompensation(frame = document.getElementById("agentFrame")) {
+  const loadoutCard = frame?.closest?.(".loadout-card");
+  if (!loadoutCard) return 1;
+
+  const style = getComputedStyle(loadoutCard);
+  const scaleX = safeNumber(style?.getPropertyValue("--parent-card-content-scale-x").trim(), 1);
+  const scaleY = safeNumber(style?.getPropertyValue("--parent-card-content-scale-y").trim(), 1);
+  const compensation = safeDivide(scaleY, scaleX) || 1;
+
+  if (!Number.isFinite(compensation) || compensation <= 0) return 1;
+  if (Math.abs(compensation - 1) < 0.01) return 1;
+  return Math.max(0.75, Math.min(1.5, compensation));
+}
+
 function syncAgentUnifiedFrameGeometry(frame = document.getElementById("agentFrame")) {
   if (!frame) return 232;
 
   const size = getAgentFrameUnitSize(frame);
-  frame.style.setProperty("--agent-frame-size", `${size}px`);
-  frame.style.setProperty("--agent-frame-unit", `${size}px`);
-  frame.style.setProperty("--agent-reel-step", `${size}px`);
-  frame.style.setProperty("--agent-art-offset-scale", "1");
+  const nextSize = `${size}px`;
+  const compensationX = String(getAgentFrameScaleCompensation(frame));
+
+  if (frame.style.getPropertyValue("--agent-frame-unit") !== nextSize) {
+    frame.style.setProperty("--agent-frame-unit", nextSize);
+  }
+  if (frame.style.getPropertyValue("--agent-reel-step") !== nextSize) {
+    frame.style.setProperty("--agent-reel-step", nextSize);
+  }
+  if (frame.style.getPropertyValue("--agent-art-offset-scale") !== "1") {
+    frame.style.setProperty("--agent-art-offset-scale", "1");
+  }
+  if (frame.style.getPropertyValue("--agent-frame-compensation-x") !== compensationX) {
+    frame.style.setProperty("--agent-frame-compensation-x", compensationX);
+  }
   return size;
 }
 
-function updateAgentFrameMetrics() {
-  const frame = document.getElementById("agentFrame");
+function updateAgentFrameMetrics(frame = document.getElementById("agentFrame")) {
   if (!frame) return;
 
   syncAgentUnifiedFrameGeometry(frame);
@@ -5663,19 +6212,31 @@ function bindAgentFrameMetrics() {
   const frame = document.getElementById("agentFrame");
   if (!frame) return;
 
+  if (agentFrameResizeAnimationFrame) {
+    cancelAnimationFrame(agentFrameResizeAnimationFrame);
+    agentFrameResizeAnimationFrame = 0;
+  }
+
   if (agentFrameResizeObserver) {
     agentFrameResizeObserver.disconnect();
     agentFrameResizeObserver = null;
   }
 
   if (typeof ResizeObserver === "function") {
-    agentFrameResizeObserver = new ResizeObserver(() => {
-      updateAgentFrameMetrics();
+    agentFrameResizeObserver = new ResizeObserver((entries = []) => {
+      const observedFrame = entries[0]?.target || frame;
+      if (agentFrameResizeAnimationFrame) {
+        cancelAnimationFrame(agentFrameResizeAnimationFrame);
+      }
+      agentFrameResizeAnimationFrame = requestAnimationFrame(() => {
+        agentFrameResizeAnimationFrame = 0;
+        updateAgentFrameMetrics(observedFrame);
+      });
     });
     agentFrameResizeObserver.observe(frame);
   }
 
-  updateAgentFrameMetrics();
+  updateAgentFrameMetrics(frame);
 }
 
 function renderAgentFrameArt(agentNameStr = "") {
@@ -6201,21 +6762,24 @@ function updateLogAgentDisplay(agent){
   const display = document.getElementById("logAgentDisplay");
   const logAgentImg = document.getElementById("logAgentImg");
   const logAgentText = document.getElementById("logAgentText");
+  const hasAgent = Boolean(String(agent || "").trim());
 
   if(display){
-    if(agent){
+    if(hasAgent){
       display.dataset.agent = agent;
     } else {
       delete display.dataset.agent;
     }
+    display.classList.toggle("is-empty", !hasAgent);
+    display.setAttribute("aria-label", hasAgent ? `Selected agent ${agent}. Open agent selector.` : "Choose agent");
   }
 
   if(logAgentText){
-    logAgentText.textContent = agent || "";
+    logAgentText.textContent = agent || "Choose agent";
   }
 
   if(logAgentImg){
-    if(agent){
+    if(hasAgent){
       logAgentImg.src = getAgentIconUrl(agent);
       logAgentImg.style.display = "block";
     } else {
@@ -6286,6 +6850,14 @@ function resetCustomFocusUI(){
   updateLoggingDebriefPreview();
 }
 
+function syncLoggingFocusPreviewText(value = "") {
+  const preview = document.getElementById("focusPreviewText");
+  if (!preview) return;
+  const resolved = String(value || "").trim();
+  preview.textContent = resolved || "Focus";
+  preview.classList.toggle("is-placeholder", !resolved);
+}
+
 function getLoggingDebriefTone(rating, mood) {
   const normalizedMood = String(mood || "").toLowerCase();
   if (Number(rating) >= 4 || ["focused", "fun", "calm"].includes(normalizedMood)) {
@@ -6325,6 +6897,8 @@ function updateLoggingDebriefPreview() {
     focus = customFocus || "";
   }
 
+  syncLoggingFocusPreviewText(focus);
+
   const tone = getLoggingDebriefTone(selectedLogRating, selectedLogMood);
   toneEl.classList.remove("tone-strong", "tone-steady", "tone-reset");
   toneEl.classList.add(`tone-${tone.key}`);
@@ -6350,6 +6924,7 @@ function updateLoggingDebriefPreview() {
 }
 
 function renderInsightCards() {
+  return renderInsightCardsModel();
   const container = document.getElementById("insightsList");
   if (!container) return;
 
@@ -6359,12 +6934,10 @@ function renderInsightCards() {
 
   if (activeInsightFilter !== "all") {
     list = list.filter(insight => insight.type === activeInsightFilter);
-  } else {
-    list = list.slice(0, 3);
   }
 
   if (!list.length && cachedInsights.length) {
-    list = cachedInsights.slice(0, 3);
+    list = cachedInsights.slice();
   }
 
   list.forEach((insight) => {
@@ -6374,8 +6947,10 @@ function renderInsightCards() {
 
     el.innerHTML = `
       <div class="insight-header">
-        <div class="insight-title">${escapeHtml(insight.title)}</div>
-        <div class="insight-tag">${escapeHtml(insight.type.toUpperCase())}</div>
+        <div class="insight-header-main">
+          <div class="insight-title">${escapeHtml(insight.title)}</div>
+          <div class="insight-tag">${escapeHtml(insight.type.toUpperCase())}</div>
+        </div>
       </div>
 
       <div class="insight-preview">
@@ -6408,6 +6983,87 @@ function renderInsightCards() {
   });
 
   bindInsightCards();
+  scheduleInsightListOverflowSync(container);
+}
+
+function syncInsightListOverflow(container = document.getElementById("insightsList")) {
+  if (!container) return;
+
+  const cards = [...container.querySelectorAll(".insight-card")];
+  const hasOpenCard = container.classList.contains("has-open-card");
+  const shouldScroll = !hasOpenCard && cards.length > 3;
+  const customHeight = getThemeBuilderGroupOverrideValue("insights-top-card", "insights-list", "groupHeight");
+  const shouldLockHeight = Boolean(customHeight) || hasOpenCard || shouldScroll;
+
+  container.classList.toggle("is-scrollable", shouldLockHeight);
+
+  if (!shouldLockHeight) {
+    container.style.removeProperty("--insights-scroll-height");
+    container.style.removeProperty("height");
+    container.style.removeProperty("min-height");
+    container.style.removeProperty("max-height");
+    container.style.removeProperty("overflow-y");
+    container.style.removeProperty("overflow-x");
+    container.style.removeProperty("padding-right");
+    container.style.removeProperty("padding-bottom");
+    container.style.removeProperty("box-sizing");
+    container.style.removeProperty("scrollbar-gutter");
+    return;
+  }
+
+  const computed = window.getComputedStyle(container);
+  const gap = parseFloat(computed.rowGap || computed.gap || "0") || 0;
+  const visibleCards = hasOpenCard
+    ? cards.filter((card) => card.classList.contains("open")).slice(0, 1)
+    : cards.slice(0, 3);
+  const measuredHeight = visibleCards.reduce((sum, card) => sum + card.getBoundingClientRect().height, 0) + (gap * Math.max(0, visibleCards.length - 1));
+  const hostCard = container.closest(".insights-top-card");
+  const hostStyle = hostCard ? window.getComputedStyle(hostCard) : null;
+  const hostInnerHeight = hostCard
+    ? hostCard.clientHeight
+      - (parseFloat(hostStyle?.paddingTop || "0") || 0)
+      - (parseFloat(hostStyle?.paddingBottom || "0") || 0)
+    : 0;
+  const fallbackHeight = Math.max(hasOpenCard ? 320 : 220, Math.floor(measuredHeight));
+  const targetViewportHeight = hasOpenCard
+    ? (Number.isFinite(hostInnerHeight) && hostInnerHeight > 0
+        ? Math.floor(hostInnerHeight * 0.92)
+        : fallbackHeight)
+    : (Number.isFinite(hostInnerHeight) && hostInnerHeight > 0
+        ? Math.min(Math.max(220, Math.floor(measuredHeight) - 2), Math.floor(hostInnerHeight * 0.6))
+        : fallbackHeight);
+  const lockedHeight = customHeight
+    ? appendThemeBuilderPxIfNeeded(customHeight, "px", "y")
+    : `${Math.max(hasOpenCard ? 260 : 220, targetViewportHeight || fallbackHeight)}px`;
+
+  container.style.setProperty("--insights-scroll-height", lockedHeight);
+  container.style.setProperty("box-sizing", "border-box");
+  container.style.setProperty("height", lockedHeight, "important");
+  container.style.setProperty("min-height", lockedHeight, "important");
+  container.style.setProperty("max-height", lockedHeight, "important");
+  container.style.setProperty("overflow-y", "auto");
+  container.style.setProperty("overflow-x", "hidden");
+  container.style.setProperty("padding-right", "6px");
+  container.style.setProperty("padding-bottom", hasOpenCard ? "0" : "6px");
+  container.style.setProperty("scrollbar-gutter", "stable");
+}
+
+function getThemeBuilderGroupOverrideValue(parentId = "", groupId = "", field = "") {
+  if (!parentId || !groupId || !field) return "";
+  const themeKey = typeof getCurrentThemeBuilderThemeKey === "function"
+    ? getCurrentThemeBuilderThemeKey()
+    : (document.body?.dataset?.theme || "");
+  const value = themeBuilderState?.[themeKey]?.groups?.[parentId]?.[groupId]?.[field];
+  return String(value ?? "").trim();
+}
+
+function scheduleInsightListOverflowSync(container = document.getElementById("insightsList")) {
+  if (!container) return;
+  syncInsightListOverflow(container);
+  requestAnimationFrame(() => {
+    syncInsightListOverflow(container);
+    window.setTimeout(() => syncInsightListOverflow(container), 80);
+  });
 }
 
 function bindInsightFilters() {
@@ -6446,7 +7102,7 @@ function renderTrendBreakdown() {
     performance: [
       `Current KD: ${document.getElementById("statKD")?.textContent || "--"}`,
       `Current win rate: ${document.getElementById("statWinrate")?.textContent || "--"}`,
-      analytics?.overview?.adr ? `Current ADR this act: ${Math.round(analytics.overview.adr)}` : "ADR trend will appear after enough match data is available."
+      analytics?.overview?.adr ? `Current ADR this act: ${Math.round(analytics.overview.adr)}` : "ADR trend builds as more demo/live imports are added."
     ],
     behavior: [
       `Weekly sessions counted: ${getWeeklySessions().length}`,
@@ -6477,10 +7133,11 @@ function bindInsightCards(){
   const container = document.getElementById("insightsList");
   if(!container) return;
 
-  const cards = [...container.querySelectorAll(".insight-card")];
+  const cards = [...container.querySelectorAll(".insight-card:not(.insight-empty)")];
   const closeAll = () => {
     cards.forEach(c => c.classList.remove("open"));
     container.classList.remove("has-open-card");
+    scheduleInsightListOverflowSync(container);
   };
 
   cards.forEach(card => {
@@ -6503,8 +7160,31 @@ function bindInsightCards(){
       card.classList.add("open");
       container.classList.add("has-open-card");
       container.prepend(card);
+      scheduleInsightListOverflowSync(container);
     };
   });
+}
+
+function replayOpenInsightTrendAnimation() {
+  const content = document.querySelector(".trend-content.open");
+  if (!content) return;
+  content.classList.remove("trend-content-animate");
+  void content.offsetWidth;
+  content.classList.add("trend-content-animate");
+}
+
+function syncCompassDescriptionToggleState(forceExpanded = null) {
+  const shell = document.querySelector(".compass-summary-shell");
+  const button = document.getElementById("compassDescriptionToggle");
+  if (!shell || !button) return;
+
+  if (typeof forceExpanded === "boolean") {
+    shell.classList.toggle("is-expanded", forceExpanded);
+  }
+
+  const expanded = shell.classList.contains("is-expanded");
+  button.setAttribute("aria-expanded", expanded ? "true" : "false");
+  button.textContent = expanded ? "Hide description" : "Show description";
 }
 
 function bindInsightTrendRows(){
@@ -6520,14 +7200,18 @@ function bindInsightTrendRows(){
     rows.forEach((row) => {
       const isOpen = String(row.dataset.trend || "").trim().toLowerCase() === normalizedKey;
       row.classList.toggle("open", isOpen);
-      const chevron = row.querySelector(".insight-trend-chevron");
-      if (chevron) chevron.innerHTML = isOpen ? "&larr;" : "&rarr;";
     });
 
     contents.forEach((content) => {
       const isOpen = String(content.dataset.trendContent || "").trim().toLowerCase() === normalizedKey;
       content.classList.toggle("open", isOpen);
-      content.style.display = isOpen ? "block" : "";
+      if (isOpen) {
+        content.classList.remove("trend-content-animate");
+        void content.offsetWidth;
+        content.classList.add("trend-content-animate");
+      } else {
+        content.classList.remove("trend-content-animate");
+      }
     });
 
     wrap.classList.toggle("has-open-card", !!normalizedKey);
@@ -6539,7 +7223,7 @@ function bindInsightTrendRows(){
       e.stopPropagation();
 
       const trendKey = String(row.dataset.trend || "").trim().toLowerCase();
-      setActiveTrend(row.classList.contains("open") ? "" : trendKey);
+      setActiveTrend(trendKey);
     };
   });
 
@@ -7088,16 +7772,7 @@ const OVERLAY_TUNING_TARGETS = [
   ".insights-action-card",
   ".insights-trends-card",
   ".logging-card",
-  ".logging-feed-card",
-  "#authModal .lens-modal",
-  "#riotModal .lens-modal",
-  "#editProfileModal .lens-modal",
-  "#weeklyFocusModal .lens-modal",
-  "#lensModalOverlay .lens-modal",
-  "#timelineStatsModal .lens-modal",
-  "#lensModal .lens-modal",
-  "#goalRankModal .lens-modal",
-  ".agent-modal .agent-modal-inner"
+  ".logging-feed-card"
 ];
 
 const OVERLAY_TUNING_VAR_NAMES = [
@@ -7120,7 +7795,8 @@ const THEME_BUILDER_ACCESS_STORAGE_KEY = "vip_theme_builder_access";
 const THEME_BUILDER_UI_STYLE_ID = "themeBuilderUiStyles";
 const THEME_BUILDER_RUNTIME_STYLE_ID = "themeBuilderRuntimeStyles";
 const THEME_BUILDER_FONT_IMPORT_STYLE_ID = "themeBuilderFontImports";
-const BAKED_THEME_SNAPSHOT_CAPTURED_AT = "2026-04-21T15:57:15.117Z";
+const THEME_SNAPSHOT_IMPORT_VERSION = 3;
+const BAKED_THEME_SNAPSHOT_CAPTURED_AT = "2026-04-25T13:25:19.267Z";
 const BAKED_THEME_BUILDER_STATE = {
   "default": {
     "overlayAssets": {
@@ -7138,22 +7814,41 @@ const BAKED_THEME_BUILDER_STATE = {
         "overlayWidth": "184",
         "parentBg": "#060606",
         "fontFamily": "\"Cinzel\", serif",
-        "contentScaleX": "0.68",
-        "overlayX": "57",
-        "overlayY": "38",
-        "contentScaleY": ".84",
+        "contentScaleX": "0.67",
+        "overlayX": "69",
+        "overlayY": "37",
+        "contentScaleY": "0.79",
         "childBg": "#240e3e",
         "letterSpacing": "1.1",
         "textNoWrap": true,
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "compass-main": {
         "hoverFxEnabled": true,
-        "hoverFxPreset": "wind",
+        "hoverFxPreset": "smoke-video",
         "overlayWidth": "687",
         "childBg": "#240e3e",
-        "overlayHeight": "713",
+        "overlayHeight": "735",
         "overlayScale": "2.2",
         "overlayX": "61",
         "overlayY": "43",
@@ -7163,22 +7858,39 @@ const BAKED_THEME_BUILDER_STATE = {
         "contentShiftY": "18",
         "parentBg": "#0c0c0c",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "improvement-card": {
         "parentBg": "#060606",
         "childBg": "#240e3e",
         "auraEnabled": true,
         "auraIntensity": "1",
-        "auraDistance": "4",
-        "auraOpacity": "0.2",
+        "auraDistance": "1",
+        "auraOpacity": "1",
         "hoverFxEnabled": true,
-        "hoverFxDistance": "2",
-        "hoverFxOpacity": "0.2",
-        "hoverFxIntensity": "0",
+        "hoverFxDistance": "4",
+        "hoverFxOpacity": "1",
+        "hoverFxIntensity": "1.85",
         "hoverFxPreset": "smoke-video",
         "hoverFxMotion": "pulse",
-        "hoverFxSpeed": "1",
+        "hoverFxSpeed": "0.7",
         "fontFamily": "\"Cinzel\", serif",
         "overlayWidth": "965",
         "overlayHeight": "850",
@@ -7188,9 +7900,18 @@ const BAKED_THEME_BUILDER_STATE = {
         "contentScaleX": ".74",
         "contentScaleY": ".86",
         "contentShiftX": "0",
-        "contentShiftY": "16",
+        "contentShiftY": "-7",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1",
+        "fontSize": "62"
       },
       "weekly-focus-card": {
         "hoverFxPreset": "smoke-video",
@@ -7200,13 +7921,13 @@ const BAKED_THEME_BUILDER_STATE = {
         "parentBg": "#000000",
         "childBg": "#240e3e",
         "hoverFxDistance": "4",
-        "hoverFxIntensity": "0",
-        "hoverFxOpacity": "0.2",
-        "hoverFxSpeed": "0.2",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
         "overlayWidth": "1619",
         "auraEnabled": true,
-        "auraDistance": "4",
-        "auraOpacity": "0.2",
+        "auraDistance": "1",
+        "auraOpacity": "1",
         "auraIntensity": "1",
         "hoverFxEnabled": true,
         "overlayHeight": "1346",
@@ -7219,7 +7940,15 @@ const BAKED_THEME_BUILDER_STATE = {
         "contentShiftY": "13",
         "textNoWrap": true,
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff"
       },
       "loadout-card": {
         "fontFamily": "\"Cinzel\", serif",
@@ -7237,46 +7966,102 @@ const BAKED_THEME_BUILDER_STATE = {
         "overlayY": "45",
         "parentBg": "#0c0a11",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "rr-chart-card": {
         "parentBg": "#060606",
         "fontFamily": "\"Cinzel\", serif",
-        "contentScaleY": "0.78",
+        "contentScaleY": "0.81",
         "contentScaleX": "0.78",
         "imageScale": "1.3",
         "contentShiftY": "23",
         "fontSize": "26",
         "overlayWidth": "1495",
-        "overlayHeight": "600",
+        "overlayHeight": "623",
         "overlayScale": "2.35",
         "overlayX": "5",
         "overlayY": "-7",
-        "contentShiftX": "0",
+        "contentShiftX": "12",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "auraEnabled": true,
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "stats-performance-card": {
         "fontFamily": "\"Cinzel\", serif",
         "parentBg": "#03010c",
         "fontSize": "21",
-        "overlayWidth": "756",
+        "overlayWidth": "776",
         "overlayHeight": "624",
         "overlayScale": "3",
         "overlayX": "0",
-        "overlayY": "-29",
-        "contentScaleX": ".86",
-        "contentScaleY": "0.94",
+        "overlayY": "-26",
+        "contentScaleX": "0.83",
+        "contentScaleY": "0.91",
         "contentShiftX": "0",
-        "contentShiftY": "10",
+        "contentShiftY": "-2",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "stats-agents-card": {
         "fontFamily": "\"Cinzel\", serif",
-        "contentScaleY": "0.5",
-        "contentScaleX": ".5",
-        "imageScale": "0.95",
+        "contentScaleY": "0.76",
+        "contentScaleX": "0.5",
+        "imageScale": "1.2",
         "parentBg": "#0b0913",
         "overlayWidth": "726",
         "overlayHeight": "776",
@@ -7284,9 +8069,28 @@ const BAKED_THEME_BUILDER_STATE = {
         "overlayX": "59",
         "overlayY": "44",
         "contentShiftX": "0",
-        "contentShiftY": "0",
+        "contentShiftY": "20",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "1",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "stats-maps-card": {
         "contentScaleY": "0.86",
@@ -7302,7 +8106,26 @@ const BAKED_THEME_BUILDER_STATE = {
         "overlayX": "0",
         "overlayY": "-21",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "insights-top-card": {
         "fontFamily": "\"Cinzel\", serif",
@@ -7316,17 +8139,36 @@ const BAKED_THEME_BUILDER_STATE = {
         "overlayX": "2",
         "overlayY": "-19",
         "contentShiftX": "0",
-        "contentShiftY": "14",
+        "contentShiftY": "-6",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "insights-action-card": {
         "fontFamily": "\"Cinzel\", serif",
         "parentBg": "#080611",
-        "fontSize": "20",
+        "fontSize": "14",
         "overlayWidth": "1530",
         "overlayHeight": "694",
-        "overlayScale": "2.3",
+        "overlayScale": "2.31",
         "overlayX": "0",
         "overlayY": "-23",
         "contentScaleX": ".76",
@@ -7334,7 +8176,26 @@ const BAKED_THEME_BUILDER_STATE = {
         "contentShiftX": "0",
         "contentShiftY": "14",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1",
+        "hoverFxZIndex": "4"
       },
       "insights-trends-card": {
         "parentBg": "#0e0919",
@@ -7342,32 +8203,70 @@ const BAKED_THEME_BUILDER_STATE = {
         "fontSize": "21",
         "contentScaleY": "0.98",
         "overlayWidth": "2067",
-        "overlayHeight": "857",
+        "overlayHeight": "992",
         "overlayScale": "1.7",
         "overlayX": "0",
         "overlayY": "-17",
         "contentScaleX": ".76",
         "contentShiftX": "0",
-        "contentShiftY": "14",
+        "contentShiftY": "-9",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "logging-card": {
         "parentBg": "#060410",
         "fontFamily": "\"Cinzel\", serif",
         "imageScale": "1",
         "contentScaleY": "0.8",
-        "fontSize": "33",
+        "fontSize": "40",
         "contentShiftY": "47",
         "contentScaleX": "0.67",
-        "contentShiftX": "-106",
+        "contentShiftX": "-112",
         "overlayWidth": "1212",
         "overlayHeight": "1860",
         "overlayScale": "2.2",
         "overlayX": "0",
         "overlayY": "116",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "logging-feed-card": {
         "fontFamily": "\"Cinzel\", serif",
@@ -7383,80 +8282,163 @@ const BAKED_THEME_BUILDER_STATE = {
         "overlayX": "26",
         "contentShiftY": "12",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "2147483687",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1"
       },
       "stats-breakdown-card": {
-        "fontSize": "19",
+        "fontSize": "20",
         "parentBg": "#03010c",
-        "overlayWidth": "891",
+        "overlayWidth": "943",
         "overlayHeight": "965",
         "overlayScale": "1.69",
         "overlayX": "61",
-        "overlayY": "43",
-        "contentScaleX": "0.92",
-        "contentScaleY": "0.97",
-        "contentShiftX": "0",
+        "overlayY": "53",
+        "contentScaleX": "1",
+        "contentShiftX": "310",
         "contentShiftY": "10",
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")",
-        "contentOrigin": "center top"
-      },
-      "stats-summary-card": {
-        "parentBg": "#03010c",
-        "fontSize": "33",
-        "contentScaleY": "0.9",
-        "contentScaleX": "0.86",
-        "contentShiftX": "0",
-        "overlayY": "-3",
-        "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")",
-        "overlayWidth": "2494",
-        "overlayHeight": "905",
-        "overlayScale": "1.4",
-        "overlayX": "0",
-        "contentShiftY": "10",
-        "contentOrigin": "center top"
+        "contentOrigin": "center top",
+        "imageScale": "1",
+        "hoverFxEnabled": true,
+        "hoverFxPreset": "smoke-video",
+        "hoverFxMotion": "pulse",
+        "hoverFxDistance": "4",
+        "hoverFxIntensity": "1.85",
+        "hoverFxOpacity": "1",
+        "hoverFxSpeed": "0.7",
+        "hoverFxZIndex": "1",
+        "hoverFxColor": "#ffffff",
+        "hoverFxAccent": "#ffffff",
+        "auraEnabled": true,
+        "auraDistance": "1",
+        "auraOpacity": "1",
+        "auraIntensity": "1",
+        "outerAuraEnabled": true,
+        "outerAuraSpread": "3",
+        "outerAuraOpacity": "1",
+        "outerAuraBlur": "1",
+        "outerAuraScale": "1",
+        "contentScaleY": "1"
       },
       "lens-modals": {
-        "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")"
+        "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-square.png\")"
       },
       "agent-modal": {
         "overlayCurrent": "url(\"output/imagegen/reaver-batch/reaver-dashboard-card-frame-wide.png\")"
+      },
+      "timeline-modal": {
+        "contentScaleY": "0.92",
+        "contentShiftX": "1"
+      },
+      "weekly-focus-modal": {
+        "overlayScale": "3.86",
+        "overlayHeight": "851",
+        "overlayY": "-29"
+      },
+      "stats-summary-card": {
+        "contentScaleX": "0",
+        "contentScaleY": "0",
+        "outerAuraEnabled": true,
+        "overlayHeight": "1123",
+        "parentBg": "#03010c"
       }
     },
-    "elements": {},
+    "elements": {
+      "rr-chart-card": {
+        "rr-match-meta": {
+          "fontSize": "10"
+        },
+        "rr-match-title": {
+          "fontSize": "19"
+        },
+        "svg": {
+          "layoutMode": "free",
+          "boxY": "41.52",
+          "boxX": "68.15",
+          "boxWidth": "2184",
+          "boxHeight": "312",
+          "zIndex": "0"
+        }
+      },
+      "timeline-modal": {
+        "timeline-pullout-tab": {
+          "layoutMode": "free",
+          "boxX": "1050.53",
+          "boxY": "36.98",
+          "boxWidth": "33",
+          "boxHeight": "665.547"
+        }
+      },
+      "compass-main": {
+        "compass-card-aim": {
+          "layoutMode": "free",
+          "boxX": "267.94",
+          "boxY": "-15.24",
+          "boxWidth": "350",
+          "boxHeight": "120",
+          "fontSize": "35"
+        },
+        "compass-card-sense": {
+          "layoutMode": "free",
+          "boxWidth": "350",
+          "boxHeight": "120",
+          "boxY": "-15",
+          "boxX": "-106.49"
+        },
+        "compass-card-team": {
+          "layoutMode": "free",
+          "boxX": "267",
+          "boxY": "113.95",
+          "boxWidth": "350",
+          "boxHeight": "120"
+        },
+        "compass-card-discipline": {
+          "layoutMode": "free",
+          "boxWidth": "350",
+          "boxHeight": "120",
+          "boxX": "-106",
+          "boxY": "112.95"
+        }
+      },
+      "stats-summary-card": {
+        "stats-summary-right": {
+          "layoutMode": "free",
+          "boxY": "58.02"
+        },
+        "stats-proof-card": {
+          "layoutMode": "free",
+          "boxY": "-101.36"
+        }
+      }
+    },
     "groups": {
       "loadout-card": {
         "home-loadout-info": {
-          "fontSize": "45",
-          "groupY": "-14",
-          "groupX": "-46",
-          "groupWidth": "-31",
-          "textX": "-1"
+          "fontSize": "45"
         },
         "role-buttons": {
           "fontSize": "39",
-          "groupHeight": "239.984",
-          "groupY": "15",
-          "groupWidth": "272",
           "fontWeight": "600",
           "textNoWrap": true,
           "textStroke": "4.5"
-        },
-        "spin-agent-button": {
-          "groupHeight": "239",
-          "groupY": "14",
-          "groupX": "107",
-          "groupWidth": "150"
-        },
-        "agent-frame": {
-          "groupHeight": "239",
-          "groupY": "18",
-          "groupWidth": "326",
-          "groupX": "91"
-        },
-        "loadout-header": {
-          "groupHeight": "52",
-          "groupY": "-15",
-          "groupX": "68"
         }
       },
       "weekly-focus-card": {
@@ -7480,42 +8462,29 @@ const BAKED_THEME_BUILDER_STATE = {
         }
       },
       "improvement-card": {
-        "timeline-grid": {
-          "groupHeight": "0",
-          "groupY": "-30"
-        },
         "improvement-header": {
           "groupHeight": "45",
           "fontSize": "22",
           "fontFamily": "system-ui, sans-serif",
           "textY": "20",
-          "groupY": "-28",
+          "groupY": "-2",
           "groupX": "266"
         }
       },
       "compass-main": {
         "compass-header": {
-          "groupHeight": "28",
-          "fontSize": "17",
-          "groupX": "66",
-          "groupWidth": "833.125",
-          "groupY": "-2"
+          "fontSize": "17"
         },
         "compass-summary-shell": {
-          "fontSize": "23",
-          "groupWidth": "872.125",
-          "groupX": "42",
-          "groupHeight": "143",
-          "groupY": "-11"
+          "fontSize": "23"
         },
         "compass-cards-grid": {
-          "groupWidth": "702.125",
-          "groupX": "191",
-          "groupY": "-38",
           "fontSize": "16.5",
-          "groupHeight": "408.344",
-          "groupScale": "1.12",
-          "textY": "-4"
+          "groupWidth": "278.406",
+          "groupHeight": "265.406",
+          "groupScale": "1.05",
+          "groupX": "299",
+          "groupY": "-21"
         }
       },
       "rr-card": {
@@ -7558,7 +8527,7 @@ const BAKED_THEME_BUILDER_STATE = {
         "rr-chart-layout": {
           "groupHeight": "125.734",
           "groupWidth": "2692",
-          "groupY": "-9",
+          "groupY": "-29",
           "groupX": "40",
           "fontFamily": "\"Cinzel\", serif",
           "fontSize": "19",
@@ -7575,13 +8544,18 @@ const BAKED_THEME_BUILDER_STATE = {
           "fontFamily": "inherit",
           "groupWidth": "173",
           "groupX": "-73",
-          "groupHeight": "275.734",
-          "groupY": "-25",
+          "groupHeight": "301.734",
           "fontWeight": "400",
-          "groupScale": "1.29"
+          "groupY": "25"
         },
         "rr-match-stat-rows": {
           "fontSize": "22"
+        },
+        "rr-match-stats-title": {
+          "groupY": "-45"
+        },
+        "rr-match-stats-meta": {
+          "groupY": "-53"
         }
       },
       "logging-card": {
@@ -7594,7 +8568,7 @@ const BAKED_THEME_BUILDER_STATE = {
           "groupHeight": "14"
         },
         "logging-form": {
-          "fontSize": "48",
+          "fontSize": "52",
           "groupWidth": "1602.39",
           "groupY": "8",
           "fontFamily": "\"Cinzel\", serif",
@@ -7622,7 +8596,12 @@ const BAKED_THEME_BUILDER_STATE = {
           "fontSize": "22"
         },
         "logging-form-content": {
-          "fontSize": "31"
+          "fontSize": "51"
+        },
+        "logging-notes-row": {
+          "groupWidth": "1604",
+          "groupHeight": "449.844",
+          "groupY": "-5"
         }
       },
       "logging-feed-card": {
@@ -7669,11 +8648,12 @@ const BAKED_THEME_BUILDER_STATE = {
       },
       "insights-action-card": {
         "insight-action": {
-          "groupX": "57",
+          "groupX": "8",
           "groupHeight": "514.438",
           "groupY": "-14",
           "fontSize": "20",
-          "textY": "-5"
+          "textY": "-5",
+          "groupZIndex": "0"
         },
         "insight-action-content": {
           "fontSize": "12",
@@ -7685,21 +8665,33 @@ const BAKED_THEME_BUILDER_STATE = {
           "fontFamily": "\"Cinzel\", serif",
           "fontWeight": "300",
           "letterSpacing": "1.9",
-          "groupHeight": "152.25",
-          "groupScale": "1.12"
+          "groupHeight": "111.25",
+          "groupScale": "1.12",
+          "groupY": "-49",
+          "groupWidth": "2475"
         },
         "insight-action-title": {
           "fontSize": "25",
           "groupX": "-16",
-          "fontWeight": "700"
+          "fontWeight": "700",
+          "groupY": "19",
+          "groupHeight": "5.625"
         },
         "insight-meta-row": {
-          "fontSize": "19"
+          "fontSize": "17",
+          "groupY": "-31",
+          "groupHeight": "38",
+          "groupX": "-187"
         },
         "insight-focus-details": {
           "fontSize": "14",
           "fontWeight": "300",
-          "textNoWrap": true
+          "groupZIndex": "-10",
+          "groupY": "-7"
+        },
+        "insights-action-sub": {
+          "groupY": "-9",
+          "groupX": "18"
         }
       },
       "insights-trends-card": {
@@ -7720,37 +8712,41 @@ const BAKED_THEME_BUILDER_STATE = {
         "insights-trend-intro": {
           "groupY": "-11",
           "groupX": "637"
+        },
+        "trend-signal-grid": {
+          "groupY": "-7",
+          "groupWidth": "1377.94",
+          "groupX": "-13",
+          "groupHeight": "391.5"
         }
       },
       "stats-agents-card": {
         "stats-agent-list": {
-          "groupScale": "0.84",
-          "groupX": "73",
-          "fontSize": "17",
-          "groupHeight": "569.406",
-          "groupY": "7",
-          "fontFamily": "\"Cinzel\", serif"
+          "groupScale": "0.79",
+          "groupX": "96",
+          "fontSize": "20",
+          "groupHeight": "618.406",
+          "groupY": "29",
+          "fontFamily": "\"Cinzel\", serif",
+          "groupZIndex": "0"
         }
       },
       "stats-breakdown-card": {
         "stats-breakdown": {
-          "groupX": "131",
-          "groupWidth": "650",
           "fontSize": "15",
           "fontFamily": "system-ui, sans-serif",
-          "textNoWrap": true
+          "groupZIndex": "0",
+          "groupWidth": "770",
+          "groupX": "118",
+          "groupHeight": "20",
+          "groupScale": "0.87"
         },
         "stats-breakdown-sub": {
-          "groupX": "350",
-          "groupY": "-13",
           "fontSize": "14",
-          "groupBg": "#0b0913"
-        }
-      },
-      "stats-maps-card": {
-        "stats-map-sub": {
-          "groupWidth": "250",
-          "groupX": "853"
+          "groupBg": "#0b0913",
+          "groupScale": "1.25",
+          "groupY": "-13",
+          "groupX": "-30"
         }
       },
       "stats-performance-card": {
@@ -7761,30 +8757,38 @@ const BAKED_THEME_BUILDER_STATE = {
           "groupY": "-10"
         },
         "stats-performance-chart": {
-          "fontSize": "51",
+          "fontSize": "17",
           "groupWidth": "1633.33",
           "groupX": "105"
         }
       },
+      "timeline-modal": {
+        "timeline-modal-header": {
+          "groupY": "-436"
+        },
+        "timeline-modal-body": {
+          "groupHeight": "867.547",
+          "groupScale": "0.68"
+        }
+      },
       "stats-summary-card": {
         "stats-summary-content": {
-          "groupBg": "#090712",
-          "fontSize": "16",
-          "groupWidth": "2768"
+          "groupScale": "0.79"
         },
-        "stats-summary-grid": {
-          "groupWidth": "1500",
-          "groupX": "299",
-          "groupZIndex": "1"
+        "stats-summary-right": {
+          "groupY": "-1"
         },
-        "stats-summary-selector": {
-          "groupX": "-661",
-          "groupY": "-74"
+        "stats-proof-cards": {
+          "groupX": "361",
+          "groupY": "-43"
         },
         "stats-proof-row": {
-          "groupWidth": "1500",
-          "groupX": "538",
-          "groupY": "-53"
+          "groupX": "8"
+        },
+        "stats-summary-stat-blocks": {
+          "groupX": "369",
+          "groupY": "46",
+          "groupBg": "#1f1a30"
         }
       }
     },
@@ -14974,7 +15978,7 @@ const BAKED_THEME_BUILDER_STATE = {
         }
       }
     },
-    "__bakedSnapshotCapturedAt": "2026-04-21T15:57:15.117Z"
+    "__bakedSnapshotCapturedAt": "2026-04-25T13:25:19.267Z"
   },
   "prime": {
     "overlayAssets": {},
@@ -14993,20 +15997,6 @@ const BAKED_THEME_BUILDER_STATE = {
         "childBoxWidth": "677.75",
         "childBoxHeight": "168.453"
       },
-      "loadout-card": {
-        "childLayoutMode": "free",
-        "childBoxX": "11",
-        "childBoxY": "244.89",
-        "childBoxWidth": "854.891",
-        "childBoxHeight": "111.188"
-      },
-      "compass-main": {
-        "childLayoutMode": "free",
-        "childBoxX": "0",
-        "childBoxY": "200.91",
-        "childBoxWidth": "476.062",
-        "childBoxHeight": "130.672"
-      },
       "rr-card": {
         "childLayoutMode": "free",
         "childBoxX": "9",
@@ -15021,13 +16011,6 @@ const BAKED_THEME_BUILDER_STATE = {
         "childBoxWidth": "166",
         "childBoxHeight": "44"
       },
-      "stats-summary-card": {
-        "childLayoutMode": "free",
-        "childBoxX": "11",
-        "childBoxY": "11",
-        "childBoxWidth": "686.25",
-        "childBoxHeight": "82"
-      },
       "stats-performance-card": {
         "childLayoutMode": "free",
         "childBoxX": "11",
@@ -15041,20 +16024,6 @@ const BAKED_THEME_BUILDER_STATE = {
         "childBoxY": "52.98",
         "childBoxWidth": "218.906",
         "childBoxHeight": "116"
-      },
-      "stats-maps-card": {
-        "childLayoutMode": "free",
-        "childBoxX": "11",
-        "childBoxY": "37.98",
-        "childBoxWidth": "452.328",
-        "childBoxHeight": "136.797"
-      },
-      "stats-breakdown-card": {
-        "childLayoutMode": "free",
-        "childBoxX": "11",
-        "childBoxY": "31.99",
-        "childBoxWidth": "889.672",
-        "childBoxHeight": "92"
       },
       "insights-top-card": {
         "childLayoutMode": "free",
@@ -15473,1431 +16442,6 @@ const BAKED_THEME_BUILDER_STATE = {
           "boxY": "348.36",
           "boxWidth": "68.3125",
           "boxHeight": "25"
-        }
-      },
-      "loadout-card": {
-        "card-header": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "card-header-div": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "card-title": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "card-sub": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "home-loadout-main": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "854.891",
-          "boxHeight": "470.344"
-        },
-        "role-buttons": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "206",
-          "boxHeight": "232"
-        },
-        "role-any-btn": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "208",
-          "boxHeight": "73.3281"
-        },
-        "role-duelist-btn": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "86.29",
-          "boxWidth": "103",
-          "boxHeight": "77.3281"
-        },
-        "img-1": {
-          "layoutMode": "free",
-          "boxX": "50.48",
-          "boxY": "112.93",
-          "boxWidth": "24",
-          "boxHeight": "24"
-        },
-        "role-controller-btn": {
-          "layoutMode": "free",
-          "boxX": "115.95",
-          "boxY": "86.29",
-          "boxWidth": "103",
-          "boxHeight": "77.3281"
-        },
-        "img-2": {
-          "layoutMode": "free",
-          "boxX": "155.43",
-          "boxY": "112.93",
-          "boxWidth": "24",
-          "boxHeight": "24"
-        },
-        "role-initiator-btn": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "165.58",
-          "boxWidth": "103",
-          "boxHeight": "77.3438"
-        },
-        "img-3": {
-          "layoutMode": "free",
-          "boxX": "50.48",
-          "boxY": "192.24",
-          "boxWidth": "24",
-          "boxHeight": "24"
-        },
-        "role-sentinel-btn": {
-          "layoutMode": "free",
-          "boxX": "115.95",
-          "boxY": "165.58",
-          "boxWidth": "103",
-          "boxHeight": "77.3438"
-        },
-        "img-4": {
-          "layoutMode": "free",
-          "boxX": "155.43",
-          "boxY": "192.24",
-          "boxWidth": "24",
-          "boxHeight": "24"
-        },
-        "spin-agent-btn": {
-          "layoutMode": "free",
-          "boxX": "220.9",
-          "boxY": "11",
-          "boxWidth": "120",
-          "boxHeight": "232"
-        },
-        "spin-icon-flip": {
-          "layoutMode": "free",
-          "boxX": "243.05",
-          "boxY": "34.58",
-          "boxWidth": "75.6719",
-          "boxHeight": "184.797"
-        },
-        "path-1": {
-          "layoutMode": "free",
-          "boxX": "255.65",
-          "boxY": "98.57",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-2": {
-          "layoutMode": "free",
-          "boxX": "287.17",
-          "boxY": "111.18",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "agent-frame": {
-          "layoutMode": "free",
-          "boxX": "489.22",
-          "boxY": "11",
-          "boxWidth": "232",
-          "boxHeight": "232"
-        },
-        "frame-border": {
-          "layoutMode": "free",
-          "boxX": "500.21",
-          "boxY": "21.99",
-          "boxWidth": "210",
-          "boxHeight": "210"
-        },
-        "agent-fx-behind": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "fx-frame-layer-1": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "fx-effect-layer-1": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "fx-veto-ult": {
-          "layoutMode": "free",
-          "boxX": "476.22",
-          "boxY": "-2",
-          "boxWidth": "258",
-          "boxHeight": "258"
-        },
-        "svg": {
-          "layoutMode": "free",
-          "boxX": "424.64",
-          "boxY": "-53.57",
-          "boxWidth": "258",
-          "boxHeight": "258"
-        },
-        "rect": {
-          "layoutMode": "free",
-          "boxX": "424.64",
-          "boxY": "18.63",
-          "boxWidth": "1000",
-          "boxHeight": "600"
-        },
-        "path-3": {
-          "layoutMode": "free",
-          "boxX": "435.79",
-          "boxY": "-1.62",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-4": {
-          "layoutMode": "free",
-          "boxX": "435.79",
-          "boxY": "-1.62",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-5": {
-          "layoutMode": "free",
-          "boxX": "478.98",
-          "boxY": "-0.18",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-6": {
-          "layoutMode": "free",
-          "boxX": "513.04",
-          "boxY": "-52.17",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-7": {
-          "layoutMode": "free",
-          "boxX": "558.59",
-          "boxY": "-42.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-8": {
-          "layoutMode": "free",
-          "boxX": "596.51",
-          "boxY": "80.38",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-9": {
-          "layoutMode": "free",
-          "boxX": "601.25",
-          "boxY": "-0.26",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-10": {
-          "layoutMode": "free",
-          "boxX": "472.37",
-          "boxY": "82.03",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-11": {
-          "layoutMode": "free",
-          "boxX": "596.22",
-          "boxY": "79.75",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-12": {
-          "layoutMode": "free",
-          "boxX": "435.01",
-          "boxY": "-2.23",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-13": {
-          "layoutMode": "free",
-          "boxX": "544.81",
-          "boxY": "122.79",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-14": {
-          "layoutMode": "free",
-          "boxX": "512.84",
-          "boxY": "-52.73",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-15": {
-          "layoutMode": "free",
-          "boxX": "477.26",
-          "boxY": "118.27",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-16": {
-          "layoutMode": "free",
-          "boxX": "596.49",
-          "boxY": "80.48",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-17": {
-          "layoutMode": "free",
-          "boxX": "477.68",
-          "boxY": "67.11",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-18": {
-          "layoutMode": "free",
-          "boxX": "472.71",
-          "boxY": "81.85",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-19": {
-          "layoutMode": "free",
-          "boxX": "568.25",
-          "boxY": "168.74",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-20": {
-          "layoutMode": "free",
-          "boxX": "393.63",
-          "boxY": "129.97",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-21": {
-          "layoutMode": "free",
-          "boxX": "281.18",
-          "boxY": "96.46",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-22": {
-          "layoutMode": "free",
-          "boxX": "321.09",
-          "boxY": "-84.59",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-23": {
-          "layoutMode": "free",
-          "boxX": "515.84",
-          "boxY": "-197.04",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-24": {
-          "layoutMode": "free",
-          "boxX": "663.53",
-          "boxY": "-157.13",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-25": {
-          "layoutMode": "free",
-          "boxX": "648.3",
-          "boxY": "37.62",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-26": {
-          "layoutMode": "free",
-          "boxX": "608.3",
-          "boxY": "175.88",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "agent-reveal-art": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "img-5": {
-          "layoutMode": "free",
-          "boxX": "474.12",
-          "boxY": "-4.1",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "agent-frame-art": {
-          "layoutMode": "free",
-          "boxX": "482.17",
-          "boxY": "-55.37",
-          "boxWidth": "115",
-          "boxHeight": "320"
-        },
-        "frame-art-inner": {
-          "layoutMode": "free",
-          "boxX": "473",
-          "boxY": "-80.9",
-          "boxWidth": "115",
-          "boxHeight": "320"
-        },
-        "agent-reel": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "12",
-          "boxWidth": "115",
-          "boxHeight": "230"
-        },
-        "reel-strip": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "12",
-          "boxWidth": "115",
-          "boxHeight": "2645"
-        },
-        "reel-icon-1": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "12",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-2": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "126.94",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-3": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "241.89",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-4": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "356.84",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-5": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "471.79",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-6": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "586.73",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-7": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "701.68",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-8": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "816.63",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-9": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "931.58",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-10": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1046.52",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-11": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1161.47",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-12": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1276.42",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-13": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1391.37",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-14": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1506.31",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-15": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1621.26",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-16": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1736.21",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-17": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1851.16",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-18": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "1966.1",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-19": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "2081.05",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-20": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "2196",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-21": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "2310.95",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-22": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "2425.9",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "reel-icon-23": {
-          "layoutMode": "free",
-          "boxX": "605.16",
-          "boxY": "2540.84",
-          "boxWidth": "115",
-          "boxHeight": "115"
-        },
-        "agent-fx-front": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "fx-frame-layer-2": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "fx-effect-layer-2": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "fx-veto-orb": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "veto-orb-svg": {
-          "layoutMode": "free",
-          "boxX": "503.29",
-          "boxY": "52.06",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "defs": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-energy-1": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-1": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-2": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-3": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-4": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-energy-2": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-5": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-6": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-7": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-8": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-9": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-shell": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-10": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-11": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-12": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-13": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-shell-edge": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-14": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-15": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stop-16": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "circle": {
-          "layoutMode": "free",
-          "boxX": "523.74",
-          "boxY": "72.5",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-core": {
-          "layoutMode": "free",
-          "boxX": "535.24",
-          "boxY": "85.02",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-shell-2": {
-          "layoutMode": "free",
-          "boxX": "520.88",
-          "boxY": "77.9",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-27": {
-          "layoutMode": "free",
-          "boxX": "558.4",
-          "boxY": "82.25",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-28": {
-          "layoutMode": "free",
-          "boxX": "583.35",
-          "boxY": "86.35",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-29": {
-          "layoutMode": "free",
-          "boxX": "527.54",
-          "boxY": "107.95",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-30": {
-          "layoutMode": "free",
-          "boxX": "538.72",
-          "boxY": "133.13",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-31": {
-          "layoutMode": "free",
-          "boxX": "520.99",
-          "boxY": "80.41",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "path-32": {
-          "layoutMode": "free",
-          "boxX": "534.16",
-          "boxY": "81.68",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "vo-band": {
-          "layoutMode": "free",
-          "boxX": "547.61",
-          "boxY": "105.26",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "breach-frame": {
-          "layoutMode": "free",
-          "boxX": "720.11",
-          "boxY": "126.94",
-          "boxWidth": "0",
-          "boxHeight": "0"
-        },
-        "frame-segment-frame-left": {
-          "layoutMode": "free",
-          "boxX": "720.11",
-          "boxY": "126.94",
-          "boxWidth": "0",
-          "boxHeight": "0"
-        },
-        "frame-segment-frame-right": {
-          "layoutMode": "free",
-          "boxX": "720.11",
-          "boxY": "126.94",
-          "boxWidth": "0",
-          "boxHeight": "0"
-        },
-        "frame-segment-frame-top": {
-          "layoutMode": "free",
-          "boxX": "720.11",
-          "boxY": "126.94",
-          "boxWidth": "0",
-          "boxHeight": "0"
-        },
-        "frame-segment-frame-bottom": {
-          "layoutMode": "free",
-          "boxX": "720.11",
-          "boxY": "126.94",
-          "boxWidth": "0",
-          "boxHeight": "0"
-        },
-        "breach-energy": {
-          "layoutMode": "free",
-          "boxX": "720.11",
-          "boxY": "126.94",
-          "boxWidth": "0",
-          "boxHeight": "0"
-        },
-        "agent-placeholder": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "placeholder-silhouette": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "100%",
-          "boxHeight": "auto"
-        },
-        "placeholder-distort": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "shine": {
-          "layoutMode": "free",
-          "boxX": "490.21",
-          "boxY": "12",
-          "boxWidth": "230",
-          "boxHeight": "230"
-        },
-        "home-loadout-info": {
-          "layoutMode": "free",
-          "boxX": "-6",
-          "boxY": "-567.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "home-loadout-pill-1": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "244.89",
-          "boxWidth": "854.891",
-          "boxHeight": "111.188"
-        },
-        "pill-label-1": {
-          "layoutMode": "free",
-          "boxX": "21.99",
-          "boxY": "277.97",
-          "boxWidth": "102.406",
-          "boxHeight": "45"
-        },
-        "agent-name": {
-          "layoutMode": "free",
-          "boxX": "603.21",
-          "boxY": "251.89",
-          "boxWidth": "251.406",
-          "boxHeight": "97.1875"
-        },
-        "home-loadout-pill-2": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "358.03",
-          "boxWidth": "854.891",
-          "boxHeight": "123.156"
-        },
-        "pill-label-2": {
-          "layoutMode": "free",
-          "boxX": "21.99",
-          "boxY": "397.09",
-          "boxWidth": "82.5312",
-          "boxHeight": "45"
-        },
-        "focus-display": {
-          "layoutMode": "free",
-          "boxX": "114.48",
-          "boxY": "322.43",
-          "boxWidth": "740.359",
-          "boxHeight": "194.375"
-        }
-      },
-      "compass-main": {
-        "compass-header": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "0",
-          "boxWidth": "960.125",
-          "boxHeight": "31"
-        },
-        "compass-header-div": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "0",
-          "boxWidth": "484",
-          "boxHeight": "16.8906"
-        },
-        "card-title": {
-          "layoutMode": "free",
-          "boxX": "-901.48",
-          "boxY": "-578.66",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-profile-copy": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "0",
-          "boxWidth": "484",
-          "boxHeight": "16.8906"
-        },
-        "compass-source-pill": {
-          "layoutMode": "free",
-          "boxX": "836.74",
-          "boxY": "0",
-          "boxWidth": "123",
-          "boxHeight": "31"
-        },
-        "compass-summary-shell": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "38.98",
-          "boxWidth": "960.125",
-          "boxHeight": "154"
-        },
-        "compass-summary-copy": {
-          "layoutMode": "free",
-          "boxX": "12.99",
-          "boxY": "76.26",
-          "boxWidth": "792.125",
-          "boxHeight": "79.3906"
-        },
-        "compass-profile-kicker": {
-          "layoutMode": "free",
-          "boxX": "12.99",
-          "boxY": "76.26",
-          "boxWidth": "792.125",
-          "boxHeight": "15"
-        },
-        "compass-profile-title": {
-          "layoutMode": "free",
-          "boxX": "12.99",
-          "boxY": "95.25",
-          "boxWidth": "792.125",
-          "boxHeight": "29.3906"
-        },
-        "compass-profile-meta": {
-          "layoutMode": "free",
-          "boxX": "12.99",
-          "boxY": "128.63",
-          "boxWidth": "792.125",
-          "boxHeight": "27"
-        },
-        "compass-average-score": {
-          "layoutMode": "free",
-          "boxX": "12.99",
-          "boxY": "128.63",
-          "boxWidth": "59",
-          "boxHeight": "27"
-        },
-        "compass-strongest-callout": {
-          "layoutMode": "free",
-          "boxX": "77.96",
-          "boxY": "128.63",
-          "boxWidth": "103",
-          "boxHeight": "27"
-        },
-        "compass-weakest-callout": {
-          "layoutMode": "free",
-          "boxX": "186.92",
-          "boxY": "128.63",
-          "boxWidth": "134",
-          "boxHeight": "27"
-        },
-        "compass-svg-wrap": {
-          "layoutMode": "free",
-          "boxX": "814.75",
-          "boxY": "49.98",
-          "boxWidth": "132",
-          "boxHeight": "132"
-        },
-        "compass-svg": {
-          "layoutMode": "free",
-          "boxX": "814.75",
-          "boxY": "49.98",
-          "boxWidth": "132",
-          "boxHeight": "132"
-        },
-        "compass-perimeter": {
-          "layoutMode": "free",
-          "boxX": "827.95",
-          "boxY": "63.17",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-tier-1": {
-          "layoutMode": "free",
-          "boxX": "843.78",
-          "boxY": "79",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-tier-2": {
-          "layoutMode": "free",
-          "boxX": "859.61",
-          "boxY": "94.84",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-axis-line-1": {
-          "layoutMode": "free",
-          "boxX": "880.72",
-          "boxY": "63.17",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-axis-line-2": {
-          "layoutMode": "free",
-          "boxX": "827.95",
-          "boxY": "115.95",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-polygon": {
-          "layoutMode": "free",
-          "boxX": "875.97",
-          "boxY": "108.03",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "core-node-aim": {
-          "layoutMode": "free",
-          "boxX": "877.84",
-          "boxY": "105.15",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "core-node-sense": {
-          "layoutMode": "free",
-          "boxX": "883.2",
-          "boxY": "113.14",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "core-node-team": {
-          "layoutMode": "free",
-          "boxX": "877.97",
-          "boxY": "116.89",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "core-node-discipline": {
-          "layoutMode": "free",
-          "boxX": "873.19",
-          "boxY": "113.16",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "axis-percent-percent-aim": {
-          "layoutMode": "free",
-          "boxX": "875.26",
-          "boxY": "48.06",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "axis-percent-percent-sense": {
-          "layoutMode": "free",
-          "boxX": "933.31",
-          "boxY": "108.75",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "axis-percent-percent-team": {
-          "layoutMode": "free",
-          "boxX": "877.99",
-          "boxY": "169.44",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "axis-percent-percent-discipline": {
-          "layoutMode": "free",
-          "boxX": "819.94",
-          "boxY": "108.75",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "compass-cards-grid": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "200.91",
-          "boxWidth": "960.125",
-          "boxHeight": "269.344"
-        },
-        "compass-card-aim": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "200.91",
-          "boxWidth": "476.062",
-          "boxHeight": "130.672"
-        },
-        "compass-card-top-1": {
-          "layoutMode": "free",
-          "boxX": "185.03",
-          "boxY": "211.9",
-          "boxWidth": "105.844",
-          "boxHeight": "19"
-        },
-        "compass-card-label-1": {
-          "layoutMode": "free",
-          "boxX": "185.03",
-          "boxY": "211.9",
-          "boxWidth": "28.8438",
-          "boxHeight": "19"
-        },
-        "compass-tier-aim": {
-          "layoutMode": "free",
-          "boxX": "221.85",
-          "boxY": "214.5",
-          "boxWidth": "69",
-          "boxHeight": "13.7969"
-        },
-        "compass-card-score-row-1": {
-          "layoutMode": "free",
-          "boxX": "199.94",
-          "boxY": "239.39",
-          "boxWidth": "76",
-          "boxHeight": "38"
-        },
-        "compass-score-aim": {
-          "layoutMode": "free",
-          "boxX": "199.94",
-          "boxY": "239.39",
-          "boxWidth": "44",
-          "boxHeight": "38"
-        },
-        "compass-card-score-row-span-1": {
-          "layoutMode": "free",
-          "boxX": "249.92",
-          "boxY": "259.38",
-          "boxWidth": "26",
-          "boxHeight": "17"
-        },
-        "compass-bar-track-1": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "285.85",
-          "boxWidth": "454.062",
-          "boxHeight": "10"
-        },
-        "compass-bar-aim": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "285.85",
-          "boxWidth": "0",
-          "boxHeight": "10"
-        },
-        "compass-meta-aim": {
-          "layoutMode": "free",
-          "boxX": "55.01",
-          "boxY": "304.35",
-          "boxWidth": "366",
-          "boxHeight": "16.1875"
-        },
-        "compass-card-sense": {
-          "layoutMode": "free",
-          "boxX": "483.84",
-          "boxY": "200.91",
-          "boxWidth": "476.062",
-          "boxHeight": "130.672"
-        },
-        "compass-card-top-2": {
-          "layoutMode": "free",
-          "boxX": "640.4",
-          "boxY": "211.9",
-          "boxWidth": "162.812",
-          "boxHeight": "19"
-        },
-        "compass-card-label-2": {
-          "layoutMode": "free",
-          "boxX": "640.4",
-          "boxY": "211.9",
-          "boxWidth": "85.8125",
-          "boxHeight": "19"
-        },
-        "compass-tier-sense": {
-          "layoutMode": "free",
-          "boxX": "734.17",
-          "boxY": "214.5",
-          "boxWidth": "69",
-          "boxHeight": "13.7969"
-        },
-        "compass-card-score-row-2": {
-          "layoutMode": "free",
-          "boxX": "683.78",
-          "boxY": "239.39",
-          "boxWidth": "76",
-          "boxHeight": "38"
-        },
-        "compass-score-sense": {
-          "layoutMode": "free",
-          "boxX": "683.78",
-          "boxY": "239.39",
-          "boxWidth": "44",
-          "boxHeight": "38"
-        },
-        "compass-card-score-row-span-2": {
-          "layoutMode": "free",
-          "boxX": "733.76",
-          "boxY": "259.38",
-          "boxWidth": "26",
-          "boxHeight": "17"
-        },
-        "compass-bar-track-2": {
-          "layoutMode": "free",
-          "boxX": "494.84",
-          "boxY": "285.85",
-          "boxWidth": "454.062",
-          "boxHeight": "10"
-        },
-        "compass-bar-sense": {
-          "layoutMode": "free",
-          "boxX": "494.84",
-          "boxY": "285.85",
-          "boxWidth": "0",
-          "boxHeight": "10"
-        },
-        "compass-meta-sense": {
-          "layoutMode": "free",
-          "boxX": "542.85",
-          "boxY": "304.35",
-          "boxWidth": "358",
-          "boxHeight": "16.1875"
-        },
-        "compass-card-team": {
-          "layoutMode": "free",
-          "boxX": "0",
-          "boxY": "339.52",
-          "boxWidth": "476.062",
-          "boxHeight": "130.672"
-        },
-        "compass-card-top-3": {
-          "layoutMode": "free",
-          "boxX": "161.83",
-          "boxY": "350.51",
-          "boxWidth": "152.25",
-          "boxHeight": "19"
-        },
-        "compass-card-label-3": {
-          "layoutMode": "free",
-          "boxX": "161.83",
-          "boxY": "350.51",
-          "boxWidth": "75.25",
-          "boxHeight": "19"
-        },
-        "compass-tier-team": {
-          "layoutMode": "free",
-          "boxX": "245.05",
-          "boxY": "353.11",
-          "boxWidth": "69",
-          "boxHeight": "13.7969"
-        },
-        "compass-card-score-row-3": {
-          "layoutMode": "free",
-          "boxX": "210.94",
-          "boxY": "378",
-          "boxWidth": "54",
-          "boxHeight": "38"
-        },
-        "compass-score-team": {
-          "layoutMode": "free",
-          "boxX": "210.94",
-          "boxY": "378",
-          "boxWidth": "22",
-          "boxHeight": "38"
-        },
-        "compass-card-score-row-span-3": {
-          "layoutMode": "free",
-          "boxX": "238.92",
-          "boxY": "397.99",
-          "boxWidth": "26",
-          "boxHeight": "17"
-        },
-        "compass-bar-track-3": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "424.46",
-          "boxWidth": "454.062",
-          "boxHeight": "10"
-        },
-        "compass-bar-team": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "424.46",
-          "boxWidth": "0",
-          "boxHeight": "10"
-        },
-        "compass-meta-team": {
-          "layoutMode": "free",
-          "boxX": "46.01",
-          "boxY": "442.96",
-          "boxWidth": "384",
-          "boxHeight": "16.1875"
-        },
-        "compass-card-discipline": {
-          "layoutMode": "free",
-          "boxX": "483.84",
-          "boxY": "339.52",
-          "boxWidth": "476.062",
-          "boxHeight": "130.672"
-        },
-        "compass-card-top-4": {
-          "layoutMode": "free",
-          "boxX": "648.39",
-          "boxY": "350.51",
-          "boxWidth": "146.812",
-          "boxHeight": "19"
-        },
-        "compass-card-label-4": {
-          "layoutMode": "free",
-          "boxX": "648.39",
-          "boxY": "350.51",
-          "boxWidth": "69.8125",
-          "boxHeight": "19"
-        },
-        "compass-tier-discipline": {
-          "layoutMode": "free",
-          "boxX": "726.17",
-          "boxY": "353.11",
-          "boxWidth": "69",
-          "boxHeight": "13.7969"
-        },
-        "compass-card-score-row-4": {
-          "layoutMode": "free",
-          "boxX": "694.78",
-          "boxY": "378",
-          "boxWidth": "54",
-          "boxHeight": "38"
-        },
-        "compass-score-discipline": {
-          "layoutMode": "free",
-          "boxX": "694.78",
-          "boxY": "378",
-          "boxWidth": "22",
-          "boxHeight": "38"
-        },
-        "compass-card-score-row-span-4": {
-          "layoutMode": "free",
-          "boxX": "722.76",
-          "boxY": "397.99",
-          "boxWidth": "26",
-          "boxHeight": "17"
-        },
-        "compass-bar-track-4": {
-          "layoutMode": "free",
-          "boxX": "494.84",
-          "boxY": "424.46",
-          "boxWidth": "454.062",
-          "boxHeight": "10"
-        },
-        "compass-bar-discipline": {
-          "layoutMode": "free",
-          "boxX": "494.84",
-          "boxY": "424.46",
-          "boxWidth": "0",
-          "boxHeight": "10"
-        },
-        "compass-meta-discipline": {
-          "layoutMode": "free",
-          "boxX": "539.85",
-          "boxY": "442.96",
-          "boxWidth": "364",
-          "boxHeight": "16.1875"
         }
       },
       "rr-card": {
@@ -17707,218 +17251,6 @@ const BAKED_THEME_BUILDER_STATE = {
           "boxY": "311.59",
           "boxWidth": "34",
           "boxHeight": "28"
-        }
-      },
-      "stats-summary-card": {
-        "stats-summary-grid": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "2769",
-          "boxHeight": "82"
-        },
-        "stat-block-1": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "686.25",
-          "boxHeight": "82"
-        },
-        "stat-label-1": {
-          "layoutMode": "free",
-          "boxX": "343.84",
-          "boxY": "19.99",
-          "boxWidth": "20.25",
-          "boxHeight": "19"
-        },
-        "stat-kd": {
-          "layoutMode": "free",
-          "boxX": "323.98",
-          "boxY": "38.98",
-          "boxWidth": "60",
-          "boxHeight": "45"
-        },
-        "stat-block-2": {
-          "layoutMode": "free",
-          "boxX": "704.93",
-          "boxY": "11",
-          "boxWidth": "686.25",
-          "boxHeight": "82"
-        },
-        "stat-label-2": {
-          "layoutMode": "free",
-          "boxX": "1024.1",
-          "boxY": "19.99",
-          "boxWidth": "47.6094",
-          "boxHeight": "19"
-        },
-        "stat-winrate": {
-          "layoutMode": "free",
-          "boxX": "1016.41",
-          "boxY": "38.98",
-          "boxWidth": "63",
-          "boxHeight": "45"
-        },
-        "stat-block-3": {
-          "layoutMode": "free",
-          "boxX": "1398.86",
-          "boxY": "11",
-          "boxWidth": "686.25",
-          "boxHeight": "82"
-        },
-        "stat-label-3": {
-          "layoutMode": "free",
-          "boxX": "1726.65",
-          "boxY": "19.99",
-          "boxWidth": "30.375",
-          "boxHeight": "19"
-        },
-        "stat-adr": {
-          "layoutMode": "free",
-          "boxX": "1712.85",
-          "boxY": "38.98",
-          "boxWidth": "58",
-          "boxHeight": "45"
-        },
-        "stat-block-4": {
-          "layoutMode": "free",
-          "boxX": "2092.8",
-          "boxY": "11",
-          "boxWidth": "686.25",
-          "boxHeight": "82"
-        },
-        "stat-label-4": {
-          "layoutMode": "free",
-          "boxX": "2417.52",
-          "boxY": "19.99",
-          "boxWidth": "36.4844",
-          "boxHeight": "19"
-        },
-        "stat-hs": {
-          "layoutMode": "free",
-          "boxX": "2402.28",
-          "boxY": "38.98",
-          "boxWidth": "67",
-          "boxHeight": "45"
-        },
-        "stats-summary-selector-row": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "100.95",
-          "boxWidth": "2769",
-          "boxHeight": "63"
-        },
-        "stats-act-select-wrap": {
-          "layoutMode": "free",
-          "boxX": "2596.82",
-          "boxY": "100.95",
-          "boxWidth": "182",
-          "boxHeight": "63"
-        },
-        "stats-act-label": {
-          "layoutMode": "free",
-          "boxX": "2596.82",
-          "boxY": "100.95",
-          "boxWidth": "182",
-          "boxHeight": "19"
-        },
-        "stats-act-selector": {
-          "layoutMode": "free",
-          "boxX": "2596.82",
-          "boxY": "125.94",
-          "boxWidth": "182",
-          "boxHeight": "38"
-        },
-        "option": {
-          "layoutMode": "free",
-          "boxX": "-4",
-          "boxY": "-159.93",
-          "boxWidth": "auto",
-          "boxHeight": "auto"
-        },
-        "stats-proof-row": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "171.92",
-          "boxWidth": "2769",
-          "boxHeight": "136.188"
-        },
-        "stats-proof-card": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "171.92",
-          "boxWidth": "1242.44",
-          "boxHeight": "136.188"
-        },
-        "stats-proof-kicker-1": {
-          "layoutMode": "free",
-          "boxX": "27.99",
-          "boxY": "186.92",
-          "boxWidth": "1208.44",
-          "boxHeight": "15"
-        },
-        "stats-proof-rank-row": {
-          "layoutMode": "free",
-          "boxX": "27.99",
-          "boxY": "211.9",
-          "boxWidth": "1208.44",
-          "boxHeight": "53"
-        },
-        "stats-peak-rank-icon": {
-          "layoutMode": "free",
-          "boxX": "27.99",
-          "boxY": "216.4",
-          "boxWidth": "44",
-          "boxHeight": "44"
-        },
-        "stats-proof-rank-copy": {
-          "layoutMode": "free",
-          "boxX": "83.96",
-          "boxY": "211.9",
-          "boxWidth": "69",
-          "boxHeight": "53"
-        },
-        "stats-peak-rank-text": {
-          "layoutMode": "free",
-          "boxX": "83.96",
-          "boxY": "211.9",
-          "boxWidth": "69",
-          "boxHeight": "32"
-        },
-        "stats-peak-rrtext": {
-          "layoutMode": "free",
-          "boxX": "83.96",
-          "boxY": "245.89",
-          "boxWidth": "69",
-          "boxHeight": "19"
-        },
-        "stats-peak-proof-note": {
-          "layoutMode": "free",
-          "boxX": "27.99",
-          "boxY": "274.88",
-          "boxWidth": "1208.44",
-          "boxHeight": "18.1875"
-        },
-        "stats-role-progress-card": {
-          "layoutMode": "free",
-          "boxX": "1260.86",
-          "boxY": "171.92",
-          "boxWidth": "1518.56",
-          "boxHeight": "136.188"
-        },
-        "stats-proof-kicker-2": {
-          "layoutMode": "free",
-          "boxX": "1277.86",
-          "boxY": "186.92",
-          "boxWidth": "1484.56",
-          "boxHeight": "15"
-        },
-        "stats-role-progress-row": {
-          "layoutMode": "free",
-          "boxX": "1277.86",
-          "boxY": "211.9",
-          "boxWidth": "1484.56",
-          "boxHeight": "0"
         }
       },
       "stats-performance-card": {
@@ -19682,493 +19014,6 @@ const BAKED_THEME_BUILDER_STATE = {
           "boxHeight": "21"
         }
       },
-      "stats-maps-card": {
-        "card-sub": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "1833.33",
-          "boxHeight": "21"
-        },
-        "stats-maps-list": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "37.98",
-          "boxWidth": "1833.33",
-          "boxHeight": "426.406"
-        },
-        "stats-map-card-1": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "37.98",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-1": {
-          "layoutMode": "free",
-          "boxX": "23.99",
-          "boxY": "48.98",
-          "boxWidth": "239.656",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-1": {
-          "layoutMode": "free",
-          "boxX": "277.53",
-          "boxY": "48.98",
-          "boxWidth": "172.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-1": {
-          "layoutMode": "free",
-          "boxX": "277.53",
-          "boxY": "82.81",
-          "boxWidth": "56",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-1": {
-          "layoutMode": "free",
-          "boxX": "277.53",
-          "boxY": "110.39",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-2": {
-          "layoutMode": "free",
-          "boxX": "471.11",
-          "boxY": "37.98",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-2": {
-          "layoutMode": "free",
-          "boxX": "484.11",
-          "boxY": "48.98",
-          "boxWidth": "239.656",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-2": {
-          "layoutMode": "free",
-          "boxX": "737.65",
-          "boxY": "48.98",
-          "boxWidth": "172.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-2": {
-          "layoutMode": "free",
-          "boxX": "737.65",
-          "boxY": "82.81",
-          "boxWidth": "39",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-2": {
-          "layoutMode": "free",
-          "boxX": "737.65",
-          "boxY": "110.39",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-3": {
-          "layoutMode": "free",
-          "boxX": "931.23",
-          "boxY": "37.98",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-3": {
-          "layoutMode": "free",
-          "boxX": "944.23",
-          "boxY": "48.98",
-          "boxWidth": "239.656",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-3": {
-          "layoutMode": "free",
-          "boxX": "1197.77",
-          "boxY": "48.98",
-          "boxWidth": "172.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-3": {
-          "layoutMode": "free",
-          "boxX": "1197.77",
-          "boxY": "82.81",
-          "boxWidth": "49",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-3": {
-          "layoutMode": "free",
-          "boxX": "1197.77",
-          "boxY": "110.39",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-4": {
-          "layoutMode": "free",
-          "boxX": "1391.35",
-          "boxY": "37.98",
-          "boxWidth": "452.344",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-4": {
-          "layoutMode": "free",
-          "boxX": "1404.35",
-          "boxY": "48.98",
-          "boxWidth": "239.672",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-4": {
-          "layoutMode": "free",
-          "boxX": "1657.9",
-          "boxY": "48.98",
-          "boxWidth": "172.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-4": {
-          "layoutMode": "free",
-          "boxX": "1657.9",
-          "boxY": "82.81",
-          "boxWidth": "45",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-4": {
-          "layoutMode": "free",
-          "boxX": "1657.9",
-          "boxY": "110.39",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-5": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "182.71",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-5": {
-          "layoutMode": "free",
-          "boxX": "23.99",
-          "boxY": "193.71",
-          "boxWidth": "235.656",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-5": {
-          "layoutMode": "free",
-          "boxX": "273.53",
-          "boxY": "193.71",
-          "boxWidth": "176.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-5": {
-          "layoutMode": "free",
-          "boxX": "273.53",
-          "boxY": "227.54",
-          "boxWidth": "61",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-5": {
-          "layoutMode": "free",
-          "boxX": "273.53",
-          "boxY": "255.12",
-          "boxWidth": "65",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-6": {
-          "layoutMode": "free",
-          "boxX": "471.11",
-          "boxY": "182.71",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-6": {
-          "layoutMode": "free",
-          "boxX": "484.11",
-          "boxY": "193.71",
-          "boxWidth": "235.656",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-6": {
-          "layoutMode": "free",
-          "boxX": "733.65",
-          "boxY": "193.71",
-          "boxWidth": "176.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-6": {
-          "layoutMode": "free",
-          "boxX": "733.65",
-          "boxY": "227.54",
-          "boxWidth": "55",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-6": {
-          "layoutMode": "free",
-          "boxX": "733.65",
-          "boxY": "255.12",
-          "boxWidth": "65",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-7": {
-          "layoutMode": "free",
-          "boxX": "931.23",
-          "boxY": "182.71",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-7": {
-          "layoutMode": "free",
-          "boxX": "944.23",
-          "boxY": "193.71",
-          "boxWidth": "237.156",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-7": {
-          "layoutMode": "free",
-          "boxX": "1195.27",
-          "boxY": "193.71",
-          "boxWidth": "175.172",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-7": {
-          "layoutMode": "free",
-          "boxX": "1195.27",
-          "boxY": "227.54",
-          "boxWidth": "62",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-7": {
-          "layoutMode": "free",
-          "boxX": "1195.27",
-          "boxY": "255.12",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-8": {
-          "layoutMode": "free",
-          "boxX": "1391.35",
-          "boxY": "182.71",
-          "boxWidth": "452.344",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-8": {
-          "layoutMode": "free",
-          "boxX": "1404.35",
-          "boxY": "193.71",
-          "boxWidth": "239.672",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-8": {
-          "layoutMode": "free",
-          "boxX": "1657.9",
-          "boxY": "193.71",
-          "boxWidth": "172.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-8": {
-          "layoutMode": "free",
-          "boxX": "1657.9",
-          "boxY": "227.54",
-          "boxWidth": "40",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-8": {
-          "layoutMode": "free",
-          "boxX": "1657.9",
-          "boxY": "255.12",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        },
-        "stats-map-card-9": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "327.44",
-          "boxWidth": "452.328",
-          "boxHeight": "136.797"
-        },
-        "stats-map-image-9": {
-          "layoutMode": "free",
-          "boxX": "23.99",
-          "boxY": "338.44",
-          "boxWidth": "231.656",
-          "boxHeight": "114.797"
-        },
-        "stats-map-meta-9": {
-          "layoutMode": "free",
-          "boxX": "269.53",
-          "boxY": "338.44",
-          "boxWidth": "180.672",
-          "boxHeight": "114.797"
-        },
-        "stats-main-text-9": {
-          "layoutMode": "free",
-          "boxX": "269.53",
-          "boxY": "372.27",
-          "boxWidth": "73",
-          "boxHeight": "21.5938"
-        },
-        "stats-sub-text-9": {
-          "layoutMode": "free",
-          "boxX": "269.53",
-          "boxY": "399.85",
-          "boxWidth": "57",
-          "boxHeight": "19.5"
-        }
-      },
-      "stats-breakdown-card": {
-        "card-sub": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "11",
-          "boxWidth": "905.672",
-          "boxHeight": "15"
-        },
-        "stats-breakdown": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "31.99",
-          "boxWidth": "905.672",
-          "boxHeight": "432.406"
-        },
-        "stats-breakdown-cardlet-stats-select-card-1": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "31.99",
-          "boxWidth": "889.672",
-          "boxHeight": "92"
-        },
-        "stats-breakdown-label-1": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "42.98",
-          "boxWidth": "125.094",
-          "boxHeight": "14"
-        },
-        "stats-breakdown-value-1": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "64.97",
-          "boxWidth": "96",
-          "boxHeight": "23.0938"
-        },
-        "stats-breakdown-detail-1": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "94.05",
-          "boxWidth": "865.672",
-          "boxHeight": "16.8906"
-        },
-        "stats-breakdown-cardlet-stats-select-card-2": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "131.94",
-          "boxWidth": "889.672",
-          "boxHeight": "92"
-        },
-        "stats-breakdown-label-2": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "142.94",
-          "boxWidth": "84.6875",
-          "boxHeight": "14"
-        },
-        "stats-breakdown-value-2": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "164.93",
-          "boxWidth": "97",
-          "boxHeight": "23.0938"
-        },
-        "stats-breakdown-detail-2": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "194.01",
-          "boxWidth": "865.672",
-          "boxHeight": "16.8906"
-        },
-        "stats-breakdown-cardlet-stats-select-card-3": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "231.89",
-          "boxWidth": "889.672",
-          "boxHeight": "92"
-        },
-        "stats-breakdown-label-3": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "242.89",
-          "boxWidth": "107.203",
-          "boxHeight": "14"
-        },
-        "stats-breakdown-value-3": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "264.88",
-          "boxWidth": "145",
-          "boxHeight": "23.0938"
-        },
-        "stats-breakdown-detail-3": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "293.96",
-          "boxWidth": "865.672",
-          "boxHeight": "16.8906"
-        },
-        "stats-breakdown-cardlet-stats-select-card-4": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "331.85",
-          "boxWidth": "889.672",
-          "boxHeight": "92"
-        },
-        "stats-breakdown-label-4": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "342.84",
-          "boxWidth": "108.328",
-          "boxHeight": "14"
-        },
-        "stats-breakdown-value-4": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "364.83",
-          "boxWidth": "182",
-          "boxHeight": "23.0938"
-        },
-        "stats-breakdown-detail-4": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "393.91",
-          "boxWidth": "865.672",
-          "boxHeight": "16.8906"
-        },
-        "stats-breakdown-cardlet-stats-select-card-5": {
-          "layoutMode": "free",
-          "boxX": "11",
-          "boxY": "431.8",
-          "boxWidth": "889.672",
-          "boxHeight": "92"
-        },
-        "stats-breakdown-label-5": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "442.8",
-          "boxWidth": "117.094",
-          "boxHeight": "14"
-        },
-        "stats-breakdown-value-5": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "464.79",
-          "boxWidth": "189",
-          "boxHeight": "23.0938"
-        },
-        "stats-breakdown-detail-5": {
-          "layoutMode": "free",
-          "boxX": "22.99",
-          "boxY": "493.87",
-          "boxWidth": "865.672",
-          "boxHeight": "16.8906"
-        }
-      },
       "insights-top-card": {
         "insights-top-header": {
           "layoutMode": "free",
@@ -21822,10 +20667,50 @@ const BAKED_THEME_BUILDER_STATE = {
     "importedFonts": [],
     "freeSourceTruthHydrated": true,
     "freeSourceTruthVersion": 2,
-    "__bakedSnapshotCapturedAt": "2026-04-20T23:53:05.497Z",
+    "__bakedSnapshotCapturedAt": "2026-04-25T13:25:19.267Z",
     "groups": {}
   }
 };
+
+const DEFAULT_THEME_PARENT_HOVER_STANDARD = {
+  "hoverFxEnabled": true,
+  "hoverFxPreset": "smoke-video",
+  "hoverFxMotion": "pulse",
+  "hoverFxDistance": "4",
+  "hoverFxIntensity": "1.85",
+  "hoverFxOpacity": "1",
+  "hoverFxSpeed": "0.7",
+  "hoverFxZIndex": "2147483687",
+  "hoverFxColor": "#ffffff",
+  "hoverFxAccent": "#ffffff",
+  "auraEnabled": true,
+  "auraDistance": "1",
+  "auraOpacity": "1",
+  "auraIntensity": "1",
+  "outerAuraEnabled": true,
+  "outerAuraSpread": "3",
+  "outerAuraOpacity": "1",
+  "outerAuraBlur": "1",
+  "outerAuraScale": "1"
+};
+
+const DEFAULT_THEME_SNAPSHOT_PARENT_OVERRIDES = {};
+
+const DEFAULT_THEME_PARENT_HOVER_STANDARD_IDS = Object.keys(DEFAULT_THEME_SNAPSHOT_PARENT_OVERRIDES);
+
+Object.entries(DEFAULT_THEME_SNAPSHOT_PARENT_OVERRIDES).forEach(([parentId, overrides]) => {
+  BAKED_THEME_BUILDER_STATE.default.parents[parentId] = {
+    ...(BAKED_THEME_BUILDER_STATE.default.parents[parentId] || {}),
+    ...overrides
+  };
+});
+
+DEFAULT_THEME_PARENT_HOVER_STANDARD_IDS.forEach((parentId) => {
+  BAKED_THEME_BUILDER_STATE.default.parents[parentId] = {
+    ...(BAKED_THEME_BUILDER_STATE.default.parents[parentId] || {}),
+    ...DEFAULT_THEME_PARENT_HOVER_STANDARD
+  };
+});
 
 const THEME_BUILDER_CHILD_SNAPSHOT_FIELDS = [
   "childLayoutMode",
@@ -21896,12 +20781,28 @@ const THEME_BUILDER_GROUP_FIELDS = [
   "fontSize",
   "fontWeight",
   "letterSpacing",
+  "lineHeight",
+  "groupGap",
+  "groupPaddingX",
+  "groupPaddingY",
   "textNoWrap",
   "textGlow",
   "textStroke",
   "textX",
   "textY"
 ];
+const THEME_BUILDER_MODAL_PARENT_IDS = new Set([
+  "auth-modal",
+  "riot-modal",
+  "edit-profile-modal",
+  "weekly-focus-modal",
+  "coaching-breakdown-modal",
+  "timeline-modal",
+  "info-modal",
+  "goal-rank-panel",
+  "agent-modal",
+  "lens-modals"
+]);
 const THEME_BUILDER_LAYOUT_MODES = [
   { value: "free", label: "Free Position" },
   { value: "flow", label: "Flow / Reflow" },
@@ -21985,7 +20886,7 @@ const THEME_BUILDER_PARENT_CONFIGS = [
   { id: "compass-main", label: "Compass Card", overlayCategory: "square", selector: ".compass-main", childSelector: ".compass-main .compass-score-card", buttonSelector: ".compass-main .compass-score-card", imageSelector: ".compass-main img, .compass-main svg" },
   { id: "rr-card", label: "RR Card", overlayCategory: "square", selector: ".rr-card", childSelector: ".rr-card .scorebox, .rr-card .impact-card, .rr-card .impact-bar-outer, .rr-card .rr-total", buttonSelector: ".rr-card .impact-role-pill", imageSelector: ".rr-card img, .rr-card svg" },
   { id: "rr-chart-card", label: "Chart Card", overlayCategory: "wide", selector: ".rr-chart-card", childSelector: ".rr-chart-card .rr-stat, .rr-chart-card .rr-match-stats, .rr-chart-card .home-chart-wrap", buttonSelector: ".rr-chart-card .graph-btn", imageSelector: ".rr-chart-card img, .rr-chart-card svg" },
-  { id: "stats-summary-card", label: "Stats Summary", overlayCategory: "wide", selector: ".stats-summary-card", childSelector: ".stats-summary-card > *, .stats-summary-card .stat-block, .stats-summary-card .stats-proof-card, .stats-summary-card .stats-role-progress-card, .stats-summary-card .stats-role-progress-row", buttonSelector: ".stats-summary-card .stats-act-select", imageSelector: ".stats-summary-card img, .stats-summary-card svg" },
+  { id: "stats-summary-card", label: "Stats Summary", overlayCategory: "wide", selector: ".stats-summary-card", childSelector: ".stats-summary-card > *, .stats-summary-card .stats-summary-layout, .stats-summary-card .stats-summary-left, .stats-summary-card .stats-summary-right, .stats-summary-card .stat-block, .stats-summary-card .stats-proof-card, .stats-summary-card .stats-role-progress-card, .stats-summary-card .stats-role-progress-row", buttonSelector: ".stats-summary-card .stats-act-select", imageSelector: ".stats-summary-card img, .stats-summary-card svg" },
   { id: "stats-performance-card", label: "Performance Chart", overlayCategory: "wide", selector: ".stats-performance-card", childSelector: ".stats-performance-card #statsPerformanceChart", buttonSelector: ".stats-performance-card button", imageSelector: ".stats-performance-card img, .stats-performance-card svg" },
   { id: "stats-agents-card", label: "Agent Stats", overlayCategory: "square", selector: ".stats-agents-card", childSelector: ".stats-agents-card .stats-agent-row, .stats-agents-card .stats-agent-column", buttonSelector: ".stats-agents-card .stats-agent-row", imageSelector: ".stats-agents-card img, .stats-agents-card svg" },
   { id: "stats-maps-card", label: "Map Stats", overlayCategory: "wide", selector: ".stats-maps-card", childSelector: ".stats-maps-card .stats-map-card", buttonSelector: ".stats-maps-card .stats-map-card", imageSelector: ".stats-maps-card img, .stats-maps-card svg" },
@@ -21994,16 +20895,7 @@ const THEME_BUILDER_PARENT_CONFIGS = [
   { id: "insights-action-card", label: "Insights Action", overlayCategory: "wide", selector: ".insights-action-card", childSelector: ".insights-action-card .insight-action > *, .insights-action-card .insight-action-hero, .insights-action-card .insight-title, .insights-action-card .insight-meta-row, .insights-action-card .insight-block, .insights-action-card .insight-meta-pill, .insights-action-card .insight-progress", buttonSelector: ".insights-action-card button", imageSelector: ".insights-action-card img, .insights-action-card svg" },
   { id: "insights-trends-card", label: "Insights Trends", overlayCategory: "wide", selector: ".insights-trends-card", childSelector: ".insights-trends-card .insight-trend-row, .insights-trends-card .trend-content, .insights-trends-card .trend-signal-card, .insights-trends-card .trend-signal-media, .insights-trends-card .trend-signal-tone, .insights-trends-card .trend-signal-kicker, .insights-trends-card .trend-signal-title, .insights-trends-card .trend-signal-value, .insights-trends-card .trend-signal-detail", buttonSelector: ".insights-trends-card .insight-trend-row", imageSelector: ".insights-trends-card img, .insights-trends-card svg" },
   { id: "logging-card", label: "Logging Card", overlayCategory: "square", selector: ".logging-card", childSelector: ".logging-card .logging-form > *, .logging-card .logging-live-card, .logging-card .logging-row, .logging-card .logging-pill, .logging-card .logging-input, .logging-card .logging-notes", buttonSelector: ".logging-card .logging-chip, .logging-card .logging-quick-chip, .logging-card #logSaveBtn", imageSelector: ".logging-card img, .logging-card svg" },
-  { id: "logging-feed-card", label: "Logging Feed", overlayCategory: "square", selector: ".logging-feed-card", childSelector: ".logging-feed-card .logging-feed > *, .logging-feed-card .logging-session-select-wrap, .logging-feed-card .logging-session-select", buttonSelector: ".logging-feed-card button", imageSelector: ".logging-feed-card img, .logging-feed-card svg" },
-  { id: "auth-modal", label: "Login Modal", overlayCategory: "wide", selector: "#authModal .lens-modal", childSelector: "#authModal .lens-modal-header, #authModal .lens-modal-body, #authModal input, #authModal button, #authModal .auth-launch-copy", buttonSelector: "#authModal button, #authModal input", imageSelector: "#authModal img, #authModal svg" },
-  { id: "riot-modal", label: "Riot Profile Modal", overlayCategory: "wide", selector: "#riotModal .lens-modal", childSelector: "#riotModal .lens-modal-header, #riotModal .lens-modal-body, #riotModal input, #riotModal button", buttonSelector: "#riotModal button, #riotModal input", imageSelector: "#riotModal img, #riotModal svg" },
-  { id: "edit-profile-modal", label: "Edit Profile Modal", overlayCategory: "wide", selector: "#editProfileModal .lens-modal", childSelector: "#editProfileModal .lens-modal-header, #editProfileModal .lens-modal-body, #editProfileModal .profile-edit-shell, #editProfileModal .profile-edit-nav, #editProfileModal .profile-edit-panels, #editProfileModal .profile-edit-field, #editProfileModal button, #editProfileModal input, #editProfileModal select", buttonSelector: "#editProfileModal button, #editProfileModal input, #editProfileModal select", imageSelector: "#editProfileModal img, #editProfileModal svg" },
-  { id: "weekly-focus-modal", label: "Weekly Focus Modal", overlayCategory: "wide", selector: "#weeklyFocusModal .lens-modal", childSelector: "#weeklyFocusModal .lens-modal-header, #weeklyFocusModal .lens-modal-body, #weeklyFocusModal .timeline-insight-card, #weeklyFocusModal .timeline-insight-chip, #weeklyFocusModal button", buttonSelector: "#weeklyFocusModal button", imageSelector: "#weeklyFocusModal img, #weeklyFocusModal svg" },
-  { id: "coaching-breakdown-modal", label: "Coaching Breakdown Modal", overlayCategory: "wide", selector: "#lensModalOverlay .lens-modal", childSelector: "#lensModalOverlay .lens-modal-header, #lensModalOverlay .lens-modal-body, #lensModalOverlay .lens-modal-section, #lensModalOverlay .lens-weight-pill, #lensModalOverlay .lens-stat, #lensModalOverlay button", buttonSelector: "#lensModalOverlay button", imageSelector: "#lensModalOverlay img, #lensModalOverlay svg" },
-  { id: "timeline-modal", label: "Timeline Modal", overlayCategory: "wide", selector: "#timelineStatsModal .lens-modal", childSelector: "#timelineStatsModal .lens-modal-header, #timelineStatsModal .lens-modal-body, #timelineStatsModal .timeline-insight-card, #timelineStatsModal .timeline-insight-chip, #timelineStatsModal button", buttonSelector: "#timelineStatsModal button", imageSelector: "#timelineStatsModal img, #timelineStatsModal svg" },
-  { id: "info-modal", label: "Info Modal", overlayCategory: "wide", selector: "#lensModal .lens-modal", childSelector: "#lensModal .lens-modal-header, #lensModal .lens-modal-body, #lensModal button", buttonSelector: "#lensModal button", imageSelector: "#lensModal img, #lensModal svg" },
-  { id: "goal-rank-panel", label: "Goal Rank Nav Panel", overlayCategory: "wide", selector: "#goalRankModal .lens-modal", childSelector: "#goalRankModal .lens-modal-header, #goalRankModal .lens-modal-body, #goalRankModal .goal-rank-row, #goalRankModal select, #goalRankModal button", buttonSelector: "#goalRankModal button, #goalRankModal select", imageSelector: "#goalRankModal img, #goalRankModal svg" },
-  { id: "agent-modal", label: "Agent Modal", overlayCategory: "wide", selector: ".agent-modal .agent-modal-inner", childSelector: ".agent-modal .agent-modal-inner .agent-modal-header, .agent-modal .agent-modal-inner .agent-role-select, .agent-modal .agent-modal-inner .agent-grid-full, .agent-modal .agent-modal-inner .agent-card, .agent-modal .agent-modal-inner button", buttonSelector: ".agent-modal .agent-modal-inner button", imageSelector: ".agent-modal .agent-modal-inner img, .agent-modal .agent-modal-inner svg" }
+  { id: "logging-feed-card", label: "Logging Feed", overlayCategory: "square", selector: ".logging-feed-card", childSelector: ".logging-feed-card .logging-feed > *, .logging-feed-card .logging-session-select-wrap, .logging-feed-card .logging-session-select", buttonSelector: ".logging-feed-card button", imageSelector: ".logging-feed-card img, .logging-feed-card svg" }
 ];
 
 const THEME_BUILDER_GROUP_CONFIGS = [
@@ -22054,8 +20946,10 @@ const THEME_BUILDER_GROUP_CONFIGS = [
   { parentId: "logging-feed-card", id: "logging-feed", label: "Logging Feed", selector: ".logging-feed-card .logging-feed" },
   { parentId: "insights-top-card", id: "insights-top-header", label: "Insights Top Header", selector: ".insights-top-card .insights-top-header" },
   { parentId: "insights-top-card", id: "insights-list", label: "Insights List", selector: ".insights-top-card .insights-list" },
-  { parentId: "insights-top-card", id: "insights-bad-cards", label: "Insights Bad Cards", selector: ".insights-top-card .insight-card.insight-bad" },
-  { parentId: "insights-top-card", id: "insights-good-cards", label: "Insights Good Cards", selector: ".insights-top-card .insight-card.insight-good" },
+  { parentId: "insights-top-card", id: "insights-all-cards", label: "All Insight Cards", selector: ".insights-top-card .insight-card", textSelector: ".insights-top-card .insight-card :is(.insight-title,.insight-preview,.insight-label,.insight-tag,.insight-meta-pill,.insight-source,.insight-close,span,strong,p,label,button)" },
+  { parentId: "insights-top-card", id: "insights-bad-cards", label: "Insights Bad Cards", selector: ".insights-top-card .insight-card.insight-bad", textSelector: ".insights-top-card .insight-card.insight-bad :is(.insight-title,.insight-preview,.insight-label,.insight-tag,.insight-meta-pill,.insight-source,.insight-close,span,strong,p,label,button)" },
+  { parentId: "insights-top-card", id: "insights-warn-cards", label: "Insights Warn Cards", selector: ".insights-top-card .insight-card.insight-warn", textSelector: ".insights-top-card .insight-card.insight-warn :is(.insight-title,.insight-preview,.insight-label,.insight-tag,.insight-meta-pill,.insight-source,.insight-close,span,strong,p,label,button)" },
+  { parentId: "insights-top-card", id: "insights-good-cards", label: "Insights Good Cards", selector: ".insights-top-card .insight-card.insight-good", textSelector: ".insights-top-card .insight-card.insight-good :is(.insight-title,.insight-preview,.insight-label,.insight-tag,.insight-meta-pill,.insight-source,.insight-close,span,strong,p,label,button)" },
   { parentId: "insights-action-card", id: "insights-action-sub", label: "Insights Action Subtitle", selector: ".insights-action-card > .card-sub" },
   { parentId: "insights-action-card", id: "insight-action", label: "Insight Action", selector: ".insights-action-card .insight-action" },
   { parentId: "insights-action-card", id: "insight-action-content", label: "Insight Action Content", selector: ".insights-action-card .insight-action > *" },
@@ -22078,6 +20972,8 @@ const THEME_BUILDER_GROUP_CONFIGS = [
   { parentId: "insights-trends-card", id: "trend-signal-detail", label: "Trend Signal Detail", selector: ".insights-trends-card .trend-signal-detail" },
   { parentId: "stats-summary-card", id: "stats-summary-card-body", label: "Stats Summary Card", selector: ".stats-summary-card" },
   { parentId: "stats-summary-card", id: "stats-summary-content", label: "Stats Summary Content", selector: ".stats-summary-card > *" },
+  { parentId: "stats-summary-card", id: "stats-summary-left", label: "Stats Summary Left", selector: ".stats-summary-card .stats-summary-left" },
+  { parentId: "stats-summary-card", id: "stats-summary-right", label: "Stats Summary Right", selector: ".stats-summary-card .stats-summary-right" },
   { parentId: "stats-summary-card", id: "stats-summary-grid", label: "Stats Summary Grid", selector: ".stats-summary-card .stats-summary-grid" },
   { parentId: "stats-summary-card", id: "stats-summary-stat-blocks", label: "Stats Summary Stat Blocks", selector: ".stats-summary-card .stat-block" },
   { parentId: "stats-summary-card", id: "stats-summary-selector", label: "Stats Summary Selector", selector: ".stats-summary-card .stats-summary-selector-row" },
@@ -22090,41 +20986,11 @@ const THEME_BUILDER_GROUP_CONFIGS = [
   { parentId: "stats-maps-card", id: "stats-map-sub", label: "Stats Map Subtitle", selector: ".stats-maps-card > .card-sub" },
   { parentId: "stats-maps-card", id: "stats-map-list", label: "Stats Map List", selector: ".stats-maps-card #statsMapsList" },
   { parentId: "stats-breakdown-card", id: "stats-breakdown-sub", label: "Stats Breakdown Subtitle", selector: ".stats-breakdown-card > .card-sub" },
-  { parentId: "stats-breakdown-card", id: "stats-breakdown", label: "Stats Breakdown", selector: ".stats-breakdown-card #statsBreakdown" },
-  { parentId: "auth-modal", id: "auth-modal-header", label: "Login Header", selector: "#authModal .lens-modal-header" },
-  { parentId: "auth-modal", id: "auth-modal-body", label: "Login Body", selector: "#authModal .lens-modal-body" },
-  { parentId: "auth-modal", id: "auth-modal-actions", label: "Login Inputs And Buttons", selector: "#authModal input, #authModal button" },
-  { parentId: "riot-modal", id: "riot-modal-header", label: "Riot Modal Header", selector: "#riotModal .lens-modal-header" },
-  { parentId: "riot-modal", id: "riot-modal-body", label: "Riot Modal Body", selector: "#riotModal .lens-modal-body" },
-  { parentId: "riot-modal", id: "riot-modal-actions", label: "Riot Inputs And Buttons", selector: "#riotModal input, #riotModal button" },
-  { parentId: "edit-profile-modal", id: "edit-profile-header", label: "Edit Profile Header", selector: "#editProfileModal .lens-modal-header" },
-  { parentId: "edit-profile-modal", id: "edit-profile-nav", label: "Edit Profile Tabs", selector: "#editProfileModal .profile-edit-nav" },
-  { parentId: "edit-profile-modal", id: "edit-profile-panels", label: "Edit Profile Panels", selector: "#editProfileModal .profile-edit-panels" },
-  { parentId: "edit-profile-modal", id: "edit-profile-fields", label: "Edit Profile Fields", selector: "#editProfileModal .profile-edit-field" },
-  { parentId: "weekly-focus-modal", id: "weekly-focus-modal-header", label: "Weekly Focus Header", selector: "#weeklyFocusModal .lens-modal-header" },
-  { parentId: "weekly-focus-modal", id: "weekly-focus-modal-body", label: "Weekly Focus Body", selector: "#weeklyFocusModal .lens-modal-body" },
-  { parentId: "weekly-focus-modal", id: "weekly-focus-modal-cards", label: "Weekly Focus Cards", selector: "#weeklyFocusModal .timeline-insight-card" },
-  { parentId: "coaching-breakdown-modal", id: "coaching-breakdown-header", label: "Coaching Breakdown Header", selector: "#lensModalOverlay .lens-modal-header" },
-  { parentId: "coaching-breakdown-modal", id: "coaching-breakdown-body", label: "Coaching Breakdown Body", selector: "#lensModalOverlay .lens-modal-body" },
-  { parentId: "coaching-breakdown-modal", id: "coaching-breakdown-weights", label: "Coaching Weight Pills", selector: "#lensModalOverlay .lens-weight-pill" },
-  { parentId: "coaching-breakdown-modal", id: "coaching-breakdown-stats", label: "Coaching Stat Cards", selector: "#lensModalOverlay .lens-stat" },
-  { parentId: "timeline-modal", id: "timeline-modal-header", label: "Timeline Modal Header", selector: "#timelineStatsModal .lens-modal-header" },
-  { parentId: "timeline-modal", id: "timeline-modal-body", label: "Timeline Modal Body", selector: "#timelineStatsModal .lens-modal-body" },
-  { parentId: "timeline-modal", id: "timeline-modal-cards", label: "Timeline Modal Cards", selector: "#timelineStatsModal .timeline-insight-card" },
-  { parentId: "info-modal", id: "info-modal-header", label: "Info Modal Header", selector: "#lensModal .lens-modal-header" },
-  { parentId: "info-modal", id: "info-modal-body", label: "Info Modal Body", selector: "#lensModal .lens-modal-body" },
-  { parentId: "goal-rank-panel", id: "goal-rank-header", label: "Goal Rank Header", selector: "#goalRankModal .lens-modal-header" },
-  { parentId: "goal-rank-panel", id: "goal-rank-row", label: "Goal Rank Row", selector: "#goalRankModal .goal-rank-row" },
-  { parentId: "goal-rank-panel", id: "goal-rank-actions", label: "Goal Rank Select And Button", selector: "#goalRankModal select, #goalRankModal button" },
-  { parentId: "agent-modal", id: "agent-modal-header", label: "Agent Modal Header", selector: ".agent-modal .agent-modal-header" },
-  { parentId: "agent-modal", id: "agent-role-select", label: "Agent Role Select", selector: ".agent-modal .agent-role-select" },
-  { parentId: "agent-modal", id: "agent-grid", label: "Agent Grid", selector: ".agent-modal .agent-grid-full" }
+  { parentId: "stats-breakdown-card", id: "stats-breakdown", label: "Stats Breakdown", selector: ".stats-breakdown-card #statsBreakdown" }
 ];
 
-let themeBuilderState = loadThemeBuilderState();
+themeBuilderState = loadThemeBuilderState();
 let themeBuilderUiState = loadThemeBuilderUiState();
-let themeBuilderNeedsSave = false;
-let themeBuilderSaveTimer = 0;
 
 // ========================
 // INIT
@@ -22193,6 +21059,7 @@ function initApp(){
   maybeOpenInitialAuthGate();
   void ensureGuestDemoMatches();
   installThemeSnapshotDebugControls();
+  maybeAutoSaveThemeSnapshotFromUrl();
   refreshThemeBuilderAccess();
   applyThemeBuilderFontImports();
   ensureThemeBuilderThemeState(getCurrentThemeBuilderThemeKey());
@@ -22202,6 +21069,7 @@ function initApp(){
   }
   applyThemeBuilderRuntimeStyles();
   syncThemeBuilderUI();
+  void importCanonicalThemeSnapshotIfAvailable();
 
   console.log("INIT COMPLETE ✔");
 }
@@ -22368,12 +21236,37 @@ function getThemeBuilderGroupTextSelector(group) {
   return `${group.selector} :is(.card-title,.card-sub,.card-pill,.weekly-focus-key,.weekly-focus-text,.timeline-title,.timeline-sub,.timeline-label,.timeline-value,.role-filter-btn,.small,.score-num,.compass-card-label,.compass-card-tier,.compass-card-meta,.insight-title,.insight-label,.insight-tag,.insight-preview,.insight-meta-pill,.insight-trend-kicker,.insight-trend-title,.stat-label,.stat-value,.stats-proof-kicker,.stats-breakdown-label,.stats-breakdown-value,.stats-breakdown-detail,span,strong,p,label,button,input,textarea,select)`;
 }
 
+function getThemeBuilderGroupTextTargets(group) {
+  return getThemeBuilderSelectorMatches(getThemeBuilderGroupTextSelector(group))
+    .filter(isThemeBuilderElementVisible)
+    .filter((element) => {
+      const enclosingAction = element.closest(THEME_BUILDER_ACTION_TARGET_SELECTOR);
+      return !enclosingAction || element === enclosingAction;
+    });
+}
+
+function getThemeBuilderLineHeightInputValue(style = null) {
+  const rawLineHeight = String(style?.lineHeight || "").trim();
+  if (!rawLineHeight || rawLineHeight === "normal") return "";
+  const numericLineHeight = Number.parseFloat(rawLineHeight);
+  if (!Number.isFinite(numericLineHeight)) return "";
+  const rawFontSize = String(style?.fontSize || "").trim();
+  const numericFontSize = Number.parseFloat(rawFontSize);
+  if (/px$/i.test(rawLineHeight) && Number.isFinite(numericFontSize) && numericFontSize > 0) {
+    return String(roundThemeBuilderSnapshotNumber(numericLineHeight / numericFontSize, 2));
+  }
+  return String(roundThemeBuilderSnapshotNumber(numericLineHeight, 2));
+}
+
 function getThemeBuilderGroupDefaults(group) {
   const element = group?.selector ? document.querySelector(group.selector) : null;
   const parentConfig = THEME_BUILDER_PARENT_CONFIGS.find(config => config.id === group?.parentId);
   const parentElement = parentConfig ? element?.closest?.(parentConfig.selector) : null;
   return withThemeBuilderRuntimeStylesSuspended(() => {
     const style = element ? getComputedStyle(element) : null;
+    const textSample = getThemeBuilderGroupTextTargets(group)
+      .find((textElement) => Boolean(getThemeBuilderReadableElementContent(textElement))) || null;
+    const textStyle = textSample ? getComputedStyle(textSample) : style;
     const sourceBox = getThemeBuilderSourceBoxDefaults(element, parentElement);
     const borderColor = style?.borderColor && style.borderColor !== "rgba(0, 0, 0, 0)"
       ? style.borderColor
@@ -22391,12 +21284,20 @@ function getThemeBuilderGroupDefaults(group) {
       groupScale: "1",
       groupZIndex: "",
       groupBg: rgbColorToHex(style?.backgroundColor || "rgba(0, 0, 0, 0)"),
-      groupText: rgbColorToHex(style?.color || "#ffffff"),
+      groupText: rgbColorToHex(textStyle?.color || style?.color || "#ffffff"),
       groupBorder: rgbColorToHex(borderColor || "#ffffff"),
-      fontFamily: matchThemeBuilderFontOption(style?.fontFamily || ""),
-      fontSize: stripCssUnit(style?.fontSize || "16px"),
-      fontWeight: normalizeThemeBuilderFontWeight(style?.fontWeight || ""),
-      letterSpacing: style?.letterSpacing && style.letterSpacing !== "normal" ? stripCssUnit(style.letterSpacing) : "",
+      fontFamily: matchThemeBuilderFontOption(textStyle?.fontFamily || style?.fontFamily || ""),
+      fontSize: stripCssUnit(textStyle?.fontSize || style?.fontSize || "16px"),
+      fontWeight: normalizeThemeBuilderFontWeight(textStyle?.fontWeight || style?.fontWeight || ""),
+      letterSpacing: textStyle?.letterSpacing && textStyle.letterSpacing !== "normal" ? stripCssUnit(textStyle.letterSpacing) : "",
+      lineHeight: getThemeBuilderLineHeightInputValue(textStyle),
+      groupGap: style?.rowGap && style.rowGap !== "normal"
+        ? stripCssUnit(style.rowGap)
+        : style?.gap && style.gap !== "normal"
+          ? stripCssUnit(style.gap)
+          : "",
+      groupPaddingX: stripCssUnit(style?.paddingLeft || ""),
+      groupPaddingY: stripCssUnit(style?.paddingTop || ""),
       textNoWrap: false,
       textGlow: "",
       textStroke: "",
@@ -22414,6 +21315,9 @@ function buildThemeBuilderGroupCssValues(values = {}) {
   const textX = String(values.textX ?? "").trim();
   const textY = String(values.textY ?? "").trim();
   const scale = String(values.groupScale ?? "").trim();
+  const groupGap = String(values.groupGap ?? "").trim();
+  const groupPaddingX = String(values.groupPaddingX ?? "").trim();
+  const groupPaddingY = String(values.groupPaddingY ?? "").trim();
   const textCss = buildThemeBuilderTextCssValues(values);
   const translateX = (x && x !== "0") || (y && y !== "0")
     ? appendThemeBuilderPx(x || "0", "x")
@@ -22440,6 +21344,9 @@ function buildThemeBuilderGroupCssValues(values = {}) {
     borderColor: values.groupBorder || "",
     fontFamily: values.fontFamily && values.fontFamily !== "inherit" ? values.fontFamily : "",
     fontSize: values.fontSize ? appendThemeBuilderPxIfNeeded(values.fontSize, "px", "uniform") : "",
+    gap: groupGap ? appendThemeBuilderPxIfNeeded(groupGap, "px", "y") : "",
+    paddingX: groupPaddingX ? appendThemeBuilderPxIfNeeded(groupPaddingX, "px", "x") : "",
+    paddingY: groupPaddingY ? appendThemeBuilderPxIfNeeded(groupPaddingY, "px", "y") : "",
     ...textCss,
     textTranslate: textTranslateX || textTranslateY ? `${textTranslateX || "0px"} ${textTranslateY || "0px"}` : "",
     textTransform: buildThemeBuilderTransformValue({ translateX: textTranslateX, translateY: textTranslateY })
@@ -22489,6 +21396,15 @@ function buildThemeBuilderGroupCssRules(themeKey, group, cssValues = {}) {
   if (cssValues.borderColor) declarations.push(`border-color:${cssValues.borderColor} !important;`);
   if (cssValues.fontFamily) declarations.push(`font-family:${cssValues.fontFamily} !important;`);
   if (cssValues.fontSize) declarations.push(`font-size:${cssValues.fontSize} !important;`);
+  if (cssValues.gap) declarations.push(`gap:${cssValues.gap} !important;`);
+  if (cssValues.paddingX) {
+    declarations.push(`padding-left:${cssValues.paddingX} !important;`);
+    declarations.push(`padding-right:${cssValues.paddingX} !important;`);
+  }
+  if (cssValues.paddingY) {
+    declarations.push(`padding-top:${cssValues.paddingY} !important;`);
+    declarations.push(`padding-bottom:${cssValues.paddingY} !important;`);
+  }
   appendThemeBuilderTextDeclarations(declarations, cssValues);
 
   const rules = [];
@@ -22786,6 +21702,31 @@ async function saveThemeSnapshot(button = null) {
 
 const saveOverlaySnapshot = saveThemeSnapshot;
 
+function shouldAutoSaveThemeSnapshotFromUrl() {
+  const params = getThemeBuilderUrlParams();
+  return isLocalThemeBuilderHost() && params.get("autoThemeSnapshot") === "1";
+}
+
+function maybeAutoSaveThemeSnapshotFromUrl() {
+  if (!shouldAutoSaveThemeSnapshotFromUrl()) return;
+  if (window.__themeSnapshotAutoSaveStarted) return;
+  window.__themeSnapshotAutoSaveStarted = true;
+
+  const runAutoSave = () => {
+    saveThemeSnapshot()
+      .then((result) => {
+        console.info("[ThemeSnapshot] Auto-saved current theme snapshot.", result);
+      })
+      .catch((error) => {
+        console.error("[ThemeSnapshot] Auto-save failed.", error);
+      });
+  };
+
+  requestAnimationFrame(() => {
+    window.setTimeout(runAutoSave, 300);
+  });
+}
+
 function shouldShowThemeSnapshotDebugButton() {
   const params = new URLSearchParams(window.location.search || "");
   return params.has("themeSnapshot") ||
@@ -22847,6 +21788,104 @@ function loadThemeBuilderState() {
   } catch (_error) {
     return normalizeLoadedThemeBuilderState(mergeBakedThemeBuilderState({}));
   }
+}
+
+function extractThemeBuilderThemesFromSnapshot(snapshot = {}) {
+  const allThemes = snapshot?.themeBuilder?.allThemes;
+  if (allThemes && typeof allThemes === "object" && !Array.isArray(allThemes)) {
+    return cloneThemeBuilderValue(allThemes);
+  }
+
+  const themeKey = String(snapshot?.theme || "").trim();
+  const currentThemeState = snapshot?.themeBuilder?.currentThemeState;
+  if (themeKey && currentThemeState && typeof currentThemeState === "object") {
+    return {
+      [themeKey]: cloneThemeBuilderValue(currentThemeState)
+    };
+  }
+
+  return {};
+}
+
+async function importCanonicalThemeSnapshotIfAvailable() {
+  if (!isLocalThemeBuilderHost()) return;
+
+  try {
+    const response = await fetch("/api/dev/theme-snapshot", { cache: "no-store" });
+    if (!response.ok) return;
+
+    const result = await response.json();
+    const snapshot = result?.snapshot;
+    if (!snapshot || typeof snapshot !== "object") return;
+
+    const capturedAt = String(snapshot?.capturedAt || "").trim();
+    const importedThemes = extractThemeBuilderThemesFromSnapshot(snapshot);
+    const themeKeys = Object.keys(importedThemes);
+    if (!themeKeys.length) return;
+
+    const shouldImport = themeKeys.some((themeKey) => {
+      const themeState = themeBuilderState?.[themeKey];
+      const importedAt = String(themeState?.__importedSnapshotCapturedAt || "").trim();
+      const importVersion = Number(themeState?.__snapshotImportVersion || 0);
+      return importVersion < THEME_SNAPSHOT_IMPORT_VERSION || !capturedAt || importedAt !== capturedAt;
+    });
+    if (!shouldImport) return;
+
+    const nextState = cloneThemeBuilderValue(themeBuilderState || {});
+    themeKeys.forEach((themeKey) => {
+      const importedTheme = importedThemes[themeKey];
+      if (!importedTheme || typeof importedTheme !== "object") return;
+      nextState[themeKey] = {
+        ...importedTheme,
+        __importedSnapshotCapturedAt: capturedAt,
+        __snapshotImportVersion: THEME_SNAPSHOT_IMPORT_VERSION
+      };
+    });
+
+    themeBuilderState = normalizeLoadedThemeBuilderState(nextState);
+    themeKeys.forEach((themeKey) => ensureThemeBuilderThemeState(themeKey));
+    saveThemeBuilderState();
+    applyThemeBuilderFontImports();
+    applyThemeBuilderRuntimeStyles();
+    syncThemeBuilderUI();
+  } catch (error) {
+    console.warn("[ThemeBuilder] Snapshot import skipped.", error);
+  }
+}
+
+function getThemeBuilderSnapshotImportMeta(themeState = {}) {
+  const importedAtValue = Date.parse(String(themeState?.__importedSnapshotCapturedAt || "").trim());
+  const importVersionValue = Number(themeState?.__snapshotImportVersion || 0);
+  return {
+    importedAt: Number.isFinite(importedAtValue) ? importedAtValue : 0,
+    importVersion: Number.isFinite(importVersionValue) ? importVersionValue : 0
+  };
+}
+
+function shouldPreferLocalThemeBuilderThemeState(localTheme = {}, remoteTheme = {}) {
+  const localMeta = getThemeBuilderSnapshotImportMeta(localTheme);
+  const remoteMeta = getThemeBuilderSnapshotImportMeta(remoteTheme);
+  if (localMeta.importVersion !== remoteMeta.importVersion) {
+    return localMeta.importVersion > remoteMeta.importVersion;
+  }
+  if (localMeta.importedAt !== remoteMeta.importedAt) {
+    return localMeta.importedAt > remoteMeta.importedAt;
+  }
+  return false;
+}
+
+function mergeLocalAndRemoteThemeBuilderState(localState = {}, remoteState = {}) {
+  const mergedState = cloneThemeBuilderValue(
+    remoteState && typeof remoteState === "object" ? remoteState : {}
+  );
+  const localThemes = localState && typeof localState === "object" ? localState : {};
+  Object.entries(localThemes).forEach(([themeKey, localTheme]) => {
+    const remoteTheme = mergedState?.[themeKey];
+    if (!remoteTheme || shouldPreferLocalThemeBuilderThemeState(localTheme, remoteTheme)) {
+      mergedState[themeKey] = cloneThemeBuilderValue(localTheme);
+    }
+  });
+  return mergedState;
 }
 
 function loadThemeBuilderUiState() {
@@ -22922,6 +21961,26 @@ function stripThemeBuilderGroupLayoutFields(groupState = {}) {
   });
 }
 
+function stripThemeBuilderParentState(themeState = {}, parentId = "") {
+  if (!themeState || typeof themeState !== "object" || !parentId) return false;
+  let changed = false;
+
+  if (themeState?.parents?.[parentId]) {
+    delete themeState.parents[parentId];
+    changed = true;
+  }
+  if (themeState?.groups?.[parentId]) {
+    delete themeState.groups[parentId];
+    changed = true;
+  }
+  if (themeState?.elements?.[parentId]) {
+    delete themeState.elements[parentId];
+    changed = true;
+  }
+
+  return changed;
+}
+
 function normalizeCompassHeaderThemeBuilderState(themeState = {}) {
   const compassElements = themeState?.elements?.["compass-main"];
   if (!compassElements || typeof compassElements !== "object") return;
@@ -22992,6 +22051,120 @@ function normalizeLoadoutThemeBuilderState(themeState = {}) {
   }
 }
 
+function normalizeStatsSummaryThemeBuilderState(themeState = {}) {
+  const parentId = "stats-summary-card";
+  const preservedGroupIds = new Set(["stats-summary-left", "stats-summary-right"]);
+
+  const parentState = themeState?.parents?.[parentId];
+  if (parentState && typeof parentState === "object") {
+    stripThemeBuilderParentChildLayoutFields(parentState);
+    if (!Object.keys(parentState).length) {
+      delete themeState.parents[parentId];
+    }
+  }
+
+  const groupStates = themeState?.groups?.[parentId];
+  if (groupStates && typeof groupStates === "object") {
+    Object.keys(groupStates).forEach((groupId) => {
+      const groupState = groupStates[groupId];
+      if (!groupState || typeof groupState !== "object") {
+        delete groupStates[groupId];
+        return;
+      }
+      if (!preservedGroupIds.has(groupId)) {
+        stripThemeBuilderGroupLayoutFields(groupState);
+      }
+      if (!Object.keys(groupState).length) {
+        delete groupStates[groupId];
+      }
+    });
+    if (!Object.keys(groupStates).length) {
+      delete themeState.groups[parentId];
+    }
+  }
+
+  const elementStates = themeState?.elements?.[parentId];
+  if (elementStates && typeof elementStates === "object") {
+    Object.keys(elementStates).forEach((elementId) => {
+      const elementState = elementStates[elementId];
+      if (!elementState || typeof elementState !== "object") {
+        delete elementStates[elementId];
+        return;
+      }
+      stripThemeBuilderElementLayoutFields(elementState);
+      if (!Object.keys(elementState).length) {
+        delete elementStates[elementId];
+      }
+    });
+    if (!Object.keys(elementStates).length) {
+      delete themeState.elements[parentId];
+    }
+  }
+}
+
+function normalizeInsightsTopThemeBuilderState(themeState = {}) {
+  const parentId = "insights-top-card";
+  const stateVersion = Number(themeState?.__insightsTopStateVersion || 0);
+  if (stateVersion >= 2) return;
+
+  const hadState = Boolean(
+    themeState?.parents?.[parentId]
+    || themeState?.groups?.[parentId]
+    || themeState?.elements?.[parentId]
+  );
+
+  if (themeState?.parents?.[parentId]) {
+    delete themeState.parents[parentId];
+  }
+  if (themeState?.groups?.[parentId]) {
+    delete themeState.groups[parentId];
+  }
+  if (themeState?.elements?.[parentId]) {
+    delete themeState.elements[parentId];
+  }
+
+  themeState.__insightsTopStateVersion = 2;
+
+  if (hadState) {
+    themeBuilderNeedsSave = true;
+  }
+}
+
+function normalizeStatsBreakdownThemeBuilderState(themeState = {}) {
+  const parentId = "stats-breakdown-card";
+  const stateVersion = Number(themeState?.__statsBreakdownStateVersion || 0);
+  if (stateVersion >= 1) return;
+
+  const hadState = Boolean(
+    themeState?.parents?.[parentId]
+    || themeState?.groups?.[parentId]
+    || themeState?.elements?.[parentId]
+  );
+
+  normalizeCardLayoutThemeBuilderState(themeState, parentId);
+  themeState.__statsBreakdownStateVersion = 1;
+
+  if (hadState) {
+    themeBuilderNeedsSave = true;
+  }
+}
+
+function normalizeThemeBuilderModalState(themeState = {}) {
+  const stateVersion = Number(themeState?.__modalOverlayStateVersion || 0);
+  if (stateVersion >= 1) return;
+
+  let hadState = false;
+  THEME_BUILDER_MODAL_PARENT_IDS.forEach((parentId) => {
+    hadState = stripThemeBuilderParentState(themeState, parentId) || hadState;
+  });
+
+  themeState.__modalOverlayStateVersion = 1;
+
+  if (hadState) {
+    themeBuilderNeedsSave = true;
+  }
+}
+
 function normalizeCardLayoutThemeBuilderState(themeState = {}, parentId = "") {
   if (!parentId) return;
 
@@ -23040,12 +22213,39 @@ function normalizeCardLayoutThemeBuilderState(themeState = {}, parentId = "") {
   }
 }
 
+function resetDefaultThemeBuilderState(themeState = {}) {
+  if (!themeState || typeof themeState !== "object") return themeState;
+  const hadCustomState =
+    Object.values(themeState.overlayAssets || {}).some(Boolean) ||
+    Object.values(themeState.globals || {}).some(Boolean) ||
+    (Array.isArray(themeState.importedFonts) && themeState.importedFonts.length > 0) ||
+    Object.keys(themeState.parents || {}).length > 0 ||
+    Object.keys(themeState.elements || {}).length > 0 ||
+    Object.keys(themeState.groups || {}).length > 0;
+  themeState.overlayAssets = {};
+  themeState.globals = {};
+  themeState.importedFonts = [];
+  themeState.parents = {};
+  themeState.elements = {};
+  themeState.groups = {};
+  return hadCustomState;
+}
+
 function normalizeLoadedThemeBuilderState(state = {}) {
-  Object.values(state || {}).forEach((themeState) => {
+  Object.entries(state || {}).forEach(([themeKey, themeState]) => {
     if (themeState && typeof themeState === "object") {
+      if (String(themeKey || "").toLowerCase() === "default") {
+        if (resetDefaultThemeBuilderState(themeState)) {
+          themeBuilderNeedsSave = true;
+        }
+      }
+      normalizeThemeBuilderModalState(themeState);
       normalizeCompassHeaderThemeBuilderState(themeState);
       normalizeLoadoutThemeBuilderState(themeState);
-      ["compass-main", "stats-maps-card", "stats-breakdown-card"].forEach((parentId) => {
+      normalizeStatsSummaryThemeBuilderState(themeState);
+      normalizeStatsBreakdownThemeBuilderState(themeState);
+      normalizeInsightsTopThemeBuilderState(themeState);
+      ["compass-main", "stats-maps-card"].forEach((parentId) => {
         normalizeCardLayoutThemeBuilderState(themeState, parentId);
       });
     }
@@ -23641,6 +22841,15 @@ const THEME_BUILDER_VISIBLE_OBJECT_GROUP_EXCLUDE_TOKENS = [
   "selector"
 ];
 
+const THEME_BUILDER_ALWAYS_VISIBLE_OBJECT_GROUP_IDS = new Set([
+  "compass-summary-shell",
+  "stats-map-list",
+  "stats-breakdown",
+  "insights-top-header",
+  "insights-list",
+  "insights-all-cards"
+]);
+
 function getThemeBuilderDirectTextContent(element) {
   return Array.from(element?.childNodes || [])
     .filter(node => node.nodeType === Node.TEXT_NODE)
@@ -23805,7 +23014,7 @@ function buildThemeBuilderTargetDisplayLabel(target, counters) {
 function isThemeBuilderVisibleObjectGroup(group) {
   if (!group?.selector) return false;
   if (isThemeBuilderAgentFrameGroup(group)) return true;
-  if (["compass-summary-shell", "stats-map-list", "stats-breakdown"].includes(String(group.id || "").trim())) return true;
+  if (THEME_BUILDER_ALWAYS_VISIBLE_OBJECT_GROUP_IDS.has(String(group.id || "").trim())) return true;
 
   const element = document.querySelector(group.selector);
   if (!isThemeBuilderElementVisible(element)) return false;
@@ -24488,14 +23697,17 @@ function isThemeBuilderEnabledBoolean(value) {
 
 function buildThemeBuilderTextCssValues(values = {}) {
   const letterSpacing = String(values.letterSpacing ?? "").trim();
+  const lineHeight = String(values.lineHeight ?? "").trim();
   const textGlow = String(values.textGlow ?? "").trim();
   const textStroke = String(values.textStroke ?? "").trim();
   const hasLetterSpacing = letterSpacing && Number(letterSpacing) !== 0;
+  const hasLineHeight = lineHeight && Number(lineHeight) > 0;
   const hasGlow = textGlow && Number(textGlow) !== 0;
   const hasStroke = textStroke && Number(textStroke) !== 0;
   return {
     fontWeight: normalizeThemeBuilderFontWeight(values.fontWeight),
     letterSpacing: hasLetterSpacing ? appendThemeBuilderPxIfNeeded(letterSpacing, "px", "x") : "",
+    lineHeight: hasLineHeight ? lineHeight : "",
     textNoWrap: isThemeBuilderEnabledBoolean(values.textNoWrap),
     textGlow: hasGlow ? appendThemeBuilderPxIfNeeded(textGlow) : "",
     textStroke: hasStroke ? appendThemeBuilderPxIfNeeded(textStroke) : ""
@@ -24506,6 +23718,7 @@ function hasThemeBuilderTextCssValues(cssValues = {}) {
   return Boolean(
     cssValues.fontWeight ||
     cssValues.letterSpacing ||
+    cssValues.lineHeight ||
     cssValues.textNoWrap ||
     cssValues.textGlow ||
     cssValues.textStroke
@@ -24515,6 +23728,7 @@ function hasThemeBuilderTextCssValues(cssValues = {}) {
 function appendThemeBuilderTextDeclarations(declarations, cssValues = {}) {
   if (cssValues.fontWeight) declarations.push(`font-weight:${cssValues.fontWeight} !important;`);
   if (cssValues.letterSpacing) declarations.push(`letter-spacing:${cssValues.letterSpacing} !important;`);
+  if (cssValues.lineHeight) declarations.push(`line-height:${cssValues.lineHeight} !important;`);
   if (cssValues.textNoWrap) {
     declarations.push("white-space:nowrap !important;");
     declarations.push("overflow:visible !important;");
@@ -24591,7 +23805,7 @@ function buildThemeBuilderOuterAuraCssValues(values = {}) {
   const spread = clampThemeBuilderNumber(values.outerAuraSpread, 34, 0, 220);
   const opacity = clampThemeBuilderNumber(values.outerAuraOpacity, 0.62, 0, 1);
   const scale = clampThemeBuilderNumber(values.outerAuraScale, 1.04, 0.6, 2.4);
-  const zIndex = normalizeThemeBuilderZIndex(values.outerAuraZIndex || "2147483646") || "2147483646";
+  const zIndex = normalizeThemeBuilderZIndex(values.outerAuraZIndex || "-1") || "-1";
   return {
     enabled: Boolean(values.outerAuraEnabled),
     color,
@@ -24892,6 +24106,9 @@ function installThemeBuilderStyles() {
   const style = document.createElement("style");
   style.id = THEME_BUILDER_UI_STYLE_ID;
   style.textContent = `
+    [data-tb-auto-fit="1"]{
+      font-size:var(--tb-auto-fit-font-size, inherit) !important;
+    }
     #themeBuilderDock{
       position:fixed;
       left:18px;
@@ -24909,7 +24126,7 @@ function installThemeBuilderStyles() {
       width:100%;
       height:100%;
       pointer-events:none;
-      z-index:0;
+      z-index:var(--tb-hover-fx-layer, 1);
       opacity:0;
       transition:opacity .16s ease;
       mix-blend-mode:screen;
@@ -24923,7 +24140,7 @@ function installThemeBuilderStyles() {
       height:100%;
       object-fit:cover;
       pointer-events:none;
-      z-index:0;
+      z-index:var(--tb-hover-fx-layer, 1);
       opacity:0;
       transition:opacity .18s ease;
       mix-blend-mode:screen;
@@ -24937,6 +24154,24 @@ function installThemeBuilderStyles() {
     }
     #${THEME_BUILDER_FX_VIDEO_ID}.is-active{
       opacity:1;
+    }
+    .theme-builder-card-smoke-video{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      pointer-events:none;
+      z-index:var(--tb-hover-fx-layer, 1);
+      opacity:.06;
+      mix-blend-mode:screen;
+      filter:grayscale(1) contrast(.94) brightness(.78) saturate(.3);
+      transform:translate3d(0,0,0);
+      transform-origin:left top;
+      border-radius:inherit;
+    }
+    .theme-builder-card-smoke-video.is-active{
+      opacity:.06;
     }
     #themeBuilderDock[data-dock="right"]{
       left:auto;
@@ -25379,6 +24614,8 @@ function installThemeBuilderStyles() {
     }
   `;
   document.head.appendChild(style);
+  installThemeBuilderAutoFitObservers();
+  scheduleThemeBuilderAutoFitText({ resetBase: true });
 }
 
 function buildThemeBuilderRuntimeCss() {
@@ -25419,14 +24656,26 @@ function buildThemeBuilderRuntimeCss() {
 
       if (baseSelectors) {
         const scopedParents = scopeThemeBuilderSelectorList(themeKey, baseSelectors);
-      const scopedChildren = scopeThemeBuilderSelectorList(themeKey, baseSelectors, " > *");
+      const baseChildSelectors = baseConfigs
+        .filter(config => config.id !== "loadout-card")
+        .map(config => `${config.selector} > *`)
+        .join(", ");
+      const scopedChildren = baseChildSelectors
+        ? scopeThemeBuilderSelectorList(themeKey, baseChildSelectors)
+        : "";
       const scopedAfter = scopeThemeBuilderSelectorList(themeKey, baseSelectors, "::after");
       const scopedHoverAfter = scopeThemeBuilderSelectorList(themeKey, baseSelectors, ":hover::after");
-      chunks.push(
-          `${scopedParents}{position:relative !important; isolation:isolate !important; overflow:visible !important; --tb-parent-overlay-current:var(--reaver-parent-overlay-current); --tb-overlay-aura-color:transparent; --tb-overlay-aura-near:0px; --tb-overlay-aura-far:0px; --tb-outer-aura-color:transparent; --tb-outer-aura-blur:0px; --tb-outer-aura-spread:0px; --tb-outer-aura-opacity:0; --tb-outer-aura-scale:1; --tb-outer-aura-z-index:2147483646;}`,
-          `${scopedChildren}{position:relative; z-index:1 !important; transform:translate(calc(var(--parent-card-content-shift-x, 0px) * var(--app-design-scale-x)), calc(var(--parent-card-content-shift-y, 0px) * var(--app-design-scale-y))) scale(var(--parent-card-content-scale-x, 1), var(--parent-card-content-scale-y, 1)); transform-origin:var(--parent-card-content-origin, center top);}`,
+        chunks.push(
+          `${scopedParents}{position:relative !important; isolation:isolate !important; overflow:visible !important; --tb-parent-overlay-current:var(--reaver-parent-overlay-current); --tb-parent-overlay-layer:0; --tb-hover-fx-layer:1; --tb-parent-content-layer:2; --tb-overlay-aura-color:transparent; --tb-overlay-aura-near:0px; --tb-overlay-aura-far:0px; --tb-outer-aura-color:transparent; --tb-outer-aura-blur:0px; --tb-outer-aura-spread:0px; --tb-outer-aura-opacity:0; --tb-outer-aura-scale:1; --tb-outer-aura-z-index:-1;}`
+        );
+        if (scopedChildren) {
+          chunks.push(
+            `${scopedChildren}{position:relative; z-index:var(--tb-parent-content-layer, 2) !important; transform:translate(calc(var(--parent-card-content-shift-x, 0px) * var(--app-design-scale-x)), calc(var(--parent-card-content-shift-y, 0px) * var(--app-design-scale-y))) scale(var(--parent-card-content-scale-x, 1), var(--parent-card-content-scale-y, 1)); transform-origin:var(--parent-card-content-origin, center top);}`
+          );
+        }
+        chunks.push(
           `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .home-chart-wrap")}{transform:none !important; transform-origin:center top !important;}`,
-          `${scopedAfter}{content:""; position:absolute; left:50%; top:50%; width:calc(var(--parent-overlay-width, 420px) * var(--app-design-scale-x)); height:calc(var(--parent-overlay-height, 420px) * var(--app-design-scale-y)); transform:translate(calc(-50% + (var(--parent-overlay-x, 0px) * var(--app-design-scale-x))), calc(-50% + (var(--parent-overlay-y, 0px) * var(--app-design-scale-y)))) scale(var(--parent-overlay-scale, 1)); transform-origin:center; background:var(--tb-parent-overlay-current) center / 100% 100% no-repeat; pointer-events:none; z-index:2147483647 !important; transition:filter .18s ease; opacity:${hideOverlays ? "0" : "1"} !important; visibility:${hideOverlays ? "hidden" : "visible"} !important;}`,
+          `${scopedAfter}{content:""; position:absolute; left:50%; top:50%; width:calc(var(--parent-overlay-width, 420px) * var(--app-design-scale-x)); height:calc(var(--parent-overlay-height, 420px) * var(--app-design-scale-y)); transform:translate(calc(-50% + (var(--parent-overlay-x, 0px) * var(--app-design-scale-x))), calc(-50% + (var(--parent-overlay-y, 0px) * var(--app-design-scale-y)))) scale(var(--parent-overlay-scale, 1)); transform-origin:center; background:var(--tb-parent-overlay-current) center / 100% 100% no-repeat; pointer-events:none; z-index:var(--tb-parent-overlay-layer, 0) !important; transition:filter .18s ease; opacity:${hideOverlays ? "0" : "1"} !important; visibility:${hideOverlays ? "hidden" : "visible"} !important;}`,
           `${scopedHoverAfter}{filter:drop-shadow(0 0 var(--tb-overlay-aura-near, 0px) var(--tb-overlay-aura-color, transparent)) drop-shadow(0 0 var(--tb-overlay-aura-far, 0px) var(--tb-overlay-aura-color, transparent));}`
         );
       }
@@ -25552,6 +24801,10 @@ function buildThemeBuilderRuntimeCss() {
           chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame")}{aspect-ratio:1 / 1 !important; --agent-art-offset-scale:1 !important;}`);
           chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame :is(#agentReel,.agent-frame-art,.agent-reveal-art,.agent-frame-fx,.frame-border,.breach-frame,#agentPlaceholder,.shine,.reel-strip,.reel-icon,.agent-reveal-art img,.agent-frame-portrait,.frame-art-inner)")}{transform-origin:center center !important;}`);
         }
+        if (config.id === "logging-card") {
+          chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".logging-card .logging-actions")}{display:flex !important; flex-direction:row !important; justify-content:center !important; align-items:center !important; width:100% !important; margin-top:auto !important; gap:0 !important; position:relative !important; left:auto !important; top:auto !important; padding-top:0 !important; padding-bottom:0 !important;}`);
+          chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".logging-card #logSaveBtn")}{display:flex !important; flex-direction:row !important; width:200px !important; min-width:200px !important; max-width:200px !important; height:58px !important; min-height:58px !important; writing-mode:horizontal-tb !important; text-orientation:mixed !important; white-space:nowrap !important; position:relative !important; left:auto !important; top:auto !important; transform:none !important;}`);
+        }
         if (config.id === "rr-chart-card") {
           chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .home-chart-wrap")}{position:relative !important; overflow:visible !important; transform:none !important; transform-origin:center top !important; min-width:0 !important; min-height:0 !important;}`);
           chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card #chartRow")}{position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; min-width:0 !important; min-height:0 !important; transform:none !important; transform-origin:top left !important;}`);
@@ -25590,8 +24843,215 @@ function applyThemeBuilderRuntimeStyles() {
     if (typeof renderChart === "function" && chartRow) {
       renderChart(currentSize);
     }
+    scheduleThemeBuilderAutoFitText({ resetBase: true });
+    scheduleInsightListOverflowSync(document.getElementById("insightsList"));
   });
   syncThemeBuilderFxEngine();
+}
+
+const THEME_BUILDER_AUTO_FIT_EXCLUDED_TAGS = new Set(["BUTTON", "INPUT", "TEXTAREA", "SELECT", "OPTION"]);
+const THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS = Array.from(new Set(
+  THEME_BUILDER_GROUP_CONFIGS
+    .map(group => getThemeBuilderGroupTextSelector(group))
+    .filter(Boolean)
+));
+const themeBuilderAutoFitState = {
+  raf: 0,
+  resetBase: false,
+  observer: null,
+  fitted: new Set(),
+  listenersAttached: false,
+  fontsReadyHooked: false
+};
+
+function installThemeBuilderAutoFitObservers() {
+  if (themeBuilderAutoFitState.listenersAttached) return;
+  themeBuilderAutoFitState.listenersAttached = true;
+  window.addEventListener("resize", () => {
+    scheduleThemeBuilderAutoFitText({ resetBase: true });
+  });
+  if (window.MutationObserver && document.body) {
+    themeBuilderAutoFitState.observer = new MutationObserver(() => {
+      scheduleThemeBuilderAutoFitText();
+    });
+    themeBuilderAutoFitState.observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
+  if (!themeBuilderAutoFitState.fontsReadyHooked && document.fonts?.ready) {
+    themeBuilderAutoFitState.fontsReadyHooked = true;
+    document.fonts.ready.then(() => {
+      scheduleThemeBuilderAutoFitText({ resetBase: true });
+    }).catch(() => {});
+    document.fonts?.addEventListener?.("loadingdone", () => {
+      scheduleThemeBuilderAutoFitText({ resetBase: true });
+    });
+  }
+}
+
+function scheduleThemeBuilderAutoFitText(options = {}) {
+  if (options?.resetBase) {
+    themeBuilderAutoFitState.resetBase = true;
+  }
+  if (themeBuilderAutoFitState.raf) return;
+  themeBuilderAutoFitState.raf = requestAnimationFrame(runThemeBuilderAutoFitText);
+}
+
+function resetThemeBuilderAutoFitElement(element, resetBase = false) {
+  if (!(element instanceof HTMLElement)) return;
+  element.style.removeProperty("--tb-auto-fit-font-size");
+  element.removeAttribute("data-tb-auto-fit");
+  if (resetBase) {
+    delete element.dataset.tbAutoFitBaseFontSize;
+  }
+}
+
+function getThemeBuilderAutoFitContainerMetrics(element) {
+  const elementRect = element.getBoundingClientRect();
+  let current = element;
+  let depth = 0;
+  while (current instanceof HTMLElement && depth < 4) {
+    const rect = current.getBoundingClientRect();
+    const style = getComputedStyle(current);
+    const width = current.clientWidth || rect.width;
+    const height = current.clientHeight || rect.height;
+    const heightConstrained =
+      (style.height && style.height !== "auto") ||
+      (style.maxHeight && style.maxHeight !== "none") ||
+      ["hidden", "clip", "scroll", "auto"].includes(style.overflowY);
+    const widthConstrained =
+      !String(style.display || "").startsWith("inline") &&
+      width > Math.max(12, elementRect.width + 4);
+    if (current === element) {
+      if (width > 12 && ((style.width && style.width !== "auto") || heightConstrained || widthConstrained)) {
+        return { width, height, heightConstrained };
+      }
+    } else if (widthConstrained) {
+      return { width, height, heightConstrained };
+    }
+    current = current.parentElement;
+    depth += 1;
+  }
+  const fallback = element.parentElement instanceof HTMLElement ? element.parentElement : element;
+  const fallbackRect = fallback.getBoundingClientRect();
+  const fallbackStyle = getComputedStyle(fallback);
+  return {
+    width: fallback.clientWidth || fallbackRect.width,
+    height: fallback.clientHeight || fallbackRect.height,
+    heightConstrained:
+      (fallbackStyle.height && fallbackStyle.height !== "auto") ||
+      (fallbackStyle.maxHeight && fallbackStyle.maxHeight !== "none") ||
+      ["hidden", "clip", "scroll", "auto"].includes(fallbackStyle.overflowY)
+  };
+}
+
+function isThemeBuilderAutoFitCandidate(element) {
+  if (!(element instanceof HTMLElement) || !element.isConnected) return false;
+  if (THEME_BUILDER_AUTO_FIT_EXCLUDED_TAGS.has(element.tagName)) return false;
+  if (element.closest("#themeBuilderDock")) return false;
+  if (element.isContentEditable) return false;
+  const computed = getComputedStyle(element);
+  if (computed.display === "none" || computed.visibility === "hidden" || Number.parseFloat(computed.opacity || "1") === 0) {
+    return false;
+  }
+  if (String(computed.whiteSpace || "").includes("nowrap")) return false;
+  if (computed.position === "absolute" || computed.position === "fixed") return false;
+  const rect = element.getBoundingClientRect();
+  if (rect.width < 18 || rect.height < 8) return false;
+  const directText = Array.from(element.childNodes || [])
+    .filter(node => node.nodeType === Node.TEXT_NODE)
+    .map(node => node.textContent || "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!directText && element.children.length > 0) return false;
+  const text = (directText || element.textContent || "").replace(/\s+/g, " ").trim();
+  return Boolean(text);
+}
+
+function collectThemeBuilderAutoFitCandidates() {
+  const candidates = [];
+  const seen = new Set();
+  THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((element) => {
+      if (!isThemeBuilderAutoFitCandidate(element) || seen.has(element)) return;
+      seen.add(element);
+      candidates.push(element);
+    });
+  });
+  return candidates;
+}
+
+function fitThemeBuilderAutoFitElement(element) {
+  const computed = getComputedStyle(element);
+  const baseFontSize = Number.parseFloat(element.dataset.tbAutoFitBaseFontSize || computed.fontSize || "0");
+  if (!Number.isFinite(baseFontSize) || baseFontSize <= 0) {
+    resetThemeBuilderAutoFitElement(element, true);
+    return;
+  }
+  if (!element.dataset.tbAutoFitBaseFontSize) {
+    element.dataset.tbAutoFitBaseFontSize = String(baseFontSize);
+  }
+  const metrics = getThemeBuilderAutoFitContainerMetrics(element);
+  const widthLimit = Math.max(12, metrics.width);
+  const heightLimit = Math.max(8, metrics.height);
+  const minFontSize = Math.max(10, baseFontSize * 0.6);
+  const maxFontSize = Math.max(minFontSize, baseFontSize * 1.28);
+  const fitsAt = (fontSize) => {
+    element.style.setProperty("--tb-auto-fit-font-size", `${Math.round(fontSize * 100) / 100}px`);
+    element.setAttribute("data-tb-auto-fit", "1");
+    const fitsWidth = element.scrollWidth <= widthLimit + 1;
+    const fitsHeight = !metrics.heightConstrained || element.scrollHeight <= heightLimit + 1;
+    return fitsWidth && fitsHeight;
+  };
+
+  let low = minFontSize;
+  let high = maxFontSize;
+  let best = minFontSize;
+  if (!fitsAt(minFontSize)) {
+    best = minFontSize;
+  } else {
+    best = minFontSize;
+    for (let index = 0; index < 8; index += 1) {
+      const mid = (low + high) / 2;
+      if (fitsAt(mid)) {
+        best = mid;
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+  }
+
+  element.style.setProperty("--tb-auto-fit-font-size", `${Math.round(best * 100) / 100}px`);
+  element.setAttribute("data-tb-auto-fit", "1");
+}
+
+function runThemeBuilderAutoFitText() {
+  themeBuilderAutoFitState.raf = 0;
+  const resetBase = themeBuilderAutoFitState.resetBase;
+  themeBuilderAutoFitState.resetBase = false;
+  const candidates = collectThemeBuilderAutoFitCandidates();
+  const activeCandidates = new Set(candidates);
+
+  themeBuilderAutoFitState.fitted.forEach((element) => {
+    if (!activeCandidates.has(element) || resetBase) {
+      resetThemeBuilderAutoFitElement(element, resetBase);
+    }
+    if (!activeCandidates.has(element)) {
+      themeBuilderAutoFitState.fitted.delete(element);
+    }
+  });
+
+  candidates.forEach((element) => {
+    if (resetBase) {
+      resetThemeBuilderAutoFitElement(element, true);
+    }
+    fitThemeBuilderAutoFitElement(element);
+    themeBuilderAutoFitState.fitted.add(element);
+  });
 }
 
 const themeBuilderFxEngine = {
@@ -25605,9 +25065,9 @@ const themeBuilderFxEngine = {
   raf: 0,
   startedAt: 0,
   lastRectKey: "",
-  particles: []
+  particles: [],
+  persistentVideos: new Map()
 };
-let themeBuilderFxListenersAttached = false;
 
 function mountThemeBuilderFxNode(node, hostElement) {
   if (!node || !hostElement?.isConnected) return node;
@@ -25615,6 +25075,75 @@ function mountThemeBuilderFxNode(node, hostElement) {
     hostElement.appendChild(node);
   }
   return node;
+}
+
+function getThemeBuilderSmokeFxDisplayOpacity(values = {}) {
+  const baseOpacity = themeBuilderFxNumber(values.opacity, 0.74);
+  const scaledOpacity = baseOpacity * 0.08;
+  return Math.max(0.035, Math.min(0.12, scaledOpacity));
+}
+
+function getThemeBuilderSmokeFxDisplayFilter(values = {}) {
+  const intensity = themeBuilderFxNumber(values.intensity, 0.65);
+  const brightness = Math.max(0.72, Math.min(0.88, 0.74 + intensity * 0.03));
+  const contrast = Math.max(0.88, Math.min(1.04, 0.92 + intensity * 0.03));
+  return `grayscale(1) contrast(${contrast}) brightness(${brightness}) saturate(.3)`;
+}
+
+function createThemeBuilderPersistentSmokeVideo(hostElement, values = {}, configId = "") {
+  if (!hostElement?.isConnected) return null;
+  let video = themeBuilderFxEngine.persistentVideos.get(hostElement);
+  if (!video) {
+    video = document.createElement("video");
+    video.className = "theme-builder-card-smoke-video";
+    video.src = THEME_BUILDER_SMOKE_VIDEO_SRC;
+    video.muted = true;
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.setAttribute("aria-hidden", "true");
+    themeBuilderFxEngine.persistentVideos.set(hostElement, video);
+  }
+  video.dataset.themeBuilderFxConfig = configId;
+  mountThemeBuilderFxNode(video, hostElement);
+  const computed = getComputedStyle(hostElement);
+  video.style.zIndex = "var(--tb-hover-fx-layer, 1)";
+  video.style.opacity = String(getThemeBuilderSmokeFxDisplayOpacity(values));
+  video.style.filter = getThemeBuilderSmokeFxDisplayFilter(values);
+  video.style.borderRadius = computed.borderRadius && computed.borderRadius !== "0px"
+    ? computed.borderRadius
+    : "18px";
+  video.classList.add("is-active");
+  video.play?.().catch(() => {});
+  return video;
+}
+
+function syncThemeBuilderPersistentSmokeFx() {
+  const themeKey = getCurrentThemeBuilderThemeKey();
+  const activeHosts = new Set();
+  const parentStates = themeBuilderState?.[themeKey]?.parents || {};
+  const canRender =
+    document.body &&
+    !document.body.classList.contains("viewport-performance-mode") &&
+    !isBrowserCompatibilityBasicMode();
+
+  THEME_BUILDER_PARENT_CONFIGS.forEach((config) => {
+    const values = buildThemeBuilderHoverFxCssValues(parentStates?.[config.id] || {}, themeKey);
+    if (!canRender || !values.enabled || values.preset !== "smoke-video") return;
+    document.querySelectorAll(config.selector).forEach((hostElement) => {
+      if (!(hostElement instanceof HTMLElement)) return;
+      activeHosts.add(hostElement);
+      createThemeBuilderPersistentSmokeVideo(hostElement, values, config.id);
+    });
+  });
+
+  Array.from(themeBuilderFxEngine.persistentVideos.entries()).forEach(([hostElement, video]) => {
+    if (activeHosts.has(hostElement) && hostElement.isConnected) return;
+    video.pause?.();
+    video.remove();
+    themeBuilderFxEngine.persistentVideos.delete(hostElement);
+  });
 }
 
 function parseThemeBuilderFxColor(value = "", fallback = "#ffffff") {
@@ -25670,7 +25199,7 @@ function ensureThemeBuilderFxCanvas(hostElement = themeBuilderFxEngine.activeEle
       width: "100%",
       height: "100%",
       pointerEvents: "none",
-      zIndex: "0",
+      zIndex: "var(--tb-hover-fx-layer, 1)",
       opacity: "0",
       transition: "opacity .16s ease",
       mixBlendMode: "screen",
@@ -25706,7 +25235,7 @@ function ensureThemeBuilderFxVideo(hostElement = themeBuilderFxEngine.activeElem
       height: "100%",
       objectFit: "cover",
       pointerEvents: "none",
-      zIndex: "0",
+      zIndex: "var(--tb-hover-fx-layer, 1)",
       opacity: "0",
       transition: "opacity .18s ease",
       mixBlendMode: "screen",
@@ -25758,11 +25287,11 @@ function positionThemeBuilderFxVideo(now = performance.now()) {
   video.style.inset = "0";
   video.style.width = "100%";
   video.style.height = "100%";
-  video.style.zIndex = "0";
+  video.style.zIndex = "var(--tb-hover-fx-layer, 1)";
   video.style.borderRadius = computed.borderRadius && computed.borderRadius !== "0px"
     ? computed.borderRadius
     : `${radius}px`;
-  video.style.opacity = String(Math.min(0.82, Math.max(0, opacity)));
+  video.style.opacity = String(Math.min(1, Math.max(0, opacity)));
   video.style.clipPath = `inset(0 round ${radius}px)`;
 }
 
@@ -26213,21 +25742,25 @@ function syncThemeBuilderFxEngine() {
   const themeKey = getCurrentThemeBuilderThemeKey();
   const hasEnabledFx = Object.values(themeBuilderState?.[themeKey]?.parents || {}).some(parent => parent?.hoverFxEnabled);
   if (!hasEnabledFx || isBrowserCompatibilityBasicMode()) {
+    syncThemeBuilderPersistentSmokeFx();
     detachThemeBuilderFxListeners();
     stopThemeBuilderFx();
     document.body.dataset.themeBuilderFxReady = "false";
     return;
   }
-  const hasSmokeVideoFx = Object.values(themeBuilderState?.[themeKey]?.parents || {}).some(parent => parent?.hoverFxEnabled && buildThemeBuilderHoverFxCssValues(parent, themeKey).preset === "smoke-video");
-  if (hasSmokeVideoFx && !document.body.classList.contains("viewport-performance-mode")) {
+  syncThemeBuilderPersistentSmokeFx();
+  const hasInteractiveFx = Object.values(themeBuilderState?.[themeKey]?.parents || {}).some((parent) => {
+    if (!parent?.hoverFxEnabled) return false;
+    return buildThemeBuilderHoverFxCssValues(parent, themeKey).preset !== "smoke-video";
+  });
+  if (hasInteractiveFx && !document.body.classList.contains("viewport-performance-mode")) {
     attachThemeBuilderFxListeners();
-    ensureThemeBuilderFxVideo();
     document.body.dataset.themeBuilderFxReady = "true";
     return;
   }
   detachThemeBuilderFxListeners();
   stopThemeBuilderFx();
-  document.body.dataset.themeBuilderFxReady = "false";
+  document.body.dataset.themeBuilderFxReady = themeBuilderFxEngine.persistentVideos.size ? "true" : "false";
 }
 
 function getThemeBuilderThemeLabel(themeKey = getCurrentThemeBuilderThemeKey()) {
@@ -26366,12 +25899,7 @@ function getThemeBuilderElementControlProfile(target) {
 }
 
 function getThemeBuilderGroupControlProfile(group) {
-  const textTargets = getThemeBuilderSelectorMatches(getThemeBuilderGroupTextSelector(group))
-    .filter(isThemeBuilderElementVisible)
-    .filter((element) => {
-      const enclosingAction = element.closest(THEME_BUILDER_ACTION_TARGET_SELECTOR);
-      return !enclosingAction || element === enclosingAction;
-    });
+  const textTargets = getThemeBuilderGroupTextTargets(group);
   const hasText = textTargets.some((element) => Boolean(getThemeBuilderReadableElementContent(element)));
 
   return {
@@ -26578,6 +26106,22 @@ function renderThemeBuilderGroupControls(config, group, themeState, fontOptions)
             <label>Text Spacing</label>
             <input type="number" step="0.1" data-theme-builder-group-parent="${escapeHtml(config.id)}" data-theme-builder-group-id="${escapeHtml(group.id)}" data-theme-builder-group-field="letterSpacing" value="${numberInput("letterSpacing", defaults.letterSpacing)}">
           </div>` : ""}
+          ${profile.hasText ? `<div class="theme-builder-field">
+            <label>Line Height</label>
+            <input type="number" step="0.05" min="0.5" data-theme-builder-group-parent="${escapeHtml(config.id)}" data-theme-builder-group-id="${escapeHtml(group.id)}" data-theme-builder-group-field="lineHeight" value="${numberInput("lineHeight", defaults.lineHeight)}">
+          </div>` : ""}
+          <div class="theme-builder-field">
+            <label>Item Gap</label>
+            <input type="number" step="1" data-theme-builder-group-parent="${escapeHtml(config.id)}" data-theme-builder-group-id="${escapeHtml(group.id)}" data-theme-builder-group-field="groupGap" value="${numberInput("groupGap", defaults.groupGap)}">
+          </div>
+          <div class="theme-builder-field">
+            <label>Padding X</label>
+            <input type="number" step="1" data-theme-builder-group-parent="${escapeHtml(config.id)}" data-theme-builder-group-id="${escapeHtml(group.id)}" data-theme-builder-group-field="groupPaddingX" value="${numberInput("groupPaddingX", defaults.groupPaddingX)}">
+          </div>
+          <div class="theme-builder-field">
+            <label>Padding Y</label>
+            <input type="number" step="1" data-theme-builder-group-parent="${escapeHtml(config.id)}" data-theme-builder-group-id="${escapeHtml(group.id)}" data-theme-builder-group-field="groupPaddingY" value="${numberInput("groupPaddingY", defaults.groupPaddingY)}">
+          </div>
           ${profile.hasText ? `<div class="theme-builder-field theme-builder-field-full">
             <label class="theme-builder-inline">
               <input type="checkbox" data-theme-builder-group-parent="${escapeHtml(config.id)}" data-theme-builder-group-id="${escapeHtml(group.id)}" data-theme-builder-group-field="textNoWrap" ${isThemeBuilderEnabledBoolean(saved.textNoWrap) ? "checked" : ""}>
@@ -27551,6 +27095,7 @@ function cacheDOM(){
   agentFxBehind = document.getElementById("agentFxBehind");
   agentFxFront = document.getElementById("agentFxFront");
   bindAgentFrameMetrics();
+  bindLoadoutValueTextFitObservers();
   chartRow = document.getElementById("chartRow");
 
   spinAgentBtn = document.getElementById("spinAgentBtn");
@@ -27782,6 +27327,13 @@ function bindEvents(){
     e.stopPropagation();
     setLoggingQuickMenuOpen(false, { restoreFocus: true });
   });
+  document.getElementById("compassDescriptionToggle")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const shell = document.querySelector(".compass-summary-shell");
+    if (!shell) return;
+    syncCompassDescriptionToggleState(!shell.classList.contains("is-expanded"));
+  });
   document.addEventListener("click", (e) => {
     const menu = document.getElementById("logQuickMenu");
     const shell = document.getElementById("loggingNotesShell");
@@ -27804,7 +27356,7 @@ function bindEvents(){
     showModalById("agentModal");
   });
 
-  document.getElementById("logAgentDisplay")?.addEventListener("click", (e) => {
+  document.getElementById("logAgentBrowseBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     renderRoleSelector();
@@ -29029,7 +28581,7 @@ function openWeeklyFocusModal(itemKey = "") {
 // COMPASS UPDATE WRAPPER
 // ========================
 
-function updateCompass(stats) {
+function updateCompass(stats, model = null) {
   if (crestPreviewActive) {
     return;
   }
@@ -29043,7 +28595,13 @@ function updateCompass(stats) {
     aim,
     gamesense: sense,
     teamplay: team,
-    discipline: disc
+    discipline: disc,
+    strongestLens: stats?.strongestLens,
+    weakestLens: stats?.weakestLens,
+    profileShare: stats?.profileShare,
+    source: stats?.source,
+    summary: stats?.summary,
+    model
   });
 
 }
@@ -29256,7 +28814,8 @@ if(entry.focus){
   if(logFocusSelect) logFocusSelect.value = "";
   if(logFocusOther) logFocusOther.value = "";
   if(focusOtherWrap) focusOtherWrap.style.display = "none";
-  if(preview) preview.textContent = "";
+  if(preview) preview.textContent = "Focus";
+  preview?.classList?.add("is-placeholder");
   setCustomFocusCommitted("");
   if(logFocusOther) logFocusOther.disabled = true;
   updateLogAgentDisplay("");
@@ -29324,7 +28883,7 @@ function editLogEntry(id){
         focusOther.value = "";
         focusOther.disabled = true;
       }
-      if(preview) preview.textContent = "";
+      if(preview) preview.textContent = entry.focus || "Focus";
       setCustomFocusCommitted("");
     } else {
       focusSelect.value = "Other";
@@ -29692,7 +29251,7 @@ function saveProfiles(){
 }
 
 const PROFILE_THEME_PRESETS = [
-  { value: "default", label: "Default", motion: "static", colors: { base:"#090612", base2:"#151022", nav:"rgba(14,10,24,.86)", card:"#120d1f", card2:"#1a1430", input:"#171126", modal:"#0d0918", overlay:"rgba(8,5,16,.78)", border:"rgba(148,123,255,.16)", borderStrong:"rgba(175,120,255,.34)", text:"#eee9ff", muted:"#b6abd4", accent:"#8b5cf6", accent2:"#c084fc", button:"#201733", buttonHover:"#2d2146", glow:"rgba(139,92,246,.26)", pattern:"radial-gradient(circle at 22% 20%, rgba(139,92,246,.12), transparent 30%)", pattern2:"radial-gradient(circle at 78% 16%, rgba(192,132,252,.08), transparent 26%)" } },
+  { value: "default", label: "Default", motion: "static", colors: { base:"#071029", base2:"#071b2b", nav:"rgba(11,18,32,.84)", card:"#0b1220", card2:"#0f172a", input:"#0f172a", modal:"#020617", overlay:"rgba(15,23,42,.7)", border:"rgba(148,163,184,.14)", borderStrong:"rgba(148,163,184,.38)", text:"#e6eef8", muted:"#94a3b8", accent:"#ff4655", accent2:"#f97316", button:"#1e293b", buttonHover:"#334155", glow:"rgba(255,70,85,.22)", pattern:"radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)", pattern2:"radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)" } },
   { value: "prime", label: "Prime", motion: "shimmer", colors: { base:"#0e1117", base2:"#141923", nav:"rgba(18,22,31,.82)", card:"#121722", card2:"#1b2230", input:"#181f2c", modal:"#10141d", overlay:"rgba(12,15,24,.74)", border:"rgba(201,168,92,.18)", borderStrong:"rgba(224,201,132,.42)", text:"#f7f3e7", muted:"#c3b79a", accent:"#d9b55a", accent2:"#8dd8ff", button:"#222b39", buttonHover:"#2f3a4d", glow:"rgba(217,181,90,.26)", pattern:"linear-gradient(120deg, rgba(217,181,90,.1), transparent 28%, rgba(141,216,255,.06) 66%, transparent 100%)", pattern2:"radial-gradient(circle at 80% 18%, rgba(217,181,90,.18), transparent 28%)" } },
   { value: "ion", label: "Ion", motion: "rings", colors: { base:"#f2f8ff", base2:"#dbeaff", nav:"rgba(230,241,255,.84)", card:"#f8fbff", card2:"#dbe9fb", input:"#eef6ff", modal:"#f8fbff", overlay:"rgba(207,224,246,.68)", border:"rgba(78,129,196,.18)", borderStrong:"rgba(103,162,237,.42)", text:"#10233d", muted:"#4d6889", accent:"#7fd8ff", accent2:"#9f7bff", button:"#d9e8fb", buttonHover:"#cae1ff", glow:"rgba(127,216,255,.32)", pattern:"radial-gradient(circle at 50% 45%, rgba(127,216,255,.24), transparent 18%), radial-gradient(circle at 50% 45%, rgba(159,123,255,.12), transparent 34%)", pattern2:"radial-gradient(circle at 50% 45%, rgba(255,255,255,.68), transparent 44%)" } },
   { value: "oni", label: "Oni", motion: "kinetic", colors: { base:"#12070c", base2:"#25131b", nav:"rgba(24,10,16,.84)", card:"#1b0e14", card2:"#2b1821", input:"#26151e", modal:"#180b11", overlay:"rgba(12,4,8,.74)", border:"rgba(190,56,75,.18)", borderStrong:"rgba(214,84,92,.42)", text:"#f6e7df", muted:"#c89a91", accent:"#d44e5d", accent2:"#7ac6a8", button:"#341922", buttonHover:"#462430", glow:"rgba(212,78,93,.28)", pattern:"radial-gradient(circle at 20% 20%, rgba(212,78,93,.18), transparent 24%), linear-gradient(140deg, transparent 0 38%, rgba(122,198,168,.08) 58%, transparent 78%)", pattern2:"radial-gradient(circle at 82% 18%, rgba(255,244,214,.08), transparent 20%)" } },
@@ -30548,6 +30107,9 @@ let pageTransitionTimer = 0;
 function activatePage(pageId){
 
   hideChartTooltip();
+  if (pageId === "home") {
+    scheduleLoadoutValueTextFit();
+  }
 
   document
     .querySelectorAll(".nav-btn")
@@ -30609,6 +30171,15 @@ function activatePage(pageId){
   pendingAgentFromLog = null;
   pendingFocusFromLog = null;
 }
+
+  if (pageId === "home") {
+    forceChartIntroAnimation = true;
+    requestAnimationFrame(() => renderChart(currentSize));
+  }
+
+  if (pageId === "insights") {
+    requestAnimationFrame(() => replayOpenInsightTrendAnimation());
+  }
 
   updateNavUnderline();
 }
@@ -30743,7 +30314,8 @@ function updateDisplays(){
   updateNavRRToGoalRank();
 
   const model = getPlayerModel();
-  updateCompass(model?.compass || {});
+  updateCompass(model?.compass || {}, model);
+  scheduleLoadoutValueTextFit();
 
 }
 // ========================
@@ -31044,6 +30616,7 @@ if(chartHeight){
   chartBusy = true;
 
   const isUndo = isUndoAnimating === true;
+  const shouldAnimateIntro = Boolean(forceChartIntroAnimation && !isUndo);
 
   const shouldAnimate =
     isUndo ||
@@ -31061,6 +30634,8 @@ if(chartHeight){
 
 if(!matches || !matches.length){
   updateRRMatchStats(null);
+  chartRow.classList.remove("chart-intro-active");
+  forceChartIntroAnimation = false;
 
   const min = -25;
   const max = 25;
@@ -31190,6 +30765,7 @@ ${xTicks}
 
   let segments="";
   let dots="";
+  const introStepDelay = 72;
 
   for(let i=0;i<points.length-1;i++){
 
@@ -31207,12 +30783,23 @@ ${xTicks}
 
     const isLast=i===points.length-2;
 
-    const animate=isLast && shouldAnimate;
+    const animate=isLast && shouldAnimate && !shouldAnimateIntro;
+    const introDelayMs = i * introStepDelay;
 
     let cls="segment";
     let style="";
 
-    if(animate){
+    if(shouldAnimateIntro){
+
+      cls+=" chart-intro-segment";
+      style=`
+--dash:${len};
+stroke-dasharray:${len};
+stroke-dashoffset:${len};
+--intro-delay:${introDelayMs}ms;
+`;
+
+    }else if(animate){
 
       cls+=" animate-segment";
 
@@ -31243,7 +30830,11 @@ stroke-linecap="round"
 style="${style}"/>`;
 
 if(showDots){
-  dots += buildDotMarkup(b, { final: isLast });
+  dots += buildDotMarkup(b, {
+    final: isLast,
+    intro: shouldAnimateIntro,
+    introDelayMs: introDelayMs + 180
+  });
 
 }
 }
@@ -31342,6 +30933,11 @@ ${dots}
 
 </svg>`;
 
+chartRow.classList.toggle("chart-intro-active", shouldAnimateIntro);
+if (!shouldAnimateIntro) {
+  chartRow.classList.remove("chart-intro-active");
+}
+
 tooltip   = document.getElementById("chartTooltip");
 crosshair = chartRow.querySelector("#chartCrosshair");
 
@@ -31356,7 +30952,25 @@ autoSelectLatest();
 
 const seg = chartRow.querySelector(".animate-segment");
 
-if(seg && shouldAnimate){
+if(shouldAnimateIntro){
+
+  requestAnimationFrame(() => {
+    chartRow.classList.add("chart-intro-active");
+  });
+
+  const introDuration = Math.max(680, (points.length * introStepDelay) + 520);
+  window.setTimeout(() => {
+    chartBusy = false;
+    chartAnimating = false;
+  }, introDuration);
+
+  skipNextChartAnimation = false;
+  lastMatchesLength = matches.length;
+  forceChartIntroAnimation = false;
+  isUndoAnimating = false;
+  undoDirection = false;
+
+}else if(seg && shouldAnimate){
 
   seg.style.animationPlayState = "paused";
 
@@ -31404,6 +31018,7 @@ requestAnimationFrame(() => {
 
   skipNextChartAnimation = false;
   lastMatchesLength = matches.length;
+  forceChartIntroAnimation = false;
 
   isUndoAnimating = false;
   undoDirection = false;
@@ -31504,6 +31119,10 @@ function scheduleSelectedChartTooltipPosition() {
   if (selectedChartTooltipRaf) return;
   selectedChartTooltipRaf = window.requestAnimationFrame(() => {
     selectedChartTooltipRaf = 0;
+    if (!canRenderChartTooltip()) {
+      hideChartTooltip();
+      return;
+    }
     if(!selectedDot) return;
     const hit = selectedDot.previousElementSibling;
     if(hit) positionTooltipToHit(hit);
@@ -32323,6 +31942,10 @@ document.querySelectorAll(".compass-score-card").forEach(card => {
   card.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    card.blur();
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
 
     const lens = card.dataset.lens;
     if (lens) {
@@ -32630,14 +32253,15 @@ document.addEventListener("click", async (e) => {
     try{
       if (guestBtn) {
         guestBtn.disabled = true;
-        guestBtn.textContent = "Opening Workspace...";
+        guestBtn.textContent = "Loading Demo Matches...";
       }
 
       setAppEntryChoice("guest");
+      await importDemoMatches();
       closeAuthModal();
     } catch (error) {
       localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
-      alert(error?.message || "Unable to open guest mode");
+      alert(error?.message || "Unable to load guest demo data");
     } finally {
       if (guestBtn) {
         guestBtn.disabled = false;
@@ -32666,7 +32290,7 @@ if (!window.__vt_riotProfileSaveBound) {
     const region = document.getElementById("riotRegionInput")?.value?.trim();
 
     if(!riotId){
-      alert("Enter your Riot ID");
+      alert("Enter Riot ID");
       return;
     }
 
@@ -32754,7 +32378,7 @@ if (!window.__vt_riotImportBound) {
     await performRiotSync({
       silent: false,
       mode: "refresh",
-      allowDemoFallback: false
+      allowDemoFallback: true
     });
     profileDropdown?.classList.remove("open");
   });
@@ -32901,17 +32525,24 @@ async function fetchWithTimeout(resource, options = {}, timeoutMs = RIOT_SYNC_FE
 async function importActiveProfileMatches(options = {}){
   const profile = getActiveProfile();
   if(!profile) throw new Error("No active profile");
-  if(!profile.riotId) throw new Error("Add your Riot ID before syncing");
+  if(!profile.riotId) throw new Error("Set Riot ID first");
+  const allowDemoFallback = options.allowDemoFallback !== false;
 
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
     const health = await healthRes.json().catch(() => ({}));
 
     if (!healthRes.ok || health?.configured === false) {
-      throw new Error("Riot sync is not configured for this environment");
+      if (allowDemoFallback) {
+        return importDemoMatches();
+      }
+      throw new Error("Riot sync is not configured");
     }
   } catch (_error) {
-    throw new Error("Riot sync is currently unavailable");
+    if (allowDemoFallback) {
+      return importDemoMatches();
+    }
+    throw new Error("Riot sync is unavailable");
   }
 
   try {
@@ -32947,7 +32578,20 @@ async function importActiveProfileMatches(options = {}){
       source: "riot"
     };
   } catch (error) {
-    throw error;
+    const message = String(error?.message || "");
+    const shouldFallbackToDemo =
+      message.includes("not configured") ||
+      message.includes("500") ||
+      message.includes("Import failed") ||
+      message.includes("403") ||
+      message.toLowerCase().includes("forbidden") ||
+      message.includes("No recent competitive matches found");
+
+    if(!shouldFallbackToDemo || !allowDemoFallback){
+      throw error;
+    }
+
+    return importDemoMatches();
   }
 }
 
@@ -33023,7 +32667,7 @@ function refreshProfileSyncCountdown() {
 
   if (!riotAutoSyncDeadline) {
     if (!hasSyncableRiotProfile()) {
-      setProfileSyncStatus("", "needs-setup", "Add your Riot ID to enable opt-in match sync", false);
+      setProfileSyncStatus("", "needs-setup", "Add a Riot ID or load the demo dataset", false);
       return;
     }
 
@@ -33100,7 +32744,7 @@ async function performRiotSync(options = {}) {
 
   if (!hasIdentityAccess) {
     if (!silent) {
-      alert("Sync requires a signed-in account or a Riot ID on the active profile.");
+      alert("Sync requires either a logged-in account or a Riot ID on the active profile.");
       if (!currentAuthUser) {
         openAuthModal?.();
       } else {
@@ -33114,7 +32758,7 @@ async function performRiotSync(options = {}) {
 
   if (!hasRiotId) {
     if (!silent) {
-      alert("Add your Riot ID to the active profile before syncing.");
+      alert("Add a Riot ID to the active profile before syncing.");
       openRiotModal?.();
     }
     clearRiotAutoSyncTimer();
@@ -33142,7 +32786,11 @@ async function performRiotSync(options = {}) {
     }
 
     if (!silent) {
-      alert(`${mode === "refresh" ? "Synced" : "Imported"} ${result.count} recent matches from Riot.`);
+      if (result?.source === "demo-fixture") {
+        alert(`Riot access is still restricted, so ${result.count} demo matches were loaded from the example dataset.`);
+      } else {
+        alert(`${mode === "refresh" ? "Synced" : "Imported"} ${result.count} recent matches from Riot.`);
+      }
     }
 
     return result;
@@ -33197,7 +32845,6 @@ function renderStatsPerformanceModel() {
 
   container.innerHTML = model.trends.map(trend => `
     <div class="stats-trend-row stats-trend-${trend.tone}" title="${escapeHtml(trend.detail)}">
-      <span class="stats-trend-arrow">${trend.tone === "up" ? "↑" : "↓"}</span>
       <div class="stats-trend-copy">
         <div class="stats-main-text">${escapeHtml(trend.label)}</div>
         <div class="stats-sub-text">${escapeHtml(trend.value)}</div>
@@ -33252,6 +32899,7 @@ function renderInsightsModel() {
   syncWeeklyFocus(topInsights);
   renderInsightCards();
   renderTrendBreakdown();
+  window.setTimeout(() => scheduleInsightListOverflowSync(document.getElementById("insightsList")), 0);
 }
 
 function renderTrendBreakdownModel() {
@@ -33383,6 +33031,7 @@ function initStatsPageModel() {
   renderStatsBreakdown();
   renderStatsAgents();
   renderStatsMaps();
+  renderStatsWeapons();
 
   const kdEl = document.getElementById("statKD");
   const wrEl = document.getElementById("statWinrate");
@@ -33428,11 +33077,14 @@ function renderStatsAgentsModel() {
   container.className = "stats-agent-list stats-agent-grid";
 
   Object.entries(grouped).forEach(([role, items]) => {
+    items.sort((a, b) => safeNumber(b.winrate) - safeNumber(a.winrate) || safeNumber(b.matchesPlayed) - safeNumber(a.matchesPlayed));
+
     const column = document.createElement("div");
     column.className = "stats-agent-column";
 
     const heading = document.createElement("div");
     heading.className = "stats-agent-column-title";
+    heading.dataset.role = role;
     heading.textContent = role.charAt(0).toUpperCase() + role.slice(1);
     column.appendChild(heading);
 
@@ -33481,7 +33133,7 @@ function renderStatsMapsModel() {
   maps.forEach((map) => {
     const card = document.createElement("button");
     card.type = "button";
-    card.className = "stats-map-card";
+    card.className = `stats-map-card ${safeNumber(map.winrate) >= 50 ? "is-positive" : "is-negative"}`;
     card.innerHTML = `
       <img class="stats-map-image" src="${getMapIconUrl(map.map)}" alt="${escapeHtml(map.map)}">
       <div class="stats-map-meta">
@@ -33491,6 +33143,52 @@ function renderStatsMapsModel() {
     `;
     card.addEventListener("click", () => openStatsDetailModal("map", map.map));
     container.appendChild(card);
+  });
+}
+
+function renderStatsWeaponsModel() {
+  const container = document.getElementById("statsWeaponsList");
+  if (!container) return;
+
+  const weapons = summarizeWeaponRounds(matches);
+  if (!weapons.length) {
+    container.innerHTML = `<div class="stats-empty">No weapon round data yet</div>`;
+    return;
+  }
+
+  container.innerHTML = weapons.map((weapon) => `
+    <button type="button" class="stats-weapon-card stats-select-card" data-weapon-type="${escapeHtml(weapon.typeKey)}">
+      <div class="stats-weapon-head">
+        <div>
+          <div class="stats-weapon-sub">${escapeHtml(weapon.primaryWeapon || "Tracked Usage")}</div>
+          <div class="stats-weapon-title">${escapeHtml(weapon.label)}</div>
+        </div>
+        <span class="stats-weapon-winrate ${safeNumber(weapon.winrate) >= 50 ? "is-positive" : "is-negative"}">${Math.round(weapon.winrate)}% WR</span>
+      </div>
+      <div class="stats-weapon-metrics">
+        <div class="stats-weapon-metric">
+          <span class="stats-weapon-label">Kills</span>
+          <span class="stats-weapon-value">${Math.round(weapon.kills)}</span>
+        </div>
+        <div class="stats-weapon-metric">
+          <span class="stats-weapon-label">Deaths</span>
+          <span class="stats-weapon-value">${Math.round(weapon.deaths)}</span>
+        </div>
+        <div class="stats-weapon-metric">
+          <span class="stats-weapon-label">ADR</span>
+          <span class="stats-weapon-value">${Math.round(weapon.adr)}</span>
+        </div>
+        <div class="stats-weapon-metric">
+          <span class="stats-weapon-label">Kills / Round</span>
+          <span class="stats-weapon-value">${Number(weapon.killsPerRound || 0).toFixed(2)}</span>
+        </div>
+      </div>
+      <div class="stats-weapon-footer">${Math.round(weapon.rounds)} tracked rounds across ${Math.round(weapon.matches)} match${Math.round(weapon.matches) === 1 ? "" : "es"}.</div>
+    </button>
+  `).join("");
+
+  container.querySelectorAll(".stats-weapon-card").forEach((button) => {
+    button.addEventListener("click", () => openStatsDetailModal("weapon", button.dataset.weaponType || ""));
   });
 }
 
@@ -33580,15 +33278,34 @@ function renderInsightCardsModel() {
 
   if (activeInsightFilter !== "all") {
     list = list.filter(insight => insight.type === activeInsightFilter);
-  } else {
-    list = list.slice(0, 3);
   }
 
   if (!list.length) {
-    list = (model?.insights || []).slice(0, 3);
+    list = (model?.insights || []).slice();
   }
 
   container.innerHTML = "";
+
+  if (!list.length) {
+    const emptyCard = document.createElement("div");
+    emptyCard.className = "insight-card insight-empty";
+    emptyCard.innerHTML = `
+      <div class="insight-header">
+        <div class="insight-header-main">
+          <div class="insight-title">Insights Waiting On More Data</div>
+          <div class="insight-tag">INFO</div>
+        </div>
+      </div>
+      <div class="insight-preview">This panel fills with ranked coaching reads after you import a few matches or save a few reflections.</div>
+      <div class="insight-block">
+        <div class="insight-label">NEXT STEP</div>
+        Play or import another short block, then reopen Insights to surface the strongest trends.
+      </div>
+    `;
+    container.appendChild(emptyCard);
+    scheduleInsightListOverflowSync(container);
+    return;
+  }
 
   list.forEach((insight) => {
     const el = document.createElement("div");
@@ -33601,10 +33318,12 @@ function renderInsightCardsModel() {
     const focusTone = getInsightMetaToneClass("focus", insight.focus || model?.focus || "Build Sample", insight.type || "neutral");
     el.innerHTML = `
       <div class="insight-header">
-        <div class="insight-title">${escapeHtml(insight.title)}</div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <button type="button" class="insight-close" aria-label="Close insight">Close</button>
+        <div class="insight-header-main">
+          <div class="insight-title">${escapeHtml(insight.title)}</div>
           <div class="insight-tag">${escapeHtml(String(insight.type || "").toUpperCase())}</div>
+        </div>
+        <div class="insight-header-actions">
+          <button type="button" class="insight-close" aria-label="Close insight">Close</button>
         </div>
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
@@ -33635,6 +33354,7 @@ function renderInsightCardsModel() {
   });
 
   bindInsightCards();
+  scheduleInsightListOverflowSync(container);
 }
 
 function renderStatsPerformanceClean() {
@@ -33652,9 +33372,9 @@ function renderStatsPerformanceClean() {
   container.innerHTML = model.trends.map((trend) => {
     const toneMeta = getSignalToneMeta(trend?.tone);
     return `
-      <button type="button" class="stats-trend-row stats-trend-card stats-trend-${toneMeta.tone} stats-select-card" data-trend-id="${escapeHtml(trend?.id || "")}" title="${escapeHtml(trend?.detail || "")}">
+      <button type="button" class="stats-trend-row stats-trend-card stats-trend-${toneMeta.tone} stats-select-card" data-trend-id="${escapeHtml(trend?.id || "")}">
         <div class="stats-trend-head">
-          <span class="stats-trend-tone">${toneMeta.glyph} ${escapeHtml(toneMeta.label)}</span>
+          <span class="stats-trend-tone">${escapeHtml(toneMeta.label)}</span>
           <span class="stats-trend-kicker">${escapeHtml(trend?.kicker || "Current Window")}</span>
         </div>
         <div class="stats-trend-copy">
@@ -33675,6 +33395,7 @@ function renderStatsPerformanceClean() {
 
 renderStatsAgents = renderStatsAgentsModel;
 renderStatsMaps = renderStatsMapsModel;
+renderStatsWeapons = renderStatsWeaponsModel;
 renderStatsSummaryMeta = renderStatsSummaryMetaModel;
 renderInsightCards = renderInsightCardsModel;
 renderStatsPerformance = renderStatsPerformanceClean;
