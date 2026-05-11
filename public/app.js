@@ -4081,27 +4081,7 @@ function setAppEntryChoice(mode = "guest") {
 }
 
 async function ensureGuestDemoMatches() {
-  if (window.__vtGuestDemoHydrationPromise) {
-    return window.__vtGuestDemoHydrationPromise;
-  }
-
-  const entryChoice = localStorage.getItem(APP_ENTRY_CHOICE_KEY);
-  const active = getActiveProfile();
-  const hasMatches = Array.isArray(active?.matches) && active.matches.length > 0;
-
-  if (entryChoice !== "guest" || hasMatches) {
-    return null;
-  }
-
-  window.__vtGuestDemoHydrationPromise = (async () => {
-    try {
-      await importDemoMatches();
-    } catch (error) {
-      console.warn("Guest demo hydration failed", error);
-    }
-  })();
-
-  return window.__vtGuestDemoHydrationPromise;
+  return null;
 }
 
 function maybeOpenInitialAuthGate() {
@@ -22360,14 +22340,7 @@ function isCurrentUserThemeBuilderAdmin(user = currentAuthUser) {
 }
 
 function shouldShowThemeBuilder() {
-  syncThemeBuilderAccessFromUrl();
-  const params = getThemeBuilderUrlParams();
-  if (params.has("hideThemeBuilder")) return false;
-  return Boolean(
-    isLocalThemeBuilderHost() ||
-    localStorage.getItem(THEME_BUILDER_ACCESS_STORAGE_KEY) === "1" ||
-    isCurrentUserThemeBuilderAdmin()
-  );
+  return false;
 }
 
 function ensureThemeBuilderThemeState(themeKey = getCurrentThemeBuilderThemeKey()) {
@@ -32253,15 +32226,14 @@ document.addEventListener("click", async (e) => {
     try{
       if (guestBtn) {
         guestBtn.disabled = true;
-        guestBtn.textContent = "Loading Demo Matches...";
+        guestBtn.textContent = "Opening Workspace...";
       }
 
       setAppEntryChoice("guest");
-      await importDemoMatches();
       closeAuthModal();
     } catch (error) {
       localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
-      alert(error?.message || "Unable to load guest demo data");
+      alert(error?.message || "Unable to open guest mode");
     } finally {
       if (guestBtn) {
         guestBtn.disabled = false;
@@ -32526,22 +32498,16 @@ async function importActiveProfileMatches(options = {}){
   const profile = getActiveProfile();
   if(!profile) throw new Error("No active profile");
   if(!profile.riotId) throw new Error("Set Riot ID first");
-  const allowDemoFallback = options.allowDemoFallback !== false;
+  const allowDemoFallback = false;
 
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
     const health = await healthRes.json().catch(() => ({}));
 
     if (!healthRes.ok || health?.configured === false) {
-      if (allowDemoFallback) {
-        return importDemoMatches();
-      }
       throw new Error("Riot sync is not configured");
     }
   } catch (_error) {
-    if (allowDemoFallback) {
-      return importDemoMatches();
-    }
     throw new Error("Riot sync is unavailable");
   }
 
@@ -32597,7 +32563,7 @@ async function importActiveProfileMatches(options = {}){
 
 async function syncActiveProfileMatches(options = {}){
   const result = await importActiveProfileMatches({
-    allowDemoFallback: options.allowDemoFallback !== false
+    allowDemoFallback: false
   });
   updateRRMatchStats(matches[matches.length - 1] || null);
   return {
