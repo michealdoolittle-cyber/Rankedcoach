@@ -229,8 +229,8 @@ function updateImpactRolePill(match = null, matchIndex = null) {
 // GLOBAL APP SCALE
 // ========================
 
-const APP_BASE_WIDTH = 2799;
-const APP_BASE_HEIGHT = 1440;
+const APP_BASE_WIDTH = 1920;
+const APP_BASE_HEIGHT = 1080;
 const LARGE_VIEWPORT_WIDTH_THRESHOLD = 2300;
 const LARGE_VIEWPORT_HEIGHT_THRESHOLD = 1300;
 const LARGE_VIEWPORT_DEVICE_PIXEL_BUDGET = 3200000;
@@ -4081,7 +4081,27 @@ function setAppEntryChoice(mode = "guest") {
 }
 
 async function ensureGuestDemoMatches() {
-  return null;
+  if (window.__vtGuestDemoHydrationPromise) {
+    return window.__vtGuestDemoHydrationPromise;
+  }
+
+  const entryChoice = localStorage.getItem(APP_ENTRY_CHOICE_KEY);
+  const active = getActiveProfile();
+  const hasMatches = Array.isArray(active?.matches) && active.matches.length > 0;
+
+  if (entryChoice !== "guest" || hasMatches) {
+    return null;
+  }
+
+  window.__vtGuestDemoHydrationPromise = (async () => {
+    try {
+      await importDemoMatches();
+    } catch (error) {
+      console.warn("Guest demo hydration failed", error);
+    }
+  })();
+
+  return window.__vtGuestDemoHydrationPromise;
 }
 
 function maybeOpenInitialAuthGate() {
@@ -4192,6 +4212,7 @@ const CHART_ANIM_DURATION = 430;
 
 let currentSize = 5;
 let lastMatchesLength = 0;
+let lastChartRenderSignature = "";
 
 let chartAnimating = false;
 let chartBusy = false;
@@ -4202,6 +4223,15 @@ let undoDirection = false;
 let skipNextChartAnimation = false;
 let forceChartIntroAnimation = false;
 let pendingUndoCommit = false;
+let pendingChartAnimationMode = null;
+
+const CHART_ANIMATION_MODE_EMPHASIS = "intro-emphasis";
+const CHART_ANIMATION_MODE_CONTINUOUS = "intro-continuous";
+const CHART_ANIMATION_MODE_LATEST_ONLY = "latest-only";
+
+function queueChartAnimationMode(mode = null) {
+  pendingChartAnimationMode = mode || null;
+}
 
 let selectedDot = null;
 let selectedTimelineMatchIndex = null;
@@ -4337,6 +4367,7 @@ function hideChartTooltip(){
   }
   const tip = tooltip || document.getElementById("chartTooltip");
   if (tip) {
+    tip.classList.remove("chart-tooltip-pop");
     tip.style.opacity = 0;
     tip.style.visibility = "hidden";
   }
@@ -4346,7 +4377,16 @@ function hideChartTooltip(){
   }
 }
 
-function positionTooltipToHit(hit){
+function animateChartTooltipPop() {
+  const tip = ensureChartTooltipLayer();
+  if (!tip) return;
+  tip.classList.remove("chart-tooltip-pop");
+  void tip.offsetWidth;
+  tip.classList.add("chart-tooltip-pop");
+}
+
+function positionTooltipToHit(hit, options = {}){
+  const { pop = false } = options;
 
   const tip = ensureChartTooltipLayer();
   if(!tip || !chartRow || !hit) return;
@@ -4384,11 +4424,15 @@ function positionTooltipToHit(hit){
 
   if (flipBelow) {
     tip.style.top = Math.min(window.innerHeight - viewportPad - tipHeight, y + DOT_CLEARANCE_BELOW) + "px";
-    tip.style.transform = "translate(-50%, 0%)";
+    tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, 0%)");
+    tip.style.transform = "var(--chart-tooltip-base-transform)";
   } else {
     tip.style.top = Math.max(viewportPad + tipHeight, y - DOT_CLEARANCE_ABOVE) + "px";
-    tip.style.transform = "translate(-50%, -100%)";
+    tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -100%)");
+    tip.style.transform = "var(--chart-tooltip-base-transform)";
   }
+
+  if (pop) animateChartTooltipPop();
 
 }
 
@@ -5512,7 +5556,7 @@ function buildDotMarkup(point, { final = false, intro = false, introDelayMs = 0 
 
   const snapshot = point.snapshot || {};
   const fill = snapshot?.impactColor || (final ? "#facc15" : "#e5e7eb");
-  const dotClass = `${final ? "final-end" : "rr-dot"}${intro ? " chart-intro-dot" : ""}`;
+  const dotClass = `${final ? "final-end" : "rr-dot"}${intro ? " chart-intro-dot" : ""}${final && intro ? " chart-intro-dot-final" : ""}`;
   const matchStats = {
     kills: Number.isFinite(Number(snapshot?.kills)) ? Number(snapshot.kills) : getMatchPanelStats(point.match || {}).kills,
     deaths: Number.isFinite(Number(snapshot?.deaths)) ? Number(snapshot.deaths) : getMatchPanelStats(point.match || {}).deaths,
@@ -5533,6 +5577,10 @@ data-impact-score="${Number.isFinite(Number(snapshot?.impactScore)) ? Math.round
 data-impact-color="${escapeHtml(snapshot?.impactColor || "")}"
 data-match-id="${escapeHtml(point?.matchId || snapshot?.id || point?.match?.id || point?.match?.matchId || "")}"
 data-match-key="${escapeHtml(point?.matchKey || "")}"`;
+
+  const introStyle = intro
+    ? `--intro-delay:${introDelayMs}ms;opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;`
+    : "";
 
   return `
 <circle class="rr-hit"
@@ -5558,7 +5606,7 @@ data-match-key="${escapeHtml(point?.matchKey || "")}"
 data-impact-tier="${escapeHtml(snapshot?.impactTier || "")}"
 data-impact-score="${Number.isFinite(Number(snapshot?.impactScore)) ? Math.round(Number(snapshot?.impactScore)) : ""}"
 fill="${fill}"
-style="${intro ? `--intro-delay:${introDelayMs}ms;` : ""}"/>`;
+style="${introStyle}"/>`;
 }
 
 function buildXTicks(points, sliceLength, matchCount) {
@@ -7445,6 +7493,7 @@ function refreshActiveModalState() {
   );
 
   body.classList.toggle("has-active-modal", hasActiveModal);
+  if (hasActiveModal) hideChartTooltip();
 }
 
 function showModalById(id) {
@@ -21002,6 +21051,7 @@ function initApp(){
   bindInsightFilters();
 
   setTimeout(() => {
+    queueChartAnimationMode(CHART_ANIMATION_MODE_EMPHASIS);
     renderChart(currentSize);
   }, 0);
 
@@ -22340,7 +22390,14 @@ function isCurrentUserThemeBuilderAdmin(user = currentAuthUser) {
 }
 
 function shouldShowThemeBuilder() {
-  return false;
+  syncThemeBuilderAccessFromUrl();
+  const params = getThemeBuilderUrlParams();
+  if (params.has("hideThemeBuilder")) return false;
+  return Boolean(
+    isLocalThemeBuilderHost() ||
+    localStorage.getItem(THEME_BUILDER_ACCESS_STORAGE_KEY) === "1" ||
+    isCurrentUserThemeBuilderAdmin()
+  );
 }
 
 function ensureThemeBuilderThemeState(themeKey = getCurrentThemeBuilderThemeKey()) {
@@ -24592,6 +24649,16 @@ function installThemeBuilderStyles() {
 }
 
 function buildThemeBuilderRuntimeCss() {
+  const homeBaselineScale = "var(--app-1080-scale)";
+  const homeBaselineViewport = true;
+  const homeBaselineSnapshotDisabledParents = new Set([
+    "weekly-focus-card",
+    "improvement-card",
+    "loadout-card",
+    "compass-main",
+    "rr-card",
+    "rr-chart-card"
+  ]);
   return Object.entries(themeBuilderState)
     .map(([themeKey, themeState]) => {
       const enableAdvancedElements = isThemeBuilderAdvancedElementsEnabled();
@@ -24784,7 +24851,7 @@ function buildThemeBuilderRuntimeCss() {
           chunks.push(`${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card #chartRow svg")}{transform:none !important; width:100% !important; height:100% !important; max-width:none !important; max-height:none !important;}`);
         }
 
-        if (hasElementStateForConfig) {
+        if (hasElementStateForConfig && !homeBaselineSnapshotDisabledParents.has(config.id)) {
           getThemeBuilderCachedElementTargets(config, elementTargetCache).forEach((target) => {
             const savedElementState = parentElementStates[target.id] || {};
             const activeElementState = getThemeBuilderElementOverrideState(target, savedElementState, elementDefaultsCache);
@@ -24796,6 +24863,78 @@ function buildThemeBuilderRuntimeCss() {
         }
 
       });
+
+      if (homeBaselineViewport) {
+        chunks.push(
+          `${scopeThemeBuilderSelectorList(themeKey, ".home-layout")}{grid-template-rows:minmax(calc(196px * ${homeBaselineScale}), auto) minmax(0, 1fr) calc(296px * ${homeBaselineScale}) !important; gap:calc(6px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row")}{grid-template-columns:minmax(calc(300px * ${homeBaselineScale}), 1.02fr) minmax(calc(336px * ${homeBaselineScale}), 1.08fr) minmax(calc(252px * ${homeBaselineScale}), .84fr) !important; gap:calc(6px * ${homeBaselineScale}) !important; min-height:0 !important; align-items:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".home-middle-row > .loadout-card, .home-middle-row > .compass-panel, .home-middle-row > .rr-card")}{min-height:0 !important; height:100% !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-main")}{grid-template-columns:minmax(calc(146px * ${homeBaselineScale}), 1fr) calc(68px * ${homeBaselineScale}) minmax(calc(146px * ${homeBaselineScale}), 1.04fr) !important; grid-template-rows:calc(132px * ${homeBaselineScale}) auto !important; grid-template-areas:\"roles spin reel\" \"info info info\" !important; column-gap:calc(7px * ${homeBaselineScale}) !important; row-gap:calc(6px * ${homeBaselineScale}) !important; justify-content:stretch !important; align-content:stretch !important; justify-items:stretch !important; zoom:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .role-filter-row")}{display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; grid-template-rows:repeat(3, minmax(0, 1fr)) !important; width:100% !important; min-width:0 !important; height:calc(132px * ${homeBaselineScale}) !important; min-height:calc(132px * ${homeBaselineScale}) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info")}{grid-column:1 / -1 !important; grid-row:2 !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .home-loadout-pill")}{padding:calc(5px * ${homeBaselineScale}) calc(10px * ${homeBaselineScale}) !important; min-height:calc(40px * ${homeBaselineScale}) !important; align-items:center !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-label")}{font-size:calc(11px * ${homeBaselineScale}) !important; line-height:1 !important; min-width:calc(60px * ${homeBaselineScale}) !important; display:flex !important; align-items:center !important; justify-content:center !important; text-align:center !important; align-self:center !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card .home-loadout-info .pill-value, .loadout-card .home-loadout-info #agentName, .loadout-card .home-loadout-info #focusDisplay")}{font-size:calc(17px * ${homeBaselineScale}) !important; display:flex !important; align-items:center !important; line-height:1 !important; flex:1 1 auto !important; width:100% !important; margin-left:auto !important; text-align:right !important; justify-content:flex-end !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn")}{font-size:calc(10px * ${homeBaselineScale}) !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; padding:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #roleButtons .role-filter-btn img")}{width:calc(24px * ${homeBaselineScale}) !important; height:calc(24px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn")}{width:100% !important; min-width:calc(68px * ${homeBaselineScale}) !important; height:calc(132px * ${homeBaselineScale}) !important; min-height:calc(132px * ${homeBaselineScale}) !important; border-radius:calc(14px * ${homeBaselineScale}) !important; justify-self:stretch !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{width:auto !important; min-width:0 !important; max-width:100% !important; height:100% !important; min-height:calc(132px * ${homeBaselineScale}) !important; aspect-ratio:1 / 1 !important; justify-self:center !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner, .loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header")}{display:grid !important; grid-template-columns:minmax(0, 1fr) auto !important; gap:calc(8px * ${homeBaselineScale}) !important; align-items:start !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header > div:first-child")}{display:flex !important; flex-direction:column !important; gap:calc(2px * ${homeBaselineScale}) !important; min-width:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header .card-title")}{font-size:calc(9px * ${homeBaselineScale}) !important; line-height:1.02 !important; margin:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header #compassProfileCopy")}{font-size:calc(8px * ${homeBaselineScale}) !important; line-height:1.02 !important; --tb-auto-fit-font-size:calc(8px * ${homeBaselineScale}) !important; max-width:none !important; width:100% !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header .compass-source-pill")}{font-size:calc(8px * ${homeBaselineScale}) !important; padding:calc(3px * ${homeBaselineScale}) calc(5px * ${homeBaselineScale}) !important; min-height:0 !important; white-space:nowrap !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell")}{display:flex !important; flex-direction:column !important; grid-template-columns:none !important; gap:calc(5px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell, .compass-main .compass-summary-shell .compass-summary-copy, .compass-main .compass-summary-shell .compass-profile-kicker, .compass-main .compass-summary-shell .compass-profile-title, .compass-main .compass-summary-shell .compass-profile-meta, .compass-main .compass-summary-shell .compass-profile-meta span, .compass-main .compass-summary-shell .compass-summary-body, .compass-main .compass-summary-shell .compass-cards-grid, .compass-main .compass-summary-shell .compass-svg-wrap, .compass-main .compass-summary-shell .compass-score-card, .compass-main .compass-summary-shell .compass-card-top, .compass-main .compass-summary-shell .compass-card-score-row, .compass-main .compass-summary-shell #compassCardAim, .compass-main .compass-summary-shell #compassCardSense, .compass-main .compass-summary-shell #compassCardTeam, .compass-main .compass-summary-shell #compassCardDiscipline")}{position:relative !important; left:auto !important; top:auto !important; width:auto !important; height:auto !important; min-width:0 !important; min-height:0 !important; margin:0 !important; translate:none !important; scale:none !important; transform:none !important; zoom:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell")}{padding:calc(5px * ${homeBaselineScale}) calc(6px * ${homeBaselineScale}) !important; flex:0 0 auto !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-copy")}{display:grid !important; grid-template-columns:minmax(0, 1fr) auto !important; grid-template-areas:"kicker kicker" "title meta" "button button" "desc desc" !important; column-gap:calc(6px * ${homeBaselineScale}) !important; row-gap:calc(3px * ${homeBaselineScale}) !important; align-items:center !important; min-height:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-profile-kicker")}{grid-area:kicker !important; font-size:calc(8px * ${homeBaselineScale}) !important; line-height:1.02 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-body")}{display:grid !important; grid-template-columns:minmax(52%, 1fr) minmax(calc(124px * ${homeBaselineScale}), .82fr) !important; gap:calc(8px * ${homeBaselineScale}) !important; align-items:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-cards-grid")}{grid-template-columns:repeat(2, minmax(0, 1fr)) !important; grid-template-rows:repeat(2, minmax(0, 1fr)) !important; gap:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-cards-grid")}{width:100% !important; max-width:none !important; min-width:0 !important; justify-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-score-card")}{width:100% !important; min-width:0 !important; padding:calc(4px * ${homeBaselineScale}) calc(4px * ${homeBaselineScale}) !important; gap:calc(2px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-profile-title")}{grid-area:title !important; font-size:calc(11px * ${homeBaselineScale}) !important; line-height:1.02 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-profile-meta")}{grid-area:meta !important; display:flex !important; flex-wrap:nowrap !important; gap:calc(3px * ${homeBaselineScale}) !important; align-items:stretch !important; justify-self:end !important; align-self:center !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-profile-meta span")}{font-size:calc(11px * ${homeBaselineScale}) !important; padding:calc(3px * ${homeBaselineScale}) calc(5px * ${homeBaselineScale}) !important; line-height:1.05 !important; max-width:none !important; display:flex !important; flex:0 0 auto !important; width:max-content !important; min-width:max-content !important; justify-content:center !important; text-align:center !important; white-space:nowrap !important; overflow:visible !important; text-overflow:clip !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-description-toggle")}{grid-area:button !important; min-height:calc(24px * ${homeBaselineScale}) !important; font-size:calc(9px * ${homeBaselineScale}) !important; padding:0 calc(8px * ${homeBaselineScale}) !important; margin-top:calc(2px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-profile-description")}{grid-area:desc !important; min-height:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell.is-expanded .compass-summary-top-shell")}{display:flex !important; flex-direction:column !important; min-height:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell.is-expanded .compass-summary-copy")}{flex:1 1 auto !important; min-height:0 !important; grid-template-rows:auto auto auto minmax(0, 1fr) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell.is-expanded .compass-profile-description")}{display:block !important; min-height:0 !important; max-height:none !important; overflow:auto !important; padding-right:calc(4px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-card-label")}{font-size:calc(8px * ${homeBaselineScale}) !important; line-height:1.03 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-card-score-row")}{gap:calc(2px * ${homeBaselineScale}) !important; font-size:calc(8px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-card-score-row strong")}{font-size:calc(12px * ${homeBaselineScale}) !important; line-height:.96 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-svg-wrap")}{padding:0 !important; width:100% !important; min-width:0 !important; min-height:0 !important; height:100% !important; display:flex !important; align-items:stretch !important; justify-content:stretch !important; align-self:stretch !important; justify-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-svg-wrap svg, .compass-main .compass-summary-shell .sw-compass-mini")}{max-width:none !important; max-height:none !important; min-width:0 !important; min-height:0 !important; width:100% !important; height:100% !important; flex:1 1 auto !important; align-self:stretch !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills")}{translate:none !important; scale:none !important; transform:none !important; zoom:1 !important; height:100% !important; min-height:0 !important; gap:calc(6px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills .weekly-focus-pill, .weekly-focus-card .weekly-focus-pills .weekly-focus-pill-head, .weekly-focus-card .weekly-focus-pills .weekly-focus-key, .weekly-focus-card .weekly-focus-pills .weekly-focus-confidence, .weekly-focus-card .weekly-focus-pills .weekly-focus-text")}{position:relative !important; left:auto !important; top:auto !important; width:auto !important; height:auto !important; min-width:0 !important; min-height:0 !important; margin:0 !important; translate:none !important; scale:none !important; transform:none !important; zoom:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills .weekly-focus-pill")}{justify-content:flex-start !important; gap:calc(2px * ${homeBaselineScale}) !important; padding:calc(7px * ${homeBaselineScale}) calc(10px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills .weekly-focus-pill-head")}{align-items:flex-start !important; gap:calc(8px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills .weekly-focus-key")}{font-size:calc(10px * ${homeBaselineScale}) !important; line-height:1.02 !important; letter-spacing:.06em !important; white-space:normal !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills .weekly-focus-confidence")}{font-size:calc(10px * ${homeBaselineScale}) !important; min-height:calc(22px * ${homeBaselineScale}) !important; padding:calc(3px * ${homeBaselineScale}) calc(7px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".weekly-focus-card .weekly-focus-pills .weekly-focus-text")}{font-size:calc(13px * ${homeBaselineScale}) !important; line-height:1.02 !important; --tb-auto-fit-font-size:calc(13px * ${homeBaselineScale}) !important; flex:0 0 auto !important; white-space:normal !important; letter-spacing:normal !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card")}{grid-template-columns:minmax(calc(92px * ${homeBaselineScale}), .72fr) minmax(calc(126px * ${homeBaselineScale}), .84fr) minmax(calc(170px * ${homeBaselineScale}), 1fr) !important; gap:calc(6px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card > .card-header")}{min-height:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card .scoreboard .scorebox")}{padding:calc(8px * ${homeBaselineScale}) calc(6px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card .scoreboard .small")}{font-size:calc(10px * ${homeBaselineScale}) !important; line-height:1.04 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card .scoreboard .score-num")}{font-size:calc(18px * ${homeBaselineScale}) !important; line-height:1 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card .rr-total")}{gap:calc(4px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card #totalRRDisplay")}{font-size:calc(40px * ${homeBaselineScale}) !important; line-height:.9 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-card .impact-role-pill")}{min-height:calc(34px * ${homeBaselineScale}) !important; font-size:calc(11px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(8px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card")}{height:calc(296px * ${homeBaselineScale}) !important; min-height:calc(296px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-chart-layout")}{grid-template-columns:calc(82px * ${homeBaselineScale}) minmax(0, 1fr) calc(164px * ${homeBaselineScale}) !important; height:100% !important; min-height:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .home-chart-wrap")}{height:100% !important; min-height:calc(232px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-match-stats")}{max-width:calc(164px * ${homeBaselineScale}) !important; background:linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 92%, white 8%), var(--button-bg)) !important; border:1px solid color-mix(in srgb, var(--accent) 12%, var(--border-soft)) !important; box-shadow:0 10px 24px rgba(2,6,23,.18) !important; border-radius:calc(10px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-match-stats-head")}{min-height:calc(48px * ${homeBaselineScale}) !important; padding:calc(8px * ${homeBaselineScale}) calc(10px * ${homeBaselineScale}) !important; border-radius:calc(10px * ${homeBaselineScale}) !important; display:flex !important; flex-direction:column !important; justify-content:flex-start !important; align-items:flex-start !important; gap:calc(1px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-match-stats-title")}{font-size:calc(13px * ${homeBaselineScale}) !important; margin:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-match-stats-meta")}{font-size:calc(12px * ${homeBaselineScale}) !important; line-height:1.18 !important; margin:0 !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-stat")}{min-height:calc(40px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) calc(10px * ${homeBaselineScale}) !important; border-radius:calc(10px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-stat span")}{font-size:calc(10px * ${homeBaselineScale}) !important;}`,
+          `${scopeThemeBuilderSelectorList(themeKey, ".rr-chart-card .rr-stat strong")}{font-size:calc(14px * ${homeBaselineScale}) !important;}`
+        );
+      }
 
       return chunks.join("\n");
     })
@@ -24925,6 +25064,19 @@ function isThemeBuilderAutoFitCandidate(element) {
   if (THEME_BUILDER_AUTO_FIT_EXCLUDED_TAGS.has(element.tagName)) return false;
   if (element.closest("#themeBuilderDock")) return false;
   if (element.isContentEditable) return false;
+  const owningPage = element.closest(".page");
+  if (owningPage instanceof HTMLElement) {
+    if (!owningPage.classList.contains("active")) return false;
+    if (owningPage.id !== "page-home") return false;
+  }
+  if (
+    element.id === "compassProfileCopy" ||
+    element.id === "improvementCardSub" ||
+    element.classList?.contains("weekly-focus-key") ||
+    element.classList?.contains("weekly-focus-text")
+  ) {
+    return false;
+  }
   const computed = getComputedStyle(element);
   if (computed.display === "none" || computed.visibility === "hidden" || Number.parseFloat(computed.opacity || "1") === 0) {
     return false;
@@ -24970,8 +25122,28 @@ function fitThemeBuilderAutoFitElement(element) {
   const metrics = getThemeBuilderAutoFitContainerMetrics(element);
   const widthLimit = Math.max(12, metrics.width);
   const heightLimit = Math.max(8, metrics.height);
-  const minFontSize = Math.max(10, baseFontSize * 0.6);
-  const maxFontSize = Math.max(minFontSize, baseFontSize * 1.28);
+  let minFontSize = Math.max(10, baseFontSize * 0.6);
+  let maxFontSize = Math.max(minFontSize, baseFontSize * 1.28);
+
+  // Keep the home compass summary copy aligned with the 1440 baseline when the
+  // app is rendered on a 1080-height viewport. The generic auto-fit logic
+  // tends to enlarge this block too aggressively on the smaller canvas.
+  if (
+    element.id === "compassProfileCopy" &&
+    (window.innerHeight || document.documentElement.clientHeight || 0) <= 1100
+  ) {
+    minFontSize = Math.min(minFontSize, 14);
+    maxFontSize = Math.min(Math.max(minFontSize, 17), maxFontSize);
+  }
+
+  if (
+    element.classList?.contains("weekly-focus-key") &&
+    (window.innerHeight || document.documentElement.clientHeight || 0) <= 1100
+  ) {
+    minFontSize = Math.min(minFontSize, 10);
+    maxFontSize = Math.min(Math.max(minFontSize, 11), maxFontSize);
+  }
+
   const fitsAt = (fontSize) => {
     element.style.setProperty("--tb-auto-fit-font-size", `${Math.round(fontSize * 100) / 100}px`);
     element.setAttribute("data-tb-auto-fit", "1");
@@ -27373,12 +27545,6 @@ function bindEvents(){
     handleAddProfile();
   });
 
-  document.querySelectorAll(".nav-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      activatePage(btn.dataset.page);
-    });
-  });
-
   document.querySelectorAll(".role-filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".role-filter-btn").forEach(b => b.classList.remove("active"));
@@ -27645,31 +27811,7 @@ function bindEvents(){
     spinLoadout();
   });
 
-  addWinBtn?.addEventListener("click", () => {
-    const v = safeNumber(rrInput?.value);
-    addRRChange(Math.abs(v), { result: "win" });
-  });
-
-  addLossBtn?.addEventListener("click", () => {
-    const v = safeNumber(rrInput?.value);
-    addRRChange(-Math.abs(v), { result: "loss" });
-  });
-
-  addDrawBtn?.addEventListener("click", () => {
-    addRRChange(0, { result: "draw" });
-  });
-
-  undoBtn?.addEventListener("click", () => {
-    undoLastMatch();
-  });
-
-  document.querySelectorAll(".graph-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".graph-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      renderChart(btn.dataset.size || "5");
-    });
-  });
+  bindRRButtons();
 
   bindInsightTrendRows();
 }
@@ -28459,7 +28601,8 @@ function openTimelineStatsModal(itemKey = "") {
   if (!target) return;
   const currentValue = escapeHtml(target.format(target.value));
   const changeValue = escapeHtml(formatTimelineDelta(target));
-  const trendValue = escapeHtml(getTimelineToneFromDelta(target.delta).replace(/^./, char => char.toUpperCase()));
+  const trendTone = getTimelineToneFromDelta(target.delta);
+  const trendValue = escapeHtml(trendTone.replace(/^./, char => char.toUpperCase()));
   const scopeValue = escapeHtml(scope.scopeDetail);
   const comparisonValue = escapeHtml(target.comparisonLabel || "Recent role window compared against the earlier role baseline.");
   const sourceValue = escapeHtml(target.sourceLabel || "Derived from Riot match history and/or Logging inside the selected scope.");
@@ -28472,8 +28615,8 @@ function openTimelineStatsModal(itemKey = "") {
       <h3 class="timeline-insight-signal">${escapeHtml(target.label)}</h3>
       <div class="timeline-insight-meta">
         <span class="timeline-insight-chip">Current ${currentValue}</span>
-        <span class="timeline-insight-chip">${changeValue}</span>
-        <span class="timeline-insight-chip">${trendValue}</span>
+        <span class="timeline-insight-chip is-${trendTone}">${changeValue}</span>
+        <span class="timeline-insight-chip is-${trendTone}">${trendValue}</span>
       </div>
     </section>
     <section class="timeline-insight-grid">
@@ -28596,6 +28739,38 @@ let selectedLogRating = null;
 let selectedLogMood = null;
 let selectedLogTeamComms = null;
 let selectedLogSelfComms = null;
+let loggingFeedRendered = false;
+let loggingFeedDirty = true;
+let loggingFeedRenderRaf = 0;
+
+function isLoggingPageActive() {
+  return Boolean(document.querySelector("#page-logging.active"));
+}
+
+function cancelScheduledLoggingFeedRender() {
+  if (loggingFeedRenderRaf) {
+    cancelAnimationFrame(loggingFeedRenderRaf);
+    loggingFeedRenderRaf = 0;
+  }
+}
+
+function markLoggingFeedDirty() {
+  loggingFeedDirty = true;
+}
+
+function scheduleLoggingFeedRender(options = {}) {
+  const force = options.force === true;
+  if (!force && !isLoggingPageActive()) {
+    markLoggingFeedDirty();
+    return;
+  }
+
+  cancelScheduledLoggingFeedRender();
+  loggingFeedRenderRaf = requestAnimationFrame(() => {
+    loggingFeedRenderRaf = 0;
+    renderLogFeed({ force: true });
+  });
+}
 
 function isFirstGameOfCurrentSession() {
   const todayKey = new Date().toISOString().slice(0, 10);
@@ -29064,14 +29239,22 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
 // LOG FEED RENDER
 // ========================
 
-function renderLogFeed(){
+function renderLogFeed(options = {}){
 
   const container = document.getElementById("logFeed");
   if(!container) return;
 
+  const force = options.force === true;
+  if (!force && !isLoggingPageActive()) {
+    markLoggingFeedDirty();
+    return;
+  }
+
   renderLogSessionSelector();
   updateWarmupQuickChipState();
   container.innerHTML = "";
+  loggingFeedDirty = false;
+  loggingFeedRendered = true;
 
   if(!logEntries.length){
     container.innerHTML = `
@@ -29086,6 +29269,7 @@ function renderLogFeed(){
     activeLogSessionFilter === "all" || session.key === activeLogSessionFilter
   );
 
+  const fragment = document.createDocumentFragment();
   sessions.forEach(session => {
     const sessionWrap = document.createElement("div");
     sessionWrap.className = "log-session-group";
@@ -29195,8 +29379,10 @@ function renderLogFeed(){
 
     });
 
-    container.appendChild(sessionWrap);
+    fragment.appendChild(sessionWrap);
   });
+
+  container.appendChild(fragment);
 
 }
 
@@ -30154,6 +30340,14 @@ function activatePage(pageId){
     requestAnimationFrame(() => replayOpenInsightTrendAnimation());
   }
 
+  if (pageId === "logging") {
+    scheduleLoggingFeedRender({ force: true });
+  } else {
+    cancelScheduledLoggingFeedRender();
+  }
+
+  scheduleThemeBuilderAutoFitText({ resetBase: true });
+
   updateNavUnderline();
 }
 
@@ -30565,6 +30759,9 @@ function renderChart(size = currentSize){
   cancelChartFrame();
 
   chartAnimating = false;
+  const previousSize = currentSize;
+  const animationMode = pendingChartAnimationMode;
+  pendingChartAnimationMode = null;
   currentSize = size;
 
   const showDots = Number(size) < 50;
@@ -30588,13 +30785,35 @@ if(chartHeight){
 }
   chartBusy = true;
 
+  const cumulative=buildCumulativeRR(matches);
+
+  const slice=getChartSlice(
+    cumulative,
+    size,
+    matches.length
+  );
+  const chartRenderSignature = `${size}|${matches.length}|${slice.join(",")}`;
+
   const isUndo = isUndoAnimating === true;
-  const shouldAnimateIntro = Boolean(forceChartIntroAnimation && !isUndo);
+  const scopeChanged = String(size) !== String(previousSize);
+  const shouldAnimateIntro = Boolean(
+    !isUndo && (
+      animationMode === CHART_ANIMATION_MODE_EMPHASIS ||
+      animationMode === CHART_ANIMATION_MODE_CONTINUOUS ||
+      forceChartIntroAnimation ||
+      scopeChanged
+    )
+  );
+  const useContinuousIntro = animationMode === CHART_ANIMATION_MODE_CONTINUOUS;
+  const shouldAnimateLatestOnly = Boolean(
+    !isUndo && animationMode === CHART_ANIMATION_MODE_LATEST_ONLY
+  );
 
   const shouldAnimate =
     isUndo ||
+    shouldAnimateLatestOnly ||
     (!skipNextChartAnimation &&
-     matches.length !== lastMatchesLength);
+     chartRenderSignature !== lastChartRenderSignature);
 	 
   PAD_LEFT = CHART_W * 0.055;
   PAD_RIGHT = CHART_W * 0.055;
@@ -30609,6 +30828,7 @@ if(!matches || !matches.length){
   updateRRMatchStats(null);
   chartRow.classList.remove("chart-intro-active");
   forceChartIntroAnimation = false;
+  lastChartRenderSignature = `empty:${size}`;
 
   const min = -25;
   const max = 25;
@@ -30703,14 +30923,6 @@ ${xTicks}
   // BUILD DATA
   // ========================
 
-  const cumulative=buildCumulativeRR(matches);
-
-  const slice=getChartSlice(
-    cumulative,
-    size,
-    matches.length
-  );
-
   const bounds=getChartBounds(slice);
 
   const y=makeChartY(
@@ -30738,7 +30950,11 @@ ${xTicks}
 
   let segments="";
   let dots="";
-  const introStepDelay = 72;
+  const introSegmentDurationMs = useContinuousIntro ? 360 : 360;
+  const introFinalPauseMs = useContinuousIntro ? 0 : 120;
+  const introFinalSegmentDurationMs = useContinuousIntro ? 360 : 620;
+  const introDotPopDelayMs = 8;
+  const introSettleMs = 220;
 
   for(let i=0;i<points.length-1;i++){
 
@@ -30757,7 +30973,9 @@ ${xTicks}
     const isLast=i===points.length-2;
 
     const animate=isLast && shouldAnimate && !shouldAnimateIntro;
-    const introDelayMs = i * introStepDelay;
+    const introDelayMs = isLast
+      ? (Math.max(0, points.length - 2) * introSegmentDurationMs) + introFinalPauseMs
+      : i * introSegmentDurationMs;
 
     let cls="segment";
     let style="";
@@ -30765,6 +30983,9 @@ ${xTicks}
     if(shouldAnimateIntro){
 
       cls+=" chart-intro-segment";
+      if(isLast && !useContinuousIntro){
+        cls+=" chart-intro-segment-final";
+      }
       style=`
 --dash:${len};
 stroke-dasharray:${len};
@@ -30806,7 +31027,7 @@ if(showDots){
   dots += buildDotMarkup(b, {
     final: isLast,
     intro: shouldAnimateIntro,
-    introDelayMs: introDelayMs + 180
+    introDelayMs: introDelayMs + (isLast ? introFinalSegmentDurationMs : introSegmentDurationMs) + introDotPopDelayMs
   });
 
 }
@@ -30917,8 +31138,6 @@ crosshair = chartRow.querySelector("#chartCrosshair");
 // clear stale selection when chart rebuilds
 selectedDot = null;
 
-autoSelectLatest();
-
 // ========================
 // ANIMATION
 // ========================
@@ -30931,14 +31150,30 @@ if(shouldAnimateIntro){
     chartRow.classList.add("chart-intro-active");
   });
 
-  const introDuration = Math.max(680, (points.length * introStepDelay) + 520);
+  const finalDotRevealDelay = Math.max(
+    0,
+    (Math.max(0, points.length - 2) * introSegmentDurationMs) +
+    introFinalPauseMs +
+    introFinalSegmentDurationMs +
+    introDotPopDelayMs
+  );
+  const introDuration = Math.max(
+    820,
+    finalDotRevealDelay +
+    introSettleMs
+  );
+  window.setTimeout(() => {
+    autoSelectLatest({ popTooltip: true });
+  }, finalDotRevealDelay);
   window.setTimeout(() => {
     chartBusy = false;
     chartAnimating = false;
+    lastChartRenderSignature = chartRenderSignature;
   }, introDuration);
 
   skipNextChartAnimation = false;
   lastMatchesLength = matches.length;
+  lastChartRenderSignature = chartRenderSignature;
   forceChartIntroAnimation = false;
   isUndoAnimating = false;
   undoDirection = false;
@@ -30984,6 +31219,7 @@ requestAnimationFrame(() => {
 
 }else{
 
+  autoSelectLatest();
   placeStaticGoldDot();
 
   chartBusy = false;
@@ -30991,6 +31227,7 @@ requestAnimationFrame(() => {
 
   skipNextChartAnimation = false;
   lastMatchesLength = matches.length;
+  lastChartRenderSignature = chartRenderSignature;
   forceChartIntroAnimation = false;
 
   isUndoAnimating = false;
@@ -31082,7 +31319,7 @@ chartRow.onclick = e => {
     crosshair.setAttribute("y2", PAD_BOTTOM);
   }
 
-  positionTooltipToHit(hit);
+  positionTooltipToHit(hit, { pop: true });
   updateRRMatchStatsFromHit(hit);
   setSelectedTimelineContext(Number(hit?.dataset?.matchIndex), { animate: true });
 };
@@ -31103,6 +31340,8 @@ function scheduleSelectedChartTooltipPosition() {
 }
 
 window.addEventListener("scroll", scheduleSelectedChartTooltipPosition, { passive: true });
+document.addEventListener("scroll", scheduleSelectedChartTooltipPosition, { capture: true, passive: true });
+window.addEventListener("resize", scheduleSelectedChartTooltipPosition, { passive: true });
 
 // ==============================
 // GOLD DOT HELPERS
@@ -31139,7 +31378,8 @@ function placeStaticGoldDot(){
   svg.appendChild(dot);
 }
 
-function autoSelectLatest(){
+function autoSelectLatest(options = {}){
+  const { popTooltip = false } = options;
 
   const gold = chartRow.querySelector(".final-end");
   const hit  = gold?.previousElementSibling;
@@ -31168,7 +31408,7 @@ function autoSelectLatest(){
     crosshair.setAttribute("y2", PAD_BOTTOM);
   }
 
-  positionTooltipToHit(hit);
+  positionTooltipToHit(hit, { pop: popTooltip });
   updateRRMatchStatsFromHit(hit);
   setSelectedTimelineContext(null, { animate: true });
 }
@@ -31213,6 +31453,19 @@ dot.setAttribute("cy", initialPoint.y);
 
 svg.appendChild(dot);
 
+  const targetX = Number(seg.getAttribute("x2"));
+  const targetY = Number(seg.getAttribute("y2"));
+  const targetDot = Array.from(svg.querySelectorAll(".rr-dot, .final-end")).find((candidate) => {
+    const cx = Number(candidate.getAttribute("cx"));
+    const cy = Number(candidate.getAttribute("cy"));
+    return Math.abs(cx - targetX) < 0.5 && Math.abs(cy - targetY) < 0.5;
+  });
+
+  if (targetDot instanceof SVGElement) {
+    targetDot.style.opacity = "0";
+    targetDot.dataset.chartHiddenDuringFollow = "1";
+  }
+
   seg.style.animationPlayState = "running";
 
   let finished = false;
@@ -31232,6 +31485,12 @@ svg.appendChild(dot);
 
     dot.setAttribute("cx", finalPoint.x);
     dot.setAttribute("cy", finalPoint.y);
+    dot.remove();
+
+    if (targetDot instanceof SVGElement) {
+      targetDot.style.removeProperty("opacity");
+      delete targetDot.dataset.chartHiddenDuringFollow;
+    }
 
     chartAnimating = false;
 
@@ -31253,15 +31512,21 @@ svg.appendChild(dot);
 
       renderChart(currentSize);
       lastMatchesLength = matches.length;
+      lastChartRenderSignature = chartRenderSignature;
 
       return;
     }
 
     chartBusy = false;
     lastMatchesLength = matches.length;
+    lastChartRenderSignature = chartRenderSignature;
     skipNextChartAnimation = false;
     isUndoAnimating = false;
     undoDirection = false;
+
+    if (!reverse && targetDot?.classList?.contains("final-end")) {
+      autoSelectLatest({ popTooltip: true });
+    }
   }
 
   function frame(){
@@ -31697,35 +31962,6 @@ async function initUserSession(){
   }
 
   // ========================
-  // RR INPUT BUTTONS
-  // ========================
-  if (addWinBtn) {
-    addWinBtn.addEventListener("click", () => {
-      const v = safeNumber(rrInput?.value);
-      addRRChange(Math.abs(v), { result: "win" });
-    });
-  }
-
-  if (addLossBtn) {
-    addLossBtn.addEventListener("click", () => {
-      const v = safeNumber(rrInput?.value);
-      addRRChange(-Math.abs(v), { result: "loss" });
-    });
-  }
-
-  if (addDrawBtn) {
-    addDrawBtn.addEventListener("click", () => {
-      addRRChange(0, { result: "draw" });
-    });
-  }
-
-  if (undoBtn) {
-    undoBtn.addEventListener("click", () => {
-      undoLastMatch();
-    });
-  }
-
-  // ========================
   // GRAPH SIZE BUTTONS
   // ========================
   document.querySelectorAll(".graph-btn").forEach(btn => {
@@ -31733,6 +31969,11 @@ async function initUserSession(){
       document.querySelectorAll(".graph-btn").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       const size = btn.dataset.size || "5";
+      queueChartAnimationMode(
+        size === "5"
+          ? CHART_ANIMATION_MODE_EMPHASIS
+          : CHART_ANIMATION_MODE_CONTINUOUS
+      );
       renderChart(size);
     });
   });
@@ -32226,14 +32467,15 @@ document.addEventListener("click", async (e) => {
     try{
       if (guestBtn) {
         guestBtn.disabled = true;
-        guestBtn.textContent = "Opening Workspace...";
+        guestBtn.textContent = "Loading Demo Matches...";
       }
 
       setAppEntryChoice("guest");
+      await importDemoMatches();
       closeAuthModal();
     } catch (error) {
       localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
-      alert(error?.message || "Unable to open guest mode");
+      alert(error?.message || "Unable to load guest demo data");
     } finally {
       if (guestBtn) {
         guestBtn.disabled = false;
@@ -32393,6 +32635,7 @@ function applyImportedMatches(matchList = [], options = {}){
 
   const profile = getActiveProfile();
   if(!profile) return;
+  const hadNoMatchesBeforeImport = !Array.isArray(matches) || matches.length === 0;
 
   const previousTotal = (matches || []).reduce((sum, match) => sum + safeNumber(match?.rr), 0);
 
@@ -32447,6 +32690,12 @@ function applyImportedMatches(matchList = [], options = {}){
   updateDisplays();
   updateNavRRToRank();
   updateNavRRToGoalRank();
+  if (hadNoMatchesBeforeImport && normalized.length > 0) {
+    forceChartIntroAnimation = true;
+    queueChartAnimationMode(CHART_ANIMATION_MODE_EMPHASIS);
+  } else if (options.animationMode) {
+    queueChartAnimationMode(options.animationMode);
+  }
   renderChart(currentSize);
   scheduleRiotAutoSync();
 }
@@ -32498,16 +32747,22 @@ async function importActiveProfileMatches(options = {}){
   const profile = getActiveProfile();
   if(!profile) throw new Error("No active profile");
   if(!profile.riotId) throw new Error("Set Riot ID first");
-  const allowDemoFallback = false;
+  const allowDemoFallback = options.allowDemoFallback !== false;
 
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
     const health = await healthRes.json().catch(() => ({}));
 
     if (!healthRes.ok || health?.configured === false) {
+      if (allowDemoFallback) {
+        return importDemoMatches();
+      }
       throw new Error("Riot sync is not configured");
     }
   } catch (_error) {
+    if (allowDemoFallback) {
+      return importDemoMatches();
+    }
     throw new Error("Riot sync is unavailable");
   }
 
@@ -32536,7 +32791,10 @@ async function importActiveProfileMatches(options = {}){
     }
 
     applyImportedMatches(matchList, {
-      source: "riot"
+      source: "riot",
+      animationMode: options.mode === "refresh"
+        ? CHART_ANIMATION_MODE_LATEST_ONLY
+        : null
     });
 
     return {
@@ -32563,7 +32821,7 @@ async function importActiveProfileMatches(options = {}){
 
 async function syncActiveProfileMatches(options = {}){
   const result = await importActiveProfileMatches({
-    allowDemoFallback: false
+    allowDemoFallback: options.allowDemoFallback !== false
   });
   updateRRMatchStats(matches[matches.length - 1] || null);
   return {
