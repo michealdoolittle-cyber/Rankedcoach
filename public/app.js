@@ -198,8 +198,8 @@ function getImpactRoleLabel(match = null, matchIndex = null) {
   const agent = core?.agent || agentName?.textContent || "";
   const role = String(agentRoles?.[agent] || "").trim();
   const roleLabel = role
-    ? `${role.charAt(0).toUpperCase()}${role.slice(1)} view`
-    : "Role view";
+    ? `${role.charAt(0).toUpperCase()}${role.slice(1)} Match`
+    : "Role Match";
 
   if (Number.isInteger(matchIndex) && matchIndex >= 0) {
     const latestIndex = Math.max(0, matches.length - 1);
@@ -2340,12 +2340,68 @@ function getWeaponRoundRates(rounds = []) {
     .sort((a, b) => b.conversionPct - a.conversionPct || b.rounds - a.rounds);
 }
 
+const STATS_WEAPON_FAMILIES = [
+  { key: "rifle", typeKey: "rifle", label: "Rifle", weapons: ["Bulldog", "Guardian", "Phantom", "Vandal"] },
+  { key: "pistol", typeKey: "pistol", label: "Pistol", weapons: ["Classic", "Shorty", "Frenzy", "Ghost", "Sheriff"] },
+  { key: "shotgun", typeKey: "shotgun", label: "Shotgun", weapons: ["Bucky", "Judge"] },
+  { key: "smg", typeKey: "smg", label: "SMG", weapons: ["Stinger", "Spectre"] },
+  { key: "sniper", typeKey: "sniper", label: "Sniper", weapons: ["Marshal", "Outlaw", "Operator"] }
+];
+
+function normalizeStatsWeaponKey(value = "") {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function getStatsWeaponMeta(value = "") {
+  const key = normalizeStatsWeaponKey(value);
+  if (!key) return null;
+
+  for (const family of STATS_WEAPON_FAMILIES) {
+    const weapon = family.weapons.find(name => normalizeStatsWeaponKey(name) === key);
+    if (weapon) {
+      return {
+        key,
+        name: weapon,
+        familyKey: family.key,
+        typeKey: family.typeKey,
+        familyLabel: family.label,
+        family
+      };
+    }
+  }
+
+  return null;
+}
+
+function getStatsWeaponFamilyMeta(value = "") {
+  const key = normalizeStatsWeaponKey(value);
+  if (!key) return null;
+  if (key === "sidearm") return STATS_WEAPON_FAMILIES.find(family => family.key === "pistol") || null;
+  return STATS_WEAPON_FAMILIES.find(family => family.key === key || family.typeKey === key) || getStatsWeaponMeta(value)?.family || null;
+}
+
+function getStatsWeaponAssetPath(value = "") {
+  const meta = getStatsWeaponMeta(value);
+  return meta ? `assets/weapons/${meta.key}.png` : "";
+}
+
+function getStatsWeaponOrderIndex(value = "") {
+  const key = normalizeStatsWeaponKey(value);
+  let offset = 0;
+  for (const family of STATS_WEAPON_FAMILIES) {
+    const index = family.weapons.findIndex(name => normalizeStatsWeaponKey(name) === key);
+    if (index >= 0) return offset + index;
+    offset += 100;
+  }
+  return 9999;
+}
+
 function getWeaponTypeMeta(weaponName = "") {
   const raw = String(weaponName || "").trim();
   const key = raw.toLowerCase();
 
   if (["classic", "shorty", "frenzy", "ghost", "sheriff"].includes(key)) {
-    return { key: "sidearm", label: "Sidearm" };
+    return { key: "pistol", label: "Pistol" };
   }
   if (["stinger", "spectre"].includes(key)) {
     return { key: "smg", label: "SMG" };
@@ -2366,6 +2422,210 @@ function getWeaponTypeMeta(weaponName = "") {
   return raw
     ? { key: "other", label: "Other" }
     : { key: "", label: "" };
+}
+
+function summarizeSpecificWeaponRounds(matchEntries = matches) {
+  const buckets = new Map();
+
+  (matchEntries || []).forEach((match) => {
+    const rounds = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
+    if (!rounds.length) return;
+
+    const core = getMatchCore(match);
+    const mapName = String(match?.metadata?.mapName || match?.map || "").trim();
+    const localBuckets = new Map();
+
+    rounds.forEach((round) => {
+      const weaponMeta = getStatsWeaponMeta(round?.weapon);
+      if (!weaponMeta) return;
+
+      const current = localBuckets.get(weaponMeta.key) || {
+        weaponKey: weaponMeta.key,
+        weapon: weaponMeta.name,
+        familyKey: weaponMeta.familyKey,
+        typeKey: weaponMeta.typeKey,
+        label: weaponMeta.familyLabel,
+        rounds: 0,
+        wins: 0,
+        attackRounds: 0,
+        attackWins: 0,
+        defenseRounds: 0,
+        defenseWins: 0,
+        buyTypes: new Map(),
+        maps: new Map(),
+        roundEntries: []
+      };
+
+      current.rounds += 1;
+      current.wins += round?.roundWon ? 1 : 0;
+      if (String(round?.side || "").toLowerCase() === "attack") {
+        current.attackRounds += 1;
+        current.attackWins += round?.roundWon ? 1 : 0;
+      } else if (String(round?.side || "").toLowerCase() === "defense") {
+        current.defenseRounds += 1;
+        current.defenseWins += round?.roundWon ? 1 : 0;
+      }
+
+      const buyType = String(round?.buyType || "").trim();
+      if (buyType) current.buyTypes.set(buyType, (current.buyTypes.get(buyType) || 0) + 1);
+      if (mapName) current.maps.set(mapName, (current.maps.get(mapName) || 0) + 1);
+      current.roundEntries.push({ ...round, matchMap: mapName });
+      localBuckets.set(weaponMeta.key, current);
+    });
+
+    const totalTaggedRounds = [...localBuckets.values()].reduce((sum, entry) => sum + entry.rounds, 0);
+    if (!totalTaggedRounds) return;
+
+    localBuckets.forEach((entry) => {
+      const share = entry.rounds / totalTaggedRounds;
+      const target = buckets.get(entry.weaponKey) || {
+        weaponKey: entry.weaponKey,
+        weapon: entry.weapon,
+        familyKey: entry.familyKey,
+        typeKey: entry.typeKey,
+        label: entry.label,
+        rounds: 0,
+        wins: 0,
+        attackRounds: 0,
+        attackWins: 0,
+        defenseRounds: 0,
+        defenseWins: 0,
+        matches: 0,
+        kills: 0,
+        deaths: 0,
+        adrWeighted: 0,
+        buyTypes: new Map(),
+        maps: new Map(),
+        roundEntries: []
+      };
+
+      target.rounds += entry.rounds;
+      target.wins += entry.wins;
+      target.attackRounds += entry.attackRounds;
+      target.attackWins += entry.attackWins;
+      target.defenseRounds += entry.defenseRounds;
+      target.defenseWins += entry.defenseWins;
+      target.matches += 1;
+      target.kills += safeNumber(core.kills) * share;
+      target.deaths += safeNumber(core.deaths) * share;
+      target.adrWeighted += safeNumber(core.adr) * entry.rounds;
+      entry.buyTypes.forEach((count, label) => {
+        target.buyTypes.set(label, (target.buyTypes.get(label) || 0) + count);
+      });
+      entry.maps.forEach((count, label) => {
+        target.maps.set(label, (target.maps.get(label) || 0) + count);
+      });
+      target.roundEntries.push(...entry.roundEntries);
+      buckets.set(entry.weaponKey, target);
+    });
+  });
+
+  return [...buckets.values()]
+    .map((entry) => ({
+      weaponKey: entry.weaponKey,
+      weapon: entry.weapon,
+      familyKey: entry.familyKey,
+      typeKey: entry.typeKey,
+      label: entry.label,
+      rounds: entry.rounds,
+      wins: entry.wins,
+      matches: entry.matches,
+      winrate: safeDivide(entry.wins * 100, entry.rounds),
+      attackWinrate: safeDivide(entry.attackWins * 100, entry.attackRounds),
+      defenseWinrate: safeDivide(entry.defenseWins * 100, entry.defenseRounds),
+      attackRounds: entry.attackRounds,
+      defenseRounds: entry.defenseRounds,
+      kills: entry.kills,
+      deaths: entry.deaths,
+      adr: safeDivide(entry.adrWeighted, entry.rounds),
+      killsPerRound: safeDivide(entry.kills, entry.rounds),
+      deathsPerRound: safeDivide(entry.deaths, entry.rounds),
+      buyTypes: [...entry.buyTypes.entries()].sort((a, b) => b[1] - a[1]),
+      maps: [...entry.maps.entries()].sort((a, b) => b[1] - a[1]),
+      roundEntries: entry.roundEntries
+    }))
+    .sort((a, b) => getStatsWeaponOrderIndex(a.weapon) - getStatsWeaponOrderIndex(b.weapon));
+}
+
+function getSpecificWeaponSummary(value = "", matchEntries = matches) {
+  const key = normalizeStatsWeaponKey(value);
+  if (!key) return null;
+  return summarizeSpecificWeaponRounds(matchEntries).find(entry => entry.weaponKey === key) || null;
+}
+
+function getWeaponFamilySummary(family, summaryMap = new Map()) {
+  const entries = (family?.weapons || [])
+    .map(name => summaryMap.get(normalizeStatsWeaponKey(name)))
+    .filter(Boolean);
+  const rounds = entries.reduce((sum, entry) => sum + safeNumber(entry.rounds), 0);
+  const wins = entries.reduce((sum, entry) => sum + safeNumber(entry.wins), 0);
+
+  return {
+    rounds,
+    wins,
+    winrate: safeDivide(wins * 100, rounds),
+    kills: entries.reduce((sum, entry) => sum + safeNumber(entry.kills), 0),
+    deaths: entries.reduce((sum, entry) => sum + safeNumber(entry.deaths), 0)
+  };
+}
+
+function buildSpecificWeaponDetailTabs(weaponKey = "") {
+  const meta = getStatsWeaponMeta(weaponKey);
+  const weapon = getSpecificWeaponSummary(weaponKey);
+  const rounds = weapon?.roundEntries || [];
+  const attackRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "attack");
+  const defenseRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "defense");
+  const topMaps = (weapon?.maps || []).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(", ");
+  const topBuyTypes = (weapon?.buyTypes || []).slice(0, 3).map(([name, count]) => `${name} (${count})`).join(", ");
+  const hasSample = Boolean(weapon?.rounds);
+
+  return [
+    {
+      key: "overview",
+      label: "Overview",
+      items: [
+        statItem("Weapon", meta?.name || "Weapon", "Exact weapon selected from the local Valorant weapon roster."),
+        statItem("Class", meta?.familyLabel || "Weapon", "Weapon family row on the Stats page."),
+        statItem("Round Win Rate", hasSample ? formatPercent(weapon.winrate) : "--", hasSample ? `round wins / tracked rounds = ${Math.round(weapon.wins)} / ${Math.round(weapon.rounds)}` : "No imported rounds are tagged with this weapon yet."),
+        statItem("Tracked Rounds", hasSample ? `${Math.round(weapon.rounds)}` : "0", "Imported round-by-round weapon usage for this exact weapon."),
+        statItem("Matches Seen", hasSample ? `${Math.round(weapon.matches)}` : "0", "Imported matches where this exact weapon appeared at least once."),
+        statItem("Estimated Kills", hasSample ? `${Math.round(weapon.kills)}` : "--", "Kills are proportionally derived from match combat totals based on this weapon's share of tracked rounds."),
+        statItem("Estimated Deaths", hasSample ? `${Math.round(weapon.deaths)}` : "--", "Deaths are proportionally derived from match combat totals based on this weapon's share of tracked rounds."),
+        statItem("Estimated ADR", hasSample ? `${Math.round(weapon.adr)}` : "--", "ADR is weighted from imported match damage-per-round across rounds using this exact weapon.")
+      ]
+    },
+    {
+      key: "side-split",
+      label: "Side Split",
+      items: [
+        statItem("Attack Win Rate", hasSample ? formatPercent(weapon.attackWinrate) : "--", `attack wins / attack rounds with ${meta?.name || "this weapon"} = ${attackRounds.filter(round => round?.roundWon).length} / ${attackRounds.length || 1}`),
+        statItem("Attack Share", hasSample ? formatPercent(safeDivide(attackRounds.length * 100, rounds.length)) : "--", "Attack rounds with this weapon divided by all tracked rounds with it."),
+        statItem("Defense Win Rate", hasSample ? formatPercent(weapon.defenseWinrate) : "--", `defense wins / defense rounds with ${meta?.name || "this weapon"} = ${defenseRounds.filter(round => round?.roundWon).length} / ${defenseRounds.length || 1}`),
+        statItem("Defense Share", hasSample ? formatPercent(safeDivide(defenseRounds.length * 100, rounds.length)) : "--", "Defense rounds with this weapon divided by all tracked rounds with it."),
+        statItem("Kills / Round", hasSample ? Number(weapon.killsPerRound || 0).toFixed(2) : "--", "Estimated kills divided by tracked rounds on this weapon."),
+        statItem("Deaths / Round", hasSample ? Number(weapon.deathsPerRound || 0).toFixed(2) : "--", "Estimated deaths divided by tracked rounds on this weapon.")
+      ]
+    },
+    {
+      key: "usage",
+      label: "Usage",
+      items: [
+        statItem("Most Common Buy", topBuyTypes || "--", "Most common economy labels on rounds where this weapon was used."),
+        statItem("Most Common Maps", topMaps || "--", "Maps where this exact weapon appears most often in the imported round sample."),
+        statItem("First Blood Lane", getMostCommonValue(rounds.map(round => round.firstKillLocation)), "Most common first-blood location on rounds tagged with this weapon."),
+        statItem("First Death Lane", getMostCommonValue(rounds.map(round => round.firstDeathLocation)), "Most common first-death location on rounds tagged with this weapon.")
+      ]
+    },
+    {
+      key: "coach-read",
+      label: "Coach Read",
+      items: [
+        statItem("Tracker-Style Read", hasSample ? `${meta?.name || "Weapon"} is converting ${formatPercent(weapon.winrate)} across ${Math.round(weapon.rounds)} rounds.` : `${meta?.name || "Weapon"} has no tracked sample yet.`, "A compact read meant to mirror the quick weapon drill-down pattern from stat tracker pages."),
+        statItem("Priority", hasSample && safeNumber(weapon.winrate) < 45 ? "Review positioning" : "Keep sampling", hasSample && safeNumber(weapon.winrate) < 45 ? "Low round conversion means this weapon should be reviewed by buy type and side." : "No urgent weakness detected from the current weapon sample."),
+        statItem("Next Check", "Compare side split and buy type", "Use the Side Split and Usage tabs to decide whether the issue is attack usage, defense usage, or economy timing.")
+      ]
+    }
+  ];
 }
 
 function summarizeWeaponRounds(matchEntries = matches) {
@@ -2476,7 +2736,13 @@ function summarizeWeaponRounds(matchEntries = matches) {
 }
 
 function buildWeaponDetailTabs(weaponTypeKey = "") {
-  const weapon = summarizeWeaponRounds(matches).find(entry => entry.typeKey === String(weaponTypeKey || "").toLowerCase());
+  const exactWeapon = getStatsWeaponMeta(weaponTypeKey);
+  if (exactWeapon) return buildSpecificWeaponDetailTabs(weaponTypeKey);
+
+  const normalizedTypeKey = normalizeStatsWeaponKey(weaponTypeKey) === "sidearm"
+    ? "pistol"
+    : normalizeStatsWeaponKey(weaponTypeKey);
+  const weapon = summarizeWeaponRounds(matches).find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalizedTypeKey);
   const rounds = weapon?.roundEntries || [];
   const attackRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "attack");
   const defenseRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "defense");
@@ -3134,8 +3400,14 @@ function openStatsDetailModal(kind, value) {
     showModalById("lensModal");
     return;
   } else if (kind === "weapon") {
-    const weapon = summarizeWeaponRounds(matches).find(entry => String(entry.typeKey || "").toLowerCase() === String(value || "").toLowerCase()) || null;
-    title.textContent = `${weapon?.label || "Weapon"} Signals Breakdown`;
+    const exactWeapon = getStatsWeaponMeta(value);
+    const normalizedTypeKey = normalizeStatsWeaponKey(value) === "sidearm" ? "pistol" : normalizeStatsWeaponKey(value);
+    const weapon = exactWeapon
+      ? null
+      : summarizeWeaponRounds(matches).find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalizedTypeKey) || null;
+    title.textContent = exactWeapon
+      ? `${exactWeapon.name} Weapon Breakdown`
+      : `${weapon?.label || "Weapon"} Signals Breakdown`;
     renderSecondaryLensTabs(tabsHost, list, buildWeaponDetailTabs(value));
     showModalById("lensModal");
     return;
@@ -7019,7 +7291,7 @@ function syncInsightListOverflow(container = document.getElementById("insightsLi
 
   const cards = [...container.querySelectorAll(".insight-card")];
   const hasOpenCard = container.classList.contains("has-open-card");
-  const shouldScroll = !hasOpenCard && cards.length > 3;
+  const shouldScroll = cards.length > 3;
   const customHeight = getThemeBuilderGroupOverrideValue("insights-top-card", "insights-list", "groupHeight");
   const shouldLockHeight = Boolean(customHeight) || hasOpenCard || shouldScroll;
 
@@ -7052,27 +7324,31 @@ function syncInsightListOverflow(container = document.getElementById("insightsLi
       - (parseFloat(hostStyle?.paddingTop || "0") || 0)
       - (parseFloat(hostStyle?.paddingBottom || "0") || 0)
     : 0;
+  const availableListHeight = hostCard && Number.isFinite(hostInnerHeight) && hostInnerHeight > 0
+    ? Math.max(120, Math.floor(hostInnerHeight - (container.offsetTop || 0) - 2))
+    : 0;
   const fallbackHeight = Math.max(hasOpenCard ? 320 : 220, Math.floor(measuredHeight));
-  const targetViewportHeight = hasOpenCard
-    ? (Number.isFinite(hostInnerHeight) && hostInnerHeight > 0
-        ? Math.floor(hostInnerHeight * 0.92)
-        : fallbackHeight)
-    : (Number.isFinite(hostInnerHeight) && hostInnerHeight > 0
-        ? Math.min(Math.max(220, Math.floor(measuredHeight) - 2), Math.floor(hostInnerHeight * 0.6))
+  const targetViewportHeight = availableListHeight > 0
+    ? availableListHeight
+    : (hasOpenCard && Number.isFinite(hostInnerHeight) && hostInnerHeight > 0
+        ? Math.floor(hostInnerHeight * 0.82)
         : fallbackHeight);
+  const minimumLockedHeight = hasOpenCard
+    ? Math.min(220, targetViewportHeight || fallbackHeight)
+    : 120;
   const lockedHeight = customHeight
     ? appendThemeBuilderPxIfNeeded(customHeight, "px", "y")
-    : `${Math.max(hasOpenCard ? 260 : 220, targetViewportHeight || fallbackHeight)}px`;
+    : `${Math.max(minimumLockedHeight, targetViewportHeight || fallbackHeight)}px`;
 
   container.style.setProperty("--insights-scroll-height", lockedHeight);
   container.style.setProperty("box-sizing", "border-box");
   container.style.setProperty("height", lockedHeight, "important");
   container.style.setProperty("min-height", lockedHeight, "important");
   container.style.setProperty("max-height", lockedHeight, "important");
-  container.style.setProperty("overflow-y", "auto");
+  container.style.setProperty("overflow-y", "scroll");
   container.style.setProperty("overflow-x", "hidden");
   container.style.setProperty("padding-right", "6px");
-  container.style.setProperty("padding-bottom", hasOpenCard ? "0" : "6px");
+  container.style.setProperty("padding-bottom", "6px");
   container.style.setProperty("scrollbar-gutter", "stable");
 }
 
@@ -7187,7 +7463,6 @@ function bindInsightCards(){
 
       card.classList.add("open");
       container.classList.add("has-open-card");
-      container.prepend(card);
       scheduleInsightListOverflowSync(container);
     };
   });
@@ -30337,7 +30612,10 @@ function activatePage(pageId){
   }
 
   if (pageId === "insights") {
-    requestAnimationFrame(() => replayOpenInsightTrendAnimation());
+    requestAnimationFrame(() => {
+      scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+      replayOpenInsightTrendAnimation();
+    });
   }
 
   if (pageId === "logging") {
@@ -33374,45 +33652,49 @@ function renderStatsWeaponsModel() {
   const container = document.getElementById("statsWeaponsList");
   if (!container) return;
 
-  const weapons = summarizeWeaponRounds(matches);
-  if (!weapons.length) {
-    container.innerHTML = `<div class="stats-empty">No weapon round data yet</div>`;
-    return;
-  }
+  const weaponSummaries = summarizeSpecificWeaponRounds(matches);
+  const summaryMap = new Map(weaponSummaries.map(weapon => [weapon.weaponKey, weapon]));
 
-  container.innerHTML = weapons.map((weapon) => `
-    <button type="button" class="stats-weapon-card stats-select-card" data-weapon-type="${escapeHtml(weapon.typeKey)}">
-      <div class="stats-weapon-head">
-        <div>
-          <div class="stats-weapon-sub">${escapeHtml(weapon.primaryWeapon || "Tracked Usage")}</div>
-          <div class="stats-weapon-title">${escapeHtml(weapon.label)}</div>
-        </div>
-        <span class="stats-weapon-winrate ${safeNumber(weapon.winrate) >= 50 ? "is-positive" : "is-negative"}">${Math.round(weapon.winrate)}% WR</span>
-      </div>
-      <div class="stats-weapon-metrics">
-        <div class="stats-weapon-metric">
-          <span class="stats-weapon-label">Kills</span>
-          <span class="stats-weapon-value">${Math.round(weapon.kills)}</span>
-        </div>
-        <div class="stats-weapon-metric">
-          <span class="stats-weapon-label">Deaths</span>
-          <span class="stats-weapon-value">${Math.round(weapon.deaths)}</span>
-        </div>
-        <div class="stats-weapon-metric">
-          <span class="stats-weapon-label">ADR</span>
-          <span class="stats-weapon-value">${Math.round(weapon.adr)}</span>
-        </div>
-        <div class="stats-weapon-metric">
-          <span class="stats-weapon-label">Kills / Round</span>
-          <span class="stats-weapon-value">${Number(weapon.killsPerRound || 0).toFixed(2)}</span>
-        </div>
-      </div>
-      <div class="stats-weapon-footer">${Math.round(weapon.rounds)} tracked rounds across ${Math.round(weapon.matches)} match${Math.round(weapon.matches) === 1 ? "" : "es"}.</div>
-    </button>
-  `).join("");
+  container.innerHTML = STATS_WEAPON_FAMILIES.map((family) => {
+    const familySummary = getWeaponFamilySummary(family, summaryMap);
+    const familyMeta = familySummary.rounds
+      ? `${Math.round(familySummary.rounds)} rds | ${Math.round(familySummary.winrate)}% WR`
+      : "No sample";
+    const toneClass = safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative";
+    const weaponTiles = family.weapons.map((weaponName) => {
+      const weaponKey = normalizeStatsWeaponKey(weaponName);
+      const weapon = summaryMap.get(weaponKey);
+      const assetPath = getStatsWeaponAssetPath(weaponName);
+      const roundsLabel = weapon?.rounds ? `${Math.round(weapon.rounds)}R` : "0R";
+      const winrateLabel = weapon?.rounds ? `${Math.round(weapon.winrate)}%` : "--";
+      const tileTone = weapon?.rounds && safeNumber(weapon.winrate) >= 50 ? "is-positive" : "is-negative";
 
-  container.querySelectorAll(".stats-weapon-card").forEach((button) => {
-    button.addEventListener("click", () => openStatsDetailModal("weapon", button.dataset.weaponType || ""));
+      return `
+        <button type="button" class="stats-weapon-tile ${weapon?.rounds ? "has-data" : "is-empty"} ${tileTone}" data-weapon-key="${escapeHtml(weaponKey)}" aria-label="Open ${escapeHtml(weaponName)} weapon insights">
+          <span class="stats-weapon-art-wrap">
+            <img class="stats-weapon-art" src="${escapeHtml(assetPath)}" alt="${escapeHtml(weaponName)} weapon">
+          </span>
+          <span class="stats-weapon-name">${escapeHtml(weaponName)}</span>
+          <span class="stats-weapon-mini"><span>${escapeHtml(roundsLabel)}</span><span>${escapeHtml(winrateLabel)}</span></span>
+        </button>
+      `;
+    }).join("");
+
+    return `
+      <section class="stats-weapon-family-row ${familySummary.rounds ? "has-data" : "is-empty"}" style="--weapon-count:${family.weapons.length}">
+        <div class="stats-weapon-family-head">
+          <span class="stats-weapon-family-title">${escapeHtml(family.label)}</span>
+          <span class="stats-weapon-family-meta ${toneClass}">${escapeHtml(familyMeta)}</span>
+        </div>
+        <div class="stats-weapon-image-row">
+          ${weaponTiles}
+        </div>
+      </section>
+    `;
+  }).join("");
+
+  container.querySelectorAll(".stats-weapon-tile").forEach((button) => {
+    button.addEventListener("click", () => openStatsDetailModal("weapon", button.dataset.weaponKey || ""));
   });
 }
 
@@ -33545,9 +33827,6 @@ function renderInsightCardsModel() {
         <div class="insight-header-main">
           <div class="insight-title">${escapeHtml(insight.title)}</div>
           <div class="insight-tag">${escapeHtml(String(insight.type || "").toUpperCase())}</div>
-        </div>
-        <div class="insight-header-actions">
-          <button type="button" class="insight-close" aria-label="Close insight">Close</button>
         </div>
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
