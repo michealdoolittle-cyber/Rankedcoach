@@ -21269,10 +21269,14 @@ html body[data-theme] #page-home #spinAgentBtn{
 #page-stats .stats-weapon-art-wrap{
   min-width:0 !important;
   min-height:0 !important;
+  width:100% !important;
+  height:calc(100% - 12px) !important;
+  max-height:38px !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
   overflow:hidden !important;
+  align-self:center !important;
 }
 
 #page-stats .stats-weapon-art{
