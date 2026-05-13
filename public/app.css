@@ -21336,3 +21336,88 @@ html body[data-theme] #page-home #spinAgentBtn{
     font-size:8px !important;
   }
 }
+
+/* Stats page headroom pass: compact the summary band so the lower row can breathe. */
+#page-stats .stats-layout{
+  grid-template-rows:minmax(104px, 118px) minmax(0, 1fr) !important;
+}
+
+#page-stats .stats-summary-card{
+  padding:6px 8px !important;
+}
+
+#page-stats .stats-summary-layout{
+  gap:6px !important;
+}
+
+#page-stats .stats-summary-grid{
+  gap:6px !important;
+}
+
+#page-stats .stat-block{
+  padding:6px !important;
+}
+
+#page-stats .stat-label{
+  font-size:9px !important;
+}
+
+#page-stats .stat-value{
+  font-size:20px !important;
+}
+
+#page-stats .stats-proof-card,
+#page-stats .stats-role-progress-card{
+  padding:6px !important;
+}
+
+#page-stats .stats-proof-kicker{
+  margin-bottom:4px !important;
+}
+
+#page-stats .stats-proof-rank-icon{
+  width:28px !important;
+  height:28px !important;
+}
+
+#page-stats .stats-proof-rank-copy strong{
+  font-size:14px !important;
+}
+
+#page-stats .stats-proof-rank-copy span,
+#page-stats .stats-proof-note{
+  font-size:10px !important;
+  line-height:1.12 !important;
+}
+
+#page-stats .stats-act-select-wrap,
+#page-stats .stats-act-select{
+  min-height:28px !important;
+}
+
+#page-stats .stats-act-select{
+  font-size:10px !important;
+  padding-top:3px !important;
+  padding-bottom:3px !important;
+}
+
+#page-stats .stats-role-progress-row{
+  height:calc(100% - 14px) !important;
+  gap:5px !important;
+}
+
+#page-stats .stats-role-pill{
+  padding:4px !important;
+}
+
+#page-stats .stats-role-pill-label{
+  font-size:9px !important;
+}
+
+#page-stats .stats-role-pill-delta{
+  font-size:10px !important;
+}
+
+#page-stats .stats-main-grid{
+  grid-template-rows:minmax(0, .88fr) minmax(0, 1.12fr) !important;
+}
