@@ -21510,3 +21510,27 @@ html body[data-theme] #page-home #spinAgentBtn{
   text-align:right !important;
   justify-content:center !important;
 }
+
+/* Match the loadout pill typography to the scoreboard scale. */
+#page-home .loadout-card .home-loadout-pill{
+  align-items:center !important;
+}
+
+#page-home .loadout-card .home-loadout-pill .pill-label,
+#page-home .loadout-card .home-loadout-pill .pill-value,
+#page-home .loadout-card #agentName,
+#page-home .loadout-card #focusDisplay,
+#page-home .loadout-card .home-loadout-pill .pill-value[data-tb-auto-fit="1"],
+#page-home .loadout-card #agentName[data-tb-auto-fit="1"],
+#page-home .loadout-card #focusDisplay[data-tb-auto-fit="1"]{
+  --tb-auto-fit-font-size:max(24px, calc(25px * var(--app-1080-scale))) !important;
+  font-size:max(24px, calc(25px * var(--app-1080-scale))) !important;
+  line-height:1 !important;
+  font-weight:900 !important;
+}
+
+#page-home .loadout-card .home-loadout-pill .pill-label{
+  min-width:max(92px, calc(92px * var(--app-1080-scale))) !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
