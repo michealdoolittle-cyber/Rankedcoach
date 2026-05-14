@@ -4489,6 +4489,8 @@ let lastChartRenderSignature = "";
 let chartAnimating = false;
 let chartBusy = false;
 let chartAnimFrame = null;
+let chartTooltipSuppressed = false;
+let chartRenderToken = 0;
 
 let isUndoAnimating = false;
 let undoDirection = false;
@@ -4623,7 +4625,21 @@ function ensureChartTooltipLayer(){
   return tooltip;
 }
 
+function chartScopeAllowsTooltip(size = currentSize) {
+  const numericSize = Number(size);
+  return Number.isFinite(numericSize) && numericSize < 50;
+}
+
+function setChartTooltipSuppressed(suppressed = true) {
+  chartTooltipSuppressed = Boolean(suppressed);
+  if (chartTooltipSuppressed) {
+    hideChartTooltip();
+  }
+}
+
 function canRenderChartTooltip() {
+  if (chartTooltipSuppressed) return false;
+  if (!chartScopeAllowsTooltip(currentSize)) return false;
   const chartPage = chartRow?.closest?.(".page");
   if (!chartPage || chartPage.id !== "page-home") return false;
   if (!chartPage.classList.contains("active")) return false;
@@ -31183,9 +31199,11 @@ function renderChart(size = currentSize){
   pendingChartAnimationMode = null;
   currentSize = size;
 
-  const showDots = Number(size) < 50;
+  const tooltipAllowedForScope = chartScopeAllowsTooltip(size);
+  const showDots = tooltipAllowedForScope;
 
   if(!chartRow) return;
+  const renderToken = ++chartRenderToken;
 
   // ========================
   // RESPONSIVE WIDTH
@@ -31233,6 +31251,12 @@ if(chartHeight){
     shouldAnimateLatestOnly ||
     (!skipNextChartAnimation &&
      chartRenderSignature !== lastChartRenderSignature);
+
+  if (!tooltipAllowedForScope || shouldAnimateIntro || shouldAnimate) {
+    setChartTooltipSuppressed(true);
+  } else {
+    chartTooltipSuppressed = false;
+  }
 	 
   PAD_LEFT = CHART_W * 0.055;
   PAD_RIGHT = CHART_W * 0.055;
@@ -31246,6 +31270,7 @@ if(chartHeight){
 if(!matches || !matches.length){
   updateRRMatchStats(null);
   chartRow.classList.remove("chart-intro-active");
+  setChartTooltipSuppressed(true);
   forceChartIntroAnimation = false;
   lastChartRenderSignature = `empty:${size}`;
 
@@ -31568,7 +31593,10 @@ const seg = chartRow.querySelector(".animate-segment");
 
 if(shouldAnimateIntro){
 
+  setChartTooltipSuppressed(true);
+
   requestAnimationFrame(() => {
+    if (renderToken !== chartRenderToken) return;
     chartRow.classList.add("chart-intro-active");
   });
 
@@ -31585,9 +31613,16 @@ if(shouldAnimateIntro){
     introSettleMs
   );
   window.setTimeout(() => {
-    autoSelectLatest({ popTooltip: true });
+    if (renderToken !== chartRenderToken) return;
+    chartTooltipSuppressed = false;
+    if (tooltipAllowedForScope) {
+      autoSelectLatest({ popTooltip: true });
+    } else {
+      hideChartTooltip();
+    }
   }, finalDotRevealDelay);
   window.setTimeout(() => {
+    if (renderToken !== chartRenderToken) return;
     chartBusy = false;
     chartAnimating = false;
     lastChartRenderSignature = chartRenderSignature;
@@ -31602,6 +31637,7 @@ if(shouldAnimateIntro){
 
 }else if(seg && shouldAnimate){
 
+  setChartTooltipSuppressed(true);
   seg.style.animationPlayState = "paused";
 
 requestAnimationFrame(() => {
@@ -31611,6 +31647,7 @@ requestAnimationFrame(() => {
     if(!seg || !seg.isConnected){
       chartBusy = false;
       chartAnimating = false;
+      chartTooltipSuppressed = !chartScopeAllowsTooltip(currentSize);
       return;
     }
 
@@ -31624,12 +31661,14 @@ requestAnimationFrame(() => {
     }catch(e){
       chartBusy = false;
       chartAnimating = false;
+      chartTooltipSuppressed = !chartScopeAllowsTooltip(currentSize);
       return;
     }
 
     if(!len || !Number.isFinite(len)){
       chartBusy = false;
       chartAnimating = false;
+      chartTooltipSuppressed = !chartScopeAllowsTooltip(currentSize);
       return;
     }
 
@@ -31641,7 +31680,11 @@ requestAnimationFrame(() => {
 
 }else{
 
+  chartTooltipSuppressed = !tooltipAllowedForScope;
   autoSelectLatest();
+  if (!tooltipAllowedForScope) {
+    hideChartTooltip();
+  }
   placeStaticGoldDot();
 
   chartBusy = false;
@@ -31668,6 +31711,10 @@ const flushChartPointerMove = () => {
   chartPointerMoveRaf = 0;
   const hit = pendingChartPointerHit;
   pendingChartPointerHit = null;
+  if (chartTooltipSuppressed || !chartScopeAllowsTooltip(currentSize)) {
+    hideChartTooltip();
+    return;
+  }
   if (!hit || selectedDot) return;
 
   const cx = Number(hit.getAttribute("cx"));
@@ -31686,6 +31733,10 @@ const flushChartPointerMove = () => {
 };
 
 chartRow.onpointermove = e => {
+  if (chartTooltipSuppressed || !chartScopeAllowsTooltip(currentSize)) {
+    hideChartTooltip();
+    return;
+  }
   const hit = getChartHitFromTarget(e.target);
   if(!hit) return;
   if(selectedDot) return;
@@ -31710,6 +31761,10 @@ chartRow.onclick = e => {
     chartPointerMoveRaf = 0;
   }
   pendingChartPointerHit = null;
+  if (chartTooltipSuppressed || !chartScopeAllowsTooltip(currentSize)) {
+    hideChartTooltip();
+    return;
+  }
   const hit = getChartHitFromTarget(e.target);
   if(!hit) return;
 
@@ -31802,6 +31857,7 @@ function placeStaticGoldDot(){
 
 function autoSelectLatest(options = {}){
   const { popTooltip = false } = options;
+  const tooltipAllowed = chartScopeAllowsTooltip(currentSize);
 
   const gold = chartRow.querySelector(".final-end");
   const hit  = gold?.previousElementSibling;
@@ -31830,7 +31886,11 @@ function autoSelectLatest(options = {}){
     crosshair.setAttribute("y2", PAD_BOTTOM);
   }
 
-  positionTooltipToHit(hit, { pop: popTooltip });
+  if (tooltipAllowed) {
+    positionTooltipToHit(hit, { pop: popTooltip });
+  } else {
+    hideChartTooltip();
+  }
   updateRRMatchStatsFromHit(hit);
   setSelectedTimelineContext(null, { animate: true });
 }
@@ -31846,6 +31906,7 @@ function followSegment(seg, reverse = false){
 
   if(chartAnimating) return;
   chartAnimating = true;
+  setChartTooltipSuppressed(true);
 
   svg.querySelectorAll(".gold-follower").forEach(el => el.remove());
 
@@ -31853,6 +31914,7 @@ function followSegment(seg, reverse = false){
   if(!len || !Number.isFinite(len)){
     chartAnimating = false;
     chartBusy = false;
+    chartTooltipSuppressed = !chartScopeAllowsTooltip(currentSize);
     return;
   }
 
@@ -31946,8 +32008,13 @@ svg.appendChild(dot);
     isUndoAnimating = false;
     undoDirection = false;
 
+    chartTooltipSuppressed = false;
     if (!reverse && targetDot?.classList?.contains("final-end")) {
-      autoSelectLatest({ popTooltip: true });
+      if (chartScopeAllowsTooltip(currentSize)) {
+        autoSelectLatest({ popTooltip: true });
+      } else {
+        hideChartTooltip();
+      }
     }
   }
 
