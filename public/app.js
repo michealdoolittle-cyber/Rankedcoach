@@ -28636,7 +28636,7 @@ function setTimelinePillVisual(pill, item) {
   labelEl.textContent = item.label;
   valueEl.textContent = item.format(item.value);
   deltaEl.textContent = formatTimelineDelta(item);
-  pill.title = [item.detail, item.comparisonLabel, item.sourceLabel].filter(Boolean).join(" | ");
+  pill.removeAttribute("title");
 
   pill.classList.remove("is-positive", "is-negative", "is-neutral");
   pill.classList.add(`is-${item.tone(item.value)}`);
