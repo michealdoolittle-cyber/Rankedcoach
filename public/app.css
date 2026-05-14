@@ -21429,9 +21429,9 @@ html body[data-theme] #page-home #spinAgentBtn{
 /* Keep the home chart instruction subtitle readable and standardized. */
 #page-home .rr-chart-card > .card-header .card-sub,
 #page-home .rr-chart-card > .card-header .card-sub[data-tb-auto-fit="1"]{
-  --tb-auto-fit-font-size:max(16px, calc(16px * var(--app-1080-scale))) !important;
-  font-size:max(16px, calc(16px * var(--app-1080-scale))) !important;
-  line-height:1.16 !important;
+  --tb-auto-fit-font-size:max(14px, calc(14px * var(--app-1080-scale))) !important;
+  font-size:max(14px, calc(14px * var(--app-1080-scale))) !important;
+  line-height:1.1 !important;
   font-weight:700 !important;
   letter-spacing:.01em !important;
 }
@@ -21458,8 +21458,15 @@ html body[data-theme] #page-home #spinAgentBtn{
 
 /* Give the chart controls and match stat rail matching height and header breathing room. */
 #page-home .rr-chart-card{
-  height:max(314px, calc(314px * var(--app-1080-scale))) !important;
-  min-height:max(314px, calc(314px * var(--app-1080-scale))) !important;
+  height:max(282px, calc(282px * var(--app-1080-scale))) !important;
+  min-height:max(282px, calc(282px * var(--app-1080-scale))) !important;
+  gap:max(4px, calc(4px * var(--app-1080-scale))) !important;
+  padding-top:max(4px, calc(4px * var(--app-1080-scale))) !important;
+}
+
+#page-home .rr-chart-card > .card-header{
+  margin:0 !important;
+  min-height:0 !important;
 }
 
 #page-home .rr-chart-layout{
@@ -21468,12 +21475,21 @@ html body[data-theme] #page-home #spinAgentBtn{
 
 #page-home .chart-controls,
 #page-home .rr-match-stats{
-  gap:max(7px, calc(7px * var(--app-1080-scale))) !important;
+  gap:max(4px, calc(4px * var(--app-1080-scale))) !important;
 }
 
 #page-home .chart-controls .graph-btn,
 #page-home .rr-stat{
-  min-height:max(44px, calc(44px * var(--app-1080-scale))) !important;
+  min-height:max(38px, calc(38px * var(--app-1080-scale))) !important;
+}
+
+#page-home .chart-controls .graph-btn{
+  min-height:38px !important;
+  height:38px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
 }
 
 #page-home .rr-match-stats{
@@ -21481,8 +21497,8 @@ html body[data-theme] #page-home #spinAgentBtn{
 }
 
 #page-home .rr-match-stats-head{
-  min-height:max(56px, calc(56px * var(--app-1080-scale))) !important;
-  padding:max(8px, calc(8px * var(--app-1080-scale))) max(10px, calc(10px * var(--app-1080-scale))) !important;
+  min-height:max(48px, calc(48px * var(--app-1080-scale))) !important;
+  padding:max(5px, calc(5px * var(--app-1080-scale))) max(10px, calc(10px * var(--app-1080-scale))) !important;
 }
 
 /* Align the selected role impact pill to the right side of the impact card. */
