@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 180" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="band" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#13081f" stop-opacity="0"/>
+      <stop offset="0.12" stop-color="#2b103d" stop-opacity="0.85"/>
+      <stop offset="0.32" stop-color="#5c1b8d" stop-opacity="0.72"/>
+      <stop offset="0.5" stop-color="#9a4dff" stop-opacity="0.42"/>
+      <stop offset="0.68" stop-color="#5c1b8d" stop-opacity="0.72"/>
+      <stop offset="0.88" stop-color="#2b103d" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#13081f" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="runeGlow" x="-20%" y="-60%" width="140%" height="220%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="26" width="1600" height="128" rx="18" fill="url(#band)"/>
+
+  <g fill="none" stroke="#efe6ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M76 118 L98 64 L120 118 L144 64 L166 118" />
+    <path d="M220 70 H266 L292 118 H340" />
+    <path d="M404 118 L428 64 L452 118 L478 64 L504 118" />
+    <path d="M584 72 H632 L662 118 H714" />
+    <path d="M784 118 L808 64 L832 118 L856 64 L880 118" />
+    <path d="M960 70 H1012 L1038 118 H1088" />
+    <path d="M1164 118 L1188 64 L1212 118 L1236 64 L1262 118" />
+    <path d="M1340 70 H1390 L1418 118 H1468" />
+  </g>
+
+  <g fill="none" stroke="#9c5cff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" opacity="0.4" filter="url(#runeGlow)">
+    <path d="M76 118 L98 64 L120 118 L144 64 L166 118" />
+    <path d="M220 70 H266 L292 118 H340" />
+    <path d="M404 118 L428 64 L452 118 L478 64 L504 118" />
+    <path d="M584 72 H632 L662 118 H714" />
+    <path d="M784 118 L808 64 L832 118 L856 64 L880 118" />
+    <path d="M960 70 H1012 L1038 118 H1088" />
+    <path d="M1164 118 L1188 64 L1212 118 L1236 64 L1262 118" />
+    <path d="M1340 70 H1390 L1418 118 H1468" />
+  </g>
+</svg>

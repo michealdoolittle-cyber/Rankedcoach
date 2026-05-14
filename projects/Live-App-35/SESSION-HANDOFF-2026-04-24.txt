@@ -1,0 +1,107 @@
+Project: Valorant coaching/demo app
+Workspace: C:\Users\mdoolittle\Desktop\Live-App-33
+Date: 2026-04-24
+
+Project goal
+This app is a polished demo-first Valorant coaching platform with home dashboard cards, stats, compass scoring, logging, synced match snapshots, and a Theme Builder used to tune card visuals per theme. The current focus is reliable monitor behavior, readable themed overlays, and a Theme Builder workflow that is fast enough for ongoing self-serve editing.
+
+Today’s snapshot
+- Canonical snapshot file: `tmp/theme-snapshot.json`
+- Captured at: `2026-04-24T17:15:27.240Z`
+- Local URL at capture: `http://127.0.0.1:3000/`
+- Theme at capture: `default`
+- Viewport at capture: `1920 x 957`
+- App base: `2799 x 1440`
+- App scale at capture:
+  - css: `0.665`
+  - x: `0.686`
+  - y: `0.665`
+- Important snapshot note:
+  - `viewportRect` values are post-transform screen pixels
+  - `designRect` plus `cssValues` are the durable values to use for future CSS/layout work
+
+What changed today
+1. Theme Builder freeze mitigation
+- Reduced the worst Theme Builder hot path cost by caching visible-element discovery and element default reads during a render/apply pass.
+- Skipped full element scans when a card has no actual element overrides.
+- Pruned empty Theme Builder entries before save so old dead override objects stop inflating runtime work.
+- Deferred Theme Builder state persistence slightly so input changes do not block the UI as aggressively on every edit.
+
+2. Theme Builder workflow split into safe mode vs advanced mode
+- The default builder flow is now intended for quick use:
+  - `Parent Cards`
+  - `Containers & Inner Text`
+- The expensive arbitrary nested-element editor is now hidden behind `Show Advanced Elements`.
+- Snapshot/export remains intact; the UI split did not remove the snapshot payload generation.
+
+3. Loadout card alignment cleanup
+- Added load-time cleanup to strip stale Theme Builder geometry from loadout parent/group/element state.
+- Reinforced base loadout frame placement in CSS so the reel/frame column behaves more predictably after refresh.
+
+4. Compass and stats layout cleanup
+- Added broader Theme Builder layout normalization for:
+  - `compass-main`
+  - `stats-maps-card`
+  - `stats-breakdown-card`
+- Rebalanced the stats page lower grid row so maps and coaching breakdown have real space again.
+- Removed the fixed breakdown-height choke point and allowed map/breakdown panels to fill their cards more naturally.
+- Restored `Compass Summary Shell` to the safe Theme Builder controls by explicitly allowing it through the visible-object filter.
+- Updated compass grid/card sizing so grid height changes propagate visually to the score cards.
+
+5. Snapshot storage cleanup
+- `server.js` now writes one canonical snapshot file to `tmp/theme-snapshot.json`.
+- The legacy duplicate file `tmp/overlay-tuning-snapshot.json` was removed.
+- Server read logic still falls back to the legacy path if an older backup contains only that file.
+
+Important files touched today
+- `app.js`
+- `app.css`
+- `server.js`
+- `tmp/theme-snapshot.json`
+
+Current Theme Builder guidance
+Use this order when making edits yourself:
+1. Start with `Parent Cards`
+- Use this for overall card background, child card color, child text, font, overlay sizing, and whole-card content shift.
+
+2. Then use `Containers & Inner Text`
+- Use this for the visible container block and the text inside it.
+- This is now the preferred everyday workflow for:
+  - shells
+  - grouped content blocks
+  - readable text adjustments
+  - safe spacing/size refinements
+
+3. Only use `Show Advanced Elements` when absolutely necessary
+- This mode is heavier and is meant for rare one-off nested target fixes.
+- It is not the recommended path for routine maintenance edits.
+
+Known current status
+Working or improved
+- Snapshot capture works and is saved to one canonical JSON file.
+- Theme Builder is safer for normal edits than it was earlier in the session.
+- Loadout card state is less likely to be wrecked by stale saved geometry.
+- Compass summary shell should now appear in safe Theme Builder controls after refresh.
+- Stats page lower-row visibility for maps and coaching breakdown has been loosened.
+
+Still needs live browser verification after refresh
+- Compass summary shell visibility in the builder should be rechecked after a full refresh.
+- Compass cards grid height changes should be tested again after refresh.
+- Stats page map list and coaching breakdown visibility should be rechecked at 1080p.
+- Overlay placement for compass/stats may still need a dedicated tune pass if visual frames remain offset after layout cleanup.
+
+Backup and cleanup notes
+- Removed as unnecessary duplicate:
+  - `tmp/overlay-tuning-snapshot.json`
+- I did not remove these root files because they are still referenced or likely intentional:
+  - `Example-User.JSON` is used by `server.js`
+  - `reaver-card-concepts.png` is referenced in `app.css`
+  - `tmp/theme-snapshot.json` is the current canonical snapshot
+
+Recommended next step
+After restoring from backup or reopening the app:
+1. Refresh once so Theme Builder normalization runs against the saved state.
+2. Open Theme Builder.
+3. Verify `Compass Summary Shell` appears under `Containers & Inner Text`.
+4. Verify stats page maps and coaching breakdown are visible without clipping.
+5. If overlay frames still look off after that, do a focused overlay-placement pass only, not another broad geometry override pass.

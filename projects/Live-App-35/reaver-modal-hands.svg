@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="beam" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f0c4ff" stop-opacity="0"/>
+      <stop offset="0.18" stop-color="#d58cff" stop-opacity="0.9"/>
+      <stop offset="0.7" stop-color="#7b2cff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#2a092f" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="ring" cx="50%" cy="62%" r="36%">
+      <stop offset="0" stop-color="#cb83ff" stop-opacity="0.65"/>
+      <stop offset="0.42" stop-color="#5e16c8" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#14041f" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="600" cy="720" rx="300" ry="120" fill="url(#ring)" filter="url(#soft)"/>
+  <ellipse cx="600" cy="716" rx="252" ry="82" fill="none" stroke="#efe6ff" stroke-opacity="0.24" stroke-width="8"/>
+  <ellipse cx="600" cy="716" rx="324" ry="108" fill="none" stroke="#9c5cff" stroke-opacity="0.24" stroke-width="20" filter="url(#soft)"/>
+
+  <path d="M490 720 C520 560 540 430 556 180 C562 88 640 88 646 180 C660 420 684 556 718 720 Z" fill="url(#beam)" filter="url(#soft)"/>
+
+  <g fill="#120611" fill-opacity="0.92" stroke="#9f5cff" stroke-opacity="0.34" stroke-width="4">
+    <path d="M316 690 C292 642 286 584 308 540 C324 506 350 500 358 526 C366 498 392 496 398 522 C406 494 430 494 436 520 C444 496 468 506 468 538 C470 594 446 650 410 698 Z"/>
+    <path d="M784 706 C752 654 740 594 754 542 C764 504 790 492 804 518 C812 490 838 488 846 514 C854 488 880 490 886 520 C894 494 918 500 922 534 C928 598 910 654 876 706 Z"/>
+    <path d="M520 760 C500 708 494 658 506 620 C514 592 532 584 546 602 C548 578 570 570 580 590 C586 564 610 564 618 590 C624 568 646 576 650 604 C658 652 650 712 628 760 Z"/>
+    <path d="M652 760 C644 706 648 648 664 614 C676 590 700 588 710 608 C716 582 740 584 746 612 C752 586 776 590 780 620 C786 664 774 718 742 762 Z"/>
+  </g>
+</svg>

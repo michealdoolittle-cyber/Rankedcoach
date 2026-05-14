@@ -1,0 +1,120 @@
+SESSION HANDOFF - 2026-05-11
+Workspace: C:\Users\mdoolittle\Desktop\Live-App-35
+Primary app entry file: Active-Edit.html
+
+CURRENT STATUS
+- This workspace does NOT use index.html. The main app shell is in Active-Edit.html.
+- The code baseline has now been shifted to 1920x1080.
+- Larger desktop viewports should scale up from the current 1080 layout instead of using 1440 as the source of truth.
+- Many older 1080p-only tuning passes still exist in the file history, but a new baseline scaling layer was added later in app.css and app.js.
+- Logging tab is still NOT considered fully stable yet.
+
+FILES CHANGED TODAY
+- Active-Edit.html
+- app.css
+- app.js
+
+IMPORTANT STRUCTURAL FIXES COMPLETED
+1. Fixed malformed HTML in Active-Edit.html.
+   - The <body> tag was incorrectly placed after modal markup.
+   - The app wrapper divs after page-logging were not all closed.
+   - This made Live-App-35 structurally different from Live-App-33 and could cause tab/page rendering to fail without a useful console error.
+2. Logging page stabilization pass in app.css.
+   - Added a logging-specific override so #page-logging stays content-visibility: visible and contain: none.
+   - Reason: the page-level content-visibility/containment model can cause heavier panels to appear blank or disappear even while the DOM still exists.
+3. Removed one duplicate nav activation path earlier in app.js so page switching was not being driven twice.
+
+LOGGING PAGE FINDINGS
+- Symptom reported:
+  - Clicking Logging freezes the app.
+  - After a long delay, Logging may partially load.
+  - It can then go blank/disappear again.
+- Strongest confirmed root cause found:
+  - Live-App-35 HTML shell was malformed compared with Live-App-33.
+- Additional likely contributor:
+  - Live-App-35 has a large block of logging-only CSS overrides that does not exist in Live-App-33.
+  - These overrides begin around the later #page-logging block in app.css and may still be fighting the general page transition/height model.
+- Logging is improved structurally, but NOT yet verified solved.
+
+1080P / 1440P RESPONSIVE STATUS
+- 1920x1080 is now the intended source of truth.
+- The goal is no longer "shrink 1440 down to 1080".
+- The goal is "keep the current 1080 layout, then scale it up proportionally for 1440p and 4K".
+- A shared 1080 baseline scale was added in:
+  - app.css root variables
+  - app.js APP_BASE_WIDTH / APP_BASE_HEIGHT
+  - Theme Builder runtime CSS generation for home cards
+- Result: the app should now be much less dependent on one-off compact-mode behavior when moving upward to larger desktop resolutions.
+- Theme Builder should NOT be used on the primary live theme to fix 1080p.
+  - Theme Builder state is shared by theme and is not safely isolated per viewport.
+  - A 1080p snapshot can affect 1440p.
+
+BEST PRACTICE RESPONSIVE DIRECTION FOR NEXT SESSION
+Use the same pattern used by stable responsive sites:
+1. Treat 1080p as the design baseline.
+2. Stop stacking one-off 1080p overrides where possible.
+3. Replace hard-coded per-element tweaks with a small set of shared scale variables.
+4. Use fluid sizing with clamp(), minmax(), grid/flex distribution, and viewport-derived custom properties.
+5. Keep content in normal flow instead of relying on per-resolution manual geometry.
+6. Do NOT let Theme Builder snapshots own viewport-specific card geometry.
+
+RESPONSIVE REBUILD PLAN
+1. Keep the current 1080p layout as the visual source of truth.
+2. Use the 1080 baseline scale variables already introduced:
+   - --app-1080-width-scale
+   - --app-1080-height-scale
+   - --app-1080-scale
+3. Rebuild any remaining problem areas from shared scale variables instead of repeated one-off overrides:
+   - Weekly Coaching Focus
+   - Improvement card
+   - Main loadout
+   - Compass card
+   - RR summary / chart row
+4. Remove or simplify the older large late-session 1080p override blocks once the new baseline scaling layer proves stable.
+5. Re-test both 1080p and 1440p after each section rather than doing many changes at once.
+
+AREAS MOST HEAVILY TOUCHED THIS SESSION
+- Home page 1080p layout tuning
+- Main loadout compact layout
+- Compass card compact layout
+- RR chart / tooltip behavior
+- Timeline modal and session pullout behavior
+- Agent modal card layout and role selector sizing
+- Logging page HTML/CSS stability
+
+KNOWN RISK AREAS
+- #page-logging late override block in app.css
+- Theme Builder runtime overrides in app.js
+- Any older viewport-specific changes tied to window.innerHeight <= 1100
+- Footer/home shell changes if compared against older workspaces
+
+WHAT TO CHECK FIRST AT HOME
+1. Open Live-App-35, not Live-App-33.
+2. Confirm Active-Edit.html is the file being served.
+3. Hard refresh the browser so app.js and app.css are not stale.
+4. Verify the new baseline behavior:
+   - 1920x1080 should match the current workspace layout
+   - 2560x1440 should look like the same layout scaled upward, not a different layout model
+5. Test Logging immediately after load:
+   - click Logging once
+   - wait for render
+   - check whether it remains visible
+6. If Logging still disappears:
+   - inspect whether #page-logging still has class active
+   - inspect whether it is visible in DOM but blank
+   - inspect whether any later CSS rule reintroduces containment/visibility behavior
+
+RECOMMENDED NEXT SESSION ORDER
+1. Verify whether the HTML structural fix reduced the Logging failure.
+2. If Logging is still unstable, compare the #page-logging CSS override block in Live-App-35 against Live-App-33 and trim it back.
+3. After Logging is stable, continue the responsive cleanup by removing older one-off compact overrides that still fight the new 1080 baseline system.
+4. Preserve 1080p as the source of truth and verify 1440p after every change.
+
+REFERENCE NOTE
+- The responsive direction above follows standard responsive web patterns used in mainstream sites:
+  fluid layouts, clamp-based typography, minmax-based grids, and avoiding per-resolution manual geometry when possible.
+- Useful references:
+  - MDN Responsive Design: https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/CSS_layout/Responsive_Design
+  - web.dev Responsive Web Design Basics: https://web.dev/responsive-web-design-basics/
+  - MDN clamp(): https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/clamp
+  - MDN minmax(): https://developer.mozilla.org/en-US/docs/Web/CSS/minmax
