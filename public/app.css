@@ -21425,3 +21425,13 @@ html body[data-theme] #page-home #spinAgentBtn{
 #page-stats .stats-main-grid{
   grid-template-rows:minmax(0, .88fr) minmax(0, 1.12fr) !important;
 }
+
+/* Keep the home chart instruction subtitle readable and standardized. */
+#page-home .rr-chart-card > .card-header .card-sub,
+#page-home .rr-chart-card > .card-header .card-sub[data-tb-auto-fit="1"]{
+  --tb-auto-fit-font-size:max(16px, calc(16px * var(--app-1080-scale))) !important;
+  font-size:max(16px, calc(16px * var(--app-1080-scale))) !important;
+  line-height:1.16 !important;
+  font-weight:700 !important;
+  letter-spacing:.01em !important;
+}
