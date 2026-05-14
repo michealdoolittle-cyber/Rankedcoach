@@ -21484,3 +21484,13 @@ html body[data-theme] #page-home #spinAgentBtn{
   min-height:max(56px, calc(56px * var(--app-1080-scale))) !important;
   padding:max(8px, calc(8px * var(--app-1080-scale))) max(10px, calc(10px * var(--app-1080-scale))) !important;
 }
+
+/* Align the selected role impact pill to the right side of the impact card. */
+#page-home .rr-card .impact-role-pill,
+#page-home #impactRolePill{
+  align-self:flex-end !important;
+  margin-left:auto !important;
+  margin-right:0 !important;
+  text-align:right !important;
+  justify-content:center !important;
+}
