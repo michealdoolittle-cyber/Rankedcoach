@@ -21435,3 +21435,11 @@ html body[data-theme] #page-home #spinAgentBtn{
   font-weight:700 !important;
   letter-spacing:.01em !important;
 }
+
+/* Underline the selected match title in the chart-side stat panel. */
+#page-home .rr-match-stats-title,
+#page-home #rrMatchTitle{
+  display:inline-block !important;
+  padding-bottom:3px !important;
+  border-bottom:2px solid color-mix(in srgb, var(--accent) 72%, transparent) !important;
+}
