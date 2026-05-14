@@ -21447,8 +21447,8 @@ html body[data-theme] #page-home #spinAgentBtn{
 /* Keep the compass profile read large enough to function as the card subtitle. */
 #page-home .compass-main .compass-header #compassProfileCopy,
 #page-home .compass-main .compass-header #compassProfileCopy[data-tb-auto-fit="1"]{
-  --tb-auto-fit-font-size:max(16px, calc(17px * var(--app-1080-scale))) !important;
-  font-size:max(16px, calc(17px * var(--app-1080-scale))) !important;
+  --tb-auto-fit-font-size:max(14px, calc(15px * var(--app-1080-scale))) !important;
+  font-size:max(14px, calc(15px * var(--app-1080-scale))) !important;
   line-height:1.15 !important;
   font-weight:700 !important;
   letter-spacing:.005em !important;
