@@ -21443,3 +21443,15 @@ html body[data-theme] #page-home #spinAgentBtn{
   padding-bottom:3px !important;
   border-bottom:2px solid color-mix(in srgb, var(--accent) 72%, transparent) !important;
 }
+
+/* Keep the compass profile read large enough to function as the card subtitle. */
+#page-home .compass-main .compass-header #compassProfileCopy,
+#page-home .compass-main .compass-header #compassProfileCopy[data-tb-auto-fit="1"]{
+  --tb-auto-fit-font-size:max(16px, calc(17px * var(--app-1080-scale))) !important;
+  font-size:max(16px, calc(17px * var(--app-1080-scale))) !important;
+  line-height:1.15 !important;
+  font-weight:700 !important;
+  letter-spacing:.005em !important;
+  max-width:none !important;
+  width:100% !important;
+}
