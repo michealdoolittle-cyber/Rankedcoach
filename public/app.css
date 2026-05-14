@@ -171,7 +171,7 @@ body.compat-no-color-mix{
   --scrollbar-thumb-border:rgba(255,255,255,.12);
 }
 
-body.compat-no-color-mix :is(.card, .profile-panel, .profile-dropdown, .profile-switcher, .lens-modal, .agent-modal, .app-header){
+body.compat-no-color-mix :is(.card, .nav-rr-widget, .profile-panel, .profile-dropdown, .profile-switcher, .lens-modal, .agent-modal, .app-header){
   border-color:var(--border-soft) !important;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.03),
@@ -441,8 +441,10 @@ flex-wrap:nowrap;
   padding: 8px 12px;
   border-radius: 10px;
   background: radial-gradient(circle at top left,
-              rgba(248,250,252,0.07), transparent 60%);
+              rgba(148,163,184,0.18), transparent 60%);
   border: 1px solid rgba(148,163,184,0.45);
+  position:relative;
+  overflow:hidden;
 }
 
 .nav-rr-head{
@@ -11449,6 +11451,7 @@ body{
 }
 
 .card,
+.nav-rr-widget,
 .profile-panel,
 .profile-dropdown,
 .profile-switcher,
@@ -11469,6 +11472,7 @@ body{
 }
 
 .card::before,
+.nav-rr-widget::before,
 .profile-panel::before,
 .agent-frame::before,
 .insight-card::before,
@@ -11927,6 +11931,7 @@ body[data-theme="ion"] .app-header::after{
 }
 
 body[data-theme="ion"] .card,
+body[data-theme="ion"] .nav-rr-widget,
 body[data-theme="ion"] .profile-panel,
 body[data-theme="ion"] .profile-dropdown,
 body[data-theme="ion"] .profile-switcher,
@@ -11952,6 +11957,7 @@ body[data-theme="ion"] .insight-card{
 }
 
 body[data-theme="ion"] .card::before,
+body[data-theme="ion"] .nav-rr-widget::before,
 body[data-theme="ion"] .profile-panel::before,
 body[data-theme="ion"] .insight-card::before,
 body[data-theme="ion"] .timeline-insight-card::before,
@@ -11964,6 +11970,7 @@ body[data-theme="ion"] .logging-live-card::before{
 }
 
 body[data-theme="ion"] .card::after,
+body[data-theme="ion"] .nav-rr-widget::after,
 body[data-theme="ion"] .profile-panel::after,
 body[data-theme="ion"] .insight-card::after,
 body[data-theme="ion"] .rr-match-stats::after,
@@ -11991,6 +11998,7 @@ body[data-theme="ion"] .agent-frame{
 }
 
 body[data-theme="ion"] .profile-panel,
+body[data-theme="ion"] .nav-rr-widget,
 body[data-theme="ion"] .profile-dropdown,
 body[data-theme="ion"] .profile-switcher{
   background:
@@ -12004,6 +12012,7 @@ body[data-theme="ion"] .profile-switcher{
 }
 
 body[data-theme="ion"] .profile-panel::after,
+body[data-theme="ion"] .nav-rr-widget::after,
 body[data-theme="ion"] .profile-dropdown::after,
 body[data-theme="ion"] .profile-switcher::after{
   content:"";
@@ -12218,6 +12227,7 @@ body[data-theme="reaver"] .insight-card{
 }
 
 body[data-theme="reaver"] .profile-panel,
+body[data-theme="reaver"] .nav-rr-widget,
 body[data-theme="reaver"] .profile-dropdown,
 body[data-theme="reaver"] .profile-switcher{
   border-radius:12px 22px 12px 22px !important;
@@ -12236,6 +12246,7 @@ body[data-theme="reaver"] .profile-panel{
 }
 
 body[data-theme="reaver"] .profile-panel,
+body[data-theme="reaver"] .nav-rr-widget,
 body[data-theme="reaver"] .profile-dropdown,
 body[data-theme="reaver"] .profile-switcher,
 body[data-theme="reaver"] .lens-modal{
@@ -12307,6 +12318,7 @@ body[data-theme="reaver"] .weekly-focus-pill::after{
 }
 
 body[data-theme="reaver"] .profile-panel::before,
+body[data-theme="reaver"] .nav-rr-widget::before,
 body[data-theme="reaver"] .profile-dropdown::before,
 body[data-theme="reaver"] .profile-switcher::before{
   background:
@@ -12316,6 +12328,7 @@ body[data-theme="reaver"] .profile-switcher::before{
 }
 
 body[data-theme="reaver"] .profile-panel::after,
+body[data-theme="reaver"] .nav-rr-widget::after,
 body[data-theme="reaver"] .profile-dropdown::after,
 body[data-theme="reaver"] .profile-switcher::after{
   content:"";
@@ -12397,12 +12410,14 @@ body[data-theme="reaver"] .compass-score-card,
 body[data-theme="reaver"] .weekly-focus-pill,
 body[data-theme="reaver"] .insight-card,
 body[data-theme="reaver"] .profile-panel,
+body[data-theme="reaver"] .nav-rr-widget,
 body[data-theme="reaver"] .profile-dropdown,
 body[data-theme="reaver"] .profile-switcher{
   position:relative;
 }
 
 body[data-theme="reaver"] .card > * ,
+body[data-theme="reaver"] .nav-rr-widget > *,
 body[data-theme="reaver"] .profile-panel > *,
 body[data-theme="reaver"] .profile-dropdown > *,
 body[data-theme="reaver"] .profile-switcher > *{
@@ -12531,6 +12546,7 @@ body[data-theme="reaver"] .profile-switcher.open{
 
 /* Reaver keeps the app-wide fantasy, but the nav-right cluster uses the stable interaction model. */
 body[data-theme="reaver"] .profile-panel,
+body[data-theme="reaver"] .nav-rr-widget,
 body[data-theme="reaver"] .profile-dropdown,
 body[data-theme="reaver"] .profile-switcher{
   clip-path:none !important;
@@ -12540,6 +12556,8 @@ body[data-theme="reaver"] .profile-switcher{
 
 body[data-theme="reaver"] .profile-panel::before,
 body[data-theme="reaver"] .profile-panel::after,
+body[data-theme="reaver"] .nav-rr-widget::before,
+body[data-theme="reaver"] .nav-rr-widget::after,
 body[data-theme="reaver"] .profile-dropdown::before,
 body[data-theme="reaver"] .profile-dropdown::after,
 body[data-theme="reaver"] .profile-switcher::before,
