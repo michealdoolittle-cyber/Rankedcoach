@@ -5765,6 +5765,40 @@ function getChartSlice(cumulative, size, matchCount) {
   return slice;
 }
 
+function getChartIntroTiming(size, segmentCount, useContinuousIntro = false) {
+  const normalizedSize = String(size || "5").toLowerCase();
+  const baseSegmentMs = 360;
+  const readableMinMs = 70;
+
+  if (!useContinuousIntro) {
+    return {
+      segmentMs: baseSegmentMs,
+      finalPauseMs: 120,
+      finalSegmentMs: 620
+    };
+  }
+
+  let segmentMs = baseSegmentMs;
+
+  if (normalizedSize === "20") {
+    segmentMs = baseSegmentMs / 2;
+  } else if (normalizedSize === "50") {
+    segmentMs = baseSegmentMs / 3;
+  } else if (normalizedSize === "all") {
+    const visibleSegments = Math.max(1, Number(segmentCount) || 1);
+    segmentMs = 6000 / visibleSegments;
+  }
+
+  const minimumSegmentMs = normalizedSize === "all" ? 1 : readableMinMs;
+  segmentMs = Math.max(minimumSegmentMs, Math.round(segmentMs * 1000) / 1000);
+
+  return {
+    segmentMs,
+    finalPauseMs: 0,
+    finalSegmentMs: segmentMs
+  };
+}
+
 function getChartBounds(slice) {
   const rawMax = Math.max(...slice, 25);
   const rawMin = Math.min(...slice, -25);
@@ -31335,9 +31369,10 @@ ${xTicks}
 
   let segments="";
   let dots="";
-  const introSegmentDurationMs = useContinuousIntro ? 360 : 360;
-  const introFinalPauseMs = useContinuousIntro ? 0 : 120;
-  const introFinalSegmentDurationMs = useContinuousIntro ? 360 : 620;
+  const introTiming = getChartIntroTiming(size, Math.max(0, points.length - 1), useContinuousIntro);
+  const introSegmentDurationMs = introTiming.segmentMs;
+  const introFinalPauseMs = introTiming.finalPauseMs;
+  const introFinalSegmentDurationMs = introTiming.finalSegmentMs;
   const introDotPopDelayMs = 8;
   const introSettleMs = 220;
 
@@ -31376,6 +31411,8 @@ ${xTicks}
 stroke-dasharray:${len};
 stroke-dashoffset:${len};
 --intro-delay:${introDelayMs}ms;
+--intro-segment-duration:${introSegmentDurationMs}ms;
+--intro-final-segment-duration:${introFinalSegmentDurationMs}ms;
 `;
 
     }else if(animate){

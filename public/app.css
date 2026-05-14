@@ -16780,12 +16780,12 @@ body.has-active-modal .compass-panel:is(:hover, :focus-within) .compass-main{
 .chart-row.chart-intro-active .chart-intro-segment{
   stroke-dasharray:var(--dash);
   stroke-dashoffset:var(--dash);
-  animation:drawLine .36s var(--chart-ease) forwards;
+  animation:drawLine var(--intro-segment-duration, .36s) var(--chart-ease) forwards;
   animation-delay:var(--intro-delay, 0ms);
 }
 
 .chart-row.chart-intro-active .chart-intro-segment-final{
-  animation:drawLineFinal .62s cubic-bezier(.18, .96, .2, 1) forwards;
+  animation:drawLineFinal var(--intro-final-segment-duration, .62s) cubic-bezier(.18, .96, .2, 1) forwards;
   animation-delay:var(--intro-delay, 0ms);
 }
 
