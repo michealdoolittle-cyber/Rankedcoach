@@ -21169,7 +21169,7 @@ html body[data-theme] #page-home #spinAgentBtn{
   min-height:0 !important;
   overflow:hidden !important;
   display:grid !important;
-  grid-template-columns:62px minmax(0, 1fr) !important;
+  grid-template-columns:84px minmax(0, 1fr) !important;
   gap:5px !important;
   align-items:stretch !important;
   padding:5px !important;
@@ -21204,6 +21204,7 @@ html body[data-theme] #page-home #spinAgentBtn{
 }
 
 #page-stats .stats-weapon-family-meta{
+  width:100% !important;
   max-width:100% !important;
   padding:3px 5px !important;
   border-radius:999px !important;
@@ -21214,6 +21215,7 @@ html body[data-theme] #page-home #spinAgentBtn{
   line-height:1 !important;
   font-weight:900 !important;
   letter-spacing:.04em !important;
+  text-align:center !important;
   white-space:nowrap !important;
 }
 
@@ -21233,7 +21235,7 @@ html body[data-theme] #page-home #spinAgentBtn{
   height:100% !important;
   display:grid !important;
   grid-template-columns:repeat(var(--weapon-count), minmax(0, 1fr)) !important;
-  gap:4px !important;
+  gap:3px !important;
 }
 
 #page-stats .stats-weapon-tile{
@@ -21246,7 +21248,7 @@ html body[data-theme] #page-home #spinAgentBtn{
   display:grid !important;
   grid-template-rows:minmax(0, 1fr) auto !important;
   gap:0 !important;
-  padding:2px 3px 3px !important;
+  padding:2px 2px 3px !important;
   border:1px solid rgba(148,163,184,.2) !important;
   border-radius:12px !important;
   background:
@@ -21323,8 +21325,8 @@ html body[data-theme] #page-home #spinAgentBtn{
 
 @media (min-width: 1600px){
   #page-stats .stats-weapon-family-row{
-    grid-template-columns:74px minmax(0, 1fr) !important;
-    gap:7px !important;
+    grid-template-columns:96px minmax(0, 1fr) !important;
+    gap:6px !important;
     padding:6px !important;
   }
 
