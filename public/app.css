@@ -21534,3 +21534,70 @@ html body[data-theme] #page-home #spinAgentBtn{
   justify-content:center !important;
   text-align:center !important;
 }
+
+/* Keep the goal rank popover the same fixed footprint as the compact profile panel. */
+#goalRankModal .lens-modal{
+  width:calc(328px * var(--app-1080-scale)) !important;
+  min-width:calc(328px * var(--app-1080-scale)) !important;
+  max-width:calc(328px * var(--app-1080-scale)) !important;
+  height:calc(var(--nav-height) - calc(6px * var(--app-1080-scale))) !important;
+  min-height:calc(var(--nav-height) - calc(6px * var(--app-1080-scale))) !important;
+  max-height:calc(var(--nav-height) - calc(6px * var(--app-1080-scale))) !important;
+  border-radius:calc(12px * var(--app-1080-scale)) !important;
+  overflow:hidden !important;
+}
+
+#goalRankModal .lens-modal-header{
+  flex:0 0 calc(34px * var(--app-1080-scale)) !important;
+  min-height:calc(34px * var(--app-1080-scale)) !important;
+  padding:calc(6px * var(--app-1080-scale)) calc(10px * var(--app-1080-scale)) calc(3px * var(--app-1080-scale)) !important;
+  gap:calc(8px * var(--app-1080-scale)) !important;
+}
+
+#goalRankModal .lens-modal-title{
+  font-size:calc(12px * var(--app-1080-scale)) !important;
+  line-height:1 !important;
+  letter-spacing:.09em !important;
+}
+
+#goalRankModal .lens-modal-close{
+  width:calc(28px * var(--app-1080-scale)) !important;
+  height:calc(28px * var(--app-1080-scale)) !important;
+  min-width:calc(28px * var(--app-1080-scale)) !important;
+  min-height:calc(28px * var(--app-1080-scale)) !important;
+  border-radius:calc(10px * var(--app-1080-scale)) !important;
+  font-size:calc(14px * var(--app-1080-scale)) !important;
+}
+
+#goalRankModal .lens-modal-body{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  padding:calc(5px * var(--app-1080-scale)) calc(10px * var(--app-1080-scale)) calc(8px * var(--app-1080-scale)) !important;
+  overflow:hidden !important;
+}
+
+#goalRankModal .goal-rank-row{
+  display:grid !important;
+  grid-template-columns:calc(38px * var(--app-1080-scale)) minmax(0, 1fr) calc(78px * var(--app-1080-scale)) !important;
+  align-items:center !important;
+  gap:calc(8px * var(--app-1080-scale)) !important;
+  width:100% !important;
+  height:100% !important;
+}
+
+#goalRankModal .goal-rank-preview-icon{
+  width:calc(38px * var(--app-1080-scale)) !important;
+  height:calc(38px * var(--app-1080-scale)) !important;
+}
+
+#goalRankModal #goalRankSelect,
+#goalRankModal #goalRankSave{
+  width:100% !important;
+  height:calc(32px * var(--app-1080-scale)) !important;
+  min-height:calc(32px * var(--app-1080-scale)) !important;
+  padding:0 calc(9px * var(--app-1080-scale)) !important;
+  border-radius:calc(10px * var(--app-1080-scale)) !important;
+  font-size:calc(12px * var(--app-1080-scale)) !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
