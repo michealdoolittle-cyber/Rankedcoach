@@ -27569,6 +27569,7 @@ function bindEvents(){
 
   if (window.__vt_bindEventsBound) return;
   window.__vt_bindEventsBound = true;
+  let profileDropdownActiveAnchor = profileDropdownAnchor || profileDropdownToggle;
 
   const positionProfilePopout = (menu, anchor) => {
     if (!menu || !anchor) return;
@@ -27615,7 +27616,7 @@ function bindEvents(){
       positionProfileSwitcherMenu();
     }
     if (profileDropdown?.classList.contains("open")) {
-      positionProfilePopout(profileDropdown, profileDropdownAnchor || profileDropdownToggle);
+      positionProfilePopout(profileDropdown, profileDropdownActiveAnchor || profileDropdownAnchor || profileDropdownToggle);
     }
   };
   let profileMenuPositionRaf = 0;
@@ -27844,6 +27845,7 @@ function bindEvents(){
   const closeProfileMenus = () => {
     profileSwitcher?.classList.remove("open");
     profileDropdown?.classList.remove("open");
+    profileDropdownActiveAnchor = profileDropdownAnchor || profileDropdownToggle;
     [profileSwitcher, profileDropdown].forEach((menu) => {
       if (!menu) return;
       menu.style.left = "";
@@ -27859,8 +27861,9 @@ function bindEvents(){
     schedulePositionOpenProfileMenus();
   };
 
-  const openProfileSettingsMenu = () => {
+  const openProfileSettingsMenu = (anchor = profileDropdownAnchor || profileDropdownToggle) => {
     profileSwitcher?.classList.remove("open");
+    profileDropdownActiveAnchor = anchor || profileDropdownAnchor || profileDropdownToggle;
     profileDropdown?.classList.add("open");
     schedulePositionOpenProfileMenus();
   };
@@ -27871,10 +27874,10 @@ function bindEvents(){
   profileAvatarWrap?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const shouldOpen = !profileSwitcher?.classList.contains("open");
+    const shouldOpen = !profileDropdown?.classList.contains("open");
     closeProfileMenus();
     if (shouldOpen) {
-      openProfileSwitcherMenu();
+      openProfileSettingsMenu(profileAvatarAnchor || profileAvatarWrap);
     }
   });
 
@@ -27884,7 +27887,7 @@ function bindEvents(){
     const shouldOpen = !profileDropdown?.classList.contains("open");
     closeProfileMenus();
     if (shouldOpen) {
-      openProfileSettingsMenu();
+      openProfileSettingsMenu(profileDropdownAnchor || profileDropdownToggle);
     }
   });
 
@@ -27896,7 +27899,7 @@ function bindEvents(){
     e.stopPropagation();
   });
 
-  document.getElementById("pdEditProfile")?.addEventListener("click", (e) => {
+  document.getElementById("pdOpenSettings")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     closeProfileDropdown();
@@ -29713,19 +29716,36 @@ const PROFILE_THEME_PRESETS = [
 ];
 
 const PROFILE_BORDER_STYLES = [
-  { value: "standard", label: "Standard" },
-  { value: "gilded", label: "Gilded" },
-  { value: "prismatic", label: "Prismatic" },
-  { value: "runed", label: "Runed" },
-  { value: "tactical", label: "Tactical" }
+  { value: "standard", label: "Standard", note: "Clean theme ring" },
+  { value: "gilded", label: "Gilded", note: "Gold highlight glow" },
+  { value: "prismatic", label: "Prismatic", note: "Cyan violet edge" },
+  { value: "runed", label: "Runed", note: "Arcane inner line" },
+  { value: "tactical", label: "Tactical", note: "Steel profile frame" }
 ];
 
 const PROFILE_BANNER_STYLES = [
-  { value: "theme", label: "Theme Banner" },
-  { value: "aurora", label: "Aurora Sweep" },
-  { value: "spotlight", label: "Spotlight" },
-  { value: "grid", label: "Tactical Grid" },
-  { value: "wave", label: "Tidal Flow" }
+  { value: "theme", label: "Default Theme", type: "default" },
+  { value: "dayglo-duo", label: "Dayglo Duo", image: "https://media.valorant-api.com/playercards/1711d20d-4b1c-c64a-14be-d4ae58a457c6/wideart.png" },
+  { value: "afternoon-asada", label: "Afternoon Asada", image: "https://media.valorant-api.com/playercards/c8b2f5fd-4331-b172-f3b7-c8a26f356a1f/wideart.png" },
+  { value: "pass-the-sticks", label: "Pass the Sticks", image: "https://media.valorant-api.com/playercards/eef542d2-4724-bc47-f53f-239f8c9c2623/wideart.png" },
+  { value: "dance-it-all-away", label: "Dance It All Away", image: "https://media.valorant-api.com/playercards/d32e58b1-4191-7315-ad4a-9da58b3f23dd/wideart.png" },
+  { value: "prelude-to-paris", label: "Prelude To Paris", image: "https://media.valorant-api.com/playercards/d2d3caf9-499f-2ac8-9722-54961c3bcbf5/wideart.png" },
+  { value: "dimensional-folding", label: "Dimensional Folding", image: "https://media.valorant-api.com/playercards/e8787c31-4a39-9636-94a5-77b298d26ba7/wideart.png" },
+  { value: "serpents-celebration", label: "Serpent's Celebration", image: "https://media.valorant-api.com/playercards/41244f42-43f5-f795-9be8-d2b9edba458a/wideart.png" },
+  { value: "the-way-forward", label: "The Way Forward", image: "https://media.valorant-api.com/playercards/33c1f011-4eca-068c-9751-f68c788b2eee/wideart.png" },
+  { value: "hivemind", label: "Hivemind", image: "https://media.valorant-api.com/playercards/fc209787-414b-10d0-dcac-04832fc2c654/wideart.png" },
+  { value: "versus-phoenix-jett", label: "Phoenix + Jett", image: "https://media.valorant-api.com/playercards/3432dc3d-47da-4675-67ae-53adb1fdad5e/wideart.png" },
+  { value: "judge-schema", label: "Judge Schema", image: "https://media.valorant-api.com/playercards/59939bea-4b82-9ce0-0586-d4b0c8d5271d/wideart.png" },
+  { value: "killjoy-id", label: "Killjoy ID", image: "https://media.valorant-api.com/playercards/55f584f9-4684-895d-88e0-a8ada2002d8a/wideart.png" },
+  { value: "chicken-noir", label: "Chicken Noir", image: "https://media.valorant-api.com/playercards/fca32892-4f2f-228b-0f5c-209ad50199b3/wideart.png" },
+  { value: "odin-schema", label: "Odin Schema", image: "https://media.valorant-api.com/playercards/adbd4077-4f0f-57c7-d9cd-7e9bc4244646/wideart.png" },
+  { value: "polyfox", label: "POLYfox", image: "https://media.valorant-api.com/playercards/30b64514-440d-1261-f863-6bbb180263f9/wideart.png" },
+  { value: "experiment-x011", label: "Experiment X011", image: "https://media.valorant-api.com/playercards/d2b288ea-4dc9-0b3b-fc8c-3baec575f0f8/wideart.png" },
+  { value: "epoch-event", label: "Epoch Event", image: "https://media.valorant-api.com/playercards/5ed8f14b-4c05-9e34-a0dd-878133823928/wideart.png" },
+  { value: "vandal-schema", label: "Vandal Schema", image: "https://media.valorant-api.com/playercards/f951d97c-4abb-0775-2312-4db199cde6bf/wideart.png" },
+  { value: "pigs-may-fly", label: "Pigs May Fly", image: "https://media.valorant-api.com/playercards/16939544-4f84-c889-545e-659e071ff3f8/wideart.png" },
+  { value: "ancient-secrets", label: "Ancient Secrets", image: "https://media.valorant-api.com/playercards/475ce7c1-4ddc-63aa-7e22-54bb621d615b/wideart.png" },
+  { value: "holidaze", label: "Holidaze", image: "https://media.valorant-api.com/playercards/22888904-4274-c5fb-ac4f-0e8a39a9417e/wideart.png" }
 ];
 
 function getDefaultProfileAvatarAgent() {
@@ -29757,8 +29777,8 @@ function normalizeProfileRecord(profile = {}) {
     avatarAgent,
     avatarUrl: profile.avatarUrl || getDefaultProfileAvatarUrl(avatarAgent),
     navBackgroundUrl: profile.navBackgroundUrl || "",
-    profileBorder: profile.profileBorder || "standard",
-    bannerStyle: profile.bannerStyle || "theme",
+    profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
+    bannerStyle: normalizeProfileBannerStyle(profile.bannerStyle || "theme"),
     accessibility: {
       contrastMode: profile?.accessibility?.contrastMode || "standard",
       motionMode: profile?.accessibility?.motionMode || "standard",
@@ -29847,8 +29867,8 @@ function createProfile(data){
     avatarAgent: data.avatarAgent || getDefaultProfileAvatarAgent(),
     avatarUrl: data.avatarUrl || getDefaultProfileAvatarUrl(data.avatarAgent),
     navBackgroundUrl: data.navBackgroundUrl || "",
-    profileBorder: data.profileBorder || "standard",
-    bannerStyle: data.bannerStyle || "theme",
+    profileBorder: normalizeProfileBorderStyle(data.profileBorder || "standard"),
+    bannerStyle: normalizeProfileBannerStyle(data.bannerStyle || "theme"),
     accessibility: {
       contrastMode: data?.accessibility?.contrastMode || "standard",
       motionMode: data?.accessibility?.motionMode || "standard",
@@ -29925,11 +29945,11 @@ function updateProfile(id, data){
   }
 
   if (data.profileBorder != null) {
-    profile.profileBorder = String(data.profileBorder || "standard");
+    profile.profileBorder = normalizeProfileBorderStyle(data.profileBorder || "standard");
   }
 
   if (data.bannerStyle != null) {
-    profile.bannerStyle = String(data.bannerStyle || "theme");
+    profile.bannerStyle = normalizeProfileBannerStyle(data.bannerStyle || "theme");
   }
 
   if (data.accessibility != null) {
@@ -30155,16 +30175,41 @@ function getThemePreset(themeKey = "default") {
   return PROFILE_THEME_PRESETS.find(theme => theme.value === resolvedThemeKey) || PROFILE_THEME_PRESETS[0];
 }
 
+function getProfileBorderStyle(borderStyle = "standard") {
+  return PROFILE_BORDER_STYLES.find(style => style.value === String(borderStyle || "standard")) || PROFILE_BORDER_STYLES[0];
+}
+
+function normalizeProfileBorderStyle(borderStyle = "standard") {
+  return getProfileBorderStyle(borderStyle).value;
+}
+
+function getProfileBannerStyle(bannerStyle = "theme") {
+  return PROFILE_BANNER_STYLES.find(style => style.value === String(bannerStyle || "theme")) || PROFILE_BANNER_STYLES[0];
+}
+
+function normalizeProfileBannerStyle(bannerStyle = "theme") {
+  return getProfileBannerStyle(bannerStyle).value;
+}
+
+function getBannerImageUrl(bannerStyle = "theme") {
+  return getProfileBannerStyle(bannerStyle)?.image || "";
+}
+
+function toCssUrl(url = "") {
+  const cleanUrl = String(url || "").trim().replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return cleanUrl ? `url("${cleanUrl}")` : "none";
+}
+
 function getBannerPattern(bannerStyle = "theme", theme = getThemePreset()) {
+  const banner = getProfileBannerStyle(bannerStyle);
+  if (banner?.image) return "none";
+
   const accent = theme?.colors?.accent || "#ff4655";
   const accent2 = theme?.colors?.accent2 || "#f97316";
   const soft = theme?.colors?.text || "#ffffff";
   const presets = {
     theme: theme?.colors?.pattern2 || "none",
-    aurora: `linear-gradient(120deg, ${accent}22, transparent 28%, ${accent2}22 62%, transparent 100%)`,
-    spotlight: `radial-gradient(circle at 22% 20%, ${soft}44, transparent 18%), radial-gradient(circle at 78% 18%, ${accent}33, transparent 24%)`,
-    grid: `linear-gradient(90deg, ${accent}18 1px, transparent 1px), linear-gradient(180deg, ${accent2}12 1px, transparent 1px)`,
-    wave: `linear-gradient(180deg, ${accent}18, transparent 24%, ${accent2}18 76%, transparent 100%)`
+    default: `radial-gradient(circle at 18% 18%, ${soft}18, transparent 20%), linear-gradient(120deg, ${accent}16, transparent 38%, ${accent2}14 72%, transparent 100%)`
   };
   return presets[bannerStyle] || presets.theme;
 }
@@ -30250,6 +30295,56 @@ function renderAvatarGallery(selectedAgent = getDefaultProfileAvatarAgent()) {
   });
 }
 
+function renderBorderGallery(selectedBorder = "standard") {
+  const gallery = document.getElementById("editProfileBorderGallery");
+  const borderSelect = document.getElementById("editProfileBorderStyle");
+  if (!gallery) return;
+
+  const profile = getActiveProfile();
+  const selectedThemeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
+  const selectedAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
+  const theme = getThemePreset(selectedThemeKey);
+  const colors = theme?.colors || {};
+  const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
+  const activeBorder = normalizeProfileBorderStyle(selectedBorder);
+
+  gallery.innerHTML = PROFILE_BORDER_STYLES.map((style) => {
+    const isActive = style.value === activeBorder;
+    return `
+      <button type="button" class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""}" data-border-card="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
+        <div
+          class="border-card-preview"
+          style="
+            --border-card-accent:${colors.accent || "#ff4655"};
+            --border-card-accent-2:${colors.accent2 || "#f97316"};
+            --border-card-text:${colors.text || "#f8fafc"};
+            --border-card-muted:${colors.muted || "#94a3b8"};
+            --border-card-surface:${colors.card || "#0b1220"};
+            --border-card-surface-2:${colors.card2 || "#0f172a"};
+            --border-card-glow:${colors.glow || "rgba(255,70,85,.22)"};
+          ">
+          <div class="border-card-avatar">
+            <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
+          </div>
+          <div class="border-card-copy">
+            <div class="border-card-name">${escapeHtml(style.label)}</div>
+            <div class="border-card-note">${escapeHtml(style.note || "Profile ring")}</div>
+          </div>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  gallery.querySelectorAll("[data-border-card]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextBorder = normalizeProfileBorderStyle(button.getAttribute("data-border-card") || "standard");
+      if (borderSelect) borderSelect.value = nextBorder;
+      renderBorderGallery(nextBorder);
+      previewEditProfileVisuals();
+    });
+  });
+}
+
 function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
   const gallery = document.getElementById("editProfileBannerGallery");
   const bannerSelect = document.getElementById("editProfileBannerStyle");
@@ -30257,10 +30352,14 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
 
   const theme = getThemePreset(themeKey);
   const colors = theme?.colors || {};
+  const activeBanner = normalizeProfileBannerStyle(selectedBanner);
 
   gallery.innerHTML = PROFILE_BANNER_STYLES.map((style) => {
-    const isActive = String(style.value) === String(selectedBanner || "");
+    const isActive = String(style.value) === activeBanner;
     const pattern = getBannerPattern(style.value, theme);
+    const previewBackground = style.image
+      ? `linear-gradient(90deg, rgba(2,6,23,.34), rgba(2,6,23,.08) 52%, rgba(2,6,23,.44)), url('${escapeHtml(style.image)}') center / cover no-repeat`
+      : `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`;
     return `
       <button type="button" class="banner-card ${isActive ? "is-active" : ""}" data-banner-card="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
         <div
@@ -30269,10 +30368,10 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
             --banner-card-text:${colors.text || "#f8fafc"};
             --banner-card-accent:${colors.accent || "#ff4655"};
             --banner-card-pattern:${pattern};
-            background:linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"});
+            background:${previewBackground};
           ">
           <div class="banner-card-name">${escapeHtml(style.label)}</div>
-          <div class="banner-card-strip"></div>
+          <div class="banner-card-strip">${style.image ? "Player Card" : "Theme Default"}</div>
         </div>
       </button>
     `;
@@ -30280,7 +30379,7 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
 
   gallery.querySelectorAll("[data-banner-card]").forEach((button) => {
     button.addEventListener("click", () => {
-      const nextBanner = button.getAttribute("data-banner-card") || "theme";
+      const nextBanner = normalizeProfileBannerStyle(button.getAttribute("data-banner-card") || "theme");
       if (bannerSelect) bannerSelect.value = nextBanner;
       renderBannerGallery(nextBanner, document.getElementById("editProfileTheme")?.value || themeKey);
       previewEditProfileVisuals();
@@ -30300,7 +30399,8 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const themeKey = requestedThemeKey === "reaver" ? "default" : requestedThemeKey;
   const theme = getThemePreset(themeKey);
   const navBackgroundUrl = String(profile?.navBackgroundUrl || "").trim();
-  const borderStyle = String(profile?.profileBorder || "standard").toLowerCase();
+  const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
+  const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
   const body = document.body;
@@ -30367,9 +30467,15 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (header) {
-    const bannerPattern = getBannerPattern(profile?.bannerStyle || "theme", theme);
-    header.style.setProperty("--nav-bg-image", navBackgroundUrl ? `url("${navBackgroundUrl}")` : "none");
-    header.style.setProperty("--nav-banner-pattern", bannerPattern);
+    const selectedBannerUrl = getBannerImageUrl(bannerStyle);
+    const activeBannerUrl = navBackgroundUrl || selectedBannerUrl;
+    const bannerPattern = getBannerPattern(bannerStyle, theme);
+    const imageLayer = activeBannerUrl
+      ? `linear-gradient(90deg, rgba(2,6,23,.46), rgba(2,6,23,.12) 44%, rgba(2,6,23,.52)), ${toCssUrl(activeBannerUrl)}`
+      : "none";
+    header.style.setProperty("--nav-bg-image", imageLayer);
+    header.style.setProperty("--nav-banner-pattern", activeBannerUrl ? "none" : bannerPattern);
+    header.style.setProperty("--nav-bg-opacity", activeBannerUrl ? ".52" : ".18");
   }
 
   ensureThemeBuilderThemeState(getCurrentThemeBuilderThemeKey());
@@ -30430,17 +30536,24 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const selectedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase() === "reaver"
     ? "default"
     : (profile?.themeKey || profile?.frameTheme || "default");
+  const selectedBorder = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
+  const selectedBanner = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   if (themeSelect) themeSelect.value = selectedThemeKey;
   renderThemeGallery(selectedThemeKey);
   if (avatarSelect) avatarSelect.value = String(profile?.avatarAgent || getDefaultProfileAvatarAgent()).toLowerCase();
   renderAvatarGallery(profile?.avatarAgent || getDefaultProfileAvatarAgent());
-  if (borderSelect) borderSelect.value = profile?.profileBorder || "standard";
-  if (bannerSelect) bannerSelect.value = profile?.bannerStyle || "theme";
-  renderBannerGallery(profile?.bannerStyle || "theme", selectedThemeKey);
-  document.getElementById("editProfileContrastMode").value = profile?.accessibility?.contrastMode || "standard";
-  document.getElementById("editProfileMotionMode").value = profile?.accessibility?.motionMode || "standard";
-  document.getElementById("editProfileLayoutMode").value = normalizeAccessibilityLayoutMode(profile?.accessibility?.layoutMode);
-  document.getElementById("editProfileNavBackground").value = profile?.navBackgroundUrl || "";
+  if (borderSelect) borderSelect.value = selectedBorder;
+  renderBorderGallery(selectedBorder);
+  if (bannerSelect) bannerSelect.value = selectedBanner;
+  renderBannerGallery(selectedBanner, selectedThemeKey);
+  const contrastModeEl = document.getElementById("editProfileContrastMode");
+  const motionModeEl = document.getElementById("editProfileMotionMode");
+  const layoutModeEl = document.getElementById("editProfileLayoutMode");
+  if (contrastModeEl) contrastModeEl.value = profile?.accessibility?.contrastMode || "standard";
+  if (motionModeEl) motionModeEl.value = profile?.accessibility?.motionMode || "standard";
+  if (layoutModeEl) layoutModeEl.value = normalizeAccessibilityLayoutMode(profile?.accessibility?.layoutMode);
+  const navBackgroundEl = document.getElementById("editProfileNavBackground");
+  if (navBackgroundEl) navBackgroundEl.value = profile?.navBackgroundUrl || "";
 }
 
 function openEditProfileModal() {
@@ -30468,14 +30581,10 @@ function saveEditProfileModal() {
     region: document.getElementById("editProfileRegion")?.value?.trim() || "NA",
     themeKey: document.getElementById("editProfileTheme")?.value || profile.themeKey || "default",
     avatarAgent: document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent,
-    profileBorder: document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard",
-    bannerStyle: document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme",
+    profileBorder: normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard"),
+    bannerStyle: normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme"),
     navBackgroundUrl: document.getElementById("editProfileNavBackground")?.value?.trim() || "",
-    accessibility: {
-      contrastMode: document.getElementById("editProfileContrastMode")?.value || profile?.accessibility?.contrastMode || "standard",
-      motionMode: document.getElementById("editProfileMotionMode")?.value || profile?.accessibility?.motionMode || "standard",
-      layoutMode: document.getElementById("editProfileLayoutMode")?.value || profile?.accessibility?.layoutMode || "web"
-    }
+    accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
   });
 
   hideModalById("editProfileModal");
@@ -30486,9 +30595,11 @@ function previewEditProfileVisuals() {
   if (!profile) return;
   const activeThemeKey = document.getElementById("editProfileTheme")?.value || profile.themeKey || "default";
   const activeAvatar = document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent;
-  const activeBanner = document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme";
+  const activeBorder = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
+  const activeBanner = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
   renderThemeGallery(activeThemeKey);
   renderAvatarGallery(activeAvatar);
+  renderBorderGallery(activeBorder);
   renderBannerGallery(activeBanner, activeThemeKey);
   applyProfileVisuals({
     ...profile,
@@ -30496,14 +30607,10 @@ function previewEditProfileVisuals() {
     frameTheme: activeThemeKey,
     avatarAgent: activeAvatar,
     avatarUrl: getDefaultProfileAvatarUrl(activeAvatar || profile.avatarAgent),
-    profileBorder: document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard",
+    profileBorder: activeBorder,
     bannerStyle: activeBanner,
     navBackgroundUrl: document.getElementById("editProfileNavBackground")?.value?.trim() || "",
-    accessibility: {
-      contrastMode: document.getElementById("editProfileContrastMode")?.value || profile?.accessibility?.contrastMode || "standard",
-      motionMode: document.getElementById("editProfileMotionMode")?.value || profile?.accessibility?.motionMode || "standard",
-      layoutMode: document.getElementById("editProfileLayoutMode")?.value || profile?.accessibility?.layoutMode || "web"
-    }
+    accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
   });
 }
 

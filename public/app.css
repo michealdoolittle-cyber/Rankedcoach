@@ -21658,3 +21658,199 @@ html body[data-theme] #page-home #spinAgentBtn{
   width:calc(11px * var(--app-1080-scale)) !important;
   height:calc(11px * var(--app-1080-scale)) !important;
 }
+
+/* Profile settings refinements: previews, nav spacing, and static menu opening. */
+.app-header::before{
+  background-repeat:no-repeat, no-repeat, no-repeat !important;
+  background-size:cover, cover, cover !important;
+  background-position:center center, center center, center center !important;
+}
+
+#editProfileModal .profile-edit-nav{
+  padding-left:calc(16px * var(--app-1080-scale)) !important;
+}
+
+.profile-dropdown,
+.profile-switcher,
+.profile-dropdown.open,
+.profile-switcher.open{
+  transition:none !important;
+  transform:none !important;
+}
+
+.profile-panel.open .profile-dropdown-toggle,
+.profile-avatar-wrap,
+.profile-avatar-ring{
+  transition:none !important;
+  transform:none !important;
+}
+
+.border-gallery{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:12px;
+}
+
+.border-card{
+  position:relative;
+  appearance:none;
+  width:100%;
+  min-height:128px;
+  padding:0;
+  border-radius:18px;
+  overflow:hidden;
+  cursor:pointer;
+  text-align:left;
+}
+
+.border-card.is-active{
+  box-shadow:
+    0 18px 36px rgba(0,0,0,.24),
+    0 0 0 2px color-mix(in srgb, var(--accent) 42%, white 8%),
+    0 0 24px color-mix(in srgb, var(--theme-glow) 45%, transparent);
+}
+
+.border-card-preview{
+  min-height:128px;
+  height:100%;
+  padding:14px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--border-card-accent) 22%, transparent), transparent 44%),
+    linear-gradient(180deg, var(--border-card-surface), var(--border-card-surface-2));
+}
+
+.border-card-avatar{
+  width:58px;
+  height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:linear-gradient(135deg, var(--border-card-surface), color-mix(in srgb, var(--border-card-accent) 18%, var(--border-card-surface-2)));
+  overflow:visible;
+}
+
+.border-card-avatar img{
+  width:46px;
+  height:46px;
+  border-radius:999px;
+  object-fit:cover;
+}
+
+.border-card-standard .border-card-avatar{
+  border:2px solid rgba(255,255,255,.16);
+}
+
+.border-card-gilded .border-card-avatar{
+  border:3px solid rgba(250,204,21,.72);
+  box-shadow:0 0 0 1px rgba(250,204,21,.2), 0 0 18px rgba(250,204,21,.28);
+}
+
+.border-card-prismatic .border-card-avatar{
+  border:3px solid rgba(167,139,250,.62);
+  box-shadow:0 0 0 1px rgba(56,189,248,.26), 0 0 20px rgba(167,139,250,.32);
+}
+
+.border-card-runed .border-card-avatar{
+  border:3px solid rgba(129,140,248,.56);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.08), 0 0 18px rgba(99,102,241,.28);
+}
+
+.border-card-tactical .border-card-avatar{
+  border:3px solid rgba(148,163,184,.58);
+  box-shadow:0 0 0 1px rgba(15,23,42,.72), 0 0 16px rgba(148,163,184,.24);
+}
+
+.border-card-copy{
+  text-align:center;
+  min-width:0;
+}
+
+.border-card-name{
+  color:var(--border-card-text, var(--text-main));
+  font-size:12px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.border-card-note{
+  margin-top:5px;
+  color:var(--border-card-muted, var(--text-muted));
+  font-size:10px;
+  font-weight:700;
+  line-height:1.15;
+}
+
+#editProfileModal #editProfileBannerGallery.banner-gallery{
+  display:grid !important;
+  grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+  gap:calc(10px * var(--app-1080-scale)) !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card{
+  min-height:calc(88px * var(--app-1080-scale)) !important;
+  height:calc(88px * var(--app-1080-scale)) !important;
+  border-radius:calc(14px * var(--app-1080-scale)) !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card.is-active{
+  transform:translateY(calc(-1px * var(--app-1080-scale))) !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card-preview{
+  min-height:100% !important;
+  height:100% !important;
+  padding:calc(9px * var(--app-1080-scale)) !important;
+  justify-content:space-between !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card-preview::before{
+  background:var(--banner-card-pattern, none) !important;
+  opacity:.52 !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card-name{
+  max-width:100% !important;
+  color:var(--banner-card-text, #f8fafc) !important;
+  font-size:calc(11px * var(--app-1080-scale)) !important;
+  line-height:1.05 !important;
+  letter-spacing:.055em !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.72);
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card-strip{
+  align-self:flex-start !important;
+  width:auto !important;
+  min-width:calc(84px * var(--app-1080-scale)) !important;
+  height:auto !important;
+  min-height:calc(22px * var(--app-1080-scale)) !important;
+  padding:calc(5px * var(--app-1080-scale)) calc(8px * var(--app-1080-scale)) !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border-radius:999px !important;
+  background:rgba(2,6,23,.62) !important;
+  color:var(--banner-card-text, #f8fafc) !important;
+  font-size:calc(9px * var(--app-1080-scale)) !important;
+  font-weight:900 !important;
+  letter-spacing:.06em !important;
+  text-transform:uppercase !important;
+  text-shadow:0 2px 8px rgba(0,0,0,.7);
+}
+
+body[data-theme="reaver"] .border-card{
+  border:1px solid rgba(217,220,230,.18);
+  border-radius:10px 24px 10px 24px;
+  background:linear-gradient(180deg, rgba(20,12,36,.94), rgba(10,7,22,.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 18px 36px rgba(7,2,16,.28);
+}

@@ -74,7 +74,6 @@ RIOT PROFILE MODAL
           <button class="profile-edit-tab" type="button" data-profile-tab="icon">Agent Profile Icon</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="border">Profile Border</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="banner">Banner</button>
-          <button class="profile-edit-tab" type="button" data-profile-tab="accessibility">Accessibility</button>
         </aside>
 
         <div class="profile-edit-panels">
@@ -133,66 +132,35 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="border">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Profile Border</div>
-              <div class="profile-edit-panel-copy">Tune the avatar ring treatment so each profile feels distinct even inside the same theme family.</div>
+              <div class="profile-edit-panel-copy">Preview the avatar ring treatment before saving so each profile feels distinct inside the same theme family.</div>
             </div>
 
             <div class="profile-edit-grid">
-              <label class="profile-edit-field">
-                <span>Border Style</span>
-                <select id="editProfileBorderStyle"></select>
-              </label>
+              <select id="editProfileBorderStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
+              <div class="profile-edit-field profile-edit-field-full">
+                <span>Border Preview</span>
+                <div id="editProfileBorderGallery" class="border-gallery"></div>
+              </div>
             </div>
           </section>
 
           <section class="profile-edit-panel" data-profile-panel="banner">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Banner</div>
-              <div class="profile-edit-panel-copy">Control the header banner atmosphere with a preset overlay or an optional custom image.</div>
+              <div class="profile-edit-panel-copy">Choose a Valorant player-card banner for the full nav bar background, or paste a custom image URL.</div>
             </div>
 
             <div class="profile-edit-grid">
               <select id="editProfileBannerStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
               <div class="profile-edit-field profile-edit-field-full">
-                <span>Banner Style</span>
+                <span>Player Card Banner</span>
                 <div id="editProfileBannerGallery" class="banner-gallery"></div>
               </div>
 
               <label class="profile-edit-field profile-edit-field-full">
                 <span>Custom Banner Image URL</span>
                 <input id="editProfileNavBackground" type="text" placeholder="https://...">
-              </label>
-            </div>
-          </section>
-
-          <section class="profile-edit-panel" data-profile-panel="accessibility">
-            <div class="profile-edit-panel-head">
-              <div class="profile-edit-panel-title">Accessibility</div>
-              <div class="profile-edit-panel-copy">Improve readability and comfort without leaving the chosen visual identity.</div>
-            </div>
-
-            <div class="profile-edit-grid">
-              <label class="profile-edit-field">
-                <span>Contrast Mode</span>
-                <select id="editProfileContrastMode">
-                  <option value="standard">Standard</option>
-                  <option value="high">High Contrast</option>
-                </select>
-              </label>
-
-              <label class="profile-edit-field">
-                <span>Motion</span>
-                <select id="editProfileMotionMode">
-                  <option value="standard">Standard Motion</option>
-                  <option value="reduced">Reduced Motion</option>
-                </select>
-              </label>
-
-              <label class="profile-edit-field">
-                <span>Layout</span>
-                <select id="editProfileLayoutMode">
-                  <option value="web">Web Layout</option>
-                  <option value="mobile">Mobile Layout</option>
-                </select>
+                <small class="profile-edit-field-note">Optional. A custom URL overrides the selected player-card banner while it is set.</small>
               </label>
             </div>
           </section>
@@ -431,7 +399,6 @@ RIOT PROFILE MODAL
           <div id="profileDropdown" class="profile-dropdown">
             <div class="pd-section-label">Profile</div>
             <button class="pd-item" id="loginBtn">Login to VIP</button>
-            <button class="pd-item" id="pdEditProfile">Edit Profile</button>
 
             <div class="pd-section-label">Settings</div>
             <button class="pd-item" id="pdOpenSettings">Open Settings</button>
@@ -468,7 +435,7 @@ INSIGHTS PAGE
         </div>
 
         <div class="card insights-action-card">
-          <div class="card-sub">This Weeks Priority</div>
+          <div class="card-sub insight-priority-title" id="insightFocusTitle">Coaching Focus Loading...</div>
 
           <div class="insight-action">
           <div class="insight-action-hero">
@@ -478,7 +445,6 @@ INSIGHTS PAGE
               <div class="insight-progress-bar"></div>
             </div>
           </div>
-          <div class="insight-title" id="insightFocusTitle">Coaching Focus Loading...</div>
           <div class="insight-meta-row">
             <span class="insight-meta-pill" id="insightPriorityPill">Priority: Waiting</span>
             <span class="insight-meta-pill" id="insightConfidencePill">Confidence: Low</span>
@@ -541,6 +507,23 @@ INSIGHTS PAGE
           </div>
         </div>
       </div>
+      <footer class="site-footer">
+        <div class="site-footer__brand">RankedCoach</div>
+        <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
+        <div class="site-footer__actions">
+          <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
+          <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
+        </div>
+        <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
+        <nav class="site-footer__links" aria-label="Legal and support links">
+          <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+          <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
+          <a href="https://playvalorant.com/" target="_blank" rel="noreferrer">VALORANT</a>
+          <a href="https://www.riotgames.com/" target="_blank" rel="noreferrer">Riot Games</a>
+        </nav>
+        <div class="site-footer__policy">Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access.</div>
+        <div class="site-footer__disclaimer">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
+      </footer>
     </section>
 
     <!-- =========================
@@ -608,12 +591,12 @@ STATS PAGE
 
         <div class="stats-main-grid">
           <div class="card stats-performance-card">
-            <div class="card-sub">Performance Signals</div>
+            <div class="card-sub">Performance Insights</div>
             <div id="statsPerformanceChart" class="stats-chart-wrap"></div>
           </div>
 
           <div class="card stats-breakdown-card">
-            <div class="card-sub">Coaching Breakdown</div>
+            <div class="card-sub">Data Insight</div>
             <div id="statsBreakdown" class="stats-breakdown"></div>
           </div>
 
@@ -633,6 +616,23 @@ STATS PAGE
           </div>
         </div>
       </div>
+      <footer class="site-footer">
+        <div class="site-footer__brand">RankedCoach</div>
+        <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
+        <div class="site-footer__actions">
+          <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
+          <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
+        </div>
+        <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
+        <nav class="site-footer__links" aria-label="Legal and support links">
+          <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+          <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
+          <a href="https://playvalorant.com/" target="_blank" rel="noreferrer">VALORANT</a>
+          <a href="https://www.riotgames.com/" target="_blank" rel="noreferrer">Riot Games</a>
+        </nav>
+        <div class="site-footer__policy">Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access.</div>
+        <div class="site-footer__disclaimer">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
+      </footer>
     </section>
 
     <section id="page-home" class="page active">
@@ -1156,8 +1156,8 @@ stroke-linejoin="round"/>
         </div>
         <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
         <nav class="site-footer__links" aria-label="Legal and support links">
-          <a href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
-          <a href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Inquiry">Business</a>
+          <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+          <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
           <a href="https://playvalorant.com/" target="_blank" rel="noreferrer">VALORANT</a>
           <a href="https://www.riotgames.com/" target="_blank" rel="noreferrer">Riot Games</a>
         </nav>
@@ -1384,6 +1384,24 @@ stroke-linejoin="round"/>
     </div>
 
   </div>
+
+  <footer class="site-footer">
+    <div class="site-footer__brand">RankedCoach</div>
+    <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
+    <div class="site-footer__actions">
+      <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
+      <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
+    </div>
+    <div class="site-footer__action-note">The donate button is currently a temporary contact path and should be replaced with the official hosted payment link once checkout setup is complete.</div>
+    <nav class="site-footer__links" aria-label="Legal and support links">
+      <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
+      <a href="terms.html" target="_blank" rel="noopener">Terms of Service</a>
+      <a href="https://playvalorant.com/" target="_blank" rel="noreferrer">VALORANT</a>
+      <a href="https://www.riotgames.com/" target="_blank" rel="noreferrer">Riot Games</a>
+    </nav>
+    <div class="site-footer__policy">Built for personal match review, self-reflection, and opt-in coaching workflows. Not for opponent scouting or hidden-data access.</div>
+    <div class="site-footer__disclaimer">RankedCoach isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.</div>
+  </footer>
 
 </section>
   </div>
