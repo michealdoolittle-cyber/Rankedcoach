@@ -21455,3 +21455,32 @@ html body[data-theme] #page-home #spinAgentBtn{
   max-width:none !important;
   width:100% !important;
 }
+
+/* Give the chart controls and match stat rail matching height and header breathing room. */
+#page-home .rr-chart-card{
+  height:max(314px, calc(314px * var(--app-1080-scale))) !important;
+  min-height:max(314px, calc(314px * var(--app-1080-scale))) !important;
+}
+
+#page-home .rr-chart-layout{
+  grid-template-columns:max(86px, calc(86px * var(--app-1080-scale))) minmax(0, 1fr) max(170px, calc(170px * var(--app-1080-scale))) !important;
+}
+
+#page-home .chart-controls,
+#page-home .rr-match-stats{
+  gap:max(7px, calc(7px * var(--app-1080-scale))) !important;
+}
+
+#page-home .chart-controls .graph-btn,
+#page-home .rr-stat{
+  min-height:max(44px, calc(44px * var(--app-1080-scale))) !important;
+}
+
+#page-home .rr-match-stats{
+  max-width:max(170px, calc(170px * var(--app-1080-scale))) !important;
+}
+
+#page-home .rr-match-stats-head{
+  min-height:max(56px, calc(56px * var(--app-1080-scale))) !important;
+  padding:max(8px, calc(8px * var(--app-1080-scale))) max(10px, calc(10px * var(--app-1080-scale))) !important;
+}
