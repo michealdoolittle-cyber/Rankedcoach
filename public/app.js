@@ -1326,7 +1326,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   if (recentLosses >= 3 && recentWindow.length >= 4) {
     insights.push({
       type: "bad",
-      title: "Recent Form Is Slipping",
+      title: "Recent Mechanical Form Is Slipping",
       preview: `${recentLosses} of your last ${recentWindow.length} matches were losses.`,
       what: "Short-term form has dipped below your overall baseline.",
       why: "This can happen when queue quality, confidence, and decision discipline all start stacking in the wrong direction.",
@@ -1339,7 +1339,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   } else if (recentWins >= 3 && recentWindow.length >= 4) {
     insights.push({
       type: "good",
-      title: "Recent Form Is Strong",
+      title: "Recent Mechanical Form Is Strong",
       preview: `${recentWins} of your last ${recentWindow.length} matches were wins.`,
       what: "Your most recent window is outperforming your broader sample.",
       why: "Whatever you are doing right now is creating cleaner round conversion and more consistent outcomes.",
@@ -1410,8 +1410,25 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 
   const topInsights = uniqueInsights.slice(0, 6);
   const primaryInsight = topInsights[0] || null;
-  const confidenceScore = clampPercent((orderedMatches.length * 8) + (logs.length * 6));
+  const matchConfidenceScore = clampPercent(safeNumber(orderedMatches.length) * 2.4);
+  const logConfidenceScore = clampPercent(safeNumber(logs.length) * 4);
+  const statConfidenceScore = clampPercent(
+    (safeNumber(overview.matchesPlayed) ? 18 : 0) +
+    (safeNumber(overview.kd) ? 12 : 0) +
+    (safeNumber(overview.adr) ? 12 : 0) +
+    (safeNumber(overview.hs) ? 8 : 0) +
+    (averageValue([overview.attackKAST, overview.defenseKAST].filter(value => safeNumber(value) > 0)) ? 10 : 0)
+  );
+  const confidenceScore = clampPercent(
+    (matchConfidenceScore * 0.45) +
+    (logConfidenceScore * 0.3) +
+    (statConfidenceScore * 0.25)
+  );
   const confidenceLabel = getConfidenceLabel(confidenceScore);
+  const matchesNeededForMaxConfidence = Math.max(0, Math.ceil((100 - matchConfidenceScore) / 2.4));
+  const logsNeededForMaxConfidence = Math.max(0, Math.ceil((100 - logConfidenceScore) / 4));
+  const statsNeededForMaxConfidence = Math.max(0, Math.ceil((100 - statConfidenceScore) / 20));
+  const confidenceFormula = `Confidence rating = 45% game volume + 30% reflection logs + 25% imported stat coverage. Current inputs: ${orderedMatches.length} games (${Math.round(matchConfidenceScore)}/100), ${logs.length} logs (${Math.round(logConfidenceScore)}/100), stat coverage ${Math.round(statConfidenceScore)}/100. To approach 100, add about ${matchesNeededForMaxConfidence} more games, ${logsNeededForMaxConfidence} more logs, and ${statsNeededForMaxConfidence} missing stat categories.`;
   const priorityScore = clampPercent(primaryInsight?.priority || ((100 - Math.round(overview.winrate || 50)) + (overview.kd < 1 ? 20 : 0)));
   const priorityLabel = getPriorityLabel(priorityScore);
   const coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before a sharper diagnosis appears.";
@@ -1481,10 +1498,12 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       tone: overview.kd >= 1.05 ? "up" : overview.kd >= 0.95 ? "warn" : "down",
       label: "Fight Conversion",
       kicker: currentSignalAgent || "Current Window",
-      value: overview.matchesPlayed ? `${overview.kd.toFixed(2)} K/D` : "Waiting for sample",
-      detail: overview.kd >= 1
-        ? "Duel conversion is staying above break-even, so this is currently a stabilizing signal."
-        : "Duel conversion is below break-even, so direct fight quality still needs protection.",
+      value: overview.matchesPlayed ? `${overview.kd.toFixed(2)} K/D` : "No data",
+      detail: !overview.matchesPlayed
+        ? "No data"
+        : overview.kd >= 1
+          ? "Duel conversion is staying above break-even, so this is currently a stabilizing signal."
+          : "Duel conversion is below break-even, so direct fight quality still needs protection.",
       read: overview.kd >= 1
         ? "Mechanical conversion is holding well enough to let the coaching model focus on cleaner round conversion."
         : "Mechanical conversion is leaking too much value, so it remains near the top of the current coaching stack.",
@@ -1505,8 +1524,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       tone: overview.winrate >= 52 ? "up" : overview.winrate >= 45 ? "warn" : "down",
       label: "Match Conversion",
       kicker: bestMap?.map || "Current Record",
-      value: overview.matchesPlayed ? `${Math.round(overview.winrate || 0)}% win rate` : "Waiting for sample",
-      detail: "This is the current conversion rate from imported matches in the active profile window.",
+      value: overview.matchesPlayed ? `${Math.round(overview.winrate || 0)}% win rate` : "No data",
+      detail: overview.matchesPlayed ? "This is the current conversion rate from imported matches in the active profile window." : "No data",
       read: overview.winrate >= 50
         ? "The broader record is converting well enough that queue discipline and role fit are supporting outcomes."
         : "The broader record is slipping below break-even, so the model is treating match conversion as a live issue.",
@@ -1525,10 +1544,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     {
       id: "recent_form",
       tone: recentKd >= (safeNumber(overview.kd) + 0.05) ? "up" : recentKd >= Math.max(0, safeNumber(overview.kd) - 0.05) ? "warn" : "down",
-      label: "Recent Form",
+      label: "Recent Mechanical Form",
       kicker: `${recentWindow.length || 0} match slice`,
-      value: recentMatches.length ? `${recentKd.toFixed(2)} recent K/D` : "Waiting for sample",
-      detail: "Recent form compares the latest imported block against the broader profile baseline.",
+      value: recentMatches.length ? `${recentKd.toFixed(2)} recent K/D` : "No data",
+      detail: recentMatches.length ? "Recent form compares the latest imported block against the broader profile baseline." : "No data",
       read: recentKd >= safeNumber(overview.kd)
         ? "Recent matches are meeting or beating the broader baseline, so short-term form is currently stable."
         : "Recent matches are running below the broader baseline, so this signal is reading as short-term regression.",
@@ -1547,10 +1566,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     {
       id: "score_pressure",
       tone: overview.adr >= 215 ? "up" : overview.adr >= 185 ? "warn" : "down",
-      label: "Score Pressure",
+      label: "Round Damage",
       kicker: currentSignalRole ? `${currentSignalRole} context` : "Current Window",
-      value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ACS` : "Waiting for sample",
-      detail: "This reads the imported score-per-round output as a stable pressure proxy for combat impact.",
+      value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ACS` : "No data",
+      detail: overview.matchesPlayed ? "This reads the imported score-per-round output as a stable pressure proxy for combat impact." : "No data",
       read: overview.adr >= 200
         ? "Round-to-round combat pressure is landing at a healthy level for the current sample."
         : "Round-to-round combat pressure is on the light side, so the model reads this as a supporting weakness.",
@@ -1569,10 +1588,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     {
       id: "precision_signal",
       tone: overview.hs >= 22 ? "up" : overview.hs >= 18 ? "warn" : "down",
-      label: "Precision Signal",
+      label: "Agent Based Mechanics",
       kicker: currentSignalAgent || "Aim Baseline",
-      value: overview.matchesPlayed ? `${Math.round(overview.hs || 0)}% HS` : "Waiting for sample",
-      detail: "Headshot percentage is being used as the cleanest imported accuracy baseline in the current window.",
+      value: overview.matchesPlayed ? `${Math.round(overview.hs || 0)}% HS` : "No data",
+      detail: overview.matchesPlayed ? "Headshot percentage is being used as the cleanest imported accuracy baseline in the current window." : "No data",
       read: overview.hs >= 20
         ? "Precision is holding at a workable level, so aim is not the only thing carrying the concern stack."
         : "Precision is under pressure, which usually pairs with weaker first-bullet conversion and more repair fights.",
@@ -1591,10 +1610,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     {
       id: "support_pressure",
       tone: assistsPerMatch >= 5 ? "up" : assistsPerMatch >= 3.5 ? "warn" : "down",
-      label: "Support Pressure",
+      label: "Role Teamwork",
       kicker: currentSignalRole ? `${currentSignalRole} teamwork` : "Teamplay Read",
-      value: overview.matchesPlayed ? `${assistsPerMatch.toFixed(1)} assists / match` : "Waiting for sample",
-      detail: "Assist rate is being used as the clearest Riot-safe teamplay pressure signal in the current window.",
+      value: overview.matchesPlayed ? `${assistsPerMatch.toFixed(1)} assists / match` : "No data",
+      detail: overview.matchesPlayed ? "Assist rate is being used as the clearest Riot-safe teamplay pressure signal in the current window." : "No data",
       read: assistsPerMatch >= 4
         ? "Teamplay value is showing up often enough to support stronger round conversion."
         : "Assist pressure is light, which can point to spacing gaps, slower follow-through, or weaker trade timing.",
@@ -1614,7 +1633,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 
   const breakdown = [
     {
-      label: "Mechanical Floor",
+      label: "Mechanics",
       value: `${overview.kd ? overview.kd.toFixed(2) : "--"} K/D`,
       detail: overview.kd >= 1 ? "Your baseline duel conversion is serviceable enough to build around." : "Your duel floor is the main limiter right now."
     },
@@ -1624,7 +1643,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       detail: "Using Riot-imported damage-per-round data to represent round-by-round combat pressure."
     },
     {
-      label: "Agent Stability",
+      label: "Agent Selection",
       value: bestAgent ? `${bestAgent.agent} ${Math.round(bestAgent.winrate)}% WR` : "No stable agent yet",
       detail: bestAgent ? "Your best repeated agent outcome is the strongest anchor for ranked consistency." : "More repeated agent volume is needed before specialisation becomes clear."
     },
@@ -1634,9 +1653,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       detail: primaryInsight?.what || "The next coaching focus will become clearer as match and reflection data accumulates."
     },
     {
-      label: "Confidence Level",
-      value: confidenceLabel,
-      detail: `${confidenceScore}% confidence based on imported sample size and reflection support.`
+      label: "Confidence Rating",
+      value: `${Math.round(confidenceScore)}/100`,
+      detail: confidenceFormula,
+      tooltip: confidenceFormula,
+      className: "stats-confidence-rating-cardlet"
     }
   ];
 
@@ -1741,8 +1762,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       {
         kicker: "Recent Split",
         title: `${recentWins}W / ${recentLosses}L`,
-        value: recentMatches.length ? `${recentKd.toFixed(2)} recent K/D` : "Waiting for sample",
-        detail: "Short-term win/loss and duel conversion read from the latest imported block.",
+        value: recentMatches.length ? `${recentKd.toFixed(2)} recent K/D` : "No data",
+        detail: recentMatches.length ? "Short-term win/loss and duel conversion read from the latest imported block." : "No data",
         tone: recentKd >= safeNumber(overview.kd) ? "up" : "down",
         mediaText: "Split",
         symbol: "▲"
@@ -29208,7 +29229,7 @@ function toggleLoggingQuickSnippet(snippet = "", forceActive = null) {
 function setExclusiveChipSelection(selector, nextValue, datasetKey){
   document.querySelectorAll(selector).forEach(btn => {
     const isActive = String(btn.dataset?.[datasetKey] || "") === String(nextValue ?? "");
-    btn.classList.toggle("active", !!nextValue && isActive);
+    btn.classList.toggle("active", nextValue !== null && nextValue !== undefined && isActive);
   });
 }
 
@@ -33577,7 +33598,7 @@ function renderStatsBreakdownModel() {
   }
 
   container.innerHTML = model.breakdown.map(card => `
-    <button type="button" class="stats-breakdown-cardlet stats-select-card" data-kind="role" data-value="${escapeHtml(card.label)}">
+    <button type="button" class="stats-breakdown-cardlet stats-select-card ${escapeHtml(card.className || "")}" data-kind="role" data-value="${escapeHtml(card.label)}" ${card.tooltip ? `data-tooltip="${escapeHtml(card.tooltip)}"` : ""}>
       <div class="stats-breakdown-label">${escapeHtml(card.label)}</div>
       <div class="stats-breakdown-value">${escapeHtml(card.value)}</div>
       <div class="stats-breakdown-detail">${escapeHtml(card.detail)}</div>
@@ -33804,7 +33825,7 @@ function renderStatsAgentsModel() {
     if (!items.length) {
       const empty = document.createElement("div");
       empty.className = "stats-empty";
-      empty.textContent = "No sample yet";
+      empty.textContent = "No Data";
       column.appendChild(empty);
     } else {
       items.forEach((agent) => {
@@ -33870,14 +33891,14 @@ function renderStatsWeaponsModel() {
     const familySummary = getWeaponFamilySummary(family, summaryMap);
     const familyMeta = familySummary.rounds
       ? `${Math.round(familySummary.rounds)} rds | ${Math.round(familySummary.winrate)}% WR`
-      : "No sample";
+      : "No Data";
     const toneClass = safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative";
     const weaponTiles = family.weapons.map((weaponName) => {
       const weaponKey = normalizeStatsWeaponKey(weaponName);
       const weapon = summaryMap.get(weaponKey);
       const assetPath = getStatsWeaponAssetPath(weaponName);
-      const roundsLabel = weapon?.rounds ? `${Math.round(weapon.rounds)}R` : "0R";
-      const winrateLabel = weapon?.rounds ? `${Math.round(weapon.winrate)}%` : "--";
+      const roundsLabel = weapon?.rounds ? `${Math.round(weapon.rounds)}R` : "No Data";
+      const winrateLabel = weapon?.rounds ? `${Math.round(weapon.winrate)}%` : "No Data";
       const tileTone = weapon?.rounds && safeNumber(weapon.winrate) >= 50 ? "is-positive" : "is-negative";
 
       return `
