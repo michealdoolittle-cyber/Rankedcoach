@@ -6,7 +6,7 @@
   <title>Valorant Coach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="app.css?v=20260519-launch-theme-lock-17">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -147,7 +147,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="banner">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Banner</div>
-              <div class="profile-edit-panel-copy">Choose a Valorant player-card banner for the full nav bar background, or paste a custom image URL.</div>
+            <div class="profile-edit-panel-copy">Choose a Valorant player-card banner for the full nav bar background.</div>
             </div>
 
             <div class="profile-edit-grid">
@@ -156,12 +156,6 @@ RIOT PROFILE MODAL
                 <span>Player Card Banner</span>
                 <div id="editProfileBannerGallery" class="banner-gallery"></div>
               </div>
-
-              <label class="profile-edit-field profile-edit-field-full">
-                <span>Custom Banner Image URL</span>
-                <input id="editProfileNavBackground" type="text" placeholder="https://...">
-                <small class="profile-edit-field-note">Optional. A custom URL overrides the selected player-card banner while it is set.</small>
-              </label>
             </div>
           </section>
         </div>
@@ -173,6 +167,43 @@ RIOT PROFILE MODAL
     </div>
   </div>
 </div>
+
+<template id="askCoachPanelTemplate">
+  <div class="ask-coach-panel-inner">
+    <div class="ask-coach-header">
+      <div>
+        <div class="ask-coach-subtitle">Ask Coach!</div>
+      </div>
+      <button id="askCoachClose" class="ask-coach-close" type="button">X</button>
+    </div>
+
+    <div class="ask-coach-body">
+      <div id="askCoachMessages" class="ask-coach-messages" aria-live="polite">
+        <div class="ask-coach-message coach">
+          <div class="ask-coach-message-kicker">Coach</div>
+          <div>Ask anything! Try “Who is my best agent on Haven?” or “What should I focus on today?”</div>
+        </div>
+      </div>
+
+      <div id="askCoachSurvey" class="ask-coach-survey" hidden>
+        <div class="ask-coach-survey-title">How was that answer?</div>
+        <div class="ask-coach-survey-actions">
+          <button type="button" class="ask-coach-survey-btn" data-survey-rating="up">Thumbs up</button>
+          <button type="button" class="ask-coach-survey-btn" data-survey-rating="down">Thumbs down</button>
+          <button type="button" class="ask-coach-survey-btn" data-survey-rating="explain">Explain more</button>
+        </div>
+        <textarea id="askCoachSurveyText" class="ask-coach-survey-text" placeholder="Tell RankedCoach what was missing or what needs more detail."></textarea>
+        <button id="askCoachSurveySubmit" class="ask-coach-survey-submit" type="button">Save Feedback & New Chat</button>
+      </div>
+
+      <div class="ask-coach-input-row">
+        <textarea id="askCoachInput" class="ask-coach-input" rows="1" placeholder="Ask anything!"></textarea>
+        <button id="askCoachNewChat" class="ask-coach-secondary-btn" type="button">New Chat</button>
+        <button id="askCoachSend" class="ask-coach-send-btn" type="button">Send</button>
+      </div>
+    </div>
+  </div>
+</template>
 
 <div id="agentModal" class="agent-modal">
   <div class="agent-modal-inner">
@@ -394,11 +425,22 @@ RIOT PROFILE MODAL
           </span>
         </button>
 
+        <button class="ask-coach-nav-btn" id="askCoachOpen" type="button" title="Ask Coach" aria-label="Open Ask Coach" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="7" width="14" height="11" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 7V4.5M9 4.5h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="9.2" cy="12.2" r="1.15" fill="currentColor"/>
+            <circle cx="14.8" cy="12.2" r="1.15" fill="currentColor"/>
+            <path d="M9.5 15.2h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M3.5 12h1.5M19 12h1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+
         <div class="profile-dropdown-anchor">
           <button class="profile-dropdown-toggle" id="profileDropdownToggle">v</button>
           <div id="profileDropdown" class="profile-dropdown">
             <div class="pd-section-label">Profile</div>
-            <button class="pd-item" id="loginBtn">Login to VIP</button>
+            <button class="pd-item" id="loginBtn">Login to RankedCoach</button>
 
             <div class="pd-section-label">Settings</div>
             <button class="pd-item" id="pdOpenSettings">Open Settings</button>
@@ -439,7 +481,7 @@ INSIGHTS PAGE
 
           <div class="insight-action">
           <div class="insight-action-hero">
-            <div class="insight-action-kicker">Primary Coaching Thread</div>
+            <div class="insight-action-kicker">Main Coaching Focus</div>
             <div class="insight-action-copy">The one adjustment most worth protecting in your next block of matches.</div>
             <div class="insight-progress">
               <div class="insight-progress-bar"></div>
@@ -470,7 +512,7 @@ INSIGHTS PAGE
 
         <div class="card insights-trends-card">
           <div class="card-sub">Coaching Insights</div>
-          <div class="insights-trends-intro">Open an insight group to see what the current model is actually reading from your imported matches and logs.</div>
+          <div class="insights-trends-intro">Open a group to see what your matches and logs are showing.</div>
 
           <div class="insight-trends">
             <div class="insight-trend-row" data-trend="performance">
@@ -822,6 +864,7 @@ stroke-linejoin="round"/>
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/jett.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/kayo.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/killjoy.png">
+                    <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/miks.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/neon.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/omen.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/phoenix.png">
@@ -852,6 +895,7 @@ stroke-linejoin="round"/>
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/jett.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/kayo.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/killjoy.png">
+                    <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/miks.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/neon.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/omen.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/phoenix.png">
@@ -882,6 +926,7 @@ stroke-linejoin="round"/>
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/jett.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/kayo.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/killjoy.png">
+                    <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/miks.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/neon.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/omen.png">
                     <img class="reel-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/phoenix.png">
@@ -1217,7 +1262,7 @@ stroke-linejoin="round"/>
   <div class="logging-pill home-loadout-pill log-agent-pill">
 <div id="logAgentDisplay" class="pill-value log-agent-display" aria-label="Selected agent">
   <span class="log-agent-leading">
-    <img id="logAgentImg" class="log-agent-img" alt="">
+    <img id="logAgentImg" class="log-agent-img is-silhouette" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeDI9IjEiIHkxPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzk0YTNiOCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzMzNDE1NSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMGYxNzJhIi8+PHBhdGggZD0iTTMyIDhjLTguMiAwLTE0IDYuNC0xNCAxNS4yIDAgNS43IDIuMyAxMC42IDYuMSAxMy4yLTguNiAyLjYtMTQuMSA4LjEtMTQuMSAxNS42djJoNDR2LTJjMC03LjUtNS41LTEzLTE0LjEtMTUuNiAzLjgtMi42IDYuMS03LjUgNi4xLTEzLjJDNDYgMTQuNCA0MC4yIDggMzIgOFoiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9Ii45MiIvPjxwYXRoIGQ9Ik0yMSAyNGM0LjItMy44IDcuOS01LjcgMTEuMi01LjcgMy41IDAgNy4xIDEuOSAxMC44IDUuNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTJlOGYwIiBzdHJva2Utb3BhY2l0eT0iLjMyIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==" alt="">
     <span id="logAgentText" class="log-agent-text">Choose agent</span>
   </span>
 </div>
@@ -1252,7 +1297,7 @@ stroke-linejoin="round"/>
   </div>
 
   <div class="focus-other-wrap" id="focusOtherWrap">
-    <input id="logFocusOther" placeholder="Custom focus">
+    <input id="logFocusOther" placeholder="">
     <button id="confirmFocusOther">OK</button>
     <button id="clearFocusOther">X</button>
   </div>
@@ -1264,7 +1309,7 @@ stroke-linejoin="round"/>
         <div class="logging-row">
           <div class="logging-pill">
             <span class="pill-label">Map</span>
-            <input id="logMap" class="logging-input" type="text" placeholder="Map pending">
+            <input id="logMap" class="logging-input" type="text" placeholder="">
           </div>
         </div>
 
@@ -1504,7 +1549,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20260519-launch-theme-lock-17"></script>
 </body>
 </html>
 

@@ -1077,11 +1077,153 @@ function getImpactTierMeta(score) {
   return { tier: "Poor", color: "#ef4444" };
 }
 
+function formatList(items = []) {
+  const clean = (items || []).map(item => String(item || "").trim()).filter(Boolean);
+  if (!clean.length) return "";
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
+  return `${clean.slice(0, -1).join(", ")}, and ${clean[clean.length - 1]}`;
+}
+
+function buildCoachingContext(matchEntries = []) {
+  const familySummaries = summarizeWeaponRounds(matchEntries);
+  const totalWeaponRounds = familySummaries.reduce((sum, entry) => sum + safeNumber(entry.rounds), 0);
+  const familyShares = {};
+
+  familySummaries.forEach((entry) => {
+    const key = normalizeStatsWeaponKey(entry.typeKey);
+    familyShares[key] = totalWeaponRounds ? safeDivide(safeNumber(entry.rounds) * 100, totalWeaponRounds) : 0;
+  });
+
+  const relianceFlags = [];
+  if (safeNumber(familyShares.sniper) >= 18) relianceFlags.push("sniper-heavy");
+  if (safeNumber(familyShares.shotgun) >= 16) relianceFlags.push("shotgun-heavy");
+  if (safeNumber(familyShares.rifle) && safeNumber(familyShares.rifle) < 45) relianceFlags.push("low-rifle-volume");
+
+  const agentWeaponBuckets = new Map();
+  (matchEntries || []).forEach((match) => {
+    const core = getMatchCore(match);
+    const agent = String(core.agent || "").trim();
+    const rounds = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
+    if (!agent || !rounds.length) return;
+
+    const bucket = agentWeaponBuckets.get(agent) || {
+      agent,
+      rounds: 0,
+      families: new Map(),
+      weapons: new Map()
+    };
+
+    rounds.forEach((round) => {
+      const weaponName = String(round?.weapon || "").trim();
+      const family = getWeaponTypeMeta(weaponName);
+      if (!family.key) return;
+      bucket.rounds += 1;
+      bucket.families.set(family.key, (bucket.families.get(family.key) || 0) + 1);
+      if (weaponName) bucket.weapons.set(weaponName, (bucket.weapons.get(weaponName) || 0) + 1);
+    });
+
+    agentWeaponBuckets.set(agent, bucket);
+  });
+
+  const agentWeaponReliance = [...agentWeaponBuckets.values()].map((bucket) => {
+    const familyEntries = [...bucket.families.entries()].sort((a, b) => b[1] - a[1]);
+    const weaponEntries = [...bucket.weapons.entries()].sort((a, b) => b[1] - a[1]);
+    const primaryFamily = familyEntries[0]?.[0] || "";
+    const primaryWeapon = weaponEntries[0]?.[0] || "";
+    const primaryFamilyShare = bucket.rounds ? safeDivide((familyEntries[0]?.[1] || 0) * 100, bucket.rounds) : 0;
+    const primaryWeaponShare = bucket.rounds ? safeDivide((weaponEntries[0]?.[1] || 0) * 100, bucket.rounds) : 0;
+
+    return {
+      agent: bucket.agent,
+      rounds: bucket.rounds,
+      primaryFamily,
+      primaryWeapon,
+      primaryFamilyShare,
+      primaryWeaponShare,
+      familyShares: Object.fromEntries(familyEntries.map(([key, count]) => [key, safeDivide(count * 100, bucket.rounds)])),
+      weaponShares: Object.fromEntries(weaponEntries.map(([key, count]) => [key, safeDivide(count * 100, bucket.rounds)]))
+    };
+  });
+
+  return {
+    weaponRounds: totalWeaponRounds,
+    familyShares,
+    relianceFlags,
+    agentWeaponReliance,
+    getAgentWeaponContext(agentName = "") {
+      const normalized = String(agentName || "").trim().toLowerCase();
+      return agentWeaponReliance.find(entry => String(entry.agent || "").trim().toLowerCase() === normalized) || null;
+    }
+  };
+}
+
+function getMechanicsContextAdjustment(agentName = "", coachingContext = {}) {
+  const agent = String(agentName || "").trim();
+  const normalizedAgent = agent.toLowerCase();
+  const agentWeapon = coachingContext?.getAgentWeaponContext?.(agent);
+  const familyShares = coachingContext?.familyShares || {};
+  const reasons = [];
+  let hsBenchmarkOffset = 0;
+  let hsWeightMultiplier = 1;
+
+  if (normalizedAgent === "neon") {
+    reasons.push("Neon's slide can lower headshot percentage without always lowering fight impact");
+    hsBenchmarkOffset -= 3;
+    hsWeightMultiplier *= 0.86;
+  }
+
+  const sniperShare = Math.max(safeNumber(familyShares.sniper), safeNumber(agentWeapon?.familyShares?.sniper));
+  const shotgunShare = Math.max(safeNumber(familyShares.shotgun), safeNumber(agentWeapon?.familyShares?.shotgun));
+  const rifleShare = Math.max(safeNumber(familyShares.rifle), safeNumber(agentWeapon?.familyShares?.rifle));
+  const primaryWeapon = agentWeapon?.primaryWeapon || "";
+
+  if (sniperShare >= 18) {
+    reasons.push(`${agent || "This profile"} has meaningful sniper usage, so headshot percentage should not be judged like rifle-only play`);
+    hsBenchmarkOffset -= normalizedAgent === "yoru" ? 5 : 4;
+    hsWeightMultiplier *= 0.78;
+  }
+
+  if (shotgunShare >= 16) {
+    reasons.push(`${agent || "This profile"} has meaningful shotgun usage, so kill conversion matters more than raw headshot percentage`);
+    hsBenchmarkOffset -= 5;
+    hsWeightMultiplier *= 0.74;
+  }
+
+  if (rifleShare > 0 && rifleShare < 45 && (sniperShare >= 18 || shotgunShare >= 16)) {
+    reasons.push("rifle volume is lower than usual, so RankedCoach is weighing weapon context more heavily");
+    hsBenchmarkOffset -= 2;
+    hsWeightMultiplier *= 0.9;
+  }
+
+  if (normalizedAgent === "yoru" && (sniperShare >= 12 || normalizeStatsWeaponKey(primaryWeapon) === "operator")) {
+    reasons.push("Yoru Operator usage can lower headshot percentage while still creating strong pick value");
+    hsBenchmarkOffset -= 3;
+    hsWeightMultiplier *= 0.86;
+  }
+
+  const hasAdjustment = reasons.length > 0;
+  const readableReason = hasAdjustment
+    ? `${formatList(reasons)}.`
+    : "No major weapon or agent adjustment is needed for this read.";
+
+  return {
+    hasAdjustment,
+    reasons,
+    readableReason,
+    hsBenchmarkOffset,
+    hsWeightMultiplier: Math.max(0.55, Math.min(1, hsWeightMultiplier)),
+    adjustedPositiveHs: Math.max(14, 22 + hsBenchmarkOffset),
+    adjustedWatchHs: Math.max(10, 18 + hsBenchmarkOffset)
+  };
+}
+
 function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null) {
   const orderedMatches = getSortedMatches(matchList);
   const recentMatches = orderedMatches.slice(-8);
   const recentWindow = orderedMatches.slice(-5);
   const logs = (logList || []).slice();
+  const coachingContext = buildCoachingContext(orderedMatches);
 
   const mapBuckets = {};
   const agentBuckets = {};
@@ -1206,7 +1348,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "warn",
       title: "No Match History Yet",
       preview: "Import recent competitive matches to unlock Riot-based coaching.",
-      what: "The coaching model needs official match history before it can diagnose strengths and weaknesses.",
+      what: "The app needs match history before it can give useful coaching advice.",
       why: "All primary insight systems are derived from Riot-safe match data and your reflection logs.",
       action: "Import matches, then add 2-3 reflection logs to unlock a stronger first coaching cycle.",
       sources: ["System"],
@@ -1221,9 +1363,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "good",
       title: "Core Agent Strength",
       preview: `${bestAgent.agent} is your strongest current comfort pick at ${Math.round(bestAgent.winrate)}% win rate.`,
-      what: `${bestAgent.agent} is delivering your cleanest mix of win rate and repeat volume.`,
-      why: "This usually means your decision speed, utility timing, and confidence are more stable on that pick.",
-      action: `Center ranked consistency around ${bestAgent.agent} while using other agents more selectively.`,
+      what: `${bestAgent.agent} is currently your most reliable pick based on match history from ${importedAnalytics?.currentAct || "Current Window"}.`,
+      why: "This usually means your decisions, utility, and comfort are more consistent on that agent.",
+      action: `Use ${bestAgent.agent} as your main ranked pick for now, and only swap when the map or team comp clearly needs it.`,
       sources: ["Riot Match History"],
       focus: "Agent Mastery",
       category: "role",
@@ -1236,9 +1378,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: weakestMap.winrate < 40 ? "bad" : "warn",
       title: "Map Preparation Gap",
       preview: `${weakestMap.map} is your weakest map at ${Math.round(weakestMap.winrate)}% win rate across ${weakestMap.matchesPlayed} matches.`,
-      what: `${weakestMap.map} is the clearest map-level weakness in your current sample.`,
-      why: "That usually points to weaker defaults, less comfort on timings, or poorer adaptation once rounds break open.",
-      action: `Make ${weakestMap.map} the next review target and build a simple plan for attack openings and defensive fallback timings.`,
+      what: `${weakestMap.map} is currently your weakest map in this season's match history.`,
+      why: "This usually means your setup, timings, or mid-round decisions are less stable on this map.",
+      action: `Review ${weakestMap.map} map preparation next. Build one simple attack plan and one simple defense fallback plan.`,
       sources: ["Riot Match History"],
       focus: "Map Awareness",
       category: "performance",
@@ -1251,9 +1393,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "good",
       title: "Multi-Kill Pressure Is Showing Up",
       preview: `${Math.round(safeNumber(importedAnalytics?.overview?.kills2K || 0))} 2Ks and ${Math.round(safeNumber(importedAnalytics?.overview?.kills3K || 0))} 3Ks are reinforcing round snowball potential.`,
-      what: "Your profile is producing enough repeat multi-kill volume to matter in real round conversion.",
-      why: "Multi-kills usually show cleaner spacing, stronger punish timing, and better mid-round fight chaining than raw exit-frag totals.",
-      action: "Keep leaning into moments where the first advantage can become a round-ending cascade instead of resetting too early.",
+      what: "The rounds where you get multi-kills have been leading to higher round wins, affecting the match outcome directly.",
+      why: "Multi-kills usually mean your spacing, timing, or follow-up fights are creating real round impact.",
+      action: "When you get the first advantage, look for safe ways to turn it into a round snowball while maintaining discipline.",
       sources: ["Riot Import", "Performance"],
       focus: "Snowball Potential",
       category: "performance",
@@ -1267,9 +1409,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: mapBias.favoredSide === "attack" ? "warn" : "warn",
       title: "Map Side Bias Matters Here",
       preview: `${mapBias.map} is currently ${mapBias.favoredSide}-favored in your sample by ${Math.round(mapBias.sideBiasGap)} percentage points.`,
-      what: `${mapBias.map} is not playing evenly for you across sides right now.`,
-      why: "Some maps naturally tilt toward one side more than others, so coaching needs to judge your side results in context instead of treating every map as balanced.",
-      action: `When reviewing ${mapBias.map}, compare your ${mapBias.favoredSide} half to expectation and spend more prep time on the weaker side setup.`,
+      what: `Your results on ${mapBias.map} are much stronger on one side than the other.`,
+      why: "Some maps are easier on attack or defense, so the app compares your results by side instead of treating the map as even.",
+      action: `When reviewing ${mapBias.map}, spend more time on the side that is costing you rounds.`,
       sources: ["Riot Import", "Map Context"],
       focus: "Side Context",
       category: "performance",
@@ -1283,11 +1425,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: expectationMet ? "good" : "warn",
       title: "Damage Delta Is Being Judged In Agent Context",
       preview: `${activeAgentNameForUtility || "Current agent"} is sitting at ${Math.round(observedDamageDelta)} DDΔ/Round against a utility-damage expectation near ${Math.round(utilityDamageExpectation)}.`,
-      what: "Damage delta is not being read as a flat stat anymore for agents with real damaging utility.",
-      why: "Agents that bring damage utility should usually post stronger pressure deltas than pure supportive picks, so the coaching read now accounts for that expectation.",
+      what: "The app reads damage differently depending on the agent you are playing.",
+      why: "Agents with damaging utility are expected to create more pressure, so the app judges their damage with that in mind.",
       action: expectationMet
-        ? "Keep converting utility pressure into cleaner rifle fights instead of treating ability damage as bonus-only value."
-        : "Look for rounds where utility damage should have created an easier follow-up duel, but did not turn into real pressure.",
+        ? "Use your damaging abilities more effectively to gain an advantageous fight."
+        : "Review rounds where your ability damage landed, but did not lead to an easier fight or round advantage.",
       sources: ["Riot Import", "Agent Context"],
       focus: "Damage Pressure",
       category: "performance",
@@ -1300,9 +1442,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "bad",
       title: "Fight Conversion Is Lagging",
       preview: `Your current K/D is ${overview.kd.toFixed(2)}, which suggests too many duels are ending unfavorably.`,
-      what: "You are losing more direct engagements than you are converting.",
+      what: "You are losing too many direct fights in the current match sample.",
       why: "This can come from crosshair placement, overpeeking, poor spacing, or taking low-percentage fights too early.",
-      action: "Prioritize one duel-quality focus this week: cleaner first bullet placement, tighter spacing, or fewer ego peeks.",
+      action: "Pick one duel focus for the week: cleaner crosshair placement, better trade positioning, or fewer ego peeks.",
       sources: ["Riot Match History"],
       focus: "Fight Selection",
       category: "performance",
@@ -1313,9 +1455,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "good",
       title: "Reliable Duel Output",
       preview: `Your current K/D is ${overview.kd.toFixed(2)}, which is a real strength in this sample.`,
-      what: "Mechanical conversion is currently one of the strongest parts of your profile.",
+      what: "Winning direct duels is currently one of your biggest strengths.",
       why: "You are consistently finding more value in your fights than you are giving away.",
-      action: "Lean into this by taking initiative on your best maps and strongest agents without forcing low-info peeks.",
+      action: "Take initiative on your strongest agents and maps, but maintain awareness and general discipline.",
       sources: ["Riot Match History"],
       focus: "Aim",
       category: "performance",
@@ -1328,9 +1470,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "bad",
       title: "Recent Mechanical Form Is Slipping",
       preview: `${recentLosses} of your last ${recentWindow.length} matches were losses.`,
-      what: "Short-term form has dipped below your overall baseline.",
-      why: "This can happen when queue quality, confidence, and decision discipline all start stacking in the wrong direction.",
-      action: "Use the last 3 losses as a mini review set and isolate the one pattern that appeared most often.",
+      what: "Your recent matches are underperforming compared to your usual match sample.",
+      why: "This can happen when confidence drops, decisions get rushed, or the match quality gets more competitive.",
+      action: "RankedCoach will use your recent losses to find the pattern most likely causing the dip, such as aim issues, repeated focus tags, teammate issues, or map-specific problems.",
       sources: ["Riot Match History", "Recent Trend"],
       focus: "Consistency",
       category: "consistency",
@@ -1341,9 +1483,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "good",
       title: "Recent Mechanical Form Is Strong",
       preview: `${recentWins} of your last ${recentWindow.length} matches were wins.`,
-      what: "Your most recent window is outperforming your broader sample.",
-      why: "Whatever you are doing right now is creating cleaner round conversion and more consistent outcomes.",
-      action: "Preserve the current formula: same agent pool, same queue discipline, and the same focus emphasis for the next block.",
+      what: "Your recent matches are performing better than your usual match sample.",
+      why: "Your current playstyle is leading to more consistent rounds with cleaner results and match wins.",
+      action: "Keep the same agent pool, ranked discipline, and focus condition for the next set of matches.",
       sources: ["Riot Match History", "Recent Trend"],
       focus: "Consistency",
       category: "consistency",
@@ -1356,9 +1498,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "warn",
       title: "Practice Theme Is Emerging",
       preview: `${topFocusEntry[0]} has been your most repeated reflection focus this week.`,
-      what: `${topFocusEntry[0]} is the strongest self-reported training theme in your logs.`,
-      why: "Repeated focus topics usually reveal what you already feel is unstable, even before the stats fully catch up.",
-      action: `Keep ${topFocusEntry[0]} as the main training thread until the next review window shows clearer improvement.`,
+      what: `${topFocusEntry[0]} is the training condition you mention the most in your logs.`,
+      why: "When the same focus keeps showing up, it usually means that part of your game still feels inconsistent.",
+      action: `Keep ${topFocusEntry[0]} as your main focus until the next match window shows improvement.`,
       sources: ["Reflection Logs"],
       focus: topFocusEntry[0],
       category: "behavior",
@@ -1371,9 +1513,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "warn",
       title: "Confidence Is Running Low",
       preview: `Recent self-ratings average ${average(ratingValues).toFixed(1)} out of 5.`,
-      what: "Your reflections suggest confidence is trending below a healthy competitive baseline.",
-      why: "Low self-rating often pairs with hesitation, frustration, and overcorrection between games.",
-      action: "Simplify the next block of games around one agent, one map plan, and one review question.",
+      what: "Your recent logs show your confidence is running lower than usual.",
+      why: "Low confidence can lead to hesitation, frustration, or trying to overfix every mistake.",
+      action: "For the next match block, keep it simple: one agent, one map plan, and one thing to review.",
       sources: ["Reflection Logs"],
       focus: "Mental Reset",
       category: "behavior",
@@ -1386,9 +1528,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "warn",
       title: "Role Fit Is Uneven",
       preview: `${bestRole.role} is materially outperforming ${weakestRole.role} in your current sample.`,
-      what: "Role fit is not balanced right now.",
-      why: "Your strengths are translating more clearly in one role family than another.",
-      action: `For ranked stability, bias your queue choices toward ${bestRole.role} until the weaker role has a clearer improvement plan.`,
+      what: `${bestRole.role} is currently working better for you than ${weakestRole.role}.`,
+      why: `Your current playstyle is showing better results on ${bestRole.role} than ${weakestRole.role}.`,
+      action: `To retain more competitive queue consistency, play more ${bestRole.role} for now while RankedCoach builds a clearer plan for ${weakestRole.role}.`,
       sources: ["Riot Match History"],
       focus: "Role Discipline",
       category: "role",
@@ -1428,7 +1570,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const matchesNeededForMaxConfidence = Math.max(0, Math.ceil((100 - matchConfidenceScore) / 2.4));
   const logsNeededForMaxConfidence = Math.max(0, Math.ceil((100 - logConfidenceScore) / 4));
   const statsNeededForMaxConfidence = Math.max(0, Math.ceil((100 - statConfidenceScore) / 20));
-  const confidenceFormula = `Confidence rating = 45% game volume + 30% reflection logs + 25% imported stat coverage. Current inputs: ${orderedMatches.length} games (${Math.round(matchConfidenceScore)}/100), ${logs.length} logs (${Math.round(logConfidenceScore)}/100), stat coverage ${Math.round(statConfidenceScore)}/100. To approach 100, add about ${matchesNeededForMaxConfidence} more games, ${logsNeededForMaxConfidence} more logs, and ${statsNeededForMaxConfidence} missing stat categories.`;
+  const seasonLabel = importedAnalytics?.currentAct || "Current Window";
+  const confidenceFormula = "Confidence Rating shows how much the app trusts this read. It looks at three things: how many games are imported, how many logs you saved, and how complete the stat data is. More games, logs, and stat coverage will raise this score toward 100.";
   const priorityScore = clampPercent(primaryInsight?.priority || ((100 - Math.round(overview.winrate || 50)) + (overview.kd < 1 ? 20 : 0)));
   const priorityLabel = getPriorityLabel(priorityScore);
   const coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before a sharper diagnosis appears.";
@@ -1489,6 +1632,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const recentWinRate = recentWindow.length ? safeDivide(recentWins, recentWindow.length) * 100 : 0;
   const currentSignalAgent = activeAgentNameForUtility || bestAgent?.agent || "";
   const currentSignalRole = agentRoles?.[currentSignalAgent] || bestRole?.role || "";
+  const mechanicsAdjustment = getMechanicsContextAdjustment(currentSignalAgent, coachingContext);
   const roleGap = bestRole && weakestRole ? Math.max(0, Math.round(safeNumber(bestRole.winrate) - safeNumber(weakestRole.winrate))) : 0;
   const mapGap = bestMap && weakestMap ? Math.max(0, Math.round(safeNumber(bestMap.winrate) - safeNumber(weakestMap.winrate))) : 0;
 
@@ -1502,20 +1646,20 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       detail: !overview.matchesPlayed
         ? "No data"
         : overview.kd >= 1
-          ? "Duel conversion is staying above break-even, so this is currently a stabilizing signal."
-          : "Duel conversion is below break-even, so direct fight quality still needs protection.",
+          ? "Your dueling results are above the moving average, so this is helping stabilize the profile."
+          : "Your dueling results are below the moving average, so fighting discipline needs more attention.",
       read: overview.kd >= 1
-        ? "Mechanical conversion is holding well enough to let the coaching model focus on cleaner round conversion."
-        : "Mechanical conversion is leaking too much value, so it remains near the top of the current coaching stack.",
-      sourceLabel: `${overview.matchesPlayed || 0} imported matches in the active profile window.`,
+        ? "Your dueling is stable enough that RankedCoach can focus more on how those fights turn into round wins."
+        : "Poor dueling results are affecting match outcomes, so RankedCoach is keeping it near the top of the coaching plan.",
+      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel}.`,
       formula: `kills / deaths = ${totalKills} / ${Math.max(1, totalDeaths)} = ${overview.matchesPlayed ? overview.kd.toFixed(2) : "--"}`,
       benchmark: "Positive above 1.05 K/D, watch at 0.95-1.04, regression below 0.95.",
       mediaType: "agent",
       mediaValue: currentSignalAgent,
       proofItems: [
-        statItem("Kills", `${totalKills}`, "Direct kills summed from the current imported match window."),
-        statItem("Deaths", `${totalDeaths}`, "Direct deaths summed from the current imported match window."),
-        statItem("Sample Window", `${overview.matchesPlayed || 0} matches`, "The full imported sample currently feeding this signal."),
+        statItem("Kills", `${totalKills}`, "Total kills from the selected season's imported matches."),
+        statItem("Deaths", `${totalDeaths}`, "Total deaths from the selected season's imported matches."),
+        statItem("Sample Window", `${overview.matchesPlayed || 0} matches`, "The selected season match sample used for this read."),
         statItem("Judgement Band", "1.05 / 0.95", "Positive above 1.05 K/D, watch between 0.95 and 1.04, regression below 0.95.")
       ]
     },
@@ -1525,19 +1669,19 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Match Conversion",
       kicker: bestMap?.map || "Current Record",
       value: overview.matchesPlayed ? `${Math.round(overview.winrate || 0)}% win rate` : "No data",
-      detail: overview.matchesPlayed ? "This is the current conversion rate from imported matches in the active profile window." : "No data",
+      detail: overview.matchesPlayed ? "This shows how often your imported matches are turning into wins." : "No data",
       read: overview.winrate >= 50
-        ? "The broader record is converting well enough that queue discipline and role fit are supporting outcomes."
-        : "The broader record is slipping below break-even, so the model is treating match conversion as a live issue.",
-      sourceLabel: `${safeNumber(overview.matchesWon)} wins and ${safeNumber(overview.matchesLost)} losses from imported Riot history.`,
+        ? "Your match record is strong enough to show that ranked discipline and role fit are helping you win."
+        : "Your match record is below the moving average, so RankedCoach is treating match conversion as an active coaching issue.",
+      sourceLabel: `Based on ${safeNumber(overview.matchesWon)} wins and ${safeNumber(overview.matchesLost)} losses from ${seasonLabel}.`,
       formula: `wins / matches played = ${safeNumber(overview.matchesWon)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${Math.round(overview.winrate || 0)}%`,
       benchmark: "Positive above 52%, watch at 45-51%, regression below 45%.",
       mediaType: "map",
       mediaValue: bestMap?.map,
       proofItems: [
-        statItem("Wins", `${safeNumber(overview.matchesWon)}`, "Imported wins in the current profile window."),
-        statItem("Losses", `${safeNumber(overview.matchesLost)}`, "Imported losses in the current profile window."),
-        statItem("Best Map Anchor", bestMap ? `${bestMap.map} ${Math.round(bestMap.winrate)}% WR` : "No stable map yet", "Strongest repeated map environment in the same window."),
+        statItem("Wins", `${safeNumber(overview.matchesWon)}`, "Wins from the selected season's imported matches."),
+        statItem("Losses", `${safeNumber(overview.matchesLost)}`, "Losses from the selected season's imported matches."),
+        statItem("Best Map Anchor", bestMap ? `${bestMap.map} ${Math.round(bestMap.winrate)}% WR` : "No stable map yet", "Your strongest map from the selected season."),
         statItem("Judgement Band", "52% / 45%", "Positive above 52%, watch between 45% and 51%, regression below 45%.")
       ]
     },
@@ -1547,20 +1691,20 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Recent Mechanical Form",
       kicker: `${recentWindow.length || 0} match slice`,
       value: recentMatches.length ? `${recentKd.toFixed(2)} recent K/D` : "No data",
-      detail: recentMatches.length ? "Recent form compares the latest imported block against the broader profile baseline." : "No data",
+      detail: recentMatches.length ? "Recent form compares your latest matches against your usual season results." : "No data",
       read: recentKd >= safeNumber(overview.kd)
-        ? "Recent matches are meeting or beating the broader baseline, so short-term form is currently stable."
-        : "Recent matches are running below the broader baseline, so this signal is reading as short-term regression.",
-      sourceLabel: `${recentMatches.length || 0} recent imported matches and a ${recentWindow.length || 0}-match win/loss slice.`,
+        ? "Your recent matches are meeting or beating your season average, so short-term form looks stable."
+        : "Your recent matches are below your season average, so RankedCoach is reading this as a short-term dip.",
+      sourceLabel: `Based on the latest ${recentMatches.length || 0} imported matches from ${seasonLabel}.`,
       formula: `recent kills / recent deaths = ${recentKills} / ${Math.max(1, recentDeaths)} = ${recentMatches.length ? recentKd.toFixed(2) : "--"}`,
       benchmark: `Compared against overall baseline K/D of ${overview.matchesPlayed ? overview.kd.toFixed(2) : "--"}.`,
       mediaType: "agent",
       mediaValue: currentSignalAgent,
       proofItems: [
-        statItem("Recent Kills", `${recentKills}`, "Kills from the most recent imported block."),
-        statItem("Recent Deaths", `${recentDeaths}`, "Deaths from the most recent imported block."),
-        statItem("Recent W-L", `${recentWins}W / ${recentLosses}L`, "Win/loss split from the most recent five-match slice."),
-        statItem("Baseline", overview.matchesPlayed ? `${overview.kd.toFixed(2)} overall K/D` : "--", "Overall imported baseline used as the recent-form comparison.")
+        statItem("Recent Kills", `${recentKills}`, "Kills from your latest imported matches."),
+        statItem("Recent Deaths", `${recentDeaths}`, "Deaths from your latest imported matches."),
+        statItem("Recent W-L", `${recentWins}W / ${recentLosses}L`, "Win/loss record from your latest five-match sample."),
+        statItem("Baseline", overview.matchesPlayed ? `${overview.kd.toFixed(2)} overall K/D` : "--", "Your selected season average used for comparison.")
       ]
     },
     {
@@ -1569,42 +1713,63 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Round Damage",
       kicker: currentSignalRole ? `${currentSignalRole} context` : "Current Window",
       value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ACS` : "No data",
-      detail: overview.matchesPlayed ? "This reads the imported score-per-round output as a stable pressure proxy for combat impact." : "No data",
+      detail: overview.matchesPlayed ? "This uses Riot score-per-round data to estimate your round-by-round combat impact." : "No data",
       read: overview.adr >= 200
-        ? "Round-to-round combat pressure is landing at a healthy level for the current sample."
-        : "Round-to-round combat pressure is on the light side, so the model reads this as a supporting weakness.",
-      sourceLabel: `${overview.matchesPlayed || 0} imported matches using Riot score-per-round output.`,
+        ? "Your combat impact is showing up at a healthy level in the current sample."
+        : "Your combat impact is lower than expected, so RankedCoach reads this as a supporting weakness.",
+      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} using Riot score-per-round data.`,
       formula: `score per round total / matches played = ${Math.round(totalAcs)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${overview.matchesPlayed ? Math.round(overview.adr || 0) : "--"} ACS`,
       benchmark: "Positive above 215 ACS, watch at 185-214, regression below 185.",
       mediaType: "role",
       mediaValue: currentSignalRole,
       proofItems: [
-        statItem("Score Total", `${Math.round(totalAcs)}`, "Summed score-per-round values across the imported window."),
-        statItem("Matches", `${safeNumber(overview.matchesPlayed)}`, "Imported matches feeding this pressure read."),
-        statItem("Current Role", currentSignalRole || "Unknown", "Role context from the latest or strongest repeated agent."),
+        statItem("Score Total", `${Math.round(totalAcs)}`, "Total score-per-round value from the selected season's imported matches."),
+        statItem("Matches", `${safeNumber(overview.matchesPlayed)}`, "Imported matches used for this round damage read."),
+        statItem("Current Role", currentSignalRole || "Unknown", "Role context based on your latest or most played agent."),
         statItem("Judgement Band", "215 / 185 ACS", "Positive above 215 ACS, watch between 185 and 214, regression below 185.")
       ]
     },
     {
       id: "precision_signal",
-      tone: overview.hs >= 22 ? "up" : overview.hs >= 18 ? "warn" : "down",
+      tone: overview.hs >= mechanicsAdjustment.adjustedPositiveHs ? "up" : overview.hs >= mechanicsAdjustment.adjustedWatchHs ? "warn" : "down",
       label: "Agent Based Mechanics",
       kicker: currentSignalAgent || "Aim Baseline",
       value: overview.matchesPlayed ? `${Math.round(overview.hs || 0)}% HS` : "No data",
-      detail: overview.matchesPlayed ? "Headshot percentage is being used as the cleanest imported accuracy baseline in the current window." : "No data",
-      read: overview.hs >= 20
-        ? "Precision is holding at a workable level, so aim is not the only thing carrying the concern stack."
-        : "Precision is under pressure, which usually pairs with weaker first-bullet conversion and more repair fights.",
-      sourceLabel: `${overview.matchesPlayed || 0} imported matches using Riot headshot percentage.`,
+      detail: overview.matchesPlayed
+        ? mechanicsAdjustment.hasAdjustment
+          ? "This uses Riot headshot percentage data with agent and weapon context, so the read is not judged like rifle-only play."
+          : "This uses Riot headshot percentage data to estimate your agent-based mechanical accuracy."
+        : "No data",
+      read: overview.hs >= mechanicsAdjustment.adjustedWatchHs
+        ? mechanicsAdjustment.hasAdjustment
+          ? `Your accuracy is being read with context: ${mechanicsAdjustment.readableReason}`
+          : "Your accuracy is stable enough that RankedCoach can look beyond aim alone."
+        : mechanicsAdjustment.hasAdjustment
+          ? `Your accuracy is below the adjusted target. ${mechanicsAdjustment.readableReason}`
+          : "Your accuracy is below target, which can lead to harder fights that could provide an advantage to the enemy team.",
+      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} using Riot headshot percentage.`,
       formula: `average headshot percent across imported matches = ${overview.matchesPlayed ? Math.round(overview.hs || 0) : "--"}%`,
-      benchmark: "Positive above 22% HS, watch at 18-21%, regression below 18%.",
+      benchmark: mechanicsAdjustment.hasAdjustment
+        ? `Adjusted for agent and weapon context: positive above ${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% HS, watch at ${Math.round(mechanicsAdjustment.adjustedWatchHs)}-${Math.round(mechanicsAdjustment.adjustedPositiveHs - 1)}%, regression below ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%.`
+        : "Positive above 22% HS, watch at 18-21%, regression below 18%.",
       mediaType: "agent",
       mediaValue: currentSignalAgent,
       proofItems: [
-        statItem("Headshot %", overview.matchesPlayed ? `${Math.round(overview.hs || 0)}%` : "--", "Imported average headshot percentage for the active profile window."),
+        statItem("Headshot %", overview.matchesPlayed ? `${Math.round(overview.hs || 0)}%` : "--", "Average headshot percentage from the selected season's imported matches."),
         statItem("Current Agent", currentSignalAgent || "Unknown", "Latest or strongest repeated agent tied to this read."),
-        statItem("Confidence", confidenceLabel, "Shared confidence label from the current coaching model."),
-        statItem("Judgement Band", "22% / 18%", "Positive above 22% HS, watch between 18% and 21%, regression below 18%.")
+        ...(mechanicsAdjustment.hasAdjustment
+          ? [statItem("Context Adjustment", "Applied", mechanicsAdjustment.readableReason)]
+          : []),
+        statItem("Confidence", confidenceLabel, "Shows how much RankedCoach trusts this read based on available data."),
+        statItem(
+          "Judgement Band",
+          mechanicsAdjustment.hasAdjustment
+            ? `${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% / ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%`
+            : "22% / 18%",
+          mechanicsAdjustment.hasAdjustment
+            ? `Adjusted for agent and weapon context. Positive above ${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% HS, watch between ${Math.round(mechanicsAdjustment.adjustedWatchHs)}% and ${Math.round(mechanicsAdjustment.adjustedPositiveHs - 1)}%, regression below ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%.`
+            : "Positive above 22% HS, watch between 18% and 21%, regression below 18%."
+        )
       ]
     },
     {
@@ -1613,19 +1778,19 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Role Teamwork",
       kicker: currentSignalRole ? `${currentSignalRole} teamwork` : "Teamplay Read",
       value: overview.matchesPlayed ? `${assistsPerMatch.toFixed(1)} assists / match` : "No data",
-      detail: overview.matchesPlayed ? "Assist rate is being used as the clearest Riot-safe teamplay pressure signal in the current window." : "No data",
+      detail: overview.matchesPlayed ? "This uses assist rate to estimate how often your play is helping teammates convert rounds." : "No data",
       read: assistsPerMatch >= 4
-        ? "Teamplay value is showing up often enough to support stronger round conversion."
-        : "Assist pressure is light, which can point to spacing gaps, slower follow-through, or weaker trade timing.",
-      sourceLabel: `${overview.matchesPlayed || 0} imported matches and ${safeNumber(totalAssists)} total assists.`,
+        ? "Your teamwork is showing up often enough to help convert more rounds."
+        : "Your teamwork impact is lower than expected, which can point to spacing, follow-through, or trade timing issues.",
+      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} and ${safeNumber(totalAssists)} total assists.`,
       formula: `total assists / matches played = ${safeNumber(totalAssists)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${overview.matchesPlayed ? assistsPerMatch.toFixed(1) : "--"}`,
       benchmark: "Positive above 5.0 assists per match, watch at 3.5-4.9, regression below 3.5.",
       mediaType: "role",
       mediaValue: currentSignalRole,
       proofItems: [
-        statItem("Total Assists", `${safeNumber(totalAssists)}`, "Imported assists from the active profile window."),
-        statItem("Assists / Match", overview.matchesPlayed ? assistsPerMatch.toFixed(1) : "--", "Average assists produced per imported match."),
-        statItem("Average KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average of attack and defense KAST when available."),
+        statItem("Total Assists", `${safeNumber(totalAssists)}`, "Total assists from the selected season's imported matches."),
+        statItem("Assists / Match", overview.matchesPlayed ? assistsPerMatch.toFixed(1) : "--", "Average assists per imported match in the selected season."),
+        statItem("Average KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average KAST from attack and defense rounds when that data is available."),
         statItem("Judgement Band", "5.0 / 3.5 assists", "Positive above 5.0 assists per match, watch between 3.5 and 4.9, regression below 3.5.")
       ]
     }
@@ -1635,22 +1800,22 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     {
       label: "Mechanics",
       value: `${overview.kd ? overview.kd.toFixed(2) : "--"} K/D`,
-      detail: overview.kd >= 1 ? "Your baseline duel conversion is serviceable enough to build around." : "Your duel floor is the main limiter right now."
+      detail: overview.kd >= 1 ? "Your dueling results are solid enough to build around right now." : "Your dueling results are one of the main things holding this profile back right now."
     },
     {
       label: "Average ADR",
       value: `${Math.round(overview.adr || 0)} ADR`,
-      detail: "Using Riot-imported damage-per-round data to represent round-by-round combat pressure."
+      detail: "This uses Riot damage-per-round data to estimate your round-by-round damage impact."
     },
     {
       label: "Agent Selection",
       value: bestAgent ? `${bestAgent.agent} ${Math.round(bestAgent.winrate)}% WR` : "No stable agent yet",
-      detail: bestAgent ? "Your best repeated agent outcome is the strongest anchor for ranked consistency." : "More repeated agent volume is needed before specialisation becomes clear."
+      detail: bestAgent ? "Your best repeated agent gives the clearest picture of what is working in ranked." : "The app needs more repeated games on the same agents before it can identify a reliable pick."
     },
     {
       label: "Coaching Focus",
       value: focus || "Build sample",
-      detail: primaryInsight?.what || "The next coaching focus will become clearer as match and reflection data accumulates."
+      detail: primaryInsight?.what || "The next coaching focus will become clearer as more matches and logs are added."
     },
     {
       label: "Confidence Rating",
@@ -1673,10 +1838,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         symbol: "◎"
       },
       {
-        kicker: "Agent Anchor",
+        kicker: "Best Agent",
         title: bestAgent?.agent || "No Stable Agent",
         value: bestAgent ? `${Math.round(bestAgent.winrate)}% WR` : "Build sample",
-        detail: bestAgent ? "Most stable repeated agent in the current imported window." : "Repeated agent volume is still too light to crown a comfort anchor.",
+        detail: bestAgent ? "Your best repeated agent in the current imported window." : "Play more repeated games on the same agents before calling one your best pick.",
         tone: bestAgent?.matchesPlayed >= 3 ? "up" : "warn",
         mediaType: "agent",
         mediaValue: bestAgent?.agent
@@ -1705,7 +1870,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         kicker: "Primary Theme",
         title: topFocusEntry ? topFocusEntry[0] : "No Repeated Theme",
         value: topFocusEntry ? `${topFocusEntry[1]} repeats` : "Queue more logs",
-        detail: topFocusEntry ? "Most repeated self-reported training theme across recent reflections." : "A repeated practice theme appears once reflections start clustering.",
+        detail: topFocusEntry ? "Most repeated training condition across recent logs." : "A repeated focus condition appears once logs start clustering.",
         tone: topFocusEntry?.[1] >= 3 ? "up" : "warn",
         mediaText: "Theme",
         symbol: "⌁"
@@ -2172,6 +2337,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     trends: uniqueTrends,
     breakdown: uniqueBreakdown,
     trendBreakdown: uniqueTrendBreakdown,
+    coachingContext,
     insights: topInsights,
     focus,
     weekly,
@@ -2203,6 +2369,924 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 function getPlayerModel() {
   const importedAnalytics = getActiveProfile()?.trackerAnalytics || null;
   return buildPlayerModel(matches, logEntries, importedAnalytics);
+}
+
+function summarizeAgentMapPerformance(matchEntries = matches) {
+  const buckets = new Map();
+  (matchEntries || []).forEach((match) => {
+    const core = getMatchCore(match);
+    const agent = String(core.agent || "").trim();
+    const map = String(core.map || "").trim();
+    if (!agent || !map || agent === "Unknown" || map === "Unknown") return;
+    const key = `${map.toLowerCase()}|${agent.toLowerCase()}`;
+    const bucket = buckets.get(key) || {
+      map,
+      agent,
+      matches: 0,
+      wins: 0,
+      kills: 0,
+      deaths: 0,
+      assists: 0
+    };
+    bucket.matches += 1;
+    bucket.wins += core.result === "win" ? 1 : 0;
+    bucket.kills += safeNumber(core.kills);
+    bucket.deaths += safeNumber(core.deaths);
+    bucket.assists += safeNumber(core.assists);
+    buckets.set(key, bucket);
+  });
+
+  return [...buckets.values()].map((entry) => ({
+    ...entry,
+    winrate: safeDivide(entry.wins * 100, entry.matches),
+    kd: safeDivide(entry.kills, Math.max(1, entry.deaths))
+  })).sort((a, b) =>
+    b.matches - a.matches ||
+    b.winrate - a.winrate ||
+    b.kd - a.kd
+  );
+}
+
+function buildAskCoachContext() {
+  const model = getPlayerModel();
+  const agentMap = summarizeAgentMapPerformance(matches);
+  const weaponFlags = model?.coachingContext?.relianceFlags || [];
+  const weaponSummary = weaponFlags.length
+    ? weaponFlags.map(flag => flag.replace(/-/g, " ")).join(", ")
+    : "no major weapon reliance adjustment detected";
+
+  return {
+    model,
+    profile: getActiveProfile(),
+    agentMap,
+    feedback: getInsightFeedbackSummary(),
+    weaponSummary
+  };
+}
+
+function buildAskCoachAIContext() {
+  const { model, agentMap, feedback, weaponSummary } = buildAskCoachContext();
+  const currentTier = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "Iron 1";
+  const rankExpectation = getCompassRankExpectation(currentTier);
+  const insightSummary = (model?.insights || []).slice(0, 5).map((insight) => ({
+    title: insight?.title || "",
+    focus: insight?.focus || "",
+    preview: insight?.preview || "",
+    action: insight?.action || "",
+    type: insight?.type || "",
+    priority: insight?.priority || ""
+  }));
+  const agentSummary = (model?.agents || []).slice(0, 6).map((agent) => ({
+    agent: agent?.agent || agent?.name || "",
+    role: agent?.role || "",
+    matchesPlayed: safeNumber(agent?.matchesPlayed || agent?.matches),
+    winrate: Math.round(safeNumber(agent?.winrate)),
+    kd: Number(safeNumber(agent?.kd).toFixed(2))
+  }));
+  const mapSummary = (model?.maps || []).slice(0, 8).map((map) => ({
+    map: map?.map || map?.name || "",
+    matchesPlayed: safeNumber(map?.matchesPlayed || map?.matches),
+    winrate: Math.round(safeNumber(map?.winrate))
+  }));
+  const roleSummary = (model?.roles || []).slice(0, 5).map((role) => ({
+    role: role?.role || role?.name || "",
+    matchesPlayed: safeNumber(role?.matchesPlayed || role?.matches),
+    winrate: Math.round(safeNumber(role?.winrate))
+  }));
+  const recentLogs = (logEntries || []).slice(-12).map((entry) => ({
+    agent: entry?.agent || "",
+    role: entry?.role || "",
+    map: entry?.map || "",
+    focus: entry?.focus || "",
+    rating: safeNumber(entry?.rating),
+    mood: entry?.mood || "",
+    teamComms: safeNumber(entry?.teamComms ?? entry?.team_comms),
+    selfComms: safeNumber(entry?.selfComms ?? entry?.self_comms),
+    notes: String(entry?.notes || "").slice(0, 280)
+  }));
+
+  return {
+    product: "RankedCoach",
+    currentAct: model?.currentAct || "Current Window",
+    rankContext: {
+      currentRank: currentTier,
+      compassBenchmark: rankExpectation?.currentTarget || null,
+      nextRankBenchmark: rankExpectation?.nextTarget || null,
+      note: "Compass and coaching reads should be interpreted against the player's current rank context, not as a whole-ladder comparison."
+    },
+    confidence: {
+      label: model?.confidenceLabel || "Low",
+      score: Math.round(safeNumber(model?.confidenceScore))
+    },
+    currentFocus: model?.focus || "",
+    coachDiagnosis: model?.coachDiagnosis || "",
+    coachRecommendation: model?.coachRecommendation || "",
+    weaponSummary,
+    feedbackSummary: feedback,
+    insights: insightSummary,
+    agents: agentSummary,
+    maps: mapSummary,
+    roles: roleSummary,
+    agentMap: (agentMap || []).slice(0, 10),
+    recentLogs
+  };
+}
+
+async function requestAskCoachAI(question = "", options = {}) {
+  if (!supabaseClient?.functions?.invoke) return null;
+  const onPhase = typeof options?.onPhase === "function" ? options.onPhase : () => {};
+  try {
+    onPhase("feedback");
+    const recentMessages = (askCoachMessages || [])
+      .slice(-8)
+      .map((message) => ({
+        role: message?.role === "user" ? "user" : "coach",
+        text: String(message?.text || "").slice(0, 900)
+      }));
+    onPhase("data");
+    const context = buildAskCoachAIContext();
+    onPhase("resources");
+    const { data, error } = await supabaseClient.functions.invoke("ask-coach", {
+      body: {
+        question: String(question || "").slice(0, 1600),
+        context,
+        messages: recentMessages
+      }
+    });
+    if (error) {
+      console.warn("Ask Coach AI unavailable; using local coach.", error);
+      return null;
+    }
+    const answer = String(data?.answer || "").trim();
+    onPhase("response");
+    return answer || null;
+  } catch (error) {
+    console.warn("Ask Coach AI request failed; using local coach.", error);
+    return null;
+  }
+}
+
+function normalizeAskCoachText(question = "") {
+  return String(question || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[“”]/g, "\"")
+    .replace(/[‘’]/g, "'")
+    .replace(/[?!.,]+$/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function isAskCoachGreeting(normalized = "") {
+  return /^(hi|hello|hey|yo|sup|howdy|good morning|good afternoon|good evening)( coach)?$/.test(normalized);
+}
+
+function isAskCoachThanks(normalized = "") {
+  return /^(thanks|thank you|ty|appreciate it|cool thanks|ok thanks)$/.test(normalized);
+}
+
+function isAskCoachAcknowledgement(normalized = "") {
+  return /^(ok|okay|cool|nice|got it|sounds good|bet|alright)$/.test(normalized);
+}
+
+function isAskCoachHelpRequest(normalized = "") {
+  return normalized.includes("what can you do")
+    || normalized.includes("help")
+    || normalized.includes("how do i use")
+    || normalized.includes("what should i ask");
+}
+
+function getAskCoachDirectionPrompt() {
+  return "I can help, but I need a little more direction. Ask me about a specific pattern, moment, agent, map, role, weapon, or focus. For example: \"Why do my later games feel worse?\" or \"Who should I play on Haven?\"";
+}
+
+function askCoachHasAny(normalized = "", terms = []) {
+  return terms.some(term => normalized.includes(term));
+}
+
+function getAskCoachScenarioResponse(normalized = "", originalQuestion = "") {
+  const wordCount = String(normalized || "").split(/\s+/).filter(Boolean).length;
+  const hasPlayerContext = wordCount >= 10 && /\b(i|my|me|i'm|ive|i've|we|our)\b/.test(normalized);
+  const asksForAdvice = askCoachHasAny(normalized, [
+    "what can i do",
+    "how can i",
+    "how do i",
+    "what should i",
+    "help me",
+    "get better",
+    "improve",
+    "prevent this",
+    "fix this"
+  ]);
+  const mentionsThirdGame = askCoachHasAny(normalized, [
+    "3rd game",
+    "third game",
+    "game 3",
+    "third match",
+    "3rd match"
+  ]);
+  const mentionsDailyVolume = askCoachHasAny(normalized, [
+    "everyday",
+    "every day",
+    "few games",
+    "couple games",
+    "several games"
+  ]);
+  const mentionsStrongStart = askCoachHasAny(normalized, [
+    "start off strong",
+    "start strong",
+    "first 2",
+    "first two",
+    "first couple",
+    "early games"
+  ]);
+  const mentionsBlowout = askCoachHasAny(normalized, [
+    "blowout",
+    "one sided",
+    "one-sided",
+    "stomp",
+    "stomped",
+    "steamrolled",
+    "rolled",
+    "unwinnable"
+  ]);
+
+  if ((mentionsThirdGame && (mentionsStrongStart || mentionsBlowout || mentionsDailyVolume)) || (mentionsBlowout && mentionsDailyVolume && asksForAdvice)) {
+    return "This sounds like a session stamina pattern, not just a random bad match.\n\n- After game 2, take a real reset before queueing again.\n- If you play game 3, keep the first 4 rounds simple: no rushed fights, clear comms, stable agent or role.\n- Log time of day, mood, warmup length, and whether you felt impatient.\n- If focus feels below a 4/5, stop ranked or reset before queueing.\n- The goal is better queue discipline, not forcing more effort.";
+  }
+
+  if (mentionsBlowout && asksForAdvice) {
+    return "For one-sided losses, the first goal is to slow the bleeding.\n\n- Stop solo opening deaths.\n- Group earlier and trade first contact.\n- Pick one simple win condition: retake together, save utility, or stack a site read.\n- After the match, review only the first 5 rounds.\n- Blowouts usually start before the score looks impossible.";
+  }
+
+  if (askCoachHasAny(normalized, ["tilt", "tilted", "angry", "annoyed", "frustrated", "mental"])) {
+    return "If tilt is showing up, shrink the goal immediately.\n\n- Do not revenge peek the next round.\n- Give one useful comm, then reset your breathing.\n- Play one position where you can be traded.\n- If you fail that reset twice in a row, take a short break.\n- The discipline win comes before the match win.";
+  }
+
+  if (askCoachHasAny(normalized, ["tired", "fatigue", "burnt", "burned", "autopilot", "drained"])) {
+    return "That sounds like fatigue or autopilot.\n\n- After each match, rate focus from 1 to 5.\n- If it is 3 or lower, stop ranked or reset before queueing.\n- Keep your next game goal narrow: fewer first deaths or cleaner trades.\n- Do not judge only by aim; attention can drop before aim feels bad.\n- Ranked quality falls fast when focus drops.";
+  }
+
+  if ((hasPlayerContext || asksForAdvice) && askCoachHasAny(normalized, ["inconsistent", "consistency", "sometimes", "random", "coin flip"])) {
+    return "For consistency, make the next block easier to measure.\n\n- Pick one condition only: first death discipline, trade spacing, or utility before contact.\n- Run that rule for 3 games.\n- Judge the block by that rule, not only win/loss.\n- If the same issue repeats, keep it as the focus.\n- If it improves, move to the next weakest pattern.";
+  }
+
+  if (askCoachHasAny(normalized, ["one tapped", "one-tapped", "losing duels", "lose duels", "can't win fights", "cant win fights"])) {
+    return "If fights feel bad, check fight quality before blaming aim.\n\n- Did you have cover?\n- Could a teammate trade you?\n- Did utility or timing help the fight?\n- If not, it was probably fight selection, not pure mechanics.\n- For the next games, avoid dry fights unless they are clearly favored.";
+  }
+
+  if (askCoachHasAny(normalized, ["teammate", "team", "throw", "grief", "toxic", "no comms", "comms"])) {
+    return "When teammates are unstable, protect your own discipline first.\n\n- Give short plan-based comms.\n- Mute quickly if someone is pulling focus down.\n- Play positions where your value does not require perfect teamwork.\n- Avoid arguing mid-round.\n- You cannot fix every teammate, but you can reduce how much their chaos changes your decisions.";
+  }
+
+  if (hasPlayerContext && asksForAdvice) {
+    return "I would turn this into one testable focus.\n\n- Pick the exact moment where the problem starts.\n- Write down what usually happens right before it.\n- Run one small rule for the next 3 games.\n- Track whether that rule improved, not just whether you won.\n- If you tell me the exact breakdown, I can give a tighter plan.";
+  }
+
+  return "";
+}
+
+function answerAskCoachQuestion(question = "") {
+  const q = String(question || "").trim();
+  const normalized = normalizeAskCoachText(q);
+  const { model, agentMap, feedback, weaponSummary } = buildAskCoachContext();
+  const season = model?.currentAct || "Current Window";
+  const topInsight = model?.insights?.[0] || null;
+  const bestAgent = model?.agents?.[0] || null;
+  const bestMap = model?.maps?.[0] || null;
+  const weakestMap = (model?.maps || []).slice().sort((a, b) => safeNumber(a.winrate) - safeNumber(b.winrate))[0] || null;
+  const bestRole = model?.roles?.[0] || null;
+  const weakestRole = (model?.roles || []).slice().sort((a, b) => safeNumber(a.winrate) - safeNumber(b.winrate))[0] || null;
+
+  if (!normalized) {
+    return getAskCoachDirectionPrompt();
+  }
+
+  if (isAskCoachGreeting(normalized)) {
+    return "Hey, I’m here. Ask me about your best agent, a map matchup, your next focus, role fit, or whether a stat read actually matters.";
+  }
+
+  if (isAskCoachThanks(normalized)) {
+    return "Anytime. When you want the next read, ask me about an agent, map, role, weapon pattern, or today’s focus.";
+  }
+
+  if (isAskCoachAcknowledgement(normalized)) {
+    return "Sounds good. Want me to look at your next focus, best current pick, weakest map, or role fit?";
+  }
+
+  if (normalized.includes("who are you") || normalized.includes("what are you")) {
+    return "I’m Ask Coach. I use your imported matches, saved logs, role context, map results, and weapon patterns to answer quick coaching questions without making you dig through every card.";
+  }
+
+  if (isAskCoachHelpRequest(normalized)) {
+    return "You can ask data questions like \"Who is my best agent on Haven?\" or context questions like \"Why do my later games feel worse?\" I can help with agents, maps, roles, weapons, tilt, fatigue, one-sided losses, comms, and what to focus on next.";
+  }
+
+  const scenarioResponse = getAskCoachScenarioResponse(normalized, q);
+  if (scenarioResponse) return scenarioResponse;
+
+  const mapMention = COMPETITIVE_MAP_POOL.find(map => normalized.includes(map.toLowerCase()));
+  if (mapMention && (normalized.includes("best agent") || normalized.includes("who") || normalized.includes("agent"))) {
+    const candidates = agentMap
+      .filter(entry => entry.map.toLowerCase() === mapMention.toLowerCase())
+      .sort((a, b) => b.winrate - a.winrate || b.matches - a.matches || b.kd - a.kd);
+    const pick = candidates[0];
+    if (pick) {
+      return `For ${mapMention}, your best current agent is ${pick.agent}: ${Math.round(pick.winrate)}% WR across ${pick.matches} imported matches from ${season}.`;
+    }
+    return `I do not have enough ${mapMention} agent history yet. Import more matches from ${season}, then ask again.`;
+  }
+
+  if (normalized.includes("best agent") || normalized.includes("strongest agent") || normalized.includes("main agent")) {
+    if (bestAgent) {
+      return `${bestAgent.agent} is your strongest current agent: ${Math.round(bestAgent.winrate)}% WR across ${bestAgent.matchesPlayed} imported matches from ${season}.`;
+    }
+    return "I need more repeated agent games before I can name a reliable best agent.";
+  }
+
+  if (normalized.includes("weakest map") || normalized.includes("worst map")) {
+    if (weakestMap) {
+      return `${weakestMap.map} is your weakest current map: ${Math.round(weakestMap.winrate)}% WR across ${weakestMap.matchesPlayed} imported matches from ${season}.`;
+    }
+    return "I need more repeated map data before I can identify a weakest map.";
+  }
+
+  if (normalized.includes("best map") || normalized.includes("strongest map")) {
+    if (bestMap) {
+      return `${bestMap.map} is your strongest current map: ${Math.round(bestMap.winrate)}% WR across ${bestMap.matchesPlayed} imported matches from ${season}.`;
+    }
+    return "I need more repeated map data before I can identify a strongest map.";
+  }
+
+  if (normalized.includes("role")) {
+    if (bestRole && weakestRole) {
+      return `${bestRole.role} is currently your best-performing role, while ${weakestRole.role} needs the most review. RankedCoach is using ${season} match history for this read.`;
+    }
+    return "I need more role variety in the imported matches before I can compare roles clearly.";
+  }
+
+  if (normalized.includes("weapon") || normalized.includes("shotgun") || normalized.includes("operator") || normalized.includes("op ") || normalized.includes("sniper")) {
+    return `Weapon context is being tracked quietly. Current read: ${weaponSummary}. This helps RankedCoach avoid judging every player like a rifle-only profile.`;
+  }
+
+  if (normalized.includes("focus") || normalized.includes("work on") || normalized.includes("today")) {
+    if (topInsight) {
+      return `Your current focus should be ${topInsight.focus || model?.focus || "the top coaching read"}: ${topInsight.action || model?.coachRecommendation}`;
+    }
+    return model?.coachRecommendation || "Import matches or save logs first so I can build a useful focus.";
+  }
+
+  if (normalized.includes("confidence") || normalized.includes("trust")) {
+    return `RankedCoach confidence is ${model?.confidenceLabel || "Low"} (${Math.round(safeNumber(model?.confidenceScore))}/100). Feedback captured so far: ${feedback.helpful} useful and ${feedback.inaccurate} marked for review.`;
+  }
+
+  if (
+    topInsight
+    && (
+      normalized.includes("top insight")
+      || normalized.includes("main insight")
+      || normalized.includes("current read")
+      || normalized.includes("summary")
+      || normalized.includes("what do you see")
+      || normalized.includes("what do you think")
+    )
+  ) {
+    return `${topInsight.title}: ${topInsight.action || topInsight.what || topInsight.preview}`;
+  }
+
+  return getAskCoachDirectionPrompt();
+}
+
+window.RankedCoachAsk = {
+  answer: answerAskCoachQuestion,
+  context: buildAskCoachContext,
+  feedbackSummary: getInsightFeedbackSummary
+};
+
+const ASK_COACH_CHAT_STORAGE_KEY = "rankedcoach_ask_coach_chat_v2";
+const ASK_COACH_THINKING_STEPS = [
+  {
+    key: "feedback",
+    label: "Step 1",
+    title: "Player feedback",
+    detail: "Reading your question and saved reflections."
+  },
+  {
+    key: "data",
+    label: "Step 2",
+    title: "Player data",
+    detail: "Checking match stats, maps, agents, roles, and weapons."
+  },
+  {
+    key: "resources",
+    label: "Step 3",
+    title: "Approved resources",
+    detail: "Checking trusted game context available to RankedCoach."
+  },
+  {
+    key: "response",
+    label: "Step 4",
+    title: "Structuring response",
+    detail: "Turning the read into clear coaching advice."
+  }
+];
+let askCoachMessages = [];
+let askCoachThinkingActive = false;
+let askCoachThinkingStepIndex = 0;
+let askCoachThinkingTimer = null;
+let askCoachRequestInFlight = false;
+
+function getAskCoachStarterMessage() {
+  return {
+    role: "coach",
+    text: "Ask anything. I can help with agents, maps, roles, weapons, or what to focus on next.",
+    createdAt: nowISO()
+  };
+}
+
+function readAskCoachMessages() {
+  try {
+    const raw = localStorage.getItem(ASK_COACH_CHAT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) && parsed.length ? parsed : [getAskCoachStarterMessage()];
+  } catch (_error) {
+    return [getAskCoachStarterMessage()];
+  }
+}
+
+function saveAskCoachMessages() {
+  try {
+    localStorage.setItem(ASK_COACH_CHAT_STORAGE_KEY, JSON.stringify(askCoachMessages.slice(-80)));
+  } catch (error) {
+    console.warn("Unable to save Ask Coach chat", error);
+  }
+}
+
+function splitAskCoachSentences(text = "") {
+  return String(text || "")
+    .replace(/\s+/g, " ")
+    .match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)
+    ?.map(sentence => sentence.trim())
+    .filter(Boolean) || [];
+}
+
+function cleanAskCoachMarkdownText(text = "") {
+  return String(text || "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*\*/g, "")
+    .replace(/__/g, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+}
+
+function normalizeAskCoachBulletText(text = "") {
+  return cleanAskCoachMarkdownText(text)
+    .replace(/^[-*]\s+/, "")
+    .replace(/^[0-9]+[\).]\s+/, "")
+    .replace(/^[:\-\s]+/, "")
+    .trim();
+}
+
+function formatAskCoachCoachTextLegacy(text = "") {
+  const raw = String(text || "").trim().replace(/\r\n/g, "\n");
+  if (!raw) return "";
+
+  const normalizedListText = raw
+    .replace(/\s+[•]\s+/g, "\n- ")
+    .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n- ")
+    .replace(/\s+(\d+[\).])\s+(?=[A-Z0-9])/g, "\n$1 ");
+  const listLines = normalizedListText
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+  const existingListCount = listLines.filter(line => /^(-|\d+[\).])\s+/.test(line)).length;
+  if (existingListCount >= 2) return listLines.join("\n");
+  if (normalizedListText.length < 260) return normalizedListText;
+
+  const sentences = splitAskCoachSentences(normalizedListText);
+  if (sentences.length < 3) return normalizedListText;
+
+  const read = sentences[0];
+  const bullets = sentences
+    .slice(1, 6)
+    .map(sentence => `- ${sentence.replace(/^[-•]\s*/, "")}`);
+  return `${read}\n\n${bullets.join("\n")}`;
+}
+
+function formatAskCoachCoachText(text = "") {
+  const raw = String(text || "").trim().replace(/\r\n/g, "\n");
+  if (!raw) return "";
+
+  const normalizedListText = raw
+    .replace(/\s+[â€¢•]\s+/g, "\n- ")
+    .replace(/\s+[-*]\s+(?=[A-Za-z0-9*])/g, "\n- ")
+    .replace(/\s+(\d+[\).])\s+(?=[A-Za-z0-9*])/g, "\n- ");
+
+  const listLines = normalizedListText
+    .split("\n")
+    .map(line => {
+      const trimmed = line.trim();
+      if (/^[-*]\s+/.test(trimmed) || /^[0-9]+[\).]\s+/.test(trimmed)) {
+        return `- ${normalizeAskCoachBulletText(trimmed)}`;
+      }
+      return cleanAskCoachMarkdownText(trimmed);
+    })
+    .filter(Boolean);
+  const existingListCount = listLines.filter(line => /^-\s+/.test(line)).length;
+  if (existingListCount >= 2) return listLines.join("\n");
+  if (normalizedListText.length < 260) return cleanAskCoachMarkdownText(normalizedListText);
+
+  const sentences = splitAskCoachSentences(normalizedListText);
+  if (sentences.length < 3) return cleanAskCoachMarkdownText(normalizedListText);
+
+  const read = cleanAskCoachMarkdownText(sentences[0]);
+  const bullets = sentences
+    .slice(1, 6)
+    .map(sentence => `- ${normalizeAskCoachBulletText(sentence.replace(/^[-â€¢•]\s*/, ""))}`)
+    .filter(line => line.length > 2);
+  return `${read}\n\n${bullets.join("\n")}`;
+}
+
+function renderAskCoachCoachTextHtml(text = "") {
+  const formatted = formatAskCoachCoachText(text);
+  const lines = formatted
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean);
+  const parts = [];
+  let bullets = [];
+
+  const flushBullets = () => {
+    if (!bullets.length) return;
+    parts.push(`<ul class="ask-coach-bullets">${bullets.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`);
+    bullets = [];
+  };
+
+  lines.forEach(line => {
+    if (/^-\s+/.test(line)) {
+      const bullet = normalizeAskCoachBulletText(line);
+      if (bullet) bullets.push(bullet);
+      return;
+    }
+    flushBullets();
+    const paragraph = cleanAskCoachMarkdownText(line);
+    if (paragraph) parts.push(`<p>${escapeHtml(paragraph)}</p>`);
+  });
+  flushBullets();
+
+  return parts.join("");
+}
+
+function getAskCoachThinkingStepIndex(stepKeyOrIndex = 0) {
+  if (typeof stepKeyOrIndex === "number") {
+    return Math.max(0, Math.min(ASK_COACH_THINKING_STEPS.length - 1, stepKeyOrIndex));
+  }
+  const foundIndex = ASK_COACH_THINKING_STEPS.findIndex(step => step.key === stepKeyOrIndex);
+  return foundIndex >= 0 ? foundIndex : 0;
+}
+
+function renderAskCoachThinkingHtml() {
+  const activeStep = ASK_COACH_THINKING_STEPS[askCoachThinkingStepIndex] || ASK_COACH_THINKING_STEPS[0];
+  return `
+    <div class="ask-coach-message coach ask-coach-thinking" aria-live="polite">
+      <div class="ask-coach-message-kicker">Coach is thinking</div>
+      <div class="ask-coach-thinking-title">${escapeHtml(activeStep.title)}</div>
+      <div class="ask-coach-thinking-detail">${escapeHtml(activeStep.detail)}</div>
+      <div class="ask-coach-thinking-steps">
+        ${ASK_COACH_THINKING_STEPS.map((step, index) => {
+          const stateClass = index < askCoachThinkingStepIndex
+            ? "is-complete"
+            : index === askCoachThinkingStepIndex
+              ? "is-active"
+              : "";
+          return `
+            <div class="ask-coach-thinking-step ${stateClass}">
+              <span class="ask-coach-thinking-dot" aria-hidden="true"></span>
+              <span class="ask-coach-thinking-label">${escapeHtml(step.label)}</span>
+              <span class="ask-coach-thinking-copy">${escapeHtml(step.title)}</span>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function setAskCoachThinkingStep(stepKeyOrIndex = 0) {
+  askCoachThinkingStepIndex = getAskCoachThinkingStepIndex(stepKeyOrIndex);
+  if (askCoachThinkingActive) renderAskCoachMessages();
+}
+
+function startAskCoachThinking() {
+  askCoachThinkingActive = true;
+  askCoachThinkingStepIndex = 0;
+  clearInterval(askCoachThinkingTimer);
+  askCoachThinkingTimer = window.setInterval(() => {
+    if (!askCoachThinkingActive) return;
+    askCoachThinkingStepIndex = Math.min(ASK_COACH_THINKING_STEPS.length - 1, askCoachThinkingStepIndex + 1);
+    renderAskCoachMessages();
+  }, 1100);
+  renderAskCoachMessages();
+}
+
+function stopAskCoachThinking() {
+  askCoachThinkingActive = false;
+  clearInterval(askCoachThinkingTimer);
+  askCoachThinkingTimer = null;
+  renderAskCoachMessages();
+}
+
+function setAskCoachBusy(isBusy = false) {
+  askCoachRequestInFlight = Boolean(isBusy);
+  const panel = document.getElementById("askCoachPanel");
+  const input = document.getElementById("askCoachInput");
+  const sendBtn = document.getElementById("askCoachSend");
+  const newChatBtn = document.getElementById("askCoachNewChat");
+  panel?.classList.toggle("is-thinking", Boolean(isBusy));
+  if (input) input.disabled = Boolean(isBusy);
+  if (sendBtn) sendBtn.disabled = Boolean(isBusy);
+  if (newChatBtn) newChatBtn.disabled = Boolean(isBusy);
+}
+
+function waitAskCoachMinimum(startedAt = Date.now(), minimumMs = 850) {
+  const remaining = Math.max(0, minimumMs - (Date.now() - startedAt));
+  return remaining
+    ? new Promise(resolve => window.setTimeout(resolve, remaining))
+    : Promise.resolve();
+}
+
+function renderAskCoachMessages() {
+  const container = document.getElementById("askCoachMessages");
+  if (!container) return;
+  const messages = askCoachMessages.length ? askCoachMessages : [getAskCoachStarterMessage()];
+  const messageHtml = messages.map(message => {
+    const role = message.role === "user" ? "user" : "coach";
+    const displayText = role === "coach"
+      ? formatAskCoachCoachText(message.text || "")
+      : String(message.text || "");
+    return `
+      <div class="ask-coach-message ${escapeHtml(role)}">
+        <div class="ask-coach-message-kicker">${escapeHtml(role === "user" ? "You" : "Coach")}</div>
+        <div class="ask-coach-message-text">${role === "coach" ? renderAskCoachCoachTextHtml(displayText) : escapeHtml(displayText)}</div>
+      </div>
+    `;
+  }).join("");
+  container.innerHTML = `${messageHtml}${askCoachThinkingActive ? renderAskCoachThinkingHtml() : ""}`;
+  container.scrollTop = container.scrollHeight;
+}
+
+function pushAskCoachMessage(role = "coach", text = "") {
+  const raw = String(text || "").trim();
+  const clean = role === "coach" ? formatAskCoachCoachText(raw) : raw;
+  if (!clean) return;
+  askCoachMessages.push({ role, text: clean, createdAt: nowISO() });
+  askCoachMessages = askCoachMessages.slice(-80);
+  saveAskCoachMessages();
+  renderAskCoachMessages();
+}
+
+function resetAskCoachSurvey() {
+  const survey = document.getElementById("askCoachSurvey");
+  const surveyText = document.getElementById("askCoachSurveyText");
+  if (!survey) return;
+  survey.hidden = true;
+  survey.classList.remove("is-explaining");
+  survey.querySelectorAll(".ask-coach-survey-btn").forEach(button => button.classList.remove("is-active"));
+  if (surveyText) surveyText.value = "";
+}
+
+function ensureAskCoachPanel() {
+  let panel = document.getElementById("askCoachPanel");
+  if (panel) return panel;
+
+  panel = document.createElement("div");
+  panel.id = "askCoachPanel";
+  panel.className = "ask-coach-panel";
+  panel.setAttribute("aria-hidden", "true");
+
+  const template = document.getElementById("askCoachPanelTemplate");
+  if (template?.content) {
+    panel.appendChild(template.content.cloneNode(true));
+  } else {
+    panel.innerHTML = `
+      <div class="ask-coach-panel-inner">
+        <div class="ask-coach-header">
+          <div>
+            <div class="ask-coach-subtitle">Ask Coach!</div>
+          </div>
+          <button id="askCoachClose" class="ask-coach-close" type="button">X</button>
+        </div>
+        <div class="ask-coach-body">
+          <div id="askCoachMessages" class="ask-coach-messages" aria-live="polite"></div>
+          <div id="askCoachSurvey" class="ask-coach-survey" hidden>
+            <div class="ask-coach-survey-title">How was that answer?</div>
+            <div class="ask-coach-survey-actions">
+              <button type="button" class="ask-coach-survey-btn" data-survey-rating="up">Thumbs up</button>
+              <button type="button" class="ask-coach-survey-btn" data-survey-rating="down">Thumbs down</button>
+              <button type="button" class="ask-coach-survey-btn" data-survey-rating="explain">Explain more</button>
+            </div>
+            <textarea id="askCoachSurveyText" class="ask-coach-survey-text" placeholder="Tell RankedCoach what was missing or what needs more detail."></textarea>
+            <button id="askCoachSurveySubmit" class="ask-coach-survey-submit" type="button">Save Feedback & New Chat</button>
+          </div>
+          <div class="ask-coach-input-row">
+            <textarea id="askCoachInput" class="ask-coach-input" rows="1" placeholder="Ask anything!"></textarea>
+            <button id="askCoachNewChat" class="ask-coach-secondary-btn" type="button">New Chat</button>
+            <button id="askCoachSend" class="ask-coach-send-btn" type="button">Send</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  document.body.appendChild(panel);
+  return panel;
+}
+
+async function submitAskCoachQuestion() {
+  if (askCoachRequestInFlight) return;
+  const input = document.getElementById("askCoachInput");
+  if (!input) return;
+  const question = input.value.trim();
+  if (!question) return;
+  pushAskCoachMessage("user", question);
+  input.value = "";
+  const startedAt = Date.now();
+  setAskCoachBusy(true);
+  startAskCoachThinking();
+  try {
+    const answer = await requestAskCoachAI(question, {
+      onPhase: setAskCoachThinkingStep
+    }) || answerAskCoachQuestion(question);
+    setAskCoachThinkingStep("response");
+    await waitAskCoachMinimum(startedAt);
+    stopAskCoachThinking();
+    pushAskCoachMessage("coach", answer);
+  } finally {
+    stopAskCoachThinking();
+    setAskCoachBusy(false);
+  }
+}
+
+function openAskCoachModal() {
+  const panel = ensureAskCoachPanel();
+  const button = document.getElementById("askCoachOpen");
+  if (!panel) return;
+  const header = document.querySelector(".app-header");
+  const headerBottom = header?.getBoundingClientRect?.().bottom || 0;
+  const buttonRect = button?.getBoundingClientRect?.();
+  const right = buttonRect ? Math.max(12, window.innerWidth - buttonRect.right) : 18;
+  panel.style.top = `${Math.max(headerBottom + 10, 10)}px`;
+  panel.style.right = `${right}px`;
+  panel.style.left = "auto";
+  panel.style.bottom = "auto";
+  askCoachMessages = readAskCoachMessages();
+  renderAskCoachMessages();
+  resetAskCoachSurvey();
+  panel.classList.add("open");
+  panel.setAttribute("aria-hidden", "false");
+  button?.setAttribute("aria-expanded", "true");
+  window.setTimeout(() => document.getElementById("askCoachInput")?.focus(), 60);
+}
+
+function closeAskCoachModal() {
+  const panel = document.getElementById("askCoachPanel");
+  const button = document.getElementById("askCoachOpen");
+  panel?.classList.remove("open");
+  panel?.setAttribute("aria-hidden", "true");
+  button?.setAttribute("aria-expanded", "false");
+}
+
+function showAskCoachSurvey() {
+  const survey = document.getElementById("askCoachSurvey");
+  if (!survey) return;
+  survey.hidden = false;
+  survey.classList.remove("is-explaining");
+  survey.querySelectorAll(".ask-coach-survey-btn").forEach(button => button.classList.remove("is-active"));
+  const surveyText = document.getElementById("askCoachSurveyText");
+  if (surveyText) surveyText.value = "";
+}
+
+function recordAskCoachSurvey(rating = "", detail = "") {
+  const feedback = {
+    id: uuid(),
+    rating,
+    detail: String(detail || "").trim(),
+    messageCount: askCoachMessages.length,
+    lastQuestion: [...askCoachMessages].reverse().find(message => message.role === "user")?.text || "",
+    lastAnswer: [...askCoachMessages].reverse().find(message => message.role === "coach")?.text || "",
+    profileId: activeProfileId || "",
+    createdAt: nowISO()
+  };
+
+  const existing = (() => {
+    try {
+      const raw = localStorage.getItem("rankedcoach_ask_coach_feedback_v1");
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_error) {
+      return [];
+    }
+  })();
+
+  try {
+    localStorage.setItem("rankedcoach_ask_coach_feedback_v1", JSON.stringify([...existing, feedback].slice(-200)));
+  } catch (error) {
+    console.warn("Unable to save Ask Coach feedback", error);
+  }
+}
+
+function startNewAskCoachChat() {
+  askCoachMessages = [getAskCoachStarterMessage()];
+  saveAskCoachMessages();
+  renderAskCoachMessages();
+  resetAskCoachSurvey();
+}
+
+function bindAskCoachUI() {
+  const openBtn = document.getElementById("askCoachOpen");
+  ensureAskCoachPanel();
+  const closeBtn = document.getElementById("askCoachClose");
+  const sendBtn = document.getElementById("askCoachSend");
+  const newChatBtn = document.getElementById("askCoachNewChat");
+  const input = document.getElementById("askCoachInput");
+  const panel = document.getElementById("askCoachPanel");
+  const survey = document.getElementById("askCoachSurvey");
+  const surveyText = document.getElementById("askCoachSurveyText");
+  const surveySubmit = document.getElementById("askCoachSurveySubmit");
+
+  openBtn?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (panel?.classList.contains("open")) {
+      closeAskCoachModal();
+    } else {
+      openAskCoachModal();
+    }
+  });
+  closeBtn?.addEventListener("click", closeAskCoachModal);
+  sendBtn?.addEventListener("click", submitAskCoachQuestion);
+  input?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      submitAskCoachQuestion();
+    }
+  });
+
+  newChatBtn?.addEventListener("click", () => {
+    const hasRealChat = askCoachMessages.some(message => message.role === "user");
+    if (hasRealChat) {
+      showAskCoachSurvey();
+      return;
+    }
+    startNewAskCoachChat();
+  });
+
+  survey?.querySelectorAll(".ask-coach-survey-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      const rating = button.dataset.surveyRating || "";
+      survey.querySelectorAll(".ask-coach-survey-btn").forEach(btn => btn.classList.toggle("is-active", btn === button));
+      survey.classList.toggle("is-explaining", rating === "explain");
+      if (rating === "explain") {
+        surveyText?.focus();
+        return;
+      }
+      recordAskCoachSurvey(rating);
+      startNewAskCoachChat();
+    });
+  });
+
+  surveyText?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      recordAskCoachSurvey("explain", surveyText.value);
+      startNewAskCoachChat();
+    }
+  });
+
+  surveySubmit?.addEventListener("click", () => {
+    recordAskCoachSurvey("explain", surveyText.value);
+    startNewAskCoachChat();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (
+      panel?.classList.contains("open")
+      && !event.target?.closest?.("#askCoachPanel")
+      && !event.target?.closest?.("#askCoachOpen")
+    ) {
+      closeAskCoachModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeAskCoachModal();
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bindAskCoachUI, { once: true });
+} else {
+  bindAskCoachUI();
 }
 
 function renderStatsAgents() {
@@ -4415,9 +5499,16 @@ if (window.supabase) {
   const supabaseConfig = window.VIP_SUPABASE_CONFIG || {};
   const storedSupabaseUrl = localStorage.getItem("vip_supabase_url") || "";
   const storedSupabaseAnonKey = localStorage.getItem("vip_supabase_anon_key") || "";
+  const defaultSupabaseUrl = "https://jqrsjaaxtdxfmpbtrupj.supabase.co";
+  const legacySupabaseUrls = new Set([
+    "https://dcsrygojyrzqqhbgvbjx.supabase.co"
+  ]);
+  const resolvedSupabaseUrl = supabaseConfig.url
+    || (legacySupabaseUrls.has(storedSupabaseUrl) ? "" : storedSupabaseUrl)
+    || defaultSupabaseUrl;
 
   supabaseClient = supabase.createClient(
-    supabaseConfig.url || storedSupabaseUrl || "https://dcsrygojyrzqqhbgvbjx.supabase.co",
+    resolvedSupabaseUrl,
     supabaseConfig.anonKey || storedSupabaseAnonKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnNqYWF4dGR4Zm1wYnRydXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MTIxNzUsImV4cCI6MjA5MDM4ODE3NX0.1wKi5VOBCvGJeVDIgHBO503MBj1tSp4GE775l0dpjOQ"
   );
 } else {
@@ -4845,6 +5936,7 @@ const STORAGE_KEY_PROFILES = "valtracker_profiles_v1";
 const STORAGE_KEY_ACTIVE_ID = "valtracker_active_profile_id";
 const STORAGE_KEY_LOG_ENTRIES = "valtracker_log_entries_v1";
 const STORAGE_KEY_LAST_BACKEND_SYNC = "valtracker_last_backend_sync_v1";
+const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 
 const backendSyncState = {
   applyingRemote: false,
@@ -4852,6 +5944,101 @@ const backendSyncState = {
   lastSaveReason: "",
   lastError: null
 };
+
+let insightFeedbackEntries = readInsightFeedbackEntries();
+
+function readInsightFeedbackEntries() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_INSIGHT_FEEDBACK);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function saveInsightFeedbackEntries(options = {}) {
+  try {
+    localStorage.setItem(STORAGE_KEY_INSIGHT_FEEDBACK, JSON.stringify(insightFeedbackEntries || []));
+  } catch (error) {
+    console.warn("Unable to save local insight feedback", error);
+  }
+
+  if (!options.skipBackend) {
+    queuePersistentAccountSave("insight-feedback");
+  }
+}
+
+function getInsightSignature(insight = {}) {
+  return [
+    insight.title,
+    insight.type,
+    insight.focus,
+    insight.what,
+    insight.action
+  ]
+    .map(part => String(part || "").trim().toLowerCase())
+    .filter(Boolean)
+    .join("|")
+    .slice(0, 420);
+}
+
+function getLatestInsightFeedback(signature = "") {
+  const key = String(signature || "").trim();
+  if (!key) return null;
+  return (insightFeedbackEntries || [])
+    .slice()
+    .reverse()
+    .find(entry => entry.signature === key) || null;
+}
+
+function recordInsightFeedback(insight = {}, rating = "helpful") {
+  const signature = getInsightSignature(insight);
+  if (!signature) return null;
+
+  const model = getPlayerModel();
+  const entry = {
+    id: uuid(),
+    signature,
+    rating,
+    title: insight.title || "",
+    type: insight.type || "",
+    focus: insight.focus || model?.focus || "",
+    priority: safeNumber(insight.priority),
+    confidenceScore: safeNumber(model?.confidenceScore),
+    currentAct: model?.currentAct || "Current Window",
+    profileId: activeProfileId || "",
+    sourceCount: Array.isArray(insight.sources) ? insight.sources.length : 0,
+    context: {
+      matchesPlayed: safeNumber(model?.overview?.matchesPlayed),
+      winrate: safeNumber(model?.overview?.winrate),
+      kd: safeNumber(model?.overview?.kd),
+      bestAgent: model?.agents?.[0]?.agent || "",
+      strongestMap: model?.maps?.[0]?.map || "",
+      weaponReliance: model?.coachingContext?.relianceFlags || []
+    },
+    createdAt: nowISO()
+  };
+
+  insightFeedbackEntries = [
+    ...(insightFeedbackEntries || []).filter(item => item.signature !== signature),
+    entry
+  ].slice(-300);
+  saveInsightFeedbackEntries();
+  return entry;
+}
+
+function getInsightFeedbackSummary() {
+  const entries = insightFeedbackEntries || [];
+  const helpful = entries.filter(entry => entry.rating === "helpful").length;
+  const inaccurate = entries.filter(entry => entry.rating === "inaccurate").length;
+  return {
+    total: entries.length,
+    helpful,
+    inaccurate,
+    helpfulRate: entries.length ? safeDivide(helpful * 100, entries.length) : 0
+  };
+}
 
 function readLocalLogEntries() {
   try {
@@ -4895,8 +6082,9 @@ function serializePersistentAccountState() {
     activeProfileId,
     profiles: (profiles || []).map(normalizeProfileRecord),
     logEntries: logEntries || [],
-    themeBuilderState: typeof themeBuilderState !== "undefined" ? themeBuilderState : {},
-    themeBuilderUiState: typeof themeBuilderUiState !== "undefined" ? themeBuilderUiState : {},
+    insightFeedbackEntries: insightFeedbackEntries || [],
+    themeBuilderState: THEME_BUILDER_LAUNCH_LOCKED ? {} : (typeof themeBuilderState !== "undefined" ? themeBuilderState : {}),
+    themeBuilderUiState: THEME_BUILDER_LAUNCH_LOCKED ? {} : (typeof themeBuilderUiState !== "undefined" ? themeBuilderUiState : {}),
     currentThemeKey: getActiveProfile()?.themeKey || getCurrentThemeBuilderThemeKey?.() || "default"
   };
 }
@@ -4918,7 +6106,23 @@ function applyPersistentAccountState(state = {}) {
       saveLogEntries({ skipBackend: true });
     }
 
+    if (Array.isArray(state.insightFeedbackEntries)) {
+      const mergedFeedback = new Map();
+      [...readInsightFeedbackEntries(), ...state.insightFeedbackEntries].forEach((entry) => {
+        if (!entry || typeof entry !== "object") return;
+        const id = String(entry.id || uuid());
+        mergedFeedback.set(id, { ...entry, id });
+      });
+      insightFeedbackEntries = [...mergedFeedback.values()]
+        .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime())
+        .slice(-300);
+      saveInsightFeedbackEntries({ skipBackend: true });
+    }
+
     if (state.themeBuilderState && typeof state.themeBuilderState === "object" && typeof themeBuilderState !== "undefined") {
+      if (THEME_BUILDER_LAUNCH_LOCKED) {
+        archiveThemeBuilderLocalStorageForLaunchLock();
+      } else {
       const mergedThemeBuilderState = mergeLocalAndRemoteThemeBuilderState(
         themeBuilderState,
         state.themeBuilderState
@@ -4929,6 +6133,7 @@ function applyPersistentAccountState(state = {}) {
       localStorage.setItem(THEME_BUILDER_STORAGE_KEY, JSON.stringify(themeBuilderState));
       applyThemeBuilderFontImports?.();
       applyThemeBuilderRuntimeStyles?.();
+      }
     }
 
     const active = getActiveProfile();
@@ -5177,7 +6382,7 @@ const RANK_THRESHOLDS = [
 
 const allAgents = [
   "Astra","Breach","Brimstone","Chamber","Clove","Cypher","Deadlock","Fade",
-  "Gekko","Harbor","Iso","Jett","Kayo","Killjoy","Neon","Omen","Phoenix",
+  "Gekko","Harbor","Iso","Jett","Kayo","Killjoy","Miks","Neon","Omen","Phoenix",
   "Raze","Reyna","Sage","Skye","Sova","Tejo","Veto","Viper","Vyse","Waylay","Yoru"
 ];
 
@@ -5194,7 +6399,7 @@ const agentRoles = {
   Gekko:"initiator",Kayo:"initiator",Tejo:"initiator",
 
   Brimstone:"controller",Omen:"controller",Viper:"controller",
-  Astra:"controller",Harbor:"controller",Clove:"controller",Veto:"sentinel",
+  Astra:"controller",Harbor:"controller",Clove:"controller",Miks:"controller",Veto:"sentinel",
 
   Killjoy:"sentinel",Sage:"sentinel",Cypher:"sentinel",
   Chamber:"sentinel",Deadlock:"sentinel",Vyse:"sentinel"
@@ -5211,6 +6416,8 @@ const ROLE_ICON_MAP = {
 // AGENT SILHOUETTE MAP
 // ========================
 
+const DEFAULT_AGENT_SILHOUETTE_SRC = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeDI9IjEiIHkxPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzk0YTNiOCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzMzNDE1NSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMGYxNzJhIi8+PHBhdGggZD0iTTMyIDhjLTguMiAwLTE0IDYuNC0xNCAxNS4yIDAgNS43IDIuMyAxMC42IDYuMSAxMy4yLTguNiAyLjYtMTQuMSA4LjEtMTQuMSAxNS42djJoNDR2LTJjMC03LjUtNS41LTEzLTE0LjEtMTUuNiAzLjgtMi42IDYuMS03LjUgNi4xLTEzLjJDNDYgMTQuNCA0MC4yIDggMzIgOFoiIGZpbGw9InVybCgjZykiIG9wYWNpdHk9Ii45MiIvPjxwYXRoIGQ9Ik0yMSAyNGM0LjItMy44IDcuOS01LjcgMTEuMi01LjcgMy41IDAgNy4xIDEuOSAxMC44IDUuNyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZTJlOGYwIiBzdHJva2Utb3BhY2l0eT0iLjMyIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==";
+
 const AGENT_SIL_MAP = {
   astra:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/astra.png",
   breach:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/breach.png",
@@ -5226,6 +6433,7 @@ const AGENT_SIL_MAP = {
   jett:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/jett.png",
   kayo:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/kayo.png",
   killjoy:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/killjoy.png",
+  miks:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/miks_fullportrait.png",
   neon:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/neon.png",
   omen:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/omen.png",
   phoenix:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/phoenix.png",
@@ -5257,6 +6465,7 @@ const AGENT_FX_COLOR_FALLBACKS = {
   jett: ["#7dd3fc", "#e0f2fe", "#0f172a"],
   kayo: ["#60a5fa", "#c084fc", "#0f172a"],
   killjoy: ["#facc15", "#f472b6", "#3f3f46"],
+  miks: ["#22c55e", "#bbf7d0", "#052e16"],
   neon: ["#22d3ee", "#f8fafc", "#1d4ed8"],
   omen: ["#7c3aed", "#c4b5fd", "#020617"],
   phoenix: ["#fb923c", "#facc15", "#7f1d1d"],
@@ -5288,6 +6497,7 @@ const AGENT_FX_PRESETS = {
   jett: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
   kayo: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
   killjoy: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
+  miks: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
   neon: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
   omen: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
   phoenix: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
@@ -5306,21 +6516,35 @@ const AGENT_FX_PRESETS = {
 };
 
 const AGENT_FX_MODE_OVERRIDES = {
-  fade: "custom",
-  iso: "custom",
-  neon: "custom",
-  phoenix: "custom",
-  reyna: "custom",
-  waylay: "custom",
-  breach: "custom",
-  deadlock: "custom",
-  sova: "custom",
-  tejo: "custom",
   astra: "custom",
+  breach: "custom",
   brimstone: "custom",
+  chamber: "custom",
+  clove: "custom",
+  cypher: "custom",
+  deadlock: "custom",
+  fade: "custom",
+  gekko: "custom",
   harbor: "custom",
+  iso: "custom",
+  jett: "custom",
+  kayo: "custom",
+  killjoy: "custom",
+  miks: "custom",
+  neon: "custom",
   omen: "custom",
-  vyse: "custom"
+  phoenix: "custom",
+  raze: "custom",
+  reyna: "custom",
+  sage: "custom",
+  skye: "custom",
+  sova: "custom",
+  waylay: "custom",
+  tejo: "custom",
+  veto: "custom",
+  viper: "custom",
+  vyse: "custom",
+  yoru: "custom"
 };
 
 // ========================
@@ -6466,8 +7690,7 @@ function getAgentFxPreset(agentNameStr = "") {
 }
 
 function getAgentFxMode(agentNameStr = "") {
-  const key = String(agentNameStr || "").toLowerCase();
-  return AGENT_FX_MODE_OVERRIDES[key] || "sandbox";
+  return "none";
 }
 
 function getAgentFxDurationMs(fxDef = {}, fallback = 2600) {
@@ -7044,12 +8267,6 @@ function applyAgentFx(agentNameStr) {
   if (frame) {
     frame.dataset.fxEngine = fxMode === "none" ? "none" : "custom";
   }
-  if (fxMode === "custom" && String(agentNameStr || "").toLowerCase() === "neon") {
-    mountNeonCustomFx();
-  }
-  if (fxMode === "custom" && String(agentNameStr || "").toLowerCase() === "fade") {
-    mountFadeCustomFx();
-  }
   if (fxMode === "none" || fxMode === "custom") {
     return art;
   }
@@ -7152,10 +8369,12 @@ function updateLogAgentDisplay(agent){
   if(logAgentImg){
     if(hasAgent){
       logAgentImg.src = getAgentIconUrl(agent);
+      logAgentImg.classList.remove("is-silhouette");
       logAgentImg.style.display = "block";
     } else {
-      logAgentImg.removeAttribute("src");
-      logAgentImg.style.display = "none";
+      logAgentImg.src = DEFAULT_AGENT_SILHOUETTE_SRC;
+      logAgentImg.classList.add("is-silhouette");
+      logAgentImg.style.display = "block";
     }
   }
 
@@ -7165,14 +8384,19 @@ function updateLogAgentDisplay(agent){
 function setFocusOtherVisibility(show, value = ""){
   const wrapper = document.getElementById("focusOtherWrap");
   const input = document.getElementById("logFocusOther");
+  const confirm = document.getElementById("confirmFocusOther");
+  const focusWrapper = document.querySelector(".focus-wrapper");
 
   if(wrapper){
     wrapper.style.display = show ? "flex" : "none";
   }
+  focusWrapper?.classList.toggle("is-custom-focus-editing", Boolean(show));
+  focusWrapper?.classList.toggle("custom-focus-committed", false);
 
   if(input){
     if(show){
       input.disabled = false;
+      input.style.display = "";
       if(value) input.value = value;
       requestAnimationFrame(() => input.focus());
     } else {
@@ -7180,12 +8404,17 @@ function setFocusOtherVisibility(show, value = ""){
       input.disabled = true;
     }
   }
+  if(confirm){
+    confirm.style.display = "";
+  }
 }
 
 function setCustomFocusCommitted(value = ""){
   const wrapper = document.querySelector(".focus-wrapper");
+  const otherWrap = document.getElementById("focusOtherWrap");
   const preview = document.getElementById("focusPreviewText");
   const input = document.getElementById("logFocusOther");
+  const confirm = document.getElementById("confirmFocusOther");
   const roleClasses = [
     "role-duelist",
     "role-controller",
@@ -7209,6 +8438,16 @@ function setCustomFocusCommitted(value = ""){
   }
 
   wrapper?.classList.toggle("custom-focus-committed", !!value);
+  wrapper?.classList.toggle("is-custom-focus-editing", !value && document.getElementById("logFocusSelect")?.value === "Other");
+  if(otherWrap){
+    otherWrap.style.display = value ? "flex" : otherWrap.style.display;
+  }
+  if(input){
+    input.disabled = !!value;
+  }
+  if(confirm){
+    confirm.style.display = value ? "none" : "";
+  }
 }
 
 function resetCustomFocusUI(){
@@ -7224,6 +8463,12 @@ function resetCustomFocusUI(){
 function syncLoggingFocusPreviewText(value = "") {
   const preview = document.getElementById("focusPreviewText");
   if (!preview) return;
+  const isEditingCustomFocus = document.querySelector(".focus-wrapper")?.classList.contains("is-custom-focus-editing");
+  if (isEditingCustomFocus) {
+    preview.textContent = "";
+    preview.classList.add("is-placeholder");
+    return;
+  }
   const resolved = String(value || "").trim();
   preview.textContent = resolved || "Focus";
   preview.classList.toggle("is-placeholder", !resolved);
@@ -7262,7 +8507,7 @@ function updateLoggingDebriefPreview() {
   const notes = document.getElementById("logNotes")?.value?.trim() || "";
   let focus = focusSelect?.value || "";
   if (focus === "Other") {
-    focus = customFocus || "Custom Focus";
+    focus = customFocus || "";
   }
   if (!focus) {
     focus = customFocus || "";
@@ -7424,6 +8669,7 @@ function syncInsightListOverflow(container = document.getElementById("insightsLi
 }
 
 function getThemeBuilderGroupOverrideValue(parentId = "", groupId = "", field = "") {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return "";
   if (!parentId || !groupId || !field) return "";
   const themeKey = typeof getCurrentThemeBuilderThemeKey === "function"
     ? getCurrentThemeBuilderThemeKey()
@@ -7509,6 +8755,15 @@ function bindInsightCards(){
   if(!container) return;
 
   const cards = [...container.querySelectorAll(".insight-card:not(.insight-empty)")];
+  const getRenderedInsights = () => {
+    const model = getPlayerModel();
+    let list = (model?.insights || []).slice();
+    if (activeInsightFilter !== "all") {
+      list = list.filter(insight => insight.type === activeInsightFilter);
+    }
+    if (!list.length) list = (model?.insights || []).slice();
+    return list;
+  };
   const closeAll = () => {
     cards.forEach(c => c.classList.remove("open"));
     container.classList.remove("has-open-card");
@@ -7517,6 +8772,22 @@ function bindInsightCards(){
 
   cards.forEach(card => {
     card.onclick = (event) => {
+      const feedbackButton = event.target.closest(".insight-feedback-btn");
+      if (feedbackButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const insight = getRenderedInsights()[safeNumber(card.dataset.insightIndex, -1)];
+        if (!insight) return;
+        const rating = feedbackButton.dataset.feedbackRating || "helpful";
+        recordInsightFeedback(insight, rating);
+        card.querySelectorAll(".insight-feedback-btn").forEach(button => {
+          button.classList.toggle("is-active", button === feedbackButton);
+        });
+        const label = card.querySelector(".insight-feedback-label");
+        if (label) label.textContent = rating === "helpful" ? "Saved as useful." : "Saved for review.";
+        return;
+      }
+
       if (event.target.closest(".insight-close")) {
         event.preventDefault();
         event.stopPropagation();
@@ -8018,7 +9289,7 @@ function renderAgentModal(){
     const key = agent.toLowerCase();
 
     card.innerHTML = `
-      <img src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${key}.png" />
+      <img src="${getAgentIconUrl(key)}" />
       <span>${agent}</span>
     `;
 
@@ -8167,9 +9438,11 @@ const OVERLAY_TUNING_VAR_NAMES = [
 const THEME_BUILDER_STORAGE_KEY = "live_app_theme_builder_v1";
 const THEME_BUILDER_UI_STORAGE_KEY = "live_app_theme_builder_ui_v2";
 const THEME_BUILDER_ACCESS_STORAGE_KEY = "vip_theme_builder_access";
+const THEME_BUILDER_LOCKED_BACKUP_STORAGE_KEY = "live_app_theme_builder_launch_backup_20260519";
 const THEME_BUILDER_UI_STYLE_ID = "themeBuilderUiStyles";
 const THEME_BUILDER_RUNTIME_STYLE_ID = "themeBuilderRuntimeStyles";
 const THEME_BUILDER_FONT_IMPORT_STYLE_ID = "themeBuilderFontImports";
+const THEME_BUILDER_LAUNCH_LOCKED = true;
 const THEME_SNAPSHOT_IMPORT_VERSION = 3;
 const BAKED_THEME_SNAPSHOT_CAPTURED_AT = "2026-04-25T13:25:19.267Z";
 const BAKED_THEME_BUILDER_STATE = {
@@ -22112,6 +23385,7 @@ function shouldShowThemeSnapshotDebugButton() {
 }
 
 function installThemeSnapshotDebugControls() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   if (!shouldShowThemeSnapshotDebugButton()) {
     window.saveThemeSnapshot = saveThemeSnapshot;
     window.collectThemeSnapshot = collectThemeSnapshot;
@@ -22154,7 +23428,30 @@ function installThemeSnapshotDebugControls() {
   window.collectOverlaySnapshot = collectOverlaySnapshot;
 }
 
+function archiveThemeBuilderLocalStorageForLaunchLock() {
+  if (!THEME_BUILDER_LAUNCH_LOCKED || typeof localStorage === "undefined") return;
+  try {
+    const payload = {
+      lockedAt: new Date().toISOString(),
+      storageKey: THEME_BUILDER_STORAGE_KEY,
+      uiStorageKey: THEME_BUILDER_UI_STORAGE_KEY,
+      state: localStorage.getItem(THEME_BUILDER_STORAGE_KEY),
+      uiState: localStorage.getItem(THEME_BUILDER_UI_STORAGE_KEY)
+    };
+    if (payload.state || payload.uiState) {
+      localStorage.setItem(THEME_BUILDER_LOCKED_BACKUP_STORAGE_KEY, JSON.stringify(payload));
+    }
+    localStorage.removeItem(THEME_BUILDER_STORAGE_KEY);
+    localStorage.removeItem(THEME_BUILDER_UI_STORAGE_KEY);
+    localStorage.removeItem(THEME_BUILDER_ACCESS_STORAGE_KEY);
+  } catch (_error) {}
+}
+
 function loadThemeBuilderState() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    archiveThemeBuilderLocalStorageForLaunchLock();
+    return {};
+  }
   try {
     const raw = localStorage.getItem(THEME_BUILDER_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
@@ -22184,6 +23481,7 @@ function extractThemeBuilderThemesFromSnapshot(snapshot = {}) {
 }
 
 async function importCanonicalThemeSnapshotIfAvailable() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   if (!isLocalThemeBuilderHost()) return;
 
   try {
@@ -22265,6 +23563,9 @@ function mergeLocalAndRemoteThemeBuilderState(localState = {}, remoteState = {})
 }
 
 function loadThemeBuilderUiState() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    return { open: false, dock: "left", offsetX: 0, offsetY: 0, advancedElements: false };
+  }
   try {
     const raw = localStorage.getItem(THEME_BUILDER_UI_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
@@ -22281,6 +23582,7 @@ function loadThemeBuilderUiState() {
 }
 
 function saveThemeBuilderUiState() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   localStorage.setItem(THEME_BUILDER_UI_STORAGE_KEY, JSON.stringify(themeBuilderUiState));
 }
 
@@ -22506,6 +23808,83 @@ function normalizeInsightsTopThemeBuilderState(themeState = {}) {
   }
 }
 
+function normalizeInsightsActionThemeBuilderState(themeState = {}) {
+  const parentId = "insights-action-card";
+  const parentState = themeState?.parents?.[parentId];
+  let changed = false;
+
+  if (parentState && typeof parentState === "object") {
+    [
+      ["contentScaleX", "1"],
+      ["contentScaleY", "1"],
+      ["contentShiftX", "0"],
+      ["contentShiftY", "0"],
+      ["contentOrigin", "center top"]
+    ].forEach(([field, value]) => {
+      if (String(parentState[field] ?? "") !== value) {
+        parentState[field] = value;
+        changed = true;
+      }
+    });
+    stripThemeBuilderParentChildLayoutFields(parentState);
+  }
+
+  const groupStates = themeState?.groups?.[parentId];
+  if (groupStates && typeof groupStates === "object") {
+    Object.keys(groupStates).forEach((groupId) => {
+      const groupState = groupStates[groupId];
+      if (!groupState || typeof groupState !== "object") {
+        delete groupStates[groupId];
+        changed = true;
+        return;
+      }
+      const before = JSON.stringify(groupState);
+      stripThemeBuilderGroupLayoutFields(groupState);
+      if (JSON.stringify(groupState) !== before) changed = true;
+      if (!Object.keys(groupState).length) {
+        delete groupStates[groupId];
+        changed = true;
+      }
+    });
+    if (!Object.keys(groupStates).length) {
+      delete themeState.groups[parentId];
+      changed = true;
+    }
+  }
+
+  const elementStates = themeState?.elements?.[parentId];
+  if (elementStates && typeof elementStates === "object") {
+    Object.keys(elementStates).forEach((elementId) => {
+      const elementState = elementStates[elementId];
+      if (!elementState || typeof elementState !== "object") {
+        delete elementStates[elementId];
+        changed = true;
+        return;
+      }
+      const before = JSON.stringify(elementState);
+      stripThemeBuilderElementLayoutFields(elementState);
+      if (JSON.stringify(elementState) !== before) changed = true;
+      if (!Object.keys(elementState).length) {
+        delete elementStates[elementId];
+        changed = true;
+      }
+    });
+    if (!Object.keys(elementStates).length) {
+      delete themeState.elements[parentId];
+      changed = true;
+    }
+  }
+
+  if (Number(themeState?.__insightsActionStateVersion || 0) < 3) {
+    themeState.__insightsActionStateVersion = 3;
+    changed = true;
+  }
+
+  if (changed) {
+    themeBuilderNeedsSave = true;
+  }
+}
+
 function normalizeStatsBreakdownThemeBuilderState(themeState = {}) {
   const parentId = "stats-breakdown-card";
   const stateVersion = Number(themeState?.__statsBreakdownStateVersion || 0);
@@ -22621,6 +24000,7 @@ function normalizeLoadedThemeBuilderState(state = {}) {
       normalizeStatsSummaryThemeBuilderState(themeState);
       normalizeStatsBreakdownThemeBuilderState(themeState);
       normalizeInsightsTopThemeBuilderState(themeState);
+      normalizeInsightsActionThemeBuilderState(themeState);
       ["compass-main", "stats-maps-card"].forEach((parentId) => {
         normalizeCardLayoutThemeBuilderState(themeState, parentId);
       });
@@ -22667,6 +24047,7 @@ function mergeBakedThemeBuilderState(storedState = {}) {
 }
 
 function flushThemeBuilderStateSave() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   Object.values(themeBuilderState || {}).forEach((themeState) => {
     if (themeState && typeof themeState === "object") {
       themeState.__bakedSnapshotCapturedAt = BAKED_THEME_SNAPSHOT_CAPTURED_AT;
@@ -22677,6 +24058,7 @@ function flushThemeBuilderStateSave() {
 }
 
 function saveThemeBuilderState(options = {}) {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   const immediate = typeof options === "boolean" ? options : options.immediate !== false;
   if (immediate) {
     if (themeBuilderSaveTimer) {
@@ -22713,6 +24095,10 @@ function isLocalThemeBuilderHost() {
 }
 
 function syncThemeBuilderAccessFromUrl() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    localStorage.removeItem(THEME_BUILDER_ACCESS_STORAGE_KEY);
+    return;
+  }
   const params = getThemeBuilderUrlParams();
   if (params.has("hideThemeBuilder")) {
     localStorage.removeItem(THEME_BUILDER_ACCESS_STORAGE_KEY);
@@ -22736,6 +24122,10 @@ function isCurrentUserThemeBuilderAdmin(user = currentAuthUser) {
 }
 
 function shouldShowThemeBuilder() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    archiveThemeBuilderLocalStorageForLaunchLock();
+    return false;
+  }
   syncThemeBuilderAccessFromUrl();
   const params = getThemeBuilderUrlParams();
   if (params.has("hideThemeBuilder")) return false;
@@ -22747,6 +24137,9 @@ function shouldShowThemeBuilder() {
 }
 
 function ensureThemeBuilderThemeState(themeKey = getCurrentThemeBuilderThemeKey()) {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    return { overlayAssets: {}, parents: {}, elements: {}, groups: {}, globals: {}, importedFonts: [] };
+  }
   const key = String(themeKey || "default");
   if (!themeBuilderState[key] || typeof themeBuilderState[key] !== "object") {
     themeBuilderState[key] = {
@@ -22884,6 +24277,10 @@ function buildThemeBuilderFontImportCss() {
 }
 
 function applyThemeBuilderFontImports() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    document.getElementById(THEME_BUILDER_FONT_IMPORT_STYLE_ID)?.remove();
+    return;
+  }
   let style = document.getElementById(THEME_BUILDER_FONT_IMPORT_STYLE_ID);
   const css = buildThemeBuilderFontImportCss();
   if (!css) {
@@ -24995,6 +26392,7 @@ function installThemeBuilderStyles() {
 }
 
 function buildThemeBuilderRuntimeCss() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return "";
   const homeBaselineScale = "var(--app-1080-scale)";
   const homeBaselineViewport = true;
   const homeBaselineSnapshotDisabledParents = new Set([
@@ -25282,6 +26680,21 @@ function buildThemeBuilderRuntimeCss() {
         );
       }
 
+      chunks.push(
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-stats .stats-main-text")}{text-decoration-line:underline !important; text-decoration-thickness:1px !important; text-underline-offset:4px !important; text-decoration-color:rgba(203,213,225,.58) !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card")}{--insight-priority-meta-lane:0px !important; --parent-card-content-scale-x:1 !important; --parent-card-content-scale-y:1 !important; --parent-card-content-shift-x:0px !important; --parent-card-content-shift-y:0px !important; --parent-card-content-origin:center top !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card > *, #page-insights .insights-action-card .insight-action > *")}{transform:none !important; transform-origin:center top !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card > .card-sub, #page-insights .insights-action-card > .insight-priority-title")}{padding-right:0 !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-action")}{position:relative !important; left:auto !important; top:auto !important; translate:none !important; scale:none !important; transform:none !important; width:100% !important; inline-size:100% !important; max-width:100% !important; min-width:0 !important; margin-left:0 !important; margin-right:0 !important; padding-right:0 !important; align-self:stretch !important; justify-self:stretch !important; box-sizing:border-box !important; display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; grid-template-rows:minmax(52px, auto) minmax(98px, 1fr) !important; grid-template-areas:"hero hero hero" "detail-1 detail-2 detail-3" !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-action-hero")}{position:relative !important; left:auto !important; top:auto !important; translate:none !important; scale:none !important; transform:none !important; grid-area:hero !important; width:100% !important; inline-size:100% !important; max-width:100% !important; min-width:0 !important; margin-left:0 !important; margin-right:0 !important; align-self:stretch !important; justify-self:stretch !important; box-sizing:border-box !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-meta-row")}{position:absolute !important; top:10px !important; right:12px !important; left:auto !important; bottom:auto !important; grid-area:auto !important; width:max-content !important; inline-size:max-content !important; max-width:calc(100% - 24px) !important; margin:0 !important; translate:none !important; scale:none !important; transform:none !important; z-index:6 !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-focus-detail:nth-of-type(3)")}{grid-area:detail-1 !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-focus-detail:nth-of-type(4)")}{grid-area:detail-2 !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-focus-detail:nth-of-type(5)")}{grid-area:detail-3 !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-focus-detail")}{position:relative !important; left:auto !important; top:auto !important; translate:none !important; scale:none !important; transform:none !important; width:100% !important; inline-size:100% !important; max-width:100% !important; min-width:0 !important; margin-left:0 !important; margin-right:0 !important; align-self:stretch !important; justify-self:stretch !important; box-sizing:border-box !important;}`,
+        `${scopeThemeBuilderSelectorList(themeKey, "#page-insights .insights-action-card .insight-action-kicker, #page-insights .insights-action-card .insight-action-copy, #page-insights .insights-action-card .insight-progress")}{width:100% !important; inline-size:100% !important; max-width:none !important;}`
+      );
+
       return chunks.join("\n");
     })
     .filter(Boolean)
@@ -25289,6 +26702,19 @@ function buildThemeBuilderRuntimeCss() {
 }
 
 function applyThemeBuilderRuntimeStyles() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    document.getElementById(THEME_BUILDER_RUNTIME_STYLE_ID)?.remove();
+    requestAnimationFrame(() => {
+      updateAgentFrameMetrics();
+      if (typeof renderChart === "function" && chartRow) {
+        renderChart(currentSize);
+      }
+      enforceInsightsActionFluidWidth();
+      scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+    });
+    syncThemeBuilderFxEngine();
+    return;
+  }
   let style = document.getElementById(THEME_BUILDER_RUNTIME_STYLE_ID);
   if (!style) {
     style = document.createElement("style");
@@ -25301,6 +26727,7 @@ function applyThemeBuilderRuntimeStyles() {
     if (typeof renderChart === "function" && chartRow) {
       renderChart(currentSize);
     }
+    enforceInsightsActionFluidWidth();
     scheduleThemeBuilderAutoFitText({ resetBase: true });
     scheduleInsightListOverflowSync(document.getElementById("insightsList"));
   });
@@ -25323,6 +26750,7 @@ const themeBuilderAutoFitState = {
 };
 
 function installThemeBuilderAutoFitObservers() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   if (themeBuilderAutoFitState.listenersAttached) return;
   themeBuilderAutoFitState.listenersAttached = true;
   window.addEventListener("resize", () => {
@@ -25350,6 +26778,7 @@ function installThemeBuilderAutoFitObservers() {
 }
 
 function scheduleThemeBuilderAutoFitText(options = {}) {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   if (options?.resetBase) {
     themeBuilderAutoFitState.resetBase = true;
   }
@@ -26229,6 +27658,15 @@ function handleThemeBuilderFxPointerOut(event) {
 }
 
 function syncThemeBuilderFxEngine() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    detachThemeBuilderFxListeners();
+    stopThemeBuilderFx();
+    syncThemeBuilderPersistentSmokeFx?.();
+    if (document.body) {
+      document.body.dataset.themeBuilderFxReady = "false";
+    }
+    return;
+  }
   if (!document.body) return;
   const themeKey = getCurrentThemeBuilderThemeKey();
   const hasEnabledFx = Object.values(themeBuilderState?.[themeKey]?.parents || {}).some(parent => parent?.hoverFxEnabled);
@@ -27302,6 +28740,11 @@ function installThemeBuilderDragBehavior() {
 }
 
 function syncThemeBuilderUI() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    clearThemeBuilderPreviewHighlight();
+    document.getElementById("themeBuilderDock")?.remove();
+    return;
+  }
   const panel = document.getElementById("themeBuilderPanel");
   const toggle = document.getElementById("themeBuilderToggle");
   const content = document.getElementById("themeBuilderContent");
@@ -27340,6 +28783,11 @@ function getThemeBuilderPreviewCard(target, panel) {
 }
 
 function refreshThemeBuilderAccess() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) {
+    clearThemeBuilderPreviewHighlight();
+    document.getElementById("themeBuilderDock")?.remove();
+    return;
+  }
   if (!document.body) return;
   if (!shouldShowThemeBuilder()) {
     clearThemeBuilderPreviewHighlight();
@@ -27350,6 +28798,7 @@ function refreshThemeBuilderAccess() {
 }
 
 function installThemeBuilderControls() {
+  if (THEME_BUILDER_LAUNCH_LOCKED) return;
   if (!shouldShowThemeBuilder()) return;
   if (!document.body || document.getElementById("themeBuilderDock")) return;
 
@@ -27732,7 +29181,6 @@ function bindEvents(){
     }
 
     setCustomFocusCommitted(customFocus);
-    setFocusOtherVisibility(true, customFocus);
     updateLoggingDebriefPreview();
 
     if(focusDisplay){
@@ -27996,7 +29444,6 @@ function bindEvents(){
     "editProfileAvatarAgent",
     "editProfileBorderStyle",
     "editProfileBannerStyle",
-    "editProfileNavBackground",
     "editProfileContrastMode",
     "editProfileMotionMode",
     "editProfileLayoutMode"
@@ -28205,14 +29652,14 @@ function selectAgentFromModal(agent){
     const fake = allAgents[Math.floor(Math.random() * allAgents.length)];
 
     const img = document.createElement("img");
-    img.src = `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${fake.toLowerCase()}.png`;
+    img.src = getAgentIconUrl(fake);
     img.className = "reel-icon";
 
     strip.appendChild(img);
   }
 
   const finalImg = document.createElement("img");
-  finalImg.src = `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${agent.toLowerCase()}.png`;
+  finalImg.src = getAgentIconUrl(agent);
   finalImg.className = "reel-icon";
 
   strip.appendChild(finalImg);
@@ -28281,6 +29728,7 @@ function selectAgentFromModal(agent){
       const logAgentText = document.getElementById("logAgentText");
       const logFocusSelect = document.getElementById("logFocusSelect");
       const logFocusOther = document.getElementById("logFocusOther");
+      const focusPreviewText = document.getElementById("focusPreviewText");
 
       logAgentText?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
@@ -28291,10 +29739,14 @@ function selectAgentFromModal(agent){
       logFocusOther?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
+      focusPreviewText?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
 
       logAgentText?.classList.add(`role-${role}`);
       logFocusSelect?.classList.add(`role-${role}`);
       logFocusOther?.classList.add(`role-${role}`);
+      focusPreviewText?.classList.add(`role-${role}`);
 
       activeRole = role;
       activeRoleFilter = role;
@@ -29375,20 +30827,13 @@ function editLogEntry(id){
 
     if(exists){
       focusSelect.value = entry.focus;
-      if(focusOtherWrap) focusOtherWrap.style.display = "none";
-      if(focusOther){
-        focusOther.value = "";
-        focusOther.disabled = true;
-      }
+      setFocusOtherVisibility(false);
       if(preview) preview.textContent = entry.focus || "Focus";
       setCustomFocusCommitted("");
     } else {
       focusSelect.value = "Other";
-      if(focusOtherWrap) focusOtherWrap.style.display = "flex";
-      if(focusOther){
-        focusOther.disabled = false;
-        focusOther.value = entry.focus;
-      }
+      if(focusOther) focusOther.value = entry.focus;
+      setFocusOtherVisibility(true, entry.focus);
       setCustomFocusCommitted(entry.focus);
     }
 
@@ -29432,15 +30877,12 @@ function syncLogInputs(){
 
     if(exists){
       focusSelect.value = pendingFocusFromLog;
-      if(focusOtherWrap) focusOtherWrap.style.display = "none";
-      focusOther.disabled = true;
-      focusOther.value = "";
+      setFocusOtherVisibility(false);
       setCustomFocusCommitted("");
     } else {
       focusSelect.value = "Other";
-      if(focusOtherWrap) focusOtherWrap.style.display = "flex";
-      focusOther.disabled = false;
       focusOther.value = pendingFocusFromLog;
+      setFocusOtherVisibility(true, pendingFocusFromLog);
       setCustomFocusCommitted(pendingFocusFromLog);
     }
 
@@ -30310,12 +31752,7 @@ function renderThemeGallery(selectedThemeKey = "default") {
             --theme-card-pattern-2:${colors.pattern2 || "none"};
             background:linear-gradient(180deg, ${colors.base || "#071029"}, ${colors.base2 || "#071b2b"});
           ">
-          <div class="theme-card-head">
-            <div class="theme-card-name">${escapeHtml(theme.label)}</div>
-            <div class="theme-card-motion">${escapeHtml(theme.motion || "static")}</div>
-          </div>
           <div class="theme-card-surfaces">
-            <div class="theme-card-card"></div>
             <div class="theme-card-pills">
               <span class="theme-card-pill" style="background:${colors.accent || "#ff4655"}"></span>
               <span class="theme-card-pill" style="background:${colors.accent2 || "#f97316"}"></span>
@@ -30469,7 +31906,6 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
   const themeKey = requestedThemeKey === "reaver" ? "default" : requestedThemeKey;
   const theme = getThemePreset(themeKey);
-  const navBackgroundUrl = String(profile?.navBackgroundUrl || "").trim();
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
@@ -30539,7 +31975,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
 
   if (header) {
     const selectedBannerUrl = getBannerImageUrl(bannerStyle);
-    const activeBannerUrl = navBackgroundUrl || selectedBannerUrl;
+    const activeBannerUrl = selectedBannerUrl;
     const bannerPattern = getBannerPattern(bannerStyle, theme);
     const imageLayer = activeBannerUrl
       ? `linear-gradient(90deg, rgba(2,6,23,.46), rgba(2,6,23,.12) 44%, rgba(2,6,23,.52)), ${toCssUrl(activeBannerUrl)}`
@@ -30623,8 +32059,6 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   if (contrastModeEl) contrastModeEl.value = profile?.accessibility?.contrastMode || "standard";
   if (motionModeEl) motionModeEl.value = profile?.accessibility?.motionMode || "standard";
   if (layoutModeEl) layoutModeEl.value = normalizeAccessibilityLayoutMode(profile?.accessibility?.layoutMode);
-  const navBackgroundEl = document.getElementById("editProfileNavBackground");
-  if (navBackgroundEl) navBackgroundEl.value = profile?.navBackgroundUrl || "";
 }
 
 function openEditProfileModal() {
@@ -30654,7 +32088,7 @@ function saveEditProfileModal() {
     avatarAgent: document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent,
     profileBorder: normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard"),
     bannerStyle: normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme"),
-    navBackgroundUrl: document.getElementById("editProfileNavBackground")?.value?.trim() || "",
+    navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
   });
 
@@ -30680,7 +32114,7 @@ function previewEditProfileVisuals() {
     avatarUrl: getDefaultProfileAvatarUrl(activeAvatar || profile.avatarAgent),
     profileBorder: activeBorder,
     bannerStyle: activeBanner,
-    navBackgroundUrl: document.getElementById("editProfileNavBackground")?.value?.trim() || "",
+    navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
   });
 }
@@ -30791,6 +32225,7 @@ function activatePage(pageId){
 
   if (pageId === "insights") {
     requestAnimationFrame(() => {
+      enforceInsightsActionFluidWidth();
       scheduleInsightListOverflowSync(document.getElementById("insightsList"));
       replayOpenInsightTrendAnimation();
     });
@@ -32181,13 +33616,10 @@ setTimeout(() => {
 
     for (let i = 0; i < SPIN_FRAMES; i++) {
       const fake = allAgents[Math.floor(Math.random() * allAgents.length)];
-      reelFrames.push(
-        `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${fake.toLowerCase()}.png`
-      );
+      reelFrames.push(getAgentIconUrl(fake));
     }
 
-    const finalUrl =
-      `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${pick.toLowerCase()}.png`;
+    const finalUrl = getAgentIconUrl(pick);
 
     reelFrames.push(finalUrl);
 
@@ -32267,10 +33699,31 @@ function flipSpinIcon(){
       focusDisplay.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
+      const logAgentText = document.getElementById("logAgentText");
+      const logFocusSelect = document.getElementById("logFocusSelect");
+      const logFocusOther = document.getElementById("logFocusOther");
+      const focusPreviewText = document.getElementById("focusPreviewText");
+
+      logAgentText?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
+      logFocusSelect?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
+      logFocusOther?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
+      focusPreviewText?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
 
       if (role) {
         agentName.classList.add(`role-${role}`);
         focusDisplay.classList.add(`role-${role}`);
+        logAgentText?.classList.add(`role-${role}`);
+        logFocusSelect?.classList.add(`role-${role}`);
+        logFocusOther?.classList.add(`role-${role}`);
+        focusPreviewText?.classList.add(`role-${role}`);
         applyAgentRoleFrame(role);
 
         updateImpactRolePill({ agent: pick }, null);
@@ -32285,15 +33738,16 @@ function flipSpinIcon(){
       activeAgent = pick;
       updateLogAgentDisplay(pick);
 
-      const logFocusSelect = document.getElementById("logFocusSelect");
       if(logFocusSelect){
         const exists = [...logFocusSelect.options].some(opt => opt.value === newFocus);
         if(exists){
           logFocusSelect.value = newFocus;
           setFocusOtherVisibility(false);
+          setCustomFocusCommitted("");
         } else {
           logFocusSelect.value = "Other";
           setFocusOtherVisibility(true, newFocus);
+          setCustomFocusCommitted(newFocus);
         }
       }
 
@@ -32345,14 +33799,14 @@ function spinLoadoutFromLogging(agent, focus){
   for(let i=0;i<SPIN_FRAMES;i++){
     const fake = allAgents[Math.floor(Math.random()*allAgents.length)];
     const img = document.createElement("img");
-    img.src = `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${fake.toLowerCase()}.png`;
+    img.src = getAgentIconUrl(fake);
     img.className = "reel-icon";
     strip.appendChild(img);
   }
 
   // 🔥 FINAL AGENT
   const finalImg = document.createElement("img");
-  finalImg.src = `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${agent.toLowerCase()}.png`;
+  finalImg.src = getAgentIconUrl(agent);
   finalImg.className = "reel-icon";
   strip.appendChild(finalImg);
 
@@ -32387,6 +33841,10 @@ function spinLoadoutFromLogging(agent, focus){
     }
 
     if(role){
+      const logAgentText = document.getElementById("logAgentText");
+      const logFocusSelect = document.getElementById("logFocusSelect");
+      const logFocusOther = document.getElementById("logFocusOther");
+      const focusPreviewText = document.getElementById("focusPreviewText");
 
       frame?.classList.remove("duelist","controller","initiator","sentinel");
       frame?.classList.add(role);
@@ -32397,9 +33855,25 @@ function spinLoadoutFromLogging(agent, focus){
       focusDisplay?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
+      logAgentText?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
+      logFocusSelect?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
+      logFocusOther?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
+      focusPreviewText?.classList.remove(
+        "role-duelist","role-controller","role-initiator","role-sentinel"
+      );
 
       agentName?.classList.add(`role-${role}`);
       focusDisplay?.classList.add(`role-${role}`);
+      logAgentText?.classList.add(`role-${role}`);
+      logFocusSelect?.classList.add(`role-${role}`);
+      logFocusOther?.classList.add(`role-${role}`);
+      focusPreviewText?.classList.add(`role-${role}`);
     }
 
     updateLogAgentDisplay(agent);
@@ -32427,7 +33901,7 @@ function randomizeInitialReel(){
   if(!reel || !strip) return;
 
   const randomAgent = allAgents[Math.floor(Math.random() * allAgents.length)];
-  const randomUrl = `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${randomAgent.toLowerCase()}.png`;
+  const randomUrl = getAgentIconUrl(randomAgent);
 
   strip.innerHTML = "";
 
@@ -33633,8 +35107,135 @@ function renderInsightsModel() {
   syncWeeklyFocus(topInsights);
   renderInsightCards();
   renderTrendBreakdown();
+  enforceInsightsActionFluidWidth();
   window.setTimeout(() => scheduleInsightListOverflowSync(document.getElementById("insightsList")), 0);
+  window.setTimeout(enforceInsightsActionFluidWidth, 0);
 }
+
+function enforceInsightsActionFluidWidth() {
+  const action = document.querySelector("#page-insights .insights-action-card .insight-action");
+  if (!(action instanceof HTMLElement)) return;
+
+  const card = action.closest(".insights-action-card");
+  const hero = action.querySelector(".insight-action-hero");
+  const meta = action.querySelector(".insight-meta-row");
+  const details = Array.from(action.querySelectorAll(".insight-focus-detail"));
+  let actionBleedLeft = "0px";
+  let actionBleedRight = "0px";
+  let actionInlineWidth = "100%";
+
+  if (card instanceof HTMLElement) {
+    const cardStyles = getComputedStyle(card);
+    actionBleedLeft = cardStyles.paddingLeft || "0px";
+    actionBleedRight = cardStyles.paddingRight || "0px";
+    const borderLeft = Number.parseFloat(cardStyles.borderLeftWidth || "0") || 0;
+    const borderRight = Number.parseFloat(cardStyles.borderRightWidth || "0") || 0;
+    const measuredInnerWidth = card.clientWidth || Math.max(0, card.getBoundingClientRect().width - borderLeft - borderRight);
+    if (measuredInnerWidth > 0) {
+      actionInlineWidth = `${Math.round(measuredInnerWidth)}px`;
+    }
+    card.style.setProperty("--insight-priority-meta-lane", "0px", "important");
+    card.style.setProperty("--insight-action-bleed-left", actionBleedLeft, "important");
+    card.style.setProperty("--insight-action-bleed-right", actionBleedRight, "important");
+    card.style.setProperty("--parent-card-content-scale-x", "1", "important");
+    card.style.setProperty("--parent-card-content-scale-y", "1", "important");
+    card.style.setProperty("--parent-card-content-shift-x", "0px", "important");
+    card.style.setProperty("--parent-card-content-shift-y", "0px", "important");
+    card.style.setProperty("--parent-card-content-origin", "center top", "important");
+    Array.from(card.children || []).forEach((child) => {
+      if (!(child instanceof HTMLElement)) return;
+      child.style.setProperty("transform", "none", "important");
+      child.style.setProperty("transform-origin", "center top", "important");
+    });
+  }
+
+  [
+    ["position", "relative"],
+    ["left", "auto"],
+    ["top", "auto"],
+    ["width", actionInlineWidth],
+    ["inline-size", actionInlineWidth],
+    ["max-width", "none"],
+    ["min-width", "0"],
+    ["margin-left", `calc(${actionBleedLeft} * -1)`],
+    ["margin-right", `calc(${actionBleedRight} * -1)`],
+    ["padding-right", "0"],
+    ["translate", "none"],
+    ["scale", "none"],
+    ["transform", "none"],
+    ["box-sizing", "border-box"],
+    ["display", "grid"],
+    ["grid-template-columns", "repeat(3, minmax(0, 1fr))"],
+    ["grid-template-rows", "minmax(52px, auto) minmax(98px, 1fr)"],
+    ["grid-template-areas", '"hero hero hero" "detail-1 detail-2 detail-3"'],
+    ["column-gap", "8px"],
+    ["row-gap", "8px"]
+  ].forEach(([property, value]) => action.style.setProperty(property, value, "important"));
+
+  if (hero instanceof HTMLElement) {
+    [
+      ["grid-area", "hero"],
+      ["grid-column", "1 / -1"],
+      ["width", "100%"],
+      ["inline-size", "100%"],
+      ["max-width", "100%"],
+      ["min-width", "0"],
+      ["margin-left", "0"],
+      ["margin-right", "0"],
+      ["translate", "none"],
+      ["scale", "none"],
+      ["transform", "none"],
+      ["box-sizing", "border-box"]
+    ].forEach(([property, value]) => hero.style.setProperty(property, value, "important"));
+  }
+
+  if (meta instanceof HTMLElement) {
+    [
+      ["position", "absolute"],
+      ["top", "10px"],
+      ["right", "12px"],
+      ["left", "auto"],
+      ["bottom", "auto"],
+      ["grid-area", "auto"],
+      ["width", "max-content"],
+      ["inline-size", "max-content"],
+      ["max-width", "calc(100% - 24px)"],
+      ["margin", "0"],
+      ["translate", "none"],
+      ["scale", "none"],
+      ["transform", "none"],
+      ["z-index", "6"]
+    ].forEach(([property, value]) => meta.style.setProperty(property, value, "important"));
+  }
+
+  details.forEach((detail, index) => {
+    if (!(detail instanceof HTMLElement)) return;
+    const area = index === 0 ? "detail-1" : index === 1 ? "detail-2" : "detail-3";
+    [
+      ["grid-area", area],
+      ["width", "100%"],
+      ["inline-size", "100%"],
+      ["max-width", "100%"],
+      ["min-width", "0"],
+      ["margin-left", "0"],
+      ["margin-right", "0"],
+      ["translate", "none"],
+      ["scale", "none"],
+      ["transform", "none"],
+      ["box-sizing", "border-box"]
+    ].forEach(([property, value]) => detail.style.setProperty(property, value, "important"));
+  });
+
+  Array.from(action.children || []).forEach((child) => {
+    if (!(child instanceof HTMLElement)) return;
+    child.style.setProperty("transform", "none", "important");
+    child.style.setProperty("transform-origin", "center top", "important");
+  });
+}
+
+window.addEventListener("resize", () => {
+  window.requestAnimationFrame(enforceInsightsActionFluidWidth);
+});
 
 function renderTrendBreakdownModel() {
   const model = getPlayerModel();
@@ -33795,6 +35396,9 @@ function renderStatsAgentsModel() {
 
   const model = getPlayerModel();
   const agents = (model?.agents || []).slice();
+  const agentByName = new Map(
+    agents.map(agent => [String(agent?.agent || "").toLowerCase(), agent])
+  );
   const grouped = {
     duelist: [],
     controller: [],
@@ -33802,16 +35406,28 @@ function renderStatsAgentsModel() {
     sentinel: []
   };
 
-  agents.forEach((agent) => {
-    const roleKey = String(agent.role || "").toLowerCase();
-    if (grouped[roleKey]) grouped[roleKey].push(agent);
+  allAgents.forEach((agentName) => {
+    const roleKey = String(agentRoles?.[agentName] || "").toLowerCase();
+    if (!grouped[roleKey]) return;
+    const data = agentByName.get(agentName.toLowerCase()) || null;
+    grouped[roleKey].push({
+      ...(data || {}),
+      agent: agentName,
+      role: roleKey,
+      hasData: Boolean(data && safeNumber(data.matchesPlayed || data.matches) > 0)
+    });
   });
 
   container.innerHTML = "";
   container.className = "stats-agent-list stats-agent-grid";
 
   Object.entries(grouped).forEach(([role, items]) => {
-    items.sort((a, b) => safeNumber(b.winrate) - safeNumber(a.winrate) || safeNumber(b.matchesPlayed) - safeNumber(a.matchesPlayed));
+    items.sort((a, b) =>
+      Number(Boolean(b.hasData)) - Number(Boolean(a.hasData)) ||
+      safeNumber(b.winrate) - safeNumber(a.winrate) ||
+      safeNumber(b.matchesPlayed) - safeNumber(a.matchesPlayed) ||
+      String(a.agent || "").localeCompare(String(b.agent || ""))
+    );
 
     const column = document.createElement("div");
     column.className = "stats-agent-column";
@@ -33829,18 +35445,30 @@ function renderStatsAgentsModel() {
       column.appendChild(empty);
     } else {
       items.forEach((agent) => {
+        const hasData = Boolean(agent.hasData);
+        const winrateValue = safeNumber(agent.winrate);
+        const kdValue = safeNumber(agent.kd);
+        const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
+        const kdTone = hasData ? (kdValue >= 1 ? "stats-value-positive" : "stats-value-negative") : "";
+        const toneClass = hasData
+          ? (winrateValue >= 50 ? "is-positive" : "is-negative")
+          : "is-empty is-locked";
         const row = document.createElement("div");
-        row.className = "stats-agent-row stats-select-card";
+        row.className = `stats-agent-row ${hasData ? "stats-select-card" : ""} ${toneClass}`;
+        row.setAttribute("aria-disabled", hasData ? "false" : "true");
         row.innerHTML = `
           <div class="stats-primary-cell">
-            <img src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${String(agent.agent).toLowerCase()}.png" class="stats-cell-icon stats-agent-tile-icon" />
+            <img src="${getAgentIconUrl(agent.agent)}" class="stats-cell-icon stats-agent-tile-icon" />
             <div class="stats-agent-metrics-stack">
-              <span class="stats-metric-line"><span class="stats-metric-label">W/R</span><span class="stats-metric-text">${Math.round(agent.winrate || 0)}%</span></span>
-              <span class="stats-metric-line"><span class="stats-metric-label">K/D</span><span class="stats-metric-text">${Number(agent.kd || 0).toFixed(2)}</span></span>
+              <span class="stats-metric-line"><span class="stats-metric-label">${escapeHtml(agent.agent)}</span></span>
+              <span class="stats-metric-line"><span class="stats-metric-label">W/R</span><span class="stats-metric-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}%` : "No Data"}</span></span>
+              <span class="stats-metric-line"><span class="stats-metric-label">K/D</span><span class="stats-metric-text ${kdTone}">${hasData ? kdValue.toFixed(2) : "No Data"}</span></span>
             </div>
           </div>
         `;
-        row.addEventListener("click", () => openStatsDetailModal("agent", agent.agent));
+        if (hasData) {
+          row.addEventListener("click", () => openStatsDetailModal("agent", agent.agent));
+        }
         column.appendChild(row);
       });
     }
@@ -33855,27 +35483,39 @@ function renderStatsMapsModel() {
 
   const model = getPlayerModel();
   const maps = (model?.maps || []).slice();
-
-  if (!maps.length) {
-    container.innerHTML = `<div class="stats-empty">No map data yet</div>`;
-    return;
-  }
+  const mapByName = new Map(
+    maps.map(map => [String(map?.map || "").toLowerCase(), map])
+  );
+  const renderMapNames = [
+    ...COMPETITIVE_MAP_POOL,
+    ...maps
+      .map(map => map?.map)
+      .filter(Boolean)
+      .filter(mapName => !COMPETITIVE_MAP_POOL.some(poolName => poolName.toLowerCase() === String(mapName).toLowerCase()))
+  ];
 
   container.innerHTML = "";
   container.classList.add("stats-map-grid");
 
-  maps.forEach((map) => {
+  renderMapNames.forEach((mapName) => {
+    const map = mapByName.get(String(mapName || "").toLowerCase()) || null;
+    const hasData = Boolean(map && safeNumber(map.matchesPlayed || map.matches) > 0);
+    const winrateValue = safeNumber(map?.winrate);
+    const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
     const card = document.createElement("button");
     card.type = "button";
-    card.className = `stats-map-card ${safeNumber(map.winrate) >= 50 ? "is-positive" : "is-negative"}`;
+    card.disabled = !hasData;
+    card.className = `stats-map-card ${hasData ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}`;
     card.innerHTML = `
-      <img class="stats-map-image" src="${getMapIconUrl(map.map)}" alt="${escapeHtml(map.map)}">
+      <img class="stats-map-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)}">
       <div class="stats-map-meta">
-        <span class="stats-main-text">${escapeHtml(map.map)}</span>
-        <span class="stats-sub-text">${Math.round(map.winrate || 0)}% WR</span>
+        <span class="stats-main-text">${escapeHtml(mapName)}</span>
+        <span class="stats-sub-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
       </div>
     `;
-    card.addEventListener("click", () => openStatsDetailModal("map", map.map));
+    if (hasData) {
+      card.addEventListener("click", () => openStatsDetailModal("map", map.map));
+    }
     container.appendChild(card);
   });
 }
@@ -33889,34 +35529,39 @@ function renderStatsWeaponsModel() {
 
   container.innerHTML = STATS_WEAPON_FAMILIES.map((family) => {
     const familySummary = getWeaponFamilySummary(family, summaryMap);
-    const familyMeta = familySummary.rounds
-      ? `${Math.round(familySummary.rounds)} rds | ${Math.round(familySummary.winrate)}% WR`
-      : "No Data";
-    const toneClass = safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative";
+    const hasFamilyData = safeNumber(familySummary.rounds) > 0;
+    const toneClass = hasFamilyData
+      ? (safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative")
+      : "is-empty is-locked";
     const weaponTiles = family.weapons.map((weaponName) => {
       const weaponKey = normalizeStatsWeaponKey(weaponName);
       const weapon = summaryMap.get(weaponKey);
+      const hasWeaponData = safeNumber(weapon?.rounds) > 0;
       const assetPath = getStatsWeaponAssetPath(weaponName);
-      const roundsLabel = weapon?.rounds ? `${Math.round(weapon.rounds)}R` : "No Data";
-      const winrateLabel = weapon?.rounds ? `${Math.round(weapon.winrate)}%` : "No Data";
-      const tileTone = weapon?.rounds && safeNumber(weapon.winrate) >= 50 ? "is-positive" : "is-negative";
+      const weaponWinrate = safeNumber(weapon?.winrate);
+      const winrateLabel = hasWeaponData ? `${Math.round(weaponWinrate)}% WR` : "No Data";
+      const weaponWinrateTone = hasWeaponData ? (weaponWinrate >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
+      const tileTone = hasWeaponData
+        ? (weaponWinrate >= 50 ? "is-positive" : "is-negative")
+        : "is-empty is-locked";
 
       return `
-        <button type="button" class="stats-weapon-tile ${weapon?.rounds ? "has-data" : "is-empty"} ${tileTone}" data-weapon-key="${escapeHtml(weaponKey)}" aria-label="Open ${escapeHtml(weaponName)} weapon insights">
+        <button type="button" class="stats-weapon-tile ${hasWeaponData ? "has-data" : "is-empty"} ${tileTone}" data-weapon-key="${escapeHtml(weaponKey)}" aria-label="Open ${escapeHtml(weaponName)} weapon insights" ${hasWeaponData ? "" : "disabled aria-disabled=\"true\""}>
           <span class="stats-weapon-art-wrap">
             <img class="stats-weapon-art" src="${escapeHtml(assetPath)}" alt="${escapeHtml(weaponName)} weapon">
           </span>
-          <span class="stats-weapon-name">${escapeHtml(weaponName)}</span>
-          <span class="stats-weapon-mini"><span>${escapeHtml(roundsLabel)}</span><span>${escapeHtml(winrateLabel)}</span></span>
+          <span class="stats-weapon-label-row">
+            <span class="stats-weapon-name">${escapeHtml(weaponName)}</span>
+            <span class="stats-weapon-mini"><span class="${weaponWinrateTone}">${escapeHtml(winrateLabel)}</span></span>
+          </span>
         </button>
       `;
     }).join("");
 
     return `
-      <section class="stats-weapon-family-row ${familySummary.rounds ? "has-data" : "is-empty"}" style="--weapon-count:${family.weapons.length}">
+      <section class="stats-weapon-family-row ${hasFamilyData ? "has-data" : "is-empty"} ${toneClass}" style="--weapon-count:${family.weapons.length}">
         <div class="stats-weapon-family-head">
           <span class="stats-weapon-family-title">${escapeHtml(family.label)}</span>
-          <span class="stats-weapon-family-meta ${toneClass}">${escapeHtml(familyMeta)}</span>
         </div>
         <div class="stats-weapon-image-row">
           ${weaponTiles}
@@ -33926,6 +35571,7 @@ function renderStatsWeaponsModel() {
   }).join("");
 
   container.querySelectorAll(".stats-weapon-tile").forEach((button) => {
+    if (button.disabled || button.classList.contains("is-empty")) return;
     button.addEventListener("click", () => openStatsDetailModal("weapon", button.dataset.weaponKey || ""));
   });
 }
@@ -34045,15 +35691,19 @@ function renderInsightCardsModel() {
     return;
   }
 
-  list.forEach((insight) => {
+  list.forEach((insight, index) => {
     const el = document.createElement("div");
     el.className = `insight-card insight-${insight.type}`;
     el.style.position = "relative";
+    el.dataset.insightIndex = String(index);
+    const signature = getInsightSignature(insight);
+    const latestFeedback = getLatestInsightFeedback(signature);
     const priority = getPriorityLabel(insight.priority);
     const confidence = getConfidenceLabel((safeNumber(insight.priority) * 0.65) + (safeNumber(model?.confidenceScore) * 0.35));
     const priorityTone = getInsightMetaToneClass("priority", priority);
     const confidenceTone = getInsightMetaToneClass("confidence", confidence);
     const focusTone = getInsightMetaToneClass("focus", insight.focus || model?.focus || "Build Sample", insight.type || "neutral");
+    const showPriorityMeta = String(insight.type || "").toLowerCase() !== "good";
     el.innerHTML = `
       <div class="insight-header">
         <div class="insight-header-main">
@@ -34063,7 +35713,7 @@ function renderInsightCardsModel() {
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
       <div class="insight-meta-row">
-        <span class="insight-meta-pill ${priorityTone}">${escapeHtml(priority)} Priority</span>
+        ${showPriorityMeta ? `<span class="insight-meta-pill ${priorityTone}">${escapeHtml(priority)} Priority</span>` : ""}
         <span class="insight-meta-pill ${confidenceTone}">${escapeHtml(confidence)}</span>
         <span class="insight-meta-pill ${focusTone}">${escapeHtml(insight.focus || model?.focus || "Build Sample")}</span>
       </div>
@@ -34082,6 +35732,11 @@ function renderInsightCardsModel() {
         </div>
         <div class="insight-sources">
           ${(insight.sources || []).map((source) => `<span class="insight-source">${escapeHtml(source)}</span>`).join("")}
+        </div>
+        <div class="insight-feedback-row" aria-label="Insight feedback">
+          <span class="insight-feedback-label">Was this read useful?</span>
+          <button type="button" class="insight-feedback-btn ${latestFeedback?.rating === "helpful" ? "is-active" : ""}" data-feedback-rating="helpful">Yes</button>
+          <button type="button" class="insight-feedback-btn ${latestFeedback?.rating === "inaccurate" ? "is-active" : ""}" data-feedback-rating="inaccurate">Not really</button>
         </div>
       </div>
     `;
