@@ -6,7 +6,7 @@
   <title>Valorant Coach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260519-launch-theme-lock-17">
+  <link rel="stylesheet" href="app.css?v=20260520-map-economy-31">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -197,7 +197,7 @@ RIOT PROFILE MODAL
       </div>
 
       <div class="ask-coach-input-row">
-        <textarea id="askCoachInput" class="ask-coach-input" rows="1" placeholder="Ask anything!"></textarea>
+        <textarea id="askCoachInput" class="ask-coach-input" rows="2" placeholder="Ask anything!"></textarea>
         <button id="askCoachNewChat" class="ask-coach-secondary-btn" type="button">New Chat</button>
         <button id="askCoachSend" class="ask-coach-send-btn" type="button">Send</button>
       </div>
@@ -463,12 +463,12 @@ INSIGHTS PAGE
         <div class="card insights-top-card">
           <div class="insights-top-shell">
             <div class="insights-top-header">
-              <div class="card-sub">Top Insights</div>
+              <div class="card-sub">Priority Reads</div>
               <div class="insight-filter-bar" id="insightFilterBar">
                 <button class="insight-filter-btn active" data-filter="all">All</button>
-                <button class="insight-filter-btn" data-filter="bad">Bad</button>
-                <button class="insight-filter-btn" data-filter="warn">Warn</button>
-                <button class="insight-filter-btn" data-filter="good">Good</button>
+                <button class="insight-filter-btn" data-filter="bad">Needs Work</button>
+                <button class="insight-filter-btn" data-filter="warn">Watch</button>
+                <button class="insight-filter-btn" data-filter="good">Strengths</button>
               </div>
             </div>
 
@@ -477,11 +477,11 @@ INSIGHTS PAGE
         </div>
 
         <div class="card insights-action-card">
-          <div class="card-sub insight-priority-title" id="insightFocusTitle">Coaching Focus Loading...</div>
+          <div class="card-sub insight-priority-title" id="insightFocusTitle">Focus Category Loading...</div>
 
           <div class="insight-action">
           <div class="insight-action-hero">
-            <div class="insight-action-kicker">Main Coaching Focus</div>
+            <div class="insight-action-kicker">Main Focus Category</div>
             <div class="insight-action-copy">The one adjustment most worth protecting in your next block of matches.</div>
             <div class="insight-progress">
               <div class="insight-progress-bar"></div>
@@ -511,7 +511,7 @@ INSIGHTS PAGE
         </div>
 
         <div class="card insights-trends-card">
-          <div class="card-sub">Coaching Insights</div>
+          <div class="card-sub">Coaching Reads</div>
           <div class="insights-trends-intro">Open a group to see what your matches and logs are showing.</div>
 
           <div class="insight-trends">
@@ -525,16 +525,16 @@ INSIGHTS PAGE
 
             <div class="insight-trend-row" data-trend="behavior">
               <div class="insight-trend-copy">
-                <span class="insight-trend-kicker">Behavior</span>
-                <span class="insight-trend-title">Behavior Insights</span>
+                <span class="insight-trend-kicker">Session Habits</span>
+                <span class="insight-trend-title">Log Reads</span>
               </div>
             </div>
             <div class="trend-content" data-trend-content="behavior"></div>
 
             <div class="insight-trend-row" data-trend="role">
               <div class="insight-trend-copy">
-                <span class="insight-trend-kicker">Role Fit</span>
-                <span class="insight-trend-title">Role Insights</span>
+                <span class="insight-trend-kicker">Role Results</span>
+                <span class="insight-trend-title">Role Reads</span>
               </div>
             </div>
             <div class="trend-content" data-trend-content="role"></div>
@@ -542,7 +542,7 @@ INSIGHTS PAGE
             <div class="insight-trend-row" data-trend="consistency">
               <div class="insight-trend-copy">
                 <span class="insight-trend-kicker">Consistency</span>
-                <span class="insight-trend-title">Stability Insights</span>
+                <span class="insight-trend-title">Consistency Reads</span>
               </div>
             </div>
             <div class="trend-content" data-trend-content="consistency"></div>
@@ -633,12 +633,12 @@ STATS PAGE
 
         <div class="stats-main-grid">
           <div class="card stats-performance-card">
-            <div class="card-sub">Performance Insights</div>
+            <div class="card-sub">Performance Timeline</div>
             <div id="statsPerformanceChart" class="stats-chart-wrap"></div>
           </div>
 
           <div class="card stats-breakdown-card">
-            <div class="card-sub">Data Insight</div>
+            <div class="card-sub">Data Reads</div>
             <div id="statsBreakdown" class="stats-breakdown"></div>
           </div>
 
@@ -688,8 +688,8 @@ STATS PAGE
 <div>
             <span class="card-pill">Week of <span id="weeklyFocusDate"></span></span>
 			            
-              <div class="card-title">Weekly Coaching Trend</div>
-              <div class="card-sub">Weekly Coaching Focus</div>
+              <div class="card-title">Weekly Coaching Read</div>
+              <div class="card-sub">Weekly Focus Category</div>
             </div>
           </div>
           <div class="weekly-focus-pills" id="weeklyFocusSummary"></div>
@@ -697,7 +697,7 @@ STATS PAGE
         <div id="weeklyFocusModal" class="lens-modal-overlay">
           <div class="lens-modal">
             <div class="lens-modal-header">
-              <div class="lens-modal-title">Weekly Focus</div>
+              <div class="lens-modal-title">Weekly Focus Category</div>
               <button class="lens-modal-close" id="weeklyFocusClose">X</button>
             </div>
             <div class="lens-modal-body">
@@ -786,7 +786,7 @@ STATS PAGE
             <div class="card-header">
               <div>
           <div class="card-title">Session Prep</div>
-          <div class="card-sub">Pick an agent and focus for the next improvement block.</div>
+          <div class="card-sub">Pick an agent and focus category for the next improvement block.</div>
               </div>
             </div>
 
@@ -971,7 +971,7 @@ stroke-linejoin="round"/>
                 </div>
 
                 <div class="home-loadout-pill">
-                  <span class="pill-label">Focus</span>
+                  <span class="pill-label">Focus Category</span>
                   <span id="focusDisplay" class="pill-value focus-neutral">-</span>
                 </div>
               </div>
@@ -1095,10 +1095,10 @@ stroke-linejoin="round"/>
 
             <div class="impact-card">
               <div class="impact-header-row">
-                <div class="timeline-title">Round Impact (Role Aware)</div>
+                <div class="timeline-title">Role Impact</div>
               </div>
 
-  <span id="impactRolePill" class="impact-role-pill ui-interactive">Duelist view</span>
+  <span id="impactRolePill" class="impact-role-pill ui-interactive">Latest Duelist Report</span>
 
 <div class="impact-bar-outer">
   <div class="impact-meter">
@@ -1108,9 +1108,14 @@ stroke-linejoin="round"/>
       <span id="impactTierCarry" class="impact-tier-mark">Carry</span>
     </div>
 	
-<div class="impact-bar-fill" id="impactBarFill"></div>
+<div class="impact-bar-fill" id="impactBarFill">
+  <div class="impact-score-label" id="impactScoreLabel" aria-live="polite">
+    <strong>--%</strong>
+  </div>
+</div>
                 </div>
               </div>
+              <div class="impact-meter-caption">Impact Role Meter</div>
             </div>
 
             <div class="scoreboard">
@@ -1249,11 +1254,11 @@ stroke-linejoin="round"/>
           <div class="logging-hero-copy">
             <div class="logging-hero-kicker">Session Debrief</div>
             <div class="logging-hero-title">Lock in what this match actually taught you.</div>
-            <div class="logging-hero-text">Capture the agent, the focus, how the match felt, and the one thing you want the coaching model to remember.</div>
+            <div class="logging-hero-text">Capture the agent, the focus category, how the match felt, and the one thing you want the coaching model to remember.</div>
           </div>
           <div class="logging-live-card" id="loggingLiveCard">
             <div class="logging-live-pill" id="loggingLiveTone">Waiting For Reflection</div>
-            <div class="logging-live-focus" id="loggingLiveFocus">Pick an agent and focus to build the debrief.</div>
+            <div class="logging-live-focus" id="loggingLiveFocus">Pick an agent and focus category to build the debrief.</div>
             <div class="logging-live-meta" id="loggingLiveMeta">No rating, mood, or map selected yet.</div>
           </div>
         </div>
@@ -1277,7 +1282,7 @@ stroke-linejoin="round"/>
 <div class="logging-pill home-loadout-pill">
 <div class="focus-wrapper">
 
-  <span id="focusPreviewText" class="focus-preview-text">Focus</span>
+  <span id="focusPreviewText" class="focus-preview-text">Focus Category</span>
 
   <div class="focus-select-shell">
     <span class="agent-select-symbol focus-select-symbol" aria-hidden="true">
@@ -1286,8 +1291,8 @@ stroke-linejoin="round"/>
         <path d="M4 7.5L10 13l6-5.5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </span>
-    <select id="logFocusSelect" class="ui-interactive logging-input pill-value" aria-label="Focus">
-      <option value="">Focus</option>
+    <select id="logFocusSelect" class="ui-interactive logging-input pill-value" aria-label="Focus category">
+      <option value="">Focus Category</option>
       <option value="Aim">Aim</option>
       <option value="Positioning">Positioning</option>
       <option value="Utility">Utility</option>
@@ -1399,7 +1404,7 @@ stroke-linejoin="round"/>
         <button type="button" class="logging-quick-chip" data-log-quick="Cheater.">Cheater</button>
       </div>
     </div>
-    <textarea id="logNotes" class="logging-notes" placeholder="What actually happened in the match? What should the next review block focus on?"></textarea>
+    <textarea id="logNotes" class="logging-notes" placeholder="What actually happened in the match? Which focus category should the next review block target?"></textarea>
   </div>
 </div>
 
@@ -1549,7 +1554,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260519-launch-theme-lock-17"></script>
+  <script type="module" src="app.js?v=20260520-map-economy-31"></script>
 </body>
 </html>
 
