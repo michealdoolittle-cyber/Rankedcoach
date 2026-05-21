@@ -6404,11 +6404,27 @@ function syncWeeklyFocus(topInsights = []) {
 
 function updateAuthUI(user = null) {
   currentAuthUser = user || null;
-  const loginBtn = document.getElementById("loginBtn");
-  if (loginBtn) {
-    loginBtn.style.display = user ? "none" : "";
-  }
+  syncProfileSwitcherAccessState();
   refreshThemeBuilderAccess();
+}
+
+function syncProfileSwitcherAccessState() {
+  const addBtn = document.getElementById("profileAddBtn");
+  if (addBtn) {
+    addBtn.hidden = !currentAuthUser;
+    addBtn.disabled = !currentAuthUser;
+  }
+
+  if (!currentAuthUser && profileListEl) {
+    profileListEl.innerHTML = `
+      <div class="profile-row active profile-row-guest" role="button" aria-disabled="true">
+        <div class="profile-info">
+          <div class="profile-name">Guest</div>
+          <div class="profile-sub">Login to RankedCoach to switch accounts.</div>
+        </div>
+      </div>
+    `;
+  }
 }
 
 function hasCompletedAppEntryChoice() {
@@ -30359,6 +30375,11 @@ function bindEvents(){
 
   const openProfileSwitcherMenu = () => {
     profileDropdown?.classList.remove("open");
+    if (!currentAuthUser) {
+      syncProfileSwitcherAccessState();
+    } else {
+      renderProfilesUI();
+    }
     profileSwitcher?.classList.add("open");
     schedulePositionOpenProfileMenus();
   };
@@ -30376,10 +30397,10 @@ function bindEvents(){
   profileAvatarWrap?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const shouldOpen = !profileDropdown?.classList.contains("open");
+    const shouldOpen = !profileSwitcher?.classList.contains("open");
     closeProfileMenus();
     if (shouldOpen) {
-      openProfileSettingsMenu(profileAvatarAnchor || profileAvatarWrap);
+      openProfileSwitcherMenu();
     }
   });
 
@@ -30408,11 +30429,11 @@ function bindEvents(){
     openEditProfileModal();
   });
 
-  document.getElementById("authSecurityBtn")?.addEventListener("click", (e) => {
+  document.getElementById("accountBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     closeProfileDropdown();
-    openAuthModalForSecurityReview();
+    openAuthModal();
   });
 
   document.getElementById("profileLinkRiotBtn")?.addEventListener("click", (e) => {
@@ -30447,12 +30468,6 @@ function bindEvents(){
     e.stopPropagation();
     hideModalById("editProfileModal");
     updateProfileHeaderUI();
-  });
-
-  document.getElementById("editProfileSave")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    saveEditProfileModal();
   });
 
   document.getElementById("editProfileModal")?.addEventListener("click", (e) => {
@@ -32562,21 +32577,6 @@ function handleAddProfile() {
   setActiveProfile(newProfile.id);
 }
 
-function hardResetAllData(){
-
-  const confirmReset = confirm(
-    "This will delete ALL stored profiles and match history.\n\nContinue?"
-  );
-
-  if(!confirmReset) return;
-
-  localStorage.removeItem(STORAGE_KEY_PROFILES);
-  localStorage.removeItem(STORAGE_KEY_ACTIVE_ID);
-  localStorage.removeItem(STORAGE_KEY_LOG_ENTRIES);
-
-  location.reload();
-}
-
 // ========================
 // PROFILES UI
 // ========================
@@ -32586,6 +32586,13 @@ function renderProfilesUI(){
   if(!profileListEl) return;
 
   profileListEl.innerHTML = "";
+
+  syncProfileSwitcherAccessState();
+
+  if (!currentAuthUser) {
+    updateProfileHeaderUI?.();
+    return;
+  }
 
   profiles.forEach(profile => {
 
@@ -33068,7 +33075,11 @@ function activateProfileEditTab(tabKey = "theme") {
 }
 
 function saveEditProfileModal() {
-  const profile = getActiveProfile();
+  let profile = getActiveProfile();
+  if (!profile) {
+    loadProfiles();
+    profile = getActiveProfile();
+  }
   if (!profile) return;
 
   updateProfile(profile.id, {
@@ -35111,6 +35122,11 @@ function rebuildProfileListUI(){
 
   profileListEl.innerHTML = "";
 
+  if (!currentAuthUser) {
+    syncProfileSwitcherAccessState();
+    return;
+  }
+
   profiles.forEach(p => {
 
     const row = document.createElement("div");
@@ -35380,13 +35396,6 @@ if (compassDot && compass) {
 
 }
 // ========================
-// HARD RESET
-// ========================
-document.querySelectorAll(".pd-item.hazard").forEach(btn=>{
-btn.addEventListener("click",hardResetAllData);
-});
-
-// ========================
 // AUTH FLOW HELPERS
 // ========================
 
@@ -35466,8 +35475,9 @@ function renderPasswordRules(targetId = "", email = "", password = "", confirmPa
   const target = document.getElementById(targetId);
   if (!target) return false;
   const result = validateRankedCoachPassword(email, password, confirmPassword);
-  target.innerHTML = result.rules.map(rule => `
-    <div class="${rule.pass ? "is-pass" : "is-fail"}">${rule.pass ? "Pass" : "Needs"}: ${escapeHtml(rule.label)}</div>
+  const failedRules = result.rules.filter(rule => !rule.pass);
+  target.innerHTML = failedRules.map(rule => `
+    <div class="is-fail">Needs: ${escapeHtml(rule.label)}</div>
   `).join("");
   return result.valid;
 }
@@ -35550,7 +35560,7 @@ document.getElementById("authMfaEnabled")?.addEventListener("change", (event) =>
   const methods = document.getElementById("authMfaMethods");
   const warning = document.getElementById("authMfaWarning");
   if (methods) methods.hidden = !enabled;
-  if (warning) warning.hidden = enabled;
+  if (warning) warning.hidden = true;
 });
 
 
@@ -37125,7 +37135,14 @@ renderStatsPerformance = renderStatsPerformanceClean;
 
 document.addEventListener("click", (e) => {
 
-  if(e.target.id === "loginBtn"){
+  if(e.target?.closest?.("#editProfileSave")){
+    e.preventDefault();
+    e.stopPropagation();
+    saveEditProfileModal();
+    return;
+  }
+
+  if(e.target.id === "accountBtn"){
     openAuthModal();
   }
 
