@@ -1759,6 +1759,12 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const bestRole = roles[0] || null;
   const weakestRole = roles.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0] || null;
   const multiKillPressure = safeNumber(importedAnalytics?.overview?.kills2K) + (safeNumber(importedAnalytics?.overview?.kills3K) * 1.5) + (safeNumber(importedAnalytics?.overview?.kills4K) * 2) + (safeNumber(importedAnalytics?.overview?.kills5K) * 3);
+  const multiKillRoundCount = safeNumber(importedAnalytics?.overview?.kills2K)
+    + safeNumber(importedAnalytics?.overview?.kills3K)
+    + safeNumber(importedAnalytics?.overview?.kills4K)
+    + safeNumber(importedAnalytics?.overview?.kills5K);
+  const estimatedRoundWins = Math.max(0, safeNumber(importedAnalytics?.overview?.matchesWon || wins) * 13);
+  const multiKillConversionPct = estimatedRoundWins ? Math.min(100, safeDivide(multiKillRoundCount * 100, estimatedRoundWins)) : 0;
   const sideBiasMaps = (importedAnalytics?.maps || [])
     .map((entry) => {
       const attackWin = safeNumber(entry?.attackWinPct);
@@ -1835,7 +1841,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "good",
       title: "Multi-Kill Impact Is Showing Up",
       preview: `${Math.round(safeNumber(importedAnalytics?.overview?.kills2K || 0))} 2Ks and ${Math.round(safeNumber(importedAnalytics?.overview?.kills3K || 0))} 3Ks are reinforcing round snowball potential.`,
-      what: "The rounds where you get multi-kills have been leading to higher round wins, affecting the match outcome directly.",
+      what: "Your multi-kill rounds are showing up often enough to affect round conversion.",
       why: "Multi-kills usually mean your spacing, timing, or follow-up fights are creating real round impact.",
       action: "When you get the first advantage, look for safe ways to turn it into a round snowball while maintaining discipline.",
       sources: ["Riot Import", "Performance"],
@@ -2029,7 +2035,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     mostPracticed: weeklyTopFocusEntry ? `${weeklyTopFocusEntry[0]} (${weeklyTopFocusEntry[1]} logs)` : "No repeated focus category yet",
     weakestTheme: weeklyLowRatedLogs.length
       ? `${(weeklyLowRatedLogs[0]?.focus || "General")} (${weeklyLowRatedLogs.length} low-rated logs)`
-      : "No low-rating cluster yet",
+      : "No low-rating pattern yet",
     topMood: weeklyTopMoodEntry ? `${weeklyTopMoodEntry[0]} (${weeklyTopMoodEntry[1]} mentions)` : "No mood trend yet",
     why: primaryInsight?.preview || "Add more matches and logs to sharpen the weekly coaching recommendation.",
     how: primaryInsight?.action || "Use one focus category for the week, then review whether the next match block actually moved the needle.",
@@ -2048,7 +2054,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       secondary: {
         label: weeklyLowRatedLogs.length >= 3 ? "High" : weeklyLowRatedLogs.length >= 2 ? "Medium" : "Low",
         detail: weeklyLowRatedLogs.length
-          ? `${weeklyLowRatedLogs.length} low-rated reflection logs support this weekly weakness. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Riot API match outcomes" : ""}, and coaching-model weakness clustering.`
+          ? `${weeklyLowRatedLogs.length} low-rated reflection logs support this weekly weakness. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Riot API match outcomes" : ""}, and coaching-model weakness grouping.`
           : "Minimal confidence because weak self-rating data is still sparse."
       },
       tertiary: {
@@ -2348,18 +2354,18 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       tone: multiKillPressure >= 18 ? "up" : "warn",
       label: "Multi-Kill Impact",
       kicker: "Round Swing",
-      value: `${Math.round(multiKillPressure)} Multi-Kill Impact Score`,
-      detail: "This checks whether multi-kill rounds are creating real round-winning pressure.",
+      value: estimatedRoundWins ? `${Math.round(multiKillConversionPct)}% Round Conversion` : "No Data",
+      detail: "This estimates how often multi-kill rounds appear inside converted round wins.",
       read: "Multi-kill rounds can show that spacing, timing, or follow-up fights are creating real impact.",
       sourceLabel: `Based on imported multi-kill counts from ${seasonLabel}.`,
-      formula: "2Ks + (3Ks x 1.5) + (4Ks x 2) + (5Ks x 3)",
-      benchmark: "Higher pressure means more round-swing potential.",
+      formula: "multi-kill rounds / estimated round wins = (2K+ rounds) / (match wins x 13)",
+      benchmark: "A higher percentage means more converted rounds are being shaped by multi-kill impact.",
       mediaType: "agent",
       mediaValue: currentSignalAgent,
       proofItems: [
         statItem("2Ks", `${Math.round(safeNumber(importedAnalytics?.overview?.kills2K))}`, "Imported two-kill rounds."),
         statItem("3Ks", `${Math.round(safeNumber(importedAnalytics?.overview?.kills3K))}`, "Imported three-kill rounds."),
-        statItem("Pressure Score", `${Math.round(multiKillPressure)}`, "Weighted multi-kill pressure."),
+        statItem("Conversion Share", estimatedRoundWins ? `${Math.round(multiKillConversionPct)}%` : "No Data", "Multi-kill rounds divided by estimated converted round wins."),
         statItem("Read", "Round swing", "Higher multi-kill pressure can change match outcomes.")
       ]
     } : null
@@ -2486,9 +2492,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       {
         kicker: "Map Read",
         selectionScore: bestMap?.matchesPlayed >= 2 ? 76 : 44,
-        title: bestMap?.map || "No Map Edge",
+        title: bestMap?.map || "No Map Strength",
         value: bestMap ? `${Math.round(bestMap.winrate)}% WR` : "Build sample",
-        detail: bestMap ? "Strongest current map environment from imported results." : "A stable map edge is reported once more repeated map volume is imported.",
+        detail: bestMap ? "Strongest current map environment from imported results." : "A stable map strength is reported once more repeated map volume is imported.",
         tone: bestMap?.matchesPlayed >= 2 ? (bestMap.winrate >= 52 ? "up" : "warn") : "warn",
         mediaType: "map",
         mediaValue: bestMap?.map
@@ -2510,7 +2516,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         selectionScore: topFocusEntry?.[1] >= 3 ? 84 : topFocusEntry ? 62 : 42,
         title: topFocusEntry ? topFocusEntry[0] : "No Repeated Focus",
         value: topFocusEntry ? `${topFocusEntry[1]} repeats` : "Queue more logs",
-        detail: topFocusEntry ? "Most repeated focus category across recent logs." : "A repeated focus category is reported once logs start clustering.",
+        detail: topFocusEntry ? "Most repeated focus category across recent logs." : "A repeated focus category is reported once logs build enough pattern.",
         tone: topFocusEntry?.[1] >= 3 ? "up" : "warn",
         mediaText: "Theme",
         symbol: "⌁"
@@ -2530,9 +2536,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       {
         kicker: "Best Role",
         selectionScore: bestRole?.matchesPlayed >= 2 ? 82 : 42,
-        title: bestRole ? `${bestRole.role.charAt(0).toUpperCase()}${bestRole.role.slice(1)}` : "No Role Edge",
+        title: bestRole ? `${bestRole.role.charAt(0).toUpperCase()}${bestRole.role.slice(1)}` : "No Role Strength",
         value: bestRole ? `${Math.round(bestRole.winrate)}% WR` : "Build sample",
-        detail: bestRole ? "Highest-performing repeated role in the current profile window." : "Role edges need more repeated matches before they become trustworthy.",
+        detail: bestRole ? "Highest-performing repeated role in the current profile window." : "Role strengths need more repeated matches before they become trustworthy.",
         tone: bestRole?.matchesPlayed >= 2 ? (bestRole.winrate >= 52 ? "up" : "warn") : "warn",
         mediaType: "role",
         mediaValue: bestRole?.role
@@ -2694,7 +2700,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   trendBreakdown.consistency.push(...[
     {
       selectionScore: recentLosses >= 3 ? 88 : recentWins >= 3 ? 62 : 48,
-      kicker: "Downtrend Cluster",
+        kicker: "Downtrend Pattern",
       title: `${recentWins}W / ${recentLosses}L`,
       value: `${recentWindow.length || 0} recent`,
       detail: "Recent win/loss shape helps identify whether the profile is stabilizing or dipping.",
@@ -2971,7 +2977,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: `Most tilt mentions${weeklyTopMoodEntry ? `: ${weeklyTopMoodEntry[0]}` : ""}`,
       summary: weeklyTopMoodEntry
         ? `${weeklyTopMoodEntry[0]} was reported in ${weeklyTopMoodEntry[1]} logs this week.`
-        : "No clear tilt mood cluster is stored yet.",
+        : "No clear tilt mood pattern is stored yet.",
       score: (weeklyNegativeMoodCount * 12) + (weeklyLowRatedLogs.length * 7),
       confidence: weeklyLogs.length >= 4 ? "High" : weeklyLogs.length >= 2 ? "Medium" : "Low",
       sourceLabel: `This week's logs: ${weeklyNegativeMoodCount} annoyed/tilted entries and ${weeklyLowRatedLogs.length} low-rated logs (${weeklyScopeLabel}).`,
@@ -2986,7 +2992,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: `Weakest self ratings${weeklyLowRatedLogs[0]?.focus ? `: ${weeklyLowRatedLogs[0].focus}` : ""}`,
       summary: weeklyLowRatedLogs[0]?.focus
         ? `${weeklyLowRatedLogs[0].focus} focus category is reported most often in low-rated sessions this week.`
-        : "No low-rated focus category cluster is stored yet.",
+        : "No low-rated focus category pattern is stored yet.",
       score: weeklyLowRatedLogs.length * 14,
       confidence: weeklyLowRatedLogs.length >= 3 ? "High" : weeklyLowRatedLogs.length >= 2 ? "Medium" : "Low",
       sourceLabel: `This week's logs with rating 2 or below: ${weeklyLowRatedLogs.length}. Focus category tags are pulled directly from saved Logging entries.`,
@@ -3003,7 +3009,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         ? `${weeklyWeakestMap.map} is the weakest map this week at ${Math.round(safeNumber(weeklyWeakestMap?.winrate))}% win rate across ${safeNumber(weeklyWeakestMap?.matchesPlayed)} matches.`
         : weeklyWeakestRole?.matchesPlayed >= 2
           ? `${weeklyWeakestRole.role} is the weakest role this week at ${Math.round(safeNumber(weeklyWeakestRole?.winrate))}% win rate across ${safeNumber(weeklyWeakestRole?.matchesPlayed)} matches.`
-          : "No stable loss cluster has enough sample size yet.",
+          : "No stable loss pattern has enough sample size yet.",
       score: weeklyWeakestMap?.matchesPlayed >= 2 ? (100 - safeNumber(weeklyWeakestMap?.winrate)) : weeklyWeakestRole?.matchesPlayed >= 2 ? (100 - safeNumber(weeklyWeakestRole?.winrate)) : 24,
       confidence: weeklyWeakestMap?.matchesPlayed >= 3 || weeklyWeakestRole?.matchesPlayed >= 3 ? "High" : weeklyWeakestMap?.matchesPlayed >= 2 || weeklyWeakestRole?.matchesPlayed >= 2 ? "Medium" : "Low",
       sourceLabel: weeklyWeakestMap?.matchesPlayed >= 2
@@ -6362,7 +6368,7 @@ function updateWeeklyFocusDetails(topInsights = []) {
   if (secondaryEl) {
     secondaryEl.textContent = weakFocus
       ? `${weakFocus[0]} (${weakFocus[1]} low-rating sessions)`
-      : "No low-rating cluster yet";
+      : "No low-rating pattern yet";
   }
 
   if (tertiaryEl) {
@@ -7694,10 +7700,10 @@ function buildCompassProfileDescription(values = {}, model = null) {
   const roleName = String(model?.scoring?.activeRoleName || model?.roles?.[0]?.role || "").trim();
   const agentName = String(model?.scoring?.activeAgentName || model?.agents?.[0]?.agent || "").trim();
   const strongestReadMap = {
-    aim: "Your biggest edge is raw mechanical conversion and direct duel pressure.",
-    gamesense: "Your biggest edge is timing, round awareness, and better decision flow.",
-    teamplay: "Your biggest edge is spacing, trade value, and coordinated round play.",
-    discipline: "Your biggest edge is steadiness, restraint, and repeatable round structure."
+    aim: "Your strongest category is raw mechanical conversion and direct duel pressure.",
+    gamesense: "Your strongest category is timing, round awareness, and better decision flow.",
+    teamplay: "Your strongest category is spacing, trade value, and coordinated round play.",
+    discipline: "Your strongest category is steadiness, restraint, and repeatable round structure."
   };
   const weakestReadMap = {
     aim: "The main leak is still finishing fights cleanly enough to cash those rounds in.",
@@ -10138,7 +10144,13 @@ function hideModalById(id) {
 function openAuthModal() {
   const closeBtn = document.getElementById("authModalClose");
   if (closeBtn) closeBtn.style.display = "";
+  setAuthPanel?.("login");
   showModalById("authModal");
+}
+
+function openAuthModalForSecurityReview() {
+  openAuthModal();
+  setAuthPanel?.("signup");
 }
 
 function closeAuthModal() {
@@ -30396,6 +30408,13 @@ function bindEvents(){
     openEditProfileModal();
   });
 
+  document.getElementById("authSecurityBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeProfileDropdown();
+    openAuthModalForSecurityReview();
+  });
+
   document.getElementById("profileLinkRiotBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -32203,7 +32222,7 @@ const PROFILE_THEME_PRESETS = [
 const PROFILE_BORDER_STYLES = [
   { value: "standard", label: "Standard", note: "Clean theme ring" },
   { value: "gilded", label: "Gilded", note: "Gold highlight glow" },
-  { value: "prismatic", label: "Prismatic", note: "Cyan violet edge" },
+  { value: "prismatic", label: "Prismatic", note: "Cyan violet rim" },
   { value: "runed", label: "Runed", note: "Arcane inner line" },
   { value: "tactical", label: "Tactical", note: "Steel profile frame" }
 ];
@@ -35367,12 +35386,194 @@ document.querySelectorAll(".pd-item.hazard").forEach(btn=>{
 btn.addEventListener("click",hardResetAllData);
 });
 
+// ========================
+// AUTH FLOW HELPERS
+// ========================
+
+let authResetTimer = 0;
+let authResetExpiresAt = 0;
+let authVerifiedRecoveryEmail = "";
+
+function setAuthPanel(panelName = "login") {
+  document.querySelectorAll("[data-auth-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.authPanel !== panelName;
+  });
+  const title = document.getElementById("authModalTitle");
+  if (title) {
+    title.textContent = panelName === "signup"
+      ? "Create account"
+      : panelName === "forgot"
+        ? "Password recovery"
+        : "Welcome back";
+  }
+}
+
+function getPasswordHistoryKey(email = "") {
+  return `rankedcoach_password_history_${String(email || "").trim().toLowerCase()}`;
+}
+
+function getStoredPasswordFingerprints(email = "") {
+  try {
+    const raw = localStorage.getItem(getPasswordHistoryKey(email));
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function getPasswordFingerprint(password = "") {
+  try {
+    return btoa(unescape(encodeURIComponent(String(password || "")))).slice(0, 120);
+  } catch {
+    return String(password || "").slice(0, 120);
+  }
+}
+
+function rememberPasswordFingerprint(email = "", password = "") {
+  if (!email || !password) return;
+  const next = [
+    getPasswordFingerprint(password),
+    ...getStoredPasswordFingerprints(email).filter(value => value !== getPasswordFingerprint(password))
+  ].slice(0, 5);
+  localStorage.setItem(getPasswordHistoryKey(email), JSON.stringify(next));
+}
+
+function validateRankedCoachPassword(email = "", password = "", confirmPassword = "") {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const localPart = normalizedEmail.split("@")[0] || "";
+  const passwordText = String(password || "");
+  const lowerPassword = passwordText.toLowerCase();
+  const repeatedPassword = getStoredPasswordFingerprints(normalizedEmail).includes(getPasswordFingerprint(passwordText));
+
+  const rules = [
+    { label: "At least 10 characters", pass: passwordText.length >= 10 },
+    { label: "Includes one uppercase letter", pass: /[A-Z]/.test(passwordText) },
+    { label: "Includes one number", pass: /\d/.test(passwordText) },
+    { label: "Does not contain your email name", pass: !localPart || localPart.length < 3 || !lowerPassword.includes(localPart.toLowerCase()) },
+    { label: "No 3-number sequences like 123 or 987", pass: !/(012|123|234|345|456|567|678|789|987|876|765|654|543|432|321|210)/.test(passwordText) },
+    { label: "Matches the confirmation field", pass: !confirmPassword || passwordText === confirmPassword },
+    { label: "Not one of the last 5 passwords on this device", pass: !repeatedPassword }
+  ];
+
+  return {
+    rules,
+    valid: rules.every(rule => rule.pass)
+  };
+}
+
+function renderPasswordRules(targetId = "", email = "", password = "", confirmPassword = "") {
+  const target = document.getElementById(targetId);
+  if (!target) return false;
+  const result = validateRankedCoachPassword(email, password, confirmPassword);
+  target.innerHTML = result.rules.map(rule => `
+    <div class="${rule.pass ? "is-pass" : "is-fail"}">${rule.pass ? "Pass" : "Needs"}: ${escapeHtml(rule.label)}</div>
+  `).join("");
+  return result.valid;
+}
+
+function setAuthStatus(id = "", message = "") {
+  const el = document.getElementById(id);
+  if (el) el.textContent = message;
+}
+
+function setAuthButtonLoading(button, loadingText = "Working...") {
+  if (!button) return () => {};
+  const originalText = button.textContent;
+  button.disabled = true;
+  button.textContent = loadingText;
+  return () => {
+    button.disabled = false;
+    button.textContent = originalText;
+  };
+}
+
+function startAuthResetCountdown() {
+  const countdown = document.getElementById("authResetCountdown");
+  const resendBtn = document.getElementById("authResendResetCodeBtn");
+  authResetExpiresAt = Date.now() + 120000;
+  if (resendBtn) resendBtn.disabled = true;
+  if (authResetTimer) window.clearInterval(authResetTimer);
+  authResetTimer = window.setInterval(() => {
+    const remaining = Math.max(0, Math.ceil((authResetExpiresAt - Date.now()) / 1000));
+    if (countdown) countdown.textContent = remaining ? `Code expires in ${remaining}s` : "Code expired. You can resend now.";
+    if (!remaining) {
+      if (resendBtn) resendBtn.disabled = false;
+      window.clearInterval(authResetTimer);
+      authResetTimer = 0;
+    }
+  }, 250);
+}
+
+async function requestPasswordRecoveryCode(email = "") {
+  if (!supabaseClient?.auth) throw new Error("RankedCoach auth is not connected yet.");
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  if (error) throw error;
+}
+
+async function verifyPasswordRecoveryCode(email = "", code = "") {
+  if (!supabaseClient?.auth) throw new Error("RankedCoach auth is not connected yet.");
+  const { error } = await supabaseClient.auth.verifyOtp({
+    email,
+    token: code,
+    type: "recovery"
+  });
+  if (error) throw error;
+}
+
+["authSignupPassword", "authSignupPasswordConfirm", "authSignupEmail"].forEach(id => {
+  document.getElementById(id)?.addEventListener("input", () => {
+    renderPasswordRules(
+      "authPasswordRules",
+      document.getElementById("authSignupEmail")?.value || "",
+      document.getElementById("authSignupPassword")?.value || "",
+      document.getElementById("authSignupPasswordConfirm")?.value || ""
+    );
+  });
+});
+
+["authNewPassword", "authNewPasswordConfirm", "authResetEmail"].forEach(id => {
+  document.getElementById(id)?.addEventListener("input", () => {
+    renderPasswordRules(
+      "authResetPasswordRules",
+      document.getElementById("authResetEmail")?.value || authVerifiedRecoveryEmail,
+      document.getElementById("authNewPassword")?.value || "",
+      document.getElementById("authNewPasswordConfirm")?.value || ""
+    );
+  });
+});
+
+document.getElementById("authMfaEnabled")?.addEventListener("change", (event) => {
+  const enabled = Boolean(event.target?.checked);
+  const methods = document.getElementById("authMfaMethods");
+  const warning = document.getElementById("authMfaWarning");
+  if (methods) methods.hidden = !enabled;
+  if (warning) warning.hidden = enabled;
+});
+
 
 // ========================
 // AUTH HANDLERS (STABLE)
 // ========================
 
 document.addEventListener("click", async (e) => {
+  if(e.target.id === "authShowSignupBtn"){
+    setAuthPanel("signup");
+    renderPasswordRules("authPasswordRules", "", "", "");
+  }
+
+  if(e.target.id === "authBackToLoginBtn" || e.target.id === "authForgotBackBtn"){
+    setAuthPanel("login");
+  }
+
+  if(e.target.id === "authForgotBtn"){
+    const loginEmail = document.getElementById("authEmail")?.value?.trim() || "";
+    const resetEmail = document.getElementById("authResetEmail");
+    if (resetEmail && loginEmail) resetEmail.value = loginEmail;
+    setAuthPanel("forgot");
+  }
 
   // LOGIN
   if(e.target.id === "authLoginBtn"){
@@ -35382,6 +35583,10 @@ document.addEventListener("click", async (e) => {
 
     if(!email || !pass){
       alert("Enter email + password");
+      return;
+    }
+    if(!supabaseClient?.auth){
+      alert("RankedCoach auth is not connected yet.");
       return;
     }
 
@@ -35401,31 +35606,171 @@ document.addEventListener("click", async (e) => {
     closeAuthModal();
   }
 
+  if(e.target.id === "authGoogleBtn"){
+    if(!supabaseClient?.auth){
+      alert("RankedCoach auth is not connected yet.");
+      return;
+    }
+    const { error } = await supabaseClient.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.href }
+    });
+    if(error) alert(error.message);
+  }
+
   // SIGNUP
-  if(e.target.id === "authSignupBtn"){
+  if(e.target.id === "authCreateAccountBtn"){
 
-    const email = document.getElementById("authEmail")?.value?.trim();
-    const pass  = document.getElementById("authPassword")?.value?.trim();
+    const email = document.getElementById("authSignupEmail")?.value?.trim();
+    const pass  = document.getElementById("authSignupPassword")?.value?.trim();
+    const confirmPass = document.getElementById("authSignupPasswordConfirm")?.value?.trim();
+    const recoveryEmail = document.getElementById("authRecoveryEmail")?.value?.trim();
+    const recoveryPhone = document.getElementById("authRecoveryPhone")?.value?.trim();
+    const mfaEnabled = Boolean(document.getElementById("authMfaEnabled")?.checked);
+    const mfaMethod = document.querySelector("input[name='authMfaMethod']:checked")?.value || "";
 
-    if(!email || !pass){
-      alert("Enter email + password");
+    if(!email || !pass || !confirmPass){
+      setAuthStatus("authSignupStatus", "Enter an email, password, and confirmation password.");
+      return;
+    }
+    if(!supabaseClient?.auth){
+      setAuthStatus("authSignupStatus", "RankedCoach auth is not connected yet.");
       return;
     }
 
+    const isValidPassword = renderPasswordRules("authPasswordRules", email, pass, confirmPass);
+    if(!isValidPassword){
+      setAuthStatus("authSignupStatus", "Please fix the password rules before creating the account.");
+      return;
+    }
+
+    if(!mfaEnabled && !confirm("2-factor authentication is off. This can make account loss more likely if your password is exposed. Continue without 2FA?")){
+      return;
+    }
+
+    const restoreButton = setAuthButtonLoading(e.target, "Creating...");
     const { error } = await supabaseClient.auth.signUp({
       email,
-      password: pass
+      password: pass,
+      options: {
+        data: {
+          recovery_email: recoveryEmail || null,
+          recovery_phone: recoveryPhone || null,
+          mfa_requested: mfaEnabled,
+          mfa_method: mfaEnabled ? mfaMethod : null
+        }
+      }
     });
+    restoreButton();
 
     if(error){
-      alert(error.message);
+      setAuthStatus("authSignupStatus", error.message);
       return;
     }
 
+    rememberPasswordFingerprint(email, pass);
     setAppEntryChoice("auth");
-    alert("Signup success");
-    await handleSignedInUser((await supabaseClient.auth.getUser()).data?.user || null);
+    setAuthStatus("authSignupStatus", mfaEnabled
+      ? "Account created. RankedCoach saved your 2FA preference; provider enrollment still needs backend setup before launch."
+      : "Account created. Please confirm your email if Supabase asks for verification."
+    );
+    const signedUpUser = (await supabaseClient.auth.getUser()).data?.user || null;
+    if (signedUpUser) {
+      await supabaseClient
+        .from("account_security_preferences")
+        .upsert({
+          user_id: signedUpUser.id,
+          recovery_email: recoveryEmail || null,
+          recovery_phone: recoveryPhone || null,
+          mfa_enabled: mfaEnabled,
+          mfa_method: mfaEnabled ? mfaMethod : null,
+          password_fingerprint_history: getStoredPasswordFingerprints(email),
+          security_json: { source: "signup", mfa_setup_pending: mfaEnabled },
+          updated_at: nowISO()
+        }, { onConflict: "user_id" });
+    }
+    await handleSignedInUser(signedUpUser);
     closeAuthModal();
+  }
+
+  if(e.target.id === "authSendResetCodeBtn" || e.target.id === "authResendResetCodeBtn"){
+    const email = document.getElementById("authResetEmail")?.value?.trim();
+    if(!email){
+      setAuthStatus("authResetStatus", "Enter the account email first.");
+      return;
+    }
+
+    const restoreButton = setAuthButtonLoading(e.target, "Sending...");
+    try{
+      await requestPasswordRecoveryCode(email);
+      document.getElementById("authResetCodeStage").hidden = false;
+      startAuthResetCountdown();
+      setAuthStatus("authResetStatus", "Recovery request sent. Enter the 6-digit code from the email if your Supabase template is configured for OTP recovery.");
+    } catch(error){
+      setAuthStatus("authResetStatus", error?.message || "Unable to send the recovery request.");
+    } finally {
+      restoreButton();
+    }
+  }
+
+  if(e.target.id === "authVerifyResetCodeBtn"){
+    const email = document.getElementById("authResetEmail")?.value?.trim();
+    const code = document.getElementById("authResetCode")?.value?.trim();
+    if(!email || !/^\d{6}$/.test(code || "")){
+      setAuthStatus("authResetStatus", "Enter the account email and the 6-digit recovery code.");
+      return;
+    }
+    if(Date.now() > authResetExpiresAt){
+      setAuthStatus("authResetStatus", "That recovery code expired. Please resend the code.");
+      return;
+    }
+    const restoreButton = setAuthButtonLoading(e.target, "Verifying...");
+    try{
+      await verifyPasswordRecoveryCode(email, code);
+      authVerifiedRecoveryEmail = email;
+      document.getElementById("authNewPasswordStage").hidden = false;
+      renderPasswordRules("authResetPasswordRules", email, "", "");
+      setAuthStatus("authResetStatus", "Code verified. Choose a new password.");
+    } catch(error){
+      setAuthStatus("authResetStatus", error?.message || "The recovery code was not accepted.");
+    } finally {
+      restoreButton();
+    }
+  }
+
+  if(e.target.id === "authUpdatePasswordBtn"){
+    const email = authVerifiedRecoveryEmail || document.getElementById("authResetEmail")?.value?.trim();
+    const password = document.getElementById("authNewPassword")?.value?.trim();
+    const confirmPassword = document.getElementById("authNewPasswordConfirm")?.value?.trim();
+    const isValidPassword = renderPasswordRules("authResetPasswordRules", email, password, confirmPassword);
+    if(!isValidPassword){
+      setAuthStatus("authResetStatus", "Please fix the password rules before changing the password.");
+      return;
+    }
+    const restoreButton = setAuthButtonLoading(e.target, "Changing...");
+    try{
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if(error) throw error;
+      rememberPasswordFingerprint(email, password);
+      const { data: { user } = {} } = await supabaseClient.auth.getUser();
+      if (user) {
+        await supabaseClient
+          .from("account_security_preferences")
+          .upsert({
+            user_id: user.id,
+            last_password_change_at: nowISO(),
+            password_fingerprint_history: getStoredPasswordFingerprints(email),
+            security_json: { source: "password_reset", security_email_pending: true },
+            updated_at: nowISO()
+          }, { onConflict: "user_id" });
+      }
+      setAuthStatus("authResetStatus", "Password changed. RankedCoach should send a security email once the launch email function is connected.");
+      setAuthPanel("login");
+    } catch(error){
+      setAuthStatus("authResetStatus", error?.message || "Unable to change the password.");
+    } finally {
+      restoreButton();
+    }
   }
 
   if(e.target.id === "authGuestBtn"){
@@ -36275,7 +36620,7 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
 
   const weeklyPillMeta = {
     tilt: { title: "Tilt Pattern", fallback: weekly.topMood || "No mood trend yet", confidence: weeklyCards.primary },
-    ratings: { title: "Self-Rating Pattern", fallback: weekly.weakestTheme || "No low-rating cluster yet", confidence: weeklyCards.secondary },
+    ratings: { title: "Self-Rating Pattern", fallback: weekly.weakestTheme || "No low-rating pattern yet", confidence: weeklyCards.secondary },
     losses: { title: "Loss Pattern", fallback: "No repeated loss context yet", confidence: { label: "Low", detail: "Waiting for loss-pattern confidence data." } },
     impactful: { title: "Biggest Focus Gap", fallback: "No clear focus gap yet", confidence: weeklyCards.tertiary }
   };
@@ -36285,7 +36630,7 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
       ? weeklyCandidates.slice(0, 4)
       : [
           { key: "tilt", label: weekly.topMood || "No mood trend yet", confidence: weeklyCards.primary?.label || "Low", detail: weeklyCards.primary?.detail || "Waiting for confidence data." },
-          { key: "ratings", label: weekly.weakestTheme || "No low-rating cluster yet", confidence: weeklyCards.secondary?.label || "Low", detail: weeklyCards.secondary?.detail || "Waiting for confidence data." },
+          { key: "ratings", label: weekly.weakestTheme || "No low-rating pattern yet", confidence: weeklyCards.secondary?.label || "Low", detail: weeklyCards.secondary?.detail || "Waiting for confidence data." },
           { key: "losses", label: "No repeated loss context yet", confidence: "Low", detail: "Waiting for confidence data." },
           { key: "impactful", label: weekly.mostPracticed || activeInsightFocus || "No repeated focus category yet", confidence: weeklyCards.tertiary?.label || "Low", detail: weeklyCards.tertiary?.detail || "Waiting for confidence data." }
         ];
@@ -36785,3 +37130,11 @@ document.addEventListener("click", (e) => {
   }
 
 });
+
+window.setTimeout(() => {
+  const params = new URLSearchParams(window.location.search || "");
+  const shouldOpenAuthPreview = params.get("auth") === "1" || String(window.location.hash || "").toLowerCase() === "#auth";
+  if (shouldOpenAuthPreview) {
+    openAuthModalForSecurityReview();
+  }
+}, 250);

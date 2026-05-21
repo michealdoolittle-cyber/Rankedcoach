@@ -1,4 +1,4 @@
--- VIP Valorant coaching app persistence schema.
+-- RankedCoach persistence schema.
 -- Run this in Supabase SQL Editor for the project used by the app's anon key.
 
 create extension if not exists pgcrypto;
@@ -83,10 +83,34 @@ create index if not exists match_snapshots_user_played_idx
 create index if not exists match_snapshots_user_context_idx
   on public.match_snapshots (user_id, map, agent, role);
 
+create table if not exists public.account_security_preferences (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  recovery_email text,
+  recovery_phone text,
+  mfa_enabled boolean not null default false,
+  mfa_method text check (mfa_method in ('email', 'phone') or mfa_method is null),
+  last_password_change_at timestamptz,
+  password_fingerprint_history jsonb not null default '[]'::jsonb,
+  security_json jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.account_security_preferences add column if not exists recovery_email text;
+alter table public.account_security_preferences add column if not exists recovery_phone text;
+alter table public.account_security_preferences add column if not exists mfa_enabled boolean not null default false;
+alter table public.account_security_preferences add column if not exists mfa_method text;
+alter table public.account_security_preferences add column if not exists last_password_change_at timestamptz;
+alter table public.account_security_preferences add column if not exists password_fingerprint_history jsonb not null default '[]'::jsonb;
+alter table public.account_security_preferences add column if not exists security_json jsonb not null default '{}'::jsonb;
+alter table public.account_security_preferences add column if not exists created_at timestamptz not null default now();
+alter table public.account_security_preferences add column if not exists updated_at timestamptz not null default now();
+
 alter table public.users_profiles enable row level security;
 alter table public.vip_app_state enable row level security;
 alter table public.reflection_logs enable row level security;
 alter table public.match_snapshots enable row level security;
+alter table public.account_security_preferences enable row level security;
 
 drop policy if exists "users_profiles_select_own" on public.users_profiles;
 create policy "users_profiles_select_own"
@@ -170,4 +194,25 @@ create policy "match_snapshots_update_own"
 drop policy if exists "match_snapshots_delete_own" on public.match_snapshots;
 create policy "match_snapshots_delete_own"
   on public.match_snapshots for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "account_security_preferences_select_own" on public.account_security_preferences;
+create policy "account_security_preferences_select_own"
+  on public.account_security_preferences for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "account_security_preferences_insert_own" on public.account_security_preferences;
+create policy "account_security_preferences_insert_own"
+  on public.account_security_preferences for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "account_security_preferences_update_own" on public.account_security_preferences;
+create policy "account_security_preferences_update_own"
+  on public.account_security_preferences for update
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "account_security_preferences_delete_own" on public.account_security_preferences;
+create policy "account_security_preferences_delete_own"
+  on public.account_security_preferences for delete
   using (auth.uid() = user_id);

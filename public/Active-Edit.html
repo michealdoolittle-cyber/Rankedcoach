@@ -3,10 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Valorant Coach</title>
+  <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260520-map-economy-31">
+  <link rel="stylesheet" href="app.css?v=20260521-auth-security-preview-33">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -17,24 +17,132 @@
 AUTH MODAL
 ========================= -->
 <div id="authModal" class="lens-modal-overlay">
-  <div class="lens-modal">
+  <div class="lens-modal auth-modal-card">
     <div class="lens-modal-header">
-      <div class="lens-modal-title">Welcome</div>
+      <div class="lens-modal-title" id="authModalTitle">Welcome back</div>
       <button id="authModalClose" class="lens-modal-close" type="button">X</button>
     </div>
 
-    <form class="lens-modal-body" id="authForm">
-      <div class="auth-launch-copy">
-        <div class="profile-edit-panel-title">Start Your Tracker</div>
-        <div class="profile-edit-panel-copy">Sign in to sync your Riot account and save progress, or continue as a guest with demo match imports.</div>
-      </div>
-      <input id="authEmail" type="email" placeholder="Email" autocomplete="email" />
-      <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
+    <form class="lens-modal-body auth-flow" id="authForm">
+      <div class="auth-launch-copy auth-panel" data-auth-panel="login">
+        <div class="auth-hero-mark" aria-hidden="true">RC</div>
+        <div class="profile-edit-panel-title">Welcome back!</div>
+        <div class="profile-edit-panel-copy">Log in to RankedCoach to sync your profile, save progress, and keep coaching reads attached to your account.</div>
 
-      <button id="authLoginBtn" type="button" class="pd-item auth-action-btn">Login</button>
-      <button id="authSignupBtn" type="button" class="pd-item auth-action-btn">Sign Up</button>
-      <button id="authGuestBtn" type="button" class="pd-item auth-action-btn auth-guest-btn">Continue as Guest</button>
-      <div class="auth-guest-note">Guest mode loads demo match imports so the full experience is visible immediately.</div>
+        <label class="auth-field">
+          <span>Email</span>
+          <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </label>
+        <label class="auth-field">
+          <span>Password</span>
+          <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
+        </label>
+
+        <button id="authForgotBtn" type="button" class="auth-link-button">Forgot password?</button>
+
+        <div class="auth-primary-row">
+          <button id="authLoginBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Login</button>
+          <button id="authGuestBtn" type="button" class="pd-item auth-action-btn auth-guest-btn">Continue as Guest</button>
+        </div>
+
+        <div class="auth-divider"><span>Or continue with</span></div>
+        <div class="auth-provider-row">
+          <button id="authGoogleBtn" type="button" class="auth-provider-btn auth-google-btn">Google</button>
+          <button id="authRiotBtn" type="button" class="auth-provider-btn auth-provider-disabled" disabled title="Riot Sign On is visible for review, but not enabled yet.">Riot</button>
+        </div>
+
+        <div class="auth-switch-copy">Don't have an account? <button id="authShowSignupBtn" type="button">Sign Up to RankedCoach</button></div>
+        <div class="auth-guest-note">Guest mode loads demo match imports so reviewers can see the full app immediately.</div>
+      </div>
+
+      <div class="auth-launch-copy auth-panel" data-auth-panel="signup" hidden>
+        <div class="profile-edit-panel-title">Create your RankedCoach account</div>
+        <div class="profile-edit-panel-copy">Use a strong password so your coaching history, logs, and account settings stay protected.</div>
+
+        <label class="auth-field">
+          <span>Email</span>
+          <input id="authSignupEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </label>
+        <label class="auth-field">
+          <span>Password</span>
+          <input id="authSignupPassword" type="password" placeholder="10+ chars, uppercase, number" autocomplete="new-password" />
+        </label>
+        <label class="auth-field">
+          <span>Confirm password</span>
+          <input id="authSignupPasswordConfirm" type="password" placeholder="Confirm password" autocomplete="new-password" />
+        </label>
+
+        <div id="authPasswordRules" class="auth-rule-list" aria-live="polite"></div>
+
+        <div class="auth-recovery-grid">
+          <label class="auth-field">
+            <span>Recovery email optional</span>
+            <input id="authRecoveryEmail" type="email" placeholder="backup@example.com" autocomplete="email" />
+          </label>
+          <label class="auth-field">
+            <span>Recovery phone optional</span>
+            <input id="authRecoveryPhone" type="tel" placeholder="+1 555 555 5555" autocomplete="tel" />
+          </label>
+        </div>
+
+        <div class="auth-two-factor-card">
+          <label class="auth-toggle-row">
+            <span>
+              <strong>Enable 2-factor authentication</strong>
+              <small>Recommended for launch accounts.</small>
+            </span>
+            <input id="authMfaEnabled" type="checkbox" role="switch" />
+          </label>
+          <div class="auth-mfa-methods" id="authMfaMethods" hidden>
+            <label><input type="radio" name="authMfaMethod" value="email" checked> Email</label>
+            <label><input type="radio" name="authMfaMethod" value="phone"> Phone</label>
+          </div>
+          <div id="authMfaWarning" class="auth-security-warning" hidden>Heads up: skipping 2-factor makes account recovery harder if someone gets your password.</div>
+        </div>
+
+        <div id="authSignupStatus" class="auth-status" aria-live="polite"></div>
+        <button id="authCreateAccountBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Create Account</button>
+        <button id="authBackToLoginBtn" type="button" class="auth-link-button">Back to login</button>
+      </div>
+
+      <div class="auth-launch-copy auth-panel" data-auth-panel="forgot" hidden>
+        <div class="profile-edit-panel-title">Reset your password</div>
+        <div class="profile-edit-panel-copy">Enter the account email. RankedCoach will request a recovery code, then you can set a new password.</div>
+
+        <label class="auth-field">
+          <span>Account email</span>
+          <input id="authResetEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+        </label>
+
+        <button id="authSendResetCodeBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Send 6-digit code</button>
+
+        <div id="authResetCodeStage" class="auth-reset-stage" hidden>
+          <label class="auth-field">
+            <span>Recovery code</span>
+            <input id="authResetCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
+          </label>
+          <div class="auth-countdown" id="authResetCountdown">Code expires in 120s</div>
+          <button id="authVerifyResetCodeBtn" type="button" class="pd-item auth-action-btn">Verify Code</button>
+          <button id="authResendResetCodeBtn" type="button" class="auth-link-button" disabled>Resend code</button>
+        </div>
+
+        <div id="authNewPasswordStage" class="auth-reset-stage" hidden>
+          <label class="auth-field">
+            <span>New password</span>
+            <input id="authNewPassword" type="password" placeholder="New password" autocomplete="new-password" />
+          </label>
+          <label class="auth-field">
+            <span>Confirm new password</span>
+            <input id="authNewPasswordConfirm" type="password" placeholder="Confirm new password" autocomplete="new-password" />
+          </label>
+          <div id="authResetPasswordRules" class="auth-rule-list" aria-live="polite"></div>
+          <button id="authUpdatePasswordBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Change Password</button>
+          <div class="auth-security-warning">After the password changes, RankedCoach should send a security email. The emergency account-lock link requires a backend email function before launch.</div>
+        </div>
+
+        <div id="authResetStatus" class="auth-status" aria-live="polite"></div>
+        <button id="authForgotBackBtn" type="button" class="auth-link-button">Back to login</button>
+      </div>
     </form>
   </div>
 </div>
@@ -315,7 +423,7 @@ RIOT PROFILE MODAL
   <header class="app-header">
     <div class="nav-left">
       <div class="nav-logo">
-        <img src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/val-logo.png" class="logo-img" alt="Valorant Coach logo">
+        <img src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/val-logo.png" class="logo-img" alt="RankedCoach logo">
       
 
       <nav class="nav-links">
@@ -443,6 +551,7 @@ RIOT PROFILE MODAL
             <button class="pd-item" id="loginBtn">Login to RankedCoach</button>
 
             <div class="pd-section-label">Settings</div>
+            <button class="pd-item" id="authSecurityBtn">Account Security</button>
             <button class="pd-item" id="pdOpenSettings">Open Settings</button>
 
             <div class="pd-section-label">Data Wipe</div>
@@ -1554,7 +1663,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260520-map-economy-31"></script>
+  <script type="module" src="app.js?v=20260521-auth-security-preview-33"></script>
 </body>
 </html>
 
