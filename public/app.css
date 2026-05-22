@@ -1239,6 +1239,19 @@ body.theme-readable :is(
   min-width:0;
 }
 
+.profile-account-name{
+  max-width:92px;
+  color:#f8fafc;
+  font-size:12px;
+  font-weight:950;
+  line-height:1;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
 #profileRiotId{
   min-width:0;
   overflow:hidden;
@@ -2060,7 +2073,7 @@ body.theme-readable :is(
 
 .auth-panel[data-auth-panel="signup"] .auth-welcome-title{
   font-size:clamp(22px, 2.1vw, 34px);
-  margin:clamp(100px, 14vw, 156px) 0 8px;
+  margin:clamp(78px, 11vw, 122px) 0 6px;
 }
 
 .auth-field input,
@@ -2075,6 +2088,40 @@ body.theme-readable :is(
   font-weight:800;
   outline:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.auth-password-shell{
+  position:relative;
+  display:block;
+}
+
+.auth-password-shell input{
+  width:100%;
+  padding-right:76px;
+  box-sizing:border-box;
+}
+
+.auth-password-reveal{
+  position:absolute;
+  top:50%;
+  right:10px;
+  transform:translateY(-50%);
+  min-width:52px;
+  height:30px;
+  border:1px solid rgba(148,163,184,.32);
+  border-radius:999px;
+  background:rgba(15,23,42,.72);
+  color:#dbeafe;
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+
+.auth-password-reveal:hover{
+  border-color:rgba(255,70,85,.5);
+  color:#fff;
 }
 
 .auth-panel[data-auth-panel="signup"] .auth-field{
@@ -2288,8 +2335,25 @@ body.theme-readable :is(
   gap:10px;
   padding:12px;
   border-radius:18px;
-  background:rgba(255,255,255,.62);
-  border:1px solid rgba(148,163,184,.32);
+  background:rgba(15,23,42,.42);
+  border:1px solid rgba(148,163,184,.24);
+}
+
+.auth-panel[data-auth-panel="forgot"]{
+  gap:10px;
+}
+
+.auth-panel[data-auth-panel="forgot"] .profile-edit-panel-title{
+  text-align:center;
+  font-size:clamp(22px, 2vw, 32px);
+  margin-top:clamp(90px, 13vw, 138px);
+}
+
+.auth-panel[data-auth-panel="forgot"] .profile-edit-panel-copy{
+  max-width:660px;
+  margin:0 auto;
+  text-align:center;
+  line-height:1.35;
 }
 
 .auth-two-factor-card{
@@ -12311,13 +12375,23 @@ INSIGHTS ACTION
 .logging-session-bar{
   display:flex;
   justify-content:flex-end;
+  align-items:flex-end;
+  gap:10px;
   margin:-2px 0 10px;
 }
 
 .logging-session-select-wrap{
   display:flex;
-  align-items:center;
-  gap:8px;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+
+.logging-date-picker-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
 }
 
 .logging-session-label{
@@ -12354,6 +12428,49 @@ INSIGHTS ACTION
 .logging-session-select option{
   background:#0f172a;
   color:#e2e8f0;
+}
+
+.logging-date-picker{
+  border-radius:10px;
+  border:1px solid rgba(148,163,184,0.24);
+  background:#0f172a;
+  color:#e2e8f0;
+  min-width:154px;
+  min-height:40px;
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:800;
+  color-scheme:dark;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 10px 22px rgba(0,0,0,0.18);
+}
+
+.logging-session-count-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  padding:0 13px;
+  border-radius:999px;
+  border:1px solid rgba(255,70,85,.46);
+  background:rgba(255,70,85,.16);
+  color:#fff;
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.log-feed-footnote{
+  margin-top:10px;
+  padding:10px 12px;
+  border:1px solid rgba(148,163,184,.22);
+  border-radius:16px;
+  background:rgba(15,23,42,.54);
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:850;
+  line-height:1.35;
 }
 
 .log-session-group{

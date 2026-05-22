@@ -6435,7 +6435,46 @@ function setAppEntryChoice(mode = "guest") {
   localStorage.setItem(APP_ENTRY_CHOICE_KEY, String(mode || "guest"));
 }
 
+function isLocalDevelopmentHost() {
+  return /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname || "");
+}
+
+function sanitizeAccountName(value = "", fallback = "Guest") {
+  const clean = String(value || "")
+    .replace(/[^a-z0-9_-]/gi, "")
+    .slice(0, 8);
+  return clean || String(fallback || "Guest").slice(0, 8);
+}
+
+function getUserAccountName(user = currentAuthUser) {
+  const metadata = user?.user_metadata || {};
+  const raw = metadata.account_name
+    || metadata.name
+    || metadata.full_name
+    || String(user?.email || "").split("@")[0]
+    || "Guest";
+  return sanitizeAccountName(raw, "User");
+}
+
+function clearGuestDemoStateForLive() {
+  if (isLocalDevelopmentHost()) return;
+  const active = getActiveProfile?.();
+  if (active) active.matches = [];
+  matches = [];
+  logEntries = [];
+  saveProfiles?.();
+  saveLogEntries?.({ skipBackend: true });
+  recomputeFromMatches?.();
+  updateDisplays?.();
+  renderChart?.(currentSize);
+  renderLogFeed?.({ force: true });
+}
+
 async function ensureGuestDemoMatches() {
+  if (!isLocalDevelopmentHost()) {
+    return null;
+  }
+
   if (window.__vtGuestDemoHydrationPromise) {
     return window.__vtGuestDemoHydrationPromise;
   }
@@ -6505,7 +6544,7 @@ let agentGrid = null;
 
 let profileAvatarWrap, profileSwitcher, profileListEl, profilePanel;
 let profileAvatarAnchor, profileDropdownAnchor;
-let profileRiotIdEl, profileRegionEl, profileProfileNameEl, profileStartingRREl;
+let profileAccountNameEl, profileRiotIdEl, profileRegionEl, profileProfileNameEl, profileStartingRREl;
 let profileDropdownToggle, profileDropdown, profileSyncBtn, profileSyncCountdownEl;
 let profileNavRightEl;
 
@@ -7322,6 +7361,14 @@ async function handleSignedInUser(user) {
   updateAuthUI(user || null);
   if (!user) return;
   await loadPersistentAccountState(user);
+  const active = getActiveProfile();
+  const accountName = getUserAccountName(user);
+  if (active && (!active.accountName || active.accountName === "Guest")) {
+    active.accountName = accountName;
+    active.name = active.name || accountName;
+    saveProfiles();
+  }
+  updateProfileHeaderUI?.();
 }
 
 // ========================
@@ -30061,6 +30108,7 @@ function cacheDOM(){
   profileListEl = document.getElementById("profileList");
   profilePanel = document.getElementById("profilePanel");
 
+  profileAccountNameEl = document.getElementById("profileAccountName");
   profileProfileNameEl = document.getElementById("profileProfileName");
   profileRiotIdEl = document.getElementById("profileRiotId");
   profileRegionEl = document.getElementById("profileRegion");
@@ -31941,8 +31989,40 @@ function getLogSessions() {
     .sort((a, b) => new Date(b.key) - new Date(a.key));
 }
 
+function getLogAverageSummary() {
+  const entries = logEntries || [];
+  const now = new Date();
+  const weekStart = getWeekStart(now);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const weeklyCount = entries.filter(entry => new Date(entry.createdAt || 0) >= weekStart).length;
+  const monthlyCount = entries.filter(entry => new Date(entry.createdAt || 0) >= monthStart).length;
+  const weekDaysElapsed = Math.max(1, Math.min(7, Math.floor((now - weekStart) / 86400000) + 1));
+  const monthDaysElapsed = Math.max(1, now.getDate());
+
+  return {
+    weeklyCount,
+    monthlyCount,
+    weeklyAverage: weeklyCount / weekDaysElapsed,
+    monthlyAverage: monthlyCount / monthDaysElapsed
+  };
+}
+
+function renderLogFeedFootnote() {
+  const summary = getLogAverageSummary();
+  return `
+    <div class="log-feed-footnote">
+      Weekly average: ${summary.weeklyAverage.toFixed(1)} game logs/day from ${summary.weeklyCount} log${summary.weeklyCount === 1 ? "" : "s"} this week.
+      Monthly average: ${summary.monthlyAverage.toFixed(1)} game logs/day from ${summary.monthlyCount} log${summary.monthlyCount === 1 ? "" : "s"} this month.
+    </div>
+  `;
+}
+
 function renderLogSessionSelector() {
   const select = document.getElementById("logSessionSelect");
+  const datePicker = document.getElementById("logSessionDatePicker");
+  const countBadge = document.getElementById("logSessionCountBadge");
   if (!select) return;
 
   const sessions = getLogSessions();
@@ -31951,9 +32031,10 @@ function renderLogSessionSelector() {
   sessions.forEach((session, index) => {
     const option = document.createElement("option");
     option.value = session.key;
+    option.dataset.count = String(session.entries.length);
     option.textContent = index === 0
-      ? `Today / Latest | ${formatDateLabel(session.key)}`
-      : formatDateLabel(session.key);
+      ? `Today / Latest | ${formatDateLabel(session.key)} (${session.entries.length})`
+      : `${formatDateLabel(session.key)} (${session.entries.length})`;
     select.appendChild(option);
   });
 
@@ -31962,9 +32043,23 @@ function renderLogSessionSelector() {
   }
 
   select.value = activeLogSessionFilter;
+  if (datePicker) {
+    datePicker.value = activeLogSessionFilter === "all" ? "" : activeLogSessionFilter;
+    datePicker.onchange = () => {
+      activeLogSessionFilter = datePicker.value || "all";
+      renderLogFeed({ force: true });
+    };
+  }
+  if (countBadge) {
+    const selectedSession = sessions.find(session => session.key === activeLogSessionFilter);
+    countBadge.hidden = !selectedSession;
+    countBadge.textContent = selectedSession
+      ? `${selectedSession.entries.length} log${selectedSession.entries.length === 1 ? "" : "s"}`
+      : "";
+  }
   select.onchange = () => {
     activeLogSessionFilter = select.value || "all";
-    renderLogFeed();
+    renderLogFeed({ force: true });
   };
 }
 
@@ -32180,6 +32275,7 @@ function renderLogFeed(options = {}){
   });
 
   container.appendChild(fragment);
+  container.insertAdjacentHTML("beforeend", renderLogFeedFootnote());
 
 }
 
@@ -32284,6 +32380,7 @@ function normalizeProfileRecord(profile = {}) {
   return {
     ...profile,
     name: profile.name || "Main",
+    accountName: sanitizeAccountName(profile.accountName || profile.name || "Guest", "Guest"),
     riotId: profile.riotId || "",
     region: profile.region || "NA",
     startingRR: safeNumber(profile.startingRR),
@@ -32330,6 +32427,7 @@ function loadProfiles(){
     const defaultProfile = {
       id: uuid(),
       name: "Main",
+      accountName: "Guest",
       riotId: "",
       region: "NA",
       startingRR: 0,
@@ -32376,6 +32474,7 @@ function createProfile(data){
   const profile = normalizeProfileRecord({
     id: uuid(),
     name: data.name || "New Profile",
+    accountName: sanitizeAccountName(data.accountName || data.name || "User", "User"),
     riotId: data.riotId || "",
     region: data.region || "NA",
     startingRR: 0,
@@ -32634,6 +32733,12 @@ function renderProfilesUI(){
   });
 
   const active = getActiveProfile();
+
+  if(profileAccountNameEl){
+    profileAccountNameEl.textContent = currentAuthUser
+      ? sanitizeAccountName(active?.accountName || getUserAccountName(currentAuthUser), "User")
+      : "Guest";
+  }
 
   if(profileProfileNameEl){
     profileProfileNameEl.textContent = active?.name || "-";
@@ -35092,6 +35197,12 @@ function updateProfileHeaderUI(){
   const p = getActiveProfile();
   if(!p) return;
 
+  if(profileAccountNameEl){
+    profileAccountNameEl.textContent = currentAuthUser
+      ? sanitizeAccountName(p.accountName || getUserAccountName(currentAuthUser), "User")
+      : "Guest";
+  }
+
   if(profileProfileNameEl){
     profileProfileNameEl.textContent = p.name || "Profile";
   }
@@ -35487,6 +35598,29 @@ function setAuthStatus(id = "", message = "") {
   if (el) el.textContent = message;
 }
 
+function resetPasswordRecoveryPanel() {
+  authVerifiedRecoveryEmail = "";
+  if (authResetTimer) {
+    window.clearInterval(authResetTimer);
+    authResetTimer = 0;
+  }
+  authResetExpiresAt = 0;
+  const codeStage = document.getElementById("authResetCodeStage");
+  const newPasswordStage = document.getElementById("authNewPasswordStage");
+  const codeInput = document.getElementById("authResetCode");
+  const newPassword = document.getElementById("authNewPassword");
+  const newPasswordConfirm = document.getElementById("authNewPasswordConfirm");
+  const resendBtn = document.getElementById("authResendResetCodeBtn");
+  if (codeStage) codeStage.hidden = true;
+  if (newPasswordStage) newPasswordStage.hidden = true;
+  if (codeInput) codeInput.value = "";
+  if (newPassword) newPassword.value = "";
+  if (newPasswordConfirm) newPasswordConfirm.value = "";
+  if (resendBtn) resendBtn.disabled = true;
+  setAuthStatus("authResetStatus", "");
+  renderPasswordRules("authResetPasswordRules", "", "", "");
+}
+
 function setAuthButtonLoading(button, loadingText = "Working...") {
   if (!button) return () => {};
   const originalText = button.textContent;
@@ -35569,6 +35703,18 @@ document.getElementById("authMfaEnabled")?.addEventListener("change", (event) =>
 // ========================
 
 document.addEventListener("click", async (e) => {
+  const revealButton = e.target.closest?.(".auth-password-reveal");
+  if (revealButton) {
+    const target = document.getElementById(revealButton.dataset.passwordTarget || "");
+    if (target) {
+      const show = target.type === "password";
+      target.type = show ? "text" : "password";
+      revealButton.textContent = show ? "Hide" : "Show";
+      revealButton.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    }
+    return;
+  }
+
   if(e.target.id === "authShowSignupBtn"){
     setAuthPanel("signup");
     renderPasswordRules("authPasswordRules", "", "", "");
@@ -35581,6 +35727,8 @@ document.addEventListener("click", async (e) => {
   if(e.target.id === "authForgotBtn"){
     const loginEmail = document.getElementById("authEmail")?.value?.trim() || "";
     const resetEmail = document.getElementById("authResetEmail");
+    if (resetEmail && loginEmail) resetEmail.value = loginEmail;
+    resetPasswordRecoveryPanel();
     if (resetEmail && loginEmail) resetEmail.value = loginEmail;
     setAuthPanel("forgot");
   }
@@ -35631,6 +35779,7 @@ document.addEventListener("click", async (e) => {
   // SIGNUP
   if(e.target.id === "authCreateAccountBtn"){
 
+    const accountName = sanitizeAccountName(document.getElementById("authSignupAccountName")?.value?.trim(), "");
     const email = document.getElementById("authSignupEmail")?.value?.trim();
     const pass  = document.getElementById("authSignupPassword")?.value?.trim();
     const confirmPass = document.getElementById("authSignupPasswordConfirm")?.value?.trim();
@@ -35639,8 +35788,8 @@ document.addEventListener("click", async (e) => {
     const mfaEnabled = Boolean(document.getElementById("authMfaEnabled")?.checked);
     const mfaMethod = document.querySelector("input[name='authMfaMethod']:checked")?.value || "";
 
-    if(!email || !pass || !confirmPass){
-      setAuthStatus("authSignupStatus", "Enter an email, password, and confirmation password.");
+    if(!accountName || !email || !pass || !confirmPass){
+      setAuthStatus("authSignupStatus", "Enter an account name, email, password, and confirmation password.");
       return;
     }
     if(!supabaseClient?.auth){
@@ -35664,6 +35813,7 @@ document.addEventListener("click", async (e) => {
       password: pass,
       options: {
         data: {
+          account_name: accountName,
           recovery_email: recoveryEmail || null,
           recovery_phone: recoveryPhone || null,
           mfa_requested: mfaEnabled,
@@ -35686,6 +35836,12 @@ document.addEventListener("click", async (e) => {
     );
     const signedUpUser = (await supabaseClient.auth.getUser()).data?.user || null;
     if (signedUpUser) {
+      const active = getActiveProfile();
+      if (active) {
+        active.accountName = accountName;
+        active.name = active.name || accountName;
+        saveProfiles();
+      }
       await supabaseClient
         .from("account_security_preferences")
         .upsert({
@@ -35738,6 +35894,8 @@ document.addEventListener("click", async (e) => {
     try{
       await verifyPasswordRecoveryCode(email, code);
       authVerifiedRecoveryEmail = email;
+      const codeStage = document.getElementById("authResetCodeStage");
+      if (codeStage) codeStage.hidden = true;
       document.getElementById("authNewPasswordStage").hidden = false;
       renderPasswordRules("authResetPasswordRules", email, "", "");
       setAuthStatus("authResetStatus", "Code verified. Choose a new password.");
@@ -35789,11 +35947,15 @@ document.addEventListener("click", async (e) => {
     try{
       if (guestBtn) {
         guestBtn.disabled = true;
-        guestBtn.textContent = "Loading Demo Matches...";
+        guestBtn.textContent = isLocalDevelopmentHost() ? "Loading Demo Matches..." : "Entering...";
       }
 
       setAppEntryChoice("guest");
-      await importDemoMatches();
+      if (isLocalDevelopmentHost()) {
+        await importDemoMatches();
+      } else {
+        clearGuestDemoStateForLive();
+      }
       closeAuthModal();
     } catch (error) {
       localStorage.removeItem(APP_ENTRY_CHOICE_KEY);

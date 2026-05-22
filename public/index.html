@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260521-auth-button-equal-43">
+  <link rel="stylesheet" href="app.css?v=20260522-auth-logs-calendar-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -34,7 +34,10 @@ AUTH MODAL
         </label>
         <label class="auth-field">
           <span>Password</span>
-          <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
+          <span class="auth-password-shell">
+            <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" />
+            <button class="auth-password-reveal" type="button" data-password-target="authPassword" aria-label="Show password">Show</button>
+          </span>
         </label>
 
         <div class="auth-account-link-row">
@@ -63,16 +66,26 @@ AUTH MODAL
         <div class="profile-edit-panel-title auth-welcome-title">Create your RankedCoach account</div>
 
         <label class="auth-field">
+          <span>Account name</span>
+          <input id="authSignupAccountName" type="text" placeholder="8 characters max" maxlength="8" autocomplete="nickname" />
+        </label>
+        <label class="auth-field">
           <span>Email</span>
           <input id="authSignupEmail" type="email" placeholder="you@example.com" autocomplete="email" />
         </label>
         <label class="auth-field">
           <span>Password</span>
-          <input id="authSignupPassword" type="password" placeholder="10+ chars, uppercase, number" autocomplete="new-password" />
+          <span class="auth-password-shell">
+            <input id="authSignupPassword" type="password" placeholder="10+ chars, uppercase, number" autocomplete="new-password" />
+            <button class="auth-password-reveal" type="button" data-password-target="authSignupPassword" aria-label="Show password">Show</button>
+          </span>
         </label>
         <label class="auth-field">
           <span>Confirm password</span>
-          <input id="authSignupPasswordConfirm" type="password" placeholder="Confirm password" autocomplete="new-password" />
+          <span class="auth-password-shell">
+            <input id="authSignupPasswordConfirm" type="password" placeholder="Confirm password" autocomplete="new-password" />
+            <button class="auth-password-reveal" type="button" data-password-target="authSignupPasswordConfirm" aria-label="Show password">Show</button>
+          </span>
         </label>
 
         <div id="authPasswordRules" class="auth-rule-list" aria-live="polite"></div>
@@ -141,11 +154,17 @@ AUTH MODAL
         <div id="authNewPasswordStage" class="auth-reset-stage" hidden>
           <label class="auth-field">
             <span>New password</span>
-            <input id="authNewPassword" type="password" placeholder="New password" autocomplete="new-password" />
+            <span class="auth-password-shell">
+              <input id="authNewPassword" type="password" placeholder="New password" autocomplete="new-password" />
+              <button class="auth-password-reveal" type="button" data-password-target="authNewPassword" aria-label="Show password">Show</button>
+            </span>
           </label>
           <label class="auth-field">
             <span>Confirm new password</span>
-            <input id="authNewPasswordConfirm" type="password" placeholder="Confirm new password" autocomplete="new-password" />
+            <span class="auth-password-shell">
+              <input id="authNewPasswordConfirm" type="password" placeholder="Confirm new password" autocomplete="new-password" />
+              <button class="auth-password-reveal" type="button" data-password-target="authNewPasswordConfirm" aria-label="Show password">Show</button>
+            </span>
           </label>
           <div id="authResetPasswordRules" class="auth-rule-list" aria-live="polite"></div>
           <button id="authUpdatePasswordBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Change Password</button>
@@ -520,6 +539,7 @@ RIOT PROFILE MODAL
         <div class="profile-divider"></div>
 
         <div class="profile-info">
+          <div class="profile-account-name" id="profileAccountName">Guest</div>
           <div class="profile-line-main">
             <span id="profileRiotId">RiotID#TAG</span>
             <span class="profile-region" id="profileRegion">NA</span>
@@ -1545,6 +1565,11 @@ stroke-linejoin="round"/>
           <span class="logging-session-label">Session</span>
           <select id="logSessionSelect" class="logging-session-select"></select>
         </label>
+        <label class="logging-date-picker-wrap">
+          <span class="logging-session-label">Calendar</span>
+          <input id="logSessionDatePicker" class="logging-date-picker" type="date">
+        </label>
+        <span id="logSessionCountBadge" class="logging-session-count-badge" hidden>0 logs</span>
       </div>
 
       <div id="logFeed" class="logging-feed"></div>
@@ -1671,7 +1696,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260521-auth-button-equal-43"></script>
+  <script type="module" src="app.js?v=20260522-auth-logs-calendar-01"></script>
 </body>
 </html>
 
