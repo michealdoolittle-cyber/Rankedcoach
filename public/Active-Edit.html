@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260522-auth-session-calendar-02">
+  <link rel="stylesheet" href="app.css?v=20260522-devtools-polish-05">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -134,12 +134,14 @@ AUTH MODAL
         <div class="profile-edit-panel-title">Reset your password</div>
         <div class="profile-edit-panel-copy">Enter the account email. RankedCoach will request a recovery code, then you can set a new password.</div>
 
-        <label class="auth-field">
-          <span>Account email</span>
-          <input id="authResetEmail" type="email" placeholder="you@example.com" autocomplete="email" />
-        </label>
+        <div id="authResetEmailStage" class="auth-reset-stage auth-reset-stage-email">
+          <label class="auth-field">
+            <span>Account email</span>
+            <input id="authResetEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+          </label>
 
-        <button id="authSendResetCodeBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Send 6-digit code</button>
+          <button id="authSendResetCodeBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Send 6-digit code</button>
+        </div>
 
         <div id="authResetCodeStage" class="auth-reset-stage" hidden>
           <label class="auth-field">
@@ -168,7 +170,6 @@ AUTH MODAL
           </label>
           <div id="authResetPasswordRules" class="auth-rule-list" aria-live="polite"></div>
           <button id="authUpdatePasswordBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Change Password</button>
-          <div class="auth-security-warning">After the password changes, RankedCoach should send a security email. The emergency account-lock link requires a backend email function before launch.</div>
         </div>
 
         <div id="authResetStatus" class="auth-status" aria-live="polite"></div>
@@ -229,27 +230,6 @@ RIOT PROFILE MODAL
                 <span>Theme Preview</span>
                 <div id="editProfileThemeGallery" class="theme-gallery"></div>
               </div>
-
-              <label class="profile-edit-field">
-                <span>Profile Name</span>
-                <input id="editProfileName" type="text" placeholder="Main Profile">
-              </label>
-
-              <label class="profile-edit-field">
-                <span>Riot ID</span>
-                <input id="editProfileRiotId" type="text" placeholder="RiotID#TAG">
-              </label>
-
-              <label class="profile-edit-field">
-                <span>Region</span>
-                <input id="editProfileRegion" type="text" placeholder="NA">
-              </label>
-
-              <label class="profile-edit-field">
-                <span>Starting RR</span>
-                <input id="editProfileStartingRR" type="text" readonly placeholder="Captured on first Riot sync of the day">
-                <small id="editProfileStartingRRNote" class="profile-edit-field-note">Captured from the first Riot sync of the day. This value is locked.</small>
-              </label>
             </div>
           </section>
 
@@ -539,7 +519,6 @@ RIOT PROFILE MODAL
         <div class="profile-divider"></div>
 
         <div class="profile-info">
-          <div class="profile-account-name" id="profileAccountName">Guest</div>
           <div class="profile-line-main">
             <span id="profileRiotId">RiotID#TAG</span>
             <span class="profile-region" id="profileRegion">NA</span>
@@ -579,12 +558,22 @@ RIOT PROFILE MODAL
         <div class="profile-dropdown-anchor">
           <button class="profile-dropdown-toggle" id="profileDropdownToggle">v</button>
           <div id="profileDropdown" class="profile-dropdown profile-dropdown-pills" aria-label="Profile menu">
-            <button class="pd-item" id="accountBtn" type="button">Account</button>
-            <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
-            <button class="pd-item" id="pdLogoutBtn" type="button">Logout</button>
-            <a class="pd-item" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
-            <a class="pd-item" href="terms.html">Terms of Service</a>
-            <a class="pd-item" href="privacy.html">Privacy Policy</a>
+            <div class="profile-menu-user">
+              <div id="profileDropdownIdentity" class="profile-menu-name">Guest User</div>
+            </div>
+            <div class="profile-menu-section">
+              <div class="profile-menu-label">Account</div>
+              <button class="pd-item" id="accountBtn" type="button">Account</button>
+              <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
+              <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
+            </div>
+            <div class="profile-menu-section">
+              <div class="profile-menu-label">Links</div>
+              <a class="pd-item" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
+              <a class="pd-item" href="terms.html">Terms of Service</a>
+              <a class="pd-item" href="privacy.html">Privacy Policy</a>
+            </div>
+            <a class="pd-item profile-menu-donate" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate / Support</a>
           </div>
         </div>
       </div>
@@ -615,11 +604,11 @@ INSIGHTS PAGE
         </div>
 
         <div class="card insights-action-card">
-          <div class="card-sub insight-priority-title" id="insightFocusTitle">Focus Category Loading...</div>
+          <div class="insight-action-kicker insight-action-kicker-top">Main Focus Category</div>
 
           <div class="insight-action">
           <div class="insight-action-hero">
-            <div class="insight-action-kicker">Main Focus Category</div>
+            <div class="card-sub insight-priority-title" id="insightFocusTitle">Focus Category Loading...</div>
             <div class="insight-action-copy">The one adjustment most worth protecting in your next block of matches.</div>
             <div class="insight-progress">
               <div class="insight-progress-bar"></div>
@@ -1695,7 +1684,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260522-auth-session-calendar-02"></script>
+  <script type="module" src="app.js?v=20260522-devtools-polish-05"></script>
 </body>
 </html>
 

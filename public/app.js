@@ -6413,6 +6413,7 @@ function syncWeeklyFocus(topInsights = []) {
 function updateAuthUI(user = null) {
   currentAuthUser = user || null;
   syncProfileSwitcherAccessState();
+  updateProfileDropdownMenu?.();
   refreshThemeBuilderAccess();
 }
 
@@ -6432,6 +6433,25 @@ function syncProfileSwitcherAccessState() {
         </div>
       </div>
     `;
+  }
+}
+
+function updateProfileDropdownMenu() {
+  const active = getActiveProfile?.();
+  const signedIn = Boolean(currentAuthUser);
+  const identityEl = document.getElementById("profileDropdownIdentity");
+  const accountBtn = document.getElementById("accountBtn");
+  const logoutBtn = document.getElementById("pdLogoutBtn");
+
+  const displayName = signedIn
+    ? sanitizeAccountName(active?.accountName || getUserAccountName(currentAuthUser), "RankedCoach")
+    : "Guest User";
+
+  if (identityEl) identityEl.textContent = displayName;
+  if (accountBtn) accountBtn.textContent = signedIn ? "Account" : "Log in / Sign up";
+  if (logoutBtn) {
+    logoutBtn.hidden = !signedIn;
+    logoutBtn.textContent = "Log out";
   }
 }
 
@@ -6502,6 +6522,7 @@ function enterGuestModeAfterLogout() {
   activeProfileId = guestProfile.id;
   matches = [];
   logEntries = [];
+  forceRRTotalDisplayValue?.(0);
   saveProfiles?.();
   saveLogEntries?.({ skipBackend: true });
   updateAuthUI?.(null);
@@ -6778,6 +6799,28 @@ function clearRRTotalAnimationPayload() {
     localStorage.removeItem(getRRTotalAnimationPayloadKey());
   } catch (_error) {
     // ignore storage failures
+  }
+}
+
+function forceRRTotalDisplayValue(value = 0) {
+  const next = Number(value) || 0;
+  if (totalRRAnimFrame) {
+    cancelAnimationFrame(totalRRAnimFrame);
+    totalRRAnimFrame = null;
+  }
+  clearRRTotalAnimationPayload();
+  writePersistedRRTotalDisplay(next);
+  if (totalRRDisplay) {
+    totalRRDisplay.dataset.value = String(next);
+    totalRRDisplay.textContent = String(next);
+    totalRRDisplay.classList.remove(
+      "rr-total-rolling",
+      "rr-total-settle",
+      "rr-total-positive",
+      "rr-total-negative",
+      "rr-total-neutral"
+    );
+    totalRRDisplay.style.color = next > 0 ? "#22c55e" : next < 0 ? "#ef4444" : "#e5e7eb";
   }
 }
 const CREST_PREVIEW_STATES = [
@@ -30711,12 +30754,26 @@ function bindEvents(){
     }
   });
 
+  function positionGoalRankPopover() {
+    if (!goalRRWidget || !goalRankModal) return;
+    const rect = goalRRWidget.getBoundingClientRect();
+    const viewportWidth = window.visualViewport?.width || window.innerWidth || 0;
+    const width = Math.max(0, Math.round(rect.width));
+    const left = Math.max(8, Math.min(Math.round(rect.left), Math.max(8, Math.round(viewportWidth - width - 8))));
+    const top = Math.round(rect.bottom + 8);
+    goalRankModal.style.setProperty("--goal-rank-popover-left", `${left}px`);
+    goalRankModal.style.setProperty("--goal-rank-popover-top", `${top}px`);
+    goalRankModal.style.setProperty("--goal-rank-popover-width", `${width}px`);
+  }
+
   if (goalRRWidget && goalRankModal) {
     goalRRWidget.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
 
+      positionGoalRankPopover();
       showModalById("goalRankModal");
+      window.requestAnimationFrame(positionGoalRankPopover);
 
       const activeProfile = getActiveProfile();
       if (goalRankSelect) {
@@ -30726,6 +30783,13 @@ function bindEvents(){
         }
       }
     });
+
+    window.addEventListener("resize", () => {
+      if (goalRankModal.classList.contains("active")) positionGoalRankPopover();
+    });
+    window.addEventListener("scroll", () => {
+      if (goalRankModal.classList.contains("active")) positionGoalRankPopover();
+    }, true);
   }
 
   goalRankClose?.addEventListener("click", (e) => {
@@ -32950,6 +33014,7 @@ function renderProfilesUI(){
       safeNumber(active?.startingRR);
   }
 
+  updateProfileDropdownMenu?.();
 }
 
 function closeProfileDropdown(){
@@ -33320,9 +33385,12 @@ function populateEditProfileModal(profile = getActiveProfile()) {
       .join("");
   }
 
-  document.getElementById("editProfileName").value = profile?.name || "";
-  document.getElementById("editProfileRiotId").value = profile?.riotId || "";
-  document.getElementById("editProfileRegion").value = profile?.region || "NA";
+  const editNameEl = document.getElementById("editProfileName");
+  const editRiotIdEl = document.getElementById("editProfileRiotId");
+  const editRegionEl = document.getElementById("editProfileRegion");
+  if (editNameEl) editNameEl.value = profile?.name || "";
+  if (editRiotIdEl) editRiotIdEl.value = profile?.riotId || "";
+  if (editRegionEl) editRegionEl.value = profile?.region || "NA";
   const startingRREl = document.getElementById("editProfileStartingRR");
   const startingRRNoteEl = document.getElementById("editProfileStartingRRNote");
   if (startingRREl) {
@@ -33380,10 +33448,14 @@ function saveEditProfileModal() {
   }
   if (!profile) return;
 
+  const editNameEl = document.getElementById("editProfileName");
+  const editRiotIdEl = document.getElementById("editProfileRiotId");
+  const editRegionEl = document.getElementById("editProfileRegion");
+
   updateProfile(profile.id, {
-    name: document.getElementById("editProfileName")?.value?.trim() || profile.name,
-    riotId: document.getElementById("editProfileRiotId")?.value?.trim() || "",
-    region: document.getElementById("editProfileRegion")?.value?.trim() || "NA",
+    name: editNameEl ? (editNameEl.value?.trim() || profile.name) : profile.name,
+    riotId: editRiotIdEl ? (editRiotIdEl.value?.trim() || "") : profile.riotId,
+    region: editRegionEl ? (editRegionEl.value?.trim() || "NA") : profile.region,
     themeKey: document.getElementById("editProfileTheme")?.value || profile.themeKey || "default",
     avatarAgent: document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent,
     profileBorder: normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard"),
@@ -35413,6 +35485,7 @@ function updateProfileHeaderUI(){
   }
 
   applyProfileVisuals(p);
+  updateProfileDropdownMenu?.();
 
 }
 
@@ -35786,6 +35859,13 @@ function renderPasswordRules(targetId = "", email = "", password = "", confirmPa
   return result.valid;
 }
 
+function clearPasswordRules(targetId = "") {
+  const target = document.getElementById(targetId);
+  if (!target) return;
+  target.innerHTML = "";
+  target.dataset.show = "0";
+}
+
 function setAuthStatus(id = "", message = "") {
   const el = document.getElementById(id);
   if (el) el.textContent = message;
@@ -35798,6 +35878,7 @@ function resetPasswordRecoveryPanel() {
     authResetTimer = 0;
   }
   authResetExpiresAt = 0;
+  setPasswordRecoveryStage("email");
   const codeStage = document.getElementById("authResetCodeStage");
   const newPasswordStage = document.getElementById("authNewPasswordStage");
   const codeInput = document.getElementById("authResetCode");
@@ -35811,7 +35892,18 @@ function resetPasswordRecoveryPanel() {
   if (newPasswordConfirm) newPasswordConfirm.value = "";
   if (resendBtn) resendBtn.disabled = true;
   setAuthStatus("authResetStatus", "");
-  renderPasswordRules("authResetPasswordRules", "", "", "");
+  clearPasswordRules("authResetPasswordRules");
+}
+
+function setPasswordRecoveryStage(stage = "email") {
+  const stages = {
+    email: document.getElementById("authResetEmailStage"),
+    code: document.getElementById("authResetCodeStage"),
+    password: document.getElementById("authNewPasswordStage")
+  };
+  Object.entries(stages).forEach(([key, el]) => {
+    if (el) el.hidden = key !== stage;
+  });
 }
 
 function setAuthButtonLoading(button, loadingText = "Working...") {
@@ -35864,23 +35956,27 @@ async function verifyPasswordRecoveryCode(email = "", code = "") {
 
 ["authSignupPassword", "authSignupPasswordConfirm", "authSignupEmail"].forEach(id => {
   document.getElementById(id)?.addEventListener("input", () => {
-    renderPasswordRules(
-      "authPasswordRules",
-      document.getElementById("authSignupEmail")?.value || "",
-      document.getElementById("authSignupPassword")?.value || "",
-      document.getElementById("authSignupPasswordConfirm")?.value || ""
-    );
+    if (document.getElementById("authPasswordRules")?.dataset.show === "1") {
+      renderPasswordRules(
+        "authPasswordRules",
+        document.getElementById("authSignupEmail")?.value || "",
+        document.getElementById("authSignupPassword")?.value || "",
+        document.getElementById("authSignupPasswordConfirm")?.value || ""
+      );
+    }
   });
 });
 
 ["authNewPassword", "authNewPasswordConfirm", "authResetEmail"].forEach(id => {
   document.getElementById(id)?.addEventListener("input", () => {
-    renderPasswordRules(
-      "authResetPasswordRules",
-      document.getElementById("authResetEmail")?.value || authVerifiedRecoveryEmail,
-      document.getElementById("authNewPassword")?.value || "",
-      document.getElementById("authNewPasswordConfirm")?.value || ""
-    );
+    if (document.getElementById("authResetPasswordRules")?.dataset.show === "1") {
+      renderPasswordRules(
+        "authResetPasswordRules",
+        document.getElementById("authResetEmail")?.value || authVerifiedRecoveryEmail,
+        document.getElementById("authNewPassword")?.value || "",
+        document.getElementById("authNewPasswordConfirm")?.value || ""
+      );
+    }
   });
 });
 
@@ -35912,10 +36008,12 @@ document.addEventListener("click", async (e) => {
 
   if(e.target.id === "authShowSignupBtn"){
     setAuthPanel("signup");
-    renderPasswordRules("authPasswordRules", "", "", "");
+    clearPasswordRules("authPasswordRules");
   }
 
   if(e.target.id === "authBackToLoginBtn" || e.target.id === "authForgotBackBtn"){
+    resetPasswordRecoveryPanel();
+    clearPasswordRules("authPasswordRules");
     setAuthPanel("login");
   }
 
@@ -35949,7 +36047,7 @@ document.addEventListener("click", async (e) => {
     });
 
     if(error){
-      alert(error.message);
+      alert("Invalid username or password.");
       return;
     }
 
@@ -35992,6 +36090,8 @@ document.addEventListener("click", async (e) => {
       return;
     }
 
+    const rulesEl = document.getElementById("authPasswordRules");
+    if (rulesEl) rulesEl.dataset.show = "1";
     const isValidPassword = renderPasswordRules("authPasswordRules", email, pass, confirmPass);
     if(!isValidPassword){
       setAuthStatus("authSignupStatus", "Please fix the password rules before creating the account.");
@@ -36024,6 +36124,7 @@ document.addEventListener("click", async (e) => {
     }
 
     rememberPasswordFingerprint(email, pass);
+    clearPasswordRules("authPasswordRules");
     setAppEntryChoice("auth");
     setAuthStatus("authSignupStatus", mfaEnabled
       ? "Account created. RankedCoach saved your 2FA preference; provider enrollment still needs backend setup before launch."
@@ -36064,9 +36165,9 @@ document.addEventListener("click", async (e) => {
     const restoreButton = setAuthButtonLoading(e.target, "Sending...");
     try{
       await requestPasswordRecoveryCode(email);
-      document.getElementById("authResetCodeStage").hidden = false;
+      setPasswordRecoveryStage("code");
       startAuthResetCountdown();
-      setAuthStatus("authResetStatus", "Recovery request sent. Enter the 6-digit code from the email if your Supabase template is configured for OTP recovery.");
+      setAuthStatus("authResetStatus", "Recovery code sent. Check your email.");
     } catch(error){
       setAuthStatus("authResetStatus", error?.message || "Unable to send the recovery request.");
     } finally {
@@ -36089,10 +36190,12 @@ document.addEventListener("click", async (e) => {
     try{
       await verifyPasswordRecoveryCode(email, code);
       authVerifiedRecoveryEmail = email;
-      const codeStage = document.getElementById("authResetCodeStage");
-      if (codeStage) codeStage.hidden = true;
-      document.getElementById("authNewPasswordStage").hidden = false;
-      renderPasswordRules("authResetPasswordRules", email, "", "");
+      if (authResetTimer) {
+        window.clearInterval(authResetTimer);
+        authResetTimer = 0;
+      }
+      setPasswordRecoveryStage("password");
+      clearPasswordRules("authResetPasswordRules");
       setAuthStatus("authResetStatus", "Code verified. Choose a new password.");
     } catch(error){
       setAuthStatus("authResetStatus", error?.message || "The recovery code was not accepted.");
@@ -36105,6 +36208,8 @@ document.addEventListener("click", async (e) => {
     const email = authVerifiedRecoveryEmail || document.getElementById("authResetEmail")?.value?.trim();
     const password = document.getElementById("authNewPassword")?.value?.trim();
     const confirmPassword = document.getElementById("authNewPasswordConfirm")?.value?.trim();
+    const resetRulesEl = document.getElementById("authResetPasswordRules");
+    if (resetRulesEl) resetRulesEl.dataset.show = "1";
     const isValidPassword = renderPasswordRules("authResetPasswordRules", email, password, confirmPassword);
     if(!isValidPassword){
       setAuthStatus("authResetStatus", "Please fix the password rules before changing the password.");
