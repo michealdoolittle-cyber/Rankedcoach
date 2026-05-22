@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260522-auth-logs-calendar-01">
+  <link rel="stylesheet" href="app.css?v=20260522-auth-session-calendar-02">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -581,6 +581,7 @@ RIOT PROFILE MODAL
           <div id="profileDropdown" class="profile-dropdown profile-dropdown-pills" aria-label="Profile menu">
             <button class="pd-item" id="accountBtn" type="button">Account</button>
             <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
+            <button class="pd-item" id="pdLogoutBtn" type="button">Logout</button>
             <a class="pd-item" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
             <a class="pd-item" href="terms.html">Terms of Service</a>
             <a class="pd-item" href="privacy.html">Privacy Policy</a>
@@ -1561,15 +1562,13 @@ stroke-linejoin="round"/>
       </div>
 
       <div class="logging-session-bar">
-        <label class="logging-session-select-wrap">
-          <span class="logging-session-label">Session</span>
-          <select id="logSessionSelect" class="logging-session-select"></select>
-        </label>
-        <label class="logging-date-picker-wrap">
-          <span class="logging-session-label">Calendar</span>
-          <input id="logSessionDatePicker" class="logging-date-picker" type="date">
-        </label>
+        <select id="logSessionSelect" class="logging-session-select" hidden></select>
+        <div class="logging-date-picker-wrap">
+          <span class="logging-session-label">Current Session</span>
+          <button id="logCalendarTrigger" class="logging-calendar-trigger" type="button" aria-expanded="false" aria-controls="logCalendarPopover">Today</button>
+        </div>
         <span id="logSessionCountBadge" class="logging-session-count-badge" hidden>0 logs</span>
+        <div id="logCalendarPopover" class="logging-calendar-popover" hidden></div>
       </div>
 
       <div id="logFeed" class="logging-feed"></div>
@@ -1696,7 +1695,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260522-auth-logs-calendar-01"></script>
+  <script type="module" src="app.js?v=20260522-auth-session-calendar-02"></script>
 </body>
 </html>
 

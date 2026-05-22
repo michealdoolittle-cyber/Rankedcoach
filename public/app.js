@@ -41,8 +41,16 @@ function formatPct(value, digits = 0) {
   return `${n.toFixed(digits)}%`;
 }
 
+function parseLocalDate(value) {
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(value);
+}
+
 function formatDateLabel(value) {
-  const d = new Date(value);
+  const d = parseLocalDate(value);
   if (Number.isNaN(d.getTime())) return "Unknown Session";
   return d.toLocaleDateString(undefined, {
     month: "short",
@@ -6470,6 +6478,44 @@ function clearGuestDemoStateForLive() {
   renderLogFeed?.({ force: true });
 }
 
+function createGuestProfileRecord() {
+  return normalizeProfileRecord({
+    id: uuid(),
+    name: "Guest",
+    accountName: "Guest",
+    riotId: "",
+    region: "NA",
+    startingRR: 0,
+    matches: [],
+    themeKey: getActiveProfile?.()?.themeKey || "default",
+    frameTheme: getActiveProfile?.()?.frameTheme || "default",
+    avatarAgent: getDefaultProfileAvatarAgent?.() || "jett",
+    avatarUrl: getDefaultProfileAvatarUrl?.() || ""
+  });
+}
+
+function enterGuestModeAfterLogout() {
+  currentAuthUser = null;
+  setAppEntryChoice("guest");
+  const guestProfile = createGuestProfileRecord();
+  profiles = [guestProfile];
+  activeProfileId = guestProfile.id;
+  matches = [];
+  logEntries = [];
+  saveProfiles?.();
+  saveLogEntries?.({ skipBackend: true });
+  updateAuthUI?.(null);
+  updateProfileHeaderUI?.();
+  rebuildProfileListUI?.();
+  recomputeFromMatches?.();
+  updateDisplays?.();
+  renderInsights?.();
+  renderStatsAgents?.();
+  renderStatsMaps?.();
+  renderLogFeed?.({ force: true });
+  renderChart?.(currentSize);
+}
+
 async function ensureGuestDemoMatches() {
   if (!isLocalDevelopmentHost()) {
     return null;
@@ -6604,6 +6650,7 @@ let activeInsightFilter = "all";
 let cachedInsights = [];
 let currentAuthUser = null;
 let activeLogSessionFilter = "all";
+let activeLogCalendarMonth = new Date();
 
 // ========================
 // CHART STATE
@@ -30303,6 +30350,59 @@ function bindEvents(){
     updateLoggingDebriefPreview();
   });
   document.getElementById("logFocusOther")?.addEventListener("input", updateLoggingDebriefPreview);
+  document.getElementById("logCalendarTrigger")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const popover = document.getElementById("logCalendarPopover");
+    const trigger = document.getElementById("logCalendarTrigger");
+    if (!popover) return;
+    const nextHidden = !popover.hidden ? true : false;
+    popover.hidden = nextHidden;
+    trigger?.setAttribute("aria-expanded", String(!nextHidden));
+    if (!nextHidden) {
+      activeLogCalendarMonth = activeLogSessionFilter === "all"
+        ? new Date()
+        : new Date(`${activeLogSessionFilter}T12:00:00`);
+      renderLogCalendarPopover();
+    }
+  });
+  document.getElementById("logCalendarPopover")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const nav = e.target.closest?.("[data-calendar-nav]");
+    if (nav) {
+      activeLogCalendarMonth.setMonth(activeLogCalendarMonth.getMonth() + Number(nav.dataset.calendarNav || 0));
+      renderLogCalendarPopover();
+      return;
+    }
+
+    const day = e.target.closest?.("[data-log-date]");
+    if (!day) return;
+    activeLogSessionFilter = day.dataset.logDate || formatLocalDateKey(new Date());
+    activeLogCalendarMonth = new Date(`${activeLogSessionFilter}T12:00:00`);
+    const popover = document.getElementById("logCalendarPopover");
+    const trigger = document.getElementById("logCalendarTrigger");
+    if (popover) popover.hidden = true;
+    trigger?.setAttribute("aria-expanded", "false");
+    renderLogFeed({ force: true });
+  });
+  document.getElementById("logCalendarPopover")?.addEventListener("mouseover", (e) => {
+    const day = e.target.closest?.("[data-log-date]");
+    if (!day) return;
+    setLogCountBadge(day.dataset.logDate || activeLogSessionFilter);
+  });
+  document.getElementById("logCalendarPopover")?.addEventListener("mouseleave", () => {
+    setLogCountBadge(activeLogSessionFilter);
+  });
+  document.addEventListener("click", (e) => {
+    const popover = document.getElementById("logCalendarPopover");
+    const trigger = document.getElementById("logCalendarTrigger");
+    if (!popover || popover.hidden) return;
+    if (popover.contains(e.target) || trigger?.contains(e.target)) return;
+    popover.hidden = true;
+    trigger?.setAttribute("aria-expanded", "false");
+    setLogCountBadge(activeLogSessionFilter);
+  });
   document.getElementById("logQuickToggleBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -30482,6 +30582,20 @@ function bindEvents(){
     e.stopPropagation();
     closeProfileDropdown();
     openAuthModal();
+  });
+
+  document.getElementById("pdLogoutBtn")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeProfileDropdown();
+    try {
+      if (supabaseClient?.auth) {
+        await supabaseClient.auth.signOut();
+      }
+    } catch (error) {
+      console.warn("Logout failed", error);
+    }
+    enterGuestModeAfterLogout();
   });
 
   document.getElementById("profileLinkRiotBtn")?.addEventListener("click", (e) => {
@@ -32019,48 +32133,117 @@ function renderLogFeedFootnote() {
   `;
 }
 
+function getLogCountByDate() {
+  const counts = new Map();
+  (logEntries || []).forEach(entry => {
+    const key = String(entry.createdAt || nowISO()).slice(0, 10);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  return counts;
+}
+
+function setLogCountBadge(dateKey = activeLogSessionFilter, countMap = getLogCountByDate()) {
+  const badge = document.getElementById("logSessionCountBadge");
+  if (!badge) return;
+  const count = countMap.get(dateKey) || 0;
+  badge.hidden = false;
+  badge.textContent = `${count} log${count === 1 ? "" : "s"}`;
+  badge.classList.remove("is-rolling");
+  void badge.offsetWidth;
+  badge.classList.add("is-rolling");
+}
+
+function formatCurrentSessionLabel(dateKey = activeLogSessionFilter) {
+  const todayKey = formatLocalDateKey(new Date());
+  const label = formatDateLabel(dateKey);
+  return dateKey === todayKey ? `Today / ${label}` : label;
+}
+
+function renderLogCalendarPopover(countMap = getLogCountByDate()) {
+  const popover = document.getElementById("logCalendarPopover");
+  if (!popover) return;
+
+  const selectedKey = activeLogSessionFilter === "all"
+    ? formatLocalDateKey(new Date())
+    : activeLogSessionFilter;
+  const todayKey = formatLocalDateKey(new Date());
+  const monthStart = new Date(activeLogCalendarMonth.getFullYear(), activeLogCalendarMonth.getMonth(), 1);
+  const gridStart = new Date(monthStart);
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+  const monthLabel = monthStart.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const maxCount = Math.max(1, ...countMap.values());
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const days = [];
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+    const key = formatLocalDateKey(date);
+    const count = countMap.get(key) || 0;
+    const heat = count ? Math.max(.18, Math.min(.92, count / maxCount)) : .04;
+    days.push(`
+      <button
+        class="logging-calendar-day${date.getMonth() !== monthStart.getMonth() ? " is-muted" : ""}${key === todayKey ? " is-today" : ""}${key === selectedKey ? " is-selected" : ""}"
+        type="button"
+        data-log-date="${key}"
+        data-log-count="${count}"
+        style="--log-heat:${heat.toFixed(2)}"
+        aria-label="${escapeHtml(formatDateLabel(key))}, ${count} log${count === 1 ? "" : "s"}"
+      ><span>${date.getDate()}</span></button>
+    `);
+  }
+
+  popover.innerHTML = `
+    <div class="logging-calendar-head">
+      <button class="logging-calendar-nav" type="button" data-calendar-nav="-1" aria-label="Previous month">‹</button>
+      <div class="logging-calendar-title">${escapeHtml(monthLabel)}</div>
+      <button class="logging-calendar-nav" type="button" data-calendar-nav="1" aria-label="Next month">›</button>
+    </div>
+    <div class="logging-calendar-grid">
+      ${dayNames.map(day => `<div class="logging-calendar-dow">${day}</div>`).join("")}
+      ${days.join("")}
+    </div>
+  `;
+
+  const previousMonthButton = popover.querySelector('[data-calendar-nav="-1"]');
+  const nextMonthButton = popover.querySelector('[data-calendar-nav="1"]');
+  if (previousMonthButton) previousMonthButton.textContent = "<";
+  if (nextMonthButton) nextMonthButton.textContent = ">";
+}
+
 function renderLogSessionSelector() {
   const select = document.getElementById("logSessionSelect");
-  const datePicker = document.getElementById("logSessionDatePicker");
-  const countBadge = document.getElementById("logSessionCountBadge");
-  if (!select) return;
+  const trigger = document.getElementById("logCalendarTrigger");
+  if (!trigger) return;
 
   const sessions = getLogSessions();
-  select.innerHTML = `<option value="all">All Sessions</option>`;
-
-  sessions.forEach((session, index) => {
-    const option = document.createElement("option");
-    option.value = session.key;
-    option.dataset.count = String(session.entries.length);
-    option.textContent = index === 0
-      ? `Today / Latest | ${formatDateLabel(session.key)} (${session.entries.length})`
-      : `${formatDateLabel(session.key)} (${session.entries.length})`;
-    select.appendChild(option);
-  });
-
-  if (!sessions.some(session => session.key === activeLogSessionFilter)) {
-    activeLogSessionFilter = "all";
+  const countMap = getLogCountByDate();
+  const todayKey = formatLocalDateKey(new Date());
+  if (activeLogSessionFilter === "all") {
+    activeLogSessionFilter = todayKey;
   }
 
-  select.value = activeLogSessionFilter;
-  if (datePicker) {
-    datePicker.value = activeLogSessionFilter === "all" ? "" : activeLogSessionFilter;
-    datePicker.onchange = () => {
-      activeLogSessionFilter = datePicker.value || "all";
-      renderLogFeed({ force: true });
-    };
+  if (select) {
+    select.innerHTML = "";
+
+    sessions.forEach((session) => {
+      const option = document.createElement("option");
+      option.value = session.key;
+      option.dataset.count = String(session.entries.length);
+      option.textContent = `${formatDateLabel(session.key)} (${session.entries.length})`;
+      select.appendChild(option);
+    });
   }
-  if (countBadge) {
-    const selectedSession = sessions.find(session => session.key === activeLogSessionFilter);
-    countBadge.hidden = !selectedSession;
-    countBadge.textContent = selectedSession
-      ? `${selectedSession.entries.length} log${selectedSession.entries.length === 1 ? "" : "s"}`
-      : "";
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(activeLogSessionFilter)) {
+    activeLogSessionFilter = todayKey;
   }
-  select.onchange = () => {
-    activeLogSessionFilter = select.value || "all";
-    renderLogFeed({ force: true });
-  };
+
+  if (select) select.value = activeLogSessionFilter;
+  trigger.textContent = formatCurrentSessionLabel(activeLogSessionFilter);
+  trigger.setAttribute("aria-label", `Current session: ${formatCurrentSessionLabel(activeLogSessionFilter)}`);
+  setLogCountBadge(activeLogSessionFilter, countMap);
+  renderLogCalendarPopover(countMap);
 }
 
 function buildDemoLogEntriesFromMatches(matchList = []) {
@@ -32160,6 +32343,16 @@ function renderLogFeed(options = {}){
   const sessions = getLogSessions().filter(session =>
     activeLogSessionFilter === "all" || session.key === activeLogSessionFilter
   );
+
+  if(!sessions.length){
+    container.innerHTML = `
+      <div class="log-empty">
+        No logs for ${escapeHtml(formatCurrentSessionLabel(activeLogSessionFilter))}.
+      </div>
+      ${renderLogFeedFootnote()}
+    `;
+    return;
+  }
 
   const fragment = document.createDocumentFragment();
   sessions.forEach(session => {
@@ -32741,7 +32934,7 @@ function renderProfilesUI(){
   }
 
   if(profileProfileNameEl){
-    profileProfileNameEl.textContent = active?.name || "-";
+    profileProfileNameEl.textContent = currentAuthUser ? (active?.name || "-") : "Guest";
   }
 
   if(profileRiotIdEl){
@@ -35204,7 +35397,7 @@ function updateProfileHeaderUI(){
   }
 
   if(profileProfileNameEl){
-    profileProfileNameEl.textContent = p.name || "Profile";
+    profileProfileNameEl.textContent = currentAuthUser ? (p.name || "Profile") : "Guest";
   }
 
   if(profileRiotIdEl){
@@ -35638,7 +35831,7 @@ function startAuthResetCountdown() {
   authResetExpiresAt = Date.now() + 120000;
   if (resendBtn) resendBtn.disabled = true;
   if (authResetTimer) window.clearInterval(authResetTimer);
-  authResetTimer = window.setInterval(() => {
+  const tick = () => {
     const remaining = Math.max(0, Math.ceil((authResetExpiresAt - Date.now()) / 1000));
     if (countdown) countdown.textContent = remaining ? `Code expires in ${remaining}s` : "Code expired. You can resend now.";
     if (!remaining) {
@@ -35646,7 +35839,9 @@ function startAuthResetCountdown() {
       window.clearInterval(authResetTimer);
       authResetTimer = 0;
     }
-  }, 250);
+  };
+  tick();
+  authResetTimer = window.setInterval(tick, 1000);
 }
 
 async function requestPasswordRecoveryCode(email = "") {
