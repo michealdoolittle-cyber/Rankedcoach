@@ -4230,11 +4230,11 @@ function getWeaponRoundRates(rounds = []) {
 
 const MAP_ECONOMY_ROUND_FORMULAS = {
   pistolWin: "Pistol Round Win % = pistol round wins on rounds 1 and 13 / pistol rounds played on rounds 1 and 13 x 100.",
-  bonusWin: "Bonus Round Win % = wins on rounds 2 and 14 classified as bonus rounds / bonus rounds played x 100.",
-  bonusLoss: "Bonus Round Loss % = losses on rounds 2 and 14 classified as bonus rounds / bonus rounds played x 100.",
-  saveWin: "Save Round Win % = wins on rounds 2 and 14 classified as save rounds / save rounds played x 100.",
-  fullBuyWin: "Full Buy Round Win % = wins on rounds 3 and 15 classified as full-buy rounds / full-buy rounds played x 100.",
-  fullBuyLoss: "Full Buy Round Loss % = losses on rounds 3 and 15 classified as full-buy rounds / full-buy rounds played x 100."
+  bonusWin: "Bonus Round Win % = wins on confirmed bonus rounds / confirmed bonus rounds played x 100. Round 2/14 is bonus after a pistol win, and round 3/15 is bonus when the pistol winner also wins the buy-up round.",
+  bonusLoss: "Bonus Round Loss % = losses on confirmed bonus rounds / confirmed bonus rounds played x 100. Round 2/14 is bonus after a pistol win, and round 3/15 is bonus when the pistol winner also wins the buy-up round.",
+  saveWin: "Save Round Win % = wins on confirmed save rounds / confirmed save rounds played x 100. Round 2/14 is normally a save after losing pistol unless economy data says otherwise.",
+  fullBuyWin: "Full Buy Round Win % = wins on confirmed full-buy rounds / confirmed full-buy rounds played x 100. Round 3/15 after a pistol-loss save is a full buy, and later full buys depend on economy/loadout data.",
+  fullBuyLoss: "Full Buy Round Loss % = losses on confirmed full-buy rounds / confirmed full-buy rounds played x 100. Half buys around rifle plus light armor are not counted as full buys."
 };
 
 function getMatchMapName(match = {}) {
@@ -4276,6 +4276,23 @@ function getRoundEconomyLabel(round = {}) {
   return String(values.find(value => String(value || "").trim()) || "").trim().toLowerCase();
 }
 
+function getRoundSpendValue(round = {}) {
+  const values = [
+    round?.creditsSpent,
+    round?.creditSpend,
+    round?.spent,
+    round?.spend,
+    round?.loadoutValue,
+    round?.loadoutCost,
+    round?.buyValue,
+    round?.equipmentValue,
+    round?.teamLoadoutValue,
+    round?.roundLoadoutValue
+  ];
+  const numeric = values.map(value => Number(value)).find(value => Number.isFinite(value) && value > 0);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
 function getRoundWonValue(round = {}) {
   if (typeof round?.roundWon === "boolean") return round.roundWon;
   if (typeof round?.won === "boolean") return round.won;
@@ -4290,20 +4307,36 @@ function classifyPostPistolEconomy(round = {}, previousPistolWon = null) {
   const economy = getRoundEconomyLabel(round);
   if (economy.includes("bonus")) return "bonus";
   if (economy.includes("save") || economy.includes("eco")) return "save";
-  if (economy.includes("light") || economy.includes("half")) {
-    if (previousPistolWon === true) return "bonus";
-    if (previousPistolWon === false) return "save";
-  }
   if (previousPistolWon === true) return "bonus";
   if (previousPistolWon === false) return "save";
+  if (economy.includes("light") || economy.includes("half")) return "save";
   return "";
 }
 
-function classifyFullBuyEconomy(round = {}) {
+function classifyLabeledEconomyPhase(round = {}) {
+  const economy = getRoundEconomyLabel(round);
+  if (economy.includes("bonus")) return "bonus";
+  if (economy.includes("save") || economy.includes("eco")) return "save";
+  if (economy.includes("light") || economy.includes("half")) return "half-buy";
+  return "";
+}
+
+function classifyFullBuyEconomy(round = {}, allowInferredFullBuy = false) {
   const economy = getRoundEconomyLabel(round);
   if (economy.includes("save") || economy.includes("eco") || economy.includes("bonus") || economy.includes("light") || economy.includes("half") || economy.includes("force")) return "";
-  if (!economy) return "full-buy";
+  const spend = getRoundSpendValue(round);
+  if (spend >= 3300 && spend < 3900) return "";
+  if (spend >= 3900) return "full-buy";
+  if (!economy) return allowInferredFullBuy ? "full-buy" : "";
   if (economy.includes("full") || economy.includes("rifle") || economy.includes("buy")) return "full-buy";
+  return "";
+}
+
+function classifyThirdRoundEconomy(round = {}, previousPistolWon = null, secondRoundWon = null) {
+  const labeledPhase = classifyLabeledEconomyPhase(round);
+  if (labeledPhase === "bonus" || labeledPhase === "save") return labeledPhase;
+  if (previousPistolWon === true && secondRoundWon === true) return "bonus";
+  if (classifyFullBuyEconomy(round, true) === "full-buy") return "full-buy";
   return "";
 }
 
@@ -4388,10 +4421,34 @@ function getMapEconomyRoundSummary(mapName = "", matchList = matches) {
       }
 
       if (roundNumber === 3 || roundNumber === 15) {
-        if (classifyFullBuyEconomy(round) === "full-buy") {
+        const previousPistolRound = roundsByNumber.get(roundNumber === 3 ? 1 : 13);
+        const previousSecondRound = roundsByNumber.get(roundNumber === 3 ? 2 : 14);
+        const previousPistolWon = previousPistolRound ? getRoundWonValue(previousPistolRound) : null;
+        const secondRoundWon = previousSecondRound ? getRoundWonValue(previousSecondRound) : null;
+        const phase = classifyThirdRoundEconomy(round, previousPistolWon, secondRoundWon);
+        if (phase === "bonus") {
+          addEconomyPhaseResult(summary.bonus, won);
+          summary.confirmedRounds += 1;
+        } else if (phase === "save") {
+          addEconomyPhaseResult(summary.save, won);
+          summary.confirmedRounds += 1;
+        } else if (phase === "full-buy") {
           addEconomyPhaseResult(summary.fullBuy, won);
           summary.confirmedRounds += 1;
         }
+        return;
+      }
+
+      const labeledPhase = classifyLabeledEconomyPhase(round);
+      if (labeledPhase === "bonus") {
+        addEconomyPhaseResult(summary.bonus, won);
+        summary.confirmedRounds += 1;
+      } else if (labeledPhase === "save") {
+        addEconomyPhaseResult(summary.save, won);
+        summary.confirmedRounds += 1;
+      } else if (classifyFullBuyEconomy(round) === "full-buy") {
+        addEconomyPhaseResult(summary.fullBuy, won);
+        summary.confirmedRounds += 1;
       }
     });
   });
@@ -6448,7 +6505,7 @@ function updateProfileDropdownMenu() {
     : "Guest User";
 
   if (identityEl) identityEl.textContent = displayName;
-  if (accountBtn) accountBtn.textContent = signedIn ? "Account" : "Log in / Sign up";
+  if (accountBtn) accountBtn.textContent = signedIn ? "Security Settings" : "Log in / Sign up";
   if (logoutBtn) {
     logoutBtn.hidden = !signedIn;
     logoutBtn.textContent = "Log out";
@@ -6470,8 +6527,171 @@ function isLocalDevelopmentHost() {
 function sanitizeAccountName(value = "", fallback = "Guest") {
   const clean = String(value || "")
     .replace(/[^a-z0-9_-]/gi, "")
-    .slice(0, 8);
-  return clean || String(fallback || "Guest").slice(0, 8);
+    .slice(0, 16);
+  return clean || String(fallback || "Guest").slice(0, 16);
+}
+
+function isValidAccountUsername(value = "") {
+  return /^[a-z0-9_-]{3,16}$/i.test(String(value || "").trim());
+}
+
+function getAccountSecurityMetadata(user = currentAuthUser) {
+  return user?.user_metadata || {};
+}
+
+function maskEmail(value = "") {
+  const clean = String(value || "").trim();
+  if (!clean || !clean.includes("@")) return "Not set";
+  const [name, domain] = clean.split("@");
+  const visibleName = name.slice(0, 2);
+  return `${visibleName}${"*".repeat(Math.max(2, name.length - 2))}@${domain}`;
+}
+
+function maskPhone(value = "") {
+  const clean = String(value || "").replace(/\D/g, "");
+  if (!clean) return "Not set";
+  return `${"*".repeat(Math.max(0, clean.length - 4))}${clean.slice(-4)}`;
+}
+
+function setSecurityMfaMethodVisibility() {
+  const mfaInput = document.getElementById("securityMfaEnabled");
+  const methodWrap = document.getElementById("securityMfaMethods");
+  if (methodWrap) methodWrap.hidden = !Boolean(mfaInput?.checked);
+}
+
+function setSecurityRecoveryMasks(email = "", phone = "") {
+  const emailMask = document.getElementById("securityRecoveryEmailMask");
+  const phoneMask = document.getElementById("securityRecoveryPhoneMask");
+  if (emailMask) emailMask.textContent = `Current: ${maskEmail(email)}`;
+  if (phoneMask) phoneMask.textContent = `Current: ${maskPhone(phone)}`;
+}
+
+function populateSecuritySettingsModal() {
+  const active = getActiveProfile?.();
+  const metadata = getAccountSecurityMetadata();
+  const usernameInput = document.getElementById("securityUsernameInput");
+  const recoveryEmailInput = document.getElementById("securityRecoveryEmailInput");
+  const recoveryPhoneInput = document.getElementById("securityRecoveryPhoneInput");
+  const mfaInput = document.getElementById("securityMfaEnabled");
+  const mfaMethod = String(metadata.mfa_method || "email").toLowerCase();
+
+  if (usernameInput) {
+    usernameInput.value = sanitizeAccountName(active?.accountName || getUserAccountName(currentAuthUser), "");
+  }
+  if (recoveryEmailInput) {
+    recoveryEmailInput.value = metadata.recovery_email || "";
+  }
+  if (recoveryPhoneInput) {
+    recoveryPhoneInput.value = metadata.recovery_phone || "";
+  }
+  if (mfaInput) {
+    mfaInput.checked = Boolean(metadata.mfa_requested || metadata.mfa_enabled);
+  }
+  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${mfaMethod === "phone" ? "phone" : "email"}"]`);
+  if (selectedMfaMethod) selectedMfaMethod.checked = true;
+  setSecurityRecoveryMasks(metadata.recovery_email || "", metadata.recovery_phone || "");
+  setSecurityMfaMethodVisibility();
+  setAuthStatus("securitySettingsStatus", "");
+}
+
+async function hydrateSecuritySettingsFromBackend() {
+  if (!currentAuthUser || !supabaseClient?.from) return;
+  const { data, error } = await supabaseClient
+    .from("account_security_preferences")
+    .select("recovery_email,recovery_phone,mfa_enabled,mfa_method")
+    .eq("user_id", currentAuthUser.id)
+    .maybeSingle();
+  if (error || !data) return;
+
+  const recoveryEmailInput = document.getElementById("securityRecoveryEmailInput");
+  const recoveryPhoneInput = document.getElementById("securityRecoveryPhoneInput");
+  const mfaInput = document.getElementById("securityMfaEnabled");
+  if (recoveryEmailInput) recoveryEmailInput.value = data.recovery_email || recoveryEmailInput.value || "";
+  if (recoveryPhoneInput) recoveryPhoneInput.value = data.recovery_phone || recoveryPhoneInput.value || "";
+  if (mfaInput) mfaInput.checked = Boolean(data.mfa_enabled);
+  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${String(data.mfa_method || "").toLowerCase() === "phone" ? "phone" : "email"}"]`);
+  if (selectedMfaMethod) selectedMfaMethod.checked = true;
+  setSecurityRecoveryMasks(data.recovery_email || "", data.recovery_phone || "");
+  setSecurityMfaMethodVisibility();
+}
+
+function openSecuritySettingsModal() {
+  if (!currentAuthUser) {
+    openAuthModal?.();
+    return;
+  }
+  populateSecuritySettingsModal();
+  showModalById("securitySettingsModal");
+  void hydrateSecuritySettingsFromBackend();
+}
+
+function closeSecuritySettingsModal() {
+  hideModalById("securitySettingsModal");
+}
+
+async function saveSecuritySettingsModal() {
+  if (!currentAuthUser || !supabaseClient?.auth) {
+    setAuthStatus("securitySettingsStatus", "Log in to change security settings.");
+    return;
+  }
+
+  const username = sanitizeAccountName(document.getElementById("securityUsernameInput")?.value || "", "");
+  const recoveryEmail = document.getElementById("securityRecoveryEmailInput")?.value?.trim() || "";
+  const recoveryPhone = document.getElementById("securityRecoveryPhoneInput")?.value?.trim() || "";
+  const mfaEnabled = Boolean(document.getElementById("securityMfaEnabled")?.checked);
+  const mfaMethod = document.querySelector("input[name='securityMfaMethod']:checked")?.value || "email";
+
+  if (!isValidAccountUsername(username)) {
+    setAuthStatus("securitySettingsStatus", "Username must be 3-16 characters and use only letters, numbers, underscores, or dashes.");
+    return;
+  }
+
+  const saveBtn = document.getElementById("securitySettingsSave");
+  const restoreButton = setAuthButtonLoading(saveBtn, "Saving...");
+
+  try {
+    const { data, error } = await supabaseClient.auth.updateUser({
+      data: {
+        ...getAccountSecurityMetadata(),
+        account_name: username,
+        recovery_email: recoveryEmail || null,
+        recovery_phone: recoveryPhone || null,
+        mfa_requested: mfaEnabled,
+        mfa_enabled: mfaEnabled,
+        mfa_method: mfaEnabled ? mfaMethod : null
+      }
+    });
+    if (error) throw error;
+    currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
+
+    profiles = (profiles || []).map(profile => ({ ...profile, accountName: username }));
+    saveProfiles?.();
+
+    const { error: securityPrefsError } = await supabaseClient
+      .from("account_security_preferences")
+      .upsert({
+        user_id: currentAuthUser.id,
+        recovery_email: recoveryEmail || null,
+        recovery_phone: recoveryPhone || null,
+        mfa_enabled: mfaEnabled,
+        mfa_method: mfaEnabled ? mfaMethod : null,
+        security_json: { source: "security_settings_modal" },
+        updated_at: nowISO()
+      }, { onConflict: "user_id" });
+    if (securityPrefsError) {
+      console.warn("Security preference save failed", securityPrefsError);
+    }
+
+    updateAuthUI?.(currentAuthUser);
+    updateProfileHeaderUI?.();
+    setSecurityRecoveryMasks(recoveryEmail, recoveryPhone);
+    queuePersistentAccountSave?.("security-settings");
+    setAuthStatus("securitySettingsStatus", "Security settings saved.");
+  } catch (error) {
+    setAuthStatus("securitySettingsStatus", error?.message || "Unable to save security settings.");
+  } finally {
+    restoreButton();
+  }
 }
 
 function getUserAccountName(user = currentAuthUser) {
@@ -30638,7 +30858,11 @@ function bindEvents(){
     e.preventDefault();
     e.stopPropagation();
     closeProfileDropdown();
-    openAuthModal();
+    if (currentAuthUser) {
+      openSecuritySettingsModal();
+    } else {
+      openAuthModal();
+    }
   });
 
   document.getElementById("pdLogoutBtn")?.addEventListener("click", async (e) => {
@@ -30653,6 +30877,18 @@ function bindEvents(){
       console.warn("Logout failed", error);
     }
     enterGuestModeAfterLogout();
+  });
+
+  document.getElementById("securitySettingsClose")?.addEventListener("click", closeSecuritySettingsModal);
+  document.getElementById("securitySettingsSave")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void saveSecuritySettingsModal();
+  });
+  document.getElementById("securitySettingsModal")?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("securitySettingsModal")) {
+      closeSecuritySettingsModal();
+    }
   });
 
   document.getElementById("profileLinkRiotBtn")?.addEventListener("click", (e) => {
@@ -32810,6 +33046,7 @@ function updateProfile(id, data){
     : previousRegion;
 
   profile.name = data.name ?? profile.name;
+  profile.accountName = data.accountName ?? profile.accountName;
   profile.riotId = data.riotId ?? profile.riotId;
   profile.region = data.region ?? profile.region;
 
@@ -36007,6 +36244,8 @@ document.getElementById("authMfaEnabled")?.addEventListener("change", (event) =>
   if (warning) warning.hidden = true;
 });
 
+document.getElementById("securityMfaEnabled")?.addEventListener("change", setSecurityMfaMethodVisibility);
+
 
 // ========================
 // AUTH HANDLERS (STABLE)
@@ -36102,6 +36341,10 @@ document.addEventListener("click", async (e) => {
 
     if(!accountName || !email || !pass || !confirmPass){
       setAuthStatus("authSignupStatus", "Enter an account name, email, password, and confirmation password.");
+      return;
+    }
+    if(!isValidAccountUsername(accountName)){
+      setAuthStatus("authSignupStatus", "Account name must be 3-16 characters and use only letters, numbers, underscores, or dashes.");
       return;
     }
     if(!supabaseClient?.auth){
@@ -37636,7 +37879,11 @@ document.addEventListener("click", (e) => {
   }
 
   if(e.target.id === "accountBtn"){
-    openAuthModal();
+    if (currentAuthUser) {
+      openSecuritySettingsModal();
+    } else {
+      openAuthModal();
+    }
   }
 
 });

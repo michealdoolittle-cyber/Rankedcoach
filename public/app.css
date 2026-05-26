@@ -1912,13 +1912,14 @@ body.theme-readable :is(
 }
 
 .profile-menu-name{
-  color:#f8fafc;
+  color:#f5d57a;
   font-size:16px;
   font-weight:950;
   line-height:1.05;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  text-shadow:0 0 14px rgba(245,213,122,.22);
 }
 
 .profile-menu-sub{
@@ -1959,9 +1960,19 @@ body.theme-readable :is(
 .profile-menu-donate{
   margin:8px;
   width:calc(100% - 16px) !important;
-  background:linear-gradient(135deg, rgba(255,70,85,.9), rgba(236,72,153,.74)) !important;
-  border-color:rgba(255,255,255,.16) !important;
-  color:#fff !important;
+  background:linear-gradient(135deg, rgba(82,63,23,.92), rgba(245,158,11,.18)) !important;
+  border-color:rgba(245,213,122,.72) !important;
+  color:#fde68a !important;
+  justify-content:flex-start !important;
+  text-align:left !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 0 14px rgba(245,158,11,.12) !important;
+}
+
+.profile-menu-donate:hover{
+  background:linear-gradient(135deg, rgba(120,85,24,.96), rgba(245,158,11,.28)) !important;
+  border-color:#f5d57a !important;
+  color:#fff7cc !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 0 18px rgba(245,158,11,.24) !important;
 }
 
 .auth-action-btn{
@@ -12667,13 +12678,19 @@ INSIGHTS ACTION
 
 .logging-calendar-day{
   position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   min-height:34px;
+  padding:0;
   border:1px solid rgba(148,163,184,.18);
   border-radius:var(--rc-control-radius, 12px);
   background:rgba(15,23,42,.72);
   color:#dbeafe;
   font-size:12px;
   font-weight:900;
+  line-height:1;
+  text-align:center;
   cursor:pointer;
   overflow:hidden;
 }
@@ -12689,6 +12706,12 @@ INSIGHTS ACTION
 .logging-calendar-day span{
   position:relative;
   z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  line-height:1;
 }
 
 .logging-calendar-day.is-muted{
@@ -24835,8 +24858,8 @@ body[data-theme="reaver"] .profile-dropdown.profile-dropdown-pills.open{
   }
 
   .profile-dropdown-pills .profile-menu-donate{
-    justify-content:center !important;
-    text-align:center !important;
+    justify-content:flex-start !important;
+    text-align:left !important;
   }
 
 #editProfileModal [data-profile-panel="theme"] .profile-edit-grid{
@@ -24874,6 +24897,113 @@ body[data-theme="reaver"] .profile-dropdown.profile-dropdown-pills.open{
   min-width:34px !important;
   height:34px !important;
   min-height:34px !important;
+}
+
+/* Nav-right gets priority space while nav-middle stays centered on the page. */
+.app-header{
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) minmax(420px, auto) !important;
+}
+
+.nav-center{
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  transform:translate(-50%, -50%) !important;
+  flex:1 1 auto !important;
+  width:min(660px, 38vw, max(360px, calc(100vw - 1260px))) !important;
+  min-width:360px !important;
+  max-width:660px !important;
+  justify-content:center !important;
+  z-index:2 !important;
+  grid-column:1 / -1 !important;
+  pointer-events:none !important;
+}
+
+.nav-center > *{
+  pointer-events:auto !important;
+}
+
+.nav-rr-widget{
+  min-width:0 !important;
+  flex:1 1 0 !important;
+}
+
+.nav-right{
+  grid-column:3 !important;
+  justify-self:end !important;
+  justify-content:flex-end !important;
+  flex:0 1 auto !important;
+  min-width:420px !important;
+  width:min(620px, 100%) !important;
+  max-width:min(620px, 100%) !important;
+  margin-left:auto !important;
+}
+
+.profile-panel{
+  min-height:60px !important;
+  height:60px !important;
+  max-height:60px !important;
+  width:100% !important;
+  min-width:420px !important;
+  max-width:620px !important;
+}
+
+.profile-info{
+  min-width:150px !important;
+  flex:1 1 auto !important;
+  overflow:hidden !important;
+}
+
+.profile-line-main{
+  min-width:0 !important;
+}
+
+#profileRiotId{
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+}
+
+.nav-left,
+.nav-right{
+  position:relative !important;
+  z-index:3 !important;
+}
+
+.nav-left{
+  grid-column:1 !important;
+  justify-self:start !important;
+}
+
+.security-settings-modal{
+  width:min(760px, calc(100vw - 48px)) !important;
+}
+
+.security-settings-body{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.security-toggle-row{
+  margin-top:2px;
+  padding:12px 2px;
+}
+
+.security-mfa-methods{
+  width:max-content;
+  min-width:240px;
+}
+
+.security-current-mask{
+  display:block;
+  margin-top:5px;
+  color:#94a3b8;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.02em;
 }
 
 #goalRankModal.lens-modal-overlay{

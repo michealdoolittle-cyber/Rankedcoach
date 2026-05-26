@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260526-recovery-session-07">
+  <link rel="stylesheet" href="app.css?v=20260526-nav-security-09">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -67,7 +67,7 @@ AUTH MODAL
 
         <label class="auth-field">
           <span>Account name</span>
-          <input id="authSignupAccountName" type="text" placeholder="8 characters max" maxlength="8" autocomplete="nickname" />
+          <input id="authSignupAccountName" type="text" placeholder="3-16 characters" maxlength="16" autocomplete="nickname" />
         </label>
         <label class="auth-field">
           <span>Email</span>
@@ -176,6 +176,60 @@ AUTH MODAL
         <button id="authForgotBackBtn" type="button" class="auth-link-button">Back to login</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div id="securitySettingsModal" class="lens-modal-overlay">
+  <div class="lens-modal security-settings-modal">
+    <div class="lens-modal-header">
+      <div class="lens-modal-title">Security Settings</div>
+      <button id="securitySettingsClose" class="lens-modal-close" type="button">X</button>
+    </div>
+
+    <div class="lens-modal-body security-settings-body">
+      <label class="auth-field">
+        <span>Change username</span>
+        <input id="securityUsernameInput" type="text" placeholder="3-16 characters" maxlength="16" autocomplete="nickname" />
+      </label>
+
+      <div class="auth-recovery-grid">
+      <label class="auth-field">
+        <span>Change recovery email</span>
+        <input id="securityRecoveryEmailInput" type="email" placeholder="backup@example.com" autocomplete="email" />
+        <small id="securityRecoveryEmailMask" class="security-current-mask">Current: Not set</small>
+      </label>
+      <label class="auth-field">
+        <span>Change recovery phone number</span>
+        <input id="securityRecoveryPhoneInput" type="tel" placeholder="+1 555 555 5555" autocomplete="tel" />
+        <small id="securityRecoveryPhoneMask" class="security-current-mask">Current: Not set</small>
+      </label>
+      </div>
+
+      <label class="auth-toggle-row security-toggle-row">
+        <span>
+          <strong>MFA Enable / Disable</strong>
+          <small>RankedCoach will save your preference while provider enrollment is finalized.</small>
+        </span>
+        <span class="auth-switch-control" aria-hidden="true">
+          <input id="securityMfaEnabled" type="checkbox" role="switch" />
+          <span class="auth-switch-track"></span>
+        </span>
+      </label>
+
+      <div class="auth-mfa-methods security-mfa-methods" id="securityMfaMethods" hidden>
+        <label class="auth-mfa-choice">
+          <input type="radio" name="securityMfaMethod" value="email" checked>
+          <span>Email</span>
+        </label>
+        <label class="auth-mfa-choice">
+          <input type="radio" name="securityMfaMethod" value="phone">
+          <span>Phone</span>
+        </label>
+      </div>
+
+      <div id="securitySettingsStatus" class="auth-status" aria-live="polite"></div>
+      <button id="securitySettingsSave" type="button" class="pd-item auth-action-btn auth-main-btn">Save Security Settings</button>
+    </div>
   </div>
 </div>
 
@@ -563,8 +617,8 @@ RIOT PROFILE MODAL
             </div>
             <div class="profile-menu-section">
               <div class="profile-menu-label">Account</div>
-              <button class="pd-item" id="accountBtn" type="button">Account</button>
               <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
+              <button class="pd-item" id="accountBtn" type="button">Security Settings</button>
               <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
             </div>
             <div class="profile-menu-section">
@@ -573,7 +627,7 @@ RIOT PROFILE MODAL
               <a class="pd-item" href="terms.html">Terms of Service</a>
               <a class="pd-item" href="privacy.html">Privacy Policy</a>
             </div>
-            <a class="pd-item profile-menu-donate" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate / Support</a>
+            <a class="pd-item profile-menu-donate" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev Link</a>
           </div>
         </div>
       </div>
@@ -1684,7 +1738,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260526-recovery-session-07"></script>
+  <script type="module" src="app.js?v=20260526-nav-security-09"></script>
 </body>
 </html>
 
