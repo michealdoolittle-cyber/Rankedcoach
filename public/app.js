@@ -35948,7 +35948,7 @@ async function verifyPasswordRecoveryCode(email = "", code = "") {
   if (!supabaseClient?.auth) throw new Error("RankedCoach auth is not connected yet.");
   const { error } = await supabaseClient.auth.verifyOtp({
     email,
-    token: code,
+    token: String(code || "").replace(/\D/g, ""),
     type: "recovery"
   });
   if (error) throw error;
@@ -36177,9 +36177,11 @@ document.addEventListener("click", async (e) => {
 
   if(e.target.id === "authVerifyResetCodeBtn"){
     const email = document.getElementById("authResetEmail")?.value?.trim();
-    const code = document.getElementById("authResetCode")?.value?.trim();
-    if(!email || !/^\d{6}$/.test(code || "")){
-      setAuthStatus("authResetStatus", "Enter the account email and the 6-digit recovery code.");
+    const codeInput = document.getElementById("authResetCode");
+    const code = String(codeInput?.value || "").replace(/\D/g, "");
+    if (codeInput && codeInput.value !== code) codeInput.value = code;
+    if(!email || !/^\d{6,10}$/.test(code || "")){
+      setAuthStatus("authResetStatus", "Enter the numeric recovery code from your email.");
       return;
     }
     if(Date.now() > authResetExpiresAt){

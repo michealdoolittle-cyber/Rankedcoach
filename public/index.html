@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260522-devtools-polish-05">
+  <link rel="stylesheet" href="app.css?v=20260526-reset-code-06">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -140,13 +140,13 @@ AUTH MODAL
             <input id="authResetEmail" type="email" placeholder="you@example.com" autocomplete="email" />
           </label>
 
-          <button id="authSendResetCodeBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Send 6-digit code</button>
+          <button id="authSendResetCodeBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Send recovery code</button>
         </div>
 
         <div id="authResetCodeStage" class="auth-reset-stage" hidden>
           <label class="auth-field">
             <span>Recovery code</span>
-            <input id="authResetCode" type="text" inputmode="numeric" maxlength="6" placeholder="123456" />
+            <input id="authResetCode" type="text" inputmode="numeric" maxlength="10" placeholder="Enter code" />
           </label>
           <div class="auth-countdown" id="authResetCountdown">Code expires in 120s</div>
           <button id="authVerifyResetCodeBtn" type="button" class="pd-item auth-action-btn">Verify Code</button>
@@ -1684,7 +1684,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260522-devtools-polish-05"></script>
+  <script type="module" src="app.js?v=20260526-reset-code-06"></script>
 </body>
 </html>
 
