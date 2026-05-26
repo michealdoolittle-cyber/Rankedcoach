@@ -23828,7 +23828,21 @@ function initApp(){
   updateImpactBar(75);
   updateNavUnderline();
   initUserSession();
-  supabaseClient?.auth?.onAuthStateChange?.((_event, session) => {
+  supabaseClient?.auth?.onAuthStateChange?.((event, session) => {
+    if (authRecoveryInProgress || event === "PASSWORD_RECOVERY") {
+      authRecoveryInProgress = true;
+      if (session?.user) {
+        currentAuthUser = session.user;
+        updateProfileDropdownMenu?.();
+      }
+      if (event === "PASSWORD_RECOVERY") {
+        authRecoverySessionReady = true;
+        setAuthPanel?.("forgot");
+        setPasswordRecoveryStage?.("password");
+        showModalById?.("authModal");
+      }
+      return;
+    }
     void handleSignedInUser(session?.user || null);
     if (session?.user) {
       setAppEntryChoice("auth");
@@ -35779,6 +35793,8 @@ if (compassDot && compass) {
 let authResetTimer = 0;
 let authResetExpiresAt = 0;
 let authVerifiedRecoveryEmail = "";
+let authRecoveryInProgress = false;
+let authRecoverySessionReady = false;
 
 function setAuthPanel(panelName = "login") {
   document.querySelectorAll("[data-auth-panel]").forEach(panel => {
@@ -35873,6 +35889,8 @@ function setAuthStatus(id = "", message = "") {
 
 function resetPasswordRecoveryPanel() {
   authVerifiedRecoveryEmail = "";
+  authRecoveryInProgress = false;
+  authRecoverySessionReady = false;
   if (authResetTimer) {
     window.clearInterval(authResetTimer);
     authResetTimer = 0;
@@ -35946,6 +35964,7 @@ async function requestPasswordRecoveryCode(email = "") {
 
 async function verifyPasswordRecoveryCode(email = "", code = "") {
   if (!supabaseClient?.auth) throw new Error("RankedCoach auth is not connected yet.");
+  authRecoveryInProgress = true;
   const { error } = await supabaseClient.auth.verifyOtp({
     email,
     token: String(code || "").replace(/\D/g, ""),
@@ -36192,6 +36211,8 @@ document.addEventListener("click", async (e) => {
     try{
       await verifyPasswordRecoveryCode(email, code);
       authVerifiedRecoveryEmail = email;
+      authRecoveryInProgress = true;
+      authRecoverySessionReady = true;
       if (authResetTimer) {
         window.clearInterval(authResetTimer);
         authResetTimer = 0;
@@ -36219,6 +36240,9 @@ document.addEventListener("click", async (e) => {
     }
     const restoreButton = setAuthButtonLoading(e.target, "Changing...");
     try{
+      if (!authRecoverySessionReady) {
+        throw new Error("Verify the recovery code before changing the password.");
+      }
       const { error } = await supabaseClient.auth.updateUser({ password });
       if(error) throw error;
       rememberPasswordFingerprint(email, password);
@@ -36234,7 +36258,12 @@ document.addEventListener("click", async (e) => {
             updated_at: nowISO()
           }, { onConflict: "user_id" });
       }
-      setAuthStatus("authResetStatus", "Password changed. RankedCoach should send a security email once the launch email function is connected.");
+      authRecoveryInProgress = false;
+      authRecoverySessionReady = false;
+      await supabaseClient.auth.signOut();
+      enterGuestModeAfterLogout?.();
+      alert("Password changed. Please log in with your new password.");
+      resetPasswordRecoveryPanel();
       setAuthPanel("login");
     } catch(error){
       setAuthStatus("authResetStatus", error?.message || "Unable to change the password.");
