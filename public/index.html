@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260526-nav-security-09">
+  <link rel="stylesheet" href="app.css?v=20260527-login-riot-profile-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -179,6 +179,23 @@ AUTH MODAL
   </div>
 </div>
 
+<div id="loginInitOverlay" class="lens-modal-overlay login-init-overlay" aria-live="polite">
+  <div class="login-init-card">
+    <div class="login-init-kicker">RankedCoach</div>
+    <div class="login-init-title" id="loginInitTitle">Warming up your account</div>
+    <div class="login-init-copy" id="loginInitCopy">Loading your saved profile, logs, and coaching setup.</div>
+    <div class="login-init-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="login-init-progress-bar" id="loginInitProgressBar"></div>
+    </div>
+    <div class="login-init-steps">
+      <span id="loginInitStepProfile">Profile</span>
+      <span id="loginInitStepLogs">Logs</span>
+      <span id="loginInitStepCoach">Coaching</span>
+      <span id="loginInitStepReady">Ready</span>
+    </div>
+  </div>
+</div>
+
 <div id="securitySettingsModal" class="lens-modal-overlay">
   <div class="lens-modal security-settings-modal">
     <div class="lens-modal-header">
@@ -250,6 +267,24 @@ RIOT PROFILE MODAL
 
       <button id="saveRiotProfileBtn" class="pd-item">Save</button>
 
+    </div>
+  </div>
+</div>
+
+<div id="riotProfileConfirmModal" class="lens-modal-overlay riot-profile-confirm-overlay">
+  <div class="lens-modal riot-profile-confirm-card">
+    <div class="lens-modal-header">
+      <div class="lens-modal-title">Add Riot Profile</div>
+      <button id="riotProfileConfirmClose" class="lens-modal-close" type="button">X</button>
+    </div>
+    <div class="lens-modal-body">
+      <div class="riot-profile-confirm-copy">
+        No Riot profile has been added. Continuing without adding a profile will not gather current Riot data, and only logs will become available for your coaching analytics. Do you wish to continue?
+      </div>
+      <div class="riot-profile-confirm-actions">
+        <button id="riotProfileContinueBtn" class="pd-item riot-profile-secondary" type="button">Continue</button>
+        <button id="riotProfileLinkBtn" class="pd-item riot-profile-primary" type="button">Link Riot Profile</button>
+      </div>
     </div>
   </div>
 </div>
@@ -567,6 +602,11 @@ RIOT PROFILE MODAL
           <div id="profileSwitcher" class="profile-switcher" aria-label="Profile accounts">
             <div id="profileList"></div>
             <button id="profileAddBtn" class="pd-item">+ Add Profile</button>
+          </div>
+
+          <div id="riotProfilePrompt" class="riot-profile-prompt" hidden>
+            <button id="riotProfilePromptAction" class="riot-profile-prompt-action" type="button">Select to add Riot profile</button>
+            <button id="riotProfilePromptClose" class="riot-profile-prompt-close" type="button" aria-label="Dismiss Riot profile prompt">X</button>
           </div>
         </div>
 
@@ -1738,7 +1778,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260526-nav-security-09"></script>
+  <script type="module" src="app.js?v=20260527-login-riot-profile-01"></script>
 </body>
 </html>
 

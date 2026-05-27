@@ -5700,6 +5700,8 @@ function getNextFocusFromInsight(ins) {
 const WEEKLY_FOCUS_KEY = "valtracker_weekly_focus_v1";
 const WEEKLY_FOCUS_WEEK_KEY = "valtracker_weekly_focus_week_v1";
 const APP_ENTRY_CHOICE_KEY = "valtracker_entry_choice_v1";
+const RIOT_PROFILE_PROMPT_DISMISS_KEY = "rankedcoach_riot_profile_prompt_dismissed_v1";
+let loginInitializationInFlight = false;
 
 function getCurrentWeekKey() {
   return `week-${formatLocalDateKey(getWeekStart())}`;
@@ -6471,6 +6473,7 @@ function updateAuthUI(user = null) {
   currentAuthUser = user || null;
   syncProfileSwitcherAccessState();
   updateProfileDropdownMenu?.();
+  refreshRiotProfilePrompt?.();
   refreshThemeBuilderAccess();
 }
 
@@ -6518,6 +6521,93 @@ function hasCompletedAppEntryChoice() {
 
 function setAppEntryChoice(mode = "guest") {
   localStorage.setItem(APP_ENTRY_CHOICE_KEY, String(mode || "guest"));
+}
+
+function getRiotPromptDismissKey(user = currentAuthUser) {
+  const identity = user?.id || user?.email || "guest";
+  return `${RIOT_PROFILE_PROMPT_DISMISS_KEY}:${identity}`;
+}
+
+function activeProfileHasRiotId() {
+  return Boolean(String(getActiveProfile?.()?.riotId || "").trim());
+}
+
+function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "") {
+  const overlay = document.getElementById("loginInitOverlay");
+  const bar = document.getElementById("loginInitProgressBar");
+  const copyEl = document.getElementById("loginInitCopy");
+  const titleEl = document.getElementById("loginInitTitle");
+  const nextPercent = Math.max(0, Math.min(100, Math.round(percent)));
+
+  if (bar) bar.style.width = `${nextPercent}%`;
+  overlay?.querySelector?.(".login-init-progress")?.setAttribute("aria-valuenow", String(nextPercent));
+  if (copyEl && copy) copyEl.textContent = copy;
+  if (titleEl) titleEl.textContent = nextPercent >= 100 ? "You are ready" : "Warming up your account";
+
+  const stepOrder = ["Profile", "Logs", "Coach", "Ready"];
+  const activeIndex = stepOrder.indexOf(activeStep);
+  stepOrder.forEach((step, index) => {
+    const el = document.getElementById(`loginInitStep${step}`);
+    if (!el) return;
+    el.classList.toggle("is-active", index === activeIndex);
+    el.classList.toggle("is-complete", activeIndex >= 0 && index < activeIndex);
+  });
+}
+
+function showLoginInitializationOverlay(copy = "") {
+  setLoginInitializationProgress(6, copy || "Opening your RankedCoach account.", "Profile");
+  showModalById?.("loginInitOverlay");
+}
+
+function hideLoginInitializationOverlay() {
+  setLoginInitializationProgress(100, "Everything is ready.", "Ready");
+  window.setTimeout(() => hideModalById?.("loginInitOverlay"), 420);
+}
+
+function shouldShowRiotProfilePrompt(options = {}) {
+  if (!currentAuthUser) return false;
+  if (activeProfileHasRiotId()) return false;
+  if (options.force) return true;
+  return sessionStorage.getItem(getRiotPromptDismissKey()) !== "1";
+}
+
+function hideRiotProfilePrompt(options = {}) {
+  const prompt = document.getElementById("riotProfilePrompt");
+  if (prompt) prompt.hidden = true;
+  if (options.persist) {
+    sessionStorage.setItem(getRiotPromptDismissKey(), "1");
+  }
+}
+
+function showRiotProfilePrompt(options = {}) {
+  const prompt = document.getElementById("riotProfilePrompt");
+  if (!prompt || !shouldShowRiotProfilePrompt(options)) {
+    if (!options.force) hideRiotProfilePrompt();
+    return;
+  }
+  prompt.hidden = false;
+}
+
+function refreshRiotProfilePrompt() {
+  if (shouldShowRiotProfilePrompt()) {
+    showRiotProfilePrompt();
+  } else {
+    hideRiotProfilePrompt();
+  }
+}
+
+function openRiotProfileConfirmModal() {
+  showModalById?.("riotProfileConfirmModal");
+}
+
+function closeRiotProfileConfirmModal() {
+  hideModalById?.("riotProfileConfirmModal");
+}
+
+function beginRiotProfileLinkFlow() {
+  closeRiotProfileConfirmModal();
+  hideRiotProfilePrompt({ persist: true });
+  openRiotModal?.();
 }
 
 function isLocalDevelopmentHost() {
@@ -7669,7 +7759,10 @@ async function loadPersistentAccountState(user) {
 async function handleSignedInUser(user) {
   currentAuthUser = user || null;
   updateAuthUI(user || null);
-  if (!user) return;
+  if (!user) {
+    refreshRiotProfilePrompt?.();
+    return;
+  }
   await loadPersistentAccountState(user);
   const active = getActiveProfile();
   const accountName = getUserAccountName(user);
@@ -7679,6 +7772,49 @@ async function handleSignedInUser(user) {
     saveProfiles();
   }
   updateProfileHeaderUI?.();
+  refreshRiotProfilePrompt?.();
+}
+
+async function initializeSignedInAccount(user, options = {}) {
+  if (!user) return;
+  if (loginInitializationInFlight) return;
+
+  loginInitializationInFlight = true;
+  showLoginInitializationOverlay("Opening your RankedCoach account.");
+
+  try {
+    setLoginInitializationProgress(18, "Loading saved profiles, settings, and customization.", "Profile");
+    await handleSignedInUser(user);
+
+    setLoginInitializationProgress(46, "Merging your saved logs and coaching notes.", "Logs");
+    await hydrateSecuritySettingsFromBackend?.();
+
+    const active = getActiveProfile();
+    if (active?.riotId) {
+      setLoginInitializationProgress(70, "Checking for fresh Riot profile data.", "Coach");
+      await performRiotSync({
+        silent: true,
+        mode: "refresh",
+        allowDemoFallback: false,
+        preserveOpenUi: true
+      });
+    } else {
+      setLoginInitializationProgress(72, "No Riot profile is linked yet. Logs will still be ready.", "Coach");
+      showRiotProfilePrompt({ force: true });
+    }
+
+    setLoginInitializationProgress(92, "Preparing your coaching pages.", "Ready");
+    updateProfileHeaderUI?.();
+    renderInsights?.();
+    initStatsPage?.();
+    renderLogFeed?.();
+    renderChart?.(currentSize);
+    queuePersistentAccountSave?.(options.reason || "login-initialization");
+    await new Promise(resolve => window.setTimeout(resolve, 360));
+  } finally {
+    hideLoginInitializationOverlay();
+    loginInitializationInFlight = false;
+  }
 }
 
 // ========================
@@ -24063,6 +24199,12 @@ function initApp(){
       }
       return;
     }
+    if (session?.user && event === "SIGNED_IN" && !loginInitializationInFlight) {
+      setAppEntryChoice("auth");
+      closeAuthModal();
+      void initializeSignedInAccount(session.user, { reason: "auth-state-signin" });
+      return;
+    }
     void handleSignedInUser(session?.user || null);
     if (session?.user) {
       setAppEntryChoice("auth");
@@ -30829,6 +30971,43 @@ function bindEvents(){
     }
   });
 
+  document.getElementById("riotProfilePromptAction")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    beginRiotProfileLinkFlow();
+  });
+
+  document.getElementById("riotProfilePromptClose")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openRiotProfileConfirmModal();
+  });
+
+  document.getElementById("riotProfileConfirmClose")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeRiotProfileConfirmModal();
+  });
+
+  document.getElementById("riotProfileContinueBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeRiotProfileConfirmModal();
+    hideRiotProfilePrompt({ persist: true });
+  });
+
+  document.getElementById("riotProfileLinkBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    beginRiotProfileLinkFlow();
+  });
+
+  document.getElementById("riotProfileConfirmModal")?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("riotProfileConfirmModal")) {
+      closeRiotProfileConfirmModal();
+    }
+  });
+
   profileDropdownToggle?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -36310,9 +36489,9 @@ document.addEventListener("click", async (e) => {
     }
 
     setAppEntryChoice("auth");
-    alert("Login success");
-    await handleSignedInUser((await supabaseClient.auth.getUser()).data?.user || null);
     closeAuthModal();
+    const signedInUser = (await supabaseClient.auth.getUser()).data?.user || null;
+    await initializeSignedInAccount(signedInUser, { reason: "password-login" });
   }
 
   if(e.target.id === "authGoogleBtn"){
@@ -36608,6 +36787,7 @@ if (!window.__vt_riotProfileSaveBound) {
         saveBtn.textContent = "Syncing Riot Data...";
       }
 
+      hideRiotProfilePrompt?.({ persist: true });
       closeRiotModal?.();
       await performRiotSync({
         silent: false,
@@ -36650,7 +36830,7 @@ if (!window.__vt_riotImportBound) {
     await performRiotSync({
       silent: false,
       mode: "refresh",
-      allowDemoFallback: true
+      allowDemoFallback: isLocalDevelopmentHost()
     });
     profileDropdown?.classList.remove("open");
   });
@@ -36805,7 +36985,7 @@ async function importActiveProfileMatches(options = {}){
   const profile = getActiveProfile();
   if(!profile) throw new Error("No active profile");
   if(!profile.riotId) throw new Error("Set Riot ID first");
-  const allowDemoFallback = options.allowDemoFallback !== false;
+  const allowDemoFallback = options.allowDemoFallback !== false && isLocalDevelopmentHost();
 
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
@@ -36879,7 +37059,8 @@ async function importActiveProfileMatches(options = {}){
 
 async function syncActiveProfileMatches(options = {}){
   const result = await importActiveProfileMatches({
-    allowDemoFallback: options.allowDemoFallback !== false
+    allowDemoFallback: options.allowDemoFallback !== false,
+    mode: options.mode || "sync"
   });
   updateRRMatchStats(matches[matches.length - 1] || null);
   return {
@@ -36949,7 +37130,7 @@ function refreshProfileSyncCountdown() {
 
   if (!riotAutoSyncDeadline) {
     if (!hasSyncableRiotProfile()) {
-      setProfileSyncStatus("", "needs-setup", "Add a Riot ID or load the demo dataset", false);
+      setProfileSyncStatus("", "needs-setup", "Add a Riot profile to sync Riot data", false);
       return;
     }
 
@@ -36997,7 +37178,7 @@ function startRiotAutoSyncCountdown() {
 
 function hasSyncableRiotProfile() {
   const profile = getActiveProfile();
-  return Boolean(currentAuthUser || profile?.riotId);
+  return Boolean(String(profile?.riotId || "").trim());
 }
 
 async function isRiotSyncConfigured() {
@@ -37013,8 +37194,8 @@ async function isRiotSyncConfigured() {
 async function performRiotSync(options = {}) {
   const { silent = false, mode = "sync", allowDemoFallback = true } = options;
   const activeProfile = getActiveProfile();
-  const hasRiotId = Boolean(activeProfile?.riotId);
-  const hasIdentityAccess = Boolean(currentAuthUser || hasRiotId);
+  const hasRiotId = Boolean(String(activeProfile?.riotId || "").trim());
+  const canUseDemoFallback = Boolean(allowDemoFallback && isLocalDevelopmentHost());
 
   if (riotSyncInFlight) {
     if (!silent) {
@@ -37024,14 +37205,9 @@ async function performRiotSync(options = {}) {
     return null;
   }
 
-  if (!hasIdentityAccess) {
+  if (!currentAuthUser && !hasRiotId) {
     if (!silent) {
-      alert("Sync requires either a logged-in account or a Riot ID on the active profile.");
-      if (!currentAuthUser) {
-        openAuthModal?.();
-      } else {
-        openRiotModal?.();
-      }
+      openAuthModal?.();
     }
 
     clearRiotAutoSyncTimer();
@@ -37040,14 +37216,13 @@ async function performRiotSync(options = {}) {
 
   if (!hasRiotId) {
     if (!silent) {
-      alert("Add a Riot ID to the active profile before syncing.");
-      openRiotModal?.();
+      showRiotProfilePrompt?.({ force: true });
     }
     clearRiotAutoSyncTimer();
     return null;
   }
 
-  if (!allowDemoFallback) {
+  if (!canUseDemoFallback) {
     const configured = await isRiotSyncConfigured();
     if (!configured) {
       scheduleRiotAutoSync();
@@ -37060,7 +37235,7 @@ async function performRiotSync(options = {}) {
   if (profileSyncBtn) profileSyncBtn.disabled = true;
 
   try {
-    const result = await syncActiveProfileMatches({ mode, allowDemoFallback });
+    const result = await syncActiveProfileMatches({ mode, allowDemoFallback: canUseDemoFallback });
     const syncedProfile = getActiveProfile();
     if (syncedProfile) {
       syncedProfile.lastSyncAt = result?.syncedAt || nowISO();
