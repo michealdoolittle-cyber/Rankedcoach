@@ -2252,6 +2252,26 @@ body.theme-readable :is(
   gap:9px;
 }
 
+.auth-panel[data-auth-panel="mfa"]{
+  max-width:640px;
+  margin:0 auto;
+  gap:12px;
+}
+
+.auth-panel[data-auth-panel="mfa"] .auth-welcome-title{
+  margin-top:clamp(76px, 10vw, 118px);
+}
+
+.auth-mfa-copy{
+  max-width:520px;
+  margin:0 auto 4px;
+  text-align:center;
+}
+
+.auth-panel[data-auth-panel="mfa"] .auth-field select{
+  height:48px;
+}
+
 .auth-panel[data-auth-panel="signup"] .auth-welcome-title{
   font-size:clamp(22px, 2.1vw, 34px);
   margin:clamp(78px, 11vw, 122px) 0 6px;

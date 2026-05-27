@@ -6504,7 +6504,7 @@ function updateProfileDropdownMenu() {
   const logoutBtn = document.getElementById("pdLogoutBtn");
 
   const displayName = signedIn
-    ? sanitizeAccountName(active?.accountName || getUserAccountName(currentAuthUser), "RankedCoach")
+    ? getUserAccountName(currentAuthUser)
     : "Guest User";
 
   if (identityEl) identityEl.textContent = displayName;
@@ -6657,16 +6657,15 @@ function setSecurityRecoveryMasks(email = "", phone = "") {
 }
 
 function populateSecuritySettingsModal() {
-  const active = getActiveProfile?.();
   const metadata = getAccountSecurityMetadata();
   const usernameInput = document.getElementById("securityUsernameInput");
   const recoveryEmailInput = document.getElementById("securityRecoveryEmailInput");
   const recoveryPhoneInput = document.getElementById("securityRecoveryPhoneInput");
   const mfaInput = document.getElementById("securityMfaEnabled");
-  const mfaMethod = String(metadata.mfa_method || "email").toLowerCase();
+  const mfaMethod = String(metadata.mfa_method || "totp").toLowerCase();
 
   if (usernameInput) {
-    usernameInput.value = sanitizeAccountName(active?.accountName || getUserAccountName(currentAuthUser), "");
+    usernameInput.value = getUserAccountName(currentAuthUser);
   }
   if (recoveryEmailInput) {
     recoveryEmailInput.value = metadata.recovery_email || "";
@@ -6677,7 +6676,7 @@ function populateSecuritySettingsModal() {
   if (mfaInput) {
     mfaInput.checked = Boolean(metadata.mfa_requested || metadata.mfa_enabled);
   }
-  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${mfaMethod === "phone" ? "phone" : "email"}"]`);
+  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${mfaMethod === "phone" ? "phone" : "totp"}"]`);
   if (selectedMfaMethod) selectedMfaMethod.checked = true;
   setSecurityRecoveryMasks(metadata.recovery_email || "", metadata.recovery_phone || "");
   setSecurityMfaMethodVisibility();
@@ -6699,7 +6698,7 @@ async function hydrateSecuritySettingsFromBackend() {
   if (recoveryEmailInput) recoveryEmailInput.value = data.recovery_email || recoveryEmailInput.value || "";
   if (recoveryPhoneInput) recoveryPhoneInput.value = data.recovery_phone || recoveryPhoneInput.value || "";
   if (mfaInput) mfaInput.checked = Boolean(data.mfa_enabled);
-  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${String(data.mfa_method || "").toLowerCase() === "phone" ? "phone" : "email"}"]`);
+  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${String(data.mfa_method || "").toLowerCase() === "phone" ? "phone" : "totp"}"]`);
   if (selectedMfaMethod) selectedMfaMethod.checked = true;
   setSecurityRecoveryMasks(data.recovery_email || "", data.recovery_phone || "");
   setSecurityMfaMethodVisibility();
@@ -6729,7 +6728,7 @@ async function saveSecuritySettingsModal() {
   const recoveryEmail = document.getElementById("securityRecoveryEmailInput")?.value?.trim() || "";
   const recoveryPhone = document.getElementById("securityRecoveryPhoneInput")?.value?.trim() || "";
   const mfaEnabled = Boolean(document.getElementById("securityMfaEnabled")?.checked);
-  const mfaMethod = document.querySelector("input[name='securityMfaMethod']:checked")?.value || "email";
+  const mfaMethod = document.querySelector("input[name='securityMfaMethod']:checked")?.value || "totp";
 
   if (!isValidAccountUsername(username)) {
     setAuthStatus("securitySettingsStatus", "Username must be 3-16 characters and use only letters, numbers, underscores, or dashes.");
@@ -6753,9 +6752,6 @@ async function saveSecuritySettingsModal() {
     });
     if (error) throw error;
     currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
-
-    profiles = (profiles || []).map(profile => ({ ...profile, accountName: username }));
-    saveProfiles?.();
 
     const { error: securityPrefsError } = await supabaseClient
       .from("account_security_preferences")
@@ -24199,6 +24195,11 @@ function initApp(){
       }
       return;
     }
+    if (session?.user && (authPasswordLoginInProgress || authMfaChallengeInProgress)) {
+      currentAuthUser = session.user;
+      updateAuthUI?.(session.user);
+      return;
+    }
     if (session?.user && event === "SIGNED_IN" && !loginInitializationInFlight) {
       setAppEntryChoice("auth");
       closeAuthModal();
@@ -33423,7 +33424,7 @@ function renderProfilesUI(){
 
   if(profileAccountNameEl){
     profileAccountNameEl.textContent = currentAuthUser
-      ? sanitizeAccountName(active?.accountName || getUserAccountName(currentAuthUser), "User")
+      ? getUserAccountName(currentAuthUser)
       : "Guest";
   }
 
@@ -35894,7 +35895,7 @@ function updateProfileHeaderUI(){
 
   if(profileAccountNameEl){
     profileAccountNameEl.textContent = currentAuthUser
-      ? sanitizeAccountName(p.accountName || getUserAccountName(currentAuthUser), "User")
+      ? getUserAccountName(currentAuthUser)
       : "Guest";
   }
 
@@ -36211,6 +36212,9 @@ let authResetExpiresAt = 0;
 let authVerifiedRecoveryEmail = "";
 let authRecoveryInProgress = false;
 let authRecoverySessionReady = false;
+let authPasswordLoginInProgress = false;
+let authMfaChallengeInProgress = false;
+let authMfaPendingFactors = [];
 
 function setAuthPanel(panelName = "login") {
   document.querySelectorAll("[data-auth-panel]").forEach(panel => {
@@ -36222,8 +36226,133 @@ function setAuthPanel(panelName = "login") {
       ? "Create account"
       : panelName === "forgot"
         ? "Password recovery"
-        : "Welcome back";
+        : panelName === "mfa"
+          ? "2-factor verification"
+          : "Welcome back";
   }
+}
+
+function getMfaFactorId(factor = {}) {
+  return factor.id || factor.factor_id || factor.factorId || "";
+}
+
+function getMfaFactorType(factor = {}) {
+  return String(factor.factor_type || factor.factorType || factor.type || "totp").toLowerCase();
+}
+
+function getMfaFactorLabel(factor = {}, index = 0) {
+  const type = getMfaFactorType(factor);
+  const friendlyName = factor.friendly_name || factor.friendlyName || factor.name;
+  if (friendlyName) return friendlyName;
+  if (type === "phone") return `Phone verification ${index + 1}`;
+  return `Authenticator app ${index + 1}`;
+}
+
+function getVerifiedMfaFactorsFromData(data = {}) {
+  const buckets = [
+    ...(Array.isArray(data?.totp) ? data.totp : []),
+    ...(Array.isArray(data?.phone) ? data.phone : []),
+    ...(Array.isArray(data?.all) ? data.all : [])
+  ];
+  const seen = new Set();
+  return buckets.filter(factor => {
+    const id = getMfaFactorId(factor);
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return String(factor.status || "verified").toLowerCase() === "verified";
+  });
+}
+
+function renderMfaChallengePanel(factors = []) {
+  const select = document.getElementById("authMfaFactorSelect");
+  const field = document.getElementById("authMfaFactorField");
+  const codeInput = document.getElementById("authMfaCode");
+  if (select) {
+    select.innerHTML = factors.map((factor, index) => {
+      const id = getMfaFactorId(factor);
+      const type = getMfaFactorType(factor);
+      return `<option value="${escapeHtml(id)}">${escapeHtml(getMfaFactorLabel(factor, index))}${type === "phone" ? " (phone)" : ""}</option>`;
+    }).join("");
+  }
+  if (field) field.hidden = factors.length <= 1;
+  if (codeInput) {
+    codeInput.value = "";
+    window.setTimeout(() => codeInput.focus(), 80);
+  }
+  const hasPhoneOnly = factors.length > 0 && factors.every(factor => getMfaFactorType(factor) === "phone");
+  setAuthStatus(
+    "authMfaLoginStatus",
+    hasPhoneOnly
+      ? "Phone MFA needs the Supabase Phone provider or Send SMS Hook before codes can be delivered."
+      : ""
+  );
+}
+
+async function getVerifiedMfaFactors() {
+  if (!supabaseClient?.auth?.mfa?.listFactors) return [];
+  const { data, error } = await supabaseClient.auth.mfa.listFactors();
+  if (error) throw error;
+  return getVerifiedMfaFactorsFromData(data || {});
+}
+
+async function shouldRequireMfaChallenge() {
+  if (!supabaseClient?.auth?.mfa?.getAuthenticatorAssuranceLevel) return false;
+  const { data, error } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error) throw error;
+  return data?.nextLevel === "aal2" && data?.currentLevel !== "aal2";
+}
+
+async function prepareMfaChallengeAfterLogin() {
+  if (!(await shouldRequireMfaChallenge())) return false;
+  const factors = await getVerifiedMfaFactors();
+  if (!factors.length) return false;
+  authMfaChallengeInProgress = true;
+  authMfaPendingFactors = factors;
+  currentAuthUser = await getSupabaseUser();
+  renderMfaChallengePanel(factors);
+  setAuthPanel("mfa");
+  showModalById("authModal");
+  return true;
+}
+
+async function verifyPendingMfaChallenge() {
+  if (!supabaseClient?.auth?.mfa?.challengeAndVerify) {
+    throw new Error("RankedCoach MFA is not connected yet.");
+  }
+  const factorId = document.getElementById("authMfaFactorSelect")?.value || getMfaFactorId(authMfaPendingFactors[0] || {});
+  const code = String(document.getElementById("authMfaCode")?.value || "").trim();
+  if (!factorId) throw new Error("No verified 2-factor method was found for this account.");
+  if (!code) throw new Error("Enter your 2-factor code.");
+
+  const { error } = await supabaseClient.auth.mfa.challengeAndVerify({
+    factorId,
+    code
+  });
+  if (error) throw error;
+
+  const stillRequiresMfa = await shouldRequireMfaChallenge();
+  if (stillRequiresMfa) {
+    throw new Error("That code was not accepted. Try the newest code from your authenticator app.");
+  }
+
+  authMfaChallengeInProgress = false;
+  authMfaPendingFactors = [];
+  const user = await getSupabaseUser();
+  currentAuthUser = user || currentAuthUser;
+  setAppEntryChoice("auth");
+  closeAuthModal();
+  await initializeSignedInAccount(currentAuthUser, { reason: "mfa-login" });
+}
+
+async function cancelPendingMfaChallenge() {
+  authMfaChallengeInProgress = false;
+  authMfaPendingFactors = [];
+  authPasswordLoginInProgress = false;
+  await supabaseClient?.auth?.signOut?.();
+  currentAuthUser = null;
+  setAuthStatus("authMfaLoginStatus", "");
+  setAuthPanel("login");
+  showModalById("authModal");
 }
 
 function getPasswordHistoryKey(email = "") {
@@ -36454,6 +36583,12 @@ document.addEventListener("click", async (e) => {
     setAuthPanel("login");
   }
 
+  if(e.target.id === "authMfaBackBtn"){
+    e.preventDefault();
+    await cancelPendingMfaChallenge();
+    return;
+  }
+
   if(e.target.id === "authForgotBtn"){
     const loginEmail = document.getElementById("authEmail")?.value?.trim() || "";
     const resetEmail = document.getElementById("authResetEmail");
@@ -36478,20 +36613,49 @@ document.addEventListener("click", async (e) => {
       return;
     }
 
+    authPasswordLoginInProgress = true;
+    const restoreButton = setAuthButtonLoading(e.target, "Checking...");
     const { error } = await supabaseClient.auth.signInWithPassword({
       email,
       password: pass
     });
 
     if(error){
+      authPasswordLoginInProgress = false;
+      restoreButton();
       alert("Invalid username or password.");
       return;
     }
 
-    setAppEntryChoice("auth");
-    closeAuthModal();
-    const signedInUser = (await supabaseClient.auth.getUser()).data?.user || null;
-    await initializeSignedInAccount(signedInUser, { reason: "password-login" });
+    try {
+      if (await prepareMfaChallengeAfterLogin()) {
+        restoreButton();
+        return;
+      }
+      authPasswordLoginInProgress = false;
+      setAppEntryChoice("auth");
+      closeAuthModal();
+      const signedInUser = (await supabaseClient.auth.getUser()).data?.user || null;
+      await initializeSignedInAccount(signedInUser, { reason: "password-login" });
+    } catch (mfaError) {
+      authPasswordLoginInProgress = false;
+      await supabaseClient.auth.signOut();
+      alert(mfaError?.message || "Unable to check 2-factor authentication for this account.");
+    } finally {
+      restoreButton();
+    }
+  }
+
+  if(e.target.id === "authVerifyMfaBtn"){
+    const restoreButton = setAuthButtonLoading(e.target, "Verifying...");
+    try {
+      await verifyPendingMfaChallenge();
+      authPasswordLoginInProgress = false;
+    } catch(error) {
+      setAuthStatus("authMfaLoginStatus", error?.message || "Unable to verify that 2-factor code.");
+    } finally {
+      restoreButton();
+    }
   }
 
   if(e.target.id === "authGoogleBtn"){
@@ -36516,7 +36680,7 @@ document.addEventListener("click", async (e) => {
     const recoveryEmail = document.getElementById("authRecoveryEmail")?.value?.trim();
     const recoveryPhone = document.getElementById("authRecoveryPhone")?.value?.trim();
     const mfaEnabled = Boolean(document.getElementById("authMfaEnabled")?.checked);
-    const mfaMethod = document.querySelector("input[name='authMfaMethod']:checked")?.value || "";
+    const mfaMethod = document.querySelector("input[name='authMfaMethod']:checked")?.value || "totp";
 
     if(!accountName || !email || !pass || !confirmPass){
       setAuthStatus("authSignupStatus", "Enter an account name, email, password, and confirmation password.");

@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260527-login-riot-profile-01">
+  <link rel="stylesheet" href="app.css?v=20260527-mfa-login-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -62,6 +62,25 @@ AUTH MODAL
         <button id="authShowSignupBtn" type="button" class="auth-link-button auth-signup-centered">Sign Up to RankedCoach</button>
       </div>
 
+      <div class="auth-launch-copy auth-panel" data-auth-panel="mfa" hidden>
+        <div class="profile-edit-panel-title auth-welcome-title">Verify your login</div>
+        <div class="profile-edit-panel-copy auth-mfa-copy">Enter the code from your enrolled 2-factor method to finish signing in.</div>
+
+        <label class="auth-field" id="authMfaFactorField">
+          <span>Verification method</span>
+          <select id="authMfaFactorSelect"></select>
+        </label>
+
+        <label class="auth-field">
+          <span>Security code</span>
+          <input id="authMfaCode" type="text" inputmode="numeric" maxlength="10" placeholder="Enter code" autocomplete="one-time-code" />
+        </label>
+
+        <div id="authMfaLoginStatus" class="auth-status" aria-live="polite"></div>
+        <button id="authVerifyMfaBtn" type="button" class="pd-item auth-action-btn auth-main-btn">Verify Login</button>
+        <button id="authMfaBackBtn" type="button" class="auth-link-button auth-signup-centered">Back to login</button>
+      </div>
+
       <div class="auth-launch-copy auth-panel" data-auth-panel="signup" hidden>
         <div class="profile-edit-panel-title auth-welcome-title">Create your RankedCoach account</div>
 
@@ -114,8 +133,8 @@ AUTH MODAL
           </label>
           <div class="auth-mfa-methods" id="authMfaMethods" hidden>
             <label class="auth-mfa-choice">
-              <input type="radio" name="authMfaMethod" value="email" checked>
-              <span>Email</span>
+              <input type="radio" name="authMfaMethod" value="totp" checked>
+              <span>Authenticator app</span>
             </label>
             <label class="auth-mfa-choice">
               <input type="radio" name="authMfaMethod" value="phone">
@@ -235,8 +254,8 @@ AUTH MODAL
 
       <div class="auth-mfa-methods security-mfa-methods" id="securityMfaMethods" hidden>
         <label class="auth-mfa-choice">
-          <input type="radio" name="securityMfaMethod" value="email" checked>
-          <span>Email</span>
+          <input type="radio" name="securityMfaMethod" value="totp" checked>
+          <span>Authenticator app</span>
         </label>
         <label class="auth-mfa-choice">
           <input type="radio" name="securityMfaMethod" value="phone">
@@ -1778,7 +1797,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260527-login-riot-profile-01"></script>
+  <script type="module" src="app.js?v=20260527-mfa-login-01"></script>
 </body>
 </html>
 
