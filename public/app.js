@@ -33169,12 +33169,13 @@ function saveProfiles(){
 }
 
 function createProfileTheme(value, label, mode, colors = {}) {
-  const text = mode === "light" ? "#172033" : "#f8fafc";
-  const muted = mode === "light" ? "#5f6b7d" : "#a8b3c7";
-  const base = colors.base || (mode === "light" ? "#f7f4eb" : "#071029");
-  const base2 = colors.base2 || (mode === "light" ? "#e5ddcc" : "#071b2b");
-  const card = colors.card || (mode === "light" ? "#fffaf0" : "#0b1220");
-  const card2 = colors.card2 || (mode === "light" ? "#ece4d2" : "#0f172a");
+  const isLight = mode === "light";
+  const text = isLight ? "#0f172a" : "#f8fafc";
+  const muted = isLight ? "#334155" : "#a8b3c7";
+  const base = colors.base || (isLight ? "#f8fafc" : "#071029");
+  const base2 = colors.base2 || (isLight ? "#e2e8f0" : "#071b2b");
+  const card = colors.card || (isLight ? "#ffffff" : "#0b1220");
+  const card2 = colors.card2 || (isLight ? "#e7eef5" : "#0f172a");
   const accent = colors.accent || "#ff4655";
   const accent2 = colors.accent2 || "#f97316";
   return {
@@ -33185,20 +33186,20 @@ function createProfileTheme(value, label, mode, colors = {}) {
     colors: {
       base,
       base2,
-      nav: colors.nav || (mode === "light" ? "rgba(248,244,235,.88)" : "rgba(11,18,32,.86)"),
+      nav: colors.nav || (isLight ? `color-mix(in srgb, ${base} 90%, transparent)` : "rgba(11,18,32,.86)"),
       card,
       card2,
-      input: colors.input || (mode === "light" ? "#ebe4d6" : "#111827"),
-      modal: colors.modal || (mode === "light" ? "#fbf7ef" : "#080d18"),
-      overlay: colors.overlay || (mode === "light" ? "rgba(212,205,190,.62)" : "rgba(3,7,18,.78)"),
-      border: colors.border || (mode === "light" ? "rgba(46,56,74,.16)" : "rgba(148,163,184,.16)"),
+      input: colors.input || (isLight ? card2 : "#111827"),
+      modal: colors.modal || (isLight ? card : "#080d18"),
+      overlay: colors.overlay || (isLight ? "rgba(15,23,42,.42)" : "rgba(3,7,18,.78)"),
+      border: colors.border || (isLight ? "rgba(15,23,42,.16)" : "rgba(148,163,184,.16)"),
       borderStrong: colors.borderStrong || `${accent}66`,
       text: colors.text || text,
       muted: colors.muted || muted,
       accent,
       accent2,
-      button: colors.button || (mode === "light" ? "#ded6c7" : "#1e293b"),
-      buttonHover: colors.buttonHover || (mode === "light" ? "#d2c7b7" : "#334155"),
+      button: colors.button || (isLight ? card2 : "#1e293b"),
+      buttonHover: colors.buttonHover || (isLight ? base2 : "#334155"),
       glow: colors.glow || `${accent}42`,
       pattern: colors.pattern || `radial-gradient(circle at 18% 14%, ${accent}24, transparent 28%), linear-gradient(135deg, transparent 0 48%, ${accent2}14 76%, transparent 100%)`,
       pattern2: colors.pattern2 || `radial-gradient(circle at 82% 18%, ${accent2}20, transparent 24%)`
@@ -34119,6 +34120,21 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const root = document.documentElement;
   const body = document.body;
   const colors = theme?.colors || {};
+  const baseSurface = colors.base || "#071029";
+  const secondarySurface = colors.base2 || "#071b2b";
+  const cardSurface = colors.card || "#0b1220";
+  const childSurface = colors.card2 || "#0f172a";
+  const inputSurface = colors.input || childSurface;
+  const modalSurface = colors.modal || cardSurface;
+  const softBorder = colors.border || "rgba(148,163,184,.14)";
+  const strongBorder = colors.borderStrong || "rgba(148,163,184,.38)";
+  const mainText = colors.text || "#e6eef8";
+  const mutedText = colors.muted || "#94a3b8";
+  const primaryAccent = colors.accent || "#ff4655";
+  const secondaryAccent = colors.accent2 || "#f97316";
+  const buttonSurface = colors.button || childSurface;
+  const buttonHoverSurface = colors.buttonHover || secondarySurface;
+  const themeGlow = colors.glow || "rgba(255,70,85,.22)";
 
   if (avatarImg) {
     avatarImg.src = avatarUrl;
@@ -34154,26 +34170,36 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (root) {
-    root.style.setProperty("--surface-base", colors.base || "#071029");
-    root.style.setProperty("--surface-base-2", colors.base2 || "#071b2b");
+    root.style.setProperty("--surface-base", baseSurface);
+    root.style.setProperty("--surface-base-2", secondarySurface);
     root.style.setProperty("--surface-nav", colors.nav || "rgba(11,18,32,.84)");
-    root.style.setProperty("--surface-card", colors.card || "#0b1220");
-    root.style.setProperty("--surface-card-2", colors.card2 || "#0f172a");
-    root.style.setProperty("--surface-input", colors.input || "#0f172a");
-    root.style.setProperty("--surface-modal", colors.modal || "#020617");
+    root.style.setProperty("--surface-card", cardSurface);
+    root.style.setProperty("--surface-card-2", childSurface);
+    root.style.setProperty("--surface-input", inputSurface);
+    root.style.setProperty("--surface-modal", modalSurface);
     root.style.setProperty("--surface-overlay", colors.overlay || "rgba(15,23,42,.7)");
-    root.style.setProperty("--border-soft", colors.border || "rgba(148,163,184,.14)");
-    root.style.setProperty("--border-strong", colors.borderStrong || "rgba(148,163,184,.38)");
-    root.style.setProperty("--text-main", colors.text || "#e6eef8");
-    root.style.setProperty("--text-muted", colors.muted || "#94a3b8");
-    root.style.setProperty("--accent", colors.accent || "#ff4655");
-    root.style.setProperty("--accent-2", colors.accent2 || "#f97316");
-    root.style.setProperty("--button-bg", colors.button || "#1e293b");
-    root.style.setProperty("--button-hover", colors.buttonHover || "#334155");
-    root.style.setProperty("--theme-glow", colors.glow || "rgba(255,70,85,.22)");
-    root.style.setProperty("--theme-bg-gradient", `linear-gradient(180deg, ${colors.base || "#071029"}, ${colors.base2 || "#071b2b"})`);
+    root.style.setProperty("--border-soft", softBorder);
+    root.style.setProperty("--border-strong", strongBorder);
+    root.style.setProperty("--text-main", mainText);
+    root.style.setProperty("--text-muted", mutedText);
+    root.style.setProperty("--accent", primaryAccent);
+    root.style.setProperty("--accent-2", secondaryAccent);
+    root.style.setProperty("--button-bg", buttonSurface);
+    root.style.setProperty("--button-hover", buttonHoverSurface);
+    root.style.setProperty("--theme-glow", themeGlow);
+    root.style.setProperty("--theme-bg-gradient", `linear-gradient(180deg, ${baseSurface}, ${secondarySurface})`);
     root.style.setProperty("--theme-bg-pattern", colors.pattern || "radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)");
     root.style.setProperty("--theme-bg-pattern-2", colors.pattern2 || "radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)");
+    root.style.setProperty("--theme-primary-surface", cardSurface);
+    root.style.setProperty("--theme-primary-surface-2", childSurface);
+    root.style.setProperty("--theme-secondary", primaryAccent);
+    root.style.setProperty("--theme-secondary-2", secondaryAccent);
+    root.style.setProperty("--theme-standout-bg", `radial-gradient(circle at 8% 0%, color-mix(in srgb, ${primaryAccent} 24%, transparent), transparent 36%), radial-gradient(circle at 92% 18%, color-mix(in srgb, ${secondaryAccent} 18%, transparent), transparent 34%), linear-gradient(135deg, color-mix(in srgb, ${cardSurface} 84%, ${primaryAccent} 16%), color-mix(in srgb, ${childSurface} 86%, ${secondaryAccent} 14%))`);
+    root.style.setProperty("--theme-standout-bg-strong", `radial-gradient(circle at 0% 0%, color-mix(in srgb, ${primaryAccent} 34%, transparent), transparent 42%), linear-gradient(135deg, color-mix(in srgb, ${cardSurface} 74%, ${primaryAccent} 26%), color-mix(in srgb, ${childSurface} 82%, ${secondaryAccent} 18%))`);
+    root.style.setProperty("--theme-standout-border", `color-mix(in srgb, ${primaryAccent} 58%, ${strongBorder})`);
+    root.style.setProperty("--theme-standout-border-soft", `color-mix(in srgb, ${secondaryAccent} 42%, ${softBorder})`);
+    root.style.setProperty("--theme-standout-text", mainText);
+    root.style.setProperty("--theme-standout-muted", mutedText);
   }
 
   if (body) {

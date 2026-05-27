@@ -25873,3 +25873,132 @@ body[data-theme="reaver"] .profile-dropdown.profile-dropdown-pills.open{
   min-height:0 !important;
   align-items:center !important;
 }
+
+/* =========================
+   FINAL THEME READABILITY + STANDOUT PANELS
+   Keeps high-priority panels visually special without breaking the selected theme.
+========================= */
+body[data-theme]{
+  color:var(--text-main) !important;
+  background:
+    var(--theme-bg-pattern),
+    var(--theme-bg-pattern-2),
+    var(--theme-bg-gradient) !important;
+}
+
+body[data-theme] :is(
+  .card,
+  .nav-rr-widget,
+  .profile-panel,
+  .logging-card,
+  .insights-top-card,
+  .insights-action-card,
+  .insights-trends-card,
+  .stats-card,
+  .lens-modal,
+  .agent-modal,
+  .profile-dropdown,
+  .profile-switcher,
+  .ask-coach-panel-inner
+){
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 32%),
+    linear-gradient(145deg, var(--surface-card), var(--surface-card-2)) !important;
+  color:var(--text-main) !important;
+  border-color:color-mix(in srgb, var(--accent) 24%, var(--border-soft)) !important;
+}
+
+body[data-theme] :is(input, select, textarea, .auth-input){
+  background:var(--surface-input) !important;
+  color:var(--text-main) !important;
+  border-color:var(--border-strong) !important;
+}
+
+body[data-theme] :is(input, select, textarea, .auth-input)::placeholder{
+  color:color-mix(in srgb, var(--text-muted) 72%, transparent) !important;
+}
+
+body[data-theme] :is(
+  .card-sub,
+  .profile-line-sub,
+  .profile-line-rr,
+  .logging-hero-text,
+  .logging-live-sub,
+  .insight-action-copy,
+  .insight-focus-detail > div:last-child,
+  .trend-signal-detail,
+  .stats-breakdown-detail
+){
+  color:var(--text-muted) !important;
+}
+
+#page-logging .logging-hero{
+  border-color:var(--theme-standout-border) !important;
+  background:var(--theme-standout-bg-strong) !important;
+  color:var(--theme-standout-text) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text-main) 10%, transparent),
+    0 20px 44px color-mix(in srgb, var(--theme-glow) 42%, transparent) !important;
+}
+
+#page-logging .logging-hero-kicker,
+#page-logging .logging-live-pill{
+  color:color-mix(in srgb, var(--accent) 78%, var(--text-main)) !important;
+  border-color:var(--theme-standout-border) !important;
+}
+
+#page-logging .logging-hero-title,
+#page-logging .logging-live-focus{
+  color:var(--theme-standout-text) !important;
+}
+
+#page-logging .logging-live-card{
+  border-color:var(--theme-standout-border-soft) !important;
+  background:var(--theme-standout-bg) !important;
+  color:var(--theme-standout-text) !important;
+}
+
+#page-insights .insights-action-card{
+  border-color:color-mix(in srgb, var(--accent) 32%, var(--border-soft)) !important;
+  background:
+    radial-gradient(circle at 4% 10%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 30%),
+    linear-gradient(135deg, var(--surface-card), var(--surface-card-2)) !important;
+  color:var(--text-main) !important;
+}
+
+#page-insights .insights-action-card .insight-action-hero{
+  border-color:var(--theme-standout-border) !important;
+  background:var(--theme-standout-bg-strong) !important;
+  color:var(--theme-standout-text) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--text-main) 9%, transparent),
+    0 12px 26px color-mix(in srgb, var(--theme-glow) 30%, transparent) !important;
+}
+
+#page-insights .insights-action-card .insight-focus-detail{
+  border-color:var(--theme-standout-border-soft) !important;
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card-2) 92%, var(--accent) 8%), color-mix(in srgb, var(--surface-card) 88%, var(--accent-2) 12%)) !important;
+  color:var(--text-main) !important;
+}
+
+#page-insights .insights-action-card > .insight-action-kicker-top,
+#page-insights .insights-action-card .insight-action-kicker,
+#page-insights .insights-action-card .insight-label{
+  color:color-mix(in srgb, var(--accent) 76%, var(--text-main)) !important;
+  text-shadow:none !important;
+}
+
+#page-insights .insights-action-card .insight-action-copy,
+#page-insights .insights-action-card .insight-focus-detail > div:last-child{
+  color:var(--theme-standout-muted) !important;
+}
+
+#page-insights .insights-action-card .insight-progress{
+  background:color-mix(in srgb, var(--surface-input) 82%, var(--accent) 18%) !important;
+}
+
+#page-insights .insights-action-card .insight-progress-bar{
+  background:linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+}
