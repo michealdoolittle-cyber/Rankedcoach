@@ -34205,6 +34205,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   if (body) {
     body.classList.remove("theme-static", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
     body.dataset.theme = themeKey;
+    body.dataset.themeMode = theme.mode || "dark";
     body.classList.add(`theme-${theme.motion || "static"}`);
     if (accessibility.contrastMode === "high") body.classList.add("access-high-contrast");
     if (accessibility.layoutMode === "mobile") body.classList.add("access-mobile-layout");
@@ -34233,6 +34234,301 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
   applyThemeBuilderRuntimeStyles();
   syncThemeBuilderUI();
+  applyThemeReadabilityRuntimeStyles(theme);
+}
+
+const THEME_READABILITY_RUNTIME_STYLE_ID = "theme-readability-runtime-style";
+
+function applyThemeReadabilityRuntimeStyles(theme = getThemePreset("default")) {
+  let style = document.getElementById(THEME_READABILITY_RUNTIME_STYLE_ID);
+  if (!style) {
+    style = document.createElement("style");
+    style.id = THEME_READABILITY_RUNTIME_STYLE_ID;
+    document.head.appendChild(style);
+  }
+
+  const isLight = (theme?.mode || "dark") === "light";
+  const sharedCss = `
+body[data-theme] #page-logging .logging-hero,
+body[data-theme] #page-insights .insights-action-card .insight-action-hero{
+  border-color:var(--theme-standout-border) !important;
+  background:var(--theme-standout-bg-strong) !important;
+  color:var(--theme-standout-text) !important;
+}
+body[data-theme] #page-logging .logging-live-card,
+body[data-theme] #page-insights .insights-action-card .insight-focus-detail{
+  border-color:var(--theme-standout-border-soft) !important;
+  background:var(--theme-standout-bg) !important;
+  color:var(--theme-standout-text) !important;
+}
+body[data-theme] #page-insights .insights-action-card{
+  background:linear-gradient(135deg, var(--surface-card), var(--surface-card-2)) !important;
+  border-color:color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+}
+`;
+
+  const lightCss = `
+body[data-theme-mode="light"]{
+  color:var(--text-main) !important;
+  background:
+    var(--theme-bg-pattern),
+    var(--theme-bg-pattern-2),
+    var(--theme-bg-gradient) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .app-shell,
+  .card,
+  .weekly-focus-card,
+  .improvement-card,
+  .loadout-card,
+  .compass-panel,
+  .compass-main,
+  .rr-card,
+  .rr-chart-card,
+  .logging-card,
+  .logging-feed-card,
+  .insights-top-card,
+  .insights-action-card,
+  .insights-trends-card,
+  .stats-summary-card,
+  .stats-performance-card,
+  .stats-agents-card,
+  .stats-maps-card,
+  .stats-breakdown-card,
+  .stats-weapons-card,
+  .stats-proof-card,
+  .stats-role-progress-card,
+  .lens-modal,
+  .agent-modal,
+  .profile-dropdown,
+  .profile-switcher,
+  .ask-coach-panel-inner
+){
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 32%),
+    linear-gradient(145deg, var(--surface-card), var(--surface-card-2)) !important;
+  border-color:color-mix(in srgb, var(--accent) 24%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .weekly-focus-pill,
+  .improvement-pill,
+  .role-filter-row button,
+  #spinAgentBtn,
+  #agentFrame,
+  .home-loadout-pill,
+  .compass-summary-shell,
+  .compass-summary-top-shell,
+  .compass-score-card,
+  .scorebox,
+  .rr-total,
+  .impact-meter,
+  .impact-role-pill,
+  .rr-match-stats,
+  .rr-stat,
+  .chart-controls button,
+  .logging-hero,
+  .logging-live-card,
+  .logging-pill,
+  .logging-input,
+  .logging-chip,
+  .logging-quick-toggle,
+  .logging-quick-menu,
+  .logging-feed-footnote,
+  .log-feed-day,
+  .log-feed-entry,
+  .session-calendar,
+  .session-calendar-day,
+  .insight-card,
+  .insight-read-card,
+  .insight-action,
+  .insight-action-hero,
+  .insight-focus-detail,
+  .trend-content,
+  .trend-signal-card,
+  .trend-signal-top,
+  .stats-trend-card,
+  .stats-breakdown-cardlet,
+  .stats-map-card,
+  .stats-agent-row,
+  .stats-agent-card,
+  .stats-agent-tile,
+  .stats-weapon-family-row,
+  .stats-weapon-card,
+  .stats-weapon-tile,
+  .stats-weapon-mini,
+  .stats-role-pill,
+  .stats-summary-box,
+  .stats-kpi-card,
+  .nav-rr-widget,
+  .profile-panel
+){
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent-2) 8%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, var(--accent) 12%), color-mix(in srgb, var(--surface-card-2) 90%, var(--accent-2) 10%)) !important;
+  border-color:color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, white 38%, transparent),
+    0 10px 24px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .card-title,
+  .card-sub,
+  .weekly-focus-key,
+  .weekly-focus-text,
+  .improvement-label,
+  .improvement-value,
+  .pill-label,
+  .pill-value,
+  .compass-header,
+  .compass-header .card-sub,
+  .compass-profile-kicker,
+  .compass-profile-title,
+  .compass-profile-meta,
+  .compass-card-label,
+  .compass-card-tier,
+  .compass-card-score-row,
+  .compass-card-meta,
+  .rr-match-stats-title,
+  .rr-match-stats-meta,
+  .rr-stat,
+  .rr-stat span,
+  .rr-stat strong,
+  .nav-rr-label,
+  .nav-rr-value,
+  .nav-rr-top-value,
+  .profile-line-main,
+  .profile-line-sub,
+  .profile-line-rr,
+  .logging-label,
+  .logging-hero-title,
+  .logging-hero-text,
+  .logging-live-focus,
+  .logging-live-meta,
+  .logging-feed,
+  .insight-title,
+  .insight-action-kicker,
+  .insight-action-copy,
+  .insight-label,
+  .insight-focus-detail,
+  .trend-signal-kicker,
+  .trend-signal-value,
+  .trend-signal-detail,
+  .stats-main-text,
+  .stats-sub-text,
+  .stats-breakdown-label,
+  .stats-breakdown-value,
+  .stats-breakdown-detail,
+  .stats-map-meta,
+  .stats-agent-metrics-stack,
+  .stats-weapon-title,
+  .stats-weapon-sub,
+  .stats-weapon-label,
+  .stats-weapon-value
+){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .impact-role-pill,
+  .impact-tier-label,
+  .impact-score-label,
+  .impact-score-label strong,
+  .impact-meter-caption
+){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] :is(.rr-chart-card svg text, .sw-compass-mini text){
+  fill:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] :is(.rr-chart-card .grid line, .rr-chart-card svg line){
+  stroke:color-mix(in srgb, var(--text-main) 22%, transparent) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .card-sub,
+  .logging-hero-text,
+  .logging-live-meta,
+  .insight-action-copy,
+  .trend-signal-detail,
+  .stats-sub-text,
+  .stats-breakdown-detail,
+  .rr-match-stats-meta,
+  .compass-card-meta
+){
+  color:var(--text-muted) !important;
+}
+
+body[data-theme-mode="light"] :is(input, select, textarea, .auth-input){
+  background:var(--surface-input) !important;
+  color:var(--text-main) !important;
+  border-color:var(--border-strong) !important;
+}
+
+body[data-theme-mode="light"] :is(button, .pd-item, .nav-pill, .profile-sync-btn, .ask-coach-toggle, .profile-dropdown-toggle){
+  background:linear-gradient(145deg, var(--button-bg), var(--button-hover)) !important;
+  border-color:color-mix(in srgb, var(--accent) 32%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .nav-pill.active,
+  .role-filter-row button.active,
+  .chart-controls button.active,
+  .insights-filter-btn.active,
+  .logging-chip.active,
+  #logSaveBtn,
+  .auth-main-btn
+){
+  background:linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  color:#ffffff !important;
+  border-color:color-mix(in srgb, var(--accent) 68%, #ffffff 18%) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .weekly-focus-confidence.confidence-high,
+  .tone-good,
+  .stats-value-positive,
+  .stats-weapon-winrate.is-positive
+){
+  color:#047857 !important;
+  border-color:rgba(4,120,87,.46) !important;
+  background:rgba(16,185,129,.14) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .weekly-focus-confidence.confidence-low,
+  .tone-bad,
+  .stats-value-negative,
+  .stats-weapon-winrate.is-negative
+){
+  color:#be123c !important;
+  border-color:rgba(190,18,60,.46) !important;
+  background:rgba(244,63,94,.13) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  button:disabled,
+  .is-empty,
+  .is-locked,
+  .no-data,
+  .disabled,
+  [aria-disabled="true"]
+){
+  opacity:.72 !important;
+  color:color-mix(in srgb, var(--text-main) 68%, transparent) !important;
+}
+`;
+
+  style.textContent = `${sharedCss}\n${isLight ? lightCss : ""}`;
 }
 
 function populateEditProfileModal(profile = getActiveProfile()) {
