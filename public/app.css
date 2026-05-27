@@ -21439,7 +21439,7 @@ html body[data-theme] #page-home #spinAgentBtn{
 #editProfileModal .profile-edit-actions{
   grid-area:actions !important;
   display:flex !important;
-  justify-content:flex-end !important;
+  justify-content:center !important;
   align-items:center !important;
   padding:16px 0 0 !important;
 }
@@ -21448,6 +21448,19 @@ html body[data-theme] #page-home #spinAgentBtn{
 #editProfileModal .profile-edit-actions button{
   min-height:42px !important;
   font-size:14px !important;
+}
+
+#editProfileModal #editProfileSave{
+  width:min(340px, 58%) !important;
+  max-width:340px !important;
+  min-width:220px !important;
+  min-height:44px !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  padding:0 28px !important;
+  margin:0 auto !important;
 }
 
 #editProfileModal .theme-select-hidden{
