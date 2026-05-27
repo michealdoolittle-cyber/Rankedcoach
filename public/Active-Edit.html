@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260527-mfa-login-01">
+  <link rel="stylesheet" href="app.css?v=20260527-totp-enroll-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -124,23 +124,13 @@ AUTH MODAL
           <label class="auth-toggle-row">
             <span>
               <strong>Enable 2-factor authentication</strong>
-              <small>Recommended for launch accounts.</small>
+              <small>Uses an authenticator app after account creation.</small>
             </span>
             <span class="auth-switch-control" aria-hidden="true">
               <input id="authMfaEnabled" type="checkbox" role="switch" />
               <span class="auth-switch-track"></span>
             </span>
           </label>
-          <div class="auth-mfa-methods" id="authMfaMethods" hidden>
-            <label class="auth-mfa-choice">
-              <input type="radio" name="authMfaMethod" value="totp" checked>
-              <span>Authenticator app</span>
-            </label>
-            <label class="auth-mfa-choice">
-              <input type="radio" name="authMfaMethod" value="phone">
-              <span>Phone</span>
-            </label>
-          </div>
           <div id="authMfaWarning" class="auth-security-warning" hidden>Heads up: skipping 2-factor makes account recovery harder if someone gets your password.</div>
         </div>
 
@@ -244,7 +234,7 @@ AUTH MODAL
       <label class="auth-toggle-row security-toggle-row">
         <span>
           <strong>MFA Enable / Disable</strong>
-          <small>RankedCoach will save your preference while provider enrollment is finalized.</small>
+          <small>Uses a 6-digit code from an authenticator app.</small>
         </span>
         <span class="auth-switch-control" aria-hidden="true">
           <input id="securityMfaEnabled" type="checkbox" role="switch" />
@@ -252,15 +242,24 @@ AUTH MODAL
         </span>
       </label>
 
-      <div class="auth-mfa-methods security-mfa-methods" id="securityMfaMethods" hidden>
-        <label class="auth-mfa-choice">
-          <input type="radio" name="securityMfaMethod" value="totp" checked>
-          <span>Authenticator app</span>
-        </label>
-        <label class="auth-mfa-choice">
-          <input type="radio" name="securityMfaMethod" value="phone">
-          <span>Phone</span>
-        </label>
+      <div class="security-totp-setup" id="securityTotpSetup" hidden>
+        <div class="security-totp-copy">
+          <strong>Set up authenticator app</strong>
+          <span>Scan this QR code with 2FAS Auth, Google Authenticator, Authy, or another TOTP app. Then enter the 6-digit code to finish.</span>
+        </div>
+        <div class="security-totp-grid">
+          <div class="security-totp-qr-wrap">
+            <img id="securityTotpQr" class="security-totp-qr" alt="RankedCoach authenticator QR code" />
+          </div>
+          <div class="security-totp-actions">
+            <label class="auth-field">
+              <span>Authenticator code</span>
+              <input id="securityTotpCode" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" />
+            </label>
+            <div class="security-totp-secret" id="securityTotpSecret"></div>
+            <button id="securityTotpVerify" type="button" class="pd-item auth-action-btn auth-main-btn">Verify Authenticator</button>
+          </div>
+        </div>
       </div>
 
       <div id="securitySettingsStatus" class="auth-status" aria-live="polite"></div>
@@ -1797,7 +1796,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260527-mfa-login-01"></script>
+  <script type="module" src="app.js?v=20260527-totp-enroll-01"></script>
 </body>
 </html>
 

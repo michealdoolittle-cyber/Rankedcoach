@@ -5702,6 +5702,7 @@ const WEEKLY_FOCUS_WEEK_KEY = "valtracker_weekly_focus_week_v1";
 const APP_ENTRY_CHOICE_KEY = "valtracker_entry_choice_v1";
 const RIOT_PROFILE_PROMPT_DISMISS_KEY = "rankedcoach_riot_profile_prompt_dismissed_v1";
 let loginInitializationInFlight = false;
+let securityTotpEnrollment = null;
 
 function getCurrentWeekKey() {
   return `week-${formatLocalDateKey(getWeekStart())}`;
@@ -6643,10 +6644,27 @@ function maskPhone(value = "") {
   return `${"*".repeat(Math.max(0, clean.length - 4))}${clean.slice(-4)}`;
 }
 
+function setSecurityTotpSetupVisibility(show = false) {
+  const setup = document.getElementById("securityTotpSetup");
+  if (setup) setup.hidden = !show;
+}
+
+function clearSecurityTotpEnrollment() {
+  securityTotpEnrollment = null;
+  const qr = document.getElementById("securityTotpQr");
+  const code = document.getElementById("securityTotpCode");
+  const secret = document.getElementById("securityTotpSecret");
+  if (qr) qr.removeAttribute("src");
+  if (code) code.value = "";
+  if (secret) secret.textContent = "";
+}
+
 function setSecurityMfaMethodVisibility() {
   const mfaInput = document.getElementById("securityMfaEnabled");
-  const methodWrap = document.getElementById("securityMfaMethods");
-  if (methodWrap) methodWrap.hidden = !Boolean(mfaInput?.checked);
+  if (!mfaInput?.checked) {
+    setSecurityTotpSetupVisibility(false);
+    clearSecurityTotpEnrollment();
+  }
 }
 
 function setSecurityRecoveryMasks(email = "", phone = "") {
@@ -6662,7 +6680,6 @@ function populateSecuritySettingsModal() {
   const recoveryEmailInput = document.getElementById("securityRecoveryEmailInput");
   const recoveryPhoneInput = document.getElementById("securityRecoveryPhoneInput");
   const mfaInput = document.getElementById("securityMfaEnabled");
-  const mfaMethod = String(metadata.mfa_method || "totp").toLowerCase();
 
   if (usernameInput) {
     usernameInput.value = getUserAccountName(currentAuthUser);
@@ -6676,8 +6693,6 @@ function populateSecuritySettingsModal() {
   if (mfaInput) {
     mfaInput.checked = Boolean(metadata.mfa_requested || metadata.mfa_enabled);
   }
-  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${mfaMethod === "phone" ? "phone" : "totp"}"]`);
-  if (selectedMfaMethod) selectedMfaMethod.checked = true;
   setSecurityRecoveryMasks(metadata.recovery_email || "", metadata.recovery_phone || "");
   setSecurityMfaMethodVisibility();
   setAuthStatus("securitySettingsStatus", "");
@@ -6697,11 +6712,164 @@ async function hydrateSecuritySettingsFromBackend() {
   const mfaInput = document.getElementById("securityMfaEnabled");
   if (recoveryEmailInput) recoveryEmailInput.value = data.recovery_email || recoveryEmailInput.value || "";
   if (recoveryPhoneInput) recoveryPhoneInput.value = data.recovery_phone || recoveryPhoneInput.value || "";
-  if (mfaInput) mfaInput.checked = Boolean(data.mfa_enabled);
-  const selectedMfaMethod = document.querySelector(`input[name="securityMfaMethod"][value="${String(data.mfa_method || "").toLowerCase() === "phone" ? "phone" : "totp"}"]`);
-  if (selectedMfaMethod) selectedMfaMethod.checked = true;
+  if (mfaInput) mfaInput.checked = Boolean(data.mfa_enabled || currentAuthUser?.user_metadata?.mfa_requested);
   setSecurityRecoveryMasks(data.recovery_email || "", data.recovery_phone || "");
   setSecurityMfaMethodVisibility();
+}
+
+async function saveSecurityPreferenceRecord({
+  recoveryEmail = "",
+  recoveryPhone = "",
+  mfaEnabled = false,
+  source = "security_settings_modal"
+} = {}) {
+  if (!currentAuthUser || !supabaseClient?.from) return;
+  const { error } = await supabaseClient
+    .from("account_security_preferences")
+    .upsert({
+      user_id: currentAuthUser.id,
+      recovery_email: recoveryEmail || null,
+      recovery_phone: recoveryPhone || null,
+      mfa_enabled: Boolean(mfaEnabled),
+      mfa_method: mfaEnabled ? "totp" : null,
+      security_json: { source },
+      updated_at: nowISO()
+    }, { onConflict: "user_id" });
+  if (error) console.warn("Security preference save failed", error);
+}
+
+async function getVerifiedTotpFactors() {
+  const factors = await getVerifiedMfaFactors();
+  return factors.filter(factor => getMfaFactorType(factor) === "totp");
+}
+
+async function refreshSecurityTotpState() {
+  const mfaInput = document.getElementById("securityMfaEnabled");
+  if (!currentAuthUser || !supabaseClient?.auth?.mfa) return;
+  try {
+    const verifiedTotp = await getVerifiedTotpFactors();
+    if (mfaInput) mfaInput.checked = verifiedTotp.length > 0 || Boolean(currentAuthUser?.user_metadata?.mfa_requested);
+    if (verifiedTotp.length > 0) {
+      setSecurityTotpSetupVisibility(false);
+      clearSecurityTotpEnrollment();
+      setAuthStatus("securitySettingsStatus", "Authenticator app MFA is active for this account.");
+    }
+  } catch (error) {
+    console.warn("Unable to refresh MFA state", error);
+  }
+}
+
+async function startSecurityTotpEnrollment() {
+  const mfaInput = document.getElementById("securityMfaEnabled");
+  if (!currentAuthUser || !supabaseClient?.auth?.mfa?.enroll) {
+    if (mfaInput) mfaInput.checked = false;
+    setAuthStatus("securitySettingsStatus", "Log in before setting up authenticator MFA.");
+    return;
+  }
+
+  const existingTotp = await getVerifiedTotpFactors();
+  if (existingTotp.length) {
+    setSecurityTotpSetupVisibility(false);
+    setAuthStatus("securitySettingsStatus", "Authenticator app MFA is already active.");
+    return;
+  }
+  if (getMfaFactorId(securityTotpEnrollment || {})) {
+    setSecurityTotpSetupVisibility(true);
+    setAuthStatus("securitySettingsStatus", "Scan the QR code already shown, then enter the 6-digit code from your authenticator app.");
+    return;
+  }
+
+  clearSecurityTotpEnrollment();
+  const { data, error } = await supabaseClient.auth.mfa.enroll({
+    factorType: "totp",
+    friendlyName: "RankedCoach"
+  });
+  if (error) {
+    if (mfaInput) mfaInput.checked = false;
+    throw error;
+  }
+
+  securityTotpEnrollment = data || null;
+  const qr = document.getElementById("securityTotpQr");
+  const code = document.getElementById("securityTotpCode");
+  const secret = document.getElementById("securityTotpSecret");
+  const qrCode = data?.totp?.qr_code || data?.totp?.qrCode || "";
+  const secretText = data?.totp?.secret || "";
+  if (qr && qrCode) qr.src = qrCode;
+  if (secret) secret.textContent = secretText ? `Manual setup key: ${secretText}` : "";
+  setSecurityTotpSetupVisibility(true);
+  setAuthStatus("securitySettingsStatus", "Scan the QR code, then enter the 6-digit code from your authenticator app.");
+  window.setTimeout(() => code?.focus(), 80);
+}
+
+async function verifySecurityTotpEnrollment() {
+  const factorId = getMfaFactorId(securityTotpEnrollment || {});
+  const code = String(document.getElementById("securityTotpCode")?.value || "").trim();
+  if (!factorId) throw new Error("Start MFA setup first so RankedCoach can create the QR code.");
+  if (!code) throw new Error("Enter the 6-digit code from your authenticator app.");
+
+  const { error } = await supabaseClient.auth.mfa.challengeAndVerify({
+    factorId,
+    code
+  });
+  if (error) throw error;
+
+  const mfaInput = document.getElementById("securityMfaEnabled");
+  const recoveryEmail = document.getElementById("securityRecoveryEmailInput")?.value?.trim() || "";
+  const recoveryPhone = document.getElementById("securityRecoveryPhoneInput")?.value?.trim() || "";
+  if (mfaInput) mfaInput.checked = true;
+  const { data, error: updateError } = await supabaseClient.auth.updateUser({
+    data: {
+      ...getAccountSecurityMetadata(),
+      mfa_requested: false,
+      mfa_enabled: true,
+      mfa_method: "totp"
+    }
+  });
+  if (updateError) throw updateError;
+  currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
+  await saveSecurityPreferenceRecord({
+    recoveryEmail,
+    recoveryPhone,
+    mfaEnabled: true,
+    source: "totp_enrollment"
+  });
+  clearSecurityTotpEnrollment();
+  setSecurityTotpSetupVisibility(false);
+  updateAuthUI?.(currentAuthUser);
+  setAuthStatus("securitySettingsStatus", "Authenticator app MFA is active. You will be asked for a code on future logins.");
+}
+
+async function disableSecurityTotpMfa() {
+  const recoveryEmail = document.getElementById("securityRecoveryEmailInput")?.value?.trim() || "";
+  const recoveryPhone = document.getElementById("securityRecoveryPhoneInput")?.value?.trim() || "";
+  const factors = await getVerifiedTotpFactors();
+  for (const factor of factors) {
+    const factorId = getMfaFactorId(factor);
+    if (!factorId || !supabaseClient?.auth?.mfa?.unenroll) continue;
+    const { error } = await supabaseClient.auth.mfa.unenroll({ factorId });
+    if (error) throw error;
+  }
+  const { data, error } = await supabaseClient.auth.updateUser({
+    data: {
+      ...getAccountSecurityMetadata(),
+      mfa_requested: false,
+      mfa_enabled: false,
+      mfa_method: null
+    }
+  });
+  if (error) throw error;
+  currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
+  await saveSecurityPreferenceRecord({
+    recoveryEmail,
+    recoveryPhone,
+    mfaEnabled: false,
+    source: "totp_disabled"
+  });
+  clearSecurityTotpEnrollment();
+  setSecurityTotpSetupVisibility(false);
+  updateAuthUI?.(currentAuthUser);
+  setAuthStatus("securitySettingsStatus", "Authenticator app MFA is disabled.");
 }
 
 function openSecuritySettingsModal() {
@@ -6712,6 +6880,7 @@ function openSecuritySettingsModal() {
   populateSecuritySettingsModal();
   showModalById("securitySettingsModal");
   void hydrateSecuritySettingsFromBackend();
+  void refreshSecurityTotpState();
 }
 
 function closeSecuritySettingsModal() {
@@ -6728,7 +6897,6 @@ async function saveSecuritySettingsModal() {
   const recoveryEmail = document.getElementById("securityRecoveryEmailInput")?.value?.trim() || "";
   const recoveryPhone = document.getElementById("securityRecoveryPhoneInput")?.value?.trim() || "";
   const mfaEnabled = Boolean(document.getElementById("securityMfaEnabled")?.checked);
-  const mfaMethod = document.querySelector("input[name='securityMfaMethod']:checked")?.value || "totp";
 
   if (!isValidAccountUsername(username)) {
     setAuthStatus("securitySettingsStatus", "Username must be 3-16 characters and use only letters, numbers, underscores, or dashes.");
@@ -6739,34 +6907,33 @@ async function saveSecuritySettingsModal() {
   const restoreButton = setAuthButtonLoading(saveBtn, "Saving...");
 
   try {
+    const verifiedTotp = await getVerifiedTotpFactors();
+    if (mfaEnabled && !verifiedTotp.length) {
+      setAuthStatus("securitySettingsStatus", "Finish the authenticator QR setup before saving MFA as enabled.");
+      await startSecurityTotpEnrollment();
+      return;
+    }
+
     const { data, error } = await supabaseClient.auth.updateUser({
       data: {
         ...getAccountSecurityMetadata(),
         account_name: username,
         recovery_email: recoveryEmail || null,
         recovery_phone: recoveryPhone || null,
-        mfa_requested: mfaEnabled,
+        mfa_requested: false,
         mfa_enabled: mfaEnabled,
-        mfa_method: mfaEnabled ? mfaMethod : null
+        mfa_method: mfaEnabled ? "totp" : null
       }
     });
     if (error) throw error;
     currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
 
-    const { error: securityPrefsError } = await supabaseClient
-      .from("account_security_preferences")
-      .upsert({
-        user_id: currentAuthUser.id,
-        recovery_email: recoveryEmail || null,
-        recovery_phone: recoveryPhone || null,
-        mfa_enabled: mfaEnabled,
-        mfa_method: mfaEnabled ? mfaMethod : null,
-        security_json: { source: "security_settings_modal" },
-        updated_at: nowISO()
-      }, { onConflict: "user_id" });
-    if (securityPrefsError) {
-      console.warn("Security preference save failed", securityPrefsError);
-    }
+    await saveSecurityPreferenceRecord({
+      recoveryEmail,
+      recoveryPhone,
+      mfaEnabled,
+      source: "security_settings_modal"
+    });
 
     updateAuthUI?.(currentAuthUser);
     updateProfileHeaderUI?.();
@@ -36546,13 +36713,29 @@ async function verifyPasswordRecoveryCode(email = "", code = "") {
 
 document.getElementById("authMfaEnabled")?.addEventListener("change", (event) => {
   const enabled = Boolean(event.target?.checked);
-  const methods = document.getElementById("authMfaMethods");
   const warning = document.getElementById("authMfaWarning");
-  if (methods) methods.hidden = !enabled;
-  if (warning) warning.hidden = true;
+  if (warning) {
+    warning.hidden = !enabled;
+    warning.textContent = enabled
+      ? "After creating the account, open Security Settings to scan your authenticator QR code."
+      : "Heads up: skipping 2-factor makes account recovery harder if someone gets your password.";
+  }
 });
 
-document.getElementById("securityMfaEnabled")?.addEventListener("change", setSecurityMfaMethodVisibility);
+document.getElementById("securityMfaEnabled")?.addEventListener("change", async (event) => {
+  const enabled = Boolean(event.target?.checked);
+  try {
+    if (enabled) {
+      await startSecurityTotpEnrollment();
+    } else {
+      await disableSecurityTotpMfa();
+    }
+  } catch (error) {
+    event.target.checked = !enabled;
+    setSecurityMfaMethodVisibility();
+    setAuthStatus("securitySettingsStatus", error?.message || "Unable to update authenticator MFA.");
+  }
+});
 
 
 // ========================
@@ -36586,6 +36769,19 @@ document.addEventListener("click", async (e) => {
   if(e.target.id === "authMfaBackBtn"){
     e.preventDefault();
     await cancelPendingMfaChallenge();
+    return;
+  }
+
+  if(e.target.id === "securityTotpVerify"){
+    e.preventDefault();
+    const restoreButton = setAuthButtonLoading(e.target, "Verifying...");
+    try {
+      await verifySecurityTotpEnrollment();
+    } catch(error) {
+      setAuthStatus("securitySettingsStatus", error?.message || "Unable to verify the authenticator code.");
+    } finally {
+      restoreButton();
+    }
     return;
   }
 
@@ -36680,7 +36876,6 @@ document.addEventListener("click", async (e) => {
     const recoveryEmail = document.getElementById("authRecoveryEmail")?.value?.trim();
     const recoveryPhone = document.getElementById("authRecoveryPhone")?.value?.trim();
     const mfaEnabled = Boolean(document.getElementById("authMfaEnabled")?.checked);
-    const mfaMethod = document.querySelector("input[name='authMfaMethod']:checked")?.value || "totp";
 
     if(!accountName || !email || !pass || !confirmPass){
       setAuthStatus("authSignupStatus", "Enter an account name, email, password, and confirmation password.");
@@ -36717,7 +36912,8 @@ document.addEventListener("click", async (e) => {
           recovery_email: recoveryEmail || null,
           recovery_phone: recoveryPhone || null,
           mfa_requested: mfaEnabled,
-          mfa_method: mfaEnabled ? mfaMethod : null
+          mfa_enabled: false,
+          mfa_method: mfaEnabled ? "totp" : null
         }
       }
     });
@@ -36732,7 +36928,7 @@ document.addEventListener("click", async (e) => {
     clearPasswordRules("authPasswordRules");
     setAppEntryChoice("auth");
     setAuthStatus("authSignupStatus", mfaEnabled
-      ? "Account created. RankedCoach saved your 2FA preference; provider enrollment still needs backend setup before launch."
+      ? "Account created. Open Security Settings after login to scan your authenticator QR code."
       : "Account created. Please confirm your email if Supabase asks for verification."
     );
     const signedUpUser = (await supabaseClient.auth.getUser()).data?.user || null;
@@ -36749,8 +36945,8 @@ document.addEventListener("click", async (e) => {
           user_id: signedUpUser.id,
           recovery_email: recoveryEmail || null,
           recovery_phone: recoveryPhone || null,
-          mfa_enabled: mfaEnabled,
-          mfa_method: mfaEnabled ? mfaMethod : null,
+          mfa_enabled: false,
+          mfa_method: mfaEnabled ? "totp" : null,
           password_fingerprint_history: getStoredPasswordFingerprints(email),
           security_json: { source: "signup", mfa_setup_pending: mfaEnabled },
           updated_at: nowISO()
