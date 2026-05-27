@@ -31266,11 +31266,13 @@ function bindEvents(){
     document.getElementById(id)?.addEventListener("change", previewEditProfileVisuals);
   });
 
-  document.getElementById("editProfileBorderRotate")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    const button = e.currentTarget;
-    setProfileBorderRotateToggle(!button.classList.contains("is-active"));
+  document.getElementById("editProfileBorderRotate")?.addEventListener("change", () => {
     previewEditProfileVisuals();
+  });
+
+  document.getElementById("editProfileBannerAnimationPreview")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    previewProfileBorderAnimation();
   });
 
   document.getElementById("editProfileClose")?.addEventListener("click", (e) => {
@@ -34007,14 +34009,39 @@ function renderBorderGallery(selectedBorder = "standard") {
 function setProfileBorderRotateToggle(enabled = false) {
   const toggle = document.getElementById("editProfileBorderRotate");
   if (!toggle) return;
-  toggle.classList.toggle("is-active", !!enabled);
-  toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+  toggle.checked = !!enabled;
+  toggle.setAttribute("aria-checked", enabled ? "true" : "false");
 }
 
 function getProfileBorderRotateValue(profile = getActiveProfile()) {
   const toggle = document.getElementById("editProfileBorderRotate");
-  if (toggle) return toggle.classList.contains("is-active");
+  if (toggle) return !!toggle.checked;
   return !!profile?.profileBorderRotate;
+}
+
+let profileBorderPreviewTimer = 0;
+
+function previewProfileBorderAnimation() {
+  const panel = document.getElementById("profilePanel");
+  if (!panel) return;
+
+  const shouldRemainAnimated = getProfileBorderRotateValue();
+  previewEditProfileVisuals();
+
+  if (profileBorderPreviewTimer) {
+    window.clearTimeout(profileBorderPreviewTimer);
+    profileBorderPreviewTimer = 0;
+  }
+
+  panel.classList.remove("border-animation-kick");
+  panel.classList.add("border-animated", "border-animation-preview");
+  void panel.offsetWidth;
+  panel.classList.add("border-animation-kick");
+
+  profileBorderPreviewTimer = window.setTimeout(() => {
+    panel.classList.remove("border-animation-preview", "border-animation-kick");
+    panel.classList.toggle("border-animated", shouldRemainAnimated);
+  }, 2200);
 }
 
 function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
@@ -34104,7 +34131,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     panel.classList.remove("theme-classic", "theme-ember", "theme-ocean", "theme-verdant", "theme-cosmic");
     panel.classList.add(`theme-classic`);
     panel.classList.add(`border-${borderStyle}`);
-    panel.classList.toggle("border-rotating", borderRotate);
+    panel.classList.toggle("border-animated", borderRotate);
   }
 
   if (ring) {

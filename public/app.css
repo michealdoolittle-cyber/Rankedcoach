@@ -1214,26 +1214,20 @@ body.theme-readable :is(
   position:absolute;
   inset:-7px;
   border-radius:inherit;
-  border:3px solid transparent;
-  border-top-color:var(--profile-ring-border, #64748b);
-  border-right-color:color-mix(in srgb, var(--profile-ring-border, #64748b) 72%, transparent);
-  border-bottom-color:color-mix(in srgb, var(--profile-ring-border, #64748b) 32%, transparent);
+  border:0;
+  background:none;
   opacity:0;
   pointer-events:none;
   transform-origin:center;
 }
 
-.profile-panel.border-rotating .profile-avatar-ring::before{
+.profile-panel.border-animated .profile-avatar-ring::before{
   opacity:1;
-  animation:profileBorderRotate 4.8s linear infinite;
 }
 
-body.access-reduced-motion .profile-panel.border-rotating .profile-avatar-ring::before{
-  animation:none;
-}
-
-@keyframes profileBorderRotate{
-  to{ transform:rotate(360deg); }
+body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring,
+body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::before{
+  animation:none !important;
 }
 
 .profile-avatar-wrap:hover .profile-avatar-ring {
@@ -13511,6 +13505,164 @@ textarea,
   border-radius:28% 28% 40% 40%;
 }
 
+.profile-panel.border-animated .profile-avatar-ring{
+  will-change:box-shadow, border-color, filter;
+}
+
+.profile-panel.border-animated.border-standard .profile-avatar-ring{
+  animation:profileBorderCleanPulse 2.8s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-halo .profile-avatar-ring{
+  animation:profileBorderHaloBreathe 3.2s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-double .profile-avatar-ring{
+  animation:profileBorderDoubleTick 2.6s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-split .profile-avatar-ring{
+  animation:profileBorderSplitFlicker 2.2s steps(4) infinite;
+}
+
+.profile-panel.border-animated.border-notched .profile-avatar-ring{
+  animation:profileBorderNotchBreathe 3.4s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-hex .profile-avatar-ring{
+  animation:profileBorderHexCharge 3s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-diamond .profile-avatar-ring::before{
+  inset:-9px;
+  border-radius:inherit;
+  background:linear-gradient(135deg, transparent 0 42%, color-mix(in srgb, var(--profile-ring-border) 74%, white 20%) 48% 52%, transparent 58% 100%);
+  background-size:220% 220%;
+  animation:profileBorderGlint 2.8s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-shield .profile-avatar-ring{
+  animation:profileBorderShieldGuard 3s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-crown .profile-avatar-ring{
+  animation:profileBorderCrownGlow 3.4s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-blade .profile-avatar-ring::before{
+  inset:-10px;
+  border-radius:inherit;
+  background:linear-gradient(115deg, transparent 0 44%, color-mix(in srgb, var(--profile-ring-border) 88%, white 10%) 48% 51%, transparent 56% 100%);
+  background-size:240% 100%;
+  animation:profileBorderBladeCut 2.5s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-pulse .profile-avatar-ring{
+  animation:profileBorderSignalPulse 2.4s ease-out infinite;
+}
+
+.profile-panel.border-animated.border-arc .profile-avatar-ring{
+  animation:profileBorderArcFlare 2.8s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-spike .profile-avatar-ring{
+  animation:profileBorderSpikeCharge 2.6s ease-in-out infinite;
+}
+
+.profile-panel.border-animated.border-crosshair .profile-avatar-ring{
+  animation:profileBorderCrosshairPing 2.3s ease-out infinite;
+}
+
+.profile-panel.border-animated.border-vanguard .profile-avatar-ring{
+  animation:profileBorderVanguardLock 3.1s ease-in-out infinite;
+}
+
+.profile-panel.border-animation-kick .profile-avatar-ring,
+.profile-panel.border-animation-kick .profile-avatar-ring::before{
+  animation-duration:1.15s !important;
+  animation-iteration-count:2 !important;
+}
+
+@keyframes profileBorderCleanPulse{
+  0%,100%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--profile-ring-border) 0%, transparent), 0 0 10px var(--profile-ring-glow); filter:saturate(1); }
+  50%{ box-shadow:0 0 0 4px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 22px var(--profile-ring-glow); filter:saturate(1.18); }
+}
+
+@keyframes profileBorderHaloBreathe{
+  0%,100%{ box-shadow:0 0 0 5px color-mix(in srgb, var(--profile-ring-border) 12%, transparent), 0 0 18px var(--profile-ring-glow); }
+  50%{ box-shadow:0 0 0 9px color-mix(in srgb, var(--profile-ring-border) 22%, transparent), 0 0 30px var(--profile-ring-glow); }
+}
+
+@keyframes profileBorderDoubleTick{
+  0%,100%{ box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--profile-ring-border) 32%, transparent), 0 0 0 3px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 12px var(--profile-ring-glow); }
+  45%,55%{ box-shadow:inset 0 0 0 5px color-mix(in srgb, var(--profile-ring-border) 54%, transparent), 0 0 0 5px color-mix(in srgb, var(--profile-ring-border) 28%, transparent), 0 0 24px var(--profile-ring-glow); }
+}
+
+@keyframes profileBorderSplitFlicker{
+  0%,100%{ filter:brightness(1); border-color:var(--profile-ring-border); }
+  35%{ filter:brightness(1.35); border-color:color-mix(in srgb, var(--profile-ring-border) 78%, white 22%); }
+  60%{ filter:brightness(.92); }
+}
+
+@keyframes profileBorderNotchBreathe{
+  0%,100%{ border-radius:34% 66% 38% 62% / 60% 34% 66% 40%; box-shadow:0 0 14px var(--profile-ring-glow); }
+  50%{ border-radius:42% 58% 44% 56% / 54% 40% 60% 46%; box-shadow:0 0 24px var(--profile-ring-glow); }
+}
+
+@keyframes profileBorderHexCharge{
+  0%,100%{ border-color:var(--profile-ring-border); box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 12px var(--profile-ring-glow); }
+  50%{ border-color:color-mix(in srgb, var(--profile-ring-border) 72%, white 28%); box-shadow:0 0 0 4px color-mix(in srgb, var(--profile-ring-border) 20%, transparent), 0 0 24px var(--profile-ring-glow); }
+}
+
+@keyframes profileBorderGlint{
+  0%,100%{ opacity:0; background-position:120% 120%; }
+  45%{ opacity:.7; }
+  70%{ opacity:0; background-position:-40% -40%; }
+}
+
+@keyframes profileBorderShieldGuard{
+  0%,100%{ filter:brightness(1); box-shadow:0 0 0 0 color-mix(in srgb, var(--profile-ring-border) 0%, transparent), 0 0 12px var(--profile-ring-glow); }
+  50%{ filter:brightness(1.2); box-shadow:0 0 0 5px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 22px var(--profile-ring-glow); }
+}
+
+@keyframes profileBorderCrownGlow{
+  0%,100%{ border-color:var(--profile-ring-border); filter:drop-shadow(0 0 8px var(--profile-ring-glow)); }
+  50%{ border-color:color-mix(in srgb, var(--profile-ring-border) 66%, #f8e08e 34%); filter:drop-shadow(0 0 18px var(--profile-ring-glow)); }
+}
+
+@keyframes profileBorderBladeCut{
+  0%,100%{ opacity:0; background-position:120% 0; }
+  35%{ opacity:.82; }
+  64%{ opacity:0; background-position:-70% 0; }
+}
+
+@keyframes profileBorderSignalPulse{
+  0%{ box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 0 0 0 color-mix(in srgb, var(--profile-ring-border) 26%, transparent), 0 0 16px var(--profile-ring-glow); }
+  70%{ box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 0 0 12px color-mix(in srgb, var(--profile-ring-border) 0%, transparent), 0 0 24px var(--profile-ring-glow); }
+  100%{ box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 0 0 0 color-mix(in srgb, var(--profile-ring-border) 0%, transparent), 0 0 16px var(--profile-ring-glow); }
+}
+
+@keyframes profileBorderArcFlare{
+  0%,100%{ border-right-color:color-mix(in srgb, var(--profile-ring-border) 72%, white 12%); filter:brightness(1); }
+  48%{ border-right-color:color-mix(in srgb, var(--profile-ring-border) 38%, white 62%); filter:brightness(1.32); }
+}
+
+@keyframes profileBorderSpikeCharge{
+  0%,100%{ box-shadow:0 0 10px var(--profile-ring-glow); filter:saturate(1); }
+  50%{ box-shadow:0 0 0 4px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 24px var(--profile-ring-glow); filter:saturate(1.24); }
+}
+
+@keyframes profileBorderCrosshairPing{
+  0%{ box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 -9px 0 -6px var(--profile-ring-border), 0 9px 0 -6px var(--profile-ring-border), 9px 0 0 -6px var(--profile-ring-border), -9px 0 0 -6px var(--profile-ring-border); }
+  55%{ box-shadow:0 0 0 6px color-mix(in srgb, var(--profile-ring-border) 16%, transparent), 0 -11px 0 -6px var(--profile-ring-border), 0 11px 0 -6px var(--profile-ring-border), 11px 0 0 -6px var(--profile-ring-border), -11px 0 0 -6px var(--profile-ring-border); }
+  100%{ box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 -9px 0 -6px var(--profile-ring-border), 0 9px 0 -6px var(--profile-ring-border), 9px 0 0 -6px var(--profile-ring-border), -9px 0 0 -6px var(--profile-ring-border); }
+}
+
+@keyframes profileBorderVanguardLock{
+  0%,100%{ filter:brightness(1); box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 12px var(--profile-ring-glow); }
+  50%{ filter:brightness(1.16); box-shadow:0 0 0 3px color-mix(in srgb, var(--profile-ring-border) 22%, transparent), 0 0 20px var(--profile-ring-glow); }
+}
+
 .agent-frame{
   border-color:color-mix(in srgb, var(--agent-role-color, var(--accent)) 28%, var(--border-soft)) !important;
   background:
@@ -23692,36 +23844,33 @@ html body[data-theme] #page-home #spinAgentBtn{
   font-weight:750;
 }
 
-.profile-border-motion-toggle{
-  appearance:none;
-  flex:0 0 auto;
-  width:58px;
-  height:32px;
-  padding:3px;
-  border:1px solid var(--border-strong);
-  border-radius:999px;
-  background:var(--button-bg);
+.profile-border-motion-switch{
+  margin-left:auto;
+}
+
+.profile-border-preview-btn{
+  justify-self:start;
+  min-height:34px;
+  padding:0 14px;
+  border:1px solid color-mix(in srgb, var(--accent) 28%, var(--border-strong));
+  border-radius:12px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 90%, white 8%), var(--button-bg));
+  color:var(--text-main);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.055em;
+  text-transform:uppercase;
   cursor:pointer;
 }
 
-.profile-border-motion-toggle span{
-  display:block;
-  width:24px;
-  height:24px;
-  border-radius:999px;
-  background:var(--text-muted);
-  box-shadow:0 4px 12px rgba(0,0,0,.28);
-  transition:transform .18s ease, background .18s ease;
+.profile-border-preview-btn:hover,
+.profile-border-preview-btn:focus-visible{
+  border-color:color-mix(in srgb, var(--accent) 58%, white 10%);
+  box-shadow:0 0 18px color-mix(in srgb, var(--theme-glow) 48%, transparent);
 }
 
-.profile-border-motion-toggle.is-active{
-  border-color:color-mix(in srgb, var(--accent) 62%, white 8%);
-  background:linear-gradient(90deg, var(--accent), var(--accent-2));
-}
-
-.profile-border-motion-toggle.is-active span{
-  transform:translateX(25px);
-  background:#fff;
+#editProfileModal [data-profile-panel="banner"] .profile-border-preview-btn{
+  margin:6px 0 2px;
 }
 
 .border-card,
