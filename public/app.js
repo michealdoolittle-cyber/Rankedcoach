@@ -31255,6 +31255,7 @@ function bindEvents(){
   [
     "editProfileTheme",
     "editProfileAvatarAgent",
+    "editProfileBorderColor",
     "editProfileBorderStyle",
     "editProfileBannerStyle",
     "editProfileContrastMode",
@@ -31277,6 +31278,13 @@ function bindEvents(){
       hideModalById("editProfileModal");
       updateProfileHeaderUI();
     }
+  });
+
+  document.querySelectorAll("[data-banner-category]").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      setProfileBannerCategory(button.dataset.bannerCategory || "official");
+    });
   });
 
   document.addEventListener("click", (e) => {
@@ -33156,40 +33164,112 @@ function saveProfiles(){
   queuePersistentAccountSave("profiles");
 }
 
+function createProfileTheme(value, label, mode, colors = {}) {
+  const text = mode === "light" ? "#172033" : "#f8fafc";
+  const muted = mode === "light" ? "#5f6b7d" : "#a8b3c7";
+  const base = colors.base || (mode === "light" ? "#f7f4eb" : "#071029");
+  const base2 = colors.base2 || (mode === "light" ? "#e5ddcc" : "#071b2b");
+  const card = colors.card || (mode === "light" ? "#fffaf0" : "#0b1220");
+  const card2 = colors.card2 || (mode === "light" ? "#ece4d2" : "#0f172a");
+  const accent = colors.accent || "#ff4655";
+  const accent2 = colors.accent2 || "#f97316";
+  return {
+    value,
+    label,
+    mode,
+    motion: "static",
+    colors: {
+      base,
+      base2,
+      nav: colors.nav || (mode === "light" ? "rgba(248,244,235,.88)" : "rgba(11,18,32,.86)"),
+      card,
+      card2,
+      input: colors.input || (mode === "light" ? "#ebe4d6" : "#111827"),
+      modal: colors.modal || (mode === "light" ? "#fbf7ef" : "#080d18"),
+      overlay: colors.overlay || (mode === "light" ? "rgba(212,205,190,.62)" : "rgba(3,7,18,.78)"),
+      border: colors.border || (mode === "light" ? "rgba(46,56,74,.16)" : "rgba(148,163,184,.16)"),
+      borderStrong: colors.borderStrong || `${accent}66`,
+      text: colors.text || text,
+      muted: colors.muted || muted,
+      accent,
+      accent2,
+      button: colors.button || (mode === "light" ? "#ded6c7" : "#1e293b"),
+      buttonHover: colors.buttonHover || (mode === "light" ? "#d2c7b7" : "#334155"),
+      glow: colors.glow || `${accent}42`,
+      pattern: colors.pattern || `radial-gradient(circle at 18% 14%, ${accent}24, transparent 28%), linear-gradient(135deg, transparent 0 48%, ${accent2}14 76%, transparent 100%)`,
+      pattern2: colors.pattern2 || `radial-gradient(circle at 82% 18%, ${accent2}20, transparent 24%)`
+    }
+  };
+}
+
 const PROFILE_THEME_PRESETS = [
-  { value: "default", label: "Default", motion: "static", colors: { base:"#071029", base2:"#071b2b", nav:"rgba(11,18,32,.84)", card:"#0b1220", card2:"#0f172a", input:"#0f172a", modal:"#020617", overlay:"rgba(15,23,42,.7)", border:"rgba(148,163,184,.14)", borderStrong:"rgba(148,163,184,.38)", text:"#e6eef8", muted:"#94a3b8", accent:"#ff4655", accent2:"#f97316", button:"#1e293b", buttonHover:"#334155", glow:"rgba(255,70,85,.22)", pattern:"radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)", pattern2:"radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)" } },
-  { value: "prime", label: "Prime", motion: "shimmer", colors: { base:"#0e1117", base2:"#141923", nav:"rgba(18,22,31,.82)", card:"#121722", card2:"#1b2230", input:"#181f2c", modal:"#10141d", overlay:"rgba(12,15,24,.74)", border:"rgba(201,168,92,.18)", borderStrong:"rgba(224,201,132,.42)", text:"#f7f3e7", muted:"#c3b79a", accent:"#d9b55a", accent2:"#8dd8ff", button:"#222b39", buttonHover:"#2f3a4d", glow:"rgba(217,181,90,.26)", pattern:"linear-gradient(120deg, rgba(217,181,90,.1), transparent 28%, rgba(141,216,255,.06) 66%, transparent 100%)", pattern2:"radial-gradient(circle at 80% 18%, rgba(217,181,90,.18), transparent 28%)" } },
-  { value: "ion", label: "Ion", motion: "rings", colors: { base:"#f2f8ff", base2:"#dbeaff", nav:"rgba(230,241,255,.84)", card:"#f8fbff", card2:"#dbe9fb", input:"#eef6ff", modal:"#f8fbff", overlay:"rgba(207,224,246,.68)", border:"rgba(78,129,196,.18)", borderStrong:"rgba(103,162,237,.42)", text:"#10233d", muted:"#4d6889", accent:"#7fd8ff", accent2:"#9f7bff", button:"#d9e8fb", buttonHover:"#cae1ff", glow:"rgba(127,216,255,.32)", pattern:"radial-gradient(circle at 50% 45%, rgba(127,216,255,.24), transparent 18%), radial-gradient(circle at 50% 45%, rgba(159,123,255,.12), transparent 34%)", pattern2:"radial-gradient(circle at 50% 45%, rgba(255,255,255,.68), transparent 44%)" } },
-  { value: "oni", label: "Oni", motion: "kinetic", colors: { base:"#12070c", base2:"#25131b", nav:"rgba(24,10,16,.84)", card:"#1b0e14", card2:"#2b1821", input:"#26151e", modal:"#180b11", overlay:"rgba(12,4,8,.74)", border:"rgba(190,56,75,.18)", borderStrong:"rgba(214,84,92,.42)", text:"#f6e7df", muted:"#c89a91", accent:"#d44e5d", accent2:"#7ac6a8", button:"#341922", buttonHover:"#462430", glow:"rgba(212,78,93,.28)", pattern:"radial-gradient(circle at 20% 20%, rgba(212,78,93,.18), transparent 24%), linear-gradient(140deg, transparent 0 38%, rgba(122,198,168,.08) 58%, transparent 78%)", pattern2:"radial-gradient(circle at 82% 18%, rgba(255,244,214,.08), transparent 20%)" } },
-  { value: "reaver", label: "Reaver", motion: "orbit", colors: { base:"#0b0717", base2:"#171026", nav:"rgba(15,10,28,.86)", card:"#130d22", card2:"#1f1633", input:"#1a132b", modal:"#0e0a1b", overlay:"rgba(8,5,20,.78)", border:"rgba(132,94,255,.18)", borderStrong:"rgba(175,120,255,.42)", text:"#eee9ff", muted:"#b8aad9", accent:"#8b5cf6", accent2:"#ec4899", button:"#241a3b", buttonHover:"#342453", glow:"rgba(139,92,246,.34)", pattern:"radial-gradient(circle at 24% 24%, rgba(139,92,246,.18), transparent 28%), radial-gradient(circle at 76% 18%, rgba(236,72,153,.12), transparent 24%)", pattern2:"conic-gradient(from 0deg at 50% 50%, rgba(139,92,246,.08), transparent 22%, rgba(236,72,153,.08), transparent 46%, rgba(139,92,246,.08))" } },
-  { value: "recon", label: "Recon", motion: "static", colors: { base:"#e7e3d7", base2:"#c9c1b0", nav:"rgba(241,235,224,.84)", card:"#f2ede0", card2:"#d6cfbf", input:"#ece5d7", modal:"#f5f0e6", overlay:"rgba(182,170,149,.62)", border:"rgba(97,90,78,.18)", borderStrong:"rgba(110,102,87,.36)", text:"#1d1c19", muted:"#625c51", accent:"#758b9c", accent2:"#8a6f50", button:"#ddd4c1", buttonHover:"#d3cab8", glow:"rgba(117,139,156,.2)", pattern:"linear-gradient(90deg, rgba(117,139,156,.06) 0 20%, transparent 20% 40%, rgba(138,111,80,.05) 40% 60%, transparent 60% 100%)", pattern2:"radial-gradient(circle at 84% 18%, rgba(255,255,255,.3), transparent 18%)" } },
-  { value: "prelude", label: "Prelude", motion: "orbit", colors: { base:"#090e19", base2:"#11192b", nav:"rgba(10,16,29,.84)", card:"#101728", card2:"#182338", input:"#131d31", modal:"#0b1221", overlay:"rgba(7,10,19,.78)", border:"rgba(246,176,72,.18)", borderStrong:"rgba(250,208,110,.42)", text:"#f7f2e8", muted:"#c9b68d", accent:"#f6b048", accent2:"#8bd8ff", button:"#1e2940", buttonHover:"#2b3651", glow:"rgba(246,176,72,.3)", pattern:"radial-gradient(circle at 20% 18%, rgba(246,176,72,.2), transparent 24%), linear-gradient(145deg, transparent 0 58%, rgba(139,216,255,.08) 76%, transparent 100%)", pattern2:"conic-gradient(from 0deg, rgba(246,176,72,.1), transparent 18%, rgba(139,216,255,.08), transparent 42%, rgba(246,176,72,.1))" } },
-  { value: "rgx", label: "RGX", motion: "kinetic", colors: { base:"#071313", base2:"#0f1c17", nav:"rgba(8,18,16,.84)", card:"#0f1917", card2:"#182723", input:"#13201d", modal:"#0a1412", overlay:"rgba(5,10,9,.76)", border:"rgba(74,222,128,.18)", borderStrong:"rgba(34,197,94,.42)", text:"#edfdf5", muted:"#98d8b2", accent:"#4ade80", accent2:"#facc15", button:"#1b302a", buttonHover:"#254036", glow:"rgba(74,222,128,.28)", pattern:"linear-gradient(135deg, rgba(74,222,128,.12), transparent 28%, rgba(250,204,21,.08) 58%, transparent 82%)", pattern2:"radial-gradient(circle at 76% 20%, rgba(74,222,128,.16), transparent 24%)" } },
-  { value: "arcade", label: "Arcade", motion: "shimmer", colors: { base:"#12072b", base2:"#1d0d42", nav:"rgba(18,8,46,.84)", card:"#1a103a", card2:"#271756", input:"#21144a", modal:"#140a2f", overlay:"rgba(12,5,25,.76)", border:"rgba(34,211,238,.18)", borderStrong:"rgba(244,114,182,.42)", text:"#fff5ff", muted:"#ddb9ff", accent:"#22d3ee", accent2:"#f472b6", button:"#2b1b5d", buttonHover:"#3b2680", glow:"rgba(244,114,182,.3)", pattern:"linear-gradient(90deg, rgba(34,211,238,.12), transparent 20%, rgba(244,114,182,.1) 42%, transparent 62%, rgba(250,204,21,.08) 82%, transparent 100%)", pattern2:"radial-gradient(circle at 78% 18%, rgba(34,211,238,.16), transparent 22%)" } },
-  { value: "singularity", label: "Singularity", motion: "orbit", colors: { base:"#04050a", base2:"#0b1020", nav:"rgba(7,8,16,.86)", card:"#0c1020", card2:"#161d31", input:"#12172b", modal:"#070b16", overlay:"rgba(2,3,8,.82)", border:"rgba(80,111,255,.18)", borderStrong:"rgba(132,108,255,.42)", text:"#eef2ff", muted:"#abb6df", accent:"#7c3aed", accent2:"#38bdf8", button:"#1a2038", buttonHover:"#232c4a", glow:"rgba(124,58,237,.34)", pattern:"radial-gradient(circle at 50% 45%, rgba(124,58,237,.18), transparent 16%), radial-gradient(circle at 50% 45%, rgba(56,189,248,.12), transparent 34%)", pattern2:"conic-gradient(from 180deg at 50% 50%, rgba(124,58,237,.08), transparent 18%, rgba(56,189,248,.08), transparent 42%, rgba(124,58,237,.08))" } },
-  { value: "doombringer", label: "Doombringer", motion: "kinetic", colors: { base:"#090909", base2:"#191312", nav:"rgba(12,10,10,.86)", card:"#151111", card2:"#221817", input:"#1a1414", modal:"#100c0c", overlay:"rgba(8,6,6,.78)", border:"rgba(251,146,60,.18)", borderStrong:"rgba(239,68,68,.44)", text:"#f8ebe7", muted:"#d0a99a", accent:"#ef4444", accent2:"#fb923c", button:"#2a1a1a", buttonHover:"#392020", glow:"rgba(239,68,68,.3)", pattern:"radial-gradient(circle at 24% 20%, rgba(239,68,68,.18), transparent 24%), linear-gradient(160deg, transparent 0 60%, rgba(251,146,60,.08) 84%, transparent 100%)", pattern2:"radial-gradient(circle at 80% 18%, rgba(251,146,60,.14), transparent 18%)" } },
-  { value: "gaia-vengeance", label: "Gaia's Vengeance", motion: "tide", colors: { base:"#08150f", base2:"#11251b", nav:"rgba(10,21,16,.84)", card:"#102219", card2:"#183225", input:"#14291f", modal:"#0a1711", overlay:"rgba(5,12,9,.78)", border:"rgba(74,222,128,.18)", borderStrong:"rgba(190,242,100,.36)", text:"#eefbf1", muted:"#9fd3ab", accent:"#84cc16", accent2:"#22c55e", button:"#1a3528", buttonHover:"#244735", glow:"rgba(132,204,22,.26)", pattern:"radial-gradient(circle at 22% 18%, rgba(132,204,22,.16), transparent 22%), radial-gradient(circle at 78% 22%, rgba(34,197,94,.12), transparent 24%)", pattern2:"linear-gradient(180deg, rgba(255,255,255,.03), transparent 28%, rgba(132,204,22,.06) 80%)" } },
-  { value: "kuronami", label: "Kuronami", motion: "tide", colors: { base:"#07141d", base2:"#102535", nav:"rgba(8,18,28,.84)", card:"#102130", card2:"#173345", input:"#132838", modal:"#09151f", overlay:"rgba(5,10,16,.8)", border:"rgba(103,232,249,.18)", borderStrong:"rgba(148,163,184,.36)", text:"#eef8ff", muted:"#a7c3d8", accent:"#67e8f9", accent2:"#60a5fa", button:"#193246", buttonHover:"#23465f", glow:"rgba(103,232,249,.28)", pattern:"linear-gradient(135deg, rgba(103,232,249,.12), transparent 22%, rgba(96,165,250,.08) 58%, transparent 80%)", pattern2:"radial-gradient(circle at 80% 18%, rgba(255,255,255,.1), transparent 20%)" } },
-  { value: "neptune", label: "Neptune", motion: "tide", colors: { base:"#051a26", base2:"#0a3044", nav:"rgba(6,24,35,.84)", card:"#0d2a3a", card2:"#123f55", input:"#103447", modal:"#081d2a", overlay:"rgba(4,12,19,.78)", border:"rgba(56,189,248,.18)", borderStrong:"rgba(34,211,238,.4)", text:"#eefcff", muted:"#9fd4e3", accent:"#38bdf8", accent2:"#22d3ee", button:"#15435d", buttonHover:"#1d5577", glow:"rgba(56,189,248,.3)", pattern:"radial-gradient(circle at 18% 18%, rgba(56,189,248,.18), transparent 22%), linear-gradient(180deg, rgba(255,255,255,.05), transparent 24%, rgba(34,211,238,.06) 74%)", pattern2:"radial-gradient(circle at 82% 16%, rgba(255,255,255,.14), transparent 18%)" } },
-  { value: "magepunk", label: "Magepunk", motion: "rings", colors: { base:"#101315", base2:"#1e2528", nav:"rgba(14,16,18,.84)", card:"#1b2024", card2:"#262d32", input:"#20282d", modal:"#14181c", overlay:"rgba(9,10,11,.76)", border:"rgba(46,213,178,.18)", borderStrong:"rgba(250,204,21,.38)", text:"#f8f7f2", muted:"#c0c3b4", accent:"#facc15", accent2:"#2dd4bf", button:"#31393f", buttonHover:"#424c54", glow:"rgba(250,204,21,.26)", pattern:"linear-gradient(90deg, rgba(250,204,21,.08), transparent 22%, rgba(45,212,191,.12) 44%, transparent 64%, rgba(250,204,21,.08) 86%)", pattern2:"radial-gradient(circle at 80% 18%, rgba(45,212,191,.14), transparent 20%)" } },
-  { value: "forsaken-light", label: "Forsaken Light", motion: "shimmer", colors: { base:"#f5f1e6", base2:"#d8ceba", nav:"rgba(244,238,224,.84)", card:"#f6f0e1", card2:"#ddd3bf", input:"#efe8da", modal:"#f8f2e5", overlay:"rgba(192,178,149,.58)", border:"rgba(153,127,71,.18)", borderStrong:"rgba(56,189,248,.34)", text:"#1c1813", muted:"#6f6457", accent:"#d4a373", accent2:"#60a5fa", button:"#e3d8c4", buttonHover:"#d9cdb8", glow:"rgba(212,163,115,.22)", pattern:"radial-gradient(circle at 24% 18%, rgba(212,163,115,.18), transparent 22%), linear-gradient(135deg, transparent 0 56%, rgba(96,165,250,.08) 76%, transparent 100%)", pattern2:"radial-gradient(circle at 78% 20%, rgba(255,255,255,.34), transparent 18%)" } },
-  { value: "forsaken-dark", label: "Forsaken Dark", motion: "orbit", colors: { base:"#0f1222", base2:"#191d2f", nav:"rgba(13,16,30,.84)", card:"#171a2b", card2:"#22263a", input:"#1b2033", modal:"#111426", overlay:"rgba(8,10,18,.78)", border:"rgba(59,130,246,.18)", borderStrong:"rgba(168,85,247,.38)", text:"#eef0ff", muted:"#b3b8d7", accent:"#60a5fa", accent2:"#c084fc", button:"#252a42", buttonHover:"#32385a", glow:"rgba(96,165,250,.28)", pattern:"radial-gradient(circle at 20% 18%, rgba(96,165,250,.18), transparent 22%), radial-gradient(circle at 80% 20%, rgba(192,132,252,.12), transparent 22%)", pattern2:"conic-gradient(from 90deg at 50% 50%, rgba(96,165,250,.08), transparent 22%, rgba(192,132,252,.08), transparent 44%, rgba(96,165,250,.08))" } },
-  { value: "spectrum", label: "Spectrum", motion: "shimmer", colors: { base:"#120f1c", base2:"#1a1831", nav:"rgba(17,14,29,.84)", card:"#1b1730", card2:"#272244", input:"#221d3b", modal:"#151126", overlay:"rgba(10,8,18,.78)", border:"rgba(244,114,182,.18)", borderStrong:"rgba(34,211,238,.38)", text:"#fff6ff", muted:"#ddc0e6", accent:"#f472b6", accent2:"#22d3ee", button:"#2b2450", buttonHover:"#3b3170", glow:"rgba(244,114,182,.28)", pattern:"linear-gradient(120deg, rgba(244,114,182,.12), transparent 18%, rgba(34,211,238,.1) 38%, transparent 58%, rgba(250,204,21,.08) 76%, transparent 100%)", pattern2:"radial-gradient(circle at 80% 18%, rgba(255,255,255,.16), transparent 20%)" } },
-  { value: "cryostasis", label: "Cryostasis", motion: "rings", colors: { base:"#dcecff", base2:"#b4d1f2", nav:"rgba(223,236,252,.84)", card:"#eef7ff", card2:"#c9def4", input:"#e1effd", modal:"#f6fbff", overlay:"rgba(174,199,227,.62)", border:"rgba(85,138,194,.18)", borderStrong:"rgba(145,186,227,.38)", text:"#11243d", muted:"#56708e", accent:"#93c5fd", accent2:"#c4b5fd", button:"#d2e4f8", buttonHover:"#c3dcf6", glow:"rgba(147,197,253,.28)", pattern:"radial-gradient(circle at 22% 18%, rgba(147,197,253,.22), transparent 22%), linear-gradient(180deg, rgba(255,255,255,.24), transparent 36%, rgba(196,181,253,.08) 78%)", pattern2:"radial-gradient(circle at 80% 20%, rgba(255,255,255,.44), transparent 20%)" } },
-  { value: "soulstrife", label: "Soulstrife", motion: "orbit", colors: { base:"#0e0c14", base2:"#1a1424", nav:"rgba(14,12,20,.86)", card:"#181422", card2:"#231a31", input:"#1d1730", modal:"#120f1c", overlay:"rgba(9,7,14,.8)", border:"rgba(129,140,248,.18)", borderStrong:"rgba(244,114,182,.38)", text:"#f5efff", muted:"#beb0d8", accent:"#818cf8", accent2:"#f472b6", button:"#2b2141", buttonHover:"#392b57", glow:"rgba(129,140,248,.3)", pattern:"radial-gradient(circle at 20% 20%, rgba(129,140,248,.18), transparent 22%), radial-gradient(circle at 78% 18%, rgba(244,114,182,.1), transparent 20%)", pattern2:"conic-gradient(from 0deg, rgba(129,140,248,.08), transparent 24%, rgba(244,114,182,.08), transparent 48%, rgba(129,140,248,.08))" } },
-  { value: "primordium", label: "Primordium", motion: "kinetic", colors: { base:"#0d0c0a", base2:"#1c1711", nav:"rgba(15,13,10,.86)", card:"#191510", card2:"#281f16", input:"#201911", modal:"#120f0b", overlay:"rgba(8,7,5,.78)", border:"rgba(251,146,60,.18)", borderStrong:"rgba(245,158,11,.38)", text:"#f7f0e5", muted:"#cdb89d", accent:"#fb923c", accent2:"#f59e0b", button:"#2f2317", buttonHover:"#422f1f", glow:"rgba(251,146,60,.28)", pattern:"radial-gradient(circle at 24% 18%, rgba(251,146,60,.18), transparent 22%), linear-gradient(150deg, transparent 0 56%, rgba(245,158,11,.08) 80%, transparent 100%)", pattern2:"radial-gradient(circle at 78% 18%, rgba(255,233,187,.1), transparent 18%)" } },
-  { value: "protocol-781-a", label: "Protocol 781-A", motion: "static", colors: { base:"#10161e", base2:"#18212d", nav:"rgba(16,22,30,.84)", card:"#17202a", card2:"#22303f", input:"#1d2733", modal:"#121921", overlay:"rgba(10,14,18,.78)", border:"rgba(148,163,184,.18)", borderStrong:"rgba(34,211,238,.38)", text:"#f3f8fb", muted:"#b1bfcb", accent:"#22d3ee", accent2:"#f97316", button:"#273444", buttonHover:"#334457", glow:"rgba(34,211,238,.26)", pattern:"linear-gradient(90deg, rgba(148,163,184,.08) 0 18%, transparent 18% 36%, rgba(34,211,238,.08) 36% 54%, transparent 54% 72%, rgba(249,115,22,.06) 72% 100%)", pattern2:"radial-gradient(circle at 82% 18%, rgba(255,255,255,.12), transparent 18%)" } },
-  { value: "glitchpop", label: "Glitchpop", motion: "shimmer", colors: { base:"#160520", base2:"#25063d", nav:"rgba(21,5,32,.86)", card:"#24093b", card2:"#350f58", input:"#2c0d48", modal:"#19072c", overlay:"rgba(12,4,22,.8)", border:"rgba(244,63,94,.18)", borderStrong:"rgba(34,211,238,.4)", text:"#fff5ff", muted:"#e4c4ff", accent:"#f43f5e", accent2:"#22d3ee", button:"#40106b", buttonHover:"#56158b", glow:"rgba(244,63,94,.3)", pattern:"linear-gradient(115deg, rgba(244,63,94,.14), transparent 20%, rgba(34,211,238,.12) 38%, transparent 56%, rgba(250,204,21,.08) 74%, transparent 100%)", pattern2:"radial-gradient(circle at 80% 20%, rgba(34,211,238,.14), transparent 18%)" } },
-  { value: "noctorum", label: "Noctorum", motion: "orbit", colors: { base:"#05060d", base2:"#0d1020", nav:"rgba(7,8,16,.88)", card:"#0d1120", card2:"#151b2d", input:"#101628", modal:"#080b15", overlay:"rgba(3,4,8,.82)", border:"rgba(99,102,241,.16)", borderStrong:"rgba(168,85,247,.34)", text:"#eef1fb", muted:"#aab2cf", accent:"#6366f1", accent2:"#a855f7", button:"#1b2340", buttonHover:"#263052", glow:"rgba(99,102,241,.3)", pattern:"radial-gradient(circle at 22% 20%, rgba(99,102,241,.14), transparent 20%), radial-gradient(circle at 82% 18%, rgba(168,85,247,.12), transparent 18%)", pattern2:"linear-gradient(180deg, rgba(255,255,255,.03), transparent 30%, rgba(99,102,241,.06) 80%)" } },
-  { value: "sentinels-of-light", label: "Sentinels of Light", motion: "rings", colors: { base:"#f4f0ea", base2:"#d4d8e6", nav:"rgba(248,244,238,.84)", card:"#faf6ef", card2:"#dde3ee", input:"#f0ece5", modal:"#fcfaf6", overlay:"rgba(204,209,222,.62)", border:"rgba(162,130,247,.18)", borderStrong:"rgba(56,189,248,.36)", text:"#1a2030", muted:"#6b7286", accent:"#a78bfa", accent2:"#38bdf8", button:"#e4e7f3", buttonHover:"#d7dcef", glow:"rgba(167,139,250,.24)", pattern:"radial-gradient(circle at 24% 18%, rgba(167,139,250,.18), transparent 20%), radial-gradient(circle at 78% 16%, rgba(56,189,248,.12), transparent 18%)", pattern2:"radial-gradient(circle at 50% 48%, rgba(255,255,255,.62), transparent 42%)" } }
+  createProfileTheme("default", "Default", "dark", { base:"#071029", base2:"#071b2b", nav:"rgba(11,18,32,.84)", card:"#0b1220", card2:"#0f172a", input:"#0f172a", modal:"#020617", overlay:"rgba(15,23,42,.7)", border:"rgba(148,163,184,.14)", borderStrong:"rgba(148,163,184,.38)", text:"#e6eef8", muted:"#94a3b8", accent:"#ff4655", accent2:"#f97316", button:"#1e293b", buttonHover:"#334155", glow:"rgba(255,70,85,.22)", pattern:"radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)", pattern2:"radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)" }),
+  createProfileTheme("obsidian-red", "Obsidian Red", "dark", { base:"#050506", base2:"#17090b", card:"#0f1015", card2:"#211014", accent:"#ef233c", accent2:"#f59e0b" }),
+  createProfileTheme("serpent-green", "Serpent Green", "dark", { base:"#03110b", base2:"#082716", card:"#071c13", card2:"#123621", accent:"#16a34a", accent2:"#a3e635" }),
+  createProfileTheme("royal-purple", "Royal Purple", "dark", { base:"#10061f", base2:"#241047", card:"#1a0d31", card2:"#301959", accent:"#a855f7", accent2:"#f0abfc" }),
+  createProfileTheme("navy-command", "Navy Command", "dark", { base:"#030b1a", base2:"#071a35", card:"#0b1730", card2:"#10284f", accent:"#2563eb", accent2:"#38bdf8" }),
+  createProfileTheme("amber-forge", "Amber Forge", "dark", { base:"#100a03", base2:"#2a1706", card:"#1b1208", card2:"#3a220c", accent:"#f59e0b", accent2:"#f97316" }),
+  createProfileTheme("blood-moon", "Blood Moon", "dark", { base:"#120306", base2:"#2b070c", card:"#1b070d", card2:"#3a0f18", accent:"#b91c1c", accent2:"#fb7185" }),
+  createProfileTheme("teal-depths", "Teal Depths", "dark", { base:"#021417", base2:"#06343a", card:"#09272d", card2:"#0d4650", accent:"#14b8a6", accent2:"#67e8f9" }),
+  createProfileTheme("timberwood", "Timberwood", "dark", { base:"#100b07", base2:"#28190d", card:"#1b120b", card2:"#3a2414", accent:"#a16207", accent2:"#d6a35c" }),
+  createProfileTheme("black-gold", "Black Gold", "dark", { base:"#030303", base2:"#11100a", card:"#0c0c0b", card2:"#1c1a10", accent:"#d4af37", accent2:"#f8e08e" }),
+  createProfileTheme("fluorescent-white", "Fluorescent White", "dark", { base:"#05080b", base2:"#101820", card:"#0b1117", card2:"#18232d", accent:"#f8fafc", accent2:"#00e5ff", text:"#f8fbff" }),
+  createProfileTheme("lime-circuit", "Lime Circuit", "dark", { base:"#061003", base2:"#132407", card:"#101b0c", card2:"#24340f", accent:"#84cc16", accent2:"#22c55e" }),
+  createProfileTheme("deep-blue", "Deep Blue", "dark", { base:"#020617", base2:"#081a3a", card:"#071329", card2:"#122a55", accent:"#1d4ed8", accent2:"#93c5fd" }),
+  createProfileTheme("crimson-smoke", "Crimson Smoke", "dark", { base:"#09070a", base2:"#211018", card:"#141019", card2:"#2b1622", accent:"#e11d48", accent2:"#64748b" }),
+  createProfileTheme("midnight-ivory", "Midnight Ivory", "dark", { base:"#08090c", base2:"#17191f", card:"#11131a", card2:"#242733", accent:"#f5f0dc", accent2:"#94a3b8" }),
+  createProfileTheme("ivory-red", "Ivory Red", "light", { base:"#f8f3e8", base2:"#e7dac2", card:"#fff9ec", card2:"#eadcc2", accent:"#ef4444", accent2:"#b45309" }),
+  createProfileTheme("eggshell-blue", "Eggshell Blue", "light", { base:"#f4efdf", base2:"#dbe8f4", card:"#fffaf0", card2:"#d7e6f3", accent:"#2563eb", accent2:"#f97316" }),
+  createProfileTheme("porcelain-teal", "Porcelain Teal", "light", { base:"#eef7f4", base2:"#cbe8df", card:"#fafffb", card2:"#d8eee7", accent:"#0f766e", accent2:"#14b8a6" }),
+  createProfileTheme("sand-gold", "Sand Gold", "light", { base:"#f4ead6", base2:"#dcc394", card:"#fff4df", card2:"#e3c88f", accent:"#b7791f", accent2:"#facc15" }),
+  createProfileTheme("white-rose", "White Rose", "light", { base:"#fff7f7", base2:"#f1d6da", card:"#fffafa", card2:"#ecd5dc", accent:"#e11d48", accent2:"#fb7185" }),
+  createProfileTheme("mint-black", "Mint Black", "light", { base:"#e8fff4", base2:"#c9eedc", card:"#f6fff9", card2:"#d6f3e4", accent:"#111827", accent2:"#10b981" }),
+  createProfileTheme("sky-amber", "Sky Amber", "light", { base:"#edf7ff", base2:"#c9e5f6", card:"#f8fcff", card2:"#d6ecfb", accent:"#0284c7", accent2:"#f59e0b" }),
+  createProfileTheme("lavender-royal", "Lavender Royal", "light", { base:"#f4efff", base2:"#d9ccf4", card:"#fbf8ff", card2:"#e3d7f7", accent:"#6d28d9", accent2:"#ec4899" }),
+  createProfileTheme("warm-tan", "Warm Tan", "light", { base:"#f1e2ca", base2:"#d6b98d", card:"#f8ead2", card2:"#dec193", accent:"#7c2d12", accent2:"#d97706" }),
+  createProfileTheme("paper-navy", "Paper Navy", "light", { base:"#f6f7fb", base2:"#d7dce8", card:"#ffffff", card2:"#e2e7f0", accent:"#1e3a8a", accent2:"#0f766e" }),
+  createProfileTheme("lime-glass", "Lime Glass", "light", { base:"#f3ffe5", base2:"#cdeca5", card:"#fbfff2", card2:"#dbf2b7", accent:"#65a30d", accent2:"#2563eb" }),
+  createProfileTheme("ivory-serpent", "Ivory Serpent", "light", { base:"#faf5e8", base2:"#d9e6bd", card:"#fffaf0", card2:"#e4edca", accent:"#166534", accent2:"#b45309" }),
+  createProfileTheme("pearl-coral", "Pearl Coral", "light", { base:"#fff5ef", base2:"#f1cdbf", card:"#fffaf5", card2:"#efd1c5", accent:"#f97316", accent2:"#0891b2" }),
+  createProfileTheme("arctic-black", "Arctic Black", "light", { base:"#eef6ff", base2:"#c7d8e8", card:"#f8fbff", card2:"#d8e6f2", accent:"#020617", accent2:"#60a5fa" }),
+  createProfileTheme("opal-green", "Opal Green", "light", { base:"#effaf1", base2:"#c7e5cd", card:"#f9fff9", card2:"#d4ead8", accent:"#15803d", accent2:"#a855f7" })
+];
+
+const PROFILE_BORDER_COLORS = [
+  { value: "theme", label: "Theme", color: "" },
+  { value: "iron", label: "Iron", color: "#6b7280" },
+  { value: "bronze", label: "Bronze", color: "#b87333" },
+  { value: "silver", label: "Silver", color: "#cbd5e1" },
+  { value: "gold", label: "Gold", color: "#facc15" },
+  { value: "platinum", label: "Platinum", color: "#67e8f9" },
+  { value: "diamond", label: "Diamond", color: "#60a5fa" },
+  { value: "ascendant", label: "Ascendant", color: "#22c55e" },
+  { value: "immortal", label: "Immortal", color: "#ef4444" },
+  { value: "radiant", label: "Radiant", color: "#f8e08e" },
+  { value: "valorant-red", label: "Valorant Red", color: "#ff4655" },
+  { value: "royal-purple", label: "Royal Purple", color: "#8b5cf6" },
+  { value: "serpent-green", label: "Serpent Green", color: "#16a34a" },
+  { value: "teal", label: "Teal", color: "#14b8a6" },
+  { value: "amber", label: "Amber", color: "#f59e0b" },
+  { value: "ivory", label: "Ivory", color: "#f5f0dc" }
 ];
 
 const PROFILE_BORDER_STYLES = [
-  { value: "standard", label: "Standard", note: "Clean theme ring" },
-  { value: "gilded", label: "Gilded", note: "Gold highlight glow" },
-  { value: "prismatic", label: "Prismatic", note: "Cyan violet rim" },
-  { value: "runed", label: "Runed", note: "Arcane inner line" },
-  { value: "tactical", label: "Tactical", note: "Steel profile frame" }
+  { value: "standard", label: "Standard", note: "Clean circular ring" },
+  { value: "halo", label: "Halo", note: "Soft outer halo" },
+  { value: "double", label: "Double", note: "Stacked profile rings" },
+  { value: "split", label: "Split", note: "Broken tactical rim" },
+  { value: "notched", label: "Notched", note: "Four-point lock" },
+  { value: "hex", label: "Hex", note: "Angular hex frame" },
+  { value: "diamond", label: "Diamond", note: "Sharp duelist frame" },
+  { value: "shield", label: "Shield", note: "Sentinel guard frame" },
+  { value: "crown", label: "Crown", note: "Ranked crest frame" },
+  { value: "blade", label: "Blade", note: "Cut edge frame" },
+  { value: "pulse", label: "Pulse", note: "Signal ring frame" },
+  { value: "arc", label: "Arc", note: "Controller arc frame" },
+  { value: "spike", label: "Spike", note: "Spike lock frame" },
+  { value: "crosshair", label: "Crosshair", note: "Aim marker frame" },
+  { value: "vanguard", label: "Vanguard", note: "Heavy launch frame" }
 ];
 
 const PROFILE_BANNER_STYLES = [
@@ -33216,6 +33296,19 @@ const PROFILE_BANNER_STYLES = [
   { value: "ancient-secrets", label: "Ancient Secrets", image: "https://media.valorant-api.com/playercards/475ce7c1-4ddc-63aa-7e22-54bb621d615b/wideart.png" },
   { value: "holidaze", label: "Holidaze", image: "https://media.valorant-api.com/playercards/22888904-4274-c5fb-ac4f-0e8a39a9417e/wideart.png" }
 ];
+
+PROFILE_BANNER_STYLES.push(
+  { value: "rc-redline", label: "Redline", category: "unofficial", pattern: "linear-gradient(110deg, #050608, #1d0a10 42%, #ff465533 72%, #050608)" },
+  { value: "rc-blueprint", label: "Blueprint", category: "unofficial", pattern: "linear-gradient(110deg, #061326, #12345a 54%, #38bdf833), repeating-linear-gradient(90deg, transparent 0 22px, #93c5fd18 22px 23px)" },
+  { value: "rc-gold-crest", label: "Gold Crest", category: "unofficial", pattern: "linear-gradient(115deg, #050505, #1d1708 48%, #facc1538 76%, #050505)" },
+  { value: "rc-serpent", label: "Serpent", category: "unofficial", pattern: "linear-gradient(120deg, #03110b, #0b2817 48%, #22c55e34 78%), radial-gradient(circle at 82% 20%, #a3e63530, transparent 24%)" },
+  { value: "rc-royal", label: "Royal", category: "unofficial", pattern: "linear-gradient(115deg, #0b0615, #28124f 54%, #a855f733), radial-gradient(circle at 80% 20%, #f0abfc26, transparent 22%)" },
+  { value: "rc-ivory", label: "Ivory", category: "unofficial", pattern: "linear-gradient(110deg, #f8f3e8, #d8c6a8 52%, #1e3a8a22), radial-gradient(circle at 78% 18%, #ffffff80, transparent 24%)" },
+  { value: "rc-teal", label: "Teal", category: "unofficial", pattern: "linear-gradient(115deg, #021417, #0f766e 58%, #67e8f93a), radial-gradient(circle at 18% 16%, #ccfbf140, transparent 22%)" },
+  { value: "rc-blood", label: "Blood", category: "unofficial", pattern: "linear-gradient(112deg, #120306, #450a0a 50%, #ef444440), radial-gradient(circle at 76% 18%, #fb718533, transparent 24%)" }
+);
+
+let activeProfileBannerCategory = "official";
 
 function getDefaultProfileAvatarAgent() {
   return "jett";
@@ -33247,6 +33340,7 @@ function normalizeProfileRecord(profile = {}) {
     avatarAgent,
     avatarUrl: profile.avatarUrl || getDefaultProfileAvatarUrl(avatarAgent),
     navBackgroundUrl: profile.navBackgroundUrl || "",
+    profileBorderColor: normalizeProfileBorderColor(profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
     bannerStyle: normalizeProfileBannerStyle(profile.bannerStyle || "theme"),
     accessibility: {
@@ -33292,6 +33386,7 @@ function loadProfiles(){
       avatarAgent: getDefaultProfileAvatarAgent(),
       avatarUrl: getDefaultProfileAvatarUrl(),
       navBackgroundUrl: "",
+      profileBorderColor: "theme",
       profileBorder: "standard",
       bannerStyle: "theme",
       accessibility: {
@@ -33339,6 +33434,7 @@ function createProfile(data){
     avatarAgent: data.avatarAgent || getDefaultProfileAvatarAgent(),
     avatarUrl: data.avatarUrl || getDefaultProfileAvatarUrl(data.avatarAgent),
     navBackgroundUrl: data.navBackgroundUrl || "",
+    profileBorderColor: normalizeProfileBorderColor(data.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(data.profileBorder || "standard"),
     bannerStyle: normalizeProfileBannerStyle(data.bannerStyle || "theme"),
     accessibility: {
@@ -33415,6 +33511,10 @@ function updateProfile(id, data){
 
   if (data.navBackgroundUrl != null) {
     profile.navBackgroundUrl = String(data.navBackgroundUrl || "").trim();
+  }
+
+  if (data.profileBorderColor != null) {
+    profile.profileBorderColor = normalizeProfileBorderColor(data.profileBorderColor || "theme");
   }
 
   if (data.profileBorder != null) {
@@ -33513,6 +33613,7 @@ function handleAddProfile() {
     avatarAgent: getDefaultProfileAvatarAgent(),
     avatarUrl: getDefaultProfileAvatarUrl(),
     navBackgroundUrl: "",
+    profileBorderColor: "theme",
     profileBorder: "standard",
     bannerStyle: "theme",
     accessibility: {
@@ -33655,6 +33756,19 @@ function normalizeProfileBorderStyle(borderStyle = "standard") {
   return getProfileBorderStyle(borderStyle).value;
 }
 
+function getProfileBorderColor(borderColor = "theme") {
+  return PROFILE_BORDER_COLORS.find(color => color.value === String(borderColor || "theme")) || PROFILE_BORDER_COLORS[0];
+}
+
+function normalizeProfileBorderColor(borderColor = "theme") {
+  return getProfileBorderColor(borderColor).value;
+}
+
+function getResolvedProfileBorderColor(borderColor = "theme", theme = getThemePreset()) {
+  const preset = getProfileBorderColor(borderColor);
+  return preset?.color || theme?.colors?.accent || "#ff4655";
+}
+
 function getProfileBannerStyle(bannerStyle = "theme") {
   return PROFILE_BANNER_STYLES.find(style => style.value === String(bannerStyle || "theme")) || PROFILE_BANNER_STYLES[0];
 }
@@ -33665,6 +33779,28 @@ function normalizeProfileBannerStyle(bannerStyle = "theme") {
 
 function getBannerImageUrl(bannerStyle = "theme") {
   return getProfileBannerStyle(bannerStyle)?.image || "";
+}
+
+function getProfileBannerCategory(style = getProfileBannerStyle()) {
+  if (!style || style.value === "theme") return "official";
+  return style.category === "unofficial" ? "unofficial" : "official";
+}
+
+function setProfileBannerCategory(category = "official") {
+  activeProfileBannerCategory = category === "unofficial" ? "unofficial" : "official";
+  const title = document.getElementById("profileBannerCategoryTitle");
+  if (title) {
+    title.textContent = activeProfileBannerCategory === "official"
+      ? "Player Card Banner Valorant Official"
+      : "Player Card Banner Unofficial";
+  }
+  document.querySelectorAll("[data-banner-category]").forEach((button) => {
+    const isActive = button.dataset.bannerCategory === activeProfileBannerCategory;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+  const currentBanner = document.getElementById("editProfileBannerStyle")?.value || "theme";
+  renderBannerGallery(currentBanner, document.getElementById("editProfileTheme")?.value || getActiveProfile()?.themeKey || "default");
 }
 
 function toCssUrl(url = "") {
@@ -33683,7 +33819,7 @@ function getBannerPattern(bannerStyle = "theme", theme = getThemePreset()) {
     theme: theme?.colors?.pattern2 || "none",
     default: `radial-gradient(circle at 18% 18%, ${soft}18, transparent 20%), linear-gradient(120deg, ${accent}16, transparent 38%, ${accent2}14 72%, transparent 100%)`
   };
-  return presets[bannerStyle] || presets.theme;
+  return banner?.pattern || presets[bannerStyle] || presets.theme;
 }
 
 function renderThemeGallery(selectedThemeKey = "default") {
@@ -33762,6 +33898,44 @@ function renderAvatarGallery(selectedAgent = getDefaultProfileAvatarAgent()) {
   });
 }
 
+function renderBorderColorGallery(selectedBorderColor = "theme") {
+  const gallery = document.getElementById("editProfileBorderColorGallery");
+  const colorSelect = document.getElementById("editProfileBorderColor");
+  if (!gallery) return;
+
+  const profile = getActiveProfile();
+  const selectedThemeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
+  const selectedAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
+  const theme = getThemePreset(selectedThemeKey);
+  const colors = theme?.colors || {};
+  const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
+  const activeColor = normalizeProfileBorderColor(selectedBorderColor);
+
+  gallery.innerHTML = PROFILE_BORDER_COLORS.map((preset) => {
+    const swatch = preset.color || colors.accent || "#ff4655";
+    const isActive = preset.value === activeColor;
+    return `
+      <button type="button" class="border-color-card ${isActive ? "is-active" : ""}" data-border-color-card="${escapeHtml(preset.value)}" aria-pressed="${isActive ? "true" : "false"}">
+        <div class="border-color-preview" style="--border-color-accent:${swatch}; --border-card-surface:${colors.card || "#0b1220"}; --border-card-surface-2:${colors.card2 || "#0f172a"}; --border-card-text:${colors.text || "#f8fafc"};">
+          <div class="border-color-avatar" style="border-color:${swatch}; box-shadow:0 0 0 2px color-mix(in srgb, ${swatch} 34%, transparent), 0 0 22px color-mix(in srgb, ${swatch} 42%, transparent);">
+            <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(preset.label)} border color preview">
+          </div>
+          <div class="border-card-name">${escapeHtml(preset.label)}</div>
+        </div>
+      </button>
+    `;
+  }).join("");
+
+  gallery.querySelectorAll("[data-border-color-card]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextColor = normalizeProfileBorderColor(button.getAttribute("data-border-color-card") || "theme");
+      if (colorSelect) colorSelect.value = nextColor;
+      renderBorderColorGallery(nextColor);
+      previewEditProfileVisuals();
+    });
+  });
+}
+
 function renderBorderGallery(selectedBorder = "standard") {
   const gallery = document.getElementById("editProfileBorderGallery");
   const borderSelect = document.getElementById("editProfileBorderStyle");
@@ -33770,8 +33944,10 @@ function renderBorderGallery(selectedBorder = "standard") {
   const profile = getActiveProfile();
   const selectedThemeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
   const selectedAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
+  const selectedBorderColor = document.getElementById("editProfileBorderColor")?.value || profile?.profileBorderColor || "theme";
   const theme = getThemePreset(selectedThemeKey);
   const colors = theme?.colors || {};
+  const ringColor = getResolvedProfileBorderColor(selectedBorderColor, theme);
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
 
@@ -33784,6 +33960,7 @@ function renderBorderGallery(selectedBorder = "standard") {
           style="
             --border-card-accent:${colors.accent || "#ff4655"};
             --border-card-accent-2:${colors.accent2 || "#f97316"};
+            --border-ring-color:${ringColor};
             --border-card-text:${colors.text || "#f8fafc"};
             --border-card-muted:${colors.muted || "#94a3b8"};
             --border-card-surface:${colors.card || "#0b1220"};
@@ -33821,14 +33998,22 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
   const colors = theme?.colors || {};
   const activeBanner = normalizeProfileBannerStyle(selectedBanner);
 
-  gallery.innerHTML = PROFILE_BANNER_STYLES.map((style) => {
+  const visibleBanners = PROFILE_BANNER_STYLES.filter((style) => getProfileBannerCategory(style) === activeProfileBannerCategory);
+  const selectedStyle = getProfileBannerStyle(activeBanner);
+  const selectedVisible = visibleBanners.some((style) => String(style.value) === activeBanner);
+  const visibleActiveBanner = selectedVisible
+    ? activeBanner
+    : (visibleBanners[0]?.value || selectedStyle?.value || "theme");
+  if (bannerSelect && bannerSelect.value !== visibleActiveBanner) bannerSelect.value = visibleActiveBanner;
+
+  gallery.innerHTML = visibleBanners.map((style) => {
     const isActive = String(style.value) === activeBanner;
     const pattern = getBannerPattern(style.value, theme);
     const previewBackground = style.image
       ? `linear-gradient(90deg, rgba(2,6,23,.34), rgba(2,6,23,.08) 52%, rgba(2,6,23,.44)), url('${escapeHtml(style.image)}') center / cover no-repeat`
-      : `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`;
+      : (style.pattern || `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`);
     return `
-      <button type="button" class="banner-card ${isActive ? "is-active" : ""}" data-banner-card="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
+      <button type="button" class="banner-card ${String(style.value) === visibleActiveBanner ? "is-active" : ""}" data-banner-card="${escapeHtml(style.value)}" aria-pressed="${String(style.value) === visibleActiveBanner ? "true" : "false"}">
         <div
           class="banner-card-preview"
           style="
@@ -33838,7 +34023,7 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
             background:${previewBackground};
           ">
           <div class="banner-card-name">${escapeHtml(style.label)}</div>
-          <div class="banner-card-strip">${style.image ? "Player Card" : "Theme Default"}</div>
+          <div class="banner-card-strip">${getProfileBannerCategory(style) === "official" ? "Official" : "RankedCoach"}</div>
         </div>
       </button>
     `;
@@ -33863,9 +34048,10 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const peak = computePeakProfileProgress(profile);
   const avatarUrl = profile?.avatarUrl || getDefaultProfileAvatarUrl(profile?.avatarAgent);
   const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
-  const themeKey = requestedThemeKey === "reaver" ? "default" : requestedThemeKey;
-  const theme = getThemePreset(themeKey);
+  const theme = getThemePreset(requestedThemeKey);
+  const themeKey = theme.value;
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
+  const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
@@ -33883,21 +34069,25 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (panel) {
-    panel.classList.remove("theme-classic", "theme-ember", "theme-ocean", "theme-verdant", "theme-cosmic", "border-standard", "border-gilded", "border-prismatic", "border-runed", "border-tactical");
+    Array.from(panel.classList).forEach((className) => {
+      if (className.startsWith("border-")) panel.classList.remove(className);
+    });
+    panel.classList.remove("theme-classic", "theme-ember", "theme-ocean", "theme-verdant", "theme-cosmic");
     panel.classList.add(`theme-classic`);
     panel.classList.add(`border-${borderStyle}`);
   }
 
   if (ring) {
-    ring.style.setProperty("--profile-ring-border", colors.accent || "#64748b");
+    const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
+    ring.style.setProperty("--profile-ring-border", resolvedBorderColor);
     ring.style.setProperty(
       "--profile-ring-bg",
       colorMixOrFallback(
-        `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${colors.accent || "#ff4655"} 18%, ${colors.card2 || "#0f172a"}))`,
+        `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
         `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
       )
     );
-    ring.style.setProperty("--profile-ring-glow", colors.glow || "rgba(255,70,85,0.55)");
+    ring.style.setProperty("--profile-ring-glow", colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)"));
   }
 
   if (root) {
@@ -33956,6 +34146,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
 function populateEditProfileModal(profile = getActiveProfile()) {
   const themeSelect = document.getElementById("editProfileTheme");
   const avatarSelect = document.getElementById("editProfileAvatarAgent");
+  const borderColorSelect = document.getElementById("editProfileBorderColor");
   const borderSelect = document.getElementById("editProfileBorderStyle");
   const bannerSelect = document.getElementById("editProfileBannerStyle");
 
@@ -33968,6 +34159,12 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   if (avatarSelect && !avatarSelect.options.length) {
     avatarSelect.innerHTML = allAgents
       .map(agent => `<option value="${String(agent).toLowerCase()}">${agent}</option>`)
+      .join("");
+  }
+
+  if (borderColorSelect && !borderColorSelect.options.length) {
+    borderColorSelect.innerHTML = PROFILE_BORDER_COLORS
+      .map(color => `<option value="${color.value}">${color.label}</option>`)
       .join("");
   }
 
@@ -34002,18 +34199,21 @@ function populateEditProfileModal(profile = getActiveProfile()) {
       ? `Captured automatically on ${syncDateLabel}. This value is locked.`
       : "Captured automatically on the first Riot sync of the day. This value is locked.";
   }
-  const selectedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase() === "reaver"
-    ? "default"
-    : (profile?.themeKey || profile?.frameTheme || "default");
+  const selectedThemeKey = getThemePreset(profile?.themeKey || profile?.frameTheme || "default").value;
+  const selectedBorderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const selectedBorder = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const selectedBanner = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   if (themeSelect) themeSelect.value = selectedThemeKey;
   renderThemeGallery(selectedThemeKey);
   if (avatarSelect) avatarSelect.value = String(profile?.avatarAgent || getDefaultProfileAvatarAgent()).toLowerCase();
   renderAvatarGallery(profile?.avatarAgent || getDefaultProfileAvatarAgent());
+  if (borderColorSelect) borderColorSelect.value = selectedBorderColor;
+  renderBorderColorGallery(selectedBorderColor);
   if (borderSelect) borderSelect.value = selectedBorder;
   renderBorderGallery(selectedBorder);
   if (bannerSelect) bannerSelect.value = selectedBanner;
+  activeProfileBannerCategory = getProfileBannerCategory(getProfileBannerStyle(selectedBanner));
+  setProfileBannerCategory(activeProfileBannerCategory);
   renderBannerGallery(selectedBanner, selectedThemeKey);
   const contrastModeEl = document.getElementById("editProfileContrastMode");
   const motionModeEl = document.getElementById("editProfileMotionMode");
@@ -34056,6 +34256,7 @@ function saveEditProfileModal() {
     region: editRegionEl ? (editRegionEl.value?.trim() || "NA") : profile.region,
     themeKey: document.getElementById("editProfileTheme")?.value || profile.themeKey || "default",
     avatarAgent: document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent,
+    profileBorderColor: normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard"),
     bannerStyle: normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme"),
     navBackgroundUrl: "",
@@ -34070,10 +34271,12 @@ function previewEditProfileVisuals() {
   if (!profile) return;
   const activeThemeKey = document.getElementById("editProfileTheme")?.value || profile.themeKey || "default";
   const activeAvatar = document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent;
+  const activeBorderColor = normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
   const activeBorder = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
   const activeBanner = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
   renderThemeGallery(activeThemeKey);
   renderAvatarGallery(activeAvatar);
+  renderBorderColorGallery(activeBorderColor);
   renderBorderGallery(activeBorder);
   renderBannerGallery(activeBanner, activeThemeKey);
   applyProfileVisuals({
@@ -34082,6 +34285,7 @@ function previewEditProfileVisuals() {
     frameTheme: activeThemeKey,
     avatarAgent: activeAvatar,
     avatarUrl: getDefaultProfileAvatarUrl(activeAvatar || profile.avatarAgent),
+    profileBorderColor: activeBorderColor,
     profileBorder: activeBorder,
     bannerStyle: activeBanner,
     navBackgroundUrl: "",

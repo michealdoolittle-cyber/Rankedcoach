@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260527-profile-savebar-01">
+  <link rel="stylesheet" href="app.css?v=20260527-customize-themes-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -319,6 +319,7 @@ RIOT PROFILE MODAL
         <aside class="profile-edit-nav">
           <button class="profile-edit-tab is-active" type="button" data-profile-tab="theme">Theme Selector</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="icon">Agent Profile Icon</button>
+          <button class="profile-edit-tab" type="button" data-profile-tab="borderColor">Profile Border Color</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="border">Profile Border</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="banner">Banner</button>
         </aside>
@@ -355,16 +356,31 @@ RIOT PROFILE MODAL
             </div>
           </section>
 
+          <section class="profile-edit-panel" data-profile-panel="borderColor">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Profile Border Color</div>
+              <div class="profile-edit-panel-copy">Choose the avatar frame color. Rank-inspired colors are included for a cleaner launch look.</div>
+            </div>
+
+            <div class="profile-edit-grid">
+              <select id="editProfileBorderColor" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
+              <div class="profile-edit-field profile-edit-field-full">
+                <span>Border Color Preview</span>
+                <div id="editProfileBorderColorGallery" class="border-color-gallery"></div>
+              </div>
+            </div>
+          </section>
+
           <section class="profile-edit-panel" data-profile-panel="border">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Profile Border</div>
-              <div class="profile-edit-panel-copy">Preview the avatar ring treatment before saving so each profile feels distinct inside the same theme family.</div>
+              <div class="profile-edit-panel-copy">Choose the avatar frame shape. These are unofficial RankedCoach frames built to fit the nav bar cleanly.</div>
             </div>
 
             <div class="profile-edit-grid">
               <select id="editProfileBorderStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
               <div class="profile-edit-field profile-edit-field-full">
-                <span>Border Preview</span>
+                <span>Border Shape Preview</span>
                 <div id="editProfileBorderGallery" class="border-gallery"></div>
               </div>
             </div>
@@ -379,7 +395,11 @@ RIOT PROFILE MODAL
             <div class="profile-edit-grid">
               <select id="editProfileBannerStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
               <div class="profile-edit-field profile-edit-field-full">
-                <span>Player Card Banner</span>
+                <span id="profileBannerCategoryTitle">Player Card Banner Valorant Official</span>
+                <div class="banner-category-toggle" role="tablist" aria-label="Player card banner category">
+                  <button id="bannerCategoryOfficial" class="banner-category-dot is-active" type="button" data-banner-category="official" aria-label="Valorant official player card banners"></button>
+                  <button id="bannerCategoryUnofficial" class="banner-category-dot" type="button" data-banner-category="unofficial" aria-label="Unofficial RankedCoach banners"></button>
+                </div>
                 <div id="editProfileBannerGallery" class="banner-gallery"></div>
               </div>
             </div>
@@ -1796,7 +1816,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260527-profile-savebar-01"></script>
+  <script type="module" src="app.js?v=20260527-customize-themes-01"></script>
 </body>
 </html>
 

@@ -913,11 +913,12 @@ body.theme-readable :is(
   display:flex;
   align-items:center;
   gap:6px;
+  margin-left:auto;
 }
 
 .theme-card-pill{
-  width:14px;
-  height:14px;
+  width:18px;
+  height:18px;
   border-radius:999px;
   box-shadow:0 0 0 1px rgba(255,255,255,.12);
 }
@@ -1005,6 +1006,32 @@ body.theme-readable :is(
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(156px, 1fr));
   gap:12px;
+}
+
+.banner-category-toggle{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin:8px 0 12px;
+}
+
+.banner-category-dot{
+  width:12px !important;
+  height:12px !important;
+  min-width:12px !important;
+  min-height:12px !important;
+  padding:0 !important;
+  border-radius:999px !important;
+  background:color-mix(in srgb, var(--text-muted) 42%, transparent) !important;
+  border:1px solid color-mix(in srgb, var(--accent) 20%, var(--border-soft)) !important;
+  box-shadow:none !important;
+}
+
+.banner-category-dot.is-active{
+  background:var(--accent) !important;
+  border-color:color-mix(in srgb, var(--accent) 70%, white 16%) !important;
+  box-shadow:0 0 14px color-mix(in srgb, var(--accent) 42%, transparent) !important;
 }
 
 .banner-card{
@@ -13383,27 +13410,78 @@ textarea,
 }
 
 .profile-panel.border-standard .profile-avatar-ring{
-  border:1px solid rgba(255,255,255,.14);
+  border-width:3px;
+  border-style:solid;
 }
 
-.profile-panel.border-gilded .profile-avatar-ring{
-  border:1px solid rgba(250,204,21,.52);
-  box-shadow:0 0 0 1px rgba(250,204,21,.18), 0 0 18px rgba(250,204,21,.22);
+.profile-panel.border-halo .profile-avatar-ring{
+  border-width:3px;
+  box-shadow:0 0 0 5px color-mix(in srgb, var(--profile-ring-border) 16%, transparent), 0 0 24px var(--profile-ring-glow);
 }
 
-.profile-panel.border-prismatic .profile-avatar-ring{
-  border:1px solid rgba(167,139,250,.48);
-  box-shadow:0 0 0 1px rgba(56,189,248,.2), 0 0 22px rgba(167,139,250,.28);
+.profile-panel.border-double .profile-avatar-ring{
+  border-width:3px;
+  box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--profile-ring-border) 38%, transparent), 0 0 0 3px color-mix(in srgb, var(--profile-ring-border) 22%, transparent), 0 0 18px var(--profile-ring-glow);
 }
 
-.profile-panel.border-runed .profile-avatar-ring{
-  border:1px solid rgba(129,140,248,.44);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 0 16px rgba(99,102,241,.24);
+.profile-panel.border-split .profile-avatar-ring{
+  border-width:4px;
+  border-style:dashed;
 }
 
-.profile-panel.border-tactical .profile-avatar-ring{
-  border:1px solid rgba(148,163,184,.4);
-  box-shadow:0 0 0 1px rgba(15,23,42,.6), 0 0 14px rgba(148,163,184,.18);
+.profile-panel.border-notched .profile-avatar-ring{
+  border-width:4px;
+  border-radius:34% 66% 38% 62% / 60% 34% 66% 40%;
+}
+
+.profile-panel.border-hex .profile-avatar-ring{
+  border-width:4px;
+  border-radius:22% 22% 28% 28%;
+}
+
+.profile-panel.border-diamond .profile-avatar-ring{
+  border-width:4px;
+  border-radius:18% 42% 18% 42%;
+}
+
+.profile-panel.border-shield .profile-avatar-ring{
+  border-width:4px;
+  border-radius:45% 45% 34% 34% / 42% 42% 58% 58%;
+}
+
+.profile-panel.border-crown .profile-avatar-ring{
+  border-width:4px;
+  border-radius:38% 38% 52% 52% / 28% 28% 72% 72%;
+}
+
+.profile-panel.border-blade .profile-avatar-ring{
+  border-width:4px;
+  border-radius:10% 42% 10% 42%;
+}
+
+.profile-panel.border-pulse .profile-avatar-ring{
+  border-width:3px;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 0 0 8px color-mix(in srgb, var(--profile-ring-border) 12%, transparent), 0 0 18px var(--profile-ring-glow);
+}
+
+.profile-panel.border-arc .profile-avatar-ring{
+  border-width:4px;
+  border-left-color:transparent !important;
+}
+
+.profile-panel.border-spike .profile-avatar-ring{
+  border-width:4px;
+  border-radius:18% 18% 42% 42% / 16% 16% 64% 64%;
+}
+
+.profile-panel.border-crosshair .profile-avatar-ring{
+  border-width:3px;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border) 30%, transparent), 0 -9px 0 -6px var(--profile-ring-border), 0 9px 0 -6px var(--profile-ring-border), 9px 0 0 -6px var(--profile-ring-border), -9px 0 0 -6px var(--profile-ring-border);
+}
+
+.profile-panel.border-vanguard .profile-avatar-ring{
+  border-width:5px;
+  border-radius:28% 28% 40% 40%;
 }
 
 .agent-frame{
@@ -23552,13 +23630,15 @@ html body[data-theme] #page-home #spinAgentBtn{
   transform:none !important;
 }
 
-.border-gallery{
+.border-gallery,
+.border-color-gallery{
   display:grid;
   grid-template-columns:repeat(5, minmax(0, 1fr));
   gap:12px;
 }
 
-.border-card{
+.border-card,
+.border-color-card{
   position:relative;
   appearance:none;
   width:100%;
@@ -23570,7 +23650,8 @@ html body[data-theme] #page-home #spinAgentBtn{
   text-align:left;
 }
 
-.border-card.is-active{
+.border-card.is-active,
+.border-color-card.is-active{
   box-shadow:
     0 18px 36px rgba(0,0,0,.24),
     0 0 0 2px color-mix(in srgb, var(--accent) 42%, white 8%),
@@ -23588,11 +23669,12 @@ html body[data-theme] #page-home #spinAgentBtn{
   gap:10px;
   border-radius:inherit;
   background:
-    radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--border-card-accent) 22%, transparent), transparent 44%),
+    radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 24%, transparent), transparent 44%),
     linear-gradient(180deg, var(--border-card-surface), var(--border-card-surface-2));
 }
 
-.border-card-avatar{
+.border-card-avatar,
+.border-color-avatar{
   width:58px;
   height:58px;
   display:flex;
@@ -23603,35 +23685,102 @@ html body[data-theme] #page-home #spinAgentBtn{
   overflow:visible;
 }
 
-.border-card-avatar img{
+.border-card-avatar img,
+.border-color-avatar img{
   width:46px;
   height:46px;
   border-radius:999px;
   object-fit:cover;
 }
 
+.border-color-preview{
+  min-height:128px;
+  height:100%;
+  padding:14px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  border-radius:inherit;
+  background:
+    radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--border-color-accent) 22%, transparent), transparent 42%),
+    linear-gradient(180deg, var(--border-card-surface), var(--border-card-surface-2));
+}
+
+.border-card-avatar{
+  border:3px solid var(--border-ring-color, var(--border-card-accent));
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 22%, transparent), 0 0 18px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 34%, transparent);
+}
+
 .border-card-standard .border-card-avatar{
-  border:2px solid rgba(255,255,255,.16);
+  border-radius:999px;
 }
 
-.border-card-gilded .border-card-avatar{
-  border:3px solid rgba(250,204,21,.72);
-  box-shadow:0 0 0 1px rgba(250,204,21,.2), 0 0 18px rgba(250,204,21,.28);
+.border-card-halo .border-card-avatar{
+  box-shadow:0 0 0 6px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 18%, transparent), 0 0 24px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 44%, transparent);
 }
 
-.border-card-prismatic .border-card-avatar{
-  border:3px solid rgba(167,139,250,.62);
-  box-shadow:0 0 0 1px rgba(56,189,248,.26), 0 0 20px rgba(167,139,250,.32);
+.border-card-double .border-card-avatar{
+  box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 45%, transparent), 0 0 0 3px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 28%, transparent);
 }
 
-.border-card-runed .border-card-avatar{
-  border:3px solid rgba(129,140,248,.56);
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.08), 0 0 18px rgba(99,102,241,.28);
+.border-card-split .border-card-avatar{
+  border-style:dashed;
+  border-width:4px;
 }
 
-.border-card-tactical .border-card-avatar{
-  border:3px solid rgba(148,163,184,.58);
-  box-shadow:0 0 0 1px rgba(15,23,42,.72), 0 0 16px rgba(148,163,184,.24);
+.border-card-notched .border-card-avatar{
+  border-radius:34% 66% 38% 62% / 60% 34% 66% 40%;
+}
+
+.border-card-hex .border-card-avatar{
+  border-radius:18%;
+  clip-path:polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%);
+}
+
+.border-card-diamond .border-card-avatar{
+  border-radius:18%;
+  transform:rotate(45deg);
+}
+
+.border-card-diamond .border-card-avatar img{
+  transform:rotate(-45deg);
+}
+
+.border-card-shield .border-card-avatar{
+  border-radius:45% 45% 34% 34% / 42% 42% 58% 58%;
+  clip-path:polygon(50% 0, 92% 18%, 84% 78%, 50% 100%, 16% 78%, 8% 18%);
+}
+
+.border-card-crown .border-card-avatar{
+  border-radius:38% 38% 52% 52% / 28% 28% 72% 72%;
+}
+
+.border-card-blade .border-card-avatar{
+  border-radius:10% 42% 10% 42%;
+}
+
+.border-card-pulse .border-card-avatar{
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 28%, transparent), 0 0 0 8px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 12%, transparent);
+}
+
+.border-card-arc .border-card-avatar{
+  border-left-color:transparent;
+  border-right-color:color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 72%, white 12%);
+}
+
+.border-card-spike .border-card-avatar{
+  clip-path:polygon(50% 0, 100% 28%, 86% 100%, 14% 100%, 0 28%);
+}
+
+.border-card-crosshair .border-card-avatar{
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 30%, transparent), 0 -9px 0 -6px var(--border-ring-color, var(--border-card-accent)), 0 9px 0 -6px var(--border-ring-color, var(--border-card-accent)), 9px 0 0 -6px var(--border-ring-color, var(--border-card-accent)), -9px 0 0 -6px var(--border-ring-color, var(--border-card-accent));
+}
+
+.border-card-vanguard .border-card-avatar{
+  border-width:5px;
+  border-radius:28% 28% 40% 40%;
 }
 
 .border-card-copy{
