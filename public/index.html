@@ -6,7 +6,7 @@
   <title>RankedCoach</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260527-customize-themes-01">
+  <link rel="stylesheet" href="app.css?v=20260527-customize-themes-02">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -379,6 +379,15 @@ RIOT PROFILE MODAL
 
             <div class="profile-edit-grid">
               <select id="editProfileBorderStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
+              <div class="profile-border-motion-row profile-edit-field-full">
+                <div>
+                  <div class="profile-border-motion-title">Rotate Border</div>
+                  <div class="profile-border-motion-copy">Animate the selected profile border clockwise.</div>
+                </div>
+                <button id="editProfileBorderRotate" class="profile-border-motion-toggle" type="button" aria-pressed="false">
+                  <span></span>
+                </button>
+              </div>
               <div class="profile-edit-field profile-edit-field-full">
                 <span>Border Shape Preview</span>
                 <div id="editProfileBorderGallery" class="border-gallery"></div>
@@ -1816,7 +1825,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260527-customize-themes-01"></script>
+  <script type="module" src="app.js?v=20260527-customize-themes-02"></script>
 </body>
 </html>
 

@@ -31266,6 +31266,13 @@ function bindEvents(){
     document.getElementById(id)?.addEventListener("change", previewEditProfileVisuals);
   });
 
+  document.getElementById("editProfileBorderRotate")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    const button = e.currentTarget;
+    setProfileBorderRotateToggle(!button.classList.contains("is-active"));
+    previewEditProfileVisuals();
+  });
+
   document.getElementById("editProfileClose")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -33213,11 +33220,11 @@ const PROFILE_THEME_PRESETS = [
   createProfileTheme("teal-depths", "Teal Depths", "dark", { base:"#021417", base2:"#06343a", card:"#09272d", card2:"#0d4650", accent:"#14b8a6", accent2:"#67e8f9" }),
   createProfileTheme("timberwood", "Timberwood", "dark", { base:"#100b07", base2:"#28190d", card:"#1b120b", card2:"#3a2414", accent:"#a16207", accent2:"#d6a35c" }),
   createProfileTheme("black-gold", "Black Gold", "dark", { base:"#030303", base2:"#11100a", card:"#0c0c0b", card2:"#1c1a10", accent:"#d4af37", accent2:"#f8e08e" }),
-  createProfileTheme("fluorescent-white", "Fluorescent White", "dark", { base:"#05080b", base2:"#101820", card:"#0b1117", card2:"#18232d", accent:"#f8fafc", accent2:"#00e5ff", text:"#f8fbff" }),
+  createProfileTheme("fluorescent-white", "Fluorescent White", "dark", { base:"#f8fbff", base2:"#dfe8ef", nav:"rgba(248,251,255,.9)", card:"#ffffff", card2:"#e7eef5", input:"#dfe8ef", modal:"#f9fbff", border:"rgba(15,23,42,.14)", borderStrong:"rgba(15,23,42,.34)", text:"#0f172a", muted:"#334155", accent:"#0f172a", accent2:"#00b8d9", button:"#dbe4ec", buttonHover:"#cbd5df", glow:"rgba(0,184,217,.22)" }),
   createProfileTheme("lime-circuit", "Lime Circuit", "dark", { base:"#061003", base2:"#132407", card:"#101b0c", card2:"#24340f", accent:"#84cc16", accent2:"#22c55e" }),
   createProfileTheme("deep-blue", "Deep Blue", "dark", { base:"#020617", base2:"#081a3a", card:"#071329", card2:"#122a55", accent:"#1d4ed8", accent2:"#93c5fd" }),
   createProfileTheme("crimson-smoke", "Crimson Smoke", "dark", { base:"#09070a", base2:"#211018", card:"#141019", card2:"#2b1622", accent:"#e11d48", accent2:"#64748b" }),
-  createProfileTheme("midnight-ivory", "Midnight Ivory", "dark", { base:"#08090c", base2:"#17191f", card:"#11131a", card2:"#242733", accent:"#f5f0dc", accent2:"#94a3b8" }),
+  createProfileTheme("midnight-ivory", "Midnight Ivory", "dark", { base:"#f5f0dc", base2:"#d8ccb0", nav:"rgba(245,240,220,.9)", card:"#fff8e6", card2:"#e8dcc2", input:"#e8dcc2", modal:"#f8f0dc", border:"rgba(20,17,12,.13)", borderStrong:"rgba(20,17,12,.34)", text:"#14110c", muted:"#5c5141", accent:"#111827", accent2:"#a16207", button:"#d8ccb0", buttonHover:"#c9b98f", glow:"rgba(161,98,7,.2)" }),
   createProfileTheme("ivory-red", "Ivory Red", "light", { base:"#f8f3e8", base2:"#e7dac2", card:"#fff9ec", card2:"#eadcc2", accent:"#ef4444", accent2:"#b45309" }),
   createProfileTheme("eggshell-blue", "Eggshell Blue", "light", { base:"#f4efdf", base2:"#dbe8f4", card:"#fffaf0", card2:"#d7e6f3", accent:"#2563eb", accent2:"#f97316" }),
   createProfileTheme("porcelain-teal", "Porcelain Teal", "light", { base:"#eef7f4", base2:"#cbe8df", card:"#fafffb", card2:"#d8eee7", accent:"#0f766e", accent2:"#14b8a6" }),
@@ -33251,7 +33258,7 @@ const PROFILE_BORDER_COLORS = [
   { value: "serpent-green", label: "Serpent Green", color: "#16a34a" },
   { value: "teal", label: "Teal", color: "#14b8a6" },
   { value: "amber", label: "Amber", color: "#f59e0b" },
-  { value: "ivory", label: "Ivory", color: "#f5f0dc" }
+  { value: "obsidian", label: "Obsidian", color: "#050505" }
 ];
 
 const PROFILE_BORDER_STYLES = [
@@ -33342,6 +33349,7 @@ function normalizeProfileRecord(profile = {}) {
     navBackgroundUrl: profile.navBackgroundUrl || "",
     profileBorderColor: normalizeProfileBorderColor(profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
+    profileBorderRotate: !!profile.profileBorderRotate,
     bannerStyle: normalizeProfileBannerStyle(profile.bannerStyle || "theme"),
     accessibility: {
       contrastMode: profile?.accessibility?.contrastMode || "standard",
@@ -33388,6 +33396,7 @@ function loadProfiles(){
       navBackgroundUrl: "",
       profileBorderColor: "theme",
       profileBorder: "standard",
+      profileBorderRotate: false,
       bannerStyle: "theme",
       accessibility: {
         contrastMode: "standard",
@@ -33436,6 +33445,7 @@ function createProfile(data){
     navBackgroundUrl: data.navBackgroundUrl || "",
     profileBorderColor: normalizeProfileBorderColor(data.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(data.profileBorder || "standard"),
+    profileBorderRotate: !!data.profileBorderRotate,
     bannerStyle: normalizeProfileBannerStyle(data.bannerStyle || "theme"),
     accessibility: {
       contrastMode: data?.accessibility?.contrastMode || "standard",
@@ -33519,6 +33529,10 @@ function updateProfile(id, data){
 
   if (data.profileBorder != null) {
     profile.profileBorder = normalizeProfileBorderStyle(data.profileBorder || "standard");
+  }
+
+  if (data.profileBorderRotate != null) {
+    profile.profileBorderRotate = !!data.profileBorderRotate;
   }
 
   if (data.bannerStyle != null) {
@@ -33615,6 +33629,7 @@ function handleAddProfile() {
     navBackgroundUrl: "",
     profileBorderColor: "theme",
     profileBorder: "standard",
+    profileBorderRotate: false,
     bannerStyle: "theme",
     accessibility: {
       contrastMode: "standard",
@@ -33989,6 +34004,19 @@ function renderBorderGallery(selectedBorder = "standard") {
   });
 }
 
+function setProfileBorderRotateToggle(enabled = false) {
+  const toggle = document.getElementById("editProfileBorderRotate");
+  if (!toggle) return;
+  toggle.classList.toggle("is-active", !!enabled);
+  toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+}
+
+function getProfileBorderRotateValue(profile = getActiveProfile()) {
+  const toggle = document.getElementById("editProfileBorderRotate");
+  if (toggle) return toggle.classList.contains("is-active");
+  return !!profile?.profileBorderRotate;
+}
+
 function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
   const gallery = document.getElementById("editProfileBannerGallery");
   const bannerSelect = document.getElementById("editProfileBannerStyle");
@@ -34052,6 +34080,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const themeKey = theme.value;
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
+  const borderRotate = !!profile?.profileBorderRotate;
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
@@ -34075,6 +34104,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     panel.classList.remove("theme-classic", "theme-ember", "theme-ocean", "theme-verdant", "theme-cosmic");
     panel.classList.add(`theme-classic`);
     panel.classList.add(`border-${borderStyle}`);
+    panel.classList.toggle("border-rotating", borderRotate);
   }
 
   if (ring) {
@@ -34123,15 +34153,18 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (header) {
+    const hasBannerOverride = bannerStyle !== "theme";
     const selectedBannerUrl = getBannerImageUrl(bannerStyle);
     const activeBannerUrl = selectedBannerUrl;
     const bannerPattern = getBannerPattern(bannerStyle, theme);
     const imageLayer = activeBannerUrl
-      ? `linear-gradient(90deg, rgba(2,6,23,.46), rgba(2,6,23,.12) 44%, rgba(2,6,23,.52)), ${toCssUrl(activeBannerUrl)}`
+      ? `linear-gradient(90deg, rgba(2,6,23,.18), rgba(2,6,23,.04) 44%, rgba(2,6,23,.22)), ${toCssUrl(activeBannerUrl)}`
       : "none";
+    const patternLayer = !activeBannerUrl && hasBannerOverride ? bannerPattern : (!hasBannerOverride ? bannerPattern : "none");
     header.style.setProperty("--nav-bg-image", imageLayer);
-    header.style.setProperty("--nav-banner-pattern", activeBannerUrl ? "none" : bannerPattern);
-    header.style.setProperty("--nav-bg-opacity", activeBannerUrl ? ".52" : ".18");
+    header.style.setProperty("--nav-banner-pattern", activeBannerUrl ? "none" : patternLayer);
+    header.style.setProperty("--nav-bg-opacity", hasBannerOverride ? ".88" : ".18");
+    header.style.setProperty("--nav-bg-color", hasBannerOverride ? "#050814" : (colors.nav || "rgba(11,18,32,.84)"));
   }
 
   ensureThemeBuilderThemeState(getCurrentThemeBuilderThemeKey());
@@ -34211,6 +34244,7 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   renderBorderColorGallery(selectedBorderColor);
   if (borderSelect) borderSelect.value = selectedBorder;
   renderBorderGallery(selectedBorder);
+  setProfileBorderRotateToggle(!!profile?.profileBorderRotate);
   if (bannerSelect) bannerSelect.value = selectedBanner;
   activeProfileBannerCategory = getProfileBannerCategory(getProfileBannerStyle(selectedBanner));
   setProfileBannerCategory(activeProfileBannerCategory);
@@ -34258,6 +34292,7 @@ function saveEditProfileModal() {
     avatarAgent: document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent,
     profileBorderColor: normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard"),
+    profileBorderRotate: getProfileBorderRotateValue(profile),
     bannerStyle: normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme"),
     navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
@@ -34273,6 +34308,7 @@ function previewEditProfileVisuals() {
   const activeAvatar = document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent;
   const activeBorderColor = normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
   const activeBorder = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
+  const activeBorderRotate = getProfileBorderRotateValue(profile);
   const activeBanner = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
   renderThemeGallery(activeThemeKey);
   renderAvatarGallery(activeAvatar);
@@ -34287,6 +34323,7 @@ function previewEditProfileVisuals() {
     avatarUrl: getDefaultProfileAvatarUrl(activeAvatar || profile.avatarAgent),
     profileBorderColor: activeBorderColor,
     profileBorder: activeBorder,
+    profileBorderRotate: activeBorderRotate,
     bannerStyle: activeBanner,
     navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
