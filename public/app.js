@@ -31270,11 +31270,6 @@ function bindEvents(){
     previewEditProfileVisuals();
   });
 
-  document.getElementById("editProfileBannerAnimationPreview")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    previewProfileBorderAnimation();
-  });
-
   document.getElementById("editProfileClose")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -33971,7 +33966,7 @@ function renderBorderGallery(selectedBorder = "standard") {
   gallery.innerHTML = PROFILE_BORDER_STYLES.map((style) => {
     const isActive = style.value === activeBorder;
     return `
-      <button type="button" class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""}" data-border-card="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
+      <div class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""}" data-border-card="${escapeHtml(style.value)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
         <div
           class="border-card-preview"
           style="
@@ -33991,17 +33986,53 @@ function renderBorderGallery(selectedBorder = "standard") {
             <div class="border-card-name">${escapeHtml(style.label)}</div>
             <div class="border-card-note">${escapeHtml(style.note || "Profile ring")}</div>
           </div>
+          <button type="button" class="border-card-preview-toggle" data-border-preview-toggle="${escapeHtml(style.value)}" aria-pressed="false">Preview</button>
         </div>
-      </button>
+      </div>
     `;
   }).join("");
 
+  const selectBorderCard = (button) => {
+    const nextBorder = normalizeProfileBorderStyle(button.getAttribute("data-border-card") || "standard");
+    if (borderSelect) borderSelect.value = nextBorder;
+    renderBorderGallery(nextBorder);
+    previewEditProfileVisuals();
+  };
+
   gallery.querySelectorAll("[data-border-card]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const nextBorder = normalizeProfileBorderStyle(button.getAttribute("data-border-card") || "standard");
-      if (borderSelect) borderSelect.value = nextBorder;
-      renderBorderGallery(nextBorder);
-      previewEditProfileVisuals();
+    button.addEventListener("click", (event) => {
+      if (event.target?.closest?.("[data-border-preview-toggle]")) return;
+      selectBorderCard(button);
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      selectBorderCard(button);
+    });
+  });
+
+  gallery.querySelectorAll("[data-border-preview-toggle]").forEach((toggle) => {
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const card = toggle.closest(".border-card");
+      if (!card) return;
+      const shouldPreview = !card.classList.contains("is-previewing");
+
+      gallery.querySelectorAll(".border-card.is-previewing").forEach((activeCard) => {
+        activeCard.classList.remove("is-previewing");
+        const activeToggle = activeCard.querySelector("[data-border-preview-toggle]");
+        if (activeToggle) {
+          activeToggle.textContent = "Preview";
+          activeToggle.setAttribute("aria-pressed", "false");
+        }
+      });
+
+      if (shouldPreview) {
+        card.classList.add("is-previewing");
+        toggle.textContent = "Stop";
+        toggle.setAttribute("aria-pressed", "true");
+      }
     });
   });
 }
@@ -34017,31 +34048,6 @@ function getProfileBorderRotateValue(profile = getActiveProfile()) {
   const toggle = document.getElementById("editProfileBorderRotate");
   if (toggle) return !!toggle.checked;
   return !!profile?.profileBorderRotate;
-}
-
-let profileBorderPreviewTimer = 0;
-
-function previewProfileBorderAnimation() {
-  const panel = document.getElementById("profilePanel");
-  if (!panel) return;
-
-  const shouldRemainAnimated = getProfileBorderRotateValue();
-  previewEditProfileVisuals();
-
-  if (profileBorderPreviewTimer) {
-    window.clearTimeout(profileBorderPreviewTimer);
-    profileBorderPreviewTimer = 0;
-  }
-
-  panel.classList.remove("border-animation-kick");
-  panel.classList.add("border-animated", "border-animation-preview");
-  void panel.offsetWidth;
-  panel.classList.add("border-animation-kick");
-
-  profileBorderPreviewTimer = window.setTimeout(() => {
-    panel.classList.remove("border-animation-preview", "border-animation-kick");
-    panel.classList.toggle("border-animated", shouldRemainAnimated);
-  }, 2200);
 }
 
 function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {

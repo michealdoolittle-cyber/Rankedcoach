@@ -13577,12 +13577,6 @@ textarea,
   animation:profileBorderVanguardLock 3.1s ease-in-out infinite;
 }
 
-.profile-panel.border-animation-kick .profile-avatar-ring,
-.profile-panel.border-animation-kick .profile-avatar-ring::before{
-  animation-duration:1.15s !important;
-  animation-iteration-count:2 !important;
-}
-
 @keyframes profileBorderCleanPulse{
   0%,100%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--profile-ring-border) 0%, transparent), 0 0 10px var(--profile-ring-glow); filter:saturate(1); }
   50%{ box-shadow:0 0 0 4px color-mix(in srgb, var(--profile-ring-border) 18%, transparent), 0 0 22px var(--profile-ring-glow); filter:saturate(1.18); }
@@ -23848,31 +23842,6 @@ html body[data-theme] #page-home #spinAgentBtn{
   margin-left:auto;
 }
 
-.profile-border-preview-btn{
-  justify-self:start;
-  min-height:34px;
-  padding:0 14px;
-  border:1px solid color-mix(in srgb, var(--accent) 28%, var(--border-strong));
-  border-radius:12px;
-  background:linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 90%, white 8%), var(--button-bg));
-  color:var(--text-main);
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.055em;
-  text-transform:uppercase;
-  cursor:pointer;
-}
-
-.profile-border-preview-btn:hover,
-.profile-border-preview-btn:focus-visible{
-  border-color:color-mix(in srgb, var(--accent) 58%, white 10%);
-  box-shadow:0 0 18px color-mix(in srgb, var(--theme-glow) 48%, transparent);
-}
-
-#editProfileModal [data-profile-panel="banner"] .profile-border-preview-btn{
-  margin:6px 0 2px;
-}
-
 .border-card,
 .border-color-card{
   position:relative;
@@ -23884,6 +23853,11 @@ html body[data-theme] #page-home #spinAgentBtn{
   overflow:hidden;
   cursor:pointer;
   text-align:left;
+}
+
+.border-card:focus-visible{
+  outline:2px solid color-mix(in srgb, var(--accent) 72%, white 10%);
+  outline-offset:3px;
 }
 
 .border-card.is-active,
@@ -23907,10 +23881,13 @@ html body[data-theme] #page-home #spinAgentBtn{
   background:
     radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 24%, transparent), transparent 44%),
     linear-gradient(180deg, var(--border-card-surface), var(--border-card-surface-2));
+  --profile-ring-border:var(--border-ring-color, var(--border-card-accent));
+  --profile-ring-glow:color-mix(in srgb, var(--border-ring-color, var(--border-card-accent)) 44%, transparent);
 }
 
 .border-card-avatar,
 .border-color-avatar{
+  position:relative;
   width:58px;
   height:58px;
   display:flex;
@@ -23919,6 +23896,115 @@ html body[data-theme] #page-home #spinAgentBtn{
   border-radius:999px;
   background:linear-gradient(135deg, var(--border-card-surface), color-mix(in srgb, var(--border-card-accent) 18%, var(--border-card-surface-2)));
   overflow:visible;
+}
+
+.border-card-avatar::before{
+  content:"";
+  position:absolute;
+  inset:-8px;
+  border-radius:inherit;
+  opacity:0;
+  pointer-events:none;
+  transform-origin:center;
+}
+
+.border-card-preview-toggle{
+  position:absolute;
+  right:10px;
+  bottom:10px;
+  min-height:28px;
+  padding:0 10px;
+  border:1px solid color-mix(in srgb, var(--border-ring-color, var(--accent)) 38%, var(--border-strong));
+  border-radius:10px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--button-bg) 90%, white 8%), var(--button-bg));
+  color:var(--text-main);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+
+.border-card-preview-toggle:hover,
+.border-card-preview-toggle:focus-visible,
+.border-card.is-previewing .border-card-preview-toggle{
+  border-color:color-mix(in srgb, var(--border-ring-color, var(--accent)) 68%, white 12%);
+  box-shadow:0 0 14px color-mix(in srgb, var(--border-ring-color, var(--accent)) 30%, transparent);
+}
+
+.border-card.is-previewing .border-card-avatar{
+  will-change:box-shadow, border-color, filter;
+}
+
+.border-card.is-previewing.border-card-standard .border-card-avatar{
+  animation:profileBorderCleanPulse 2.8s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-halo .border-card-avatar{
+  animation:profileBorderHaloBreathe 3.2s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-double .border-card-avatar{
+  animation:profileBorderDoubleTick 2.6s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-split .border-card-avatar{
+  animation:profileBorderSplitFlicker 2.2s steps(4) infinite;
+}
+
+.border-card.is-previewing.border-card-notched .border-card-avatar{
+  animation:profileBorderNotchBreathe 3.4s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-hex .border-card-avatar{
+  animation:profileBorderHexCharge 3s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-diamond .border-card-avatar::before{
+  opacity:1;
+  background:linear-gradient(135deg, transparent 0 42%, color-mix(in srgb, var(--profile-ring-border) 74%, white 20%) 48% 52%, transparent 58% 100%);
+  background-size:220% 220%;
+  animation:profileBorderGlint 2.8s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-shield .border-card-avatar{
+  animation:profileBorderShieldGuard 3s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-crown .border-card-avatar{
+  animation:profileBorderCrownGlow 3.4s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-blade .border-card-avatar::before{
+  opacity:1;
+  background:linear-gradient(115deg, transparent 0 44%, color-mix(in srgb, var(--profile-ring-border) 88%, white 10%) 48% 51%, transparent 56% 100%);
+  background-size:240% 100%;
+  animation:profileBorderBladeCut 2.5s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-pulse .border-card-avatar{
+  animation:profileBorderSignalPulse 2.4s ease-out infinite;
+}
+
+.border-card.is-previewing.border-card-arc .border-card-avatar{
+  animation:profileBorderArcFlare 2.8s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-spike .border-card-avatar{
+  animation:profileBorderSpikeCharge 2.6s ease-in-out infinite;
+}
+
+.border-card.is-previewing.border-card-crosshair .border-card-avatar{
+  animation:profileBorderCrosshairPing 2.3s ease-out infinite;
+}
+
+.border-card.is-previewing.border-card-vanguard .border-card-avatar{
+  animation:profileBorderVanguardLock 3.1s ease-in-out infinite;
+}
+
+body.access-reduced-motion .border-card.is-previewing .border-card-avatar,
+body.access-reduced-motion .border-card.is-previewing .border-card-avatar::before{
+  animation:none !important;
 }
 
 .border-card-avatar img,
