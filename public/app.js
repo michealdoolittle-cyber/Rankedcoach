@@ -33207,6 +33207,31 @@ function createProfileTheme(value, label, mode, colors = {}) {
   };
 }
 
+function getHexColorLuminance(value) {
+  const match = String(value || "").match(/#([0-9a-f]{3}|[0-9a-f]{6})\b/i);
+  if (!match) return null;
+  const hex = match[1].length === 3
+    ? match[1].split("").map(char => char + char).join("")
+    : match[1];
+  const channels = [0, 2, 4].map(offset => {
+    const raw = parseInt(hex.slice(offset, offset + 2), 16) / 255;
+    return raw <= 0.03928 ? raw / 12.92 : Math.pow((raw + 0.055) / 1.055, 2.4);
+  });
+  return (channels[0] * 0.2126) + (channels[1] * 0.7152) + (channels[2] * 0.0722);
+}
+
+function getThemeVisualMode(theme = getThemePreset("default")) {
+  const colors = theme?.colors || {};
+  const luminanceValues = [colors.card, colors.card2, colors.base]
+    .map(getHexColorLuminance)
+    .filter(value => Number.isFinite(value));
+  if (luminanceValues.length) {
+    const averageLuminance = luminanceValues.reduce((sum, value) => sum + value, 0) / luminanceValues.length;
+    return averageLuminance >= 0.52 ? "light" : "dark";
+  }
+  return theme?.mode || "dark";
+}
+
 const PROFILE_THEME_PRESETS = [
   createProfileTheme("default", "Default", "dark", { base:"#071029", base2:"#071b2b", nav:"rgba(11,18,32,.84)", card:"#0b1220", card2:"#0f172a", input:"#0f172a", modal:"#020617", overlay:"rgba(15,23,42,.7)", border:"rgba(148,163,184,.14)", borderStrong:"rgba(148,163,184,.38)", text:"#e6eef8", muted:"#94a3b8", accent:"#ff4655", accent2:"#f97316", button:"#1e293b", buttonHover:"#334155", glow:"rgba(255,70,85,.22)", pattern:"radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)", pattern2:"radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)" }),
   createProfileTheme("obsidian-red", "Obsidian Red", "dark", { base:"#050506", base2:"#17090b", card:"#0f1015", card2:"#211014", accent:"#ef233c", accent2:"#f59e0b" }),
@@ -33218,11 +33243,11 @@ const PROFILE_THEME_PRESETS = [
   createProfileTheme("teal-depths", "Teal Depths", "dark", { base:"#021417", base2:"#06343a", card:"#09272d", card2:"#0d4650", accent:"#14b8a6", accent2:"#67e8f9" }),
   createProfileTheme("timberwood", "Timberwood", "dark", { base:"#100b07", base2:"#28190d", card:"#1b120b", card2:"#3a2414", accent:"#a16207", accent2:"#d6a35c" }),
   createProfileTheme("black-gold", "Black Gold", "dark", { base:"#030303", base2:"#11100a", card:"#0c0c0b", card2:"#1c1a10", accent:"#d4af37", accent2:"#f8e08e" }),
-  createProfileTheme("fluorescent-white", "Fluorescent White", "dark", { base:"#f8fbff", base2:"#dfe8ef", nav:"rgba(248,251,255,.9)", card:"#ffffff", card2:"#e7eef5", input:"#dfe8ef", modal:"#f9fbff", border:"rgba(15,23,42,.14)", borderStrong:"rgba(15,23,42,.34)", text:"#0f172a", muted:"#334155", accent:"#0f172a", accent2:"#00b8d9", button:"#dbe4ec", buttonHover:"#cbd5df", glow:"rgba(0,184,217,.22)" }),
+  createProfileTheme("fluorescent-white", "Fluorescent White", "light", { base:"#f8fbff", base2:"#dfe8ef", nav:"rgba(248,251,255,.9)", card:"#ffffff", card2:"#e7eef5", input:"#dfe8ef", modal:"#f9fbff", border:"rgba(15,23,42,.14)", borderStrong:"rgba(15,23,42,.34)", text:"#0f172a", muted:"#334155", accent:"#0f172a", accent2:"#00b8d9", button:"#dbe4ec", buttonHover:"#cbd5df", glow:"rgba(0,184,217,.22)" }),
   createProfileTheme("lime-circuit", "Lime Circuit", "dark", { base:"#061003", base2:"#132407", card:"#101b0c", card2:"#24340f", accent:"#84cc16", accent2:"#22c55e" }),
   createProfileTheme("deep-blue", "Deep Blue", "dark", { base:"#020617", base2:"#081a3a", card:"#071329", card2:"#122a55", accent:"#1d4ed8", accent2:"#93c5fd" }),
   createProfileTheme("crimson-smoke", "Crimson Smoke", "dark", { base:"#09070a", base2:"#211018", card:"#141019", card2:"#2b1622", accent:"#e11d48", accent2:"#64748b" }),
-  createProfileTheme("midnight-ivory", "Midnight Ivory", "dark", { base:"#f5f0dc", base2:"#d8ccb0", nav:"rgba(245,240,220,.9)", card:"#fff8e6", card2:"#e8dcc2", input:"#e8dcc2", modal:"#f8f0dc", border:"rgba(20,17,12,.13)", borderStrong:"rgba(20,17,12,.34)", text:"#14110c", muted:"#5c5141", accent:"#111827", accent2:"#a16207", button:"#d8ccb0", buttonHover:"#c9b98f", glow:"rgba(161,98,7,.2)" }),
+  createProfileTheme("midnight-ivory", "Midnight Ivory", "light", { base:"#f5f0dc", base2:"#d8ccb0", nav:"rgba(245,240,220,.9)", card:"#fff8e6", card2:"#e8dcc2", input:"#e8dcc2", modal:"#f8f0dc", border:"rgba(20,17,12,.13)", borderStrong:"rgba(20,17,12,.34)", text:"#14110c", muted:"#5c5141", accent:"#111827", accent2:"#a16207", button:"#d8ccb0", buttonHover:"#c9b98f", glow:"rgba(161,98,7,.2)" }),
   createProfileTheme("ivory-red", "Ivory Red", "light", { base:"#f8f3e8", base2:"#e7dac2", card:"#fff9ec", card2:"#eadcc2", accent:"#ef4444", accent2:"#b45309" }),
   createProfileTheme("eggshell-blue", "Eggshell Blue", "light", { base:"#f4efdf", base2:"#dbe8f4", card:"#fffaf0", card2:"#d7e6f3", accent:"#2563eb", accent2:"#f97316" }),
   createProfileTheme("porcelain-teal", "Porcelain Teal", "light", { base:"#eef7f4", base2:"#cbe8df", card:"#fafffb", card2:"#d8eee7", accent:"#0f766e", accent2:"#14b8a6" }),
@@ -34120,6 +34145,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const root = document.documentElement;
   const body = document.body;
   const colors = theme?.colors || {};
+  const themeVisualMode = getThemeVisualMode(theme);
   const baseSurface = colors.base || "#071029";
   const secondarySurface = colors.base2 || "#071b2b";
   const cardSurface = colors.card || "#0b1220";
@@ -34205,7 +34231,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   if (body) {
     body.classList.remove("theme-static", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
     body.dataset.theme = themeKey;
-    body.dataset.themeMode = theme.mode || "dark";
+    body.dataset.themeMode = themeVisualMode;
     body.classList.add(`theme-${theme.motion || "static"}`);
     if (accessibility.contrastMode === "high") body.classList.add("access-high-contrast");
     if (accessibility.layoutMode === "mobile") body.classList.add("access-mobile-layout");
@@ -34234,12 +34260,12 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
   applyThemeBuilderRuntimeStyles();
   syncThemeBuilderUI();
-  applyThemeReadabilityRuntimeStyles(theme);
+  applyThemeReadabilityRuntimeStyles(theme, themeVisualMode);
 }
 
 const THEME_READABILITY_RUNTIME_STYLE_ID = "theme-readability-runtime-style";
 
-function applyThemeReadabilityRuntimeStyles(theme = getThemePreset("default")) {
+function applyThemeReadabilityRuntimeStyles(theme = getThemePreset("default"), visualMode = getThemeVisualMode(theme)) {
   let style = document.getElementById(THEME_READABILITY_RUNTIME_STYLE_ID);
   if (!style) {
     style = document.createElement("style");
@@ -34247,7 +34273,7 @@ function applyThemeReadabilityRuntimeStyles(theme = getThemePreset("default")) {
     document.head.appendChild(style);
   }
 
-  const isLight = (theme?.mode || "dark") === "light";
+  const isLight = visualMode === "light";
   const sharedCss = `
 body[data-theme] #page-logging .logging-hero,
 body[data-theme] #page-insights .insights-action-card .insight-action-hero{
@@ -34362,6 +34388,8 @@ body[data-theme-mode="light"] :is(
   .stats-role-pill,
   .stats-summary-box,
   .stats-kpi-card,
+  .stats-trend-row,
+  .stats-select-card,
   .nav-rr-widget,
   .profile-panel
 ){
@@ -34373,6 +34401,55 @@ body[data-theme-mode="light"] :is(
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, white 38%, transparent),
     0 10px 24px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .weekly-focus-pill,
+  .improvement-pill,
+  .home-loadout-pill,
+  .compass-score-card,
+  .scorebox,
+  .rr-total,
+  .rr-match-stats,
+  .rr-stat,
+  .logging-pill,
+  .logging-chip,
+  .logging-quick-toggle,
+  .logging-feed-footnote,
+  .log-feed-entry,
+  .insight-card,
+  .insight-read-card,
+  .trend-signal-card,
+  .stats-trend-card,
+  .stats-trend-row,
+  .stats-breakdown-cardlet,
+  .stats-map-card,
+  .stats-agent-row,
+  .stats-agent-card,
+  .stats-agent-tile,
+  .stats-weapon-family-row,
+  .stats-weapon-card,
+  .stats-weapon-tile,
+  .stats-weapon-mini,
+  .stats-select-card
+) :is(div, span, strong, p, label){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] :is(
+  .stats-trend-tone,
+  .insight-tag,
+  .insight-meta-pill,
+  .logging-live-pill,
+  .weekly-focus-confidence,
+  .stats-weapon-winrate,
+  .stats-trend-kicker
+){
+  background:color-mix(in srgb, var(--button-bg) 82%, var(--accent) 18%) !important;
+  border-color:color-mix(in srgb, var(--accent) 36%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+  text-shadow:none !important;
 }
 
 body[data-theme-mode="light"] :is(
@@ -34523,8 +34600,20 @@ body[data-theme-mode="light"] :is(
   .disabled,
   [aria-disabled="true"]
 ){
-  opacity:.72 !important;
-  color:color-mix(in srgb, var(--text-main) 68%, transparent) !important;
+  opacity:.84 !important;
+  color:color-mix(in srgb, var(--text-main) 82%, var(--surface-card)) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  button:disabled,
+  .is-empty,
+  .is-locked,
+  .no-data,
+  .disabled,
+  [aria-disabled="true"]
+) :is(div, span, strong, p, label){
+  color:color-mix(in srgb, var(--text-main) 82%, var(--surface-card)) !important;
+  text-shadow:none !important;
 }
 `;
 
