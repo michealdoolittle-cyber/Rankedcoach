@@ -34827,6 +34827,148 @@ body[data-theme-mode="light"] :is(
   border-color:rgba(190,18,60,.48) !important;
   color:#be123c !important;
 }
+
+body[data-theme-mode="light"] #page-stats .stats-act-select-wrap{
+  border:1px solid color-mix(in srgb, var(--accent) 38%, var(--border-soft)) !important;
+  border-radius:12px !important;
+  padding:4px !important;
+  background:
+    radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 36%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, var(--accent) 12%), color-mix(in srgb, var(--surface-card-2) 90%, var(--accent-2) 10%)) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent),
+    0 10px 20px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-act-select{
+  border:1px solid color-mix(in srgb, var(--accent) 42%, var(--border-soft)) !important;
+  border-radius:10px !important;
+  background:linear-gradient(145deg, var(--button-bg), var(--button-hover)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] #page-logging .focus-select-shell{
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+
+body[data-theme-mode="light"] #page-logging .focus-select-symbol{
+  border:1px solid color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+  border-radius:10px !important;
+  background:linear-gradient(145deg, var(--button-bg), var(--button-hover)) !important;
+  color:var(--text-main) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent),
+    0 10px 20px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-logging :is(
+  .focus-preview-text,
+  .focus-preview-text.is-placeholder,
+  .logging-feed,
+  .logging-feed-card,
+  .logging-feed-card .card-title,
+  .logging-feed-card .card-sub,
+  .logging-feed-card .logging-session-label,
+  .logging-feed-card .logging-session-select,
+  .logging-feed-card .log-feed-empty,
+  .logging-feed-card .log-feed-footnote,
+  .logging-feed-card .log-feed-day,
+  .logging-feed-card .log-feed-entry,
+  .logging-feed-card .log-feed-entry *,
+  .logging-feed-card .session-calendar,
+  .logging-feed-card .session-calendar *,
+  .logging-feed-card .current-session-label,
+  .logging-feed-card .current-session-value
+){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] #page-logging :is(.logging-feed-card .card-sub, .logging-feed-card .logging-feed-footnote){
+  color:var(--text-muted) !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-summary-card :is(
+  .stat-label,
+  .stat-value,
+  .stats-proof-kicker,
+  .stats-act-label,
+  .stats-proof-rank-copy,
+  .stats-proof-rank-copy strong,
+  .stats-proof-rank-copy span,
+  .stats-proof-note,
+  .stats-role-progress-card,
+  .stats-role-progress-card *,
+  .stats-role-progress-row,
+  .stats-role-progress-row *,
+  .stats-summary-selector-row,
+  .stats-summary-selector-row *
+){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-summary-card :is(.stat-label,.stats-proof-kicker,.stats-act-label,.stats-proof-note){
+  color:var(--text-muted) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insight-filter-btn.active,
+body[data-theme-mode="light"] #page-insights .insight-filter-btn[data-filter="all"].active,
+body[data-theme-mode="light"] #page-insights .insight-trend-row.open{
+  background:linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  border-color:color-mix(in srgb, var(--accent) 72%, #ffffff 16%) !important;
+  color:#ffffff !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 26%, transparent),
+    0 10px 22px color-mix(in srgb, var(--accent) 24%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insight-trend-row.open :is(.insight-trend-kicker,.insight-trend-title,span,strong,div){
+  color:#ffffff !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] .profile-switcher,
+body[data-theme-mode="light"] .profile-switcher :is(.profile-row,.profile-row *,#profileList,#profileList *,button,span,strong,div){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] .profile-switcher .profile-row.active{
+  background:color-mix(in srgb, var(--accent) 16%, var(--surface-card)) !important;
+  border-color:color-mix(in srgb, var(--accent) 36%, var(--border-soft)) !important;
+}
+
+body[data-theme-mode="light"] .profile-switcher .profile-row:hover{
+  background:color-mix(in srgb, var(--accent) 12%, var(--surface-card)) !important;
+}
+
+body[data-theme-mode="light"] #page-home .compass-summary-shell :is(
+  .compass-summary-bottom-shell,
+  .compass-summary-body,
+  .compass-cards-grid,
+  .compass-svg-wrap,
+  .compass-profile-description
+){
+  background:
+    radial-gradient(circle at 16% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 36%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 86%, var(--accent) 14%), color-mix(in srgb, var(--surface-card-2) 90%, var(--accent-2) 10%)) !important;
+  border-color:color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] #page-home .compass-summary-shell :is(
+  .compass-summary-bottom-shell,
+  .compass-summary-body,
+  .compass-cards-grid,
+  .compass-svg-wrap
+) :is(div,span,strong,p,label){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
 `;
 
   style.textContent = `${sharedCss}\n${isLight ? lightCss : ""}`;
