@@ -26008,62 +26008,6 @@ body[data-theme] :is(
    Keeps the 1080p layout intact while preventing larger canvases from
    over-scaling nav/profile text, native selects, and the compass readout.
 ========================= */
-@media (min-width: 1450px){
-  .app-header{
-    grid-template-columns:minmax(360px, 1fr) minmax(0, 1fr) minmax(460px, 1fr) !important;
-  }
-
-  .nav-center{
-    width:clamp(380px, 28vw, 620px) !important;
-    min-width:clamp(380px, 28vw, 620px) !important;
-    max-width:620px !important;
-  }
-
-  .nav-right{
-    min-width:clamp(460px, 30vw, 600px) !important;
-    width:clamp(460px, 30vw, 600px) !important;
-    max-width:600px !important;
-  }
-
-  .profile-panel{
-    width:100% !important;
-    min-width:clamp(460px, 30vw, 600px) !important;
-    max-width:600px !important;
-  }
-
-  .profile-info{
-    min-width:178px !important;
-    overflow:visible !important;
-  }
-
-  .profile-line-main{
-    font-size:clamp(13px, calc(13px * var(--app-1080-scale)), 15px) !important;
-  }
-
-  .profile-line-sub{
-    font-size:clamp(11px, calc(12px * var(--app-1080-scale)), 13px) !important;
-  }
-
-  .profile-line-rr{
-    font-size:clamp(10px, calc(10px * var(--app-1080-scale)), 11px) !important;
-  }
-
-  #profileRiotId{
-    min-width:0 !important;
-    max-width:none !important;
-    overflow:visible !important;
-    text-overflow:clip !important;
-    white-space:nowrap !important;
-  }
-
-  .nav-right :is(.profile-dropdown-toggle, .profile-sync-btn, .ask-coach-nav-btn){
-    width:clamp(50px, calc(50px * var(--app-1080-scale)), 58px) !important;
-    min-width:clamp(50px, calc(50px * var(--app-1080-scale)), 58px) !important;
-    height:clamp(50px, calc(50px * var(--app-1080-scale)), 58px) !important;
-    min-height:clamp(50px, calc(50px * var(--app-1080-scale)), 58px) !important;
-  }
-}
-
 #goalRankModal #goalRankSelect,
 #goalRankModal #goalRankSave,
 #goalRankModal #goalRankSelect option,
@@ -26071,22 +26015,30 @@ body[data-theme] :is(
 #page-logging #logFocusSelect option,
 #page-logging .logging-session-select,
 #page-logging .logging-session-select option{
-  font-size:clamp(12px, calc(12px * var(--app-1080-scale)), 14px) !important;
-  line-height:1.12 !important;
+  font:700 13px/1.12 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   letter-spacing:.01em !important;
   text-align:left !important;
+  text-align-last:left !important;
   direction:ltr !important;
 }
 
 #goalRankModal #goalRankSelect,
 #page-logging #logFocusSelect{
   max-height:40px !important;
+  transform:none !important;
+  transition:none !important;
+  zoom:1 !important;
 }
 
 #goalRankModal #goalRankSelect option,
 #page-logging #logFocusSelect option{
   min-height:24px !important;
   padding:4px 8px !important;
+}
+
+#page-logging .focus-wrapper,
+#page-logging .focus-select-shell{
+  transform:none !important;
 }
 
 #page-home .compass-summary-shell,
