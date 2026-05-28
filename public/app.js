@@ -34915,6 +34915,31 @@ body[data-theme-mode="light"] #page-stats .stats-summary-card :is(.stat-label,.s
   color:var(--text-muted) !important;
 }
 
+body[data-theme-mode="light"] #page-stats .stats-summary-card .stats-proof-card{
+  padding:5px 8px 4px !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-summary-card .stats-proof-card-head{
+  align-items:flex-start !important;
+  gap:6px !important;
+  transform:translateY(-2px) !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-summary-card .stats-proof-kicker{
+  margin-bottom:2px !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-summary-card .stats-proof-rank-row{
+  transform:translateY(-2px) !important;
+  gap:6px !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-summary-card .stats-proof-note{
+  margin-top:2px !important;
+  line-height:1.05 !important;
+  transform:translateY(-3px) !important;
+}
+
 body[data-theme-mode="light"] #page-insights .insight-filter-btn.active,
 body[data-theme-mode="light"] #page-insights .insight-filter-btn[data-filter="all"].active,
 body[data-theme-mode="light"] #page-insights .insight-trend-row.open{
