@@ -34969,6 +34969,68 @@ body[data-theme-mode="light"] #page-home .compass-summary-shell :is(
   color:var(--text-main) !important;
   text-shadow:none !important;
 }
+
+body[data-theme-mode="light"] :is(
+  #page-stats .stats-agents-card,
+  #page-stats #statsAgentsList.stats-agent-list,
+  #page-stats .stats-breakdown-card,
+  #page-stats #statsBreakdown.stats-breakdown,
+  #page-logging .logging-feed-card,
+  #page-logging #logFeed.logging-feed
+){
+  scrollbar-color:color-mix(in srgb, var(--accent) 80%, white 20%) var(--scrollbar-track) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-stats .stats-agents-card,
+  #page-stats #statsAgentsList.stats-agent-list,
+  #page-stats .stats-breakdown-card,
+  #page-stats #statsBreakdown.stats-breakdown,
+  #page-logging .logging-feed-card,
+  #page-logging #logFeed.logging-feed
+)::-webkit-scrollbar{
+  width:12px !important;
+  height:12px !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-stats .stats-agents-card,
+  #page-stats #statsAgentsList.stats-agent-list,
+  #page-stats .stats-breakdown-card,
+  #page-stats #statsBreakdown.stats-breakdown,
+  #page-logging .logging-feed-card,
+  #page-logging #logFeed.logging-feed
+)::-webkit-scrollbar-track{
+  background:var(--scrollbar-track) !important;
+  border-radius:999px !important;
+  border:0 !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-stats .stats-agents-card,
+  #page-stats #statsAgentsList.stats-agent-list,
+  #page-stats .stats-breakdown-card,
+  #page-stats #statsBreakdown.stats-breakdown,
+  #page-logging .logging-feed-card,
+  #page-logging #logFeed.logging-feed
+)::-webkit-scrollbar-thumb{
+  background:var(--scrollbar-thumb) !important;
+  border-radius:999px !important;
+  border:2px solid var(--scrollbar-track) !important;
+  box-shadow:0 0 0 1px var(--scrollbar-thumb-border), 0 0 14px color-mix(in srgb, var(--theme-glow) 40%, transparent) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-stats .stats-agents-card,
+  #page-stats #statsAgentsList.stats-agent-list,
+  #page-stats .stats-breakdown-card,
+  #page-stats #statsBreakdown.stats-breakdown,
+  #page-logging .logging-feed-card,
+  #page-logging #logFeed.logging-feed
+)::-webkit-scrollbar-thumb:hover{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 92%, white 8%), color-mix(in srgb, var(--accent-2) 30%, var(--accent))) !important;
+}
 `;
 
   style.textContent = `${sharedCss}\n${isLight ? lightCss : ""}`;
