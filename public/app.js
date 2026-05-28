@@ -10103,6 +10103,7 @@ function setCustomFocusCommitted(value = ""){
   if(confirm){
     confirm.style.display = value ? "none" : "";
   }
+  syncLogFocusCustomDropdown();
 }
 
 function resetCustomFocusUI(){
@@ -10112,7 +10113,121 @@ function resetCustomFocusUI(){
   if(select){
     select.style.display = "";
   }
+  syncLogFocusCustomDropdown();
   updateLoggingDebriefPreview();
+}
+
+function closeLogFocusCustomDropdown() {
+  const shell = document.getElementById("logFocusCustomSelect");
+  const menu = document.getElementById("logFocusCustomMenu");
+  const trigger = document.getElementById("logFocusCustomTrigger");
+  shell?.classList.remove("open");
+  if (menu) menu.hidden = true;
+  trigger?.setAttribute("aria-expanded", "false");
+}
+
+function syncLogFocusCustomDropdown() {
+  const select = document.getElementById("logFocusSelect");
+  const valueEl = document.getElementById("logFocusCustomValue");
+  const menu = document.getElementById("logFocusCustomMenu");
+  const trigger = document.getElementById("logFocusCustomTrigger");
+  if (!select) return;
+
+  const value = String(select.value || "").trim();
+  if (valueEl) valueEl.textContent = value && value !== "Other" ? value : "Browse";
+
+  const roleClasses = ["role-duelist", "role-controller", "role-initiator", "role-sentinel"];
+  trigger?.classList.remove(...roleClasses);
+  roleClasses.forEach((roleClass) => {
+    if (select.classList.contains(roleClass)) trigger?.classList.add(roleClass);
+  });
+
+  menu?.querySelectorAll(".log-focus-custom-option").forEach((option) => {
+    const isActive = option.dataset.value === value;
+    option.classList.toggle("is-active", isActive);
+    option.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+}
+
+function setupLogFocusCustomDropdown() {
+  const select = document.getElementById("logFocusSelect");
+  const shell = select?.closest(".focus-select-shell");
+  if (!select || !shell) return;
+
+  select.classList.add("log-focus-native-select");
+  select.setAttribute("aria-hidden", "true");
+  select.tabIndex = -1;
+  shell.classList.add("has-custom-focus-select");
+
+  if (select.dataset.logFocusCustomBound === "1") {
+    syncLogFocusCustomDropdown();
+    return;
+  }
+
+  let customShell = document.getElementById("logFocusCustomSelect");
+  if (!customShell) {
+    customShell = document.createElement("div");
+    customShell.id = "logFocusCustomSelect";
+    customShell.className = "log-focus-custom-select";
+    customShell.innerHTML = `
+      <button id="logFocusCustomTrigger" class="log-focus-custom-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+        <span id="logFocusCustomValue"></span>
+        <span class="log-focus-custom-chevron" aria-hidden="true">v</span>
+      </button>
+      <div id="logFocusCustomMenu" class="log-focus-custom-menu" role="listbox" hidden></div>
+    `;
+    shell.appendChild(customShell);
+  }
+
+  const trigger = document.getElementById("logFocusCustomTrigger");
+  const menu = document.getElementById("logFocusCustomMenu");
+  if (!trigger || !menu) return;
+
+  menu.innerHTML = "";
+  Array.from(select.options).forEach((option) => {
+    if (!option.value) return;
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "log-focus-custom-option";
+    item.dataset.value = option.value;
+    item.role = "option";
+    item.textContent = option.textContent || option.value;
+    menu.appendChild(item);
+  });
+
+  trigger.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const willOpen = menu.hidden;
+    closeLogFocusCustomDropdown();
+    if (willOpen) {
+      customShell.classList.add("open");
+      menu.hidden = false;
+      trigger.setAttribute("aria-expanded", "true");
+      syncLogFocusCustomDropdown();
+    }
+  });
+
+  menu.addEventListener("click", (e) => {
+    const option = e.target.closest(".log-focus-custom-option");
+    if (!option) return;
+    e.preventDefault();
+    e.stopPropagation();
+    select.value = option.dataset.value || select.value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    closeLogFocusCustomDropdown();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!customShell.contains(e.target)) closeLogFocusCustomDropdown();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeLogFocusCustomDropdown();
+  });
+
+  select.dataset.logFocusCustomBound = "1";
+  syncLogFocusCustomDropdown();
 }
 
 function syncLoggingFocusPreviewText(value = "") {
@@ -30841,9 +30956,12 @@ function bindEvents(){
     addLogEntry();
   });
 
+  setupLogFocusCustomDropdown();
+
   document.getElementById("logFocusSelect")?.addEventListener("change", (e) => {
     setCustomFocusCommitted("");
     setFocusOtherVisibility(e.target.value === "Other");
+    syncLogFocusCustomDropdown();
     updateLoggingDebriefPreview();
   });
 
@@ -31651,6 +31769,7 @@ function selectAgentFromModal(agent){
         const logFocusSelect = document.getElementById("logFocusSelect");
         if(logFocusSelect){
           logFocusSelect.value = defaultFocus;
+          syncLogFocusCustomDropdown();
         }
       }
     }
@@ -31694,6 +31813,7 @@ function selectAgentFromModal(agent){
       logFocusSelect?.classList.add(`role-${role}`);
       logFocusOther?.classList.add(`role-${role}`);
       focusPreviewText?.classList.add(`role-${role}`);
+      syncLogFocusCustomDropdown();
 
       activeRole = role;
       activeRoleFilter = role;
@@ -36946,6 +37066,7 @@ function flipSpinIcon(){
         logFocusSelect?.classList.add(`role-${role}`);
         logFocusOther?.classList.add(`role-${role}`);
         focusPreviewText?.classList.add(`role-${role}`);
+        syncLogFocusCustomDropdown();
         applyAgentRoleFrame(role);
 
         updateImpactRolePill({ agent: pick }, null);
@@ -36971,6 +37092,7 @@ function flipSpinIcon(){
           setFocusOtherVisibility(true, newFocus);
           setCustomFocusCommitted(newFocus);
         }
+        syncLogFocusCustomDropdown();
       }
 
       syncLogInputs();
@@ -37096,6 +37218,7 @@ function spinLoadoutFromLogging(agent, focus){
       logFocusSelect?.classList.add(`role-${role}`);
       logFocusOther?.classList.add(`role-${role}`);
       focusPreviewText?.classList.add(`role-${role}`);
+      syncLogFocusCustomDropdown();
     }
 
     updateLogAgentDisplay(agent);

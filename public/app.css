@@ -26223,3 +26223,134 @@ body[data-theme] :is(
   align-self:center !important;
   padding-block:calc(4px * var(--app-1080-scale)) !important;
 }
+
+/* Focus category now uses the same compact controlled menu as Set Goal Rank. */
+#page-logging .focus-select-shell.has-custom-focus-select{
+  width:118px !important;
+  min-width:118px !important;
+  height:38px !important;
+  overflow:visible !important;
+  padding:0 !important;
+  border:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  z-index:30 !important;
+}
+
+#page-logging .focus-select-shell.has-custom-focus-select .focus-select-symbol{
+  display:none !important;
+}
+
+#page-logging #logFocusSelect.log-focus-native-select{
+  position:absolute !important;
+  inline-size:1px !important;
+  block-size:1px !important;
+  width:1px !important;
+  height:1px !important;
+  min-width:1px !important;
+  min-height:1px !important;
+  inset:auto !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  overflow:hidden !important;
+  clip:rect(0 0 0 0) !important;
+  clip-path:inset(50%) !important;
+  z-index:-1 !important;
+}
+
+#page-logging .log-focus-custom-select{
+  position:relative !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  z-index:31 !important;
+}
+
+#page-logging .log-focus-custom-trigger{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  padding:0 10px !important;
+  border:1px solid rgba(148,163,184,.46) !important;
+  border-radius:10px !important;
+  background:#0b1220 !important;
+  color:#e5edf8 !important;
+  font:800 12px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  letter-spacing:.01em !important;
+  cursor:pointer !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+#page-logging .log-focus-custom-trigger:hover,
+#page-logging .log-focus-custom-trigger[aria-expanded="true"]{
+  border-color:rgba(56,189,248,.55) !important;
+  background:#0b1220 !important;
+}
+
+#page-logging .log-focus-custom-value,
+#page-logging #logFocusCustomValue{
+  min-width:0 !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+#page-logging .log-focus-custom-chevron{
+  flex:0 0 auto !important;
+  font-size:10px !important;
+  opacity:.82 !important;
+}
+
+#page-logging .log-focus-custom-menu{
+  position:absolute !important;
+  top:calc(100% + 4px) !important;
+  left:0 !important;
+  right:0 !important;
+  z-index:2200 !important;
+  max-height:170px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding:4px !important;
+  border:1px solid rgba(148,163,184,.42) !important;
+  border-radius:10px !important;
+  background:#0b1220 !important;
+  box-shadow:0 18px 34px rgba(0,0,0,.46) !important;
+}
+
+#page-logging .log-focus-custom-menu[hidden]{
+  display:none !important;
+}
+
+#page-logging .log-focus-custom-option{
+  display:flex !important;
+  align-items:center !important;
+  width:100% !important;
+  height:26px !important;
+  padding:0 10px !important;
+  border:0 !important;
+  border-radius:7px !important;
+  background:transparent !important;
+  color:#e5edf8 !important;
+  font:800 12px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  text-align:left !important;
+  cursor:pointer !important;
+}
+
+#page-logging .log-focus-custom-option:hover,
+#page-logging .log-focus-custom-option.is-active{
+  background:rgba(56,189,248,.22) !important;
+  color:#f8fafc !important;
+}
+
+#page-logging .log-focus-custom-menu::-webkit-scrollbar{
+  width:8px !important;
+}
+
+#page-logging .log-focus-custom-menu::-webkit-scrollbar-thumb{
+  background:#ff4655 !important;
+  border-radius:999px !important;
+}
