@@ -26101,3 +26101,125 @@ body[data-theme] :is(
 #page-home .compass-summary-shell.is-expanded .compass-summary-bottom-shell{
   display:none !important;
 }
+
+/* The goal-rank chooser uses a custom menu so high-DPI/native select popups cannot over-scale. */
+#goalRankModal #goalRankSelect.goal-rank-native-select{
+  position:absolute !important;
+  inline-size:1px !important;
+  block-size:1px !important;
+  width:1px !important;
+  height:1px !important;
+  min-width:1px !important;
+  min-height:1px !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  overflow:hidden !important;
+  clip:rect(0 0 0 0) !important;
+  clip-path:inset(50%) !important;
+}
+
+#goalRankModal .goal-rank-custom-select{
+  position:relative !important;
+  min-width:0 !important;
+  width:100% !important;
+  height:calc(32px * var(--app-1080-scale)) !important;
+  z-index:4 !important;
+}
+
+#goalRankModal .goal-rank-custom-trigger{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  padding:0 calc(9px * var(--app-1080-scale)) !important;
+  border:1px solid rgba(148,163,184,.46) !important;
+  border-radius:calc(10px * var(--app-1080-scale)) !important;
+  background:#0b1220 !important;
+  color:#e5edf8 !important;
+  font:800 12px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  letter-spacing:.01em !important;
+  cursor:pointer !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+#goalRankModal .goal-rank-custom-chevron{
+  flex:0 0 auto !important;
+  font-size:10px !important;
+  opacity:.82 !important;
+}
+
+#goalRankModal .goal-rank-custom-menu{
+  position:absolute !important;
+  top:calc(100% + 4px) !important;
+  left:0 !important;
+  right:0 !important;
+  z-index:2200 !important;
+  max-height:238px !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding:4px !important;
+  border:1px solid rgba(148,163,184,.42) !important;
+  border-radius:10px !important;
+  background:#0b1220 !important;
+  box-shadow:0 18px 34px rgba(0,0,0,.46) !important;
+}
+
+#goalRankModal .lens-modal,
+#goalRankModal .lens-modal-body,
+#goalRankModal .goal-rank-row{
+  overflow:visible !important;
+}
+
+#goalRankModal .goal-rank-custom-menu[hidden]{
+  display:none !important;
+}
+
+#goalRankModal .goal-rank-custom-option{
+  display:flex !important;
+  align-items:center !important;
+  width:100% !important;
+  height:26px !important;
+  padding:0 10px !important;
+  border:0 !important;
+  border-radius:7px !important;
+  background:transparent !important;
+  color:#e5edf8 !important;
+  font:800 12px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  text-align:left !important;
+  cursor:pointer !important;
+}
+
+#goalRankModal .goal-rank-custom-option:hover,
+#goalRankModal .goal-rank-custom-option.is-active{
+  background:rgba(56,189,248,.22) !important;
+  color:#f8fafc !important;
+}
+
+#goalRankModal .goal-rank-custom-menu::-webkit-scrollbar{
+  width:8px !important;
+}
+
+#goalRankModal .goal-rank-custom-menu::-webkit-scrollbar-thumb{
+  background:#ff4655 !important;
+  border-radius:999px !important;
+}
+
+/* Keep nav-right and nav-middle on the same visual rail across 1080p, 1440p, and 4K. */
+.app-header{
+  --nav-widget-sync-height:clamp(56px, calc(56px * var(--app-1080-scale)), 74px);
+}
+
+.nav-center .nav-rr-widget,
+.nav-right .profile-panel{
+  height:var(--nav-widget-sync-height) !important;
+  min-height:var(--nav-widget-sync-height) !important;
+  max-height:var(--nav-widget-sync-height) !important;
+}
+
+.nav-right .profile-panel{
+  align-self:center !important;
+  padding-block:calc(4px * var(--app-1080-scale)) !important;
+}

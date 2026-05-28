@@ -31357,11 +31357,117 @@ function bindEvents(){
     return `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${file}`;
   }
 
+  function closeGoalRankCustomDropdown() {
+    const shell = document.getElementById("goalRankCustomSelect");
+    const menu = document.getElementById("goalRankCustomMenu");
+    const trigger = document.getElementById("goalRankCustomTrigger");
+    shell?.classList.remove("open");
+    if (menu) menu.hidden = true;
+    trigger?.setAttribute("aria-expanded", "false");
+  }
+
+  function syncGoalRankCustomDropdown() {
+    const select = document.getElementById("goalRankSelect");
+    const valueEl = document.getElementById("goalRankCustomValue");
+    const menu = document.getElementById("goalRankCustomMenu");
+    if (!select) return;
+
+    const value = select.value || "Gold 1";
+    if (valueEl) valueEl.textContent = value;
+
+    menu?.querySelectorAll(".goal-rank-custom-option").forEach((option) => {
+      const isActive = option.dataset.value === value;
+      option.classList.toggle("is-active", isActive);
+      option.setAttribute("aria-selected", isActive ? "true" : "false");
+    });
+  }
+
+  function setupGoalRankCustomDropdown() {
+    const select = document.getElementById("goalRankSelect");
+    if (!select) return;
+
+    select.classList.add("goal-rank-native-select");
+    select.setAttribute("aria-hidden", "true");
+    select.tabIndex = -1;
+
+    if (select.dataset.goalCustomBound === "1") {
+      syncGoalRankCustomDropdown();
+      return;
+    }
+
+    let shell = document.getElementById("goalRankCustomSelect");
+    if (!shell) {
+      shell = document.createElement("div");
+      shell.id = "goalRankCustomSelect";
+      shell.className = "goal-rank-custom-select";
+      shell.innerHTML = `
+        <button id="goalRankCustomTrigger" class="goal-rank-custom-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+          <span id="goalRankCustomValue"></span>
+          <span class="goal-rank-custom-chevron" aria-hidden="true">v</span>
+        </button>
+        <div id="goalRankCustomMenu" class="goal-rank-custom-menu" role="listbox" hidden></div>
+      `;
+      select.insertAdjacentElement("afterend", shell);
+    }
+
+    const trigger = document.getElementById("goalRankCustomTrigger");
+    const menu = document.getElementById("goalRankCustomMenu");
+    if (!trigger || !menu) return;
+
+    menu.innerHTML = "";
+    Array.from(select.options).forEach((option) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "goal-rank-custom-option";
+      item.dataset.value = option.value;
+      item.role = "option";
+      item.textContent = option.textContent || option.value;
+      menu.appendChild(item);
+    });
+
+    trigger.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const willOpen = menu.hidden;
+      closeGoalRankCustomDropdown();
+      if (willOpen) {
+        shell.classList.add("open");
+        menu.hidden = false;
+        trigger.setAttribute("aria-expanded", "true");
+        syncGoalRankCustomDropdown();
+      }
+    });
+
+    menu.addEventListener("click", (e) => {
+      const option = e.target.closest(".goal-rank-custom-option");
+      if (!option) return;
+      e.preventDefault();
+      e.stopPropagation();
+      select.value = option.dataset.value || select.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      closeGoalRankCustomDropdown();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!shell.contains(e.target)) closeGoalRankCustomDropdown();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeGoalRankCustomDropdown();
+    });
+
+    select.dataset.goalCustomBound = "1";
+    syncGoalRankCustomDropdown();
+  }
+
   goalRankSelect?.addEventListener("change", () => {
     if (goalRankPreviewIcon) {
       goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
     }
+    syncGoalRankCustomDropdown();
   });
+
+  setupGoalRankCustomDropdown();
 
   function positionGoalRankPopover() {
     if (!goalRRWidget || !goalRankModal) return;
@@ -31390,6 +31496,7 @@ function bindEvents(){
         if (goalRankPreviewIcon) {
           goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
         }
+        syncGoalRankCustomDropdown();
       }
     });
 
