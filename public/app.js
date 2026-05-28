@@ -34550,13 +34550,14 @@ body[data-theme-mode="light"] :is(input, select, textarea, .auth-input){
   border-color:var(--border-strong) !important;
 }
 
-body[data-theme-mode="light"] :is(button, .pd-item, .nav-pill, .profile-sync-btn, .ask-coach-toggle, .profile-dropdown-toggle){
+body[data-theme-mode="light"] :is(button, .pd-item, .nav-btn, .nav-pill, .profile-sync-btn, .ask-coach-toggle, .ask-coach-nav-btn, .profile-dropdown-toggle){
   background:linear-gradient(145deg, var(--button-bg), var(--button-hover)) !important;
   border-color:color-mix(in srgb, var(--accent) 32%, var(--border-soft)) !important;
   color:var(--text-main) !important;
 }
 
 body[data-theme-mode="light"] :is(
+  .nav-btn.active,
   .nav-pill.active,
   .role-filter-row button.active,
   .chart-controls button.active,
@@ -34614,6 +34615,217 @@ body[data-theme-mode="light"] :is(
 ) :is(div, span, strong, p, label){
   color:color-mix(in srgb, var(--text-main) 82%, var(--surface-card)) !important;
   text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] .nav-btn.active{
+  background:linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  color:#ffffff !important;
+  border:1px solid color-mix(in srgb, var(--accent) 72%, #ffffff 16%) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 26%, transparent),
+    0 10px 22px color-mix(in srgb, var(--accent) 24%, transparent) !important;
+}
+
+body[data-theme-mode="light"] .nav-underline{
+  background:linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+  box-shadow:0 0 14px color-mix(in srgb, var(--accent) 34%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-home :is(
+  .compass-summary-body,
+  .compass-cards-grid,
+  .compass-svg-wrap,
+  .compass-description-toggle
+){
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 36%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 86%, var(--accent) 14%), color-mix(in srgb, var(--surface-card-2) 90%, var(--accent-2) 10%)) !important;
+  border-color:color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] #page-home .compass-svg-wrap{
+  box-shadow:inset 0 1px 0 color-mix(in srgb, #ffffff 32%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-logging :is(
+  .logging-select-trigger,
+  .agent-select-symbol,
+  .focus-select-symbol
+),
+body[data-theme-mode="light"] #page-stats :is(
+  .stats-act-select-wrap,
+  .stats-act-select
+){
+  background:linear-gradient(145deg, var(--button-bg), var(--button-hover)) !important;
+  border-color:color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent),
+    0 10px 20px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-stats .stats-act-select option{
+  background:var(--surface-card) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card{
+  background:
+    radial-gradient(circle at 9% 12%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 30%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, var(--accent) 12%), color-mix(in srgb, var(--surface-card-2) 92%, var(--accent-2) 8%)) !important;
+  border-color:color-mix(in srgb, var(--accent) 32%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 36%, transparent),
+    0 12px 28px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card.insight-good{
+  background:
+    radial-gradient(circle at 8% 12%, rgba(16,185,129,.18), transparent 32%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, #10b981 12%), color-mix(in srgb, var(--surface-card-2) 92%, #047857 8%)) !important;
+  border-color:rgba(4,120,87,.48) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card.insight-warn{
+  background:
+    radial-gradient(circle at 8% 12%, rgba(250,204,21,.2), transparent 32%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, #facc15 12%), color-mix(in srgb, var(--surface-card-2) 92%, #92400e 8%)) !important;
+  border-color:rgba(146,64,14,.48) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card.insight-bad{
+  background:
+    radial-gradient(circle at 8% 12%, rgba(244,63,94,.18), transparent 32%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, #f43f5e 12%), color-mix(in srgb, var(--surface-card-2) 92%, #be123c 8%)) !important;
+  border-color:rgba(190,18,60,.48) !important;
+}
+
+body[data-theme-mode="light"] #page-insights :is(
+  .insight-trend-row,
+  .trend-content
+){
+  background:
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 88%, var(--accent) 12%), color-mix(in srgb, var(--surface-card-2) 90%, var(--accent-2) 10%)) !important;
+  border-color:color-mix(in srgb, var(--accent) 32%, var(--border-soft)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insight-trend-row.open{
+  background:
+    radial-gradient(circle at 8% 16%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 78%, var(--accent) 22%), color-mix(in srgb, var(--surface-card-2) 88%, var(--accent-2) 12%)) !important;
+  border-color:color-mix(in srgb, var(--accent) 54%, var(--border-soft)) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .trend-signal-card{
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 90%, var(--accent) 10%), color-mix(in srgb, var(--surface-card-2) 92%, var(--accent-2) 8%)) !important;
+  color:var(--text-main) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .trend-signal-card.tone-up{
+  border-color:rgba(4,120,87,.48) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .trend-signal-card.tone-warn{
+  border-color:rgba(146,64,14,.5) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .trend-signal-card.tone-down{
+  border-color:rgba(190,18,60,.48) !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-insights .trend-signal-card.tone-up .trend-signal-tone,
+  #page-stats .stats-trend-up .stats-trend-tone
+){
+  background:rgba(16,185,129,.16) !important;
+  border-color:rgba(4,120,87,.48) !important;
+  color:#047857 !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-insights .trend-signal-card.tone-warn .trend-signal-tone,
+  #page-stats .stats-trend-warn .stats-trend-tone
+){
+  background:rgba(250,204,21,.18) !important;
+  border-color:rgba(146,64,14,.5) !important;
+  color:#92400e !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-insights .trend-signal-card.tone-down .trend-signal-tone,
+  #page-stats .stats-trend-down .stats-trend-tone
+){
+  background:rgba(244,63,94,.14) !important;
+  border-color:rgba(190,18,60,.48) !important;
+  color:#be123c !important;
+}
+
+body[data-theme-mode="light"] #page-insights :is(
+  .insight-card,
+  .insight-trend-row,
+  .trend-content,
+  .trend-signal-card
+) :is(.insight-title,.insight-preview,.insight-trend-kicker,.insight-trend-title,.trend-signal-kicker,.trend-signal-title,.trend-signal-value,.trend-signal-detail,div,span,strong,p,label){
+  color:var(--text-main) !important;
+  text-shadow:none !important;
+}
+
+body[data-theme-mode="light"] #page-insights .trend-signal-detail,
+body[data-theme-mode="light"] #page-insights .insight-preview{
+  color:var(--text-muted) !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-meta-pill.tone-good,
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card.insight-good .insight-tag{
+  background:rgba(16,185,129,.16) !important;
+  border-color:rgba(4,120,87,.48) !important;
+  color:#047857 !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-meta-pill.tone-warn,
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card.insight-warn .insight-tag{
+  background:rgba(250,204,21,.18) !important;
+  border-color:rgba(146,64,14,.5) !important;
+  color:#92400e !important;
+}
+
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-meta-pill.tone-bad,
+body[data-theme-mode="light"] #page-insights .insights-top-card .insight-card.insight-bad .insight-tag{
+  background:rgba(244,63,94,.14) !important;
+  border-color:rgba(190,18,60,.48) !important;
+  color:#be123c !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-insights .trend-signal-card.tone-up .trend-signal-tone,
+  #page-stats .stats-trend-up .stats-trend-tone
+){
+  background:rgba(16,185,129,.16) !important;
+  border-color:rgba(4,120,87,.48) !important;
+  color:#047857 !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-insights .trend-signal-card.tone-warn .trend-signal-tone,
+  #page-stats .stats-trend-warn .stats-trend-tone
+){
+  background:rgba(250,204,21,.18) !important;
+  border-color:rgba(146,64,14,.5) !important;
+  color:#92400e !important;
+}
+
+body[data-theme-mode="light"] :is(
+  #page-insights .trend-signal-card.tone-down .trend-signal-tone,
+  #page-stats .stats-trend-down .stats-trend-tone
+){
+  background:rgba(244,63,94,.14) !important;
+  border-color:rgba(190,18,60,.48) !important;
+  color:#be123c !important;
 }
 `;
 
