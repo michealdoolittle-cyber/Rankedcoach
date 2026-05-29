@@ -11287,6 +11287,50 @@ min-height:0;
     0 16px 30px rgba(0,0,0,0.34);
 }
 
+.log-entry-win{
+  border-color:rgba(34,197,94,.48);
+  box-shadow:
+    inset 4px 0 0 rgba(34,197,94,.78),
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 10px 24px rgba(0,0,0,.24);
+}
+
+.log-entry-loss{
+  border-color:rgba(248,113,113,.52);
+  box-shadow:
+    inset 4px 0 0 rgba(239,68,68,.82),
+    inset 0 1px 0 rgba(255,255,255,.04),
+    0 10px 24px rgba(0,0,0,.24);
+}
+
+.log-result-rr{
+  margin-left:8px;
+  padding:4px 8px;
+  border-radius:9px;
+  background:rgba(15,23,42,.82);
+  border:1px solid rgba(148,163,184,.28);
+  font-size:12px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.02em;
+}
+
+.log-result-rr-win{
+  color:#4ade80;
+  border-color:rgba(34,197,94,.42);
+  background:rgba(20,83,45,.32);
+}
+
+.log-result-rr-loss{
+  color:#fb7185;
+  border-color:rgba(248,113,113,.46);
+  background:rgba(127,29,29,.30);
+}
+
+.log-result-rr-neutral{
+  color:#cbd5e1;
+}
+
 .log-header,
 .log-body,
 .log-meta{
@@ -11297,6 +11341,12 @@ min-height:0;
 
 .log-header{
   margin-bottom:10px;
+}
+
+.log-entry .log-header{
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-start;
 }
 
 .log-tier-row{

@@ -33033,6 +33033,39 @@ function renderLogFeedFootnote() {
   `;
 }
 
+function getLogEntryMatchContext(entry = {}) {
+  const entryMatchId = String(entry.matchId || entry.riotMatchId || "").trim();
+  const entryCreatedAt = new Date(entry.createdAt || 0).getTime();
+  const entryAgent = String(entry.agent || "").toLowerCase();
+  const entryMap = String(entry.map || "").toLowerCase();
+
+  const linkedMatch = (matches || []).find((match) => {
+    const ids = [
+      match?.id,
+      match?.matchId,
+      match?.metadata?.matchId
+    ].map(value => String(value || "").trim()).filter(Boolean);
+    if (entryMatchId && ids.includes(entryMatchId)) return true;
+
+    const core = getMatchCore(match);
+    const matchCreatedAt = new Date(core.createdAt || match?.createdAt || match?.metadata?.playedAt || 0).getTime();
+    const sameTime = entryCreatedAt && matchCreatedAt && Math.abs(entryCreatedAt - matchCreatedAt) < 60000;
+    return sameTime
+      && String(core.agent || "").toLowerCase() === entryAgent
+      && String(core.map || "").toLowerCase() === entryMap;
+  }) || null;
+
+  const core = linkedMatch ? getMatchCore(linkedMatch) : {};
+  const result = String(entry.result || core.result || "").toLowerCase();
+  const rr = Number.isFinite(Number(entry.rr))
+    ? Number(entry.rr)
+    : Number.isFinite(Number(linkedMatch?.rr))
+      ? Number(linkedMatch.rr)
+      : null;
+
+  return { match: linkedMatch, result, rr };
+}
+
 function getLogCountByDate() {
   const counts = new Map();
   (logEntries || []).forEach(entry => {
@@ -33183,6 +33216,11 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
 
     return {
       id: uuid(),
+      matchId: String(match?.id || match?.matchId || match?.metadata?.matchId || ""),
+      result,
+      rr: Number.isFinite(Number(match?.rr)) ? Number(match.rr) : 0,
+      lockedOutcome: true,
+      source: match?.source || "demo-match",
       createdAt,
       agent: match?.metadata?.agent || "Jett",
       focus: focusOptions[index % focusOptions.length],
@@ -33270,8 +33308,17 @@ function renderLogFeed(options = {}){
       const ratingBadge = getLogRatingBadge(entry.rating);
       const moodLabel = entry.mood || entry.tilt || "-";
       const moodTone = getMoodTone(moodLabel);
+      const matchContext = getLogEntryMatchContext(entry);
+      const resultTone = matchContext.result === "win"
+        ? "win"
+        : matchContext.result === "loss"
+          ? "loss"
+          : "";
+      const rrLabel = Number.isFinite(matchContext.rr)
+        ? `${matchContext.rr > 0 ? "+" : ""}${Math.round(matchContext.rr)} RR`
+        : "";
       const el = document.createElement("div");
-      el.className = "log-entry";
+      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}`;
 
       el.innerHTML = `
         <div class="log-header">
@@ -33280,6 +33327,7 @@ function renderLogFeed(options = {}){
               ? `<img src="${getAgentIconUrl(entry.agent)}" alt="${entry.agent}">`
               : "?"
           }</span>
+          ${rrLabel ? `<span class="log-result-rr log-result-rr-${resultTone || "neutral"}">${escapeHtml(rrLabel)}</span>` : ""}
           <span class="log-rating">⭐ ${entry.rating}</span>
         </div>
 
@@ -33301,7 +33349,6 @@ function renderLogFeed(options = {}){
 
         <div class="log-actions">
           <button class="log-edit-btn">Edit</button>
-          <button class="log-delete-btn">Delete</button>
         </div>
       `;
 
@@ -33355,10 +33402,8 @@ function renderLogFeed(options = {}){
       }
 
       const editBtn = el.querySelector(".log-edit-btn");
-      const deleteBtn = el.querySelector(".log-delete-btn");
 
       editBtn?.addEventListener("click", () => editLogEntry(entry.id));
-      deleteBtn?.addEventListener("click", () => deleteLogEntry(entry.id));
 
       sessionWrap.appendChild(el);
 
