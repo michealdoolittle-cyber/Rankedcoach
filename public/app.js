@@ -7010,6 +7010,439 @@ function enterGuestModeAfterLogout() {
   renderChart?.(currentSize);
 }
 
+const GUEST_TUTORIAL_STEPS = [
+  {
+    page: "home",
+    selector: ".app-header",
+    title: "Start with the top bar",
+    copy: "Use the left tabs to move between Home, Logging, Stats, and Insights. The center widgets track your current RR path and goal rank. The right side holds profile, sync, Ask Coach, and account options."
+  },
+  {
+    page: "home",
+    selector: "#goalRRWidget",
+    title: "Set a goal rank",
+    copy: "Select your goal rank here. RankedCoach uses the goal widget to keep the dashboard pointed at what you are trying to reach next."
+  },
+  {
+    page: "home",
+    selector: "#profilePanel",
+    title: "Profile and Riot connection",
+    copy: "Use the avatar area to manage the active profile. Signed-in users can later connect a Riot profile through RSO so match history can sync safely."
+  },
+  {
+    page: "home",
+    selector: ".weekly-focus-card",
+    title: "Weekly Focus Category",
+    copy: "This card summarizes the strongest weekly patterns from your logs and match sample. It updates by week, not by day, so the coaching plan stays stable long enough to act on."
+  },
+  {
+    page: "home",
+    selector: ".improvement-card",
+    title: "Recent Improvement",
+    copy: "These reads compare recent match movement against the active sample. They are meant to show what is changing fastest, not to judge one isolated game."
+  },
+  {
+    page: "home",
+    selector: ".loadout-card",
+    title: "Role, agent, and focus generator",
+    copy: "Use this section to rotate role, agent, and focus category ideas before queueing. It keeps your session goals clear without forcing one rigid plan."
+  },
+  {
+    page: "home",
+    selector: ".compass-panel",
+    title: "Compass scores",
+    copy: "The compass scores Aim, Game Sense, Teamwork, and Discipline from your available match data and logs. These are current 0-100 category scores, not a hidden MMR or total-ladder rating."
+  },
+  {
+    page: "home",
+    selector: ".rr-card",
+    title: "Role impact meter",
+    copy: "This summarizes whether the latest match looked impactful for the role played. A player can have a useful role impact read even if the match was not a win."
+  },
+  {
+    page: "home",
+    selector: ".rr-chart-card",
+    title: "RR trend line",
+    copy: "Click game dots to inspect match snapshots. The chart controls change the visible match window so you can review short-term or longer-term movement."
+  },
+  {
+    page: "logging",
+    selector: ".logging-form",
+    title: "Logging form",
+    copy: "After each match, capture the agent, focus category, map, ratings, comms, and notes. These reflections are the behavioral layer that helps RankedCoach explain why stats may be moving."
+  },
+  {
+    page: "logging",
+    selector: ".logging-score-grid",
+    title: "Ratings and comms",
+    copy: "Performance, mood, team comms, and self comms help connect match quality to session behavior. These are quick taps so logging does not become extra work."
+  },
+  {
+    page: "logging",
+    selector: ".logging-session-bar",
+    title: "Current session calendar",
+    copy: "Use the calendar to jump between dates. The log count shows how many match reflections exist for that day."
+  },
+  {
+    page: "logging",
+    selector: ".logging-feed-card",
+    title: "Reflection feed",
+    copy: "Synced match logs can be edited, but the win/loss result and RR change stay locked because they come from match history. Wins highlight green and losses highlight red."
+  },
+  {
+    page: "stats",
+    selector: ".stats-summary-card",
+    title: "Stats overview",
+    copy: "The summary card shows the current statistical snapshot, peak progress, selected season window, and role progress context."
+  },
+  {
+    page: "stats",
+    selector: ".stats-performance-card",
+    title: "Performance Timeline",
+    copy: "These cards show the app's selected performance reads, such as duel conversion, win rate, recent mechanical form, round damage, and utility value."
+  },
+  {
+    page: "stats",
+    selector: ".stats-breakdown-card",
+    title: "Data Reads",
+    copy: "Data Reads are deeper explanations from the same match and log pool. They are meant to explain what a stat means, not just display the number."
+  },
+  {
+    page: "stats",
+    selector: ".stats-maps-card",
+    title: "Map Stats",
+    copy: "Map cards show repeated map performance. Opening a map gives quick economy-round reads such as pistol, bonus, save, and full-buy outcomes when that data is available."
+  },
+  {
+    page: "stats",
+    selector: ".stats-agents-card",
+    title: "Agent Stats",
+    copy: "Agent cards summarize win rate and K/D by agent. No-data cards stay locked until the profile has enough match history for that agent."
+  },
+  {
+    page: "stats",
+    selector: ".stats-weapons-card",
+    title: "Weapon Stats",
+    copy: "Weapon rows group weapons by category so RankedCoach can judge mechanics with context. A shotgun-heavy profile should not be reviewed the same way as a rifle-only profile."
+  },
+  {
+    page: "insights",
+    selector: ".insights-top-card",
+    title: "Priority Reads",
+    copy: "Priority Reads surface the most important coaching items first. Use the filters to separate needs-work items, watch items, and strengths."
+  },
+  {
+    page: "insights",
+    selector: ".insights-action-card",
+    title: "Main Focus Category",
+    copy: "This is the one focus category RankedCoach thinks is most worth protecting for the next block of matches, with a why, how, and source."
+  },
+  {
+    page: "insights",
+    selector: ".insights-trends-card",
+    title: "Coaching Reads",
+    copy: "Coaching Reads combine match stats and logs into grouped reads for performance, session habits, role results, and consistency."
+  }
+];
+
+let guestEntryInProgress = false;
+let guestTutorialIndex = 0;
+let guestTutorialActiveTarget = null;
+
+function ensureGuestTutorialShells() {
+  if (!document.getElementById("guestTutorialChoiceModal")) {
+    document.body.insertAdjacentHTML("beforeend", `
+      <div id="guestTutorialChoiceModal" class="lens-modal-overlay guest-tutorial-choice-overlay">
+        <div class="lens-modal guest-tutorial-choice-card">
+          <div class="lens-modal-header">
+            <div class="lens-modal-title">Guest Tutorial</div>
+            <button id="guestTutorialCancelBtn" class="lens-modal-close" type="button">X</button>
+          </div>
+          <div class="lens-modal-body guest-tutorial-choice-body">
+            <div class="guest-tutorial-choice-kicker">RankedCoach Guest Mode</div>
+            <div class="guest-tutorial-choice-title">Want a guided tour with demo matches?</div>
+            <div class="guest-tutorial-choice-copy">Choose the tutorial to load sample matches and walk through the dashboard. Choose clean guest mode to enter without demo match history.</div>
+            <div class="guest-tutorial-choice-actions">
+              <button id="guestTutorialStartBtn" class="pd-item guest-tutorial-primary" type="button">Yes, show tutorial</button>
+              <button id="guestTutorialSkipBtn" class="pd-item guest-tutorial-secondary" type="button">No, continue as guest</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  if (!document.getElementById("appTutorialOverlay")) {
+    document.body.insertAdjacentHTML("beforeend", `
+      <div id="appTutorialOverlay" class="app-tutorial-overlay" aria-live="polite">
+        <div id="appTutorialSpotlight" class="app-tutorial-spotlight"></div>
+        <div id="appTutorialArrow" class="app-tutorial-arrow"></div>
+        <div id="appTutorialCard" class="app-tutorial-card" role="dialog" aria-modal="false" aria-labelledby="appTutorialTitle">
+          <button id="appTutorialClose" class="app-tutorial-close" type="button" aria-label="Exit tutorial">X</button>
+          <div id="appTutorialCount" class="app-tutorial-count">1 / 1</div>
+          <div id="appTutorialTitle" class="app-tutorial-title">Tutorial</div>
+          <div id="appTutorialCopy" class="app-tutorial-copy"></div>
+          <div class="app-tutorial-actions">
+            <button id="appTutorialBack" class="pd-item app-tutorial-secondary" type="button">Back</button>
+            <button id="appTutorialRestart" class="pd-item app-tutorial-secondary" type="button" hidden>Start over</button>
+            <button id="appTutorialNext" class="pd-item app-tutorial-primary" type="button">Next</button>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+}
+
+function setGuestButtonLoading(isLoading = false, label = "Continue as Guest") {
+  const guestBtn = document.getElementById("authGuestBtn");
+  if (!guestBtn) return;
+  guestBtn.disabled = Boolean(isLoading);
+  guestBtn.textContent = isLoading ? label : "Continue as Guest";
+}
+
+function openGuestTutorialChoice() {
+  ensureGuestTutorialShells();
+  showModalById?.("guestTutorialChoiceModal");
+}
+
+function closeGuestTutorialChoice() {
+  hideModalById?.("guestTutorialChoiceModal");
+}
+
+function buildClientTutorialDemoMatches(count = 50) {
+  const agents = ["Jett", "Neon", "Sova", "Killjoy", "Brimstone", "Sage", "Raze", "Cypher"];
+  const maps = ["Haven", "Ascent", "Bind", "Lotus", "Fracture", "Split", "Pearl"];
+  const weapons = ["Vandal", "Phantom", "Guardian", "Ghost", "Sheriff", "Operator", "Spectre"];
+  const start = new Date();
+  start.setDate(start.getDate() - count);
+
+  return Array.from({ length: count }, (_, index) => {
+    const agent = agents[index % agents.length];
+    const map = maps[index % maps.length];
+    const result = [0, 1, 3, 4].includes(index % 6) ? "win" : "loss";
+    const rr = result === "win" ? 16 + (index % 9) : -(12 + (index % 8));
+    const kills = result === "win" ? 16 + (index % 10) : 10 + (index % 9);
+    const deaths = result === "win" ? 9 + (index % 6) : 13 + (index % 7);
+    const assists = 3 + (index % 8);
+    const acs = 178 + kills * 5 + assists * 3;
+    const adr = Math.round(112 + kills * 2.2 + assists * 1.5);
+    const hs = Math.round(18 + (index % 14));
+    const playedAt = new Date(start.getTime() + (index + 1) * 24 * 60 * 60 * 1000).toISOString();
+
+    const rounds = Array.from({ length: 24 }, (_, roundIndex) => {
+      const roundNumber = roundIndex + 1;
+      const roundWon = result === "win"
+        ? (roundIndex % 5 !== 1)
+        : (roundIndex % 5 === 0 || roundIndex % 7 === 2);
+      const pistolRound = roundNumber === 1 || roundNumber === 13;
+      const buyType = pistolRound
+        ? "pistol"
+        : [2, 14].includes(roundNumber)
+          ? (roundWon ? "bonus" : "save")
+          : [3, 15].includes(roundNumber)
+            ? (result === "win" ? "bonus" : "full-buy")
+            : (roundIndex % 4 === 0 ? "full-buy" : "light-buy");
+
+      return {
+        round: roundNumber,
+        roundWon,
+        buyType,
+        weapon: weapons[(index + roundIndex) % weapons.length],
+        creditsSpent: buyType === "full-buy" ? 4300 : buyType === "bonus" ? 2400 : buyType === "light-buy" ? 3300 : 800
+      };
+    });
+
+    return {
+      id: `tutorial_demo_${index + 1}`,
+      matchId: `tutorial_demo_${index + 1}`,
+      source: "demo-fixture",
+      result,
+      rr,
+      agent,
+      map,
+      createdAt: playedAt,
+      metadata: {
+        matchId: `tutorial_demo_${index + 1}`,
+        result,
+        agent,
+        mapName: map,
+        playedAt,
+        mode: "Competitive"
+      },
+      segments: [{
+        type: "overview",
+        stats: {
+          kills: { value: kills },
+          deaths: { value: deaths },
+          assists: { value: assists },
+          scorePerRound: { value: acs },
+          damagePerRound: { value: adr },
+          headshotsPercentage: { value: hs }
+        }
+      }],
+      advanced: { rounds }
+    };
+  });
+}
+
+async function enterGuestFromAuth({ withTutorial = false } = {}) {
+  if (guestEntryInProgress) return;
+  guestEntryInProgress = true;
+  closeGuestTutorialChoice();
+  setGuestButtonLoading(true, withTutorial ? "Loading tutorial..." : "Entering...");
+
+  try {
+    enterGuestModeAfterLogout();
+    if (withTutorial) {
+      await importDemoMatches();
+    }
+    closeAuthModal();
+    if (withTutorial) {
+      window.setTimeout(() => startGuestTutorial(), 420);
+    }
+  } catch (error) {
+    localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
+    alert(error?.message || "Unable to enter guest mode.");
+  } finally {
+    guestEntryInProgress = false;
+    setGuestButtonLoading(false);
+  }
+}
+
+function getTutorialTarget(step = {}) {
+  const selectors = Array.isArray(step.selector) ? step.selector : [step.selector];
+  for (const selector of selectors) {
+    const target = document.querySelector(selector);
+    if (target) return target;
+  }
+  return document.querySelector(".app-header") || document.body;
+}
+
+function clearTutorialTarget() {
+  if (guestTutorialActiveTarget) {
+    guestTutorialActiveTarget.classList.remove("app-tutorial-focus-target");
+    guestTutorialActiveTarget = null;
+  }
+}
+
+function positionGuestTutorialOverlay() {
+  const overlay = document.getElementById("appTutorialOverlay");
+  const spotlight = document.getElementById("appTutorialSpotlight");
+  const arrow = document.getElementById("appTutorialArrow");
+  const card = document.getElementById("appTutorialCard");
+  const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
+  if (!overlay?.classList.contains("active") || !spotlight || !arrow || !card || !step) return;
+
+  const target = getTutorialTarget(step);
+  const rect = target.getBoundingClientRect();
+  const pad = 8;
+  const safe = 14;
+  const vw = window.innerWidth || document.documentElement.clientWidth || 1280;
+  const vh = window.innerHeight || document.documentElement.clientHeight || 720;
+  const cardRect = card.getBoundingClientRect();
+  const cardW = Math.min(cardRect.width || 360, vw - safe * 2);
+  const cardH = cardRect.height || 220;
+
+  const top = Math.max(safe, rect.top - pad);
+  const left = Math.max(safe, rect.left - pad);
+  const width = Math.min(vw - left - safe, rect.width + pad * 2);
+  const height = Math.min(vh - top - safe, rect.height + pad * 2);
+
+  spotlight.style.left = `${left}px`;
+  spotlight.style.top = `${top}px`;
+  spotlight.style.width = `${width}px`;
+  spotlight.style.height = `${height}px`;
+
+  let cardLeft = rect.right + 28;
+  let cardTop = rect.top + rect.height / 2 - cardH / 2;
+  let side = "right";
+
+  if (cardLeft + cardW > vw - safe) {
+    cardLeft = rect.left - cardW - 28;
+    side = "left";
+  }
+
+  if (cardLeft < safe) {
+    cardLeft = Math.min(Math.max(safe, rect.left), vw - cardW - safe);
+    cardTop = rect.bottom + 24;
+    side = "bottom";
+    if (cardTop + cardH > vh - safe) {
+      cardTop = rect.top - cardH - 24;
+      side = "top";
+    }
+  }
+
+  cardTop = Math.min(Math.max(safe, cardTop), Math.max(safe, vh - cardH - safe));
+  card.style.left = `${cardLeft}px`;
+  card.style.top = `${cardTop}px`;
+
+  const targetMidX = rect.left + rect.width / 2;
+  const targetMidY = rect.top + rect.height / 2;
+  const cardMidX = cardLeft + cardW / 2;
+  const cardMidY = cardTop + cardH / 2;
+  const arrowX = side === "right" ? cardLeft - 16 : side === "left" ? cardLeft + cardW + 4 : cardMidX - 8;
+  const arrowY = side === "bottom" ? cardTop - 16 : side === "top" ? cardTop + cardH + 4 : cardMidY - 8;
+  const angle = Math.atan2(targetMidY - cardMidY, targetMidX - cardMidX) * 180 / Math.PI;
+  arrow.style.left = `${Math.min(Math.max(safe, arrowX), vw - 28)}px`;
+  arrow.style.top = `${Math.min(Math.max(safe, arrowY), vh - 28)}px`;
+  arrow.style.transform = `rotate(${angle}deg)`;
+}
+
+function renderGuestTutorialStep(index = guestTutorialIndex) {
+  ensureGuestTutorialShells();
+  guestTutorialIndex = Math.max(0, Math.min(GUEST_TUTORIAL_STEPS.length - 1, index));
+  const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
+  if (!step) return;
+
+  clearTutorialTarget();
+  activatePage?.(step.page || "home");
+
+  window.setTimeout(() => {
+    const target = getTutorialTarget(step);
+    guestTutorialActiveTarget = target;
+    target.classList.add("app-tutorial-focus-target");
+    target.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" });
+
+    const title = document.getElementById("appTutorialTitle");
+    const copy = document.getElementById("appTutorialCopy");
+    const count = document.getElementById("appTutorialCount");
+    const back = document.getElementById("appTutorialBack");
+    const next = document.getElementById("appTutorialNext");
+    const restart = document.getElementById("appTutorialRestart");
+    const isLast = guestTutorialIndex === GUEST_TUTORIAL_STEPS.length - 1;
+
+    if (title) title.textContent = step.title || "RankedCoach tutorial";
+    if (copy) copy.textContent = step.copy || "";
+    if (count) count.textContent = `${guestTutorialIndex + 1} / ${GUEST_TUTORIAL_STEPS.length}`;
+    if (back) back.disabled = guestTutorialIndex === 0;
+    if (next) next.textContent = isLast ? "Complete" : "Next";
+    if (restart) restart.hidden = !isLast;
+
+    window.setTimeout(positionGuestTutorialOverlay, 260);
+  }, 120);
+}
+
+function startGuestTutorial() {
+  ensureGuestTutorialShells();
+  const overlay = document.getElementById("appTutorialOverlay");
+  if (!overlay) return;
+  overlay.classList.add("active");
+  document.body.classList.add("app-tutorial-running");
+  guestTutorialIndex = 0;
+  renderGuestTutorialStep(0);
+  window.addEventListener("resize", positionGuestTutorialOverlay, { passive: true });
+  window.addEventListener("scroll", positionGuestTutorialOverlay, { passive: true, capture: true });
+}
+
+function stopGuestTutorial() {
+  const overlay = document.getElementById("appTutorialOverlay");
+  overlay?.classList.remove("active");
+  document.body.classList.remove("app-tutorial-running");
+  clearTutorialTarget();
+  window.removeEventListener("resize", positionGuestTutorialOverlay);
+  window.removeEventListener("scroll", positionGuestTutorialOverlay, true);
+}
+
 async function ensureGuestDemoMatches() {
   if (!isLocalDevelopmentHost()) {
     return null;
@@ -38456,32 +38889,43 @@ document.addEventListener("click", async (e) => {
   }
 
   if(e.target.id === "authGuestBtn"){
-    const guestBtn = document.getElementById("authGuestBtn");
-
-    try{
-      if (guestBtn) {
-        guestBtn.disabled = true;
-        guestBtn.textContent = isLocalDevelopmentHost() ? "Loading Demo Matches..." : "Entering...";
-      }
-
-      setAppEntryChoice("guest");
-      if (isLocalDevelopmentHost()) {
-        await importDemoMatches();
-      } else {
-        clearGuestDemoStateForLive();
-      }
-      closeAuthModal();
-    } catch (error) {
-      localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
-      alert(error?.message || "Unable to load guest demo data");
-    } finally {
-      if (guestBtn) {
-        guestBtn.disabled = false;
-        guestBtn.textContent = "Continue as Guest";
-      }
-    }
+    openGuestTutorialChoice();
   }
 
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target?.id === "guestTutorialStartBtn") {
+    void enterGuestFromAuth({ withTutorial: true });
+  }
+
+  if (e.target?.id === "guestTutorialSkipBtn") {
+    void enterGuestFromAuth({ withTutorial: false });
+  }
+
+  if (e.target?.id === "guestTutorialCancelBtn") {
+    closeGuestTutorialChoice();
+  }
+
+  if (e.target?.id === "appTutorialClose") {
+    stopGuestTutorial();
+  }
+
+  if (e.target?.id === "appTutorialBack") {
+    renderGuestTutorialStep(guestTutorialIndex - 1);
+  }
+
+  if (e.target?.id === "appTutorialRestart") {
+    renderGuestTutorialStep(0);
+  }
+
+  if (e.target?.id === "appTutorialNext") {
+    if (guestTutorialIndex >= GUEST_TUTORIAL_STEPS.length - 1) {
+      stopGuestTutorial();
+      return;
+    }
+    renderGuestTutorialStep(guestTutorialIndex + 1);
+  }
 });
 
 // ========================
@@ -38700,27 +39144,41 @@ function applyImportedMatches(matchList = [], options = {}){
 }
 
 async function importDemoMatches(){
-  const res = await fetchWithTimeout("/api/demo/import-example");
-  const data = await res.json().catch(() => ({}));
+  try {
+    const res = await fetchWithTimeout("/api/demo/import-example");
+    const data = await res.json().catch(() => ({}));
 
-  if(!res.ok){
-    throw new Error(data?.error || `Demo import failed (${res.status})`);
+    if(!res.ok){
+      throw new Error(data?.error || `Demo import failed (${res.status})`);
+    }
+
+    const matchList = Array.isArray(data?.matches) ? data.matches : [];
+    if(!matchList.length){
+      throw new Error("Demo fixture did not return any matches");
+    }
+
+    applyImportedMatches(matchList, {
+      source: data?.source || "demo-fixture",
+      analytics: data?.analytics || null
+    });
+
+    return {
+      count: matchList.length,
+      source: data?.source || "demo-fixture"
+    };
+  } catch (error) {
+    console.warn("Demo endpoint unavailable; using built-in tutorial fixture.", error);
+    const matchList = buildClientTutorialDemoMatches(50);
+    applyImportedMatches(matchList, {
+      source: "demo-fixture",
+      analytics: null
+    });
+    return {
+      count: matchList.length,
+      source: "demo-fixture",
+      fallback: true
+    };
   }
-
-  const matchList = Array.isArray(data?.matches) ? data.matches : [];
-  if(!matchList.length){
-    throw new Error("Demo fixture did not return any matches");
-  }
-
-  applyImportedMatches(matchList, {
-    source: data?.source || "demo-fixture",
-    analytics: data?.analytics || null
-  });
-
-  return {
-    count: matchList.length,
-    source: data?.source || "demo-fixture"
-  };
 }
 
 async function fetchWithTimeout(resource, options = {}, timeoutMs = RIOT_SYNC_FETCH_TIMEOUT_MS) {
