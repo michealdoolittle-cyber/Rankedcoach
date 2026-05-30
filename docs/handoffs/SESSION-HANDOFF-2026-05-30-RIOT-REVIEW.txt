@@ -1,0 +1,532 @@
+SESSION HANDOFF - RankedCoach Riot Review / Production Prep
+Date: 2026-05-30
+
+IMPORTANT NEXT-SESSION CONFIRMATION
+If this document is uploaded into a new Codex/ChatGPT session, first read it, then reply exactly:
+"I am fully aware of where we are in the project, let us continue"
+
+This handoff is the continuation of the long session that began with: "please read the 5/07 session hand off".
+It summarizes the whole project state, recent decisions, and review-critical details so work can continue from any PC.
+
+SECURITY NOTE
+This file intentionally does not include raw secrets, API keys, Supabase access tokens, OpenAI keys, or reusable test passwords.
+Those were discussed during the project, but should not be stored in a portable handoff file.
+
+CURRENT SOURCE OF TRUTH
+Local working source:
+C:\Users\mdoolittle\Desktop\Live-App-35
+
+Main deploy checkout:
+C:\Users\mdoolittle\Desktop\Rankedcoach-main-sync
+
+GitHub repository:
+https://github.com/michealdoolittle-cyber/Rankedcoach
+
+Production site:
+https://www.rankedcoach.gg
+https://rankedcoach.gg
+
+Cloudflare:
+The site is connected to GitHub main. Pushing to main triggers the live deployment.
+The public static asset root is the repo public folder.
+
+Riot verification:
+The Riot verification file must be available at:
+https://rankedcoach.gg/riot.txt
+
+The exact verification code is:
+93d1fde8-6584-4720-8cbf-61b0dfa281e7
+
+The file lives at:
+public/riot.txt
+
+PROJECT PURPOSE
+RankedCoach is a post-match VALORANT coaching and self-review app.
+It is intended to help players understand their own match history, logs, habits, agents, maps, weapons, and improvement focus.
+The app is private to the signed-in player. It does not evaluate other players.
+It does not provide live in-game advantage.
+It does not provide MMR, ELO, or an alternative ranked ladder.
+It does not claim Riot approval or partnership.
+It should use RSO/OAuth once Riot approves production access for player stat display.
+
+RIOT APPLICATION POSITION
+The product should be presented as:
+- A post-match coaching and reflection tool.
+- RSO/OAuth based for player consent.
+- Personal/private player data only.
+- No player shaming.
+- No unofficial rank/MMR/ELO calculator.
+- No live game advantage.
+- No use of Riot official logos.
+- Game art assets are used where appropriate.
+
+Requested APIs for Riot application:
+- RSO / OAuth
+- Account-V1
+- VAL-MATCH-V1
+- VAL-CONTENT-V1
+- VAL-RANKED-V1, if available/appropriate for rank context
+
+Policy risk reminders:
+- Do not charge for exclusive app access while under Riot review.
+- Donations/tips can exist, but should not gate functionality.
+- Avoid language that shames players.
+- Keep all coaching language focused on self-improvement.
+- Keep API keys server-side only.
+
+CURRENT PRODUCT DESCRIPTION SUMMARY
+RankedCoach helps VALORANT players review their own ranked performance after matches by combining Riot-authorized match data, player reflections, and coaching formulas.
+It gives a Home dashboard, Logging page, Stats page, Insights page, and Ask Coach assistant.
+It is built for personal improvement, not public comparison.
+
+CURRENT APP STRUCTURE
+Main public files:
+public/index.html
+public/Active-Edit.html
+public/app.css
+public/app.js
+public/privacy.html
+public/terms.html
+public/riot.txt
+
+Other important folders:
+supabase/functions/ask-coach
+functions/
+data/
+docs/handoffs/
+projects/
+
+CURRENT UX SOURCE OF TRUTH
+The 1080p layout is the visual source of truth.
+Higher resolutions should scale up while preserving the same proportions and structure.
+This was a major theme of the session because earlier 1440p/1080p behavior diverged.
+
+AUTHENTICATION STATUS
+Supabase is the backend auth/data platform.
+Supabase Pro was enabled so the project does not pause.
+Google OAuth has been configured in Google Cloud and Supabase.
+The Google auth branding/domain had to be corrected so users see RankedCoach rather than the raw Supabase domain.
+Password login, signup, forgot password UI, guest mode, and profile dropdown were redesigned.
+
+Auth UI expectations:
+- Login modal uses the RankedCoach logo.
+- Login form has email/password.
+- Forgot password is available.
+- Login and Continue as Guest buttons align in height.
+- Google and Riot auth buttons use icons.
+- Riot auth may be visible but disabled/unavailable until RSO is approved.
+- Signup requires email, account name, password, confirm password, and agreement to Terms/Privacy.
+- Password rules: 10+ chars, uppercase, number, no email substring, no 3-number sequence, not one of last 5 stored local fingerprints.
+- Password reveal buttons exist.
+- Guest mode should not automatically import demo matches unless tutorial is chosen.
+
+MFA STATUS
+The plan is TOTP-only for now.
+Phone/SMS MFA was discussed, but SMS requires a provider or hook and is not free/simple by default.
+The current direction is:
+- Enable MFA via TOTP.
+- Show a QR code when MFA is enabled.
+- Let user scan with an authenticator app such as 2FAS.
+- Remove email/phone MFA selection for now unless SMS/email MFA is fully implemented later.
+
+KNOWN AUTH DISTINCTION
+Account username is for the RankedCoach account/security identity.
+Profile line sub is for the active Riot/profile slot shown in the app.
+Changing one should not incorrectly change the other.
+
+PROFILE DROPDOWN EXPECTATION
+Dropdown should look clean like a modern account menu.
+If signed out:
+- Shows Guest.
+- Shows Log in / Sign up.
+- Does not show Log out.
+
+If signed in:
+- Shows account identity in gold.
+- Does not show Log in / Sign up.
+- Shows Security Settings.
+- Shows Customize.
+- Shows Links.
+- Includes Support, Terms of Service, Privacy Policy.
+- Includes Tip to Dev Link with gold border/hover.
+- Includes Log out.
+
+Security Settings modal should include:
+- Change Username, 3 to 16 characters.
+- Change Recovery Email.
+- Change Recovery Phone Number.
+- MFA enable/disable.
+- Current masked recovery email/phone shown.
+
+GUEST MODE AND TUTORIAL
+Continue as Guest should show a tutorial choice popup:
+- Yes, show tutorial.
+- No, continue as guest.
+
+If tutorial is selected:
+- Load demo matches.
+- Run a guided overlay tutorial.
+- Highlight one section at a time.
+- Fade or defocus the rest of the app.
+- Show arrow and description.
+- Include Back, Next, Start Over, Complete.
+
+Latest tutorial copy updates:
+- Slide 7/22 no longer mentions scoring.
+- Slide 19/22 no longer mentions weapon weighting. It now mentions weapon playstyle bias/player tendencies.
+- Slide 21/22 uses "practicing" instead of "protecting".
+- On completion, show a congrats popup explaining users can explore the demo insights or sign up/import their own account once approved.
+
+Tutorial content must cover:
+- Top nav and page navigation.
+- Goal rank selector.
+- Riot/profile connection area.
+- Weekly Focus Category.
+- Recent Improvement.
+- Role/agent/focus generator.
+- Compass categories.
+- Role impact meter.
+- RR trend line.
+- Logging form step by step.
+- Ratings/comms.
+- Current session calendar.
+- Reflection feed.
+- Stats overview.
+- Performance Timeline.
+- Data Reads.
+- Map Stats.
+- Agent Stats.
+- Weapon Stats.
+- Priority Reads.
+- Main Focus Category.
+- Coaching Reads.
+
+DEMO DATA STATUS
+Demo tutorial imports now use a built-in varied fixture instead of relying on the older local demo endpoint.
+The fixture contains 50 matches across 10 sessions.
+No single day has more than 7 games.
+The latest/current session has 5 games by design, matching a more realistic daily ranked session.
+
+Demo maps include positive, neutral, and negative examples:
+- Pearl is strongly positive.
+- Haven is positive.
+- Bind is positive.
+- Corrode is around neutral.
+- Abyss, Breeze, Split, and Fracture are negative.
+- Fracture is included as an excluded/old map example so locked excluded map behavior can be shown.
+
+Demo examples intentionally include:
+- Different agents.
+- Different weapons.
+- Odd weapon tendencies such as shotgun/Neon or shotgun/Raze.
+- Good and bad map outcomes.
+- Good and bad comms.
+- Mood variance.
+- Tilt, focus, utility, survivability, eco, map awareness, and duel discipline patterns.
+- Player-bias examples where flashy multikills do not necessarily become wins.
+
+SESSION RR / CHART BEHAVIOR
+Important correction made on 2026-05-30:
+The RR total card and chart should represent the current selected session/day only, not the entire season/act.
+The nav rank and profile-level progress can still understand broader profile context, but the Home RR card/chart is a session tracker.
+This matters because most users play 3 to 5 games in a session, not 20+.
+
+Session/date selection is tied to the logging calendar current session date.
+The chart x-axis should reflect that session window.
+The RR match stats panel uses the latest match from the current selected session.
+
+MAP STATS BEHAVIOR
+Map cards should be sorted by win rate.
+Active maps come first.
+Excluded maps are locked, greyed out, and placed at the bottom.
+Excluded maps should not be clickable.
+
+Map stats economy formulas were discussed:
+- Pistol rounds are rounds 1 and 13.
+- If pistol is won, round 2/14 is generally the buy-up and round 3/15 can be a bonus if the buy-up was won.
+- If pistol is lost, round 2/14 is often a save/force context and round 3/15 is typically the full buy.
+- Full buy after that depends on economy.
+- Half buy threshold example discussed: rifle plus light shield is 3300 credits.
+Future Riot data will determine exact economy classification where possible.
+
+HOME PAGE STATUS
+Home includes:
+- Weekly Focus Category.
+- Recent Improvement.
+- Loadout role/agent/focus generator.
+- Compass categories.
+- Role Impact Meter.
+- RR session chart.
+- Match stats panel.
+
+Language cleanup examples already applied:
+- "Teamwork is your best category..." instead of "clearest edge".
+- Death Control -> Round Survivability.
+- Follow Up Value -> Team Utility Score.
+- Mood Drift -> Behavior Development.
+- Recent Split changed to more understandable language.
+- Best Role Edge -> Best Role.
+- Leak Check -> Awareness Check / Monitor Check depending context.
+- Seen -> Reported.
+- Class -> Weapon Category.
+- Tracked rounds -> Rounds reported.
+
+COMPASS STATUS
+Compass categories are Aim, Game Sense, Teamwork, Discipline.
+Scores should be based on current rank expectations, not total ladder judgment.
+Users should understand where they are strong or weak at a glance.
+Compass score weighting was reviewed because previous demo numbers were unrealistically low despite strong stats.
+Keep language clear that this is a coaching category read, not MMR/ELO.
+
+ROLE IMPACT METER STATUS
+The impact meter shows role impact percentage inside the fill.
+Label below says "Impact Role Meter".
+Pill says "Latest [Role] Report".
+The fill bar should always have a visible outline/silhouette even when empty.
+Percentage text should stay centered inside the fill/bar area.
+
+LOGGING PAGE STATUS
+Logging page includes:
+- Session Debrief.
+- Agent selector.
+- Focus Category selector.
+- Map field.
+- Performance, Mood, Team Comms, Self Comms.
+- Notes.
+- Quick Add.
+- Current Session calendar.
+- Reflection feed.
+
+Synced/imported game sessions are created from match history.
+Users can edit log/reflection data.
+Users should not delete synced games because win/loss/RR are career facts from match history.
+Win/loss and RR gain/loss are locked.
+
+Logging feed expectations:
+- Wins highlighted green.
+- Losses highlighted red.
+- Show +RR or -RR near agent image with green/red text.
+- Calendar date tiles show log counts.
+- Feed footnote shows weekly and monthly average games/logs per day.
+
+STATS PAGE STATUS
+Stats includes:
+- Summary cards.
+- Peak progress.
+- Season/current window selector.
+- Performance Timeline.
+- Data Reads.
+- Map Stats.
+- Agent Stats.
+- Weapon Stats.
+
+Performance Timeline cards include:
+- Duel Conversion.
+- Win Rate.
+- Recent Mechanical Form.
+- Average Round Damage.
+- Agent Mechanics.
+- Team Utility.
+- Round Survivability.
+- Round Impact.
+- Attack/Defense Balance.
+- Weapon Category Use.
+- Multi-Kill Impact.
+
+Data Reads include:
+- Mechanics.
+- Average ADR.
+- Agent Selection.
+- Coaching Focus Category.
+- Confidence Rating.
+- Round Survivability.
+- Support Value.
+- Map Review.
+- Role Fit.
+- Weapon Category.
+- Behavior Development.
+
+Weapon Stats:
+- Families: Rifle, Pistol, Shotgun, SMG, Sniper.
+- Weapon images exist in the repo/assets.
+- No data cards are greyed/locked.
+- Weapon mini stats should show win rate only.
+- Positive win rate is green, negative is red.
+
+Agent and Map Stats:
+- No data should read "No Data".
+- No data cards locked/greyed.
+- K/D >= 1.00 green, below red.
+- Win rate >= 50% green, below red.
+
+INSIGHTS PAGE STATUS
+Insights includes:
+- Priority Reads.
+- Main Focus Category.
+- Coaching Reads.
+
+Coaching Reads groups:
+- Performance / Match Insights.
+- Session Habits / Log Reads.
+- Role Results / Role Reads.
+- Consistency / Consistency Reads.
+
+The app selects up to 3 cards per group.
+These need to feel dynamic per user profile, not static.
+
+Main Focus Category:
+- Must clearly say focus category when discussing focus, not just "focus".
+- The WHY/HOW/SOURCE cards must be full-width aligned within the parent card.
+- Language should match Ask Coach's clarity and directness.
+
+Priority Reads:
+- Good/strength items should not show a priority correction rating unless there is actually something to correct.
+
+ASK COACH STATUS
+Ask Coach is a dropdown chat below the nav, not a full modal.
+It should overlay content and not push layout down.
+Button is robot face near sync/profile controls.
+It uses Supabase Edge Function and OpenAI when available, with local fallback.
+Responses should be direct, human, and usually use clean bullet points.
+Avoid markdown artifacts like bold markers when rendering.
+It should have a thinking process:
+1. Player feedback.
+2. Player data.
+3. Approved resources.
+4. Structuring response.
+
+Ask Coach should answer normal coaching questions in context, such as:
+"I start strong for two games but the third is always a blowout. What can I do?"
+
+SUPABASE STATUS
+Supabase is used for:
+- Auth.
+- User profile/security preference data.
+- Logs/reflections.
+- Ask Coach function.
+
+Logs should be permanent per user, not just local cache.
+RLS policies were discussed and may need review again before final scale.
+Backend data should be user-scoped.
+
+OPENAI / ASK COACH FUNCTION
+OpenAI API key was added as a Supabase secret.
+Ask Coach model secret was also added.
+Do not expose keys client-side.
+
+EMAIL / CONTACTS
+Public app contact emails:
+support@rankedcoach.gg
+business@rankedcoach.gg
+feedback@rankedcoach.gg
+
+Privacy policy was edited to remove specific vendor names and avoid exposing exact architecture/vendor details.
+Terms and privacy need to be publicly accessible in plain web format.
+
+FOOTER STATUS
+Footer links include Terms and Privacy.
+Footer also includes donation/tip support path.
+Donation/tip should not gate product access.
+
+THEMES / CUSTOMIZE STATUS
+Theme selector has 30 themes:
+- 15 dark.
+- 15 light.
+Default remains unchanged.
+Light themes had multiple fixes for readability and consistent color application.
+Primary colors should drive parent/child cards.
+Secondary colors should drive borders/highlights.
+Text should always contrast.
+
+Profile customization includes:
+- Theme selector.
+- Agent profile icon.
+- Profile border color.
+- Profile border shape/animation options.
+- Banner selection.
+
+Profile borders:
+- Color options include Valorant rank-like colors.
+- Border shape options exist.
+- Animation preview is per profile border option, not banner.
+- Border animation should be simple and professional.
+
+Banners:
+- Split into Player Card Banner Valorant Official and Player Card Banner Unofficial.
+- Banner should override theme background instead of blending/conflicting.
+
+RECENT RESPONSIVE STATUS
+The nav/right/middle scaling received many fixes.
+Known review standard:
+- 1080p layout is correct baseline.
+- 1440p and higher should preserve proportions.
+- Dropdowns should not become comically large at higher resolutions.
+- Nav-right should match nav-middle height.
+- Compass expanded description should stay full width.
+
+RECENT LIVE PUSHES
+Several pushes to main were completed during review prep.
+Most recent before this handoff:
+Commit e62556a - Refine guest tutorial and session demo data.
+It included:
+- Tutorial slide copy fixes.
+- Session-only RR/chart behavior.
+- New varied demo fixture.
+- Map win-rate sorting and excluded map lock.
+- Completion popup.
+
+Current requested update:
+- Add public/riot.txt with Riot verification UUID.
+- Create this handoff file.
+- Push to main so Riot can verify https://rankedcoach.gg/riot.txt.
+
+WORKFLOW PREFERENCE
+The user often works between work and home PCs.
+Keep handoff files in docs/handoffs when major progress happens.
+When pushing live, use:
+C:\Users\mdoolittle\Desktop\Rankedcoach-main-sync
+
+Common copy/sync pattern:
+- Source edits often happen in C:\Users\mdoolittle\Desktop\Live-App-35.
+- Deploy files live in C:\Users\mdoolittle\Desktop\Rankedcoach-main-sync\public.
+- Copy source app.js/app.css into public/app.js/public/app.css before git commit, unless editing deploy checkout directly.
+
+GIT / DEPLOY NOTES
+Current branch for deploy checkout should be main.
+Cloudflare auto-deploys main.
+Use non-interactive git commands.
+Do not amend commits unless explicitly asked.
+Do not include unrelated local files.
+
+TESTING CHECKLIST BEFORE RIOT SUBMISSION
+Must verify:
+- https://rankedcoach.gg/riot.txt works.
+- https://www.rankedcoach.gg/privacy.html works.
+- https://www.rankedcoach.gg/terms.html works.
+- Continue as Guest opens tutorial choice.
+- Guest tutorial loads demo data only when tutorial is chosen.
+- Tutorial can complete and shows congrats popup.
+- Clean guest mode does not import demo data.
+- Login works.
+- Logout returns to Guest.
+- Forgot password flow does not overflow modal.
+- Signup requires Terms/Privacy checkbox.
+- Google auth branding shows RankedCoach.
+- Profile dropdown hides Login when logged in and hides Logout when logged out.
+- Ask Coach works or gracefully falls back.
+- No API key is exposed to browser.
+- No Riot official logo is used.
+- No language claims Riot approval/partnership.
+- No MMR/ELO language.
+- No public player comparison/shaming.
+
+IF RESUMING FROM THIS FILE
+Start by checking:
+1. git status in C:\Users\mdoolittle\Desktop\Rankedcoach-main-sync
+2. live https://rankedcoach.gg/riot.txt
+3. Cloudflare deployment status if the pushed file is not live yet.
+4. Riot application form requirements.
+
+User's confirmation requirement:
+When this handoff is uploaded in a future session, respond:
+I am fully aware of where we are in the project, let us continue
