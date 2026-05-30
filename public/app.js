@@ -7050,8 +7050,8 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "home",
     selector: ".compass-panel",
-    title: "Compass scores",
-    copy: "The compass scores Aim, Game Sense, Teamwork, and Discipline from your available match data and logs. These are current 0-100 category scores, not a hidden MMR or total-ladder rating."
+    title: "Compass categories",
+    copy: "The compass compares Aim, Game Sense, Teamwork, and Discipline from your available match data and logs so you can spot your strongest category and your clearest improvement area quickly."
   },
   {
     page: "home",
@@ -7063,7 +7063,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "home",
     selector: ".rr-chart-card",
     title: "RR trend line",
-    copy: "Click game dots to inspect match snapshots. The chart controls change the visible match window so you can review short-term or longer-term movement."
+    copy: "Click game dots to inspect match snapshots. The chart controls change the visible window for the selected session, so a normal three-to-five-game day stays easy to read."
   },
   {
     page: "logging",
@@ -7123,7 +7123,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "stats",
     selector: ".stats-weapons-card",
     title: "Weapon Stats",
-    copy: "Weapon rows group weapons by category so RankedCoach can judge mechanics with context. A shotgun-heavy profile should not be reviewed the same way as a rifle-only profile."
+    copy: "Weapon rows show weapon playstyle bias and player tendencies. A shotgun-heavy profile should not be reviewed the same way as a rifle-only profile."
   },
   {
     page: "insights",
@@ -7135,7 +7135,7 @@ const GUEST_TUTORIAL_STEPS = [
     page: "insights",
     selector: ".insights-action-card",
     title: "Main Focus Category",
-    copy: "This is the one focus category RankedCoach thinks is most worth protecting for the next block of matches, with a why, how, and source."
+    copy: "This is the one focus category RankedCoach thinks is most worth practicing for the next block of matches, with a why, how, and source."
   },
   {
     page: "insights",
@@ -7191,6 +7191,28 @@ function ensureGuestTutorialShells() {
       </div>
     `);
   }
+
+  if (!document.getElementById("guestTutorialCompleteModal")) {
+    document.body.insertAdjacentHTML("beforeend", `
+      <div id="guestTutorialCompleteModal" class="lens-modal-overlay guest-tutorial-choice-overlay">
+        <div class="lens-modal guest-tutorial-choice-card guest-tutorial-complete-card">
+          <div class="lens-modal-header">
+            <div class="lens-modal-title">Tutorial Complete</div>
+            <button id="guestTutorialCompleteClose" class="lens-modal-close" type="button">X</button>
+          </div>
+          <div class="lens-modal-body guest-tutorial-choice-body">
+            <div class="guest-tutorial-choice-kicker">Nice work</div>
+            <div class="guest-tutorial-choice-title">You finished the RankedCoach tour.</div>
+            <div class="guest-tutorial-choice-copy">You can freely look around the demo insights, logs, stats, and Ask Coach examples. When RankedCoach is approved for live Riot imports, you can sign up and connect your own account.</div>
+            <div class="guest-tutorial-choice-actions">
+              <button id="guestTutorialCompleteExplore" class="pd-item guest-tutorial-primary" type="button">Explore demo</button>
+              <button id="guestTutorialCompleteSignup" class="pd-item guest-tutorial-secondary" type="button">Sign up</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+  }
 }
 
 function setGuestButtonLoading(isLoading = false, label = "Continue as Guest") {
@@ -7209,80 +7231,168 @@ function closeGuestTutorialChoice() {
   hideModalById?.("guestTutorialChoiceModal");
 }
 
+function closeGuestTutorialComplete() {
+  hideModalById?.("guestTutorialCompleteModal");
+}
+
+function openGuestTutorialComplete() {
+  ensureGuestTutorialShells();
+  showModalById?.("guestTutorialCompleteModal");
+}
+
 function buildClientTutorialDemoMatches(count = 50) {
-  const agents = ["Jett", "Neon", "Sova", "Killjoy", "Brimstone", "Sage", "Raze", "Cypher"];
-  const maps = ["Haven", "Ascent", "Bind", "Lotus", "Fracture", "Split", "Pearl"];
-  const weapons = ["Vandal", "Phantom", "Guardian", "Ghost", "Sheriff", "Operator", "Spectre"];
-  const start = new Date();
-  start.setDate(start.getDate() - count);
+  const sessionPlans = [
+    { daysAgo: 28, count: 5 },
+    { daysAgo: 24, count: 4 },
+    { daysAgo: 21, count: 6 },
+    { daysAgo: 17, count: 3 },
+    { daysAgo: 13, count: 7 },
+    { daysAgo: 9, count: 5 },
+    { daysAgo: 6, count: 4 },
+    { daysAgo: 3, count: 6 },
+    { daysAgo: 1, count: 5 },
+    { daysAgo: 0, count: 5 }
+  ];
+  const mapRotation = [
+    "Haven", "Split", "Bind", "Abyss", "Pearl", "Fracture", "Breeze", "Corrode",
+    "Split", "Abyss", "Bind", "Pearl", "Haven", "Split", "Fracture", "Breeze",
+    "Corrode", "Pearl", "Abyss", "Split", "Haven", "Bind", "Breeze", "Fracture"
+  ];
+  const mapOutcomePattern = {
+    Haven: ["win", "win", "loss", "win"],
+    Bind: ["win", "loss", "win"],
+    Breeze: ["loss", "win", "loss"],
+    Corrode: ["win", "loss", "win", "loss"],
+    Pearl: ["win", "win", "loss", "win"],
+    Split: ["loss", "loss", "win", "loss"],
+    Abyss: ["loss", "win", "loss", "loss"],
+    Fracture: ["loss", "loss", "loss", "win"]
+  };
+  const playProfiles = [
+    { agent: "Jett", weapon: "Vandal", focus: "Trade Conversion", scenario: "clean rifle entries with one overheat after spike plant", killShift: 3, deathShift: 0, assistShift: 1, hsShift: 5 },
+    { agent: "Neon", weapon: "Judge", focus: "Positioning", scenario: "fast judge tempo created multikills but also risky solo deaths", killShift: 7, deathShift: 5, assistShift: -1, hsShift: -8 },
+    { agent: "Sova", weapon: "Phantom", focus: "Utility Timing", scenario: "recon timing helped trades but late darts slowed retakes", killShift: 0, deathShift: -1, assistShift: 5, hsShift: 1 },
+    { agent: "Killjoy", weapon: "Vandal", focus: "Round Survivability", scenario: "site anchors stayed alive longer but retake comms were late", killShift: -1, deathShift: -2, assistShift: 3, hsShift: 2 },
+    { agent: "Brimstone", weapon: "Phantom", focus: "Team Utility", scenario: "smokes supported team hits but post-plant spacing broke twice", killShift: -2, deathShift: 0, assistShift: 6, hsShift: -1 },
+    { agent: "Raze", weapon: "Judge", focus: "Eco Conversion", scenario: "shotgun burst rounds looked flashy but did not always convert", killShift: 5, deathShift: 3, assistShift: 0, hsShift: -6 },
+    { agent: "Cypher", weapon: "Guardian", focus: "Awareness Check", scenario: "trap info was strong, but rotations were sometimes too slow", killShift: 1, deathShift: -1, assistShift: 2, hsShift: 7 },
+    { agent: "Sage", weapon: "Spectre", focus: "Support Value", scenario: "support utility stabilized low buys but damage output dipped", killShift: -3, deathShift: -1, assistShift: 7, hsShift: -2 },
+    { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", scenario: "one-way smoke value was strong while lurk timing was inconsistent", killShift: 1, deathShift: 1, assistShift: 4, hsShift: 0 },
+    { agent: "Reyna", weapon: "Vandal", focus: "Duel Discipline", scenario: "direct duels were strong but dismiss exits came too late in losses", killShift: 5, deathShift: 2, assistShift: -2, hsShift: 4 }
+  ];
+  const mapUsage = new Map();
+  const matchesOut = [];
 
-  return Array.from({ length: count }, (_, index) => {
-    const agent = agents[index % agents.length];
-    const map = maps[index % maps.length];
-    const result = [0, 1, 3, 4].includes(index % 6) ? "win" : "loss";
-    const rr = result === "win" ? 16 + (index % 9) : -(12 + (index % 8));
-    const kills = result === "win" ? 16 + (index % 10) : 10 + (index % 9);
-    const deaths = result === "win" ? 9 + (index % 6) : 13 + (index % 7);
-    const assists = 3 + (index % 8);
-    const acs = 178 + kills * 5 + assists * 3;
-    const adr = Math.round(112 + kills * 2.2 + assists * 1.5);
-    const hs = Math.round(18 + (index % 14));
-    const playedAt = new Date(start.getTime() + (index + 1) * 24 * 60 * 60 * 1000).toISOString();
+  sessionPlans.forEach((session, sessionIndex) => {
+    for (let gameInSession = 0; gameInSession < session.count && matchesOut.length < count; gameInSession += 1) {
+      const index = matchesOut.length;
+      const profile = playProfiles[(index + sessionIndex) % playProfiles.length];
+      const map = mapRotation[index % mapRotation.length];
+      const mapCount = mapUsage.get(map) || 0;
+      const pattern = mapOutcomePattern[map] || ["win", "loss"];
+      const result = pattern[mapCount % pattern.length];
+      mapUsage.set(map, mapCount + 1);
 
-    const rounds = Array.from({ length: 24 }, (_, roundIndex) => {
-      const roundNumber = roundIndex + 1;
-      const roundWon = result === "win"
-        ? (roundIndex % 5 !== 1)
-        : (roundIndex % 5 === 0 || roundIndex % 7 === 2);
-      const pistolRound = roundNumber === 1 || roundNumber === 13;
-      const buyType = pistolRound
-        ? "pistol"
-        : [2, 14].includes(roundNumber)
-          ? (roundWon ? "bonus" : "save")
-          : [3, 15].includes(roundNumber)
-            ? (result === "win" ? "bonus" : "full-buy")
-            : (roundIndex % 4 === 0 ? "full-buy" : "light-buy");
+      const isWin = result === "win";
+      const oddWeaponProfile = ["Judge", "Bucky", "Shorty"].includes(profile.weapon);
+      const rr = isWin
+        ? Math.max(7, 14 + (index % 8) - (oddWeaponProfile ? 5 : 0))
+        : -(14 + (index % 10) + (oddWeaponProfile ? 5 : 0));
+      const kills = Math.max(4, 13 + profile.killShift + (isWin ? 4 : 0) + (index % 6));
+      const deaths = Math.max(5, 13 + profile.deathShift + (isWin ? -3 : 3) + (index % 4));
+      const assists = Math.max(0, 3 + profile.assistShift + (index % 5));
+      const acs = Math.round(150 + kills * 5.8 + assists * 3.1 - deaths * 1.4);
+      const adr = Math.round(98 + kills * 2.5 + assists * 1.6 - deaths * 0.9);
+      const hs = Math.max(6, Math.min(41, 18 + profile.hsShift + (index % 11)));
+      const sessionDate = new Date();
+      sessionDate.setDate(sessionDate.getDate() - session.daysAgo);
+      sessionDate.setHours(18 + Math.floor(gameInSession / 2), (gameInSession % 2) * 32, 0, 0);
+      const playedAt = sessionDate.toISOString();
 
-      return {
-        round: roundNumber,
-        roundWon,
-        buyType,
-        weapon: weapons[(index + roundIndex) % weapons.length],
-        creditsSpent: buyType === "full-buy" ? 4300 : buyType === "bonus" ? 2400 : buyType === "light-buy" ? 3300 : 800
-      };
-    });
+      const rounds = Array.from({ length: 24 }, (_, roundIndex) => {
+        const roundNumber = roundIndex + 1;
+        const half = roundNumber <= 12 ? 0 : 1;
+        const roundInHalf = half ? roundNumber - 12 : roundNumber;
+        const pistolWon = isWin ? (index + half) % 4 !== 1 : (index + half) % 4 === 0;
+        const secondRoundWon = pistolWon ? (isWin || (index + half) % 3 === 0) : false;
+        let buyType = "full-buy";
 
-    return {
-      id: `tutorial_demo_${index + 1}`,
-      matchId: `tutorial_demo_${index + 1}`,
-      source: "demo-fixture",
-      result,
-      rr,
-      agent,
-      map,
-      createdAt: playedAt,
-      metadata: {
-        matchId: `tutorial_demo_${index + 1}`,
-        result,
-        agent,
-        mapName: map,
-        playedAt,
-        mode: "Competitive"
-      },
-      segments: [{
-        type: "overview",
-        stats: {
-          kills: { value: kills },
-          deaths: { value: deaths },
-          assists: { value: assists },
-          scorePerRound: { value: acs },
-          damagePerRound: { value: adr },
-          headshotsPercentage: { value: hs }
+        if (roundInHalf === 1) {
+          buyType = "pistol";
+        } else if (roundInHalf === 2) {
+          buyType = pistolWon ? "bonus" : "save";
+        } else if (roundInHalf === 3) {
+          buyType = pistolWon && secondRoundWon ? "bonus" : "full-buy";
+        } else if (roundIndex % 6 === 0) {
+          buyType = "save";
+        } else if (roundIndex % 5 === 0) {
+          buyType = "light-buy";
         }
-      }],
-      advanced: { rounds }
-    };
+
+        const roundWon = roundInHalf === 1
+          ? pistolWon
+          : roundInHalf === 2
+            ? secondRoundWon
+            : isWin
+              ? (roundIndex % 5 !== 1)
+              : (roundIndex % 6 === 0 || roundIndex % 7 === 3);
+        const sidearm = index % 2 === 0 ? "Ghost" : "Sheriff";
+        const roundWeapon = buyType === "pistol"
+          ? sidearm
+          : buyType === "save"
+            ? (oddWeaponProfile ? "Shorty" : "Sheriff")
+            : buyType === "light-buy"
+              ? (oddWeaponProfile ? "Judge" : "Spectre")
+              : profile.weapon;
+
+        return {
+          round: roundNumber,
+          roundWon,
+          buyType,
+          weapon: roundWeapon,
+          creditsSpent: buyType === "full-buy" ? 4300 : buyType === "bonus" ? 2400 : buyType === "light-buy" ? 3300 : buyType === "save" ? 1100 : 800
+        };
+      });
+
+      matchesOut.push({
+        id: `tutorial_demo_${index + 1}`,
+        matchId: `tutorial_demo_${index + 1}`,
+        source: "demo-fixture",
+        result,
+        rr,
+        agent: profile.agent,
+        map,
+        createdAt: playedAt,
+        metadata: {
+          matchId: `tutorial_demo_${index + 1}`,
+          result,
+          agent: profile.agent,
+          mapName: map,
+          playedAt,
+          mode: "Competitive",
+          demoFocus: profile.focus,
+          demoScenario: profile.scenario,
+          demoWeapon: profile.weapon,
+          demoSessionIndex: sessionIndex + 1,
+          demoGameInSession: gameInSession + 1
+        },
+        segments: [{
+          type: "overview",
+          stats: {
+            kills: { value: kills },
+            deaths: { value: deaths },
+            assists: { value: assists },
+            scorePerRound: { value: acs },
+            damagePerRound: { value: adr },
+            headshotsPercentage: { value: hs }
+          }
+        }],
+        advanced: { rounds }
+      });
+    }
   });
+
+  return matchesOut;
 }
 
 async function enterGuestFromAuth({ withTutorial = false } = {}) {
@@ -7294,7 +7404,7 @@ async function enterGuestFromAuth({ withTutorial = false } = {}) {
   try {
     enterGuestModeAfterLogout();
     if (withTutorial) {
-      await importDemoMatches();
+      await importDemoMatches({ preferBuiltIn: true });
     }
     closeAuthModal();
     if (withTutorial) {
@@ -7434,13 +7544,16 @@ function startGuestTutorial() {
   window.addEventListener("scroll", positionGuestTutorialOverlay, { passive: true, capture: true });
 }
 
-function stopGuestTutorial() {
+function stopGuestTutorial({ completed = false } = {}) {
   const overlay = document.getElementById("appTutorialOverlay");
   overlay?.classList.remove("active");
   document.body.classList.remove("app-tutorial-running");
   clearTutorialTarget();
   window.removeEventListener("resize", positionGuestTutorialOverlay);
   window.removeEventListener("scroll", positionGuestTutorialOverlay, true);
+  if (completed) {
+    window.setTimeout(openGuestTutorialComplete, 120);
+  }
 }
 
 async function ensureGuestDemoMatches() {
@@ -7462,7 +7575,7 @@ async function ensureGuestDemoMatches() {
 
   window.__vtGuestDemoHydrationPromise = (async () => {
     try {
-      await importDemoMatches();
+      await importDemoMatches({ preferBuiltIn: true });
     } catch (error) {
       console.warn("Guest demo hydration failed", error);
     }
@@ -7567,6 +7680,7 @@ let focusProgressMax = 5;     // sessions required
 // ========================
 
 let rrSum = 0;
+let sessionRRSum = 0;
 let activeRoleFilter = "any";
 let currentMap = "";
 
@@ -7579,6 +7693,41 @@ let currentAuthUser = null;
 let activeLogSessionFilter = "all";
 let activeLogCalendarMonth = new Date();
 
+function getMatchSessionDateKey(match = {}) {
+  const rawDate =
+    match?.createdAt ||
+    match?.metadata?.playedAt ||
+    match?.metadata?.createdAt ||
+    match?.playedAt ||
+    "";
+  return formatLocalDateKey(rawDate ? new Date(rawDate) : new Date());
+}
+
+function getActiveSessionDateKey() {
+  const key = String(activeLogSessionFilter || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(key)
+    ? key
+    : formatLocalDateKey(new Date());
+}
+
+function getSessionMatchEntries(dateKey = getActiveSessionDateKey(), matchList = matches) {
+  return (matchList || [])
+    .map((match, index) => ({ match, index }))
+    .filter(({ match }) => getMatchSessionDateKey(match) === dateKey);
+}
+
+function sumRRForMatchEntries(entries = []) {
+  return (entries || []).reduce((sum, entry) => sum + safeNumber(entry?.match?.rr), 0);
+}
+
+function sumRRForSession(matchList = matches, dateKey = getActiveSessionDateKey()) {
+  return sumRRForMatchEntries(getSessionMatchEntries(dateKey, matchList));
+}
+
+function getCurrentSessionMatches() {
+  return getSessionMatchEntries().map(entry => entry.match);
+}
+
 // ========================
 // CHART STATE
 // ========================
@@ -7588,6 +7737,7 @@ const CHART_ANIM_DURATION = 430;
 let currentSize = 5;
 let lastMatchesLength = 0;
 let lastChartRenderSignature = "";
+let activeChartRenderSignature = "";
 
 let chartAnimating = false;
 let chartBusy = false;
@@ -9114,6 +9264,18 @@ function getChartSlice(cumulative, size, matchCount) {
   return slice;
 }
 
+function getChartSliceWithEntries(cumulative, entries, size) {
+  const matchCount = Array.isArray(entries) ? entries.length : 0;
+  const maxWindow = String(size).toLowerCase() === "all"
+    ? matchCount
+    : Math.min(matchCount, Number(size) || 5);
+
+  return {
+    slice: [0, ...cumulative.slice(-maxWindow)],
+    entries: (entries || []).slice(-maxWindow)
+  };
+}
+
 function getChartIntroTiming(size, segmentCount, useContinuousIntro = false) {
   const normalizedSize = String(size || "5").toLowerCase();
   const baseSegmentMs = 360;
@@ -9164,10 +9326,11 @@ function makeChartY(minTick, maxTick) {
   };
 }
 
-function buildChartPoints(slice, y) {
+function buildChartPoints(slice, y, visibleEntries = null) {
   const plotWidth = CHART_W - PAD_LEFT - PAD_RIGHT;
   const step = slice.length > 1 ? plotWidth / (slice.length - 1) : 0;
   const visibleMatchCount = Math.max(0, slice.length - 1);
+  const scopedEntries = Array.isArray(visibleEntries) ? visibleEntries : null;
   const startMatchIndex = Math.max(0, matches.length - visibleMatchCount);
   const impactSnapshots = getPlayerModel()?.scoring?.impactSnapshots || [];
 
@@ -9186,8 +9349,11 @@ function buildChartPoints(slice, y) {
       };
     }
 
-    const matchIndex = startMatchIndex + index - 1;
-    const match = matches[matchIndex] || null;
+    const scopedEntry = scopedEntries?.[index - 1] || null;
+    const matchIndex = scopedEntry
+      ? Number(scopedEntry.index)
+      : startMatchIndex + index - 1;
+    const match = scopedEntry?.match || matches[matchIndex] || null;
     const snapshot = findImpactSnapshotForMatch(match, matchIndex, impactSnapshots);
 
     return {
@@ -9196,6 +9362,7 @@ function buildChartPoints(slice, y) {
       rr: value - slice[index - 1],
       value,
       matchIndex,
+      sessionIndex: index - 1,
       match,
       snapshot,
       matchId: String((match?.id || match?.matchId || snapshot?.id || snapshot?.matchId || "")),
@@ -9246,6 +9413,7 @@ data-rr="${point.rr}"
 data-total-rr="${point.value}"
 data-index="${point.matchIndex}"
 data-match-index="${point.matchIndex}"
+data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
 ${statsAttrs}/>
 
 <circle class="${dotClass}"
@@ -9256,6 +9424,7 @@ data-rr="${point.rr}"
 data-total-rr="${point.value}"
 data-index="${point.matchIndex}"
 data-match-index="${point.matchIndex}"
+data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
 data-match-id="${escapeHtml(point?.matchId || snapshot?.id || point?.match?.id || point?.match?.matchId || "")}"
 data-match-key="${escapeHtml(point?.matchKey || "")}"
 data-impact-tier="${escapeHtml(snapshot?.impactTier || "")}"
@@ -11119,7 +11288,7 @@ function hasMatchPanelStats(match = null) {
   });
 }
 
-function updateRRMatchStats(match = null, matchIndex = null) {
+function updateRRMatchStats(match = null, matchIndex = null, options = {}) {
   const panel = {
     kills: rrKillsEl,
     deaths: rrDeathsEl,
@@ -11142,8 +11311,11 @@ function updateRRMatchStats(match = null, matchIndex = null) {
   }
 
   const stats = getMatchPanelStats(match);
-  const gameLabel = Number.isInteger(matchIndex) && matchIndex >= 0
-    ? `Game ${matchIndex + 1}`
+  const displayIndex = Number.isInteger(options?.displayIndex)
+    ? options.displayIndex
+    : matchIndex;
+  const gameLabel = Number.isInteger(displayIndex) && displayIndex >= 0
+    ? `Game ${displayIndex + 1}`
     : "Selected Game";
   const rrDelta = safeNumber(match?.rr);
   const rrLabel = rrDelta > 0 ? `+${rrDelta} RR` : `${rrDelta} RR`;
@@ -11181,6 +11353,7 @@ function updateRRMatchStats(match = null, matchIndex = null) {
 
 function updateRRMatchStatsFromHit(hit) {
   const matchIndex = Number(hit?.dataset?.matchIndex);
+  const sessionIndex = Number(hit?.dataset?.sessionIndex);
   const matchId = String(hit?.dataset?.matchId || "").trim();
   const matchKey = String(hit?.dataset?.matchKey || "").trim();
   if (!Number.isInteger(matchIndex) || matchIndex < 0 || matchIndex >= matches.length) {
@@ -11235,7 +11408,9 @@ function updateRRMatchStatsFromHit(hit) {
       mapName: hitStats.map || match?.metadata?.mapName,
       agent: hitStats.agent || match?.metadata?.agent
     }
-  }, matchIndex);
+  }, matchIndex, {
+    displayIndex: Number.isInteger(sessionIndex) && sessionIndex >= 0 ? sessionIndex : matchIndex
+  });
 }
 
 function getChartHitFromTarget(target) {
@@ -33613,26 +33788,41 @@ function renderLogSessionSelector() {
 }
 
 function buildDemoLogEntriesFromMatches(matchList = []) {
-  const focusOptions = [
+  const fallbackFocusOptions = [
     "Trade Conversion",
-    "Crosshair Discipline",
-    "Spacing",
+    "Duel Discipline",
+    "Positioning",
     "Eco Conversion",
-    "Mid Round Discipline",
-    "Comms Discipline",
+    "Map Awareness",
+    "Team Utility",
+    "Round Survivability",
+    "Utility Timing",
     "Retake Timing",
-    "Utility Efficiency"
+    "Comms Discipline",
+    "Weapon Category Use",
+    "Mental Reset"
   ];
-  const scenarioNotes = [
-    "AFK teammate on defense led to two free site hits and a broken bonus conversion.",
-    "Enemy disconnect mid-half created easier spacing windows but masked weak retake structure.",
-    "Played with music on and team comms muted. Missed one rotate call that turned a 4v3 post-plant into a loss.",
-    "Queued with a duo and had cleaner trade spacing on entry rounds, especially on low-buy fights.",
-    "Solo queue with voice disabled made late-round info thin and produced slower rotate timing.",
-    "Won eco rounds when staying close enough to trade instead of dry swinging after utility.",
-    "Lost a key round after overbuying utility and entering without rifle support.",
-    "First death kept happening in the same lane when peeking before utility landed."
+  const lossNotes = [
+    "The loss was not just aim. Early deaths gave away too much map control before the team had a trade setup.",
+    "This was a player-bias check: the flashy round looked good, but the next two rounds were lost because the economy broke.",
+    "The team kept calling the same rotate late. The app should connect that pattern to map awareness instead of one bad duel.",
+    "The round fell apart after chasing a multikill instead of resetting into post-plant discipline.",
+    "Shotgun value showed up in one lane, but it did not convert enough rounds to justify forcing the same look repeatedly.",
+    "The match felt close individually, but deaths after first contact kept turning winnable rounds into saves."
   ];
+  const winNotes = [
+    "The win came from cleaner trade timing and fewer solo fights after first contact.",
+    "The team converted low-buy pressure because spacing stayed tight enough for follow-up fights.",
+    "This game is useful because the result was positive while still showing a clear focus category to practice.",
+    "Good map control made the late round easier. This should show as a strength without hiding the next review area.",
+    "The role plan was simple and repeatable: take space, pause, then use utility before the next fight.",
+    "This was a good example of impact without needing every stat to be perfect."
+  ];
+  const neutralNotes = [
+    "The match had mixed signals, so the app should avoid overreacting to one number.",
+    "Several rounds were decided by economy swings rather than one clean mechanical issue."
+  ];
+  const moods = ["Focused", "Calm", "Confident", "Tired", "Annoyed", "Tilted", "Frustrated", "Composed"];
 
   return (matchList || []).map((match, index) => {
     const createdAt = match?.createdAt || match?.metadata?.playedAt || nowISO();
@@ -33646,6 +33836,18 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
       sentinel: { rolePlan: 81, utility: 79, entry: 66, spacing: 80 }
     }[String(role || "").toLowerCase()] || { rolePlan: 74, utility: 74, entry: 72, spacing: 72 };
     const resultBoost = result === "win" ? 8 : result === "loss" ? -6 : 2;
+    const focus = match?.metadata?.demoFocus || fallbackFocusOptions[index % fallbackFocusOptions.length];
+    const mood = result === "win"
+      ? moods[index % 4]
+      : moods[4 + (index % 4)];
+    const notePool = result === "win" ? winNotes : result === "loss" ? lossNotes : neutralNotes;
+    const scenario = match?.metadata?.demoScenario || notePool[index % notePool.length];
+    const weaponBias = match?.metadata?.demoWeapon
+      ? ` Weapon tendency: ${match.metadata.demoWeapon}.`
+      : "";
+    const survivorBiasNote = index % 9 === 1
+      ? " This is a survivor-bias example: one big play should not outweigh the full match result."
+      : "";
 
     return {
       id: uuid(),
@@ -33656,16 +33858,19 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
       source: match?.source || "demo-match",
       createdAt,
       agent: match?.metadata?.agent || "Jett",
-      focus: focusOptions[index % focusOptions.length],
+      focus,
       map: match?.metadata?.mapName || "Unknown",
-      rating: result === "win" ? 5 - (index % 2) : result === "loss" ? 2 + (index % 2) : 3,
-      mood: result === "win" ? "Focused" : result === "loss" ? "Tilted" : "Calm",
-      teamComms: result === "win" ? 4 + (index % 2) : result === "loss" ? 2 + (index % 2) : 3,
-      selfComms: result === "win" ? 4 : result === "loss" ? 2 + (index % 2) : 3,
-      warmup: index === 0,
-      notes: `${scenarioNotes[index % scenarioNotes.length]} ${result === "win"
-        ? "Won more rounds when respecting teammate spacing and delaying peeks until utility connected."
-        : "Losses stacked when first deaths came early and the round economy snowballed poorly."}`,
+      rating: result === "win"
+        ? (index % 5 === 0 ? 3 : 4 + (index % 2))
+        : result === "loss"
+          ? (index % 6 === 2 ? 4 : 2 + (index % 2))
+          : 3,
+      mood,
+      tilt: mood,
+      teamComms: result === "win" ? 3 + (index % 3) : Math.max(0, 1 + (index % 4)),
+      selfComms: result === "win" ? 3 + (index % 2) : Math.max(0, 1 + ((index + 1) % 4)),
+      warmup: index % 10 === 0,
+      notes: `${scenario} ${notePool[index % notePool.length]}${weaponBias}${survivorBiasNote}`,
       role,
       musicOn: index % 3 === 0,
       commsDisabled: index % 4 === 0,
@@ -36020,6 +36225,8 @@ function activatePage(pageId){
 }
 
   if (pageId === "home") {
+    recomputeFromMatches();
+    updateDisplays();
     forceChartIntroAnimation = true;
     requestAnimationFrame(() => renderChart(currentSize));
   }
@@ -36049,6 +36256,8 @@ function activatePage(pageId){
 // ========================
 
 function updateDisplays(){
+  const sessionEntries = getSessionMatchEntries();
+  sessionRRSum = sumRRForMatchEntries(sessionEntries);
 
   // ========================
   // RR TOTAL ANIMATION
@@ -36064,7 +36273,7 @@ function updateDisplays(){
     const textStart = Number(totalRRDisplay.textContent);
     const shouldUsePayload =
       !!animationPayload &&
-      Number(animationPayload.to) === Number(rrSum) &&
+      Number(animationPayload.to) === Number(sessionRRSum) &&
       payloadTs !== lastUsedPayloadTs;
     const start = shouldUsePayload
       ? Number(animationPayload.from)
@@ -36075,7 +36284,7 @@ function updateDisplays(){
         : Number.isFinite(textStart)
           ? textStart
           : 0;
-    const target = rrSum;
+    const target = sessionRRSum;
 
     if (totalRRAnimFrame) {
       cancelAnimationFrame(totalRRAnimFrame);
@@ -36157,7 +36366,7 @@ function updateDisplays(){
   let losses = 0;
   let draws = 0;
 
-  (matches || []).forEach(m => {
+  sessionEntries.forEach(({ match: m }) => {
     if(m.result === "win") wins++;
     else if(m.result === "loss") losses++;
     else draws++;
@@ -36166,7 +36375,7 @@ function updateDisplays(){
   if(winsCountEl) winsCountEl.textContent = wins;
   if(lossCountEl) lossCountEl.textContent = losses;
   if(drawCountEl) drawCountEl.textContent = draws;
-  if(totalGamesEl) totalGamesEl.textContent = (matches || []).length;
+  if(totalGamesEl) totalGamesEl.textContent = sessionEntries.length;
 
   refreshImprovementTimeline({ animate: true });
   updateNavRRToRank();
@@ -36214,27 +36423,31 @@ function recomputeFromMatches(){
 
   rrSum = 0;
 
-  let wins = 0;
-  let losses = 0;
-  let draws = 0;
-
   (matches || []).forEach(m => {
 
     rrSum += safeNumber(m.rr);
 
+  });
+
+  const sessionEntries = getSessionMatchEntries();
+  sessionRRSum = sumRRForMatchEntries(sessionEntries);
+  let wins = 0;
+  let losses = 0;
+  let draws = 0;
+
+  sessionEntries.forEach(({ match: m }) => {
     if(m.result === "win") wins++;
     else if(m.result === "loss") losses++;
     else draws++;
-
   });
 
   if(winsCountEl) winsCountEl.textContent = wins;
   if(lossCountEl) lossCountEl.textContent = losses;
   if(drawCountEl) drawCountEl.textContent = draws;
-  if(totalGamesEl) totalGamesEl.textContent = matches.length;
+  if(totalGamesEl) totalGamesEl.textContent = sessionEntries.length;
 
   if(totalRRDisplay && !Number.isFinite(Number(totalRRDisplay.dataset.value))){
-    totalRRDisplay.textContent = rrSum;
+    totalRRDisplay.textContent = sessionRRSum;
   }
 
   const p = getActiveProfile();
@@ -36493,14 +36706,15 @@ if(chartHeight){
 }
   chartBusy = true;
 
-  const cumulative=buildCumulativeRR(matches);
-
-  const slice=getChartSlice(
-    cumulative,
-    size,
-    matches.length
-  );
-  const chartRenderSignature = `${size}|${matches.length}|${slice.join(",")}`;
+  const chartEntries = getSessionMatchEntries();
+  const chartMatchCount = chartEntries.length;
+  const chartMatches = chartEntries.map(entry => entry.match);
+  const cumulative=buildCumulativeRR(chartMatches);
+  const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, size);
+  const slice = chartWindow.slice;
+  const visibleChartEntries = chartWindow.entries;
+  const chartRenderSignature = `${getActiveSessionDateKey()}|${size}|${chartMatchCount}|${slice.join(",")}`;
+  activeChartRenderSignature = chartRenderSignature;
 
   const isUndo = isUndoAnimating === true;
   const scopeChanged = String(size) !== String(previousSize);
@@ -36538,7 +36752,7 @@ if(chartHeight){
 // NO MATCH PLACEHOLDER
 // ========================
 
-if(!matches || !matches.length){
+if(!chartEntries.length){
   updateRRMatchStats(null);
   chartRow.classList.remove("chart-intro-active");
   setChartTooltipSuppressed(true);
@@ -36650,12 +36864,12 @@ ${xTicks}
     bounds.maxTick
   );
 
-  const points=buildChartPoints(slice,y);
+  const points=buildChartPoints(slice,y,visibleChartEntries);
 
   const xTicks=buildXTicks(
     points,
     slice.length,
-    matches.length
+    chartMatchCount
   );
 
   const yTicks=buildYTicks(
@@ -36905,7 +37119,7 @@ if(shouldAnimateIntro){
   }, introDuration);
 
   skipNextChartAnimation = false;
-  lastMatchesLength = matches.length;
+  lastMatchesLength = chartMatchCount;
   lastChartRenderSignature = chartRenderSignature;
   forceChartIntroAnimation = false;
   isUndoAnimating = false;
@@ -36967,7 +37181,7 @@ requestAnimationFrame(() => {
   chartAnimating = false;
 
   skipNextChartAnimation = false;
-  lastMatchesLength = matches.length;
+  lastMatchesLength = chartMatchCount;
   lastChartRenderSignature = chartRenderSignature;
   forceChartIntroAnimation = false;
 
@@ -37271,15 +37485,15 @@ svg.appendChild(dot);
       undoDirection = false;
 
       renderChart(currentSize);
-      lastMatchesLength = matches.length;
-      lastChartRenderSignature = chartRenderSignature;
+      lastMatchesLength = getSessionMatchEntries().length;
+      lastChartRenderSignature = activeChartRenderSignature;
 
       return;
     }
 
     chartBusy = false;
-    lastMatchesLength = matches.length;
-    lastChartRenderSignature = chartRenderSignature;
+    lastMatchesLength = getSessionMatchEntries().length;
+    lastChartRenderSignature = activeChartRenderSignature;
     skipNextChartAnimation = false;
     isUndoAnimating = false;
     undoDirection = false;
@@ -38921,10 +39135,19 @@ document.addEventListener("click", (e) => {
 
   if (e.target?.id === "appTutorialNext") {
     if (guestTutorialIndex >= GUEST_TUTORIAL_STEPS.length - 1) {
-      stopGuestTutorial();
+      stopGuestTutorial({ completed: true });
       return;
     }
     renderGuestTutorialStep(guestTutorialIndex + 1);
+  }
+
+  if (e.target?.id === "guestTutorialCompleteClose" || e.target?.id === "guestTutorialCompleteExplore") {
+    closeGuestTutorialComplete();
+  }
+
+  if (e.target?.id === "guestTutorialCompleteSignup") {
+    closeGuestTutorialComplete();
+    openAuthModalForSecurityReview?.();
   }
 });
 
@@ -39079,8 +39302,10 @@ function applyImportedMatches(matchList = [], options = {}){
   const profile = getActiveProfile();
   if(!profile) return;
   const hadNoMatchesBeforeImport = !Array.isArray(matches) || matches.length === 0;
+  const sessionDateKey = getActiveSessionDateKey();
 
   const previousTotal = (matches || []).reduce((sum, match) => sum + safeNumber(match?.rr), 0);
+  const previousSessionTotal = sumRRForSession(matches, sessionDateKey);
 
   const normalized = (matchList || [])
     .filter(Boolean)
@@ -39090,6 +39315,7 @@ function applyImportedMatches(matchList = [], options = {}){
     new Date(b?.createdAt || b?.metadata?.playedAt || 0).getTime()
   );
   const nextTotal = normalized.reduce((sum, match) => sum + safeNumber(match?.rr), 0);
+  const nextSessionTotal = sumRRForSession(normalized, sessionDateKey);
   const importSource = options.source || "riot";
 
   if (importSource === "riot") {
@@ -39102,8 +39328,8 @@ function applyImportedMatches(matchList = [], options = {}){
     }
   }
 
-  if (previousTotal !== nextTotal) {
-    writeRRTotalAnimationPayload(previousTotal, nextTotal);
+  if (previousSessionTotal !== nextSessionTotal) {
+    writeRRTotalAnimationPayload(previousSessionTotal, nextSessionTotal);
   }
 
   profile.matches = normalized.slice();
@@ -39143,7 +39369,20 @@ function applyImportedMatches(matchList = [], options = {}){
   scheduleRiotAutoSync();
 }
 
-async function importDemoMatches(){
+async function importDemoMatches(options = {}){
+  if (options.preferBuiltIn) {
+    const matchList = buildClientTutorialDemoMatches(50);
+    applyImportedMatches(matchList, {
+      source: "demo-fixture",
+      analytics: null
+    });
+    return {
+      count: matchList.length,
+      source: "demo-fixture",
+      fallback: true
+    };
+  }
+
   try {
     const res = await fetchWithTimeout("/api/demo/import-example");
     const data = await res.json().catch(() => ({}));
@@ -39281,7 +39520,11 @@ async function syncActiveProfileMatches(options = {}){
     allowDemoFallback: options.allowDemoFallback !== false,
     mode: options.mode || "sync"
   });
-  updateRRMatchStats(matches[matches.length - 1] || null);
+  const currentSessionEntries = getSessionMatchEntries();
+  const latestSessionEntry = currentSessionEntries[currentSessionEntries.length - 1] || null;
+  updateRRMatchStats(latestSessionEntry?.match || null, latestSessionEntry?.index ?? null, {
+    displayIndex: latestSessionEntry ? currentSessionEntries.length - 1 : null
+  });
   return {
     ...result,
     syncedAt: nowISO(),
@@ -39955,13 +40198,27 @@ function renderStatsMapsModel() {
   const mapByName = new Map(
     maps.map(map => [String(map?.map || "").toLowerCase(), map])
   );
-  const renderMapNames = [
-    ...COMPETITIVE_MAP_POOL,
-    ...maps
-      .map(map => map?.map)
-      .filter(Boolean)
-      .filter(mapName => !COMPETITIVE_MAP_POOL.some(poolName => poolName.toLowerCase() === String(mapName).toLowerCase()))
-  ];
+  const poolSet = new Set(COMPETITIVE_MAP_POOL.map(mapName => String(mapName).toLowerCase()));
+  const activeMapNames = COMPETITIVE_MAP_POOL.slice().sort((a, b) => {
+    const mapA = mapByName.get(String(a).toLowerCase());
+    const mapB = mapByName.get(String(b).toLowerCase());
+    const hasA = Boolean(mapA && safeNumber(mapA.matchesPlayed || mapA.matches) > 0);
+    const hasB = Boolean(mapB && safeNumber(mapB.matchesPlayed || mapB.matches) > 0);
+    if (hasA !== hasB) return hasA ? -1 : 1;
+    if (hasA && hasB) {
+      const winrateDelta = safeNumber(mapB.winrate) - safeNumber(mapA.winrate);
+      if (Math.abs(winrateDelta) > 0.01) return winrateDelta;
+      const volumeDelta = safeNumber(mapB.matchesPlayed || mapB.matches) - safeNumber(mapA.matchesPlayed || mapA.matches);
+      if (volumeDelta) return volumeDelta;
+    }
+    return String(a).localeCompare(String(b));
+  });
+  const excludedMapNames = maps
+    .map(map => map?.map)
+    .filter(Boolean)
+    .filter(mapName => !poolSet.has(String(mapName).toLowerCase()))
+    .sort((a, b) => String(a).localeCompare(String(b)));
+  const renderMapNames = [...activeMapNames, ...excludedMapNames];
 
   container.innerHTML = "";
   container.classList.add("stats-map-grid");
@@ -39969,20 +40226,22 @@ function renderStatsMapsModel() {
   renderMapNames.forEach((mapName) => {
     const map = mapByName.get(String(mapName || "").toLowerCase()) || null;
     const hasData = Boolean(map && safeNumber(map.matchesPlayed || map.matches) > 0);
+    const isActivePool = poolSet.has(String(mapName || "").toLowerCase());
+    const canOpen = hasData && isActivePool;
     const winrateValue = safeNumber(map?.winrate);
     const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
     const card = document.createElement("button");
     card.type = "button";
-    card.disabled = !hasData;
-    card.className = `stats-map-card ${hasData ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}`;
+    card.disabled = !canOpen;
+    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded" : ""}`;
     card.innerHTML = `
       <img class="stats-map-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)}">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
-        <span class="stats-sub-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
+        <span class="stats-sub-text ${canOpen ? winrateTone : ""}">${!isActivePool ? "Excluded" : hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
       </div>
     `;
-    if (hasData) {
+    if (canOpen) {
       card.addEventListener("click", () => openStatsDetailModal("map", map.map));
     }
     container.appendChild(card);

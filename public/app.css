@@ -11342,6 +11342,10 @@ min-height:0;
   overflow:hidden;
 }
 
+.guest-tutorial-complete-card{
+  width:min(560px, calc(100vw - 40px));
+}
+
 .guest-tutorial-choice-body{
   display:grid;
   gap:12px;
