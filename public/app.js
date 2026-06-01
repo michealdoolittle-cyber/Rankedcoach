@@ -3087,6 +3087,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     activeAgentSummary
   });
 
+  const weeklyWeakestMapLabel = weeklyWeakestMap?.map ? formatReadableLabel(weeklyWeakestMap.map) : "";
+  const weeklyWeakestRoleLabel = weeklyWeakestRole?.role ? formatReadableLabel(weeklyWeakestRole.role) : "";
+  const weeklyWeakestContextLabel = weeklyWeakestMapLabel || weeklyWeakestRoleLabel || "This Context";
+
   const weeklyCandidates = [
     {
       key: "tilt",
@@ -3120,18 +3124,18 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       key: "losses",
-      label: `Most losses occur on ${weeklyWeakestMap?.map || weeklyWeakestRole?.role || "this context"}`,
+      label: `Most losses occur on ${weeklyWeakestContextLabel}`,
       summary: weeklyWeakestMap?.matchesPlayed >= 2
-        ? `${weeklyWeakestMap.map} is the weakest map this week at ${Math.round(safeNumber(weeklyWeakestMap?.winrate))}% win rate across ${safeNumber(weeklyWeakestMap?.matchesPlayed)} matches.`
+        ? `${weeklyWeakestMapLabel} is the weakest map this week at ${Math.round(safeNumber(weeklyWeakestMap?.winrate))}% win rate across ${safeNumber(weeklyWeakestMap?.matchesPlayed)} matches.`
         : weeklyWeakestRole?.matchesPlayed >= 2
-          ? `${weeklyWeakestRole.role} is the weakest role this week at ${Math.round(safeNumber(weeklyWeakestRole?.winrate))}% win rate across ${safeNumber(weeklyWeakestRole?.matchesPlayed)} matches.`
+          ? `${weeklyWeakestRoleLabel} is the weakest role this week at ${Math.round(safeNumber(weeklyWeakestRole?.winrate))}% win rate across ${safeNumber(weeklyWeakestRole?.matchesPlayed)} matches.`
           : "No stable loss pattern has enough sample size yet.",
       score: weeklyWeakestMap?.matchesPlayed >= 2 ? (100 - safeNumber(weeklyWeakestMap?.winrate)) : weeklyWeakestRole?.matchesPlayed >= 2 ? (100 - safeNumber(weeklyWeakestRole?.winrate)) : 24,
       confidence: weeklyWeakestMap?.matchesPlayed >= 3 || weeklyWeakestRole?.matchesPlayed >= 3 ? "High" : weeklyWeakestMap?.matchesPlayed >= 2 || weeklyWeakestRole?.matchesPlayed >= 2 ? "Medium" : "Low",
       sourceLabel: weeklyWeakestMap?.matchesPlayed >= 2
-        ? `This week's match history: ${safeNumber(weeklyWeakestMap?.matchesPlayed)} matches on ${weeklyWeakestMap.map}, ${safeNumber(weeklyWeakestMap?.matchesWon)} wins, ${safeNumber(weeklyWeakestMap?.matchesLost)} losses.`
+        ? `This week's match history: ${safeNumber(weeklyWeakestMap?.matchesPlayed)} matches on ${weeklyWeakestMapLabel}, ${safeNumber(weeklyWeakestMap?.matchesWon)} wins, ${safeNumber(weeklyWeakestMap?.matchesLost)} losses.`
         : weeklyWeakestRole?.matchesPlayed >= 2
-          ? `This week's match history: ${safeNumber(weeklyWeakestRole?.matchesPlayed)} matches on ${weeklyWeakestRole.role}, ${safeNumber(weeklyWeakestRole?.matchesWon)} wins, ${safeNumber(weeklyWeakestRole?.matchesLost)} losses.`
+          ? `This week's match history: ${safeNumber(weeklyWeakestRole?.matchesPlayed)} matches on ${weeklyWeakestRoleLabel}, ${safeNumber(weeklyWeakestRole?.matchesWon)} wins, ${safeNumber(weeklyWeakestRole?.matchesLost)} losses.`
           : `This week's match history does not yet have enough repeated losses in one context (${weeklyScopeLabel}).`,
       formula: weeklyWeakestMap?.matchesPlayed >= 2
         ? `100 - map win rate = 100 - ${Math.round(safeNumber(weeklyWeakestMap?.winrate))} = ${Math.round(100 - safeNumber(weeklyWeakestMap?.winrate))}`
@@ -36949,14 +36953,14 @@ if(chartHeight){
 }
   chartBusy = true;
 
-  const chartEntries = getSessionMatchEntries();
+  const chartEntries = (matches || []).map((match, index) => ({ match, index }));
   const chartMatchCount = chartEntries.length;
   const chartMatches = chartEntries.map(entry => entry.match);
   const cumulative=buildCumulativeRR(chartMatches);
   const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, size);
   const slice = chartWindow.slice;
   const visibleChartEntries = chartWindow.entries;
-  const chartRenderSignature = `${getActiveSessionDateKey()}|${size}|${chartMatchCount}|${slice.join(",")}`;
+  const chartRenderSignature = `season|${size}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
 
   const isUndo = isUndoAnimating === true;
@@ -40280,7 +40284,7 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
         : confidenceConfig.label === "Medium"
           ? "confidence-medium"
           : "confidence-low";
-      const pillBody = candidate?.summary || candidate?.label || meta.fallback;
+      const pillBody = normalizeRankedCoachCopy(candidate?.summary || candidate?.label || meta.fallback);
 
       return `
         <button class="weekly-focus-pill" type="button" data-weekly-key="${escapeHtml(candidate?.key || "")}" title="${escapeHtml(candidate?.sourceLabel || confidenceConfig.detail)}">
@@ -40325,6 +40329,8 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
 
 function initStatsPageModel() {
   renderStatsSummaryMeta();
+  renderStatsPeakProgress();
+  renderStatsRoleProgress();
   renderStatsPerformance();
   renderStatsBreakdown();
   renderStatsAgents();
@@ -40609,21 +40615,37 @@ function renderStatsRoleProgress() {
     initiator: "Initiator",
     sentinel: "Sentinel"
   };
+  const normalizeRoleProgressKey = (entry = {}) => {
+    const rawRole = entry?.role || entry?.roleKey || entry?.roleName || entry?.label || entry?.name || "";
+    return getCompassRoleKey(rawRole);
+  };
+  const getRoleMatchesPlayed = (entry = {}) => safeNumber(
+    entry?.matchesPlayed ?? entry?.matches ?? entry?.games ?? entry?.count
+  );
+  const getRoleMatchesWon = (entry = {}) => safeNumber(
+    entry?.matchesWon ?? entry?.wins ?? entry?.matches_won
+  );
+  const getRoleWinRate = (entry = {}, matchesPlayed = getRoleMatchesPlayed(entry)) => {
+    const explicitRaw = entry?.winrate ?? entry?.winRate ?? entry?.wr ?? entry?.winPct;
+    const explicit = Number(explicitRaw);
+    if (Number.isFinite(explicit)) {
+      return explicit > 0 && explicit <= 1 ? explicit * 100 : explicit;
+    }
+    return matchesPlayed ? safeDivide(getRoleMatchesWon(entry) * 100, matchesPlayed) : 0;
+  };
   const findRoleEntry = (roleKey) => (
-    roles.find(entry => String(entry?.role || "").toLowerCase() === roleKey)
-    || importedRoles.find(entry => String(entry?.role || "").toLowerCase() === roleKey)
+    roles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
+    || importedRoles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
     || null
   );
   const roleCards = roleOrder.map((roleKey) => {
     const role = findRoleEntry(roleKey) || { role: roleKey, matchesPlayed: 0, matchesWon: 0, winrate: 0 };
-    const matchesPlayed = safeNumber(role?.matchesPlayed);
-    const currentWinRate = matchesPlayed
-      ? safeNumber(role?.winrate, safeDivide(safeNumber(role?.matchesWon) * 100, matchesPlayed))
-      : 0;
-    const importedRole = importedRoles.find(entry => String(entry?.role || "").toLowerCase() === roleKey);
-    const importedPlayed = safeNumber(importedRole?.matchesPlayed);
+    const matchesPlayed = getRoleMatchesPlayed(role);
+    const currentWinRate = matchesPlayed ? getRoleWinRate(role, matchesPlayed) : 0;
+    const importedRole = importedRoles.find(entry => normalizeRoleProgressKey(entry) === roleKey);
+    const importedPlayed = getRoleMatchesPlayed(importedRole);
     const baselineWinRate = importedPlayed
-      ? safeDivide(safeNumber(importedRole?.matchesWon) * 100, importedPlayed)
+      ? getRoleWinRate(importedRole, importedPlayed)
       : currentWinRate;
     const delta = currentWinRate - baselineWinRate;
     return {
