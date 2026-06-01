@@ -6722,6 +6722,7 @@ function updateProfileDropdownMenu() {
   const identityEl = document.getElementById("profileDropdownIdentity");
   const accountBtn = document.getElementById("accountBtn");
   const logoutBtn = document.getElementById("pdLogoutBtn");
+  const manualToggle = document.getElementById("manualEntryModeToggle");
 
   const displayName = signedIn
     ? getUserAccountName(currentAuthUser)
@@ -6729,10 +6730,187 @@ function updateProfileDropdownMenu() {
 
   if (identityEl) identityEl.textContent = displayName;
   if (accountBtn) accountBtn.textContent = signedIn ? "Security Settings" : "Log in / Sign up";
+  if (manualToggle) {
+    manualToggle.hidden = false;
+  }
   if (logoutBtn) {
     logoutBtn.hidden = !signedIn;
     logoutBtn.textContent = "Log out";
   }
+  syncManualEntryModeUI?.();
+}
+
+function isManualEntryModeEnabled() {
+  return Boolean(getActiveProfile?.()?.manualEntryMode);
+}
+
+function syncManualEntryModeUI() {
+  const enabled = isManualEntryModeEnabled();
+  const toggle = document.getElementById("manualEntryModeToggle");
+  const panel = document.getElementById("manualMatchPanel");
+  const loggingForm = document.querySelector(".logging-form");
+
+  if (toggle) {
+    toggle.classList.toggle("is-active", enabled);
+    toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+  }
+
+  if (panel) panel.hidden = !enabled;
+  loggingForm?.classList.toggle("manual-entry-enabled", enabled);
+}
+
+function setManualEntryMode(nextEnabled = false) {
+  const profile = getActiveProfile?.();
+  if (!profile) return;
+
+  profile.manualEntryMode = Boolean(nextEnabled);
+  saveProfiles?.();
+  syncManualEntryModeUI();
+}
+
+function readManualNumber(id, fallback = null) {
+  const raw = document.getElementById(id)?.value;
+  if (raw == null || String(raw).trim() === "") return fallback;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function getManualReportValues() {
+  if (!isManualEntryModeEnabled()) return null;
+
+  const result = String(document.getElementById("manualResult")?.value || "draw").toLowerCase();
+  const rr = readManualNumber("manualRR", 0);
+
+  return {
+    result: ["win", "loss", "draw"].includes(result) ? result : "draw",
+    rr: safeNumber(rr),
+    roundsWon: readManualNumber("manualRoundsWon", null),
+    roundsLost: readManualNumber("manualRoundsLost", null),
+    kills: readManualNumber("manualKills", 0),
+    deaths: readManualNumber("manualDeaths", 0),
+    assists: readManualNumber("manualAssists", 0),
+    acs: readManualNumber("manualACS", 0),
+    adr: readManualNumber("manualADR", 0),
+    hs: readManualNumber("manualHS", 0),
+    pendingVerification: true
+  };
+}
+
+function setManualReportFormValues(report = null) {
+  const values = report || {};
+  const assign = (id, value) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = value == null ? "" : String(value);
+  };
+
+  assign("manualResult", values.result || "win");
+  assign("manualRR", values.rr);
+  assign("manualRoundsWon", values.roundsWon);
+  assign("manualRoundsLost", values.roundsLost);
+  assign("manualKills", values.kills);
+  assign("manualDeaths", values.deaths);
+  assign("manualAssists", values.assists);
+  assign("manualACS", values.acs);
+  assign("manualADR", values.adr);
+  assign("manualHS", values.hs);
+}
+
+function resetManualReportForm() {
+  setManualReportFormValues({
+    result: "win",
+    rr: "",
+    roundsWon: "",
+    roundsLost: "",
+    kills: "",
+    deaths: "",
+    assists: "",
+    acs: "",
+    adr: "",
+    hs: ""
+  });
+}
+
+function buildManualMatchFromLogEntry(entry = {}) {
+  const manual = entry.manualReport || entry.manual || {};
+  const createdAt = entry.createdAt || nowISO();
+  const result = ["win", "loss", "draw"].includes(String(manual.result || "").toLowerCase())
+    ? String(manual.result).toLowerCase()
+    : "draw";
+  const rr = safeNumber(manual.rr, result === "win" ? 18 : result === "loss" ? -16 : 0);
+  const agent = String(entry.agent || "").trim() || "Unknown";
+  const mapName = String(entry.map || "").trim() || "Unknown";
+  const matchId = entry.matchId || `manual-${entry.id || uuid()}`;
+
+  return {
+    id: matchId,
+    matchId,
+    source: "manual",
+    manual: true,
+    pendingVerification: true,
+    rr,
+    result,
+    createdAt,
+    agent,
+    map: mapName,
+    metadata: {
+      id: matchId,
+      matchId,
+      manualLogId: entry.id,
+      agent,
+      mapName,
+      result,
+      playedAt: createdAt,
+      source: "manual"
+    },
+    segments: [{
+      type: "overview",
+      stats: {
+        kills: { value: safeNumber(manual.kills) },
+        deaths: { value: safeNumber(manual.deaths) },
+        assists: { value: safeNumber(manual.assists) },
+        scorePerRound: { value: safeNumber(manual.acs) },
+        damagePerRound: { value: safeNumber(manual.adr) },
+        headshotsPercentage: { value: safeNumber(manual.hs) }
+      }
+    }],
+    manualReport: {
+      ...manual,
+      result,
+      rr,
+      roundsWon: manual.roundsWon == null ? null : safeNumber(manual.roundsWon),
+      roundsLost: manual.roundsLost == null ? null : safeNumber(manual.roundsLost)
+    },
+    advanced: {
+      manual: true,
+      roundsWon: manual.roundsWon == null ? null : safeNumber(manual.roundsWon),
+      roundsLost: manual.roundsLost == null ? null : safeNumber(manual.roundsLost)
+    }
+  };
+}
+
+function upsertManualMatchForLogEntry(entry = {}) {
+  if (!entry?.manualReport && !entry?.manual) return null;
+
+  const profile = getActiveProfile?.();
+  if (!profile) return null;
+
+  const manualMatch = buildManualMatchFromLogEntry(entry);
+  entry.matchId = manualMatch.matchId;
+  entry.manualMatchId = manualMatch.matchId;
+
+  const existing = Array.isArray(matches) ? matches : [];
+  matches = existing
+    .filter(match => String(match?.metadata?.manualLogId || match?.manualLogId || "") !== String(entry.id))
+    .concat(manualMatch)
+    .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
+
+  profile.matches = matches.slice();
+  profile.importSource = profile.importSource || "manual";
+  profile.lastManualEntryAt = nowISO();
+  saveProfiles?.();
+  recomputeFromMatches?.();
+  return manualMatch.matchId;
 }
 
 function hasCompletedAppEntryChoice() {
@@ -7199,6 +7377,7 @@ function createGuestProfileRecord() {
     region: "NA",
     startingRR: 0,
     matches: [],
+    manualEntryMode: false,
     themeKey: getActiveProfile?.()?.themeKey || "default",
     frameTheme: getActiveProfile?.()?.frameTheme || "default",
     avatarAgent: getDefaultProfileAvatarAgent?.() || "jett",
@@ -31897,6 +32076,13 @@ function bindEvents(){
     addLogEntry();
   });
 
+  document.getElementById("manualEntryModeToggle")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setManualEntryMode(!isManualEntryModeEnabled());
+    updateLoggingDebriefPreview?.();
+  });
+
   syncLogFocusSelectOptions();
   setupLogFocusCustomDropdown();
 
@@ -31997,6 +32183,10 @@ function bindEvents(){
     updateLoggingDebriefPreview();
   });
   document.getElementById("logFocusOther")?.addEventListener("input", updateLoggingDebriefPreview);
+  document.querySelectorAll("#manualMatchPanel input, #manualMatchPanel select").forEach(input => {
+    input.addEventListener("input", updateLoggingDebriefPreview);
+    input.addEventListener("change", updateLoggingDebriefPreview);
+  });
   document.getElementById("logCalendarTrigger")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -33788,6 +33978,8 @@ function getLogFormValues(){
     selfComms: selectedLogSelfComms,
     notes: logNotes?.value?.trim() || "",
     role: activeRole || "",
+    manualMode: isManualEntryModeEnabled(),
+    manualReport: getManualReportValues(),
     warmup: Boolean((logNotes?.value || "").toLowerCase().includes("warmup")) && isFirstGameOfCurrentSession()
   };
 }
@@ -33823,6 +34015,15 @@ if(!entry.focus || entry.focus === "Select Focus"){
     }
   } else {
     logEntries.unshift(entry);
+  }
+
+  const manualMatchId = upsertManualMatchForLogEntry(entry);
+  if (manualMatchId) {
+    logEntries = logEntries.map(existing => (
+      existing.id === entry.id
+        ? { ...existing, matchId: manualMatchId, manualMatchId }
+        : existing
+    ));
   }
 
   editingLogEntryId = null;
@@ -33866,6 +34067,7 @@ if(entry.focus){
   setCustomFocusCommitted("");
   if(logFocusOther) logFocusOther.disabled = true;
   updateLogAgentDisplay("");
+  resetManualReportForm();
 
   selectedLogRating = null;
   selectedLogMood = null;
@@ -33947,6 +34149,7 @@ function editLogEntry(id){
 
   if(logMapEl) logMapEl.value = entry.map || "";
   if(notesEl) notesEl.value = entry.notes;
+  setManualReportFormValues(entry.manualReport || entry.manual || null);
 
   selectedLogRating = Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null;
   selectedLogMood = entry.mood || null;
@@ -34711,6 +34914,7 @@ function normalizeProfileRecord(profile = {}) {
     avatarAgent,
     avatarUrl: profile.avatarUrl || getDefaultProfileAvatarUrl(avatarAgent),
     navBackgroundUrl: profile.navBackgroundUrl || "",
+    manualEntryMode: !!profile.manualEntryMode,
     profileBorderColor: normalizeProfileBorderColor(profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
     profileBorderRotate: !!profile.profileBorderRotate,
@@ -34758,6 +34962,7 @@ function loadProfiles(){
       avatarAgent: getDefaultProfileAvatarAgent(),
       avatarUrl: getDefaultProfileAvatarUrl(),
       navBackgroundUrl: "",
+      manualEntryMode: false,
       profileBorderColor: "theme",
       profileBorder: "standard",
       profileBorderRotate: false,
@@ -34809,6 +35014,7 @@ function createProfile(data){
     avatarAgent: data.avatarAgent || getDefaultProfileAvatarAgent(),
     avatarUrl: data.avatarUrl || getDefaultProfileAvatarUrl(data.avatarAgent),
     navBackgroundUrl: data.navBackgroundUrl || "",
+    manualEntryMode: !!data.manualEntryMode,
     profileBorderColor: normalizeProfileBorderColor(data.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(data.profileBorder || "standard"),
     profileBorderRotate: !!data.profileBorderRotate,
@@ -34887,6 +35093,10 @@ function updateProfile(id, data){
 
   if (data.navBackgroundUrl != null) {
     profile.navBackgroundUrl = String(data.navBackgroundUrl || "").trim();
+  }
+
+  if (data.manualEntryMode != null) {
+    profile.manualEntryMode = !!data.manualEntryMode;
   }
 
   if (data.profileBorderColor != null) {
@@ -34993,6 +35203,7 @@ function handleAddProfile() {
     avatarAgent: getDefaultProfileAvatarAgent(),
     avatarUrl: getDefaultProfileAvatarUrl(),
     navBackgroundUrl: "",
+    manualEntryMode: false,
     profileBorderColor: "theme",
     profileBorder: "standard",
     profileBorderRotate: false,
@@ -35028,6 +35239,7 @@ function renderProfilesUI(){
 
   if (!currentAuthUser) {
     updateProfileHeaderUI?.();
+    syncManualEntryModeUI?.();
     return;
   }
 
@@ -35096,6 +35308,7 @@ function renderProfilesUI(){
   }
 
   updateProfileDropdownMenu?.();
+  syncManualEntryModeUI?.();
 }
 
 function closeProfileDropdown(){

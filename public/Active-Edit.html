@@ -707,6 +707,13 @@ RIOT PROFILE MODAL
               <div class="profile-menu-label">Account</div>
               <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
               <button class="pd-item" id="accountBtn" type="button">Security Settings</button>
+              <button class="pd-item manual-mode-toggle" id="manualEntryModeToggle" type="button" aria-pressed="false">
+                <span class="manual-mode-toggle-copy">
+                  <span>Manual Entry Mode</span>
+                  <small>Offline match reports</small>
+                </span>
+                <span class="manual-mode-switch" aria-hidden="true"><span></span></span>
+              </button>
               <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
             </div>
             <div class="profile-menu-section">
@@ -1608,6 +1615,63 @@ stroke-linejoin="round"/>
           </div>
         </div>
 
+        <div id="manualMatchPanel" class="manual-match-panel" hidden>
+          <div class="manual-match-head">
+            <div>
+              <div class="manual-match-kicker">Offline Match Report</div>
+              <div class="manual-match-title">Add match stats when Riot sync is unavailable.</div>
+            </div>
+            <div class="manual-match-status">Pending Riot sync verification</div>
+          </div>
+
+          <div class="manual-match-grid">
+            <label class="manual-field manual-field-select">
+              <span>Result</span>
+              <select id="manualResult">
+                <option value="win">Win</option>
+                <option value="loss">Loss</option>
+                <option value="draw">Draw</option>
+              </select>
+            </label>
+            <label class="manual-field">
+              <span>RR</span>
+              <input id="manualRR" type="number" inputmode="numeric" placeholder="+/-">
+            </label>
+            <label class="manual-field">
+              <span>Rounds Won</span>
+              <input id="manualRoundsWon" type="number" min="0" max="25" inputmode="numeric" placeholder="13">
+            </label>
+            <label class="manual-field">
+              <span>Rounds Lost</span>
+              <input id="manualRoundsLost" type="number" min="0" max="25" inputmode="numeric" placeholder="10">
+            </label>
+            <label class="manual-field">
+              <span>Kills</span>
+              <input id="manualKills" type="number" min="0" inputmode="numeric" placeholder="18">
+            </label>
+            <label class="manual-field">
+              <span>Deaths</span>
+              <input id="manualDeaths" type="number" min="0" inputmode="numeric" placeholder="14">
+            </label>
+            <label class="manual-field">
+              <span>Assists</span>
+              <input id="manualAssists" type="number" min="0" inputmode="numeric" placeholder="5">
+            </label>
+            <label class="manual-field">
+              <span>ACS</span>
+              <input id="manualACS" type="number" min="0" inputmode="decimal" placeholder="220">
+            </label>
+            <label class="manual-field">
+              <span>ADR</span>
+              <input id="manualADR" type="number" min="0" inputmode="decimal" placeholder="145">
+            </label>
+            <label class="manual-field">
+              <span>HS %</span>
+              <input id="manualHS" type="number" min="0" max="100" inputmode="decimal" placeholder="24">
+            </label>
+          </div>
+        </div>
+
 <div class="logging-score-grid">
   <div class="logging-row logging-score-cell">
     <span class="logging-label">Performance</span>
@@ -1851,7 +1915,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260601-tutorial-focus-01"></script>
+  <script type="module" src="app.js?v=20260601-mobile-manual-01"></script>
 </body>
 </html>
 

@@ -26830,3 +26830,581 @@ body[data-theme] :is(
 #page-stats .stats-role-pill-delta.is-even{
   color:#94a3b8 !important;
 }
+
+/* Manual/offline match reports ------------------------------------------------ */
+.manual-mode-toggle{
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+}
+
+.manual-mode-toggle-copy{
+  display:flex;
+  min-width:0;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:2px;
+  line-height:1;
+}
+
+.manual-mode-toggle-copy small{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+
+.manual-mode-switch{
+  position:relative;
+  flex:0 0 40px;
+  width:40px;
+  height:22px;
+  border:1px solid rgba(148,163,184,.42);
+  border-radius:999px;
+  background:rgba(15,23,42,.72);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.manual-mode-switch span{
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:#cbd5e1;
+  transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.manual-mode-toggle.is-active .manual-mode-switch{
+  border-color:color-mix(in srgb, var(--accent) 65%, white);
+  background:color-mix(in srgb, var(--accent) 38%, #0f172a);
+}
+
+.manual-mode-toggle.is-active .manual-mode-switch span{
+  transform:translateX(18px);
+  background:#fff;
+  box-shadow:0 0 14px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.manual-match-panel{
+  display:grid;
+  gap:8px;
+  min-height:0;
+  padding:10px;
+  border:1px solid color-mix(in srgb, var(--accent) 42%, rgba(148,163,184,.3));
+  border-radius:var(--radius-sm);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 18%, var(--panel)) 0%,
+      color-mix(in srgb, var(--surface) 88%, transparent) 58%,
+      color-mix(in srgb, var(--accent-2, var(--accent)) 16%, var(--panel)) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+.manual-match-panel[hidden]{
+  display:none !important;
+}
+
+.manual-match-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.manual-match-kicker,
+.manual-match-status,
+.manual-field span{
+  color:var(--muted);
+  font-size:10px;
+  font-weight:950;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.manual-match-title{
+  margin-top:3px;
+  color:var(--text);
+  font-size:13px;
+  font-weight:950;
+}
+
+.manual-match-status{
+  flex:0 0 auto;
+  padding:6px 10px;
+  border:1px solid color-mix(in srgb, var(--accent) 48%, rgba(148,163,184,.34));
+  border-radius:var(--radius-pill);
+  background:rgba(2,6,23,.26);
+  color:color-mix(in srgb, var(--accent) 72%, var(--text));
+  text-align:center;
+}
+
+.manual-match-grid{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:8px;
+}
+
+.manual-field{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+
+.manual-field input,
+.manual-field select{
+  width:100%;
+  min-width:0;
+  height:34px;
+  border:1px solid rgba(148,163,184,.38);
+  border-radius:var(--radius-xs);
+  background:color-mix(in srgb, var(--surface) 80%, #0b1220);
+  color:var(--text);
+  font:900 12px/1 var(--font-display);
+  outline:none;
+  padding:0 9px;
+}
+
+.manual-field input:focus,
+.manual-field select:focus{
+  border-color:color-mix(in srgb, var(--accent) 68%, white);
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.logging-form.manual-entry-enabled{
+  grid-template-rows:auto auto auto auto auto auto minmax(0, 1fr) auto;
+}
+
+/* Mobile shell and page ordering -------------------------------------------- */
+@media (max-width: 820px){
+  :root{
+    --mobile-bottom-nav:78px;
+    --mobile-rank-top:92px;
+  }
+
+  html,
+  body{
+    width:100%;
+    min-width:0 !important;
+    height:auto !important;
+    min-height:100%;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+  }
+
+  body{
+    background:var(--page-bg, #08111f);
+  }
+
+  .app-root,
+  .app-shell,
+  .app-scale-wrap{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:auto !important;
+    min-height:100vh !important;
+    transform:none !important;
+    scale:1 !important;
+    translate:none !important;
+    overflow:visible !important;
+  }
+
+  .app-header{
+    position:fixed !important;
+    inset:auto 0 0 0 !important;
+    z-index:5000 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) auto !important;
+    grid-template-rows:1fr !important;
+    height:var(--mobile-bottom-nav) !important;
+    min-height:var(--mobile-bottom-nav) !important;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom)) !important;
+    gap:8px !important;
+    border-top:1px solid color-mix(in srgb, var(--accent) 46%, transparent) !important;
+    border-bottom:0 !important;
+  }
+
+  .nav-left{
+    grid-column:1 !important;
+    display:grid !important;
+    grid-template-columns:auto repeat(4, minmax(0, 1fr)) !important;
+    width:100% !important;
+    min-width:0 !important;
+    gap:5px !important;
+  }
+
+  .logo-img{
+    width:58px !important;
+    height:38px !important;
+  }
+
+  .nav-btn{
+    min-width:0 !important;
+    height:38px !important;
+    padding:0 7px !important;
+    font-size:10px !important;
+    letter-spacing:.03em !important;
+  }
+
+  .nav-right{
+    grid-column:2 !important;
+    min-width:0 !important;
+    width:auto !important;
+    flex:0 0 auto !important;
+    gap:5px !important;
+  }
+
+  .nav-right .profile-panel{
+    width:auto !important;
+    min-width:0 !important;
+    max-width:188px !important;
+    height:52px !important;
+    min-height:52px !important;
+    max-height:52px !important;
+    padding:5px !important;
+    gap:5px !important;
+  }
+
+  .profile-avatar-wrap,
+  .profile-avatar-ring{
+    width:42px !important;
+    height:42px !important;
+    min-width:42px !important;
+  }
+
+  .profile-info{
+    display:none !important;
+  }
+
+  .profile-divider{
+    display:none !important;
+  }
+
+  .nav-right .profile-dropdown-toggle,
+  .nav-right .profile-sync-btn,
+  .nav-right .ask-coach-nav-btn{
+    width:42px !important;
+    min-width:42px !important;
+    height:42px !important;
+    min-height:42px !important;
+  }
+
+  .nav-right :is(.profile-dropdown-toggle, .profile-sync-btn, .ask-coach-nav-btn) svg{
+    width:24px !important;
+    height:24px !important;
+    min-width:24px !important;
+    min-height:24px !important;
+  }
+
+  .nav-middle,
+  .nav-center{
+    position:fixed !important;
+    top:8px !important;
+    left:10px !important;
+    right:10px !important;
+    z-index:3900 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) !important;
+    width:auto !important;
+    min-width:0 !important;
+    height:72px !important;
+    gap:8px !important;
+    transform:none !important;
+    pointer-events:auto !important;
+  }
+
+  .nav-center .nav-rr-widget,
+  .nav-middle .nav-rr-widget{
+    width:100% !important;
+    min-width:0 !important;
+    height:64px !important;
+    min-height:64px !important;
+    max-height:64px !important;
+    padding:8px !important;
+  }
+
+  .page{
+    position:relative !important;
+    inset:auto !important;
+    display:none !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:auto !important;
+    min-height:100vh !important;
+    overflow:visible !important;
+    padding:calc(var(--mobile-rank-top) + 8px) 8px calc(var(--mobile-bottom-nav) + 10px) !important;
+  }
+
+  .page.active{
+    display:block !important;
+  }
+
+  .site-footer,
+  .site-footer-shell,
+  footer{
+    display:none !important;
+  }
+
+  .card{
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  #page-home .home-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+    gap:10px !important;
+    padding:0 !important;
+  }
+
+  #page-home .home-middle-row{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+    gap:10px !important;
+  }
+
+  #page-home .loadout-card{ order:1 !important; min-height:360px !important; }
+  #page-home .rr-card{ order:2 !important; min-height:270px !important; }
+  #page-home .improvement-card{ order:3 !important; min-height:360px !important; }
+  #page-home .compass-panel{ order:4 !important; min-height:420px !important; }
+  #page-home .weekly-focus-card{ order:5 !important; min-height:300px !important; }
+  #page-home .rr-chart-card{ order:6 !important; min-height:520px !important; }
+
+  #page-home .loadout-main{
+    min-height:300px !important;
+  }
+
+  #page-home .loadout-card .home-loadout-pill{
+    min-height:64px !important;
+  }
+
+  #page-home .improvement-grid,
+  #page-home .compass-body,
+  #page-home .rr-card-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  .rr-chart-layout{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) !important;
+    grid-template-rows:minmax(260px, auto) auto auto !important;
+    grid-template-areas:"chart" "controls" "stats" !important;
+    gap:10px !important;
+    height:auto !important;
+    min-height:0 !important;
+    align-items:stretch !important;
+  }
+
+  .home-chart-wrap{
+    grid-area:chart !important;
+    min-height:260px !important;
+    height:280px !important;
+    width:100% !important;
+  }
+
+  #rrChartSvg,
+  .rr-chart-svg{
+    width:100% !important;
+    height:100% !important;
+  }
+
+  .chart-controls{
+    grid-area:controls !important;
+    display:grid !important;
+    grid-template-columns:repeat(5, minmax(0, 1fr)) !important;
+    gap:6px !important;
+    width:100% !important;
+  }
+
+  .chart-controls .graph-btn{
+    height:44px !important;
+    min-height:44px !important;
+  }
+
+  .rr-match-stats{
+    grid-area:stats !important;
+    display:grid !important;
+    grid-template-columns:minmax(116px, 1.25fr) repeat(4, minmax(0, 1fr)) !important;
+    grid-template-rows:repeat(2, minmax(42px, auto)) !important;
+    gap:6px !important;
+    width:100% !important;
+    max-width:none !important;
+    min-height:0 !important;
+    padding:6px !important;
+  }
+
+  .rr-match-stats-head{
+    grid-row:1 / span 2 !important;
+    grid-column:1 !important;
+    min-height:90px !important;
+    writing-mode:vertical-rl;
+    transform:rotate(180deg);
+    justify-content:center !important;
+    align-items:center !important;
+    text-align:center !important;
+  }
+
+  .rr-match-stats .rr-stat{
+    min-height:42px !important;
+    height:auto !important;
+  }
+
+  .logging-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+    gap:10px !important;
+  }
+
+  .logging-card,
+  .logging-feed-card{
+    min-height:0 !important;
+    height:auto !important;
+  }
+
+  .logging-form{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+  }
+
+  .logging-hero,
+  .logging-score-grid,
+  .manual-match-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+  }
+
+  .logging-pill,
+  .logging-notes,
+  .logging-feed-list{
+    min-height:0 !important;
+  }
+
+  .logging-notes{
+    height:220px !important;
+  }
+
+  .stats-layout,
+  .stats-summary-layout,
+  .stats-proof-row,
+  .stats-main-grid{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+    gap:10px !important;
+  }
+
+  #page-stats .stats-summary-grid{ order:1 !important; }
+  #page-stats .stats-role-progress-card{ order:2 !important; min-height:260px !important; }
+  #page-stats .stats-proof-card{ order:3 !important; min-height:170px !important; }
+  #page-stats .stats-agents-card{ order:4 !important; min-height:520px !important; }
+  #page-stats .stats-maps-card{ order:5 !important; min-height:520px !important; }
+  #page-stats .stats-weapons-card{ order:6 !important; min-height:420px !important; }
+  #page-stats .stats-performance-card{ order:7 !important; min-height:540px !important; }
+  #page-stats .stats-breakdown-card{ order:8 !important; min-height:520px !important; }
+
+  #page-stats .stats-summary-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #page-stats .stats-role-progress-row,
+  #page-stats .stats-agent-grid,
+  #page-stats .stats-map-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #page-stats .stats-weapon-family{
+    grid-template-columns:1fr !important;
+  }
+
+  .insights-layout,
+  .insights-main-grid,
+  .insight-groups-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+    min-height:0 !important;
+    gap:10px !important;
+  }
+
+  #page-insights .insights-action-card{ order:1 !important; min-height:360px !important; }
+  #page-insights .top-insights-card{ order:2 !important; min-height:460px !important; }
+  #page-insights .insight-groups-card{ order:3 !important; min-height:560px !important; }
+
+  #page-insights .insight-action,
+  #page-insights .trend-content-animate,
+  #page-insights .coaching-read-content{
+    display:flex !important;
+    flex-direction:column !important;
+    height:auto !important;
+  }
+
+  .profile-dropdown,
+  .profile-switcher,
+  .ask-coach-panel{
+    position:fixed !important;
+    left:8px !important;
+    right:8px !important;
+    bottom:calc(var(--mobile-bottom-nav) + 8px) !important;
+    top:auto !important;
+    width:auto !important;
+    max-width:none !important;
+    transform:none !important;
+  }
+}
+
+@media (max-width: 520px){
+  .nav-left{
+    grid-template-columns:auto repeat(4, minmax(44px, 1fr)) !important;
+  }
+
+  .nav-btn{
+    font-size:9px !important;
+    padding:0 5px !important;
+  }
+
+  .logo-img{
+    width:48px !important;
+  }
+
+  .nav-right .profile-panel{
+    max-width:146px !important;
+  }
+
+  .nav-right .profile-sync-btn,
+  .nav-right .ask-coach-nav-btn{
+    display:none !important;
+  }
+
+  #page-stats .stats-summary-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .rr-match-stats{
+    grid-template-columns:1fr 1fr !important;
+    grid-template-rows:auto !important;
+  }
+
+  .rr-match-stats-head{
+    grid-row:auto !important;
+    grid-column:1 / -1 !important;
+    writing-mode:horizontal-tb !important;
+    transform:none !important;
+    min-height:52px !important;
+  }
+}
