@@ -11549,6 +11549,10 @@ min-height:0;
   transition:left .22s ease, top .22s ease, transform .22s ease;
 }
 
+.app-tutorial-overlay.active :is(.app-tutorial-spotlight,.app-tutorial-card,.app-tutorial-arrow){
+  transition:none !important;
+}
+
 .app-tutorial-arrow::after{
   content:"";
   position:absolute;

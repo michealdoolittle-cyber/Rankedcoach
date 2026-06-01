@@ -7367,6 +7367,9 @@ const GUEST_TUTORIAL_STEPS = [
 let guestEntryInProgress = false;
 let guestTutorialIndex = 0;
 let guestTutorialActiveTarget = null;
+let guestTutorialPositionLocked = false;
+let guestTutorialPositionFrame = 0;
+let guestTutorialPositionTimer = 0;
 
 function ensureGuestTutorialShells() {
   if (!document.getElementById("guestTutorialChoiceModal")) {
@@ -7654,7 +7657,38 @@ function clearTutorialTarget() {
   }
 }
 
-function positionGuestTutorialOverlay() {
+function roundTutorialPx(value) {
+  return Math.round(Number(value) || 0);
+}
+
+function scheduleGuestTutorialOverlayPosition(delay = 0) {
+  window.clearTimeout(guestTutorialPositionTimer);
+  if (guestTutorialPositionFrame) {
+    window.cancelAnimationFrame(guestTutorialPositionFrame);
+    guestTutorialPositionFrame = 0;
+  }
+
+  const run = () => {
+    guestTutorialPositionFrame = window.requestAnimationFrame(() => {
+      guestTutorialPositionFrame = window.requestAnimationFrame(() => {
+        guestTutorialPositionFrame = 0;
+        positionGuestTutorialOverlay({ force: true });
+        guestTutorialPositionLocked = false;
+      });
+    });
+  };
+
+  if (delay > 0) {
+    guestTutorialPositionTimer = window.setTimeout(run, delay);
+  } else {
+    run();
+  }
+}
+
+function positionGuestTutorialOverlay(options = {}) {
+  const force = Boolean(options?.force);
+  if (guestTutorialPositionLocked && !force) return;
+
   const overlay = document.getElementById("appTutorialOverlay");
   const spotlight = document.getElementById("appTutorialSpotlight");
   const arrow = document.getElementById("appTutorialArrow");
@@ -7672,10 +7706,10 @@ function positionGuestTutorialOverlay() {
   const cardW = Math.min(cardRect.width || 360, vw - safe * 2);
   const cardH = cardRect.height || 220;
 
-  const top = Math.max(safe, rect.top - pad);
-  const left = Math.max(safe, rect.left - pad);
-  const width = Math.min(vw - left - safe, rect.width + pad * 2);
-  const height = Math.min(vh - top - safe, rect.height + pad * 2);
+  const top = roundTutorialPx(Math.max(safe, rect.top - pad));
+  const left = roundTutorialPx(Math.max(safe, rect.left - pad));
+  const width = roundTutorialPx(Math.min(vw - left - safe, rect.width + pad * 2));
+  const height = roundTutorialPx(Math.min(vh - top - safe, rect.height + pad * 2));
 
   spotlight.style.left = `${left}px`;
   spotlight.style.top = `${top}px`;
@@ -7701,7 +7735,8 @@ function positionGuestTutorialOverlay() {
     }
   }
 
-  cardTop = Math.min(Math.max(safe, cardTop), Math.max(safe, vh - cardH - safe));
+  cardLeft = roundTutorialPx(cardLeft);
+  cardTop = roundTutorialPx(Math.min(Math.max(safe, cardTop), Math.max(safe, vh - cardH - safe)));
   card.style.left = `${cardLeft}px`;
   card.style.top = `${cardTop}px`;
 
@@ -7712,8 +7747,8 @@ function positionGuestTutorialOverlay() {
   const arrowX = side === "right" ? cardLeft - 16 : side === "left" ? cardLeft + cardW + 4 : cardMidX - 8;
   const arrowY = side === "bottom" ? cardTop - 16 : side === "top" ? cardTop + cardH + 4 : cardMidY - 8;
   const angle = Math.atan2(targetMidY - cardMidY, targetMidX - cardMidX) * 180 / Math.PI;
-  arrow.style.left = `${Math.min(Math.max(safe, arrowX), vw - 28)}px`;
-  arrow.style.top = `${Math.min(Math.max(safe, arrowY), vh - 28)}px`;
+  arrow.style.left = `${roundTutorialPx(Math.min(Math.max(safe, arrowX), vw - 28))}px`;
+  arrow.style.top = `${roundTutorialPx(Math.min(Math.max(safe, arrowY), vh - 28))}px`;
   arrow.style.transform = `rotate(${angle}deg)`;
 }
 
@@ -7723,6 +7758,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
   const step = GUEST_TUTORIAL_STEPS[guestTutorialIndex];
   if (!step) return;
 
+  guestTutorialPositionLocked = true;
   clearTutorialTarget();
   activatePage?.(step.page || "home");
 
@@ -7747,8 +7783,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
     if (next) next.textContent = isLast ? "Complete" : "Next";
     if (restart) restart.hidden = !isLast;
 
-    positionGuestTutorialOverlay();
-    window.setTimeout(positionGuestTutorialOverlay, 80);
+    scheduleGuestTutorialOverlayPosition();
   }, 120);
 }
 
@@ -7768,6 +7803,12 @@ function stopGuestTutorial({ completed = false } = {}) {
   const overlay = document.getElementById("appTutorialOverlay");
   overlay?.classList.remove("active");
   document.body.classList.remove("app-tutorial-running");
+  guestTutorialPositionLocked = false;
+  window.clearTimeout(guestTutorialPositionTimer);
+  if (guestTutorialPositionFrame) {
+    window.cancelAnimationFrame(guestTutorialPositionFrame);
+    guestTutorialPositionFrame = 0;
+  }
   clearTutorialTarget();
   window.removeEventListener("resize", positionGuestTutorialOverlay);
   window.removeEventListener("scroll", positionGuestTutorialOverlay, true);
@@ -8838,8 +8879,31 @@ const allAgents = [
 ];
 
 const focusesList = [
-  "Aim","Crosshair Discipline","Positioning","Utility Usage","Trading",
-  "Entry","Timing","Information Gathering","Post-Plant Control","Map Awareness"
+  "Aim",
+  "Crosshair Discipline",
+  "Duel Discipline",
+  "Positioning",
+  "Trading",
+  "Trade Conversion",
+  "Entry",
+  "Timing",
+  "Information Gathering",
+  "Map Awareness",
+  "Utility",
+  "Utility Usage",
+  "Utility Timing",
+  "Team Utility",
+  "Support Value",
+  "Post-Plant Control",
+  "Round Survivability",
+  "Eco Conversion",
+  "Awareness Check",
+  "Retake Timing",
+  "Comms Discipline",
+  "Weapon Category Use",
+  "Mental Reset",
+  "Game Sense",
+  "General"
 ];
 
 const agentRoles = {
@@ -10993,6 +11057,30 @@ function syncLogFocusCustomDropdown() {
     option.classList.toggle("is-active", isActive);
     option.setAttribute("aria-selected", isActive ? "true" : "false");
   });
+}
+
+function syncLogFocusSelectOptions() {
+  const select = document.getElementById("logFocusSelect");
+  if (!select) return;
+
+  const currentValue = String(select.value || "");
+  const optionValues = ["", ...focusesList, "Other"];
+  const optionLabels = new Map([
+    ["", "Focus Category"],
+    ["Other", "Other"]
+  ]);
+
+  select.innerHTML = "";
+  optionValues.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = optionLabels.get(value) || value;
+    select.appendChild(option);
+  });
+
+  if (optionValues.includes(currentValue)) {
+    select.value = currentValue;
+  }
 }
 
 function setupLogFocusCustomDropdown() {
@@ -31809,6 +31897,7 @@ function bindEvents(){
     addLogEntry();
   });
 
+  syncLogFocusSelectOptions();
   setupLogFocusCustomDropdown();
 
   document.getElementById("logFocusSelect")?.addEventListener("change", (e) => {
