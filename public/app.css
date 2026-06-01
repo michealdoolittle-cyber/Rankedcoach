@@ -26762,3 +26762,67 @@ body[data-theme] :is(
   background:#ff4655 !important;
   border-radius:999px !important;
 }
+
+/* Role win-rate progress: make the role identity visual-first and keep trend deltas readable. */
+#page-stats .stats-role-pill{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:4px !important;
+  text-align:center !important;
+}
+
+#page-stats .stats-role-pill-main{
+  display:flex !important;
+  flex:1 1 auto !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:4px !important;
+  width:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+}
+
+#page-stats .stats-role-pill-icon{
+  width:min(56px, 76%) !important;
+  height:min(56px, 54%) !important;
+  max-width:76% !important;
+  max-height:58% !important;
+  object-fit:contain !important;
+}
+
+#page-stats .stats-role-pill-label{
+  width:100% !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  text-align:center !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+#page-stats .stats-role-pill-value{
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  margin-left:0 !important;
+  gap:2px !important;
+  text-align:center !important;
+}
+
+#page-stats .stats-role-pill-delta{
+  font-weight:950 !important;
+}
+
+#page-stats .stats-role-pill-delta.is-up{
+  color:#22c55e !important;
+}
+
+#page-stats .stats-role-pill-delta.is-down{
+  color:#ef4444 !important;
+}
+
+#page-stats .stats-role-pill-delta.is-even{
+  color:#94a3b8 !important;
+}

@@ -40707,6 +40707,7 @@ function renderStatsRoleProgress() {
   const model = getPlayerModel();
   const roles = (model?.roles || []).slice();
   const importedRoles = getActiveProfile()?.trackerAnalytics?.roles || [];
+  const roleSamples = new Map();
   const roleOrder = ["duelist", "controller", "initiator", "sentinel"];
   const roleDisplay = {
     duelist: "Duelist",
@@ -40732,6 +40733,43 @@ function renderStatsRoleProgress() {
     }
     return matchesPlayed ? safeDivide(getRoleMatchesWon(entry) * 100, matchesPlayed) : 0;
   };
+  getSortedMatches(matches || []).forEach((match) => {
+    const core = getMatchCore(match);
+    const roleKey = getCompassRoleKey(core.role);
+    const result = String(core.result || "").toLowerCase();
+    if (!roleOrder.includes(roleKey) || (result !== "win" && result !== "loss")) return;
+    if (!roleSamples.has(roleKey)) roleSamples.set(roleKey, []);
+    roleSamples.get(roleKey).push({ result });
+  });
+  const getRoleSampleWinRate = (entries = []) => {
+    if (!entries.length) return 0;
+    return safeDivide(entries.filter(entry => entry.result === "win").length * 100, entries.length);
+  };
+  const getExplicitRoleDelta = (...entries) => {
+    for (const entry of entries) {
+      if (!entry) continue;
+      const raw = entry?.winRateDelta ?? entry?.deltaWinRate ?? entry?.wrDelta ?? entry?.delta;
+      const value = Number(raw);
+      if (Number.isFinite(value)) return value > -1 && value < 1 ? value * 100 : value;
+    }
+    return null;
+  };
+  const getRoleTrendDelta = (roleKey, currentWinRate, role = null, importedRole = null) => {
+    const explicitDelta = getExplicitRoleDelta(role, importedRole);
+    if (Number.isFinite(explicitDelta)) return explicitDelta;
+
+    const sample = roleSamples.get(roleKey) || [];
+    if (sample.length >= 2) {
+      const recentCount = Math.min(5, Math.max(1, Math.ceil(sample.length / 2)));
+      const recentSample = sample.slice(-recentCount);
+      const previousSample = sample.slice(0, -recentCount);
+      if (previousSample.length) {
+        return getRoleSampleWinRate(recentSample) - getRoleSampleWinRate(previousSample);
+      }
+    }
+
+    return currentWinRate - 50;
+  };
   const findRoleEntry = (roleKey) => (
     roles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
     || importedRoles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
@@ -40742,11 +40780,7 @@ function renderStatsRoleProgress() {
     const matchesPlayed = getRoleMatchesPlayed(role);
     const currentWinRate = matchesPlayed ? getRoleWinRate(role, matchesPlayed) : 0;
     const importedRole = importedRoles.find(entry => normalizeRoleProgressKey(entry) === roleKey);
-    const importedPlayed = getRoleMatchesPlayed(importedRole);
-    const baselineWinRate = importedPlayed
-      ? getRoleWinRate(importedRole, importedPlayed)
-      : currentWinRate;
-    const delta = currentWinRate - baselineWinRate;
+    const delta = matchesPlayed ? getRoleTrendDelta(roleKey, currentWinRate, role, importedRole) : 0;
     return {
       roleKey,
       label: roleDisplay[roleKey] || formatReadableLabel(roleKey),
@@ -40759,7 +40793,9 @@ function renderStatsRoleProgress() {
   container.innerHTML = "";
 
   roleCards.forEach((role) => {
-    const deltaClass = role.delta > 1 ? "is-up" : role.delta < -1 ? "is-down" : "";
+    const roundedDelta = Math.round(safeNumber(role.delta));
+    const deltaClass = !role.matchesPlayed ? "" : roundedDelta > 0 ? "is-up" : roundedDelta < 0 ? "is-down" : "is-even";
+    const deltaText = role.matchesPlayed ? `${roundedDelta >= 0 ? "+" : ""}${roundedDelta}%` : "--";
 
     const pill = document.createElement("div");
     pill.className = `stats-role-pill ${role.matchesPlayed ? "" : "is-empty"}`;
@@ -40770,7 +40806,7 @@ function renderStatsRoleProgress() {
       </div>
       <div class="stats-role-pill-value">
         <span class="stats-role-pill-percent">${role.matchesPlayed ? `${Math.round(role.currentWinRate)}%` : "No Data"}</span>
-        <span class="stats-role-pill-delta ${deltaClass}">${role.matchesPlayed ? `${role.delta > 0 ? "+" : ""}${Math.round(role.delta)}%` : "--"}</span>
+        <span class="stats-role-pill-delta ${deltaClass}">${deltaText}</span>
       </div>
     `;
     container.appendChild(pill);
