@@ -11315,6 +11315,20 @@ min-height:0;
     0 10px 24px rgba(0,0,0,.24);
 }
 
+.log-entry-editing{
+  border-color:rgba(250,204,21,.72) !important;
+  box-shadow:
+    inset 4px 0 0 rgba(250,204,21,.92),
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 0 0 1px rgba(250,204,21,.18),
+    0 16px 34px rgba(250,204,21,.14) !important;
+}
+
+.log-entry-editing .log-edit-btn{
+  border-color:rgba(250,204,21,.62) !important;
+  color:#fde68a !important;
+}
+
 .log-result-rr{
   margin-left:8px;
   padding:4px 8px;
@@ -11417,10 +11431,12 @@ min-height:0;
 
 .app-tutorial-overlay.active{
   display:block;
+  pointer-events:auto;
 }
 
 .app-tutorial-spotlight{
   position:fixed;
+  pointer-events:none;
   border:2px solid rgba(255,70,85,.95);
   border-radius:18px;
   box-shadow:
@@ -11523,6 +11539,7 @@ min-height:0;
 .app-tutorial-arrow{
   position:fixed;
   z-index:1;
+  pointer-events:none;
   width:34px;
   height:3px;
   border-radius:999px;
@@ -26464,6 +26481,57 @@ body[data-theme] :is(
   width:100% !important;
   height:calc(32px * var(--app-1080-scale)) !important;
   z-index:4 !important;
+}
+
+#goalRankModal.goal-radiant-active .lens-modal{
+  height:auto !important;
+  min-height:calc(var(--nav-height) + calc(36px * var(--app-1080-scale))) !important;
+  max-height:none !important;
+}
+
+#goalRankModal.goal-radiant-active .goal-rank-row{
+  height:auto !important;
+}
+
+#goalRankModal .goal-radiant-rr-wrap{
+  grid-column:2 / 4 !important;
+  display:grid !important;
+  grid-template-columns:auto minmax(0, 1fr) !important;
+  align-items:center !important;
+  gap:calc(8px * var(--app-1080-scale)) !important;
+  min-width:0 !important;
+  padding-top:calc(4px * var(--app-1080-scale)) !important;
+}
+
+#goalRankModal .goal-radiant-rr-wrap[hidden]{
+  display:none !important;
+}
+
+#goalRankModal .goal-radiant-rr-wrap label{
+  color:#94a3b8 !important;
+  font:900 calc(10px * var(--app-1080-scale))/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+#goalRankModal .goal-radiant-rr-input{
+  min-width:0 !important;
+  width:100% !important;
+  height:calc(30px * var(--app-1080-scale)) !important;
+  padding:0 calc(10px * var(--app-1080-scale)) !important;
+  border:1px solid rgba(148,163,184,.46) !important;
+  border-radius:calc(10px * var(--app-1080-scale)) !important;
+  background:#0b1220 !important;
+  color:#f8fafc !important;
+  font:900 calc(12px * var(--app-1080-scale))/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  outline:none !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+#goalRankModal .goal-radiant-rr-input:focus{
+  border-color:rgba(255,70,85,.72) !important;
+  box-shadow:0 0 0 2px rgba(255,70,85,.18), inset 0 1px 0 rgba(255,255,255,.06) !important;
 }
 
 #goalRankModal .goal-rank-custom-trigger{

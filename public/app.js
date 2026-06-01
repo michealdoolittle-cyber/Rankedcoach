@@ -7730,7 +7730,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
     const target = getTutorialTarget(step);
     guestTutorialActiveTarget = target;
     target.classList.add("app-tutorial-focus-target");
-    target.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" });
+    target.scrollIntoView?.({ behavior: "auto", block: "center", inline: "center" });
 
     const title = document.getElementById("appTutorialTitle");
     const copy = document.getElementById("appTutorialCopy");
@@ -7747,7 +7747,8 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
     if (next) next.textContent = isLast ? "Complete" : "Next";
     if (restart) restart.hidden = !isLast;
 
-    window.setTimeout(positionGuestTutorialOverlay, 260);
+    positionGuestTutorialOverlay();
+    window.setTimeout(positionGuestTutorialOverlay, 80);
   }, 120);
 }
 
@@ -7904,6 +7905,8 @@ let activeRoleFilter = "any";
 let currentMap = "";
 
 let logEntries = [];
+let editingLogEntryId = null;
+let editingLogEntrySnapshot = null;
 let profiles = [];
 let activeProfileId = null;
 let activeInsightFilter = "all";
@@ -8820,6 +8823,9 @@ const RANK_THRESHOLDS = [
 
   { tierLabel: "Radiant",      min: 2400, max: Infinity, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/radiant_rank.png" }
 ];
+
+const RANK_RR_STEP = 100;
+const RADIANT_MIN_RR = 2400;
 
 // ========================
 // AGENT / ROLE DEFINITIONS
@@ -9752,6 +9758,25 @@ function getTierBoundsByLabel(label){
   return RANK_THRESHOLDS.find(
     r => r.tierLabel.toLowerCase() === String(label).toLowerCase()
   );
+}
+
+function getGoalRankTarget(label, requestedRR = null){
+  const normalized = normalizeTierLabel(label);
+  const bounds = getTierBoundsByLabel(normalized);
+  if(!bounds) return null;
+
+  const isRadiant = bounds.tierLabel === "Radiant";
+  const rawTarget = safeNumber(requestedRR, bounds.min);
+  const targetRR = isRadiant
+    ? Math.max(RADIANT_MIN_RR, Math.round(rawTarget || bounds.min))
+    : bounds.min;
+
+  return { bounds, targetRR };
+}
+
+function getProfileGoalTarget(profile){
+  if(!profile?.goalRank) return null;
+  return getGoalRankTarget(profile.goalRank, profile.goalRR);
 }
 
 // ========================
@@ -32268,6 +32293,8 @@ function bindEvents(){
   const goalRankSave = document.getElementById("goalRankSave");
   const goalRankSelect = document.getElementById("goalRankSelect");
   const goalRankPreviewIcon = document.getElementById("goalRankPreviewIcon");
+  const goalRadiantRRWrap = document.getElementById("goalRadiantRRWrap");
+  const goalRadiantRRInput = document.getElementById("goalRadiantRRInput");
 
   function getGoalRankIcon(label){
     const normalized = String(label || "").toLowerCase();
@@ -32326,6 +32353,29 @@ function bindEvents(){
       option.classList.toggle("is-active", isActive);
       option.setAttribute("aria-selected", isActive ? "true" : "false");
     });
+  }
+
+  function syncGoalRadiantRRControls() {
+    const selected = normalizeTierLabel(goalRankSelect?.value || "");
+    const isRadiant = selected === "Radiant";
+    goalRankModal?.classList.toggle("goal-radiant-active", isRadiant);
+
+    if (goalRadiantRRWrap) {
+      goalRadiantRRWrap.hidden = !isRadiant;
+    }
+
+    if (goalRadiantRRInput) {
+      goalRadiantRRInput.min = String(RADIANT_MIN_RR);
+      goalRadiantRRInput.disabled = !isRadiant;
+      if (isRadiant) {
+        const activeProfile = getActiveProfile();
+        const currentValue = safeNumber(goalRadiantRRInput.value, 0);
+        const profileTarget = safeNumber(activeProfile?.goalRR, RADIANT_MIN_RR);
+        if (!currentValue || currentValue < RADIANT_MIN_RR) {
+          goalRadiantRRInput.value = String(Math.max(RADIANT_MIN_RR, Math.round(profileTarget)));
+        }
+      }
+    }
   }
 
   function setupGoalRankCustomDropdown() {
@@ -32411,6 +32461,7 @@ function bindEvents(){
       goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
     }
     syncGoalRankCustomDropdown();
+    syncGoalRadiantRRControls();
   });
 
   setupGoalRankCustomDropdown();
@@ -32439,10 +32490,14 @@ function bindEvents(){
       const activeProfile = getActiveProfile();
       if (goalRankSelect) {
         goalRankSelect.value = normalizeTierLabel(activeProfile?.goalRank || "Gold 1");
+        if (goalRadiantRRInput) {
+          goalRadiantRRInput.value = String(Math.max(RADIANT_MIN_RR, Math.round(safeNumber(activeProfile?.goalRR, RADIANT_MIN_RR))));
+        }
         if (goalRankPreviewIcon) {
           goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
         }
         syncGoalRankCustomDropdown();
+        syncGoalRadiantRRControls();
       }
     });
 
@@ -32474,8 +32529,10 @@ function bindEvents(){
     if (!p || !goalRankSelect) return;
 
     p.goalRank = normalizeTierLabel(goalRankSelect.value);
+    const goalTarget = getGoalRankTarget(p.goalRank, goalRadiantRRInput?.value);
+    p.goalRR = goalTarget?.targetRR ?? null;
     profiles = profiles.map(pr =>
-      pr.id === p.id ? { ...pr, goalRank: p.goalRank } : pr
+      pr.id === p.id ? { ...pr, goalRank: p.goalRank, goalRR: p.goalRR } : pr
     );
 
     saveProfiles();
@@ -33624,9 +33681,15 @@ function getLogFormValues(){
     focus = focusOther?.value?.trim() || "Other";
   }
 
+  const editingEntry = editingLogEntryId
+    ? (logEntries.find(entry => entry.id === editingLogEntryId) || editingLogEntrySnapshot)
+    : null;
+  const baseEntry = editingEntry && typeof editingEntry === "object" ? editingEntry : {};
+
   return {
-    id: uuid(),
-    createdAt: nowISO(),
+    ...baseEntry,
+    id: baseEntry.id || uuid(),
+    createdAt: baseEntry.createdAt || nowISO(),
     agent: logAgentDisplay?.dataset.agent || "",
     focus,
     map: logMap?.value?.trim() || "",
@@ -33646,12 +33709,35 @@ function getLogFormValues(){
 function addLogEntry(){
 
   const entry = getLogFormValues();
+  const editingId = editingLogEntryId;
+  const isEditing = Boolean(editingId);
 
 if(!entry.focus || entry.focus === "Select Focus"){
   entry.focus = "general";
 }
 
-  logEntries.unshift(entry);
+  if (isEditing) {
+    let replaced = false;
+    logEntries = logEntries.map(existing => {
+      if (existing.id !== editingId) return existing;
+      replaced = true;
+      return {
+        ...existing,
+        ...entry,
+        id: existing.id,
+        createdAt: existing.createdAt || entry.createdAt
+      };
+    });
+
+    if (!replaced) {
+      logEntries.unshift(entry);
+    }
+  } else {
+    logEntries.unshift(entry);
+  }
+
+  editingLogEntryId = null;
+  editingLogEntrySnapshot = null;
 
   pendingFocusFromLog = entry.focus;
   pendingAgentFromLog = entry.agent;
@@ -33713,6 +33799,11 @@ if(entry.focus){
 
 function deleteLogEntry(id){
 
+  if (editingLogEntryId === id) {
+    editingLogEntryId = null;
+    editingLogEntrySnapshot = null;
+  }
+
   logEntries = logEntries.filter(e => e.id !== id);
   saveLogEntries();
   void deletePersistentLogEntry(id);
@@ -33729,6 +33820,9 @@ function editLogEntry(id){
 
   const entry = logEntries.find(e => e.id === id);
   if(!entry) return;
+
+  editingLogEntryId = entry.id;
+  editingLogEntrySnapshot = { ...entry };
 
   const focusSelect = document.getElementById("logFocusSelect");
   const focusOther = document.getElementById("logFocusOther");
@@ -33777,8 +33871,7 @@ function editLogEntry(id){
   setLoggingQuickMenuOpen(false);
   syncLoggingQuickChipStates();
   updateLoggingDebriefPreview();
-
-  deleteLogEntry(id);
+  renderLogFeed({ force: true });
 }
 
 // ========================
@@ -34202,8 +34295,9 @@ function renderLogFeed(options = {}){
       const rrLabel = Number.isFinite(matchContext.rr)
         ? `${matchContext.rr > 0 ? "+" : ""}${Math.round(matchContext.rr)} RR`
         : "";
+      const isEditingEntry = entry.id === editingLogEntryId;
       const el = document.createElement("div");
-      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}`;
+      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}${isEditingEntry ? " log-entry-editing" : ""}`;
 
       el.innerHTML = `
         <div class="log-header">
@@ -34233,7 +34327,7 @@ function renderLogFeed(options = {}){
         </div>
 
         <div class="log-actions">
-          <button class="log-edit-btn">Edit</button>
+          <button class="log-edit-btn">${isEditingEntry ? "Editing" : "Edit"}</button>
         </div>
       `;
 
@@ -34521,6 +34615,7 @@ function normalizeProfileRecord(profile = {}) {
     startingRRDate: String(profile.startingRRDate || ""),
     startingRRSource: String(profile.startingRRSource || ""),
     goalRank: profile.goalRank || null,
+    goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
     matches: Array.isArray(profile.matches) ? profile.matches : [],
     themeKey: profile.themeKey || "default",
     frameTheme: profile.frameTheme || profile.themeKey || "default",
@@ -34578,6 +34673,8 @@ function loadProfiles(){
       profileBorder: "standard",
       profileBorderRotate: false,
       bannerStyle: "theme",
+      goalRank: null,
+      goalRR: null,
       accessibility: {
         contrastMode: "standard",
         motionMode: "standard",
@@ -34817,6 +34914,7 @@ function handleAddProfile() {
       layoutMode: "web"
     },
     goalRank: null,
+    goalRR: null,
     matches: []
   };
 
@@ -36853,16 +36951,17 @@ function updateNavRRToGoalRank(){
     return;
   }
 
-  const bounds = getTierBoundsByLabel(normalizeTierLabel(profile.goalRank));
-  if(!bounds){
+  const goalTarget = getProfileGoalTarget(profile);
+  if(!goalTarget?.bounds){
     label.textContent = "Invalid Goal";
     bar.style.width = "100%";
     applyStaticTrackGradient(bar, 0, "horizontal");
     return;
   }
 
-  const rrNeeded = Math.max(0, bounds.min - abs);
-  const span = Math.max(1, bounds.min - current.min);
+  const { bounds, targetRR } = goalTarget;
+  const rrNeeded = Math.max(0, targetRR - abs);
+  const span = Math.max(1, targetRR - current.min);
   const progressPct = rrNeeded <= 0
     ? 100
     : Math.max(0, Math.min(100, ((abs - current.min) / span) * 100));
