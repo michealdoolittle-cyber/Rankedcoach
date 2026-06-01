@@ -7161,10 +7161,10 @@ function ensureGuestTutorialShells() {
           <div class="lens-modal-body guest-tutorial-choice-body">
             <div class="guest-tutorial-choice-kicker">RankedCoach Guest Mode</div>
             <div class="guest-tutorial-choice-title">Want a guided tour with demo matches?</div>
-            <div class="guest-tutorial-choice-copy">Choose the tutorial to load sample matches and walk through the dashboard. Choose clean guest mode to enter without demo match history.</div>
+            <div class="guest-tutorial-choice-copy">Choose the tutorial to load sample matches and walk through the dashboard. Skip the tutorial to continue with the same demo matches already loaded.</div>
             <div class="guest-tutorial-choice-actions">
               <button id="guestTutorialStartBtn" class="pd-item guest-tutorial-primary" type="button">Yes, show tutorial</button>
-              <button id="guestTutorialSkipBtn" class="pd-item guest-tutorial-secondary" type="button">No, continue as guest</button>
+              <button id="guestTutorialSkipBtn" class="pd-item guest-tutorial-secondary" type="button">Skip tutorial</button>
             </div>
           </div>
         </div>
@@ -7395,15 +7395,15 @@ function buildClientTutorialDemoMatches(count = 50) {
   return matchesOut;
 }
 
-async function enterGuestFromAuth({ withTutorial = false } = {}) {
+async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true } = {}) {
   if (guestEntryInProgress) return;
   guestEntryInProgress = true;
   closeGuestTutorialChoice();
-  setGuestButtonLoading(true, withTutorial ? "Loading tutorial..." : "Entering...");
+  setGuestButtonLoading(true, withTutorial ? "Loading tutorial..." : "Loading demo...");
 
   try {
     enterGuestModeAfterLogout();
-    if (withTutorial) {
+    if (withDemoMatches) {
       await importDemoMatches({ preferBuiltIn: true });
     }
     closeAuthModal();
