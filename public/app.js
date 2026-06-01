@@ -35,6 +35,46 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
+// Central language guardrail for generated coaching copy. Keep tactical terms clear,
+// human, and consistent with Ask Coach instead of letting engine fallbacks drift.
+const RANKEDCOACH_LANGUAGE_REPLACEMENTS = [
+  [/\bside split\b/gi, "ATK/DEF"],
+  [/\bside disparity\b/gi, "ATK/DEF gap"],
+  [/\btracked rounds\b/gi, "rounds reported"],
+  [/\bclass\b/gi, "Weapon Category"],
+  [/\bseen\b/gi, "reported"],
+  [/\bself-reported\b/gi, "self-rated"],
+  [/\bcluster\b/gi, "pattern"],
+  [/\bedge\b/gi, "strength"],
+  [/\bleak\b/gi, "issue"],
+  [/\bfour-lens\b/gi, "four-category"],
+  [/\blens\b/gi, "category"],
+  [/\bPractice Theme Is Emerging\b/g, "Focus Category to Observe"],
+  [/\bPractice Theme is Emerging\b/g, "Focus Category to Observe"],
+  [/\bReliable Duel Output\b/g, "Reliable Dueling"],
+  [/Weapon reliance is context, not a penalty\. It helps RankedCoach avoid grading every profile like rifle-only play\./g, "Weapon reliance is context being applied to the Machine Learning model. It helps RankedCoach avoid grading every profile like rifle-only play."],
+  [/Your combat impact is showing up at a healthy level in the current sample\./g, "Your combat impact is strong in your profile."],
+  [/Your recent matches are below your season average, so RankedCoach is reading this as a short-term dip\./g, "Your recent matches are below your average level of play, so RankedCoach is reading this as a short-term dip in performance."],
+  [/Your accuracy is stable enough that RankedCoach can look beyond aim alone\./g, "Your precision is stable enough that RankedCoach can look beyond aim alone."]
+];
+
+function normalizeRankedCoachCopy(value = "") {
+  if (value == null) return value;
+  if (typeof value !== "string") return value;
+
+  let text = value;
+  RANKEDCOACH_LANGUAGE_REPLACEMENTS.forEach(([pattern, replacement]) => {
+    text = text.replace(pattern, replacement);
+  });
+
+  return text.replace(/(^|[.!?]\s+)([a-z])/g, (_match, prefix, firstLetter) => `${prefix}${firstLetter.toUpperCase()}`);
+}
+
+function logCountLabel(count = 0) {
+  const safeCount = Math.round(safeNumber(count));
+  return `${safeCount} log${safeCount === 1 ? "" : "s"}`;
+}
+
 function formatPct(value, digits = 0) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "--";
@@ -252,7 +292,7 @@ function updateImpactThresholdState(percent) {
   });
 }
 
-function getImpactRoleLabel(match = null, matchIndex = null) {
+function getImpactRoleLabel(match = null, matchIndex = null, displayIndex = null) {
   const core = getMatchCore(match || {});
   const agent = core?.agent || agentName?.textContent || "";
   const role = String(agentRoles?.[agent] || "").trim();
@@ -262,25 +302,32 @@ function getImpactRoleLabel(match = null, matchIndex = null) {
 
   if (Number.isInteger(matchIndex) && matchIndex >= 0) {
     const latestIndex = Math.max(0, matches.length - 1);
+    const displayGameNumber = Number.isInteger(displayIndex) && displayIndex >= 0
+      ? displayIndex + 1
+      : matchIndex + 1;
     return matchIndex === latestIndex
       ? `Latest ${roleLabel}`
-      : `Game ${matchIndex + 1} ${roleLabel}`;
+      : `Game ${displayGameNumber} ${roleLabel}`;
   }
 
   return `Latest ${roleLabel}`;
 }
 
-function updateImpactRolePill(match = null, matchIndex = null) {
+function updateImpactRolePill(match = null, matchIndex = null, options = {}) {
   if (!impactRolePill) return;
 
   const core = getMatchCore(match || {});
   const agent = core?.agent || agentName?.textContent || "";
   const role = String(agentRoles?.[agent] || "").trim().toLowerCase();
+  const displayIndex = Number.isInteger(options?.displayIndex) ? options.displayIndex : null;
 
-  impactRolePill.textContent = getImpactRoleLabel(match, matchIndex);
+  impactRolePill.textContent = getImpactRoleLabel(match, matchIndex, displayIndex);
   impactRolePill.dataset.role = role || "duelist";
   impactRolePill.dataset.matchIndex = Number.isInteger(matchIndex) && matchIndex >= 0
     ? String(matchIndex)
+    : "";
+  impactRolePill.dataset.displayIndex = Number.isInteger(displayIndex) && displayIndex >= 0
+    ? String(displayIndex)
     : "";
 }
 
@@ -619,16 +666,52 @@ function getPriorityLabel(score) {
 
 function buildCoachRecommendation(kind, entity = {}, model = {}) {
   const overview = model?.overview || {};
+  const weeklyFocus = model?.weekly?.mostPracticed || model?.focus || "the current focus category";
 
   if (kind === "map") {
     const mapName = entity?.map || "this map";
     const mapWr = Math.round(safeNumber(entity?.winrate));
+    const sample = safeNumber(entity?.matchesPlayed);
+    const agent = entity?.agent || "your most repeated agent";
+    const attackWr = safeNumber(entity?.attackWinPct);
+    const defenseWr = safeNumber(entity?.defenseWinPct);
+    const sideGap = Math.abs(attackWr - defenseWr);
+    const weakerSide = attackWr && defenseWr
+      ? attackWr < defenseWr ? "ATK" : "DEF"
+      : "";
+
+    if (sample < 2) {
+      return {
+        diagnosis: `${mapName} needs more repeated matches before RankedCoach can trust the read.`,
+        emphasis: "Build sample before making a hard call.",
+        recommendation: `Play one more ${mapName} match before treating this as a real map pattern.`
+      };
+    }
+
+    if (mapWr >= 55) {
+      return {
+        diagnosis: `${mapName} is one of your stronger repeated map environments.`,
+        emphasis: `${agent} habits on this map are worth carrying forward.`,
+        recommendation: sideGap >= 12 && weakerSide
+          ? `Keep the winning plan, then review the ${weakerSide} half so the map stays reliable on both sides.`
+          : `Keep your current ${mapName} prep simple and repeat the round plans that are already converting.`
+      };
+    }
+
+    if (mapWr >= 45) {
+      return {
+        diagnosis: `${mapName} is close, but not stable enough to ignore.`,
+        emphasis: sideGap >= 12 && weakerSide ? `${weakerSide} rounds are the cleaner review target.` : "The map needs one repeatable plan.",
+        recommendation: sideGap >= 12 && weakerSide
+          ? `Build one ${weakerSide} opening plan and one fallback call for ${mapName}.`
+          : `Pick one default attack plan and one defense fallback before your next ${mapName} queue.`
+      };
+    }
+
     return {
-      diagnosis: mapWr < 45 ? `${mapName} is a live weakness right now.` : `${mapName} is a stable environment in your sample.`,
-      emphasis: mapWr < 45 ? "Prep your first 3 rounds before queueing this map." : "Keep using this map as a confidence anchor.",
-      recommendation: mapWr < 45
-        ? `Build one attack default and one defensive fallback plan for ${mapName}, then review whether the next two games feel less reactive.`
-        : `Reuse the habits that already work on ${mapName} and carry one of them into a weaker map next session.`
+      diagnosis: `${mapName} is a repeated map problem in this profile.`,
+      emphasis: "Fix the earliest round plan first.",
+      recommendation: `Review ${mapName} map preparation next. Build one simple attack plan and one simple defense fallback plan.`
     };
   }
 
@@ -636,12 +719,37 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
     const agentName = entity?.agent || "this agent";
     const winrate = Math.round(safeNumber(entity?.winrate));
     const kd = Number(entity?.kd || 0);
+    const role = agentRoles?.[agentName] || "role";
+    const sample = safeNumber(entity?.matchesPlayed);
+
+    if (sample < 3) {
+      return {
+        diagnosis: `${agentName} needs more repeated games before the app can trust the agent read.`,
+        emphasis: "Do not overreact to a tiny sample.",
+        recommendation: `Play ${agentName} only if it fits the map plan, then let RankedCoach compare the next few games.`
+      };
+    }
+
+    if (winrate >= 55 && kd >= 1) {
+      return {
+        diagnosis: `${agentName} is currently one of your most reliable picks.`,
+        emphasis: `${role} decisions on this agent are converting well.`,
+        recommendation: `Keep ${agentName} in the active pool and compare weaker agents against this pick's simpler round plan.`
+      };
+    }
+
+    if (winrate >= 50 || kd >= 1) {
+      return {
+        diagnosis: `${agentName} has usable value, but the full match conversion is not clean yet.`,
+        emphasis: kd >= 1 ? "Fights are playable; round plans need more structure." : "Round results are playable; duel discipline needs more attention.",
+        recommendation: `Give ${agentName} one job next block: either cleaner first contact, cleaner trading, or cleaner utility timing.`
+      };
+    }
+
     return {
-      diagnosis: winrate >= 50 && kd >= 1 ? `${agentName} is giving you stable value.` : `${agentName} is not converting cleanly enough yet.`,
-      emphasis: winrate >= 50 && kd >= 1 ? "Use this pick when you want consistency." : "Narrow the job you expect from this pick.",
-      recommendation: winrate >= 50 && kd >= 1
-        ? `Treat ${agentName} as an anchor pick while you experiment less on lower-confidence roles.`
-        : `Play ${agentName} with one clearer responsibility next block instead of trying to solve every round.`
+      diagnosis: `${agentName} is costing too much value in the current sample.`,
+      emphasis: "Narrow the job you expect from this pick.",
+      recommendation: `Play ${agentName} with one clear ${role} objective next block instead of trying to solve every round.`
     };
   }
 
@@ -649,17 +757,17 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
     const roleName = entity?.role || "this role";
     const winrate = Math.round(safeNumber(entity?.winrate));
     return {
-      diagnosis: winrate >= 50 ? `${roleName} currently fits your decision profile.` : `${roleName} is where your decision load is slipping.`,
-      emphasis: winrate >= 50 ? "Lean into the role strengths already showing up." : "Reduce overload and simplify the role plan.",
+      diagnosis: winrate >= 50 ? `${roleName} currently fits your decision profile.` : `This role is where your in-game decisions are frequently leading to poor outcomes.`,
+      emphasis: winrate >= 50 ? "Lean into the role strengths already showing up." : "Simplify the plans you have for the role in question.",
       recommendation: winrate >= 50
         ? `Bias queues toward ${roleName} when you want stable impact and review what transfers from it to weaker roles.`
-        : `Give ${roleName} one smaller role objective next session so success is easier to measure.`
+        : `Give this role one small role objective next session so it is easier to measure performance.`
     };
   }
 
   return {
     diagnosis: overview.kd >= 1 ? "Your profile has a workable baseline." : "Your profile still needs a stronger floor.",
-    emphasis: "Use the next match block to validate one change, not five.",
+    emphasis: `Use ${weeklyFocus} as the next review target.`,
     recommendation: "Keep the next improvement target narrow enough that you can tell whether it actually worked."
   };
 }
@@ -1909,7 +2017,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   } else if (overview.kd >= 1.1 && orderedMatches.length >= 4) {
     insights.push({
       type: "good",
-      title: "Reliable Duel Output",
+      title: "Reliable Dueling",
       preview: `Your current K/D is ${overview.kd.toFixed(2)}, which is a real strength in this sample.`,
       what: "Winning direct duels is currently one of your biggest strengths.",
       why: "You are consistently finding more value in your fights than you are giving away.",
@@ -1952,7 +2060,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   if (weeklyTopFocusEntry) {
     insights.push({
       type: "warn",
-      title: "Practice Theme Is Emerging",
+      title: "Focus Category to Observe",
       preview: `${weeklyTopFocusEntry[0]} has been your most repeated reflection focus category this week.`,
       what: `${weeklyTopFocusEntry[0]} is the focus category you mention the most in this week's logs.`,
       why: "When the same focus category keeps showing up, it usually means that part of your game still feels inconsistent.",
@@ -2155,8 +2263,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: recentMatches.length ? `${recentKd.toFixed(2)} Recent K/D` : "No data",
       detail: recentMatches.length ? "Recent form compares your latest matches against your usual season results." : "No data",
       read: recentKd >= safeNumber(overview.kd)
-        ? "Your recent matches are meeting or beating your season average, so short-term form looks stable."
-        : "Your recent matches are below your season average, so RankedCoach is reading this as a short-term dip.",
+        ? "Your recent matches are meeting or beating your average level of play, so short-term form looks stable."
+        : "Your recent matches are below your average level of play, so RankedCoach is reading this as a short-term dip in performance.",
       sourceLabel: `Based on the latest ${recentMatches.length || 0} imported matches from ${seasonLabel}.`,
       formula: `recent kills / recent deaths = ${recentKills} / ${Math.max(1, recentDeaths)} = ${recentMatches.length ? recentKd.toFixed(2) : "--"}`,
       benchmark: `Compared against overall baseline K/D of ${overview.matchesPlayed ? overview.kd.toFixed(2) : "--"}.`,
@@ -2166,7 +2274,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         statItem("Recent Kills", `${recentKills}`, "Kills from your latest imported matches."),
         statItem("Recent Deaths", `${recentDeaths}`, "Deaths from your latest imported matches."),
         statItem("Recent W-L", `${recentWins}W / ${recentLosses}L`, "Win/loss record from your latest five-match sample."),
-        statItem("Baseline", overview.matchesPlayed ? `${overview.kd.toFixed(2)} overall K/D` : "--", "Your selected season average used for comparison.")
+        statItem("Baseline", overview.matchesPlayed ? `${overview.kd.toFixed(2)} overall K/D` : "--", "Your usual imported match level used for comparison.")
       ]
     },
     {
@@ -2178,7 +2286,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ACS` : "No data",
       detail: overview.matchesPlayed ? "This uses Riot score-per-round data to estimate your round-by-round combat impact." : "No data",
       read: overview.adr >= 200
-        ? "Your combat impact is showing up at a healthy level in the current sample."
+        ? "Your combat impact is strong in your profile."
         : "Your combat impact is lower than expected, so RankedCoach reads this as a supporting weakness.",
       sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} using Riot score-per-round data.`,
       formula: `score per round total / matches played = ${Math.round(totalAcs)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${overview.matchesPlayed ? Math.round(overview.adr || 0) : "--"} ACS`,
@@ -2207,7 +2315,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       read: overview.hs >= mechanicsAdjustment.adjustedWatchHs
         ? mechanicsAdjustment.hasAdjustment
           ? `Your accuracy is being read with context: ${mechanicsAdjustment.readableReason}`
-          : "Your accuracy is stable enough that RankedCoach can look beyond aim alone."
+          : "Your precision is stable enough that RankedCoach can look beyond aim alone."
         : mechanicsAdjustment.hasAdjustment
           ? `Your accuracy is below the adjusted target. ${mechanicsAdjustment.readableReason}`
           : "Your accuracy is below target, which can lead to harder fights that could provide an advantage to the enemy team.",
@@ -2321,7 +2429,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       tone: sideBias.sideBiasGap >= 18 ? "down" : "warn",
       label: "Attack/Defense Balance",
       kicker: sideBias.map || "Map Context",
-      value: `${Math.round(sideBias.sideBiasGap)}% Side Disparity`,
+      value: `${Math.round(sideBias.sideBiasGap)}% ATK/DEF Gap`,
       detail: `${sideBias.map} is currently stronger on ${sideBias.favoredSide}, so one side needs a cleaner plan.`,
       read: `Your ${sideBias.map} results are split enough by side that the weaker half should be reviewed separately.`,
       sourceLabel: `Based on imported attack and defense win rate on ${sideBias.map}.`,
@@ -2330,7 +2438,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       mediaType: "map",
       mediaValue: sideBias.map,
       proofItems: [
-        statItem("Map", sideBias.map || "--", "Map with the clearest side split."),
+        statItem("Map", sideBias.map || "--", "Map with the clearest ATK/DEF gap."),
         statItem("Favored Side", sideBias.favoredSide || "--", "Side currently performing better."),
         statItem("Side Gap", `${Math.round(sideBias.sideBiasGap)} points`, "Difference between attack and defense results."),
         statItem("Review Target", sideBias.favoredSide === "attack" ? "Defense" : "Attack", "The weaker side should be reviewed first.")
@@ -2344,7 +2452,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       kicker: topWeaponFamilyLabel || "Weapon Context",
       value: `${Math.round(safeNumber(topWeaponFamilyEntry[1]))}% Rounds`,
       detail: "This checks whether one weapon category is shaping how the app should judge mechanics and fight conversion.",
-      read: "Weapon reliance is context, not a penalty. It helps RankedCoach avoid grading every profile like rifle-only play.",
+      read: "Weapon reliance is context being applied to the Machine Learning model. It helps RankedCoach avoid grading every profile like rifle-only play.",
       sourceLabel: `Based on round-by-round weapon usage from ${seasonLabel}.`,
       formula: `top weapon category share = ${Math.round(safeNumber(topWeaponFamilyEntry[1]))}%`,
       benchmark: "High reliance above 45% means mechanics should be read with weapon context.",
@@ -2984,7 +3092,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       key: "tilt",
       label: `Most tilt mentions${weeklyTopMoodEntry ? `: ${weeklyTopMoodEntry[0]}` : ""}`,
       summary: weeklyTopMoodEntry
-        ? `${weeklyTopMoodEntry[0]} was reported in ${weeklyTopMoodEntry[1]} logs this week.`
+        ? `The ${weeklyTopMoodEntry[0]} focus category was reported in ${logCountLabel(weeklyTopMoodEntry[1])} this week.`
         : "No clear tilt mood pattern is stored yet.",
       score: (weeklyNegativeMoodCount * 12) + (weeklyLowRatedLogs.length * 7),
       confidence: weeklyLogs.length >= 4 ? "High" : weeklyLogs.length >= 2 ? "Medium" : "Low",
@@ -2992,14 +3100,14 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       formula: `(annoyed or tilted logs x 12) + (low-rated logs x 7) = ${(weeklyNegativeMoodCount * 12) + (weeklyLowRatedLogs.length * 7)}`,
       scopeLabel: `Current weekly review window: ${weeklyScopeLabel} (${weeklyLogs.length} logs reviewed).`,
       read: weeklyTopMoodEntry
-        ? `${weeklyTopMoodEntry[0]} is the strongest recurring mood signal in this week's saved logs, which suggests emotional stability may be affecting play quality.`
+        ? `${weeklyTopMoodEntry[0]} focus category is the strongest recurring mood in this week's saved logs, which suggests emotional stability may be affecting play quality.`
         : "There is not enough stored mood data yet to make a strong tilt-pattern read."
     },
     {
       key: "ratings",
       label: `Weakest self ratings${weeklyLowRatedLogs[0]?.focus ? `: ${weeklyLowRatedLogs[0].focus}` : ""}`,
       summary: weeklyLowRatedLogs[0]?.focus
-        ? `${weeklyLowRatedLogs[0].focus} focus category is reported most often in low-rated sessions this week.`
+        ? `${weeklyLowRatedLogs[0].focus} focus category is reported most often in low mood-rated sessions this week.`
         : "No low-rated focus category pattern is stored yet.",
       score: weeklyLowRatedLogs.length * 14,
       confidence: weeklyLowRatedLogs.length >= 3 ? "High" : weeklyLowRatedLogs.length >= 2 ? "Medium" : "Low",
@@ -3007,7 +3115,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       formula: `low-rated logs (rating <= 2) x 14 = ${weeklyLowRatedLogs.length} x 14`,
       scopeLabel: `Current weekly review window: ${weeklyScopeLabel} (${weeklyLogs.length} logs reviewed).`,
       read: weeklyLowRatedLogs[0]?.focus
-        ? `${weeklyLowRatedLogs[0].focus} focus category is the clearest recurring weakness in this week's session reviews, so it is the best self-reported coaching target right now.`
+        ? `${weeklyLowRatedLogs[0].focus} focus category is the clearest recurring weakness in this week's session reviews, so it is the best self-rated coaching target right now.`
         : "There is not enough low-rating log volume yet to isolate a trustworthy self-rating pattern."
     },
     {
@@ -3031,20 +3139,22 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           ? `100 - role win rate = 100 - ${Math.round(safeNumber(weeklyWeakestRole?.winrate))} = ${Math.round(100 - safeNumber(weeklyWeakestRole?.winrate))}`
           : "Fallback watch score = 24 because there is not enough repeated loss context yet.",
       scopeLabel: `Current weekly review window: ${weeklyScopeLabel} (${weeklyOrderedMatches.length} matches reviewed).`,
-      read: weeklyWeakestMap?.matchesPlayed >= 2 || weeklyWeakestRole?.matchesPlayed >= 2
-        ? "This is the clearest repeated loss environment this week, so it is the best context to review first."
+      read: weeklyWeakestRole?.matchesPlayed >= 2
+        ? "This is the clearest repeated losses for roles this week, so it is the best to review this role first."
+        : weeklyWeakestMap?.matchesPlayed >= 2
+          ? "This is the clearest repeated map loss pattern this week, so it is the best map to review first."
         : "Losses are still too spread out to isolate one trustworthy context."
     },
     {
       key: "impactful",
       label: hasMatchData ? `Biggest coaching category gap: ${weakestLens === "gamesense" ? "Game knowledge" : COMPASS_LENS_META[weakestLens]?.label || "Core category"}` : "Biggest coaching category gap: No data",
-      summary: hasMatchData ? `${COMPASS_LENS_META[weakestLens]?.label || "Core category"} is currently the lowest coaching category in the active player model.` : "Import match history before RankedCoach calls out an impact shift.",
+      summary: hasMatchData ? `${COMPASS_LENS_META[weakestLens]?.label || "Core category"} compass category is currently the lowest pillar in your profile.` : "Import match history before RankedCoach calls out an impact shift.",
       score: hasMatchData ? 100 - safeNumber({ aim: contextAimScore, gamesense: contextSenseScore, teamplay: contextTeamplayScore, discipline: contextDisciplineScore }[weakestLens]) : 0,
       confidence: hasMatchData ? (orderedMatches.length >= 8 ? "High" : orderedMatches.length >= 4 ? "Medium" : "Low") : "Low",
       sourceLabel: hasMatchData ? `Current coaching model built from Riot match history${logs.length ? " and stored Logging entries" : ""}. Category scores: Aim ${contextAimScore}, Game Sense ${contextSenseScore}, Teamwork ${contextTeamplayScore}, Discipline ${contextDisciplineScore}.` : "No imported match history available yet.",
       formula: hasMatchData ? `100 - weakest compass score = 100 - ${safeNumber({ aim: contextAimScore, gamesense: contextSenseScore, teamplay: contextTeamplayScore, discipline: contextDisciplineScore }[weakestLens])} = ${Math.round(100 - safeNumber({ aim: contextAimScore, gamesense: contextSenseScore, teamplay: contextTeamplayScore, discipline: contextDisciplineScore }[weakestLens]))}` : "No formula until match history is imported.",
       scopeLabel: `Current imported match window plus current stored log support in the active profile.`,
-      read: hasMatchData ? `${COMPASS_LENS_META[weakestLens]?.label || "This category"} is the lowest current coaching pillar, so it represents the clearest room for improvement in the broader player model.` : "No impact read is available until match history is imported."
+      read: hasMatchData ? `${COMPASS_LENS_META[weakestLens]?.label || "This category"} is the lowest current coaching pillar, so it represents the clearest room for improvement in your player profile.` : "No impact read is available until match history is imported."
     }
   ].sort((a, b) => b.score - a.score);
 
@@ -4138,7 +4248,11 @@ function getUtilityDamageExpectation(agentName = "") {
 }
 
 function statItem(label, stat, formula) {
-  return { label, stat, formula };
+  return {
+    label: normalizeRankedCoachCopy(label),
+    stat: normalizeRankedCoachCopy(stat),
+    formula: normalizeRankedCoachCopy(formula)
+  };
 }
 
 function getMostCommonValue(values = [], fallback = "--") {
@@ -4157,6 +4271,92 @@ function getMostCommonValue(values = [], fallback = "--") {
     }
   });
   return winner;
+}
+
+function formatReadableLabel(value = "") {
+  return String(value || "")
+    .trim()
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function isInsufficientDataReadCard(card = {}) {
+  const value = String(card?.value ?? "").trim();
+  const detail = String(card?.detail ?? "").trim();
+  const joined = `${value} ${detail}`.toLowerCase();
+  return !value
+    || /^--$/.test(value)
+    || /\b(no data|build sample|no stable|waiting|pending|not enough data)\b/i.test(joined);
+}
+
+function getBehaviorRoleContext(model = getPlayerModel()) {
+  const negativeLogs = (logEntries || []).filter(entry => {
+    const mood = String(entry?.mood || entry?.tilt || "").toLowerCase();
+    const rating = Number(entry?.rating ?? entry?.selfRating ?? entry?.self_rating);
+    return ["tilted", "annoyed", "frustrated", "angry", "stressed"].some(token => mood.includes(token))
+      || (Number.isFinite(rating) && rating > 0 && rating <= 2);
+  });
+
+  const roleFromLogs = getMostCommonValue(negativeLogs.map(entry => (
+    entry?.role
+    || agentRoles?.[entry?.agent]
+    || entry?.agentRole
+    || ""
+  )), "");
+
+  const fallbackRole = model?.scoring?.activeRoleName
+    || model?.roles?.[0]?.role
+    || getMostCommonValue((matches || []).map(match => getMatchCore(match).role), "");
+  return formatReadableLabel(roleFromLogs || fallbackRole || "Current role");
+}
+
+function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
+  const label = normalizeRankedCoachCopy(card?.label || "Data Read");
+  const value = normalizeRankedCoachCopy(card?.value || "No Data");
+  const detail = normalizeRankedCoachCopy(card?.detail || card?.tooltip || "RankedCoach needs more match and log context before this read becomes specific.");
+  const toneMeta = getSignalToneMeta(card?.tone || (String(value).toLowerCase().includes("no data") ? "down" : "warn"));
+  const behaviorRole = /^behavior development$/i.test(String(card?.label || ""))
+    ? getBehaviorRoleContext(analytics)
+    : "";
+  const sourceLabel = analytics?.overview?.matchesPlayed
+    ? `${Math.round(safeNumber(analytics?.overview?.matchesPlayed))} imported matches${logEntries?.length ? ` and ${logCountLabel(logEntries.length)}` : ""}`
+    : logEntries?.length
+      ? logCountLabel(logEntries.length)
+      : "No player data yet";
+
+  const readItems = [
+    behaviorRole ? statItem("Role Context", behaviorRole, "This is the role most tied to low-rated or frustrated saved logs in the current profile.") : null,
+    statItem("Read", label, "Selected Data Reads card."),
+    statItem("Current Value", value, "Current value shown on the Data Reads card."),
+    statItem("What It Means", detail, "Plain-language explanation generated from the current profile context."),
+    statItem("Signal", toneMeta.label, "Signal tone is based on whether the read is a strength, watch item, or needs-work item.")
+  ].filter(Boolean);
+
+  return [
+    {
+      key: "read",
+      label: "Read",
+      items: readItems
+    },
+    {
+      key: "context",
+      label: "Context",
+      items: [
+        statItem("Data Source", sourceLabel, "Data Reads combine imported matches, saved logs, and the current RankedCoach profile model."),
+        statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Confidence Rating shows how much the app trusts this read."),
+        statItem("Priority", analytics?.priorityLabel || "Watch", "Priority describes how soon this read should affect the next review block.")
+      ]
+    },
+    {
+      key: "formula",
+      label: "Formula",
+      items: [
+        statItem("Selection Score", Number.isFinite(Number(card?.selectionScore)) ? `${Math.round(Number(card.selectionScore))}/100` : "No formula", "The app ranks Data Reads by severity, sample strength, and whether the read is useful right now."),
+        statItem("Tooltip", card?.tooltip || detail, "Tooltip/detail text used for this selected read.")
+      ]
+    }
+  ];
 }
 
 function getAgentMapInsights(agentName, analytics) {
@@ -4748,7 +4948,7 @@ function buildSpecificWeaponDetailTabs(weaponKey = "") {
     },
     {
       key: "side-split",
-      label: "Side Split",
+      label: "ATK/DEF",
       items: [
         statItem("Attack Win Rate", hasSample ? formatPercent(weapon.attackWinrate) : "--", `attack wins / attack rounds with ${meta?.name || "this weapon"} = ${attackRounds.filter(round => round?.roundWon).length} / ${attackRounds.length || 1}`),
         statItem("Attack Share", hasSample ? formatPercent(safeDivide(attackRounds.length * 100, rounds.length)) : "--", "Attack rounds with this weapon divided by all rounds reported with it."),
@@ -4774,7 +4974,7 @@ function buildSpecificWeaponDetailTabs(weaponKey = "") {
       items: [
         statItem("Tracker-Style Read", hasSample ? `${meta?.name || "Weapon"} is converting ${formatPercent(weapon.winrate)} across ${Math.round(weapon.rounds)} rounds reported.` : `${meta?.name || "Weapon"} has no reported sample yet.`, "A compact read meant to mirror the quick weapon drill-down pattern from stat tracker pages."),
         statItem("Priority", hasSample && safeNumber(weapon.winrate) < 45 ? "Review positioning" : "Keep sampling", hasSample && safeNumber(weapon.winrate) < 45 ? "Low round conversion means this weapon should be reviewed by buy type and side." : "No urgent weakness detected from the current weapon sample."),
-        statItem("Next Check", "Compare side split and buy type", "Use the Side Split and Usage tabs to decide whether the issue is attack usage, defense usage, or economy timing.")
+        statItem("Next Check", "Compare ATK/DEF and buy type", "Use the ATK/DEF and Usage tabs to decide whether the issue is attack usage, defense usage, or economy timing.")
       ]
     }
   ];
@@ -5289,6 +5489,9 @@ function renderSecondaryLensStats(list, items = []) {
     const normalized = Array.isArray(item)
       ? { label: item[0], stat: item[1], formula: "" }
       : { label: item?.label, stat: item?.stat, formula: item?.formula || "" };
+    normalized.label = normalizeRankedCoachCopy(normalized.label);
+    normalized.stat = normalizeRankedCoachCopy(normalized.stat);
+    normalized.formula = normalizeRankedCoachCopy(normalized.formula);
 
     return `
     <li class="lens-stat${normalized.formula ? " lens-stat-has-formula" : ""}" ${normalized.formula ? `data-formula="${escapeHtml(normalized.formula)}"` : ""}>
@@ -5311,7 +5514,7 @@ function renderSecondaryLensTabs(tabsHost, list, tabs = []) {
   tabsHost.style.display = "flex";
   tabsHost.innerHTML = tabs.map((tab, index) => `
     <button type="button" class="lens-detail-tab ${index === 0 ? "active" : ""}" data-tab-key="${escapeHtml(tab.key)}">
-      ${escapeHtml(tab.label)}
+      ${escapeHtml(normalizeRankedCoachCopy(tab.label))}
     </button>
   `).join("");
 
@@ -5534,6 +5737,18 @@ function openStatsDetailModal(kind, value) {
     roundExamples.slice(0, 2).forEach(round => {
       items.push([`Reported Round ${round.round}`, `${round.weapon} | ${round.utility} | ${round.utilityPattern}`]);
     });
+  } else if (kind === "breakdown") {
+    const card = (analytics?.breakdown || []).find(item => String(item?.label || "").toLowerCase() === String(value || "").toLowerCase()) || null;
+    if (!card || isInsufficientDataReadCard(card)) return;
+    const behaviorRole = /^behavior development$/i.test(String(card?.label || ""))
+      ? getBehaviorRoleContext(analytics)
+      : "";
+    title.textContent = behaviorRole
+      ? `${behaviorRole} Behavior Development Review`
+      : `${card.label || "Data Read"} Review`;
+    renderSecondaryLensTabs(tabsHost, list, buildDataReadDetailTabs(card, analytics));
+    showModalById("lensModal");
+    return;
   } else if (kind === "trend") {
     const trend = (analytics?.trends || []).find(item => String(item?.id || "").toLowerCase() === String(value || "").toLowerCase()) || null;
     title.textContent = `${trend?.label || "Performance Read"} Breakdown`;
@@ -8928,10 +9143,10 @@ function getCompassRoleContext(roleName = "", strongestLens = "", weakestLens = 
   }
 
   const roleMap = {
-    duelist: "Because the recent sample leans duelist, entry pressure, follow-through, and self-created fights weigh heavily in this read.",
-    initiator: "Because the recent sample leans initiator, setup timing, info value, and teammate conversion weigh heavily in this read.",
-    controller: "Because the recent sample leans controller, utility pacing, map control, and round structure weigh heavily in this read.",
-    sentinel: "Because the recent sample leans sentinel, anchor stability, survival value, and punish timing weigh heavily in this read."
+    duelist: "The recent sample leans duelist, so entry pressure, follow-through, and self-created fights weigh heavily in this read.",
+    initiator: "The recent sample leans initiator, so setup timing, info value, and teammate conversion weigh heavily in this read.",
+    controller: "The recent sample leans controller, so utility pacing, map control, and round structure weigh heavily in this read.",
+    sentinel: "The recent sample leans sentinel, so anchor stability, survival value, and punish timing weigh heavily in this read."
   };
 
   return roleMap[roleKey] || "";
@@ -8955,16 +9170,16 @@ function buildCompassProfileDescription(values = {}, model = null) {
   const roleName = String(model?.scoring?.activeRoleName || model?.roles?.[0]?.role || "").trim();
   const agentName = String(model?.scoring?.activeAgentName || model?.agents?.[0]?.agent || "").trim();
   const strongestReadMap = {
-    aim: "Your strongest category is raw mechanical conversion and direct duel pressure.",
-    gamesense: "Your strongest category is timing, round awareness, and better decision flow.",
-    teamplay: "Your strongest category is spacing, trade value, and coordinated round play.",
-    discipline: "Your strongest category is steadiness, restraint, and repeatable round structure."
+    aim: "Your strongest collected stats are raw mechanical conversion and direct duel pressure.",
+    gamesense: "Your strongest collected stats are timing, round awareness, and better decision flow.",
+    teamplay: "Your strongest collected stats are spacing, trading, and coordinated round play.",
+    discipline: "Your strongest collected stats are steadiness, restraint, and repeatable round structure."
   };
   const weakestReadMap = {
-    aim: "The main leak is still finishing fights cleanly enough to cash those rounds in.",
-    gamesense: "The main leak is still reading the round early enough to turn good spots into cleaner outcomes.",
-    teamplay: "The main leak is still linking your value with teammates through trades, timing, and follow-through.",
-    discipline: "The main leak is still protecting value through patience, economy control, and fewer unnecessary commits."
+    aim: "The main issue is still finishing fights cleanly enough to cash those rounds in.",
+    gamesense: "The main issue is still reading the round early enough to turn good advantages into cleaner outcomes.",
+    teamplay: "The main issue is still linking your value with teammates through trades, timing, and follow-through.",
+    discipline: "The main issue is still protecting value through patience, economy control, and fewer unnecessary commits."
   };
   const baselineGap = averageScore - rankExpectation.currentTarget;
   const nextGap = rankExpectation.nextTarget == null
@@ -8978,7 +9193,7 @@ function buildCompassProfileDescription(values = {}, model = null) {
     ? `At ${averageScore} average, this profile is about ${Math.abs(Math.round(baselineGap))} points above the usual ${currentRank} benchmark.`
     : `At ${averageScore} average, this profile is about ${Math.abs(Math.round(baselineGap))} points below the usual ${currentRank} benchmark.`;
   const nextRankSentence = rankExpectation.nextTarget == null
-    ? "At the top end, progress usually comes from shaving down the last weak lens rather than adding one more specialty."
+    ? "At the top end, progress usually comes from shaving down the last weak lens rather than adding one more specialty focus."
     : `${rankExpectation.nextLabel} profiles tend to be closer to ${rankExpectation.nextTarget} average, so roughly ${nextGap} more average points is the next rung to chase.`;
   const roleSentence = getCompassRoleContext(roleName, strongestLens, weakestLens);
 
@@ -11345,7 +11560,7 @@ function updateRRMatchStats(match = null, matchIndex = null, options = {}) {
   panel.deaths.textContent = Number.isFinite(Number(stats.deaths)) ? `${Math.round(Number(stats.deaths))}` : "N/A";
   panel.assists.textContent = Number.isFinite(Number(stats.assists)) ? `${Math.round(Number(stats.assists))}` : "N/A";
   panel.acs.textContent = Number.isFinite(Number(stats.acs)) ? `${Math.round(Number(stats.acs))}` : "N/A";
-  updateImpactRolePill(match, matchIndex);
+  updateImpactRolePill(match, matchIndex, { displayIndex });
   if (Number.isFinite(impactScore)) {
     updateImpactBar(Math.round(impactScore));
   }
@@ -11574,6 +11789,7 @@ function openImpactModal() {
   const model = getPlayerModel();
   const impactSnapshots = model?.scoring?.impactSnapshots || [];
   const selectedMatchIndex = Number(impactRolePill?.dataset?.matchIndex);
+  const selectedDisplayIndex = Number(impactRolePill?.dataset?.displayIndex);
   const fallbackIndex = matches.length - 1;
   const matchIndex = Number.isInteger(selectedMatchIndex) && selectedMatchIndex >= 0
     ? selectedMatchIndex
@@ -11584,7 +11800,7 @@ function openImpactModal() {
   const resultLabel = String(core?.result || snapshot?.result || "draw").toLowerCase();
   const impactScore = Math.round(safeNumber(snapshot?.impactScore));
   const impactTier = snapshot?.impactTier || getImpactTierMeta(impactScore).tier;
-  const roleLabel = getImpactRoleLabel(match, matchIndex);
+  const roleLabel = getImpactRoleLabel(match, matchIndex, Number.isInteger(selectedDisplayIndex) ? selectedDisplayIndex : null);
   const roleKey = snapshot?.impactRoleKey || getCompassRoleKey(core?.role || snapshot?.role);
   const roleWeightEntries = Array.isArray(snapshot?.impactWeights) && snapshot.impactWeights.length
     ? snapshot.impactWeights
@@ -32695,24 +32911,34 @@ function buildTimelineItemsFromModel(model = getPlayerModel()) {
       format: value => String(value ?? "--")
     }));
 
+  const notEnoughDataItem = (index = 0) => ({
+    key: `not_enough_data_${index}`,
+    label: "Not enough data",
+    value: "Build sample",
+    detail: "RankedCoach needs more current-window match data before this improvement slot becomes clickable.",
+    delta: 0,
+    deltaDisplay: "",
+    comparisonLabel: "Waiting for enough unique improvement signals.",
+    sourceLabel: "Import more matches or add more logs to unlock this slot.",
+    formula: "No formula yet because the sample is still too small.",
+    disabled: true,
+    tone: () => "neutral",
+    format: value => String(value ?? "--")
+  });
+
   if (mapped.length) {
-    return mapped
+    const unique = dedupeDisplayItems(mapped, ["key", "label"]);
+    const selected = unique
       .slice()
       .sort((a, b) => safeNumber(b.delta) - safeNumber(a.delta))
       .slice(0, 4);
+    while (selected.length < 4) {
+      selected.push(notEnoughDataItem(selected.length));
+    }
+    return selected;
   }
 
-  return [
-    {
-      key: "sample_build",
-      label: "Build sample",
-      value: "Play 3-5 games",
-      detail: "Recent improvement pills unlock once the profile has enough current-window matches.",
-      delta: 0,
-      tone: () => "neutral",
-      format: value => String(value ?? "--")
-    }
-  ];
+  return [0, 1, 2, 3].map(index => notEnoughDataItem(index));
 }
 
 function getTimelineContext() {
@@ -32838,8 +33064,18 @@ function setTimelinePillVisual(pill, item) {
   valueEl.textContent = item.format(item.value);
   deltaEl.textContent = formatTimelineDelta(item);
   pill.removeAttribute("title");
+  pill.disabled = Boolean(item.disabled);
+  pill.setAttribute("aria-disabled", item.disabled ? "true" : "false");
+  if (item.disabled) {
+    pill.setAttribute("disabled", "");
+  } else {
+    pill.removeAttribute("disabled");
+  }
 
-  pill.classList.remove("is-positive", "is-negative", "is-neutral");
+  pill.classList.remove("is-positive", "is-negative", "is-neutral", "is-disabled");
+  if (item.disabled) {
+    pill.classList.add("is-disabled");
+  }
   pill.classList.add(`is-${item.tone(item.value)}`);
 }
 
@@ -32945,8 +33181,8 @@ async function runImprovementTimelineAnimation() {
 
   if (pills.length !== 4) return;
 
-  const spinPool = selected.length
-    ? selected
+  const spinPool = selected.filter(item => !item?.disabled).length
+    ? selected.filter(item => !item?.disabled)
     : [{
         key: "sample_build",
         label: "Build sample",
@@ -32966,16 +33202,22 @@ async function runImprovementTimelineAnimation() {
   });
 
   await Promise.all(
-    pills.map((pill, index) =>
-      cycleTimelinePill(pill, {
-        finalItem: selected[index] || spinPool[index % spinPool.length],
+    pills.map((pill, index) => {
+      const finalItem = selected[index] || spinPool[index % spinPool.length];
+      if (finalItem?.disabled) {
+        pill.classList.remove("is-loading", "is-spinning", "is-settled");
+        setTimelinePillVisual(pill, finalItem);
+        return Promise.resolve();
+      }
+      return cycleTimelinePill(pill, {
+        finalItem,
         sourceItems: spinPool,
         spinDuration: 950 + (index * 180),
         tickEvery: 75,
         settleDelay: index * 160,
         animationVersion
-      })
-    )
+      });
+    })
   );
 
 }
@@ -32987,6 +33229,7 @@ async function runImprovementTimelineAnimation() {
 document.addEventListener("click", (e)=>{
   const timelinePill = e.target.closest?.(".timeline-pill");
   if (timelinePill) {
+    if (timelinePill.classList.contains("is-disabled") || timelinePill.disabled) return;
     openTimelineStatsModal(timelinePill.dataset.timelineKey || "");
   }
   if (e.target?.closest?.("#timelinePulloutTab")) {
@@ -33074,7 +33317,7 @@ function openTimelineStatsModal(itemKey = "") {
   const scope = getTimelineContext();
   const items = buildTimelineItemsFromModel(scope.model);
   const target = items.find(item => item.key === itemKey) || items[0] || null;
-  if (!target) return;
+  if (!target || target.disabled) return;
   const currentValue = escapeHtml(target.format(target.value));
   const changeValue = escapeHtml(formatTimelineDelta(target));
   const trendTone = getTimelineToneFromDelta(target.delta);
@@ -39782,16 +40025,24 @@ function renderStatsBreakdownModel() {
     return;
   }
 
-  container.innerHTML = model.breakdown.map(card => `
-    <button type="button" class="stats-breakdown-cardlet stats-select-card ${escapeHtml(card.className || "")}" data-kind="role" data-value="${escapeHtml(card.label)}" ${card.tooltip ? `data-tooltip="${escapeHtml(card.tooltip)}"` : ""}>
-      <div class="stats-breakdown-label">${escapeHtml(card.label)}</div>
-      <div class="stats-breakdown-value">${escapeHtml(card.value)}</div>
-      <div class="stats-breakdown-detail">${escapeHtml(card.detail)}</div>
+  container.innerHTML = model.breakdown.map(card => {
+    const isDisabled = isInsufficientDataReadCard(card);
+    const rawLabel = card.label || "Data Read";
+    const label = normalizeRankedCoachCopy(rawLabel);
+    const value = normalizeRankedCoachCopy(card.value || "No Data");
+    const detail = normalizeRankedCoachCopy(card.detail || "No data");
+    return `
+    <button type="button" class="stats-breakdown-cardlet stats-select-card ${escapeHtml(card.className || "")} ${isDisabled ? "is-disabled" : ""}" data-kind="breakdown" data-value="${escapeHtml(rawLabel)}" ${card.tooltip ? `data-tooltip="${escapeHtml(normalizeRankedCoachCopy(card.tooltip))}"` : ""} ${isDisabled ? `disabled aria-disabled="true"` : ""}>
+      <div class="stats-breakdown-label">${escapeHtml(label)}</div>
+      <div class="stats-breakdown-value">${escapeHtml(value)}</div>
+      <div class="stats-breakdown-detail">${escapeHtml(detail)}</div>
     </button>
-  `).join("");
+  `;
+  }).join("");
 
   container.querySelectorAll(".stats-breakdown-cardlet").forEach(button => {
-    button.addEventListener("click", () => openStatsDetailModal("role", button.dataset.value || "Role Discipline"));
+    if (button.disabled || button.classList.contains("is-disabled")) return;
+    button.addEventListener("click", () => openStatsDetailModal("breakdown", button.dataset.value || "Data Read"));
   });
 }
 
@@ -40349,32 +40600,56 @@ function renderStatsRoleProgress() {
   if (!container) return;
 
   const model = getPlayerModel();
-  const roles = (model?.roles || []).slice().sort((a, b) => b.matchesPlayed - a.matchesPlayed);
+  const roles = (model?.roles || []).slice();
   const importedRoles = getActiveProfile()?.trackerAnalytics?.roles || [];
-
-  if (!roles.length && !importedRoles.length) {
-    container.innerHTML = `<div class="stats-empty">Import matches to compare roles</div>`;
-    return;
-  }
+  const roleOrder = ["duelist", "controller", "initiator", "sentinel"];
+  const roleDisplay = {
+    duelist: "Duelist",
+    controller: "Controller",
+    initiator: "Initiator",
+    sentinel: "Sentinel"
+  };
+  const findRoleEntry = (roleKey) => (
+    roles.find(entry => String(entry?.role || "").toLowerCase() === roleKey)
+    || importedRoles.find(entry => String(entry?.role || "").toLowerCase() === roleKey)
+    || null
+  );
+  const roleCards = roleOrder.map((roleKey) => {
+    const role = findRoleEntry(roleKey) || { role: roleKey, matchesPlayed: 0, matchesWon: 0, winrate: 0 };
+    const matchesPlayed = safeNumber(role?.matchesPlayed);
+    const currentWinRate = matchesPlayed
+      ? safeNumber(role?.winrate, safeDivide(safeNumber(role?.matchesWon) * 100, matchesPlayed))
+      : 0;
+    const importedRole = importedRoles.find(entry => String(entry?.role || "").toLowerCase() === roleKey);
+    const importedPlayed = safeNumber(importedRole?.matchesPlayed);
+    const baselineWinRate = importedPlayed
+      ? safeDivide(safeNumber(importedRole?.matchesWon) * 100, importedPlayed)
+      : currentWinRate;
+    const delta = currentWinRate - baselineWinRate;
+    return {
+      roleKey,
+      label: roleDisplay[roleKey] || formatReadableLabel(roleKey),
+      currentWinRate,
+      matchesPlayed,
+      delta
+    };
+  }).sort((a, b) => b.currentWinRate - a.currentWinRate || b.matchesPlayed - a.matchesPlayed);
 
   container.innerHTML = "";
 
-  (roles.length ? roles : importedRoles).slice(0, 4).forEach((role) => {
-    const currentWinRate = safeNumber(role?.winrate, safeDivide(safeNumber(role?.matchesWon) * 100, safeNumber(role?.matchesPlayed)));
-    const importedRole = importedRoles.find(entry => String(entry?.role || "").toLowerCase() === String(role?.role || "").toLowerCase());
-    const baselineWinRate = (safeNumber(importedRole?.matchesWon) || safeNumber(importedRole?.matchesPlayed))
-      ? safeDivide(safeNumber(importedRole?.matchesWon) * 100, safeNumber(importedRole?.matchesPlayed))
-      : currentWinRate;
-    const delta = currentWinRate - baselineWinRate;
-    const deltaClass = delta > 1 ? "is-up" : delta < -1 ? "is-down" : "";
+  roleCards.forEach((role) => {
+    const deltaClass = role.delta > 1 ? "is-up" : role.delta < -1 ? "is-down" : "";
 
     const pill = document.createElement("div");
-    pill.className = "stats-role-pill";
+    pill.className = `stats-role-pill ${role.matchesPlayed ? "" : "is-empty"}`;
     pill.innerHTML = `
-      <span class="stats-role-pill-label">${escapeHtml(role.role || "Role")}</span>
+      <div class="stats-role-pill-main">
+        <img class="stats-role-pill-icon" src="${escapeHtml(ROLE_ICON_MAP[role.roleKey] || "")}" alt="${escapeHtml(role.label)} role icon">
+        <span class="stats-role-pill-label">${escapeHtml(role.label)}</span>
+      </div>
       <div class="stats-role-pill-value">
-        <span>${Math.round(currentWinRate)}% WR</span>
-        <span class="stats-role-pill-delta ${deltaClass}">${delta > 0 ? "+" : ""}${Math.round(delta)}%</span>
+        <span class="stats-role-pill-percent">${role.matchesPlayed ? `${Math.round(role.currentWinRate)}%` : "No Data"}</span>
+        <span class="stats-role-pill-delta ${deltaClass}">${role.matchesPlayed ? `${role.delta > 0 ? "+" : ""}${Math.round(role.delta)}%` : "--"}</span>
       </div>
     `;
     container.appendChild(pill);
