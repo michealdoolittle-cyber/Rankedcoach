@@ -146,6 +146,905 @@ html, body{
   }
 }
 
+/* Mobile launch shell overrides ---------------------------------------------
+   This layer is intentionally last: it turns the desktop dashboard into a real
+   phone layout without changing the 1080p/1440p source-of-truth desktop views. */
+@media (max-width:820px){
+  body.is-mobile-layout{
+    --mobile-bottom-nav:74px;
+    --mobile-top-ranks:74px;
+    --mobile-gap:10px;
+    --mobile-card-pad:10px;
+    --mobile-control:42px;
+    --mobile-pill-radius:12px;
+    min-height:100dvh !important;
+    padding:0 !important;
+    overflow-x:hidden !important;
+  }
+
+  body.is-mobile-layout .app-root,
+  body.is-mobile-layout .app,
+  body.is-mobile-layout .app-scale-wrap{
+    width:100vw !important;
+    min-width:0 !important;
+    max-width:100vw !important;
+    min-height:100dvh !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+    transform:none !important;
+  }
+
+  body.is-mobile-layout .page{
+    width:100% !important;
+    min-height:100dvh !important;
+    padding:calc(var(--mobile-top-ranks) + 10px) 8px calc(var(--mobile-bottom-nav) + 16px + env(safe-area-inset-bottom)) !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout .page.active{
+    display:block !important;
+  }
+
+  body.is-mobile-layout .app-header{
+    position:fixed !important;
+    inset:auto 0 0 0 !important;
+    z-index:9000 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) auto !important;
+    align-items:center !important;
+    gap:6px !important;
+    width:100vw !important;
+    height:var(--mobile-bottom-nav) !important;
+    min-height:var(--mobile-bottom-nav) !important;
+    max-height:var(--mobile-bottom-nav) !important;
+    padding:7px 7px calc(7px + env(safe-area-inset-bottom)) !important;
+    transform:none !important;
+    opacity:1 !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout.mobile-nav-hidden .app-header{
+    bottom:calc(-1 * var(--mobile-bottom-nav) - 10px) !important;
+    opacity:1 !important;
+    pointer-events:none !important;
+  }
+
+  body.is-mobile-layout .nav-left{
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  body.is-mobile-layout .nav-logo{
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  body.is-mobile-layout .logo-img{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .nav-links{
+    display:grid !important;
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    align-items:center !important;
+    gap:4px !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  body.is-mobile-layout .nav-btn{
+    width:100% !important;
+    min-width:0 !important;
+    min-height:42px !important;
+    height:42px !important;
+    padding:0 3px !important;
+    border-radius:10px !important;
+    font-size:clamp(8px, 2.45vw, 10px) !important;
+    letter-spacing:.05em !important;
+    line-height:1 !important;
+    text-align:center !important;
+    white-space:nowrap !important;
+  }
+
+  body.is-mobile-layout .nav-center,
+  body.is-mobile-layout .nav-middle{
+    position:fixed !important;
+    top:6px !important;
+    left:8px !important;
+    right:58px !important;
+    z-index:8400 !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:6px !important;
+    width:auto !important;
+    height:62px !important;
+    min-height:62px !important;
+    max-height:62px !important;
+    transform:none !important;
+    pointer-events:auto !important;
+  }
+
+  body.is-mobile-layout .nav-center .nav-rr-widget,
+  body.is-mobile-layout .nav-middle .nav-rr-widget{
+    width:100% !important;
+    min-width:0 !important;
+    max-width:none !important;
+    height:62px !important;
+    min-height:62px !important;
+    max-height:62px !important;
+    padding:6px 7px !important;
+    border-radius:12px !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout .nav-rr-label,
+  body.is-mobile-layout .nav-rr-title{
+    font-size:8px !important;
+    line-height:1 !important;
+    letter-spacing:.06em !important;
+  }
+
+  body.is-mobile-layout .nav-rr-top-value,
+  body.is-mobile-layout .nav-rr-value,
+  body.is-mobile-layout .nav-goal-btn{
+    font-size:10px !important;
+    line-height:1.05 !important;
+  }
+
+  body.is-mobile-layout .nav-tier-icon{
+    width:17px !important;
+    height:17px !important;
+    min-width:17px !important;
+  }
+
+  body.is-mobile-layout .nav-tier-text{
+    font-size:9px !important;
+    line-height:1 !important;
+  }
+
+  body.is-mobile-layout .nav-right{
+    display:flex !important;
+    justify-content:flex-end !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+  }
+
+  body.is-mobile-layout .profile-panel{
+    display:grid !important;
+    grid-template-columns:38px 38px 38px !important;
+    align-items:center !important;
+    justify-content:end !important;
+    gap:4px !important;
+    width:126px !important;
+    min-width:126px !important;
+    max-width:126px !important;
+    height:54px !important;
+    min-height:54px !important;
+    max-height:54px !important;
+    padding:5px !important;
+    overflow:visible !important;
+    border-radius:12px !important;
+  }
+
+  body.is-mobile-layout .profile-avatar-anchor,
+  body.is-mobile-layout .profile-dropdown-anchor{
+    position:relative !important;
+    display:block !important;
+    width:38px !important;
+    height:38px !important;
+    min-width:38px !important;
+  }
+
+  body.is-mobile-layout .profile-avatar-wrap,
+  body.is-mobile-layout .profile-avatar-ring,
+  body.is-mobile-layout .profile-sync-btn,
+  body.is-mobile-layout .profile-dropdown-toggle{
+    width:38px !important;
+    min-width:38px !important;
+    height:38px !important;
+    min-height:38px !important;
+    border-radius:10px !important;
+  }
+
+  body.is-mobile-layout .profile-rank-icon{
+    width:15px !important;
+    height:15px !important;
+  }
+
+  body.is-mobile-layout .profile-info,
+  body.is-mobile-layout .profile-divider{
+    display:none !important;
+  }
+
+  body.is-mobile-layout #profileSyncBtn.profile-sync-btn{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:0 !important;
+  }
+
+  body.is-mobile-layout #profileSyncBtn svg,
+  body.is-mobile-layout .profile-dropdown-toggle svg{
+    width:22px !important;
+    height:22px !important;
+  }
+
+  body.is-mobile-layout #askCoachOpen.ask-coach-nav-btn{
+    position:fixed !important;
+    top:8px !important;
+    right:8px !important;
+    z-index:9400 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:48px !important;
+    min-width:48px !important;
+    height:48px !important;
+    min-height:48px !important;
+    padding:0 !important;
+    border-radius:14px !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+  }
+
+  body.is-mobile-layout #askCoachOpen svg{
+    width:27px !important;
+    height:27px !important;
+  }
+
+  body.is-mobile-layout.mobile-modal-open .app-header,
+  body.is-mobile-layout.mobile-modal-open .nav-center,
+  body.is-mobile-layout.mobile-modal-open .nav-middle,
+  body.is-mobile-layout.mobile-modal-open #askCoachOpen,
+  body.is-mobile-layout.mobile-modal-open .riot-profile-prompt{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .profile-dropdown,
+  body.is-mobile-layout .profile-switcher{
+    position:fixed !important;
+    left:8px !important;
+    right:8px !important;
+    bottom:calc(var(--mobile-bottom-nav) + 8px + env(safe-area-inset-bottom)) !important;
+    top:auto !important;
+    width:auto !important;
+    max-width:none !important;
+    max-height:min(70dvh, 560px) !important;
+    overflow:auto !important;
+    transform:none !important;
+    z-index:9600 !important;
+    border-radius:16px !important;
+  }
+
+  body.is-mobile-layout .ask-coach-panel{
+    position:fixed !important;
+    inset:62px 8px auto 8px !important;
+    width:auto !important;
+    max-width:none !important;
+    max-height:calc(100dvh - 74px - var(--mobile-bottom-nav)) !important;
+    z-index:9350 !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout .ask-coach-panel-inner{
+    width:100% !important;
+    max-height:inherit !important;
+    border-radius:18px !important;
+  }
+
+  body.is-mobile-layout .ask-coach-messages{
+    max-height:38dvh !important;
+  }
+
+  body.is-mobile-layout .lens-modal-overlay.active,
+  body.is-mobile-layout .lens-modal-overlay.is-opening,
+  body.is-mobile-layout .lens-modal-overlay.is-closing{
+    position:fixed !important;
+    inset:0 !important;
+    z-index:20000 !important;
+    display:flex !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout .agent-modal.active,
+  body.is-mobile-layout .agent-modal.is-opening,
+  body.is-mobile-layout .agent-modal.is-closing{
+    position:fixed !important;
+    inset:0 !important;
+    z-index:20000 !important;
+    display:flex !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout .lens-modal,
+  body.is-mobile-layout .agent-modal-inner{
+    width:100vw !important;
+    min-width:100vw !important;
+    max-width:100vw !important;
+    height:100dvh !important;
+    min-height:100dvh !important;
+    max-height:100dvh !important;
+    margin:0 !important;
+    border-radius:0 !important;
+    overflow:auto !important;
+  }
+
+  body.is-mobile-layout .lens-modal-header,
+  body.is-mobile-layout .agent-modal-header{
+    position:sticky !important;
+    top:0 !important;
+    z-index:3 !important;
+    min-height:62px !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout .lens-modal-close,
+  body.is-mobile-layout .modal-exit-btn,
+  body.is-mobile-layout .agent-modal-close{
+    min-width:46px !important;
+    width:46px !important;
+    height:46px !important;
+    border-radius:12px !important;
+  }
+
+  body.is-mobile-layout .lens-modal-body,
+  body.is-mobile-layout .agent-modal-body,
+  body.is-mobile-layout .profile-edit-modal-body{
+    width:100% !important;
+    max-height:none !important;
+    overflow:visible !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout .card,
+  body.is-mobile-layout .compass-main{
+    border-radius:16px !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout #page-home .home-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:var(--mobile-gap) !important;
+  }
+
+  body.is-mobile-layout #page-home .home-middle-row{
+    display:contents !important;
+  }
+
+  body.is-mobile-layout #page-home .loadout-card{ order:1 !important; }
+  body.is-mobile-layout #page-home .rr-card{ order:2 !important; }
+  body.is-mobile-layout #page-home .improvement-card{ order:3 !important; }
+  body.is-mobile-layout #page-home .compass-panel{ order:4 !important; }
+  body.is-mobile-layout #page-home .weekly-focus-card{ order:5 !important; }
+  body.is-mobile-layout #page-home .rr-chart-card{ order:6 !important; }
+
+  body.is-mobile-layout .home-loadout-main{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 54px minmax(104px, 34%) !important;
+    grid-template-areas:
+      "roles spin frame"
+      "info info info" !important;
+    gap:8px !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout .role-filter-row{
+    grid-area:roles !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:5px !important;
+  }
+
+  body.is-mobile-layout .role-filter-btn{
+    min-height:54px !important;
+    height:54px !important;
+    border-radius:11px !important;
+  }
+
+  body.is-mobile-layout .role-filter-btn[data-role="any"]{
+    grid-column:1 / -1 !important;
+  }
+
+  body.is-mobile-layout .role-filter-btn img{
+    width:29px !important;
+    height:29px !important;
+  }
+
+  body.is-mobile-layout #spinAgentBtn{
+    grid-area:spin !important;
+    width:54px !important;
+    min-width:54px !important;
+    height:100% !important;
+    min-height:164px !important;
+    align-self:stretch !important;
+    border-radius:12px !important;
+  }
+
+  body.is-mobile-layout .agent-frame{
+    grid-area:frame !important;
+    width:100% !important;
+    min-width:0 !important;
+    height:164px !important;
+    min-height:164px !important;
+    justify-self:stretch !important;
+    border-radius:16px !important;
+  }
+
+  body.is-mobile-layout .home-loadout-info{
+    grid-area:info !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout .home-loadout-pill{
+    min-height:58px !important;
+    padding:8px 12px !important;
+    border-radius:12px !important;
+  }
+
+  body.is-mobile-layout .home-loadout-pill .pill-label,
+  body.is-mobile-layout .home-loadout-pill .pill-value{
+    line-height:1.08 !important;
+    padding-bottom:2px !important;
+  }
+
+  body.is-mobile-layout .rr-card{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    padding:8px !important;
+  }
+
+  body.is-mobile-layout .rr-card > .card-header{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .rr-total{
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    height:76px !important;
+    min-height:76px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    flex-direction:column !important;
+    border-radius:14px !important;
+  }
+
+  body.is-mobile-layout #totalRRDisplay{
+    font-size:clamp(34px, 12vw, 48px) !important;
+  }
+
+  body.is-mobile-layout .impact-card{
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    min-height:236px !important;
+    height:auto !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 110px !important;
+    grid-template-areas:
+      "pill pill"
+      "scale meter" !important;
+    gap:8px !important;
+    padding:8px 10px 24px !important;
+  }
+
+  body.is-mobile-layout .impact-header-row{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .impact-role-pill{
+    grid-area:pill !important;
+    position:relative !important;
+    inset:auto !important;
+    justify-self:end !important;
+    min-height:38px !important;
+    height:38px !important;
+    width:auto !important;
+    padding:0 12px !important;
+    border-radius:12px !important;
+    font-size:11px !important;
+  }
+
+  body.is-mobile-layout .impact-bar-outer{
+    grid-area:meter !important;
+    position:relative !important;
+    width:92px !important;
+    height:172px !important;
+    justify-self:center !important;
+    align-self:start !important;
+    transform:none !important;
+  }
+
+  body.is-mobile-layout .impact-meter{
+    position:relative !important;
+    width:92px !important;
+    height:172px !important;
+    margin:0 auto !important;
+  }
+
+  body.is-mobile-layout .impact-bar-fill{
+    position:absolute !important;
+    left:50% !important;
+    bottom:0 !important;
+    width:58px !important;
+    max-width:58px !important;
+    height:100% !important;
+    transform:translateX(-50%) !important;
+    border-radius:14px !important;
+  }
+
+  body.is-mobile-layout .impact-scale{
+    grid-area:scale !important;
+    position:relative !important;
+    inset:auto !important;
+    height:172px !important;
+    display:grid !important;
+    align-content:space-between !important;
+    justify-items:start !important;
+    padding:6px 0 4px !important;
+    transform:none !important;
+  }
+
+  body.is-mobile-layout .impact-tier-mark{
+    position:static !important;
+    transform:none !important;
+    font-size:clamp(15px, 4.5vw, 19px) !important;
+  }
+
+  body.is-mobile-layout .impact-score-label{
+    left:50% !important;
+    width:100% !important;
+    transform:translate(-50%, -50%) !important;
+    text-align:center !important;
+  }
+
+  body.is-mobile-layout .impact-score-label strong{
+    font-size:clamp(24px, 9vw, 36px) !important;
+  }
+
+  body.is-mobile-layout .impact-meter-caption{
+    position:absolute !important;
+    right:13px !important;
+    bottom:6px !important;
+    width:104px !important;
+    font-size:10px !important;
+    line-height:1 !important;
+    letter-spacing:.08em !important;
+    text-align:center !important;
+  }
+
+  body.is-mobile-layout .scoreboard{
+    display:grid !important;
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:6px !important;
+  }
+
+  body.is-mobile-layout .scorebox{
+    min-height:64px !important;
+    padding:7px 4px !important;
+  }
+
+  body.is-mobile-layout .timeline-grid,
+  body.is-mobile-layout .improvement-grid{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    height:auto !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout .timeline-pill{
+    min-height:88px !important;
+    height:auto !important;
+  }
+
+  body.is-mobile-layout .compass-main{
+    padding:8px !important;
+  }
+
+  body.is-mobile-layout .compass-summary-body{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout .compass-cards-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout .compass-score-card{
+    min-height:96px !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout .compass-svg-wrap{
+    height:232px !important;
+    min-height:232px !important;
+  }
+
+  body.is-mobile-layout .compass-profile-description.is-open,
+  body.is-mobile-layout .compass-summary-shell.is-expanded .compass-profile-description{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+  }
+
+  body.is-mobile-layout .weekly-focus-pills{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+    height:auto !important;
+  }
+
+  body.is-mobile-layout .weekly-focus-pill{
+    min-height:78px !important;
+  }
+
+  body.is-mobile-layout .rr-chart-layout{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-areas:"chart" "controls" "stats" !important;
+    grid-template-rows:auto auto auto !important;
+    gap:8px !important;
+    padding:0 8px 10px !important;
+  }
+
+  body.is-mobile-layout .home-chart-wrap{
+    grid-area:chart !important;
+    height:270px !important;
+    min-height:270px !important;
+  }
+
+  body.is-mobile-layout .chart-controls{
+    grid-area:controls !important;
+    display:grid !important;
+    grid-template-columns:repeat(5, minmax(0, 1fr)) !important;
+    gap:6px !important;
+  }
+
+  body.is-mobile-layout .chart-controls .graph-btn{
+    min-height:42px !important;
+    height:42px !important;
+    border-radius:11px !important;
+  }
+
+  body.is-mobile-layout .rr-match-stats{
+    grid-area:stats !important;
+    display:grid !important;
+    grid-template-columns:minmax(86px, 1.1fr) repeat(4, minmax(0, 1fr)) !important;
+    grid-template-rows:repeat(2, minmax(42px, auto)) !important;
+    gap:6px !important;
+    padding:6px !important;
+  }
+
+  body.is-mobile-layout .rr-match-stats-head{
+    grid-column:1 !important;
+    grid-row:1 / span 2 !important;
+    writing-mode:vertical-rl !important;
+    transform:rotate(180deg) !important;
+    min-height:90px !important;
+    height:auto !important;
+    justify-content:center !important;
+    align-items:center !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-layout,
+  body.is-mobile-layout #page-stats .stats-layout,
+  body.is-mobile-layout #page-insights .insights-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-card{ order:1 !important; }
+  body.is-mobile-layout #page-logging .logging-feed-card{ order:2 !important; }
+
+  body.is-mobile-layout #page-logging .logging-form{
+    padding:10px !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-hero{
+    grid-template-columns:1fr !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-pill{
+    min-height:54px !important;
+    border-radius:12px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-score-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-notes{
+    min-height:220px !important;
+    height:220px !important;
+  }
+
+  body.is-mobile-layout #page-logging .manual-match-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-layout,
+  body.is-mobile-layout #page-stats .stats-main-grid{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-left{ order:1 !important; }
+  body.is-mobile-layout #page-stats .stats-summary-right{ order:2 !important; }
+
+  body.is-mobile-layout #page-stats .stats-proof-row{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-role-progress-card{ order:1 !important; }
+  body.is-mobile-layout #page-stats .stats-proof-card{ order:2 !important; }
+  body.is-mobile-layout #page-stats .stats-agents-card{ order:1 !important; }
+  body.is-mobile-layout #page-stats .stats-maps-card{ order:2 !important; }
+  body.is-mobile-layout #page-stats .stats-weapons-card{ order:3 !important; }
+  body.is-mobile-layout #page-stats .stats-performance-card{ order:4 !important; }
+  body.is-mobile-layout #page-stats .stats-breakdown-card{ order:5 !important; }
+
+  body.is-mobile-layout #page-stats .stats-summary-grid,
+  body.is-mobile-layout #page-stats .stats-role-progress-row,
+  body.is-mobile-layout #page-stats .stats-agent-list,
+  body.is-mobile-layout #page-stats .stats-map-grid{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-agent-list,
+  body.is-mobile-layout #page-stats .stats-map-list,
+  body.is-mobile-layout #page-stats .stats-weapon-list,
+  body.is-mobile-layout #page-stats .stats-breakdown,
+  body.is-mobile-layout #page-stats .stats-chart-wrap{
+    max-height:none !important;
+    height:auto !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-agent-card,
+  body.is-mobile-layout #page-stats .stats-map-card{
+    min-height:148px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-weapon-row{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-trends-grid,
+  body.is-mobile-layout #page-stats .stats-breakdown{
+    grid-template-columns:1fr !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-action-card{ order:1 !important; }
+  body.is-mobile-layout #page-insights .insights-top-card{ order:2 !important; }
+  body.is-mobile-layout #page-insights .insights-trends-card{ order:3 !important; }
+
+  body.is-mobile-layout #page-insights .insight-action,
+  body.is-mobile-layout #page-insights .insights-top-shell,
+  body.is-mobile-layout #page-insights .insight-trends{
+    height:auto !important;
+    min-height:0 !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-list,
+  body.is-mobile-layout #page-insights .trend-content{
+    max-height:none !important;
+    height:auto !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-filter-bar{
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width:380px){
+  body.is-mobile-layout{
+    --mobile-bottom-nav:72px;
+    --mobile-top-ranks:72px;
+  }
+
+  body.is-mobile-layout .app-header{
+    gap:4px !important;
+    padding-left:5px !important;
+    padding-right:5px !important;
+  }
+
+  body.is-mobile-layout .nav-btn{
+    font-size:8px !important;
+    min-height:40px !important;
+    height:40px !important;
+  }
+
+  body.is-mobile-layout .profile-panel{
+    grid-template-columns:36px 36px 36px !important;
+    width:118px !important;
+    min-width:118px !important;
+    max-width:118px !important;
+    gap:3px !important;
+  }
+
+  body.is-mobile-layout .profile-avatar-anchor,
+  body.is-mobile-layout .profile-dropdown-anchor,
+  body.is-mobile-layout .profile-avatar-wrap,
+  body.is-mobile-layout .profile-avatar-ring,
+  body.is-mobile-layout .profile-sync-btn,
+  body.is-mobile-layout .profile-dropdown-toggle{
+    width:36px !important;
+    min-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+  }
+
+  body.is-mobile-layout .nav-center,
+  body.is-mobile-layout .nav-middle{
+    right:54px !important;
+  }
+
+  body.is-mobile-layout #askCoachOpen.ask-coach-nav-btn{
+    width:44px !important;
+    min-width:44px !important;
+    height:44px !important;
+    min-height:44px !important;
+  }
+
+  body.is-mobile-layout .home-loadout-main{
+    grid-template-columns:minmax(0, 1fr) 48px 98px !important;
+  }
+
+  body.is-mobile-layout #spinAgentBtn{
+    width:48px !important;
+    min-width:48px !important;
+  }
+
+  body.is-mobile-layout .agent-frame{
+    height:154px !important;
+    min-height:154px !important;
+  }
+
+  body.is-mobile-layout .scoreboard,
+  body.is-mobile-layout #page-logging .logging-score-grid,
+  body.is-mobile-layout #page-logging .manual-match-grid,
+  body.is-mobile-layout #page-stats .stats-summary-grid,
+  body.is-mobile-layout #page-stats .stats-role-progress-row,
+  body.is-mobile-layout #page-stats .stats-agent-list,
+  body.is-mobile-layout #page-stats .stats-map-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  body.is-mobile-layout .rr-match-stats{
+    grid-template-columns:1fr 1fr !important;
+    grid-template-rows:auto !important;
+  }
+
+  body.is-mobile-layout .rr-match-stats-head{
+    grid-column:1 / -1 !important;
+    grid-row:auto !important;
+    writing-mode:horizontal-tb !important;
+    transform:none !important;
+  }
+}
+
 body.compat-no-content-visibility .page{
   content-visibility:visible;
   contain:none;
@@ -28628,5 +29527,1206 @@ body.is-mobile-layout textarea{
   body.is-mobile-layout #page-stats .stats-agent-list,
   body.is-mobile-layout #page-stats .stats-map-grid{
     grid-template-columns:1fr !important;
+  }
+}
+
+/* Phone launch correction layer: keep this last so mobile wins over older
+   responsive desktop rules without touching tablet/desktop layouts. */
+@media (max-width:820px){
+  body.is-mobile-layout{
+    --mobile-bottom-nav:76px;
+    --mobile-top-ranks:78px;
+    padding:0 !important;
+    overflow-x:hidden !important;
+  }
+
+  body.is-mobile-layout .page{
+    padding:calc(var(--mobile-top-ranks) + 10px) 8px calc(var(--mobile-bottom-nav) + 18px + env(safe-area-inset-bottom)) !important;
+  }
+
+  body.is-mobile-layout .app-header{
+    position:static !important;
+    inset:auto !important;
+    height:0 !important;
+    min-height:0 !important;
+    max-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    border:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    overflow:visible !important;
+    pointer-events:none !important;
+  }
+
+  body.is-mobile-layout .app-header .nav-left,
+  body.is-mobile-layout .app-header .nav-right{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .app-header .nav-center,
+  body.is-mobile-layout .app-header .nav-middle{
+    position:fixed !important;
+    top:6px !important;
+    left:8px !important;
+    right:58px !important;
+    z-index:8400 !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:6px !important;
+    width:auto !important;
+    height:68px !important;
+    min-height:68px !important;
+    max-height:68px !important;
+    pointer-events:auto !important;
+  }
+
+  body.is-mobile-layout .app-header .nav-center .nav-rr-widget,
+  body.is-mobile-layout .app-header .nav-middle .nav-rr-widget{
+    min-width:0 !important;
+    width:100% !important;
+    height:68px !important;
+    min-height:68px !important;
+    max-height:68px !important;
+    padding:8px 8px !important;
+  }
+
+  body.is-mobile-layout #askCoachOpen.ask-coach-nav-btn{
+    position:fixed !important;
+    top:8px !important;
+    right:8px !important;
+    z-index:9400 !important;
+    display:flex !important;
+    width:48px !important;
+    min-width:48px !important;
+    height:48px !important;
+    min-height:48px !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+  }
+
+  body.is-mobile-layout #askCoachOpen.ask-coach-nav-btn svg{
+    width:30px !important;
+    height:30px !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-shell{
+    position:fixed !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    z-index:9300 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) auto !important;
+    align-items:center !important;
+    gap:6px !important;
+    width:100vw !important;
+    min-height:var(--mobile-bottom-nav) !important;
+    padding:7px 7px calc(7px + env(safe-area-inset-bottom)) !important;
+    border-top:1px solid color-mix(in srgb, var(--accent) 42%, transparent) !important;
+    background:
+      linear-gradient(135deg, rgba(10,16,31,.96), rgba(26,18,34,.96)),
+      var(--card) !important;
+    box-shadow:0 -16px 42px rgba(0,0,0,.48) !important;
+    backdrop-filter:blur(14px) !important;
+    transition:transform .24s ease !important;
+    transform:translateY(0) !important;
+    pointer-events:auto !important;
+  }
+
+  body.is-mobile-layout.mobile-nav-hidden .mobile-bottom-shell{
+    transform:translateY(calc(100% + 10px)) !important;
+    pointer-events:none !important;
+  }
+
+  body.is-mobile-layout.mobile-modal-open .mobile-bottom-shell,
+  body.is-mobile-layout.mobile-modal-open #askCoachOpen,
+  body.is-mobile-layout.mobile-modal-open .nav-center,
+  body.is-mobile-layout.mobile-modal-open .nav-middle,
+  body.is-mobile-layout.mobile-modal-open .riot-profile-prompt{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-pages{
+    display:grid !important;
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:4px !important;
+    min-width:0 !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-page-btn,
+  body.is-mobile-layout .mobile-bottom-icon-btn,
+  body.is-mobile-layout .mobile-bottom-avatar-btn{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    min-width:0 !important;
+    min-height:42px !important;
+    height:42px !important;
+    border:1px solid color-mix(in srgb, var(--accent) 28%, rgba(148,163,184,.32)) !important;
+    border-radius:10px !important;
+    background:linear-gradient(180deg, rgba(51,65,85,.94), rgba(23,32,47,.94)) !important;
+    color:var(--text) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06) !important;
+    font-weight:900 !important;
+    text-transform:uppercase !important;
+    letter-spacing:.05em !important;
+    line-height:1 !important;
+    cursor:pointer !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-page-btn{
+    font-size:clamp(8px, 2.35vw, 10px) !important;
+    padding:0 3px !important;
+    white-space:nowrap !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-page-btn.active{
+    background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent-2) 70%, var(--accent))) !important;
+    border-color:color-mix(in srgb, var(--accent) 80%, white 12%) !important;
+    color:#fff !important;
+    box-shadow:0 0 18px color-mix(in srgb, var(--accent) 38%, transparent) !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-actions{
+    display:grid !important;
+    grid-template-columns:42px 42px 38px !important;
+    gap:4px !important;
+    align-items:center !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-avatar-btn{
+    position:relative !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-avatar-img{
+    width:30px !important;
+    height:30px !important;
+    border-radius:999px !important;
+    object-fit:cover !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-icon-btn{
+    font-size:13px !important;
+    padding:0 !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-icon-btn svg{
+    width:27px !important;
+    height:27px !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-icon-btn.syncing svg{
+    animation:profileSyncSpin 1s linear infinite;
+  }
+
+  body.is-mobile-layout .profile-dropdown,
+  body.is-mobile-layout .profile-switcher{
+    bottom:calc(var(--mobile-bottom-nav) + 10px + env(safe-area-inset-bottom)) !important;
+    left:8px !important;
+    right:8px !important;
+    width:auto !important;
+    max-width:none !important;
+    z-index:9600 !important;
+  }
+
+  body.is-mobile-layout .ask-coach-panel{
+    position:fixed !important;
+    top:64px !important;
+    left:8px !important;
+    right:8px !important;
+    bottom:auto !important;
+    width:auto !important;
+    max-width:none !important;
+    z-index:9500 !important;
+  }
+
+  body.is-mobile-layout .lens-modal-overlay,
+  body.is-mobile-layout .agent-modal,
+  body.is-mobile-layout .agent-modal-overlay,
+  body.is-mobile-layout .auth-modal-overlay,
+  body.is-mobile-layout .profile-edit-overlay{
+    position:fixed !important;
+    inset:0 !important;
+    z-index:9700 !important;
+    padding:0 !important;
+    margin:0 !important;
+    align-items:stretch !important;
+    justify-content:stretch !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout .lens-modal,
+  body.is-mobile-layout .agent-modal-inner,
+  body.is-mobile-layout .auth-modal,
+  body.is-mobile-layout .profile-edit-modal{
+    width:100vw !important;
+    max-width:100vw !important;
+    min-width:0 !important;
+    height:100dvh !important;
+    max-height:100dvh !important;
+    border-radius:0 !important;
+    overflow:auto !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-card{
+    min-height:390px !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-card-layout,
+  body.is-mobile-layout #page-home .rr-card .rr-card-layout,
+  body.is-mobile-layout #page-home .impact-card{
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    grid-template-areas:
+      "total total"
+      "meter meter"
+      "score score" !important;
+    gap:10px !important;
+    align-items:stretch !important;
+    min-height:0 !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-total{
+    grid-area:total !important;
+    min-height:104px !important;
+    width:100% !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-card{
+    grid-area:meter !important;
+    position:relative !important;
+    min-height:260px !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-role-pill{
+    position:static !important;
+    width:100% !important;
+    min-height:42px !important;
+    justify-content:center !important;
+    margin:0 0 8px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-outer{
+    position:relative !important;
+    display:grid !important;
+    grid-template-columns:72px minmax(0, 1fr) !important;
+    gap:12px !important;
+    width:100% !important;
+    min-height:202px !important;
+    margin:0 !important;
+    transform:none !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-scale{
+    position:static !important;
+    grid-column:1 !important;
+    display:grid !important;
+    grid-template-rows:repeat(3, 1fr) !important;
+    align-items:center !important;
+    height:100% !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-scale span{
+    position:static !important;
+    transform:none !important;
+    font-size:16px !important;
+    text-align:right !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-meter{
+    grid-column:2 !important;
+    position:relative !important;
+    width:100% !important;
+    height:100% !important;
+    min-height:202px !important;
+    display:flex !important;
+    align-items:stretch !important;
+    justify-content:center !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-fill{
+    left:50% !important;
+    right:auto !important;
+    width:min(96px, 72%) !important;
+    transform:translateX(-50%) !important;
+    border-radius:12px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-score-label{
+    left:50% !important;
+    right:auto !important;
+    top:var(--impact-score-top, 88%) !important;
+    transform:translate(-50%, -50%) !important;
+    width:min(110px, 82%) !important;
+    text-align:center !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-score-label strong{
+    font-size:clamp(28px, 12vw, 50px) !important;
+    line-height:.9 !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-meter-caption{
+    position:absolute !important;
+    left:50% !important;
+    right:auto !important;
+    bottom:-2px !important;
+    transform:translateX(-50%) !important;
+    width:110px !important;
+    margin:0 !important;
+    text-align:center !important;
+    line-height:.9 !important;
+    white-space:normal !important;
+  }
+
+  body.is-mobile-layout #page-home .scoreboard{
+    grid-area:score !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+    width:100% !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-label,
+  body.is-mobile-layout #page-logging .logging-pill,
+  body.is-mobile-layout #page-logging .logging-score-cell,
+  body.is-mobile-layout #page-logging .score-options button,
+  body.is-mobile-layout #page-logging .mood-btn,
+  body.is-mobile-layout #page-logging .logging-notes,
+  body.is-mobile-layout #page-logging .logging-submit{
+    font-size:clamp(12px, 3.1vw, 15px) !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-score-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  body.is-mobile-layout #page-logging .score-options{
+    grid-template-columns:repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-notes{
+    min-height:220px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-card{
+    order:1 !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-main-grid{
+    order:2 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-layout,
+  body.is-mobile-layout #page-stats .stats-summary-right,
+  body.is-mobile-layout #page-stats .stats-proof-row{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-left{ order:1 !important; }
+  body.is-mobile-layout #page-stats .stats-summary-right{ order:2 !important; }
+  body.is-mobile-layout #page-stats .stats-role-progress-card{ order:1 !important; }
+  body.is-mobile-layout #page-stats .stats-proof-card{ order:2 !important; }
+  body.is-mobile-layout #page-stats .stats-agents-card{ order:1 !important; }
+  body.is-mobile-layout #page-stats .stats-maps-card{ order:2 !important; }
+  body.is-mobile-layout #page-stats .stats-weapons-card{ order:3 !important; }
+  body.is-mobile-layout #page-stats .stats-performance-card{ order:4 !important; }
+  body.is-mobile-layout #page-stats .stats-breakdown-card{ order:5 !important; }
+
+  body.is-mobile-layout #page-stats .stats-proof-card,
+  body.is-mobile-layout #page-stats .stats-role-progress-card{
+    min-height:154px !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-layout,
+  body.is-mobile-layout #page-insights .insights-main-grid,
+  body.is-mobile-layout #page-insights .insight-groups-layout{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+    height:auto !important;
+    min-height:0 !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-action-card{
+    order:1 !important;
+    min-height:420px !important;
+    height:auto !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-top-card{
+    order:2 !important;
+    min-height:460px !important;
+    height:auto !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-trends-card{
+    order:3 !important;
+    min-height:520px !important;
+    height:auto !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-top-shell,
+  body.is-mobile-layout #page-insights .insight-trends,
+  body.is-mobile-layout #page-insights .insights-list,
+  body.is-mobile-layout #page-insights .trend-content,
+  body.is-mobile-layout #page-insights .coaching-read-content{
+    min-height:0 !important;
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+}
+
+@media (max-width:380px){
+  body.is-mobile-layout{
+    --mobile-bottom-nav:72px;
+    --mobile-top-ranks:76px;
+  }
+
+  body.is-mobile-layout .mobile-bottom-actions{
+    grid-template-columns:40px 40px 36px !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-page-btn{
+    font-size:8px !important;
+  }
+
+  body.is-mobile-layout #askCoachOpen.ask-coach-nav-btn{
+    width:44px !important;
+    min-width:44px !important;
+    height:44px !important;
+    min-height:44px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-outer{
+    grid-template-columns:64px minmax(0, 1fr) !important;
+  }
+}
+
+/* Mobile launch polish layer: this intentionally stays after every other
+   responsive block so phone layouts remain readable and touch-friendly. */
+@media (max-width:820px){
+  body.is-mobile-layout #mobileAskCoachOpen.mobile-ask-coach-open{
+    position:fixed !important;
+    top:8px !important;
+    right:8px !important;
+    z-index:9400 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:48px !important;
+    min-width:48px !important;
+    height:48px !important;
+    min-height:48px !important;
+    border-radius:12px !important;
+    opacity:1 !important;
+    pointer-events:auto !important;
+  }
+
+  body.is-mobile-layout #mobileAskCoachOpen.mobile-ask-coach-open svg{
+    width:30px !important;
+    height:30px !important;
+  }
+
+  body.is-mobile-layout.mobile-modal-open #mobileAskCoachOpen{
+    display:none !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-shell{
+    min-height:76px !important;
+  }
+
+  body.is-mobile-layout .mobile-bottom-page-btn,
+  body.is-mobile-layout .mobile-bottom-icon-btn,
+  body.is-mobile-layout .mobile-bottom-avatar-btn{
+    min-height:44px !important;
+    height:44px !important;
+    touch-action:manipulation !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-card{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "total"
+      "impact"
+      "score" !important;
+    gap:10px !important;
+    min-height:0 !important;
+    height:auto !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-card > .card-header{
+    display:none !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-total{
+    grid-area:total !important;
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    min-height:86px !important;
+    max-height:none !important;
+    transform:none !important;
+    border-radius:14px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    margin:0 !important;
+  }
+
+  body.is-mobile-layout #page-home #totalRRDisplay{
+    font-size:clamp(34px, 15vw, 58px) !important;
+    line-height:.9 !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-card{
+    grid-area:impact !important;
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "pill"
+      "meter"
+      "caption" !important;
+    gap:8px !important;
+    min-height:310px !important;
+    height:auto !important;
+    padding:10px 12px 12px !important;
+    overflow:hidden !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-header-row{
+    display:none !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-role-pill{
+    grid-area:pill !important;
+    position:relative !important;
+    inset:auto !important;
+    width:100% !important;
+    min-height:40px !important;
+    max-width:none !important;
+    margin:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:clamp(10px, 2.8vw, 13px) !important;
+    white-space:normal !important;
+    text-align:center !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-outer{
+    grid-area:meter !important;
+    position:relative !important;
+    width:100% !important;
+    min-height:218px !important;
+    height:218px !important;
+    display:block !important;
+    margin:0 !important;
+    transform:none !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-meter{
+    position:relative !important;
+    width:100% !important;
+    height:100% !important;
+    min-height:218px !important;
+    display:grid !important;
+    grid-template-columns:minmax(70px, 30%) minmax(86px, 1fr) !important;
+    gap:10px !important;
+    align-items:stretch !important;
+    justify-items:center !important;
+    margin:0 !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-scale{
+    grid-column:1 !important;
+    position:static !important;
+    display:grid !important;
+    grid-template-rows:repeat(3, 1fr) !important;
+    align-items:center !important;
+    justify-items:end !important;
+    width:100% !important;
+    height:100% !important;
+    padding:0 6px 0 0 !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-scale span{
+    position:static !important;
+    transform:none !important;
+    font-size:clamp(13px, 4vw, 17px) !important;
+    line-height:1 !important;
+    text-align:right !important;
+    white-space:nowrap !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-fill{
+    grid-column:2 !important;
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:auto !important;
+    width:min(96px, 86%) !important;
+    height:100% !important;
+    min-height:218px !important;
+    transform:none !important;
+    justify-self:center !important;
+    border-radius:14px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-score-label{
+    position:absolute !important;
+    left:50% !important;
+    top:50% !important;
+    transform:translate(-50%, -50%) !important;
+    width:100% !important;
+    padding:0 4px !important;
+    text-align:center !important;
+    pointer-events:none !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-score-label strong{
+    font-size:clamp(28px, 11vw, 48px) !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-meter-caption{
+    grid-area:caption !important;
+    position:static !important;
+    width:100% !important;
+    transform:none !important;
+    margin:0 !important;
+    text-align:center !important;
+    line-height:.95 !important;
+    white-space:normal !important;
+  }
+
+  body.is-mobile-layout #page-home .scoreboard{
+    grid-area:score !important;
+    position:static !important;
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+    width:100% !important;
+    margin:0 !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-card > .card-header{
+    display:none !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-card{
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-form{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:10px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-hero{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-hero-kicker,
+  body.is-mobile-layout #page-logging .logging-label,
+  body.is-mobile-layout #page-logging .pill-label{
+    font-size:11px !important;
+    line-height:1.1 !important;
+    letter-spacing:.08em !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-hero-title{
+    font-size:clamp(18px, 5.3vw, 22px) !important;
+    line-height:1.05 !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-hero-text,
+  body.is-mobile-layout #page-logging .logging-live-meta,
+  body.is-mobile-layout #page-logging .logging-live-focus{
+    font-size:clamp(12px, 3.5vw, 15px) !important;
+    line-height:1.25 !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-row,
+  body.is-mobile-layout #page-logging .logging-pill{
+    width:100% !important;
+    min-width:0 !important;
+    min-height:58px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-pill{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    padding:8px 10px !important;
+  }
+
+  body.is-mobile-layout #page-logging .log-agent-text,
+  body.is-mobile-layout #page-logging .focus-preview-text,
+  body.is-mobile-layout #page-logging .agent-select-text,
+  body.is-mobile-layout #page-logging .logging-input,
+  body.is-mobile-layout #page-logging .logging-notes{
+    font-size:clamp(14px, 4vw, 17px) !important;
+    line-height:1.15 !important;
+  }
+
+  body.is-mobile-layout #page-logging .log-agent-img{
+    width:34px !important;
+    height:34px !important;
+    min-width:34px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-select-trigger,
+  body.is-mobile-layout #page-logging .focus-select-symbol{
+    min-width:108px !important;
+    height:44px !important;
+    font-size:14px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-score-grid{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-score-cell{
+    min-height:78px !important;
+    padding:9px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-rating,
+  body.is-mobile-layout #page-logging .logging-moods{
+    display:grid !important;
+    grid-template-columns:repeat(5, minmax(0, 1fr)) !important;
+    gap:6px !important;
+    width:100% !important;
+  }
+
+  body.is-mobile-layout #page-logging :is(#logTeamCommsRow, #logSelfCommsRow).logging-rating{
+    grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-chip{
+    min-height:34px !important;
+    font-size:14px !important;
+    line-height:1 !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-notes{
+    min-height:260px !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-submit{
+    width:min(180px, 70%) !important;
+    min-height:48px !important;
+    margin:0 auto !important;
+    font-size:14px !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-logging :is(
+    .logging-select-trigger .agent-select-text,
+    .focus-select-symbol .agent-select-text,
+    .logging-pill .pill-label,
+    .log-agent-text,
+    .focus-preview-text,
+    #logFocusCustomValue
+  ){
+    font-size:clamp(14px, 4vw, 17px) !important;
+    line-height:1.15 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-logging :is(
+    .logging-label,
+    .logging-hero-kicker
+  ){
+    font-size:11px !important;
+    line-height:1.1 !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stat-block{
+    min-height:82px !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stat-label{
+    font-size:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stat-value{
+    font-size:clamp(20px, 7vw, 28px) !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-summary-card{
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-proof-card{
+    min-height:150px !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-role-progress-card{
+    min-height:320px !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-role-progress-row{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-role-progress-item{
+    min-height:66px !important;
+  }
+
+  body.is-mobile-layout #page-stats .stats-maps-card,
+  body.is-mobile-layout #page-stats .stats-agents-card,
+  body.is-mobile-layout #page-stats .stats-weapons-card{
+    min-height:480px !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-action{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "hero"
+      "detail-1"
+      "detail-2"
+      "detail-3" !important;
+    gap:8px !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-action-card{
+    min-height:0 !important;
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-action-hero,
+  body.is-mobile-layout #page-insights .insight-focus-detail{
+    min-height:0 !important;
+    width:100% !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-focus-detail{
+    padding:12px !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-focus-detail > div:last-child,
+  body.is-mobile-layout #page-insights .insight-action-copy,
+  body.is-mobile-layout #page-insights .insights-top-card,
+  body.is-mobile-layout #page-insights .insights-trends-card{
+    font-size:clamp(12px, 3.4vw, 15px) !important;
+    line-height:1.25 !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-meta-row{
+    position:static !important;
+    display:flex !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+    margin:6px 0 !important;
+  }
+}
+
+@media (max-width:380px){
+  body.is-mobile-layout #page-home .impact-meter{
+    grid-template-columns:minmax(58px, 28%) minmax(78px, 1fr) !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-scale span{
+    font-size:13px !important;
+  }
+
+  body.is-mobile-layout #page-logging .logging-select-trigger,
+  body.is-mobile-layout #page-logging .focus-select-symbol{
+    min-width:92px !important;
+  }
+}
+
+/* Final phone safeguards for launch review. These only apply after the app has
+   entered mobile mode, leaving desktop/tablet visuals untouched. */
+@media (max-width:820px){
+  body.is-mobile-layout #page-home .rr-card{
+    gap:8px !important;
+    padding:10px !important;
+  }
+
+  body.is-mobile-layout #page-home .rr-total{
+    min-height:72px !important;
+    padding:8px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-card{
+    min-height:252px !important;
+    gap:6px !important;
+    padding:9px 10px 10px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-role-pill{
+    min-height:36px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-outer{
+    min-height:168px !important;
+    height:168px !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-meter{
+    min-height:168px !important;
+    height:168px !important;
+    grid-template-columns:minmax(64px, 28%) minmax(74px, 1fr) !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-bar-fill{
+    min-height:168px !important;
+    width:min(82px, 82%) !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-scale span{
+    font-size:clamp(12px, 3.6vw, 15px) !important;
+  }
+
+  body.is-mobile-layout #page-home .impact-meter-caption{
+    font-size:clamp(10px, 2.8vw, 12px) !important;
+    letter-spacing:.08em !important;
+  }
+
+  body.is-mobile-layout #page-home .scoreboard{
+    gap:6px !important;
+  }
+
+  body.is-mobile-layout #page-home .scorebox{
+    min-height:58px !important;
+    padding:8px !important;
+  }
+
+  body.is-mobile-layout #page-home .scorebox .small{
+    font-size:clamp(11px, 3.4vw, 13px) !important;
+  }
+
+  body.is-mobile-layout #page-home .score-num{
+    font-size:clamp(24px, 8vw, 34px) !important;
+  }
+
+  body.is-mobile-layout #page-insights .insights-action-card{
+    display:flex !important;
+    flex-direction:column !important;
+    min-height:auto !important;
+    height:auto !important;
+    overflow:visible !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-action{
+    width:100% !important;
+    inline-size:100% !important;
+    min-height:auto !important;
+    height:auto !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-action-hero{
+    grid-area:hero !important;
+  }
+
+  body.is-mobile-layout #page-insights .insight-focus-detail:nth-of-type(1){ grid-area:detail-1 !important; }
+  body.is-mobile-layout #page-insights .insight-focus-detail:nth-of-type(2){ grid-area:detail-2 !important; }
+  body.is-mobile-layout #page-insights .insight-focus-detail:nth-of-type(3){ grid-area:detail-3 !important; }
+}
+
+/* S20/iPhone launch guardrails. Keep these last so phone-only readability wins
+   over older desktop scaling and theme preview rules. */
+@media (max-width:820px){
+  html body[data-theme].is-mobile-layout #page-logging .logging-chip{
+    font-size:16px !important;
+    line-height:1 !important;
+    font-weight:900 !important;
+    letter-spacing:.02em !important;
+    color:var(--button-text, #f8fafc) !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-card{
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-areas:
+      "pill"
+      "meter"
+      "caption" !important;
+    min-height:244px !important;
+    gap:7px !important;
+    padding:9px 10px 12px !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-role-pill{
+    grid-area:pill !important;
+    justify-self:stretch !important;
+    width:100% !important;
+    min-height:36px !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-bar-outer{
+    grid-area:meter !important;
+    width:100% !important;
+    min-height:158px !important;
+    height:158px !important;
+    display:flex !important;
+    align-items:stretch !important;
+    justify-content:center !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-meter{
+    width:min(210px, 100%) !important;
+    min-height:158px !important;
+    height:158px !important;
+    display:grid !important;
+    grid-template-columns:74px 82px !important;
+    column-gap:14px !important;
+    align-items:stretch !important;
+    justify-content:center !important;
+    margin:0 auto !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-scale{
+    grid-column:1 !important;
+    display:grid !important;
+    grid-template-rows:1fr 1fr 1fr !important;
+    align-items:center !important;
+    justify-items:start !important;
+    height:158px !important;
+    padding:0 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home #impactTierCarry{ grid-row:1 !important; }
+  html body[data-theme].is-mobile-layout #page-home #impactTierSolid{ grid-row:2 !important; }
+  html body[data-theme].is-mobile-layout #page-home #impactTierPoor{ grid-row:3 !important; }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-tier-mark{
+    position:static !important;
+    transform:none !important;
+    font-size:clamp(13px, 4vw, 17px) !important;
+    line-height:1 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-bar-fill{
+    grid-column:2 !important;
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+    bottom:auto !important;
+    width:72px !important;
+    max-width:72px !important;
+    min-height:158px !important;
+    height:158px !important;
+    transform:none !important;
+    justify-self:center !important;
+    overflow:hidden !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-score-label{
+    position:absolute !important;
+    left:50% !important;
+    right:auto !important;
+    top:var(--impact-score-top, 50%) !important;
+    width:100% !important;
+    max-width:100% !important;
+    transform:translate(-50%, -50%) !important;
+    text-align:center !important;
+    padding:0 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-score-label strong{
+    display:block !important;
+    width:100% !important;
+    font-size:clamp(26px, 9vw, 36px) !important;
+    line-height:.92 !important;
+    white-space:nowrap !important;
+    letter-spacing:-.06em !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-home .impact-meter-caption{
+    grid-area:caption !important;
+    position:static !important;
+    width:100% !important;
+    margin:0 !important;
+    text-align:center !important;
+    font-size:11px !important;
+    line-height:1 !important;
+    letter-spacing:.08em !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-priority-title{
+    display:block !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    max-width:100% !important;
+    font-size:clamp(18px, 5.2vw, 22px) !important;
+    line-height:1.08 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-action-copy{
+    display:block !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    max-height:none !important;
+    line-height:1.25 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-meta-row{
+    width:100% !important;
+    gap:6px !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-meta-pill{
+    min-height:24px !important;
+    padding:4px 8px !important;
+    font-size:10px !important;
+    line-height:1 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-action-hero + .insight-meta-row + .insight-focus-detail{
+    grid-area:detail-1 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-action-hero + .insight-meta-row + .insight-focus-detail + .insight-focus-detail{
+    grid-area:detail-2 !important;
+  }
+
+  html body[data-theme].is-mobile-layout #page-insights .insight-action-hero + .insight-meta-row + .insight-focus-detail + .insight-focus-detail + .insight-focus-detail{
+    grid-area:detail-3 !important;
   }
 }

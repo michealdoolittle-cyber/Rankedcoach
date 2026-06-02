@@ -352,6 +352,9 @@ const MOBILE_LAYOUT_MAX_WIDTH = 820;
 let mobileNavLastScrollY = 0;
 let mobileNavScrollRaf = 0;
 let mobileNavListenersInstalled = false;
+let mobileBottomShell = null;
+let mobileBottomShellTimer = 0;
+let mobileAskCoachButton = null;
 
 function getViewportWidth() {
   return window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || APP_BASE_WIDTH;
@@ -368,9 +371,167 @@ function syncMobileViewportState() {
 
   if (!isMobile) {
     document.body?.classList.remove("mobile-nav-hidden");
+    document.body?.classList.remove("mobile-modal-open");
+  } else if (document.body?.classList.contains("has-active-modal")) {
+    document.body.classList.add("mobile-modal-open");
+  }
+
+  if (document.body) {
+    window.requestAnimationFrame(() => {
+      syncMobileBottomShellState();
+      syncMobileAskCoachButtonState();
+    });
   }
 
   return isMobile;
+}
+
+function getMobileNavPageLabel(page = "") {
+  const labels = {
+    home: "Home",
+    logging: "Logging",
+    stats: "Stats",
+    insights: "Insights"
+  };
+  return labels[page] || page;
+}
+
+function ensureMobileBottomShell() {
+  if (mobileBottomShell || !document.body) return mobileBottomShell;
+
+  mobileBottomShell = document.createElement("nav");
+  mobileBottomShell.id = "mobileBottomShell";
+  mobileBottomShell.className = "mobile-bottom-shell";
+  mobileBottomShell.setAttribute("aria-label", "Mobile app navigation");
+  mobileBottomShell.innerHTML = `
+    <div class="mobile-bottom-pages" aria-label="Pages">
+      ${["home", "logging", "stats", "insights"].map((page) => `
+        <button type="button" class="mobile-bottom-page-btn" data-mobile-page="${page}" aria-label="${getMobileNavPageLabel(page)} page">
+          ${getMobileNavPageLabel(page)}
+        </button>
+      `).join("")}
+    </div>
+    <div class="mobile-bottom-actions" aria-label="Profile actions">
+      <button type="button" class="mobile-bottom-avatar-btn" data-mobile-action="profile" aria-label="Open profile switcher">
+        <img class="mobile-bottom-avatar-img" alt="" aria-hidden="true">
+      </button>
+      <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="sync" aria-label="Sync profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 12a8 8 0 0 1-13.66 5.66M4 12A8 8 0 0 1 17.66 6.34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          <path d="M15 4h3v3M6 17H3v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </button>
+      <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="menu" aria-label="Open profile menu">v</button>
+    </div>
+  `;
+
+  mobileBottomShell.addEventListener("click", (event) => {
+    const pageButton = event.target.closest("[data-mobile-page]");
+    if (pageButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.querySelector(`.nav-btn[data-page="${pageButton.dataset.mobilePage}"]`)?.click();
+      syncMobileBottomShellState();
+      return;
+    }
+
+    const actionButton = event.target.closest("[data-mobile-action]");
+    if (!actionButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const action = actionButton.dataset.mobileAction;
+    if (action === "profile") {
+      document.getElementById("profileAvatarWrap")?.click();
+    } else if (action === "sync") {
+      document.getElementById("profileSyncBtn")?.click();
+    } else if (action === "menu") {
+      document.getElementById("profileDropdownToggle")?.click();
+    }
+  });
+
+  document.body.appendChild(mobileBottomShell);
+
+  if (!mobileBottomShellTimer) {
+    mobileBottomShellTimer = window.setInterval(syncMobileBottomShellState, 1200);
+  }
+
+  return mobileBottomShell;
+}
+
+function getMobileAskCoachFallbackIcon() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="5" y="7" width="14" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2"></rect>
+      <path d="M12 4v3M8.5 13h.01M15.5 13h.01M9 17h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+  `;
+}
+
+function ensureMobileAskCoachButton() {
+  if (mobileAskCoachButton || !document.body) return mobileAskCoachButton;
+
+  mobileAskCoachButton = document.createElement("button");
+  mobileAskCoachButton.id = "mobileAskCoachOpen";
+  mobileAskCoachButton.type = "button";
+  mobileAskCoachButton.className = "ask-coach-nav-btn mobile-ask-coach-open";
+  mobileAskCoachButton.title = "Ask Coach";
+  mobileAskCoachButton.setAttribute("aria-label", "Open Ask Coach");
+  mobileAskCoachButton.setAttribute("aria-expanded", "false");
+  mobileAskCoachButton.innerHTML = document.getElementById("askCoachOpen")?.innerHTML || getMobileAskCoachFallbackIcon();
+  mobileAskCoachButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    document.getElementById("askCoachOpen")?.click();
+  });
+  document.body.appendChild(mobileAskCoachButton);
+  return mobileAskCoachButton;
+}
+
+function syncMobileAskCoachButtonState() {
+  const isMobile = isMobileLayoutViewport();
+  const button = ensureMobileAskCoachButton();
+  if (!button) return;
+
+  button.hidden = !isMobile;
+  if (!isMobile) return;
+
+  const source = document.getElementById("askCoachOpen");
+  if (source?.innerHTML && source.innerHTML !== button.innerHTML) {
+    button.innerHTML = source.innerHTML;
+  }
+  button.setAttribute("aria-expanded", source?.getAttribute("aria-expanded") || "false");
+  button.title = source?.title || "Ask Coach";
+}
+
+function syncMobileBottomShellState() {
+  const isMobile = isMobileLayoutViewport();
+  const shell = ensureMobileBottomShell();
+  if (!shell) return;
+
+  shell.hidden = !isMobile;
+  if (!isMobile) return;
+
+  const activePageId = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
+  shell.querySelectorAll("[data-mobile-page]").forEach((button) => {
+    const isActive = button.dataset.mobilePage === activePageId;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-current", isActive ? "page" : "false");
+  });
+
+  const avatarImg = shell.querySelector(".mobile-bottom-avatar-img");
+  const sourceAvatar = document.getElementById("profileAvatarImg");
+  if (avatarImg && sourceAvatar?.getAttribute("src")) {
+    avatarImg.src = sourceAvatar.getAttribute("src");
+  }
+
+  const syncButton = shell.querySelector('[data-mobile-action="sync"]');
+  const sourceSync = document.getElementById("profileSyncBtn");
+  if (syncButton && sourceSync) {
+    syncButton.classList.toggle("syncing", sourceSync.classList.contains("syncing"));
+    syncButton.classList.toggle("counting", sourceSync.classList.contains("counting"));
+    syncButton.title = sourceSync.title || "Sync profile";
+  }
 }
 
 function updateMobileNavVisibility() {
@@ -12059,13 +12220,14 @@ function refreshActiveModalState() {
   const body = document.body;
   if (!body) return;
 
-  const hasActiveModal = Array.from(document.querySelectorAll(".lens-modal-overlay, .agent-modal")).some((modal) =>
+  const hasActiveModal = Array.from(document.querySelectorAll(".lens-modal-overlay, .agent-modal, .profile-edit-overlay, .auth-modal-overlay")).some((modal) =>
     modal.classList.contains("active") ||
     modal.classList.contains("is-opening") ||
     modal.classList.contains("is-closing")
   );
 
   body.classList.toggle("has-active-modal", hasActiveModal);
+  body.classList.toggle("mobile-modal-open", hasActiveModal && isMobileLayoutViewport());
   if (hasActiveModal) hideChartTooltip();
 }
 
@@ -28865,6 +29027,18 @@ function installThemeBuilderStyles() {
     [data-tb-auto-fit="1"]{
       font-size:var(--tb-auto-fit-font-size, inherit) !important;
     }
+    body.is-mobile-layout #page-logging .log-agent-text[data-tb-auto-fit="1"],
+    body.is-mobile-layout #page-logging .agent-select-text[data-tb-auto-fit="1"],
+    body.is-mobile-layout #page-logging .pill-label[data-tb-auto-fit="1"],
+    body.is-mobile-layout #page-logging .focus-preview-text[data-tb-auto-fit="1"]{
+      font-size:clamp(14px, 4vw, 17px) !important;
+      line-height:1.15 !important;
+    }
+    body.is-mobile-layout #page-logging .logging-select-trigger .agent-select-text[data-tb-auto-fit="1"],
+    body.is-mobile-layout #page-logging .focus-select-symbol .agent-select-text[data-tb-auto-fit="1"]{
+      font-size:14px !important;
+      line-height:1 !important;
+    }
     #themeBuilderDock{
       position:fixed;
       left:18px;
@@ -40555,6 +40729,102 @@ function renderInsightsModel() {
   window.setTimeout(enforceInsightsActionFluidWidth, 0);
 }
 
+function clearInsightsActionMobileInlineLayout(action, card, hero, meta, details) {
+  const clearProps = (el, props) => {
+    if (!(el instanceof HTMLElement)) return;
+    props.forEach((property) => el.style.removeProperty(property));
+  };
+
+  if (card instanceof HTMLElement) {
+    [
+      "--insight-action-bleed-left",
+      "--insight-action-bleed-right",
+      "--parent-card-content-scale-x",
+      "--parent-card-content-scale-y",
+      "--parent-card-content-shift-x",
+      "--parent-card-content-shift-y",
+      "--parent-card-content-origin"
+    ].forEach((property) => card.style.removeProperty(property));
+    Array.from(card.children || []).forEach((child) => {
+      clearProps(child, ["transform", "transform-origin"]);
+    });
+  }
+
+  clearProps(action, [
+    "position",
+    "left",
+    "top",
+    "width",
+    "inline-size",
+    "max-width",
+    "min-width",
+    "margin-left",
+    "margin-right",
+    "padding-right",
+    "translate",
+    "scale",
+    "transform",
+    "box-sizing",
+    "display",
+    "grid-template-columns",
+    "grid-template-rows",
+    "grid-template-areas",
+    "column-gap",
+    "row-gap"
+  ]);
+
+  clearProps(hero, [
+    "grid-area",
+    "grid-column",
+    "width",
+    "inline-size",
+    "max-width",
+    "min-width",
+    "margin-left",
+    "margin-right",
+    "translate",
+    "scale",
+    "transform",
+    "box-sizing"
+  ]);
+
+  clearProps(meta, [
+    "position",
+    "top",
+    "right",
+    "left",
+    "bottom",
+    "grid-area",
+    "width",
+    "inline-size",
+    "max-width",
+    "margin",
+    "translate",
+    "scale",
+    "transform",
+    "z-index"
+  ]);
+
+  details.forEach((detail) => {
+    clearProps(detail, [
+      "width",
+      "inline-size",
+      "max-width",
+      "min-width",
+      "margin-left",
+      "margin-right",
+      "translate",
+      "scale",
+      "transform",
+      "box-sizing"
+    ]);
+  });
+
+  Array.from(action.children || []).forEach((child) => {
+    clearProps(child, ["transform", "transform-origin"]);
+  });
+}
+
 function enforceInsightsActionFluidWidth() {
   const action = document.querySelector("#page-insights .insights-action-card .insight-action");
   if (!(action instanceof HTMLElement)) return;
@@ -40563,6 +40833,12 @@ function enforceInsightsActionFluidWidth() {
   const hero = action.querySelector(".insight-action-hero");
   const meta = action.querySelector(".insight-meta-row");
   const details = Array.from(action.querySelectorAll(".insight-focus-detail"));
+
+  if (isMobileLayoutViewport()) {
+    clearInsightsActionMobileInlineLayout(action, card, hero, meta, details);
+    return;
+  }
+
   let actionBleedLeft = "0px";
   let actionBleedRight = "0px";
   let actionInlineWidth = "100%";
