@@ -359,6 +359,7 @@ let mobileAskCoachButton = null;
 let mobileHeaderSyncButton = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
+const mobileProfilePortalMarkers = new Map();
 
 function getViewportWidth() {
   return window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || APP_BASE_WIDTH;
@@ -366,6 +367,33 @@ function getViewportWidth() {
 
 function isMobileLayoutViewport() {
   return getViewportWidth() <= MOBILE_LAYOUT_MAX_WIDTH;
+}
+
+function portalMobileProfileSurface(id) {
+  const el = document.getElementById(id);
+  if (!el || !document.body || !isMobileLayoutViewport()) return el;
+
+  if (!mobileProfilePortalMarkers.has(id) && el.parentNode) {
+    const marker = document.createComment(`mobile-${id}-portal`);
+    el.parentNode.insertBefore(marker, el);
+    mobileProfilePortalMarkers.set(id, marker);
+  }
+
+  if (el.parentNode !== document.body) {
+    document.body.appendChild(el);
+  }
+
+  return el;
+}
+
+function restoreMobileProfileSurfaces() {
+  mobileProfilePortalMarkers.forEach((marker, id) => {
+    const el = document.getElementById(id);
+    if (!el || !marker.parentNode) return;
+    marker.parentNode.insertBefore(el, marker.nextSibling);
+    marker.remove();
+  });
+  mobileProfilePortalMarkers.clear();
 }
 
 function setImportantStyle(el, property, value) {
@@ -477,6 +505,7 @@ function syncMobileViewportState() {
   if (!isMobile) {
     document.body?.classList.remove("mobile-nav-hidden");
     document.body?.classList.remove("mobile-modal-open");
+    restoreMobileProfileSurfaces();
     document.documentElement.style.overflowY = "";
     document.body && (document.body.style.overflowY = "");
   } else if (document.body?.classList.contains("has-active-modal")) {
@@ -561,10 +590,12 @@ function ensureMobileBottomShell() {
 
     const action = actionButton.dataset.mobileAction;
     if (action === "profile") {
+      portalMobileProfileSurface("profileSwitcher");
       document.getElementById("profileAvatarWrap")?.click();
     } else if (action === "sync") {
       document.getElementById("profileSyncBtn")?.click();
     } else if (action === "menu") {
+      portalMobileProfileSurface("profileDropdown");
       document.getElementById("profileDropdownToggle")?.click();
     }
   });
