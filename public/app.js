@@ -4648,17 +4648,21 @@ function openAskCoachModal() {
 function closeAskCoachModal() {
   const panel = document.getElementById("askCoachPanel");
   const button = document.getElementById("askCoachOpen");
+  const mobileButton = document.getElementById("mobileAskCoachOpen");
   const activeElement = document.activeElement;
   if (panel?.contains(activeElement)) {
-    if (button && typeof button.focus === "function") {
-      button.focus({ preventScroll: true });
-    } else if (typeof activeElement?.blur === "function") {
+    const focusTarget = isMobileLayoutViewport() ? (mobileButton || button) : (button || mobileButton);
+    if (focusTarget && typeof focusTarget.focus === "function") {
+      focusTarget.focus({ preventScroll: true });
+    }
+    if (panel.contains(document.activeElement) && typeof activeElement?.blur === "function") {
       activeElement.blur();
     }
   }
   panel?.classList.remove("open");
   panel?.setAttribute("aria-hidden", "true");
   button?.setAttribute("aria-expanded", "false");
+  mobileButton?.setAttribute("aria-expanded", "false");
 }
 
 function showAskCoachSurvey() {
