@@ -359,6 +359,7 @@ let mobileAskCoachButton = null;
 let mobileHeaderSyncButton = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
+let mobileStatsTrendIndex = 0;
 const mobileProfilePortalMarkers = new Map();
 
 function getViewportWidth() {
@@ -521,6 +522,7 @@ function syncMobileViewportState() {
       syncMobileHeaderSyncButtonState();
       ensureMobileLoggingTabs();
       ensureMobileStatsTabs();
+      ensureMobileTrendCarousel();
       ensureMobileManualReportControls();
       scheduleMobileScrollExtentSync();
     });
@@ -745,9 +747,8 @@ function ensureMobileStatsTabs() {
     tabs.innerHTML = `
       <button type="button" data-mobile-stats-view="agents">Agents</button>
       <button type="button" data-mobile-stats-view="maps">Maps</button>
-      <button type="button" data-mobile-stats-view="weapons">Weapons</button>
-    `;
-    grid.insertAdjacentElement("beforebegin", tabs);
+        <button type="button" data-mobile-stats-view="weapons">Weapons</button>
+      `;
     tabs.addEventListener("click", (event) => {
       const button = event.target.closest("[data-mobile-stats-view]");
       if (!button) return;
@@ -757,12 +758,111 @@ function ensureMobileStatsTabs() {
     });
   }
 
+  const anchor =
+    page.querySelector(".stats-agents-card")
+    || page.querySelector(".stats-maps-card")
+    || page.querySelector(".stats-weapons-card");
+  if (anchor?.parentElement === grid && tabs.parentElement !== grid) {
+    grid.insertBefore(tabs, anchor);
+  } else if (anchor?.parentElement === grid && tabs.nextElementSibling !== anchor) {
+    grid.insertBefore(tabs, anchor);
+  } else if (!anchor && tabs.parentElement !== grid) {
+    grid.insertAdjacentElement("beforebegin", tabs);
+  }
+
   if (!page.dataset.mobileStatsView) page.dataset.mobileStatsView = "agents";
   tabs.querySelectorAll("[data-mobile-stats-view]").forEach((button) => {
     const isActive = button.dataset.mobileStatsView === page.dataset.mobileStatsView;
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+}
+
+function getMobileTrendTone(card) {
+  if (!card) return "all";
+  if (card.classList.contains("stats-trend-up") || card.classList.contains("stats-trend-good")) return "strengths";
+  if (card.classList.contains("stats-trend-down") || card.classList.contains("stats-trend-bad")) return "needs";
+  if (card.classList.contains("stats-trend-warn")) return "watch";
+  return "all";
+}
+
+function ensureMobileTrendCarousel() {
+  const page = document.getElementById("page-stats");
+  const card = page?.querySelector(".stats-performance-card");
+  const chart = document.getElementById("statsPerformanceChart");
+  if (!page || !card || !chart) return;
+
+  let tabs = document.getElementById("mobileTrendTabs");
+  if (!tabs) {
+    tabs = document.createElement("div");
+    tabs.id = "mobileTrendTabs";
+    tabs.className = "mobile-trend-tabs";
+    tabs.innerHTML = `
+      <button type="button" data-mobile-trend-filter="all">All</button>
+      <button type="button" data-mobile-trend-filter="needs">Needs Work</button>
+      <button type="button" data-mobile-trend-filter="watch">Watch</button>
+      <button type="button" data-mobile-trend-filter="strengths">Strengths</button>
+    `;
+    tabs.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-trend-filter]");
+      if (!button) return;
+      event.preventDefault();
+      page.dataset.mobileTrendFilter = button.dataset.mobileTrendFilter || "all";
+      mobileStatsTrendIndex = 0;
+      ensureMobileTrendCarousel();
+    });
+  }
+
+  let nav = document.getElementById("mobileTrendNav");
+  if (!nav) {
+    nav = document.createElement("div");
+    nav.id = "mobileTrendNav";
+    nav.className = "mobile-trend-nav";
+    nav.innerHTML = `
+      <button type="button" data-mobile-trend-step="-1" aria-label="Previous trend card">&lsaquo;</button>
+      <span id="mobileTrendCounter">1 / 1</span>
+      <button type="button" data-mobile-trend-step="1" aria-label="Next trend card">&rsaquo;</button>
+    `;
+    nav.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-trend-step]");
+      if (!button) return;
+      event.preventDefault();
+      const visibleCards = [...chart.querySelectorAll(".stats-trend-card")].filter(item => !item.classList.contains("mobile-trend-filtered"));
+      if (!visibleCards.length) return;
+      const step = Number(button.dataset.mobileTrendStep || 0);
+      mobileStatsTrendIndex = (mobileStatsTrendIndex + step + visibleCards.length) % visibleCards.length;
+      ensureMobileTrendCarousel();
+    });
+  }
+
+  if (tabs.parentElement !== card) card.insertBefore(tabs, chart);
+  if (nav.parentElement !== card) card.insertBefore(nav, chart);
+
+  if (!page.dataset.mobileTrendFilter) page.dataset.mobileTrendFilter = "all";
+  const activeFilter = page.dataset.mobileTrendFilter;
+  tabs.querySelectorAll("[data-mobile-trend-filter]").forEach((button) => {
+    const isActive = button.dataset.mobileTrendFilter === activeFilter;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  const cards = [...chart.querySelectorAll(".stats-trend-card")];
+  const filteredCards = cards.filter((item) => activeFilter === "all" || getMobileTrendTone(item) === activeFilter);
+  const visibleCards = filteredCards.length ? filteredCards : cards;
+  if (mobileStatsTrendIndex >= visibleCards.length) mobileStatsTrendIndex = 0;
+
+  cards.forEach((item) => {
+    const isFiltered = visibleCards.length && !visibleCards.includes(item);
+    const isActive = visibleCards[mobileStatsTrendIndex] === item;
+    item.classList.toggle("mobile-trend-filtered", isFiltered);
+    item.classList.toggle("is-mobile-trend-active", isActive && !isFiltered);
+    item.setAttribute("aria-hidden", isActive && !isFiltered ? "false" : "true");
+  });
+
+  const counter = document.getElementById("mobileTrendCounter");
+  if (counter) counter.textContent = visibleCards.length ? `${mobileStatsTrendIndex + 1} / ${visibleCards.length}` : "0 / 0";
+  nav.hidden = !cards.length;
+  tabs.hidden = !cards.length;
 }
 
 function ensureMobileManualReportControls() {
@@ -42080,6 +42180,7 @@ function renderStatsPerformanceClean() {
       openStatsDetailModal("trend", button.dataset.trendId || "");
     });
   });
+  ensureMobileTrendCarousel();
 }
 
 renderStatsAgents = renderStatsAgentsModel;
