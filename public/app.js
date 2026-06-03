@@ -360,6 +360,10 @@ let mobileHeaderSyncButton = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
 let mobileStatsTrendIndex = 0;
+let mobileStatsBreakdownIndex = 0;
+let mobileInsightCardIndex = 0;
+let mobileInsightTrendKey = "performance";
+let mobileInsightTrendIndex = 0;
 const mobileProfilePortalMarkers = new Map();
 
 function getViewportWidth() {
@@ -501,6 +505,7 @@ function syncMobileViewportState() {
   const isMobile = isMobileLayoutViewport();
   document.documentElement.classList.toggle("is-mobile-layout", isMobile);
   document.body?.classList.toggle("is-mobile-layout", isMobile);
+  syncManualEntryModeBodyClass();
   if (isMobile) installMobileTouchScrollGuard();
 
   if (!isMobile) {
@@ -523,6 +528,9 @@ function syncMobileViewportState() {
       ensureMobileLoggingTabs();
       ensureMobileStatsTabs();
       ensureMobileTrendCarousel();
+      ensureMobileStatsBreakdownCarousel();
+      ensureMobileInsightCardCarousel();
+      ensureMobileInsightTrendCarousel();
       ensureMobileManualReportControls();
       scheduleMobileScrollExtentSync();
     });
@@ -865,9 +873,211 @@ function ensureMobileTrendCarousel() {
   tabs.hidden = !cards.length;
 }
 
+function syncManualEntryModeBodyClass() {
+  const enabled = typeof isManualEntryModeEnabled === "function" ? isManualEntryModeEnabled() : false;
+  document.body?.classList.toggle("is-manual-entry-mode", Boolean(enabled));
+}
+
+function ensureMobileStatsBreakdownCarousel() {
+  const page = document.getElementById("page-stats");
+  const container = document.getElementById("statsBreakdown");
+  if (!page || !container) return;
+
+  let nav = document.getElementById("mobileBreakdownNav");
+  if (!nav) {
+    nav = document.createElement("div");
+    nav.id = "mobileBreakdownNav";
+    nav.className = "mobile-breakdown-nav";
+    nav.innerHTML = `
+      <button type="button" data-mobile-breakdown-step="-1" aria-label="Previous data read">&lsaquo;</button>
+      <span id="mobileBreakdownCounter">1 / 1</span>
+      <button type="button" data-mobile-breakdown-step="1" aria-label="Next data read">&rsaquo;</button>
+    `;
+    nav.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-breakdown-step]");
+      if (!button) return;
+      event.preventDefault();
+      const cards = [...container.querySelectorAll(".stats-breakdown-cardlet")];
+      if (!cards.length) return;
+      const step = Number(button.dataset.mobileBreakdownStep || 0);
+      mobileStatsBreakdownIndex = (mobileStatsBreakdownIndex + step + cards.length) % cards.length;
+      ensureMobileStatsBreakdownCarousel();
+    });
+  }
+
+  if (nav.parentElement !== container.parentElement) {
+    container.insertAdjacentElement("beforebegin", nav);
+  }
+
+  const cards = [...container.querySelectorAll(".stats-breakdown-cardlet")];
+  if (mobileStatsBreakdownIndex >= cards.length) mobileStatsBreakdownIndex = 0;
+  cards.forEach((card, index) => {
+    const isActive = index === mobileStatsBreakdownIndex;
+    card.classList.toggle("is-mobile-breakdown-active", isActive);
+    card.setAttribute("aria-hidden", isActive ? "false" : "true");
+  });
+
+  const counter = document.getElementById("mobileBreakdownCounter");
+  if (counter) counter.textContent = cards.length ? `${mobileStatsBreakdownIndex + 1} / ${cards.length}` : "0 / 0";
+  nav.hidden = !cards.length;
+}
+
+function ensureMobileInsightCardCarousel() {
+  const page = document.getElementById("page-insights");
+  const container = document.getElementById("insightsList");
+  if (!page || !container) return;
+
+  let nav = document.getElementById("mobileInsightCardNav");
+  if (!nav) {
+    nav = document.createElement("div");
+    nav.id = "mobileInsightCardNav";
+    nav.className = "mobile-insight-card-nav";
+    nav.innerHTML = `
+      <button type="button" data-mobile-insight-step="-1" aria-label="Previous coaching read">&lsaquo;</button>
+      <span id="mobileInsightCardCounter">1 / 1</span>
+      <button type="button" data-mobile-insight-step="1" aria-label="Next coaching read">&rsaquo;</button>
+    `;
+    nav.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-insight-step]");
+      if (!button) return;
+      event.preventDefault();
+      const cards = [...container.querySelectorAll(".insight-card:not(.insight-empty)")];
+      if (!cards.length) return;
+      const step = Number(button.dataset.mobileInsightStep || 0);
+      mobileInsightCardIndex = (mobileInsightCardIndex + step + cards.length) % cards.length;
+      ensureMobileInsightCardCarousel();
+    });
+  }
+
+  if (nav.parentElement !== container.parentElement) {
+    container.insertAdjacentElement("beforebegin", nav);
+  }
+
+  const cards = [...container.querySelectorAll(".insight-card:not(.insight-empty)")];
+  if (mobileInsightCardIndex >= cards.length) mobileInsightCardIndex = 0;
+  cards.forEach((card, index) => {
+    const isActive = index === mobileInsightCardIndex;
+    card.classList.toggle("is-mobile-insight-active", isActive);
+    card.setAttribute("aria-hidden", isActive ? "false" : "true");
+  });
+
+  const counter = document.getElementById("mobileInsightCardCounter");
+  if (counter) counter.textContent = cards.length ? `${mobileInsightCardIndex + 1} / ${cards.length}` : "0 / 0";
+  nav.hidden = !cards.length;
+}
+
+function repairTrendSignalMedia() {
+  document.querySelectorAll(".trend-signal-media.has-image img").forEach((img) => {
+    const markBroken = () => {
+      const media = img.closest(".trend-signal-media");
+      media?.classList.add("is-empty");
+      media?.classList.remove("has-image");
+      img.remove();
+    };
+    img.addEventListener("error", markBroken, { once: true });
+    if (img.complete && !img.naturalWidth) markBroken();
+  });
+}
+
+function ensureMobileInsightTrendCarousel() {
+  const page = document.getElementById("page-insights");
+  const wrap = page?.querySelector(".insight-trends");
+  if (!page || !wrap) return;
+
+  const rows = [...wrap.querySelectorAll(".insight-trend-row")];
+  const contents = [...wrap.querySelectorAll(".trend-content")];
+  if (!rows.length || !contents.length) return;
+
+  let tabs = document.getElementById("mobileInsightTrendTabs");
+  if (!tabs) {
+    tabs = document.createElement("div");
+    tabs.id = "mobileInsightTrendTabs";
+    tabs.className = "mobile-insight-trend-tabs";
+    tabs.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-insight-trend]");
+      if (!button) return;
+      event.preventDefault();
+      mobileInsightTrendKey = String(button.dataset.mobileInsightTrend || "performance").toLowerCase();
+      mobileInsightTrendIndex = 0;
+      ensureMobileInsightTrendCarousel();
+    });
+  }
+
+  let nav = document.getElementById("mobileInsightTrendNav");
+  if (!nav) {
+    nav = document.createElement("div");
+    nav.id = "mobileInsightTrendNav";
+    nav.className = "mobile-insight-trend-nav";
+    nav.innerHTML = `
+      <button type="button" data-mobile-insight-trend-step="-1" aria-label="Previous trend read">&lsaquo;</button>
+      <span id="mobileInsightTrendCounter">1 / 1</span>
+      <button type="button" data-mobile-insight-trend-step="1" aria-label="Next trend read">&rsaquo;</button>
+    `;
+    nav.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-insight-trend-step]");
+      if (!button) return;
+      event.preventDefault();
+      const activeContent = contents.find((content) => String(content.dataset.trendContent || "").toLowerCase() === mobileInsightTrendKey) || contents[0];
+      const cards = [...activeContent.querySelectorAll(".trend-signal-card")];
+      if (!cards.length) return;
+      const step = Number(button.dataset.mobileInsightTrendStep || 0);
+      mobileInsightTrendIndex = (mobileInsightTrendIndex + step + cards.length) % cards.length;
+      ensureMobileInsightTrendCarousel();
+    });
+  }
+
+  tabs.innerHTML = rows.map((row) => {
+    const key = String(row.dataset.trend || "").toLowerCase();
+    const label = row.querySelector(".stats-main-text, .insight-trend-title, .trend-title")?.textContent?.trim()
+      || row.textContent?.trim()
+      || key;
+    return `<button type="button" data-mobile-insight-trend="${escapeHtml(key)}">${escapeHtml(label)}</button>`;
+  }).join("");
+
+  if (!mobileInsightTrendKey || !rows.some((row) => String(row.dataset.trend || "").toLowerCase() === mobileInsightTrendKey)) {
+    mobileInsightTrendKey = String(wrap.dataset.openTrend || rows[0]?.dataset.trend || "performance").toLowerCase();
+  }
+
+  if (tabs.parentElement !== wrap) wrap.insertBefore(tabs, wrap.firstChild);
+  if (nav.parentElement !== wrap) tabs.insertAdjacentElement("afterend", nav);
+
+  rows.forEach((row) => {
+    const isActive = String(row.dataset.trend || "").toLowerCase() === mobileInsightTrendKey;
+    row.classList.toggle("is-mobile-trend-tab-active", isActive);
+  });
+  tabs.querySelectorAll("[data-mobile-insight-trend]").forEach((button) => {
+    const isActive = String(button.dataset.mobileInsightTrend || "").toLowerCase() === mobileInsightTrendKey;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+
+  let activeCards = [];
+  contents.forEach((content) => {
+    const isActiveContent = String(content.dataset.trendContent || "").toLowerCase() === mobileInsightTrendKey;
+    content.classList.toggle("is-mobile-trend-content-active", isActiveContent);
+    if (isActiveContent) activeCards = [...content.querySelectorAll(".trend-signal-card")];
+  });
+
+  if (mobileInsightTrendIndex >= activeCards.length) mobileInsightTrendIndex = 0;
+  contents.forEach((content) => {
+    content.querySelectorAll(".trend-signal-card").forEach((card, index) => {
+      const isActiveContent = content.classList.contains("is-mobile-trend-content-active");
+      const isActive = isActiveContent && index === mobileInsightTrendIndex;
+      card.classList.toggle("is-mobile-insight-trend-active", isActive);
+      card.setAttribute("aria-hidden", isActive ? "false" : "true");
+    });
+  });
+
+  const counter = document.getElementById("mobileInsightTrendCounter");
+  if (counter) counter.textContent = activeCards.length ? `${mobileInsightTrendIndex + 1} / ${activeCards.length}` : "0 / 0";
+  nav.hidden = !activeCards.length;
+  repairTrendSignalMedia();
+}
+
 function ensureMobileManualReportControls() {
   const panel = document.getElementById("manualMatchPanel");
   if (!panel) return;
+  syncManualEntryModeBodyClass();
 
   let openButton = document.getElementById("mobileManualReportToggle");
   if (!openButton) {
@@ -880,6 +1090,7 @@ function ensureMobileManualReportControls() {
     openButton.addEventListener("click", (event) => {
       event.preventDefault();
       setManualEntryMode(true);
+      syncManualEntryModeBodyClass();
       panel.hidden = false;
       panel.classList.add("mobile-manual-open");
     });
@@ -898,6 +1109,13 @@ function ensureMobileManualReportControls() {
       panel.classList.remove("mobile-manual-open");
       panel.hidden = true;
     });
+  }
+
+  const enabled = isManualEntryModeEnabled();
+  openButton.hidden = !enabled;
+  if (!enabled) {
+    panel.hidden = true;
+    panel.classList.remove("mobile-manual-open");
   }
 }
 
@@ -4757,7 +4975,10 @@ async function submitAskCoachQuestion() {
 
 function openAskCoachModal() {
   const panel = ensureAskCoachPanel();
-  const button = document.getElementById("askCoachOpen");
+  const isMobile = isMobileLayoutViewport();
+  const mobileButton = document.getElementById("mobileAskCoachOpen");
+  const desktopButton = document.getElementById("askCoachOpen");
+  const button = isMobile ? (mobileButton || desktopButton) : (desktopButton || mobileButton);
   if (!panel) return;
   const header = document.querySelector(".app-header");
   const headerBottom = header?.getBoundingClientRect?.().bottom || 0;
@@ -4772,7 +4993,8 @@ function openAskCoachModal() {
   resetAskCoachSurvey();
   panel.classList.add("open");
   panel.setAttribute("aria-hidden", "false");
-  button?.setAttribute("aria-expanded", "true");
+  desktopButton?.setAttribute("aria-expanded", "true");
+  mobileButton?.setAttribute("aria-expanded", "true");
   window.setTimeout(() => document.getElementById("askCoachInput")?.focus(), 60);
 }
 
@@ -4911,6 +5133,7 @@ function bindAskCoachUI() {
       panel?.classList.contains("open")
       && !event.target?.closest?.("#askCoachPanel")
       && !event.target?.closest?.("#askCoachOpen")
+      && !event.target?.closest?.("#mobileAskCoachOpen")
     ) {
       closeAskCoachModal();
     }
@@ -7507,6 +7730,8 @@ function setManualEntryMode(nextEnabled = false) {
   profile.manualEntryMode = Boolean(nextEnabled);
   saveProfiles?.();
   syncManualEntryModeUI();
+  syncManualEntryModeBodyClass();
+  ensureMobileManualReportControls();
 }
 
 function readManualNumber(id, fallback = null) {
@@ -12813,6 +13038,8 @@ function showModalById(id) {
     modal._modalTransitionTimer = 0;
   }
   modal.style.display = "flex";
+  modal.hidden = false;
+  modal.setAttribute("aria-hidden", "false");
   modal.classList.remove("is-closing");
   if (modal.classList.contains("active")) {
     refreshActiveModalState();
@@ -12833,6 +13060,9 @@ function showModalById(id) {
 function hideModalById(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
+  if (modal.contains(document.activeElement) && typeof document.activeElement?.blur === "function") {
+    document.activeElement.blur();
+  }
   if (modal._modalTransitionTimer) {
     window.clearTimeout(modal._modalTransitionTimer);
     modal._modalTransitionTimer = 0;
@@ -12845,6 +13075,7 @@ function hideModalById(id) {
     if (!modal.isConnected) return;
     modal.classList.remove("is-closing");
     modal.style.display = "none";
+    modal.setAttribute("aria-hidden", "true");
     refreshActiveModalState();
   }, 220);
 }
@@ -32822,6 +33053,16 @@ function bindEvents(){
 
   const positionProfilePopout = (menu, anchor) => {
     if (!menu || !anchor) return;
+    if (isMobileLayoutViewport()) {
+      menu.style.left = "auto";
+      menu.style.right = "8px";
+      menu.style.bottom = "calc(var(--mobile-bottom-nav, 72px) + 8px + env(safe-area-inset-bottom))";
+      menu.style.top = "auto";
+      menu.style.width = "min(360px, calc(100vw - 16px))";
+      menu.style.maxWidth = "calc(100vw - 16px)";
+      menu.style.transform = "none";
+      return;
+    }
     const headerRect = document.querySelector(".app-header")?.getBoundingClientRect?.();
     const navRect = profileNavRightEl?.getBoundingClientRect?.() || profilePanel?.getBoundingClientRect?.();
     const anchorRect = anchor.getBoundingClientRect();
@@ -32837,6 +33078,16 @@ function bindEvents(){
 
   const positionProfileSwitcherMenu = () => {
     if (!profileSwitcher || !profilePanel) return;
+    if (isMobileLayoutViewport()) {
+      profileSwitcher.style.left = "8px";
+      profileSwitcher.style.right = "8px";
+      profileSwitcher.style.bottom = "calc(var(--mobile-bottom-nav, 72px) + 8px + env(safe-area-inset-bottom))";
+      profileSwitcher.style.top = "auto";
+      profileSwitcher.style.width = "auto";
+      profileSwitcher.style.maxWidth = "calc(100vw - 16px)";
+      profileSwitcher.style.transform = "none";
+      return;
+    }
     const headerRect = document.querySelector(".app-header")?.getBoundingClientRect?.();
     const navRect = profileNavRightEl?.getBoundingClientRect?.() || profilePanel?.getBoundingClientRect?.();
     const anchorRect = (profileAvatarAnchor || profileAvatarWrap)?.getBoundingClientRect?.();
@@ -33652,6 +33903,8 @@ function bindEvents(){
   bindRRButtons();
 
   bindInsightTrendRows();
+  repairTrendSignalMedia();
+  ensureMobileInsightTrendCarousel();
 }
 
 // ========================
@@ -37655,6 +37908,10 @@ function activatePage(pageId){
       syncMobileBottomShellState();
       ensureMobileLoggingTabs();
       ensureMobileStatsTabs();
+      ensureMobileTrendCarousel();
+      ensureMobileStatsBreakdownCarousel();
+      ensureMobileInsightCardCarousel();
+      ensureMobileInsightTrendCarousel();
       ensureMobileManualReportControls();
       scheduleMobileScrollExtentSync();
     });
@@ -41284,6 +41541,8 @@ function renderStatsBreakdownModel() {
     if (button.disabled || button.classList.contains("is-disabled")) return;
     button.addEventListener("click", () => openStatsDetailModal("breakdown", button.dataset.value || "Data Read"));
   });
+  mobileStatsBreakdownIndex = Math.min(mobileStatsBreakdownIndex, Math.max(0, container.querySelectorAll(".stats-breakdown-cardlet").length - 1));
+  ensureMobileStatsBreakdownCarousel();
 }
 
 function renderInsightsModel() {
@@ -41309,6 +41568,8 @@ function renderInsightsModel() {
   syncWeeklyFocus(topInsights);
   renderInsightCards();
   renderTrendBreakdown();
+  ensureMobileInsightCardCarousel();
+  ensureMobileInsightTrendCarousel();
   enforceInsightsActionFluidWidth();
   window.setTimeout(() => scheduleInsightListOverflowSync(document.getElementById("insightsList")), 0);
   window.setTimeout(enforceInsightsActionFluidWidth, 0);
@@ -41674,6 +41935,8 @@ function initStatsPageModel() {
   renderStatsAgents();
   renderStatsMaps();
   renderStatsWeapons();
+  ensureMobileTrendCarousel();
+  ensureMobileStatsBreakdownCarousel();
 
   const kdEl = document.getElementById("statKD");
   const wrEl = document.getElementById("statWinrate");
@@ -41830,10 +42093,12 @@ function renderStatsMapsModel() {
     card.disabled = !canOpen;
     card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded" : ""}`;
     card.innerHTML = `
+      ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true">X</span>` : ""}
       <img class="stats-map-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)}">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
-        <span class="stats-sub-text ${canOpen ? winrateTone : ""}">${!isActivePool ? "Excluded" : hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
+        <span class="stats-sub-text ${canOpen ? winrateTone : ""}">${!isActivePool ? "Out-of-Season" : hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
+        ${!isActivePool ? `<span class="stats-map-out-badge">Out-of-Season</span>` : ""}
       </div>
     `;
     if (canOpen) {
@@ -41856,7 +42121,21 @@ function renderStatsWeaponsModel() {
     const toneClass = hasFamilyData
       ? (safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative")
       : "is-empty is-locked";
-    const weaponTiles = family.weapons.map((weaponName) => {
+    const orderedWeapons = family.weapons.slice().sort((weaponA, weaponB) => {
+      const summaryA = summaryMap.get(normalizeStatsWeaponKey(weaponA));
+      const summaryB = summaryMap.get(normalizeStatsWeaponKey(weaponB));
+      const hasA = safeNumber(summaryA?.rounds) > 0;
+      const hasB = safeNumber(summaryB?.rounds) > 0;
+      if (hasA !== hasB) return hasA ? -1 : 1;
+      if (hasA && hasB) {
+        const winrateDelta = safeNumber(summaryB?.winrate) - safeNumber(summaryA?.winrate);
+        if (Math.abs(winrateDelta) > 0.01) return winrateDelta;
+        return safeNumber(summaryB?.rounds) - safeNumber(summaryA?.rounds);
+      }
+      return String(weaponA).localeCompare(String(weaponB));
+    });
+
+    const weaponTiles = orderedWeapons.map((weaponName) => {
       const weaponKey = normalizeStatsWeaponKey(weaponName);
       const weapon = summaryMap.get(weaponKey);
       const hasWeaponData = safeNumber(weapon?.rounds) > 0;
@@ -42143,6 +42422,8 @@ function renderInsightCardsModel() {
   });
 
   bindInsightCards();
+  mobileInsightCardIndex = Math.min(mobileInsightCardIndex, Math.max(0, container.querySelectorAll(".insight-card:not(.insight-empty)").length - 1));
+  ensureMobileInsightCardCarousel();
   scheduleInsightListOverflowSync(container);
 }
 
@@ -42181,6 +42462,7 @@ function renderStatsPerformanceClean() {
     });
   });
   ensureMobileTrendCarousel();
+  ensureMobileStatsBreakdownCarousel();
 }
 
 renderStatsAgents = renderStatsAgentsModel;
