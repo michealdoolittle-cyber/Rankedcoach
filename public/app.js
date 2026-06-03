@@ -352,9 +352,13 @@ const MOBILE_LAYOUT_MAX_WIDTH = 820;
 let mobileNavLastScrollY = 0;
 let mobileNavScrollRaf = 0;
 let mobileNavListenersInstalled = false;
+let mobileTouchScrollGuardInstalled = false;
 let mobileBottomShell = null;
 let mobileBottomShellTimer = 0;
 let mobileAskCoachButton = null;
+let mobileHeaderSyncButton = null;
+let mobileScrollSentinel = null;
+let mobileScrollExtentRaf = 0;
 
 function getViewportWidth() {
   return window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || APP_BASE_WIDTH;
@@ -364,22 +368,132 @@ function isMobileLayoutViewport() {
   return getViewportWidth() <= MOBILE_LAYOUT_MAX_WIDTH;
 }
 
+function setImportantStyle(el, property, value) {
+  if (!el) return;
+  el.style.setProperty(property, value, "important");
+}
+
+function clearInlineStyles(el, properties = []) {
+  if (!el) return;
+  properties.forEach((property) => el.style.removeProperty(property));
+}
+
+function applyMobileScrollSurfaceState() {
+  const html = document.documentElement;
+  const body = document.body;
+  const root = document.querySelector(".app-root");
+  const isMobile = isMobileLayoutViewport();
+  const modalOpen = Boolean(body?.classList.contains("mobile-modal-open"));
+  const isTouchDevice =
+    isMobile ||
+    window.matchMedia?.("(hover: none), (pointer: coarse)")?.matches ||
+    navigator.maxTouchPoints > 0;
+
+  html?.classList.toggle("is-touch-layout", isTouchDevice);
+  body?.classList.toggle("is-touch-layout", isTouchDevice);
+
+  if (!isMobile) {
+    clearInlineStyles(html, [
+      "width",
+      "height",
+      "min-height",
+      "max-height",
+      "overflow",
+      "overflow-x",
+      "overflow-y",
+      "overscroll-behavior",
+      "touch-action"
+    ]);
+    clearInlineStyles(body, [
+      "position",
+      "inset",
+      "width",
+      "min-width",
+      "height",
+      "min-height",
+      "max-height",
+      "overflow",
+      "overflow-x",
+      "overflow-y",
+      "overscroll-behavior",
+      "touch-action"
+    ]);
+    clearInlineStyles(root, [
+      "position",
+      "inset",
+      "max-width",
+      "min-height",
+      "max-height",
+      "overflow-x",
+      "overflow-y",
+      "overscroll-behavior-y",
+      "-webkit-overflow-scrolling",
+      "touch-action"
+    ]);
+    return;
+  }
+
+  setImportantStyle(html, "width", "100%");
+  setImportantStyle(html, "height", "100dvh");
+  setImportantStyle(html, "min-height", "100dvh");
+  setImportantStyle(html, "max-height", "100dvh");
+  setImportantStyle(html, "overflow", "hidden");
+  setImportantStyle(html, "overscroll-behavior", "none");
+  setImportantStyle(html, "touch-action", "pan-y");
+
+  if (body) {
+    setImportantStyle(body, "position", "fixed");
+    setImportantStyle(body, "inset", "0");
+    setImportantStyle(body, "width", "100%");
+    setImportantStyle(body, "min-width", "0");
+    setImportantStyle(body, "height", "100dvh");
+    setImportantStyle(body, "min-height", "100dvh");
+    setImportantStyle(body, "max-height", "100dvh");
+    setImportantStyle(body, "overflow", "hidden");
+    setImportantStyle(body, "overscroll-behavior", "none");
+    setImportantStyle(body, "touch-action", "pan-y");
+  }
+
+  if (root) {
+    setImportantStyle(root, "position", "fixed");
+    setImportantStyle(root, "inset", "0");
+    setImportantStyle(root, "max-width", "100vw");
+    setImportantStyle(root, "min-height", "100dvh");
+    setImportantStyle(root, "max-height", "100dvh");
+    setImportantStyle(root, "overflow-x", "hidden");
+    setImportantStyle(root, "overflow-y", modalOpen ? "hidden" : "auto");
+    setImportantStyle(root, "overscroll-behavior-y", "contain");
+    setImportantStyle(root, "-webkit-overflow-scrolling", "touch");
+    setImportantStyle(root, "touch-action", "pan-y");
+  }
+}
+
 function syncMobileViewportState() {
   const isMobile = isMobileLayoutViewport();
   document.documentElement.classList.toggle("is-mobile-layout", isMobile);
   document.body?.classList.toggle("is-mobile-layout", isMobile);
+  if (isMobile) installMobileTouchScrollGuard();
 
   if (!isMobile) {
     document.body?.classList.remove("mobile-nav-hidden");
     document.body?.classList.remove("mobile-modal-open");
+    document.documentElement.style.overflowY = "";
+    document.body && (document.body.style.overflowY = "");
   } else if (document.body?.classList.contains("has-active-modal")) {
     document.body.classList.add("mobile-modal-open");
   }
+
+  applyMobileScrollSurfaceState();
 
   if (document.body) {
     window.requestAnimationFrame(() => {
       syncMobileBottomShellState();
       syncMobileAskCoachButtonState();
+      syncMobileHeaderSyncButtonState();
+      ensureMobileLoggingTabs();
+      ensureMobileStatsTabs();
+      ensureMobileManualReportControls();
+      scheduleMobileScrollExtentSync();
     });
   }
 
@@ -421,7 +535,12 @@ function ensureMobileBottomShell() {
           <path d="M15 4h3v3M6 17H3v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
         </svg>
       </button>
-      <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="menu" aria-label="Open profile menu">v</button>
+      <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="menu" aria-label="Open settings menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" fill="none" stroke="currentColor" stroke-width="2"></path>
+          <path d="M19.2 13.6c.1-.5.1-1 .1-1.6s0-1.1-.1-1.6l2-1.5-2-3.4-2.4 1a8.4 8.4 0 0 0-1.3-.8L15.1 3h-4.2l-.4 2.7c-.5.2-.9.5-1.3.8l-2.4-1-2 3.4 2 1.5c-.1.5-.1 1-.1 1.6s0 1.1.1 1.6l-2 1.5 2 3.4 2.4-1c.4.3.8.6 1.3.8l.4 2.7h4.2l.4-2.7c.5-.2.9-.5 1.3-.8l2.4 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+        </svg>
+      </button>
     </div>
   `;
 
@@ -430,7 +549,7 @@ function ensureMobileBottomShell() {
     if (pageButton) {
       event.preventDefault();
       event.stopPropagation();
-      document.querySelector(`.nav-btn[data-page="${pageButton.dataset.mobilePage}"]`)?.click();
+      activatePage(pageButton.dataset.mobilePage);
       syncMobileBottomShellState();
       return;
     }
@@ -504,6 +623,153 @@ function syncMobileAskCoachButtonState() {
   button.title = source?.title || "Ask Coach";
 }
 
+function getMobileSyncFallbackIcon() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 12a8 8 0 0 1-13.66 5.66M4 12A8 8 0 0 1 17.66 6.34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+      <path d="M15 4h3v3M6 17H3v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  `;
+}
+
+function ensureMobileHeaderSyncButton() {
+  if (mobileHeaderSyncButton || !document.body) return mobileHeaderSyncButton;
+
+  mobileHeaderSyncButton = document.createElement("button");
+  mobileHeaderSyncButton.id = "mobileHeaderSyncBtn";
+  mobileHeaderSyncButton.type = "button";
+  mobileHeaderSyncButton.className = "mobile-header-sync-btn";
+  mobileHeaderSyncButton.title = "Sync profile";
+  mobileHeaderSyncButton.setAttribute("aria-label", "Sync profile");
+  mobileHeaderSyncButton.innerHTML =
+    document.querySelector("#profileSyncBtn .profile-sync-face-icon")?.innerHTML ||
+    getMobileSyncFallbackIcon();
+  mobileHeaderSyncButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    document.getElementById("profileSyncBtn")?.click();
+  });
+  document.body.appendChild(mobileHeaderSyncButton);
+  return mobileHeaderSyncButton;
+}
+
+function syncMobileHeaderSyncButtonState() {
+  const isMobile = isMobileLayoutViewport();
+  const button = ensureMobileHeaderSyncButton();
+  if (!button) return;
+
+  button.hidden = !isMobile;
+  if (!isMobile) return;
+
+  const source = document.getElementById("profileSyncBtn");
+  const icon = source?.querySelector(".profile-sync-face-icon")?.innerHTML;
+  if (icon && button.innerHTML !== icon) button.innerHTML = icon;
+  button.classList.toggle("syncing", source?.classList.contains("syncing"));
+  button.classList.toggle("counting", source?.classList.contains("counting"));
+  button.title = source?.title || "Sync profile";
+}
+
+function ensureMobileLoggingTabs() {
+  const page = document.getElementById("page-logging");
+  const layout = page?.querySelector(".logging-layout");
+  if (!page || !layout) return;
+
+  let tabs = document.getElementById("mobileLoggingTabs");
+  if (!tabs) {
+    tabs = document.createElement("div");
+    tabs.id = "mobileLoggingTabs";
+    tabs.className = "mobile-logging-tabs";
+    tabs.innerHTML = `
+      <button type="button" data-mobile-logging-view="form">Form</button>
+      <button type="button" data-mobile-logging-view="feed">Feed</button>
+    `;
+    layout.insertAdjacentElement("beforebegin", tabs);
+    tabs.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-logging-view]");
+      if (!button) return;
+      event.preventDefault();
+      page.dataset.mobileLoggingView = button.dataset.mobileLoggingView || "form";
+      ensureMobileLoggingTabs();
+    });
+  }
+
+  if (!page.dataset.mobileLoggingView) page.dataset.mobileLoggingView = "form";
+  tabs.querySelectorAll("[data-mobile-logging-view]").forEach((button) => {
+    const isActive = button.dataset.mobileLoggingView === page.dataset.mobileLoggingView;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function ensureMobileStatsTabs() {
+  const page = document.getElementById("page-stats");
+  const grid = page?.querySelector(".stats-main-grid");
+  if (!page || !grid) return;
+
+  let tabs = document.getElementById("mobileStatsTabs");
+  if (!tabs) {
+    tabs = document.createElement("div");
+    tabs.id = "mobileStatsTabs";
+    tabs.className = "mobile-stats-tabs";
+    tabs.innerHTML = `
+      <button type="button" data-mobile-stats-view="agents">Agents</button>
+      <button type="button" data-mobile-stats-view="maps">Maps</button>
+      <button type="button" data-mobile-stats-view="weapons">Weapons</button>
+    `;
+    grid.insertAdjacentElement("beforebegin", tabs);
+    tabs.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-mobile-stats-view]");
+      if (!button) return;
+      event.preventDefault();
+      page.dataset.mobileStatsView = button.dataset.mobileStatsView || "agents";
+      ensureMobileStatsTabs();
+    });
+  }
+
+  if (!page.dataset.mobileStatsView) page.dataset.mobileStatsView = "agents";
+  tabs.querySelectorAll("[data-mobile-stats-view]").forEach((button) => {
+    const isActive = button.dataset.mobileStatsView === page.dataset.mobileStatsView;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function ensureMobileManualReportControls() {
+  const panel = document.getElementById("manualMatchPanel");
+  if (!panel) return;
+
+  let openButton = document.getElementById("mobileManualReportToggle");
+  if (!openButton) {
+    openButton = document.createElement("button");
+    openButton.id = "mobileManualReportToggle";
+    openButton.type = "button";
+    openButton.className = "mobile-manual-report-toggle";
+    openButton.textContent = "Create Match Report";
+    panel.insertAdjacentElement("beforebegin", openButton);
+    openButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      setManualEntryMode(true);
+      panel.hidden = false;
+      panel.classList.add("mobile-manual-open");
+    });
+  }
+
+  let doneButton = document.getElementById("mobileManualReportDone");
+  if (!doneButton) {
+    doneButton = document.createElement("button");
+    doneButton.id = "mobileManualReportDone";
+    doneButton.type = "button";
+    doneButton.className = "mobile-manual-report-done";
+    doneButton.textContent = "Done";
+    panel.appendChild(doneButton);
+    doneButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      panel.classList.remove("mobile-manual-open");
+      panel.hidden = true;
+    });
+  }
+}
+
 function syncMobileBottomShellState() {
   const isMobile = isMobileLayoutViewport();
   const shell = ensureMobileBottomShell();
@@ -532,6 +798,83 @@ function syncMobileBottomShellState() {
     syncButton.classList.toggle("counting", sourceSync.classList.contains("counting"));
     syncButton.title = sourceSync.title || "Sync profile";
   }
+
+  scheduleMobileScrollExtentSync();
+}
+
+function getMobileScrollContainer() {
+  if (!isMobileLayoutViewport()) return null;
+  return document.querySelector(".app-root") || document.scrollingElement || document.documentElement;
+}
+
+function ensureMobileScrollSentinel() {
+  const root = document.querySelector(".app-root");
+  if (!root) return null;
+  if (mobileScrollSentinel?.isConnected) return mobileScrollSentinel;
+
+  mobileScrollSentinel = document.createElement("div");
+  mobileScrollSentinel.id = "mobileScrollSentinel";
+  mobileScrollSentinel.className = "mobile-scroll-sentinel";
+  mobileScrollSentinel.setAttribute("aria-hidden", "true");
+  root.appendChild(mobileScrollSentinel);
+  return mobileScrollSentinel;
+}
+
+function getMobileActivePageContentBottom(root, activePage) {
+  if (!root || !activePage) return 0;
+  const rootRect = root.getBoundingClientRect();
+  const rootScrollTop = root.scrollTop || 0;
+  const getBottom = (el) => {
+    const rect = el.getBoundingClientRect();
+    if (!rect.width && !rect.height) return 0;
+    return rect.bottom - rootRect.top + rootScrollTop;
+  };
+
+  let bottom = getBottom(activePage);
+  activePage.querySelectorAll("*").forEach((el) => {
+    const style = window.getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") return;
+    bottom = Math.max(bottom, getBottom(el));
+  });
+
+  return Math.max(0, bottom);
+}
+
+function syncMobileScrollExtent() {
+  mobileScrollExtentRaf = 0;
+  const root = document.querySelector(".app-root");
+  const sentinel = ensureMobileScrollSentinel();
+
+  if (!root || !sentinel || !isMobileLayoutViewport() || document.body?.classList.contains("mobile-modal-open")) {
+    if (sentinel) sentinel.hidden = true;
+    return;
+  }
+
+  const activePage = document.querySelector(".page.active");
+  if (!activePage) {
+    sentinel.hidden = true;
+    return;
+  }
+
+  const bottomShellHeight = document.getElementById("mobileBottomShell")?.getBoundingClientRect().height || 78;
+  const safeBottomSpace = Math.max(44, bottomShellHeight + 28);
+  const contentBottom = getMobileActivePageContentBottom(root, activePage);
+  const sentinelTop = Math.ceil(Math.max(root.clientHeight + 1, contentBottom + safeBottomSpace));
+
+  sentinel.hidden = false;
+  setImportantStyle(sentinel, "display", "block");
+  setImportantStyle(sentinel, "position", "absolute");
+  setImportantStyle(sentinel, "left", "0");
+  setImportantStyle(sentinel, "top", `${sentinelTop}px`);
+  setImportantStyle(sentinel, "width", "1px");
+  setImportantStyle(sentinel, "height", "1px");
+  setImportantStyle(sentinel, "pointer-events", "none");
+  setImportantStyle(sentinel, "opacity", "0");
+}
+
+function scheduleMobileScrollExtentSync() {
+  if (mobileScrollExtentRaf) return;
+  mobileScrollExtentRaf = window.requestAnimationFrame(syncMobileScrollExtent);
 }
 
 function updateMobileNavVisibility() {
@@ -543,16 +886,11 @@ function updateMobileNavVisibility() {
     return;
   }
 
-  const scrollTop = Math.max(0, window.scrollY || document.documentElement.scrollTop || 0);
-  const delta = scrollTop - mobileNavLastScrollY;
-
-  if (scrollTop < 72 || delta < -10) {
-    body.classList.remove("mobile-nav-hidden");
-  } else if (delta > 14 && scrollTop > 140) {
-    body.classList.add("mobile-nav-hidden");
-  }
-
+  const scrollContainer = getMobileScrollContainer();
+  const scrollTop = Math.max(0, scrollContainer?.scrollTop || body.scrollTop || window.scrollY || document.documentElement.scrollTop || 0);
+  body.classList.remove("mobile-nav-hidden");
   mobileNavLastScrollY = scrollTop;
+  scheduleMobileScrollExtentSync();
 }
 
 function scheduleMobileNavVisibility() {
@@ -565,14 +903,47 @@ function installMobileNavBehavior() {
   mobileNavListenersInstalled = true;
 
   window.addEventListener("scroll", scheduleMobileNavVisibility, { passive: true });
+  document.body?.addEventListener?.("scroll", scheduleMobileNavVisibility, { passive: true });
+  document.querySelector(".app-root")?.addEventListener?.("scroll", scheduleMobileNavVisibility, { passive: true });
   window.addEventListener("resize", () => {
     syncMobileViewportState();
     scheduleMobileNavVisibility();
+    scheduleMobileScrollExtentSync();
   }, { passive: true });
   window.visualViewport?.addEventListener?.("resize", () => {
     syncMobileViewportState();
     scheduleMobileNavVisibility();
+    scheduleMobileScrollExtentSync();
   }, { passive: true });
+}
+
+function installMobileTouchScrollGuard() {
+  if (mobileTouchScrollGuardInstalled) return;
+  mobileTouchScrollGuardInstalled = true;
+
+  const clearStaleScrollLocks = () => {
+    if (!isMobileLayoutViewport() || !document.body) return;
+    refreshActiveModalState();
+    applyMobileScrollSurfaceState();
+  };
+
+  window.addEventListener("touchstart", clearStaleScrollLocks, { passive: true, capture: true });
+  window.addEventListener("touchend", clearStaleScrollLocks, { passive: true, capture: true });
+  window.addEventListener("touchcancel", clearStaleScrollLocks, { passive: true, capture: true });
+  window.addEventListener("orientationchange", () => {
+    window.setTimeout(clearStaleScrollLocks, 160);
+  }, { passive: true });
+}
+
+function scrollMobilePageToTop() {
+  if (isMobileLayoutViewport()) {
+    const scrollContainer = getMobileScrollContainer();
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    scheduleMobileScrollExtentSync();
+  }
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function supportsCssDeclaration(property, value) {
@@ -4277,6 +4648,14 @@ function openAskCoachModal() {
 function closeAskCoachModal() {
   const panel = document.getElementById("askCoachPanel");
   const button = document.getElementById("askCoachOpen");
+  const activeElement = document.activeElement;
+  if (panel?.contains(activeElement)) {
+    if (button && typeof button.focus === "function") {
+      button.focus({ preventScroll: true });
+    } else if (typeof activeElement?.blur === "function") {
+      activeElement.blur();
+    }
+  }
   panel?.classList.remove("open");
   panel?.setAttribute("aria-hidden", "true");
   button?.setAttribute("aria-expanded", "false");
@@ -7254,6 +7633,55 @@ function getAccountSecurityMetadata(user = currentAuthUser) {
   return user?.user_metadata || {};
 }
 
+function isMissingAccountSecurityPreferencesError(error) {
+  if (!error) return false;
+  const text = [
+    error.status,
+    error.code,
+    error.message,
+    error.details,
+    error.hint
+  ].filter(Boolean).join(" ");
+  return error.status === 404
+    || /PGRST205/i.test(text)
+    || /account_security_preferences/i.test(text)
+    || /schema cache/i.test(text)
+    || /\bNot Found\b/i.test(text);
+}
+
+function markAccountSecurityPreferencesUnavailable(error) {
+  accountSecurityPreferencesBackendAvailable = false;
+  if (!accountSecurityPreferencesMissingNoticeShown) {
+    accountSecurityPreferencesMissingNoticeShown = true;
+    console.info(
+      "Account security preferences table is unavailable; using Supabase auth metadata fallback.",
+      error?.message || error || ""
+    );
+  }
+}
+
+async function safeUpsertAccountSecurityPreferences(payload = {}, label = "Security preference save failed") {
+  if (!accountSecurityPreferencesBackendAvailable || !supabaseClient?.from) return false;
+  const userId = payload.user_id || currentAuthUser?.id;
+  if (!userId) return false;
+
+  const { error } = await supabaseClient
+    .from("account_security_preferences")
+    .upsert({
+      ...payload,
+      user_id: userId,
+      updated_at: payload.updated_at || nowISO()
+    }, { onConflict: "user_id" });
+
+  if (!error) return true;
+  if (isMissingAccountSecurityPreferencesError(error)) {
+    markAccountSecurityPreferencesUnavailable(error);
+    return false;
+  }
+  console.warn(label, error);
+  return false;
+}
+
 function maskEmail(value = "") {
   const clean = String(value || "").trim();
   if (!clean || !clean.includes("@")) return "Not set";
@@ -7323,13 +7751,21 @@ function populateSecuritySettingsModal() {
 }
 
 async function hydrateSecuritySettingsFromBackend() {
-  if (!currentAuthUser || !supabaseClient?.from) return;
+  if (!accountSecurityPreferencesBackendAvailable || !currentAuthUser || !supabaseClient?.from) return;
   const { data, error } = await supabaseClient
     .from("account_security_preferences")
     .select("recovery_email,recovery_phone,mfa_enabled,mfa_method")
     .eq("user_id", currentAuthUser.id)
     .maybeSingle();
-  if (error || !data) return;
+  if (error) {
+    if (isMissingAccountSecurityPreferencesError(error)) {
+      markAccountSecurityPreferencesUnavailable(error);
+    } else {
+      console.warn("Security preference load failed", error);
+    }
+    return;
+  }
+  if (!data) return;
 
   const recoveryEmailInput = document.getElementById("securityRecoveryEmailInput");
   const recoveryPhoneInput = document.getElementById("securityRecoveryPhoneInput");
@@ -7347,19 +7783,13 @@ async function saveSecurityPreferenceRecord({
   mfaEnabled = false,
   source = "security_settings_modal"
 } = {}) {
-  if (!currentAuthUser || !supabaseClient?.from) return;
-  const { error } = await supabaseClient
-    .from("account_security_preferences")
-    .upsert({
-      user_id: currentAuthUser.id,
-      recovery_email: recoveryEmail || null,
-      recovery_phone: recoveryPhone || null,
-      mfa_enabled: Boolean(mfaEnabled),
-      mfa_method: mfaEnabled ? "totp" : null,
-      security_json: { source },
-      updated_at: nowISO()
-    }, { onConflict: "user_id" });
-  if (error) console.warn("Security preference save failed", error);
+  await safeUpsertAccountSecurityPreferences({
+    recovery_email: recoveryEmail || null,
+    recovery_phone: recoveryPhone || null,
+    mfa_enabled: Boolean(mfaEnabled),
+    mfa_method: mfaEnabled ? "totp" : null,
+    security_json: { source }
+  });
 }
 
 async function getVerifiedTotpFactors() {
@@ -8034,7 +8464,7 @@ async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true
     if (withDemoMatches) {
       await importDemoMatches({ preferBuiltIn: true });
     }
-    closeAuthModal();
+    closeAuthModal(true);
     if (withTutorial) {
       window.setTimeout(() => startGuestTutorial(), 420);
     }
@@ -8359,6 +8789,9 @@ let activeProfileId = null;
 let activeInsightFilter = "all";
 let cachedInsights = [];
 let currentAuthUser = null;
+const ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED = false;
+let accountSecurityPreferencesBackendAvailable = ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED;
+let accountSecurityPreferencesMissingNoticeShown = false;
 let activeLogSessionFilter = "all";
 let activeLogCalendarMonth = new Date();
 
@@ -11450,7 +11883,8 @@ function syncLogFocusCustomDropdown() {
   if (!select) return;
 
   const value = String(select.value || "").trim();
-  if (valueEl) valueEl.textContent = value && value !== "Other" ? value : "Browse";
+  const mobileBrowseLabel = isMobileLayoutViewport();
+  if (valueEl) valueEl.textContent = mobileBrowseLabel ? "Browse" : (value && value !== "Other" ? value : "Browse");
 
   const roleClasses = ["role-duelist", "role-controller", "role-initiator", "role-sentinel"];
   trigger?.classList.remove(...roleClasses);
@@ -12220,14 +12654,19 @@ function refreshActiveModalState() {
   const body = document.body;
   if (!body) return;
 
-  const hasActiveModal = Array.from(document.querySelectorAll(".lens-modal-overlay, .agent-modal, .profile-edit-overlay, .auth-modal-overlay")).some((modal) =>
-    modal.classList.contains("active") ||
-    modal.classList.contains("is-opening") ||
-    modal.classList.contains("is-closing")
-  );
+  const hasActiveModal = Array.from(document.querySelectorAll(".lens-modal-overlay, .agent-modal, .profile-edit-overlay, .auth-modal-overlay")).some((modal) => {
+    const isModalActive =
+      modal.classList.contains("active") ||
+      modal.classList.contains("is-opening") ||
+      modal.classList.contains("is-closing");
+    if (!isModalActive || modal.hidden || modal.getAttribute("aria-hidden") === "true") return false;
+    const style = window.getComputedStyle(modal);
+    return style.display !== "none" && style.visibility !== "hidden" && style.pointerEvents !== "none";
+  });
 
   body.classList.toggle("has-active-modal", hasActiveModal);
   body.classList.toggle("mobile-modal-open", hasActiveModal && isMobileLayoutViewport());
+  applyMobileScrollSurfaceState();
   if (hasActiveModal) hideChartTooltip();
 }
 
@@ -12287,8 +12726,8 @@ function openAuthModalForSecurityReview() {
   setAuthPanel?.("signup");
 }
 
-function closeAuthModal() {
-  if (!currentAuthUser && !hasCompletedAppEntryChoice()) return;
+function closeAuthModal(force = false) {
+  if (!force && !currentAuthUser && !hasCompletedAppEntryChoice()) return;
   hideModalById("authModal");
 }
 
@@ -12391,9 +12830,6 @@ function openImpactModal() {
 // ========================
 
 function renderAgentModal(){
-
-  console.log("renderAgentModal", agentGrid);
-
   if(!agentGrid){
     agentGrid = document.getElementById("agentModalGrid");
   }
@@ -37064,8 +37500,30 @@ function activatePage(pageId){
   const targetId = "page-" + pageId;
   const nextPage = document.getElementById(targetId);
   const currentPage = document.querySelector(".page.active");
+  const isMobilePageSwitch = isMobileLayoutViewport();
 
-  if (nextPage && currentPage !== nextPage) {
+  if (isMobilePageSwitch && nextPage) {
+    const token = ++pageTransitionToken;
+    if (pageTransitionTimer) {
+      window.clearTimeout(pageTransitionTimer);
+      pageTransitionTimer = 0;
+    }
+
+    document.querySelectorAll(".page").forEach(page => {
+      page.classList.toggle("active", page === nextPage);
+      page.classList.remove("entering", "exiting");
+    });
+
+    window.requestAnimationFrame(() => {
+      if (token !== pageTransitionToken || !nextPage.isConnected) return;
+      scrollMobilePageToTop();
+      syncMobileBottomShellState();
+      ensureMobileLoggingTabs();
+      ensureMobileStatsTabs();
+      ensureMobileManualReportControls();
+      scheduleMobileScrollExtentSync();
+    });
+  } else if (nextPage && currentPage !== nextPage) {
     const token = ++pageTransitionToken;
     if (pageTransitionTimer) {
       window.clearTimeout(pageTransitionTimer);
@@ -37105,7 +37563,7 @@ function activatePage(pageId){
   if (isMobileLayoutViewport()) {
     document.body.classList.remove("mobile-nav-hidden");
     window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      scrollMobilePageToTop();
       scheduleMobileNavVisibility();
     });
   }
@@ -38444,8 +38902,6 @@ svg.appendChild(dot);
 // ============================
 
 function spinLoadout() {
-
-  console.log("SPIN LOADOUT clicked");
   spinIconLocked = false;
   const PRE_SPIN_DELAY = 220;
 
@@ -39885,18 +40341,15 @@ document.addEventListener("click", async (e) => {
         active.name = active.name || accountName;
         saveProfiles();
       }
-      await supabaseClient
-        .from("account_security_preferences")
-        .upsert({
-          user_id: signedUpUser.id,
-          recovery_email: recoveryEmail || null,
-          recovery_phone: recoveryPhone || null,
-          mfa_enabled: false,
-          mfa_method: mfaEnabled ? "totp" : null,
-          password_fingerprint_history: getStoredPasswordFingerprints(email),
-          security_json: { source: "signup", mfa_setup_pending: mfaEnabled },
-          updated_at: nowISO()
-        }, { onConflict: "user_id" });
+      await safeUpsertAccountSecurityPreferences({
+        user_id: signedUpUser.id,
+        recovery_email: recoveryEmail || null,
+        recovery_phone: recoveryPhone || null,
+        mfa_enabled: false,
+        mfa_method: mfaEnabled ? "totp" : null,
+        password_fingerprint_history: getStoredPasswordFingerprints(email),
+        security_json: { source: "signup", mfa_setup_pending: mfaEnabled }
+      }, "Signup security preference save failed");
     }
     await handleSignedInUser(signedUpUser);
     closeAuthModal();
@@ -39976,15 +40429,12 @@ document.addEventListener("click", async (e) => {
       rememberPasswordFingerprint(email, password);
       const { data: { user } = {} } = await supabaseClient.auth.getUser();
       if (user) {
-        await supabaseClient
-          .from("account_security_preferences")
-          .upsert({
-            user_id: user.id,
-            last_password_change_at: nowISO(),
-            password_fingerprint_history: getStoredPasswordFingerprints(email),
-            security_json: { source: "password_reset", security_email_pending: true },
-            updated_at: nowISO()
-          }, { onConflict: "user_id" });
+        await safeUpsertAccountSecurityPreferences({
+          user_id: user.id,
+          last_password_change_at: nowISO(),
+          password_fingerprint_history: getStoredPasswordFingerprints(email),
+          security_json: { source: "password_reset", security_email_pending: true }
+        }, "Password reset security preference save failed");
       }
       authRecoveryInProgress = false;
       authRecoverySessionReady = false;
