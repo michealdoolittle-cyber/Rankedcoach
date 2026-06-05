@@ -42620,9 +42620,9 @@ function renderStatsAgentsModel() {
         button.className = `stats-agent-mini-card ${toneClass}`;
         button.setAttribute("aria-label", hasData ? `Open ${agent.agent} agent insights` : `${agent.agent} has no data`);
         button.innerHTML = `
+          <span class="stats-agent-mini-name">${escapeHtml(agent.agent)}</span>
           <img class="stats-agent-mini-image" src="${escapeHtml(getAgentIconUrl(agent.agent))}" alt="${escapeHtml(agent.agent)}">
           <span class="stats-card-meta stats-agent-mini-meta">
-            <span class="stats-main-text">${escapeHtml(agent.agent)}</span>
             <span class="stats-sub-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
             <span class="stats-sub-text">${hasData ? `${kdValue.toFixed(2)} K/D` : escapeHtml(roleMeta.label)}</span>
           </span>

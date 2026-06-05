@@ -36290,17 +36290,17 @@ body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card {
   position: relative !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
-  grid-template-rows: minmax(0, 1fr) !important;
-  align-items: center !important;
+  grid-template-rows: 18px minmax(0, 1fr) 25px !important;
+  align-items: stretch !important;
   justify-items: center !important;
-  gap: 0 !important;
+  gap: 4px !important;
   justify-self: center !important;
-  width: min(100%, 96px) !important;
-  aspect-ratio: 1 / 1 !important;
+  width: min(100%, 98px) !important;
+  aspect-ratio: auto !important;
   min-width: 0 !important;
-  min-height: 0 !important;
-  height: auto !important;
-  max-height: none !important;
+  min-height: 124px !important;
+  height: 124px !important;
+  max-height: 124px !important;
   padding: 5px !important;
   overflow: hidden !important;
   border: 1px solid rgba(148, 163, 184, .22) !important;
@@ -36323,45 +36323,57 @@ body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card.is-negative {
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-image {
   display: block !important;
-  position: absolute !important;
-  inset: 4px !important;
+  position: static !important;
+  inset: auto !important;
   z-index: 1 !important;
-  justify-self: stretch !important;
+  justify-self: center !important;
   align-self: stretch !important;
-  width: calc(100% - 8px) !important;
-  height: calc(100% - 8px) !important;
+  width: 100% !important;
+  height: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
   max-width: 100% !important;
   max-height: none !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
+  object-position: center center !important;
   transform: none !important;
   filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .32)) !important;
 }
 
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-name {
+  z-index: 2 !important;
+  display: block !important;
+  align-self: center !important;
+  justify-self: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  color: #f8fafc !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta {
-  position: absolute !important;
-  left: 5px !important;
-  right: 5px !important;
-  bottom: 5px !important;
+  position: static !important;
+  inset: auto !important;
   z-index: 2 !important;
   justify-items: center !important;
   align-content: center !important;
   gap: 1px !important;
   text-align: center !important;
-  width: auto !important;
-  min-height: 28px !important;
-  padding: 2px 4px !important;
+  width: 100% !important;
+  min-height: 0 !important;
+  padding: 1px 4px !important;
   border-radius: 8px !important;
-  background: rgba(2, 6, 23, .54) !important;
+  background: rgba(2, 6, 23, .48) !important;
 }
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta :is(.stats-main-text, .stats-sub-text) {
   text-align: center !important;
-}
-
-body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-main-text {
-  font-size: 10px !important;
 }
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-sub-text {
