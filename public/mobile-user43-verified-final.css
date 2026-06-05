@@ -10436,3 +10436,111 @@
     grid-auto-rows: max-content !important;
   }
 }
+
+/* Absolute EOF mobile agent frame, goal lock, and manual session modal - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #agentFrame#agentFrame.agent-frame,
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #agentFrame#agentFrame {
+    border-width: 2px !important;
+    border-style: solid !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.14),
+      0 0 0 1px rgba(255,255,255,.06),
+      0 0 22px color-mix(in srgb, var(--accent, #ff4655) 28%, transparent) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #agentFrame#agentFrame.duelist {
+    border-color: #ff4d5a !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 1px rgba(255,77,90,.45), 0 0 24px rgba(255,77,90,.38) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #agentFrame#agentFrame.initiator {
+    border-color: #6dd6ff !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 1px rgba(109,214,255,.45), 0 0 24px rgba(109,214,255,.38) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #agentFrame#agentFrame.controller {
+    border-color: #c084fc !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 1px rgba(192,132,252,.45), 0 0 24px rgba(192,132,252,.38) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #agentFrame#agentFrame.sentinel {
+    border-color: #4ade80 !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 1px rgba(74,222,128,.45), 0 0 24px rgba(74,222,128,.38) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .goal-rank-custom-option.is-disabled,
+  html.is-mobile-layout body.is-mobile-layout .goal-rank-custom-option:disabled {
+    opacity: .34 !important;
+    color: rgba(148, 163, 184, .72) !important;
+    background: rgba(15, 23, 42, .52) !important;
+    border-color: rgba(71, 85, 105, .42) !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    filter: grayscale(.7) saturate(.55) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal.manual-session-start-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 36000 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 18px !important;
+    background: rgba(2, 6, 23, .78) !important;
+    backdrop-filter: blur(10px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal .manual-session-start-modal {
+    width: min(100%, 380px) !important;
+    max-width: calc(100vw - 28px) !important;
+    display: grid !important;
+    gap: 12px !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+    border: 1px solid color-mix(in srgb, var(--accent, #ff4655) 46%, rgba(148, 163, 184, .34)) !important;
+    background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.98)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal .manual-session-start-copy {
+    color: var(--muted, #94a3b8) !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.28 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal .manual-session-start-field {
+    display: grid !important;
+    gap: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal .manual-session-start-field span {
+    color: var(--muted, #94a3b8) !important;
+    font-size: clamp(10px, 2.8vw, 12px) !important;
+    font-weight: 900 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal #manualSessionStartRRInput {
+    width: 100% !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(148, 163, 184, .34) !important;
+    background: rgba(15, 23, 42, .92) !important;
+    color: var(--text, #e5edf7) !important;
+    padding: 0 12px !important;
+    font-weight: 900 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal .manual-session-start-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #manualSessionStartModal .manual-session-start-actions button {
+    min-height: 42px !important;
+    border-radius: 12px !important;
+    font-weight: 950 !important;
+  }
+}

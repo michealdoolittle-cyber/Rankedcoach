@@ -7785,19 +7785,40 @@ function updateAuthUI(user = null) {
 function syncProfileSwitcherAccessState() {
   const addBtn = document.getElementById("profileAddBtn");
   if (addBtn) {
-    addBtn.hidden = !currentAuthUser;
-    addBtn.disabled = !currentAuthUser;
+    addBtn.hidden = false;
+    addBtn.disabled = false;
   }
 
   if (!currentAuthUser && profileListEl) {
+    const active = getActiveProfile?.();
+    const hasDemoMatches = Array.isArray(active?.matches) && active.matches.length > 0;
     profileListEl.innerHTML = `
-      <div class="profile-row active profile-row-guest" role="button" aria-disabled="true">
+      <div class="profile-row ${hasDemoMatches ? "" : "active"} profile-row-guest" role="button" data-guest-profile-choice="blank">
         <div class="profile-info">
-          <div class="profile-name">Guest</div>
-          <div class="profile-sub">Login to RankedCoach to switch accounts.</div>
+          <div class="profile-name">Guest: Blank</div>
+          <div class="profile-sub">Start from an empty profile.</div>
+        </div>
+      </div>
+      <div class="profile-row ${hasDemoMatches ? "active" : ""} profile-row-guest" role="button" data-guest-profile-choice="demo">
+        <div class="profile-info">
+          <div class="profile-name">Guest: Demo Import</div>
+          <div class="profile-sub">Load sample matches and coaching reads.</div>
         </div>
       </div>
     `;
+
+    profileListEl.querySelector('[data-guest-profile-choice="blank"]')?.addEventListener("click", () => {
+      enterGuestModeAfterLogout();
+      profileSwitcher?.classList.remove("open");
+    });
+
+    profileListEl.querySelector('[data-guest-profile-choice="demo"]')?.addEventListener("click", async () => {
+      enterGuestModeAfterLogout();
+      await importDemoMatches({ preferBuiltIn: true });
+      profileSwitcher?.classList.remove("open");
+      rebuildProfileListUI?.();
+      updateProfileHeaderUI?.();
+    });
   }
 }
 
@@ -7853,6 +7874,105 @@ function setManualEntryMode(nextEnabled = false) {
   syncManualEntryModeUI();
   syncManualEntryModeBodyClass();
   ensureMobileManualReportControls();
+}
+
+function ensureManualSessionStartModal() {
+  let modal = document.getElementById("manualSessionStartModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "manualSessionStartModal";
+  modal.className = "lens-modal-overlay manual-session-start-overlay";
+  modal.setAttribute("aria-hidden", "true");
+  modal.style.display = "none";
+  modal.innerHTML = `
+    <div class="lens-modal manual-session-start-modal" role="dialog" aria-modal="true" aria-labelledby="manualSessionStartTitle">
+      <div class="lens-modal-head">
+        <div>
+          <div class="lens-modal-kicker">Manual Entry Session</div>
+          <div id="manualSessionStartTitle" class="lens-modal-title">Set today's starting RR</div>
+        </div>
+        <button id="manualSessionStartClose" class="lens-modal-close" type="button">X</button>
+      </div>
+      <div class="manual-session-start-copy">
+        Enter your RR before the first manual match of the day. RankedCoach uses this to keep RR to next rank and RR to goal rank accurate.
+      </div>
+      <label class="manual-session-start-field" for="manualSessionStartRRInput">
+        <span>Current RR before game 1</span>
+        <input id="manualSessionStartRRInput" type="number" min="0" step="1" inputmode="numeric">
+      </label>
+      <div class="manual-session-start-actions">
+        <button id="manualSessionStartCancel" type="button">Cancel</button>
+        <button id="manualSessionStartConfirm" type="button">Start Manual Session</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function openManualSessionStartPrompt() {
+  const profile = getActiveProfile?.();
+  if (!profile) return Promise.resolve(false);
+
+  const modal = ensureManualSessionStartModal();
+  const input = modal.querySelector("#manualSessionStartRRInput");
+  const confirm = modal.querySelector("#manualSessionStartConfirm");
+  const cancel = modal.querySelector("#manualSessionStartCancel");
+  const close = modal.querySelector("#manualSessionStartClose");
+  const currentAbsolute = Math.max(0, Math.round(safeNumber(computeCurrentRRAbsolute(), 0)));
+
+  if (input) {
+    input.value = String(currentAbsolute);
+    input.min = "0";
+  }
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (confirmed) => {
+      if (settled) return;
+      settled = true;
+      modal.removeEventListener("click", onOverlayClick);
+      confirm?.removeEventListener("click", onConfirm);
+      cancel?.removeEventListener("click", onCancel);
+      close?.removeEventListener("click", onCancel);
+      hideModalById("manualSessionStartModal");
+      resolve(Boolean(confirmed));
+    };
+
+    const onConfirm = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const startingRR = Math.max(0, Math.round(safeNumber(input?.value, currentAbsolute)));
+      profile.startingRR = startingRR;
+      profile.startingRRDate = getCurrentDayKey();
+      profile.startingRRSource = "manual-session";
+      saveProfiles?.();
+      recomputeFromMatches?.();
+      updateNavRRToRank?.();
+      updateNavRRToGoalRank?.();
+      updateDisplays?.();
+      updateProfileHeaderUI?.();
+      finish(true);
+    };
+
+    const onCancel = (event) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      finish(false);
+    };
+
+    const onOverlayClick = (event) => {
+      if (event.target === modal) onCancel(event);
+    };
+
+    confirm?.addEventListener("click", onConfirm);
+    cancel?.addEventListener("click", onCancel);
+    close?.addEventListener("click", onCancel);
+    modal.addEventListener("click", onOverlayClick);
+    showModalById("manualSessionStartModal");
+    window.requestAnimationFrame(() => input?.focus());
+  });
 }
 
 function readManualNumber(id, fallback = null) {
@@ -33397,10 +33517,15 @@ function bindEvents(){
     addLogEntry();
   });
 
-  document.getElementById("manualEntryModeToggle")?.addEventListener("click", (e) => {
+  document.getElementById("manualEntryModeToggle")?.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setManualEntryMode(!isManualEntryModeEnabled());
+    const nextEnabled = !isManualEntryModeEnabled();
+    if (nextEnabled) {
+      const confirmed = await openManualSessionStartPrompt();
+      if (!confirmed) return;
+    }
+    setManualEntryMode(nextEnabled);
     updateLoggingDebriefPreview?.();
   });
 
@@ -33969,12 +34094,19 @@ function bindEvents(){
     const select = document.getElementById("goalRankSelect");
     const menu = document.getElementById("goalRankCustomMenu");
     if (!select) return;
+    const optionButtons = Array.from(menu?.querySelectorAll(".goal-rank-custom-option") || []);
 
     Array.from(select.options).forEach((option) => {
       const isAllowed = isGoalRankSelectionAllowed(option.value, option.value === "Radiant" ? goalRadiantRRInput?.value : null);
       option.disabled = !isAllowed;
-      menu?.querySelector(`.goal-rank-custom-option[data-value="${CSS.escape(option.value)}"]`)?.classList.toggle("is-disabled", !isAllowed);
-      menu?.querySelector(`.goal-rank-custom-option[data-value="${CSS.escape(option.value)}"]`)?.setAttribute("aria-disabled", isAllowed ? "false" : "true");
+      optionButtons
+        .filter((button) => button.dataset.value === option.value)
+        .forEach((button) => {
+          button.disabled = !isAllowed;
+          button.classList.toggle("is-disabled", !isAllowed);
+          button.setAttribute("aria-disabled", isAllowed ? "false" : "true");
+          button.tabIndex = isAllowed ? 0 : -1;
+        });
     });
 
     if (!isGoalRankSelectionAllowed(select.value, goalRadiantRRInput?.value)) {
@@ -34000,10 +34132,12 @@ function bindEvents(){
     menu?.querySelectorAll(".goal-rank-custom-option").forEach((option) => {
       const isActive = option.dataset.value === value;
       const isAllowed = isGoalRankSelectionAllowed(option.dataset.value, option.dataset.value === "Radiant" ? goalRadiantRRInput?.value : null);
+      option.disabled = !isAllowed;
       option.classList.toggle("is-active", isActive);
       option.classList.toggle("is-disabled", !isAllowed);
       option.setAttribute("aria-selected", isActive ? "true" : "false");
       option.setAttribute("aria-disabled", isAllowed ? "false" : "true");
+      option.tabIndex = isAllowed ? 0 : -1;
     });
   }
 
