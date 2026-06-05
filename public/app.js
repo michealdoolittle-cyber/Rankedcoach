@@ -35354,8 +35354,6 @@ function toggleLoggingQuickSnippet(snippet = "", forceActive = null) {
   notes.value = nextLines.join("\n");
   syncLoggingQuickChipStates();
   updateLoggingDebriefPreview();
-  notes.focus();
-  notes.setSelectionRange(notes.value.length, notes.value.length);
 }
 
 function setExclusiveChipSelection(selector, nextValue, datasetKey){

@@ -10281,3 +10281,158 @@
     filter: grayscale(.55) !important;
   }
 }
+
+/* Absolute EOF mobile logging manual report and weapon spacing lock - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "status"
+      "copy" !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-status {
+    grid-area: status !important;
+    justify-self: stretch !important;
+    width: 100% !important;
+    min-height: 32px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 6px 8px !important;
+    font-size: clamp(8px, 2.25vw, 10px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-head > div:first-child {
+    grid-area: copy !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr) !important;
+    grid-template-areas: "kicker title" !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-kicker {
+    grid-area: kicker !important;
+    margin: 0 !important;
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.08 !important;
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-title {
+    grid-area: title !important;
+    margin: 0 !important;
+    font-size: clamp(10px, 2.9vw, 12px) !important;
+    line-height: 1.08 !important;
+    text-align: right !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-field:has(#manualHS) {
+    margin-bottom: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #mobileManualReportDone.mobile-manual-report-done {
+    margin-top: 2px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logQuickMenu.logging-quick-menu {
+    scroll-margin-bottom: 120px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card {
+    min-height: 0 !important;
+    height: auto !important;
+    padding-bottom: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list {
+    align-content: start !important;
+    justify-content: stretch !important;
+    gap: 8px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card .stats-mobile-weapon-filter.stats-mobile-weapon-filter {
+    margin: 0 0 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-row.stats-weapon-family-row {
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-image-row.stats-weapon-image-row {
+    margin: 0 !important;
+    gap: 8px !important;
+  }
+}
+
+/* Absolute EOF mobile weapon filter height collapse - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card > * {
+    align-self: start !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list {
+    grid-auto-rows: max-content !important;
+    align-items: start !important;
+    align-content: start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card .stats-mobile-weapon-filter.stats-mobile-weapon-filter {
+    align-self: start !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    overflow: visible !important;
+    grid-auto-rows: 42px !important;
+    grid-template-rows: 42px !important;
+  }
+}
+
+/* Absolute EOF mobile weapon filter full-width restore - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card .stats-mobile-weapon-filter.stats-mobile-weapon-filter,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-row.stats-weapon-family-row,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-image-row.stats-weapon-image-row,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-tile.stats-weapon-tile {
+    justify-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Absolute EOF mobile weapon list row-track collapse - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapons-card.stats-weapons-card #statsWeaponsList#statsWeaponsList.stats-weapon-list {
+    grid-template-rows: max-content max-content !important;
+    grid-auto-rows: max-content !important;
+  }
+}
