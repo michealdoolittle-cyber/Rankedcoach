@@ -1,0 +1,3045 @@
+/* RankedCoach mobile proof layer.
+   Loaded after mobile-qa-final.css so the 43-item QA fixes can be verified
+   from screenshots without being overwritten by older duplicated mobile rules. */
+@media (max-width: 760px), (pointer: coarse) and (max-width: 900px) {
+  html body.is-mobile-layout {
+    --rc-proof-radius: 10px;
+    --rc-proof-xxs: clamp(9px, 2.35vw, 10px);
+    --rc-proof-xs: clamp(10px, 2.65vw, 12px);
+    --rc-proof-sm: clamp(11px, 3vw, 13px);
+    --rc-proof-md: clamp(12px, 3.35vw, 15px);
+    --rc-proof-lg: clamp(14px, 3.9vw, 17px);
+    --rc-proof-xl: clamp(18px, 5.1vw, 22px);
+  }
+
+  html body.is-mobile-layout :is(
+    button,
+    .ui-interactive,
+    .impact-role-pill,
+    .insight-meta-pill,
+    .weekly-focus-confidence,
+    .logging-chip,
+    .logging-select-trigger,
+    .focus-select-shell,
+    .rr-stat,
+    .rr-match-stats,
+    .stats-tab-btn,
+    .priority-filter-btn,
+    .insight-filter-btn,
+    .mobile-bottom-page-btn,
+    .profile-dropdown button,
+    .profile-row
+  ) {
+    border-radius: var(--rc-proof-radius) !important;
+  }
+
+  /* #4 - RR for Today must read as a stacked value, not overlap. */
+  html body.is-mobile-layout #page-home .rr-total {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    align-content: center !important;
+    justify-items: center !important;
+    gap: 4px !important;
+    padding: 10px 6px !important;
+    overflow: hidden !important;
+  }
+
+  html body.is-mobile-layout #page-home :is(#totalRRDisplay, #rrTotal, .rr-total-value, .rr-total-number) {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(23px, 7vw, 32px) !important;
+    line-height: .92 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    --tb-auto-fit-font-size: clamp(23px, 7vw, 32px) !important;
+  }
+
+  html body.is-mobile-layout #page-home .rr-total :is(.card-sub, #rrTodayLabel, .rr-total-label, .rr-total-sub) {
+    position: static !important;
+    inset: auto !important;
+    display: block !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.55vw, 11px) !important;
+  }
+
+  /* #15-#16 - logging form text must be readable, not billboard-scale. */
+  html body.is-mobile-layout #page-logging .logging-hero {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+
+  html body.is-mobile-layout #page-logging .logging-hero-title {
+    font-size: clamp(18px, 5vw, 22px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: .01em !important;
+    --tb-auto-fit-font-size: clamp(18px, 5vw, 22px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging .logging-hero-text {
+    font-size: clamp(11px, 3.2vw, 13px) !important;
+    line-height: 1.18 !important;
+    --tb-auto-fit-font-size: clamp(11px, 3.2vw, 13px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging .logging-live-card {
+    min-height: 88px !important;
+    padding: 10px !important;
+    gap: 5px !important;
+    overflow: hidden !important;
+  }
+
+  html body.is-mobile-layout #page-logging :is(.logging-live-title, .logging-live-focus) {
+    font-size: clamp(14px, 3.8vw, 17px) !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    --tb-auto-fit-font-size: clamp(14px, 3.8vw, 17px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging .logging-live-meta,
+  html body.is-mobile-layout #page-logging .logging-live-meta * {
+    font-size: clamp(9px, 2.7vw, 11px) !important;
+    line-height: 1.12 !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.7vw, 11px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging .logging-live-pill {
+    max-width: 100% !important;
+    padding: 6px 8px !important;
+    font-size: clamp(9px, 2.45vw, 10px) !important;
+    line-height: 1.05 !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.45vw, 10px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging .logging-pill {
+    min-height: 50px !important;
+    padding: 6px 10px !important;
+  }
+
+  html body.is-mobile-layout #page-logging :is(#focusPreviewText, #logAgentText, .log-agent-text, .logging-pill .pill-label, .logging-pill .pill-value, #logMap) {
+    min-width: 0 !important;
+    font-size: clamp(14px, 3.9vw, 17px) !important;
+    line-height: 1.06 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    --tb-auto-fit-font-size: clamp(14px, 3.9vw, 17px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging :is(.focus-select-shell, .logging-select-trigger) {
+    height: 38px !important;
+    min-height: 38px !important;
+    width: 118px !important;
+    min-width: 118px !important;
+    max-width: 118px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  html body.is-mobile-layout #page-logging :is(.agent-select-text, .focus-select-symbol, .agent-select-symbol) {
+    font-size: clamp(13px, 3.4vw, 15px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    --tb-auto-fit-font-size: clamp(13px, 3.4vw, 15px) !important;
+  }
+
+  html body.is-mobile-layout #page-logging :is(.logging-hero-kicker, .logging-label, .logging-score-label, .log-tier-label, .logging-score-cell label, .feed-card-label) {
+    font-size: var(--rc-proof-xs) !important;
+    line-height: 1.05 !important;
+    --tb-auto-fit-font-size: var(--rc-proof-xs) !important;
+  }
+
+  /* #31-#35 - insight action cards must not collapse into vertical text. */
+  html body.is-mobile-layout #page-insights .insights-action-card {
+    padding: 12px !important;
+    overflow: visible !important;
+  }
+
+  html body.is-mobile-layout #page-insights .insight-action {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+    grid-template: none !important;
+    grid-auto-flow: row !important;
+    overflow: visible !important;
+  }
+
+  html body.is-mobile-layout #page-insights .insight-action > * {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-area: auto !important;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    white-space: normal !important;
+  }
+
+  html body.is-mobile-layout #page-insights :is(.insight-action-hero, .insight-focus-detail, .insight-block) {
+    display: block !important;
+    grid-template: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 12px !important;
+    overflow: visible !important;
+  }
+
+  html body.is-mobile-layout #page-insights :is(.insight-meta-row, .priority-read-meta, .trend-signal-meta) {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    position: static !important;
+  }
+
+  html body.is-mobile-layout #page-insights :is(#insightFocusTitle, .insight-priority-title, .priority-read-title, .insight-card-title, .trend-signal-title) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: clamp(18px, 5.2vw, 22px) !important;
+    line-height: 1.1 !important;
+    writing-mode: horizontal-tb !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    --tb-auto-fit-font-size: clamp(18px, 5.2vw, 22px) !important;
+  }
+
+  html body.is-mobile-layout #page-insights :is(.insight-action-copy, #insightFocusWhy, #insightFocusHow, #insightFocusSource, .priority-read-preview, .insight-preview, .trend-signal-detail, .trend-signal-value) {
+    font-size: clamp(12px, 3.7vw, 15px) !important;
+    line-height: 1.18 !important;
+    writing-mode: horizontal-tb !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    --tb-auto-fit-font-size: clamp(12px, 3.7vw, 15px) !important;
+  }
+
+  html body.is-mobile-layout #page-insights :is(.insight-label, .insight-action-kicker, .insight-action-kicker-top, .trend-signal-kicker, .trend-signal-tone, .insight-meta-pill) {
+    font-size: var(--rc-proof-xs) !important;
+    line-height: 1.05 !important;
+    writing-mode: horizontal-tb !important;
+    --tb-auto-fit-font-size: var(--rc-proof-xs) !important;
+  }
+
+  html body.is-mobile-layout #page-insights .insight-progress {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+}
+
+/* USER 43 TRUE FINAL OVERRIDES - keep as the last rules in this file.
+   These correct the mobile font/container regressions after all legacy blocks. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-pill:has(.focus-wrapper),
+  html.is-mobile-layout body.is-mobile-layout #page-logging .home-loadout-pill:has(.focus-wrapper) {
+    display: block !important;
+    grid-template-columns: none !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    padding: 5px 7px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 92px !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #focusPreviewText {
+    display: block !important;
+    grid-column: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 4px !important;
+    font-size: clamp(12px, 3.25vw, 14px) !important;
+    line-height: 1.08 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell {
+    grid-column: 2 !important;
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 7px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: end !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .agent-select-text,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .focus-select-symbol {
+    font-size: clamp(10px, 2.75vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta * {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.logging-label, .logging-score-label, .log-tier-label, .logging-tier-label, .logging-score-cell > span, .feed-card-label) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.06 !important;
+  }
+}
+
+/* RankedCoach mobile 43 re-verify pass.
+   These are deliberately ID/structure-level overrides because earlier broad
+   mobile groups were being beaten by duplicated legacy mobile rules. */
+@media (max-width: 760px), (pointer: coarse) and (max-width: 900px) {
+  /* #14B - keep the focus text and Browse control visible at the same time. */
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 96px !important;
+    grid-template-rows: 1fr !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-pill:has(.focus-wrapper),
+  html.is-mobile-layout body.is-mobile-layout #page-logging .home-loadout-pill:has(.focus-wrapper) {
+    display: block !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    padding: 5px 8px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #focusPreviewText {
+    grid-column: 1 !important;
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    --tb-auto-fit-font-size: clamp(12px, 3.35vw, 14px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell {
+    grid-column: 2 !important;
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding: 0 8px !important;
+    overflow: hidden !important;
+    border-radius: var(--rc-proof-radius, 10px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .focus-select-symbol {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .agent-select-text {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 68px !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    --tb-auto-fit-font-size: clamp(10px, 2.85vw, 12px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex: 0 0 13px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #logFocusSelect {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 4 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    color: transparent !important;
+    background: transparent !important;
+    font-size: 16px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+  }
+
+  /* #15-#16 - keep live-read and score labels closer to the rest of mobile UI. */
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-focus {
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: clamp(12px, 3.35vw, 14px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta * {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.1 !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.55vw, 11px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-score-cell .logging-label,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .feed-card-label,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-tier-label {
+    font-size: clamp(9px, 2.45vw, 10.5px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: .08em !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.45vw, 10.5px) !important;
+  }
+}
+
+/* User 43 re-verification pass.
+   This block is intentionally last so the screenshot QA layer wins over older
+   mobile experiments and auto-fit leftovers. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout.theme-static {
+    --rc43r-radius: 10px;
+    --rc43r-xxs: clamp(8px, 2.25vw, 10px);
+    --rc43r-xs: clamp(9px, 2.65vw, 11px);
+    --rc43r-sm: clamp(11px, 3.05vw, 13px);
+    --rc43r-md: clamp(12px, 3.4vw, 15px);
+    --rc43r-lg: clamp(15px, 4.15vw, 18px);
+    --rc43r-xl: clamp(18px, 5vw, 22px);
+  }
+
+  /* #42: one mobile radius standard for pills, controls, and small cards. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static :is(
+    button,
+    select,
+    input,
+    textarea,
+    .ui-interactive,
+    .role-filter-btn,
+    .loadout-role-btn,
+    .home-loadout-pill,
+    .impact-role-pill,
+    .weekly-focus-pill,
+    .weekly-focus-confidence,
+    .timeline-pill,
+    .improvement-pill,
+    .compass-source-pill,
+    .compass-description-toggle,
+    .compass-profile-meta span,
+    .compass-score-card,
+    .rr-stat,
+    .rr-match-stats,
+    .logging-pill,
+    .logging-row,
+    .logging-chip,
+    .logging-select-trigger,
+    .focus-select-shell,
+    .log-calendar-trigger,
+    .log-session-badge,
+    .stats-tab-btn,
+    .stats-filter-pill,
+    .stats-row-pill,
+    .stats-trend-card,
+    .stats-breakdown-cardlet,
+    .stats-map-card,
+    .stats-agent-card,
+    .stats-weapon-card,
+    .insight-meta-pill,
+    .priority-filter-btn,
+    .priority-read-card,
+    .trend-signal-card,
+    .mobile-bottom-page-btn,
+    .mobile-bottom-avatar-btn,
+    .mobile-bottom-icon-btn,
+    .profile-dropdown .pd-item,
+    .profile-row
+  ) {
+    border-radius: var(--rc43r-radius) !important;
+  }
+
+  /* #4: keep RR total and label stacked, centered, and readable. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    padding: 9px 6px !important;
+    overflow: hidden !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total :is(#totalRRDisplay, #rrTotal, .rr-total-value, .rr-total-number) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    font-size: clamp(28px, 8.6vw, 36px) !important;
+    line-height: .9 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total .card-sub {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* #2-#3: remove mobile loadout dead space and keep labels/values together. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-main {
+    grid-template-columns: minmax(0, .78fr) minmax(0, 1fr) !important;
+    grid-template-rows: 44px clamp(120px, 34vw, 146px) 54px 54px !important;
+    gap: 5px !important;
+    min-height: 298px !important;
+    padding: 7px !important;
+    align-items: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons.role-filter-row {
+    height: 44px !important;
+    min-height: 44px !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons .role-filter-btn {
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: var(--rc43r-xs) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons .role-filter-btn :is(img, svg) {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill {
+    grid-template-columns: minmax(116px, .82fr) minmax(0, 1fr) !important;
+    min-height: 54px !important;
+    height: 54px !important;
+    padding: 0 9px !important;
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill .pill-label {
+    font-size: clamp(18px, 5vw, 22px) !important;
+    line-height: 1.05 !important;
+    padding-bottom: .08em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill :is(.pill-value, #agentName, #focusDisplay) {
+    font-size: clamp(15px, 4.25vw, 19px) !important;
+    line-height: 1.08 !important;
+    padding-bottom: .08em !important;
+  }
+
+  /* #5: center the mobile impact meter as a compact meter block. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-card {
+    grid-template-rows: auto 212px !important;
+    min-height: 280px !important;
+    padding: 9px !important;
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-meter {
+    grid-template-columns: 74px 82px !important;
+    grid-template-rows: 176px auto !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 6px 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-scale {
+    height: 176px !important;
+    align-content: space-between !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-scale span {
+    font-size: clamp(12px, 3.7vw, 15px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-bar-outer {
+    width: 82px !important;
+    min-width: 82px !important;
+    height: 176px !important;
+    min-height: 176px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-score-label strong {
+    font-size: clamp(22px, 6.5vw, 30px) !important;
+    line-height: .9 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-meter-caption {
+    font-size: clamp(8px, 2.55vw, 10px) !important;
+    line-height: 1 !important;
+  }
+
+  /* #6-#14: home card text uses mobile containers instead of oversized auto-fit. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.timeline-pill-label, .improvement-pill-label) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.05 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.timeline-pill-delta, .improvement-pill-delta) {
+    font-size: clamp(10px, 2.75vw, 11px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-card :is(.card-sub, .weekly-focus-title) {
+    font-size: clamp(12px, 3.25vw, 14px) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.weekly-focus-key, .weekly-focus-pill-head) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-text {
+    font-size: clamp(11px, 3.1vw, 13px) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.compass-card, .compass-panel) {
+    padding: 9px !important;
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.compass-card, .compass-panel) :is(.card-sub, #compassProfileCopy, .compass-card-head, .compass-profile-title) {
+    font-size: clamp(12px, 3.45vw, 15px) !important;
+    line-height: 1.14 !important;
+    white-space: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-profile-meta,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-profile-meta * {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-description-toggle {
+    min-height: 28px !important;
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-score-card {
+    min-height: 102px !important;
+    padding: 7px !important;
+    gap: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-score-card :is(.compass-card-top, .compass-card-label, .compass-card-score-row, span, strong) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #rrMatchStats :is(.rr-match-stats-head, .rr-match-stats-title, .rr-match-stats-meta, .rr-stat span, .rr-stat strong) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.12 !important;
+  }
+
+  /* #14B-#17: logging mobile form uses compact readable rows. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-title {
+    font-size: clamp(17px, 4.45vw, 19px) !important;
+    line-height: 1.03 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-text {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.16 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-card {
+    min-height: 74px !important;
+    padding: 8px !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-live-title, .logging-live-focus) {
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-meta * {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-pill {
+    padding: 5px 7px !important;
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-pill, .logging-agent-row, .logging-focus-row) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    padding: 6px 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(#focusPreviewText, #logAgentText, .log-agent-text, .logging-pill .pill-label, .logging-pill .pill-value, #logMap) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: block !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.06 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .focus-wrapper:not(.is-custom-focus-editing) #focusPreviewText {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.focus-select-shell, .logging-select-trigger) {
+    width: auto !important;
+    min-width: 84px !important;
+    max-width: 104px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.focus-select-symbol, .agent-select-symbol, .agent-select-text) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-score-grid {
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-score-cell, .logging-score-group) {
+    padding: 8px !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-label, .logging-score-label, .log-tier-label, .logging-tier-label, .logging-score-cell > span, .feed-card-label) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.04 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-score-btn {
+    min-height: 32px !important;
+    font-size: clamp(12px, 3.25vw, 14px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.log-calendar-trigger, .log-session-badge) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 34px !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1 !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.log-entry-label, .log-entry-value, .log-entry-meta, .log-entry-notes, .quick-tip-btn, .quick-tip-option, .feed-card .card-sub, .feed-detail, .feed-value, .feed-notes) {
+    font-size: clamp(11px, 3.05vw, 13px) !important;
+    line-height: 1.18 !important;
+  }
+
+  /* #18-#30: stats text and card controls use the same mobile scale. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stat-label, .stats-act-label, .stats-main-text, .stats-proof-kicker, .stats-proof-note, .stats-proof-rank-copy, .stats-agent-card .card-sub, .stats-map-card .card-sub, .stats-weapon-card .card-sub, .stats-performance-card .card-sub, .stats-breakdown-cardlet .card-sub) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-value-row, .stats-role-progress-value-row) {
+    display: inline-flex !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-delta, .stats-row-progress-delta, .stats-role-progress-delta) {
+    margin-left: 0 !important;
+    font-size: clamp(8px, 2.3vw, 10px) !important;
+    text-align: right !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-proof-card {
+    min-height: 92px !important;
+    gap: 3px !important;
+    padding: 9px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-act-select-wrap,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-act-select {
+    min-height: 34px !important;
+    height: 34px !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-breakdown-cardlet.is-mobile-breakdown-active,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active {
+    min-height: 184px !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stats-breakdown-label, .stats-breakdown-value, .stats-breakdown-detail) {
+    font-size: clamp(11px, 3.1vw, 13px) !important;
+    line-height: 1.14 !important;
+  }
+
+  /* #31-#38: insights mobile stack must be centered, compact, and readable. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card {
+    display: grid !important;
+    grid-template-rows: auto 1fr !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card .insight-action {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card .insight-action > * {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    grid-area: auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card :is(.insight-action-hero, .insight-focus-detail, .insight-block) {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insight-meta-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insight-progress {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.insight-priority-title, .insight-action-title, .insight-card-title, .trend-signal-title, .insight-preview-title) {
+    font-size: clamp(16px, 4.45vw, 19px) !important;
+    line-height: 1.1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.card-sub, .insight-action-copy, #insightFocusWhy, #insightFocusHow, #insightFocusSource, .priority-read-preview, .insight-preview, .insight-detail, .trend-signal-detail, .trend-signal-value) {
+    font-size: clamp(11px, 3.1vw, 13px) !important;
+    line-height: 1.15 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.insight-label, .insight-action-kicker, .insight-action-kicker-top, .trend-signal-kicker, .trend-signal-tone, .insight-meta-pill) {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.05 !important;
+  }
+}
+
+/* USER 43 TRUE FINAL OVERRIDES - keep as the literal last rules in this file.
+   These correct the mobile font/container regressions after all legacy blocks. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-pill:has(.focus-wrapper),
+  html.is-mobile-layout body.is-mobile-layout #page-logging .home-loadout-pill:has(.focus-wrapper) {
+    display: block !important;
+    grid-template-columns: none !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    padding: 5px 7px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 92px !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #focusPreviewText {
+    display: block !important;
+    grid-column: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 4px !important;
+    font-size: clamp(12px, 3.25vw, 14px) !important;
+    line-height: 1.08 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell {
+    grid-column: 2 !important;
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 7px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: end !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .agent-select-text,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .focus-select-symbol {
+    font-size: clamp(10px, 2.75vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta * {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.logging-label, .logging-score-label, .log-tier-label, .logging-tier-label, .logging-score-cell > span, .feed-card-label) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.06 !important;
+  }
+}
+
+/* RC MOBILE 43 FINAL PROOF LAYER - actual EOF.
+   This must stay last. It fixes the cascade issue where earlier "proof" rules
+   were overwritten by duplicated mobile blocks later in the file. */
+@media (max-width: 760px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout {
+    --rc43-radius: 10px;
+    --rc43-font-xxs: clamp(8px, 2.25vw, 10px);
+    --rc43-font-xs: clamp(9px, 2.55vw, 11px);
+    --rc43-font-sm: clamp(10px, 2.95vw, 12px);
+    --rc43-font-md: clamp(12px, 3.35vw, 14px);
+    --rc43-font-lg: clamp(14px, 3.8vw, 16px);
+    --rc43-font-xl: clamp(16px, 4.35vw, 19px);
+  }
+
+  /* #1 */
+  html.is-mobile-layout body.is-mobile-layout .mobile-rank-header,
+  html.is-mobile-layout body.is-mobile-layout .nav-rank-center {
+    margin-bottom: 4px !important;
+  }
+
+  /* #2 */
+  html.is-mobile-layout body.is-mobile-layout #page-home .loadout-card {
+    gap: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home #roleButtons,
+  html.is-mobile-layout body.is-mobile-layout #page-home .role-buttons,
+  html.is-mobile-layout body.is-mobile-layout #page-home .loadout-role-buttons {
+    margin: 0 !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home :is(.loadout-mobile-core, .home-loadout-stage, .loadout-agent-stage) {
+    margin-top: 0 !important;
+    gap: 6px !important;
+  }
+
+  /* #3 */
+  html.is-mobile-layout body.is-mobile-layout #page-home .home-loadout-info {
+    display: grid !important;
+    gap: 5px !important;
+    grid-template-rows: repeat(2, minmax(54px, auto)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .home-loadout-pill {
+    display: grid !important;
+    grid-template-columns: minmax(132px, .95fr) minmax(0, 1.05fr) !important;
+    align-items: center !important;
+    min-height: 56px !important;
+    height: 56px !important;
+    padding: 0 10px !important;
+    gap: 7px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .home-loadout-pill :is(.pill-label, .pill-value, #agentName, #focusDisplay) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: var(--rc43-xl) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    --tb-auto-fit-font-size: var(--rc43-xl) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .home-loadout-pill .pill-label {
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .home-loadout-pill :is(.pill-value, #agentName, #focusDisplay) {
+    text-align: right !important;
+  }
+
+  /* #4 */
+  html.is-mobile-layout body.is-mobile-layout #page-home :is(.rr-total .card-sub, .rr-total-label, .rr-total-sub, #rrTodayLabel) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    --tb-auto-fit-font-size: var(--rc43-xs) !important;
+  }
+
+  /* #5 */
+  html.is-mobile-layout body.is-mobile-layout #page-home .rank-impact-card :is(.impact-meter, .impact-bar-shell, .impact-bar-outer) {
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .impact-meter {
+    width: min(292px, 84vw) !important;
+    grid-template-columns: 76px minmax(90px, 1fr) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .impact-score-label {
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    text-align: center !important;
+  }
+
+  /* #6-#14 */
+  html.is-mobile-layout body.is-mobile-layout #page-home :is(
+    .timeline-pill-label,
+    .timeline-pill-head,
+    .timeline-pill-title,
+    .timeline-pill-delta,
+    .improvement-pill-label,
+    .improvement-pill-title,
+    .improvement-pill-delta,
+    .weekly-focus-key,
+    .weekly-focus-head,
+    .weekly-focus-confidence,
+    .compass-profile-meta span,
+    .compass-source-pill,
+    .compass-description-toggle,
+    .compass-card-top,
+    .compass-card-label,
+    .rr-match-stats-title,
+    .rr-match-stats-meta,
+    .rr-stat span,
+    .rr-stat strong
+  ) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: var(--rc43-xs) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home :is(
+    .timeline-pill-value,
+    .improvement-pill-value,
+    .weekly-focus-card .card-sub,
+    .weekly-focus-text,
+    #compassProfileCopy,
+    .compass-card .card-sub,
+    .compass-profile-description
+  ) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.16 !important;
+    --tb-auto-fit-font-size: var(--rc43-sm) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home :is(.compass-header .card-title, .compass-profile-title, .compass-head, .compass-title) {
+    font-size: var(--rc43-lg) !important;
+    line-height: 1.1 !important;
+    --tb-auto-fit-font-size: var(--rc43-lg) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home .compass-description-toggle {
+    width: 100% !important;
+    min-height: 32px !important;
+    height: 32px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #rrMatchStats {
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #rrMatchStats .rr-match-stats-head {
+    min-height: 34px !important;
+    gap: 3px !important;
+  }
+
+  /* #14B-#17 */
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-pill:has(.focus-wrapper),
+  html.is-mobile-layout body.is-mobile-layout #page-logging .home-loadout-pill:has(.focus-wrapper) {
+    display: block !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    padding: 5px 8px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 96px !important;
+    grid-template-rows: 1fr !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #focusPreviewText {
+    grid-column: 1 !important;
+    display: block !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: var(--rc43-md) !important;
+    line-height: 1.08 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    --tb-auto-fit-font-size: var(--rc43-md) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell {
+    grid-column: 2 !important;
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: end !important;
+    width: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border-radius: var(--rc43-radius) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .focus-select-symbol {
+    position: static !important;
+    inset: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .agent-select-text,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-symbol,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .agent-select-symbol {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    --tb-auto-fit-font-size: var(--rc43-sm) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.logging-hero-title, .logging-live-focus) {
+    font-size: var(--rc43-lg) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: var(--rc43-lg) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.logging-hero-text, .logging-live-meta, .log-live-meta, .session-brief-meta, .logging-feed-card, .feed-card, .quick-tip, .quick-add-option) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.15 !important;
+    --tb-auto-fit-font-size: var(--rc43-sm) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.logging-hero-kicker, .logging-live-pill, .logging-label, .logging-score-label, .log-tier-label, .logging-tier-label, .logging-score-cell label, .feed-card-label) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: var(--rc43-xs) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.logging-score-cell, .logging-score-group) {
+    gap: 6px !important;
+    padding: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-score-btn {
+    min-height: 30px !important;
+    font-size: var(--rc43-md) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.log-calendar-trigger, .log-session-badge, .logging-calendar-trigger, .logging-session-count-badge) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    min-height: 34px !important;
+    font-size: var(--rc43-xs) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging :is(.log-entry-label, .log-entry-value, .log-entry-meta, .log-entry-notes, .quick-tip-btn, .quick-tip-option, .feed-card .card-sub, .feed-detail, .feed-value, .feed-notes) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.18 !important;
+    white-space: normal !important;
+  }
+
+  /* #18-#30 */
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stat-label, .stat-card-label, .stats-summary-label, .stats-act-label, .stats-main-text, .stats-proof-kicker, .stats-proof-note, .stats-proof-rank-copy, .stats-agent-card .card-sub, .stats-map-card .card-sub, .stats-weapon-card .card-sub, .stats-performance-card .card-sub, .stats-breakdown-cardlet .card-sub) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.12 !important;
+    --tb-auto-fit-font-size: var(--rc43-xs) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-value-line, .role-progress-value-row, .stats-role-progress-value-row) {
+    display: inline-flex !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.role-progress-delta, .stats-row-progress-delta, .stats-role-progress-delta) {
+    display: inline-block !important;
+    margin-left: 0 !important;
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.role-progress-delta.positive, .stats-row-progress-delta.positive, .stats-role-progress-delta.positive, .delta-good) {
+    color: var(--good, #22c55e) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.role-progress-delta.negative, .stats-row-progress-delta.negative, .stats-role-progress-delta.negative, .delta-bad) {
+    color: var(--bad, #ef4444) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-proof-card {
+    min-height: 96px !important;
+    padding: 8px !important;
+    gap: 3px !important;
+    align-content: start !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select-wrap,
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select {
+    min-height: 34px !important;
+    height: 34px !important;
+    font-size: var(--rc43-sm) !important;
+    line-height: 1 !important;
+    border-radius: var(--rc43-radius) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-agent-name, .stats-map-name, .stats-weapon-name, .stats-breakdown-value, .stats-trend-title) {
+    font-size: var(--rc43-md) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: var(--rc43-md) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-agent-card .card-sub, .stats-map-card .card-sub, .stats-weapon-card .card-sub, .stats-performance-card .card-sub, .stats-breakdown-card .card-sub, .stats-breakdown-detail, .stats-trend-detail) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.14 !important;
+    --tb-auto-fit-font-size: var(--rc43-sm) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-weapon-image-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-weapon-tile {
+    min-height: 92px !important;
+    display: grid !important;
+    grid-template-rows: minmax(48px, 1fr) auto auto !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.weapon-mini, .weapon-mini-stat, .stats-weapon-mini, .stats-weapon-name) {
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-map-card:is(.is-excluded, .out-of-season, [data-excluded="true"], [data-map-active="false"]) {
+    opacity: .58 !important;
+    filter: grayscale(1) saturate(.55) !important;
+    position: relative !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-map-card:is(.is-excluded, .out-of-season, [data-excluded="true"], [data-map-active="false"])::after {
+    content: "X\A Out-of-Season" !important;
+    white-space: pre !important;
+    position: absolute !important;
+    inset: 8px !important;
+    display: grid !important;
+    place-items: center !important;
+    text-align: center !important;
+    font-size: var(--rc43-md) !important;
+    line-height: 1.1 !important;
+    border-radius: var(--rc43-radius) !important;
+    pointer-events: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-breakdown-cardlet:not(.is-mobile-breakdown-active),
+  html.is-mobile-layout body.is-mobile-layout #page-stats #statsPerformanceChart .stats-trend-card:not(.is-mobile-trend-active) {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-breakdown-cardlet.is-mobile-breakdown-active,
+  html.is-mobile-layout body.is-mobile-layout #page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active {
+    display: grid !important;
+    width: 100% !important;
+    min-height: 196px !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-breakdown-label, .stats-breakdown-value, .stats-breakdown-detail) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+  }
+
+  /* #31-#38 */
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insight-progress {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insights-action-card {
+    padding: 10px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insight-action {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 auto !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insight-action > * {
+    position: static !important;
+    inset: auto !important;
+    grid-area: auto !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights :is(.insight-action-hero, .insight-block, .insight-focus-detail) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+    border-radius: var(--rc43-radius) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights :is(.insight-priority-title, #insightFocusTitle, .priority-read-title, .insight-card-title, .trend-signal-title) {
+    font-size: var(--rc43-xl) !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    --tb-auto-fit-font-size: var(--rc43-xl) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights :is(.card-sub, .insight-action-copy, #insightFocusWhy, #insightFocusHow, #insightFocusSource, .priority-read-preview, .insight-preview, .trend-signal-detail, .trend-signal-value) {
+    font-size: var(--rc43-md) !important;
+    line-height: 1.16 !important;
+    white-space: normal !important;
+    --tb-auto-fit-font-size: var(--rc43-md) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights :is(.insight-label, .insight-action-kicker, .insight-action-kicker-top, .trend-signal-kicker, .trend-signal-tone, .insight-meta-pill) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: var(--rc43-xs) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insight-card:not(.is-mobile-insight-active),
+  html.is-mobile-layout body.is-mobile-layout #page-insights .trend-signal-card:not(.is-mobile-insight-trend-active) {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insight-card.is-mobile-insight-active,
+  html.is-mobile-layout body.is-mobile-layout #page-insights .trend-signal-card.is-mobile-insight-trend-active {
+    display: grid !important;
+    width: 100% !important;
+    min-height: 214px !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights :is(.mobile-insight-tabs, .mobile-insight-trend-tabs, .mobile-trend-tabs) {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .trend-signal-media img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+
+  /* #39-#43 */
+  html.is-mobile-layout body.is-mobile-layout #profileAddBtn {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+    text-align: center !important;
+    border-radius: var(--rc43-radius) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#profileDropdown, .profile-dropdown) {
+    position: fixed !important;
+    left: auto !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: calc(var(--mobile-bottom-nav, 86px) + 8px + env(safe-area-inset-bottom)) !important;
+    width: min(330px, calc(100vw - 16px)) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - var(--mobile-bottom-nav, 86px) - 24px) !important;
+    overflow-y: auto !important;
+    transform: none !important;
+    z-index: 30000 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#profileSwitcher, .profile-switcher) {
+    position: fixed !important;
+    left: auto !important;
+    right: 8px !important;
+    top: auto !important;
+    bottom: calc(var(--mobile-bottom-nav, 86px) + 8px + env(safe-area-inset-bottom)) !important;
+    width: min(330px, calc(100vw - 16px)) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - var(--mobile-bottom-nav, 86px) - 24px) !important;
+    overflow-y: auto !important;
+    transform: none !important;
+    z-index: 30000 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout:not(.is-manual-entry-mode):not(.manual-mode-enabled) :is(#mobileManualReportToggle, #manualMatchPanel, .manual-match-panel, .manual-report-panel, .offline-match-report, [data-manual-report], [data-mobile-manual-report]) {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(
+    button,
+    input,
+    textarea,
+    select,
+    .pd-item,
+    .pill,
+    .meta-pill,
+    .ui-interactive,
+    .logging-pill,
+    .role-filter-btn,
+    .chart-control-btn,
+    .stats-tab-btn,
+    .mobile-bottom-page-btn,
+    .mobile-carousel-btn,
+    .insight-meta-pill,
+    .confidence-pill,
+    .impact-role-pill,
+    .rr-stat,
+    .score-box,
+    .stats-trend-card,
+    .stats-breakdown-cardlet,
+    .insight-card,
+    .trend-signal-card
+  ) {
+    border-radius: var(--rc43-radius) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal), .agent-modal, .agent-modal-overlay, .auth-modal-overlay, .profile-edit-overlay, .tutorial-overlay, .security-modal-overlay).active,
+  html.is-mobile-layout body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal), .agent-modal, .agent-modal-overlay, .auth-modal-overlay, .profile-edit-overlay, .tutorial-overlay, .security-modal-overlay).is-open {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 32000 !important;
+    background: rgba(2, 6, 23, .78) !important;
+    backdrop-filter: blur(10px) saturate(.9) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(.9) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal), .auth-modal-overlay, .profile-edit-overlay, .security-modal-overlay).active > :is(.lens-modal, .auth-modal, .profile-edit-modal, .security-modal),
+  html.is-mobile-layout body.is-mobile-layout .agent-modal.active :is(.agent-modal-inner, .agent-modal-shell) {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    transform: none !important;
+  }
+}
+
+/* TRUE EOF OVERRIDES - user 43 re-verification.
+   Keep this block at the end so older duplicated mobile rules cannot re-break
+   verified fixes during the QA screenshot loop. */
+@media (max-width: 760px), (pointer: coarse) and (max-width: 900px) {
+  /* #14B - focus category row must show value + Browse together. */
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-pill:has(.focus-wrapper),
+  html.is-mobile-layout body.is-mobile-layout #page-logging .home-loadout-pill:has(.focus-wrapper) {
+    display: block !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    padding: 5px 8px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 96px !important;
+    grid-template-rows: 1fr !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #focusPreviewText {
+    grid-column: 1 !important;
+    display: block !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    --tb-auto-fit-font-size: clamp(12px, 3.35vw, 14px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell {
+    grid-column: 2 !important;
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    justify-self: end !important;
+    width: 96px !important;
+    min-width: 96px !important;
+    max-width: 96px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border-radius: var(--rc-proof-radius, 10px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .focus-select-symbol {
+    position: static !important;
+    inset: auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell .agent-select-text {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 68px !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    --tb-auto-fit-font-size: clamp(10px, 2.85vw, 12px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-select-shell svg {
+    width: 13px !important;
+    height: 13px !important;
+    flex: 0 0 13px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging #logFocusSelect {
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: 4 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    color: transparent !important;
+    background: transparent !important;
+    font-size: 16px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+  }
+
+  /* #15-#16 - logging live read and score-tier labels. */
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-card {
+    min-height: 82px !important;
+    padding: 9px !important;
+    gap: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-focus {
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.08 !important;
+    --tb-auto-fit-font-size: clamp(12px, 3.35vw, 14px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-live-meta * {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.1 !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.55vw, 11px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging .logging-score-cell .logging-label,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .feed-card-label,
+  html.is-mobile-layout body.is-mobile-layout #page-logging .log-tier-label {
+    font-size: clamp(9px, 2.45vw, 10.5px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: .08em !important;
+    --tb-auto-fit-font-size: clamp(9px, 2.45vw, 10.5px) !important;
+  }
+}
+
+/* User 43 verification pass: high-specificity mobile fixes.
+   These intentionally match the older theme snapshot specificity so the
+   screenshots reflect the real intended mobile layout. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout.theme-static {
+    --rc43-radius: 10px;
+    --rc43-card-radius: 16px;
+    --rc43-xxs: clamp(8px, 2.1vw, 10px);
+    --rc43-xs: clamp(9px, 2.45vw, 11px);
+    --rc43-sm: clamp(10px, 2.9vw, 13px);
+    --rc43-md: clamp(12px, 3.35vw, 15px);
+    --rc43-lg: clamp(15px, 4.2vw, 18px);
+    --rc43-xl: clamp(19px, 5.8vw, 25px);
+  }
+
+  /* #42: standard mobile pill/button radius to match desktop's squared pills. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static :is(
+    button,
+    select,
+    input,
+    textarea,
+    .ui-interactive,
+    .role-filter-btn,
+    .home-loadout-pill,
+    .impact-role-pill,
+    .weekly-focus-confidence,
+    .timeline-pill,
+    .improvement-pill,
+    .compass-source-pill,
+    .compass-description-toggle,
+    .compass-profile-meta span,
+    .rr-stat,
+    .rr-match-stats,
+    .logging-pill,
+    .logging-chip,
+    .logging-select-trigger,
+    .focus-select-shell,
+    .log-calendar-trigger,
+    .log-session-badge,
+    .stats-tab-btn,
+    .stats-filter-pill,
+    .stats-row-pill,
+    .insight-meta-pill,
+    .priority-filter-btn,
+    .insight-filter-btn,
+    .mobile-bottom-page-btn,
+    .mobile-bottom-avatar-btn,
+    .mobile-bottom-icon-btn,
+    .profile-dropdown .pd-item,
+    .profile-row
+  ) {
+    border-radius: var(--rc43-radius) !important;
+  }
+
+  /* #1: keep top rank widgets tight to the header. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static .mobile-top-shell,
+  html.is-mobile-layout body.is-mobile-layout.theme-static .app-header {
+    min-height: 74px !important;
+    padding: calc(env(safe-area-inset-top) + 4px) 8px 6px !important;
+    gap: 5px !important;
+    border-bottom: 1px solid var(--border-soft, rgba(148,163,184,.34)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static .mobile-rank-row,
+  html.is-mobile-layout body.is-mobile-layout.theme-static .nav-center,
+  html.is-mobile-layout body.is-mobile-layout.theme-static .nav-middle {
+    gap: 6px !important;
+    min-height: 34px !important;
+    height: auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static .nav-card,
+  html.is-mobile-layout body.is-mobile-layout.theme-static .rank-widget {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 5px 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static .page.active {
+    padding-top: calc(var(--mobile-top-ranks, 82px) + 4px) !important;
+  }
+
+  /* #2-#3: mobile loadout should be compact, readable, and balanced. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-main {
+    display: grid !important;
+    grid-template-columns: minmax(0, .72fr) minmax(0, 1fr) !important;
+    grid-template-rows: 48px clamp(132px, 36vw, 154px) 58px 58px !important;
+    grid-template-areas:
+      "roles roles"
+      "spin reel"
+      "agent agent"
+      "focus focus" !important;
+    gap: 6px !important;
+    padding: 8px !important;
+    min-height: 322px !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons.role-filter-row {
+    grid-area: roles !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-auto-flow: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons .role-filter-btn {
+    width: 100% !important;
+    height: 48px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    font-size: var(--rc43-xs) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons .role-filter-btn :is(img, svg) {
+    width: 25px !important;
+    height: 25px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #spinAgentBtn {
+    grid-area: spin !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #agentFrame,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #agentFrame.agent-frame {
+    grid-area: reel !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    align-self: stretch !important;
+    justify-self: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-info {
+    display: contents !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill {
+    display: grid !important;
+    grid-template-columns: minmax(0, .84fr) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 58px !important;
+    height: 58px !important;
+    padding: 0 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill:first-child {
+    grid-area: agent !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill:last-child {
+    grid-area: focus !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill .pill-label {
+    min-width: 0 !important;
+    font-size: var(--rc43-xl) !important;
+    line-height: 1.04 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill :is(.pill-value, #agentName, #focusDisplay) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(16px, 4.9vw, 21px) !important;
+    line-height: 1.04 !important;
+    text-align: right !important;
+    justify-content: flex-end !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding-bottom: .08em !important;
+  }
+
+  /* #4: RR total label and value must both remain visible. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    align-content: center !important;
+    justify-items: center !important;
+    gap: 4px !important;
+    padding: 10px 6px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total #totalRRDisplay {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(22px, 7vw, 30px) !important;
+    line-height: .92 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total .card-sub {
+    position: static !important;
+    inset: auto !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(9px, 2.7vw, 11px) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* #5: center impact role meter and keep label/fill aligned. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-card {
+    display: grid !important;
+    grid-template-rows: auto 248px !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    min-height: 326px !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-meter {
+    display: grid !important;
+    grid-template-columns: 88px 96px !important;
+    grid-template-rows: 214px auto !important;
+    grid-template-areas:
+      "scale fill"
+      "caption caption" !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px 14px !important;
+    width: 100% !important;
+    height: 248px !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-scale {
+    grid-area: scale !important;
+    height: 214px !important;
+    display: grid !important;
+    align-content: space-between !important;
+    justify-items: end !important;
+    padding: 4px 0 !important;
+    text-align: right !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-scale span {
+    font-size: clamp(14px, 4.2vw, 18px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-bar-outer {
+    grid-area: fill !important;
+    width: 96px !important;
+    height: 214px !important;
+    min-width: 96px !important;
+    min-height: 214px !important;
+    margin: 0 !important;
+    align-self: center !important;
+    justify-self: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-score-label {
+    left: 50% !important;
+    right: auto !important;
+    top: var(--impact-score-top, 50%) !important;
+    transform: translate(-50%, -50%) !important;
+    width: 100% !important;
+    text-align: center !important;
+    pointer-events: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-score-label strong {
+    font-size: clamp(24px, 7vw, 34px) !important;
+    line-height: .9 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-meter-caption {
+    grid-area: caption !important;
+    margin: 0 !important;
+    font-size: clamp(10px, 3vw, 12px) !important;
+    line-height: 1.02 !important;
+    letter-spacing: .08em !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* #6-#14: home read cards use readable mobile text. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.timeline-pill-label, .improvement-pill-label) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.05 !important;
+    white-space: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.timeline-pill-delta, .improvement-pill-delta) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-card .card-sub,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-title {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.weekly-focus-key, .weekly-focus-pill-head) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-text {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-card :is(.card-sub, #compassProfileCopy, .compass-card-head, .compass-profile-title),
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-panel :is(.card-sub, #compassProfileCopy, .compass-card-head, .compass-profile-title) {
+    font-size: var(--rc43-md) !important;
+    line-height: 1.12 !important;
+    white-space: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-profile-meta,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-profile-meta * {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-description-toggle {
+    width: 100% !important;
+    min-height: 30px !important;
+    font-size: var(--rc43-xs) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-score-card :is(.compass-card-top, .compass-card-label, .compass-card-score-row, span, strong) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.06 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #rrMatchStats :is(.rr-match-stats-head, .rr-match-stats-title, .rr-match-stats-meta, .rr-stat span, .rr-stat strong),
+  html.is-mobile-layout body.is-mobile-layout.theme-static #rrMatchStats :is(.rr-match-stats-head, .rr-match-stats-title, .rr-match-stats-meta, .rr-stat span, .rr-stat strong) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.12 !important;
+  }
+
+  /* #14B-#17: logging form/feed controls and labels. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero {
+    padding: 10px !important;
+    gap: 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-title {
+    font-size: clamp(18px, 5vw, 22px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: .01em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-text,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-copy {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.16 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-card {
+    min-height: 94px !important;
+    padding: 10px !important;
+    gap: 5px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-live-title, .logging-live-focus) {
+    font-size: var(--rc43-md) !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-meta * {
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-pill {
+    max-width: 100% !important;
+    padding: 6px 8px !important;
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-pill {
+    min-height: 50px !important;
+    height: 50px !important;
+    padding: 6px 10px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(#focusPreviewText, #logAgentText, .log-agent-text, .logging-pill .pill-label, .logging-pill .pill-value, #logMap) {
+    min-width: 0 !important;
+    display: block !important;
+    font-size: var(--rc43-md) !important;
+    line-height: 1.06 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .focus-wrapper:not(.is-custom-focus-editing) #focusPreviewText {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.focus-select-shell, .logging-select-trigger) {
+    height: 38px !important;
+    min-height: 38px !important;
+    width: 112px !important;
+    min-width: 112px !important;
+    max-width: 112px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .focus-select-symbol,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .agent-select-symbol,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .agent-select-text {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-label, .logging-score-label, .log-tier-label, .logging-tier-label, .logging-score-cell > span, .feed-card-label) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.log-calendar-trigger, .log-session-badge) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    min-height: 38px !important;
+    font-size: var(--rc43-sm) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.log-entry-label, .log-entry-value, .log-entry-meta, .log-entry-notes, .quick-tip-btn, .quick-tip-option, .feed-card .card-sub, .feed-detail, .feed-value, .feed-notes) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.18 !important;
+  }
+
+  /* #18-#30: stats mobile typography and card rhythm. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stat-label, .stats-act-label, .stats-main-text, .stats-proof-kicker, .stats-proof-note, .stats-proof-rank-copy, .card-sub, .stats-agent-card .card-sub, .stats-map-card .card-sub, .stats-weapon-card .card-sub, .stats-performance-card .card-sub, .stats-breakdown-cardlet .card-sub) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.14 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-proof-card {
+    min-height: 104px !important;
+    display: grid !important;
+    grid-template-rows: auto auto auto !important;
+    align-content: start !important;
+    gap: 4px !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-act-select-wrap,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-act-select {
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: var(--rc43-xs) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stats-row-progress-row, .stats-role-progress-row, #statsRoleProgressRow) {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    min-height: 96px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-card, .stats-role-progress-item, .stats-row-progress-card) {
+    display: grid !important;
+    grid-template-rows: minmax(34px, 1fr) auto auto !important;
+    align-items: center !important;
+    justify-items: center !important;
+    gap: 3px !important;
+    min-height: 94px !important;
+    padding: 7px 5px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-icon, .stats-role-progress-icon) {
+    width: 34px !important;
+    height: 34px !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-label, .stats-role-progress-label) {
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-value-row, .stats-role-progress-value-row) {
+    display: inline-flex !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-value, .stats-row-progress-value, .stats-role-progress-value) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-delta, .stats-row-progress-delta, .stats-role-progress-delta) {
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1 !important;
+    margin-left: auto !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-map-card.is-excluded,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-map-card[data-excluded="true"] {
+    filter: grayscale(1) saturate(.2) opacity(.72) !important;
+    position: relative !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-map-card.is-excluded::after,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-map-card[data-excluded="true"]::after {
+    content: "X  Out-of-Season" !important;
+    position: absolute !important;
+    inset: 8px !important;
+    display: grid !important;
+    place-items: center !important;
+    background: rgba(2,6,23,.58) !important;
+    border: 1px solid rgba(226,232,240,.28) !important;
+    border-radius: var(--rc43-radius) !important;
+    color: #f8fafc !important;
+    font-size: var(--rc43-xs) !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-weapon-image-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    max-height: 178px !important;
+    overflow: auto !important;
+    padding-right: 3px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-weapon-tile {
+    min-height: 78px !important;
+    display: grid !important;
+    grid-template-rows: minmax(34px, 1fr) auto auto !important;
+    gap: 3px !important;
+    padding: 6px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stats-weapon-art-wrap, .stats-weapon-art) {
+    min-height: 34px !important;
+    height: 34px !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stats-weapon-name, .stats-weapon-mini, .weapon-mini, .weapon-mini *) {
+    font-size: var(--rc43-xxs) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-breakdown-cardlet:not(.is-mobile-breakdown-active),
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats #statsPerformanceChart .stats-trend-card:not(.is-mobile-trend-active) {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-breakdown-cardlet.is-mobile-breakdown-active,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active {
+    display: grid !important;
+    width: 100% !important;
+    min-height: 198px !important;
+    max-width: 100% !important;
+    padding: 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stats-breakdown-label, .stats-breakdown-value, .stats-breakdown-detail) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.16 !important;
+  }
+
+  /* #31-#38: insights should not collapse, overflow, or use unreadable text. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card {
+    padding: 12px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card .insight-action {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 10px !important;
+    grid-template: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card .insight-action > * {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-area: auto !important;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    white-space: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card :is(.insight-action-hero, .insight-focus-detail, .insight-block) {
+    display: block !important;
+    grid-template: none !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 12px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insight-progress {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.insight-priority-title, .insight-action-title, .insight-card-title, .trend-signal-title, .insight-preview-title) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: var(--rc43-lg) !important;
+    line-height: 1.12 !important;
+    writing-mode: horizontal-tb !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.card-sub, .insight-action-copy, #insightFocusWhy, #insightFocusHow, #insightFocusSource, .priority-read-preview, .insight-preview, .insight-detail, .trend-signal-detail, .trend-signal-value) {
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.18 !important;
+    writing-mode: horizontal-tb !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.insight-label, .insight-action-kicker, .insight-action-kicker-top, .trend-signal-kicker, .trend-signal-tone, .insight-meta-pill) {
+    font-size: var(--rc43-xs) !important;
+    line-height: 1.05 !important;
+    writing-mode: horizontal-tb !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.mobile-insight-tabs, .mobile-insight-trend-tabs, .mobile-trend-tabs, .insights-group-tabs) {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .trend-signal-media {
+    min-height: 120px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .trend-signal-media img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  /* #39-#41/#43: mobile dropdowns and modals must be reachable. */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #profileAddBtn {
+    width: 100% !important;
+    min-height: 38px !important;
+    white-space: normal !important;
+    font-size: var(--rc43-sm) !important;
+    line-height: 1.05 !important;
+    padding: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static .profile-dropdown {
+    position: fixed !important;
+    right: 10px !important;
+    left: auto !important;
+    bottom: calc(var(--mobile-bottom-nav, 84px) + 8px + env(safe-area-inset-bottom)) !important;
+    top: auto !important;
+    width: min(286px, calc(100vw - 20px)) !important;
+    max-height: min(70vh, 560px) !important;
+    overflow: auto !important;
+    z-index: 2147483646 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static .profile-switcher {
+    position: fixed !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(var(--mobile-bottom-nav, 84px) + 8px + env(safe-area-inset-bottom)) !important;
+    top: auto !important;
+    max-height: min(64vh, 520px) !important;
+    overflow: auto !important;
+    z-index: 2147483646 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static:not(.is-manual-entry-mode) :is(#mobileManualReportToggle, #manualMatchPanel, .manual-match-panel, .manual-report-panel, .offline-match-report) {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static :is(.lens-modal-overlay:not(#goalRankModal), .agent-modal, .agent-modal-overlay, .auth-modal-overlay, .profile-edit-overlay, .tutorial-overlay, .security-modal-overlay).active,
+  html.is-mobile-layout body.is-mobile-layout.theme-static :is(.lens-modal-overlay:not(#goalRankModal), .agent-modal, .agent-modal-overlay, .auth-modal-overlay, .profile-edit-overlay, .tutorial-overlay, .security-modal-overlay).is-open {
+    position: fixed !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px) !important;
+    background: rgba(2,6,23,.78) !important;
+    backdrop-filter: blur(8px) !important;
+    overflow: hidden !important;
+    z-index: 2147483647 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static :is(.lens-modal-overlay:not(#goalRankModal), .auth-modal-overlay, .profile-edit-overlay, .security-modal-overlay).active > :is(.lens-modal, .auth-modal, .profile-edit-modal, .security-modal),
+  html.is-mobile-layout body.is-mobile-layout.theme-static .agent-modal.active :is(.agent-modal-inner, .agent-modal-shell),
+  html.is-mobile-layout body.is-mobile-layout.theme-static .agent-modal-overlay.active :is(.agent-modal-inner, .agent-modal-shell) {
+    width: min(100%, 430px) !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    overflow: auto !important;
+    margin: 0 !important;
+  }
+}
+
+/* User 43 final cascade: fixes verified against before/after screenshots. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout.theme-static {
+    --rc43-final-radius: 10px;
+    --rc43-final-xxs: clamp(8px, 2.25vw, 10px);
+    --rc43-final-xs: clamp(9px, 2.65vw, 11px);
+    --rc43-final-sm: clamp(11px, 3.05vw, 13px);
+    --rc43-final-md: clamp(12px, 3.4vw, 15px);
+    --rc43-final-lg: clamp(15px, 4.15vw, 18px);
+    --rc43-final-xl: clamp(18px, 5vw, 22px);
+  }
+
+  /* #42 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static :is(
+    button, select, input, textarea, .ui-interactive,
+    .role-filter-btn, .loadout-role-btn, .home-loadout-pill, .impact-role-pill,
+    .weekly-focus-pill, .weekly-focus-confidence, .timeline-pill, .improvement-pill,
+    .compass-source-pill, .compass-description-toggle, .compass-profile-meta span,
+    .compass-score-card, .rr-stat, .rr-match-stats, .logging-pill, .logging-row,
+    .logging-chip, .logging-select-trigger, .focus-select-shell, .log-calendar-trigger,
+    .log-session-badge, .stats-tab-btn, .stats-filter-pill, .stats-row-pill,
+    .stats-trend-card, .stats-breakdown-cardlet, .stats-map-card, .stats-agent-card,
+    .stats-weapon-card, .insight-meta-pill, .priority-filter-btn, .priority-read-card,
+    .trend-signal-card, .mobile-bottom-page-btn, .mobile-bottom-avatar-btn,
+    .mobile-bottom-icon-btn, .profile-dropdown .pd-item, .profile-row
+  ) {
+    border-radius: var(--rc43-final-radius) !important;
+  }
+
+  /* #2-#3 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-main {
+    grid-template-columns: minmax(0, .78fr) minmax(0, 1fr) !important;
+    grid-template-rows: 44px clamp(120px, 34vw, 146px) 54px 54px !important;
+    gap: 5px !important;
+    min-height: 298px !important;
+    padding: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons.role-filter-row {
+    height: 44px !important;
+    min-height: 44px !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons .role-filter-btn {
+    height: 44px !important;
+    min-height: 44px !important;
+    font-size: var(--rc43-final-xs) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home #roleButtons .role-filter-btn :is(img, svg) {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill {
+    grid-template-columns: minmax(116px, .82fr) minmax(0, 1fr) !important;
+    min-height: 54px !important;
+    height: 54px !important;
+    padding: 0 9px !important;
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill .pill-label {
+    font-size: clamp(18px, 5vw, 22px) !important;
+    line-height: 1.05 !important;
+    padding-bottom: .08em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .home-loadout-pill :is(.pill-value, #agentName, #focusDisplay) {
+    font-size: clamp(15px, 4.25vw, 19px) !important;
+    line-height: 1.08 !important;
+    padding-bottom: .08em !important;
+  }
+
+  /* #4 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+    padding: 9px 6px !important;
+    overflow: hidden !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total :is(#totalRRDisplay, #rrTotal, .rr-total-value, .rr-total-number) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    font-size: clamp(28px, 8.6vw, 36px) !important;
+    line-height: .9 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .rr-card .rr-total .card-sub {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  /* #5 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-card {
+    grid-template-rows: auto 212px !important;
+    min-height: 280px !important;
+    padding: 9px !important;
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-meter {
+    grid-template-columns: 74px 82px !important;
+    grid-template-rows: 176px auto !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 6px 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-scale {
+    height: 176px !important;
+    align-content: space-between !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-scale span {
+    font-size: clamp(12px, 3.7vw, 15px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-bar-outer {
+    width: 82px !important;
+    min-width: 82px !important;
+    height: 176px !important;
+    min-height: 176px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-score-label strong {
+    font-size: clamp(22px, 6.5vw, 30px) !important;
+    line-height: .9 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .impact-meter-caption {
+    font-size: clamp(8px, 2.55vw, 10px) !important;
+    line-height: 1 !important;
+  }
+
+  /* #6-#14 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.timeline-pill-label, .improvement-pill-label) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.05 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.timeline-pill-delta, .improvement-pill-delta) {
+    font-size: clamp(10px, 2.75vw, 11px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-card :is(.card-sub, .weekly-focus-title) {
+    font-size: clamp(12px, 3.25vw, 14px) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.weekly-focus-key, .weekly-focus-pill-head) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .weekly-focus-text {
+    font-size: clamp(11px, 3.1vw, 13px) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.compass-card, .compass-panel) {
+    padding: 9px !important;
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home :is(.compass-card, .compass-panel) :is(.card-sub, #compassProfileCopy, .compass-card-head, .compass-profile-title) {
+    font-size: clamp(12px, 3.45vw, 15px) !important;
+    line-height: 1.14 !important;
+    white-space: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-profile-meta,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-profile-meta * {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-description-toggle {
+    min-height: 28px !important;
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-score-card {
+    min-height: 102px !important;
+    padding: 7px !important;
+    gap: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-home .compass-score-card :is(.compass-card-top, .compass-card-label, .compass-card-score-row, span, strong) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #rrMatchStats :is(.rr-match-stats-head, .rr-match-stats-title, .rr-match-stats-meta, .rr-stat span, .rr-stat strong) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.12 !important;
+  }
+
+  /* #14B-#17 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-title {
+    font-size: clamp(17px, 4.45vw, 19px) !important;
+    line-height: 1.03 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-hero-text {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.16 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-card {
+    min-height: 74px !important;
+    padding: 8px !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-live-title, .logging-live-focus) {
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-meta,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-meta * {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.08 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-live-pill {
+    padding: 5px 7px !important;
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-pill, .logging-agent-row, .logging-focus-row) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    padding: 6px 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(#focusPreviewText, #logAgentText, .log-agent-text, .logging-pill .pill-label, .logging-pill .pill-value, #logMap) {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    display: block !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.06 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .focus-wrapper:not(.is-custom-focus-editing) #focusPreviewText {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.focus-select-shell, .logging-select-trigger) {
+    width: auto !important;
+    min-width: 84px !important;
+    max-width: 104px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.focus-select-symbol, .agent-select-symbol, .agent-select-text) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-score-grid {
+    gap: 7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-score-cell, .logging-score-group) {
+    padding: 8px !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.logging-label, .logging-score-label, .log-tier-label, .logging-tier-label, .logging-score-cell > span, .feed-card-label) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1.04 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging .logging-score-btn {
+    min-height: 32px !important;
+    font-size: clamp(12px, 3.25vw, 14px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.log-calendar-trigger, .log-session-badge) {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 34px !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1 !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-logging :is(.log-entry-label, .log-entry-value, .log-entry-meta, .log-entry-notes, .quick-tip-btn, .quick-tip-option, .feed-card .card-sub, .feed-detail, .feed-value, .feed-notes) {
+    font-size: clamp(11px, 3.05vw, 13px) !important;
+    line-height: 1.18 !important;
+  }
+
+  /* #18-#30 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stat-label, .stats-act-label, .stats-main-text, .stats-proof-kicker, .stats-proof-note, .stats-proof-rank-copy, .stats-agent-card .card-sub, .stats-map-card .card-sub, .stats-weapon-card .card-sub, .stats-performance-card .card-sub, .stats-breakdown-cardlet .card-sub) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-value-row, .stats-role-progress-value-row) {
+    display: inline-flex !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.role-progress-delta, .stats-row-progress-delta, .stats-role-progress-delta) {
+    margin-left: 0 !important;
+    font-size: clamp(8px, 2.3vw, 10px) !important;
+    text-align: right !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-proof-card {
+    min-height: 92px !important;
+    gap: 3px !important;
+    padding: 9px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-act-select-wrap,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-act-select {
+    min-height: 34px !important;
+    height: 34px !important;
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats .stats-breakdown-cardlet.is-mobile-breakdown-active,
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active {
+    min-height: 184px !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-stats :is(.stats-breakdown-label, .stats-breakdown-value, .stats-breakdown-detail) {
+    font-size: clamp(11px, 3.1vw, 13px) !important;
+    line-height: 1.14 !important;
+  }
+
+  /* #31-#38 */
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card {
+    display: grid !important;
+    grid-template-rows: auto 1fr !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card .insight-action {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card .insight-action > * {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    translate: none !important;
+    scale: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    grid-area: auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insights-action-card :is(.insight-action-hero, .insight-focus-detail, .insight-block) {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insight-meta-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights .insight-progress {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.insight-priority-title, .insight-action-title, .insight-card-title, .trend-signal-title, .insight-preview-title) {
+    font-size: clamp(16px, 4.45vw, 19px) !important;
+    line-height: 1.1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.card-sub, .insight-action-copy, #insightFocusWhy, #insightFocusHow, #insightFocusSource, .priority-read-preview, .insight-preview, .insight-detail, .trend-signal-detail, .trend-signal-value) {
+    font-size: clamp(11px, 3.1vw, 13px) !important;
+    line-height: 1.15 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.theme-static #page-insights :is(.insight-label, .insight-action-kicker, .insight-action-kicker-top, .trend-signal-kicker, .trend-signal-tone, .insight-meta-pill) {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.05 !important;
+  }
+}

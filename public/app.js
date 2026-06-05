@@ -359,6 +359,7 @@ let mobileAskCoachButton = null;
 let mobileHeaderSyncButton = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
+let mobileTouchScrollState = null;
 let mobileStatsTrendIndex = 0;
 let mobileStatsBreakdownIndex = 0;
 let mobileInsightCardIndex = 0;
@@ -467,34 +468,36 @@ function applyMobileScrollSurfaceState() {
   }
 
   setImportantStyle(html, "width", "100%");
-  setImportantStyle(html, "height", "100dvh");
-  setImportantStyle(html, "min-height", "100dvh");
-  setImportantStyle(html, "max-height", "100dvh");
-  setImportantStyle(html, "overflow", "hidden");
-  setImportantStyle(html, "overscroll-behavior", "none");
+  setImportantStyle(html, "height", "auto");
+  setImportantStyle(html, "min-height", "100%");
+  setImportantStyle(html, "max-height", "none");
+  setImportantStyle(html, "overflow-x", "hidden");
+  setImportantStyle(html, "overflow-y", modalOpen ? "hidden" : "auto");
+  setImportantStyle(html, "overscroll-behavior", modalOpen ? "none" : "contain");
   setImportantStyle(html, "touch-action", "pan-y");
 
   if (body) {
-    setImportantStyle(body, "position", "fixed");
-    setImportantStyle(body, "inset", "0");
+    setImportantStyle(body, "position", "static");
+    setImportantStyle(body, "inset", "auto");
     setImportantStyle(body, "width", "100%");
     setImportantStyle(body, "min-width", "0");
-    setImportantStyle(body, "height", "100dvh");
+    setImportantStyle(body, "height", "auto");
     setImportantStyle(body, "min-height", "100dvh");
-    setImportantStyle(body, "max-height", "100dvh");
-    setImportantStyle(body, "overflow", "hidden");
-    setImportantStyle(body, "overscroll-behavior", "none");
+    setImportantStyle(body, "max-height", "none");
+    setImportantStyle(body, "overflow-x", "hidden");
+    setImportantStyle(body, "overflow-y", modalOpen ? "hidden" : "auto");
+    setImportantStyle(body, "overscroll-behavior", modalOpen ? "none" : "contain");
     setImportantStyle(body, "touch-action", "pan-y");
   }
 
   if (root) {
-    setImportantStyle(root, "position", "fixed");
-    setImportantStyle(root, "inset", "0");
+    setImportantStyle(root, "position", "relative");
+    setImportantStyle(root, "inset", "auto");
     setImportantStyle(root, "max-width", "100vw");
     setImportantStyle(root, "min-height", "100dvh");
-    setImportantStyle(root, "max-height", "100dvh");
+    setImportantStyle(root, "max-height", "none");
     setImportantStyle(root, "overflow-x", "hidden");
-    setImportantStyle(root, "overflow-y", modalOpen ? "hidden" : "auto");
+    setImportantStyle(root, "overflow-y", "visible");
     setImportantStyle(root, "overscroll-behavior-y", "contain");
     setImportantStyle(root, "-webkit-overflow-scrolling", "touch");
     setImportantStyle(root, "touch-action", "pan-y");
@@ -1276,9 +1279,62 @@ function installMobileTouchScrollGuard() {
     applyMobileScrollSurfaceState();
   };
 
+  const canBridgeTouchScroll = (event) => {
+    if (!isMobileLayoutViewport() || document.body?.classList.contains("mobile-modal-open")) return false;
+    if (!event.touches || event.touches.length !== 1) return false;
+    const target = event.target;
+    if (target?.closest?.("input, textarea, select, option, [contenteditable='true']")) return false;
+    if (target?.closest?.(".lens-modal-overlay.active, .agent-modal.active, .profile-edit-overlay.active, .auth-modal-overlay.active, .app-tutorial-overlay.active")) return false;
+    return Boolean(getMobileScrollContainer());
+  };
+
+  window.addEventListener("touchstart", (event) => {
+    clearStaleScrollLocks();
+    if (!canBridgeTouchScroll(event)) {
+      mobileTouchScrollState = null;
+      return;
+    }
+    const touch = event.touches[0];
+    mobileTouchScrollState = {
+      x: touch.clientX,
+      y: touch.clientY,
+      startedAt: Date.now(),
+      moved: false
+    };
+  }, { passive: true, capture: true });
+
+  window.addEventListener("touchmove", (event) => {
+    if (!mobileTouchScrollState || !canBridgeTouchScroll(event)) return;
+    const touch = event.touches[0];
+    const deltaX = mobileTouchScrollState.x - touch.clientX;
+    const deltaY = mobileTouchScrollState.y - touch.clientY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    if (absY < 4 || absY < absX * 1.15) return;
+
+    const scroller = getMobileScrollContainer();
+    if (!scroller) return;
+    const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+    const nextTop = Math.max(0, Math.min(maxTop, scroller.scrollTop + deltaY));
+    if (nextTop !== scroller.scrollTop) {
+      scroller.scrollTop = nextTop;
+      mobileTouchScrollState.moved = true;
+      mobileTouchScrollState.x = touch.clientX;
+      mobileTouchScrollState.y = touch.clientY;
+      event.preventDefault();
+      scheduleMobileNavVisibility();
+    }
+  }, { passive: false, capture: true });
+
   window.addEventListener("touchstart", clearStaleScrollLocks, { passive: true, capture: true });
-  window.addEventListener("touchend", clearStaleScrollLocks, { passive: true, capture: true });
-  window.addEventListener("touchcancel", clearStaleScrollLocks, { passive: true, capture: true });
+  window.addEventListener("touchend", () => {
+    mobileTouchScrollState = null;
+    clearStaleScrollLocks();
+  }, { passive: true, capture: true });
+  window.addEventListener("touchcancel", () => {
+    mobileTouchScrollState = null;
+    clearStaleScrollLocks();
+  }, { passive: true, capture: true });
   window.addEventListener("orientationchange", () => {
     window.setTimeout(clearStaleScrollLocks, 160);
   }, { passive: true });
@@ -10086,19 +10142,31 @@ const focusesList = [
   "Trade Conversion",
   "Entry",
   "Timing",
+  "First Contact",
   "Information Gathering",
+  "Angle Discipline",
+  "Spacing",
+  "Pacing",
+  "Objective Play",
   "Map Awareness",
+  "Map Preparation",
   "Utility",
   "Utility Usage",
   "Utility Timing",
   "Team Utility",
+  "Role Teamwork",
   "Support Value",
+  "Damage Output",
   "Post-Plant Control",
   "Round Survivability",
   "Eco Conversion",
+  "Multi-Kill Conversion",
+  "Clutch Discipline",
   "Awareness Check",
   "Retake Timing",
   "Comms Discipline",
+  "Team Comms",
+  "Self Comms",
   "Weapon Category Use",
   "Mental Reset",
   "Game Sense",
@@ -12153,6 +12221,8 @@ function setFocusOtherVisibility(show, value = ""){
 
   if(wrapper){
     wrapper.style.display = show ? "flex" : "none";
+    wrapper.hidden = !show;
+    wrapper.setAttribute("aria-hidden", String(!show));
   }
   focusWrapper?.classList.toggle("is-custom-focus-editing", Boolean(show));
   focusWrapper?.classList.toggle("custom-focus-committed", false);
@@ -12179,6 +12249,8 @@ function setCustomFocusCommitted(value = ""){
   const preview = document.getElementById("focusPreviewText");
   const input = document.getElementById("logFocusOther");
   const confirm = document.getElementById("confirmFocusOther");
+  const select = document.getElementById("logFocusSelect");
+  const isOtherFocus = select?.value === "Other";
   const roleClasses = [
     "role-duelist",
     "role-controller",
@@ -12202,9 +12274,12 @@ function setCustomFocusCommitted(value = ""){
   }
 
   wrapper?.classList.toggle("custom-focus-committed", !!value);
-  wrapper?.classList.toggle("is-custom-focus-editing", !value && document.getElementById("logFocusSelect")?.value === "Other");
+  wrapper?.classList.toggle("is-custom-focus-editing", !value && isOtherFocus);
   if(otherWrap){
-    otherWrap.style.display = value ? "flex" : otherWrap.style.display;
+    const shouldShowOtherWrap = Boolean(value || isOtherFocus);
+    otherWrap.style.display = shouldShowOtherWrap ? "flex" : "none";
+    otherWrap.hidden = !shouldShowOtherWrap;
+    otherWrap.setAttribute("aria-hidden", String(!shouldShowOtherWrap));
   }
   if(input){
     input.disabled = !!value;
@@ -12374,7 +12449,7 @@ function syncLoggingFocusPreviewText(value = "") {
     return;
   }
   const resolved = String(value || "").trim();
-  preview.textContent = resolved || "Focus";
+  preview.textContent = resolved || "Focus Category";
   preview.classList.toggle("is-placeholder", !resolved);
 }
 
@@ -35127,8 +35202,12 @@ if(entry.focus){
   if(logNotes) logNotes.value = "";
   if(logFocusSelect) logFocusSelect.value = "";
   if(logFocusOther) logFocusOther.value = "";
-  if(focusOtherWrap) focusOtherWrap.style.display = "none";
-  if(preview) preview.textContent = "Focus";
+  if(focusOtherWrap){
+    focusOtherWrap.style.display = "none";
+    focusOtherWrap.hidden = true;
+    focusOtherWrap.setAttribute("aria-hidden", "true");
+  }
+  if(preview) preview.textContent = "Focus Category";
   preview?.classList?.add("is-placeholder");
   setCustomFocusCommitted("");
   if(logFocusOther) logFocusOther.disabled = true;
