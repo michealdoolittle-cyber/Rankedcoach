@@ -11180,6 +11180,50 @@ function getProfileGoalTarget(profile){
   return getGoalRankTarget(profile.goalRank, profile.goalRR);
 }
 
+function getCurrentGoalMinimum(){
+  const currentRR = Math.max(0, Math.round(safeNumber(computeCurrentRRAbsolute(), 0)));
+  const currentRank = getTierRank(currentRR) || RANK_THRESHOLDS[0];
+  const currentRankMin = Math.max(0, safeNumber(currentRank?.min, 0));
+  const radiantMinRR = currentRank?.tierLabel === "Radiant"
+    ? Math.max(RADIANT_MIN_RR, currentRR)
+    : RADIANT_MIN_RR;
+
+  return { currentRR, currentRank, currentRankMin, radiantMinRR };
+}
+
+function isGoalRankSelectionAllowed(label, requestedRR = null){
+  const target = getGoalRankTarget(label, requestedRR);
+  if(!target?.bounds) return false;
+
+  const minimum = getCurrentGoalMinimum();
+  if(target.bounds.min < minimum.currentRankMin) return false;
+  if(target.bounds.tierLabel === "Radiant" && target.targetRR < minimum.radiantMinRR) return false;
+
+  return true;
+}
+
+function getClampedGoalRankSelection(label, requestedRR = null){
+  const target = getGoalRankTarget(label, requestedRR);
+  if(target?.bounds && isGoalRankSelectionAllowed(target.bounds.tierLabel, target.targetRR)){
+    return {
+      goalRank: target.bounds.tierLabel,
+      goalRR: target.targetRR,
+      target
+    };
+  }
+
+  const minimum = getCurrentGoalMinimum();
+  const fallbackRank = minimum.currentRank?.tierLabel || RANK_THRESHOLDS[0].tierLabel;
+  const fallbackRR = fallbackRank === "Radiant" ? minimum.radiantMinRR : null;
+  const fallbackTarget = getGoalRankTarget(fallbackRank, fallbackRR);
+
+  return {
+    goalRank: fallbackTarget?.bounds?.tierLabel || fallbackRank,
+    goalRR: fallbackTarget?.targetRR ?? null,
+    target: fallbackTarget
+  };
+}
+
 // ========================
 // MOCK MATCH DATA (DEV)
 // ========================
@@ -11279,7 +11323,7 @@ function animateText(el, value) {
   scheduleLoadoutValueTextFit();
 }
 
-function fitLoadoutValueText(el, { maxPx = 40, minPx = 14 } = {}) {
+function fitLoadoutValueText(el, { maxPx = null, minPx = 9 } = {}) {
   if (!el || !el.isConnected) return;
 
   const availableWidth = Math.max(
@@ -11289,19 +11333,32 @@ function fitLoadoutValueText(el, { maxPx = 40, minPx = 14 } = {}) {
 
   if (!availableWidth) return;
 
-  el.style.fontSize = `${maxPx}px`;
+  const computedFontSize = Number.parseFloat(getComputedStyle(el).fontSize || "0");
+  const baseFontSize = Number.isFinite(computedFontSize) && computedFontSize > 0
+    ? computedFontSize
+    : 16;
+  const targetMaxPx = Number.isFinite(maxPx) && maxPx > 0 ? maxPx : baseFontSize;
+
+  const applyFitFontSize = (fontSize) => {
+    const rounded = Math.round(fontSize * 100) / 100;
+    el.style.setProperty("font-size", `${rounded}px`, "important");
+    el.style.setProperty("--tb-auto-fit-font-size", `${rounded}px`);
+    el.setAttribute("data-tb-auto-fit", "1");
+  };
+
+  applyFitFontSize(targetMaxPx);
 
   if (el.scrollWidth <= availableWidth + 1) {
     return;
   }
 
   let low = minPx;
-  let high = maxPx;
+  let high = targetMaxPx;
   let best = minPx;
 
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    el.style.fontSize = `${mid}px`;
+    applyFitFontSize(mid);
 
     if (el.scrollWidth <= availableWidth + 1) {
       best = mid;
@@ -11311,13 +11368,52 @@ function fitLoadoutValueText(el, { maxPx = 40, minPx = 14 } = {}) {
     }
   }
 
-  el.style.fontSize = `${best}px`;
+  applyFitFontSize(best);
+}
+
+const LOADOUT_ROLE_TEXT_COLORS = {
+  duelist: "#ff4d5a",
+  initiator: "#6dd6ff",
+  controller: "#c084fc",
+  sentinel: "#4ade80"
+};
+
+function applyLoadoutRoleTextColor(el) {
+  if (!el || !el.isConnected) return;
+  const role = Object.keys(LOADOUT_ROLE_TEXT_COLORS).find((roleKey) => (
+    el.classList?.contains(`role-${roleKey}`)
+  ));
+  if (!role) return;
+  el.style.setProperty("color", LOADOUT_ROLE_TEXT_COLORS[role], "important");
+}
+
+function syncLoadoutRoleTextColors() {
+  [
+    agentName,
+    focusDisplay,
+    document.getElementById("logAgentText"),
+    document.getElementById("logFocusSelect"),
+    document.getElementById("logFocusOther"),
+    document.getElementById("focusPreviewText")
+  ].filter(Boolean).forEach(applyLoadoutRoleTextColor);
 }
 
 function flushLoadoutValueTextFit() {
   loadoutValueTextFitRaf = 0;
-  fitLoadoutValueText(agentName);
-  fitLoadoutValueText(focusDisplay);
+  syncLoadoutRoleTextColors();
+  const targets = [
+    agentName,
+    focusDisplay,
+    ...document.querySelectorAll("#page-home .home-loadout-pill .pill-label"),
+    document.getElementById("logAgentText"),
+    document.getElementById("focusPreviewText")
+  ].filter(Boolean);
+
+  targets.forEach((target) => {
+    const isLabel = target.classList?.contains("pill-label");
+    fitLoadoutValueText(target, { minPx: isLabel ? 9 : 7 });
+  });
+  syncLoadoutRoleTextColors();
 }
 
 function scheduleLoadoutValueTextFit() {
@@ -11336,7 +11432,13 @@ function bindLoadoutValueTextFitObservers() {
     loadoutValueTextResizeObserver = null;
   }
 
-  const targets = [agentName, focusDisplay].filter(Boolean);
+  const targets = [
+    agentName,
+    focusDisplay,
+    ...document.querySelectorAll("#page-home .home-loadout-pill .pill-label"),
+    document.getElementById("logAgentText"),
+    document.getElementById("focusPreviewText")
+  ].filter(Boolean);
   if (!targets.length) return;
 
   if (typeof MutationObserver === "function") {
@@ -33842,9 +33944,13 @@ function bindEvents(){
     const p = getActiveProfile();
     if (!p || !goalRankSelect) return;
 
-    p.goalRank = normalizeTierLabel(goalRankSelect.value);
-    const goalTarget = getGoalRankTarget(p.goalRank, goalRadiantRRInput?.value);
-    p.goalRR = goalTarget?.targetRR ?? null;
+    const clampedGoal = getClampedGoalRankSelection(goalRankSelect.value, goalRadiantRRInput?.value);
+    p.goalRank = clampedGoal.goalRank;
+    p.goalRR = clampedGoal.goalRR;
+    goalRankSelect.value = p.goalRank;
+    if (goalRadiantRRInput && p.goalRank === "Radiant") {
+      goalRadiantRRInput.value = String(Math.max(clampedGoal.goalRR || RADIANT_MIN_RR, safeNumber(goalRadiantRRInput.min, RADIANT_MIN_RR)));
+    }
     profiles = profiles.map(pr =>
       pr.id === p.id ? { ...pr, goalRank: p.goalRank, goalRR: p.goalRR } : pr
     );
@@ -33859,19 +33965,45 @@ function bindEvents(){
     if (closeModal) hideModalById("goalRankModal");
   }
 
+  function syncGoalRankAllowedOptions() {
+    const select = document.getElementById("goalRankSelect");
+    const menu = document.getElementById("goalRankCustomMenu");
+    if (!select) return;
+
+    Array.from(select.options).forEach((option) => {
+      const isAllowed = isGoalRankSelectionAllowed(option.value, option.value === "Radiant" ? goalRadiantRRInput?.value : null);
+      option.disabled = !isAllowed;
+      menu?.querySelector(`.goal-rank-custom-option[data-value="${CSS.escape(option.value)}"]`)?.classList.toggle("is-disabled", !isAllowed);
+      menu?.querySelector(`.goal-rank-custom-option[data-value="${CSS.escape(option.value)}"]`)?.setAttribute("aria-disabled", isAllowed ? "false" : "true");
+    });
+
+    if (!isGoalRankSelectionAllowed(select.value, goalRadiantRRInput?.value)) {
+      const clampedGoal = getClampedGoalRankSelection(select.value, goalRadiantRRInput?.value);
+      select.value = clampedGoal.goalRank;
+      if (goalRadiantRRInput && clampedGoal.goalRank === "Radiant") {
+        goalRadiantRRInput.value = String(clampedGoal.goalRR || RADIANT_MIN_RR);
+      }
+    }
+  }
+
   function syncGoalRankCustomDropdown() {
     const select = document.getElementById("goalRankSelect");
     const valueEl = document.getElementById("goalRankCustomValue");
     const menu = document.getElementById("goalRankCustomMenu");
     if (!select) return;
 
+    syncGoalRankAllowedOptions();
+
     const value = select.value || "Gold 1";
     if (valueEl) valueEl.textContent = value;
 
     menu?.querySelectorAll(".goal-rank-custom-option").forEach((option) => {
       const isActive = option.dataset.value === value;
+      const isAllowed = isGoalRankSelectionAllowed(option.dataset.value, option.dataset.value === "Radiant" ? goalRadiantRRInput?.value : null);
       option.classList.toggle("is-active", isActive);
+      option.classList.toggle("is-disabled", !isAllowed);
       option.setAttribute("aria-selected", isActive ? "true" : "false");
+      option.setAttribute("aria-disabled", isAllowed ? "false" : "true");
     });
   }
 
@@ -33885,17 +34017,20 @@ function bindEvents(){
     }
 
     if (goalRadiantRRInput) {
-      goalRadiantRRInput.min = String(RADIANT_MIN_RR);
+      const minimum = getCurrentGoalMinimum();
+      goalRadiantRRInput.min = String(minimum.radiantMinRR);
       goalRadiantRRInput.disabled = !isRadiant;
       if (isRadiant) {
         const activeProfile = getActiveProfile();
         const currentValue = safeNumber(goalRadiantRRInput.value, 0);
-        const profileTarget = safeNumber(activeProfile?.goalRR, RADIANT_MIN_RR);
-        if (!currentValue || currentValue < RADIANT_MIN_RR) {
-          goalRadiantRRInput.value = String(Math.max(RADIANT_MIN_RR, Math.round(profileTarget)));
+        const profileTarget = safeNumber(activeProfile?.goalRR, minimum.radiantMinRR);
+        if (!currentValue || currentValue < minimum.radiantMinRR) {
+          goalRadiantRRInput.value = String(Math.max(minimum.radiantMinRR, Math.round(profileTarget)));
         }
       }
     }
+
+    syncGoalRankAllowedOptions();
   }
 
   function setupGoalRankCustomDropdown() {
@@ -33959,6 +34094,7 @@ function bindEvents(){
       if (!option) return;
       e.preventDefault();
       e.stopPropagation();
+      if (option.classList.contains("is-disabled") || option.getAttribute("aria-disabled") === "true") return;
       select.value = option.dataset.value || select.value;
       select.dispatchEvent(new Event("change", { bubbles: true }));
       if (shell.classList.contains("goal-rank-inline-mobile")) {
@@ -33980,11 +34116,20 @@ function bindEvents(){
   }
 
   goalRankSelect?.addEventListener("change", () => {
+    syncGoalRankAllowedOptions();
     if (goalRankPreviewIcon) {
       goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
     }
     syncGoalRankCustomDropdown();
     syncGoalRadiantRRControls();
+  });
+
+  goalRadiantRRInput?.addEventListener("input", () => {
+    const minimum = getCurrentGoalMinimum();
+    if (safeNumber(goalRadiantRRInput.value, 0) < minimum.radiantMinRR) {
+      goalRadiantRRInput.value = String(minimum.radiantMinRR);
+    }
+    syncGoalRankCustomDropdown();
   });
 
   setupGoalRankCustomDropdown();
@@ -34011,9 +34156,10 @@ function bindEvents(){
     if (!shell || !menu || !trigger) return false;
 
     const activeProfile = getActiveProfile();
-    goalRankSelect.value = normalizeTierLabel(activeProfile?.goalRank || "Gold 1");
+    const clampedGoal = getClampedGoalRankSelection(activeProfile?.goalRank || "Gold 1", activeProfile?.goalRR);
+    goalRankSelect.value = clampedGoal.goalRank;
     if (goalRadiantRRInput) {
-      goalRadiantRRInput.value = String(Math.max(RADIANT_MIN_RR, Math.round(safeNumber(activeProfile?.goalRR, RADIANT_MIN_RR))));
+      goalRadiantRRInput.value = String(Math.max(safeNumber(goalRadiantRRInput.min, RADIANT_MIN_RR), Math.round(safeNumber(clampedGoal.goalRR, RADIANT_MIN_RR))));
     }
     if (goalRankPreviewIcon) {
       goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
@@ -34057,9 +34203,10 @@ function bindEvents(){
 
       const activeProfile = getActiveProfile();
       if (goalRankSelect) {
-        goalRankSelect.value = normalizeTierLabel(activeProfile?.goalRank || "Gold 1");
+        const clampedGoal = getClampedGoalRankSelection(activeProfile?.goalRank || "Gold 1", activeProfile?.goalRR);
+        goalRankSelect.value = clampedGoal.goalRank;
         if (goalRadiantRRInput) {
-          goalRadiantRRInput.value = String(Math.max(RADIANT_MIN_RR, Math.round(safeNumber(activeProfile?.goalRR, RADIANT_MIN_RR))));
+          goalRadiantRRInput.value = String(Math.max(safeNumber(goalRadiantRRInput.min, RADIANT_MIN_RR), Math.round(safeNumber(clampedGoal.goalRR, RADIANT_MIN_RR))));
         }
         if (goalRankPreviewIcon) {
           goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
@@ -34251,6 +34398,7 @@ function selectAgentFromModal(agent){
       logFocusOther?.classList.add(`role-${role}`);
       focusPreviewText?.classList.add(`role-${role}`);
       syncLogFocusCustomDropdown();
+      syncLoadoutRoleTextColors();
 
       activeRole = role;
       activeRoleFilter = role;
@@ -39716,6 +39864,7 @@ function flipSpinIcon(){
         logFocusOther?.classList.add(`role-${role}`);
         focusPreviewText?.classList.add(`role-${role}`);
         syncLogFocusCustomDropdown();
+        syncLoadoutRoleTextColors();
         applyAgentRoleFrame(role);
 
         updateImpactRolePill({ agent: pick }, null);
@@ -39868,6 +40017,7 @@ function spinLoadoutFromLogging(agent, focus){
       logFocusOther?.classList.add(`role-${role}`);
       focusPreviewText?.classList.add(`role-${role}`);
       syncLogFocusCustomDropdown();
+      syncLoadoutRoleTextColors();
     }
 
     updateLogAgentDisplay(agent);
