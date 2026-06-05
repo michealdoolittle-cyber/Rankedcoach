@@ -9989,3 +9989,39 @@
     text-align: center !important;
   }
 }
+
+/* Absolute EOF Home mobile order lock - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .home-layout.dashboard-grid {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .home-middle-row {
+    display: contents !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .loadout-card.loadout-card {
+    order: 10 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .rr-card.rr-card {
+    order: 20 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .improvement-card.improvement-card {
+    order: 30 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .weekly-focus-card.weekly-focus-card {
+    order: 40 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .rr-chart-card.rr-chart-card {
+    order: 50 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-panel.compass-panel {
+    order: 60 !important;
+  }
+}
