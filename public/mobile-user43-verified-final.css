@@ -8600,3 +8600,238 @@
     display: grid !important;
   }
 }
+
+/* Absolute EOF Home mobile fixes - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout,
+  html.is-mobile-layout body.is-mobile-layout,
+  html.is-mobile-layout body.is-mobile-layout :is(.app, .app-root, .app-scale-wrap, .page, .card, .compass-main, .compass-summary-shell, .rr-match-stats) {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  html.is-mobile-layout::-webkit-scrollbar,
+  html.is-mobile-layout body.is-mobile-layout::-webkit-scrollbar,
+  html.is-mobile-layout body.is-mobile-layout :is(.app, .app-root, .app-scale-wrap, .page, .card, .compass-main, .compass-summary-shell, .rr-match-stats)::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .app-header {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 0 auto 0 !important;
+    height: 100px !important;
+    min-height: 100px !important;
+    max-height: 100px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    overflow: visible !important;
+    pointer-events: none !important;
+    z-index: 9400 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center {
+    display: grid !important;
+    position: fixed !important;
+    top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+    left: 8px !important;
+    right: 60px !important;
+    height: 92px !important;
+    min-height: 92px !important;
+    max-height: 92px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    z-index: 9550 !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-widget {
+    display: grid !important;
+    grid-template-rows: auto 1fr 5px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 92px !important;
+    min-height: 92px !important;
+    max-height: 92px !important;
+    padding: 8px !important;
+    border: 1px solid color-mix(in srgb, var(--accent, #ff4655) 34%, rgba(148, 163, 184, .38)) !important;
+    border-radius: 13px !important;
+    background: linear-gradient(180deg, rgba(51, 65, 85, .74), rgba(15, 23, 42, .78)) !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+    backdrop-filter: blur(12px) saturate(.95) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(.95) !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center :is(.nav-rr-label, .nav-rr-top-value, .nav-tier-text) {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-label {
+    font-size: clamp(8px, 2.25vw, 10px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center :is(.nav-rr-top-value, .nav-tier-text) {
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-tier-icon {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active :is(.compass-panel, .compass-main, .compass-summary-shell, .compass-summary-top-shell, .compass-summary-bottom-shell) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-panel {
+    padding-inline: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-main {
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-source-pill {
+    align-self: start !important;
+    justify-self: end !important;
+    margin-top: 0 !important;
+    width: max-content !important;
+    max-width: 42vw !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-description-toggle.compass-description-toggle {
+    background: linear-gradient(180deg, rgba(75, 85, 99, .94), rgba(51, 65, 85, .94)) !important;
+    border-color: rgba(148, 163, 184, .46) !important;
+    color: var(--text, #e5edf7) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-score-card {
+    display: grid !important;
+    grid-template-rows: auto 1fr 7px !important;
+    align-items: center !important;
+    justify-items: center !important;
+    text-align: center !important;
+    min-height: 104px !important;
+    padding: 10px 8px !important;
+    gap: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-score-card :is(.compass-card-top, .compass-card-label, .compass-card-score-row) {
+    width: 100% !important;
+    justify-content: center !important;
+    justify-self: center !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .compass-score-card .compass-bar-track {
+    width: calc(100% - 14px) !important;
+    max-width: calc(100% - 14px) !important;
+    justify-self: center !important;
+    margin: 0 auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .weekly-focus-pill-head {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active .weekly-focus-confidence.weekly-focus-confidence {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    min-height: 22px !important;
+    padding: 3px 8px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active #rrMatchStats .rr-stat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    min-height: 54px !important;
+    padding: 7px 5px !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home.page.active #rrMatchStats .rr-stat :is(span, strong) {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Absolute EOF Home compass width/bar correction - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-summary-shell.compass-summary-shell {
+    width: calc(100% + 20px) !important;
+    max-width: calc(100% + 20px) !important;
+    margin-inline: -10px !important;
+    box-sizing: border-box !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-score-card.compass-score-card {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto 1fr 8px !important;
+    justify-items: stretch !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-score-card.compass-score-card :is(.compass-card-top, .compass-card-label, .compass-card-score-row) {
+    justify-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-score-card.compass-score-card .compass-bar-track.compass-bar-track {
+    display: block !important;
+    justify-self: stretch !important;
+    align-self: end !important;
+    width: auto !important;
+    inline-size: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-inline: 7px !important;
+    height: 8px !important;
+  }
+}
