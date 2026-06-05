@@ -36226,6 +36226,14 @@ body:not(.is-mobile-layout) #page-stats .stats-card-meta .stats-sub-text {
   line-height: 1.05 !important;
 }
 
+body:not(.is-mobile-layout) #page-stats .stats-main-grid {
+  grid-template-rows: minmax(0, .32fr) minmax(0, 1.68fr) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agents-card {
+  min-height: 0 !important;
+}
+
 /* Absolute desktop stats category restore - 2026-06-05.
    Agents use four role columns; weapons use family rows with category labels left. */
 body:not(.is-mobile-layout) #page-stats #statsAgentsList.stats-agent-category-grid {
@@ -36238,6 +36246,7 @@ body:not(.is-mobile-layout) #page-stats #statsAgentsList.stats-agent-category-gr
   width: 100% !important;
   height: 100% !important;
   min-height: 0 !important;
+  max-height: none !important;
   margin: 2px 0 0 !important;
   padding: 0 8px 8px 0 !important;
   overflow-y: auto !important;
@@ -36290,7 +36299,7 @@ body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card {
   position: relative !important;
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
-  grid-template-rows: 18px minmax(0, 1fr) 25px !important;
+  grid-template-rows: 17px minmax(0, 1fr) 23px !important;
   align-items: stretch !important;
   justify-items: center !important;
   gap: 4px !important;
@@ -36298,9 +36307,9 @@ body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card {
   width: min(100%, 98px) !important;
   aspect-ratio: auto !important;
   min-width: 0 !important;
-  min-height: 124px !important;
-  height: 124px !important;
-  max-height: 124px !important;
+  min-height: 118px !important;
+  height: 118px !important;
+  max-height: 118px !important;
   padding: 5px !important;
   overflow: hidden !important;
   border: 1px solid rgba(148, 163, 184, .22) !important;
