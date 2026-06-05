@@ -36287,16 +36287,21 @@ body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading img {
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card {
   appearance: none !important;
+  position: relative !important;
   display: grid !important;
-  grid-template-columns: 34px minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) !important;
   align-items: center !important;
-  gap: 6px !important;
-  width: 100% !important;
+  justify-items: center !important;
+  gap: 0 !important;
+  justify-self: center !important;
+  width: min(100%, 96px) !important;
+  aspect-ratio: 1 / 1 !important;
   min-width: 0 !important;
-  min-height: 43px !important;
-  height: 43px !important;
-  max-height: 43px !important;
-  padding: 4px 5px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 5px !important;
   overflow: hidden !important;
   border: 1px solid rgba(148, 163, 184, .22) !important;
   border-radius: 10px !important;
@@ -36318,33 +36323,49 @@ body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card.is-negative {
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-image {
   display: block !important;
-  justify-self: center !important;
-  width: 32px !important;
-  height: 32px !important;
-  max-width: 32px !important;
-  max-height: 32px !important;
+  position: absolute !important;
+  inset: 4px !important;
+  z-index: 1 !important;
+  justify-self: stretch !important;
+  align-self: stretch !important;
+  width: calc(100% - 8px) !important;
+  height: calc(100% - 8px) !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: none !important;
   object-fit: contain !important;
   transform: none !important;
   filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .32)) !important;
 }
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta {
-  justify-items: start !important;
+  position: absolute !important;
+  left: 5px !important;
+  right: 5px !important;
+  bottom: 5px !important;
+  z-index: 2 !important;
+  justify-items: center !important;
   align-content: center !important;
   gap: 1px !important;
-  text-align: left !important;
+  text-align: center !important;
+  width: auto !important;
+  min-height: 28px !important;
+  padding: 2px 4px !important;
+  border-radius: 8px !important;
+  background: rgba(2, 6, 23, .54) !important;
 }
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta :is(.stats-main-text, .stats-sub-text) {
-  text-align: left !important;
+  text-align: center !important;
 }
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-main-text {
-  font-size: 11px !important;
+  font-size: 10px !important;
 }
 
 body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-sub-text {
-  font-size: 9px !important;
+  font-size: 8px !important;
 }
 
 body:not(.is-mobile-layout) #page-stats #statsWeaponsList.stats-desktop-weapon-rows {
