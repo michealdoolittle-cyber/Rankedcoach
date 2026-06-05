@@ -21193,7 +21193,7 @@ const THEME_BUILDER_THEME_HOVER_DEFAULTS = {
 const THEME_BUILDER_ADMIN_EMAILS = [];
 const THEME_BUILDER_FX_CANVAS_ID = "themeBuilderHoverFxCanvas";
 const THEME_BUILDER_FX_VIDEO_ID = "themeBuilderHoverFxVideo";
-const THEME_BUILDER_SMOKE_VIDEO_SRC = "assets/hover-fx/reaver-smoke-hover.mp4";
+const THEME_BUILDER_SMOKE_IMAGE_SRC = "reaver-hover-smoke.png";
 const THEME_BUILDER_VERSION = 2;
 const THEME_BUILDER_FREE_SOURCE_TRUTH_VERSION = 2;
 const THEME_BUILDER_ALL_PARENT_SELECTORS = OVERLAY_TUNING_TARGETS.join(", ");
@@ -25564,14 +25564,11 @@ function createThemeBuilderPersistentSmokeVideo(hostElement, values = {}, config
   if (!hostElement?.isConnected) return null;
   let video = themeBuilderFxEngine.persistentVideos.get(hostElement);
   if (!video) {
-    video = document.createElement("video");
+    video = document.createElement("img");
     video.className = "theme-builder-card-smoke-video";
-    video.src = THEME_BUILDER_SMOKE_VIDEO_SRC;
-    video.muted = true;
-    video.loop = true;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.preload = "metadata";
+    video.src = THEME_BUILDER_SMOKE_IMAGE_SRC;
+    video.loading = "lazy";
+    video.decoding = "async";
     video.setAttribute("aria-hidden", "true");
     themeBuilderFxEngine.persistentVideos.set(hostElement, video);
   }
@@ -25690,13 +25687,11 @@ function ensureThemeBuilderFxVideo(hostElement = themeBuilderFxEngine.activeElem
 
   let video = themeBuilderFxEngine.video;
   if (!video) {
-    video = document.createElement("video");
+    video = document.createElement("img");
     video.id = THEME_BUILDER_FX_VIDEO_ID;
-    video.src = THEME_BUILDER_SMOKE_VIDEO_SRC;
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.preload = "metadata";
+    video.src = THEME_BUILDER_SMOKE_IMAGE_SRC;
+    video.loading = "lazy";
+    video.decoding = "async";
     video.setAttribute("aria-hidden", "true");
     Object.assign(video.style, {
       position: "absolute",
