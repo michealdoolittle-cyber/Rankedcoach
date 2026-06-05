@@ -42808,7 +42808,7 @@ function renderStatsWeaponsModel() {
         <div class="stats-desktop-weapon-family-head">
           <span class="stats-desktop-weapon-family-title">${escapeHtml(family.label)}</span>
           <span class="stats-desktop-weapon-family-meta ${hasFamilyData ? (safeNumber(familySummary.winrate) >= 50 ? "stats-value-positive" : "stats-value-negative") : ""}">
-            ${hasFamilyData ? `${Math.round(safeNumber(familySummary.winrate))}% WR` : "No Data"}
+            ${hasFamilyData ? `${Math.round(safeNumber(familySummary.winrate))}% AVG WR` : "No Data"}
           </span>
         </div>
         <div class="stats-desktop-weapon-image-row"></div>
