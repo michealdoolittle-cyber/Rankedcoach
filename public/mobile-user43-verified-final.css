@@ -10116,3 +10116,95 @@
     text-align: center !important;
   }
 }
+
+/* Absolute EOF mobile compass description lock - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-shell.compass-summary-shell .compass-summary-copy.compass-summary-copy {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "kicker"
+      "title"
+      "meta"
+      "button"
+      "desc" !important;
+    justify-items: stretch !important;
+    align-items: start !important;
+    gap: 5px !important;
+    padding: 6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-profile-kicker.compass-profile-kicker {
+    grid-area: kicker !important;
+    justify-self: start !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #compassProfileTitle#compassProfileTitle.compass-profile-title {
+    grid-area: title !important;
+    justify-self: start !important;
+    width: 100% !important;
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-profile-meta.compass-profile-meta {
+    grid-area: meta !important;
+    justify-self: stretch !important;
+    align-self: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-profile-meta.compass-profile-meta span {
+    justify-self: stretch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 22px !important;
+    height: auto !important;
+    padding: 4px 8px !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active #compassDescriptionToggle#compassDescriptionToggle.compass-description-toggle {
+    grid-area: button !important;
+    width: 100% !important;
+    margin: 2px 0 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-shell.compass-summary-shell #compassProfileDescription#compassProfileDescription.compass-profile-description {
+    grid-area: desc !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-shell.compass-summary-shell:not(.is-expanded) #compassProfileDescription#compassProfileDescription.compass-profile-description {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-shell.compass-summary-shell.is-expanded #compassProfileDescription#compassProfileDescription.compass-profile-description {
+    display: block !important;
+    visibility: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-top: 5px !important;
+    padding: 9px 10px !important;
+    border-radius: 11px !important;
+    background: rgba(15, 23, 42, .72) !important;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    color: var(--muted, #94a3b8) !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.32 !important;
+  }
+}
