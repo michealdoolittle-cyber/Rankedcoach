@@ -11059,8 +11059,9 @@ function buildXTicks(points, sliceLength, matchCount) {
 
   const visibleMatches = Math.min(matchCount, sliceLength - 1);
   const startGame = matchCount - visibleMatches + 1;
+  const isMobileTwentyWindow = isMobileLayoutViewport() && String(currentSize || "").toLowerCase() === "20";
 
-  if (points[0]) {
+  if (points[0] && !isMobileTwentyWindow) {
     xTicks += `
 <line x1="${points[0].x}" y1="${PAD_BOTTOM}"
       x2="${points[0].x}" y2="${PAD_BOTTOM + 4}"
@@ -11081,6 +11082,10 @@ function buildXTicks(points, sliceLength, matchCount) {
     const game = startGame + i - 1;
 
     let showLabel = true;
+
+    if (isMobileTwentyWindow) {
+      showLabel = game === startGame || game === matchCount;
+    }
 
     if (visibleMatches === 50) {
       showLabel =
@@ -42447,14 +42452,17 @@ function renderStatsSummaryMetaModel() {
   if (!selector) return;
 
   const model = getPlayerModel();
-  const currentLabel = model?.currentAct || "Current Window";
+  const mobileStatsSeasonLabel = isMobileLayoutViewport() ? "Select Season" : "Current Window";
+  const currentLabel = model?.currentAct || mobileStatsSeasonLabel;
   const options = model?.acts?.length ? model.acts : [currentLabel];
 
   selector.innerHTML = "";
   options.forEach((label) => {
     const option = document.createElement("option");
     option.value = label;
-    option.textContent = label;
+    option.textContent = isMobileLayoutViewport() && String(label || "").trim().toLowerCase() === "current window"
+      ? "Select Season"
+      : label;
     selector.appendChild(option);
   });
 

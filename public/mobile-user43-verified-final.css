@@ -9485,3 +9485,341 @@
     border-radius: 14px !important;
   }
 }
+
+/* Absolute EOF mobile page polish pass 2 - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout .app-header,
+  html.is-mobile-layout body.is-mobile-layout .app-header::before,
+  html.is-mobile-layout body.is-mobile-layout .app-header::after,
+  html.is-mobile-layout body.is-mobile-layout .nav-center::before,
+  html.is-mobile-layout body.is-mobile-layout .nav-center::after {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .app-header :is(.nav-left, .nav-right, .desktop-nav, .header-tabs, .top-nav-tabs, .nav-tabs) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .home-layout.dashboard-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .home-middle-row {
+    display: contents !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .loadout-card {
+    order: 10 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card {
+    order: 20 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-card {
+    order: 30 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .improvement-card {
+    order: 40 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .weekly-focus-card {
+    order: 50 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-panel {
+    order: 60 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .weekly-focus-card .card-pill.card-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: fit-content !important;
+    min-height: 24px !important;
+    padding: 5px 9px !important;
+    border-radius: 999px !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1 !important;
+    letter-spacing: .04em !important;
+    white-space: nowrap !important;
+    --tb-auto-fit-font-size: clamp(12px, 3.35vw, 14px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .weekly-focus-card .card-pill #weeklyFocusDate {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .impact-role-pill.impact-role-pill {
+    background: linear-gradient(180deg, rgba(75, 85, 99, .94), rgba(51, 65, 85, .94)) !important;
+    border-color: rgba(148, 163, 184, .46) !important;
+    color: var(--text, #e5edf7) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-summary-top-shell.compass-summary-top-shell {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-summary-copy {
+    display: grid !important;
+    gap: 6px !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-profile-description:not(.is-open):not(.active),
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-summary-shell:not(.is-expanded) .compass-profile-description {
+    display: none !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .compass-description-toggle.compass-description-toggle {
+    margin-top: 2px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card .chart-row text {
+    font-size: 13px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .log-agent-pill.log-agent-pill {
+    grid-template-columns: minmax(0, 1fr) 94px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logAgentBrowseBtn#logAgentBrowseBtn#logAgentBrowseBtn.logging-select-trigger {
+    width: 94px !important;
+    min-width: 94px !important;
+    max-width: 94px !important;
+    padding: 0 7px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logAgentBrowseBtn#logAgentBrowseBtn#logAgentBrowseBtn.logging-select-trigger .agent-select-text {
+    display: inline-block !important;
+    max-width: none !important;
+    font-size: clamp(11px, 3vw, 12px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logMap#logMap {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 10px !important;
+    line-height: 1.25 !important;
+    font-size: clamp(13px, 3.55vw, 15px) !important;
+    text-align: left !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logMap#logMap::placeholder {
+    line-height: 1.25 !important;
+    opacity: .86 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-role-pill-label.stats-role-pill-label {
+    font-size: clamp(7px, 2.05vw, 8.5px) !important;
+    letter-spacing: -.04em !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    --tb-auto-fit-font-size: clamp(7px, 2.05vw, 8.5px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-act-label.stats-act-label {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-act-select-wrap.stats-act-select-wrap {
+    grid-template-rows: 42px !important;
+    min-height: 46px !important;
+    padding: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsActSelector#statsActSelector.stats-act-select {
+    min-height: 42px !important;
+    height: 42px !important;
+    text-align: center !important;
+    text-align-last: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-map-card .stats-map-meta.stats-map-meta,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-map-card .stats-map-meta.stats-map-meta * {
+    text-align: center !important;
+    justify-items: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-map-card .stats-sub-text.stats-sub-text {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    margin-inline: auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList.stats-weapon-list {
+    gap: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-family-row.stats-weapon-family-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-image-row.stats-weapon-image-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-tile.stats-weapon-tile {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 104px !important;
+    padding: 10px !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: minmax(58px, auto) auto !important;
+    gap: 8px !important;
+    align-items: center !important;
+    justify-items: center !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-art-wrap.stats-weapon-art-wrap {
+    width: 100% !important;
+    min-height: 58px !important;
+    display: grid !important;
+    place-items: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-art.stats-weapon-art {
+    width: min(92%, 240px) !important;
+    height: 58px !important;
+    max-width: 240px !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-label-row.stats-weapon-label-row {
+    display: grid !important;
+    place-items: center !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-name.stats-weapon-name {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-mini.stats-weapon-mini,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-weapon-mini.stats-weapon-mini * {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-top-shell.compass-summary-top-shell,
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-copy.compass-summary-copy {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-top-shell.compass-summary-top-shell {
+    padding: 10px !important;
+    align-items: start !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-shell:not(.is-expanded) #compassProfileDescription#compassProfileDescription.compass-profile-description {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-row.stats-weapon-family-row,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-image-row.stats-weapon-image-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-tile.stats-weapon-tile {
+    display: grid !important;
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    flex: 1 1 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-profile-title.compass-profile-title {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    font-size: clamp(13px, 3.6vw, 15px) !important;
+    line-height: 1.12 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-profile-meta.compass-profile-meta {
+    min-height: 0 !important;
+    height: auto !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 3px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-profile-meta.compass-profile-meta span {
+    min-height: 20px !important;
+    height: 20px !important;
+    display: grid !important;
+    place-items: center !important;
+    font-size: clamp(11px, 3.05vw, 13px) !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-summary-copy.compass-summary-copy {
+    padding: 6px !important;
+    gap: 4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art-wrap.stats-weapon-art-wrap {
+    min-height: 66px !important;
+    height: 66px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art.stats-weapon-art {
+    width: min(94%, 260px) !important;
+    height: 66px !important;
+    max-height: 66px !important;
+    object-fit: contain !important;
+  }
+}
