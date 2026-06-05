@@ -42423,7 +42423,7 @@ function renderStatsWeaponsModel() {
 
     return `
       <section class="stats-weapon-family-row ${hasFamilyData ? "has-data" : "is-empty"} ${toneClass}" style="--weapon-count:${family.weapons.length}">
-        <div class="stats-weapon-family-head">
+        <div class="stats-weapon-family-head" ${isMobile ? "hidden aria-hidden=\"true\"" : ""}>
           <span class="stats-weapon-family-title">${escapeHtml(family.label)}</span>
         </div>
         <div class="stats-weapon-image-row">

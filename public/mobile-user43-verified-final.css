@@ -9823,3 +9823,169 @@
     object-fit: contain !important;
   }
 }
+
+/* Absolute EOF mobile page polish pass 3 - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout .app-header.app-header {
+    background:
+      radial-gradient(circle at top left, rgba(255, 70, 85, .14), transparent 34%),
+      linear-gradient(180deg, rgba(8, 15, 30, .98), rgba(4, 9, 20, .98)) !important;
+    border-bottom: 1px solid rgba(148, 163, 184, .18) !important;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .34) !important;
+    backdrop-filter: blur(14px) saturate(1.04) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(1.04) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .app-header.app-header::before,
+  html.is-mobile-layout body.is-mobile-layout .app-header.app-header::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .weekly-focus-card.weekly-focus-card {
+    order: 20 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .rr-chart-card.rr-chart-card {
+    order: 30 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .rr-card.rr-card {
+    order: 40 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .improvement-card.improvement-card {
+    order: 50 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home#page-home.page.active .compass-panel.compass-panel {
+    order: 60 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .logging-row .logging-pill:has(#logMap) {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .logging-row .logging-pill:has(#logMap) .pill-label {
+    width: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    display: block !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+    font-size: clamp(12px, 3.35vw, 14px) !important;
+    line-height: 1.15 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logMap#logMap#logMap {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 10px !important;
+    line-height: 42px !important;
+    font-size: clamp(13px, 3.55vw, 15px) !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    text-indent: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-mobile-weapon-filter.stats-mobile-weapon-filter {
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    margin: 0 0 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-mobile-weapon-filter-btn.stats-mobile-weapon-filter-btn {
+    min-height: 42px !important;
+    height: 42px !important;
+    max-height: 42px !important;
+    padding: 4px 2px !important;
+    border-radius: 10px !important;
+    font-size: clamp(8px, 2.2vw, 9.5px) !important;
+    line-height: 1 !important;
+    display: grid !important;
+    place-items: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-head.stats-weapon-family-head,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-title.stats-weapon-family-title {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-row.stats-weapon-family-row {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-image-row.stats-weapon-image-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-tile.stats-weapon-tile {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 74px auto !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    min-height: 124px !important;
+    padding: 10px 12px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art-wrap.stats-weapon-art-wrap {
+    width: 100% !important;
+    height: 74px !important;
+    min-height: 74px !important;
+    max-height: 74px !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art.stats-weapon-art {
+    display: block !important;
+    width: min(96%, 280px) !important;
+    height: 74px !important;
+    min-height: 74px !important;
+    max-height: 74px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    margin: 0 auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-label-row.stats-weapon-label-row {
+    min-height: 30px !important;
+    width: 100% !important;
+    display: grid !important;
+    place-items: center !important;
+    text-align: center !important;
+  }
+}
