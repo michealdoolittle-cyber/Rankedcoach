@@ -401,6 +401,175 @@
   }
 }
 
+/* Absolute EOF goal/profile/customize mobile fixes - 2026-06-05. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row {
+    background: linear-gradient(180deg, rgba(51, 65, 85, .98), rgba(30, 41, 59, .98)) !important;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    color: var(--text, #e5edf7) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row.active {
+    background: linear-gradient(135deg, #ff4655 0%, #ff5f68 62%, #c2410c 100%) !important;
+    border-color: rgba(255, 70, 85, .92) !important;
+    box-shadow: 0 10px 24px rgba(255, 70, 85, .22) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row.active :is(.profile-name, .profile-sub) {
+    color: #fff !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row:not(.active) .profile-sub {
+    color: var(--muted, #94a3b8) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.is-opening {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.is-opening > .lens-modal {
+    width: min(392px, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px) !important;
+    height: auto !important;
+    max-height: calc(100dvh - 20px) !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-modal-body {
+    padding: 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-shell {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "nav"
+      "panels"
+      "actions" !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-nav {
+    grid-area: nav !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-tab.profile-edit-tab {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 7px 4px !important;
+    border-radius: 10px !important;
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: .03em !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panels {
+    grid-area: panels !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel.is-active {
+    display: grid !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 2px 4px 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel-head {
+    display: grid !important;
+    gap: 5px !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel-title {
+    font-size: clamp(13px, 3.55vw, 15px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: .08em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel-copy {
+    max-width: 100% !important;
+    font-size: clamp(11px, 3vw, 13px) !important;
+    line-height: 1.22 !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal :is(.theme-gallery, .avatar-gallery, .border-color-gallery, .border-gallery, .banner-gallery) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-actions {
+    grid-area: actions !important;
+    display: flex !important;
+    justify-content: stretch !important;
+    align-items: center !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileSave {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    font-size: clamp(11px, 3vw, 13px) !important;
+  }
+}
+
 /* Mobile QA 43 proof pass 02: readable layout, uniform controls, and modal lock. */
 @media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
   html.is-mobile-layout,
@@ -11000,5 +11169,174 @@
     max-height: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
+  }
+}
+
+/* Absolute EOF goal/profile/customize mobile fixes - 2026-06-05. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row {
+    background: linear-gradient(180deg, rgba(51, 65, 85, .98), rgba(30, 41, 59, .98)) !important;
+    border: 1px solid rgba(148, 163, 184, .18) !important;
+    color: var(--text, #e5edf7) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row.active {
+    background: linear-gradient(135deg, #ff4655 0%, #ff5f68 62%, #c2410c 100%) !important;
+    border-color: rgba(255, 70, 85, .92) !important;
+    box-shadow: 0 10px 24px rgba(255, 70, 85, .22) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row.active :is(.profile-name, .profile-sub) {
+    color: #fff !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #profileSwitcher#profileSwitcher #profileList#profileList .profile-row.profile-row:not(.active) .profile-sub {
+    color: var(--muted, #94a3b8) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.is-opening {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.is-opening > .lens-modal {
+    width: min(392px, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px) !important;
+    height: auto !important;
+    max-height: calc(100dvh - 20px) !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-modal-body {
+    padding: 8px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-shell {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "nav"
+      "panels"
+      "actions" !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-nav {
+    grid-area: nav !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-tab.profile-edit-tab {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 7px 4px !important;
+    border-radius: 10px !important;
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1.05 !important;
+    letter-spacing: .03em !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panels {
+    grid-area: panels !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel.is-active {
+    display: grid !important;
+    grid-auto-rows: max-content !important;
+    align-content: start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 2px 4px 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel-head {
+    display: grid !important;
+    gap: 5px !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel-title {
+    font-size: clamp(13px, 3.55vw, 15px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: .08em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel-copy {
+    max-width: 100% !important;
+    font-size: clamp(11px, 3vw, 13px) !important;
+    line-height: 1.22 !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal :is(.theme-gallery, .avatar-gallery, .border-color-gallery, .border-gallery, .banner-gallery) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-actions {
+    grid-area: actions !important;
+    display: flex !important;
+    justify-content: stretch !important;
+    align-items: center !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileSave {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    font-size: clamp(11px, 3vw, 13px) !important;
   }
 }

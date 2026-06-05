@@ -11276,8 +11276,11 @@ function getNextTierRank(rr){
 function getTierBoundsByLabel(label){
   if(!label) return null;
 
+  const normalized = normalizeTierLabel(label);
+  const canonical = normalized === "Radiant +" ? "Radiant" : normalized;
+
   return RANK_THRESHOLDS.find(
-    r => r.tierLabel.toLowerCase() === String(label).toLowerCase()
+    r => r.tierLabel.toLowerCase() === String(canonical).toLowerCase()
   );
 }
 
@@ -11286,13 +11289,19 @@ function getGoalRankTarget(label, requestedRR = null){
   const bounds = getTierBoundsByLabel(normalized);
   if(!bounds) return null;
 
+  const isRadiantPlus = normalized === "Radiant +";
   const isRadiant = bounds.tierLabel === "Radiant";
   const rawTarget = safeNumber(requestedRR, bounds.min);
   const targetRR = isRadiant
     ? Math.max(RADIANT_MIN_RR, Math.round(rawTarget || bounds.min))
     : bounds.min;
 
-  return { bounds, targetRR };
+  return {
+    bounds,
+    targetRR,
+    goalRankLabel: isRadiantPlus ? "Radiant +" : bounds.tierLabel,
+    isRadiantPlus
+  };
 }
 
 function getProfileGoalTarget(profile){
@@ -11334,9 +11343,9 @@ function isGoalRankSelectionAllowed(label, requestedRR = null){
 
 function getClampedGoalRankSelection(label, requestedRR = null){
   const target = getGoalRankTarget(label, requestedRR);
-  if(target?.bounds && isGoalRankSelectionAllowed(target.bounds.tierLabel, target.targetRR)){
+  if(target?.bounds && isGoalRankSelectionAllowed(target.goalRankLabel || target.bounds.tierLabel, target.targetRR)){
     return {
-      goalRank: target.bounds.tierLabel,
+      goalRank: target.goalRankLabel || target.bounds.tierLabel,
       goalRR: target.targetRR,
       target
     };
@@ -12471,7 +12480,8 @@ function getRankIconUrl(label){
     "immortal 1": "immortal_1_rank.png",
     "immortal 2": "immortal_2_rank.png",
     "immortal 3": "immortal_3_rank.png",
-    "radiant": "radiant_rank.png"
+    "radiant": "radiant_rank.png",
+    "radiant +": "radiant_rank.png"
   };
 
   const file = map[normalized];
@@ -34065,7 +34075,8 @@ function bindEvents(){
       "immortal 1": "immortal_1_rank.png",
       "immortal 2": "immortal_2_rank.png",
       "immortal 3": "immortal_3_rank.png",
-      "radiant": "radiant_rank.png"
+      "radiant": "radiant_rank.png",
+      "radiant +": "radiant_rank.png"
     };
 
     const file = map[normalized] || "gold_1_rank.png";
@@ -34107,6 +34118,32 @@ function bindEvents(){
     if (closeModal) hideModalById("goalRankModal");
   }
 
+  function isRadiantGoalRank(label) {
+    const normalized = normalizeTierLabel(label);
+    return normalized === "Radiant" || normalized === "Radiant +";
+  }
+
+  function getGoalRankRequestedRR(label) {
+    const normalized = normalizeTierLabel(label);
+    if (normalized === "Radiant +") {
+      const minimum = getCurrentGoalMinimum();
+      return Math.max(minimum.radiantMinRR, safeNumber(goalRadiantRRInput?.value, minimum.radiantMinRR));
+    }
+    return normalized === "Radiant" ? goalRadiantRRInput?.value : null;
+  }
+
+  function requestRadiantPlusGoalRR(defaultValue = null) {
+    const minimum = getCurrentGoalMinimum();
+    const fallback = Math.max(
+      minimum.radiantMinRR,
+      Math.round(safeNumber(defaultValue ?? goalRadiantRRInput?.value, minimum.radiantMinRR))
+    );
+    const entered = window.prompt?.("Enter your Radiant+ RR goal", String(fallback));
+    if (entered === null) return null;
+    const parsed = Math.round(safeNumber(entered, NaN));
+    return Number.isFinite(parsed) ? Math.max(minimum.radiantMinRR, parsed) : fallback;
+  }
+
   function syncGoalRankAllowedOptions() {
     const select = document.getElementById("goalRankSelect");
     const menu = document.getElementById("goalRankCustomMenu");
@@ -34114,7 +34151,7 @@ function bindEvents(){
     const optionButtons = Array.from(menu?.querySelectorAll(".goal-rank-custom-option") || []);
 
     Array.from(select.options).forEach((option) => {
-      const isAllowed = isGoalRankSelectionAllowed(option.value, option.value === "Radiant" ? goalRadiantRRInput?.value : null);
+      const isAllowed = isGoalRankSelectionAllowed(option.value, getGoalRankRequestedRR(option.value));
       option.disabled = !isAllowed;
       optionButtons
         .filter((button) => button.dataset.value === option.value)
@@ -34148,7 +34185,7 @@ function bindEvents(){
 
     menu?.querySelectorAll(".goal-rank-custom-option").forEach((option) => {
       const isActive = option.dataset.value === value;
-      const isAllowed = isGoalRankSelectionAllowed(option.dataset.value, option.dataset.value === "Radiant" ? goalRadiantRRInput?.value : null);
+      const isAllowed = isGoalRankSelectionAllowed(option.dataset.value, getGoalRankRequestedRR(option.dataset.value));
       option.disabled = !isAllowed;
       option.classList.toggle("is-active", isActive);
       option.classList.toggle("is-disabled", !isAllowed);
@@ -34160,11 +34197,15 @@ function bindEvents(){
 
   function syncGoalRadiantRRControls() {
     const selected = normalizeTierLabel(goalRankSelect?.value || "");
-    const isRadiant = selected === "Radiant";
+    const isRadiant = isRadiantGoalRank(selected);
+    const isRadiantPlus = selected === "Radiant +";
     goalRankModal?.classList.toggle("goal-radiant-active", isRadiant);
+    goalRankModal?.classList.toggle("goal-radiant-plus-active", isRadiantPlus);
 
     if (goalRadiantRRWrap) {
       goalRadiantRRWrap.hidden = !isRadiant;
+      const label = goalRadiantRRWrap.querySelector("label");
+      if (label) label.textContent = isRadiantPlus ? "Radiant+ RR Goal" : "Radiant RR";
     }
 
     if (goalRadiantRRInput) {
@@ -34246,7 +34287,15 @@ function bindEvents(){
       e.preventDefault();
       e.stopPropagation();
       const requestedGoalRank = option.dataset.value || "";
-      const requestedGoalRR = requestedGoalRank === "Radiant" ? goalRadiantRRInput?.value : null;
+      if (requestedGoalRank === "Radiant +" && shell.classList.contains("goal-rank-inline-mobile")) {
+        const requestedRR = requestRadiantPlusGoalRR(goalRadiantRRInput?.value);
+        if (requestedRR === null) {
+          syncGoalRankCustomDropdown();
+          return;
+        }
+        if (goalRadiantRRInput) goalRadiantRRInput.value = String(requestedRR);
+      }
+      const requestedGoalRR = getGoalRankRequestedRR(requestedGoalRank);
       if (!isGoalRankSelectionAllowed(requestedGoalRank, requestedGoalRR)) {
         syncGoalRankCustomDropdown();
         return;
@@ -34303,6 +34352,20 @@ function bindEvents(){
     goalRankModal.style.setProperty("--goal-rank-popover-width", `${width}px`);
   }
 
+  function positionMobileGoalRankDropdown(shell) {
+    if (!goalRRWidget || !shell) return false;
+    const rect = goalRRWidget.getBoundingClientRect();
+    const viewportWidth = window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 0;
+    if (!viewportWidth || rect.width <= 0 || rect.bottom <= 0) return false;
+    const width = Math.max(150, Math.min(Math.round(rect.width), Math.round(viewportWidth - 16)));
+    const left = Math.max(8, Math.min(Math.round(rect.left), Math.max(8, Math.round(viewportWidth - width - 8))));
+    const top = Math.max(48, Math.round(rect.bottom + 6));
+    shell.style.setProperty("--goal-rank-inline-left", `${left}px`);
+    shell.style.setProperty("--goal-rank-inline-top", `${top}px`);
+    shell.style.setProperty("--goal-rank-inline-width", `${width}px`);
+    return true;
+  }
+
   function openMobileGoalRankDropdown() {
     if (!goalRRWidget || !goalRankSelect) return false;
     setupGoalRankCustomDropdown();
@@ -34323,26 +34386,28 @@ function bindEvents(){
     }
     syncGoalRankCustomDropdown();
     syncGoalRadiantRRControls();
-    hideModalById("goalRankModal");
+    if (goalRankModal?.classList.contains("active")) {
+      hideModalById("goalRankModal");
+    } else if (goalRankModal) {
+      goalRankModal.classList.remove("active", "is-opening", "is-closing");
+      goalRankModal.setAttribute("aria-hidden", "true");
+      goalRankModal.style.display = "none";
+    }
 
     if (shell.parentNode !== document.body) {
       document.body.appendChild(shell);
     }
 
-    const rect = goalRRWidget.getBoundingClientRect();
-    const viewportWidth = window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 0;
-    const width = Math.max(150, Math.min(Math.round(rect.width), Math.round(viewportWidth - 16)));
-    const left = Math.max(8, Math.min(Math.round(rect.left), Math.max(8, Math.round(viewportWidth - width - 8))));
-    const top = Math.round(rect.bottom + 6);
-
     shell.classList.add("goal-rank-inline-mobile");
     shell.classList.add("open");
-    shell.style.setProperty("--goal-rank-inline-left", `${left}px`);
-    shell.style.setProperty("--goal-rank-inline-top", `${top}px`);
-    shell.style.setProperty("--goal-rank-inline-width", `${width}px`);
+    positionMobileGoalRankDropdown(shell);
     menu.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
     syncGoalRankCustomDropdown();
+    window.requestAnimationFrame(() => {
+      positionMobileGoalRankDropdown(shell);
+      window.requestAnimationFrame(() => positionMobileGoalRankDropdown(shell));
+    });
     return true;
   }
 
