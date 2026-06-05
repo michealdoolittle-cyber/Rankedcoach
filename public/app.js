@@ -42586,6 +42586,46 @@ function renderStatsAgentsModel() {
   });
 
   container.innerHTML = "";
+
+  if (!isMobile) {
+    container.className = "stats-agent-list stats-agent-card-grid stats-desktop-card-grid";
+    Object.values(grouped)
+      .flat()
+      .sort((a, b) =>
+        Number(Boolean(b.hasData)) - Number(Boolean(a.hasData)) ||
+        safeNumber(b.winrate) - safeNumber(a.winrate) ||
+        safeNumber(b.matchesPlayed) - safeNumber(a.matchesPlayed) ||
+        String(a.agent || "").localeCompare(String(b.agent || ""))
+      )
+      .forEach((agent) => {
+        const hasData = Boolean(agent.hasData);
+        const winrateValue = safeNumber(agent.winrate);
+        const kdValue = safeNumber(agent.kd);
+        const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
+        const toneClass = hasData
+          ? (winrateValue >= 50 ? "is-positive" : "is-negative")
+          : "is-empty is-locked";
+        const card = document.createElement("button");
+        card.type = "button";
+        card.disabled = !hasData;
+        card.className = `stats-agent-stat-card stats-desktop-stat-card ${toneClass}`;
+        card.setAttribute("aria-label", hasData ? `Open ${agent.agent} agent insights` : `${agent.agent} has no data`);
+        card.innerHTML = `
+          <img class="stats-agent-card-image" src="${escapeHtml(getAgentIconUrl(agent.agent))}" alt="${escapeHtml(agent.agent)}">
+          <span class="stats-card-meta">
+            <span class="stats-main-text">${escapeHtml(agent.agent)}</span>
+            <span class="stats-sub-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
+            <span class="stats-sub-text">${hasData ? `${kdValue.toFixed(2)} K/D` : escapeHtml(roleFilters.find(role => role.key === agent.role)?.label || agent.role || "")}</span>
+          </span>
+        `;
+        if (hasData) {
+          card.addEventListener("click", () => openStatsDetailModal("agent", agent.agent));
+        }
+        container.appendChild(card);
+      });
+    return;
+  }
+
   container.className = "stats-agent-list stats-agent-grid";
 
   if (isMobile) {
@@ -42739,6 +42779,58 @@ function renderStatsWeaponsModel() {
   const familiesToRender = isMobile
     ? STATS_WEAPON_FAMILIES.filter(family => family.key === mobileStatsWeaponFamily)
     : STATS_WEAPON_FAMILIES;
+
+  if (!isMobile) {
+    const weaponItems = STATS_WEAPON_FAMILIES
+      .flatMap((family) => family.weapons.map((weaponName) => ({ family, weaponName })))
+      .sort((itemA, itemB) => {
+        const summaryA = summaryMap.get(normalizeStatsWeaponKey(itemA.weaponName));
+        const summaryB = summaryMap.get(normalizeStatsWeaponKey(itemB.weaponName));
+        const hasA = safeNumber(summaryA?.rounds) > 0;
+        const hasB = safeNumber(summaryB?.rounds) > 0;
+        if (hasA !== hasB) return hasA ? -1 : 1;
+        if (hasA && hasB) {
+          const winrateDelta = safeNumber(summaryB?.winrate) - safeNumber(summaryA?.winrate);
+          if (Math.abs(winrateDelta) > 0.01) return winrateDelta;
+          return safeNumber(summaryB?.rounds) - safeNumber(summaryA?.rounds);
+        }
+        return getStatsWeaponOrderIndex(itemA.weaponName) - getStatsWeaponOrderIndex(itemB.weaponName);
+      });
+
+    container.innerHTML = "";
+    container.className = "stats-weapon-list stats-weapon-card-grid stats-desktop-card-grid";
+    weaponItems.forEach(({ family, weaponName }) => {
+      const weaponKey = normalizeStatsWeaponKey(weaponName);
+      const weapon = summaryMap.get(weaponKey);
+      const hasWeaponData = safeNumber(weapon?.rounds) > 0;
+      const weaponWinrate = safeNumber(weapon?.winrate);
+      const weaponWinrateTone = hasWeaponData ? (weaponWinrate >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
+      const toneClass = hasWeaponData
+        ? (weaponWinrate >= 50 ? "is-positive" : "is-negative")
+        : "is-empty is-locked";
+      const card = document.createElement("button");
+      card.type = "button";
+      card.disabled = !hasWeaponData;
+      card.className = `stats-weapon-stat-card stats-desktop-stat-card ${toneClass}`;
+      card.dataset.weaponKey = weaponKey;
+      card.setAttribute("aria-label", hasWeaponData ? `Open ${weaponName} weapon insights` : `${weaponName} has no data`);
+      card.innerHTML = `
+        <span class="stats-weapon-card-art-wrap">
+          <img class="stats-weapon-card-image" src="${escapeHtml(getStatsWeaponAssetPath(weaponName))}" alt="${escapeHtml(weaponName)} weapon">
+        </span>
+        <span class="stats-card-meta">
+          <span class="stats-main-text">${escapeHtml(weaponName)}</span>
+          <span class="stats-sub-text ${weaponWinrateTone}">${hasWeaponData ? `${Math.round(weaponWinrate)}% WR` : "No Data"}</span>
+          <span class="stats-sub-text">${escapeHtml(family.label)}</span>
+        </span>
+      `;
+      if (hasWeaponData) {
+        card.addEventListener("click", () => openStatsDetailModal("weapon", weaponKey));
+      }
+      container.appendChild(card);
+    });
+    return;
+  }
 
   const mobileFilterMarkup = isMobile ? `
     <div class="stats-mobile-weapon-filter" aria-label="Filter weapons by category">
