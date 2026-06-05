@@ -42588,16 +42588,25 @@ function renderStatsAgentsModel() {
   container.innerHTML = "";
 
   if (!isMobile) {
-    container.className = "stats-agent-list stats-agent-card-grid stats-desktop-card-grid";
-    Object.values(grouped)
-      .flat()
-      .sort((a, b) =>
+    container.className = "stats-agent-list stats-agent-category-grid stats-desktop-agent-columns";
+    roleFilters.forEach((roleMeta) => {
+      const items = (grouped[roleMeta.key] || []).slice().sort((a, b) =>
         Number(Boolean(b.hasData)) - Number(Boolean(a.hasData)) ||
         safeNumber(b.winrate) - safeNumber(a.winrate) ||
         safeNumber(b.matchesPlayed) - safeNumber(a.matchesPlayed) ||
         String(a.agent || "").localeCompare(String(b.agent || ""))
-      )
-      .forEach((agent) => {
+      );
+      const column = document.createElement("section");
+      column.className = "stats-agent-desktop-column";
+      column.dataset.agentRole = roleMeta.key;
+      column.innerHTML = `
+        <div class="stats-agent-desktop-heading" data-role="${escapeHtml(roleMeta.key)}">
+          <img src="${escapeHtml(ROLE_ICON_MAP[roleMeta.key] || "")}" alt="">
+          <span>${escapeHtml(roleMeta.label)}</span>
+        </div>
+      `;
+
+      items.forEach((agent) => {
         const hasData = Boolean(agent.hasData);
         const winrateValue = safeNumber(agent.winrate);
         const kdValue = safeNumber(agent.kd);
@@ -42605,24 +42614,26 @@ function renderStatsAgentsModel() {
         const toneClass = hasData
           ? (winrateValue >= 50 ? "is-positive" : "is-negative")
           : "is-empty is-locked";
-        const card = document.createElement("button");
-        card.type = "button";
-        card.disabled = !hasData;
-        card.className = `stats-agent-stat-card stats-desktop-stat-card ${toneClass}`;
-        card.setAttribute("aria-label", hasData ? `Open ${agent.agent} agent insights` : `${agent.agent} has no data`);
-        card.innerHTML = `
-          <img class="stats-agent-card-image" src="${escapeHtml(getAgentIconUrl(agent.agent))}" alt="${escapeHtml(agent.agent)}">
-          <span class="stats-card-meta">
+        const button = document.createElement("button");
+        button.type = "button";
+        button.disabled = !hasData;
+        button.className = `stats-agent-mini-card ${toneClass}`;
+        button.setAttribute("aria-label", hasData ? `Open ${agent.agent} agent insights` : `${agent.agent} has no data`);
+        button.innerHTML = `
+          <img class="stats-agent-mini-image" src="${escapeHtml(getAgentIconUrl(agent.agent))}" alt="${escapeHtml(agent.agent)}">
+          <span class="stats-card-meta stats-agent-mini-meta">
             <span class="stats-main-text">${escapeHtml(agent.agent)}</span>
             <span class="stats-sub-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
-            <span class="stats-sub-text">${hasData ? `${kdValue.toFixed(2)} K/D` : escapeHtml(roleFilters.find(role => role.key === agent.role)?.label || agent.role || "")}</span>
+            <span class="stats-sub-text">${hasData ? `${kdValue.toFixed(2)} K/D` : escapeHtml(roleMeta.label)}</span>
           </span>
         `;
         if (hasData) {
-          card.addEventListener("click", () => openStatsDetailModal("agent", agent.agent));
+          button.addEventListener("click", () => openStatsDetailModal("agent", agent.agent));
         }
-        container.appendChild(card);
+        column.appendChild(button);
       });
+      container.appendChild(column);
+    });
     return;
   }
 
@@ -42781,11 +42792,31 @@ function renderStatsWeaponsModel() {
     : STATS_WEAPON_FAMILIES;
 
   if (!isMobile) {
-    const weaponItems = STATS_WEAPON_FAMILIES
-      .flatMap((family) => family.weapons.map((weaponName) => ({ family, weaponName })))
-      .sort((itemA, itemB) => {
-        const summaryA = summaryMap.get(normalizeStatsWeaponKey(itemA.weaponName));
-        const summaryB = summaryMap.get(normalizeStatsWeaponKey(itemB.weaponName));
+    container.innerHTML = "";
+    container.className = "stats-weapon-list stats-weapon-family-list stats-desktop-weapon-rows";
+    STATS_WEAPON_FAMILIES.forEach((family) => {
+      const familySummary = getWeaponFamilySummary(family, summaryMap);
+      const hasFamilyData = safeNumber(familySummary.rounds) > 0;
+      const familyToneClass = hasFamilyData
+        ? (safeNumber(familySummary.winrate) >= 50 ? "is-positive" : "is-negative")
+        : "is-empty is-locked";
+      const row = document.createElement("section");
+      row.className = `stats-desktop-weapon-family-row ${familyToneClass}`;
+      row.dataset.weaponFamily = family.key;
+      row.style.setProperty("--weapon-count", String(family.weapons.length));
+      row.innerHTML = `
+        <div class="stats-desktop-weapon-family-head">
+          <span class="stats-desktop-weapon-family-title">${escapeHtml(family.label)}</span>
+          <span class="stats-desktop-weapon-family-meta ${hasFamilyData ? (safeNumber(familySummary.winrate) >= 50 ? "stats-value-positive" : "stats-value-negative") : ""}">
+            ${hasFamilyData ? `${Math.round(safeNumber(familySummary.winrate))}% WR` : "No Data"}
+          </span>
+        </div>
+        <div class="stats-desktop-weapon-image-row"></div>
+      `;
+      const imageRow = row.querySelector(".stats-desktop-weapon-image-row");
+      family.weapons.slice().sort((weaponA, weaponB) => {
+        const summaryA = summaryMap.get(normalizeStatsWeaponKey(weaponA));
+        const summaryB = summaryMap.get(normalizeStatsWeaponKey(weaponB));
         const hasA = safeNumber(summaryA?.rounds) > 0;
         const hasB = safeNumber(summaryB?.rounds) > 0;
         if (hasA !== hasB) return hasA ? -1 : 1;
@@ -42794,40 +42825,37 @@ function renderStatsWeaponsModel() {
           if (Math.abs(winrateDelta) > 0.01) return winrateDelta;
           return safeNumber(summaryB?.rounds) - safeNumber(summaryA?.rounds);
         }
-        return getStatsWeaponOrderIndex(itemA.weaponName) - getStatsWeaponOrderIndex(itemB.weaponName);
+        return getStatsWeaponOrderIndex(weaponA) - getStatsWeaponOrderIndex(weaponB);
+      }).forEach((weaponName) => {
+        const weaponKey = normalizeStatsWeaponKey(weaponName);
+        const weapon = summaryMap.get(weaponKey);
+        const hasWeaponData = safeNumber(weapon?.rounds) > 0;
+        const weaponWinrate = safeNumber(weapon?.winrate);
+        const weaponWinrateTone = hasWeaponData ? (weaponWinrate >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
+        const toneClass = hasWeaponData
+          ? (weaponWinrate >= 50 ? "is-positive" : "is-negative")
+          : "is-empty is-locked";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.disabled = !hasWeaponData;
+        button.className = `stats-desktop-weapon-tile ${toneClass}`;
+        button.dataset.weaponKey = weaponKey;
+        button.setAttribute("aria-label", hasWeaponData ? `Open ${weaponName} weapon insights` : `${weaponName} has no data`);
+        button.innerHTML = `
+          <span class="stats-desktop-weapon-art-wrap">
+            <img class="stats-desktop-weapon-art" src="${escapeHtml(getStatsWeaponAssetPath(weaponName))}" alt="${escapeHtml(weaponName)} weapon">
+          </span>
+          <span class="stats-card-meta stats-desktop-weapon-meta">
+            <span class="stats-main-text">${escapeHtml(weaponName)}</span>
+            <span class="stats-sub-text ${weaponWinrateTone}">${hasWeaponData ? `${Math.round(weaponWinrate)}% WR` : "No Data"}</span>
+          </span>
+        `;
+        if (hasWeaponData) {
+          button.addEventListener("click", () => openStatsDetailModal("weapon", weaponKey));
+        }
+        imageRow?.appendChild(button);
       });
-
-    container.innerHTML = "";
-    container.className = "stats-weapon-list stats-weapon-card-grid stats-desktop-card-grid";
-    weaponItems.forEach(({ family, weaponName }) => {
-      const weaponKey = normalizeStatsWeaponKey(weaponName);
-      const weapon = summaryMap.get(weaponKey);
-      const hasWeaponData = safeNumber(weapon?.rounds) > 0;
-      const weaponWinrate = safeNumber(weapon?.winrate);
-      const weaponWinrateTone = hasWeaponData ? (weaponWinrate >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
-      const toneClass = hasWeaponData
-        ? (weaponWinrate >= 50 ? "is-positive" : "is-negative")
-        : "is-empty is-locked";
-      const card = document.createElement("button");
-      card.type = "button";
-      card.disabled = !hasWeaponData;
-      card.className = `stats-weapon-stat-card stats-desktop-stat-card ${toneClass}`;
-      card.dataset.weaponKey = weaponKey;
-      card.setAttribute("aria-label", hasWeaponData ? `Open ${weaponName} weapon insights` : `${weaponName} has no data`);
-      card.innerHTML = `
-        <span class="stats-weapon-card-art-wrap">
-          <img class="stats-weapon-card-image" src="${escapeHtml(getStatsWeaponAssetPath(weaponName))}" alt="${escapeHtml(weaponName)} weapon">
-        </span>
-        <span class="stats-card-meta">
-          <span class="stats-main-text">${escapeHtml(weaponName)}</span>
-          <span class="stats-sub-text ${weaponWinrateTone}">${hasWeaponData ? `${Math.round(weaponWinrate)}% WR` : "No Data"}</span>
-          <span class="stats-sub-text">${escapeHtml(family.label)}</span>
-        </span>
-      `;
-      if (hasWeaponData) {
-        card.addEventListener("click", () => openStatsDetailModal("weapon", weaponKey));
-      }
-      container.appendChild(card);
+      container.appendChild(row);
     });
     return;
   }

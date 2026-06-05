@@ -36226,6 +36226,280 @@ body:not(.is-mobile-layout) #page-stats .stats-card-meta .stats-sub-text {
   line-height: 1.05 !important;
 }
 
+/* Absolute desktop stats category restore - 2026-06-05.
+   Agents use four role columns; weapons use family rows with category labels left. */
+body:not(.is-mobile-layout) #page-stats #statsAgentsList.stats-agent-category-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-auto-rows: minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  align-content: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 2px 0 0 !important;
+  padding: 0 8px 8px 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-gutter: stable !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-column {
+  display: grid !important;
+  grid-auto-rows: max-content !important;
+  align-content: start !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 28px !important;
+  height: 28px !important;
+  padding: 0 6px !important;
+  border: 1px solid rgba(148, 163, 184, .24) !important;
+  border-radius: 9px !important;
+  background: linear-gradient(180deg, rgba(30, 41, 59, .78), rgba(15, 23, 42, .78)) !important;
+  color: #e5edf8 !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading img {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  object-fit: contain !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card {
+  appearance: none !important;
+  display: grid !important;
+  grid-template-columns: 34px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 43px !important;
+  height: 43px !important;
+  max-height: 43px !important;
+  padding: 4px 5px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(148, 163, 184, .22) !important;
+  border-radius: 10px !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(255, 70, 85, .10), transparent 40%),
+    linear-gradient(180deg, rgba(15, 23, 42, .94), rgba(2, 6, 23, .9)) !important;
+  color: #f8fafc !important;
+  cursor: pointer !important;
+  transform: none !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card.is-positive {
+  border-color: rgba(34, 197, 94, .44) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card.is-negative {
+  border-color: rgba(255, 70, 85, .50) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-image {
+  display: block !important;
+  justify-self: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  object-fit: contain !important;
+  transform: none !important;
+  filter: drop-shadow(0 5px 9px rgba(0, 0, 0, .32)) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta {
+  justify-items: start !important;
+  align-content: center !important;
+  gap: 1px !important;
+  text-align: left !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta :is(.stats-main-text, .stats-sub-text) {
+  text-align: left !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-main-text {
+  font-size: 11px !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-sub-text {
+  font-size: 9px !important;
+}
+
+body:not(.is-mobile-layout) #page-stats #statsWeaponsList.stats-desktop-weapon-rows {
+  display: grid !important;
+  grid-template-rows: repeat(5, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 2px 0 0 !important;
+  padding: 0 8px 8px 0 !important;
+  overflow: hidden !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-row {
+  display: grid !important;
+  grid-template-columns: 82px minmax(0, 1fr) !important;
+  align-items: stretch !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  padding: 5px !important;
+  border: 1px solid rgba(148, 163, 184, .22) !important;
+  border-radius: 13px !important;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 70, 85, .12), transparent 42%),
+    linear-gradient(135deg, rgba(15, 23, 42, .94), rgba(2, 6, 23, .9)) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-row.is-positive {
+  border-color: rgba(34, 197, 94, .44) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-row.is-negative {
+  border-color: rgba(255, 70, 85, .48) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-head {
+  display: grid !important;
+  grid-auto-rows: max-content !important;
+  align-content: center !important;
+  justify-items: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  text-align: center !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-title {
+  color: #f8fafc !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-meta {
+  max-width: 100% !important;
+  padding: 2px 5px !important;
+  border-radius: 999px !important;
+  background: rgba(2, 6, 23, .70) !important;
+  color: #94a3b8 !important;
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-image-row {
+  display: grid !important;
+  grid-template-columns: repeat(var(--weapon-count), minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-tile {
+  appearance: none !important;
+  display: grid !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  align-items: stretch !important;
+  justify-items: stretch !important;
+  gap: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 3px 4px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(148, 163, 184, .18) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(180deg, rgba(30, 41, 59, .58), rgba(2, 6, 23, .72)) !important;
+  color: #f8fafc !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transform: none !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-tile.is-positive {
+  border-color: rgba(34, 197, 94, .38) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-tile.is-negative {
+  border-color: rgba(255, 70, 85, .46) !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-art-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-art {
+  display: block !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 34px !important;
+  object-fit: contain !important;
+  transform: none !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta {
+  gap: 1px !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta .stats-main-text {
+  font-size: 10px !important;
+}
+
+body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta .stats-sub-text {
+  font-size: 9px !important;
+}
+
+body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-desktop-weapon-tile, .stats-desktop-weapon-family-row).is-empty,
+body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-desktop-weapon-tile, .stats-desktop-weapon-family-row).is-locked,
+body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-desktop-weapon-tile):disabled {
+  border-color: rgba(148, 163, 184, .16) !important;
+  background: linear-gradient(180deg, rgba(30, 41, 59, .38), rgba(2, 6, 23, .50)) !important;
+  color: rgba(203, 213, 225, .58) !important;
+  opacity: .54 !important;
+  cursor: default !important;
+}
+
+body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-desktop-weapon-tile).is-empty img,
+body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-desktop-weapon-tile).is-locked img,
+body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-desktop-weapon-tile):disabled img {
+  filter: grayscale(1) opacity(.46) !important;
+}
+
 @media (max-width:520px){
   body.is-mobile-layout{
     --mobile-bottom-nav:70px;
