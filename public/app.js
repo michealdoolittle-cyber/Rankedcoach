@@ -13437,7 +13437,7 @@ function showModalById(id) {
   if (!modal) return;
   if (
     modal.classList.contains("lens-modal-overlay") &&
-    modal.id !== "goalRankModal" &&
+    (modal.id !== "goalRankModal" || !isMobileLayoutViewport()) &&
     modal.parentElement !== document.body
   ) {
     document.body.appendChild(modal);
@@ -38896,7 +38896,10 @@ function updateNavRRToRank(){
     bar.style.width = "100%";
     applyStaticTrackGradient(bar, Math.round(progress.pct * 100), "horizontal");
   } else {
-    nextText.textContent = "Max Rank";
+    const radiantRR = current.tierLabel === "Radiant"
+      ? Math.max(0, Math.round(abs - RADIANT_MIN_RR))
+      : null;
+    nextText.textContent = radiantRR === null ? "Max Rank" : `Radiant ${radiantRR}`;
     if(nextIcon){
       nextIcon.src = getRankIconUrl(current.tierLabel);
       nextIcon.alt = current.tierLabel;

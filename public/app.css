@@ -36047,6 +36047,47 @@ body.is-mobile-layout textarea{
   resize:vertical;
 }
 
+/* Absolute desktop goal-rank layer lock - 2026-06-05.
+   Keep the custom rank dropdown above header/theme/card layers. */
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal.lens-modal-overlay {
+  z-index: 2147483647 !important;
+  isolation: isolate !important;
+  overflow: visible !important;
+}
+
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal.active,
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal.is-opening {
+  display: flex !important;
+  pointer-events: none !important;
+  visibility: visible !important;
+}
+
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal > .lens-modal {
+  z-index: 2147483647 !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+}
+
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal .lens-modal-body,
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal .goal-rank-row,
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal .goal-rank-custom-select {
+  overflow: visible !important;
+  isolation: auto !important;
+}
+
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal .goal-rank-custom-select {
+  position: relative !important;
+  z-index: 2147483647 !important;
+}
+
+body:not(.is-mobile-layout) #goalRankModal#goalRankModal .goal-rank-custom-menu:not([hidden]) {
+  z-index: 2147483647 !important;
+  display: grid !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 @media (max-width:520px){
   body.is-mobile-layout{
     --mobile-bottom-nav:70px;
