@@ -11301,8 +11301,18 @@ function getProfileGoalTarget(profile){
 }
 
 function getCurrentGoalMinimum(){
-  const currentRR = Math.max(0, Math.round(safeNumber(computeCurrentRRAbsolute(), 0)));
-  const currentRank = getTierRank(currentRR) || RANK_THRESHOLDS[0];
+  const computedRR = Math.max(0, Math.round(safeNumber(computeCurrentRRAbsolute(), 0)));
+  const visibleRankLabel = normalizeTierLabel(
+    document.getElementById("navCurrentTierText")?.textContent ||
+    document.getElementById("navGoalCurrentIcon")?.alt ||
+    ""
+  );
+  const visibleRank = getTierBoundsByLabel(visibleRankLabel);
+  const computedRank = getTierRank(computedRR) || RANK_THRESHOLDS[0];
+  const currentRank = visibleRank && safeNumber(visibleRank.min) > safeNumber(computedRank.min)
+    ? visibleRank
+    : computedRank;
+  const currentRR = Math.max(computedRR, safeNumber(currentRank?.min, 0));
   const currentRankMin = Math.max(0, safeNumber(currentRank?.min, 0));
   const radiantMinRR = currentRank?.tierLabel === "Radiant"
     ? Math.max(RADIANT_MIN_RR, currentRR)
@@ -34228,8 +34238,14 @@ function bindEvents(){
       if (!option) return;
       e.preventDefault();
       e.stopPropagation();
+      const requestedGoalRank = option.dataset.value || "";
+      const requestedGoalRR = requestedGoalRank === "Radiant" ? goalRadiantRRInput?.value : null;
+      if (!isGoalRankSelectionAllowed(requestedGoalRank, requestedGoalRR)) {
+        syncGoalRankCustomDropdown();
+        return;
+      }
       if (option.classList.contains("is-disabled") || option.getAttribute("aria-disabled") === "true") return;
-      select.value = option.dataset.value || select.value;
+      select.value = requestedGoalRank || select.value;
       select.dispatchEvent(new Event("change", { bubbles: true }));
       if (shell.classList.contains("goal-rank-inline-mobile")) {
         saveSelectedGoalRank({ closeModal: false });
@@ -34319,6 +34335,7 @@ function bindEvents(){
     shell.style.setProperty("--goal-rank-inline-width", `${width}px`);
     menu.hidden = false;
     trigger.setAttribute("aria-expanded", "true");
+    syncGoalRankCustomDropdown();
     return true;
   }
 
