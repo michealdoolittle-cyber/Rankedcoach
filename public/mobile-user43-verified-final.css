@@ -10544,3 +10544,110 @@
     font-weight: 950 !important;
   }
 }
+
+/* Absolute EOF mobile performance timeline and coaching reads lock - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-performance-card.stats-performance-card {
+    min-height: 0 !important;
+    height: auto !important;
+    align-self: start !important;
+    padding-bottom: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsPerformanceChart#statsPerformanceChart.stats-chart-wrap {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: max-content !important;
+    grid-auto-rows: 0 !important;
+    align-items: start !important;
+    align-content: start !important;
+    gap: 0 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsPerformanceChart#statsPerformanceChart.stats-chart-wrap .stats-trend-card.stats-trend-card:not(.is-mobile-trend-active) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsPerformanceChart#statsPerformanceChart.stats-chart-wrap .stats-trend-card.stats-trend-card.is-mobile-trend-active {
+    display: grid !important;
+    height: auto !important;
+    min-height: 210px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active .insight-trends.insight-trends {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    align-content: start !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active .trend-content.trend-content.is-mobile-trend-content-active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active .trend-content.trend-content:not(.is-mobile-trend-content-active) {
+    display: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active .trend-content.trend-content.is-mobile-trend-content-active .trend-signal-grid.trend-signal-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: max-content !important;
+    grid-auto-rows: 0 !important;
+    align-items: start !important;
+    align-content: start !important;
+    gap: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active .trend-content.trend-content .trend-signal-card.trend-signal-card:not(.is-mobile-insight-trend-active) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights#page-insights.page.active .trend-content.trend-content .trend-signal-card.trend-signal-card.is-mobile-insight-trend-active {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 210px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+}
