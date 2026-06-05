@@ -10810,3 +10810,195 @@
     line-height: 1.05 !important;
   }
 }
+
+/* Absolute EOF mobile modal scope and logging hidden-panel lock - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel[hidden],
+  html.is-mobile-layout body.is-mobile-layout:not(.is-manual-entry-mode) #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.is-manual-entry-mode #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel:not([hidden]) {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal):not(.active):not(.is-opening):not(.is-closing),
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal)[aria-hidden="true"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 32000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+    background: rgba(2, 6, 23, .78) !important;
+    backdrop-filter: blur(10px) saturate(.9) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal {
+    position: relative !important;
+    inset: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(392px, calc(100vw - 24px)) !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 24px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 28px) !important;
+    margin: 0 auto !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    transform: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal > .lens-modal-header,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal > .lens-modal-header {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    z-index: 2 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 38px !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 10px 12px !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal > .lens-modal-header .lens-modal-title,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal > .lens-modal-header .lens-modal-title {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    font-size: clamp(15px, 4vw, 18px) !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal > .lens-modal-header .lens-modal-close,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal > .lens-modal-header .lens-modal-close {
+    position: static !important;
+    justify-self: end !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal > .lens-modal-body,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal > .lens-modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    width: 100% !important;
+    padding: 12px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #weeklyFocusModal.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #lensModal.active > .lens-modal {
+    max-height: min(78dvh, 720px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #weeklyFocusModal.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #lensModal.lens-modal-overlay.active {
+    display: flex !important;
+  }
+}
+
+/* Absolute EOF mobile modal display fallback for coarse/viewport mismatches - 2026-06-05. */
+@media (max-width: 767px), (pointer: coarse) and (max-width: 900px) {
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay#lensModalOverlay.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #weeklyFocusModal#weeklyFocusModal.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal.lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout #lensModal#lensModal.lens-modal-overlay.active {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    padding: 12px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay#lensModalOverlay.lens-modal-overlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #weeklyFocusModal#weeklyFocusModal.lens-modal-overlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal.lens-modal-overlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #lensModal#lensModal.lens-modal-overlay.active > .lens-modal {
+    position: relative !important;
+    inset: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(392px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    height: auto !important;
+    max-height: min(78dvh, 720px) !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay#lensModalOverlay.lens-modal-overlay.active > .lens-modal > .lens-modal-header,
+  html.is-mobile-layout body.is-mobile-layout #weeklyFocusModal#weeklyFocusModal.lens-modal-overlay.active > .lens-modal > .lens-modal-header,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal.lens-modal-overlay.active > .lens-modal > .lens-modal-header,
+  html.is-mobile-layout body.is-mobile-layout #lensModal#lensModal.lens-modal-overlay.active > .lens-modal > .lens-modal-header {
+    position: relative !important;
+    top: auto !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 38px !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 10px 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel#manualMatchPanel.manual-match-panel[hidden],
+  html.is-mobile-layout body.is-mobile-layout:not(.is-manual-entry-mode) #page-logging#page-logging#page-logging.page.active #manualMatchPanel#manualMatchPanel.manual-match-panel {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+}

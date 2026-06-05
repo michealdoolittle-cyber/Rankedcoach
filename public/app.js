@@ -13425,6 +13425,13 @@ function refreshActiveModalState() {
 function showModalById(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
+  if (
+    modal.classList.contains("lens-modal-overlay") &&
+    modal.id !== "goalRankModal" &&
+    modal.parentElement !== document.body
+  ) {
+    document.body.appendChild(modal);
+  }
   if (modal._modalTransitionTimer) {
     window.clearTimeout(modal._modalTransitionTimer);
     modal._modalTransitionTimer = 0;
