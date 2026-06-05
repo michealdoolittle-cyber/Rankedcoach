@@ -11340,3 +11340,139 @@
     font-size: clamp(11px, 3vw, 13px) !important;
   }
 }
+
+/* EOF mobile stats category selector restore - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active :is(.stats-mobile-role-filter, .stats-mobile-weapon-filter) {
+    display: grid !important;
+    width: 100% !important;
+    gap: 6px !important;
+    margin: 0 0 10px !important;
+    padding: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-mobile-role-filter.stats-mobile-role-filter {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-mobile-weapon-filter.stats-mobile-weapon-filter {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active :is(.stats-mobile-role-filter-btn, .stats-mobile-weapon-filter-btn) {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 4px 4px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-mobile-role-filter-btn img {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList.stats-agent-list {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-column.stats-agent-column {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-head.stats-weapon-family-head,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-title.stats-weapon-family-title {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-image-row.stats-weapon-image-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-tile.stats-weapon-tile {
+    width: 100% !important;
+    min-height: 124px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 74px) auto !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    place-items: center !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art-wrap.stats-weapon-art-wrap {
+    width: 100% !important;
+    height: 74px !important;
+    min-height: 74px !important;
+    max-height: 74px !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art.stats-weapon-art {
+    width: min(94%, 260px) !important;
+    height: 74px !important;
+    max-height: 74px !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-label-row.stats-weapon-label-row {
+    display: grid !important;
+    place-items: center !important;
+    width: 100% !important;
+    min-height: 32px !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-name.stats-weapon-name,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-mini.stats-weapon-mini,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-mini.stats-weapon-mini * {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    font-size: clamp(11px, 3.2vw, 13px) !important;
+    line-height: 1.08 !important;
+    text-align: center !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}

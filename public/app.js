@@ -377,6 +377,15 @@ function isMobileLayoutViewport() {
   return getViewportWidth() <= MOBILE_LAYOUT_MAX_WIDTH;
 }
 
+function isStatsMobileLayout() {
+  return (
+    isMobileLayoutViewport() ||
+    document.documentElement?.classList.contains("is-mobile-layout") ||
+    document.body?.classList.contains("is-mobile-layout") ||
+    document.body?.classList.contains("access-mobile-layout")
+  );
+}
+
 function portalMobileProfileSurface(id) {
   const el = document.getElementById(id);
   if (!el || !document.body || !isMobileLayoutViewport()) return el;
@@ -42556,7 +42565,7 @@ function renderStatsAgentsModel() {
     { key: "initiator", label: "Initiator" },
     { key: "sentinel", label: "Sentinel" }
   ];
-  const isMobile = isMobileLayoutViewport();
+  const isMobile = isStatsMobileLayout();
   if (!roleFilters.some(role => role.key === mobileStatsAgentRole)) {
     mobileStatsAgentRole = "duelist";
   }
@@ -42783,7 +42792,7 @@ function renderStatsWeaponsModel() {
 
   const weaponSummaries = summarizeSpecificWeaponRounds(matches);
   const summaryMap = new Map(weaponSummaries.map(weapon => [weapon.weaponKey, weapon]));
-  const isMobile = isMobileLayoutViewport();
+  const isMobile = isStatsMobileLayout();
   if (!STATS_WEAPON_FAMILIES.some(family => family.key === mobileStatsWeaponFamily)) {
     mobileStatsWeaponFamily = STATS_WEAPON_FAMILIES[0]?.key || "rifle";
   }
