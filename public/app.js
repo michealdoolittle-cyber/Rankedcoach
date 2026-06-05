@@ -362,6 +362,8 @@ let mobileScrollExtentRaf = 0;
 let mobileTouchScrollState = null;
 let mobileStatsTrendIndex = 0;
 let mobileStatsBreakdownIndex = 0;
+let mobileStatsAgentRole = "duelist";
+let mobileStatsWeaponFamily = "rifle";
 let mobileInsightCardIndex = 0;
 let mobileInsightTrendKey = "performance";
 let mobileInsightTrendIndex = 0;
@@ -6687,6 +6689,69 @@ function renderTrendBreakdownCard(item = {}) {
   `;
 }
 
+function getTrendBreakdownFallbackItems(key = "", model = {}) {
+  const matchesPlayed = safeNumber(model?.overview?.matchesPlayed || matches.length);
+  const focusLabel = model?.focus || getLockedWeeklyFocus() || "Weekly Focus";
+  const roleLabel = model?.role || activeRole || "Primary Role";
+  const mapLabel = model?.topMap || model?.maps?.[0]?.map || "Current Map Pool";
+
+  const fallbacks = {
+    performance: [
+      {
+        tone: matchesPlayed ? "warn" : "neutral",
+        mediaType: "map",
+        mediaValue: mapLabel,
+        kicker: "Performance",
+        title: "Match Insights",
+        value: matchesPlayed ? `${matchesPlayed} matches tracked` : "Waiting for matches",
+        detail: matchesPlayed ? "Current performance reads are built from imported match outcomes and stat trends." : "Import or log matches to unlock KD, win-rate, and map-performance reads."
+      }
+    ],
+    behavior: [
+      {
+        tone: "warn",
+        mediaType: "text",
+        mediaText: "Logs",
+        kicker: "Session Habits",
+        title: "Log Reads",
+        value: focusLabel,
+        detail: "Log reads connect your focus category, mood, rating, comms, and notes into coaching patterns."
+      }
+    ],
+    role: [
+      {
+        tone: "warn",
+        mediaType: "role",
+        mediaValue: roleLabel,
+        kicker: "Role Results",
+        title: "Role Reads",
+        value: String(roleLabel || "Role").replace(/^\w/, char => char.toUpperCase()),
+        detail: "Role reads compare how your current role is converting fights, utility, and round impact."
+      }
+    ],
+    consistency: [
+      {
+        tone: "warn",
+        mediaType: "text",
+        mediaText: "Flow",
+        kicker: "Consistency",
+        title: "Consistency Reads",
+        value: matchesPlayed ? "Pattern building" : "Needs more samples",
+        detail: "Consistency reads look for repeated swings across matches, logs, focus categories, and recent form."
+      }
+    ]
+  };
+
+  return fallbacks[String(key || "").toLowerCase()] || [{
+    tone: "neutral",
+    mediaText: "Read",
+    kicker: "Coaching",
+    title: "Coaching Read",
+    value: "Waiting for data",
+    detail: "This section fills as RankedCoach collects more profile context."
+  }];
+}
+
 function buildPerformanceTrendDetailTabs(trend = {}, model = {}) {
   const proofItems = Array.isArray(trend?.proofItems) && trend.proofItems.length
     ? trend.proofItems
@@ -12583,6 +12648,21 @@ function renderInsightCards() {
 
 function syncInsightListOverflow(container = document.getElementById("insightsList")) {
   if (!container) return;
+
+  if (isMobileLayoutViewport()) {
+    container.classList.remove("is-scrollable");
+    container.style.removeProperty("--insights-scroll-height");
+    container.style.removeProperty("height");
+    container.style.removeProperty("min-height");
+    container.style.removeProperty("max-height");
+    container.style.removeProperty("overflow-y");
+    container.style.removeProperty("overflow-x");
+    container.style.removeProperty("padding-right");
+    container.style.removeProperty("padding-bottom");
+    container.style.removeProperty("box-sizing");
+    container.style.removeProperty("scrollbar-gutter");
+    return;
+  }
 
   const cards = [...container.querySelectorAll(".insight-card")];
   const hasOpenCard = container.classList.contains("has-open-card");
@@ -41940,9 +42020,10 @@ function renderTrendBreakdownModel() {
   }).forEach(([key, items]) => {
     const content = document.querySelector(`[data-trend-content="${key}"]`);
     if (!content) return;
+    const renderItems = Array.isArray(items) && items.length ? items : getTrendBreakdownFallbackItems(key, model);
     content.innerHTML = `
       <div class="trend-signal-grid">
-        ${items.map((item) => {
+        ${renderItems.map((item) => {
           if (item && typeof item === "object" && !Array.isArray(item)) {
             return renderTrendBreakdownCard(item);
           }
@@ -42090,6 +42171,17 @@ function renderStatsAgentsModel() {
   const container = document.getElementById("statsAgentsList");
   if (!container) return;
 
+  const roleFilters = [
+    { key: "duelist", label: "Duelist" },
+    { key: "controller", label: "Controller" },
+    { key: "initiator", label: "Initiator" },
+    { key: "sentinel", label: "Sentinel" }
+  ];
+  const isMobile = isMobileLayoutViewport();
+  if (!roleFilters.some(role => role.key === mobileStatsAgentRole)) {
+    mobileStatsAgentRole = "duelist";
+  }
+
   const model = getPlayerModel();
   const agents = (model?.agents || []).slice();
   const agentByName = new Map(
@@ -42117,7 +42209,27 @@ function renderStatsAgentsModel() {
   container.innerHTML = "";
   container.className = "stats-agent-list stats-agent-grid";
 
-  Object.entries(grouped).forEach(([role, items]) => {
+  if (isMobile) {
+    const filter = document.createElement("div");
+    filter.className = "stats-mobile-role-filter";
+    filter.setAttribute("aria-label", "Filter agents by role");
+    filter.innerHTML = roleFilters.map((role) => `
+      <button type="button" class="stats-mobile-role-filter-btn ${role.key === mobileStatsAgentRole ? "active" : ""}" data-stats-agent-role="${escapeHtml(role.key)}" aria-pressed="${role.key === mobileStatsAgentRole ? "true" : "false"}">
+        <img src="${escapeHtml(ROLE_ICON_MAP[role.key] || "")}" alt="">
+        <span>${escapeHtml(role.label)}</span>
+      </button>
+    `).join("");
+    filter.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-stats-agent-role]");
+      if (!button) return;
+      event.preventDefault();
+      mobileStatsAgentRole = String(button.dataset.statsAgentRole || "duelist").toLowerCase();
+      renderStatsAgentsModel();
+    });
+    container.appendChild(filter);
+  }
+
+  Object.entries(grouped).filter(([role]) => !isMobile || role === mobileStatsAgentRole).forEach(([role, items]) => {
     items.sort((a, b) =>
       Number(Boolean(b.hasData)) - Number(Boolean(a.hasData)) ||
       safeNumber(b.winrate) - safeNumber(a.winrate) ||
@@ -42127,6 +42239,7 @@ function renderStatsAgentsModel() {
 
     const column = document.createElement("div");
     column.className = "stats-agent-column";
+    column.dataset.agentRole = role;
 
     const heading = document.createElement("div");
     heading.className = "stats-agent-column-title";
@@ -42240,8 +42353,25 @@ function renderStatsWeaponsModel() {
 
   const weaponSummaries = summarizeSpecificWeaponRounds(matches);
   const summaryMap = new Map(weaponSummaries.map(weapon => [weapon.weaponKey, weapon]));
+  const isMobile = isMobileLayoutViewport();
+  if (!STATS_WEAPON_FAMILIES.some(family => family.key === mobileStatsWeaponFamily)) {
+    mobileStatsWeaponFamily = STATS_WEAPON_FAMILIES[0]?.key || "rifle";
+  }
+  const familiesToRender = isMobile
+    ? STATS_WEAPON_FAMILIES.filter(family => family.key === mobileStatsWeaponFamily)
+    : STATS_WEAPON_FAMILIES;
 
-  container.innerHTML = STATS_WEAPON_FAMILIES.map((family) => {
+  const mobileFilterMarkup = isMobile ? `
+    <div class="stats-mobile-weapon-filter" aria-label="Filter weapons by category">
+      ${STATS_WEAPON_FAMILIES.map((family) => `
+        <button type="button" class="stats-mobile-weapon-filter-btn ${family.key === mobileStatsWeaponFamily ? "active" : ""}" data-stats-weapon-family="${escapeHtml(family.key)}" aria-pressed="${family.key === mobileStatsWeaponFamily ? "true" : "false"}">
+          ${escapeHtml(family.label)}
+        </button>
+      `).join("")}
+    </div>
+  ` : "";
+
+  container.innerHTML = `${mobileFilterMarkup}${familiesToRender.map((family) => {
     const familySummary = getWeaponFamilySummary(family, summaryMap);
     const hasFamilyData = safeNumber(familySummary.rounds) > 0;
     const toneClass = hasFamilyData
@@ -42296,7 +42426,15 @@ function renderStatsWeaponsModel() {
         </div>
       </section>
     `;
-  }).join("");
+  }).join("")}`;
+
+  container.querySelectorAll("[data-stats-weapon-family]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      mobileStatsWeaponFamily = String(button.dataset.statsWeaponFamily || "rifle").toLowerCase();
+      renderStatsWeaponsModel();
+    });
+  });
 
   container.querySelectorAll(".stats-weapon-tile").forEach((button) => {
     if (button.disabled || button.classList.contains("is-empty")) return;

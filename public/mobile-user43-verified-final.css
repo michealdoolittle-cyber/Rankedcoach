@@ -9113,3 +9113,375 @@
     order: 2 !important;
   }
 }
+
+/* Absolute EOF page mobile polish - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .logging-row {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .logging-pill.logging-pill {
+    min-width: 0 !important;
+    min-height: 56px !important;
+    align-items: center !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .log-agent-pill.log-agent-pill {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 82px !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #logAgentDisplay.log-agent-display {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .log-agent-leading {
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .log-agent-img.log-agent-img {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    object-fit: contain !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .log-agent-text.log-agent-text {
+    min-width: 0 !important;
+    line-height: 1.12 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #logAgentBrowseBtn#logAgentBrowseBtn.logging-select-trigger {
+    justify-self: end !important;
+    width: 82px !important;
+    min-width: 82px !important;
+    max-width: 82px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .focus-wrapper {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 112px !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #focusPreviewText.focus-preview-text {
+    min-height: 18px !important;
+    align-items: center !important;
+    line-height: 1.22 !important;
+    padding-block: 1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .focus-other-wrap:not([hidden]) {
+    position: absolute !important;
+    inset: 4px 118px 4px 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 34px 34px !important;
+    align-items: center !important;
+    gap: 5px !important;
+    z-index: 8 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #logFocusOther {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 10px !important;
+    line-height: 1 !important;
+    align-self: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #confirmFocusOther,
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #clearFocusOther {
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    line-height: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .logging-pill :is(.pill-label, .focus-preview-text, .agent-select-text),
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #logMap {
+    line-height: 1.2 !important;
+    min-height: 18px !important;
+    padding-block: 1px !important;
+    align-self: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #logMap {
+    height: 38px !important;
+    min-height: 38px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stat-block .stat-label {
+    font-size: clamp(10px, 2.75vw, 12px) !important;
+    line-height: 1.05 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stat-block .stat-value {
+    font-size: clamp(18px, 5.8vw, 24px) !important;
+    line-height: .98 !important;
+    font-weight: 900 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-act-select-wrap, .stats-act-select, #statsActSelector) {
+    border-radius: 14px !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-role-progress-role, .stats-role-pill-label) {
+    font-size: clamp(8px, 2.35vw, 11px) !important;
+    line-height: 1.02 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-mobile-role-filter, .stats-mobile-weapon-filter) {
+    grid-column: 1 / -1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    width: 100% !important;
+    margin: 0 0 9px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-mobile-weapon-filter {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-mobile-role-filter-btn, .stats-mobile-weapon-filter-btn) {
+    min-width: 0 !important;
+    min-height: 48px !important;
+    padding: 5px 3px !important;
+    border-radius: 12px !important;
+    display: grid !important;
+    place-items: center !important;
+    gap: 3px !important;
+    color: var(--text, #e5edf7) !important;
+    background: linear-gradient(180deg, rgba(30, 41, 59, .92), rgba(15, 23, 42, .88)) !important;
+    border: 1px solid rgba(148, 163, 184, .26) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-mobile-role-filter-btn.active, .stats-mobile-weapon-filter-btn.active) {
+    border-color: color-mix(in srgb, var(--accent, #ff4655) 62%, rgba(148, 163, 184, .32)) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), 0 0 16px rgba(255, 70, 85, .18) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-mobile-role-filter-btn img {
+    width: 24px !important;
+    height: 24px !important;
+    object-fit: contain !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-mobile-role-filter-btn span, .stats-mobile-weapon-filter-btn) {
+    font-size: clamp(8px, 2.35vw, 10px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #statsAgentsList.stats-agent-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-agent-column {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-agent-column-title {
+    grid-column: 1 / -1 !important;
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #statsWeaponsList.stats-weapon-list {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-weapon-family-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-weapon-family-head {
+    justify-items: start !important;
+    place-items: center start !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-weapon-image-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-weapon-tile {
+    min-height: 72px !important;
+    grid-template-rows: minmax(44px, 1fr) auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-weapon-name {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-weapon-mini {
+    display: block !important;
+    margin-top: 2px !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .mobile-trend-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .mobile-trend-tabs button {
+    min-height: 42px !important;
+    padding: 4px 2px !important;
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-sub-text, .stats-breakdown-detail, .stats-map-meta, .stats-agent-metrics-stack, .stats-weapon-label-row) {
+    text-align: left !important;
+    justify-items: start !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-main-text, .stats-breakdown-label, .stats-metric-label) {
+    display: block !important;
+    margin-bottom: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active :is(.stats-sub-text, .stats-breakdown-value, .stats-metric-text) {
+    display: block !important;
+    margin-bottom: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .insights-list {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding-right: 0 !important;
+    scrollbar-gutter: auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .insight-filter-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .insight-filter-btn {
+    min-width: 0 !important;
+    min-height: 38px !important;
+    padding: 4px 3px !important;
+    font-size: clamp(9px, 2.55vw, 11px) !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .insight-action {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .insight-meta-row {
+    order: -1 !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    margin: 2px 0 0 !important;
+    transform: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .trend-signal-card {
+    text-align: left !important;
+    justify-items: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .trend-signal-top {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+    align-items: stretch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .trend-signal-tone {
+    order: 2 !important;
+    justify-self: start !important;
+    width: auto !important;
+    max-width: 100% !important;
+    margin-top: 0 !important;
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active :is(.trend-signal-kicker, .trend-signal-title, .trend-signal-value, .trend-signal-detail, .trend-signal-media-label) {
+    text-align: left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stat-block .stat-label.stat-label {
+    font-size: clamp(10px, 2.75vw, 12px) !important;
+    line-height: 1.05 !important;
+    --tb-auto-fit-font-size: clamp(10px, 2.75vw, 12px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stat-block .stat-value.stat-value {
+    font-size: clamp(18px, 5.8vw, 24px) !important;
+    line-height: .98 !important;
+    font-weight: 900 !important;
+    --tb-auto-fit-font-size: clamp(18px, 5.8vw, 24px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-act-select-wrap.stats-act-select-wrap,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsActSelector#statsActSelector.stats-act-select {
+    border-radius: 14px !important;
+  }
+}
