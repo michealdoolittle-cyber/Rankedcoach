@@ -10025,3 +10025,94 @@
     order: 60 !important;
   }
 }
+
+/* Absolute EOF mobile weapon card compact lock - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    gap: 8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-family-row.stats-weapon-family-row {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-image-row.stats-weapon-image-row {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-tile.stats-weapon-tile {
+    height: auto !important;
+    min-height: 78px !important;
+    max-height: none !important;
+    padding: 7px 10px !important;
+    display: grid !important;
+    grid-template-rows: 46px minmax(16px, auto) !important;
+    gap: 4px !important;
+    align-items: center !important;
+    justify-items: center !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art-wrap.stats-weapon-art-wrap {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-art.stats-weapon-art {
+    width: min(92%, 230px) !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-label-row.stats-weapon-label-row {
+    min-height: 16px !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-mini.stats-weapon-mini,
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list .stats-weapon-mini.stats-weapon-mini * {
+    display: inline !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    font-size: clamp(11px, 3vw, 13px) !important;
+    line-height: 1.05 !important;
+    text-align: center !important;
+  }
+}
