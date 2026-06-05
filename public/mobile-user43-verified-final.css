@@ -8945,3 +8945,171 @@
     font-size: clamp(8px, 2.2vw, 9px) !important;
   }
 }
+
+/* Absolute EOF compact mobile header + direct goal dropdown - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout {
+    --rc-mobile-header-top: calc(6px + env(safe-area-inset-top, 0px));
+    --rc-mobile-header-side: 6px;
+    --rc-mobile-header-gap: 5px;
+    --rc-mobile-header-h: 48px;
+    --rc-mobile-action-w: 36px;
+    --mobile-header-h: 60px;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .app-header {
+    height: calc(var(--rc-mobile-header-top) + var(--rc-mobile-header-h) + 6px) !important;
+    min-height: calc(var(--rc-mobile-header-top) + var(--rc-mobile-header-h) + 6px) !important;
+    max-height: calc(var(--rc-mobile-header-top) + var(--rc-mobile-header-h) + 6px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center {
+    top: var(--rc-mobile-header-top) !important;
+    left: var(--rc-mobile-header-side) !important;
+    right: calc(var(--rc-mobile-header-side) + (var(--rc-mobile-action-w) * 2) + (var(--rc-mobile-header-gap) * 2)) !important;
+    height: var(--rc-mobile-header-h) !important;
+    min-height: var(--rc-mobile-header-h) !important;
+    max-height: var(--rc-mobile-header-h) !important;
+    gap: var(--rc-mobile-header-gap) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #nextRRWidget.nav-rr-widget {
+    order: 1 !important;
+    grid-column: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #goalRRWidget.nav-rr-widget {
+    order: 2 !important;
+    grid-column: 2 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-widget,
+  html.is-mobile-layout body.is-mobile-layout #mobileAskCoachOpen.mobile-ask-coach-open,
+  html.is-mobile-layout body.is-mobile-layout #mobileHeaderSyncBtn.mobile-header-sync-btn {
+    height: var(--rc-mobile-header-h) !important;
+    min-height: var(--rc-mobile-header-h) !important;
+    max-height: var(--rc-mobile-header-h) !important;
+    border-radius: 9px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-widget {
+    padding: 5px 6px !important;
+    grid-template-rows: auto 1fr 3px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #mobileAskCoachOpen.mobile-ask-coach-open,
+  html.is-mobile-layout body.is-mobile-layout #mobileHeaderSyncBtn.mobile-header-sync-btn {
+    top: var(--rc-mobile-header-top) !important;
+    width: var(--rc-mobile-action-w) !important;
+    min-width: var(--rc-mobile-action-w) !important;
+    max-width: var(--rc-mobile-action-w) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #mobileAskCoachOpen.mobile-ask-coach-open {
+    right: calc(var(--rc-mobile-header-side) + var(--rc-mobile-action-w) + var(--rc-mobile-header-gap)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #mobileHeaderSyncBtn.mobile-header-sync-btn {
+    right: var(--rc-mobile-header-side) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #mobileAskCoachOpen.mobile-ask-coach-open svg,
+  html.is-mobile-layout body.is-mobile-layout #mobileHeaderSyncBtn.mobile-header-sync-btn svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-head {
+    gap: 3px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-label {
+    font-size: clamp(6px, 1.7vw, 7px) !important;
+    letter-spacing: .04em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-top-value {
+    max-width: 40px !important;
+    font-size: clamp(7px, 1.9vw, 8px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-tier-text {
+    font-size: clamp(7px, 2vw, 8px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-tier-icon {
+    width: 13px !important;
+    height: 13px !important;
+    min-width: 13px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-bar {
+    height: 3px !important;
+    min-height: 3px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .goal-rank-custom-select.goal-rank-inline-mobile {
+    position: fixed !important;
+    left: var(--goal-rank-inline-left, 8px) !important;
+    top: var(--goal-rank-inline-top, 58px) !important;
+    width: var(--goal-rank-inline-width, 150px) !important;
+    max-width: calc(100vw - 12px) !important;
+    z-index: 30000 !important;
+    display: block !important;
+    pointer-events: auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .goal-rank-custom-select.goal-rank-inline-mobile .goal-rank-custom-trigger {
+    display: none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .goal-rank-custom-select.goal-rank-inline-mobile .goal-rank-custom-menu {
+    position: static !important;
+    width: 100% !important;
+    max-height: min(46dvh, 320px) !important;
+    overflow-y: auto !important;
+    display: grid !important;
+    gap: 3px !important;
+    padding: 6px !important;
+    border-radius: 10px !important;
+    border: 1px solid color-mix(in srgb, var(--accent, #ff4655) 40%, rgba(148, 163, 184, .45)) !important;
+    background: linear-gradient(180deg, rgba(15, 23, 42, .98), rgba(2, 6, 23, .98)) !important;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, .42) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .goal-rank-custom-select.goal-rank-inline-mobile .goal-rank-custom-option {
+    min-height: 34px !important;
+    padding: 7px 9px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    line-height: 1 !important;
+    text-align: left !important;
+  }
+}
+
+/* Absolute EOF goal card height reset - 2026-06-05. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  html.is-mobile-layout body.is-mobile-layout .nav-center #goalRRWidget#goalRRWidget.nav-rr-widget,
+  html.is-mobile-layout body.is-mobile-layout .nav-center #nextRRWidget#nextRRWidget.nav-rr-widget {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: var(--rc-mobile-header-h) !important;
+    min-height: var(--rc-mobile-header-h) !important;
+    max-height: var(--rc-mobile-header-h) !important;
+    grid-row: auto !important;
+    align-self: stretch !important;
+    overflow: hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center #nextRRWidget#nextRRWidget.nav-rr-widget {
+    grid-column: 1 !important;
+    order: 1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .nav-center #goalRRWidget#goalRRWidget.nav-rr-widget {
+    grid-column: 2 !important;
+    order: 2 !important;
+  }
+}

@@ -33748,8 +33748,30 @@ function bindEvents(){
     const menu = document.getElementById("goalRankCustomMenu");
     const trigger = document.getElementById("goalRankCustomTrigger");
     shell?.classList.remove("open");
+    shell?.classList.remove("goal-rank-inline-mobile");
     if (menu) menu.hidden = true;
     trigger?.setAttribute("aria-expanded", "false");
+  }
+
+  function saveSelectedGoalRank({ closeModal = true } = {}) {
+    const p = getActiveProfile();
+    if (!p || !goalRankSelect) return;
+
+    p.goalRank = normalizeTierLabel(goalRankSelect.value);
+    const goalTarget = getGoalRankTarget(p.goalRank, goalRadiantRRInput?.value);
+    p.goalRR = goalTarget?.targetRR ?? null;
+    profiles = profiles.map(pr =>
+      pr.id === p.id ? { ...pr, goalRank: p.goalRank, goalRR: p.goalRR } : pr
+    );
+
+    saveProfiles();
+    recomputeFromMatches();
+    updateNavRRToRank();
+    updateNavRRToGoalRank();
+    updateDisplays();
+    updateProfileHeaderUI();
+
+    if (closeModal) hideModalById("goalRankModal");
   }
 
   function syncGoalRankCustomDropdown() {
@@ -33854,6 +33876,9 @@ function bindEvents(){
       e.stopPropagation();
       select.value = option.dataset.value || select.value;
       select.dispatchEvent(new Event("change", { bubbles: true }));
+      if (shell.classList.contains("goal-rank-inline-mobile")) {
+        saveSelectedGoalRank({ closeModal: false });
+      }
       closeGoalRankCustomDropdown();
     });
 
@@ -33891,10 +33916,55 @@ function bindEvents(){
     goalRankModal.style.setProperty("--goal-rank-popover-width", `${width}px`);
   }
 
+  function openMobileGoalRankDropdown() {
+    if (!goalRRWidget || !goalRankSelect) return false;
+    setupGoalRankCustomDropdown();
+
+    const shell = document.getElementById("goalRankCustomSelect");
+    const menu = document.getElementById("goalRankCustomMenu");
+    const trigger = document.getElementById("goalRankCustomTrigger");
+    if (!shell || !menu || !trigger) return false;
+
+    const activeProfile = getActiveProfile();
+    goalRankSelect.value = normalizeTierLabel(activeProfile?.goalRank || "Gold 1");
+    if (goalRadiantRRInput) {
+      goalRadiantRRInput.value = String(Math.max(RADIANT_MIN_RR, Math.round(safeNumber(activeProfile?.goalRR, RADIANT_MIN_RR))));
+    }
+    if (goalRankPreviewIcon) {
+      goalRankPreviewIcon.src = getGoalRankIcon(goalRankSelect.value);
+    }
+    syncGoalRankCustomDropdown();
+    syncGoalRadiantRRControls();
+    hideModalById("goalRankModal");
+
+    if (shell.parentNode !== document.body) {
+      document.body.appendChild(shell);
+    }
+
+    const rect = goalRRWidget.getBoundingClientRect();
+    const viewportWidth = window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 0;
+    const width = Math.max(150, Math.min(Math.round(rect.width), Math.round(viewportWidth - 16)));
+    const left = Math.max(8, Math.min(Math.round(rect.left), Math.max(8, Math.round(viewportWidth - width - 8))));
+    const top = Math.round(rect.bottom + 6);
+
+    shell.classList.add("goal-rank-inline-mobile");
+    shell.classList.add("open");
+    shell.style.setProperty("--goal-rank-inline-left", `${left}px`);
+    shell.style.setProperty("--goal-rank-inline-top", `${top}px`);
+    shell.style.setProperty("--goal-rank-inline-width", `${width}px`);
+    menu.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    return true;
+  }
+
   if (goalRRWidget && goalRankModal) {
     goalRRWidget.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+
+      if (isMobileLayoutViewport() && openMobileGoalRankDropdown()) {
+        return;
+      }
 
       positionGoalRankPopover();
       showModalById("goalRankModal");
@@ -33937,25 +34007,7 @@ function bindEvents(){
   goalRankSave?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    const p = getActiveProfile();
-    if (!p || !goalRankSelect) return;
-
-    p.goalRank = normalizeTierLabel(goalRankSelect.value);
-    const goalTarget = getGoalRankTarget(p.goalRank, goalRadiantRRInput?.value);
-    p.goalRR = goalTarget?.targetRR ?? null;
-    profiles = profiles.map(pr =>
-      pr.id === p.id ? { ...pr, goalRank: p.goalRank, goalRR: p.goalRR } : pr
-    );
-
-    saveProfiles();
-    recomputeFromMatches();
-    updateNavRRToRank();
-    updateNavRRToGoalRank();
-    updateDisplays();
-    updateProfileHeaderUI();
-
-    hideModalById("goalRankModal");
+    saveSelectedGoalRank({ closeModal: true });
   });
 
   document.querySelector(".timeline-cycle-btn")?.addEventListener("click", (e) => {
