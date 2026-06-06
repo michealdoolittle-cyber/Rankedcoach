@@ -31560,7 +31560,7 @@ html body[data-theme] #page-home #spinAgentBtn{
   white-space:nowrap !important;
 }
 
-/* Edit profile theme selector: two larger columns for readable previews. */
+/* Edit profile theme selector: two compact columns with fitted previews. */
 #editProfileModal #editProfileThemeGallery.theme-gallery{
   display:grid !important;
   grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
@@ -31570,8 +31570,8 @@ html body[data-theme] #page-home #spinAgentBtn{
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card{
-  min-height:calc(322px * var(--app-1080-scale)) !important;
-  height:calc(322px * var(--app-1080-scale)) !important;
+  min-height:calc(100px * var(--app-1080-scale)) !important;
+  height:calc(100px * var(--app-1080-scale)) !important;
   border-radius:calc(14px * var(--app-1080-scale)) !important;
 }
 
@@ -31582,8 +31582,8 @@ html body[data-theme] #page-home #spinAgentBtn{
 #editProfileModal #editProfileThemeGallery .theme-card-preview{
   min-height:100% !important;
   height:100% !important;
-  padding:calc(10px * var(--app-1080-scale)) !important;
-  gap:calc(8px * var(--app-1080-scale)) !important;
+  padding:calc(7px * var(--app-1080-scale)) !important;
+  gap:calc(5px * var(--app-1080-scale)) !important;
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card-name{
@@ -31600,21 +31600,21 @@ html body[data-theme] #page-home #spinAgentBtn{
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card-surfaces{
-  gap:calc(7px * var(--app-1080-scale)) !important;
-}
-
-#editProfileModal #editProfileThemeGallery .theme-card-card{
-  height:calc(30px * var(--app-1080-scale)) !important;
-  border-radius:calc(10px * var(--app-1080-scale)) !important;
-}
-
-#editProfileModal #editProfileThemeGallery .theme-card-pills{
   gap:calc(5px * var(--app-1080-scale)) !important;
 }
 
+#editProfileModal #editProfileThemeGallery .theme-card-card{
+  height:calc(20px * var(--app-1080-scale)) !important;
+  border-radius:calc(8px * var(--app-1080-scale)) !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-pills{
+  gap:calc(4px * var(--app-1080-scale)) !important;
+}
+
 #editProfileModal #editProfileThemeGallery .theme-card-pill{
-  width:calc(11px * var(--app-1080-scale)) !important;
-  height:calc(11px * var(--app-1080-scale)) !important;
+  width:calc(9px * var(--app-1080-scale)) !important;
+  height:calc(9px * var(--app-1080-scale)) !important;
 }
 
 /* Profile settings refinements: previews, nav spacing, and static menu opening. */
@@ -31981,8 +31981,8 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card{
-  min-height:calc(308px * var(--app-1080-scale)) !important;
-  height:calc(308px * var(--app-1080-scale)) !important;
+  min-height:calc(100px * var(--app-1080-scale)) !important;
+  height:calc(100px * var(--app-1080-scale)) !important;
   border-radius:calc(14px * var(--app-1080-scale)) !important;
 }
 
@@ -31993,7 +31993,7 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 #editProfileModal #editProfileBannerGallery .banner-card-preview{
   min-height:100% !important;
   height:100% !important;
-  padding:calc(9px * var(--app-1080-scale)) !important;
+  padding:calc(7px * var(--app-1080-scale)) !important;
   justify-content:space-between !important;
 }
 
@@ -32005,26 +32005,28 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 #editProfileModal #editProfileBannerGallery .banner-card-name{
   max-width:100% !important;
   color:var(--banner-card-text, #f8fafc) !important;
-  font-size:calc(11px * var(--app-1080-scale)) !important;
-  line-height:1.05 !important;
-  letter-spacing:.055em !important;
+  font-size:calc(9px * var(--app-1080-scale)) !important;
+  min-height:calc(11px * var(--app-1080-scale)) !important;
+  line-height:1.15 !important;
+  letter-spacing:.045em !important;
+  overflow:hidden !important;
   text-shadow:0 2px 8px rgba(0,0,0,.72);
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card-strip{
   align-self:flex-start !important;
   width:auto !important;
-  min-width:calc(84px * var(--app-1080-scale)) !important;
+  min-width:calc(58px * var(--app-1080-scale)) !important;
   height:auto !important;
-  min-height:calc(22px * var(--app-1080-scale)) !important;
-  padding:calc(5px * var(--app-1080-scale)) calc(8px * var(--app-1080-scale)) !important;
+  min-height:calc(18px * var(--app-1080-scale)) !important;
+  padding:calc(4px * var(--app-1080-scale)) calc(6px * var(--app-1080-scale)) !important;
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
   border-radius:999px !important;
   background:rgba(2,6,23,.62) !important;
   color:var(--banner-card-text, #f8fafc) !important;
-  font-size:calc(9px * var(--app-1080-scale)) !important;
+  font-size:calc(7px * var(--app-1080-scale)) !important;
   font-weight:900 !important;
   letter-spacing:.06em !important;
   text-transform:uppercase !important;

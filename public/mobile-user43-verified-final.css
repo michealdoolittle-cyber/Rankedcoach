@@ -11584,7 +11584,7 @@
     flex:0 0 auto !important;
   }
 }
-/* Customize theme/banner selector scale lock: two columns, 3.5x card height. */
+/* Customize theme/banner selector scale lock: two columns, compact 100px previews. */
 @media (max-width:820px){
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileThemeGallery.theme-gallery,
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery.banner-gallery{
@@ -11595,22 +11595,48 @@
   }
 
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileThemeGallery .theme-card{
-    min-height:322px !important;
-    height:322px !important;
+    min-height:100px !important;
+    height:100px !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileThemeGallery .theme-card-preview{
     min-height:100% !important;
     height:100% !important;
+    padding:7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileThemeGallery .theme-card-pills{
+    gap:4px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileThemeGallery .theme-card-pill{
+    width:9px !important;
+    height:9px !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card{
-    min-height:308px !important;
-    height:308px !important;
+    min-height:100px !important;
+    height:100px !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card-preview{
     min-height:100% !important;
     height:100% !important;
+    padding:7px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card-name{
+    font-size:9px !important;
+    min-height:11px !important;
+    line-height:1.15 !important;
+    letter-spacing:.045em !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card-strip{
+    min-width:58px !important;
+    min-height:18px !important;
+    padding:4px 6px !important;
+    font-size:7px !important;
   }
 }
