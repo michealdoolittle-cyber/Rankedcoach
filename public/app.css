@@ -31756,9 +31756,9 @@ html body[data-theme] #page-home #spinAgentBtn{
 }
 
 .border-card-preview-toggle{
-  position:absolute;
-  right:10px;
-  bottom:10px;
+  position:static;
+  width:100%;
+  max-width:86px;
   min-height:28px;
   padding:0 10px;
   border:1px solid color-mix(in srgb, var(--border-ring-color, var(--accent)) 38%, var(--border-strong));
@@ -31955,6 +31955,7 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 .border-card-copy{
   text-align:center;
   min-width:0;
+  width:100%;
 }
 
 .border-card-name{
@@ -31964,6 +31965,10 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   line-height:1;
   letter-spacing:.08em;
   text-transform:uppercase;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 .border-card-note{
@@ -31972,6 +31977,75 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   font-size:10px;
   font-weight:700;
   line-height:1.15;
+  max-width:100%;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#editProfileModal #editProfileBorderGallery.border-gallery{
+  grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+  gap:10px !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card{
+  min-height:150px !important;
+  height:150px !important;
+  overflow:hidden !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card-preview{
+  min-height:100% !important;
+  height:100% !important;
+  padding:10px 7px 8px !important;
+  gap:5px !important;
+  justify-content:flex-start !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card-avatar{
+  width:50px !important;
+  height:50px !important;
+  flex:0 0 50px !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar{
+  width:44px !important;
+  height:44px !important;
+  flex-basis:44px !important;
+  margin-bottom:10px !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card-name{
+  font-size:10px !important;
+  line-height:1.05 !important;
+  letter-spacing:.05em !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card-note{
+  margin-top:2px !important;
+  font-size:8px !important;
+  line-height:1.05 !important;
+  letter-spacing:.01em !important;
+  min-height:17px !important;
+  display:-webkit-box !important;
+  -webkit-line-clamp:2 !important;
+  -webkit-box-orient:vertical !important;
+  white-space:normal !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+}
+
+#editProfileModal #editProfileBorderGallery .border-card-preview-toggle{
+  width:100% !important;
+  max-width:none !important;
+  min-height:23px !important;
+  height:23px !important;
+  padding:0 4px !important;
+  margin-top:auto !important;
+  border-radius:9px !important;
+  font-size:8px !important;
+  line-height:1 !important;
+  letter-spacing:.04em !important;
 }
 
 #editProfileModal #editProfileBannerGallery.banner-gallery{
