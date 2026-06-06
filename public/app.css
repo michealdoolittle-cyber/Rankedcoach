@@ -31560,18 +31560,18 @@ html body[data-theme] #page-home #spinAgentBtn{
   white-space:nowrap !important;
 }
 
-/* Edit profile theme selector: four compact columns for faster scanning. */
+/* Edit profile theme selector: two larger columns for readable previews. */
 #editProfileModal #editProfileThemeGallery.theme-gallery{
   display:grid !important;
-  grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
   align-items:stretch !important;
   gap:calc(10px * var(--app-1080-scale)) !important;
   width:100% !important;
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card{
-  min-height:calc(92px * var(--app-1080-scale)) !important;
-  height:calc(92px * var(--app-1080-scale)) !important;
+  min-height:calc(322px * var(--app-1080-scale)) !important;
+  height:calc(322px * var(--app-1080-scale)) !important;
   border-radius:calc(14px * var(--app-1080-scale)) !important;
 }
 
@@ -31976,13 +31976,13 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 
 #editProfileModal #editProfileBannerGallery.banner-gallery{
   display:grid !important;
-  grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
   gap:calc(10px * var(--app-1080-scale)) !important;
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card{
-  min-height:calc(88px * var(--app-1080-scale)) !important;
-  height:calc(88px * var(--app-1080-scale)) !important;
+  min-height:calc(308px * var(--app-1080-scale)) !important;
+  height:calc(308px * var(--app-1080-scale)) !important;
   border-radius:calc(14px * var(--app-1080-scale)) !important;
 }
 
