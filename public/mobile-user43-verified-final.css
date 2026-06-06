@@ -11760,18 +11760,18 @@
     word-break:normal !important;
   }
 }
-/* Mobile native scroll ownership lock: the document scrolls; app shells stay visible.
-   Prevents nested panes from dragging blank layers while preserving fast swipe momentum. */
+/* Mobile native momentum scroll lock: app-root scrolls; app content stays visible.
+   Prevents blank nested layers while preserving fast swipe momentum. */
 @media (max-width:820px), (hover:none) and (pointer:coarse){
   html.is-mobile-layout,
   html.is-mobile-layout body.is-mobile-layout{
-    height:auto !important;
+    height:100dvh !important;
     min-height:100dvh !important;
-    max-height:none !important;
+    max-height:100dvh !important;
+    overflow:hidden !important;
     overflow-x:hidden !important;
-    overflow-y:auto !important;
-    overscroll-behavior-x:none !important;
-    overscroll-behavior-y:auto !important;
+    overflow-y:hidden !important;
+    overscroll-behavior:none !important;
     touch-action:pan-y !important;
   }
 
@@ -11782,18 +11782,20 @@
   }
 
   html.is-mobile-layout body.is-mobile-layout .app-scale-wrap{
-    height:auto !important;
+    height:100dvh !important;
     min-height:100dvh !important;
-    max-height:none !important;
-    overflow:visible !important;
+    max-height:100dvh !important;
+    overflow:hidden !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout .app-root{
-    height:auto !important;
+    height:100dvh !important;
     min-height:100dvh !important;
-    max-height:none !important;
-    overflow:visible !important;
-    overscroll-behavior-y:auto !important;
+    max-height:100dvh !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    overscroll-behavior-y:contain !important;
+    -webkit-overflow-scrolling:touch !important;
     touch-action:pan-y !important;
   }
 

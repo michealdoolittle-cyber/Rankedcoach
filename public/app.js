@@ -481,12 +481,13 @@ function applyMobileScrollSurfaceState() {
   }
 
   setImportantStyle(html, "width", "100%");
-  setImportantStyle(html, "height", "auto");
-  setImportantStyle(html, "min-height", "100%");
-  setImportantStyle(html, "max-height", "none");
+  setImportantStyle(html, "height", "100dvh");
+  setImportantStyle(html, "min-height", "100dvh");
+  setImportantStyle(html, "max-height", "100dvh");
+  setImportantStyle(html, "overflow", "hidden");
   setImportantStyle(html, "overflow-x", "hidden");
-  setImportantStyle(html, "overflow-y", modalOpen ? "hidden" : "auto");
-  setImportantStyle(html, "overscroll-behavior", modalOpen ? "none" : "contain");
+  setImportantStyle(html, "overflow-y", "hidden");
+  setImportantStyle(html, "overscroll-behavior", "none");
   setImportantStyle(html, "touch-action", "pan-y");
 
   if (body) {
@@ -494,26 +495,26 @@ function applyMobileScrollSurfaceState() {
     setImportantStyle(body, "inset", "auto");
     setImportantStyle(body, "width", "100%");
     setImportantStyle(body, "min-width", "0");
-    setImportantStyle(body, "height", "auto");
+    setImportantStyle(body, "height", "100dvh");
     setImportantStyle(body, "min-height", "100dvh");
-    setImportantStyle(body, "max-height", "none");
+    setImportantStyle(body, "max-height", "100dvh");
+    setImportantStyle(body, "overflow", "hidden");
     setImportantStyle(body, "overflow-x", "hidden");
-    setImportantStyle(body, "overflow-y", modalOpen ? "hidden" : "auto");
-    setImportantStyle(body, "overscroll-behavior", modalOpen ? "none" : "contain");
+    setImportantStyle(body, "overflow-y", "hidden");
+    setImportantStyle(body, "overscroll-behavior", "none");
     setImportantStyle(body, "touch-action", "pan-y");
   }
 
   if (root) {
     setImportantStyle(root, "position", "relative");
     setImportantStyle(root, "inset", "auto");
-    setImportantStyle(root, "height", "auto");
+    setImportantStyle(root, "height", "100dvh");
     setImportantStyle(root, "max-width", "100vw");
     setImportantStyle(root, "min-height", "100dvh");
-    setImportantStyle(root, "max-height", "none");
-    setImportantStyle(root, "overflow", "visible");
-    setImportantStyle(root, "overflow-x", "visible");
-    setImportantStyle(root, "overflow-y", "visible");
-    setImportantStyle(root, "overscroll-behavior-y", "auto");
+    setImportantStyle(root, "max-height", "100dvh");
+    setImportantStyle(root, "overflow-x", "hidden");
+    setImportantStyle(root, "overflow-y", modalOpen ? "hidden" : "auto");
+    setImportantStyle(root, "overscroll-behavior-y", "contain");
     setImportantStyle(root, "-webkit-overflow-scrolling", "touch");
     setImportantStyle(root, "touch-action", "pan-y");
   }
@@ -1171,7 +1172,7 @@ function syncMobileBottomShellState() {
 
 function getMobileScrollContainer() {
   if (!isMobileLayoutViewport()) return null;
-  return document.scrollingElement || document.documentElement || document.body;
+  return document.querySelector(".app-root") || document.scrollingElement || document.documentElement;
 }
 
 function ensureMobileScrollSentinel() {
@@ -1300,9 +1301,7 @@ function installMobileTouchScrollGuard() {
     const target = event.target;
     if (target?.closest?.("input, textarea, select, option, [contenteditable='true']")) return false;
     if (target?.closest?.(".lens-modal-overlay.active, .agent-modal.active, .profile-edit-overlay.active, .auth-modal-overlay.active, .app-tutorial-overlay.active")) return false;
-    const root = document.querySelector(".app-root");
-    const rootOverflowY = root ? window.getComputedStyle(root).overflowY : "visible";
-    return Boolean(root && rootOverflowY !== "visible");
+    return false;
   };
 
   window.addEventListener("touchstart", (event) => {
