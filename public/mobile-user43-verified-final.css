@@ -11617,12 +11617,20 @@
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card{
     min-height:100px !important;
     height:100px !important;
+    display:block !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card-preview{
-    min-height:100% !important;
-    height:100% !important;
+    width:calc(100% + 2px) !important;
+    max-width:none !important;
+    min-height:calc(100% + 2px) !important;
+    height:calc(100% + 2px) !important;
+    margin:-1px !important;
+    box-sizing:border-box !important;
     padding:7px !important;
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBannerGallery .banner-card-name{

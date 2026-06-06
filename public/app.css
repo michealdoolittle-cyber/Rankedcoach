@@ -31984,6 +31984,7 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   min-height:calc(100px * var(--app-1080-scale)) !important;
   height:calc(100px * var(--app-1080-scale)) !important;
   border-radius:calc(14px * var(--app-1080-scale)) !important;
+  display:block !important;
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card.is-active{
@@ -31991,10 +31992,17 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card-preview{
-  min-height:100% !important;
-  height:100% !important;
+  width:calc(100% + 2px) !important;
+  max-width:none !important;
+  min-height:calc(100% + 2px) !important;
+  height:calc(100% + 2px) !important;
+  margin:-1px !important;
+  box-sizing:border-box !important;
   padding:calc(7px * var(--app-1080-scale)) !important;
   justify-content:space-between !important;
+  background-size:cover !important;
+  background-position:center center !important;
+  background-repeat:no-repeat !important;
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card-preview::before{
