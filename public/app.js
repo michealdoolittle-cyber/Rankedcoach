@@ -466,9 +466,11 @@ function applyMobileScrollSurfaceState() {
     clearInlineStyles(root, [
       "position",
       "inset",
+      "height",
       "max-width",
       "min-height",
       "max-height",
+      "overflow",
       "overflow-x",
       "overflow-y",
       "overscroll-behavior-y",
@@ -504,12 +506,14 @@ function applyMobileScrollSurfaceState() {
   if (root) {
     setImportantStyle(root, "position", "relative");
     setImportantStyle(root, "inset", "auto");
+    setImportantStyle(root, "height", "auto");
     setImportantStyle(root, "max-width", "100vw");
     setImportantStyle(root, "min-height", "100dvh");
     setImportantStyle(root, "max-height", "none");
-    setImportantStyle(root, "overflow-x", "hidden");
+    setImportantStyle(root, "overflow", "visible");
+    setImportantStyle(root, "overflow-x", "visible");
     setImportantStyle(root, "overflow-y", "visible");
-    setImportantStyle(root, "overscroll-behavior-y", "contain");
+    setImportantStyle(root, "overscroll-behavior-y", "auto");
     setImportantStyle(root, "-webkit-overflow-scrolling", "touch");
     setImportantStyle(root, "touch-action", "pan-y");
   }
@@ -1167,7 +1171,7 @@ function syncMobileBottomShellState() {
 
 function getMobileScrollContainer() {
   if (!isMobileLayoutViewport()) return null;
-  return document.querySelector(".app-root") || document.scrollingElement || document.documentElement;
+  return document.scrollingElement || document.documentElement || document.body;
 }
 
 function ensureMobileScrollSentinel() {
@@ -1296,7 +1300,9 @@ function installMobileTouchScrollGuard() {
     const target = event.target;
     if (target?.closest?.("input, textarea, select, option, [contenteditable='true']")) return false;
     if (target?.closest?.(".lens-modal-overlay.active, .agent-modal.active, .profile-edit-overlay.active, .auth-modal-overlay.active, .app-tutorial-overlay.active")) return false;
-    return Boolean(getMobileScrollContainer());
+    const root = document.querySelector(".app-root");
+    const rootOverflowY = root ? window.getComputedStyle(root).overflowY : "visible";
+    return Boolean(root && rootOverflowY !== "visible");
   };
 
   window.addEventListener("touchstart", (event) => {
