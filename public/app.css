@@ -31654,7 +31654,7 @@ html body[data-theme] #page-home #spinAgentBtn{
 }
 
 .border-color-gallery{
-  grid-template-columns:repeat(5, minmax(0, 1fr));
+  grid-template-columns:repeat(4, minmax(0, 1fr));
 }
 
 .profile-border-motion-row{
@@ -31981,6 +31981,30 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+}
+
+#editProfileModal #editProfileBorderColorGallery.border-color-gallery{
+  grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+  gap:10px !important;
+}
+
+#editProfileModal #editProfileBorderColorGallery .border-color-card{
+  min-height:136px !important;
+  height:136px !important;
+}
+
+#editProfileModal #editProfileBorderColorGallery .border-card-name{
+  width:100% !important;
+  max-width:100% !important;
+  min-height:22px !important;
+  font-size:8px !important;
+  line-height:1.12 !important;
+  letter-spacing:.025em !important;
+  text-align:center !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  word-break:normal !important;
 }
 
 #editProfileModal #editProfileBorderGallery.border-gallery{

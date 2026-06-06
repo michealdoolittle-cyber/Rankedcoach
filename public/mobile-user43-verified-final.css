@@ -11732,3 +11732,31 @@
     letter-spacing:.04em !important;
   }
 }
+/* Customize border color fit lock: four columns so labels can breathe. */
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderColorGallery.border-color-gallery{
+    display:grid !important;
+    grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+    gap:10px !important;
+    width:100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderColorGallery .border-color-card{
+    min-height:136px !important;
+    height:136px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderColorGallery .border-card-name{
+    width:100% !important;
+    max-width:100% !important;
+    min-height:22px !important;
+    font-size:8px !important;
+    line-height:1.12 !important;
+    letter-spacing:.025em !important;
+    text-align:center !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    word-break:normal !important;
+  }
+}
