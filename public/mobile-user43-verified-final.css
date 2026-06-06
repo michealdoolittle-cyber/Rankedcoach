@@ -11521,3 +11521,66 @@
     text-overflow: clip !important;
   }
 }
+/* Profile edit modal tab-height lock: final loaded mobile override. */
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.active{
+    align-items:flex-start !important;
+    justify-content:center !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal.lens-modal-overlay.active > .lens-modal{
+    height:calc(100dvh - 20px) !important;
+    min-height:calc(100dvh - 20px) !important;
+    max-height:calc(100dvh - 20px) !important;
+    margin:10px auto !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-modal-body{
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-shell{
+    height:100% !important;
+    min-height:0 !important;
+    max-height:none !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:auto minmax(0, 1fr) auto !important;
+    grid-template-areas:
+      "nav"
+      "panels"
+      "actions" !important;
+    gap:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-nav{
+    grid-area:nav !important;
+    flex-direction:row !important;
+    flex-wrap:wrap !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panels{
+    grid-area:panels !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel.is-active{
+    min-height:0 !important;
+    height:100% !important;
+    overflow:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-actions{
+    grid-area:actions !important;
+    flex:0 0 auto !important;
+  }
+}
