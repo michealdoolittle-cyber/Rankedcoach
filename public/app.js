@@ -41594,12 +41594,15 @@ if (!window.__vt_riotImportBound) {
 
     clearRiotAutoSyncTimer();
 
-    await performRiotSync({
+    const result = await performRiotSync({
       silent: false,
       mode: "refresh",
       allowDemoFallback: isLocalDevelopmentHost()
     });
     profileDropdown?.classList.remove("open");
+    if (result) {
+      window.setTimeout(() => window.location.reload(), 150);
+    }
   });
 }
 
