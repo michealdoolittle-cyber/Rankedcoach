@@ -11389,10 +11389,55 @@
 
   html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-column.stats-agent-column {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
     max-height: none !important;
     overflow: visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-column-title.stats-agent-column-title {
+    grid-column: 1 / -1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-row.stats-agent-row {
+    height: 118px !important;
+    min-height: 118px !important;
+    max-height: 118px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: 50px minmax(0, 1fr) !important;
+    gap: 5px !important;
+    padding: 6px !important;
+    justify-items: center !important;
+    text-align: center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-row .stats-primary-cell {
+    display: contents !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-row .stats-agent-tile-icon {
+    width: 50px !important;
+    height: 50px !important;
+    max-width: 50px !important;
+    max-height: 50px !important;
+    object-fit: cover !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-row .stats-agent-metrics-stack {
+    width: 100% !important;
+    display: grid !important;
+    justify-items: center !important;
+    align-content: center !important;
+    gap: 1px !important;
+    min-width: 0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsAgentsList#statsAgentsList .stats-agent-row :is(.stats-metric-line, .stats-metric-label, .stats-metric-text) {
+    font-size: clamp(10px, 2.85vw, 12px) !important;
+    line-height: 1.02 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active #statsWeaponsList#statsWeaponsList.stats-weapon-list {
