@@ -661,6 +661,150 @@
   }
 }
 
+/* Mobile logging focus text polish: hide editing ghost text and protect descenders. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #focusPreviewText#focusPreviewText#focusPreviewText.focus-preview-text{
+    line-height:1.28 !important;
+    min-height:22px !important;
+    padding-block:2px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed){
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) !important;
+    align-items:center !important;
+    gap:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed) #focusPreviewText#focusPreviewText#focusPreviewText.focus-preview-text,
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed) .focus-select-shell.focus-select-shell.focus-select-shell{
+    display:none !important;
+    visibility:hidden !important;
+    opacity:0 !important;
+    width:0 !important;
+    min-width:0 !important;
+    max-width:0 !important;
+    height:0 !important;
+    min-height:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed) #focusOtherWrap#focusOtherWrap:not([hidden]){
+    position:static !important;
+    inset:auto !important;
+    grid-column:1 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 34px 34px !important;
+    align-items:center !important;
+    gap:5px !important;
+    width:100% !important;
+    max-width:100% !important;
+    height:42px !important;
+    min-height:42px !important;
+    margin:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing){
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 36px !important;
+    align-items:center !important;
+    gap:8px !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #focusPreviewText#focusPreviewText#focusPreviewText.focus-preview-text{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    grid-column:1 !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:auto !important;
+    min-height:22px !important;
+    margin:0 !important;
+    padding:2px 0 !important;
+    align-self:center !important;
+    line-height:1.28 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) .focus-select-shell.focus-select-shell.focus-select-shell{
+    display:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #focusOtherWrap#focusOtherWrap:not([hidden]){
+    position:static !important;
+    inset:auto !important;
+    grid-column:2 !important;
+    display:grid !important;
+    place-items:center !important;
+    align-self:center !important;
+    justify-self:end !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) :is(#logFocusOther#logFocusOther, #confirmFocusOther#confirmFocusOther){
+    display:none !important;
+    width:0 !important;
+    min-width:0 !important;
+    height:0 !important;
+    min-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #clearFocusOther#clearFocusOther{
+    display:grid !important;
+    place-items:center !important;
+    align-items:center !important;
+    justify-items:center !important;
+    width:34px !important;
+    min-width:34px !important;
+    height:34px !important;
+    min-height:34px !important;
+    padding:0 !important;
+    margin:0 !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+}
+
+/* Mobile logging handwritten focus clear button centering final lock. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #focusOtherWrap#focusOtherWrap:not([hidden]){
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:1fr !important;
+    place-items:center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #clearFocusOther#clearFocusOther{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    align-self:center !important;
+    justify-self:center !important;
+    margin:0 !important;
+    transform:none !important;
+  }
+}
+
 /* Mobile logging Other focus: beat duplicate-ID legacy rules. */
 @media (max-width:820px), (hover:none) and (pointer:coarse){
   html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed){
@@ -12377,5 +12521,149 @@
     min-height:34px !important;
     padding:0 !important;
     line-height:1 !important;
+  }
+}
+
+/* Mobile logging focus text polish final lock. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #focusPreviewText#focusPreviewText#focusPreviewText.focus-preview-text{
+    line-height:1.28 !important;
+    min-height:22px !important;
+    padding-block:2px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed){
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) !important;
+    align-items:center !important;
+    gap:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed) #focusPreviewText#focusPreviewText#focusPreviewText.focus-preview-text,
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed) .focus-select-shell.focus-select-shell.focus-select-shell{
+    display:none !important;
+    visibility:hidden !important;
+    opacity:0 !important;
+    width:0 !important;
+    min-width:0 !important;
+    max-width:0 !important;
+    height:0 !important;
+    min-height:0 !important;
+    max-height:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.is-custom-focus-editing:not(.custom-focus-committed) #focusOtherWrap#focusOtherWrap:not([hidden]){
+    position:static !important;
+    inset:auto !important;
+    grid-column:1 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 34px 34px !important;
+    align-items:center !important;
+    gap:5px !important;
+    width:100% !important;
+    max-width:100% !important;
+    height:42px !important;
+    min-height:42px !important;
+    margin:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing){
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) 36px !important;
+    align-items:center !important;
+    gap:8px !important;
+    width:100% !important;
+    min-width:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #focusPreviewText#focusPreviewText#focusPreviewText.focus-preview-text{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    grid-column:1 !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    height:auto !important;
+    min-height:22px !important;
+    margin:0 !important;
+    padding:2px 0 !important;
+    align-self:center !important;
+    line-height:1.28 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) .focus-select-shell.focus-select-shell.focus-select-shell{
+    display:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #focusOtherWrap#focusOtherWrap:not([hidden]){
+    position:static !important;
+    inset:auto !important;
+    grid-column:2 !important;
+    display:grid !important;
+    place-items:center !important;
+    align-self:center !important;
+    justify-self:end !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) :is(#logFocusOther#logFocusOther, #confirmFocusOther#confirmFocusOther){
+    display:none !important;
+    width:0 !important;
+    min-width:0 !important;
+    height:0 !important;
+    min-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #clearFocusOther#clearFocusOther{
+    display:grid !important;
+    place-items:center !important;
+    align-items:center !important;
+    justify-items:center !important;
+    width:34px !important;
+    min-width:34px !important;
+    height:34px !important;
+    min-height:34px !important;
+    padding:0 !important;
+    margin:0 !important;
+    line-height:1 !important;
+    text-align:center !important;
+  }
+}
+
+/* Mobile logging handwritten focus clear button centering physical EOF lock. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #focusOtherWrap#focusOtherWrap:not([hidden]){
+    display:grid !important;
+    grid-template-columns:1fr !important;
+    grid-template-rows:1fr !important;
+    place-items:center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active .focus-wrapper.focus-wrapper.custom-focus-committed:not(.is-custom-focus-editing) #clearFocusOther#clearFocusOther{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    align-self:center !important;
+    justify-self:center !important;
+    margin:0 !important;
+    transform:none !important;
   }
 }
