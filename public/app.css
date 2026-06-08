@@ -19248,6 +19248,10 @@ SUMMARY BAR
   gap:clamp(8px, .55vw, 12px);
 }
 
+.stats-season-title{
+  display:none;
+}
+
 .stats-summary-selector-row{
   display:flex;
   justify-content:flex-end;
