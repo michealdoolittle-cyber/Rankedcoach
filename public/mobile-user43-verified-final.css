@@ -12867,3 +12867,151 @@
     display:none !important;
   }
 }
+
+/* Mobile modal polish: close alignment, readable chips, full improvement overlays. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.active,
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.is-opening{
+    align-items:center !important;
+    justify-content:center !important;
+    padding:14px !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.active > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.is-opening > .lens-modal{
+    width:min(392px, calc(100vw - 28px)) !important;
+    max-width:calc(100vw - 28px) !important;
+    max-height:calc(100dvh - 42px) !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.active > .lens-modal > .lens-modal-header,
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.is-opening > .lens-modal > .lens-modal-header{
+    position:relative !important;
+    display:flex !important;
+    align-items:center !important;
+    min-height:56px !important;
+    height:auto !important;
+    padding:12px 64px 12px 14px !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.active > .lens-modal > .lens-modal-header .lens-modal-title,
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.is-opening > .lens-modal > .lens-modal-header .lens-modal-title{
+    display:block !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    padding:0 !important;
+    font-size:clamp(16px, 4.25vw, 18px) !important;
+    line-height:1.12 !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.active > .lens-modal > .lens-modal-header .lens-modal-close,
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.is-opening > .lens-modal > .lens-modal-header .lens-modal-close{
+    position:absolute !important;
+    top:50% !important;
+    right:12px !important;
+    transform:translateY(-50%) !important;
+    margin:0 !important;
+    width:40px !important;
+    min-width:40px !important;
+    max-width:40px !important;
+    height:40px !important;
+    min-height:40px !important;
+    max-height:40px !important;
+    padding:0 !important;
+    border-radius:11px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    font-size:20px !important;
+    line-height:1 !important;
+    z-index:20 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.active > .lens-modal > .lens-modal-body,
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #timelineStatsModal, #weeklyFocusModal, #lensModal).lens-modal-overlay.is-opening > .lens-modal > .lens-modal-body{
+    padding:12px !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #lensModal) #lensWeightingBlock#lensWeightingBlock{
+    grid-template-columns:minmax(0, 1fr) !important;
+    gap:8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #lensModal) .lens-weight-pill.lens-weight-pill{
+    min-height:42px !important;
+    padding:10px 12px !important;
+    border-radius:12px !important;
+    gap:10px !important;
+    font-size:clamp(12px, 3.25vw, 14px) !important;
+    line-height:1.15 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #lensModal) .lens-weight-pill.lens-weight-pill span{
+    font-size:clamp(12px, 3.25vw, 14px) !important;
+    line-height:1.15 !important;
+    white-space:normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#lensModalOverlay, #lensModal) .lens-weight-pill.lens-weight-pill strong{
+    font-size:clamp(13px, 3.55vw, 15px) !important;
+    line-height:1.1 !important;
+    white-space:nowrap !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#timelineStatsModal, #weeklyFocusModal) .timeline-insight-chip.timeline-insight-chip,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insight-meta-pill.insight-meta-pill{
+    min-height:32px !important;
+    padding:7px 11px !important;
+    border-radius:999px !important;
+    font-size:clamp(12px, 3.2vw, 14px) !important;
+    line-height:1.12 !important;
+    font-weight:900 !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .weekly-focus-confidence.weekly-focus-confidence,
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .weekly-focus-card .card-pill.card-pill{
+    min-height:30px !important;
+    padding:7px 10px !important;
+    font-size:clamp(12px, 3.2vw, 14px) !important;
+    line-height:1.12 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal .timeline-insight-card.timeline-insight-card,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal .timeline-insight-hero.timeline-insight-hero{
+    position:relative !important;
+    overflow:hidden !important;
+    background:
+      radial-gradient(circle at 100% 100%, rgba(255,70,85,.24), transparent 72%),
+      linear-gradient(145deg, rgba(31,41,58,.96), rgba(11,18,32,.96)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal .timeline-insight-card.timeline-insight-card::before,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal .timeline-insight-hero.timeline-insight-hero::before{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    border-radius:inherit !important;
+    pointer-events:none !important;
+    background:
+      linear-gradient(135deg, rgba(255,255,255,.06), transparent 34%, transparent 58%, rgba(255,70,85,.20)) !important;
+    opacity:1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal .timeline-insight-card.timeline-insight-card > *,
+  html.is-mobile-layout body.is-mobile-layout #timelineStatsModal#timelineStatsModal .timeline-insight-hero.timeline-insight-hero > *{
+    position:relative !important;
+    z-index:1 !important;
+  }
+}
