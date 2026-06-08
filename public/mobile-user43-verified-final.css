@@ -12848,4 +12848,22 @@
     background:linear-gradient(135deg, rgba(255,70,85,.98), rgba(185,28,28,.92)) !important;
     box-shadow:0 0 0 1px rgba(255,70,85,.18) inset, 0 12px 24px rgba(255,70,85,.22) !important;
   }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-mobile-weapon-filter.stats-mobile-weapon-filter .stats-mobile-weapon-filter-btn.stats-mobile-weapon-filter-btn.active{
+    color:#fff7f8 !important;
+    border-color:rgba(255,70,85,.72) !important;
+    background:linear-gradient(135deg, rgba(255,70,85,.98), rgba(185,28,28,.92)) !important;
+    box-shadow:0 0 0 1px rgba(255,70,85,.18) inset, 0 12px 24px rgba(255,70,85,.22) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .logging-form-warning.logging-form-warning{
+    display:block !important;
+    margin:8px 0 10px !important;
+    padding:10px 12px !important;
+    font-size:clamp(12px, 3.2vw, 14px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active .logging-form-warning.logging-form-warning[hidden]{
+    display:none !important;
+  }
 }

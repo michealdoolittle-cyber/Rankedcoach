@@ -35527,6 +35527,7 @@ let selectedLogSelfComms = null;
 let loggingFeedRendered = false;
 let loggingFeedDirty = true;
 let loggingFeedRenderRaf = 0;
+const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 3";
 
 function isLoggingPageActive() {
   return Boolean(document.querySelector("#page-logging.active"));
@@ -35725,9 +35726,93 @@ function scrollLoggingFormToTopAfterSave() {
   });
 }
 
+function ensureLogFormWarning() {
+  const actions = document.querySelector("#page-logging .logging-actions");
+  if (!actions) return null;
+  let warning = document.getElementById("logFormWarning");
+  if (!warning) {
+    warning = document.createElement("div");
+    warning.id = "logFormWarning";
+    warning.className = "logging-form-warning";
+    warning.setAttribute("role", "alert");
+    warning.hidden = true;
+    actions.insertAdjacentElement("beforebegin", warning);
+  }
+  return warning;
+}
+
+function setLogFormWarning(message = "") {
+  const warning = ensureLogFormWarning();
+  if (!warning) return;
+  warning.textContent = message;
+  warning.hidden = !message;
+}
+
+function isFiniteLogNumber(value) {
+  return Number.isFinite(Number(value));
+}
+
+function isManualInputFilled(id) {
+  return String(document.getElementById(id)?.value ?? "").trim() !== "";
+}
+
+function getLogFormMissingFields(entry = {}) {
+  const missing = [];
+  if (!String(entry.agent || "").trim()) missing.push("agent");
+  if (!String(entry.focus || "").trim() || entry.focus === "Other" || entry.focus === "Select Focus") missing.push("focus category");
+  if (!String(entry.map || "").trim()) missing.push("map");
+  if (!isFiniteLogNumber(entry.rating)) missing.push("performance");
+  if (!String(entry.mood || "").trim()) missing.push("mood");
+  if (!isFiniteLogNumber(entry.teamComms)) missing.push("team comms");
+  if (!isFiniteLogNumber(entry.selfComms)) missing.push("self comms");
+  if (!String(entry.notes || "").trim()) missing.push("notes");
+
+  if (isManualEntryModeEnabled()) {
+    [
+      ["manualRR", "RR"],
+      ["manualRoundsWon", "rounds won"],
+      ["manualRoundsLost", "rounds lost"],
+      ["manualKills", "kills"],
+      ["manualDeaths", "deaths"],
+      ["manualAssists", "assists"],
+      ["manualACS", "ACS"],
+      ["manualADR", "ADR"],
+      ["manualHS", "HS %"]
+    ].forEach(([id, label]) => {
+      if (!isManualInputFilled(id)) missing.push(label);
+    });
+  }
+
+  return missing;
+}
+
+function focusFirstMissingLogField(missing = []) {
+  const first = missing[0] || "";
+  const target =
+    first === "agent" ? document.getElementById("logAgentDisplay") :
+    first === "focus category" ? document.getElementById("logFocusSelect") :
+    first === "map" ? document.getElementById("logMap") :
+    first === "notes" ? document.getElementById("logNotes") :
+    document.getElementById("logSaveBtn");
+  target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  target?.focus?.({ preventScroll: true });
+}
+
+function validateLogFormBeforeSave(entry = {}) {
+  const missing = getLogFormMissingFields(entry);
+  if (!missing.length) {
+    setLogFormWarning("");
+    return true;
+  }
+  setLogFormWarning("Not all fields are filled in the form.");
+  focusFirstMissingLogField(missing);
+  return false;
+}
+
 function addLogEntry(){
 
   const entry = getLogFormValues();
+  if (!validateLogFormBeforeSave(entry)) return;
   const editingId = editingLogEntryId;
   const isEditing = Boolean(editingId);
 
@@ -43046,19 +43131,25 @@ function renderStatsSummaryMetaModel() {
   if (!selector) return;
 
   const model = getPlayerModel();
-  const mobileStatsSeasonLabel = isMobileLayoutViewport() ? "Select Season" : "Current Window";
-  const currentLabel = model?.currentAct || mobileStatsSeasonLabel;
-  const options = model?.acts?.length ? model.acts : [currentLabel];
+  const fallbackSeasonLabel = isMobileLayoutViewport() ? CURRENT_VALORANT_SEASON_LABEL : "Current Window";
+  const normalizeSeasonLabel = (label = "") => {
+    const value = String(label || "").trim();
+    if (!value || value.toLowerCase() === "current window" || value.toLowerCase() === "select season") {
+      return fallbackSeasonLabel;
+    }
+    return value;
+  };
+  const currentLabel = normalizeSeasonLabel(model?.currentAct);
+  const options = [...new Set((model?.acts?.length ? model.acts : [currentLabel]).map(normalizeSeasonLabel))];
 
   selector.innerHTML = "";
   options.forEach((label) => {
     const option = document.createElement("option");
     option.value = label;
-    option.textContent = isMobileLayoutViewport() && String(label || "").trim().toLowerCase() === "current window"
-      ? "Select Season"
-      : label;
+    option.textContent = label;
     selector.appendChild(option);
   });
+  selector.value = options.includes(currentLabel) ? currentLabel : options[0] || currentLabel;
 
   selector.disabled = false;
 }

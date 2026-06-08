@@ -21222,6 +21222,25 @@ textarea,
   color:var(--text-main) !important;
 }
 
+.logging-form-warning{
+  width:100%;
+  border:1px solid rgba(255,70,85,.72);
+  border-radius:12px;
+  background:linear-gradient(135deg, rgba(255,70,85,.18), rgba(15,23,42,.94));
+  color:#fff7f8;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.25;
+  letter-spacing:.02em;
+  padding:10px 12px;
+  margin:8px 0 10px;
+  box-shadow:0 0 0 1px rgba(255,70,85,.16) inset, 0 10px 22px rgba(255,70,85,.16);
+}
+
+.logging-form-warning[hidden]{
+  display:none !important;
+}
+
 .nav-btn.active,
 .role-filter-row button.active,
 .logging-chip.active,
