@@ -12071,3 +12071,31 @@
     color:#fff !important;
   }
 }
+
+/* Mobile logging focus menu: align to Browse right edge and shrink-wrap categories. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-logging.page.active #logFocusCustomMenu.log-focus-custom-menu,
+  html.is-mobile-layout body.is-mobile-layout #page-logging.page.active #logFocusCustomMenu.log-focus-custom-menu.is-open{
+    position:absolute !important;
+    top:calc(100% + 4px) !important;
+    bottom:auto !important;
+    left:auto !important;
+    right:0 !important;
+    width:max-content !important;
+    min-width:0 !important;
+    max-width:calc(100vw - 24px) !important;
+    box-sizing:border-box !important;
+    transform:none !important;
+    inset:auto 0 auto auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging.page.active #logFocusCustomMenu.log-focus-custom-menu .log-focus-custom-option{
+    width:100% !important;
+    min-width:max-content !important;
+    max-width:calc(100vw - 34px) !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    box-sizing:border-box !important;
+  }
+}
