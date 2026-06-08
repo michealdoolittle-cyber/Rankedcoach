@@ -34425,12 +34425,34 @@ function bindEvents(){
     return true;
   }
 
+  function isMobileGoalRankDropdownOpen() {
+    const shell = document.getElementById("goalRankCustomSelect");
+    const menu = document.getElementById("goalRankCustomMenu");
+    return Boolean(
+      shell?.classList.contains("goal-rank-inline-mobile") &&
+      shell?.classList.contains("open") &&
+      menu &&
+      !menu.hidden
+    );
+  }
+
   if (goalRRWidget && goalRankModal) {
     goalRRWidget.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      if (isMobileLayoutViewport() && openMobileGoalRankDropdown()) {
+      if (isMobileLayoutViewport()) {
+        if (isMobileGoalRankDropdownOpen()) {
+          closeGoalRankCustomDropdown();
+          return;
+        }
+        if (openMobileGoalRankDropdown()) {
+          return;
+        }
+      }
+
+      if (goalRankModal.classList.contains("active")) {
+        hideModalById("goalRankModal");
         return;
       }
 
@@ -34470,6 +34492,23 @@ function bindEvents(){
   goalRankModal?.addEventListener("click", (e) => {
     if (e.target === goalRankModal) {
       hideModalById("goalRankModal");
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    const target = e.target;
+    if (!target) return;
+    const clickedGoalWidget = goalRRWidget?.contains(target);
+    const clickedGoalModal = goalRankModal?.contains(target);
+    const clickedGoalDropdown = document.getElementById("goalRankCustomSelect")?.contains(target);
+
+    if (clickedGoalWidget || clickedGoalModal || clickedGoalDropdown) return;
+
+    if (goalRankModal?.classList.contains("active")) {
+      hideModalById("goalRankModal");
+    }
+    if (isMobileGoalRankDropdownOpen()) {
+      closeGoalRankCustomDropdown();
     }
   });
 
