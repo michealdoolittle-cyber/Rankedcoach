@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>RankedCoach</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="description" content="RankedCoach helps Valorant players review performance, build profiles, and surface focused coaching insights.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.rankedcoach.gg/">
@@ -15,11 +15,11 @@
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#071b2b">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-  <link rel="stylesheet" href="app.css?v=20260608-log-edit-insight-icons-01">
+  <link rel="stylesheet" href="app.css?v=20260608-bug-modal-profile-mobile-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260604-mobile-qa-43-proof-08">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260604-mobile-qa-43-proof-05">
-<link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260608-log-edit-insight-icons-01">
-<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260608-log-edit-insight-icons-01">
+<link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260608-bug-modal-profile-mobile-01">
+<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260608-bug-modal-profile-mobile-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -474,6 +474,24 @@ RIOT PROFILE MODAL
   </div>
 </template>
 
+
+<div id="bugReportModal" class="lens-modal-overlay" aria-hidden="true" style="display:none;">
+  <div class="lens-modal bug-report-modal-card">
+    <div class="lens-modal-header">
+      <div class="lens-modal-title">Report a Bug</div>
+      <button id="bugReportClose" class="lens-modal-close" type="button">X</button>
+    </div>
+    <div class="lens-modal-body bug-report-modal-body">
+      <div class="bug-report-copy">Tell us what broke, what page you were on, and what you expected to happen. RankedCoach attaches your profile/user context automatically.</div>
+      <textarea id="bugReportText" class="bug-report-text" rows="7" placeholder="Example: On mobile Stats, tapping Weapons opens a blank card..."></textarea>
+      <div id="bugReportStatus" class="bug-report-status" aria-live="polite"></div>
+      <div class="bug-report-actions">
+        <button id="bugReportCancel" class="pd-item bug-report-cancel" type="button">Cancel</button>
+        <button id="bugReportSubmit" class="pd-item bug-report-submit" type="button">Send Bug Report</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="agentModal" class="agent-modal">
   <div class="agent-modal-inner">
 
@@ -699,6 +717,14 @@ RIOT PROFILE MODAL
           </span>
         </button>
 
+        <button class="bug-report-nav-btn" id="bugReportOpen" type="button" title="Report a bug" aria-label="Report a bug">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 8.5h8v8a4 4 0 0 1-8 0v-8Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"></path>
+            <path d="M9.5 8.5 8 5.5M14.5 8.5 16 5.5M7.8 11H4.5M19.5 11h-3.3M7.8 14.5H4.5M19.5 14.5h-3.3M12 9v9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+            <circle cx="10.2" cy="12" r=".9" fill="currentColor"></circle>
+            <circle cx="13.8" cy="12" r=".9" fill="currentColor"></circle>
+          </svg>
+        </button>
         <button class="ask-coach-nav-btn" id="askCoachOpen" type="button" title="Ask Coach" aria-label="Open Ask Coach" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <rect x="5" y="7" width="14" height="11" rx="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
@@ -1935,7 +1961,7 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script type="module" src="app.js?v=20260608-log-edit-insight-icons-01"></script>
+  <script type="module" src="app.js?v=20260608-bug-modal-profile-mobile-01"></script>
 </body>
 </html>
 

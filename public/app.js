@@ -356,6 +356,7 @@ let mobileTouchScrollGuardInstalled = false;
 let mobileBottomShell = null;
 let mobileBottomShellTimer = 0;
 let mobileAskCoachButton = null;
+let mobileBugReportButton = null;
 let mobileHeaderSyncButton = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
@@ -543,6 +544,7 @@ function syncMobileViewportState() {
     window.requestAnimationFrame(() => {
       syncMobileBottomShellState();
       syncMobileAskCoachButtonState();
+      syncMobileBugReportButtonState();
       syncMobileHeaderSyncButtonState();
       ensureMobileLoggingTabs();
       ensureMobileStatsTabs();
@@ -647,6 +649,17 @@ function getMobileAskCoachFallbackIcon() {
   `;
 }
 
+function getBugReportIconMarkup() {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 8.5h8v8a4 4 0 0 1-8 0v-8Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"></path>
+      <path d="M9.5 8.5 8 5.5M14.5 8.5 16 5.5M7.8 11H4.5M19.5 11h-3.3M7.8 14.5H4.5M19.5 14.5h-3.3M12 9v9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+      <circle cx="10.2" cy="12" r=".9" fill="currentColor"></circle>
+      <circle cx="13.8" cy="12" r=".9" fill="currentColor"></circle>
+    </svg>
+  `;
+}
+
 function ensureMobileAskCoachButton() {
   if (mobileAskCoachButton || !document.body) return mobileAskCoachButton;
 
@@ -681,6 +694,40 @@ function syncMobileAskCoachButtonState() {
   }
   button.setAttribute("aria-expanded", source?.getAttribute("aria-expanded") || "false");
   button.title = source?.title || "Ask Coach";
+}
+
+function ensureMobileBugReportButton() {
+  if (mobileBugReportButton || !document.body) return mobileBugReportButton;
+
+  mobileBugReportButton = document.createElement("button");
+  mobileBugReportButton.id = "mobileBugReportOpen";
+  mobileBugReportButton.type = "button";
+  mobileBugReportButton.className = "bug-report-nav-btn mobile-bug-report-open";
+  mobileBugReportButton.title = "Report a bug";
+  mobileBugReportButton.setAttribute("aria-label", "Report a bug");
+  mobileBugReportButton.innerHTML = document.getElementById("bugReportOpen")?.innerHTML || getBugReportIconMarkup();
+  mobileBugReportButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openBugReportModal();
+  });
+  document.body.appendChild(mobileBugReportButton);
+  return mobileBugReportButton;
+}
+
+function syncMobileBugReportButtonState() {
+  const isMobile = isMobileLayoutViewport();
+  const button = ensureMobileBugReportButton();
+  if (!button) return;
+
+  button.hidden = !isMobile;
+  if (!isMobile) return;
+
+  const source = document.getElementById("bugReportOpen");
+  if (source?.innerHTML && source.innerHTML !== button.innerHTML) {
+    button.innerHTML = source.innerHTML;
+  }
+  button.title = source?.title || "Report a bug";
 }
 
 function getMobileSyncFallbackIcon() {
@@ -5129,6 +5176,151 @@ function recordAskCoachSurvey(rating = "", detail = "") {
   }
 }
 
+const STORAGE_KEY_BUG_REPORTS = "rankedcoach_bug_reports_v1";
+const STORAGE_KEY_CLIENT_SESSION_ID = "rankedcoach_client_session_id";
+
+function getClientSessionId() {
+  try {
+    const existing = localStorage.getItem(STORAGE_KEY_CLIENT_SESSION_ID);
+    if (existing) return existing;
+    const next = uuid();
+    localStorage.setItem(STORAGE_KEY_CLIENT_SESSION_ID, next);
+    return next;
+  } catch (_error) {
+    return "session-unavailable";
+  }
+}
+
+function readLocalBugReports() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_BUG_REPORTS);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_error) {
+    return [];
+  }
+}
+
+function saveLocalBugReport(report = {}) {
+  try {
+    localStorage.setItem(STORAGE_KEY_BUG_REPORTS, JSON.stringify([...readLocalBugReports(), report].slice(-100)));
+  } catch (error) {
+    console.warn("Unable to save local bug report", error);
+  }
+}
+
+function getBugReportContext() {
+  const profile = getActiveProfile?.() || {};
+  const viewport = {
+    width: window.innerWidth || 0,
+    height: window.innerHeight || 0,
+    devicePixelRatio: window.devicePixelRatio || 1,
+    visualViewportWidth: window.visualViewport?.width || window.innerWidth || 0,
+    visualViewportHeight: window.visualViewport?.height || window.innerHeight || 0
+  };
+  return {
+    userId: currentAuthUser?.id || null,
+    userEmail: currentAuthUser?.email || "",
+    accountName: getUserAccountName?.(currentAuthUser) || "Guest",
+    profileId: activeProfileId || profile?.id || "",
+    profileName: profile?.name || "",
+    riotId: profile?.riotId || "",
+    region: profile?.region || "",
+    isGuest: !currentAuthUser,
+    page: document.querySelector(".page.active")?.id || "",
+    theme: document.body?.dataset?.theme || "",
+    url: location.href,
+    userAgent: navigator.userAgent || "",
+    viewport,
+    clientSessionId: getClientSessionId(),
+    cacheKey: document.querySelector('script[src*="app.js?v="]')?.src?.split("v=")?.[1] || ""
+  };
+}
+
+async function submitBugReport() {
+  const textEl = document.getElementById("bugReportText");
+  const statusEl = document.getElementById("bugReportStatus");
+  const submitBtn = document.getElementById("bugReportSubmit");
+  const message = String(textEl?.value || "").trim();
+  if (!message) {
+    if (statusEl) statusEl.textContent = "Please describe what broke first.";
+    textEl?.focus();
+    return;
+  }
+
+  const context = getBugReportContext();
+  const report = {
+    id: uuid(),
+    user_id: context.userId,
+    user_email: context.userEmail,
+    account_name: context.accountName,
+    profile_id: context.profileId,
+    profile_name: context.profileName,
+    riot_id: context.riotId,
+    region: context.region,
+    is_guest: context.isGuest,
+    page_id: context.page,
+    message,
+    status: "new",
+    context_json: context,
+    created_at: nowISO()
+  };
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (statusEl) statusEl.textContent = "Sending bug report...";
+
+  try {
+    if (!supabaseClient?.from) throw new Error("Supabase is not connected.");
+    const { error } = await supabaseClient.from("bug_reports").insert(report);
+    if (error) throw error;
+    if (statusEl) statusEl.textContent = "Bug report sent. Thank you.";
+    if (textEl) textEl.value = "";
+    window.setTimeout(() => hideModalById("bugReportModal"), 650);
+  } catch (error) {
+    saveLocalBugReport({ ...report, sync_error: error?.message || String(error || "") });
+    if (statusEl) statusEl.textContent = "Saved locally. Supabase bug_reports table may need setup.";
+    console.warn("Bug report saved locally after Supabase insert failed", error);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+function openBugReportModal() {
+  const statusEl = document.getElementById("bugReportStatus");
+  if (statusEl) statusEl.textContent = "";
+  showModalById("bugReportModal");
+  window.setTimeout(() => document.getElementById("bugReportText")?.focus({ preventScroll: true }), 90);
+}
+
+function bindBugReportUI() {
+  const openBtn = document.getElementById("bugReportOpen");
+  const closeBtn = document.getElementById("bugReportClose");
+  const cancelBtn = document.getElementById("bugReportCancel");
+  const submitBtn = document.getElementById("bugReportSubmit");
+  const textEl = document.getElementById("bugReportText");
+
+  openBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openBugReportModal();
+  });
+  closeBtn?.addEventListener("click", () => hideModalById("bugReportModal"));
+  cancelBtn?.addEventListener("click", () => hideModalById("bugReportModal"));
+  submitBtn?.addEventListener("click", submitBugReport);
+  textEl?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      submitBugReport();
+    }
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bindBugReportUI, { once: true });
+} else {
+  bindBugReportUI();
+}
+
 function startNewAskCoachChat() {
   askCoachMessages = [getAskCoachStarterMessage()];
   saveAskCoachMessages();
@@ -8713,6 +8905,63 @@ function createGuestProfileRecord() {
   });
 }
 
+let appLoadingVeilDepth = 0;
+
+function ensureAppLoadingVeil() {
+  let veil = document.getElementById("appLoadingVeil");
+  if (veil) return veil;
+  veil = document.createElement("div");
+  veil.id = "appLoadingVeil";
+  veil.className = "app-loading-veil";
+  veil.setAttribute("aria-live", "polite");
+  veil.setAttribute("aria-hidden", "true");
+  veil.innerHTML = `
+    <div class="app-loading-card">
+      <div class="app-loading-mark">RC</div>
+      <div class="app-loading-title">Loading RankedCoach</div>
+      <div class="app-loading-copy" id="appLoadingCopy">Preparing your dashboard...</div>
+      <div class="app-loading-bar" aria-hidden="true"><span></span></div>
+    </div>
+  `;
+  document.body?.appendChild(veil);
+  return veil;
+}
+
+function showAppLoadingVeil(message = "Preparing your dashboard...") {
+  const veil = ensureAppLoadingVeil();
+  appLoadingVeilDepth += 1;
+  const copy = document.getElementById("appLoadingCopy");
+  if (copy) copy.textContent = message;
+  veil.hidden = false;
+  veil.setAttribute("aria-hidden", "false");
+  veil.classList.add("is-visible");
+  document.body?.classList.add("app-loading-active");
+}
+
+function hideAppLoadingVeil({ force = false } = {}) {
+  appLoadingVeilDepth = force ? 0 : Math.max(0, appLoadingVeilDepth - 1);
+  if (appLoadingVeilDepth > 0) return;
+  const veil = document.getElementById("appLoadingVeil");
+  if (!veil) return;
+  veil.classList.remove("is-visible");
+  veil.setAttribute("aria-hidden", "true");
+  document.body?.classList.remove("app-loading-active");
+  window.setTimeout(() => {
+    if (!veil.classList.contains("is-visible")) veil.hidden = true;
+  }, 260);
+}
+
+async function withAppLoadingVeil(message = "Preparing your dashboard...", task = async () => {}) {
+  showAppLoadingVeil(message);
+  const startedAt = Date.now();
+  try {
+    return await task();
+  } finally {
+    const remaining = Math.max(0, 520 - (Date.now() - startedAt));
+    window.setTimeout(() => hideAppLoadingVeil(), remaining);
+  }
+}
+
 function enterGuestModeAfterLogout() {
   currentAuthUser = null;
   setAppEntryChoice("guest");
@@ -9131,11 +9380,13 @@ async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true
   setGuestButtonLoading(true, withTutorial ? "Loading tutorial..." : "Loading demo...");
 
   try {
-    enterGuestModeAfterLogout();
-    if (withDemoMatches) {
-      await importDemoMatches({ preferBuiltIn: true });
-    }
-    closeAuthModal(true);
+    await withAppLoadingVeil(withTutorial ? "Loading demo and tutorial..." : "Loading guest dashboard...", async () => {
+      enterGuestModeAfterLogout();
+      if (withDemoMatches) {
+        await importDemoMatches({ preferBuiltIn: true });
+      }
+      closeAuthModal(true);
+    });
     if (withTutorial) {
       window.setTimeout(() => startGuestTutorial(), 420);
     }
@@ -9343,7 +9594,7 @@ async function ensureGuestDemoMatches() {
 
   window.__vtGuestDemoHydrationPromise = (async () => {
     try {
-      await importDemoMatches({ preferBuiltIn: true });
+      await withAppLoadingVeil("Loading guest demo data...", () => importDemoMatches({ preferBuiltIn: true }));
     } catch (error) {
       console.warn("Guest demo hydration failed", error);
     }
@@ -38627,6 +38878,12 @@ function activateProfileEditTab(tabKey = "theme") {
   });
 }
 
+function getProfileEditSelection(selector = "", dataAttribute = "", fallback = "") {
+  const active = selector ? document.querySelector(selector) : null;
+  const value = active?.getAttribute?.(dataAttribute) || "";
+  return value || fallback;
+}
+
 function saveEditProfileModal() {
   let profile = getActiveProfile();
   if (!profile) {
@@ -38638,17 +38895,22 @@ function saveEditProfileModal() {
   const editNameEl = document.getElementById("editProfileName");
   const editRiotIdEl = document.getElementById("editProfileRiotId");
   const editRegionEl = document.getElementById("editProfileRegion");
+  const selectedTheme = getProfileEditSelection("#editProfileThemeGallery [data-theme-card].is-active", "data-theme-card", document.getElementById("editProfileTheme")?.value || profile.themeKey || "default");
+  const selectedAvatar = getProfileEditSelection("#editProfileAvatarGallery [data-avatar-card].is-active", "data-avatar-card", document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent);
+  const selectedBorderColor = getProfileEditSelection("#editProfileBorderColorGallery [data-border-color-card].is-active", "data-border-color-card", document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
+  const selectedBorder = getProfileEditSelection("#editProfileBorderGallery [data-border-card].is-active", "data-border-card", document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
+  const selectedBanner = getProfileEditSelection("#editProfileBannerGallery [data-banner-card].is-active", "data-banner-card", document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
 
   updateProfile(profile.id, {
     name: editNameEl ? (editNameEl.value?.trim() || profile.name) : profile.name,
     riotId: editRiotIdEl ? (editRiotIdEl.value?.trim() || "") : profile.riotId,
     region: editRegionEl ? (editRegionEl.value?.trim() || "NA") : profile.region,
-    themeKey: document.getElementById("editProfileTheme")?.value || profile.themeKey || "default",
-    avatarAgent: document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent,
-    profileBorderColor: normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme"),
-    profileBorder: normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard"),
+    themeKey: selectedTheme,
+    avatarAgent: selectedAvatar,
+    profileBorderColor: normalizeProfileBorderColor(selectedBorderColor),
+    profileBorder: normalizeProfileBorderStyle(selectedBorder),
     profileBorderRotate: getProfileBorderRotateValue(profile),
-    bannerStyle: normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme"),
+    bannerStyle: normalizeProfileBannerStyle(selectedBanner),
     navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
   });

@@ -83,6 +83,33 @@ create index if not exists match_snapshots_user_played_idx
 create index if not exists match_snapshots_user_context_idx
   on public.match_snapshots (user_id, map, agent, role);
 
+create table if not exists public.bug_reports (
+  id text primary key,
+  user_id uuid references auth.users(id) on delete set null,
+  user_email text,
+  account_name text,
+  profile_id text,
+  profile_name text,
+  riot_id text,
+  region text,
+  is_guest boolean not null default false,
+  page_id text,
+  message text not null,
+  status text not null default 'new',
+  context_json jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  reviewed_at timestamptz
+);
+
+create index if not exists bug_reports_created_idx
+  on public.bug_reports (created_at desc);
+
+create index if not exists bug_reports_status_created_idx
+  on public.bug_reports (status, created_at desc);
+
+create index if not exists bug_reports_user_created_idx
+  on public.bug_reports (user_id, created_at desc);
+
 create table if not exists public.account_security_preferences (
   user_id uuid primary key references auth.users(id) on delete cascade,
   recovery_email text,
@@ -110,6 +137,7 @@ alter table public.users_profiles enable row level security;
 alter table public.vip_app_state enable row level security;
 alter table public.reflection_logs enable row level security;
 alter table public.match_snapshots enable row level security;
+alter table public.bug_reports enable row level security;
 alter table public.account_security_preferences enable row level security;
 
 drop policy if exists "users_profiles_select_own" on public.users_profiles;
@@ -194,6 +222,16 @@ create policy "match_snapshots_update_own"
 drop policy if exists "match_snapshots_delete_own" on public.match_snapshots;
 create policy "match_snapshots_delete_own"
   on public.match_snapshots for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "bug_reports_insert_anyone" on public.bug_reports;
+create policy "bug_reports_insert_anyone"
+  on public.bug_reports for insert
+  with check (user_id is null or auth.uid() = user_id);
+
+drop policy if exists "bug_reports_select_own" on public.bug_reports;
+create policy "bug_reports_select_own"
+  on public.bug_reports for select
   using (auth.uid() = user_id);
 
 drop policy if exists "account_security_preferences_select_own" on public.account_security_preferences;

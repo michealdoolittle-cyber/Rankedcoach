@@ -16,6 +16,7 @@ The schema creates:
 - `vip_app_state`: full app state for cross-device restore.
 - `reflection_logs`: normalized long-term logging history for coaching/ML.
 - `match_snapshots`: normalized imported/demo match history for coaching/ML.
+- `bug_reports`: in-app bug reports with account/guest context for review in Supabase Table Editor.
 
 Row-level security is enabled so users can only read and write their own records.
 
@@ -48,8 +49,11 @@ After signup/login, the app saves:
 - reflection logs
 - imported/demo match snapshots
 - Theme Builder state and UI state
+- bug reports submitted through the header bug icon
 
 Guest mode still works locally for the demo, but signed-in users sync to Supabase.
+
+Bug reports can also be submitted by guests. If the `bug_reports` table has not been created yet, the browser keeps the report in localStorage and shows a setup hint.
 
 ## 4. Ask Coach AI Backend
 
