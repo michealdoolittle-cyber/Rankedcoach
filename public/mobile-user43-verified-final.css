@@ -11907,6 +11907,21 @@
     width:100% !important;
   }
 
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-tag{
+    position:absolute !important;
+    top:12px !important;
+    right:12px !important;
+    margin:0 !important;
+    max-width:72px !important;
+    padding:4px 8px !important;
+    font-size:clamp(9px, 2.65vw, 11px) !important;
+    line-height:1 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    z-index:2 !important;
+  }
+
   html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-title{
     font-size:clamp(18px, 5.2vw, 22px) !important;
     line-height:1.08 !important;
@@ -11937,6 +11952,20 @@
     gap:6px !important;
     margin:0 !important;
     padding:0 !important;
+    padding-right:80px !important;
+    box-sizing:border-box !important;
+    position:static !important;
+    inset:auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-meta-pill{
+    flex:0 1 auto !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    line-height:1.12 !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active:not(.open) .insight-expand{
