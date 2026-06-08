@@ -11814,3 +11814,112 @@
     overscroll-behavior:auto !important;
   }
 }
+
+/* Mobile modal/readability lock: align close buttons and keep Priority Reads horizontal. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal > :is(.lens-modal-header, .lens-modal-head),
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal > :is(.lens-modal-header, .lens-modal-head){
+    position:relative !important;
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+    min-height:52px !important;
+    padding:10px 58px 10px 12px !important;
+    box-sizing:border-box !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).active > .lens-modal > :is(.lens-modal-header, .lens-modal-head) .lens-modal-close,
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(#goalRankModal).is-opening > .lens-modal > :is(.lens-modal-header, .lens-modal-head) .lens-modal-close{
+    position:absolute !important;
+    top:8px !important;
+    right:10px !important;
+    margin:0 !important;
+    width:38px !important;
+    min-width:38px !important;
+    max-width:38px !important;
+    height:38px !important;
+    min-height:38px !important;
+    max-height:38px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:0 !important;
+    line-height:1 !important;
+    z-index:5 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) !important;
+    grid-template-rows:auto auto auto minmax(0, auto) !important;
+    grid-template-areas:
+      "head"
+      "preview"
+      "meta"
+      "expand" !important;
+    align-items:start !important;
+    justify-items:stretch !important;
+    gap:8px !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    min-height:0 !important;
+    height:auto !important;
+    padding:12px !important;
+    overflow:hidden !important;
+    writing-mode:horizontal-tb !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active :is(.insight-header, .insight-header-main, .insight-title, .insight-tag, .insight-preview, .insight-meta-row, .insight-meta-pill, .insight-expand, .insight-block){
+    min-width:0 !important;
+    max-width:100% !important;
+    writing-mode:horizontal-tb !important;
+    text-orientation:mixed !important;
+    white-space:normal !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+    text-align:left !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-header{
+    grid-area:head !important;
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) auto !important;
+    align-items:start !important;
+    gap:8px !important;
+    width:100% !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-title{
+    font-size:clamp(18px, 5.2vw, 22px) !important;
+    line-height:1.08 !important;
+    display:block !important;
+    width:100% !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-preview{
+    grid-area:preview !important;
+    display:block !important;
+    width:100% !important;
+    font-size:clamp(13px, 3.6vw, 15px) !important;
+    line-height:1.25 !important;
+    -webkit-line-clamp:unset !important;
+    -webkit-box-orient:initial !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-meta-row{
+    grid-area:meta !important;
+    width:100% !important;
+    display:flex !important;
+    flex-wrap:wrap !important;
+    justify-content:flex-start !important;
+    align-items:flex-start !important;
+    gap:6px !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+}
