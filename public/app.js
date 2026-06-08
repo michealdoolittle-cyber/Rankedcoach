@@ -35023,12 +35023,24 @@ function getTimelineContext() {
 function syncImprovementCardSub(scope = getTimelineContext()) {
   const sub = document.getElementById("improvementCardSub");
   if (!sub) return;
-  const roleName = String(scope?.model?.scoring?.activeRoleName || "").trim();
+  const roleNameRaw = String(scope?.model?.scoring?.activeRoleName || "").trim();
+  const roleName = roleNameRaw
+    ? `${roleNameRaw.charAt(0).toUpperCase()}${roleNameRaw.slice(1).toLowerCase()}`
+    : "";
   const agentName = String(scope?.model?.scoring?.activeAgentName || "").trim();
   const roleAgentLabel = [roleName, agentName].filter(Boolean).join(" / ");
+  const selectedIndex = Number.isInteger(scope?.selectedIndex) ? scope.selectedIndex : -1;
+  const selectedMatch = selectedIndex >= 0 ? matches[selectedIndex] : null;
+  const selectedCore = selectedMatch ? getMatchCore(selectedMatch) : null;
+  const selectedDate = selectedCore?.createdAt
+    ? new Date(selectedCore.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    : "";
+  const scopeLabel = selectedIndex >= 0
+    ? `Game ${selectedIndex + 1}${selectedDate ? ` [${selectedDate}]` : ""}`
+    : scope.scopeDetail;
   sub.textContent = roleAgentLabel
-    ? `Recent Improvement | ${scope.scopeDetail} | ${roleAgentLabel}`
-    : `Recent Improvement | ${scope.scopeDetail}`;
+    ? `Recent Improvement | ${scopeLabel} | ${roleAgentLabel}`
+    : `Recent Improvement | ${scopeLabel}`;
 }
 
 function getTimelineDeltaUnit(item = {}) {

@@ -12733,3 +12733,58 @@
     white-space:nowrap !important;
   }
 }
+
+/* Mobile home/logging polish: compact header gap, hidden counts, role color, compass header cleanup. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active{
+    padding-top:calc(16px + env(safe-area-inset-top, 0px)) !important;
+    scroll-padding-top:calc(var(--rc-mobile-header-h, 48px) + 14px + env(safe-area-inset-top, 0px)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging.page.active #mobileLoggingTabs.mobile-logging-tabs{
+    margin-top:4px !important;
+    margin-bottom:8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #logQuickCount#logQuickCount.logging-quick-toggle-count[hidden]{
+    display:none !important;
+    visibility:hidden !important;
+    opacity:0 !important;
+    width:0 !important;
+    min-width:0 !important;
+    height:0 !important;
+    min-height:0 !important;
+    padding:0 !important;
+    margin:0 !important;
+    border:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #compassProfileCopy#compassProfileCopy,
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #compassSourcePill#compassSourcePill{
+    display:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #impactRolePill#impactRolePill.impact-role-pill[data-role="duelist"]{
+    color:#ff5a67 !important;
+    border-color:rgba(255,70,85,.52) !important;
+    background:linear-gradient(180deg, rgba(127,29,29,.36), rgba(51,65,85,.92)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #impactRolePill#impactRolePill.impact-role-pill[data-role="controller"]{
+    color:#c084fc !important;
+    border-color:rgba(192,132,252,.52) !important;
+    background:linear-gradient(180deg, rgba(88,28,135,.34), rgba(51,65,85,.92)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #impactRolePill#impactRolePill.impact-role-pill[data-role="initiator"]{
+    color:#38bdf8 !important;
+    border-color:rgba(56,189,248,.52) !important;
+    background:linear-gradient(180deg, rgba(12,74,110,.34), rgba(51,65,85,.92)) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active #impactRolePill#impactRolePill.impact-role-pill[data-role="sentinel"]{
+    color:#34d399 !important;
+    border-color:rgba(52,211,153,.52) !important;
+    background:linear-gradient(180deg, rgba(6,95,70,.34), rgba(51,65,85,.92)) !important;
+  }
+}
