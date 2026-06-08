@@ -34278,7 +34278,11 @@ function bindEvents(){
       item.className = "goal-rank-custom-option";
       item.dataset.value = option.value;
       item.role = "option";
-      item.textContent = option.textContent || option.value;
+      const label = option.textContent || option.value;
+      item.innerHTML = `
+        <img class="goal-rank-custom-option-icon" src="${getGoalRankIcon(label)}" alt="" aria-hidden="true">
+        <span class="goal-rank-custom-option-label">${label}</span>
+      `;
       menu.appendChild(item);
     });
 
