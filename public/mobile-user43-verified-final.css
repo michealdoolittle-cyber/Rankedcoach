@@ -11850,15 +11850,9 @@
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active{
-    display:grid !important;
-    grid-template-columns:minmax(0, 1fr) !important;
-    grid-template-rows:auto auto auto minmax(0, auto) !important;
-    grid-template-areas:
-      "head"
-      "preview"
-      "meta"
-      "expand" !important;
-    align-items:start !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
     justify-items:stretch !important;
     gap:8px !important;
     width:100% !important;
@@ -11867,8 +11861,30 @@
     min-height:0 !important;
     height:auto !important;
     padding:12px !important;
-    overflow:hidden !important;
+    overflow:visible !important;
     writing-mode:horizontal-tb !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-layout,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-shell,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList{
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-layout,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-shell,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList,
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active{
+    flex:0 0 auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList{
+    display:block !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active :is(.insight-header, .insight-header-main, .insight-title, .insight-tag, .insight-preview, .insight-meta-row, .insight-meta-pill, .insight-expand, .insight-block){
@@ -11921,5 +11937,59 @@
     gap:6px !important;
     margin:0 !important;
     padding:0 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-expand{
+    display:grid !important;
+    grid-template-columns:minmax(0, 1fr) !important;
+    grid-template-rows:auto !important;
+    gap:10px !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    max-height:none !important;
+    height:auto !important;
+    margin:4px 0 0 !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-block{
+    display:block !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    min-height:96px !important;
+    height:auto !important;
+    margin:0 !important;
+    padding:12px !important;
+    border:1px solid rgba(255,112,67,.72) !important;
+    border-radius:10px !important;
+    background:
+      radial-gradient(circle at 100% 100%, rgba(255,112,67,.24), transparent 42%),
+      linear-gradient(180deg, rgba(70,28,36,.82), rgba(20,29,48,.9)) !important;
+    color:#c7d2e4 !important;
+    font-size:clamp(13px, 3.55vw, 15px) !important;
+    line-height:1.22 !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-label{
+    display:block !important;
+    margin:0 0 8px !important;
+    color:#ff6b7a !important;
+    font-size:clamp(13px, 3.65vw, 15px) !important;
+    line-height:1 !important;
+    letter-spacing:.12em !important;
+    text-transform:uppercase !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights.page.active .insights-top-card #insightsList .insight-card.is-mobile-insight-active .insight-sources{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    gap:6px !important;
+    width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    overflow:visible !important;
   }
 }
