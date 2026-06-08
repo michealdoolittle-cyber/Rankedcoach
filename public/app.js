@@ -6655,12 +6655,68 @@ function getTrendSignalBadgeSymbol(item = {}) {
   return "◈";
 }
 
+function getTrendSignalIconMarkup(item = {}) {
+  const mediaType = String(item?.mediaType || "").trim().toLowerCase();
+  const mediaText = String(item?.mediaText || "").trim().toLowerCase();
+  const mediaValue = String(item?.mediaValue || "").trim();
+  const title = String(item?.title || "").trim().toLowerCase();
+  const kicker = String(item?.kicker || "").trim().toLowerCase();
+  const value = String(item?.value || "").trim().toLowerCase();
+  const combined = `${mediaType} ${mediaText} ${title} ${kicker} ${value}`;
+
+  if (mediaType === "role") {
+    const roleKey = getCompassRoleKey(mediaValue || title || value);
+    const roleIcon = ROLE_ICON_MAP?.[roleKey] || "";
+    if (roleIcon) {
+      return `
+        <div class="trend-signal-media has-icon role-icon" data-icon-kind="role" data-role="${escapeHtml(roleKey)}">
+          <img src="${escapeHtml(roleIcon)}" alt="${escapeHtml(roleKey)} role">
+        </div>
+      `;
+    }
+  }
+
+  let icon = "";
+  let iconKind = "general";
+  if (combined.includes("log")) {
+    icon = "📓";
+    iconKind = "logs";
+  } else if (combined.includes("split") || combined.includes("win") || combined.includes("loss")) {
+    icon = '<span class="trend-dual-icon"><span class="trend-up-icon">↗</span><span class="trend-down-icon">↘</span></span>';
+    iconKind = "split";
+  } else if (combined.includes("window") || combined.includes("calendar") || combined.includes("season")) {
+    icon = "📅";
+    iconKind = "window";
+  } else if (combined.includes("form") || combined.includes("focus") || combined.includes("tilt") || combined.includes("mood")) {
+    const tone = normalizeSignalTone(item?.tone);
+    icon = combined.includes("form") ? "🧘" : tone === "up" ? "👍" : tone === "down" ? "👎" : "▬";
+    iconKind = combined.includes("form") ? "form" : "mood";
+  } else if (combined.includes("theme") || combined.includes("chart") || combined.includes("trend") || combined.includes("performance")) {
+    icon = "📈";
+    iconKind = "theme";
+  } else if (mediaType === "text") {
+    const tone = normalizeSignalTone(item?.tone);
+    icon = tone === "up" ? "👍" : tone === "down" ? "👎" : "▬";
+    iconKind = "mood";
+  }
+
+  if (!icon) return "";
+  return `
+    <div class="trend-signal-media has-icon" data-icon-kind="${escapeHtml(iconKind)}">
+      <span class="trend-signal-icon" aria-hidden="true">${icon}</span>
+    </div>
+  `;
+}
+
 function getTrendSignalMediaMarkup(item = {}) {
   const mediaType = String(item?.mediaType || "").trim().toLowerCase();
   const mediaValue = String(item?.mediaValue || "").trim();
   const directMediaUrl = String(item?.mediaUrl || "").trim();
   let mediaUrl = "";
   let mediaAlt = getTrendSignalMediaLabel(item);
+
+  const iconMarkup = getTrendSignalIconMarkup(item);
+  if (iconMarkup) return iconMarkup;
 
   if (directMediaUrl) {
     mediaUrl = directMediaUrl;
@@ -35756,6 +35812,22 @@ function isManualInputFilled(id) {
   return String(document.getElementById(id)?.value ?? "").trim() !== "";
 }
 
+function snapLoggingFormToTarget(target = null) {
+  const page = document.getElementById("page-logging");
+  if (page?.dataset) page.dataset.mobileLoggingView = "form";
+  ensureMobileLoggingTabs();
+
+  window.requestAnimationFrame(() => {
+    const fallback =
+      document.getElementById("mobileLoggingTabs")
+      || page?.querySelector(".logging-card")
+      || page;
+    const scrollTarget = target || fallback;
+    scrollTarget?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    scrollTarget?.focus?.({ preventScroll: true });
+  });
+}
+
 function getLogFormMissingFields(entry = {}) {
   const missing = [];
   if (!String(entry.agent || "").trim()) missing.push("agent");
@@ -35792,10 +35864,22 @@ function focusFirstMissingLogField(missing = []) {
     first === "agent" ? document.getElementById("logAgentDisplay") :
     first === "focus category" ? document.getElementById("logFocusSelect") :
     first === "map" ? document.getElementById("logMap") :
+    first === "performance" ? document.querySelector("#logRatingRow [data-rating], [data-rating]") :
+    first === "mood" ? document.querySelector("#logMoodRow [data-mood], [data-mood]") :
+    first === "team comms" ? document.querySelector("#logTeamCommsRow [data-team-comms], [data-team-comms]") :
+    first === "self comms" ? document.querySelector("#logSelfCommsRow [data-self-comms], [data-self-comms]") :
     first === "notes" ? document.getElementById("logNotes") :
+    first === "RR" ? document.getElementById("manualRR") :
+    first === "rounds won" ? document.getElementById("manualRoundsWon") :
+    first === "rounds lost" ? document.getElementById("manualRoundsLost") :
+    first === "kills" ? document.getElementById("manualKills") :
+    first === "deaths" ? document.getElementById("manualDeaths") :
+    first === "assists" ? document.getElementById("manualAssists") :
+    first === "ACS" ? document.getElementById("manualACS") :
+    first === "ADR" ? document.getElementById("manualADR") :
+    first === "HS %" ? document.getElementById("manualHS") :
     document.getElementById("logSaveBtn");
-  target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-  target?.focus?.({ preventScroll: true });
+  snapLoggingFormToTarget(target);
 }
 
 function validateLogFormBeforeSave(entry = {}) {
@@ -35992,6 +36076,7 @@ function editLogEntry(id){
   syncLoggingQuickChipStates();
   updateLoggingDebriefPreview();
   renderLogFeed({ force: true });
+  snapLoggingFormToTarget(document.querySelector("#page-logging .logging-card") || document.getElementById("mobileLoggingTabs"));
 }
 
 // ========================
