@@ -8798,8 +8798,8 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-top-card",
-    title: "Priority Reads",
-    copy: "Priority Reads surface the most important coaching items first. Use the filters to separate needs-work items, watch items, and strengths."
+    title: "Priority Insights",
+    copy: "Priority Insights surface the most important coaching items first. Use the filters to separate needs-work items, watch items, and strengths."
   },
   {
     page: "insights",
@@ -8810,8 +8810,8 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-trends-card",
-    title: "Coaching Reads",
-    copy: "Coaching Reads combine match stats and logs into grouped reads for performance, session habits, role results, and consistency."
+    title: "General Insight",
+    copy: "General Insight combines match stats and logs into grouped reads for performance, session habits, role results, and consistency."
   }
 ];
 
@@ -35033,14 +35033,26 @@ function syncImprovementCardSub(scope = getTimelineContext()) {
   const selectedMatch = selectedIndex >= 0 ? matches[selectedIndex] : null;
   const selectedCore = selectedMatch ? getMatchCore(selectedMatch) : null;
   const selectedDate = selectedCore?.createdAt
-    ? new Date(selectedCore.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    ? formatImprovementGameDate(selectedCore.createdAt)
     : "";
   const scopeLabel = selectedIndex >= 0
-    ? `Game ${selectedIndex + 1}${selectedDate ? ` [${selectedDate}]` : ""}`
+    ? `Game ${selectedIndex + 1}${selectedDate ? ` - ${selectedDate}` : ""}`
     : scope.scopeDetail;
   sub.textContent = roleAgentLabel
     ? `Recent Improvement | ${scopeLabel} | ${roleAgentLabel}`
     : `Recent Improvement | ${scopeLabel}`;
+}
+
+function formatImprovementGameDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = date.getDate();
+  const mod100 = day % 100;
+  const suffix = mod100 >= 11 && mod100 <= 13
+    ? "th"
+    : ({ 1: "st", 2: "nd", 3: "rd" }[day % 10] || "th");
+  const month = date.toLocaleDateString(undefined, { month: "long" });
+  return `${month} ${day}${suffix}`;
 }
 
 function getTimelineDeltaUnit(item = {}) {
@@ -35698,6 +35710,21 @@ function getLogFormValues(){
 // ========================
 // ADD LOG ENTRY
 // ========================
+function scrollLoggingFormToTopAfterSave() {
+  const page = document.getElementById("page-logging");
+  if (page?.dataset) page.dataset.mobileLoggingView = "form";
+  ensureMobileLoggingTabs();
+
+  window.requestAnimationFrame(() => {
+    const target =
+      document.getElementById("mobileLoggingTabs")
+      || page?.querySelector(".logging-card")
+      || page;
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 function addLogEntry(){
 
   const entry = getLogFormValues();
@@ -35798,6 +35825,7 @@ if(entry.focus){
   updateLoggingDebriefPreview();
   updateWarmupQuickChipState();
   saveLogEntries();
+  scrollLoggingFormToTopAfterSave();
 }
 // ========================
 // DELETE LOG ENTRY
