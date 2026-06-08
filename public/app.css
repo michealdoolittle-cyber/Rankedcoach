@@ -46661,3 +46661,203 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
   text-overflow:ellipsis !important;
   white-space:nowrap !important;
 }
+
+/* Profile visual persistence + motion polish lock: saved banners/borders, modal pop, dropdown slide, edit-tab slide. */
+:root{
+  --rc-modal-motion-ms:280ms;
+  --rc-dropdown-motion-ms:220ms;
+}
+
+.app-header.has-profile-banner::before,
+body.has-profile-banner .app-header::before{
+  opacity:var(--nav-bg-opacity, .88) !important;
+  background-image:var(--nav-bg-image, none), var(--nav-banner-pattern, none) !important;
+  background-size:cover, cover !important;
+  background-position:center, center !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-standard,
+#profileAvatarWrap.border-standard .profile-avatar-ring{
+  border-width:3px !important;
+  border-style:solid !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-halo,
+#profileAvatarWrap.border-halo .profile-avatar-ring{
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  box-shadow:0 0 0 5px color-mix(in srgb, var(--profile-ring-border, #ff4655) 16%, transparent), 0 0 24px var(--profile-ring-glow, rgba(255,70,85,.55)) !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-double,
+#profileAvatarWrap.border-double .profile-avatar-ring{
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  box-shadow:inset 0 0 0 3px color-mix(in srgb, var(--profile-ring-border, #ff4655) 38%, transparent), 0 0 0 3px color-mix(in srgb, var(--profile-ring-border, #ff4655) 22%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.55)) !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-split,
+#profileAvatarWrap.border-split .profile-avatar-ring{
+  border-width:4px !important;
+  border-style:dashed !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-notched,
+#profileAvatarWrap.border-notched .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:34% 66% 38% 62% / 60% 34% 66% 40% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-hex,
+#profileAvatarWrap.border-hex .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:22% 22% 28% 28% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-diamond,
+#profileAvatarWrap.border-diamond .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:18% 42% 18% 42% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-shield,
+#profileAvatarWrap.border-shield .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:45% 45% 34% 34% / 42% 42% 58% 58% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-crown,
+#profileAvatarWrap.border-crown .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:38% 38% 52% 52% / 28% 28% 72% 72% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-blade,
+#profileAvatarWrap.border-blade .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:10% 42% 10% 42% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-pulse,
+#profileAvatarWrap.border-pulse .profile-avatar-ring{
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 30%, transparent), 0 0 0 8px color-mix(in srgb, var(--profile-ring-border, #ff4655) 12%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.55)) !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-arc,
+#profileAvatarWrap.border-arc .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-left-color:transparent !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-spike,
+#profileAvatarWrap.border-spike .profile-avatar-ring{
+  border-width:4px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:18% 18% 42% 42% / 16% 16% 64% 64% !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-crosshair,
+#profileAvatarWrap.border-crosshair .profile-avatar-ring{
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 30%, transparent), 0 -9px 0 -6px var(--profile-ring-border, #ff4655), 0 9px 0 -6px var(--profile-ring-border, #ff4655), 9px 0 0 -6px var(--profile-ring-border, #ff4655), -9px 0 0 -6px var(--profile-ring-border, #ff4655) !important;
+}
+
+:is(#profileAvatarWrap, .profile-avatar-ring, .mobile-bottom-avatar-btn).border-vanguard,
+#profileAvatarWrap.border-vanguard .profile-avatar-ring{
+  border-width:5px !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  border-radius:28% 28% 40% 40% !important;
+}
+
+.mobile-bottom-avatar-btn[class*="border-"]{
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border, #ff4655) 36%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
+}
+
+:is(.lens-modal-overlay, .agent-modal){
+  opacity:0;
+  transition:opacity var(--rc-modal-motion-ms) ease, backdrop-filter var(--rc-modal-motion-ms) ease !important;
+}
+
+:is(.lens-modal-overlay, .agent-modal).active,
+:is(.lens-modal-overlay, .agent-modal).is-opening{
+  opacity:1 !important;
+}
+
+:is(.lens-modal-overlay, .agent-modal).is-opening:not(.active),
+:is(.lens-modal-overlay, .agent-modal).is-closing{
+  opacity:0 !important;
+}
+
+.lens-modal-overlay > .lens-modal,
+.agent-modal .agent-modal-inner{
+  opacity:0;
+  transform:translate3d(0, 18px, 0) scale(.965);
+  transition:opacity 230ms ease, transform var(--rc-modal-motion-ms) cubic-bezier(.2,.84,.24,1) !important;
+  will-change:opacity, transform;
+}
+
+.lens-modal-overlay.active > .lens-modal,
+.agent-modal.active .agent-modal-inner{
+  opacity:1 !important;
+  transform:translate3d(0, 0, 0) scale(1) !important;
+}
+
+.lens-modal-overlay.is-closing > .lens-modal,
+.agent-modal.is-closing .agent-modal-inner{
+  opacity:0 !important;
+  transform:translate3d(0, 10px, 0) scale(.985) !important;
+}
+
+:is(.profile-dropdown, .profile-switcher, .goal-rank-custom-menu, .log-focus-custom-menu, .focus-select-menu, .logging-select-menu, .ask-coach-panel-inner){
+  opacity:0;
+  transform:translate3d(0, -10px, 0) scale(.982);
+  transform-origin:top center;
+  transition:opacity var(--rc-dropdown-motion-ms) ease, transform var(--rc-dropdown-motion-ms) cubic-bezier(.2,.84,.24,1) !important;
+  will-change:opacity, transform;
+}
+
+:is(.profile-dropdown.open, .profile-switcher.open, .goal-rank-custom-menu:not([hidden]), .log-focus-custom-menu.is-open, .focus-select-menu:not([hidden]), .logging-select-menu:not([hidden]), .ask-coach-panel.open .ask-coach-panel-inner){
+  opacity:1 !important;
+  transform:translate3d(0, 0, 0) scale(1) !important;
+}
+
+@starting-style{
+  :is(.goal-rank-custom-menu:not([hidden]), .log-focus-custom-menu.is-open, .focus-select-menu:not([hidden]), .logging-select-menu:not([hidden])){
+    opacity:0;
+    transform:translate3d(0, -10px, 0) scale(.982);
+  }
+}
+
+#editProfileModal .profile-edit-panel.is-active.is-tab-entering{
+  animation:rcProfileTabSlideIn 280ms cubic-bezier(.2,.84,.24,1) both;
+}
+
+#editProfileModal .profile-edit-shell[data-tab-direction="back"] .profile-edit-panel.is-active.is-tab-entering{
+  animation-name:rcProfileTabSlideInBack;
+}
+
+@keyframes rcProfileTabSlideIn{
+  from{opacity:0; transform:translate3d(18px,0,0) scale(.992);}
+  to{opacity:1; transform:translate3d(0,0,0) scale(1);}
+}
+
+@keyframes rcProfileTabSlideInBack{
+  from{opacity:0; transform:translate3d(-18px,0,0) scale(.992);}
+  to{opacity:1; transform:translate3d(0,0,0) scale(1);}
+}
+
+@media (prefers-reduced-motion: reduce){
+  :is(.lens-modal-overlay, .agent-modal, .lens-modal-overlay > .lens-modal, .agent-modal .agent-modal-inner, .profile-dropdown, .profile-switcher, .goal-rank-custom-menu, .log-focus-custom-menu, .focus-select-menu, .logging-select-menu, .ask-coach-panel-inner){
+    transition:none !important;
+    animation:none !important;
+  }
+}

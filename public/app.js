@@ -652,10 +652,14 @@ function getMobileAskCoachFallbackIcon() {
 function getBugReportIconMarkup() {
   return `
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 8.5h8v8a4 4 0 0 1-8 0v-8Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"></path>
-      <path d="M9.5 8.5 8 5.5M14.5 8.5 16 5.5M7.8 11H4.5M19.5 11h-3.3M7.8 14.5H4.5M19.5 14.5h-3.3M12 9v9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-      <circle cx="10.2" cy="12" r=".9" fill="currentColor"></circle>
-      <circle cx="13.8" cy="12" r=".9" fill="currentColor"></circle>
+      <path d="M9 7.3c.6-1.3 1.6-2 3-2s2.4.7 3 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      <path d="M9.2 6.4 7.5 4.5M14.8 6.4l1.7-1.9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      <ellipse cx="12" cy="14.1" rx="5.1" ry="5.8" fill="none" stroke="currentColor" stroke-width="1.8"></ellipse>
+      <path d="M12 8.5v11.2M7.4 11.1 4.7 9.5M16.6 11.1l2.7-1.6M7.1 14.2H4.1M16.9 14.2h3M7.8 17.2 5.3 19M16.2 17.2l2.5 1.8" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"></path>
+      <circle cx="9.8" cy="12.3" r=".75" fill="currentColor"></circle>
+      <circle cx="14.2" cy="12.3" r=".75" fill="currentColor"></circle>
+      <circle cx="10.2" cy="16.1" r=".65" fill="currentColor"></circle>
+      <circle cx="13.8" cy="16.1" r=".65" fill="currentColor"></circle>
     </svg>
   `;
 }
@@ -13776,14 +13780,18 @@ function showModalById(id) {
     return;
   }
   modal.classList.add("is-opening");
+  void modal.offsetWidth;
   refreshActiveModalState();
   window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => {
+    if (!modal.isConnected) return;
+    modal.classList.add("active");
+    refreshActiveModalState();
+    modal._modalTransitionTimer = window.setTimeout(() => {
       if (!modal.isConnected) return;
-      modal.classList.add("active");
       modal.classList.remove("is-opening");
+      modal._modalTransitionTimer = 0;
       refreshActiveModalState();
-    });
+    }, 320);
   });
 }
 
@@ -13807,7 +13815,7 @@ function hideModalById(id) {
     modal.style.display = "none";
     modal.setAttribute("aria-hidden", "true");
     refreshActiveModalState();
-  }, 220);
+  }, 280);
 }
 
 function openAuthModal() {
@@ -37852,7 +37860,9 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const rankIcon = document.getElementById("profileRankIcon");
   const header = document.querySelector(".app-header");
   const panel = document.getElementById("profilePanel");
+  const avatarWrap = document.getElementById("profileAvatarWrap");
   const ring = document.querySelector(".profile-avatar-ring");
+  const mobileAvatarButton = document.querySelector(".mobile-bottom-avatar-btn");
   const peak = computePeakProfileProgress(profile);
   const avatarUrl = profile?.avatarUrl || getDefaultProfileAvatarUrl(profile?.avatarAgent);
   const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
@@ -37882,6 +37892,13 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const buttonSurface = colors.button || childSurface;
   const buttonHoverSurface = colors.buttonHover || secondarySurface;
   const themeGlow = colors.glow || "rgba(255,70,85,.22)";
+  const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
+  const ringBackground = colorMixOrFallback(
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
+  );
+  const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
+  const borderTargets = [panel, avatarWrap, ring, mobileAvatarButton].filter(Boolean);
 
   if (avatarImg) {
     avatarImg.src = avatarUrl;
@@ -37893,27 +37910,28 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     rankIcon.alt = peak.tierLabel;
   }
 
-  if (panel) {
-    Array.from(panel.classList).forEach((className) => {
-      if (className.startsWith("border-")) panel.classList.remove(className);
+  borderTargets.forEach((target) => {
+    Array.from(target.classList).forEach((className) => {
+      if (className.startsWith("border-")) target.classList.remove(className);
     });
+    target.classList.add(`border-${borderStyle}`);
+    target.classList.toggle("border-animated", borderRotate);
+    target.dataset.profileBorder = borderStyle;
+    target.dataset.profileBorderColor = borderColor;
+    target.style.setProperty("--profile-ring-border", resolvedBorderColor);
+    target.style.setProperty("--profile-ring-bg", ringBackground);
+    target.style.setProperty("--profile-ring-glow", ringGlow);
+  });
+
+  if (panel) {
     panel.classList.remove("theme-classic", "theme-ember", "theme-ocean", "theme-verdant", "theme-cosmic");
     panel.classList.add(`theme-classic`);
-    panel.classList.add(`border-${borderStyle}`);
-    panel.classList.toggle("border-animated", borderRotate);
   }
 
   if (ring) {
-    const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
     ring.style.setProperty("--profile-ring-border", resolvedBorderColor);
-    ring.style.setProperty(
-      "--profile-ring-bg",
-      colorMixOrFallback(
-        `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
-        `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
-      )
-    );
-    ring.style.setProperty("--profile-ring-glow", colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)"));
+    ring.style.setProperty("--profile-ring-bg", ringBackground);
+    ring.style.setProperty("--profile-ring-glow", ringGlow);
   }
 
   if (root) {
@@ -37934,6 +37952,9 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     root.style.setProperty("--button-bg", buttonSurface);
     root.style.setProperty("--button-hover", buttonHoverSurface);
     root.style.setProperty("--theme-glow", themeGlow);
+    root.style.setProperty("--profile-ring-border", resolvedBorderColor);
+    root.style.setProperty("--profile-ring-bg", ringBackground);
+    root.style.setProperty("--profile-ring-glow", ringGlow);
     root.style.setProperty("--theme-bg-gradient", `linear-gradient(180deg, ${baseSurface}, ${secondarySurface})`);
     root.style.setProperty("--theme-bg-pattern", colors.pattern || "radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)");
     root.style.setProperty("--theme-bg-pattern-2", colors.pattern2 || "radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)");
@@ -37968,10 +37989,21 @@ function applyProfileVisuals(profile = getActiveProfile()) {
       ? `linear-gradient(90deg, rgba(2,6,23,.18), rgba(2,6,23,.04) 44%, rgba(2,6,23,.22)), ${toCssUrl(activeBannerUrl)}`
       : "none";
     const patternLayer = !activeBannerUrl && hasBannerOverride ? bannerPattern : (!hasBannerOverride ? bannerPattern : "none");
+    const navBgColor = hasBannerOverride ? "#050814" : (colors.nav || "rgba(11,18,32,.84)");
+    const navBgOpacity = hasBannerOverride ? ".88" : ".18";
+    if (root) {
+      root.style.setProperty("--nav-bg-image", imageLayer);
+      root.style.setProperty("--nav-banner-pattern", activeBannerUrl ? "none" : patternLayer);
+      root.style.setProperty("--nav-bg-opacity", navBgOpacity);
+      root.style.setProperty("--nav-bg-color", navBgColor);
+    }
     header.style.setProperty("--nav-bg-image", imageLayer);
     header.style.setProperty("--nav-banner-pattern", activeBannerUrl ? "none" : patternLayer);
-    header.style.setProperty("--nav-bg-opacity", hasBannerOverride ? ".88" : ".18");
-    header.style.setProperty("--nav-bg-color", hasBannerOverride ? "#050814" : (colors.nav || "rgba(11,18,32,.84)"));
+    header.style.setProperty("--nav-bg-opacity", navBgOpacity);
+    header.style.setProperty("--nav-bg-color", navBgColor);
+    header.dataset.profileBanner = bannerStyle;
+    header.classList.toggle("has-profile-banner", hasBannerOverride);
+    if (body) body.classList.toggle("has-profile-banner", hasBannerOverride);
   }
 
   ensureThemeBuilderThemeState(getCurrentThemeBuilderThemeKey());
@@ -38870,11 +38902,28 @@ function openEditProfileModal() {
 }
 
 function activateProfileEditTab(tabKey = "theme") {
+  const shell = document.querySelector("#editProfileModal .profile-edit-shell");
+  const previousTab = shell?.dataset.activeProfileTab || "";
+  const tabOrder = ["theme", "icon", "borderColor", "border", "banner"];
+  const previousIndex = tabOrder.indexOf(previousTab);
+  const nextIndex = tabOrder.indexOf(tabKey);
+  const direction = previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex ? "back" : "forward";
+  if (shell) {
+    shell.dataset.activeProfileTab = tabKey;
+    shell.dataset.tabDirection = direction;
+  }
   document.querySelectorAll(".profile-edit-tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.profileTab === tabKey);
   });
   document.querySelectorAll(".profile-edit-panel").forEach((panel) => {
-    panel.classList.toggle("is-active", panel.dataset.profilePanel === tabKey);
+    const isActivePanel = panel.dataset.profilePanel === tabKey;
+    panel.classList.toggle("is-active", isActivePanel);
+    panel.classList.remove("is-tab-entering");
+    if (isActivePanel) {
+      void panel.offsetWidth;
+      panel.classList.add("is-tab-entering");
+      window.setTimeout(() => panel.classList.remove("is-tab-entering"), 280);
+    }
   });
 }
 
