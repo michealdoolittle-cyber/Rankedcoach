@@ -1209,6 +1209,7 @@ function syncMobileBottomShellState() {
   if (avatarImg && sourceAvatar?.getAttribute("src")) {
     avatarImg.src = sourceAvatar.getAttribute("src");
   }
+  syncMobileBottomAvatarVisuals();
 
   const syncButton = shell.querySelector('[data-mobile-action="sync"]');
   const sourceSync = document.getElementById("profileSyncBtn");
@@ -1219,6 +1220,34 @@ function syncMobileBottomShellState() {
   }
 
   scheduleMobileScrollExtentSync();
+}
+
+function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
+  const button = document.querySelector(".mobile-bottom-avatar-btn");
+  if (!button || !profile) return;
+  const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
+  const theme = getThemePreset(requestedThemeKey);
+  const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
+  const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
+  const borderRotate = !!profile?.profileBorderRotate;
+  const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
+  const colors = theme?.colors || {};
+  const ringBackground = colorMixOrFallback(
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
+  );
+  const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
+
+  Array.from(button.classList).forEach((className) => {
+    if (className.startsWith("border-")) button.classList.remove(className);
+  });
+  button.classList.add(`border-${borderStyle}`);
+  button.classList.toggle("border-animated", borderRotate);
+  button.dataset.profileBorder = borderStyle;
+  button.dataset.profileBorderColor = borderColor;
+  button.style.setProperty("--profile-ring-border", resolvedBorderColor);
+  button.style.setProperty("--profile-ring-bg", ringBackground);
+  button.style.setProperty("--profile-ring-glow", ringGlow);
 }
 
 function getMobileScrollContainer() {
@@ -38014,6 +38043,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   applyThemeBuilderRuntimeStyles();
   syncThemeBuilderUI();
   applyThemeReadabilityRuntimeStyles(theme, themeVisualMode);
+  syncMobileBottomAvatarVisuals(profile);
 }
 
 const THEME_READABILITY_RUNTIME_STYLE_ID = "theme-readability-runtime-style";

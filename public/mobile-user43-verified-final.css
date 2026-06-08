@@ -13480,3 +13480,8 @@
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-panel.is-active.is-tab-entering{animation:rcProfileTabSlideIn 280ms cubic-bezier(.2,.84,.24,1) both !important;}
   html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal .profile-edit-shell[data-tab-direction="back"] .profile-edit-panel.is-active.is-tab-entering{animation-name:rcProfileTabSlideInBack !important;}
 }
+
+/* True EOF footer avatar frame color lock. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn[class*="border-"]{border-color:var(--profile-ring-border, #ff4655) !important;box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border, #ff4655) 48%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;}
+}

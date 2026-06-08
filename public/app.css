@@ -46861,3 +46861,10 @@ body.has-profile-banner .app-header::before{
     animation:none !important;
   }
 }
+
+/* Footer avatar selected profile-frame override: beats mobile bottom shell theme border. */
+body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn[class*="border-"],
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn[class*="border-"]{
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border, #ff4655) 48%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
+}
