@@ -368,6 +368,7 @@ let mobileStatsWeaponFamily = "rifle";
 let mobileInsightCardIndex = 0;
 let mobileInsightTrendKey = "performance";
 let mobileInsightTrendIndex = 0;
+let lastStatsMobileRenderState = null;
 const mobileProfilePortalMarkers = new Map();
 
 function getViewportWidth() {
@@ -525,6 +526,13 @@ function syncMobileViewportState() {
   const isMobile = isMobileLayoutViewport();
   document.documentElement.classList.toggle("is-mobile-layout", isMobile);
   document.body?.classList.toggle("is-mobile-layout", isMobile);
+  if (lastStatsMobileRenderState !== isMobile) {
+    lastStatsMobileRenderState = isMobile;
+    window.requestAnimationFrame?.(() => {
+      renderStatsAgents?.();
+      renderStatsWeapons?.();
+    });
+  }
   syncManualEntryModeBodyClass();
   if (isMobile) installMobileTouchScrollGuard();
 
@@ -597,8 +605,8 @@ function ensureMobileBottomShell() {
       </button>
       <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="menu" aria-label="Open settings menu">
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" fill="none" stroke="currentColor" stroke-width="2"></path>
-          <path d="M19.2 13.6c.1-.5.1-1 .1-1.6s0-1.1-.1-1.6l2-1.5-2-3.4-2.4 1a8.4 8.4 0 0 0-1.3-.8L15.1 3h-4.2l-.4 2.7c-.5.2-.9.5-1.3.8l-2.4-1-2 3.4 2 1.5c-.1.5-.1 1-.1 1.6s0 1.1.1 1.6l-2 1.5 2 3.4 2.4-1c.4.3.8.6 1.3.8l.4 2.7h4.2l.4-2.7c.5-.2.9-.5 1.3-.8l2.4 1 2-3.4-2-1.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+          <circle cx="12" cy="12" r="3.25" fill="none" stroke="currentColor" stroke-width="2"></circle>
+          <path d="M12 2.8 13.15 5.4c.48.13.95.32 1.39.57l2.62-1.02 1.9 3.3-2.23 1.7c.05.34.08.69.08 1.05s-.03.71-.08 1.05l2.23 1.7-1.9 3.3-2.62-1.02c-.44.25-.91.44-1.39.57L12 21.2l-1.15-2.6a7.16 7.16 0 0 1-1.39-.57l-2.62 1.02-1.9-3.3 2.23-1.7A7.2 7.2 0 0 1 7.09 12c0-.36.03-.71.08-1.05l-2.23-1.7 1.9-3.3 2.62 1.02c.44-.25.91-.44 1.39-.57L12 2.8Z" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"></path>
         </svg>
       </button>
     </div>
@@ -43634,6 +43642,8 @@ function renderStatsWeaponsModel() {
 function renderStatsSummaryMetaModel() {
   const selector = document.getElementById("statsActSelector");
   if (!selector) return;
+  const label = document.querySelector("#page-stats .stats-act-label");
+  if (label) label.textContent = "Season Stats For";
 
   const model = getPlayerModel();
   const fallbackSeasonLabel = isMobileLayoutViewport() ? CURRENT_VALORANT_SEASON_LABEL : "Current Window";
