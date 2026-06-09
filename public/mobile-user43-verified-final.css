@@ -14289,3 +14289,218 @@ html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #
 html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #statsWeaponsList .stats-weapon-label-row{display:grid !important;place-items:center !important;text-align:center !important;min-width:0 !important;overflow:hidden !important;}
 html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #statsWeaponsList .stats-weapon-name{display:block !important;width:100% !important;font-size:clamp(16px,5.4vw,22px) !important;line-height:.96 !important;white-space:normal !important;overflow-wrap:anywhere !important;}
 html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #statsWeaponsList .stats-weapon-mini{display:block !important;width:100% !important;max-width:100% !important;margin-top:4px !important;padding:0 !important;background:transparent !important;border:0 !important;box-shadow:none !important;font-size:clamp(13px,4vw,17px) !important;line-height:1.02 !important;}
+
+/* Desktop stats/nav correction v20: contain every desktop panel without affecting mobile. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-header{
+  grid-template-columns:minmax(280px,1fr) minmax(420px,680px) minmax(540px,720px) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right{
+  min-width:540px !important;
+  width:min(720px,38vw) !important;
+  max-width:720px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel{
+  min-width:540px !important;
+  max-width:720px !important;
+  height:58px !important;
+  min-height:58px !important;
+  max-height:58px !important;
+  gap:8px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-anchor{
+  width:58px !important;
+  min-width:58px !important;
+  max-width:58px !important;
+  height:58px !important;
+  min-height:58px !important;
+  max-height:58px !important;
+  overflow:visible !important;
+  display:grid !important;
+  place-items:center !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-wrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring{
+  width:48px !important;
+  min-width:48px !important;
+  max-width:48px !important;
+  height:48px !important;
+  min-height:48px !important;
+  max-height:48px !important;
+  position:relative !important;
+  display:grid !important;
+  place-items:center !important;
+  overflow:visible !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-img{
+  width:38px !important;
+  height:38px !important;
+  max-width:38px !important;
+  max-height:38px !important;
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  transform:translate(-50%,-50%) !important;
+  object-fit:cover !important;
+  border-radius:999px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-rank-icon{
+  width:17px !important;
+  height:17px !important;
+  max-width:17px !important;
+  max-height:17px !important;
+  position:absolute !important;
+  right:-2px !important;
+  bottom:-2px !important;
+  z-index:5 !important;
+  object-fit:contain !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle){
+  width:46px !important;
+  min-width:46px !important;
+  max-width:46px !important;
+  height:46px !important;
+  min-height:46px !important;
+  max-height:46px !important;
+  flex:0 0 46px !important;
+  padding:0 !important;
+  display:grid !important;
+  place-items:center !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle) svg{
+  width:28px !important;
+  height:28px !important;
+  min-width:28px !important;
+  min-height:28px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
+  height:calc(100vh - var(--nav-height)) !important;
+  min-height:0 !important;
+  grid-template-rows:minmax(104px,128px) minmax(0,1fr) !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-card,.stats-performance-card,.stats-breakdown-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card){
+  min-height:0 !important;
+  height:100% !important;
+  max-height:100% !important;
+  overflow:hidden !important;
+  position:relative !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{padding:6px 8px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-layout{gap:6px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-grid{gap:6px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stat-block{padding:6px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stat-value{font-size:20px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-role-progress-card{padding:6px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-performance-card,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card{
+  height:100% !important;
+  min-height:0 !important;
+  max-height:100% !important;
+  overflow:hidden !important;
+  align-self:stretch !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsBreakdown.stats-breakdown{
+  height:100% !important;
+  min-height:0 !important;
+  max-height:100% !important;
+  overflow:hidden !important;
+  padding-right:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsBreakdown.stats-breakdown{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-cardlet{
+  min-height:0 !important;
+  height:100% !important;
+  max-height:100% !important;
+  overflow:hidden !important;
+  padding:7px 9px !important;
+  gap:4px !important;
+  justify-content:flex-start !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-main-text,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-value{
+  font-size:15px !important;
+  line-height:1.05 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-sub-text{
+  font-size:16px !important;
+  line-height:1.05 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-detail,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-detail{
+  font-size:11px !important;
+  line-height:1.18 !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+  gap:7px !important;
+  height:100% !important;
+  overflow:hidden !important;
+  padding-right:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card{
+  min-height:0 !important;
+  height:100% !important;
+  padding:7px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-image{
+  height:58px !important;
+  min-height:58px !important;
+  max-height:58px !important;
+  object-fit:cover !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta .stats-main-text{font-size:13px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta .stats-sub-text{font-size:10px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsAgentsList.stats-agent-list{
+  overflow:hidden !important;
+  gap:6px !important;
+  padding-right:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading{
+  height:24px !important;
+  min-height:24px !important;
+  font-size:9px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card{
+  width:min(100%,78px) !important;
+  height:68px !important;
+  min-height:68px !important;
+  max-height:68px !important;
+  grid-template-rows:12px minmax(0,1fr) 16px !important;
+  padding:4px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-name{font-size:8px !important;line-height:1 !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-icon{max-height:32px !important;object-fit:cover !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-sub-text{font-size:6.8px !important;line-height:.95 !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsWeaponsList.stats-desktop-weapon-rows{
+  overflow:hidden !important;
+  gap:5px !important;
+  padding:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-row{
+  grid-template-columns:70px minmax(0,1fr) !important;
+  gap:5px !important;
+  padding:4px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-title{font-size:10px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-meta{font-size:8px !important;padding:2px 4px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-image-row{gap:4px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-tile{padding:2px 3px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-art{max-height:28px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta .stats-main-text{font-size:9px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta .stats-sub-text{font-size:8px !important;}
