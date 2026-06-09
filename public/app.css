@@ -48453,3 +48453,27 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell
 }
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{animation:rcFooterBladeFrameVisible 1.65s ease-in-out infinite !important;transform-origin:center !important;}
+
+/* Mobile diamond/blade sheen-only correction: no brightness pulse, no size breathing. */
+@keyframes rcFooterDiamondSheenOnly{
+  0%{opacity:0;background-position:145% 145%;}
+  18%{opacity:.92;background-position:72% 72%;}
+  42%{opacity:.32;background-position:20% 20%;}
+  64%,100%{opacity:0;background-position:-55% -55%;}
+}
+@keyframes rcFooterBladeSheenOnly{
+  0%{opacity:0;background-position:145% 50%;}
+  20%{opacity:.94;background-position:72% 50%;}
+  44%{opacity:.30;background-position:12% 50%;}
+  66%,100%{opacity:0;background-position:-60% 50%;}
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond{animation:none !important;filter:none !important;transform:none !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::before{animation:none !important;filter:none !important;transform:translate(-50%,-50%) rotate(45deg) !important;box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 18%,transparent),0 0 13px color-mix(in srgb,var(--profile-ring-border,#ff4655) 30%,transparent) !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::after{background:linear-gradient(135deg, transparent 0 36%, rgba(255,255,255,.98) 47% 53%, transparent 64% 100%) !important;background-size:260% 260% !important;opacity:0 !important;filter:none !important;animation:rcFooterDiamondSheenOnly 2.15s ease-in-out infinite !important;mix-blend-mode:screen !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{animation:none !important;filter:none !important;transform:none !important;box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 18%,transparent),0 0 14px color-mix(in srgb,var(--profile-ring-border,#ff4655) 34%,transparent) !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::before{background:linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,.98) 47% 54%, transparent 65% 100%) !important;background-size:280% 100% !important;opacity:0 !important;filter:none !important;animation:rcFooterBladeSheenOnly 2.05s ease-in-out infinite !important;mix-blend-mode:screen !important;}
