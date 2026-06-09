@@ -47037,3 +47037,33 @@ body.has-profile-banner #mobileBottomShell.mobile-bottom-shell > *{
   position:relative !important;
   z-index:1 !important;
 }
+
+/* Profile frame animation visibility lock: curated glints render above avatar art, not behind it. */
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn)[class*="border-"]{
+  isolation:isolate !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn)[class*="border-"] > img,
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn)[class*="border-"] .profile-avatar-img,
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn)[class*="border-"] .profile-rank-icon,
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn)[class*="border-"] .mobile-bottom-avatar-img{
+  position:relative !important;
+  z-index:1 !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn)[class*="border-"]::before{
+  z-index:2 !important;
+  mix-blend-mode:screen !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-blade::before,
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-diamond::before{
+  inset:-7px !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-blade::before{
+  background:linear-gradient(115deg, transparent 0 38%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 74%, white 26%) 46% 53%, transparent 62% 100%) !important;
+  background-size:260% 100% !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-diamond::before{
+  background:linear-gradient(135deg, transparent 0 38%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 70%, white 30%) 47% 54%, transparent 62% 100%) !important;
+  background-size:240% 240% !important;
+}

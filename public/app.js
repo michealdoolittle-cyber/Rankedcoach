@@ -1229,7 +1229,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const theme = getThemePreset(requestedThemeKey);
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
-  const borderRotate = !!profile?.profileBorderRotate;
+  const borderRotate = !!profile?.profileBorderRotate || borderStyle !== "standard";
   const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
@@ -37779,6 +37779,7 @@ function renderBorderGallery(selectedBorder = "standard") {
   const selectBorderCard = (button) => {
     const nextBorder = normalizeProfileBorderStyle(button.getAttribute("data-border-card") || "standard");
     if (borderSelect) borderSelect.value = nextBorder;
+    if (nextBorder !== "standard") setProfileBorderRotateToggle(true);
     renderBorderGallery(nextBorder);
     previewEditProfileVisuals();
   };
@@ -37899,7 +37900,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const themeKey = theme.value;
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
-  const borderRotate = !!profile?.profileBorderRotate;
+  const borderRotate = !!profile?.profileBorderRotate || borderStyle !== "standard";
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
@@ -38988,7 +38989,7 @@ function saveEditProfileModal() {
     avatarAgent: selectedAvatar,
     profileBorderColor: normalizeProfileBorderColor(selectedBorderColor),
     profileBorder: normalizeProfileBorderStyle(selectedBorder),
-    profileBorderRotate: getProfileBorderRotateValue(profile),
+    profileBorderRotate: getProfileBorderRotateValue(profile) || normalizeProfileBorderStyle(selectedBorder) !== "standard",
     bannerStyle: normalizeProfileBannerStyle(selectedBanner),
     navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
@@ -39004,7 +39005,7 @@ function previewEditProfileVisuals() {
   const activeAvatar = document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent;
   const activeBorderColor = normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
   const activeBorder = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
-  const activeBorderRotate = getProfileBorderRotateValue(profile);
+  const activeBorderRotate = getProfileBorderRotateValue(profile) || activeBorder !== "standard";
   const activeBanner = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
   renderThemeGallery(activeThemeKey);
   renderAvatarGallery(activeAvatar);
