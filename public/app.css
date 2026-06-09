@@ -47134,3 +47134,55 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).b
   0%,100%{filter:brightness(1);box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border,#16a34a) 18%, transparent), 0 0 12px var(--profile-ring-glow, rgba(22,163,74,.42));}
   50%{filter:brightness(1.26);box-shadow:0 0 0 4px color-mix(in srgb, var(--profile-ring-border,#16a34a) 22%, transparent), 0 0 24px var(--profile-ring-glow, rgba(22,163,74,.62));}
 }
+
+/* Exact profile preview animation lock: live frames mirror edit-profile preview, no shared fade pulse. */
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated{
+  will-change:box-shadow, border-color, filter, border-radius !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated::before{
+  opacity:0 !important;
+  background:none !important;
+  border:0 !important;
+  box-shadow:none !important;
+  animation:none !important;
+  mix-blend-mode:normal !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-standard{animation:profileBorderCleanPulse 2.8s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-halo{animation:profileBorderHaloBreathe 3.2s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-double{animation:profileBorderDoubleTick 2.6s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-split{animation:profileBorderSplitFlicker 2.2s steps(4) infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-notched{animation:profileBorderNotchBreathe 3.4s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-hex{animation:profileBorderHexCharge 3s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-diamond{animation:none !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-diamond::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:-8px !important;
+  border-radius:inherit !important;
+  opacity:1 !important;
+  pointer-events:none !important;
+  z-index:2 !important;
+  background:linear-gradient(135deg, transparent 0 42%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 74%, white 20%) 48% 52%, transparent 58% 100%) !important;
+  background-size:220% 220% !important;
+  animation:profileBorderGlint 2.8s ease-in-out infinite !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-shield{animation:profileBorderShieldGuard 3s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-crown{animation:profileBorderCrownGlow 3.4s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-blade{animation:none !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-blade::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:-8px !important;
+  border-radius:inherit !important;
+  opacity:1 !important;
+  pointer-events:none !important;
+  z-index:2 !important;
+  background:linear-gradient(115deg, transparent 0 44%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 88%, white 10%) 48% 51%, transparent 56% 100%) !important;
+  background-size:240% 100% !important;
+  animation:profileBorderBladeCut 2.5s ease-in-out infinite !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-pulse{animation:profileBorderSignalPulse 2.4s ease-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-arc{animation:profileBorderArcFlare 2.8s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-spike{animation:profileBorderSpikeCharge 2.6s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-crosshair{animation:profileBorderCrosshairPing 2.3s ease-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-vanguard{animation:profileBorderVanguardLock 3.1s ease-in-out infinite !important;}
