@@ -13954,3 +13954,45 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{animation:none !important;filter:none !important;transform:none !important;box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 18%,transparent),0 0 14px color-mix(in srgb,var(--profile-ring-border,#ff4655) 34%,transparent) !important;}
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::before,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::before{background:linear-gradient(115deg, transparent 0 36%, rgba(255,255,255,.98) 47% 54%, transparent 65% 100%) !important;background-size:280% 100% !important;opacity:0 !important;filter:none !important;animation:rcFooterBladeSheenOnly 2.05s ease-in-out infinite !important;mix-blend-mode:screen !important;}
+
+/* Visible mobile glint sweep for diamond/blade: stable frame, moving highlight only. */
+@keyframes rcFooterDiamondGlintBar{
+  0%,14%{opacity:0;transform:translate(-50%,-50%) rotate(45deg) translateX(-34px);}
+  24%{opacity:.95;transform:translate(-50%,-50%) rotate(45deg) translateX(-15px);}
+  42%{opacity:.75;transform:translate(-50%,-50%) rotate(45deg) translateX(10px);}
+  58%,100%{opacity:0;transform:translate(-50%,-50%) rotate(45deg) translateX(34px);}
+}
+@keyframes rcFooterBladeGlintBar{
+  0%,12%{opacity:0;transform:translateX(-42px) skewX(-18deg);}
+  25%{opacity:.95;transform:translateX(-16px) skewX(-18deg);}
+  45%{opacity:.78;transform:translateX(12px) skewX(-18deg);}
+  62%,100%{opacity:0;transform:translateX(42px) skewX(-18deg);}
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond{animation:none !important;filter:none !important;transform:none !important;overflow:visible !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::before{animation:none !important;filter:none !important;transform:translate(-50%,-50%) rotate(45deg) !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::after{content:"" !important;display:block !important;position:absolute !important;top:50% !important;left:50% !important;width:12px !important;height:54px !important;border:0 !important;border-radius:999px !important;clip-path:none !important;background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 22%, rgba(255,255,255,1) 50%, rgba(255,255,255,.25) 78%, transparent 100%) !important;box-shadow:0 0 10px rgba(255,255,255,.72) !important;opacity:0 !important;z-index:7 !important;pointer-events:none !important;mix-blend-mode:screen !important;animation:rcFooterDiamondGlintBar 2.15s ease-in-out infinite !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{animation:none !important;filter:none !important;transform:none !important;overflow:hidden !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::before{content:"" !important;display:block !important;position:absolute !important;top:-8px !important;bottom:-8px !important;left:50% !important;width:13px !important;inset-block-start:-8px !important;inset-block-end:-8px !important;border:0 !important;border-radius:999px !important;clip-path:none !important;background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 22%, rgba(255,255,255,1) 50%, rgba(255,255,255,.25) 78%, transparent 100%) !important;box-shadow:0 0 10px rgba(255,255,255,.7) !important;opacity:0 !important;pointer-events:none !important;z-index:7 !important;mix-blend-mode:screen !important;animation:rcFooterBladeGlintBar 2.05s ease-in-out infinite !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::after{display:none !important;}
+
+/* Reliable visible sheen segment: moving highlight, stable frame brightness. */
+@keyframes rcFooterDiamondSheenSegment{
+  0%{transform:translate(-50%,-50%) rotate(45deg) rotate(0deg);}
+  100%{transform:translate(-50%,-50%) rotate(45deg) rotate(360deg);}
+}
+@keyframes rcFooterBladeSheenSegment{
+  0%{transform:translateX(-35px) skewX(-18deg);}
+  100%{transform:translateX(35px) skewX(-18deg);}
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::after{content:"" !important;display:block !important;position:absolute !important;top:50% !important;left:50% !important;width:50px !important;height:50px !important;border:0 !important;border-radius:18% !important;clip-path:none !important;background:conic-gradient(from 0deg, transparent 0 36deg, rgba(255,255,255,.95) 48deg 66deg, color-mix(in srgb,var(--profile-ring-border,#ff4655) 62%, white 38%) 76deg 92deg, transparent 104deg 360deg) !important;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0) !important;-webkit-mask-composite:xor !important;mask-composite:exclude !important;padding:5px !important;opacity:.95 !important;z-index:7 !important;pointer-events:none !important;mix-blend-mode:screen !important;animation:rcFooterDiamondSheenSegment 2.2s linear infinite !important;box-shadow:none !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{overflow:hidden !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::before{content:"" !important;display:block !important;position:absolute !important;top:-10px !important;bottom:-10px !important;left:50% !important;width:12px !important;border:0 !important;border-radius:999px !important;clip-path:none !important;background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.18) 18%, rgba(255,255,255,.95) 50%, rgba(255,255,255,.18) 82%, transparent 100%) !important;box-shadow:0 0 10px rgba(255,255,255,.55) !important;opacity:.86 !important;pointer-events:none !important;z-index:7 !important;mix-blend-mode:screen !important;animation:rcFooterBladeSheenSegment 1.8s linear infinite !important;}
