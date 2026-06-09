@@ -46969,3 +46969,71 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-av
   border-radius:inherit !important;
   clip-path:inherit !important;
 }
+
+/* Curated profile frame animation map: live frames match edit-profile preview animations, no generic spin. */
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated::before{
+  animation:none !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-standard{animation:profileBorderCleanPulse 2.8s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-halo{animation:profileBorderHaloBreathe 3.2s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-double{animation:profileBorderDoubleTick 2.6s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-split{animation:profileBorderSplitFlicker 2.2s steps(4) infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-notched{animation:profileBorderNotchBreathe 3.4s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-hex{animation:profileBorderHexCharge 3s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-diamond{animation:none !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-diamond::before{
+  opacity:.72 !important;
+  background:linear-gradient(135deg, transparent 0 42%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 74%, white 20%) 48% 52%, transparent 58% 100%) !important;
+  background-size:220% 220% !important;
+  animation:profileBorderGlint 2.8s ease-in-out infinite !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-shield{animation:profileBorderShieldGuard 3s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-crown{animation:profileBorderCrownGlow 3.4s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-blade{animation:none !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-blade::before{
+  opacity:.82 !important;
+  background:linear-gradient(115deg, transparent 0 44%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 88%, white 10%) 48% 51%, transparent 56% 100%) !important;
+  background-size:240% 100% !important;
+  animation:profileBorderBladeCut 2.5s ease-in-out infinite !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-pulse{animation:profileBorderSignalPulse 2.4s ease-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-arc{animation:profileBorderArcFlare 2.8s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-spike{animation:profileBorderSpikeCharge 2.6s ease-in-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-crosshair{animation:profileBorderCrosshairPing 2.3s ease-out infinite !important;}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-vanguard{animation:profileBorderVanguardLock 3.1s ease-in-out infinite !important;}
+
+/* Selected banner visibility: paint both mobile header and footer bars without covering controls. */
+body.has-profile-banner .app-header,
+.app-header.has-profile-banner{
+  background-color:var(--nav-bg-color, #050814) !important;
+  background-image:var(--nav-bg-image, none), var(--nav-banner-pattern, none) !important;
+  background-size:cover, cover !important;
+  background-position:center, center !important;
+  background-blend-mode:normal !important;
+}
+body.has-profile-banner .app-header::before,
+.app-header.has-profile-banner::before{
+  opacity:.48 !important;
+}
+body.has-profile-banner #mobileBottomShell.mobile-bottom-shell{
+  position:fixed !important;
+  isolation:isolate !important;
+  background-color:var(--nav-bg-color, #050814) !important;
+  background-image:var(--nav-bg-image, none), var(--nav-banner-pattern, none) !important;
+  background-size:cover, cover !important;
+  background-position:center, center !important;
+  overflow:visible !important;
+}
+body.has-profile-banner #mobileBottomShell.mobile-bottom-shell::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:0 !important;
+  border-radius:inherit !important;
+  background:linear-gradient(180deg, rgba(2,6,23,.20), rgba(2,6,23,.48)) !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+}
+body.has-profile-banner #mobileBottomShell.mobile-bottom-shell > *{
+  position:relative !important;
+  z-index:1 !important;
+}
