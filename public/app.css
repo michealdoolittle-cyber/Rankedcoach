@@ -48290,3 +48290,166 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::after{display:none !important;}
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade img,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade .mobile-bottom-avatar-img{display:block !important;width:34px !important;min-width:34px !important;height:34px !important;min-height:34px !important;border-radius:999px !important;clip-path:none !important;transform:none !important;position:relative !important;z-index:5 !important;}
+
+/* Always-on mobile footer motion for selected diamond/blade frames. */
+@keyframes rcFooterDiamondFrameVisible{
+  0%,100%{transform:translate(-50%,-50%) rotate(45deg) scale(1);filter:brightness(1);box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 18%,transparent),0 0 12px color-mix(in srgb,var(--profile-ring-border,#ff4655) 30%,transparent);}
+  50%{transform:translate(-50%,-50%) rotate(45deg) scale(1.12);filter:brightness(1.25);box-shadow:0 0 0 5px color-mix(in srgb,var(--profile-ring-border,#ff4655) 24%,transparent),0 0 26px color-mix(in srgb,var(--profile-ring-border,#ff4655) 52%,transparent);}
+}
+@keyframes rcFooterDiamondSweepVisible{
+  0%{opacity:.12;background-position:130% 130%;}
+  35%{opacity:.95;background-position:50% 50%;}
+  70%{opacity:.22;background-position:-30% -30%;}
+  100%{opacity:.12;background-position:-50% -50%;}
+}
+@keyframes rcFooterBladeSweepVisible{
+  0%{opacity:.08;background-position:140% 50%;filter:brightness(1);}
+  35%{opacity:.92;background-position:48% 50%;filter:brightness(1.35);}
+  72%{opacity:.16;background-position:-50% 50%;filter:brightness(1);}
+  100%{opacity:.08;background-position:-70% 50%;filter:brightness(1);}
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond{
+  border:0 !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  animation:none !important;
+  transform:none !important;
+  overflow:visible !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::before{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:39px !important;
+  height:39px !important;
+  border:3px solid var(--profile-ring-border,#ff4655) !important;
+  border-radius:18% !important;
+  clip-path:none !important;
+  background:linear-gradient(135deg, var(--profile-ring-bg, #152238), color-mix(in srgb, var(--profile-ring-border,#ff4655) 18%, #0b1220)) !important;
+  background-size:auto !important;
+  opacity:1 !important;
+  z-index:0 !important;
+  pointer-events:none !important;
+  transform:translate(-50%,-50%) rotate(45deg) !important;
+  animation:rcFooterDiamondFrameVisible 1.8s ease-in-out infinite !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::after{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:52px !important;
+  height:52px !important;
+  border:0 !important;
+  border-radius:18% !important;
+  clip-path:none !important;
+  background:linear-gradient(135deg, transparent 0 38%, color-mix(in srgb, var(--profile-ring-border,#ff4655) 62%, white 38%) 47% 54%, transparent 64% 100%) !important;
+  background-size:240% 240% !important;
+  opacity:.12 !important;
+  z-index:6 !important;
+  pointer-events:none !important;
+  transform:translate(-50%,-50%) rotate(45deg) !important;
+  animation:rcFooterDiamondSweepVisible 1.8s ease-in-out infinite !important;
+  mix-blend-mode:screen !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond .mobile-bottom-avatar-img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond .mobile-bottom-avatar-img{
+  display:block !important;
+  width:34px !important;
+  min-width:34px !important;
+  height:34px !important;
+  min-height:34px !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  transform:none !important;
+  position:relative !important;
+  z-index:5 !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{
+  border:3px solid var(--profile-ring-border,#ff4655) !important;
+  border-radius:10% 42% 10% 42% !important;
+  clip-path:none !important;
+  background:linear-gradient(135deg, var(--profile-ring-bg, #152238), color-mix(in srgb, var(--profile-ring-border,#ff4655) 18%, #0b1220)) !important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 18%,transparent),0 0 14px color-mix(in srgb,var(--profile-ring-border,#ff4655) 38%,transparent) !important;
+  animation:none !important;
+  transform:none !important;
+  overflow:visible !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::before{
+  content:"" !important;
+  display:block !important;
+  position:absolute !important;
+  inset:-9px !important;
+  border:0 !important;
+  border-radius:inherit !important;
+  clip-path:none !important;
+  background:linear-gradient(115deg, transparent 0 38%, color-mix(in srgb, var(--profile-ring-border,#ff4655) 58%, white 42%) 47% 55%, transparent 64% 100%) !important;
+  background-size:260% 100% !important;
+  opacity:.08 !important;
+  pointer-events:none !important;
+  z-index:6 !important;
+  transform:none !important;
+  animation:rcFooterBladeSweepVisible 1.65s ease-in-out infinite !important;
+  mix-blend-mode:screen !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::after{
+  display:none !important;
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade .mobile-bottom-avatar-img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade .mobile-bottom-avatar-img{
+  display:block !important;
+  width:34px !important;
+  min-width:34px !important;
+  height:34px !important;
+  min-height:34px !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  transform:none !important;
+  position:relative !important;
+  z-index:5 !important;
+}
+
+/* Stronger visible diamond/blade mobile footer motion. */
+@keyframes rcFooterDiamondFrameVisible{
+  0%,100%{transform:translate(-50%,-50%) rotate(45deg) scale(.94);filter:brightness(.9);box-shadow:0 0 0 1px color-mix(in srgb,var(--profile-ring-border,#ff4655) 12%,transparent),0 0 8px color-mix(in srgb,var(--profile-ring-border,#ff4655) 22%,transparent);}
+  50%{transform:translate(-50%,-50%) rotate(45deg) scale(1.22);filter:brightness(1.45);box-shadow:0 0 0 7px color-mix(in srgb,var(--profile-ring-border,#ff4655) 34%,transparent),0 0 34px color-mix(in srgb,var(--profile-ring-border,#ff4655) 72%,transparent);}
+}
+@keyframes rcFooterDiamondSweepVisible{
+  0%{opacity:.05;background-position:145% 145%;}
+  30%{opacity:1;background-position:55% 55%;}
+  62%{opacity:.32;background-position:-25% -25%;}
+  100%{opacity:.05;background-position:-70% -70%;}
+}
+@keyframes rcFooterBladeSweepVisible{
+  0%{opacity:.04;background-position:145% 50%;filter:brightness(1);}
+  32%{opacity:1;background-position:48% 50%;filter:brightness(1.7);}
+  68%{opacity:.24;background-position:-35% 50%;filter:brightness(1.15);}
+  100%{opacity:.04;background-position:-70% 50%;filter:brightness(1);}
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-diamond::after,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-diamond::after{background:linear-gradient(135deg, transparent 0 34%, rgba(255,255,255,.98) 47% 54%, transparent 66% 100%) !important;background-size:260% 260% !important;animation:rcFooterDiamondSweepVisible 1.8s ease-in-out infinite !important;}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade::before{background:linear-gradient(115deg, transparent 0 34%, rgba(255,255,255,.98) 46% 56%, transparent 68% 100%) !important;background-size:280% 100% !important;animation:rcFooterBladeSweepVisible 1.65s ease-in-out infinite !important;}
+
+/* Extra blade frame pulse so blade motion is unmistakable on-device. */
+@keyframes rcFooterBladeFrameVisible{
+  0%,100%{transform:scale(.96);filter:brightness(.95);box-shadow:0 0 0 1px color-mix(in srgb,var(--profile-ring-border,#ff4655) 14%,transparent),0 0 8px color-mix(in srgb,var(--profile-ring-border,#ff4655) 22%,transparent);}
+  50%{transform:scale(1.14);filter:brightness(1.35);box-shadow:0 0 0 6px color-mix(in srgb,var(--profile-ring-border,#ff4655) 28%,transparent),0 0 28px color-mix(in srgb,var(--profile-ring-border,#ff4655) 62%,transparent);}
+}
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-blade,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-blade{animation:rcFooterBladeFrameVisible 1.65s ease-in-out infinite !important;transform-origin:center !important;}
