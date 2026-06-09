@@ -47233,3 +47233,45 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).b
 :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-spike::after{animation:profileBorderSpikeCharge 2.6s ease-in-out infinite !important;}
 :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-crosshair::after{animation:profileBorderCrosshairPing 2.3s ease-out infinite !important;}
 :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-vanguard::after{animation:profileBorderVanguardLock 3.1s ease-in-out infinite !important;}
+
+/* Single-painter profile frame lock: prevent the button rectangle from drawing over curated frame styles. */
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated{
+  animation:none !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated:is(.border-standard,.border-halo,.border-double,.border-split,.border-notched,.border-hex,.border-diamond,.border-shield,.border-crown,.border-blade,.border-pulse,.border-arc,.border-spike,.border-crosshair,.border-vanguard){
+  animation:none !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated:is(.border-standard,.border-halo,.border-double,.border-split,.border-pulse,.border-arc,.border-crosshair){
+  border-radius:999px !important;
+  clip-path:none !important;
+}
+#mobileBottomShell .mobile-bottom-avatar-btn.border-animated{
+  background:transparent !important;
+}
+#mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated:is(.border-standard,.border-halo,.border-double,.border-split,.border-pulse,.border-arc,.border-crosshair){
+  border-radius:999px !important;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated::after{
+  box-sizing:border-box;
+  border-radius:inherit;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated:is(.border-standard,.border-halo,.border-double,.border-pulse,.border-crosshair)::after{
+  border-style:solid;
+  border-width:3px;
+  border-color:var(--profile-ring-border,#ff4655);
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-split::after{
+  border-style:dashed;
+  border-width:4px;
+  border-color:var(--profile-ring-border,#ff4655);
+  border-radius:999px;
+}
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-arc::after{
+  border-style:solid;
+  border-width:4px;
+  border-color:var(--profile-ring-border,#ff4655);
+  border-left-color:transparent;
+  border-radius:999px;
+}
