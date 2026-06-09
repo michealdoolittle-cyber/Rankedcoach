@@ -46897,3 +46897,75 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-av
   border-style:solid !important;
   box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 42%, transparent), 0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 28%, transparent), 0 0 16px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
 }
+
+/* Profile frame geometry lock: selected frame shape/animation applies to top ring and mobile footer avatar. */
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-standard{border-radius:999px !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-halo{border-radius:999px !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-double{border-radius:999px !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-split{border-radius:999px !important;border-style:dashed !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-notched{border-radius:34% 66% 38% 62% / 60% 34% 66% 40% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-hex{border-radius:22% 22% 28% 28% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-diamond{border-radius:18% 42% 18% 42% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-shield{border-radius:45% 45% 34% 34% / 42% 42% 58% 58% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-crown{border-radius:38% 38% 52% 52% / 28% 28% 72% 72% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-blade{border-radius:10% 42% 10% 42% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-pulse{border-radius:999px !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-arc{border-radius:999px !important;border-style:solid !important;border-left-color:transparent !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-spike{border-radius:18% 18% 42% 42% / 16% 16% 64% 64% !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-crosshair{border-radius:999px !important;border-style:solid !important;}
+:is(.profile-avatar-ring, #profileAvatarWrap, .mobile-bottom-avatar-btn).border-vanguard{border-radius:28% 28% 40% 40% !important;border-style:solid !important;}
+
+:is(.profile-avatar-ring, .mobile-bottom-avatar-btn)[class*="border-"]{
+  position:relative !important;
+  border-color:var(--profile-ring-border, #ff4655) !important;
+  overflow:visible !important;
+}
+
+:is(.profile-avatar-ring, .mobile-bottom-avatar-btn)[class*="border-"]::before{
+  content:"" !important;
+  position:absolute !important;
+  inset:-4px !important;
+  border-radius:inherit !important;
+  border:1px solid color-mix(in srgb, var(--profile-ring-border, #ff4655) 64%, transparent) !important;
+  opacity:.42 !important;
+  pointer-events:none !important;
+  box-shadow:0 0 14px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
+}
+
+:is(.profile-avatar-ring, .mobile-bottom-avatar-btn).border-blade::before{
+  background:linear-gradient(115deg, transparent 0 44%, color-mix(in srgb, var(--profile-ring-border, #ff4655) 82%, white 12%) 48% 51%, transparent 56% 100%) !important;
+}
+
+:is(.profile-avatar-ring, .mobile-bottom-avatar-btn).border-crosshair{
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 30%, transparent), 0 -9px 0 -6px var(--profile-ring-border, #ff4655), 0 9px 0 -6px var(--profile-ring-border, #ff4655), 9px 0 0 -6px var(--profile-ring-border, #ff4655), -9px 0 0 -6px var(--profile-ring-border, #ff4655) !important;
+}
+
+:is(.profile-avatar-ring, .mobile-bottom-avatar-btn).border-animated{
+  animation:rcProfileFrameGlow 1450ms ease-in-out infinite !important;
+}
+
+:is(.profile-avatar-ring, .mobile-bottom-avatar-btn).border-animated::before{
+  animation:rcProfileFrameSweep 1500ms linear infinite !important;
+}
+
+body.access-reduced-motion :is(.profile-avatar-ring, .mobile-bottom-avatar-btn).border-animated,
+body.access-reduced-motion :is(.profile-avatar-ring, .mobile-bottom-avatar-btn).border-animated::before{
+  animation:none !important;
+}
+
+@keyframes rcProfileFrameGlow{
+  0%,100%{filter:brightness(1);box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border, #ff4655) 16%, transparent), 0 0 10px var(--profile-ring-glow, rgba(255,70,85,.35));}
+  50%{filter:brightness(1.24);box-shadow:0 0 0 3px color-mix(in srgb, var(--profile-ring-border, #ff4655) 28%, transparent), 0 0 22px var(--profile-ring-glow, rgba(255,70,85,.58));}
+}
+
+@keyframes rcProfileFrameSweep{
+  0%{transform:rotate(0deg);opacity:.26;}
+  50%{opacity:.72;}
+  100%{transform:rotate(360deg);opacity:.26;}
+}
+
+body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn[class*="border-"] .mobile-bottom-avatar-img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn[class*="border-"] .mobile-bottom-avatar-img{
+  border-radius:inherit !important;
+  clip-path:inherit !important;
+}
