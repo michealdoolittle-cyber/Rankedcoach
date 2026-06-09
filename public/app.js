@@ -1229,7 +1229,6 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const theme = getThemePreset(requestedThemeKey);
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
-  const borderRotate = true;
   const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
@@ -1241,13 +1240,74 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   Array.from(button.classList).forEach((className) => {
     if (className.startsWith("border-")) button.classList.remove(className);
   });
-  button.classList.add(`border-${borderStyle}`);
-  button.classList.toggle("border-animated", borderRotate);
   button.dataset.profileBorder = borderStyle;
   button.dataset.profileBorderColor = borderColor;
   button.style.setProperty("--profile-ring-border", resolvedBorderColor);
   button.style.setProperty("--profile-ring-bg", ringBackground);
   button.style.setProperty("--profile-ring-glow", ringGlow);
+  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor);
+}
+
+function getMobileAvatarFramePath(borderStyle = "standard") {
+  const framePaths = {
+    standard: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    halo: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    double: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    split: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    notched: "M50 8 62 20 80 20 80 38 92 50 80 62 80 80 62 80 50 92 38 80 20 80 20 62 8 50 20 38 20 20 38 20Z",
+    hex: "M28 10H72L94 50 72 90H28L6 50Z",
+    diamond: "M50 5 95 50 50 95 5 50Z",
+    shield: "M50 6 88 20 80 70 50 94 20 70 12 20Z",
+    crown: "M16 72 16 30 34 48 50 18 66 48 84 30 84 72Q50 88 16 72Z",
+    blade: "M16 84 16 22Q16 12 28 12H84V70Q84 84 70 84Z",
+    pulse: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    arc: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    spike: "M50 4 94 34 80 94H20L6 34Z",
+    crosshair: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    vanguard: "M16 16H84V66L50 92 16 66Z"
+  };
+  return framePaths[borderStyle] || framePaths.standard;
+}
+
+function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655") {
+  if (!button) return;
+  const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
+  let frame = button.querySelector(".rc-mobile-avatar-frame");
+  if (!frame) {
+    frame = document.createElement("span");
+    frame.className = "rc-mobile-avatar-frame";
+    frame.setAttribute("aria-hidden", "true");
+    const avatar = button.querySelector(".mobile-bottom-avatar-img");
+    if (avatar) {
+      button.insertBefore(frame, avatar);
+    } else {
+      button.appendChild(frame);
+    }
+  }
+
+  const path = getMobileAvatarFramePath(normalizedStyle);
+  const isArc = normalizedStyle === "arc";
+  const isCrosshair = normalizedStyle === "crosshair";
+  frame.dataset.mobileFrame = normalizedStyle;
+  frame.innerHTML = `
+    <svg class="rc-mobile-avatar-frame-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+      <path class="rc-mobile-frame-fill" d="${path}"></path>
+      <path class="rc-mobile-frame-main" d="${path}" pathLength="100"></path>
+      <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"></path>
+      ${isArc ? `<path class="rc-mobile-frame-arc" d="${path}" pathLength="100"></path>` : ""}
+      ${isCrosshair ? `
+        <g class="rc-mobile-frame-crosshair">
+          <path d="M50 0V22"></path>
+          <path d="M50 78V100"></path>
+          <path d="M0 50H22"></path>
+          <path d="M78 50H100"></path>
+        </g>
+      ` : ""}
+    </svg>
+  `;
+  button.classList.add("has-rc-mobile-frame");
+  button.dataset.mobileFrame = normalizedStyle;
+  button.style.setProperty("--rc-mobile-frame-color", resolvedBorderColor);
 }
 
 function getMobileScrollContainer() {
