@@ -37813,9 +37813,22 @@ function renderBorderGallery(selectedBorder = "standard") {
   const ringColor = getResolvedProfileBorderColor(selectedBorderColor, theme);
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
+  const useMobileFramePreview = isMobileLayoutViewport();
 
   gallery.innerHTML = PROFILE_BORDER_STYLES.map((style) => {
     const isActive = style.value === activeBorder;
+    const avatarPreviewMarkup = useMobileFramePreview
+      ? `
+          <div class="border-card-avatar has-rc-mobile-preview" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --profile-ring-border:${ringColor}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
+            ${getMobileAvatarFrameMarkup(style.value)}
+            <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
+          </div>
+        `
+      : `
+          <div class="border-card-avatar">
+            <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
+          </div>
+        `;
     return `
       <div class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""}" data-border-card="${escapeHtml(style.value)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
         <div
@@ -37830,10 +37843,7 @@ function renderBorderGallery(selectedBorder = "standard") {
             --border-card-surface-2:${colors.card2 || "#0f172a"};
             --border-card-glow:${colors.glow || "rgba(255,70,85,.22)"};
           ">
-          <div class="border-card-avatar has-rc-mobile-preview" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --profile-ring-border:${ringColor}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
-            ${getMobileAvatarFrameMarkup(style.value)}
-            <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
-          </div>
+          ${avatarPreviewMarkup}
           <div class="border-card-copy">
             <div class="border-card-name">${escapeHtml(style.label)}</div>
             <div class="border-card-note">${escapeHtml(style.note || "Profile ring")}</div>
