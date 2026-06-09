@@ -1269,6 +1269,31 @@ function getMobileAvatarFramePath(borderStyle = "standard") {
   return framePaths[borderStyle] || framePaths.standard;
 }
 
+function getMobileAvatarFrameMarkup(borderStyle = "standard") {
+  const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
+  const path = getMobileAvatarFramePath(normalizedStyle);
+  const isArc = normalizedStyle === "arc";
+  const isCrosshair = normalizedStyle === "crosshair";
+  return `
+    <span class="rc-mobile-avatar-frame" data-mobile-frame="${escapeHtml(normalizedStyle)}" aria-hidden="true">
+      <svg class="rc-mobile-avatar-frame-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+        <path class="rc-mobile-frame-fill" d="${path}"></path>
+        <path class="rc-mobile-frame-main" d="${path}" pathLength="100"></path>
+        <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"></path>
+        ${isArc ? `<path class="rc-mobile-frame-arc" d="${path}" pathLength="100"></path>` : ""}
+        ${isCrosshair ? `
+          <g class="rc-mobile-frame-crosshair">
+            <path d="M50 0V22"></path>
+            <path d="M50 78V100"></path>
+            <path d="M0 50H22"></path>
+            <path d="M78 50H100"></path>
+          </g>
+        ` : ""}
+      </svg>
+    </span>
+  `;
+}
+
 function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655") {
   if (!button) return;
   const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
@@ -1285,26 +1310,8 @@ function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolve
     }
   }
 
-  const path = getMobileAvatarFramePath(normalizedStyle);
-  const isArc = normalizedStyle === "arc";
-  const isCrosshair = normalizedStyle === "crosshair";
   frame.dataset.mobileFrame = normalizedStyle;
-  frame.innerHTML = `
-    <svg class="rc-mobile-avatar-frame-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
-      <path class="rc-mobile-frame-fill" d="${path}"></path>
-      <path class="rc-mobile-frame-main" d="${path}" pathLength="100"></path>
-      <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"></path>
-      ${isArc ? `<path class="rc-mobile-frame-arc" d="${path}" pathLength="100"></path>` : ""}
-      ${isCrosshair ? `
-        <g class="rc-mobile-frame-crosshair">
-          <path d="M50 0V22"></path>
-          <path d="M50 78V100"></path>
-          <path d="M0 50H22"></path>
-          <path d="M78 50H100"></path>
-        </g>
-      ` : ""}
-    </svg>
-  `;
+  frame.outerHTML = getMobileAvatarFrameMarkup(normalizedStyle);
   button.classList.add("has-rc-mobile-frame");
   button.dataset.mobileFrame = normalizedStyle;
   button.style.setProperty("--rc-mobile-frame-color", resolvedBorderColor);
@@ -37823,7 +37830,8 @@ function renderBorderGallery(selectedBorder = "standard") {
             --border-card-surface-2:${colors.card2 || "#0f172a"};
             --border-card-glow:${colors.glow || "rgba(255,70,85,.22)"};
           ">
-          <div class="border-card-avatar">
+          <div class="border-card-avatar has-rc-mobile-preview" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --profile-ring-border:${ringColor}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
+            ${getMobileAvatarFrameMarkup(style.value)}
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
           </div>
           <div class="border-card-copy">
