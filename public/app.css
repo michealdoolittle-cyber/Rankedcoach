@@ -46868,3 +46868,32 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-av
   border-color:var(--profile-ring-border, #ff4655) !important;
   box-shadow:0 0 0 1px color-mix(in srgb, var(--profile-ring-border, #ff4655) 48%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
 }
+
+/* Footer avatar frame shape lock: profile border owns the whole footer avatar, image never draws theme frame. */
+body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn[class*="border-"] .mobile-bottom-avatar-img,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn[class*="border-"] .mobile-bottom-avatar-img{
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+
+body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn.border-split,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn.border-split{
+  border-width:2px !important;
+  border-style:dashed !important;
+  border-color:var(--profile-ring-border, #16a34a) !important;
+  border-radius:12px !important;
+}
+
+body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn.border-halo,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn.border-halo{
+  border-style:solid !important;
+  box-shadow:0 0 0 4px color-mix(in srgb, var(--profile-ring-border, #ff4655) 18%, transparent), 0 0 18px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
+}
+
+body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn.border-double,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-avatar-btn.border-double{
+  border-style:solid !important;
+  box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 42%, transparent), 0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 28%, transparent), 0 0 16px var(--profile-ring-glow, rgba(255,70,85,.45)) !important;
+}
