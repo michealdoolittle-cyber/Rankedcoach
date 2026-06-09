@@ -49027,3 +49027,276 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-deskt
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-art{max-height:28px !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta .stats-main-text{font-size:9px !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-meta .stats-sub-text{font-size:8px !important;}
+
+/* Desktop nav/stat correction v22: compact nav, stable avatar, 1/3 reads row. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-header{
+  grid-template-columns:minmax(320px,1fr) minmax(560px,680px) minmax(430px,480px) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right{
+  min-width:430px !important;
+  width:min(480px,25vw) !important;
+  max-width:480px !important;
+  justify-self:end !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel{
+  min-width:430px !important;
+  width:100% !important;
+  max-width:480px !important;
+  height:56px !important;
+  min-height:56px !important;
+  max-height:56px !important;
+  gap:7px !important;
+  padding:5px 8px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-anchor{
+  flex:0 0 46px !important;
+  width:46px !important;
+  min-width:46px !important;
+  max-width:46px !important;
+  height:46px !important;
+  min-height:46px !important;
+  max-height:46px !important;
+  display:grid !important;
+  place-items:center !important;
+  overflow:visible !important;
+  transform:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-wrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring{
+  box-sizing:border-box !important;
+  flex:0 0 42px !important;
+  width:42px !important;
+  min-width:42px !important;
+  max-width:42px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:grid !important;
+  place-items:center !important;
+  position:relative !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  transform:none !important;
+  animation:none !important;
+  overflow:visible !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-wrap::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-wrap::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring::after{
+  content:none !important;
+  display:none !important;
+  animation:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring{
+  border:2px solid var(--profile-ring-border,#ff4655) !important;
+  background:rgba(15,23,42,.92) !important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.10),0 0 12px var(--profile-ring-glow,rgba(255,70,85,.35)) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-img{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:32px !important;
+  min-width:32px !important;
+  max-width:32px !important;
+  height:32px !important;
+  min-height:32px !important;
+  max-height:32px !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  transform:translate(-50%,-50%) !important;
+  object-fit:cover !important;
+  z-index:2 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-rank-icon{
+  position:absolute !important;
+  right:-2px !important;
+  bottom:-2px !important;
+  width:14px !important;
+  min-width:14px !important;
+  max-width:14px !important;
+  height:14px !important;
+  min-height:14px !important;
+  max-height:14px !important;
+  padding:1px !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  transform:none !important;
+  z-index:5 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-info{
+  min-width:0 !important;
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:44px !important;
+  display:grid !important;
+  align-content:center !important;
+  gap:1px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-name,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-sub,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-starting-rr,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-line-main,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-line-sub,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-line-rr{
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-line-main{
+  font-size:12px !important;
+  line-height:1.05 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-line-sub{
+  font-size:10px !important;
+  line-height:1.05 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-line-rr{
+  font-size:9px !important;
+  line-height:1.05 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle){
+  width:42px !important;
+  min-width:42px !important;
+  max-width:42px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  flex:0 0 42px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right :is(.profile-sync-btn,.bug-report-nav-btn,.ask-coach-nav-btn,.profile-dropdown-toggle) svg{
+  width:25px !important;
+  min-width:25px !important;
+  height:25px !important;
+  min-height:25px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
+  grid-template-rows:minmax(104px,128px) minmax(0,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-template-rows:minmax(0,1fr) minmax(0,2fr) !important;
+  grid-template-areas:
+    "performance performance breakdown"
+    "maps agents weapons" !important;
+  gap:12px !important;
+  height:100% !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(2,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  min-height:0 !important;
+  height:100% !important;
+  padding:9px 11px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card #mobileBreakdownNav{
+  display:grid !important;
+  grid-template-columns:42px minmax(0,1fr) 42px !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:100% !important;
+  margin:2px 0 8px !important;
+  flex:0 0 42px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card #mobileBreakdownNav[hidden]{
+  display:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card #mobileBreakdownNav button{
+  width:42px !important;
+  height:42px !important;
+  min-width:42px !important;
+  border-radius:10px !important;
+  display:grid !important;
+  place-items:center !important;
+  border:1px solid rgba(148,163,184,.28) !important;
+  background:linear-gradient(180deg,rgba(51,65,85,.92),rgba(30,41,59,.92)) !important;
+  color:#f8fafc !important;
+  font-weight:900 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card #mobileBreakdownCounter{
+  min-width:0 !important;
+  height:42px !important;
+  display:grid !important;
+  place-items:center !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  border-radius:10px !important;
+  background:rgba(2,6,23,.46) !important;
+  color:#e5edf8 !important;
+  font-weight:900 !important;
+  letter-spacing:.08em !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-breakdown-card #statsBreakdown.stats-breakdown{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height:auto !important;
+  max-height:none !important;
+  display:block !important;
+  overflow:hidden !important;
+  padding:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsBreakdown .stats-breakdown-cardlet:not(.is-mobile-breakdown-active){
+  display:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsBreakdown .stats-breakdown-cardlet.is-mobile-breakdown-active{
+  display:flex !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:100% !important;
+  padding:12px 14px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-column{
+  gap:3px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading{
+  height:22px !important;
+  min-height:22px !important;
+  font-size:8px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading img{
+  width:14px !important;
+  height:14px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card{
+  width:min(100%,72px) !important;
+  height:56px !important;
+  min-height:56px !important;
+  max-height:56px !important;
+  grid-template-rows:10px minmax(0,1fr) 13px !important;
+  gap:2px !important;
+  padding:3px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-name{
+  font-size:7px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-image{
+  max-height:28px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta{
+  padding:0 2px !important;
+  gap:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-meta .stats-sub-text{
+  font-size:6px !important;
+  line-height:.9 !important;
+}
