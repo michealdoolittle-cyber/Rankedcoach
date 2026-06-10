@@ -15152,3 +15152,140 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-e
   background:transparent !important;
   border:0 !important;
 }
+
+/* Desktop stats/profile polish v26: final desktop overrides after mobile bundle load. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsMapsList.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-grid{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(2,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+  gap:8px !important;
+  height:100% !important;
+  max-height:100% !important;
+  overflow:hidden !important;
+  padding:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card{
+  min-height:0 !important;
+  height:100% !important;
+  padding:7px !important;
+  display:grid !important;
+  grid-template-rows:minmax(52px,.76fr) minmax(42px,.44fr) !important;
+  align-content:stretch !important;
+  gap:5px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-image{
+  width:100% !important;
+  height:100% !important;
+  min-height:52px !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta{
+  display:grid !important;
+  place-items:center !important;
+  align-content:center !important;
+  min-height:0 !important;
+  gap:1px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta .stats-main-text{font-size:12px !important;line-height:1 !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta .stats-sub-text{font-size:9px !important;line-height:1 !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-excluded-x{top:calc(7px + 26px) !important;width:52px !important;height:52px !important;font-size:40px !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-card{
+  grid-template-rows:18px minmax(66px,1fr) 25px !important;
+  min-height:124px !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-mini-image{
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap.profile-avatar-wrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame{
+  display:grid !important;
+  place-items:center !important;
+  isolation:isolate !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame .rc-mobile-avatar-frame{
+  top:50% !important;
+  left:50% !important;
+  width:52px !important;
+  height:52px !important;
+  transform:translate(-50%,-50%) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame .profile-avatar-img,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarImg.profile-avatar-img{
+  top:50% !important;
+  left:50% !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:34px !important;
+  height:34px !important;
+  transform:translate(-50%,-50%) !important;
+  object-fit:cover !important;
+  object-position:center top !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame .profile-rank-icon,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileRankIcon.profile-rank-icon{
+  top:calc(50% + 13px) !important;
+  left:calc(50% + 13px) !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:14px !important;
+  height:14px !important;
+  transform:translate(-50%,-50%) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview{
+  position:relative !important;
+  width:58px !important;
+  height:58px !important;
+  min-width:58px !important;
+  min-height:58px !important;
+  margin:0 auto !important;
+  display:grid !important;
+  place-items:center !important;
+  border:0 !important;
+  border-radius:999px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview::after{content:none !important;display:none !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview img{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:34px !important;
+  height:34px !important;
+  border:0 !important;
+  border-radius:999px !important;
+  object-fit:cover !important;
+  object-position:center top !important;
+  transform:translate(-50%,-50%) !important;
+  z-index:4 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:58px !important;
+  height:58px !important;
+  transform:translate(-50%,-50%) !important;
+  z-index:2 !important;
+  pointer-events:none !important;
+  display:block !important;
+  opacity:1 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame-svg{width:100% !important;height:100% !important;display:block !important;overflow:visible !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-fill{fill:var(--profile-ring-bg,#152238) !important;opacity:.72 !important;stroke:none !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main{fill:none !important;stroke:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) !important;stroke-width:7 !important;stroke-linecap:round !important;stroke-linejoin:round !important;filter:drop-shadow(0 0 7px var(--profile-ring-glow,rgba(255,70,85,.45))) !important;animation:rcMobileSvgFrameBreathe 2.8s ease-in-out infinite !important;transform-origin:50% 50% !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint{fill:none !important;stroke:rgba(255,255,255,.96) !important;stroke-width:4 !important;stroke-linecap:round !important;stroke-linejoin:round !important;stroke-dasharray:12 88 !important;stroke-dashoffset:0 !important;filter:drop-shadow(0 0 5px rgba(255,255,255,.72)) !important;animation:rcMobileSvgFrameTrace 1.7s linear infinite !important;transform-origin:50% 50% !important;}
