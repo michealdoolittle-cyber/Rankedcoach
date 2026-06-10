@@ -50007,3 +50007,33 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editP
   rotate:0deg !important;
   scale:1 !important;
 }
+
+/* Diamond nav-right avatar upright lock v30: SVG frame owns the diamond, not the wrapper. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap.border-diamond,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap.border-diamond .profile-avatar-ring,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring.border-diamond,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-ring.has-rc-mobile-frame.border-diamond{
+  transform:none !important;
+  rotate:0deg !important;
+  clip-path:none !important;
+  border-radius:999px !important;
+  border-width:0 !important;
+  border-color:transparent !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap.border-diamond .profile-avatar-img,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap.border-diamond .profile-rank-icon,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring.border-diamond .profile-avatar-img,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring.border-diamond .profile-rank-icon,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-ring.has-rc-mobile-frame.border-diamond .profile-avatar-img,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-ring.has-rc-mobile-frame.border-diamond .profile-rank-icon{
+  transform:translate(-50%,-50%) !important;
+  rotate:0deg !important;
+  clip-path:none !important;
+  border-radius:999px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-ring.has-rc-mobile-frame.border-diamond .rc-mobile-avatar-frame{
+  transform:translate(-50%,-50%) !important;
+  rotate:0deg !important;
+}
