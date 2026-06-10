@@ -1310,7 +1310,7 @@ function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolve
     frame = document.createElement("span");
     frame.className = "rc-mobile-avatar-frame";
     frame.setAttribute("aria-hidden", "true");
-    const avatar = button.querySelector(".mobile-bottom-avatar-img");
+    const avatar = button.querySelector(".mobile-bottom-avatar-img, .profile-avatar-img");
     if (avatar) {
       button.insertBefore(frame, avatar);
     } else {
@@ -37821,7 +37821,7 @@ function renderBorderGallery(selectedBorder = "standard") {
   const ringColor = getResolvedProfileBorderColor(selectedBorderColor, theme);
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
-  const useMobileFramePreview = isMobileLayoutViewport();
+  const useMobileFramePreview = true;
 
   gallery.innerHTML = PROFILE_BORDER_STYLES.map((style) => {
     const isActive = style.value === activeBorder;
@@ -38048,6 +38048,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     ring.style.setProperty("--profile-ring-border", resolvedBorderColor);
     ring.style.setProperty("--profile-ring-bg", ringBackground);
     ring.style.setProperty("--profile-ring-glow", ringGlow);
+    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor);
   }
 
   if (root) {
@@ -43460,7 +43461,7 @@ function renderStatsMapsModel() {
     card.disabled = !canOpen;
     card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded" : ""}`;
     card.innerHTML = `
-      ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true">X</span>` : ""}
+      ${!canOpen ? `<span class="stats-map-excluded-x" aria-hidden="true">X</span>` : ""}
       <img class="stats-map-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)}">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
