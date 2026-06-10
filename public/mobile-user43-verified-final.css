@@ -15289,3 +15289,101 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editP
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-fill{fill:var(--profile-ring-bg,#152238) !important;opacity:.72 !important;stroke:none !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main{fill:none !important;stroke:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) !important;stroke-width:7 !important;stroke-linecap:round !important;stroke-linejoin:round !important;filter:drop-shadow(0 0 7px var(--profile-ring-glow,rgba(255,70,85,.45))) !important;animation:rcMobileSvgFrameBreathe 2.8s ease-in-out infinite !important;transform-origin:50% 50% !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint{fill:none !important;stroke:rgba(255,255,255,.96) !important;stroke-width:4 !important;stroke-linecap:round !important;stroke-linejoin:round !important;stroke-dasharray:12 88 !important;stroke-dashoffset:0 !important;filter:drop-shadow(0 0 5px rgba(255,255,255,.72)) !important;animation:rcMobileSvgFrameTrace 1.7s linear infinite !important;transform-origin:50% 50% !important;}
+
+/* Desktop profile frame cleanup v27: SVG-only nav frame and animated selector previews. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-anchor,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] #profileAvatarWrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-wrap,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-ring,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap[class*="border-"],
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring[class*="border-"]{
+  border:0 !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  clip-path:none !important;
+  filter:none !important;
+  animation:none !important;
+  transform:none !important;
+  overflow:visible !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-anchor::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-anchor::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] #profileAvatarWrap::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] #profileAvatarWrap::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-wrap::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-wrap::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-ring::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel[class*="border-"] .profile-avatar-ring::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap[class*="border-"]::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap[class*="border-"]::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring[class*="border-"]::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring[class*="border-"]::after{
+  content:none !important;
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  animation:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame{
+  position:relative !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  clip-path:none !important;
+  animation:none !important;
+  overflow:visible !important;
+  isolation:isolate !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame[class*="border-"],
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel[class*="border-"] .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame{
+  border-width:0 !important;
+  border-style:none !important;
+  border-color:transparent !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame[class*="border-"]::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame[class*="border-"]::after,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel[class*="border-"] .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame::before,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel[class*="border-"] .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame::after{
+  content:none !important;
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  animation:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame .rc-mobile-avatar-frame,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="halo"] .rc-mobile-frame-fill{opacity:.18 !important;animation:rcMobileSvgFrameSignal 2.4s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="halo"] .rc-mobile-frame-main{stroke-width:5 !important;stroke-dasharray:72 28 !important;animation:rcMobileSvgFrameSweep 3.1s linear infinite,rcMobileSvgFrameGlowBeat 2.4s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="double"] .rc-mobile-frame-main{stroke-width:5 !important;stroke-dasharray:58 6 22 6 !important;animation:rcMobileSvgFrameSpin 4.8s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="split"] .rc-mobile-frame-main{stroke-dasharray:9 7 !important;animation:rcMobileSvgFrameTrace 3.2s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="hex"] .rc-mobile-frame-main{stroke-dasharray:18 8 42 8 !important;animation:rcMobileSvgFrameSweep 2.6s linear infinite,rcMobileSvgFrameGlowBeat 3.2s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="hex"] .rc-mobile-frame-glint{stroke-dasharray:8 92 !important;animation:rcMobileSvgFrameReverseSweep 1.5s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="diamond"] .rc-mobile-frame-main{stroke-dasharray:26 10 26 38 !important;animation:rcMobileSvgFrameSweep 2.15s linear infinite,rcMobileSvgFrameGlowBeat 2.9s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="diamond"] .rc-mobile-frame-glint{stroke-dasharray:6 94 !important;animation:rcMobileSvgFrameSweep 1.2s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="shield"] .rc-mobile-frame-main{stroke-dasharray:48 8 16 28 !important;animation:rcMobileSvgFrameReverseSweep 3.4s linear infinite,rcMobileSvgFrameGlowBeat 2.7s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="shield"] .rc-mobile-frame-glint{stroke-dasharray:14 86 !important;animation:rcMobileSvgFrameSweep 1.9s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="crown"] .rc-mobile-frame-main{stroke-dasharray:12 5 52 31 !important;animation:rcMobileSvgFrameSweep 2.8s linear infinite,rcMobileSvgFrameGlowBeat 2.2s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="crown"] .rc-mobile-frame-glint{stroke-dasharray:7 93 !important;animation:rcMobileSvgFrameReverseSweep 1.35s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="blade"] .rc-mobile-frame-main{stroke-dasharray:66 7 12 15 !important;animation:rcMobileSvgFrameSweep 2s linear infinite,rcMobileSvgFrameGlowBeat 2.6s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="blade"] .rc-mobile-frame-glint{stroke-dasharray:10 90 !important;animation:rcMobileSvgFrameSweep .95s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="pulse"] .rc-mobile-frame-main{stroke-dasharray:100 0 !important;animation:rcMobileSvgFrameGlowBeat 1.55s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="pulse"] .rc-mobile-frame-glint{stroke-dasharray:24 76 !important;animation:rcMobileSvgFrameSweep 1.15s linear infinite,rcMobileSvgFrameBlink 1.15s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="arc"] .rc-mobile-frame-main{stroke-dasharray:60 40 !important;animation:rcMobileSvgFrameTrace 2.6s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="spike"] .rc-mobile-frame-main{stroke-dasharray:24 8 8 8 24 28 !important;animation:rcMobileSvgFrameReverseSweep 2.25s linear infinite,rcMobileSvgFrameGlowBeat 2.1s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="spike"] .rc-mobile-frame-glint{stroke-dasharray:9 91 !important;animation:rcMobileSvgFrameSweep 1.05s linear infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="vanguard"] .rc-mobile-frame-main{stroke-dasharray:40 7 30 23 !important;animation:rcMobileSvgFrameSweep 3s linear infinite,rcMobileSvgFrameGlowBeat 2.8s ease-in-out infinite !important;}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="vanguard"] .rc-mobile-frame-glint{stroke-dasharray:12 88 !important;animation:rcMobileSvgFrameReverseSweep 1.65s linear infinite !important;}
