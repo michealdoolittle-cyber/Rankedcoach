@@ -49971,3 +49971,39 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell
 #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint){
   stroke-dashoffset:0 !important;
 }
+
+/* Diamond border preview art upright lock v29. */
+#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview,
+html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview{
+  transform:none !important;
+  rotate:0deg !important;
+  scale:1 !important;
+  clip-path:none !important;
+}
+#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview img,
+html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview img,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview img{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  transform:translate(-50%,-50%) !important;
+  rotate:0deg !important;
+  scale:1 !important;
+  width:34px !important;
+  min-width:34px !important;
+  max-width:34px !important;
+  height:34px !important;
+  min-height:34px !important;
+  max-height:34px !important;
+  border-radius:999px !important;
+  clip-path:none !important;
+  object-fit:cover !important;
+}
+#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #editProfileModal #editProfileBorderGallery .border-card-diamond .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame{
+  transform:translate(-50%,-50%) !important;
+  rotate:0deg !important;
+  scale:1 !important;
+}
