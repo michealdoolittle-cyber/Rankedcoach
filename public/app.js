@@ -1248,12 +1248,14 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   Array.from(button.classList).forEach((className) => {
     if (className.startsWith("border-")) button.classList.remove(className);
   });
+  button.classList.add(`border-${borderStyle}`);
+  button.classList.toggle("border-animated", !!profile?.profileBorderRotate);
   button.dataset.profileBorder = borderStyle;
   button.dataset.profileBorderColor = borderColor;
   button.style.setProperty("--profile-ring-border", resolvedBorderColor);
   button.style.setProperty("--profile-ring-bg", ringBackground);
   button.style.setProperty("--profile-ring-glow", ringGlow);
-  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor);
+  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, !!profile?.profileBorderRotate);
 }
 
 function getMobileAvatarFramePath(borderStyle = "standard") {
@@ -1302,7 +1304,24 @@ function getMobileAvatarFrameMarkup(borderStyle = "standard") {
   `;
 }
 
-function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655") {
+function setAvatarFrameAnimationState(target, enabled = true) {
+  if (!target) return;
+  target.querySelectorAll(".rc-mobile-frame-fill, .rc-mobile-frame-main, .rc-mobile-frame-glint, .rc-mobile-frame-arc, .rc-mobile-frame-crosshair path").forEach((part) => {
+    if (enabled) {
+      part.style.removeProperty("animation");
+      part.style.removeProperty("animation-name");
+      part.style.removeProperty("animation-duration");
+      part.style.removeProperty("animation-play-state");
+      return;
+    }
+    part.style.setProperty("animation", "none", "important");
+    part.style.setProperty("animation-name", "none", "important");
+    part.style.setProperty("animation-duration", "0s", "important");
+    part.style.setProperty("animation-play-state", "paused", "important");
+  });
+}
+
+function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655", animationsEnabled = true) {
   if (!button) return;
   const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
   let frame = button.querySelector(".rc-mobile-avatar-frame");
@@ -1323,6 +1342,7 @@ function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolve
   button.classList.add("has-rc-mobile-frame");
   button.dataset.mobileFrame = normalizedStyle;
   button.style.setProperty("--rc-mobile-frame-color", resolvedBorderColor);
+  setAvatarFrameAnimationState(button, !!animationsEnabled);
 }
 
 function getMobileScrollContainer() {
@@ -37865,7 +37885,6 @@ function renderBorderGallery(selectedBorder = "standard") {
   const selectBorderCard = (button) => {
     const nextBorder = normalizeProfileBorderStyle(button.getAttribute("data-border-card") || "standard");
     if (borderSelect) borderSelect.value = nextBorder;
-    setProfileBorderRotateToggle(true);
     renderBorderGallery(nextBorder);
     previewEditProfileVisuals();
   };
@@ -37986,7 +38005,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const themeKey = theme.value;
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
-  const borderRotate = true;
+  const borderRotate = !!profile?.profileBorderRotate;
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
@@ -38048,7 +38067,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     ring.style.setProperty("--profile-ring-border", resolvedBorderColor);
     ring.style.setProperty("--profile-ring-bg", ringBackground);
     ring.style.setProperty("--profile-ring-glow", ringGlow);
-    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor);
+    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor, borderRotate);
   }
 
   if (root) {
@@ -39076,7 +39095,7 @@ function saveEditProfileModal() {
     avatarAgent: selectedAvatar,
     profileBorderColor: normalizeProfileBorderColor(selectedBorderColor),
     profileBorder: normalizeProfileBorderStyle(selectedBorder),
-    profileBorderRotate: true,
+    profileBorderRotate: getProfileBorderRotateValue(profile),
     bannerStyle: normalizeProfileBannerStyle(selectedBanner),
     navBackgroundUrl: "",
     accessibility: profile?.accessibility || { contrastMode: "standard", motionMode: "standard", layoutMode: "web" }
@@ -39092,7 +39111,7 @@ function previewEditProfileVisuals() {
   const activeAvatar = document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent;
   const activeBorderColor = normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
   const activeBorder = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
-  const activeBorderRotate = true;
+  const activeBorderRotate = getProfileBorderRotateValue(profile);
   const activeBanner = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
   renderThemeGallery(activeThemeKey);
   renderAvatarGallery(activeAvatar);

@@ -15387,3 +15387,45 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="spike"] .rc-mobile-frame-glint{stroke-dasharray:9 91 !important;animation:rcMobileSvgFrameSweep 1.05s linear infinite !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="vanguard"] .rc-mobile-frame-main{stroke-dasharray:40 7 30 23 !important;animation:rcMobileSvgFrameSweep 3s linear infinite,rcMobileSvgFrameGlowBeat 2.8s ease-in-out infinite !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-avatar-ring.has-rc-mobile-frame,#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview) .rc-mobile-avatar-frame[data-mobile-frame="vanguard"] .rc-mobile-frame-glint{stroke-dasharray:12 88 !important;animation:rcMobileSvgFrameReverseSweep 1.65s linear infinite !important;}
+
+/* Profile frame animation gate v28: slider controls saved frames, Preview controls gallery motion. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-fill,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-main,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-arc,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-crosshair path,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-fill,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-main,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-arc,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-crosshair path,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-fill,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-arc,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-crosshair path{
+  animation:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-main,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-main,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint{
+  stroke-dashoffset:0 !important;
+}
+
+/* Profile frame animation gate v28b: out-specific legacy data-frame animation rules. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path,
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path{
+  animation:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint),
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint),
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint){
+  stroke-dashoffset:0 !important;
+}
