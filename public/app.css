@@ -50294,3 +50294,107 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusC
   font-size:0 !important;
 }
 
+/* Focus dropdown cleanup v42: restore the live trigger and theme every app scrollbar. */
+html body{
+  --rc-scroll-accent:var(--profile-ring-border,var(--rc-mobile-frame-color,var(--theme-accent,var(--accent,#ff4655))));
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .focus-select-shell.has-custom-focus-select{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:auto !important;
+  position:relative !important;
+  flex:0 0 118px !important;
+  width:118px !important;
+  min-width:118px !important;
+  height:38px !important;
+  padding:0 !important;
+  overflow:visible !important;
+  border:none !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  z-index:2800 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .focus-select-shell.has-custom-focus-select > .focus-select-symbol{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomSelect.log-focus-custom-select{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:relative !important;
+  width:100% !important;
+  height:100% !important;
+  z-index:2801 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:38px !important;
+  padding:0 12px !important;
+  border-radius:10px !important;
+  border:1px solid rgba(148,163,184,.34) !important;
+  background:linear-gradient(180deg, rgba(51,65,85,.95), rgba(30,41,59,.98)) !important;
+  color:#f1f5f9 !important;
+  box-shadow:none !important;
+  font:800 15px/1.15 var(--font-display,inherit) !important;
+  letter-spacing:.02em !important;
+  cursor:pointer !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger:hover,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger[aria-expanded="true"]{
+  background:linear-gradient(180deg, rgba(71,85,105,.98), rgba(30,41,59,1)) !important;
+  border-color:rgba(203,213,225,.42) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger .log-focus-custom-chevron{
+  display:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger::after{
+  content:"" !important;
+  display:block !important;
+  flex:0 0 auto !important;
+  width:8px !important;
+  height:8px !important;
+  margin-left:8px !important;
+  border-right:2px solid currentColor !important;
+  border-bottom:2px solid currentColor !important;
+  transform:rotate(45deg) translateY(-2px) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu{
+  --rc-scroll-accent:var(--profile-ring-border,var(--rc-mobile-frame-color,var(--theme-accent,var(--accent,#ff4655))));
+  display:block !important;
+  top:calc(100% + 6px) !important;
+  right:0 !important;
+  left:auto !important;
+  width:max-content !important;
+  min-width:190px !important;
+  max-width:min(280px,calc(100vw - 32px)) !important;
+  max-height:260px !important;
+  overflow-y:scroll !important;
+  scrollbar-gutter:stable both-edges !important;
+  scrollbar-width:thin !important;
+  scrollbar-color:var(--rc-scroll-accent) rgba(15,23,42,.94) !important;
+  z-index:5000 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu[hidden]{
+  display:none !important;
+}
+html body :is(.logging-feed,.logging-feed-card,#logFeed,.log-focus-custom-menu,.profile-dropdown,.profile-switcher,.goal-rank-custom-menu,.lens-modal-body,#statsAgentsList,.stats-agent-desktop-column,.stats-agent-list,.stats-breakdown){
+  scrollbar-color:var(--rc-scroll-accent) rgba(15,23,42,.88) !important;
+}
+html body :is(.logging-feed,.logging-feed-card,#logFeed,.log-focus-custom-menu,.profile-dropdown,.profile-switcher,.goal-rank-custom-menu,.lens-modal-body,#statsAgentsList,.stats-agent-desktop-column,.stats-agent-list,.stats-breakdown)::-webkit-scrollbar-thumb,
+html body *::-webkit-scrollbar-thumb{
+  background:var(--rc-scroll-accent) !important;
+  border-color:rgba(15,23,42,.88) !important;
+}
+html body :is(.logging-feed,.logging-feed-card,#logFeed,.log-focus-custom-menu,.profile-dropdown,.profile-switcher,.goal-rank-custom-menu,.lens-modal-body,#statsAgentsList,.stats-agent-desktop-column,.stats-agent-list,.stats-breakdown)::-webkit-scrollbar-thumb:hover,
+html body *::-webkit-scrollbar-thumb:hover{
+  background:color-mix(in srgb,var(--rc-scroll-accent) 82%,white 18%) !important;
+}
+
