@@ -50241,7 +50241,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusC
   cursor:pointer !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger::after{
-  content:"?" !important;
+  content:"" !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
@@ -50281,5 +50281,16 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusC
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu[hidden]{
   display:none !important;
+}
+/* Focus dropdown cleanup v41: draw caret with CSS, no glyph encoding risk. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger::after{
+  content:"" !important;
+  width:7px !important;
+  height:7px !important;
+  border-right:2px solid #dbeafe !important;
+  border-bottom:2px solid #dbeafe !important;
+  transform:rotate(45deg) translateY(-2px) !important;
+  margin-left:2px !important;
+  font-size:0 !important;
 }
 
