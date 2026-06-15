@@ -50096,6 +50096,22 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusC
   min-width:100% !important;
   max-width:min(270px,calc(100vw - 32px)) !important;
   z-index:4000 !important;
+  max-height:260px !important;
+  overflow-y:scroll !important;
+  scrollbar-width:auto !important;
+  scrollbar-color:#ff4655 rgba(15,23,42,.92) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu::-webkit-scrollbar{
+  width:10px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu::-webkit-scrollbar-track{
+  background:rgba(15,23,42,.92) !important;
+  border-radius:999px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu::-webkit-scrollbar-thumb{
+  background:#ff4655 !important;
+  border:2px solid rgba(15,23,42,.92) !important;
+  border-radius:999px !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu .log-focus-custom-option{
   width:100% !important;

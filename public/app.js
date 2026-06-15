@@ -13230,33 +13230,6 @@ function setupLogFocusCustomDropdown() {
   const shell = select?.closest(".focus-select-shell");
   if (!select || !shell) return;
 
-  if (!isMobileLayoutViewport()) {
-    document.getElementById("logFocusCustomSelect")?.remove();
-    shell.classList.remove("has-custom-focus-select");
-    select.classList.remove("log-focus-native-select");
-    select.removeAttribute("aria-hidden");
-    select.tabIndex = 0;
-    select.style.removeProperty("display");
-    select.style.removeProperty("opacity");
-    select.style.removeProperty("pointer-events");
-    if (shell.dataset.desktopFocusBrowseBound !== "1") {
-      shell.addEventListener("click", (event) => {
-        const target = event.target;
-        if (target === select) return;
-        event.preventDefault();
-        event.stopPropagation();
-        select.focus();
-        if (typeof select.showPicker === "function") {
-          select.showPicker();
-        } else {
-          select.click();
-        }
-      });
-      shell.dataset.desktopFocusBrowseBound = "1";
-    }
-    return;
-  }
-
   select.classList.add("log-focus-native-select");
   select.setAttribute("aria-hidden", "true");
   select.tabIndex = -1;
