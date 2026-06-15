@@ -50398,3 +50398,61 @@ html body *::-webkit-scrollbar-thumb:hover{
   background:color-mix(in srgb,var(--rc-scroll-accent) 82%,white 18%) !important;
 }
 
+/* Focus dropdown cleanup v43: body-portal menu cannot be clipped by the form row. */
+html body #logFocusCustomMenu.log-focus-custom-menu{
+  --rc-scroll-accent:var(--profile-ring-border,var(--rc-mobile-frame-color,var(--theme-accent,var(--accent,#ff4655))));
+  position:fixed !important;
+  display:block !important;
+  width:max-content !important;
+  min-width:190px !important;
+  max-width:min(280px,calc(100vw - 24px)) !important;
+  max-height:min(300px,calc(100vh - 96px)) !important;
+  overflow-y:scroll !important;
+  overflow-x:hidden !important;
+  scrollbar-gutter:stable both-edges !important;
+  scrollbar-width:thin !important;
+  scrollbar-color:var(--rc-scroll-accent) rgba(15,23,42,.94) !important;
+  padding:4px !important;
+  border:1px solid color-mix(in srgb,var(--rc-scroll-accent) 64%,rgba(148,163,184,.32)) !important;
+  border-radius:12px !important;
+  background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.98)) !important;
+  box-shadow:0 22px 44px rgba(0,0,0,.52),0 0 0 1px rgba(255,255,255,.04) !important;
+  z-index:2147483000 !important;
+}
+html body #logFocusCustomMenu.log-focus-custom-menu[hidden]{
+  display:none !important;
+}
+html body #logFocusCustomMenu.log-focus-custom-menu::-webkit-scrollbar{
+  width:10px !important;
+  display:block !important;
+}
+html body #logFocusCustomMenu.log-focus-custom-menu::-webkit-scrollbar-track{
+  background:rgba(15,23,42,.94) !important;
+  border-radius:999px !important;
+}
+html body #logFocusCustomMenu.log-focus-custom-menu::-webkit-scrollbar-thumb{
+  background:var(--rc-scroll-accent) !important;
+  border:2px solid rgba(15,23,42,.94) !important;
+  border-radius:999px !important;
+}
+html body #logFocusCustomMenu.log-focus-custom-menu .log-focus-custom-option{
+  display:block !important;
+  width:100% !important;
+  min-width:170px !important;
+  max-width:260px !important;
+  padding:10px 12px !important;
+  border:0 !important;
+  border-radius:9px !important;
+  background:transparent !important;
+  color:#f8fafc !important;
+  font:800 13px/1.15 var(--font-display,inherit) !important;
+  letter-spacing:.01em !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+  cursor:pointer !important;
+}
+html body #logFocusCustomMenu.log-focus-custom-menu .log-focus-custom-option:hover,
+html body #logFocusCustomMenu.log-focus-custom-menu .log-focus-custom-option.is-active{
+  background:color-mix(in srgb,var(--rc-scroll-accent) 32%,rgba(30,41,59,.92)) !important;
+}
+

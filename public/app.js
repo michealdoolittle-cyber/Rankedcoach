@@ -13177,6 +13177,24 @@ function closeLogFocusCustomDropdown() {
   trigger?.setAttribute("aria-expanded", "false");
 }
 
+function positionLogFocusCustomDropdown() {
+  const trigger = document.getElementById("logFocusCustomTrigger");
+  const menu = document.getElementById("logFocusCustomMenu");
+  if (!trigger || !menu || menu.hidden) return;
+  const rect = trigger.getBoundingClientRect();
+  const viewportPadding = 12;
+  const requestedWidth = Math.min(280, Math.max(190, rect.width));
+  menu.style.minWidth = `${requestedWidth}px`;
+  const menuWidth = Math.min(280, Math.max(requestedWidth, menu.offsetWidth || requestedWidth));
+  const maxLeft = Math.max(viewportPadding, window.innerWidth - menuWidth - viewportPadding);
+  const left = Math.min(maxLeft, Math.max(viewportPadding, rect.right - menuWidth));
+  const top = Math.min(rect.bottom + 6, window.innerHeight - viewportPadding);
+  menu.style.position = "fixed";
+  menu.style.top = `${Math.max(viewportPadding, top)}px`;
+  menu.style.left = `${left}px`;
+  menu.style.right = "auto";
+}
+
 function syncLogFocusCustomDropdown() {
   const select = document.getElementById("logFocusSelect");
   const valueEl = document.getElementById("logFocusCustomValue");
@@ -13250,13 +13268,20 @@ function setupLogFocusCustomDropdown() {
         <span id="logFocusCustomValue"></span>
         <span class="log-focus-custom-chevron" aria-hidden="true">v</span>
       </button>
-      <div id="logFocusCustomMenu" class="log-focus-custom-menu" role="listbox" hidden></div>
     `;
     shell.appendChild(customShell);
   }
+  let menu = document.getElementById("logFocusCustomMenu");
+  if (!menu) {
+    menu = document.createElement("div");
+    menu.id = "logFocusCustomMenu";
+    menu.className = "log-focus-custom-menu";
+    menu.role = "listbox";
+    menu.hidden = true;
+  }
+  document.body.appendChild(menu);
 
   const trigger = document.getElementById("logFocusCustomTrigger");
-  const menu = document.getElementById("logFocusCustomMenu");
   if (!trigger || !menu) return;
 
   menu.innerHTML = "";
@@ -13281,6 +13306,7 @@ function setupLogFocusCustomDropdown() {
       menu.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
       syncLogFocusCustomDropdown();
+      positionLogFocusCustomDropdown();
     }
   });
 
@@ -13295,12 +13321,14 @@ function setupLogFocusCustomDropdown() {
   });
 
   document.addEventListener("click", (e) => {
-    if (!customShell.contains(e.target)) closeLogFocusCustomDropdown();
+    if (!customShell.contains(e.target) && !menu.contains(e.target)) closeLogFocusCustomDropdown();
   });
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeLogFocusCustomDropdown();
   });
+  window.addEventListener("resize", positionLogFocusCustomDropdown);
+  window.addEventListener("scroll", positionLogFocusCustomDropdown, true);
 
   select.dataset.logFocusCustomBound = "1";
   syncLogFocusCustomDropdown();
