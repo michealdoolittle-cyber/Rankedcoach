@@ -4459,7 +4459,21 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 
 function getPlayerModel() {
   const importedAnalytics = getActiveProfile()?.trackerAnalytics || null;
-  return buildPlayerModel(matches, logEntries, importedAnalytics);
+  const actOptions = importedAnalytics?.acts || [];
+  const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
+    ? activeStatsActLabel
+    : importedAnalytics?.currentAct || "";
+  const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
+  const actMatches = shouldFilterByAct
+    ? (matches || []).filter((match) => String(match?.metadata?.demoAct || match?.metadata?.act || "") === selectedAct)
+    : matches;
+  const actLogs = shouldFilterByAct
+    ? (logEntries || []).filter((entry) => String(entry?.demoAct || entry?.act || "") === selectedAct)
+    : logEntries;
+  const scopedAnalytics = importedAnalytics
+    ? { ...importedAnalytics, currentAct: selectedAct || importedAnalytics.currentAct || "Current Window" }
+    : null;
+  return buildPlayerModel(actMatches, actLogs, scopedAnalytics);
 }
 
 function summarizeAgentMapPerformance(matchEntries = matches) {
@@ -9346,111 +9360,158 @@ function openGuestTutorialComplete() {
   showModalById?.("guestTutorialCompleteModal");
 }
 
-function buildClientTutorialDemoMatches(count = 50) {
-  const sessionPlans = [
-    { daysAgo: 28, count: 5 },
-    { daysAgo: 24, count: 4 },
-    { daysAgo: 21, count: 6 },
-    { daysAgo: 17, count: 3 },
-    { daysAgo: 13, count: 7 },
-    { daysAgo: 9, count: 5 },
-    { daysAgo: 6, count: 4 },
-    { daysAgo: 3, count: 6 },
-    { daysAgo: 1, count: 5 },
-    { daysAgo: 0, count: 5 }
+function buildClientTutorialDemoMatches(count = 750) {
+  const actPlans = [
+    {
+      label: "Season 2025 Act 5",
+      start: "2025-08-20T18:00:00",
+      end: "2025-10-15T22:00:00",
+      targetWins: 64,
+      winMod: 7,
+      winRemainderMax: 3,
+      rrWin: 16,
+      rrLoss: -18,
+      moodBase: "Tilted",
+      noteTheme: "early ranked chaos, solo swings, panic sprays, and comms breaking down after close rounds",
+      maps: { Split: -10, Abyss: -8, Breeze: -6, Haven: 3, Bind: 0, Pearl: -3, Fracture: -7, Corrode: -4 },
+      profiles: [
+        { agent: "Reyna", weapon: "Vandal", focus: "Duel Discipline", kill: 5, death: 4, assist: -2, hs: 2 },
+        { agent: "Phoenix", weapon: "Spectre", focus: "Self Comms", kill: 2, death: 3, assist: 0, hs: -2 },
+        { agent: "Sage", weapon: "Phantom", focus: "Team Comms", kill: -3, death: 1, assist: 5, hs: -1 },
+        { agent: "Cypher", weapon: "Judge", focus: "Awareness Check", kill: 0, death: 2, assist: 2, hs: -7 }
+      ]
+    },
+    {
+      label: "Season 2025 Act 6",
+      start: "2025-10-15T18:00:00",
+      end: "2026-01-07T22:00:00",
+      targetWins: 70,
+      winMod: 15,
+      winRemainderMax: 6,
+      rrWin: 17,
+      rrLoss: -17,
+      moodBase: "Annoyed",
+      noteTheme: "sentinel comfort, stronger info, low damage, and setups that were too locked to one site",
+      maps: { Split: -5, Abyss: -7, Breeze: -2, Haven: 4, Bind: 3, Pearl: 2, Fracture: -6, Corrode: 1 },
+      profiles: [
+        { agent: "Cypher", weapon: "Guardian", focus: "Round Survivability", kill: -1, death: -2, assist: 4, hs: 5 },
+        { agent: "Killjoy", weapon: "Vandal", focus: "Awareness Check", kill: 0, death: -1, assist: 5, hs: 2 },
+        { agent: "Sage", weapon: "Phantom", focus: "Support Value", kill: -3, death: -1, assist: 8, hs: -1 },
+        { agent: "Deadlock", weapon: "Spectre", focus: "Retake Timing", kill: -2, death: 0, assist: 4, hs: -3 }
+      ]
+    },
+    {
+      label: "Season 2026 Act 1",
+      start: "2026-01-07T18:00:00",
+      end: "2026-03-18T22:00:00",
+      targetWins: 81,
+      winMod: 25,
+      winRemainderMax: 13,
+      rrWin: 18,
+      rrLoss: -16,
+      moodBase: "Focused",
+      noteTheme: "controller climb, better smoke timing, safer rotates, and stronger post-plant calls",
+      maps: { Split: -2, Abyss: -4, Breeze: 1, Haven: 6, Bind: 5, Pearl: 6, Fracture: -3, Lotus: 7 },
+      profiles: [
+        { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 1, death: -1, assist: 6, hs: 1 },
+        { agent: "Brimstone", weapon: "Phantom", focus: "Team Utility", kill: -2, death: -1, assist: 8, hs: -1 },
+        { agent: "Clove", weapon: "Vandal", focus: "Post-Plant Control", kill: 2, death: 0, assist: 5, hs: 3 },
+        { agent: "Harbor", weapon: "Spectre", focus: "Utility Timing", kill: -3, death: -2, assist: 9, hs: -2 }
+      ]
+    },
+    {
+      label: "Season 2026 Act 2",
+      start: "2026-03-18T18:00:00",
+      end: "2026-04-29T22:00:00",
+      targetWins: 74,
+      winMod: 23,
+      winRemainderMax: 11,
+      rrWin: 17,
+      rrLoss: -17,
+      moodBase: "Frustrated",
+      noteTheme: "aggressive fill games, shotgun success on low buys, rifle rounds slipping, and role swaps hurting consistency",
+      maps: { Split: -8, Abyss: -5, Breeze: -3, Haven: 7, Bind: 1, Pearl: 3, Lotus: -6, Corrode: 4 },
+      profiles: [
+        { agent: "Omen", weapon: "Judge", focus: "Eco Conversion", kill: 4, death: 1, assist: 4, hs: -8 },
+        { agent: "Raze", weapon: "Judge", focus: "Positioning", kill: 5, death: 4, assist: 0, hs: -7 },
+        { agent: "Neon", weapon: "Vandal", focus: "Trade Conversion", kill: 4, death: 5, assist: -1, hs: 1 },
+        { agent: "Sova", weapon: "Phantom", focus: "Utility Timing", kill: 0, death: 0, assist: 5, hs: 1 }
+      ]
+    },
+    {
+      label: "Season 2026 Act 3",
+      start: "2026-04-29T18:00:00",
+      end: "2026-06-15T22:00:00",
+      targetWins: 87,
+      winMod: 12,
+      winRemainderMax: 6,
+      rrWin: 19,
+      rrLoss: -15,
+      moodBase: "Composed",
+      noteTheme: "more stable agent pool, cleaner trades, stronger controller calls, and fewer tilt carryover games",
+      maps: { Split: 2, Abyss: -2, Breeze: 1, Haven: 8, Bind: 5, Pearl: 7, Lotus: -4, Corrode: 4 },
+      profiles: [
+        { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 2, death: -1, assist: 6, hs: 2 },
+        { agent: "Sova", weapon: "Vandal", focus: "Utility Timing", kill: 1, death: -1, assist: 8, hs: 4 },
+        { agent: "Jett", weapon: "Vandal", focus: "Trade Conversion", kill: 5, death: 1, assist: 1, hs: 6 },
+        { agent: "Killjoy", weapon: "Phantom", focus: "Round Survivability", kill: 0, death: -3, assist: 5, hs: 2 }
+      ]
+    }
   ];
-  const mapRotation = [
-    "Haven", "Split", "Bind", "Abyss", "Pearl", "Fracture", "Breeze", "Corrode",
-    "Split", "Abyss", "Bind", "Pearl", "Haven", "Split", "Fracture", "Breeze",
-    "Corrode", "Pearl", "Abyss", "Split", "Haven", "Bind", "Breeze", "Fracture"
-  ];
-  const mapOutcomePattern = {
-    Haven: ["win", "win", "loss", "win"],
-    Bind: ["win", "loss", "win"],
-    Breeze: ["loss", "win", "loss"],
-    Corrode: ["win", "loss", "win", "loss"],
-    Pearl: ["win", "win", "loss", "win"],
-    Split: ["loss", "loss", "win", "loss"],
-    Abyss: ["loss", "win", "loss", "loss"],
-    Fracture: ["loss", "loss", "loss", "win"]
-  };
-  const playProfiles = [
-    { agent: "Jett", weapon: "Vandal", focus: "Trade Conversion", scenario: "clean rifle entries with one overheat after spike plant", killShift: 3, deathShift: 0, assistShift: 1, hsShift: 5 },
-    { agent: "Neon", weapon: "Judge", focus: "Positioning", scenario: "fast judge tempo created multikills but also risky solo deaths", killShift: 7, deathShift: 5, assistShift: -1, hsShift: -8 },
-    { agent: "Sova", weapon: "Phantom", focus: "Utility Timing", scenario: "recon timing helped trades but late darts slowed retakes", killShift: 0, deathShift: -1, assistShift: 5, hsShift: 1 },
-    { agent: "Killjoy", weapon: "Vandal", focus: "Round Survivability", scenario: "site anchors stayed alive longer but retake comms were late", killShift: -1, deathShift: -2, assistShift: 3, hsShift: 2 },
-    { agent: "Brimstone", weapon: "Phantom", focus: "Team Utility", scenario: "smokes supported team hits but post-plant spacing broke twice", killShift: -2, deathShift: 0, assistShift: 6, hsShift: -1 },
-    { agent: "Raze", weapon: "Judge", focus: "Eco Conversion", scenario: "shotgun burst rounds looked flashy but did not always convert", killShift: 5, deathShift: 3, assistShift: 0, hsShift: -6 },
-    { agent: "Cypher", weapon: "Guardian", focus: "Awareness Check", scenario: "trap info was strong, but rotations were sometimes too slow", killShift: 1, deathShift: -1, assistShift: 2, hsShift: 7 },
-    { agent: "Sage", weapon: "Spectre", focus: "Support Value", scenario: "support utility stabilized low buys but damage output dipped", killShift: -3, deathShift: -1, assistShift: 7, hsShift: -2 },
-    { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", scenario: "one-way smoke value was strong while lurk timing was inconsistent", killShift: 1, deathShift: 1, assistShift: 4, hsShift: 0 },
-    { agent: "Reyna", weapon: "Vandal", focus: "Duel Discipline", scenario: "direct duels were strong but dismiss exits came too late in losses", killShift: 5, deathShift: 2, assistShift: -2, hsShift: 4 }
-  ];
-  const mapUsage = new Map();
+  const mapRotation = ["Haven", "Split", "Bind", "Abyss", "Pearl", "Fracture", "Breeze", "Corrode", "Lotus"];
   const matchesOut = [];
+  const maxMatches = Math.max(1, safeNumber(count, 750));
 
-  sessionPlans.forEach((session, sessionIndex) => {
-    for (let gameInSession = 0; gameInSession < session.count && matchesOut.length < count; gameInSession += 1) {
-      const index = matchesOut.length;
-      const profile = playProfiles[(index + sessionIndex) % playProfiles.length];
-      const map = mapRotation[index % mapRotation.length];
-      const mapCount = mapUsage.get(map) || 0;
-      const pattern = mapOutcomePattern[map] || ["win", "loss"];
-      const result = pattern[mapCount % pattern.length];
-      mapUsage.set(map, mapCount + 1);
-
+  actPlans.forEach((act, actIndex) => {
+    const actStart = new Date(act.start);
+    for (let actGameIndex = 0; actGameIndex < 150 && matchesOut.length < maxMatches; actGameIndex += 1) {
+      const globalIndex = matchesOut.length;
+      const profile = act.profiles[actGameIndex % act.profiles.length];
+      const map = mapRotation[(actGameIndex + actIndex * 2) % mapRotation.length];
+      const mapShift = safeNumber(act.maps[map]);
+      const winCutoff = Math.max(20, Math.min(130, act.targetWins + mapShift));
+      const result = ((actGameIndex * act.winMod + actIndex * 9) % 150) < winCutoff ? "win" : "loss";
       const isWin = result === "win";
-      const oddWeaponProfile = ["Judge", "Bucky", "Shorty"].includes(profile.weapon);
+      const offMetaWeapon = ["Judge", "Bucky", "Shorty", "Spectre"].includes(profile.weapon);
       const rr = isWin
-        ? Math.max(7, 14 + (index % 8) - (oddWeaponProfile ? 5 : 0))
-        : -(14 + (index % 10) + (oddWeaponProfile ? 5 : 0));
-      const kills = Math.max(4, 13 + profile.killShift + (isWin ? 4 : 0) + (index % 6));
-      const deaths = Math.max(5, 13 + profile.deathShift + (isWin ? -3 : 3) + (index % 4));
-      const assists = Math.max(0, 3 + profile.assistShift + (index % 5));
-      const acs = Math.round(150 + kills * 5.8 + assists * 3.1 - deaths * 1.4);
-      const adr = Math.round(98 + kills * 2.5 + assists * 1.6 - deaths * 0.9);
-      const hs = Math.max(6, Math.min(41, 18 + profile.hsShift + (index % 11)));
-      const sessionDate = new Date();
-      sessionDate.setDate(sessionDate.getDate() - session.daysAgo);
-      sessionDate.setHours(18 + Math.floor(gameInSession / 2), (gameInSession % 2) * 32, 0, 0);
-      const playedAt = sessionDate.toISOString();
-
+        ? Math.max(8, act.rrWin + (actGameIndex % 5) - (offMetaWeapon ? 2 : 0))
+        : -(Math.max(8, act.rrLoss + (actGameIndex % 4) + (offMetaWeapon ? 2 : 0)));
+      const kills = Math.max(3, 13 + profile.kill + (isWin ? 4 : 0) + (actGameIndex % 6));
+      const deaths = Math.max(4, 14 + profile.death + (isWin ? -3 : 3) + (actGameIndex % 4));
+      const assists = Math.max(0, 3 + profile.assist + (actGameIndex % 5));
+      const acs = Math.round(142 + kills * 6.1 + assists * 2.6 - deaths * 1.2 + (isWin ? 8 : -4));
+      const adr = Math.round(95 + kills * 2.8 + assists * 1.3 - deaths * 0.8 + (isWin ? 5 : -2));
+      const hs = Math.max(6, Math.min(45, 17 + profile.hs + actIndex * 2 + (actGameIndex % 9)));
+      const actEnd = new Date(act.end || act.start);
+      const actSpanMs = Math.max(1, actEnd.getTime() - actStart.getTime());
+      const playedAtDate = new Date(actStart.getTime() + Math.round((actSpanMs * actGameIndex) / 149));
+      playedAtDate.setHours(17 + (actGameIndex % 4), (actGameIndex % 3) * 18, 0, 0);
+      const playedAt = playedAtDate.toISOString();
       const rounds = Array.from({ length: 24 }, (_, roundIndex) => {
         const roundNumber = roundIndex + 1;
-        const half = roundNumber <= 12 ? 0 : 1;
-        const roundInHalf = half ? roundNumber - 12 : roundNumber;
-        const pistolWon = isWin ? (index + half) % 4 !== 1 : (index + half) % 4 === 0;
-        const secondRoundWon = pistolWon ? (isWin || (index + half) % 3 === 0) : false;
-        let buyType = "full-buy";
-
-        if (roundInHalf === 1) {
-          buyType = "pistol";
-        } else if (roundInHalf === 2) {
-          buyType = pistolWon ? "bonus" : "save";
-        } else if (roundInHalf === 3) {
-          buyType = pistolWon && secondRoundWon ? "bonus" : "full-buy";
-        } else if (roundIndex % 6 === 0) {
-          buyType = "save";
-        } else if (roundIndex % 5 === 0) {
-          buyType = "light-buy";
-        }
-
+        const roundInHalf = roundNumber <= 12 ? roundNumber : roundNumber - 12;
+        const pistolWon = isWin ? (actGameIndex + roundIndex) % 4 !== 1 : (actGameIndex + roundIndex) % 4 === 0;
+        const buyType = roundInHalf === 1
+          ? "pistol"
+          : roundInHalf === 2
+            ? (pistolWon ? "bonus" : "save")
+            : roundIndex % 7 === 0
+              ? "save"
+              : roundIndex % 5 === 0
+                ? "light-buy"
+                : "full-buy";
         const roundWon = roundInHalf === 1
           ? pistolWon
-          : roundInHalf === 2
-            ? secondRoundWon
-            : isWin
-              ? (roundIndex % 5 !== 1)
-              : (roundIndex % 6 === 0 || roundIndex % 7 === 3);
-        const sidearm = index % 2 === 0 ? "Ghost" : "Sheriff";
+          : isWin
+            ? roundIndex % 5 !== 1
+            : roundIndex % 6 === 0 || roundIndex % 7 === 3;
         const roundWeapon = buyType === "pistol"
-          ? sidearm
+          ? (actGameIndex % 2 ? "Sheriff" : "Ghost")
           : buyType === "save"
-            ? (oddWeaponProfile ? "Shorty" : "Sheriff")
+            ? (offMetaWeapon ? "Shorty" : "Sheriff")
             : buyType === "light-buy"
-              ? (oddWeaponProfile ? "Judge" : "Spectre")
+              ? (offMetaWeapon ? profile.weapon : "Spectre")
               : profile.weapon;
-
         return {
           round: roundNumber,
           roundWon,
@@ -9461,8 +9522,8 @@ function buildClientTutorialDemoMatches(count = 50) {
       });
 
       matchesOut.push({
-        id: `tutorial_demo_${index + 1}`,
-        matchId: `tutorial_demo_${index + 1}`,
+        id: `tutorial_demo_${globalIndex + 1}`,
+        matchId: `tutorial_demo_${globalIndex + 1}`,
         source: "demo-fixture",
         result,
         rr,
@@ -9470,17 +9531,18 @@ function buildClientTutorialDemoMatches(count = 50) {
         map,
         createdAt: playedAt,
         metadata: {
-          matchId: `tutorial_demo_${index + 1}`,
+          matchId: `tutorial_demo_${globalIndex + 1}`,
           result,
           agent: profile.agent,
           mapName: map,
           playedAt,
           mode: "Competitive",
+          demoAct: act.label,
           demoFocus: profile.focus,
-          demoScenario: profile.scenario,
+          demoScenario: act.noteTheme,
           demoWeapon: profile.weapon,
-          demoSessionIndex: sessionIndex + 1,
-          demoGameInSession: gameInSession + 1
+          demoSessionIndex: Math.floor(actGameIndex / 5) + 1,
+          demoGameInSession: (actGameIndex % 5) + 1
         },
         segments: [{
           type: "overview",
@@ -9499,6 +9561,20 @@ function buildClientTutorialDemoMatches(count = 50) {
   });
 
   return matchesOut;
+}
+
+function buildClientTutorialDemoAnalytics() {
+  return {
+    currentAct: "Season 2026 Act 3",
+    acts: [
+      "Season 2026 Act 3",
+      "Season 2026 Act 2",
+      "Season 2026 Act 1",
+      "Season 2025 Act 6",
+      "Season 2025 Act 5"
+    ],
+    demoProfileArc: "Five-act RankedCoach fixture: chaotic fill start, sentinel plateau, controller climb, aggressive fill regression, and current balanced improvement."
+  };
 }
 
 async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true } = {}) {
@@ -9919,6 +9995,7 @@ let suppressImprovementTimelineAnimationUntil = 0;
 let tooltip = null;
 let crosshair = null;
 let selectedChartTooltipRaf = 0;
+let activeStatsActLabel = "";
 
 // ========================
 // LOG SYNC STATE
@@ -36765,6 +36842,7 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
     }[String(role || "").toLowerCase()] || { rolePlan: 74, utility: 74, entry: 72, spacing: 72 };
     const resultBoost = result === "win" ? 8 : result === "loss" ? -6 : 2;
     const focus = match?.metadata?.demoFocus || fallbackFocusOptions[index % fallbackFocusOptions.length];
+    const demoAct = match?.metadata?.demoAct || "";
     const mood = result === "win"
       ? moods[index % 4]
       : moods[4 + (index % 4)];
@@ -36785,6 +36863,8 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
       lockedOutcome: true,
       source: match?.source || "demo-match",
       createdAt,
+      demoAct,
+      act: demoAct,
       agent: match?.metadata?.agent || "Jett",
       focus,
       map: match?.metadata?.mapName || "Unknown",
@@ -42384,6 +42464,9 @@ function applyImportedMatches(matchList = [], options = {}){
   }
 
   if(options.source === "demo-fixture"){
+    profile.startingRR = 320;
+    profile.startingRRDate = "";
+    profile.startingRRSource = "demo-progression";
     logEntries = buildDemoLogEntriesFromMatches(normalized);
     saveLogEntries();
   }
@@ -42414,10 +42497,11 @@ function applyImportedMatches(matchList = [], options = {}){
 
 async function importDemoMatches(options = {}){
   if (options.preferBuiltIn) {
-    const matchList = buildClientTutorialDemoMatches(50);
+    const matchList = buildClientTutorialDemoMatches(750);
+    activeStatsActLabel = "Season 2026 Act 3";
     applyImportedMatches(matchList, {
       source: "demo-fixture",
-      analytics: null
+      analytics: buildClientTutorialDemoAnalytics()
     });
     return {
       count: matchList.length,
@@ -42450,10 +42534,11 @@ async function importDemoMatches(options = {}){
     };
   } catch (error) {
     console.warn("Demo endpoint unavailable; using built-in tutorial fixture.", error);
-    const matchList = buildClientTutorialDemoMatches(50);
+    const matchList = buildClientTutorialDemoMatches(750);
+    activeStatsActLabel = "Season 2026 Act 3";
     applyImportedMatches(matchList, {
       source: "demo-fixture",
-      analytics: null
+      analytics: buildClientTutorialDemoAnalytics()
     });
     return {
       count: matchList.length,
@@ -43674,7 +43759,7 @@ function renderStatsSummaryMetaModel() {
     }
     return value;
   };
-  const currentLabel = normalizeSeasonLabel(model?.currentAct);
+  const currentLabel = normalizeSeasonLabel(activeStatsActLabel || model?.currentAct);
   const options = [...new Set((model?.acts?.length ? model.acts : [currentLabel]).map(normalizeSeasonLabel))];
 
   selector.innerHTML = "";
@@ -43685,6 +43770,17 @@ function renderStatsSummaryMetaModel() {
     selector.appendChild(option);
   });
   selector.value = options.includes(currentLabel) ? currentLabel : options[0] || currentLabel;
+  activeStatsActLabel = selector.value || activeStatsActLabel || currentLabel;
+  selector.onchange = () => {
+    activeStatsActLabel = selector.value || "";
+    initStatsPage();
+    renderStatsAgents();
+    renderStatsMaps();
+    renderStatsWeaponsModel();
+    renderInsights();
+    if (typeof updateHomeFromMatches === "function") updateHomeFromMatches();
+    renderChart(currentSize);
+  };
 
   selector.disabled = false;
 }
