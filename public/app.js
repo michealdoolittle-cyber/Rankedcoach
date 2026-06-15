@@ -1876,36 +1876,36 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 2) {
       return {
-        diagnosis: `${mapName} needs more repeated matches before RankedCoach can trust the read.`,
-        emphasis: "Build sample before making a hard call.",
-        recommendation: `Play one more ${mapName} match before treating this as a real map pattern.`
+        diagnosis: `${mapName} needs more repeated matches before this is a real read.`,
+        emphasis: "One game can point us somewhere, but it should not decide the map yet.",
+        recommendation: `Play one more ${mapName} match before changing your map plan.`
       };
     }
 
     if (mapWr >= 55) {
       return {
-        diagnosis: `${mapName} is one of your stronger repeated map environments.`,
-        emphasis: `${agent} habits on this map are worth carrying forward.`,
+        diagnosis: `${mapName} is working well for you right now.`,
+        emphasis: `${agent} looks comfortable here.`,
         recommendation: sideGap >= 12 && weakerSide
-          ? `Keep the winning plan, then review the ${weakerSide} half so the map stays reliable on both sides.`
-          : `Keep your current ${mapName} prep simple and repeat the round plans that are already converting.`
+          ? `Keep what is working, then clean up the ${weakerSide} half.`
+          : `Keep your ${mapName} plan simple and repeat what is winning rounds.`
       };
     }
 
     if (mapWr >= 45) {
       return {
-        diagnosis: `${mapName} is close, but not stable enough to ignore.`,
-        emphasis: sideGap >= 12 && weakerSide ? `${weakerSide} rounds are the cleaner review target.` : "The map needs one repeatable plan.",
+        diagnosis: `${mapName} is close, but it is not winning often enough yet.`,
+        emphasis: sideGap >= 12 && weakerSide ? `${weakerSide} rounds are the first thing to review.` : "The map needs a simpler plan.",
         recommendation: sideGap >= 12 && weakerSide
-          ? `Build one ${weakerSide} opening plan and one fallback call for ${mapName}.`
-          : `Pick one default attack plan and one defense fallback before your next ${mapName} queue.`
+          ? `Go in with one ${weakerSide} plan and one backup call.`
+          : `Pick one attack plan and one defense fallback before your next ${mapName} game.`
       };
     }
 
     return {
-      diagnosis: `${mapName} is a repeated map problem in this profile.`,
-      emphasis: "Fix the earliest round plan first.",
-      recommendation: `Review ${mapName} map preparation next. Build one simple attack plan and one simple defense fallback plan.`
+      diagnosis: `${mapName} is hurting your climb right now.`,
+      emphasis: "Start with the first plan of the round.",
+      recommendation: `Review your ${mapName} prep and keep the next plan simple.`
     };
   }
 
@@ -1918,32 +1918,32 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 3) {
       return {
-        diagnosis: `${agentName} needs more repeated games before the app can trust the agent read.`,
+        diagnosis: `${agentName} needs more games before this is a fair read.`,
         emphasis: "Do not overreact to a tiny sample.",
-        recommendation: `Play ${agentName} only if it fits the map plan, then let RankedCoach compare the next few games.`
+        recommendation: `Play ${agentName} when it fits the map, then check the next few games.`
       };
     }
 
     if (winrate >= 55 && kd >= 1) {
       return {
-        diagnosis: `${agentName} is currently one of your most reliable picks.`,
-        emphasis: `${role} decisions on this agent are converting well.`,
-        recommendation: `Keep ${agentName} in the active pool and compare weaker agents against this pick's simpler round plan.`
+        diagnosis: `${agentName} is one of your best picks right now.`,
+        emphasis: `Your ${role} play on this agent is helping rounds.`,
+        recommendation: `Keep ${agentName} in your active pool.`
       };
     }
 
     if (winrate >= 50 || kd >= 1) {
       return {
-        diagnosis: `${agentName} has usable value, but the full match conversion is not clean yet.`,
-        emphasis: kd >= 1 ? "Fights are playable; round plans need more structure." : "Round results are playable; duel discipline needs more attention.",
-        recommendation: `Give ${agentName} one job next block: either cleaner first contact, cleaner trading, or cleaner utility timing.`
+        diagnosis: `${agentName} is showing value, but the wins are not clean yet.`,
+        emphasis: kd >= 1 ? "The fights are there. The rounds need more structure." : "The rounds are close. The fights need more discipline.",
+        recommendation: `Give ${agentName} one job next game.`
       };
     }
 
     return {
-      diagnosis: `${agentName} is costing too much value in the current sample.`,
+      diagnosis: `${agentName} is not working well enough right now.`,
       emphasis: "Narrow the job you expect from this pick.",
-      recommendation: `Play ${agentName} with one clear ${role} objective next block instead of trying to solve every round.`
+      recommendation: `Play ${agentName} with one clear ${role} goal next game.`
     };
   }
 
@@ -1951,18 +1951,18 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
     const roleName = entity?.role || "this role";
     const winrate = Math.round(safeNumber(entity?.winrate));
     return {
-      diagnosis: winrate >= 50 ? `${roleName} currently fits your decision profile.` : `This role is where your in-game decisions are frequently leading to poor outcomes.`,
-      emphasis: winrate >= 50 ? "Lean into the role strengths already showing up." : "Simplify the plans you have for the role in question.",
+      diagnosis: winrate >= 50 ? `${roleName} is working for you right now.` : `${roleName} is not leading to enough wins right now.`,
+      emphasis: winrate >= 50 ? "Lean into what is already working." : "Make the role simpler before adding more plans.",
       recommendation: winrate >= 50
-        ? `Bias queues toward ${roleName} when you want stable impact and review what transfers from it to weaker roles.`
-        : `Give this role one small role objective next session so it is easier to measure performance.`
+        ? `Queue ${roleName} when you want a steadier path.`
+        : `Give this role one small job next game.`
     };
   }
 
   return {
-    diagnosis: overview.kd >= 1 ? "Your profile has a workable baseline." : "Your profile still needs a stronger floor.",
+    diagnosis: overview.kd >= 1 ? "Your profile has something to build from." : "Your profile needs a stronger floor.",
     emphasis: `Use ${weeklyFocus} as the next review target.`,
-    recommendation: "Keep the next improvement target narrow enough that you can tell whether it actually worked."
+    recommendation: "Keep the next goal small enough to notice if it works."
   };
 }
 
@@ -2610,7 +2610,7 @@ function getImpactTierMeta(score) {
 const ROLE_IMPACT_SCORE_WEIGHTS = {
   duelist: [
     { key: "acs", label: "Combat Output", weight: 0.28 },
-    { key: "kd", label: "Duel Conversion", weight: 0.22 },
+    { key: "kd", label: "Fight Value", weight: 0.22 },
     { key: "opening", label: "Opening Value", weight: 0.18 },
     { key: "hs", label: "Mechanical Accuracy", weight: 0.12 },
     { key: "deaths", label: "Round Survivability", weight: 0.10 },
@@ -2622,7 +2622,7 @@ const ROLE_IMPACT_SCORE_WEIGHTS = {
     { key: "kast", label: "Round Involvement", weight: 0.22 },
     { key: "deaths", label: "Life Value", weight: 0.14 },
     { key: "acs", label: "Combat Output", weight: 0.12 },
-    { key: "kd", label: "Duel Conversion", weight: 0.10 },
+    { key: "kd", label: "Fight Value", weight: 0.10 },
     { key: "opening", label: "Info / First Contact", weight: 0.08 },
     { key: "result", label: "Result Context", weight: 0.06 }
   ],
@@ -2631,14 +2631,14 @@ const ROLE_IMPACT_SCORE_WEIGHTS = {
     { key: "assists", label: "Setup Value", weight: 0.20 },
     { key: "kast", label: "Round Involvement", weight: 0.20 },
     { key: "econ", label: "Economy Value", weight: 0.14 },
-    { key: "kd", label: "Duel Conversion", weight: 0.10 },
+    { key: "kd", label: "Fight Value", weight: 0.10 },
     { key: "acs", label: "Damage Output", weight: 0.08 },
     { key: "result", label: "Result Context", weight: 0.06 }
   ],
   sentinel: [
     { key: "deaths", label: "Life Value", weight: 0.24 },
     { key: "kast", label: "Round Stability", weight: 0.22 },
-    { key: "kd", label: "Duel Conversion", weight: 0.16 },
+    { key: "kd", label: "Fight Value", weight: 0.16 },
     { key: "acs", label: "Combat Output", weight: 0.12 },
     { key: "assists", label: "Support Value", weight: 0.12 },
     { key: "opening", label: "Hold / Contact Value", weight: 0.08 },
@@ -2646,7 +2646,7 @@ const ROLE_IMPACT_SCORE_WEIGHTS = {
   ],
   unknown: [
     { key: "acs", label: "Combat Output", weight: 0.22 },
-    { key: "kd", label: "Duel Conversion", weight: 0.20 },
+    { key: "kd", label: "Fight Value", weight: 0.20 },
     { key: "deaths", label: "Round Survivability", weight: 0.18 },
     { key: "kast", label: "Round Involvement", weight: 0.16 },
     { key: "assists", label: "Assist Value", weight: 0.12 },
@@ -3198,7 +3198,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   if (overview.kd < 0.95 && orderedMatches.length >= 4) {
     insights.push({
       type: "bad",
-      title: "Duel Conversion Is Slipping",
+      title: "Fights Are Slipping",
       preview: `Your current K/D is ${overview.kd.toFixed(2)}, which suggests too many duels are ending unfavorably.`,
       what: "You are losing too many direct fights in the current match sample.",
       why: "This can come from crosshair placement, overpeeking, poor spacing, or taking low-percentage fights too early.",
@@ -3400,7 +3400,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       id: "fight_conversion",
       selectionScore: !hasMatchData ? 20 : overview.kd < 0.95 ? 99 : overview.kd >= 1.1 ? 72 : 58,
       tone: overview.kd >= 1.05 ? "up" : overview.kd >= 0.95 ? "warn" : "down",
-      label: "Duel Conversion",
+      label: "Fight Value",
       kicker: currentSignalAgent || "Current Sample",
       value: overview.matchesPlayed ? `${overview.kd.toFixed(2)} K/D` : "No data",
       detail: !overview.matchesPlayed
@@ -3421,7 +3421,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       proofItems: [
         statItem("Kills", `${totalKills}`, "Total kills from the selected season's imported matches."),
         statItem("Deaths", `${totalDeaths}`, "Total deaths from the selected season's imported matches."),
-        statItem("Sample Window", `${overview.matchesPlayed || 0} matches`, "The selected season match sample used for this read."),
+        statItem("Games Used", `${overview.matchesPlayed || 0} matches`, "The matches used for this read."),
         statItem("Judgement Band", "1.05 / 0.95", "Positive above 1.05 K/D, watch between 0.95 and 1.04, regression below 0.95.")
       ]
     },
@@ -3475,7 +3475,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       id: "score_pressure",
       selectionScore: !hasMatchData ? 18 : overview.adr < 185 ? 90 : overview.adr >= 215 ? 70 : 60,
       tone: overview.adr >= 215 ? "up" : overview.adr >= 185 ? "warn" : "down",
-      label: "Average Round Damage",
+      label: "Damage Output",
       kicker: currentSignalRole ? `${currentSignalRole} context` : "Current Sample",
       value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ACS` : "No data",
       detail: overview.matchesPlayed ? "This uses Riot score-per-round data to estimate your round-by-round combat impact." : "No data",
@@ -3642,7 +3642,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       id: "weapon_reliance",
       selectionScore: Math.min(86, 50 + safeNumber(topWeaponFamilyEntry[1]) / 2),
       tone: safeNumber(topWeaponFamilyEntry[1]) >= 45 ? "warn" : "up",
-      label: "Weapon Category Use",
+      label: "Weapon Pattern",
       kicker: topWeaponFamilyLabel || "Weapon Context",
       value: `${Math.round(safeNumber(topWeaponFamilyEntry[1]))}% Rounds`,
       detail: "This checks whether one weapon category is shaping how the app should judge mechanics and fight conversion.",
@@ -3737,7 +3737,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       selectionScore: weakestMap?.matchesPlayed >= 2 ? 84 : bestMap?.matchesPlayed >= 2 ? 60 : 36,
-      label: "Map Review",
+      label: "Map Pattern",
       value: weakestMap?.matchesPlayed >= 2
         ? `${weakestMap.map} ${Math.round(weakestMap.winrate)}% WR`
         : bestMap
@@ -3769,7 +3769,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       selectionScore: topMoodEntry || negativeMoodCount ? 74 + (negativeMoodCount * 3) : 30,
-      label: "Behavior Development",
+      label: "Mood Pattern",
       value: topMoodEntry ? `${topMoodEntry[0]} ${topMoodEntry[1]}x` : "No Data",
       detail: topMoodEntry
         ? "Repeated mood entries help connect session behavior to match quality."
@@ -3800,7 +3800,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         mediaValue: bestAgent?.agent
       },
       {
-        kicker: "Map Read",
+        kicker: "Map Pattern",
         selectionScore: bestMap?.matchesPlayed >= 2 ? 76 : 44,
         title: bestMap?.map || "No Map Strength",
         value: bestMap ? `${Math.round(bestMap.winrate)}% WR` : "Build sample",
@@ -3832,7 +3832,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         symbol: "⌁"
       },
       {
-        kicker: "Behavior Development",
+        kicker: "Mood Pattern",
         selectionScore: negativeMoodCount > positiveMoodCount ? 86 : topMoodEntry ? 60 : 40,
         title: topMoodEntry ? topMoodEntry[0] : "No Mood Trend",
         value: topMoodEntry ? `${topMoodEntry[1]} mentions` : "Steady",
@@ -3911,7 +3911,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   trendBreakdown.performance.push(...[
     weakestMap ? {
       selectionScore: weakestMap.matchesPlayed >= 2 ? 88 : 50,
-      kicker: "Map Review",
+      kicker: "Map Pattern",
       title: weakestMap.map,
       value: `${Math.round(weakestMap.winrate)}% WR`,
       detail: "Weakest repeated map in the current imported data.",
@@ -3921,10 +3921,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     } : null,
     {
       selectionScore: overview.kd < 0.95 ? 86 : overview.kd >= 1.1 ? 64 : 54,
-      kicker: "Duel Conversion",
+      kicker: "Fight Value",
       title: overview.matchesPlayed ? `${overview.kd.toFixed(2)} K/D` : "No Data",
       value: overview.kd >= 1 ? "Stable" : "Needs review",
-      detail: overview.kd >= 1 ? "Direct fights are helping the profile." : "Direct fights are costing too much value.",
+      detail: overview.kd >= 1 ? "Your fights are helping." : "Your fights are costing too many rounds.",
       tone: overview.kd >= 1.05 ? "up" : overview.kd >= 0.95 ? "warn" : "down",
       mediaType: "agent",
       mediaValue: currentSignalAgent
@@ -4120,7 +4120,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           statItem("Raw Weight", `${Math.round(aimRaw)}`, "Unrounded model output before the display score is clamped to the 0-100 coaching scale."),
           statItem("Source Window", compassSourceLabel, "Uses the most recent imported act/window available in the current profile."),
           statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Imported match accuracy baseline."),
-          statItem("Duel Conversion", overview.kd ? overview.kd.toFixed(2) : "--", "Higher K/D raises the aim lens score.")
+          statItem("Fight Value", overview.kd ? overview.kd.toFixed(2) : "--", "Better fights raise the aim score.")
         ]
       },
       gamesense: {
@@ -5687,8 +5687,8 @@ function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
 
   const readItems = [
     behaviorRole ? statItem("Role Context", behaviorRole, "This is the role most tied to low-rated or frustrated saved logs in the current profile.") : null,
-    statItem("Read", label, "Selected Data Reads card."),
-    statItem("Current Value", value, "Current value shown on the Data Reads card."),
+    statItem("Read", label, "Selected match pattern card."),
+    statItem("Current Value", value, "Current value shown on this card."),
     statItem("What It Means", detail, "Plain-language explanation generated from the current profile context."),
     statItem("Signal", toneMeta.label, "Signal tone is based on whether the read is a strength, watch item, or needs-work item.")
   ].filter(Boolean);
@@ -5703,8 +5703,8 @@ function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
       key: "context",
       label: "Context",
       items: [
-        statItem("Data Source", sourceLabel, "Data Reads combine imported matches, saved logs, and the current RankedCoach profile model."),
-        statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Confidence Rating shows how much the app trusts this read."),
+        statItem("Data Source", sourceLabel, "This combines imported matches, saved logs, and the active profile."),
+        statItem("Data Confidence", analytics?.confidenceLabel || "Low Confidence", "Shows how much data supports this read."),
         statItem("Priority", analytics?.priorityLabel || "Watch", "Priority describes how soon this read should affect the next review block.")
       ]
     },
@@ -5712,7 +5712,7 @@ function buildDataReadDetailTabs(card = {}, analytics = getPlayerModel()) {
       key: "formula",
       label: "Formula",
       items: [
-        statItem("Selection Score", Number.isFinite(Number(card?.selectionScore)) ? `${Math.round(Number(card.selectionScore))}/100` : "No formula", "The app ranks Data Reads by severity, sample strength, and whether the read is useful right now."),
+        statItem("Why This Shows Up", Number.isFinite(Number(card?.selectionScore)) ? `${Math.round(Number(card.selectionScore))}/100` : "Not enough info yet", "RankedCoach looks at severity, sample size, and whether the read is useful right now."),
         statItem("Tooltip", card?.tooltip || detail, "Tooltip/detail text used for this selected read.")
       ]
     }
@@ -7137,7 +7137,7 @@ function getTrendBreakdownFallbackItems(key = "", model = {}) {
     mediaText: "Read",
     kicker: "Coaching",
     title: "Coaching Read",
-    value: "Waiting for data",
+    value: "Needs more games",
     detail: "This section fills as RankedCoach collects more profile context."
   }];
 }
@@ -7189,8 +7189,8 @@ function openStatsDetailModal(kind, value) {
   if (kind === "map") {
     const map = (analytics?.maps || []).find(item => String(item.map || "").toLowerCase() === String(value || "").toLowerCase());
     const coach = buildCoachRecommendation("map", map, analytics);
-    title.textContent = `${value} Map Review`;
-    items.push(statItem("Diagnosis", coach.diagnosis, "Coaching-layer read built from map performance and sample strength."));
+    title.textContent = `${value} Map Pattern`;
+    items.push(statItem("Diagnosis", coach.diagnosis, "Coaching read built from map performance and sample size."));
     items.push(statItem("Priority", analytics?.priorityLabel || "Watch", "Shared coaching priority based on current top issue severity."));
     items.push(statItem("Recommendation", coach.recommendation, "Next-step recommendation translated from the current map trend."));
     items.push(statItem("Win Rate", map ? formatPercent(safeDivide(safeNumber(map.matchesWon), safeNumber(map.matchesPlayed)) * 100) : "--", map ? `matchesWon / matchesPlayed on ${value} = ${safeNumber(map.matchesWon)} / ${safeNumber(map.matchesPlayed)}` : "No imported map segment."));
@@ -7223,7 +7223,7 @@ function openStatsDetailModal(kind, value) {
       ? getBehaviorRoleContext(analytics)
       : "";
     title.textContent = behaviorRole
-      ? `${behaviorRole} Behavior Development Review`
+      ? `${behaviorRole} Mood Pattern Review`
       : `${card.label || "Data Read"} Review`;
     renderSecondaryLensTabs(tabsHost, list, buildDataReadDetailTabs(card, analytics));
     showModalById("lensModal");
@@ -9135,13 +9135,13 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "home",
     selector: ".weekly-focus-card",
-    title: "Weekly Focus Category",
+    title: "This Week's Focus",
     copy: "This card summarizes the strongest weekly patterns from your logs and match sample. It updates by week, not by day, so the coaching plan stays stable long enough to act on."
   },
   {
     page: "home",
     selector: ".improvement-card",
-    title: "Recent Improvement",
+    title: "What Improved Recently",
     copy: "These reads compare recent match movement against the active sample. They are meant to show what is changing fastest, not to judge one isolated game."
   },
   {
@@ -9201,14 +9201,14 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "stats",
     selector: ".stats-performance-card",
-    title: "Performance Timeline",
+    title: "Recent Match Trends",
     copy: "These cards show the app's selected performance reads, such as duel conversion, win rate, recent mechanical form, round damage, and utility value."
   },
   {
     page: "stats",
     selector: ".stats-breakdown-card",
-    title: "Data Reads",
-    copy: "Data Reads are deeper explanations from the same match and log pool. They are meant to explain what a stat means, not just display the number."
+    title: "Match Patterns",
+    copy: "These cards explain what the stats may mean, not just what the number is."
   },
   {
     page: "stats",
@@ -9231,20 +9231,20 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-top-card",
-    title: "Priority Insights",
-    copy: "Priority Insights surface the most important coaching items first. Use the filters to separate needs-work items, watch items, and strengths."
+    title: "Needs Attention",
+    copy: "These are the reads most likely to matter right now. Use the filters to separate problems, watch items, and strengths."
   },
   {
     page: "insights",
     selector: ".insights-action-card",
-    title: "Main Focus Category",
-    copy: "This is the one focus category RankedCoach thinks is most worth practicing for the next block of matches, with a why, how, and source."
+    title: "Main Focus",
+    copy: "This is the one thing RankedCoach thinks is most worth working on next."
   },
   {
     page: "insights",
     selector: ".insights-trends-card",
-    title: "General Insight",
-    copy: "General Insight combines match stats and logs into grouped reads for performance, session habits, role results, and consistency."
+    title: "Other Patterns",
+    copy: "These reads show supporting patterns from matches, logs, roles, and consistency."
   }
 ];
 
@@ -10801,7 +10801,7 @@ const focusesList = [
   "Comms Discipline",
   "Team Comms",
   "Self Comms",
-  "Weapon Category Use",
+  "Weapon Pattern",
   "Mental Reset",
   "Game Sense",
   "General"
@@ -14012,7 +14012,7 @@ function openImpactModal() {
     }));
   const impactStats = [
     { label: "Role Impact", value: `${impactScore}%`, formula: snapshot?.impactFormula || "Final weighted role-impact score after the selected role components are combined." },
-    { label: "Impact Grade", value: impactTier, formula: "Carry starts at 85+. Solid starts at 60+. Result context is intentionally low weight so a strong loss can still rate well." },
+    { label: "How It Looked", value: impactTier, formula: "Carry starts at 85+. Solid starts at 60+. Result matters, but a strong loss can still rate well." },
     { label: "Role Context", value: roleLabel || "Current role", formula: "Role label inferred from the selected match agent and current role mapping." },
     { label: "Map", value: snapshot?.map || core.map || "--", formula: "Direct map label from the selected match snapshot." },
     { label: "Agent", value: snapshot?.agent || core.agent || "--", formula: "Direct agent label from the selected match snapshot." },
@@ -14020,8 +14020,8 @@ function openImpactModal() {
   ].concat(componentStats);
 
   if (title) title.textContent = "Selected Match Impact";
-  if (weightingTitle) weightingTitle.textContent = "Role Impact Weighting";
-  if (statsTitle) statsTitle.textContent = "Role Impact Breakdown";
+  if (weightingTitle) weightingTitle.textContent = "What Moved This Score";
+  if (statsTitle) statsTitle.textContent = "Why This Score Changed";
 
   list.innerHTML = "";
   if (weightingBlock) weightingBlock.innerHTML = "";
@@ -35844,15 +35844,15 @@ function openTimelineStatsModal(itemKey = "") {
     </section>
     <section class="timeline-insight-grid">
       <article class="timeline-insight-card">
-        <h4 class="timeline-insight-card-title">Sample Window</h4>
+        <h4 class="timeline-insight-card-title">Games Compared</h4>
         <p class="timeline-insight-card-body">${comparisonValue}</p>
       </article>
       <article class="timeline-insight-card">
-        <h4 class="timeline-insight-card-title">Scoped Window</h4>
-        <p class="timeline-insight-card-body">This read is scoped to <strong>${scopeValue}</strong>, so the signal only reflects the currently selected RR context and everything accumulated through that point.</p>
+        <h4 class="timeline-insight-card-title">Games Used</h4>
+        <p class="timeline-insight-card-body">This read only uses <strong>${scopeValue}</strong>.</p>
       </article>
       <article class="timeline-insight-card">
-        <h4 class="timeline-insight-card-title">Calculation Method</h4>
+        <h4 class="timeline-insight-card-title">How This Was Figured Out</h4>
         <p class="timeline-insight-card-body">${formulaValue}</p>
         <p class="timeline-insight-card-body">${sourceValue}</p>
       </article>
@@ -35886,8 +35886,8 @@ function openWeeklyFocusModal(itemKey = "") {
 
   content.innerHTML = `
     <section class="timeline-insight-hero">
-      <span class="timeline-insight-kicker">Weekly Focus Category</span>
-      <h3 class="timeline-insight-signal">${escapeHtml(target.label || "Weekly Focus Category")}</h3>
+      <span class="timeline-insight-kicker">This Week's Focus</span>
+      <h3 class="timeline-insight-signal">${escapeHtml(target.label || "This Week's Focus")}</h3>
       <div class="timeline-insight-meta">
         <span class="timeline-insight-chip">${summaryValue}</span>
         <span class="timeline-insight-chip">Confidence ${confidenceValue}</span>
@@ -35895,15 +35895,15 @@ function openWeeklyFocusModal(itemKey = "") {
     </section>
     <section class="timeline-insight-grid">
       <article class="timeline-insight-card">
-        <h4 class="timeline-insight-card-title">Sample Window</h4>
+        <h4 class="timeline-insight-card-title">Games Used</h4>
         <p class="timeline-insight-card-body">${scopeValue}</p>
       </article>
       <article class="timeline-insight-card">
-        <h4 class="timeline-insight-card-title">Data Pulled</h4>
+        <h4 class="timeline-insight-card-title">What This Uses</h4>
         <p class="timeline-insight-card-body">${sourceValue}</p>
       </article>
       <article class="timeline-insight-card">
-        <h4 class="timeline-insight-card-title">Calculation Method</h4>
+        <h4 class="timeline-insight-card-title">How This Was Figured Out</h4>
         <p class="timeline-insight-card-body">${formulaValue}</p>
       </article>
       <article class="timeline-insight-card">
@@ -36727,7 +36727,7 @@ function buildDemoLogEntriesFromMatches(matchList = []) {
     "Utility Timing",
     "Retake Timing",
     "Comms Discipline",
-    "Weapon Category Use",
+    "Weapon Pattern",
     "Mental Reset"
   ];
   const lossNotes = [
@@ -43846,14 +43846,14 @@ function renderInsightCardsModel() {
     emptyCard.innerHTML = `
       <div class="insight-header">
         <div class="insight-header-main">
-          <div class="insight-title">Insights Waiting On More Data</div>
+          <div class="insight-title">RankedCoach Needs More Games</div>
           <div class="insight-tag">INFO</div>
         </div>
       </div>
       <div class="insight-preview">This panel fills with ranked coaching reads after you import a few matches or save a few reflections.</div>
       <div class="insight-block">
         <div class="insight-label">NEXT STEP</div>
-        Play or import another short block, then reopen Insights to surface the strongest trends.
+        Import a few more matches or save a few reflections so RankedCoach can find a real pattern.
       </div>
     `;
     container.appendChild(emptyCard);
