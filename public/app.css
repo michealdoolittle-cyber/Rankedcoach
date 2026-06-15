@@ -45434,7 +45434,7 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     line-height: 1 !important;
   }
 
-  html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-card, .stats-role-progress-card) {
+html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-card, .stats-role-progress-card) {
     min-height: 150px !important;
     padding: 10px !important;
     gap: 8px !important;
@@ -50036,4 +50036,53 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-pa
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-ring.has-rc-mobile-frame.border-diamond .rc-mobile-avatar-frame{
   transform:translate(-50%,-50%) !important;
   rotate:0deg !important;
+}
+
+/* Desktop logging focus browse + desktop agent role color lock v34. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .focus-select-shell.has-custom-focus-select{
+  pointer-events:auto !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .log-focus-custom-select,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomTrigger{
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:2600 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu{
+  left:auto !important;
+  right:0 !important;
+  width:max-content !important;
+  min-width:100% !important;
+  max-width:min(270px,calc(100vw - 32px)) !important;
+  z-index:4000 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu .log-focus-custom-option{
+  width:100% !important;
+  min-width:170px !important;
+  max-width:260px !important;
+  white-space:nowrap !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading[data-role="duelist"]{
+  color:var(--duelist,#ff4655) !important;
+  border-color:color-mix(in srgb,var(--duelist,#ff4655) 70%,transparent) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--duelist,#ff4655) 26%,rgba(15,23,42,.92)),rgba(15,23,42,.9)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--duelist,#ff4655) 22%,transparent),0 0 16px color-mix(in srgb,var(--duelist,#ff4655) 18%,transparent) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading[data-role="controller"]{
+  color:var(--controller,#7b3fbf) !important;
+  border-color:color-mix(in srgb,var(--controller,#7b3fbf) 70%,transparent) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--controller,#7b3fbf) 26%,rgba(15,23,42,.92)),rgba(15,23,42,.9)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--controller,#7b3fbf) 22%,transparent),0 0 16px color-mix(in srgb,var(--controller,#7b3fbf) 18%,transparent) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading[data-role="initiator"]{
+  color:var(--initiator,#3b82f6) !important;
+  border-color:color-mix(in srgb,var(--initiator,#3b82f6) 70%,transparent) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--initiator,#3b82f6) 26%,rgba(15,23,42,.92)),rgba(15,23,42,.9)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--initiator,#3b82f6) 22%,transparent),0 0 16px color-mix(in srgb,var(--initiator,#3b82f6) 18%,transparent) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-heading[data-role="sentinel"]{
+  color:var(--sentinel,#22c55e) !important;
+  border-color:color-mix(in srgb,var(--sentinel,#22c55e) 70%,transparent) !important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--sentinel,#22c55e) 26%,rgba(15,23,42,.92)),rgba(15,23,42,.9)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--sentinel,#22c55e) 22%,transparent),0 0 16px color-mix(in srgb,var(--sentinel,#22c55e) 18%,transparent) !important;
 }
