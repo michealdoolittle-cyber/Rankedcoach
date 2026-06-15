@@ -176,12 +176,36 @@ const COMPETITIVE_MAP_POOL = [
   "Split"
 ];
 
+const ALL_VALORANT_MAP_NAMES = [
+  "Abyss",
+  "Ascent",
+  "Bind",
+  "Breeze",
+  "Corrode",
+  "Fracture",
+  "Haven",
+  "Lotus",
+  "Pearl",
+  "Split"
+];
+
+const DEMO_ACT_MAP_POOLS = {
+  "Season 2025 Act 5": ["Ascent", "Bind", "Breeze", "Corrode", "Haven", "Lotus", "Abyss"],
+  "Season 2025 Act 6": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
+  "Season 2026 Act 1": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
+  "Season 2026 Act 2": ["Bind", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
+  "Season 2026 Act 3": ["Ascent", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"]
+};
+
 const MAP_DETAIL_PRESETS = {
   Abyss: { bestGun: "Vandal", worstGun: "Bucky", style: "Long sightlines reward first-shot precision and patient retakes." },
+  Ascent: { bestGun: "Vandal", worstGun: "Shorty", style: "Mid control and late rotates make clean spacing matter." },
   Bind: { bestGun: "Phantom", worstGun: "Marshal", style: "Fast executes and tight site takes reward utility layering." },
   Breeze: { bestGun: "Vandal", worstGun: "Judge", style: "Wide lanes demand disciplined spacing and long-range duel value." },
   Corrode: { bestGun: "Phantom", worstGun: "Sheriff", style: "Mid control and late site pressure matter more than raw pace." },
+  Fracture: { bestGun: "Phantom", worstGun: "Operator", style: "Pinch timing and fast rotates punish slow information." },
   Haven: { bestGun: "Phantom", worstGun: "Odin", style: "Rotations and layered info create high-value split-second decisions." },
+  Lotus: { bestGun: "Phantom", worstGun: "Marshal", style: "Three-site pressure rewards early info and fast team decisions." },
   Pearl: { bestGun: "Vandal", worstGun: "Shorty", style: "Long corridors and retake depth reward clean trade timing." },
   Split: { bestGun: "Phantom", worstGun: "Guardian", style: "Compact chokes magnify utility value and anchor discipline." }
 };
@@ -9373,7 +9397,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -18,
       moodBase: "Tilted",
       noteTheme: "early ranked chaos, solo swings, panic sprays, and comms breaking down after close rounds",
-      mapPool: ["Ascent", "Bind", "Breeze", "Corrode", "Haven", "Lotus", "Abyss"],
+      mapPool: DEMO_ACT_MAP_POOLS["Season 2025 Act 5"],
       maps: { Ascent: -2, Bind: 0, Breeze: -6, Corrode: -4, Haven: 3, Lotus: -5, Abyss: -8 },
       profiles: [
         { agent: "Reyna", weapon: "Vandal", focus: "Duel Discipline", kill: 5, death: 4, assist: -2, hs: 2 },
@@ -9393,7 +9417,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -17,
       moodBase: "Annoyed",
       noteTheme: "sentinel comfort, stronger info, low damage, and setups that were too locked to one site",
-      mapPool: ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
+      mapPool: DEMO_ACT_MAP_POOLS["Season 2025 Act 6"],
       maps: { Abyss: -7, Bind: 3, Breeze: -2, Corrode: 1, Haven: 4, Pearl: 2, Split: -5 },
       profiles: [
         { agent: "Cypher", weapon: "Guardian", focus: "Round Survivability", kill: -1, death: -2, assist: 4, hs: 5 },
@@ -9413,7 +9437,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -16,
       moodBase: "Focused",
       noteTheme: "controller climb, better smoke timing, safer rotates, and stronger post-plant calls",
-      mapPool: ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
+      mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 1"],
       maps: { Abyss: -4, Bind: 5, Breeze: 1, Corrode: 2, Haven: 6, Pearl: 6, Split: -2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 1, death: -1, assist: 6, hs: 1 },
@@ -9433,7 +9457,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -17,
       moodBase: "Frustrated",
       noteTheme: "aggressive fill games, shotgun success on low buys, rifle rounds slipping, and role swaps hurting consistency",
-      mapPool: ["Bind", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
+      mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 2"],
       maps: { Bind: 1, Breeze: -3, Fracture: -4, Haven: 7, Lotus: -6, Pearl: 3, Split: -8 },
       profiles: [
         { agent: "Omen", weapon: "Judge", focus: "Eco Conversion", kill: 4, death: 1, assist: 4, hs: -8 },
@@ -9453,7 +9477,7 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -15,
       moodBase: "Composed",
       noteTheme: "more stable agent pool, cleaner trades, stronger controller calls, and fewer tilt carryover games",
-      mapPool: ["Ascent", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
+      mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 3"],
       maps: { Ascent: 3, Breeze: 1, Fracture: -2, Haven: 8, Lotus: -4, Pearl: 7, Split: 2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 2, death: -1, assist: 6, hs: 2 },
@@ -43533,8 +43557,10 @@ function renderStatsMapsModel() {
   const mapByName = new Map(
     maps.map(map => [String(map?.map || "").toLowerCase(), map])
   );
-  const poolSet = new Set(COMPETITIVE_MAP_POOL.map(mapName => String(mapName).toLowerCase()));
-  const activeMapNames = COMPETITIVE_MAP_POOL.slice().sort((a, b) => {
+  const selectedAct = model?.currentAct || activeStatsActLabel || "";
+  const activePool = DEMO_ACT_MAP_POOLS[selectedAct] || COMPETITIVE_MAP_POOL;
+  const poolSet = new Set(activePool.map(mapName => String(mapName).toLowerCase()));
+  const activeMapNames = activePool.slice().sort((a, b) => {
     const mapA = mapByName.get(String(a).toLowerCase());
     const mapB = mapByName.get(String(b).toLowerCase());
     const hasA = Boolean(mapA && safeNumber(mapA.matchesPlayed || mapA.matches) > 0);
@@ -43548,9 +43574,7 @@ function renderStatsMapsModel() {
     }
     return String(a).localeCompare(String(b));
   });
-  const excludedMapNames = maps
-    .map(map => map?.map)
-    .filter(Boolean)
+  const excludedMapNames = ALL_VALORANT_MAP_NAMES
     .filter(mapName => !poolSet.has(String(mapName).toLowerCase()))
     .sort((a, b) => String(a).localeCompare(String(b)));
   const renderMapNames = [...activeMapNames, ...excludedMapNames];
