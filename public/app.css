@@ -50167,3 +50167,42 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent
   background:linear-gradient(135deg,rgba(34,197,94,.34),rgba(15,23,42,.92)) !important;
   box-shadow:inset 0 0 0 1px rgba(34,197,94,.42),0 0 16px rgba(34,197,94,.25) !important;
 }
+
+/* Focus dropdown cleanup v39: one browse button, theme-colored scrollbars. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .focus-select-shell.has-custom-focus-select > .focus-select-symbol,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .focus-select-shell.has-custom-focus-select > .agent-select-symbol.focus-select-symbol{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging .focus-select-shell.has-custom-focus-select{
+  width:118px !important;
+  min-width:118px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu{
+  --rc-scroll-accent:var(--profile-ring-border,var(--rc-mobile-frame-color,var(--theme-accent,var(--accent,#ff4655))));
+  overflow-y:scroll !important;
+  scrollbar-gutter:stable both-edges !important;
+  scrollbar-width:thin !important;
+  scrollbar-color:var(--rc-scroll-accent) rgba(15,23,42,.92) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu::-webkit-scrollbar{
+  width:10px !important;
+  display:block !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-logging #logFocusCustomMenu::-webkit-scrollbar-thumb{
+  background:var(--rc-scroll-accent) !important;
+  border:2px solid rgba(15,23,42,.92) !important;
+  border-radius:999px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsAgentsList::-webkit-scrollbar-thumb,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-column::-webkit-scrollbar-thumb,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-dropdown,.profile-switcher,.goal-rank-custom-menu,.log-focus-custom-menu,.lens-modal-body)::-webkit-scrollbar-thumb{
+  background:var(--profile-ring-border,var(--rc-mobile-frame-color,var(--theme-accent,var(--accent,#ff4655)))) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsAgentsList,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-agent-desktop-column,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(.profile-dropdown,.profile-switcher,.goal-rank-custom-menu,.log-focus-custom-menu,.lens-modal-body){
+  scrollbar-color:var(--profile-ring-border,var(--rc-mobile-frame-color,var(--theme-accent,var(--accent,#ff4655)))) rgba(15,23,42,.88) !important;
+}
