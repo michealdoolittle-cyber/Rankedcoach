@@ -9373,7 +9373,8 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -18,
       moodBase: "Tilted",
       noteTheme: "early ranked chaos, solo swings, panic sprays, and comms breaking down after close rounds",
-      maps: { Split: -10, Abyss: -8, Breeze: -6, Haven: 3, Bind: 0, Pearl: -3, Fracture: -7, Corrode: -4 },
+      mapPool: ["Ascent", "Bind", "Breeze", "Corrode", "Haven", "Lotus", "Abyss"],
+      maps: { Ascent: -2, Bind: 0, Breeze: -6, Corrode: -4, Haven: 3, Lotus: -5, Abyss: -8 },
       profiles: [
         { agent: "Reyna", weapon: "Vandal", focus: "Duel Discipline", kill: 5, death: 4, assist: -2, hs: 2 },
         { agent: "Phoenix", weapon: "Spectre", focus: "Self Comms", kill: 2, death: 3, assist: 0, hs: -2 },
@@ -9392,7 +9393,8 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -17,
       moodBase: "Annoyed",
       noteTheme: "sentinel comfort, stronger info, low damage, and setups that were too locked to one site",
-      maps: { Split: -5, Abyss: -7, Breeze: -2, Haven: 4, Bind: 3, Pearl: 2, Fracture: -6, Corrode: 1 },
+      mapPool: ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
+      maps: { Abyss: -7, Bind: 3, Breeze: -2, Corrode: 1, Haven: 4, Pearl: 2, Split: -5 },
       profiles: [
         { agent: "Cypher", weapon: "Guardian", focus: "Round Survivability", kill: -1, death: -2, assist: 4, hs: 5 },
         { agent: "Killjoy", weapon: "Vandal", focus: "Awareness Check", kill: 0, death: -1, assist: 5, hs: 2 },
@@ -9411,7 +9413,8 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -16,
       moodBase: "Focused",
       noteTheme: "controller climb, better smoke timing, safer rotates, and stronger post-plant calls",
-      maps: { Split: -2, Abyss: -4, Breeze: 1, Haven: 6, Bind: 5, Pearl: 6, Fracture: -3, Lotus: 7 },
+      mapPool: ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
+      maps: { Abyss: -4, Bind: 5, Breeze: 1, Corrode: 2, Haven: 6, Pearl: 6, Split: -2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 1, death: -1, assist: 6, hs: 1 },
         { agent: "Brimstone", weapon: "Phantom", focus: "Team Utility", kill: -2, death: -1, assist: 8, hs: -1 },
@@ -9430,7 +9433,8 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -17,
       moodBase: "Frustrated",
       noteTheme: "aggressive fill games, shotgun success on low buys, rifle rounds slipping, and role swaps hurting consistency",
-      maps: { Split: -8, Abyss: -5, Breeze: -3, Haven: 7, Bind: 1, Pearl: 3, Lotus: -6, Corrode: 4 },
+      mapPool: ["Bind", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
+      maps: { Bind: 1, Breeze: -3, Fracture: -4, Haven: 7, Lotus: -6, Pearl: 3, Split: -8 },
       profiles: [
         { agent: "Omen", weapon: "Judge", focus: "Eco Conversion", kill: 4, death: 1, assist: 4, hs: -8 },
         { agent: "Raze", weapon: "Judge", focus: "Positioning", kill: 5, death: 4, assist: 0, hs: -7 },
@@ -9449,7 +9453,8 @@ function buildClientTutorialDemoMatches(count = 750) {
       rrLoss: -15,
       moodBase: "Composed",
       noteTheme: "more stable agent pool, cleaner trades, stronger controller calls, and fewer tilt carryover games",
-      maps: { Split: 2, Abyss: -2, Breeze: 1, Haven: 8, Bind: 5, Pearl: 7, Lotus: -4, Corrode: 4 },
+      mapPool: ["Ascent", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
+      maps: { Ascent: 3, Breeze: 1, Fracture: -2, Haven: 8, Lotus: -4, Pearl: 7, Split: 2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 2, death: -1, assist: 6, hs: 2 },
         { agent: "Sova", weapon: "Vandal", focus: "Utility Timing", kill: 1, death: -1, assist: 8, hs: 4 },
@@ -9458,7 +9463,6 @@ function buildClientTutorialDemoMatches(count = 750) {
       ]
     }
   ];
-  const mapRotation = ["Haven", "Split", "Bind", "Abyss", "Pearl", "Fracture", "Breeze", "Corrode", "Lotus"];
   const matchesOut = [];
   const maxMatches = Math.max(1, safeNumber(count, 750));
 
@@ -9467,7 +9471,8 @@ function buildClientTutorialDemoMatches(count = 750) {
     for (let actGameIndex = 0; actGameIndex < 150 && matchesOut.length < maxMatches; actGameIndex += 1) {
       const globalIndex = matchesOut.length;
       const profile = act.profiles[actGameIndex % act.profiles.length];
-      const map = mapRotation[(actGameIndex + actIndex * 2) % mapRotation.length];
+      const mapPool = act.mapPool || Object.keys(act.maps || {});
+      const map = mapPool[(actGameIndex + actIndex * 2) % mapPool.length];
       const mapShift = safeNumber(act.maps[map]);
       const winCutoff = Math.max(20, Math.min(130, act.targetWins + mapShift));
       const result = ((actGameIndex * act.winMod + actIndex * 9) % 150) < winCutoff ? "win" : "loss";
