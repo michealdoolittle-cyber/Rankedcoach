@@ -13230,6 +13230,18 @@ function setupLogFocusCustomDropdown() {
   const shell = select?.closest(".focus-select-shell");
   if (!select || !shell) return;
 
+  if (!isMobileLayoutViewport()) {
+    document.getElementById("logFocusCustomSelect")?.remove();
+    shell.classList.remove("has-custom-focus-select");
+    select.classList.remove("log-focus-native-select");
+    select.removeAttribute("aria-hidden");
+    select.tabIndex = 0;
+    select.style.removeProperty("display");
+    select.style.removeProperty("opacity");
+    select.style.removeProperty("pointer-events");
+    return;
+  }
+
   select.classList.add("log-focus-native-select");
   select.setAttribute("aria-hidden", "true");
   select.tabIndex = -1;
@@ -43429,10 +43441,10 @@ function renderStatsAgentsModel() {
         String(a.agent || "").localeCompare(String(b.agent || ""))
       );
       const column = document.createElement("section");
-      column.className = "stats-agent-desktop-column";
+      column.className = `stats-agent-desktop-column role-${roleMeta.key}`;
       column.dataset.agentRole = roleMeta.key;
       column.innerHTML = `
-        <div class="stats-agent-desktop-heading" data-role="${escapeHtml(roleMeta.key)}">
+        <div class="stats-agent-desktop-heading role-${escapeHtml(roleMeta.key)}" data-role="${escapeHtml(roleMeta.key)}">
           <img src="${escapeHtml(ROLE_ICON_MAP[roleMeta.key] || "")}" alt="">
           <span>${escapeHtml(roleMeta.label)}</span>
         </div>
