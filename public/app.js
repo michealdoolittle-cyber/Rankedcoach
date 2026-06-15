@@ -13239,6 +13239,21 @@ function setupLogFocusCustomDropdown() {
     select.style.removeProperty("display");
     select.style.removeProperty("opacity");
     select.style.removeProperty("pointer-events");
+    if (shell.dataset.desktopFocusBrowseBound !== "1") {
+      shell.addEventListener("click", (event) => {
+        const target = event.target;
+        if (target === select) return;
+        event.preventDefault();
+        event.stopPropagation();
+        select.focus();
+        if (typeof select.showPicker === "function") {
+          select.showPicker();
+        } else {
+          select.click();
+        }
+      });
+      shell.dataset.desktopFocusBrowseBound = "1";
+    }
     return;
   }
 
