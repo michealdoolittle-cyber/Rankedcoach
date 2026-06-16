@@ -47,6 +47,11 @@ const RANKEDCOACH_LANGUAGE_REPLACEMENTS = [
   [/\bcluster\b/gi, "pattern"],
   [/\bedge\b/gi, "strength"],
   [/\bleak\b/gi, "issue"],
+  [/\bMachine Learning model\b/g, "coaching model"],
+  [/\bmoving average\b/gi, "profile baseline"],
+  [/\bjudgement\b/gi, "judgment"],
+  [/\bdiagnosis\b/gi, "read"],
+  [/\bdata read\b/gi, "coaching read"],
   [/\bfour-lens\b/gi, "four-category"],
   [/\blens\b/gi, "category"],
   [/\bPractice Theme Is Emerging\b/g, "Focus Category to Observe"],
@@ -2019,6 +2024,478 @@ function buildCoachingEvidenceLayer({
   };
 }
 
+const COACHING_LANGUAGE_RULES = Object.freeze([
+  "Call out what the data proves, then separate what is only a reasonable assumption.",
+  "Do not frame a best map, agent, weapon, or role as a strength when it is still below a winning pace.",
+  "When every option in a group is under 50% win rate, coach the category as a conversion problem instead of praising the highest option.",
+  "Down-weight raw mechanics stats when weapon mix, role, agent, economy, map, or sample size makes that stat less meaningful.",
+  "Give the player one next action before adding more context."
+]);
+
+function getCoachingSampleTone(evidenceLayer = {}) {
+  const sample = evidenceLayer?.sample || {};
+  const matches = safeNumber(sample.matchCount);
+  if (matches <= 0) {
+    return {
+      label: "No sample",
+      short: "No imported match sample yet.",
+      sentence: "No imported match sample exists yet, so this should stay as setup guidance."
+    };
+  }
+  if (matches < 6) {
+    return {
+      label: "Early sample",
+      short: `${matches} match${matches === 1 ? "" : "es"} is early.`,
+      sentence: `Only ${matches} match${matches === 1 ? "" : "es"} are in this scope, so treat this as direction, not proof.`
+    };
+  }
+  if (matches < 15) {
+    return {
+      label: "Developing sample",
+      short: `${matches} matches is developing.`,
+      sentence: `${matches} matches is enough to guide the next block, but not enough to overrule future results.`
+    };
+  }
+  return {
+    label: "Stable sample",
+    short: `${matches} matches gives this read useful weight.`,
+    sentence: `${matches} matches gives this read useful weight.`
+  };
+}
+
+function getWinrateBand(winrate = 0, sample = 0) {
+  const wr = safeNumber(winrate);
+  const count = safeNumber(sample);
+  if (count <= 0) return "none";
+  if (count < 3) return "early";
+  if (wr >= 55) return "strong";
+  if (wr >= 50) return "working";
+  if (wr >= 45) return "close";
+  return "losing";
+}
+
+function getWinrateCoachingSentence(subject = "This", winrate = 0, sample = 0, options = {}) {
+  const wr = Math.round(safeNumber(winrate));
+  const count = safeNumber(sample);
+  const band = getWinrateBand(wr, count);
+  const lowerSubject = String(subject || "this").trim() || "this";
+  const target = options?.target || "50%";
+  if (band === "none") return `${lowerSubject} needs more matches before the read is fair.`;
+  if (band === "early") return `${lowerSubject} is at ${wr}% WR, but ${count} match${count === 1 ? "" : "es"} is too small to judge hard.`;
+  if (band === "strong") return `${lowerSubject} is winning at ${wr}% WR across ${count} matches, so keep testing what is working.`;
+  if (band === "working") return `${lowerSubject} is above ${target} at ${wr}% WR, but the goal is to make the wins repeatable.`;
+  if (band === "close") return `${lowerSubject} is close at ${wr}% WR, but it is not winning often enough yet.`;
+  return `${lowerSubject} is at ${wr}% WR across ${count} matches, which means it is losing more than it wins.`;
+}
+
+function buildCoachingCopyContext(context = {}) {
+  const evidenceLayer = context.evidenceLayer || {};
+  const sampleTone = getCoachingSampleTone(evidenceLayer);
+  const bestMap = context.bestMap || null;
+  const weakestMap = context.weakestMap || null;
+  const bestAgent = context.bestAgent || null;
+  const weakestAgent = context.weakestAgent || null;
+  const bestRole = context.bestRole || null;
+  const weakestRole = context.weakestRole || null;
+  const overview = context.overview || {};
+  return {
+    ...context,
+    sampleTone,
+    rules: COACHING_LANGUAGE_RULES,
+    allRepeatedMapsBelowTarget: Boolean(bestMap?.matchesPlayed >= 2 && safeNumber(bestMap?.winrate) < 50),
+    allRepeatedAgentsBelowTarget: Boolean(bestAgent?.matchesPlayed >= 3 && safeNumber(bestAgent?.winrate) < 50),
+    bestMapText: bestMap
+      ? getWinrateCoachingSentence(bestMap.map || "Your best repeated map", bestMap.winrate, bestMap.matchesPlayed)
+      : "No repeated map has enough matches yet.",
+    weakestMapText: weakestMap
+      ? getWinrateCoachingSentence(weakestMap.map || "Your weakest repeated map", weakestMap.winrate, weakestMap.matchesPlayed)
+      : "No repeated map weakness is stable yet.",
+    bestAgentText: bestAgent
+      ? getWinrateCoachingSentence(bestAgent.agent || "Your best repeated agent", bestAgent.winrate, bestAgent.matchesPlayed)
+      : "No repeated agent has enough matches yet.",
+    weakestAgentText: weakestAgent
+      ? getWinrateCoachingSentence(weakestAgent.agent || "Your weakest repeated agent", weakestAgent.winrate, weakestAgent.matchesPlayed)
+      : "No repeated agent weakness is stable yet.",
+    bestRoleText: bestRole
+      ? getWinrateCoachingSentence(formatReadableLabel(bestRole.role || "Your best role"), bestRole.winrate, bestRole.matchesPlayed)
+      : "No repeated role has enough matches yet.",
+    winrateText: getWinrateCoachingSentence("This selected window", overview.winrate, overview.matchesPlayed)
+  };
+}
+
+function normalizeCoachCopyObject(value) {
+  if (Array.isArray(value)) return value.map(item => normalizeCoachCopyObject(item));
+  if (!value || typeof value !== "object") return normalizeRankedCoachCopy(value);
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, normalizeCoachCopyObject(entry)])
+  );
+}
+
+function polishCoachingInsight(insight = {}, context = {}) {
+  const title = String(insight?.title || "").toLowerCase();
+  const output = { ...insight };
+  const sampleSentence = context.sampleTone?.sentence || "";
+  const bestAgent = context.bestAgent || {};
+  const bestMap = context.bestMap || {};
+  const weakestMap = context.weakestMap || {};
+  const bestRole = context.bestRole || {};
+  const weakestRole = context.weakestRole || {};
+  const overview = context.overview || {};
+
+  if (title === "core agent strength" && bestAgent?.agent) {
+    const wr = Math.round(safeNumber(bestAgent.winrate));
+    const games = safeNumber(bestAgent.matchesPlayed);
+    if (wr < 50) {
+      output.type = "warn";
+      output.title = "Best Available Agent Still Needs Work";
+      output.preview = `${bestAgent.agent} is your best repeated pick at ${wr}% WR, but that is still below a winning pace.`;
+      output.what = `${bestAgent.agent} is the clearest agent sample right now, not a proven strength yet.`;
+      output.why = `The pick has enough games to review, but ${wr}% WR means the rounds are not converting often enough. ${sampleSentence}`;
+      output.action = `Keep ${bestAgent.agent} only if the map fits, then give the next game one clear ${formatReadableLabel(agentRoles?.[bestAgent.agent] || "role")} job.`;
+      output.priority = Math.max(safeNumber(output.priority), 86);
+    } else {
+      output.preview = `${bestAgent.agent} is winning at ${wr}% WR across ${games} repeated games.`;
+      output.what = `${bestAgent.agent} is one of the cleaner parts of this profile right now.`;
+      output.why = `The agent is winning often enough to treat as working, while still watching whether the wins come from role impact or raw duels.`;
+      output.action = `Keep ${bestAgent.agent} in the active pool and repeat the same map plans before adding new ones.`;
+    }
+  }
+
+  if (title === "map preparation gap" && weakestMap?.map) {
+    const bestWr = Math.round(safeNumber(bestMap?.winrate));
+    if (context.allRepeatedMapsBelowTarget) {
+      output.title = "Map Pool Is Not Converting Yet";
+      output.preview = `No repeated map is above 50% WR right now. Best available: ${bestMap?.map || "unknown"} at ${bestWr}% WR.`;
+      output.what = "This is not just one bad map. The current map pool is losing more than it wins.";
+      output.why = `${context.bestMapText} That points to round plans, side discipline, or role fit more than one isolated map mistake.`;
+      output.action = "Pick one map to simplify first: one attack plan, one defense default, and one mid-round fallback.";
+      output.priority = Math.max(safeNumber(output.priority), 96);
+    } else {
+      output.preview = `${weakestMap.map} is the repeated map most worth reviewing at ${Math.round(safeNumber(weakestMap.winrate))}% WR.`;
+      output.what = `${weakestMap.map} is the weakest repeated map in this selected window.`;
+      output.why = "A repeated low map result usually means your default plan, side balance, or comfort pick is not stable enough there.";
+      output.action = `Before the next ${weakestMap.map} game, choose one attack plan and one defense fallback.`;
+    }
+  }
+
+  if (title === "multi-kill impact is showing up") {
+    output.title = "Multi-Kill Rounds Are Creating Chances";
+    output.what = "Your multi-kill rounds are creating round-winning chances.";
+    output.why = "The next question is whether those advantages are being traded into safer round wins instead of extra risky fights.";
+    output.action = "After the first advantage, slow the round down, group up, and make the trade easy.";
+  }
+
+  if (title === "map side bias matters here") {
+    output.title = "One Side Of The Map Needs A Plan";
+    output.what = "One side of this map is performing much better than the other.";
+    output.why = "Attack and defense ask for different habits, so the weaker side should be reviewed separately.";
+    output.action = "Keep the stronger side simple, then build one clear rule for the weaker side.";
+  }
+
+  if (title === "damage delta is being judged in agent context") {
+    output.title = "Damage Needs Agent Context";
+    output.preview = normalizeRankedCoachCopy(output.preview || "Damage is being checked against the agent you are playing.");
+    output.what = "Damage output is being read through the agent, not as a flat number.";
+    output.why = "Some agents should create pressure with utility, while others create value through space, info, or survival.";
+    output.action = "Check whether your damage helped create an easier fight, a stalled hit, or a round win.";
+  }
+
+  if (title === "mechanics need weapon context") {
+    output.what = "Raw headshot percentage is not being treated like a rifle-only stat for this profile.";
+    output.why = context.evidenceLayer?.metricWeights?.headshot?.presumption || output.why;
+    output.action = "Check fight conversion, damage timing, positioning, and round wins before making aim the whole issue.";
+  }
+
+  if (title === "fights are slipping") {
+    output.preview = `Your K/D is ${Number(safeNumber(overview.kd)).toFixed(2)}, so fight value needs attention in this window.`;
+    output.what = "Too many fights are being lost or taken without enough support.";
+    output.why = "This can be aim, but it can also be dry peeks, bad spacing, late trades, or taking contact before utility is ready.";
+    output.action = "For the next block, choose one fight rule: swing with a teammate, clear one angle at a time, or stop the first solo death.";
+  }
+
+  if (title === "reliable dueling") {
+    output.preview = `Your K/D is ${Number(safeNumber(overview.kd)).toFixed(2)}, which gives the profile something real to build from.`;
+    output.what = "Your fights are producing value.";
+    output.why = safeNumber(overview.winrate) < 50
+      ? "The issue is likely what happens after the fight advantage, because the match record still is not converting enough."
+      : "The fights and the match record are lining up well enough to keep leaning into this style.";
+    output.action = safeNumber(overview.winrate) < 50
+      ? "After a pick, group up and turn the advantage into a safer round."
+      : "Keep taking initiative, but avoid turning a won fight into an unnecessary second risk.";
+  }
+
+  if (title === "recent mechanical form is slipping") {
+    output.title = "Recent Form Is Slipping";
+    output.what = "The latest match block is performing worse than the broader sample.";
+    output.why = "That can come from tilt, fatigue, tougher games, weaker maps, or trying to fix too many things at once.";
+    output.action = "Make the next game boring on purpose: one agent, one focus, one reset rule.";
+  }
+
+  if (title === "recent mechanical form is strong") {
+    output.title = "Recent Form Is Working";
+    output.what = "The latest match block is holding up better than the broader sample.";
+    output.why = "The current setup is producing more playable rounds, so changing too much now would hide what is working.";
+    output.action = "Repeat the same agent pool and focus category for the next few games.";
+  }
+
+  if (title === "focus category to observe") {
+    output.title = "Repeated Focus Category";
+    output.what = `${output.focus || "This focus"} keeps showing up in your saved logs.`;
+    output.why = "When the same focus keeps coming back, the player usually feels that part of the game breaking down in real rounds.";
+    output.action = `Keep ${output.focus || "this focus"} active until the next block shows it improving or stops repeating.`;
+  }
+
+  if (title === "confidence is running low") {
+    output.title = "Confidence Needs A Reset Plan";
+    output.what = "Recent logs show confidence or self-rating dropping.";
+    output.why = "Low confidence usually makes players hesitate, rush fixes, or chase back a bad round.";
+    output.action = "Use a small reset: one breath, one useful comm, then play the next round plan.";
+  }
+
+  if (title === "role results are uneven" && bestRole?.role && weakestRole?.role) {
+    const bestRoleLabel = formatReadableLabel(bestRole.role);
+    const weakestRoleLabel = formatReadableLabel(weakestRole.role);
+    if (safeNumber(bestRole.winrate) < 50) {
+      output.title = "Role Fit Is Still Unsettled";
+      output.preview = `${bestRoleLabel} is your best role sample, but it is still under 50% WR.`;
+      output.what = `${bestRoleLabel} is best available, not fully working yet.`;
+      output.why = `${weakestRoleLabel} is lagging behind, but the best role still needs cleaner round conversion.`;
+      output.action = `Queue ${bestRoleLabel} only with a simple role job, then compare it against ${weakestRoleLabel} after more games.`;
+      output.priority = Math.max(safeNumber(output.priority), 84);
+    } else {
+      output.what = `${bestRoleLabel} is giving you better results than ${weakestRoleLabel}.`;
+      output.why = "That usually means your comfort, decisions, or impact timing fits one role better right now.";
+      output.action = `Use ${bestRoleLabel} when you want stability, and give ${weakestRoleLabel} one specific practice goal when you play it.`;
+    }
+  }
+
+  return normalizeCoachCopyObject(output);
+}
+
+function polishTrendRead(trend = {}, context = {}) {
+  const output = { ...trend };
+  const id = String(output.id || "").toLowerCase();
+  const overview = context.overview || {};
+  const sampleSentence = context.sampleTone?.sentence || "";
+
+  if (id === "fight_conversion") {
+    output.detail = safeNumber(overview.kd) >= 1
+      ? "Your fights are giving the profile value. Now check whether those fights become round wins."
+      : "Fight value needs review, but the fix may be fight choice, spacing, or trade timing instead of aim alone.";
+    output.read = safeNumber(overview.kd) >= 1
+      ? "The fight value is playable. The next read is conversion."
+      : "Fight value is costing rounds often enough to stay near the top of the plan.";
+  }
+
+  if (id === "match_conversion") {
+    output.detail = safeNumber(overview.winrate) >= 50
+      ? "The selected window is winning enough to keep testing the current setup."
+      : "The selected window is losing more than it wins, so the app should focus on round conversion.";
+    output.read = context.allRepeatedMapsBelowTarget
+      ? "No repeated map is above 50% WR, so this is a full map-pool conversion problem, not a single-map flex."
+      : output.detail;
+  }
+
+  if (id === "recent_form") {
+    output.detail = "Recent form compares the latest block against the broader selected window.";
+    output.read = safeNumber(trend?.tone === "down" ? -1 : 1) < 0
+      ? "Recent form is dipping. Keep the next match simple enough to measure."
+      : "Recent form is stable enough to repeat the current plan.";
+  }
+
+  if (id === "score_pressure") {
+    output.label = "Damage Pressure";
+    output.detail = "Damage is useful when it creates easier fights, stalls a hit, or helps convert the round.";
+    output.read = safeNumber(overview.adr) >= 200
+      ? "Damage pressure is showing up. Keep tying it to round wins."
+      : "Damage pressure is a supporting issue, especially if fights or KAST are also low.";
+  }
+
+  if (id === "precision_signal") {
+    const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
+    output.detail = hsWeight?.label === "Down-weighted"
+      ? "HS% is being read with weapon and role context, not as a rifle-only grade."
+      : "HS% is being used as a normal mechanics signal in this profile.";
+    output.read = hsWeight?.label === "Down-weighted"
+      ? `${hsWeight.presumption} Check fight conversion before making aim the full answer.`
+      : output.read;
+  }
+
+  if (id === "support_pressure") {
+    output.detail = "Assist value is a proxy for trades, setup timing, and teammate conversion.";
+    output.read = "This matters most when it lines up with role choice and round wins.";
+  }
+
+  if (id === "round_survivability") {
+    output.detail = "Deaths are checked as role discipline, not as a demand to play scared.";
+    output.read = "Survival matters when dying early removes utility, trade value, or map control.";
+  }
+
+  if (id === "kast_stability") {
+    output.detail = "KAST checks whether you are surviving, trading, assisting, or being part of converted rounds.";
+    output.read = "Low KAST usually means too many rounds are happening without you staying connected to the team.";
+  }
+
+  if (id === "side_balance") {
+    output.detail = "ATK/DEF gaps are reviewed separately because the two halves ask for different plans.";
+    output.read = "Do not fix the whole map at once. Fix the weaker side first.";
+  }
+
+  if (id === "weapon_pattern") {
+    output.detail = "Weapon usage changes how mechanics should be judged.";
+    output.read = "A weapon-heavy profile should be reviewed by conversion, positioning, and round impact, not HS% alone.";
+  }
+
+  if (id === "multi_kill_pressure") {
+    output.detail = "Multi-kill rounds show that you can swing rounds, but conversion still matters.";
+    output.read = "After the first advantage, group up and make the trade easy.";
+  }
+
+  if (sampleSentence && !String(output.sourceLabel || "").includes(sampleSentence)) {
+    output.sampleNote = sampleSentence;
+  }
+
+  return normalizeCoachCopyObject(output);
+}
+
+function polishBreakdownRead(card = {}, context = {}) {
+  const output = { ...card };
+  const label = String(output.label || "").toLowerCase();
+  const bestAgent = context.bestAgent || {};
+  const bestMap = context.bestMap || {};
+  const weakestMap = context.weakestMap || {};
+  const bestRole = context.bestRole || {};
+
+  if (label === "mechanics") {
+    output.detail = context.evidenceLayer?.metricWeights?.headshot?.label === "Down-weighted"
+      ? "Mechanics are being read through fights, damage timing, positioning, and weapon mix."
+      : "Mechanics are being read through fight value, damage, and precision together.";
+  }
+
+  if (label === "average adr") {
+    output.label = "Damage Pressure";
+    output.detail = "Damage matters most when it creates a cleaner fight, a stalled hit, or a converted round.";
+  }
+
+  if (label === "agent selection" && bestAgent?.agent) {
+    output.detail = safeNumber(bestAgent.winrate) >= 50
+      ? `${bestAgent.agent} is winning enough to keep in the active pool.`
+      : `${bestAgent.agent} is the best repeated pick available, but ${Math.round(safeNumber(bestAgent.winrate))}% WR is still not working enough yet.`;
+  }
+
+  if (label === "coaching focus category") {
+    output.detail = context.coachDiagnosis || output.detail;
+  }
+
+  if (label === "confidence rating") {
+    output.detail = context.sampleTone?.sentence || output.detail;
+    output.tooltip = `${output.detail} Confidence also checks logs and stat coverage.`;
+  }
+
+  if (label === "round survivability") {
+    output.detail = "Deaths are reviewed by timing and role value. The goal is not passive play; it is staying alive when your life still has value.";
+  }
+
+  if (label === "support value") {
+    output.detail = "Assist value helps show whether trades, utility, or follow-up timing are helping teammates convert rounds.";
+  }
+
+  if (label === "map pattern") {
+    if (context.allRepeatedMapsBelowTarget && bestMap?.map) {
+      output.value = `${bestMap.map} ${Math.round(safeNumber(bestMap.winrate))}% WR`;
+      output.detail = "This is the best repeated map, but it is still below 50%, so the map pool needs a simpler plan.";
+    } else if (weakestMap?.map) {
+      output.detail = `${weakestMap.map} is the repeated map most worth reviewing first.`;
+    }
+  }
+
+  if (label === "role fit" && bestRole?.role) {
+    output.detail = safeNumber(bestRole.winrate) >= 50
+      ? `${formatReadableLabel(bestRole.role)} is the clearest stable role signal right now.`
+      : `${formatReadableLabel(bestRole.role)} is best available, but still below a winning pace.`;
+  }
+
+  if (label === "weapon category") {
+    output.detail = "Weapon category changes how aim, HS%, and conversion should be read.";
+  }
+
+  if (label === "mood pattern") {
+    output.detail = "Mood logs explain session quality. They should guide resets, not blame the player.";
+  }
+
+  return normalizeCoachCopyObject(output);
+}
+
+function polishWeeklyCandidate(candidate = {}, context = {}) {
+  const output = { ...candidate };
+  const key = String(output.key || "").toLowerCase();
+
+  if (key === "tilt") {
+    const moodLabel = String(output.label || "").replace(/^Most tilt mentions:?\s*/i, "").trim();
+    output.label = moodLabel && !/^Most/i.test(moodLabel) ? `Mood pattern: ${moodLabel}` : "Mood pattern";
+    output.summary = output.summary && !/No clear/i.test(output.summary)
+      ? output.summary.replace(/focus category/i, "mood pattern")
+      : "No repeated tilt pattern is stored yet.";
+    output.read = output.read && !/not enough/i.test(output.read)
+      ? "This points to session emotion affecting decisions. Treat it as a reset cue, not a character flaw."
+      : "There are not enough mood logs yet to make a strong tilt read.";
+  }
+
+  if (key === "ratings") {
+    output.label = output.label.replace(/^Weakest self ratings/i, "Lowest self-rated focus");
+    output.read = output.read && !/not enough/i.test(output.read)
+      ? "This is where the player is rating their own games lowest, so it is a practical place to review first."
+      : "There is not enough low-rating log volume yet to isolate a fair self-rating pattern.";
+  }
+
+  if (key === "losses") {
+    output.read = context.allRepeatedMapsBelowTarget
+      ? "Losses are not isolated to one winning map pool yet. Start by simplifying the most repeated losing context."
+      : output.read;
+  }
+
+  if (key === "impactful") {
+    output.label = output.label.replace(/^Biggest coaching category gap:/i, "Compass gap:");
+    output.read = output.read && !/No impact/i.test(output.read)
+      ? "This is the lowest compass pillar right now, so it is the best long-term development target."
+      : output.read;
+  }
+
+  return normalizeCoachCopyObject(output);
+}
+
+function polishTrendBreakdownItem(item = {}, context = {}) {
+  const output = { ...item };
+  const kicker = String(output.kicker || "").toLowerCase();
+  const title = String(output.title || "").toLowerCase();
+
+  if (kicker.includes("map") && context.allRepeatedMapsBelowTarget) {
+    output.detail = "The map read is below a winning pace. Review the plan before calling it a strength.";
+  }
+  if (kicker.includes("agent") && context.allRepeatedAgentsBelowTarget) {
+    output.detail = "The agent read is best available, but not winning enough to call stable yet.";
+  }
+  if (kicker.includes("emotional") || title.includes("positive") || title.includes("negative")) {
+    output.detail = "Mood logs are context for reset habits and decision quality.";
+  }
+  if (kicker.includes("engine health")) {
+    output.detail = context.sampleTone?.sentence || output.detail;
+  }
+  return normalizeCoachCopyObject(output);
+}
+
+function polishRecentImprovementItem(item = {}, context = {}) {
+  const output = { ...item };
+  output.detail = output.detail || "This moved in the right direction in the recent window.";
+  output.comparisonLabel = output.comparisonLabel || "Recent window compared against the earlier profile baseline.";
+  output.sourceLabel = output.sourceLabel || "Built from the current match/log sample.";
+  output.formula = output.formula || "Recent value minus earlier value.";
+  if (context.sampleTone?.label === "Early sample") {
+    output.sourceLabel = `${output.sourceLabel} ${context.sampleTone.sentence}`;
+  }
+  return normalizeCoachCopyObject(output);
+}
+
 function buildCoachRecommendation(kind, entity = {}, model = {}) {
   const overview = model?.overview || {};
   const weeklyFocus = model?.weekly?.mostPracticed || model?.focus || "the current focus category";
@@ -2037,16 +2514,16 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 2) {
       return {
-        diagnosis: `${mapName} needs more repeated matches before this is a real read.`,
-        emphasis: "One game can point us somewhere, but it should not decide the map yet.",
-        recommendation: `Play one more ${mapName} match before changing your map plan.`
+        diagnosis: `${mapName} needs more matches before this is a fair map read.`,
+        emphasis: "One game can point at a problem, but it should not decide the whole map plan.",
+        recommendation: `Play one more ${mapName} match and log what side felt harder.`
       };
     }
 
     if (mapWr >= 55) {
       return {
-        diagnosis: `${mapName} is working well for you right now.`,
-        emphasis: `${agent} looks comfortable here.`,
+        diagnosis: `${mapName} is winning enough to keep in the active pool.`,
+        emphasis: `${agent} looks comfortable here, but the goal is still repeatable round plans.`,
         recommendation: sideGap >= 12 && weakerSide
           ? `Keep what is working, then clean up the ${weakerSide} half.`
           : `Keep your ${mapName} plan simple and repeat what is winning rounds.`
@@ -2055,7 +2532,7 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (mapWr >= 45) {
       return {
-        diagnosis: `${mapName} is close, but it is not winning often enough yet.`,
+        diagnosis: `${mapName} is close, but still not winning enough yet.`,
         emphasis: sideGap >= 12 && weakerSide ? `${weakerSide} rounds are the first thing to review.` : "The map needs a simpler plan.",
         recommendation: sideGap >= 12 && weakerSide
           ? `Go in with one ${weakerSide} plan and one backup call.`
@@ -2064,9 +2541,9 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
     }
 
     return {
-      diagnosis: `${mapName} is hurting your climb right now.`,
-      emphasis: "Start with the first plan of the round.",
-      recommendation: `Review your ${mapName} prep and keep the next plan simple.`
+      diagnosis: `${mapName} is losing more than it wins right now.`,
+      emphasis: "Do not treat this as a small stat dip until the plan gets simpler.",
+      recommendation: `Review your ${mapName} prep first: one attack default, one defense default, one fallback call.`
     };
   }
 
@@ -2079,16 +2556,16 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 3) {
       return {
-        diagnosis: `${agentName} needs more games before this is a fair read.`,
+        diagnosis: `${agentName} needs more games before this is a fair agent read.`,
         emphasis: "Do not overreact to a tiny sample.",
-        recommendation: `Play ${agentName} when it fits the map, then check the next few games.`
+        recommendation: `Play ${agentName} when the map fits, then check whether the next few games repeat the same pattern.`
       };
     }
 
     if (winrate >= 55 && kd >= 1) {
       return {
-        diagnosis: `${agentName} is one of your best picks right now.`,
-        emphasis: `Your ${role} play on this agent is helping rounds.`,
+        diagnosis: `${agentName} is one of your cleaner picks right now.`,
+        emphasis: `Your ${role} play on this agent is helping rounds convert.`,
         recommendation: `Keep ${agentName} in your active pool.`
       };
     }
@@ -2097,12 +2574,12 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
       return {
         diagnosis: `${agentName} is showing value, but the wins are not clean yet.`,
         emphasis: kd >= 1 ? "The fights are there. The rounds need more structure." : "The rounds are close. The fights need more discipline.",
-        recommendation: `Give ${agentName} one job next game.`
+        recommendation: `Give ${agentName} one job next game and judge whether that job helped convert rounds.`
       };
     }
 
     return {
-      diagnosis: `${agentName} is not working well enough right now.`,
+      diagnosis: `${agentName} is not winning enough right now.`,
       emphasis: "Narrow the job you expect from this pick.",
       recommendation: `Play ${agentName} with one clear ${role} goal next game.`
     };
@@ -2112,8 +2589,8 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
     const roleName = entity?.role || "this role";
     const winrate = Math.round(safeNumber(entity?.winrate));
     return {
-      diagnosis: winrate >= 50 ? `${roleName} is working for you right now.` : `${roleName} is not leading to enough wins right now.`,
-      emphasis: winrate >= 50 ? "Lean into what is already working." : "Make the role simpler before adding more plans.",
+      diagnosis: winrate >= 50 ? `${roleName} is winning enough to keep testing.` : `${roleName} is not leading to enough wins right now.`,
+      emphasis: winrate >= 50 ? "Lean into the habits that are already converting rounds." : "Make the role simpler before adding more plans.",
       recommendation: winrate >= 50
         ? `Queue ${roleName} when you want a steadier path.`
         : `Give this role one small job next game.`
@@ -2121,9 +2598,9 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
   }
 
   return {
-    diagnosis: overview.kd >= 1 ? "Your profile has something to build from." : "Your profile needs a stronger floor.",
+    diagnosis: overview.kd >= 1 ? "Your profile has fight value to build from." : "Your profile needs a stronger baseline before the read gets sharp.",
     emphasis: `Use ${weeklyFocus} as the next review target.`,
-    recommendation: "Keep the next goal small enough to notice if it works."
+    recommendation: "Keep the next goal small enough to actually notice if it worked."
   };
 }
 
@@ -3322,6 +3799,21 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     });
   }
 
+  if (bestMap && bestMap.matchesPlayed >= 2 && safeNumber(bestMap.winrate) < 50) {
+    insights.push({
+      type: "bad",
+      title: "No Map Is Winning Enough Yet",
+      preview: `${bestMap.map} is the best repeated map available at ${Math.round(safeNumber(bestMap.winrate))}% WR, but every repeated map is still below 50%.`,
+      what: "The map pool is losing more than it wins in this selected window.",
+      why: "When the best repeated map is still below 50%, the answer is not to praise that map. The profile needs cleaner round plans, side discipline, and role fit across the pool.",
+      action: "Pick one repeated map first. Build one attack plan, one defense default, and one fallback call before queueing it again.",
+      sources: ["Riot Match History", "Map Context"],
+      focus: "Map Awareness",
+      category: "performance",
+      priority: 99
+    });
+  }
+
   if (multiKillPressure >= 18) {
     insights.push({
       type: "good",
@@ -3499,8 +3991,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       }
     });
 
-  const topInsights = uniqueInsights.slice(0, 6);
-  const primaryInsight = topInsights[0] || null;
+  let topInsights = uniqueInsights.slice(0, 6);
+  let primaryInsight = topInsights[0] || null;
   const matchConfidenceScore = clampPercent(safeNumber(orderedMatches.length) * 2.4);
   const logConfidenceScore = clampPercent(safeNumber(logs.length) * 4);
   const statConfidenceScore = clampPercent(
@@ -3522,8 +4014,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const confidenceFormula = `${evidenceLayer.sample.explanation} Confidence Rating looks at match volume, reflection logs, and stat coverage before the app decides how hard to trust a read.`;
   const priorityScore = clampPercent(primaryInsight?.priority || (hasMatchData ? ((100 - Math.round(overview.winrate || 50)) + (overview.kd < 1 ? 20 : 0)) : 0));
   const priorityLabel = getPriorityLabel(priorityScore);
-  const coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before it can report a sharper diagnosis.";
-  const coachRecommendation = primaryInsight?.action || "Import another block of matches and keep one weekly focus category active until the trend changes.";
+  let coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before it can report a sharper diagnosis.";
+  let coachRecommendation = primaryInsight?.action || "Import another block of matches and keep one weekly focus category active until the trend changes.";
 
   const focus = primaryInsight?.focus
     || weeklyTopFocusEntry?.[0]
@@ -4545,16 +5037,55 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     }
   ].sort((a, b) => b.score - a.score);
 
-  const uniqueTrends = selectReadCandidatePool(trends, 6, ["id", "label", "value"]);
-  const uniqueBreakdown = selectReadCandidatePool(breakdown, 5, ["label", "value"]);
-  const uniqueTrendBreakdown = Object.fromEntries(
+  let uniqueTrends = selectReadCandidatePool(trends, 6, ["id", "label", "value"]);
+  let uniqueBreakdown = selectReadCandidatePool(breakdown, 5, ["label", "value"]);
+  let uniqueTrendBreakdown = Object.fromEntries(
     Object.entries(trendBreakdown).map(([key, items]) => [
       key,
       selectReadCandidatePool(items, 3, ["kicker", "title", "value"])
     ])
   );
-  const uniqueRecentImprovements = dedupeDisplayItems(recentImprovements, ["key", "label", "value"]);
-  const uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"]);
+  let uniqueRecentImprovements = dedupeDisplayItems(recentImprovements, ["key", "label", "value"]);
+  let uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"]);
+
+  const coachingCopyContext = buildCoachingCopyContext({
+    overview,
+    evidenceLayer,
+    bestMap,
+    weakestMap,
+    bestAgent,
+    weakestAgent,
+    bestRole,
+    weakestRole,
+    coachDiagnosis,
+    coachRecommendation,
+    focus,
+    seasonLabel,
+    activeRoleName,
+    activeAgentName,
+    currentSignalAgent,
+    currentSignalRole,
+    coachingContext
+  });
+
+  topInsights = topInsights.map(insight => polishCoachingInsight(insight, coachingCopyContext));
+  primaryInsight = topInsights[0] || null;
+  coachDiagnosis = primaryInsight?.what || coachDiagnosis;
+  coachRecommendation = primaryInsight?.action || coachRecommendation;
+  coachingCopyContext.coachDiagnosis = coachDiagnosis;
+  coachingCopyContext.coachRecommendation = coachRecommendation;
+  uniqueTrends = uniqueTrends.map(trend => polishTrendRead(trend, coachingCopyContext));
+  uniqueBreakdown = uniqueBreakdown.map(card => polishBreakdownRead(card, coachingCopyContext));
+  uniqueTrendBreakdown = Object.fromEntries(
+    Object.entries(uniqueTrendBreakdown).map(([key, items]) => [
+      key,
+      (items || []).map(item => polishTrendBreakdownItem(item, coachingCopyContext))
+    ])
+  );
+  uniqueRecentImprovements = uniqueRecentImprovements.map(item => polishRecentImprovementItem(item, coachingCopyContext));
+  uniqueWeeklyCandidates = uniqueWeeklyCandidates.map(item => polishWeeklyCandidate(item, coachingCopyContext));
+  weekly.why = primaryInsight?.preview || weekly.why;
+  weekly.how = primaryInsight?.action || weekly.how;
 
   weekly.mostPracticed = uniqueWeeklyCandidates[0]?.label || weekly.mostPracticed;
   weekly.weakestTheme = uniqueWeeklyCandidates[1]?.label || weekly.weakestTheme;
@@ -4778,7 +5309,8 @@ function buildAskCoachAIContext() {
       currentContext: model?.evidenceLayer?.currentContext || null,
       metricWeights: model?.evidenceLayer?.metricWeights || null,
       sourcePolicy: model?.evidenceLayer?.sourcePolicy || [],
-      sources: model?.evidenceLayer?.sources || []
+      sources: model?.evidenceLayer?.sources || [],
+      languageRules: COACHING_LANGUAGE_RULES
     },
     currentFocus: model?.focus || "",
     coachDiagnosis: model?.coachDiagnosis || "",
@@ -4993,14 +5525,22 @@ function answerAskCoachQuestion(question = "") {
       .sort((a, b) => b.winrate - a.winrate || b.matches - a.matches || b.kd - a.kd);
     const pick = candidates[0];
     if (pick) {
-      return `For ${mapMention}, your best current agent is ${pick.agent}: ${Math.round(pick.winrate)}% WR across ${pick.matches} imported matches from ${season}.`;
+      const wr = Math.round(safeNumber(pick.winrate));
+      if (wr < 50) {
+        return `For ${mapMention}, ${pick.agent} is only the best available sample: ${wr}% WR across ${pick.matches} imported matches from ${season}. That is not strong yet, so I would review the map plan before calling the pick solved.`;
+      }
+      return `For ${mapMention}, ${pick.agent} is your best current agent: ${wr}% WR across ${pick.matches} imported matches from ${season}. Keep the plan simple and test whether it repeats.`;
     }
     return `I do not have enough ${mapMention} agent history yet. Import more matches from ${season}, then ask again.`;
   }
 
   if (normalized.includes("best agent") || normalized.includes("strongest agent") || normalized.includes("main agent")) {
     if (bestAgent) {
-      return `${bestAgent.agent} is your strongest current agent: ${Math.round(bestAgent.winrate)}% WR across ${bestAgent.matchesPlayed} imported matches from ${season}.`;
+      const wr = Math.round(safeNumber(bestAgent.winrate));
+      if (wr < 50) {
+        return `${bestAgent.agent} is your best available repeated agent at ${wr}% WR across ${bestAgent.matchesPlayed} matches from ${season}, but that is still below a winning pace. Treat it as the first agent to review, not a confirmed main.`;
+      }
+      return `${bestAgent.agent} is your strongest current agent: ${wr}% WR across ${bestAgent.matchesPlayed} imported matches from ${season}.`;
     }
     return "I need more repeated agent games before I can name a reliable best agent.";
   }
@@ -5014,14 +5554,24 @@ function answerAskCoachQuestion(question = "") {
 
   if (normalized.includes("best map") || normalized.includes("strongest map")) {
     if (bestMap) {
-      return `${bestMap.map} is your strongest current map: ${Math.round(bestMap.winrate)}% WR across ${bestMap.matchesPlayed} imported matches from ${season}.`;
+      const wr = Math.round(safeNumber(bestMap.winrate));
+      if (wr < 50) {
+        return `${bestMap.map} is your best available repeated map at ${wr}% WR across ${bestMap.matchesPlayed} matches from ${season}, but that is still below 50%. The real read is that your map pool needs simpler plans before any map gets called strong.`;
+      }
+      return `${bestMap.map} is your strongest current map: ${wr}% WR across ${bestMap.matchesPlayed} imported matches from ${season}.`;
     }
     return "I need more repeated map data before I can identify a strongest map.";
   }
 
   if (normalized.includes("role")) {
     if (bestRole && weakestRole) {
-      return `${bestRole.role} is currently your best-performing role, while ${weakestRole.role} needs the most review. RankedCoach is using ${season} match history for this read.`;
+      const bestWr = Math.round(safeNumber(bestRole.winrate));
+      const bestRoleLabel = formatReadableLabel(bestRole.role);
+      const weakestRoleLabel = formatReadableLabel(weakestRole.role);
+      if (bestWr < 50) {
+        return `${bestRoleLabel} is your best available role sample at ${bestWr}% WR, but it is still below a winning pace. ${weakestRoleLabel} needs review too, but I would first simplify the role job and prove one role can convert rounds.`;
+      }
+      return `${bestRoleLabel} is currently your best-performing role, while ${weakestRoleLabel} needs the most review. RankedCoach is using ${season} match history for this read.`;
     }
     return "I need more role variety in the imported matches before I can compare roles clearly.";
   }
