@@ -11923,6 +11923,7 @@ function isGoalRankSelectionAllowed(label, requestedRR = null){
   if(!target?.bounds) return false;
 
   const minimum = getCurrentGoalMinimum();
+  if(target.isRadiantPlus) return safeNumber(target.goalRR, RADIANT_MIN_RR) >= minimum.radiantMinRR;
   if(target.bounds.min < minimum.currentRankMin) return false;
   if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < minimum.radiantMinRR) return false;
 
@@ -34776,10 +34777,10 @@ function bindEvents(){
       optionButtons
         .filter((button) => button.dataset.value === option.value)
         .forEach((button) => {
-          button.disabled = !isAllowed;
+          button.disabled = false;
           button.classList.toggle("is-disabled", !isAllowed);
           button.setAttribute("aria-disabled", isAllowed ? "false" : "true");
-          button.tabIndex = isAllowed ? 0 : -1;
+          button.tabIndex = 0;
         });
     });
 
@@ -34817,12 +34818,12 @@ function bindEvents(){
     menu?.querySelectorAll(".goal-rank-custom-option").forEach((option) => {
       const isActive = option.dataset.value === value;
       const isAllowed = isGoalRankSelectionAllowed(option.dataset.value, getGoalRankRequestedRR(option.dataset.value));
-      option.disabled = !isAllowed;
+      option.disabled = false;
       option.classList.toggle("is-active", isActive);
       option.classList.toggle("is-disabled", !isAllowed);
       option.setAttribute("aria-selected", isActive ? "true" : "false");
       option.setAttribute("aria-disabled", isAllowed ? "false" : "true");
-      option.tabIndex = isAllowed ? 0 : -1;
+      option.tabIndex = 0;
     });
   }
 
@@ -34935,7 +34936,6 @@ function bindEvents(){
         syncGoalRankCustomDropdown();
         return;
       }
-      if (option.classList.contains("is-disabled") || option.getAttribute("aria-disabled") === "true") return;
       select.value = requestedGoalRank || select.value;
       select.dispatchEvent(new Event("change", { bubbles: true }));
       if (shell.classList.contains("goal-rank-inline-mobile")) {
