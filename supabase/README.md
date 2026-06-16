@@ -59,22 +59,41 @@ Bug reports can also be submitted by guests. If the `bug_reports` table has not 
 
 Ask Coach uses a Supabase Edge Function so the browser never receives the OpenAI API key.
 
+This repo is configured for the RankedCoach Supabase project in `supabase/config.toml`:
+
+```bash
+project ref: jqrsjaaxtdxfmpbtrupj
+site url: https://rankedcoach.gg
+```
+
+Authenticate the Supabase CLI locally before deploying:
+
+```bash
+supabase login
+```
+
+Or use a one-time environment variable without committing it:
+
+```bash
+$env:SUPABASE_ACCESS_TOKEN="your-token"
+```
+
 Create the function secret:
 
 ```bash
-supabase secrets set OPENAI_API_KEY=sk-your-openai-key
+supabase secrets set OPENAI_API_KEY=sk-your-openai-key --project-ref jqrsjaaxtdxfmpbtrupj
 ```
 
 Optional model override:
 
 ```bash
-supabase secrets set OPENAI_MODEL=gpt-5.5
+supabase secrets set OPENAI_MODEL=gpt-5.5 --project-ref jqrsjaaxtdxfmpbtrupj
 ```
 
 Deploy the function:
 
 ```bash
-supabase functions deploy ask-coach
+supabase functions deploy ask-coach --project-ref jqrsjaaxtdxfmpbtrupj --use-api
 ```
 
 If the Supabase project is paused or the function is not deployed, the app falls back to the local rule-based Ask Coach responses.
