@@ -39811,7 +39811,7 @@ function updateNavRRToRank(){
     applyStaticTrackGradient(bar, Math.round(progress.pct * 100), "horizontal");
   } else {
     const radiantRR = current.tierLabel === "Radiant"
-      ? getActRRForAbsoluteRR(abs, current)
+      ? RADIANT_MIN_RR
       : null;
     nextText.textContent = radiantRR === null ? "Max Rank" : `${radiantRR} RR`;
     if(nextIcon){
@@ -39865,11 +39865,14 @@ function updateNavRRToGoalRank(){
   }
 
   const { bounds, targetRR } = goalTarget;
-  const rrNeeded = Math.max(0, targetRR - abs);
+  const comparableCurrentRR = current.tierLabel === "Radiant"
+    ? getAbsoluteRRForActRR(RADIANT_MIN_RR)
+    : abs;
+  const rrNeeded = Math.max(0, targetRR - comparableCurrentRR);
   const span = Math.max(1, targetRR - current.min);
   const progressPct = rrNeeded <= 0
     ? 100
-    : Math.max(0, Math.min(100, ((abs - current.min) / span) * 100));
+    : Math.max(0, Math.min(100, ((comparableCurrentRR - current.min) / span) * 100));
 
   if(targetIcon){
     targetIcon.src = getRankIconUrl(bounds.tierLabel);
