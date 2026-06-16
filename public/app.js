@@ -34792,6 +34792,17 @@ function bindEvents(){
     }
   }
 
+  function clampGoalRadiantRRInput() {
+    if (!goalRadiantRRInput || goalRadiantRRInput.disabled) return;
+    const minimum = getCurrentGoalMinimum();
+    const rawValue = String(goalRadiantRRInput.value || "").trim();
+    const nextValue = Math.max(
+      minimum.radiantMinRR,
+      Math.round(safeNumber(rawValue, minimum.radiantMinRR))
+    );
+    goalRadiantRRInput.value = String(nextValue);
+  }
+
   function syncGoalRankCustomDropdown() {
     const select = document.getElementById("goalRankSelect");
     const valueEl = document.getElementById("goalRankCustomValue");
@@ -34955,10 +34966,18 @@ function bindEvents(){
   });
 
   goalRadiantRRInput?.addEventListener("input", () => {
-    const minimum = getCurrentGoalMinimum();
-    if (safeNumber(goalRadiantRRInput.value, 0) < minimum.radiantMinRR) {
-      goalRadiantRRInput.value = String(minimum.radiantMinRR);
-    }
+    goalRadiantRRInput.dataset.isEditing = "1";
+  });
+
+  goalRadiantRRInput?.addEventListener("blur", () => {
+    goalRadiantRRInput.dataset.isEditing = "";
+    clampGoalRadiantRRInput();
+    syncGoalRankCustomDropdown();
+  });
+
+  goalRadiantRRInput?.addEventListener("change", () => {
+    goalRadiantRRInput.dataset.isEditing = "";
+    clampGoalRadiantRRInput();
     syncGoalRankCustomDropdown();
   });
 

@@ -50460,4 +50460,27 @@ html body #logFocusCustomMenu.log-focus-custom-menu .log-focus-custom-option.is-
   background:color-mix(in srgb,var(--rc-scroll-accent) 32%,rgba(30,41,59,.92)) !important;
 }
 
+/* Goal rank lock v46: ranks below current synced rank stay visibly unavailable. */
+html body #goalRankCustomMenu .goal-rank-custom-option:is(:disabled,.is-disabled,[aria-disabled="true"]){
+  background:rgba(15,23,42,.72) !important;
+  color:rgba(148,163,184,.52) !important;
+  border-color:rgba(148,163,184,.12) !important;
+  cursor:not-allowed !important;
+  opacity:.58 !important;
+  filter:saturate(.45) grayscale(.35) !important;
+  box-shadow:none !important;
+  pointer-events:none !important;
+}
+html body #goalRankCustomMenu .goal-rank-custom-option:is(:disabled,.is-disabled,[aria-disabled="true"]) .goal-rank-custom-option-icon{
+  opacity:.42 !important;
+  filter:grayscale(1) saturate(.2) brightness(.72) !important;
+}
+html body #goalRankCustomMenu .goal-rank-custom-option:is(:disabled,.is-disabled,[aria-disabled="true"]) .goal-rank-custom-option-label{
+  color:rgba(148,163,184,.56) !important;
+}
+html body #goalRankCustomMenu .goal-rank-custom-option:is(:disabled,.is-disabled,[aria-disabled="true"]):hover{
+  background:rgba(15,23,42,.72) !important;
+  color:rgba(148,163,184,.52) !important;
+}
+
 
