@@ -11869,6 +11869,14 @@ function normalizeRadiantGoalRRInput(rr){
   return Math.max(RADIANT_MIN_RR, actRR || RADIANT_MIN_RR);
 }
 
+function getMinimumRadiantPlusGoalRR(){
+  const minimum = getCurrentGoalMinimum();
+  return Math.max(
+    RADIANT_MIN_RR + 1,
+    Math.round(safeNumber(minimum?.radiantMinRR, RADIANT_MIN_RR)) + 1
+  );
+}
+
 function getGoalRankTarget(label, requestedRR = null){
   const normalized = normalizeTierLabel(label);
   const bounds = getTierBoundsByLabel(normalized);
@@ -11876,8 +11884,11 @@ function getGoalRankTarget(label, requestedRR = null){
 
   const isRadiantPlus = normalized === "Radiant +";
   const isRadiant = bounds.tierLabel === "Radiant";
-  const rawTarget = safeNumber(requestedRR, isRadiant ? RADIANT_MIN_RR : bounds.min);
-  const goalRR = isRadiant ? normalizeRadiantGoalRRInput(rawTarget) : null;
+  const radiantFallbackRR = isRadiantPlus ? getMinimumRadiantPlusGoalRR() : RADIANT_MIN_RR;
+  const rawTarget = safeNumber(requestedRR, isRadiant ? radiantFallbackRR : bounds.min);
+  const goalRR = isRadiant
+    ? Math.max(radiantFallbackRR, normalizeRadiantGoalRRInput(rawTarget))
+    : null;
   const targetRR = isRadiant
     ? getAbsoluteRRForActRR(goalRR)
     : bounds.min;
@@ -11923,7 +11934,7 @@ function isGoalRankSelectionAllowed(label, requestedRR = null){
   if(!target?.bounds) return false;
 
   const minimum = getCurrentGoalMinimum();
-  if(target.isRadiantPlus) return safeNumber(target.goalRR, RADIANT_MIN_RR) >= minimum.radiantMinRR;
+  if(target.isRadiantPlus) return safeNumber(target.goalRR, RADIANT_MIN_RR) >= getMinimumRadiantPlusGoalRR();
   if(target.bounds.min < minimum.currentRankMin) return false;
   if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < minimum.radiantMinRR) return false;
 
@@ -34722,7 +34733,7 @@ function bindEvents(){
     p.goalRank = clampedGoal.goalRank;
     p.goalRR = clampedGoal.goalRR;
     goalRankSelect.value = p.goalRank;
-    if (goalRadiantRRInput && p.goalRank === "Radiant") {
+    if (goalRadiantRRInput && isRadiantGoalRank(p.goalRank)) {
       goalRadiantRRInput.value = String(Math.max(clampedGoal.goalRR || RADIANT_MIN_RR, safeNumber(goalRadiantRRInput.min, RADIANT_MIN_RR)));
     }
     profiles = profiles.map(pr =>
@@ -34747,22 +34758,22 @@ function bindEvents(){
   function getGoalRankRequestedRR(label) {
     const normalized = normalizeTierLabel(label);
     if (normalized === "Radiant +") {
-      const minimum = getCurrentGoalMinimum();
-      return Math.max(minimum.radiantMinRR, safeNumber(goalRadiantRRInput?.value, minimum.radiantMinRR));
+      const minimumRR = getMinimumRadiantPlusGoalRR();
+      return Math.max(minimumRR, safeNumber(goalRadiantRRInput?.value, minimumRR));
     }
     return normalized === "Radiant" ? goalRadiantRRInput?.value : null;
   }
 
   function requestRadiantPlusGoalRR(defaultValue = null) {
-    const minimum = getCurrentGoalMinimum();
+    const minimumRR = getMinimumRadiantPlusGoalRR();
     const fallback = Math.max(
-      minimum.radiantMinRR,
-      Math.round(safeNumber(defaultValue ?? goalRadiantRRInput?.value, minimum.radiantMinRR))
+      minimumRR,
+      Math.round(safeNumber(defaultValue ?? goalRadiantRRInput?.value, minimumRR))
     );
     const entered = window.prompt?.("Enter your Radiant+ RR goal", String(fallback));
     if (entered === null) return null;
     const parsed = Math.round(safeNumber(entered, NaN));
-    return Number.isFinite(parsed) ? Math.max(minimum.radiantMinRR, parsed) : fallback;
+    return Number.isFinite(parsed) ? Math.max(minimumRR, parsed) : fallback;
   }
 
   function syncGoalRankAllowedOptions() {
@@ -34787,7 +34798,7 @@ function bindEvents(){
     if (!isGoalRankSelectionAllowed(select.value, goalRadiantRRInput?.value)) {
       const clampedGoal = getClampedGoalRankSelection(select.value, goalRadiantRRInput?.value);
       select.value = clampedGoal.goalRank;
-      if (goalRadiantRRInput && clampedGoal.goalRank === "Radiant") {
+      if (goalRadiantRRInput && isRadiantGoalRank(clampedGoal.goalRank)) {
         goalRadiantRRInput.value = String(clampedGoal.goalRR || RADIANT_MIN_RR);
       }
     }
@@ -34795,11 +34806,14 @@ function bindEvents(){
 
   function clampGoalRadiantRRInput() {
     if (!goalRadiantRRInput || goalRadiantRRInput.disabled) return;
-    const minimum = getCurrentGoalMinimum();
+    const selected = normalizeTierLabel(goalRankSelect?.value || "");
+    const minimumRR = selected === "Radiant +"
+      ? getMinimumRadiantPlusGoalRR()
+      : getCurrentGoalMinimum().radiantMinRR;
     const rawValue = String(goalRadiantRRInput.value || "").trim();
     const nextValue = Math.max(
-      minimum.radiantMinRR,
-      Math.round(safeNumber(rawValue, minimum.radiantMinRR))
+      minimumRR,
+      Math.round(safeNumber(rawValue, minimumRR))
     );
     goalRadiantRRInput.value = String(nextValue);
   }
@@ -34842,14 +34856,15 @@ function bindEvents(){
 
     if (goalRadiantRRInput) {
       const minimum = getCurrentGoalMinimum();
-      goalRadiantRRInput.min = String(minimum.radiantMinRR);
+      const minimumRR = isRadiantPlus ? getMinimumRadiantPlusGoalRR() : minimum.radiantMinRR;
+      goalRadiantRRInput.min = String(minimumRR);
       goalRadiantRRInput.disabled = !isRadiant;
       if (isRadiant) {
         const activeProfile = getActiveProfile();
         const currentValue = safeNumber(goalRadiantRRInput.value, 0);
-        const profileTarget = safeNumber(activeProfile?.goalRR, minimum.radiantMinRR);
-        if (!currentValue || currentValue < minimum.radiantMinRR) {
-          goalRadiantRRInput.value = String(Math.max(minimum.radiantMinRR, Math.round(profileTarget)));
+        const profileTarget = safeNumber(activeProfile?.goalRR, minimumRR);
+        if (!currentValue || currentValue < minimumRR) {
+          goalRadiantRRInput.value = String(Math.max(minimumRR, Math.round(profileTarget)));
         }
       }
     }
@@ -39803,7 +39818,7 @@ function updateNavRRToRank(){
     const radiantRR = current.tierLabel === "Radiant"
       ? getActRRForAbsoluteRR(abs, current)
       : null;
-    nextText.textContent = radiantRR === null ? "Max Rank" : `Radiant ${radiantRR}`;
+    nextText.textContent = radiantRR === null ? "Max Rank" : `${radiantRR} RR`;
     if(nextIcon){
       nextIcon.src = getRankIconUrl(current.tierLabel);
       nextIcon.alt = current.tierLabel;
@@ -39860,8 +39875,9 @@ function updateNavRRToGoalRank(){
     targetIcon.alt = bounds.tierLabel;
   }
 
-  label.textContent =
-    rrNeeded <= 0
+  label.textContent = goalTarget.isRadiantPlus
+    ? `+ ${goalTarget.goalRR} RR`
+    : rrNeeded <= 0
       ? "Goal Reached"
       : `${rrNeeded} RR`;
   bar.style.width = "100%";
