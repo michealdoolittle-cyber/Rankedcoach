@@ -50483,4 +50483,16 @@ html body #goalRankCustomMenu .goal-rank-custom-option:is(:disabled,.is-disabled
   color:rgba(148,163,184,.52) !important;
 }
 
+/* Radiant+ goal label lives beside the Radiant icon, not in the header value. */
+html body .nav-goal-target-rr{
+  display:inline-flex !important;
+  align-items:center !important;
+  white-space:nowrap !important;
+  color:#f8fafc !important;
+  font:800 clamp(10px, calc(var(--app-vw) * .68), 14px)/1 var(--font-display, inherit) !important;
+  letter-spacing:.01em !important;
+}
+html body .nav-goal-target-rr[hidden]{
+  display:none !important;
+}
 

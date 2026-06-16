@@ -11870,11 +11870,7 @@ function normalizeRadiantGoalRRInput(rr){
 }
 
 function getMinimumRadiantPlusGoalRR(){
-  const minimum = getCurrentGoalMinimum();
-  return Math.max(
-    RADIANT_MIN_RR + 1,
-    Math.round(safeNumber(minimum?.radiantMinRR, RADIANT_MIN_RR)) + 1
-  );
+  return RADIANT_MIN_RR + 1;
 }
 
 function getGoalRankTarget(label, requestedRR = null){
@@ -11889,6 +11885,7 @@ function getGoalRankTarget(label, requestedRR = null){
   const goalRR = isRadiant
     ? Math.max(radiantFallbackRR, normalizeRadiantGoalRRInput(rawTarget))
     : null;
+  const isRadiantPlusGoal = isRadiant && (isRadiantPlus || goalRR > RADIANT_MIN_RR);
   const targetRR = isRadiant
     ? getAbsoluteRRForActRR(goalRR)
     : bounds.min;
@@ -11897,8 +11894,8 @@ function getGoalRankTarget(label, requestedRR = null){
     bounds,
     targetRR,
     goalRR,
-    goalRankLabel: isRadiantPlus ? "Radiant +" : bounds.tierLabel,
-    isRadiantPlus
+    goalRankLabel: isRadiantPlusGoal ? "Radiant +" : bounds.tierLabel,
+    isRadiantPlus: isRadiantPlusGoal
   };
 }
 
@@ -11922,9 +11919,7 @@ function getCurrentGoalMinimum(){
   const currentRR = Math.max(computedRR, safeNumber(currentRank?.min, 0));
   const currentRankMin = Math.max(0, safeNumber(currentRank?.min, 0));
   const currentActRR = getActRRForAbsoluteRR(currentRR, currentRank);
-  const radiantMinRR = currentRank?.tierLabel === "Radiant"
-    ? Math.max(RADIANT_MIN_RR, currentActRR)
-    : RADIANT_MIN_RR;
+  const radiantMinRR = RADIANT_MIN_RR;
 
   return { currentRR, currentRank, currentRankMin, currentActRR, radiantMinRR };
 }
@@ -39838,10 +39833,16 @@ function updateNavRRToGoalRank(){
   const current = getTierRank(abs);
   const currentIcon = document.getElementById("navGoalCurrentIcon");
   const targetIcon = document.getElementById("navGoalTargetIcon");
+  const targetRRText = document.getElementById("navGoalTargetRRText");
   const label = document.getElementById("navGoalTierText");
   const bar = document.getElementById("navRRGoalBar");
 
   if(!current || !label || !bar) return;
+
+  if(targetRRText){
+    targetRRText.textContent = "";
+    targetRRText.hidden = true;
+  }
 
   if(currentIcon){
     currentIcon.src = getRankIconUrl(current.tierLabel);
@@ -39875,9 +39876,13 @@ function updateNavRRToGoalRank(){
     targetIcon.alt = bounds.tierLabel;
   }
 
-  label.textContent = goalTarget.isRadiantPlus
-    ? `+ ${goalTarget.goalRR} RR`
-    : rrNeeded <= 0
+  if(targetRRText && goalTarget.isRadiantPlus){
+    targetRRText.textContent = `+ ${goalTarget.goalRR} RR`;
+    targetRRText.hidden = false;
+  }
+
+  label.textContent =
+    rrNeeded <= 0
       ? "Goal Reached"
       : `${rrNeeded} RR`;
   bar.style.width = "100%";
