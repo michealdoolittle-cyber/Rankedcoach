@@ -10824,6 +10824,13 @@ async function initializeSignedInAccount(user, options = {}) {
 // ========================
 // RANK THRESHOLDS
 // ========================
+const RANK_RR_STEP = 100;
+const IMMORTAL_ACT_RR_BASE = 2100;
+const IMMORTAL_2_MIN_RR = 100;
+const IMMORTAL_3_MIN_RR = 200;
+const RADIANT_MIN_RR = 450;
+const RADIANT_ABSOLUTE_MIN_RR = IMMORTAL_ACT_RR_BASE + RADIANT_MIN_RR;
+
 const RANK_THRESHOLDS = [
   { tierLabel: "Iron 1",       min: 0,    max: 100,  icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/iron_1_rank.png" },
   { tierLabel: "Iron 2",       min: 100,  max: 200,  icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/iron_2_rank.png" },
@@ -10853,15 +10860,12 @@ const RANK_THRESHOLDS = [
   { tierLabel: "Ascendant 2",  min: 1900, max: 2000, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/ascendant_2_rank.png" },
   { tierLabel: "Ascendant 3",  min: 2000, max: 2100, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/ascendant_3_rank.png" },
 
-  { tierLabel: "Immortal 1",   min: 2100, max: 2200, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/immortal_1_rank.png" },
-  { tierLabel: "Immortal 2",   min: 2200, max: 2300, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/immortal_2_rank.png" },
-  { tierLabel: "Immortal 3",   min: 2300, max: 2400, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/immortal_3_rank.png" },
+  { tierLabel: "Immortal 1",   min: IMMORTAL_ACT_RR_BASE, max: IMMORTAL_ACT_RR_BASE + IMMORTAL_2_MIN_RR, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/immortal_1_rank.png" },
+  { tierLabel: "Immortal 2",   min: IMMORTAL_ACT_RR_BASE + IMMORTAL_2_MIN_RR, max: IMMORTAL_ACT_RR_BASE + IMMORTAL_3_MIN_RR, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/immortal_2_rank.png" },
+  { tierLabel: "Immortal 3",   min: IMMORTAL_ACT_RR_BASE + IMMORTAL_3_MIN_RR, max: RADIANT_ABSOLUTE_MIN_RR, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/immortal_3_rank.png" },
 
-  { tierLabel: "Radiant",      min: 2400, max: Infinity, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/radiant_rank.png" }
+  { tierLabel: "Radiant",      min: RADIANT_ABSOLUTE_MIN_RR, max: Infinity, icon: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/radiant_rank.png" }
 ];
-
-const RANK_RR_STEP = 100;
-const RADIANT_MIN_RR = 2400;
 
 // ========================
 // AGENT / ROLE DEFINITIONS
@@ -11839,6 +11843,32 @@ function getTierBoundsByLabel(label){
   );
 }
 
+function isImmortalOrRadiantRank(label){
+  const normalized = normalizeTierLabel(label).toLowerCase();
+  return normalized.startsWith("immortal") || normalized === "radiant" || normalized === "radiant +";
+}
+
+function getActRRForAbsoluteRR(rr, rank = null){
+  const absoluteRR = Math.max(0, Math.round(safeNumber(rr, 0)));
+  const resolvedRank = rank || getTierRank(absoluteRR);
+  if(isImmortalOrRadiantRank(resolvedRank?.tierLabel)){
+    return Math.max(0, Math.round(absoluteRR - IMMORTAL_ACT_RR_BASE));
+  }
+  return Math.max(0, Math.round(absoluteRR - safeNumber(resolvedRank?.min, 0)));
+}
+
+function getAbsoluteRRForActRR(actRR){
+  return IMMORTAL_ACT_RR_BASE + Math.max(0, Math.round(safeNumber(actRR, 0)));
+}
+
+function normalizeRadiantGoalRRInput(rr){
+  const rawRR = Math.max(0, Math.round(safeNumber(rr, RADIANT_MIN_RR)));
+  const actRR = rawRR >= IMMORTAL_ACT_RR_BASE
+    ? rawRR - IMMORTAL_ACT_RR_BASE
+    : rawRR;
+  return Math.max(RADIANT_MIN_RR, actRR || RADIANT_MIN_RR);
+}
+
 function getGoalRankTarget(label, requestedRR = null){
   const normalized = normalizeTierLabel(label);
   const bounds = getTierBoundsByLabel(normalized);
@@ -11846,14 +11876,16 @@ function getGoalRankTarget(label, requestedRR = null){
 
   const isRadiantPlus = normalized === "Radiant +";
   const isRadiant = bounds.tierLabel === "Radiant";
-  const rawTarget = safeNumber(requestedRR, bounds.min);
+  const rawTarget = safeNumber(requestedRR, isRadiant ? RADIANT_MIN_RR : bounds.min);
+  const goalRR = isRadiant ? normalizeRadiantGoalRRInput(rawTarget) : null;
   const targetRR = isRadiant
-    ? Math.max(RADIANT_MIN_RR, Math.round(rawTarget || bounds.min))
+    ? getAbsoluteRRForActRR(goalRR)
     : bounds.min;
 
   return {
     bounds,
     targetRR,
+    goalRR,
     goalRankLabel: isRadiantPlus ? "Radiant +" : bounds.tierLabel,
     isRadiantPlus
   };
@@ -11878,11 +11910,12 @@ function getCurrentGoalMinimum(){
     : computedRank;
   const currentRR = Math.max(computedRR, safeNumber(currentRank?.min, 0));
   const currentRankMin = Math.max(0, safeNumber(currentRank?.min, 0));
+  const currentActRR = getActRRForAbsoluteRR(currentRR, currentRank);
   const radiantMinRR = currentRank?.tierLabel === "Radiant"
-    ? Math.max(RADIANT_MIN_RR, currentRR)
+    ? Math.max(RADIANT_MIN_RR, currentActRR)
     : RADIANT_MIN_RR;
 
-  return { currentRR, currentRank, currentRankMin, radiantMinRR };
+  return { currentRR, currentRank, currentRankMin, currentActRR, radiantMinRR };
 }
 
 function isGoalRankSelectionAllowed(label, requestedRR = null){
@@ -11891,17 +11924,17 @@ function isGoalRankSelectionAllowed(label, requestedRR = null){
 
   const minimum = getCurrentGoalMinimum();
   if(target.bounds.min < minimum.currentRankMin) return false;
-  if(target.bounds.tierLabel === "Radiant" && target.targetRR < minimum.radiantMinRR) return false;
+  if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < minimum.radiantMinRR) return false;
 
   return true;
 }
 
 function getClampedGoalRankSelection(label, requestedRR = null){
   const target = getGoalRankTarget(label, requestedRR);
-  if(target?.bounds && isGoalRankSelectionAllowed(target.goalRankLabel || target.bounds.tierLabel, target.targetRR)){
+  if(target?.bounds && isGoalRankSelectionAllowed(target.goalRankLabel || target.bounds.tierLabel, target.goalRR ?? target.targetRR)){
     return {
       goalRank: target.goalRankLabel || target.bounds.tierLabel,
-      goalRR: target.targetRR,
+      goalRR: target.goalRR ?? target.targetRR,
       target
     };
   }
@@ -11913,7 +11946,7 @@ function getClampedGoalRankSelection(label, requestedRR = null){
 
   return {
     goalRank: fallbackTarget?.bounds?.tierLabel || fallbackRank,
-    goalRR: fallbackTarget?.targetRR ?? null,
+    goalRR: fallbackTarget?.goalRR ?? null,
     target: fallbackTarget
   };
 }
@@ -39749,7 +39782,7 @@ function updateNavRRToRank(){
     applyStaticTrackGradient(bar, Math.round(progress.pct * 100), "horizontal");
   } else {
     const radiantRR = current.tierLabel === "Radiant"
-      ? Math.max(0, Math.round(abs - RADIANT_MIN_RR))
+      ? getActRRForAbsoluteRR(abs, current)
       : null;
     nextText.textContent = radiantRR === null ? "Max Rank" : `Radiant ${radiantRR}`;
     if(nextIcon){
