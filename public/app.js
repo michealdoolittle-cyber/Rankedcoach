@@ -1882,6 +1882,143 @@ function getPriorityLabel(score) {
   return "Watch";
 }
 
+const COACHING_EVIDENCE_SOURCES = Object.freeze([
+  {
+    id: "riot-match-history",
+    label: "Riot match history",
+    status: "player-authorized",
+    use: "Match results, agents, maps, combat stats, role samples, round context when imported."
+  },
+  {
+    id: "rankedcoach-reflection-logs",
+    label: "RankedCoach reflection logs",
+    status: "player-authored",
+    use: "Mood, focus category, confidence, comms, teammate context, AFK/DC/toxicity notes, and self-review."
+  },
+  {
+    id: "riot-content-catalog",
+    label: "Riot content catalog",
+    status: "reference",
+    use: "Current Valorant agents, maps, acts, and content identity."
+  },
+  {
+    id: "public-rank-baselines",
+    label: "Public rank baselines",
+    status: "requires-fresh-cache",
+    use: "Rank-specific comparisons only when a current trusted baseline is available."
+  },
+  {
+    id: "pro-reference-context",
+    label: "Pro reference context",
+    status: "requires-fresh-cache",
+    use: "Agent, role, and map examples only when a current trusted esports source is available."
+  }
+]);
+
+function buildSampleConfidenceContext({ matchCount = 0, logCount = 0, statCoverage = 0, scopeLabel = "current scope" } = {}) {
+  const matches = safeNumber(matchCount);
+  const logs = safeNumber(logCount);
+  const coverage = clampPercent(statCoverage);
+  const score = clampPercent((Math.min(matches, 40) * 1.6) + (Math.min(logs, 20) * 1.2) + (coverage * 0.18));
+  const label = getConfidenceLabel(score);
+  const explanation = matches < 6
+    ? `This is an early read from ${matches} ${scopeLabel} match${matches === 1 ? "" : "es"} and ${logs} reflection log${logs === 1 ? "" : "s"}. Treat it as direction, not proof.`
+    : matches < 15
+      ? `This is a developing read from ${matches} ${scopeLabel} matches and ${logs} reflection logs. It can guide the next block, but it should not overrule repeated future data.`
+      : `This read has a healthier sample: ${matches} ${scopeLabel} matches and ${logs} reflection logs.`;
+
+  return { score, label, explanation, matchCount: matches, logCount: logs, statCoverage: coverage };
+}
+
+function buildCoachingEvidenceLayer({
+  orderedMatches = [],
+  logs = [],
+  overview = {},
+  importedAnalytics = null,
+  currentSignalAgent = "",
+  currentSignalRole = "",
+  coachingContext = {},
+  mechanicsAdjustment = null,
+  seasonLabel = "Current Window"
+} = {}) {
+  const matchCount = safeNumber(overview.matchesPlayed || orderedMatches.length);
+  const logCount = safeNumber(logs.length);
+  const statCoverage = clampPercent(
+    (safeNumber(overview.kd) ? 20 : 0) +
+    (safeNumber(overview.adr) ? 20 : 0) +
+    (safeNumber(overview.hs) ? 14 : 0) +
+    (safeNumber(overview.winrate) ? 18 : 0) +
+    (safeNumber(importedAnalytics?.overview?.attackKAST) || safeNumber(importedAnalytics?.overview?.defenseKAST) ? 14 : 0) +
+    (safeNumber(coachingContext?.weaponRounds) ? 14 : 0)
+  );
+  const sample = buildSampleConfidenceContext({
+    matchCount,
+    logCount,
+    statCoverage,
+    scopeLabel: seasonLabel
+  });
+  const familyShares = coachingContext?.familyShares || {};
+  const shotgunShare = safeNumber(familyShares.shotgun);
+  const sniperShare = safeNumber(familyShares.sniper);
+  const rifleShare = safeNumber(familyShares.rifle);
+  const mechanicReasons = mechanicsAdjustment?.reasons || [];
+  const hsWeight = Math.round((mechanicsAdjustment?.hsWeightMultiplier ?? 1) * 100) / 100;
+  const hsIsDownWeighted = hsWeight < 0.92 || shotgunShare >= 16 || sniperShare >= 18 || (rifleShare > 0 && rifleShare < 45);
+  const hsReason = hsIsDownWeighted
+    ? `${formatList(mechanicReasons.length ? mechanicReasons : ["weapon mix changes how headshot percentage should be judged"])}.`
+    : "Headshot percentage is being read normally because no major weapon context is changing the value of the stat.";
+
+  return {
+    sources: COACHING_EVIDENCE_SOURCES,
+    sourcePolicy: [
+      "Do not compare a player to public rank, global, or pro baselines unless that source exists in the current context and is fresh.",
+      "When sample size is low, say what is assumed and keep the recommendation small.",
+      "Stats are weighted by role, agent, weapon mix, map, economy context, and player logs before becoming coaching advice.",
+      "A stat can be useful without being the main problem; avoid over-punishing low-value stats for the player's current playstyle."
+    ],
+    sample,
+    currentContext: {
+      seasonLabel,
+      agent: currentSignalAgent || "",
+      role: currentSignalRole || "",
+      weaponRounds: safeNumber(coachingContext?.weaponRounds),
+      weaponShares: {
+        rifle: Math.round(rifleShare),
+        shotgun: Math.round(shotgunShare),
+        sniper: Math.round(sniperShare)
+      },
+      relianceFlags: coachingContext?.relianceFlags || []
+    },
+    metricWeights: {
+      headshot: {
+        baseWeight: 1,
+        activeWeight: hsWeight,
+        label: hsIsDownWeighted ? "Down-weighted" : "Normal",
+        presumption: hsReason,
+        rule: hsIsDownWeighted
+          ? "Do not make headshot percentage the lead weakness unless fight conversion, damage, or round impact also supports it."
+          : "Headshot percentage can be used as a normal mechanics signal."
+      },
+      winrate: {
+        baseWeight: 1,
+        activeWeight: matchCount >= 8 ? 1 : 0.72,
+        label: matchCount >= 8 ? "Normal" : "Early signal",
+        presumption: matchCount >= 8
+          ? "Win rate has enough match volume to guide the profile."
+          : "Win rate is visible, but the sample is still too small to treat as the whole player."
+      },
+      logs: {
+        baseWeight: 1,
+        activeWeight: logCount >= 5 ? 1 : 0.65,
+        label: logCount >= 5 ? "Normal" : "Needs more reflections",
+        presumption: logCount >= 5
+          ? "Reflection logs have enough repetition to support behavior reads."
+          : "Behavior reads should stay cautious until more reflections repeat the same pattern."
+      }
+    }
+  };
+}
+
 function buildCoachRecommendation(kind, entity = {}, model = {}) {
   const overview = model?.overview || {};
   const weeklyFocus = model?.weekly?.mostPracticed || model?.focus || "the current focus category";
@@ -3114,6 +3251,21 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const activeAgentNameForUtility = String((orderedMatches.slice(-1)[0] && getMatchCore(orderedMatches.slice(-1)[0]).agent) || bestAgent?.agent || "").trim();
   const utilityDamageExpectation = getUtilityDamageExpectation(activeAgentNameForUtility);
   const observedDamageDelta = safeNumber(importedAnalytics?.overview?.damageDeltaPerRound);
+  const seasonLabel = importedAnalytics?.currentAct || "Current Window";
+  const currentSignalAgent = activeAgentNameForUtility || bestAgent?.agent || "";
+  const currentSignalRole = agentRoles?.[currentSignalAgent] || bestRole?.role || "";
+  const mechanicsAdjustment = getMechanicsContextAdjustment(currentSignalAgent, coachingContext);
+  const evidenceLayer = buildCoachingEvidenceLayer({
+    orderedMatches,
+    logs,
+    overview,
+    importedAnalytics,
+    currentSignalAgent,
+    currentSignalRole,
+    coachingContext,
+    mechanicsAdjustment,
+    seasonLabel
+  });
 
   const recentWins = recentWindow.filter((match) => getMatchCore(match).result === "win").length;
   const recentLosses = recentWindow.filter((match) => getMatchCore(match).result === "loss").length;
@@ -3216,6 +3368,21 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       focus: "Damage Output",
       category: "performance",
       priority: expectationMet ? 74 : 84
+    });
+  }
+
+  if (hasMatchData && evidenceLayer.metricWeights.headshot.label === "Down-weighted") {
+    insights.push({
+      type: "warn",
+      title: "Mechanics Need Weapon Context",
+      preview: "Headshot percentage is not being treated like a rifle-only stat for this profile.",
+      what: "RankedCoach is changing how it reads your mechanics because your weapon mix affects the value of raw headshot percentage.",
+      why: evidenceLayer.metricWeights.headshot.presumption,
+      action: "Review fight conversion, damage timing, positioning, and round impact before blaming aim alone.",
+      sources: ["Riot Match History", "Weapon Context"],
+      focus: "Fight Conversion",
+      category: "performance",
+      priority: 83
     });
   }
 
@@ -3352,8 +3519,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const matchesNeededForMaxConfidence = Math.max(0, Math.ceil((100 - matchConfidenceScore) / 2.4));
   const logsNeededForMaxConfidence = Math.max(0, Math.ceil((100 - logConfidenceScore) / 4));
   const statsNeededForMaxConfidence = Math.max(0, Math.ceil((100 - statConfidenceScore) / 20));
-  const seasonLabel = importedAnalytics?.currentAct || "Current Window";
-  const confidenceFormula = "Confidence Rating shows how much the app trusts this read. It looks at three things: how many games are imported, how many logs you saved, and how complete the stat data is. More games, logs, and stat coverage will raise this score toward 100.";
+  const confidenceFormula = `${evidenceLayer.sample.explanation} Confidence Rating looks at match volume, reflection logs, and stat coverage before the app decides how hard to trust a read.`;
   const priorityScore = clampPercent(primaryInsight?.priority || (hasMatchData ? ((100 - Math.round(overview.winrate || 50)) + (overview.kd < 1 ? 20 : 0)) : 0));
   const priorityLabel = getPriorityLabel(priorityScore);
   const coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before it can report a sharper diagnosis.";
@@ -3413,9 +3579,6 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const recentKills = recentMatches.reduce((sum, match) => sum + getMatchCore(match).kills, 0);
   const recentDeaths = recentMatches.reduce((sum, match) => sum + getMatchCore(match).deaths, 0);
   const recentWinRate = recentWindow.length ? safeDivide(recentWins, recentWindow.length) * 100 : 0;
-  const currentSignalAgent = activeAgentNameForUtility || bestAgent?.agent || "";
-  const currentSignalRole = agentRoles?.[currentSignalAgent] || bestRole?.role || "";
-  const mechanicsAdjustment = getMechanicsContextAdjustment(currentSignalAgent, coachingContext);
   const roleGap = bestRole && weakestRole ? Math.max(0, Math.round(safeNumber(bestRole.winrate) - safeNumber(weakestRole.winrate))) : 0;
   const mapGap = bestMap && weakestMap ? Math.max(0, Math.round(safeNumber(bestMap.winrate) - safeNumber(weakestMap.winrate))) : 0;
 
@@ -3527,15 +3690,15 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: overview.matchesPlayed ? `${Math.round(overview.hs || 0)}% HS` : "No data",
       detail: overview.matchesPlayed
         ? mechanicsAdjustment.hasAdjustment
-          ? "This uses Riot headshot percentage data with agent and weapon context, so the read is not judged like rifle-only play."
+          ? "This uses Riot headshot percentage data with the central evidence rules, so weapon mix can lower the importance of HS%."
           : "This uses Riot headshot percentage data to estimate your agent-based mechanical accuracy."
         : "No data",
       read: overview.hs >= mechanicsAdjustment.adjustedWatchHs
         ? mechanicsAdjustment.hasAdjustment
-          ? `Your accuracy is being read with context: ${mechanicsAdjustment.readableReason}`
+          ? `This is being read with context: ${evidenceLayer.metricWeights.headshot.presumption}`
           : "Your precision is stable enough that RankedCoach can look beyond aim alone."
         : mechanicsAdjustment.hasAdjustment
-          ? `Your accuracy is below the adjusted target. ${mechanicsAdjustment.readableReason}`
+          ? `Your HS% is below the adjusted target, but it is ${evidenceLayer.metricWeights.headshot.label.toLowerCase()} here. Check whether fights, damage timing, and round conversion are also slipping before making aim the whole issue.`
           : "Your accuracy is below target, which can lead to harder fights that could provide an advantage to the enemy team.",
       sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} using Riot headshot percentage.`,
       formula: `average headshot percent across imported matches = ${overview.matchesPlayed ? Math.round(overview.hs || 0) : "--"}%`,
@@ -3547,6 +3710,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       proofItems: [
         statItem("Headshot %", overview.matchesPlayed ? `${Math.round(overview.hs || 0)}%` : "--", "Average headshot percentage from the selected season's imported matches."),
         statItem("Current Agent", currentSignalAgent || "Unknown", "Latest or strongest repeated agent tied to this read."),
+        statItem("HS Weight", evidenceLayer.metricWeights.headshot.label, evidenceLayer.metricWeights.headshot.presumption),
+        statItem("Sample", evidenceLayer.sample.label, evidenceLayer.sample.explanation),
         ...(mechanicsAdjustment.hasAdjustment
           ? [statItem("Context Adjustment", "Applied", mechanicsAdjustment.readableReason)]
           : []),
@@ -4453,6 +4618,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     breakdown: uniqueBreakdown,
     trendBreakdown: uniqueTrendBreakdown,
     coachingContext,
+    evidenceLayer,
     insights: topInsights,
     focus,
     weekly,
@@ -4606,6 +4772,13 @@ function buildAskCoachAIContext() {
     confidence: {
       label: model?.confidenceLabel || "Low",
       score: Math.round(safeNumber(model?.confidenceScore))
+    },
+    evidence: {
+      sample: model?.evidenceLayer?.sample || null,
+      currentContext: model?.evidenceLayer?.currentContext || null,
+      metricWeights: model?.evidenceLayer?.metricWeights || null,
+      sourcePolicy: model?.evidenceLayer?.sourcePolicy || [],
+      sources: model?.evidenceLayer?.sources || []
     },
     currentFocus: model?.focus || "",
     coachDiagnosis: model?.coachDiagnosis || "",
