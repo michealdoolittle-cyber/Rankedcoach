@@ -38534,23 +38534,62 @@ function closeProfileDropdown(){
   profileDropdown.classList.remove("open");
 }
 
-function computePeakProfileProgress(profile = getActiveProfile()) {
-  const start = safeNumber(profile?.startingRR);
-  const matchList = Array.isArray(profile?.matches) ? profile.matches : [];
-  let running = start;
-  let peak = start;
+function getStatsSelectedActLabel(profile = getActiveProfile()) {
+  const analytics = profile?.trackerAnalytics || null;
+  const actOptions = Array.isArray(analytics?.acts) ? analytics.acts : [];
+  const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
+    ? activeStatsActLabel
+    : analytics?.currentAct || "";
+  return selectedAct && actOptions.includes(selectedAct) ? selectedAct : "";
+}
 
-  matchList.forEach((match) => {
+function getMatchSeasonLabel(match = {}) {
+  return String(match?.metadata?.demoAct || match?.metadata?.act || match?.demoAct || match?.act || "").trim();
+}
+
+function computePeakProfileProgress(profile = getActiveProfile(), options = {}) {
+  const safeOptions = options || {};
+  const profileStart = safeNumber(profile?.startingRR);
+  const matchList = Array.isArray(profile?.matches) ? profile.matches : [];
+  const selectedAct = String(
+    Object.prototype.hasOwnProperty.call(safeOptions, "actLabel")
+      ? safeOptions.actLabel || ""
+      : getStatsSelectedActLabel(profile)
+  ).trim();
+  const selectedIndexes = selectedAct
+    ? matchList
+        .map((match, index) => getMatchSeasonLabel(match) === selectedAct ? index : -1)
+        .filter(index => index >= 0)
+    : [];
+  const useSeasonScope = Boolean(selectedAct && selectedIndexes.length);
+  const firstSelectedIndex = useSeasonScope ? selectedIndexes[0] : 0;
+  const selectedIndexSet = new Set(selectedIndexes);
+  const seasonStart = useSeasonScope
+    ? matchList
+        .slice(0, firstSelectedIndex)
+        .reduce((total, match) => total + safeNumber(match?.rr), profileStart)
+    : profileStart;
+  let running = seasonStart;
+  let peak = seasonStart;
+  const scopedMatches = useSeasonScope
+    ? matchList.filter((_match, index) => selectedIndexSet.has(index))
+    : matchList;
+
+  scopedMatches.forEach((match) => {
     running += safeNumber(match?.rr);
     if (running > peak) peak = running;
   });
 
-  const tier = getTierRank(peak) || getTierRank(start);
+  const tier = getTierRank(peak) || getTierRank(seasonStart);
   return {
     peakRR: peak,
     tierLabel: tier?.tierLabel || "Iron 1",
     rankIconUrl: getRankIconUrl(tier?.tierLabel || "Iron 1"),
-    gainFromStart: peak - start
+    gainFromStart: peak - seasonStart,
+    startRR: seasonStart,
+    scopeLabel: useSeasonScope ? selectedAct : "Profile Timeline",
+    isSeasonScoped: useSeasonScope,
+    matchCount: scopedMatches.length
   };
 }
 
@@ -44656,9 +44695,12 @@ function renderStatsPeakProgress() {
   if (rankText) rankText.textContent = peak.tierLabel;
   if (rrText) rrText.textContent = `${Math.round(peak.peakRR)} RR peak`;
   if (note) {
+    const scopeLabel = peak.isSeasonScoped ? peak.scopeLabel : "this profile timeline";
     note.textContent = peak.gainFromStart > 0
-      ? `Visual proof of progress: +${Math.round(peak.gainFromStart)} RR above your starting point.`
-      : "Highest point reached in this profile timeline so far.";
+      ? `Visual proof of progress: +${Math.round(peak.gainFromStart)} RR above ${peak.isSeasonScoped ? `${peak.scopeLabel} starting point` : "your profile starting point"}.`
+      : peak.matchCount
+        ? `Highest point reached in ${scopeLabel} so far.`
+        : `No RR movement found in ${scopeLabel} yet.`;
   }
 }
 

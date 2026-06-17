@@ -50496,3 +50496,24 @@ html body .nav-goal-target-rr[hidden]{
   display:none !important;
 }
 
+/* Profile rank badge v47: double badge size while keeping the same anchored center. */
+html body #profileAvatarWrap.profile-avatar-wrap,
+html body #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
+  overflow:visible !important;
+}
+html body #profileRankIcon.profile-rank-icon{
+  top:calc(50% + 13px) !important;
+  left:calc(50% + 13px) !important;
+  right:auto !important;
+  bottom:auto !important;
+  width:28px !important;
+  min-width:28px !important;
+  max-width:28px !important;
+  height:28px !important;
+  min-height:28px !important;
+  max-height:28px !important;
+  transform:translate(-50%,-50%) !important;
+  object-fit:contain !important;
+  z-index:50 !important;
+  pointer-events:none !important;
+}
