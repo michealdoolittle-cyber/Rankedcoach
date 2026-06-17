@@ -9046,10 +9046,10 @@ function ensureManualSessionStartModal() {
         <button id="manualSessionStartClose" class="lens-modal-close" type="button">X</button>
       </div>
       <div class="manual-session-start-copy">
-        Enter your RR before the first manual match of the day. RankedCoach uses this to keep RR to next rank and RR to goal rank accurate.
+        Enter your RR inside your current rank before the first manual match of the day. RankedCoach uses this to keep RR to next rank and RR to goal rank accurate.
       </div>
       <label class="manual-session-start-field" for="manualSessionStartRRInput">
-        <span>Current RR before game 1</span>
+        <span>Current rank RR before game 1</span>
         <input id="manualSessionStartRRInput" type="number" min="0" step="1" inputmode="numeric">
       </label>
       <div class="manual-session-start-actions">
@@ -9072,10 +9072,12 @@ function openManualSessionStartPrompt() {
   const cancel = modal.querySelector("#manualSessionStartCancel");
   const close = modal.querySelector("#manualSessionStartClose");
   const currentAbsolute = Math.max(0, Math.round(safeNumber(computeCurrentRRAbsolute(), 0)));
+  const currentRank = getTierRank(currentAbsolute) || RANK_THRESHOLDS[0];
 
   if (input) {
-    input.value = String(currentAbsolute);
+    input.value = String(getRankLocalRRForAbsoluteRR(currentAbsolute, currentRank));
     input.min = "0";
+    input.dataset.rankLabel = currentRank.tierLabel;
   }
 
   return new Promise((resolve) => {
@@ -9094,7 +9096,9 @@ function openManualSessionStartPrompt() {
     const onConfirm = (event) => {
       event.preventDefault();
       event.stopPropagation();
-      const startingRR = Math.max(0, Math.round(safeNumber(input?.value, currentAbsolute)));
+      const currentRankLabel = input?.dataset.rankLabel || currentRank.tierLabel;
+      const enteredRR = Math.max(0, Math.round(safeNumber(input?.value, getRankLocalRRForAbsoluteRR(currentAbsolute, currentRank))));
+      const startingRR = getAbsoluteRRForRankLocalRR(currentRankLabel, enteredRR);
       profile.startingRR = startingRR;
       profile.startingRRDate = getCurrentDayKey();
       profile.startingRRSource = "manual-session";
@@ -11551,7 +11555,7 @@ const RANK_RR_STEP = 100;
 const IMMORTAL_ACT_RR_BASE = 2100;
 const IMMORTAL_2_MIN_RR = 100;
 const IMMORTAL_3_MIN_RR = 200;
-const RADIANT_MIN_RR = 450;
+const RADIANT_MIN_RR = 300;
 const RADIANT_ABSOLUTE_MIN_RR = IMMORTAL_ACT_RR_BASE + RADIANT_MIN_RR;
 
 const RANK_THRESHOLDS = [
@@ -12580,6 +12584,33 @@ function getActRRForAbsoluteRR(rr, rank = null){
   return Math.max(0, Math.round(absoluteRR - safeNumber(resolvedRank?.min, 0)));
 }
 
+function getRankLocalRRForAbsoluteRR(rr, rank = null){
+  const absoluteRR = Math.max(0, Math.round(safeNumber(rr, 0)));
+  const resolvedRank = rank || getTierRank(absoluteRR);
+  if(!resolvedRank) return absoluteRR;
+  return getActRRForAbsoluteRR(absoluteRR, resolvedRank);
+}
+
+function formatRankLocalRR(rr, options = {}){
+  const resolvedRank = options.rank || getTierRank(rr);
+  const localRR = getRankLocalRRForAbsoluteRR(rr, resolvedRank);
+  const includeRank = Boolean(options.includeRank);
+  const withUnit = options.withUnit !== false;
+  const suffix = options.suffix || "";
+  const rankPrefix = includeRank && resolvedRank?.tierLabel ? `${resolvedRank.tierLabel} ` : "";
+  const unit = withUnit ? " RR" : "";
+  return `${rankPrefix}${localRR}${unit}${suffix}`;
+}
+
+function getAbsoluteRRForRankLocalRR(rankLabel, rr){
+  const bounds = getTierBoundsByLabel(rankLabel) || getTierRank(0);
+  const localRR = Math.max(0, Math.round(safeNumber(rr, 0)));
+  if(isImmortalOrRadiantRank(bounds?.tierLabel)){
+    return getAbsoluteRRForActRR(localRR);
+  }
+  return safeNumber(bounds?.min, 0) + Math.min(RANK_RR_STEP - 1, localRR);
+}
+
 function getAbsoluteRRForActRR(actRR){
   return IMMORTAL_ACT_RR_BASE + Math.max(0, Math.round(safeNumber(actRR, 0)));
 }
@@ -12594,6 +12625,24 @@ function normalizeRadiantGoalRRInput(rr){
 
 function getMinimumRadiantPlusGoalRR(){
   return RADIANT_MIN_RR + 1;
+}
+
+function getMinimumRadiantGoalRR(label){
+  const normalized = normalizeTierLabel(label);
+  const minimum = getCurrentGoalMinimum();
+  const currentRankLabel = normalizeTierLabel(minimum.currentRank?.tierLabel || "");
+  const currentActRR = Math.max(0, Math.round(safeNumber(minimum.currentActRR, 0)));
+  const currentIsRadiant = currentRankLabel === "Radiant";
+
+  if(normalized === "Radiant +"){
+    return Math.max(getMinimumRadiantPlusGoalRR(), currentIsRadiant ? currentActRR + 1 : getMinimumRadiantPlusGoalRR());
+  }
+
+  if(normalized === "Radiant"){
+    return Math.max(minimum.radiantMinRR, currentIsRadiant ? currentActRR : minimum.radiantMinRR);
+  }
+
+  return minimum.radiantMinRR;
 }
 
 function getGoalRankTarget(label, requestedRR = null){
@@ -12652,9 +12701,9 @@ function isGoalRankSelectionAllowed(label, requestedRR = null){
   if(!target?.bounds) return false;
 
   const minimum = getCurrentGoalMinimum();
-  if(target.isRadiantPlus) return safeNumber(target.goalRR, RADIANT_MIN_RR) >= getMinimumRadiantPlusGoalRR();
+  if(target.isRadiantPlus) return safeNumber(target.goalRR, RADIANT_MIN_RR) >= getMinimumRadiantGoalRR("Radiant +");
   if(target.bounds.min < minimum.currentRankMin) return false;
-  if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < minimum.radiantMinRR) return false;
+  if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < getMinimumRadiantGoalRR(target.goalRankLabel || target.bounds.tierLabel)) return false;
 
   return true;
 }
@@ -12670,8 +12719,11 @@ function getClampedGoalRankSelection(label, requestedRR = null){
   }
 
   const minimum = getCurrentGoalMinimum();
-  const fallbackRank = minimum.currentRank?.tierLabel || RANK_THRESHOLDS[0].tierLabel;
-  const fallbackRR = fallbackRank === "Radiant" ? minimum.radiantMinRR : null;
+  const minimumRankLabel = minimum.currentRank?.tierLabel || RANK_THRESHOLDS[0].tierLabel;
+  const fallbackRank = normalizeTierLabel(minimumRankLabel) === "Radiant" ? "Radiant +" : minimumRankLabel;
+  const fallbackRR = fallbackRank === "Radiant +" || fallbackRank === "Radiant"
+    ? getMinimumRadiantGoalRR(fallbackRank)
+    : null;
   const fallbackTarget = getGoalRankTarget(fallbackRank, fallbackRR);
 
   return {
@@ -35447,7 +35499,7 @@ function bindEvents(){
     const p = getActiveProfile();
     if (!p || !goalRankSelect) return;
 
-    const clampedGoal = getClampedGoalRankSelection(goalRankSelect.value, goalRadiantRRInput?.value);
+    const clampedGoal = getClampedGoalRankSelection(goalRankSelect.value, getGoalRankRequestedRR(goalRankSelect.value));
     p.goalRank = clampedGoal.goalRank;
     p.goalRR = clampedGoal.goalRR;
     goalRankSelect.value = p.goalRank;
@@ -35476,14 +35528,14 @@ function bindEvents(){
   function getGoalRankRequestedRR(label) {
     const normalized = normalizeTierLabel(label);
     if (normalized === "Radiant +") {
-      const minimumRR = getMinimumRadiantPlusGoalRR();
+      const minimumRR = getMinimumRadiantGoalRR("Radiant +");
       return Math.max(minimumRR, safeNumber(goalRadiantRRInput?.value, minimumRR));
     }
-    return normalized === "Radiant" ? goalRadiantRRInput?.value : null;
+    return normalized === "Radiant" ? RADIANT_MIN_RR : null;
   }
 
   function requestRadiantPlusGoalRR(defaultValue = null) {
-    const minimumRR = getMinimumRadiantPlusGoalRR();
+    const minimumRR = getMinimumRadiantGoalRR("Radiant +");
     const fallback = Math.max(
       minimumRR,
       Math.round(safeNumber(defaultValue ?? goalRadiantRRInput?.value, minimumRR))
@@ -35513,8 +35565,8 @@ function bindEvents(){
         });
     });
 
-    if (!isGoalRankSelectionAllowed(select.value, goalRadiantRRInput?.value)) {
-      const clampedGoal = getClampedGoalRankSelection(select.value, goalRadiantRRInput?.value);
+    if (!isGoalRankSelectionAllowed(select.value, getGoalRankRequestedRR(select.value))) {
+      const clampedGoal = getClampedGoalRankSelection(select.value, getGoalRankRequestedRR(select.value));
       select.value = clampedGoal.goalRank;
       if (goalRadiantRRInput && isRadiantGoalRank(clampedGoal.goalRank)) {
         goalRadiantRRInput.value = String(clampedGoal.goalRR || RADIANT_MIN_RR);
@@ -35525,9 +35577,7 @@ function bindEvents(){
   function clampGoalRadiantRRInput() {
     if (!goalRadiantRRInput || goalRadiantRRInput.disabled) return;
     const selected = normalizeTierLabel(goalRankSelect?.value || "");
-    const minimumRR = selected === "Radiant +"
-      ? getMinimumRadiantPlusGoalRR()
-      : getCurrentGoalMinimum().radiantMinRR;
+    const minimumRR = getMinimumRadiantGoalRR(selected);
     const rawValue = String(goalRadiantRRInput.value || "").trim();
     const nextValue = Math.max(
       minimumRR,
@@ -35573,8 +35623,7 @@ function bindEvents(){
     }
 
     if (goalRadiantRRInput) {
-      const minimum = getCurrentGoalMinimum();
-      const minimumRR = isRadiantPlus ? getMinimumRadiantPlusGoalRR() : minimum.radiantMinRR;
+      const minimumRR = getMinimumRadiantGoalRR(selected);
       goalRadiantRRInput.min = String(minimumRR);
       goalRadiantRRInput.disabled = !isRadiant;
       if (isRadiant) {
@@ -38522,7 +38571,7 @@ function renderProfilesUI(){
 
   if(profileStartingRREl){
     profileStartingRREl.textContent =
-      safeNumber(active?.startingRR);
+      formatRankLocalRR(active?.startingRR || 0, { withUnit: false });
   }
 
   updateProfileDropdownMenu?.();
@@ -40573,9 +40622,9 @@ function updateNavRRToRank(){
     applyStaticTrackGradient(bar, Math.round(progress.pct * 100), "horizontal");
   } else {
     const radiantRR = current.tierLabel === "Radiant"
-      ? RADIANT_MIN_RR
+      ? getRankLocalRRForAbsoluteRR(abs, current)
       : null;
-    nextText.textContent = radiantRR === null ? "Max Rank" : `${radiantRR} RR`;
+    nextText.textContent = radiantRR === null ? "Max Rank" : `Radiant ${radiantRR}`;
     if(nextIcon){
       nextIcon.src = getRankIconUrl(current.tierLabel);
       nextIcon.alt = current.tierLabel;
@@ -40627,9 +40676,7 @@ function updateNavRRToGoalRank(){
   }
 
   const { bounds, targetRR } = goalTarget;
-  const comparableCurrentRR = current.tierLabel === "Radiant"
-    ? getAbsoluteRRForActRR(RADIANT_MIN_RR)
-    : abs;
+  const comparableCurrentRR = abs;
   const rrNeeded = Math.max(0, targetRR - comparableCurrentRR);
   const span = Math.max(1, targetRR - current.min);
   const progressPct = rrNeeded <= 0
@@ -42148,7 +42195,7 @@ function updateProfileHeaderUI(){
   }
 
   if(profileStartingRREl){
-    profileStartingRREl.textContent = safeNumber(p.startingRR || 0);
+    profileStartingRREl.textContent = formatRankLocalRR(p.startingRR || 0, { withUnit: false });
   }
 
   applyProfileVisuals(p);
@@ -44693,7 +44740,7 @@ function renderStatsPeakProgress() {
     icon.alt = peak.tierLabel;
   }
   if (rankText) rankText.textContent = peak.tierLabel;
-  if (rrText) rrText.textContent = `${Math.round(peak.peakRR)} RR peak`;
+  if (rrText) rrText.textContent = formatRankLocalRR(peak.peakRR, { suffix: " peak" });
   if (note) {
     const scopeLabel = peak.isSeasonScoped ? peak.scopeLabel : "this profile timeline";
     note.textContent = peak.gainFromStart > 0
