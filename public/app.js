@@ -2144,75 +2144,75 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
 
   if (id === "fight_conversion") {
     const kd = safeNumber(overview.kd);
-    if (kd >= 1.2) return "Your fights are winning. Now check what happens after first contact.";
-    if (kd >= 1.05) return "Fight value is working. Turn picks into safer round wins.";
-    if (kd >= 0.95) return "Fights are close. Clean up trade timing before changing everything.";
-    return "Fights are costing rounds. Stop isolated contact first.";
+    if (kd >= 1.2) return "You are winning most of your gunfights. After getting a kill, slow down and help turn the advantage into a won round.";
+    if (kd >= 1.05) return "Your gunfights are helping you. Keep playing close enough to teammates so those kills turn into rounds.";
+    if (kd >= 0.95) return "Your gunfights are close. Focus on taking fights with a teammate before changing your whole playstyle.";
+    return "You are losing too many gunfights. Start by avoiding solo fights and taking cleaner angles.";
   }
 
   if (id === "match_conversion") {
     const wr = safeNumber(overview.winrate);
-    if (wr >= 55) return "This setup is winning. Keep it stable and repeat the same plan.";
-    if (wr >= 50) return "You are barely positive. Protect the rounds you already know how to win.";
-    if (wr >= 45) return "You are close, but key swing rounds are slipping.";
-    return "This window is losing. Start with the most repeated round problem.";
+    if (wr >= 55) return "This group of games is winning. Keep the same agents and plans until the pattern changes.";
+    if (wr >= 50) return "You are winning slightly more than you lose. Protect the rounds you already know how to close.";
+    if (wr >= 45) return "You are close to breaking even. Review the rounds where your team had an advantage but still lost.";
+    return "This group of games is losing more than it wins. Start with the same mistake that keeps showing up.";
   }
 
   if (id === "recent_form") {
-    if (tone === "up") return "Recent games are beating your baseline. Repeat the same block.";
-    if (tone === "down") return "Recent games are below your baseline. Simplify the next match.";
-    return "Recent games are steady. Keep the plan stable for more signal.";
+    if (tone === "up") return "Your recent games are better than your usual results. Keep the same agent, focus, and warmup routine.";
+    if (tone === "down") return "Your recent games are worse than your usual results. Make the next match simple with one clear focus.";
+    return "Your recent games match your usual results. Keep the plan steady until the trend is clearer.";
   }
 
   if (id === "score_pressure") {
     const adr = safeNumber(overview.adr);
-    if (adr >= 240) return "Damage is landing. Make it create space, stall hits, or close rounds.";
-    if (adr >= 215) return "Damage is showing. Tie it to entries, stalls, or trades.";
-    if (adr >= 185) return "Damage is present, but it may be arriving too late.";
-    return "Damage pressure is low. Create cleaner first-contact plans.";
+    if (adr >= 240) return "Your damage is excellent. Keep using it to win space, slow pushes, or finish rounds.";
+    if (adr >= 215) return "Your damage is strong. Make sure it helps your team enter sites, stop pushes, or trade kills.";
+    if (adr >= 185) return "Your damage is okay, but it may not be happening early enough to change rounds.";
+    return "Your damage is low. Look for cleaner fights where your team can trade or support you.";
   }
 
   if (id === "precision_signal") {
     const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
     const hs = safeNumber(overview.hs);
-    if (hsWeight?.label === "Down-weighted") return "Aim is not the main read. Judge fight choices and conversion first.";
-    if (hs >= 28) return "Aim is not the blocker. Review choices after first contact.";
-    if (hs >= 22) return "Precision is stable. Look at decisions after the first kill.";
-    if (hs >= 18) return "Precision is shaky. Train first bullets and calmer fights.";
-    return "Precision is hurting fights. Rebuild first-shot discipline.";
+    if (hsWeight?.label === "Down-weighted") return "Headshot percentage is not the main issue here. Review whether your fights are smart and helping win rounds.";
+    if (hs >= 28) return "Aim is not an issue because your headshot percentage is exceptional. After your first gunfight, keep making calm decisions so your mechanics keep helping you win rounds.";
+    if (hs >= 22) return "Your aim is solid. After getting a kill, focus on whether to hold, regroup, or take the next fight.";
+    if (hs >= 18) return "Your aim is inconsistent. Practice calmer first shots and avoid panic spraying when fights get tense.";
+    return "Your aim is hurting your fights. Start with crosshair placement and controlled first shots.";
   }
 
   if (id === "support_pressure") {
     if (valueNumber >= 8) return "Team impact is strong. Keep pairing utility with trades and follow-up.";
-    if (valueNumber >= 5) return "Teamwork is helping rounds. Keep calling utility around teammates.";
-    if (valueNumber >= 3.5) return "Team impact is there, but timing needs to repeat.";
-    return "Team impact is low. Play closer to trades and setup value.";
+    if (valueNumber >= 5) return "Your teamwork is helping rounds. Keep using utility and comms around what teammates are doing.";
+    if (valueNumber >= 3.5) return "Your teamwork is showing up sometimes. Work on making your timing repeat every round.";
+    return "Your team impact is low. Play closer to teammates so you can trade kills and support their fights.";
   }
 
   if (id === "round_survivability") {
-    if (tone === "up") return "Your life is staying useful longer. Keep spending it with purpose.";
-    if (tone === "down") return "Too many rounds end before your role value is spent.";
-    return "Survival is close. Review when your deaths happen.";
+    if (tone === "up") return "You are staying alive long enough to help more rounds. Keep taking risks only when they have a clear purpose.";
+    if (tone === "down") return "You are dying too early too often. Review whether those deaths happen before your utility or role job is done.";
+    return "Your survival is close. Review when you die and whether the death helped the round.";
   }
 
   if (id === "kast_stability") {
-    if (tone === "up") return "You are connected to more rounds. Protect that involvement.";
-    return "Too many rounds happen without your trade, assist, or survival.";
+    if (tone === "up") return "You are involved in more rounds through kills, assists, trades, or survival. Keep playing connected to the team.";
+    return "Too many rounds happen without your impact. Stay close enough to trade, assist, or survive with the team.";
   }
 
   if (id === "side_balance") {
-    return "One side is lagging. Fix that half before changing the whole map.";
+    return "One side of the map is weaker. Fix that attack or defense plan before changing the whole map.";
   }
 
   if (id === "weapon_pattern") {
     const weaponLabel = formatReadableLabel(trend.kicker || trend.mediaText || "Weapon");
-    if (valueNumber >= 55) return `${weaponLabel} rounds are driving this sample. Check whether they convert.`;
-    if (valueNumber >= 45) return `${weaponLabel} rounds are shaping the read. Judge conversion first.`;
-    return `${weaponLabel} is part of the picture, but not the whole read.`;
+    if (valueNumber >= 55) return `${weaponLabel} rounds are a major part of this profile. Check whether that weapon choice is helping you win rounds.`;
+    if (valueNumber >= 45) return `${weaponLabel} rounds are shaping this read. Judge the weapon by round wins, not just kills.`;
+    return `${weaponLabel} is part of the picture, but it should not define the whole profile.`;
   }
 
   if (id === "multi_kill_pressure") {
-    return "Multi-kills are creating chances. Slow down after the first advantage.";
+    return "Your multi-kill rounds are creating chances. After the first kill, slow down and help secure the round.";
   }
 
   return trend.detail || "Tap for the full read.";
