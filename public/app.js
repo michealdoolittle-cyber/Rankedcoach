@@ -2131,6 +2131,93 @@ function normalizeCoachCopyObject(value) {
   );
 }
 
+function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
+  const id = String(trend.id || "").toLowerCase();
+  const tone = String(trend.tone || "").toLowerCase();
+  const overview = context.overview || {};
+  const matches = safeNumber(overview.matchesPlayed);
+  const valueNumber = parseFloat(String(trend.value || "0").replace(/[^\d.-]/g, ""));
+
+  if (!matches && !["weapon_pattern", "side_balance", "multi_kill_pressure"].includes(id)) {
+    return "No match sample yet.";
+  }
+
+  if (id === "fight_conversion") {
+    const kd = safeNumber(overview.kd);
+    if (kd >= 1.2) return "Your fights are winning. Now check what happens after first contact.";
+    if (kd >= 1.05) return "Fight value is working. Turn picks into safer round wins.";
+    if (kd >= 0.95) return "Fights are close. Clean up trade timing before changing everything.";
+    return "Fights are costing rounds. Stop isolated contact first.";
+  }
+
+  if (id === "match_conversion") {
+    const wr = safeNumber(overview.winrate);
+    if (wr >= 55) return "This setup is winning. Keep it stable and repeat the same plan.";
+    if (wr >= 50) return "You are barely positive. Protect the rounds you already know how to win.";
+    if (wr >= 45) return "You are close, but key swing rounds are slipping.";
+    return "This window is losing. Start with the most repeated round problem.";
+  }
+
+  if (id === "recent_form") {
+    if (tone === "up") return "Recent games are beating your baseline. Repeat the same block.";
+    if (tone === "down") return "Recent games are below your baseline. Simplify the next match.";
+    return "Recent games are steady. Keep the plan stable for more signal.";
+  }
+
+  if (id === "score_pressure") {
+    const adr = safeNumber(overview.adr);
+    if (adr >= 240) return "Damage is landing. Make it create space, stall hits, or close rounds.";
+    if (adr >= 215) return "Damage is showing. Tie it to entries, stalls, or trades.";
+    if (adr >= 185) return "Damage is present, but it may be arriving too late.";
+    return "Damage pressure is low. Create cleaner first-contact plans.";
+  }
+
+  if (id === "precision_signal") {
+    const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
+    const hs = safeNumber(overview.hs);
+    if (hsWeight?.label === "Down-weighted") return "Aim is not the main read. Judge fight choices and conversion first.";
+    if (hs >= 28) return "Aim is not the blocker. Review choices after first contact.";
+    if (hs >= 22) return "Precision is stable. Look at decisions after the first kill.";
+    if (hs >= 18) return "Precision is shaky. Train first bullets and calmer fights.";
+    return "Precision is hurting fights. Rebuild first-shot discipline.";
+  }
+
+  if (id === "support_pressure") {
+    if (valueNumber >= 8) return "Team impact is strong. Keep pairing utility with trades and follow-up.";
+    if (valueNumber >= 5) return "Teamwork is helping rounds. Keep calling utility around teammates.";
+    if (valueNumber >= 3.5) return "Team impact is there, but timing needs to repeat.";
+    return "Team impact is low. Play closer to trades and setup value.";
+  }
+
+  if (id === "round_survivability") {
+    if (tone === "up") return "Your life is staying useful longer. Keep spending it with purpose.";
+    if (tone === "down") return "Too many rounds end before your role value is spent.";
+    return "Survival is close. Review when your deaths happen.";
+  }
+
+  if (id === "kast_stability") {
+    if (tone === "up") return "You are connected to more rounds. Protect that involvement.";
+    return "Too many rounds happen without your trade, assist, or survival.";
+  }
+
+  if (id === "side_balance") {
+    return "One side is lagging. Fix that half before changing the whole map.";
+  }
+
+  if (id === "weapon_pattern") {
+    const weaponLabel = formatReadableLabel(trend.kicker || trend.mediaText || "Weapon");
+    if (valueNumber >= 55) return `${weaponLabel} rounds are driving this sample. Check whether they convert.`;
+    if (valueNumber >= 45) return `${weaponLabel} rounds are shaping the read. Judge conversion first.`;
+    return `${weaponLabel} is part of the picture, but not the whole read.`;
+  }
+
+  if (id === "multi_kill_pressure") {
+    return "Multi-kills are creating chances. Slow down after the first advantage.";
+  }
+
+  return trend.detail || "Tap for the full read.";
+}
+
 function polishCoachingInsight(insight = {}, context = {}) {
   const title = String(insight?.title || "").toLowerCase();
   const output = { ...insight };
@@ -2390,6 +2477,8 @@ function polishTrendRead(trend = {}, context = {}) {
     output.detail = "Multi-kill rounds show that you can swing rounds, but conversion still matters.";
     output.read = "After the first advantage, group up and make the trade easy.";
   }
+
+  output.detail = getStatsTrendQuickTakeaway(output, context);
 
   if (sampleSentence && !String(output.sourceLabel || "").includes(sampleSentence)) {
     output.sampleNote = sampleSentence;
