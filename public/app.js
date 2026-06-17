@@ -2131,7 +2131,7 @@ function normalizeCoachCopyObject(value) {
   );
 }
 
-function formatTrendWhatHow(what = "", how = "") {
+function formatTrendCoachAction(what = "", how = "") {
   const cleanWhat = String(what || "").trim().replace(/[.]+$/, "");
   const cleanHow = String(how || "").trim().replace(/[.]+$/, "");
   return `${cleanWhat}. ${cleanHow}.`;
@@ -2150,75 +2150,75 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
 
   if (id === "fight_conversion") {
     const kd = safeNumber(overview.kd);
-    if (kd >= 1.2) return formatTrendWhatHow("Your gunfights are strong", "Use those kills to make the round safer");
-    if (kd >= 1.05) return formatTrendWhatHow("Your gunfights are helping", "Stay close enough for teammate support");
-    if (kd >= 0.95) return formatTrendWhatHow("Your gunfights are close", "Take more fights with a teammate nearby");
-    return formatTrendWhatHow("Your gunfights are hurting rounds", "Avoid solo fights first");
+    if (kd >= 1.2) return formatTrendCoachAction("Your gunfights are already a real strength", "Keep turning those kills into safer round wins");
+    if (kd >= 1.05) return formatTrendCoachAction("Your gunfights are helping your games", "Keep playing close enough for trades and support");
+    if (kd >= 0.95) return formatTrendCoachAction("Your gunfights are close enough to improve quickly", "Take more fights with a teammate nearby");
+    return formatTrendCoachAction("Your gunfights are costing too many rounds", "Start by avoiding lonely fights");
   }
 
   if (id === "match_conversion") {
     const wr = safeNumber(overview.winrate);
-    if (wr >= 55) return formatTrendWhatHow("This setup is winning", "Repeat the same agents and plans");
-    if (wr >= 50) return formatTrendWhatHow("Your record is positive", "Focus on closing tight rounds");
-    if (wr >= 45) return formatTrendWhatHow("Your record is close", "Review rounds lost after gaining an advantage");
-    return formatTrendWhatHow("This window is losing", "Start with the mistake that keeps repeating");
+    if (wr >= 55) return formatTrendCoachAction("This setup is working well", "Keep repeating the same agents and plans");
+    if (wr >= 50) return formatTrendCoachAction("Your record is moving in the right direction", "Focus on closing tight rounds cleaner");
+    if (wr >= 45) return formatTrendCoachAction("Your record is close, but not stable yet", "Review rounds lost after gaining an advantage");
+    return formatTrendCoachAction("This match window is not working yet", "Start with the mistake that keeps repeating");
   }
 
   if (id === "recent_form") {
-    if (tone === "up") return formatTrendWhatHow("Your recent games are improving", "Repeat the same agent and focus");
-    if (tone === "down") return formatTrendWhatHow("Your recent games are slipping", "Keep the next match simple");
-    return formatTrendWhatHow("Your recent games are steady", "Keep the same plan for now");
+    if (tone === "up") return formatTrendCoachAction("Your recent games are trending up", "Repeat the same agent and focus");
+    if (tone === "down") return formatTrendCoachAction("Your recent games are slipping a bit", "Keep the next match simple");
+    return formatTrendCoachAction("Your recent games look steady", "Keep the same plan for now");
   }
 
   if (id === "score_pressure") {
     const adr = safeNumber(overview.adr);
-    if (adr >= 240) return formatTrendWhatHow("Your damage is excellent", "Use it to close more rounds");
-    if (adr >= 215) return formatTrendWhatHow("Your damage is strong", "Use it to support site hits and trades");
-    if (adr >= 185) return formatTrendWhatHow("Your damage is okay", "Try to impact rounds earlier");
-    return formatTrendWhatHow("Your damage is low", "Look for cleaner supported fights");
+    if (adr >= 240) return formatTrendCoachAction("Your damage is excellent already", "Use it to help close more rounds");
+    if (adr >= 215) return formatTrendCoachAction("Your damage is a strong point", "Use it to support site hits and trades");
+    if (adr >= 185) return formatTrendCoachAction("Your damage is serviceable", "Try to make it matter earlier in rounds");
+    return formatTrendCoachAction("Your damage is too quiet right now", "Look for cleaner fights with support");
   }
 
   if (id === "precision_signal") {
     const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
     const hs = safeNumber(overview.hs);
-    if (hsWeight?.label === "Down-weighted") return formatTrendWhatHow("Headshots matter less here", "Review your fight choices first");
-    if (hs >= 28) return formatTrendWhatHow("Your aim is excellent", "Keep your composure after the first fight");
-    if (hs >= 22) return formatTrendWhatHow("Your aim is solid", "Choose the next fight carefully");
-    if (hs >= 18) return formatTrendWhatHow("Your aim is inconsistent", "Practice calmer first shots");
-    return formatTrendWhatHow("Your aim is hurting fights", "Start with crosshair placement");
+    if (hsWeight?.label === "Down-weighted") return formatTrendCoachAction("Headshots are not the main issue here", "Review your fight choices first");
+    if (hs >= 28) return formatTrendCoachAction("Your aim is excellent already", "Keep your composure after the first fight");
+    if (hs >= 22) return formatTrendCoachAction("Your aim is in a good place", "Choose the next fight with patience");
+    if (hs >= 18) return formatTrendCoachAction("Your aim is a little inconsistent", "Practice calmer first shots");
+    return formatTrendCoachAction("Your aim is making fights harder", "Start with cleaner crosshair placement");
   }
 
   if (id === "support_pressure") {
-    if (valueNumber >= 8) return formatTrendWhatHow("Your team impact is strong", "Pair utility with trades");
-    if (valueNumber >= 5) return formatTrendWhatHow("Your teamwork is helping", "Keep syncing with teammates");
-    if (valueNumber >= 3.5) return formatTrendWhatHow("Your teamwork is inconsistent", "Make the timing repeat");
-    return formatTrendWhatHow("Your team impact is low", "Play closer to help teammates");
+    if (valueNumber >= 8) return formatTrendCoachAction("Your team impact is strong", "Keep pairing utility with trades");
+    if (valueNumber >= 5) return formatTrendCoachAction("Your teamwork is helping rounds", "Keep syncing with teammates");
+    if (valueNumber >= 3.5) return formatTrendCoachAction("Your teamwork appears in flashes", "Make the timing more repeatable");
+    return formatTrendCoachAction("Your team impact is too low", "Play closer so you can help teammates");
   }
 
   if (id === "round_survivability") {
-    if (tone === "up") return formatTrendWhatHow("Your survival is strong", "Keep taking risks with purpose");
-    if (tone === "down") return formatTrendWhatHow("Your deaths happen too early", "Use your role value first");
-    return formatTrendWhatHow("Your survival is close", "Review when your deaths happen");
+    if (tone === "up") return formatTrendCoachAction("Your survival is helping your rounds", "Keep taking risks with purpose");
+    if (tone === "down") return formatTrendCoachAction("Your deaths are happening too early", "Use your role value first");
+    return formatTrendCoachAction("Your survival is close to stable", "Review when your deaths happen");
   }
 
   if (id === "kast_stability") {
-    if (tone === "up") return formatTrendWhatHow("Your round impact is strong", "Stay connected to the team");
-    return formatTrendWhatHow("Your impact is missing too often", "Stay close enough to help");
+    if (tone === "up") return formatTrendCoachAction("Your round impact is strong", "Stay connected to the team");
+    return formatTrendCoachAction("Your impact is missing too often", "Stay close enough to help");
   }
 
   if (id === "side_balance") {
-    return formatTrendWhatHow("One side of the map is weaker", "Fix that plan first");
+    return formatTrendCoachAction("One side of the map needs attention", "Fix that plan before changing everything");
   }
 
   if (id === "weapon_pattern") {
     const weaponLabel = formatReadableLabel(trend.kicker || trend.mediaText || "Weapon");
-    if (valueNumber >= 55) return formatTrendWhatHow(`${weaponLabel} is a major pattern`, "Check if it wins rounds");
-    if (valueNumber >= 45) return formatTrendWhatHow(`${weaponLabel} shapes this read`, "Judge round wins first");
-    return formatTrendWhatHow(`${weaponLabel} matters here`, "Keep the full profile in view");
+    if (valueNumber >= 55) return formatTrendCoachAction(`${weaponLabel} is a major pattern`, "Check if it is actually winning rounds");
+    if (valueNumber >= 45) return formatTrendCoachAction(`${weaponLabel} is shaping this read`, "Judge the round wins first");
+    return formatTrendCoachAction(`${weaponLabel} matters here`, "Keep the full profile in view");
   }
 
   if (id === "multi_kill_pressure") {
-    return formatTrendWhatHow("Multi-kills create chances", "Slow down and secure the round");
+    return formatTrendCoachAction("Your multi-kills are creating chances", "Slow down and secure the round");
   }
 
   return trend.detail || "Tap for the full read.";
