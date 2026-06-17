@@ -2137,6 +2137,147 @@ function formatTrendCoachAction(what = "", how = "") {
   return `${cleanWhat}. ${cleanHow}.`;
 }
 
+function describeCommsPracticeTarget(context = {}) {
+  const averageSelfComms = safeNumber(context.averageSelfComms, NaN);
+  const averageTeamComms = safeNumber(context.averageTeamComms, NaN);
+  if (Number.isFinite(averageSelfComms) && averageSelfComms < 3) {
+    return "keep improving self comms so your next call is clear before the fight starts";
+  }
+  if (Number.isFinite(averageTeamComms) && averageTeamComms < 3) {
+    return "call your utility timing earlier so teammates know when to swing with it";
+  }
+  return "keep calling your timing so teammates can play off the value you create";
+}
+
+function describeTeamUtilityPracticeTarget(context = {}, roleName = "", agentName = "") {
+  const baseTip = describeCommsPracticeTarget(context);
+  const role = String(roleName || "").trim().toLowerCase();
+  const agent = String(agentName || "").trim();
+  if (role === "sentinel") return `make one clear call when ${agent || "your setup"} is about to create contact`;
+  if (role === "controller") return "call smoke or molly timing before teammates are forced to guess";
+  if (role === "initiator") return "call when your info lands so teammates know when to move";
+  if (role === "duelist") return "say when you are about to take space so teammates can trade you";
+  return baseTip;
+}
+
+function describeTeamUtilityRead(roleName = "", valueNumber = 0) {
+  const role = String(roleName || "").trim().toLowerCase();
+  const strong = safeNumber(valueNumber) >= 8;
+  if (role === "sentinel") return strong ? "Your setup value is turning into real assists" : "Your setup value is helping rounds";
+  if (role === "controller") return strong ? "Your utility is giving teammates real help" : "Your controller utility is helping rounds";
+  if (role === "initiator") return strong ? "Your info is turning into team value" : "Your info is helping teammates act";
+  if (role === "duelist") return strong ? "Your entry work is still helping teammates" : "Your duelist impact is showing some team value";
+  return strong ? "Your assists are genuinely impactful" : "Your teamwork is helping rounds";
+}
+
+function describeDamageRead(roleName = "", adr = 0) {
+  const role = String(roleName || "").trim().toLowerCase();
+  const elite = safeNumber(adr) >= 240;
+  if (role === "sentinel") return elite ? "Your damage is doing real work for a Sentinel profile" : "Your Sentinel damage is a strong point";
+  if (role === "controller") return elite ? "Your damage is strong for a Controller sample" : "Your Controller damage is helping rounds";
+  if (role === "initiator") return elite ? "Your damage is adding real impact to your info role" : "Your Initiator damage is a strong point";
+  if (role === "duelist") return elite ? "Your damage is giving the team real entry pressure" : "Your Duelist damage is a strong point";
+  return elite ? "Your damage is excellent and genuinely impactful" : "Your damage is a strong point";
+}
+
+function describeDamagePracticeTarget(context = {}, roleName = "", agentName = "") {
+  const role = String(roleName || "").trim().toLowerCase();
+  const agent = String(agentName || "").trim();
+  const weaponLabel = formatReadableLabel(context.topWeaponFamilyLabel || "");
+  if (role === "sentinel") return `keep using ${agent || "your setup"} to make attackers walk into worse fights`;
+  if (role === "controller") return `keep using ${agent || "your utility"} to make fights easier before you swing`;
+  if (role === "initiator") return `turn your info into earlier damage instead of spending utility with no follow-up`;
+  if (role === "duelist") return "use that pressure to take space, then avoid giving away the second fight";
+  if (weaponLabel) return `keep using ${weaponLabel.toLowerCase()} when it gives you the cleanest fights`;
+  return "turn the damage into earlier round control instead of late exits";
+}
+
+function describeRolePracticeTarget(roleName = "", agentName = "") {
+  const role = String(roleName || "").trim().toLowerCase();
+  const agent = String(agentName || "").trim();
+  if (role === "duelist") return "keep entering with a trade plan instead of turning the round into solo fights";
+  if (role === "controller") return "stay alive long enough to refresh smokes and make the retake playable";
+  if (role === "initiator") return "use info first, then make sure someone is ready to act on it";
+  if (role === "sentinel") return `keep using ${agent || "your setup"} to control space, then adapt once the attackers avoid it`;
+  return "keep the round plan simple enough to repeat under pressure";
+}
+
+function describeProfilePracticeLever(context = {}, options = {}) {
+  const prefer = Array.isArray(options.prefer) ? options.prefer : [];
+  const avoid = new Set(Array.isArray(options.avoid) ? options.avoid : []);
+  const bestMap = context.bestMap || null;
+  const weakestMap = context.weakestMap || null;
+  const bestAgent = context.bestAgent || null;
+  const weakestAgent = context.weakestAgent || null;
+  const bestRole = context.bestRole || null;
+  const weakestRole = context.weakestRole || null;
+  const focusEntry = context.weeklyTopFocusEntry || context.topFocusEntry || null;
+  const moodEntry = context.weeklyTopMoodEntry || context.topMoodEntry || null;
+  const averageSelfComms = safeNumber(context.averageSelfComms, NaN);
+  const averageTeamComms = safeNumber(context.averageTeamComms, NaN);
+  const topWeaponLabel = formatReadableLabel(context.topWeaponFamilyLabel || "");
+  const topWeaponWinrate = safeNumber(context.topWeaponFamilyWinrate, NaN);
+  const topWeaponShare = safeNumber(context.topWeaponFamilyShare, NaN);
+
+  const candidates = [];
+  const addCandidate = (type, score, phrase, action) => {
+    if (!type || avoid.has(type) || !phrase || !action) return;
+    const preferBoost = prefer.includes(type) ? 30 : 0;
+    candidates.push({ type, score: safeNumber(score) + preferBoost, phrase, action });
+  };
+
+  if (focusEntry?.[0]) {
+    addCandidate("focus", 82 + safeNumber(focusEntry[1]), `your ${focusEntry[0]} focus`, `make ${focusEntry[0]} the one thing you review after the next match`);
+  }
+  if (Number.isFinite(averageSelfComms) && averageSelfComms < 3) {
+    addCandidate("self_comms", 88 - averageSelfComms * 8, "self comms", "make one clear call before you swing or rotate");
+  }
+  if (Number.isFinite(averageTeamComms) && averageTeamComms < 3) {
+    addCandidate("team_comms", 84 - averageTeamComms * 8, "team comms", "call utility timing before teammates need to guess");
+  }
+  if (weakestMap?.map && safeNumber(weakestMap.matchesPlayed) >= 2) {
+    addCandidate("weak_map", 100 - safeNumber(weakestMap.winrate), `${weakestMap.map} round plans`, `bring one attack plan and one defense fallback into the next ${weakestMap.map} game`);
+  }
+  if (weakestRole?.role && safeNumber(weakestRole.matchesPlayed) >= 2) {
+    const roleLabel = formatReadableLabel(weakestRole.role);
+    addCandidate("weak_role", 96 - safeNumber(weakestRole.winrate), `${roleLabel} role value`, `give ${roleLabel} one simple job before adding more complexity`);
+  }
+  if (weakestAgent?.agent && safeNumber(weakestAgent.matchesPlayed) >= 2) {
+    addCandidate("weak_agent", 92 - safeNumber(weakestAgent.winrate), `${weakestAgent.agent} games`, `review where ${weakestAgent.agent} dies or loses value before swapping the whole agent pool`);
+  }
+  if (bestAgent?.agent && safeNumber(bestAgent.matchesPlayed) >= 3 && safeNumber(bestAgent.winrate) >= 55) {
+    addCandidate("best_agent", safeNumber(bestAgent.winrate), `${bestAgent.agent} plans`, `repeat the ${bestAgent.agent} plans that are already producing wins`);
+  }
+  if (bestMap?.map && safeNumber(bestMap.matchesPlayed) >= 2 && safeNumber(bestMap.winrate) >= 55) {
+    addCandidate("best_map", safeNumber(bestMap.winrate) - 4, `${bestMap.map} map plan`, `keep the same map plan and only change the round that keeps failing`);
+  }
+  if (topWeaponLabel && Number.isFinite(topWeaponWinrate)) {
+    const weaponScore = topWeaponWinrate >= 52 ? topWeaponWinrate - 2 : 88 - topWeaponWinrate;
+    const weaponPhrase = topWeaponWinrate >= 52
+      ? `${topWeaponLabel} round conversion`
+      : `${topWeaponLabel} round losses`;
+    const weaponAction = topWeaponWinrate >= 52
+      ? `keep using ${topWeaponLabel.toLowerCase()} when the round plan supports clean fights`
+      : `review whether ${topWeaponLabel.toLowerCase()} rounds are losing on attack, defense, or buy timing`;
+    addCandidate("weapon", weaponScore, weaponPhrase, weaponAction);
+  } else if (topWeaponLabel && Number.isFinite(topWeaponShare) && topWeaponShare >= 45) {
+    addCandidate("weapon", topWeaponShare, `${topWeaponLabel} fights`, `judge mechanics through those ${topWeaponLabel.toLowerCase()} fights instead of raw aim alone`);
+  }
+  if (moodEntry?.[0] && ["annoyed", "tilted"].includes(String(moodEntry[0]).toLowerCase())) {
+    addCandidate("mood", 76 + safeNumber(moodEntry[1]), `${moodEntry[0]} logs`, "reset between games before that mood changes the next round plan");
+  }
+  if (bestRole?.role && safeNumber(bestRole.matchesPlayed) >= 2 && safeNumber(bestRole.winrate) >= 55) {
+    const roleLabel = formatReadableLabel(bestRole.role);
+    addCandidate("best_role", safeNumber(bestRole.winrate) - 8, `${roleLabel} role value`, `use ${roleLabel} when you want the cleanest ranked baseline`);
+  }
+
+  return candidates.sort((a, b) => b.score - a.score)[0] || {
+    type: "general",
+    phrase: "one cleaner repeatable plan",
+    action: "pick one focus for the next match and review only that first"
+  };
+}
+
 function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
   const id = String(trend.id || "").toLowerCase();
   const tone = String(trend.tone || "").toLowerCase();
@@ -2150,6 +2291,7 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
   const averageTeamComms = safeNumber(context.averageTeamComms, NaN);
   const matches = safeNumber(overview.matchesPlayed);
   const valueNumber = parseFloat(String(trend.value || "0").replace(/[^\d.-]/g, ""));
+  const profileLever = describeProfilePracticeLever(context);
 
   if (!matches && !["weapon_pattern", "weapon_reliance", "side_balance", "multi_kill_pressure"].includes(id)) {
     return "No match sample yet.";
@@ -2157,63 +2299,62 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
 
   if (id === "fight_conversion") {
     const kd = safeNumber(overview.kd);
-    if (kd >= 1.2) return formatTrendCoachAction("Your gunfights are a major strength", "After getting a kill, help your team keep the advantage");
-    if (kd >= 1.05) return formatTrendCoachAction("Your gunfights are helping your games", "Keep taking fights your team can follow up on");
-    if (kd >= 0.95) return formatTrendCoachAction("Your fights are close to even", "Take fewer isolated duels and swing with support");
-    return formatTrendCoachAction("Too many fights are going against you", "Start with cleaner timing and fewer lonely peeks");
+    if (kd >= 1.2) return formatTrendCoachAction("Your gunfights are a major strength", "After the first kill, slow down and help your team keep the advantage");
+    if (kd >= 1.05) return formatTrendCoachAction("Your fights are giving the profile real value", `Keep taking fights that connect back to ${profileLever.phrase}`);
+    if (kd >= 0.95) return formatTrendCoachAction("Your fights are close to even", "Swing with support more often so close duels become traded rounds");
+    return formatTrendCoachAction("Too many fights are going against you", profileLever.action);
   }
 
   if (id === "match_conversion") {
     const wr = safeNumber(overview.winrate);
     const mapName = bestMap?.map || trend.kicker || "this map";
     const agentText = signalAgent ? ` with ${signalAgent}` : "";
-    if (wr >= 55) return formatTrendCoachAction(`${mapName} is going well${agentText}`, "Keep repeating the round plans that are already winning");
-    if (wr >= 50) return formatTrendCoachAction(`${mapName} is barely above a winning pace`, "Keep the same plan, but review the close losses");
+    if (context.allRepeatedMapsBelowTarget && bestMap?.map) return formatTrendCoachAction(`${bestMap.map} is your best repeated map, but it is still under 50% WR`, profileLever.action);
+    if (wr >= 55) return formatTrendCoachAction(`${mapName} is going well${agentText}`, `Keep repeating the ${signalAgent || mapName} plans that already win rounds`);
+    if (wr >= 50) return formatTrendCoachAction(`${mapName} is barely above a winning pace`, "Keep the plan, but review the close losses before changing everything");
     if (wr >= 45) return formatTrendCoachAction(`${mapName} is close, but not stable yet`, "Review rounds lost after your team gets the first advantage");
-    return formatTrendCoachAction(`${mapName} is not converting enough wins yet`, "Start with the repeated round loss that shows up most");
+    return formatTrendCoachAction(`${mapName} is not converting enough wins yet`, profileLever.action);
   }
 
   if (id === "recent_form") {
-    if (tone === "up") return formatTrendCoachAction("Your recent games are trending up", "Repeat the same agent and focus");
-    if (tone === "down") return formatTrendCoachAction("Your recent games are slipping a bit", "Keep the next match simple");
-    return formatTrendCoachAction("Your recent games look steady", "Keep the same plan for now");
+    const recentWins = safeNumber(context.recentWins);
+    const recentLosses = safeNumber(context.recentLosses);
+    if (tone === "up") return formatTrendCoachAction("Your recent games are trending up", `Repeat the same ${signalAgent || "agent"} plan and keep ${profileLever.phrase} in view`);
+    if (tone === "down") return formatTrendCoachAction(`Recent form is slipping with ${recentLosses || "more"} losses in the last block`, `Keep the next match simple and review ${profileLever.phrase} first`);
+    return formatTrendCoachAction(`Recent form is steady at ${recentWins} wins and ${recentLosses} losses`, "Keep the same plan for one more block before changing focus");
   }
 
   if (id === "score_pressure") {
     const adr = safeNumber(overview.adr);
-    const toolText = signalAgent || weaponLabel || signalRole || "your strongest tools";
-    if (adr >= 240) return formatTrendCoachAction("Your damage is excellent and genuinely impactful", `Keep using ${toolText} to start fights your team can finish`);
-    if (adr >= 215) return formatTrendCoachAction("Your damage is a strong point", `Keep using ${toolText} to pressure space before rounds slow down`);
-    if (adr >= 185) return formatTrendCoachAction("Your damage is serviceable", "Make it matter earlier by fighting with clearer support");
-    return formatTrendCoachAction("Your damage is too quiet right now", "Look for cleaner fights before the round is already lost");
+    const damageTip = describeDamagePracticeTarget(context, signalRole, signalAgent);
+    if (adr >= 240) return formatTrendCoachAction(describeDamageRead(signalRole, adr), damageTip);
+    if (adr >= 215) return formatTrendCoachAction(describeDamageRead(signalRole, adr), damageTip);
+    if (adr >= 185) return formatTrendCoachAction("Your damage is serviceable", "Make it matter sooner by fighting with clearer support");
+    return formatTrendCoachAction("Your damage is too quiet right now", profileLever.action);
   }
 
   if (id === "precision_signal") {
     const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
     const hs = safeNumber(overview.hs);
-    if (hsWeight?.label === "Down-weighted") return formatTrendCoachAction("Headshots are not the main issue for this profile", "Review fight choices before chasing aim fixes");
-    if (hs >= 28) return formatTrendCoachAction("Your aim is excellent already", "Keep your composure after your first fight");
-    if (hs >= 22) return formatTrendCoachAction("Your aim is in a good place", "Keep choosing the next fight with patience");
-    if (hs >= 18) return formatTrendCoachAction("Your aim is a little inconsistent", "Slow down the first bullet before spraying");
+    if (hsWeight?.label === "Down-weighted") return formatTrendCoachAction("Headshots are not the main issue for this profile", `Spend more review time on ${profileLever.phrase}`);
+    if (hs >= 28) return formatTrendCoachAction("Your aim is excellent already", "Keep your composure after your first fight so the mechanics stay reliable");
+    if (hs >= 22) return formatTrendCoachAction("Your aim is in a good place", "Keep choosing the next fight with patience instead of forcing the follow-up peek");
+    if (hs >= 18) return formatTrendCoachAction("Your aim is a little inconsistent", "Slow down the first bullet and make the spray a backup plan");
     return formatTrendCoachAction("Your aim is making fights harder", "Start with cleaner crosshair placement before each swing");
   }
 
   if (id === "support_pressure") {
-    const commsTip = Number.isFinite(averageSelfComms) && averageSelfComms < 3
-      ? "Keep improving self comms so teammates can act on your timing"
-      : Number.isFinite(averageTeamComms) && averageTeamComms < 3
-        ? "Call your utility timing earlier so teammates can play off it"
-        : "Keep calling your timing so teammates can play off it";
-    if (valueNumber >= 8) return formatTrendCoachAction("Your assists are genuinely impactful", commsTip);
-    if (valueNumber >= 5) return formatTrendCoachAction("Your teamwork is helping rounds", commsTip);
-    if (valueNumber >= 3.5) return formatTrendCoachAction("Your team impact shows up in flashes", "Make the timing more repeatable");
+    const commsTip = describeTeamUtilityPracticeTarget(context, signalRole, signalAgent);
+    if (valueNumber >= 8) return formatTrendCoachAction(describeTeamUtilityRead(signalRole, valueNumber), commsTip);
+    if (valueNumber >= 5) return formatTrendCoachAction(describeTeamUtilityRead(signalRole, valueNumber), commsTip);
+    if (valueNumber >= 3.5) return formatTrendCoachAction("Your team impact shows up in flashes", "Make the timing more repeatable with one clear call before contact");
     return formatTrendCoachAction("Your team impact is too low", "Play closer so your utility and trades actually help teammates");
   }
 
   if (id === "round_survivability") {
-    if (tone === "up") return formatTrendCoachAction("Your survival is helping your rounds", "Keep taking risks with purpose");
-    if (tone === "down") return formatTrendCoachAction("Your deaths are happening too early", "Use your role value first");
-    return formatTrendCoachAction("Your survival is close to stable", "Review when your deaths happen");
+    if (tone === "up") return formatTrendCoachAction("Your survival is helping your rounds", describeRolePracticeTarget(signalRole, signalAgent));
+    if (tone === "down") return formatTrendCoachAction(`You are dying before getting full value from ${signalRole || "your role"}`, describeRolePracticeTarget(signalRole, signalAgent));
+    return formatTrendCoachAction("Your survival is close to stable", "Review whether deaths happen before or after your role job is done");
   }
 
   if (id === "kast_stability") {
@@ -2227,11 +2368,18 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
 
   if (id === "weapon_pattern" || id === "weapon_reliance") {
     const kd = safeNumber(overview.kd);
+    const weaponWinrate = safeNumber(context.topWeaponFamilyWinrate, NaN);
+    const primaryWeapon = formatReadableLabel(context.topWeaponPrimaryWeapon || "");
+    const sideGap = Math.abs(safeNumber(context.topWeaponFamilyAttackWinrate) - safeNumber(context.topWeaponFamilyDefenseWinrate));
+    const weakerSide = safeNumber(context.topWeaponFamilyAttackWinrate) < safeNumber(context.topWeaponFamilyDefenseWinrate) ? "attack" : "defense";
+    const weaponName = primaryWeapon && primaryWeapon !== "--" ? primaryWeapon : weaponLabel;
+    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 55) return formatTrendCoachAction(`${weaponLabel} rounds are a real strength at ${Math.round(weaponWinrate)}% WR`, `Keep using ${weaponName} when the round plan gives you clean fights`);
+    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 50) return formatTrendCoachAction(`${weaponLabel} rounds are winning slightly more than they lose`, sideGap >= 12 ? `Review ${weakerSide} rounds so the weapon value holds on both sides` : "Keep the same buy timing and avoid forcing extra peeks after a kill");
+    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 45) return formatTrendCoachAction(`${weaponLabel} rounds are close, but not stable yet`, sideGap >= 12 ? `Start with the weaker ${weakerSide} side before blaming the weapon` : "Review whether these rounds are lost from positioning, timing, or the buy itself");
+    if (Number.isFinite(weaponWinrate)) return formatTrendCoachAction(`${weaponLabel} rounds are losing too often right now`, sideGap >= 12 ? `Start with the weaker ${weakerSide} side and change one buy habit at a time` : "Do not make this the default buy until the round plan improves");
     if (valueNumber >= 55 && kd >= 1) return formatTrendCoachAction(`${weaponLabel} rounds fit your profile well`, "Keep taking clean fights and avoid forcing extra peeks after a kill");
-    if (valueNumber >= 55) return formatTrendCoachAction(`${weaponLabel} is a major part of your games`, "Make sure those rounds are creating real win chances");
-    if (valueNumber >= 45 && kd >= 1) return formatTrendCoachAction(`${weaponLabel} is working often enough to respect`, "Keep using it when the round plan supports it");
-    if (valueNumber >= 45) return formatTrendCoachAction(`${weaponLabel} is shaping your profile`, "Review whether those rounds are actually converting wins");
-    return formatTrendCoachAction(`${weaponLabel} is only part of the story`, "Judge mechanics through the full match context");
+    if (valueNumber >= 45) return formatTrendCoachAction(`${weaponLabel} is shaping your profile`, profileLever.action);
+    return formatTrendCoachAction(`${weaponLabel} needs more clean data before judging hard`, `Keep logging it and compare it against ${profileLever.phrase}`);
   }
 
   if (id === "multi_kill_pressure") {
@@ -3636,9 +3784,14 @@ function buildCoachingContext(matchEntries = []) {
 
   return {
     weaponRounds: totalWeaponRounds,
+    familySummaries,
     familyShares,
     relianceFlags,
     agentWeaponReliance,
+    getFamilySummary(typeKey = "") {
+      const normalized = normalizeStatsWeaponKey(typeKey);
+      return familySummaries.find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalized) || null;
+    },
     getAgentWeaponContext(agentName = "") {
       const normalized = String(agentName || "").trim().toLowerCase();
       return agentWeaponReliance.find(entry => String(entry.agent || "").trim().toLowerCase() === normalized) || null;
@@ -4404,7 +4557,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     ? `${topWeaponFamilyEntry[0].charAt(0).toUpperCase()}${topWeaponFamilyEntry[0].slice(1)}`
     : "";
   const topWeaponFamilyShare = safeNumber(topWeaponFamilyEntry?.[1]);
-  const topWeaponFamilyTone = topWeaponFamilyShare >= 50 && safeNumber(overview.kd) >= 1 ? "up" : topWeaponFamilyShare >= 45 ? "warn" : "up";
+  const topWeaponFamilySummary = topWeaponFamilyEntry ? coachingContext?.getFamilySummary?.(topWeaponFamilyEntry[0]) : null;
+  const topWeaponFamilyWinrate = safeNumber(topWeaponFamilySummary?.winrate, NaN);
+  const topWeaponFamilyTone = Number.isFinite(topWeaponFamilyWinrate)
+    ? topWeaponFamilyWinrate >= 52 ? "up" : topWeaponFamilyWinrate >= 45 ? "warn" : "down"
+    : topWeaponFamilyShare >= 50 && safeNumber(overview.kd) >= 1 ? "up" : topWeaponFamilyShare >= 45 ? "warn" : "warn";
   const sideBias = sideBiasMaps[0] || null;
 
   trends.push(...[
@@ -4482,9 +4639,13 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Weapon Pattern",
       kicker: topWeaponFamilyLabel || "Weapon Context",
       value: `${Math.round(topWeaponFamilyShare)}% Rounds`,
-      detail: topWeaponFamilyTone === "up"
-        ? `${topWeaponFamilyLabel || "This weapon group"} rounds fit this profile well. Keep taking clean fights and protect the advantage after a kill.`
-        : `${topWeaponFamilyLabel || "This weapon group"} is shaping this profile. Review whether those rounds are actually converting wins.`,
+      detail: Number.isFinite(topWeaponFamilyWinrate)
+        ? topWeaponFamilyWinrate >= 52
+          ? `${topWeaponFamilyLabel || "This weapon group"} rounds are converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Keep the same buy timing when the round plan supports it.`
+          : `${topWeaponFamilyLabel || "This weapon group"} rounds are only converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Review side, buy timing, and positioning before judging mechanics alone.`
+        : topWeaponFamilyTone === "up"
+          ? `${topWeaponFamilyLabel || "This weapon group"} rounds fit this profile well. Keep taking clean fights and protect the advantage after a kill.`
+          : `${topWeaponFamilyLabel || "This weapon group"} is shaping this profile. Review whether those rounds are actually converting wins.`,
       read: "This read checks whether one weapon group is a real strength, a risky habit, or simply context for how the rest of the profile should be judged.",
       sourceLabel: `Based on round-by-round weapon usage from ${seasonLabel}.`,
       formula: `top weapon category share = ${Math.round(topWeaponFamilyShare)}%`,
@@ -5225,6 +5386,20 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     currentSignalRole,
     topWeaponFamilyLabel,
     topWeaponFamilyShare,
+    topWeaponFamilyWinrate,
+    topWeaponPrimaryWeapon: topWeaponFamilySummary?.primaryWeapon,
+    topWeaponFamilyAttackWinrate: topWeaponFamilySummary?.attackWinrate,
+    topWeaponFamilyDefenseWinrate: topWeaponFamilySummary?.defenseWinrate,
+    topFocusEntry,
+    topMoodEntry,
+    weeklyTopFocusEntry,
+    weeklyTopMoodEntry,
+    recentWins,
+    recentLosses,
+    recentKd,
+    recentWinRate,
+    positiveMoodCount,
+    negativeMoodCount,
     averageTeamComms,
     averageSelfComms,
     assistsPerMatch,
