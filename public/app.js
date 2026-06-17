@@ -2277,35 +2277,56 @@ function polishTrendRead(trend = {}, context = {}) {
   const id = String(output.id || "").toLowerCase();
   const overview = context.overview || {};
   const sampleSentence = context.sampleTone?.sentence || "";
+  const tone = String(output.tone || trend?.tone || "").toLowerCase();
 
   if (id === "fight_conversion") {
-    output.detail = safeNumber(overview.kd) >= 1
-      ? "Your fights are giving the profile value. Now check whether those fights become round wins."
-      : "Fight value needs review, but the fix may be fight choice, spacing, or trade timing instead of aim alone.";
+    output.detail = !safeNumber(overview.matchesPlayed)
+      ? "No match sample yet."
+      : safeNumber(overview.kd) >= 1.1
+        ? "You are winning enough fights to build around it. Now prove those picks become rounds."
+        : safeNumber(overview.kd) >= 1
+          ? "The fights are playable. The next check is whether they are turning into wins."
+          : "Too many fights are being lost or isolated. Check spacing and trade timing before blaming aim only.";
     output.read = safeNumber(overview.kd) >= 1
       ? "The fight value is playable. The next read is conversion."
       : "Fight value is costing rounds often enough to stay near the top of the plan.";
   }
 
   if (id === "match_conversion") {
-    output.detail = safeNumber(overview.winrate) >= 50
-      ? "The selected window is winning enough to keep testing the current setup."
-      : "The selected window is losing more than it wins, so the app should focus on round conversion.";
+    output.detail = !safeNumber(overview.matchesPlayed)
+      ? "No match sample yet."
+      : safeNumber(overview.winrate) >= 52
+        ? "This window is winning. Keep the setup stable and find what is repeating."
+        : safeNumber(overview.winrate) >= 50
+          ? "This is barely positive. Protect the rounds you already know how to win."
+          : safeNumber(overview.winrate) >= 45
+            ? "This is close, but still under target. One or two rounds per match are slipping."
+            : "This window is losing more than it wins. Start with the repeat context costing rounds.";
     output.read = context.allRepeatedMapsBelowTarget
       ? "No repeated map is above 50% WR, so this is a full map-pool conversion problem, not a single-map flex."
       : output.detail;
   }
 
   if (id === "recent_form") {
-    output.detail = "Recent form compares the latest block against the broader selected window.";
-    output.read = safeNumber(trend?.tone === "down" ? -1 : 1) < 0
+    output.detail = tone === "down"
+      ? "Latest matches are below your usual level. Lower the scope and stabilize one focus."
+      : tone === "up"
+        ? "Latest matches are beating your baseline. Repeat the same agent and focus block."
+        : "Latest matches are close to your usual level. Keep the plan stable for more signal.";
+    output.read = tone === "down"
       ? "Recent form is dipping. Keep the next match simple enough to measure."
       : "Recent form is stable enough to repeat the current plan.";
   }
 
   if (id === "score_pressure") {
     output.label = "Damage Pressure";
-    output.detail = "Damage is useful when it creates easier fights, stalls a hit, or helps convert the round.";
+    output.detail = !safeNumber(overview.matchesPlayed)
+      ? "No match sample yet."
+      : safeNumber(overview.adr) >= 215
+        ? "Damage is creating pressure. Now make sure it is ending in round wins."
+        : safeNumber(overview.adr) >= 185
+          ? "Damage is present but not decisive. Check whether it arrives early enough to matter."
+          : "Damage pressure is low. Fights may be too late, too isolated, or not setting up teammates.";
     output.read = safeNumber(overview.adr) >= 200
       ? "Damage pressure is showing up. Keep tying it to round wins."
       : "Damage pressure is a supporting issue, especially if fights or KAST are also low.";
@@ -2314,25 +2335,40 @@ function polishTrendRead(trend = {}, context = {}) {
   if (id === "precision_signal") {
     const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
     output.detail = hsWeight?.label === "Down-weighted"
-      ? "HS% is being read with weapon and role context, not as a rifle-only grade."
-      : "HS% is being used as a normal mechanics signal in this profile.";
+      ? "HS% is not the main story here. Judge the fights by conversion, position, and weapon mix."
+      : safeNumber(overview.hs) >= 22
+        ? "Precision is not blocking you right now. Look at conversion and decision timing next."
+        : safeNumber(overview.hs) >= 18
+          ? "Precision is borderline. Clean up first-bullet fights without making aim the whole review."
+          : "Precision is low enough to hurt fights. Pair crosshair discipline with better fight choice.";
     output.read = hsWeight?.label === "Down-weighted"
       ? `${hsWeight.presumption} Check fight conversion before making aim the full answer.`
       : output.read;
   }
 
   if (id === "support_pressure") {
-    output.detail = "Assist value is a proxy for trades, setup timing, and teammate conversion.";
+    const assistsValue = parseFloat(String(output.value || "0").replace(/[^\d.]/g, ""));
+    output.detail = assistsValue >= 5
+      ? "Team value is showing up. Keep pairing utility and trades with round wins."
+      : assistsValue >= 3.5
+        ? "Team value is present but inconsistent. Check comm timing and trade spacing."
+        : "Low assists can mean fights are too solo or utility is not helping teammates enough.";
     output.read = "This matters most when it lines up with role choice and round wins.";
   }
 
   if (id === "round_survivability") {
-    output.detail = "Deaths are checked as role discipline, not as a demand to play scared.";
+    output.detail = tone === "up"
+      ? "Deaths are controlled enough to keep your role value alive longer."
+      : tone === "down"
+        ? "Too many rounds are ending before your role value is spent."
+        : "Survival is close, but the timing of deaths still needs review.";
     output.read = "Survival matters when dying early removes utility, trade value, or map control.";
   }
 
   if (id === "kast_stability") {
-    output.detail = "KAST checks whether you are surviving, trading, assisting, or being part of converted rounds.";
+    output.detail = tone === "up"
+      ? "You are staying connected to more rounds. Keep protecting that involvement."
+      : "Too many rounds are happening without you connected to the trade, assist, or survival.";
     output.read = "Low KAST usually means too many rounds are happening without you staying connected to the team.";
   }
 
@@ -2342,7 +2378,11 @@ function polishTrendRead(trend = {}, context = {}) {
   }
 
   if (id === "weapon_pattern") {
-    output.detail = "Weapon usage changes how mechanics should be judged.";
+    const weaponLabel = output.kicker || output.mediaText || "Weapon";
+    const weaponShare = parseFloat(String(output.value || "0").replace(/[^\d.]/g, ""));
+    output.detail = weaponShare >= 45
+      ? `${weaponLabel} is shaping this profile. Judge the results by conversion, positioning, and round wins.`
+      : `${weaponLabel} is part of the picture, but it is not taking over the whole read.`;
     output.read = "A weapon-heavy profile should be reviewed by conversion, positioning, and round impact, not HS% alone.";
   }
 
