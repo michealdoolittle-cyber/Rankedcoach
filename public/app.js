@@ -4227,8 +4227,6 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const recentWinRate = recentWindow.length ? safeDivide(recentWins, recentWindow.length) * 100 : 0;
   const roleGap = bestRole && weakestRole ? Math.max(0, Math.round(safeNumber(bestRole.winrate) - safeNumber(weakestRole.winrate))) : 0;
   const mapGap = bestMap && weakestMap ? Math.max(0, Math.round(safeNumber(bestMap.winrate) - safeNumber(weakestMap.winrate))) : 0;
-  const topWeaponFamilyShare = safeNumber(topWeaponFamilyEntry?.[1]);
-  const topWeaponFamilyTone = topWeaponFamilyShare >= 50 && safeNumber(overview.kd) >= 1 ? "up" : topWeaponFamilyShare >= 45 ? "warn" : "up";
 
   const trends = [
     {
@@ -4405,6 +4403,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const topWeaponFamilyLabel = topWeaponFamilyEntry
     ? `${topWeaponFamilyEntry[0].charAt(0).toUpperCase()}${topWeaponFamilyEntry[0].slice(1)}`
     : "";
+  const topWeaponFamilyShare = safeNumber(topWeaponFamilyEntry?.[1]);
+  const topWeaponFamilyTone = topWeaponFamilyShare >= 50 && safeNumber(overview.kd) >= 1 ? "up" : topWeaponFamilyShare >= 45 ? "warn" : "up";
   const sideBias = sideBiasMaps[0] || null;
 
   trends.push(...[
