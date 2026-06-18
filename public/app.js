@@ -2258,8 +2258,8 @@ function describeProfilePracticeLever(context = {}, options = {}) {
       ? `${topWeaponLabel} round conversion`
       : `${topWeaponLabel} round losses`;
     const weaponAction = topWeaponWinrate >= 52
-      ? `keep using ${topWeaponLabel.toLowerCase()} when the round plan supports clean fights`
-      : `review whether ${topWeaponLabel.toLowerCase()} rounds are losing on attack, defense, or buy timing`;
+      ? `keep using ${topWeaponLabel.toLowerCase()} when you can fight with teammate help or safely leave after the kill`
+      : `review whether ${topWeaponLabel.toLowerCase()} rounds are losing more on attack, defense, or forced buys`;
     addCandidate("weapon", weaponScore, weaponPhrase, weaponAction);
   } else if (topWeaponLabel && Number.isFinite(topWeaponShare) && topWeaponShare >= 45) {
     addCandidate("weapon", topWeaponShare, `${topWeaponLabel} fights`, `judge mechanics through those ${topWeaponLabel.toLowerCase()} fights instead of raw aim alone`);
@@ -2378,8 +2378,8 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
     const sideGap = Math.abs(safeNumber(context.topWeaponFamilyAttackWinrate) - safeNumber(context.topWeaponFamilyDefenseWinrate));
     const weakerSide = safeNumber(context.topWeaponFamilyAttackWinrate) < safeNumber(context.topWeaponFamilyDefenseWinrate) ? "attack" : "defense";
     const weaponName = primaryWeapon && primaryWeapon !== "--" ? primaryWeapon : weaponLabel;
-    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 55) return formatTrendCoachAction(`${weaponLabel} rounds are a real strength at ${Math.round(weaponWinrate)}% WR`, `Keep using ${weaponName} when the round plan gives you clean fights`);
-    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 50) return formatTrendCoachAction(`${weaponLabel} rounds are winning slightly more than they lose`, sideGap >= 12 ? `Review ${weakerSide} rounds so the weapon value holds on both sides` : "Keep the same buy timing and avoid forcing extra peeks after a kill");
+    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 55) return formatTrendCoachAction(`${weaponLabel} rounds are a real strength at ${Math.round(weaponWinrate)}% WR`, `Keep using ${weaponName} in rounds where you can trade out or safely leave after the first kill`);
+    if (Number.isFinite(weaponWinrate) && weaponWinrate >= 50) return formatTrendCoachAction(`${weaponLabel} rounds are winning slightly more than they lose`, sideGap >= 12 ? `Review ${weakerSide} rounds so the weapon value holds on both sides` : "Keep buying it when your credits support the plan, then avoid forcing extra peeks after a kill");
     if (Number.isFinite(weaponWinrate) && weaponWinrate >= 45) return formatTrendCoachAction(`${weaponLabel} rounds are close, but not stable yet`, sideGap >= 12 ? `Start with the weaker ${weakerSide} side before blaming the weapon` : "Review whether these rounds are lost from positioning, timing, or the buy itself");
     if (Number.isFinite(weaponWinrate)) return formatTrendCoachAction(`${weaponLabel} rounds are losing too often right now`, sideGap >= 12 ? `Start with the weaker ${weakerSide} side and change one buy habit at a time` : "Do not make this the default buy until the round plan improves");
     if (valueNumber >= 55 && kd >= 1) return formatTrendCoachAction(`${weaponLabel} rounds fit your profile well`, "Keep taking clean fights and avoid forcing extra peeks after a kill");
@@ -4670,8 +4670,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: `${Math.round(topWeaponFamilyShare)}% Rounds`,
       detail: Number.isFinite(topWeaponFamilyWinrate)
         ? topWeaponFamilyWinrate >= 52
-          ? `${topWeaponFamilyLabel || "This weapon group"} rounds are converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Keep the same buy timing when the round plan supports it.`
-          : `${topWeaponFamilyLabel || "This weapon group"} rounds are only converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Review side, buy timing, and positioning before judging mechanics alone.`
+          ? `${topWeaponFamilyLabel || "This weapon group"} rounds are converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Keep buying it in rounds where your credits and role plan support it.`
+          : `${topWeaponFamilyLabel || "This weapon group"} rounds are only converting at ${Math.round(topWeaponFamilyWinrate)}% WR. Review attack/defense side, economy state, and positioning before judging mechanics alone.`
         : topWeaponFamilyTone === "up"
           ? `${topWeaponFamilyLabel || "This weapon group"} rounds fit this profile well. Keep taking clean fights and protect the advantage after a kill.`
           : `${topWeaponFamilyLabel || "This weapon group"} is shaping this profile. Review whether those rounds are actually converting wins.`,
@@ -7488,7 +7488,7 @@ function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedS
       items: [
         statItem("Tracker-Style Read", hasSample ? `${meta?.name || "Weapon"} is converting ${formatPercent(weapon.winrate)} across ${Math.round(weapon.rounds)} rounds reported.` : `${meta?.name || "Weapon"} has no reported sample yet.`, "A compact read meant to mirror the quick weapon drill-down pattern from stat tracker pages."),
         statItem("Priority", hasSample && safeNumber(weapon.winrate) < 45 ? "Review positioning" : "Keep sampling", hasSample && safeNumber(weapon.winrate) < 45 ? "Low round conversion means this weapon should be reviewed by buy type and side." : "No urgent weakness detected from the current weapon sample."),
-        statItem("Next Check", "Compare ATK/DEF and buy type", "Use the ATK/DEF and Usage tabs to decide whether the issue is attack usage, defense usage, or economy timing.")
+        statItem("Next Check", "Compare ATK/DEF and buy type", "Use the ATK/DEF and Usage tabs to decide whether the issue is attack usage, defense usage, or economy choice.")
       ]
     }
   ];
@@ -11286,7 +11286,7 @@ function chartScopeAllowsTooltip(size = currentSize) {
   return Number.isFinite(numericSize) && numericSize < 50;
 }
 
-function chartUsesSelectedSeasonScope(size = currentSize) {
+function chartUsesCurrentSessionScope(size = currentSize) {
   const normalized = String(size || "5").toLowerCase();
   return ["5", "10", "20"].includes(normalized);
 }
@@ -11305,10 +11305,8 @@ function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
 
 function getChartSourceEntries(size = currentSize) {
   const profile = getActiveProfile?.();
-  const scoped = getScopedStatsData(profile);
-  const statsSelectedAct = String(getStatsSelectedActLabel(profile) || "").trim();
-  const selectedAct = statsSelectedAct || String(scoped?.selectedAct || "").trim();
-  const selectedSeasonActive = Boolean(chartUsesSelectedSeasonScope(size) && statsSelectedAct);
+  const sessionDateKey = getActiveSessionDateKey();
+  const currentSessionActive = chartUsesCurrentSessionScope(size);
   const recentAccountWindow = chartUsesRecentAccountWindow(size);
   const sourceMatches = Array.isArray(profile?.matches)
     ? profile.matches
@@ -11330,11 +11328,11 @@ function getChartSourceEntries(size = currentSize) {
   let entries = allEntries;
   let scopeLabel = "Lifetime";
 
-  if (selectedSeasonActive) {
+  if (currentSessionActive) {
     entries = allEntries
-      .filter((entry) => getMatchSeasonLabel(entry.match) === selectedAct)
+      .filter((entry) => getMatchSessionDateKey(entry.match) === sessionDateKey)
       .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-    scopeLabel = selectedAct;
+    scopeLabel = `Current session ${sessionDateKey}`;
   } else if (recentAccountWindow) {
     entries = allEntries
       .slice(-50)
@@ -11345,7 +11343,7 @@ function getChartSourceEntries(size = currentSize) {
   return {
     entries,
     scopeLabel,
-    isSeasonScoped: selectedSeasonActive,
+    isCurrentSessionScoped: currentSessionActive,
     isRecentAccountWindow: recentAccountWindow,
     matchCount: entries.length
   };
@@ -12944,8 +12942,9 @@ style="${introStyle}"/>`;
 function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } = {}) {
   if (!point?.rankChange?.iconUrl) return "";
   const direction = point.rankChange.direction === "down" ? "down" : "up";
-  const markerX = point.x;
-  const markerY = Math.max(PAD_TOP + 16, point.y - 26);
+  const markerX = Math.min(CHART_W - PAD_RIGHT - 28, Math.max(PAD_LEFT + 16, point.x));
+  const markerY = Math.max(PAD_TOP + 20, point.y - 30);
+  const arrow = direction === "down" ? "↓" : "↑";
   const introStyle = intro
     ? `--intro-delay:${introDelayMs}ms;opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;`
     : "";
@@ -12957,6 +12956,7 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
     x="${markerX - 10}" y="${markerY - 10}"
     width="20" height="20"
     preserveAspectRatio="xMidYMid meet"></image>
+  <text class="chart-rank-arrow" x="${markerX + 19}" y="${markerY + 7}" text-anchor="middle">${arrow}</text>
 </g>`;
 }
 
@@ -41311,7 +41311,16 @@ if(chartHeight){
   const cumulative=buildCumulativeRR(chartMatches);
   const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, size);
   const slice = chartWindow.slice;
-  const visibleChartEntries = chartWindow.entries;
+  let visibleChartEntries = chartWindow.entries;
+  const chartAxisMatchCount = chartSource.isCurrentSessionScoped
+    ? visibleChartEntries.length
+    : chartMatchCount;
+  if (chartSource.isCurrentSessionScoped) {
+    visibleChartEntries = visibleChartEntries.map((entry, displayIndex) => ({
+      ...entry,
+      displayIndex
+    }));
+  }
   const chartRenderSignature = `${chartSource.scopeLabel}|${size}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
 
@@ -41468,7 +41477,7 @@ ${xTicks}
   const xTicks=buildXTicks(
     points,
     slice.length,
-    chartMatchCount
+    chartAxisMatchCount
   );
 
   const yTicks=buildYTicks(
@@ -41560,19 +41569,18 @@ stroke-width="${LINE_WIDTH}"
 stroke-linecap="round"
 style="${style}"/>`;
 
-if(showDots){
   const dotRevealDelay = introDelayMs + (isLast ? introFinalSegmentDurationMs : introSegmentDurationMs) + introDotPopDelayMs;
+if(showDots){
   dots += buildDotMarkup(b, {
     final: isLast,
     intro: shouldAnimateIntro,
     introDelayMs: dotRevealDelay
   });
+}
   rankMarkers += buildRankChangeMarkerMarkup(b, {
     intro: shouldAnimateIntro,
     introDelayMs: dotRevealDelay + 90
   });
-
-}
 }
 // ========================
 // GRADIENT COLOR DETECT

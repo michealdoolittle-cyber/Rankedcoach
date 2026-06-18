@@ -17360,12 +17360,29 @@ stroke-width:3;
 pointer-events:none;
 }
 
+.chart-rank-arrow{
+font-size:18px;
+font-weight:900;
+font-family:var(--font-display, inherit);
+paint-order:stroke;
+stroke:rgba(2,6,23,.9);
+stroke-width:3px;
+}
+
 .chart-rank-up circle{
 stroke:#22c55e;
 }
 
+.chart-rank-up .chart-rank-arrow{
+fill:#22c55e;
+}
+
 .chart-rank-down circle{
 stroke:#ef4444;
+}
+
+.chart-rank-down .chart-rank-arrow{
+fill:#ef4444;
 }
 
 .chart-intro-active .chart-rank-marker{
