@@ -1976,7 +1976,7 @@ function buildCoachingEvidenceLayer({
   return {
     sources: COACHING_EVIDENCE_SOURCES,
     sourcePolicy: [
-      "Do not compare a player to public rank, global, or pro baselines unless that source exists in the current context and is fresh.",
+      "Do not compare a player to public rank, all-time, or pro baselines unless that source exists in the current context and is fresh.",
       "When sample size is low, say what is assumed and keep the recommendation small.",
       "Stats are weighted by role, agent, weapon mix, map, economy context, and player logs before becoming coaching advice.",
       "A stat can be useful without being the main problem; avoid over-punishing low-value stats for the player's current playstyle."
@@ -4467,7 +4467,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       selectionScore: recentMatches.length ? Math.min(96, 58 + (Math.abs(recentKd - safeNumber(overview.kd)) * 100)) : 18,
       tone: recentKd >= (safeNumber(overview.kd) + 0.05) ? "up" : recentKd >= Math.max(0, safeNumber(overview.kd) - 0.05) ? "warn" : "down",
       label: "Recent Mechanical Form",
-      kicker: `${recentWindow.length || 0} match slice`,
+      kicker: `${recentWindow.length || 0} recent matches`,
       value: recentMatches.length ? `${recentKd.toFixed(2)} Recent K/D` : "No data",
       detail: recentMatches.length ? "Recent form compares your latest matches against your usual season results." : "No data",
       read: recentKd >= safeNumber(overview.kd)
@@ -4906,9 +4906,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       {
         kicker: "Recent Match Window",
         selectionScore: recentWindow.length ? 62 : 30,
-        title: `${recentWindow.length} Match Slice`,
+        title: `${recentWindow.length} Match Window`,
         value: recentWindow.length ? `${Math.round(recentWinRate)}% WR` : "Build sample",
-        detail: "Most recent match slice feeding the short-term consistency read.",
+        detail: "Most recent match window feeding the short-term consistency read.",
         tone: recentWinRate >= 55 ? "up" : recentWinRate >= 45 ? "warn" : "down",
         mediaText: "Window",
         symbol: "◈"
@@ -9466,7 +9466,7 @@ function openManualSessionStartPrompt() {
   const confirm = modal.querySelector("#manualSessionStartConfirm");
   const cancel = modal.querySelector("#manualSessionStartCancel");
   const close = modal.querySelector("#manualSessionStartClose");
-  const currentAbsolute = Math.max(0, Math.round(safeNumber(computeCurrentRRAbsolute(), 0)));
+  const currentAbsolute = Math.max(0, Math.round(safeNumber(getFreshCurrentRRAbsolute(profile), 0)));
   const currentRank = getTierRank(currentAbsolute) || RANK_THRESHOLDS[0];
 
   if (input) {
@@ -11285,6 +11285,71 @@ function chartScopeAllowsTooltip(size = currentSize) {
   return Number.isFinite(numericSize) && numericSize < 50;
 }
 
+function chartUsesSelectedSeasonScope(size = currentSize) {
+  const normalized = String(size || "5").toLowerCase();
+  return ["5", "10", "20"].includes(normalized);
+}
+
+function chartUsesRecentAccountWindow(size = currentSize) {
+  return String(size || "").toLowerCase() === "50";
+}
+
+function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
+  const sourceMatches = Array.isArray(profile?.matches)
+    ? profile.matches
+    : (matches || []);
+  const start = profile ? safeNumber(profile.startingRR) : 0;
+  return sourceMatches.reduce((total, match) => total + safeNumber(match?.rr), start);
+}
+
+function getChartSourceEntries(size = currentSize) {
+  const profile = getActiveProfile?.();
+  const scoped = getScopedStatsData(profile);
+  const statsSelectedAct = String(getStatsSelectedActLabel(profile) || "").trim();
+  const selectedAct = statsSelectedAct || String(scoped?.selectedAct || "").trim();
+  const selectedSeasonActive = Boolean(chartUsesSelectedSeasonScope(size) && statsSelectedAct);
+  const recentAccountWindow = chartUsesRecentAccountWindow(size);
+  const sourceMatches = Array.isArray(profile?.matches)
+    ? profile.matches
+    : (matches || []);
+
+  let runningRR = profile ? safeNumber(profile.startingRR) : 0;
+  const allEntries = sourceMatches.map((match, index) => {
+    const absoluteBefore = runningRR;
+    runningRR += safeNumber(match?.rr);
+    return {
+      match,
+      index,
+      displayIndex: index,
+      absoluteBefore,
+      absoluteAfter: runningRR
+    };
+  });
+
+  let entries = allEntries;
+  let scopeLabel = "Lifetime";
+
+  if (selectedSeasonActive) {
+    entries = allEntries
+      .filter((entry) => getMatchSeasonLabel(entry.match) === selectedAct)
+      .map((entry, displayIndex) => ({ ...entry, displayIndex }));
+    scopeLabel = selectedAct;
+  } else if (recentAccountWindow) {
+    entries = allEntries
+      .slice(-50)
+      .map((entry, displayIndex) => ({ ...entry, displayIndex }));
+    scopeLabel = "Recent 50 matches";
+  }
+
+  return {
+    entries,
+    scopeLabel,
+    isSeasonScoped: selectedSeasonActive,
+    isRecentAccountWindow: recentAccountWindow,
+    matchCount: entries.length
+  };
+}
+
 function getChartAxisWindowSize(size = currentSize, matchCount = 0) {
   const normalized = String(size || "5").toLowerCase();
   if (normalized === "all") {
@@ -11948,9 +12013,9 @@ async function initializeSignedInAccount(user, options = {}) {
 // ========================
 const RANK_RR_STEP = 100;
 const IMMORTAL_ACT_RR_BASE = 2100;
-const IMMORTAL_2_MIN_RR = 100;
+const IMMORTAL_2_MIN_RR = 90;
 const IMMORTAL_3_MIN_RR = 200;
-const RADIANT_MIN_RR = 300;
+const RADIANT_MIN_RR = 450;
 const RADIANT_ABSOLUTE_MIN_RR = IMMORTAL_ACT_RR_BASE + RADIANT_MIN_RR;
 
 const RANK_THRESHOLDS = [
@@ -12691,10 +12756,29 @@ function getChartSliceWithEntries(cumulative, entries, size) {
   const maxWindow = String(size).toLowerCase() === "all"
     ? matchCount
     : Math.min(matchCount, Number(size) || 5);
+  const startIndex = Math.max(0, matchCount - maxWindow);
+  const baseline = startIndex > 0 ? safeNumber(cumulative[startIndex - 1]) : 0;
+  const visibleCumulative = cumulative
+    .slice(startIndex)
+    .map(value => safeNumber(value) - baseline);
 
   return {
-    slice: [0, ...cumulative.slice(-maxWindow)],
-    entries: (entries || []).slice(-maxWindow)
+    slice: [0, ...visibleCumulative],
+    entries: (entries || []).slice(startIndex)
+  };
+}
+
+function getChartRankChange(entry = null) {
+  if (!entry) return null;
+  const before = getTierRank(safeNumber(entry.absoluteBefore));
+  const after = getTierRank(safeNumber(entry.absoluteAfter));
+  if (!before || !after || before.tierLabel === after.tierLabel) return null;
+
+  const direction = safeNumber(after.min) > safeNumber(before.min) ? "up" : "down";
+  return {
+    direction,
+    tierLabel: after.tierLabel,
+    iconUrl: getRankIconUrl(after.tierLabel)
   };
 }
 
@@ -12784,9 +12868,10 @@ function buildChartPoints(slice, y, visibleEntries = null) {
       rr: value - slice[index - 1],
       value,
       matchIndex,
-      sessionIndex: index - 1,
+      sessionIndex: Number.isInteger(scopedEntry?.displayIndex) ? scopedEntry.displayIndex : index - 1,
       match,
       snapshot,
+      rankChange: getChartRankChange(scopedEntry),
       matchId: String((match?.id || match?.matchId || snapshot?.id || snapshot?.matchId || "")),
       matchKey: getMatchIdentityKey(match || snapshot || {})
     };
@@ -12853,6 +12938,25 @@ data-impact-tier="${escapeHtml(snapshot?.impactTier || "")}"
 data-impact-score="${Number.isFinite(Number(snapshot?.impactScore)) ? Math.round(Number(snapshot?.impactScore)) : ""}"
 fill="${fill}"
 style="${introStyle}"/>`;
+}
+
+function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } = {}) {
+  if (!point?.rankChange?.iconUrl) return "";
+  const direction = point.rankChange.direction === "down" ? "down" : "up";
+  const markerX = point.x;
+  const markerY = Math.max(PAD_TOP + 16, point.y - 26);
+  const introStyle = intro
+    ? `--intro-delay:${introDelayMs}ms;opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;`
+    : "";
+
+  return `
+<g class="chart-rank-marker chart-rank-${direction}" style="${introStyle}">
+  <circle cx="${markerX}" cy="${markerY}" r="14"></circle>
+  <image href="${escapeHtml(point.rankChange.iconUrl)}"
+    x="${markerX - 10}" y="${markerY - 10}"
+    width="20" height="20"
+    preserveAspectRatio="xMidYMid meet"></image>
+</g>`;
 }
 
 function buildXTicks(points, sliceLength, matchCount) {
@@ -13047,7 +13151,7 @@ function getGoalRankTarget(label, requestedRR = null){
 
   const isRadiantPlus = normalized === "Radiant +";
   const isRadiant = bounds.tierLabel === "Radiant";
-  const radiantFallbackRR = isRadiantPlus ? getMinimumRadiantPlusGoalRR() : RADIANT_MIN_RR;
+  const radiantFallbackRR = isRadiantPlus ? getMinimumRadiantGoalRR("Radiant +") : RADIANT_MIN_RR;
   const rawTarget = safeNumber(requestedRR, isRadiant ? radiantFallbackRR : bounds.min);
   const goalRR = isRadiant
     ? Math.max(radiantFallbackRR, normalizeRadiantGoalRRInput(rawTarget))
@@ -13092,11 +13196,13 @@ function getCurrentGoalMinimum(){
 }
 
 function isGoalRankSelectionAllowed(label, requestedRR = null){
+  const normalized = normalizeTierLabel(label);
+  if(normalized === "Radiant +") return true;
+
   const target = getGoalRankTarget(label, requestedRR);
   if(!target?.bounds) return false;
 
   const minimum = getCurrentGoalMinimum();
-  if(target.isRadiantPlus) return safeNumber(target.goalRR, RADIANT_MIN_RR) >= getMinimumRadiantGoalRR("Radiant +");
   if(target.bounds.min < minimum.currentRankMin) return false;
   if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < getMinimumRadiantGoalRR(target.goalRankLabel || target.bounds.tierLabel)) return false;
 
@@ -13122,7 +13228,7 @@ function getClampedGoalRankSelection(label, requestedRR = null){
   const fallbackTarget = getGoalRankTarget(fallbackRank, fallbackRR);
 
   return {
-    goalRank: fallbackTarget?.bounds?.tierLabel || fallbackRank,
+    goalRank: fallbackTarget?.goalRankLabel || fallbackRank,
     goalRR: fallbackTarget?.goalRR ?? null,
     target: fallbackTarget
   };
@@ -13298,8 +13404,34 @@ function syncLoadoutRoleTextColors() {
     document.getElementById("logAgentText"),
     document.getElementById("logFocusSelect"),
     document.getElementById("logFocusOther"),
-    document.getElementById("focusPreviewText")
+    document.getElementById("focusPreviewText"),
+    document.getElementById("loggingLiveFocus"),
+    document.getElementById("logFocusCustomTrigger"),
+    document.getElementById("logFocusCustomValue")
   ].filter(Boolean).forEach(applyLoadoutRoleTextColor);
+}
+
+function syncLoggingRoleTone(roleName = activeRole) {
+  const normalizedRole = String(roleName || "").toLowerCase();
+  const role = ["duelist", "controller", "initiator", "sentinel"].includes(normalizedRole)
+    ? normalizedRole
+    : "";
+  const roleClasses = ["role-duelist", "role-controller", "role-initiator", "role-sentinel"];
+  [
+    document.getElementById("logAgentText"),
+    document.getElementById("logFocusSelect"),
+    document.getElementById("logFocusOther"),
+    document.getElementById("focusPreviewText"),
+    document.getElementById("loggingLiveFocus"),
+    document.getElementById("logFocusCustomTrigger"),
+    document.getElementById("logFocusCustomValue")
+  ].filter(Boolean).forEach((target) => {
+    target.classList.remove(...roleClasses);
+    if (role) target.classList.add(`role-${role}`);
+  });
+  syncLogFocusCustomDropdown?.();
+  syncLoadoutRoleTextColors();
+  scheduleLoadoutValueTextFit();
 }
 
 function flushLoadoutValueTextFit() {
@@ -14287,6 +14419,7 @@ function updateLogAgentDisplay(agent){
     }
   }
 
+  syncLoggingRoleTone(agentRoles?.[agent] || activeRole);
   updateLoggingDebriefPreview();
 }
 
@@ -35384,6 +35517,7 @@ function bindEvents(){
       focusDisplay.textContent = customFocus;
       focusDisplay.classList.remove("focus-neutral");
     }
+    syncLoggingRoleTone(activeRole);
   });
 
   document.getElementById("clearFocusOther")?.addEventListener("click", (e) => {
@@ -41169,14 +41303,15 @@ if(chartHeight){
 }
   chartBusy = true;
 
-  const chartEntries = (matches || []).map((match, index) => ({ match, index }));
+  const chartSource = getChartSourceEntries(size);
+  const chartEntries = chartSource.entries;
   const chartMatchCount = chartEntries.length;
   const chartMatches = chartEntries.map(entry => entry.match);
   const cumulative=buildCumulativeRR(chartMatches);
   const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, size);
   const slice = chartWindow.slice;
   const visibleChartEntries = chartWindow.entries;
-  const chartRenderSignature = `season|${size}|${chartMatchCount}|${slice.join(",")}`;
+  const chartRenderSignature = `${chartSource.scopeLabel}|${size}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
 
   const isUndo = isUndoAnimating === true;
@@ -41263,7 +41398,7 @@ text-anchor="end">${Math.round(val)}</text>`;
       PAD_LEFT +
       ((CHART_W-PAD_LEFT-PAD_RIGHT)/4)*i;
     const tickValue = i === 4 && normalizedSize === "all"
-      ? "All"
+      ? "Lifetime"
       : Math.round((axisWindowSize / 4) * i);
 
     xTicks += `
@@ -41347,6 +41482,7 @@ ${xTicks}
 
   let segments="";
   let dots="";
+  let rankMarkers="";
   const introTiming = getChartIntroTiming(size, Math.max(0, points.length - 1), useContinuousIntro);
   const introSegmentDurationMs = introTiming.segmentMs;
   const introFinalPauseMs = introTiming.finalPauseMs;
@@ -41424,10 +41560,15 @@ stroke-linecap="round"
 style="${style}"/>`;
 
 if(showDots){
+  const dotRevealDelay = introDelayMs + (isLast ? introFinalSegmentDurationMs : introSegmentDurationMs) + introDotPopDelayMs;
   dots += buildDotMarkup(b, {
     final: isLast,
     intro: shouldAnimateIntro,
-    introDelayMs: introDelayMs + (isLast ? introFinalSegmentDurationMs : introSegmentDurationMs) + introDotPopDelayMs
+    introDelayMs: dotRevealDelay
+  });
+  rankMarkers += buildRankChangeMarkerMarkup(b, {
+    intro: shouldAnimateIntro,
+    introDelayMs: dotRevealDelay + 90
   });
 
 }
@@ -41524,6 +41665,7 @@ opacity="0"/>
 
 ${segments}
 ${dots}
+${rankMarkers}
 
 </svg>`;
 
@@ -41845,7 +41987,7 @@ function autoSelectLatest(options = {}){
     hideChartTooltip();
   }
   updateRRMatchStatsFromHit(hit);
-  setSelectedTimelineContext(null, { animate: true });
+  setSelectedTimelineContext(Number(hit?.dataset?.matchIndex), { animate: true });
 }
 
 // ==============================

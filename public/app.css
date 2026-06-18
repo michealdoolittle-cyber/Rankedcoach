@@ -17344,6 +17344,35 @@ animation:rrSelectedPulse 1.4s ease-in-out infinite;
 
 }
 
+.chart-rank-marker{
+pointer-events:none;
+transform-box:fill-box;
+transform-origin:center;
+filter:drop-shadow(0 2px 7px rgba(0,0,0,.45));
+}
+
+.chart-rank-marker circle{
+fill:rgba(15,23,42,.94);
+stroke-width:3;
+}
+
+.chart-rank-marker image{
+pointer-events:none;
+}
+
+.chart-rank-up circle{
+stroke:#22c55e;
+}
+
+.chart-rank-down circle{
+stroke:#ef4444;
+}
+
+.chart-intro-active .chart-rank-marker{
+animation:rrDotPop .26s cubic-bezier(.18,1,.3,1) forwards;
+animation-delay:var(--intro-delay,0ms);
+}
+
 @keyframes rrSelectedPulse{
 
 0%,100%{
@@ -50496,7 +50525,7 @@ html body .nav-goal-target-rr[hidden]{
   display:none !important;
 }
 
-/* Profile rank badge v47: double badge size while keeping the same anchored center. */
+/* Profile rank badge v48: reduced badge size while keeping the same anchored center. */
 html body #profileAvatarWrap.profile-avatar-wrap,
 html body #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
   overflow:visible !important;
@@ -50506,12 +50535,12 @@ html body #profileRankIcon.profile-rank-icon{
   left:calc(50% + 13px) !important;
   right:auto !important;
   bottom:auto !important;
-  width:28px !important;
-  min-width:28px !important;
-  max-width:28px !important;
-  height:28px !important;
-  min-height:28px !important;
-  max-height:28px !important;
+  width:19px !important;
+  min-width:19px !important;
+  max-width:19px !important;
+  height:19px !important;
+  min-height:19px !important;
+  max-height:19px !important;
   transform:translate(-50%,-50%) !important;
   object-fit:contain !important;
   z-index:50 !important;
