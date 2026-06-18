@@ -2298,22 +2298,23 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
   }
 
   if (id === "fight_conversion") {
-    const kd = safeNumber(overview.kd);
-    if (kd >= 1.2) return formatTrendCoachAction("Your gunfights are a major strength", "After the first kill, slow down and help your team keep the advantage");
-    if (kd >= 1.05) return formatTrendCoachAction("Your fights are giving the profile real value", `Keep taking fights that connect back to ${profileLever.phrase}`);
-    if (kd >= 0.95) return formatTrendCoachAction("Your fights are close to even", "Swing with support more often so close duels become traded rounds");
-    return formatTrendCoachAction("Too many fights are going against you", profileLever.action);
+    const kd = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(overview.kd);
+    const subject = trend.kicker || signalAgent || "This sample";
+    if (kd >= 1.2) return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so your gunfights are a major strength`, "After the first kill, slow down and help your team keep the advantage");
+    if (kd >= 1.05) return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so your fights are giving the profile real value`, `Keep taking fights that connect back to ${profileLever.phrase}`);
+    if (kd >= 0.95) return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so your fights are close to even`, "Swing with support more often so close duels become traded rounds");
+    return formatTrendCoachAction(`${subject} is at ${kd.toFixed(2)} K/D, so too many fights are going against you`, profileLever.action);
   }
 
   if (id === "match_conversion") {
-    const wr = safeNumber(overview.winrate);
-    const mapName = bestMap?.map || trend.kicker || "this map";
+    const wr = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(overview.winrate);
+    const mapName = trend.kicker || bestMap?.map || "this map";
     const agentText = signalAgent ? ` with ${signalAgent}` : "";
-    if (context.allRepeatedMapsBelowTarget && bestMap?.map) return formatTrendCoachAction(`${bestMap.map} is your best repeated map, but it is still under 50% WR`, profileLever.action);
-    if (wr >= 55) return formatTrendCoachAction(`${mapName} is going well${agentText}`, `Keep repeating the ${signalAgent || mapName} plans that already win rounds`);
-    if (wr >= 50) return formatTrendCoachAction(`${mapName} is barely above a winning pace`, "Keep the plan, but review the close losses before changing everything");
-    if (wr >= 45) return formatTrendCoachAction(`${mapName} is close, but not stable yet`, "Review rounds lost after your team gets the first advantage");
-    return formatTrendCoachAction(`${mapName} is not converting enough wins yet`, profileLever.action);
+    if (context.allRepeatedMapsBelowTarget && bestMap?.map) return formatTrendCoachAction(`${bestMap.map} is your best repeated map at ${Math.round(wr)}% WR, but it is still under 50%`, profileLever.action);
+    if (wr >= 55) return formatTrendCoachAction(`${mapName} is going well at ${Math.round(wr)}% WR${agentText}`, `Keep repeating the ${signalAgent || mapName} plans that already win rounds`);
+    if (wr >= 50) return formatTrendCoachAction(`${mapName} is barely above a winning pace at ${Math.round(wr)}% WR`, "Keep the plan, but review the close losses before changing everything");
+    if (wr >= 45) return formatTrendCoachAction(`${mapName} is close at ${Math.round(wr)}% WR, but not stable yet`, "Review rounds lost after your team gets the first advantage");
+    return formatTrendCoachAction(`${mapName} is at ${Math.round(wr)}% WR, so it is not converting enough wins yet`, profileLever.action);
   }
 
   if (id === "recent_form") {
@@ -2325,36 +2326,39 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
   }
 
   if (id === "score_pressure") {
-    const adr = safeNumber(overview.adr);
+    const adr = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(overview.adr);
     const damageTip = describeDamagePracticeTarget(context, signalRole, signalAgent);
-    if (adr >= 240) return formatTrendCoachAction(describeDamageRead(signalRole, adr), damageTip);
-    if (adr >= 215) return formatTrendCoachAction(describeDamageRead(signalRole, adr), damageTip);
-    if (adr >= 185) return formatTrendCoachAction("Your damage is serviceable", "Make it matter sooner by fighting with clearer support");
-    return formatTrendCoachAction("Your damage is too quiet right now", profileLever.action);
+    if (adr >= 240) return formatTrendCoachAction(`${describeDamageRead(signalRole, adr)} at ${Math.round(adr)} ACS`, damageTip);
+    if (adr >= 215) return formatTrendCoachAction(`${describeDamageRead(signalRole, adr)} at ${Math.round(adr)} ACS`, damageTip);
+    if (adr >= 185) return formatTrendCoachAction(`Your damage is serviceable at ${Math.round(adr)} ACS`, "Make it matter sooner by fighting with clearer support");
+    return formatTrendCoachAction(`Your damage is too quiet at ${Math.round(adr)} ACS`, profileLever.action);
   }
 
   if (id === "precision_signal") {
     const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
-    const hs = safeNumber(overview.hs);
-    if (hsWeight?.label === "Down-weighted") return formatTrendCoachAction("Headshots are not the main issue for this profile", `Spend more review time on ${profileLever.phrase}`);
-    if (hs >= 28) return formatTrendCoachAction("Your aim is excellent already", "Keep your composure after your first fight so the mechanics stay reliable");
-    if (hs >= 22) return formatTrendCoachAction("Your aim is in a good place", "Keep choosing the next fight with patience instead of forcing the follow-up peek");
-    if (hs >= 18) return formatTrendCoachAction("Your aim is a little inconsistent", "Slow down the first bullet and make the spray a backup plan");
-    return formatTrendCoachAction("Your aim is making fights harder", "Start with cleaner crosshair placement before each swing");
+    const hs = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(overview.hs);
+    const subject = trend.kicker || signalAgent || "This sample";
+    if (hsWeight?.label === "Down-weighted") return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so headshots are not the main issue for this profile`, `Spend more review time on ${profileLever.phrase}`);
+    if (hs >= 28) return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so your aim is excellent already`, "Keep your composure after your first fight so the mechanics stay reliable");
+    if (hs >= 22) return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so your aim is in a good place`, "Keep choosing the next fight with patience instead of forcing the follow-up peek");
+    if (hs >= 18) return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so your aim is a little inconsistent`, "Slow down the first bullet and make the spray a backup plan");
+    return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so aim is making fights harder`, "Start with cleaner crosshair placement before each swing");
   }
 
   if (id === "support_pressure") {
     const commsTip = describeTeamUtilityPracticeTarget(context, signalRole, signalAgent);
-    if (valueNumber >= 8) return formatTrendCoachAction(describeTeamUtilityRead(signalRole, valueNumber), commsTip);
-    if (valueNumber >= 5) return formatTrendCoachAction(describeTeamUtilityRead(signalRole, valueNumber), commsTip);
-    if (valueNumber >= 3.5) return formatTrendCoachAction("Your team impact shows up in flashes", "Make the timing more repeatable with one clear call before contact");
-    return formatTrendCoachAction("Your team impact is too low", "Play closer so your utility and trades actually help teammates");
+    const assists = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(context.assistsPerMatch);
+    if (assists >= 8) return formatTrendCoachAction(`${describeTeamUtilityRead(signalRole, assists)} at ${assists.toFixed(1)} assists per match`, commsTip);
+    if (assists >= 5) return formatTrendCoachAction(`${describeTeamUtilityRead(signalRole, assists)} at ${assists.toFixed(1)} assists per match`, commsTip);
+    if (assists >= 3.5) return formatTrendCoachAction(`Your team impact shows up in flashes at ${assists.toFixed(1)} assists per match`, "Make the timing more repeatable with one clear call before contact");
+    return formatTrendCoachAction(`Your team impact is too low at ${assists.toFixed(1)} assists per match`, "Play closer so your utility and trades actually help teammates");
   }
 
   if (id === "round_survivability") {
-    if (tone === "up") return formatTrendCoachAction("Your survival is helping your rounds", describeRolePracticeTarget(signalRole, signalAgent));
-    if (tone === "down") return formatTrendCoachAction(`You are dying before getting full value from ${signalRole || "your role"}`, describeRolePracticeTarget(signalRole, signalAgent));
-    return formatTrendCoachAction("Your survival is close to stable", "Review whether deaths happen before or after your role job is done");
+    const deaths = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : 0;
+    if (tone === "up") return formatTrendCoachAction(`${signalRole || "Your role"} is at ${deaths.toFixed(1)} deaths per match, so survival is helping your rounds`, describeRolePracticeTarget(signalRole, signalAgent));
+    if (tone === "down") return formatTrendCoachAction(`${signalRole || "Your role"} is at ${deaths.toFixed(1)} deaths per match, so you are dying before getting full value`, describeRolePracticeTarget(signalRole, signalAgent));
+    return formatTrendCoachAction(`${signalRole || "Your role"} is at ${deaths.toFixed(1)} deaths per match, so survival is close to stable`, "Review whether deaths happen before or after your role job is done");
   }
 
   if (id === "kast_stability") {
@@ -4380,57 +4384,81 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const recentWinRate = recentWindow.length ? safeDivide(recentWins, recentWindow.length) * 100 : 0;
   const roleGap = bestRole && weakestRole ? Math.max(0, Math.round(safeNumber(bestRole.winrate) - safeNumber(weakestRole.winrate))) : 0;
   const mapGap = bestMap && weakestMap ? Math.max(0, Math.round(safeNumber(bestMap.winrate) - safeNumber(weakestMap.winrate))) : 0;
+  const agentTrendBucket = agents.find(entry => String(entry?.agent || "").toLowerCase() === String(currentSignalAgent || "").toLowerCase()) || bestAgent || null;
+  const roleTrendBucket = roles.find(entry => String(entry?.role || "").toLowerCase() === String(currentSignalRole || "").toLowerCase()) || bestRole || null;
+  const mapTrendBucket = bestMap || null;
+  const fightKd = safeNumber(agentTrendBucket?.kd, safeNumber(overview.kd));
+  const fightKills = safeNumber(agentTrendBucket?.kills, totalKills);
+  const fightDeaths = safeNumber(agentTrendBucket?.deaths, totalDeaths);
+  const fightMatches = safeNumber(agentTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const fightSubject = agentTrendBucket?.agent || currentSignalAgent || "Current Sample";
+  const matchWinrate = safeNumber(mapTrendBucket?.winrate, safeNumber(overview.winrate));
+  const matchWins = safeNumber(mapTrendBucket?.matchesWon, safeNumber(overview.matchesWon));
+  const matchLosses = safeNumber(mapTrendBucket?.matchesLost, safeNumber(overview.matchesLost));
+  const matchCount = safeNumber(mapTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const matchSubject = mapTrendBucket?.map || "Current Record";
+  const roleAcs = safeNumber(roleTrendBucket?.adr, safeNumber(overview.adr));
+  const roleAcsTotal = safeNumber(roleTrendBucket?.acsTotal, totalAcs);
+  const roleMatches = safeNumber(roleTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const roleSubject = roleTrendBucket?.role || currentSignalRole || "Current Sample";
+  const agentHs = safeNumber(agentTrendBucket?.hs, safeNumber(overview.hs));
+  const agentHsTotal = safeNumber(agentTrendBucket?.hsTotal, totalHs);
+  const agentHsMatches = safeNumber(agentTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const roleAssists = safeNumber(roleTrendBucket?.assists, totalAssists);
+  const roleAssistsPerMatch = roleMatches ? safeDivide(roleAssists, roleMatches) : assistsPerMatch;
+  const roleDeaths = safeNumber(roleTrendBucket?.deaths, totalDeaths);
+  const roleDeathsPerMatch = roleMatches ? safeDivide(roleDeaths, roleMatches) : deathsPerMatch;
 
   const trends = [
     {
       id: "fight_conversion",
-      selectionScore: !hasMatchData ? 20 : overview.kd < 0.95 ? 99 : overview.kd >= 1.1 ? 72 : 58,
-      tone: overview.kd >= 1.05 ? "up" : overview.kd >= 0.95 ? "warn" : "down",
+      selectionScore: !hasMatchData ? 20 : fightKd < 0.95 ? 99 : fightKd >= 1.1 ? 72 : 58,
+      tone: fightKd >= 1.05 ? "up" : fightKd >= 0.95 ? "warn" : "down",
       label: "Fight Value",
-      kicker: currentSignalAgent || "Current Sample",
-      value: overview.matchesPlayed ? `${overview.kd.toFixed(2)} K/D` : "No data",
-      detail: !overview.matchesPlayed
+      kicker: fightSubject,
+      value: fightMatches ? `${fightKd.toFixed(2)} K/D` : "No data",
+      detail: !fightMatches
         ? "No data"
-        : overview.kd >= 1
-          ? "Your dueling results are above the moving average, so this is helping stabilize the profile."
-          : "Your dueling results are below the moving average, so fighting discipline needs more attention.",
-      read: !overview.matchesPlayed
+        : fightKd >= 1
+          ? `${fightSubject} fights are above even in this selected season sample.`
+          : `${fightSubject} fights are below even in this selected season sample.`,
+      read: !fightMatches
         ? "No data"
-        : overview.kd >= 1
-          ? "Your dueling is stable enough that RankedCoach can focus more on how those fights turn into round wins."
-          : "Poor dueling results are affecting match outcomes, so RankedCoach is keeping it near the top of the coaching plan.",
-      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel}.`,
-      formula: `kills / deaths = ${totalKills} / ${Math.max(1, totalDeaths)} = ${overview.matchesPlayed ? overview.kd.toFixed(2) : "--"}`,
+        : fightKd >= 1
+          ? `${fightSubject} is winning enough direct fight value that the next question is whether those kills become round wins.`
+          : `${fightSubject} fight results are low enough that timing, spacing, and trade setup need attention.`,
+      sourceLabel: `Based on ${fightMatches || 0} ${fightSubject} matches from ${seasonLabel}.`,
+      formula: `${fightSubject} kills / deaths = ${Math.round(fightKills)} / ${Math.max(1, Math.round(fightDeaths))} = ${fightMatches ? fightKd.toFixed(2) : "--"}`,
       benchmark: "Positive above 1.05 K/D, watch at 0.95-1.04, regression below 0.95.",
       mediaType: "agent",
-      mediaValue: currentSignalAgent,
+      mediaValue: fightSubject,
       proofItems: [
-        statItem("Kills", `${totalKills}`, "Total kills from the selected season's imported matches."),
-        statItem("Deaths", `${totalDeaths}`, "Total deaths from the selected season's imported matches."),
-        statItem("Games Used", `${overview.matchesPlayed || 0} matches`, "The matches used for this read."),
+        statItem("Kills", `${Math.round(fightKills)}`, `Total ${fightSubject} kills from the selected season.`),
+        statItem("Deaths", `${Math.round(fightDeaths)}`, `Total ${fightSubject} deaths from the selected season.`),
+        statItem("Games Used", `${fightMatches || 0} matches`, `The ${fightSubject} matches used for this read.`),
         statItem("Judgement Band", "1.05 / 0.95", "Positive above 1.05 K/D, watch between 0.95 and 1.04, regression below 0.95.")
       ]
     },
     {
       id: "match_conversion",
-      selectionScore: !hasMatchData ? 20 : overview.winrate < 45 ? 96 : overview.winrate >= 52 ? 70 : 62,
-      tone: overview.winrate >= 52 ? "up" : overview.winrate >= 45 ? "warn" : "down",
+      selectionScore: !hasMatchData ? 20 : matchWinrate < 45 ? 96 : matchWinrate >= 52 ? 70 : 62,
+      tone: matchWinrate >= 52 ? "up" : matchWinrate >= 45 ? "warn" : "down",
       label: "Win Rate",
-      kicker: bestMap?.map || "Current Record",
-      value: overview.matchesPlayed ? `${Math.round(overview.winrate || 0)}% Win Rate` : "No data",
-      detail: overview.matchesPlayed ? "This shows how often your imported matches are turning into wins." : "No data",
-      read: overview.winrate >= 50
-        ? "Your match record is strong enough to show that ranked discipline and role fit are helping you win."
-        : "Your match record is below the moving average, so RankedCoach is treating match conversion as an active coaching issue.",
-      sourceLabel: `Based on ${safeNumber(overview.matchesWon)} wins and ${safeNumber(overview.matchesLost)} losses from ${seasonLabel}.`,
-      formula: `wins / matches played = ${safeNumber(overview.matchesWon)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${Math.round(overview.winrate || 0)}%`,
+      kicker: matchSubject,
+      value: matchCount ? `${Math.round(matchWinrate || 0)}% Win Rate` : "No data",
+      detail: matchCount ? `${matchSubject} is being judged from its selected-season match record, not the full profile.` : "No data",
+      read: matchWinrate >= 50
+        ? `${matchSubject} is winning often enough to keep testing the current plan.`
+        : `${matchSubject} is below a winning pace, so the app treats it as a map conversion issue.`,
+      sourceLabel: `Based on ${matchWins} wins and ${matchLosses} losses on ${matchSubject} from ${seasonLabel}.`,
+      formula: `${matchSubject} wins / matches played = ${matchWins} / ${Math.max(1, matchCount)} = ${Math.round(matchWinrate || 0)}%`,
       benchmark: "Positive above 52%, watch at 45-51%, regression below 45%.",
       mediaType: "map",
-      mediaValue: bestMap?.map,
+      mediaValue: mapTrendBucket?.map,
       proofItems: [
-        statItem("Wins", `${safeNumber(overview.matchesWon)}`, "Wins from the selected season's imported matches."),
-        statItem("Losses", `${safeNumber(overview.matchesLost)}`, "Losses from the selected season's imported matches."),
-        statItem("Best Map", bestMap ? `${bestMap.map} ${Math.round(bestMap.winrate)}% WR` : "No stable map yet", "Your strongest map from the selected season."),
+        statItem("Wins", `${matchWins}`, `Wins on ${matchSubject} from the selected season.`),
+        statItem("Losses", `${matchLosses}`, `Losses on ${matchSubject} from the selected season.`),
+        statItem("Map Sample", `${matchCount} matches`, "Selected-season map sample used for this read."),
         statItem("Judgement Band", "52% / 45%", "Positive above 52%, watch between 45% and 51%, regression below 45%.")
       ]
     },
@@ -4459,56 +4487,56 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       id: "score_pressure",
-      selectionScore: !hasMatchData ? 18 : overview.adr < 185 ? 90 : overview.adr >= 215 ? 70 : 60,
-      tone: overview.adr >= 215 ? "up" : overview.adr >= 185 ? "warn" : "down",
+      selectionScore: !hasMatchData ? 18 : roleAcs < 185 ? 90 : roleAcs >= 215 ? 70 : 60,
+      tone: roleAcs >= 215 ? "up" : roleAcs >= 185 ? "warn" : "down",
       label: "Damage Output",
-      kicker: currentSignalRole ? `${currentSignalRole} context` : "Current Sample",
-      value: overview.matchesPlayed ? `${Math.round(overview.adr || 0)} ACS` : "No data",
-      detail: overview.matchesPlayed ? "This uses Riot score-per-round data to estimate your round-by-round combat impact." : "No data",
-      read: overview.adr >= 200
-        ? "Your combat impact is strong in your profile."
-        : "Your combat impact is lower than expected, so RankedCoach reads this as a supporting weakness.",
-      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} using Riot score-per-round data.`,
-      formula: `score per round total / matches played = ${Math.round(totalAcs)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${overview.matchesPlayed ? Math.round(overview.adr || 0) : "--"} ACS`,
+      kicker: roleSubject ? `${roleSubject} context` : "Current Sample",
+      value: roleMatches ? `${Math.round(roleAcs || 0)} ACS` : "No data",
+      detail: roleMatches ? `${roleSubject} damage is being read from the selected-season role sample.` : "No data",
+      read: roleAcs >= 200
+        ? `${roleSubject} combat impact is strong in this selected season sample.`
+        : `${roleSubject} combat impact is lower than expected, so this stays visible in the coaching plan.`,
+      sourceLabel: `Based on ${roleMatches || 0} ${roleSubject} matches from ${seasonLabel} using Riot score-per-round data.`,
+      formula: `${roleSubject} score per round total / matches played = ${Math.round(roleAcsTotal)} / ${Math.max(1, roleMatches)} = ${roleMatches ? Math.round(roleAcs || 0) : "--"} ACS`,
       benchmark: "Positive above 215 ACS, watch at 185-214, regression below 185.",
       mediaType: "role",
-      mediaValue: currentSignalRole,
+      mediaValue: roleSubject,
       proofItems: [
-        statItem("Score Total", `${Math.round(totalAcs)}`, "Total score-per-round value from the selected season's imported matches."),
-        statItem("Matches", `${safeNumber(overview.matchesPlayed)}`, "Imported matches used for this round damage read."),
-        statItem("Current Role", currentSignalRole || "Unknown", "Role context based on your latest or most played agent."),
+        statItem("Score Total", `${Math.round(roleAcsTotal)}`, `Total score-per-round value from ${roleSubject} matches.`),
+        statItem("Matches", `${roleMatches}`, `Selected-season ${roleSubject} matches used for this read.`),
+        statItem("Current Role", roleSubject || "Unknown", "Role context used for this card's displayed stat."),
         statItem("Judgement Band", "215 / 185 ACS", "Positive above 215 ACS, watch between 185 and 214, regression below 185.")
       ]
     },
     {
       id: "precision_signal",
-      selectionScore: !hasMatchData ? 18 : overview.hs < mechanicsAdjustment.adjustedWatchHs ? 90 : mechanicsAdjustment.hasAdjustment ? 76 : overview.hs >= mechanicsAdjustment.adjustedPositiveHs ? 66 : 58,
-      tone: overview.hs >= mechanicsAdjustment.adjustedPositiveHs ? "up" : overview.hs >= mechanicsAdjustment.adjustedWatchHs ? "warn" : "down",
+      selectionScore: !hasMatchData ? 18 : agentHs < mechanicsAdjustment.adjustedWatchHs ? 90 : mechanicsAdjustment.hasAdjustment ? 76 : agentHs >= mechanicsAdjustment.adjustedPositiveHs ? 66 : 58,
+      tone: agentHs >= mechanicsAdjustment.adjustedPositiveHs ? "up" : agentHs >= mechanicsAdjustment.adjustedWatchHs ? "warn" : "down",
       label: "Agent Mechanics",
-      kicker: currentSignalAgent || "Aim Baseline",
-      value: overview.matchesPlayed ? `${Math.round(overview.hs || 0)}% HS` : "No data",
-      detail: overview.matchesPlayed
+      kicker: fightSubject || "Aim Baseline",
+      value: agentHsMatches ? `${Math.round(agentHs || 0)}% HS` : "No data",
+      detail: agentHsMatches
         ? mechanicsAdjustment.hasAdjustment
           ? "This uses Riot headshot percentage data with the central evidence rules, so weapon mix can lower the importance of HS%."
           : "This uses Riot headshot percentage data to estimate your agent-based mechanical accuracy."
         : "No data",
-      read: overview.hs >= mechanicsAdjustment.adjustedWatchHs
+      read: agentHs >= mechanicsAdjustment.adjustedWatchHs
         ? mechanicsAdjustment.hasAdjustment
           ? `This is being read with context: ${evidenceLayer.metricWeights.headshot.presumption}`
           : "Your precision is stable enough that RankedCoach can look beyond aim alone."
         : mechanicsAdjustment.hasAdjustment
           ? `Your HS% is below the adjusted target, but it is ${evidenceLayer.metricWeights.headshot.label.toLowerCase()} here. Check whether fights, damage timing, and round conversion are also slipping before making aim the whole issue.`
           : "Your accuracy is below target, which can lead to harder fights that could provide an advantage to the enemy team.",
-      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} using Riot headshot percentage.`,
-      formula: `average headshot percent across imported matches = ${overview.matchesPlayed ? Math.round(overview.hs || 0) : "--"}%`,
+      sourceLabel: `Based on ${agentHsMatches || 0} ${fightSubject} matches from ${seasonLabel} using Riot headshot percentage.`,
+      formula: `${fightSubject} headshot percent total / matches = ${Math.round(agentHsTotal)} / ${Math.max(1, agentHsMatches)} = ${agentHsMatches ? Math.round(agentHs || 0) : "--"}%`,
       benchmark: mechanicsAdjustment.hasAdjustment
         ? `Adjusted for agent and weapon context: positive above ${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% HS, watch at ${Math.round(mechanicsAdjustment.adjustedWatchHs)}-${Math.round(mechanicsAdjustment.adjustedPositiveHs - 1)}%, regression below ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%.`
         : "Positive above 22% HS, watch at 18-21%, regression below 18%.",
       mediaType: "agent",
-      mediaValue: currentSignalAgent,
+      mediaValue: fightSubject,
       proofItems: [
-        statItem("Headshot %", overview.matchesPlayed ? `${Math.round(overview.hs || 0)}%` : "--", "Average headshot percentage from the selected season's imported matches."),
-        statItem("Current Agent", currentSignalAgent || "Unknown", "Latest or strongest repeated agent tied to this read."),
+        statItem("Headshot %", agentHsMatches ? `${Math.round(agentHs || 0)}%` : "--", `Average headshot percentage from ${fightSubject} matches.`),
+        statItem("Current Agent", fightSubject || "Unknown", "Agent tied to this read's displayed stat."),
         statItem("HS Weight", evidenceLayer.metricWeights.headshot.label, evidenceLayer.metricWeights.headshot.presumption),
         statItem("Sample", evidenceLayer.sample.label, evidenceLayer.sample.explanation),
         ...(mechanicsAdjustment.hasAdjustment
@@ -4528,23 +4556,23 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       id: "support_pressure",
-      selectionScore: !hasMatchData ? 18 : assistsPerMatch < 3.5 ? 88 : assistsPerMatch >= 5 ? 68 : 58,
-      tone: assistsPerMatch >= 5 ? "up" : assistsPerMatch >= 3.5 ? "warn" : "down",
+      selectionScore: !hasMatchData ? 18 : roleAssistsPerMatch < 3.5 ? 88 : roleAssistsPerMatch >= 5 ? 68 : 58,
+      tone: roleAssistsPerMatch >= 5 ? "up" : roleAssistsPerMatch >= 3.5 ? "warn" : "down",
       label: "Team Utility",
-      kicker: currentSignalRole ? `${currentSignalRole} teamwork` : "Teamwork Read",
-      value: overview.matchesPlayed ? `${assistsPerMatch.toFixed(1)} Assists / Match` : "No data",
-      detail: overview.matchesPlayed ? "This uses assist rate to estimate how often your play is helping teammates convert rounds." : "No data",
-      read: assistsPerMatch >= 4
-        ? "Your teamwork is showing up often enough to help convert more rounds."
-        : "Your teamwork impact is lower than expected, which can point to spacing, follow-through, or trade timing issues.",
-      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel} and ${safeNumber(totalAssists)} total assists.`,
-      formula: `total assists / matches played = ${safeNumber(totalAssists)} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${overview.matchesPlayed ? assistsPerMatch.toFixed(1) : "--"}`,
+      kicker: roleSubject ? `${roleSubject} teamwork` : "Teamwork Read",
+      value: roleMatches ? `${roleAssistsPerMatch.toFixed(1)} Assists / Match` : "No data",
+      detail: roleMatches ? `${roleSubject} assist rate is being read from the selected-season role sample.` : "No data",
+      read: roleAssistsPerMatch >= 4
+        ? `${roleSubject} teamwork is showing up often enough to help convert more rounds.`
+        : `${roleSubject} teamwork impact is lower than expected, which can point to spacing, follow-through, or trade timing issues.`,
+      sourceLabel: `Based on ${roleMatches || 0} ${roleSubject} matches from ${seasonLabel} and ${Math.round(roleAssists)} total assists.`,
+      formula: `${roleSubject} assists / matches played = ${Math.round(roleAssists)} / ${Math.max(1, roleMatches)} = ${roleMatches ? roleAssistsPerMatch.toFixed(1) : "--"}`,
       benchmark: "Positive above 5.0 assists per match, watch at 3.5-4.9, regression below 3.5.",
       mediaType: "role",
-      mediaValue: currentSignalRole,
+      mediaValue: roleSubject,
       proofItems: [
-        statItem("Total Assists", `${safeNumber(totalAssists)}`, "Total assists from the selected season's imported matches."),
-        statItem("Assists / Match", overview.matchesPlayed ? assistsPerMatch.toFixed(1) : "--", "Average assists per imported match in the selected season."),
+        statItem("Total Assists", `${Math.round(roleAssists)}`, `Total assists from ${roleSubject} matches.`),
+        statItem("Assists / Match", roleMatches ? roleAssistsPerMatch.toFixed(1) : "--", `Average assists per ${roleSubject} match.`),
         statItem("Average KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average KAST from attack and defense rounds when that data is available."),
         statItem("Judgement Band", "5.0 / 3.5 assists", "Positive above 5.0 assists per match, watch between 3.5 and 4.9, regression below 3.5.")
       ]
@@ -4567,24 +4595,24 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   trends.push(...[
     {
       id: "round_survivability",
-      selectionScore: !hasMatchData ? 18 : deathsPerMatch >= 16 ? 91 : deathsPerMatch <= 12 ? 67 : 58,
-      tone: deathsPerMatch <= 12 ? "up" : deathsPerMatch <= 16 ? "warn" : "down",
+      selectionScore: !hasMatchData ? 18 : roleDeathsPerMatch >= 16 ? 91 : roleDeathsPerMatch <= 12 ? 67 : 58,
+      tone: roleDeathsPerMatch <= 12 ? "up" : roleDeathsPerMatch <= 16 ? "warn" : "down",
       label: "Round Survivability",
-      kicker: currentSignalRole ? `${currentSignalRole} discipline` : "Discipline Read",
-      value: overview.matchesPlayed ? `${deathsPerMatch.toFixed(1)} Deaths / Match` : "No data",
-      detail: overview.matchesPlayed ? "This checks whether deaths are staying controlled enough for the role and match sample." : "No data",
-      read: deathsPerMatch <= 12
-        ? "Your death count is controlled enough to keep more rounds playable."
-        : "Your death count is high enough that survival discipline should stay visible in the coaching plan.",
-      sourceLabel: `Based on ${overview.matchesPlayed || 0} imported matches from ${seasonLabel}.`,
-      formula: `total deaths / matches played = ${totalDeaths} / ${Math.max(1, safeNumber(overview.matchesPlayed))} = ${overview.matchesPlayed ? deathsPerMatch.toFixed(1) : "--"}`,
+      kicker: roleSubject ? `${roleSubject} discipline` : "Discipline Read",
+      value: roleMatches ? `${roleDeathsPerMatch.toFixed(1)} Deaths / Match` : "No data",
+      detail: roleMatches ? `${roleSubject} deaths are being read from the selected-season role sample.` : "No data",
+      read: roleDeathsPerMatch <= 12
+        ? `${roleSubject} deaths are controlled enough to keep more rounds playable.`
+        : `${roleSubject} deaths are high enough that survival discipline should stay visible in the coaching plan.`,
+      sourceLabel: `Based on ${roleMatches || 0} ${roleSubject} matches from ${seasonLabel}.`,
+      formula: `${roleSubject} deaths / matches played = ${Math.round(roleDeaths)} / ${Math.max(1, roleMatches)} = ${roleMatches ? roleDeathsPerMatch.toFixed(1) : "--"}`,
       benchmark: "Positive at 12 or fewer deaths per match, watch at 12.1-16, regression above 16.",
       mediaType: "role",
-      mediaValue: currentSignalRole,
+      mediaValue: roleSubject,
       proofItems: [
-        statItem("Deaths", `${totalDeaths}`, "Deaths from the selected season's imported matches."),
-        statItem("Matches", `${safeNumber(overview.matchesPlayed)}`, "Imported matches used for this survivability read."),
-        statItem("Current Role", currentSignalRole || "Unknown", "Role context based on your latest or most played agent."),
+        statItem("Deaths", `${Math.round(roleDeaths)}`, `Deaths from ${roleSubject} matches.`),
+        statItem("Matches", `${roleMatches}`, `Selected-season ${roleSubject} matches used for this survivability read.`),
+        statItem("Current Role", roleSubject || "Unknown", "Role context used for this card's displayed stat."),
         statItem("Judgement Band", "12 / 16 deaths", "Positive at 12 or fewer deaths per match, watch through 16, regression above 16.")
       ]
     },
@@ -5517,22 +5545,45 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
 }
 
 function getPlayerModel() {
-  const importedAnalytics = getActiveProfile()?.trackerAnalytics || null;
-  const actOptions = importedAnalytics?.acts || [];
-  const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
-    ? activeStatsActLabel
-    : importedAnalytics?.currentAct || "";
+  const scoped = getScopedStatsData();
+  return buildPlayerModel(scoped.matches, scoped.logs, scoped.analytics);
+}
+
+function getScopedStatsData(profile = getActiveProfile(), options = {}) {
+  const importedAnalytics = profile?.trackerAnalytics || null;
+  const actOptions = Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [];
+  const selectedAct = String(
+    Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
+      ? options.actLabel || ""
+      : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
+        ? activeStatsActLabel
+        : importedAnalytics?.currentAct || ""
+  ).trim();
   const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
+  const sourceMatches = Array.isArray(options?.matches)
+    ? options.matches
+    : Array.isArray(profile?.matches)
+      ? profile.matches
+      : (matches || []);
+  const sourceLogs = Array.isArray(options?.logs)
+    ? options.logs
+    : (logEntries || []);
   const actMatches = shouldFilterByAct
-    ? (matches || []).filter((match) => String(match?.metadata?.demoAct || match?.metadata?.act || "") === selectedAct)
-    : matches;
+    ? sourceMatches.filter((match) => getMatchSeasonLabel(match) === selectedAct)
+    : sourceMatches;
   const actLogs = shouldFilterByAct
-    ? (logEntries || []).filter((entry) => String(entry?.demoAct || entry?.act || "") === selectedAct)
-    : logEntries;
+    ? sourceLogs.filter((entry) => String(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act || "").trim() === selectedAct)
+    : sourceLogs;
+  const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
   const scopedAnalytics = importedAnalytics
     ? { ...importedAnalytics, currentAct: selectedAct || importedAnalytics.currentAct || "Current Window" }
     : null;
-  return buildPlayerModel(actMatches, actLogs, scopedAnalytics);
+  return {
+    selectedAct: selectedAct || importedAnalytics?.currentAct || "Current Window",
+    matches: actMatches,
+    logs: scopedLogs,
+    analytics: scopedAnalytics
+  };
 }
 
 function summarizeAgentMapPerformance(matchEntries = matches) {
@@ -5573,7 +5624,8 @@ function summarizeAgentMapPerformance(matchEntries = matches) {
 
 function buildAskCoachContext() {
   const model = getPlayerModel();
-  const agentMap = summarizeAgentMapPerformance(matches);
+  const scoped = getScopedStatsData();
+  const agentMap = summarizeAgentMapPerformance(scoped.matches);
   const weaponFlags = model?.coachingContext?.relianceFlags || [];
   const weaponSummary = weaponFlags.length
     ? weaponFlags.map(flag => flag.replace(/-/g, " ")).join(", ")
@@ -5590,6 +5642,7 @@ function buildAskCoachContext() {
 
 function buildAskCoachAIContext() {
   const { model, agentMap, feedback, weaponSummary } = buildAskCoachContext();
+  const scoped = getScopedStatsData();
   const currentTier = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "Iron 1";
   const rankExpectation = getCompassRankExpectation(currentTier);
   const insightSummary = (model?.insights || []).slice(0, 5).map((insight) => ({
@@ -5617,7 +5670,7 @@ function buildAskCoachAIContext() {
     matchesPlayed: safeNumber(role?.matchesPlayed || role?.matches),
     winrate: Math.round(safeNumber(role?.winrate))
   }));
-  const recentLogs = (logEntries || []).slice(-12).map((entry) => ({
+  const recentLogs = (scoped.logs || []).slice(-12).map((entry) => ({
     agent: entry?.agent || "",
     role: entry?.role || "",
     map: entry?.map || "",
@@ -6828,10 +6881,11 @@ function getAgentMapInsights(agentName, analytics) {
     });
 }
 
-function getEntityRounds({ agentName = "", roleName = "", side = "" } = {}) {
-  return (matches || []).flatMap(match => {
-    const agentMatch = !agentName || String(match?.metadata?.agent || "").toLowerCase() === String(agentName || "").toLowerCase();
-    const roleMatch = !roleName || String(agentRoles?.[match?.metadata?.agent] || "").toLowerCase() === String(roleName || "").toLowerCase();
+function getEntityRounds({ agentName = "", roleName = "", side = "", matchEntries = matches } = {}) {
+  return (matchEntries || []).flatMap(match => {
+    const core = getMatchCore(match);
+    const agentMatch = !agentName || String(core.agent || "").toLowerCase() === String(agentName || "").toLowerCase();
+    const roleMatch = !roleName || String(core.role || agentRoles?.[core.agent] || "").toLowerCase() === String(roleName || "").toLowerCase();
     if (!agentMatch || !roleMatch) return [];
 
     return (match?.advanced?.rounds || []).filter(round =>
@@ -7115,8 +7169,8 @@ function getMapEconomyRoundSummary(mapName = "", matchList = matches) {
   return summary;
 }
 
-function getMapEconomyStatItems(mapName = "") {
-  const summary = getMapEconomyRoundSummary(mapName);
+function getMapEconomyStatItems(mapName = "", matchList = getScopedStatsData().matches) {
+  const summary = getMapEconomyRoundSummary(mapName, matchList);
   return [
     statItem(
       "Pistol Round Win %",
@@ -7380,9 +7434,9 @@ function getWeaponFamilySummary(family, summaryMap = new Map()) {
   };
 }
 
-function buildSpecificWeaponDetailTabs(weaponKey = "") {
+function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedStatsData().matches) {
   const meta = getStatsWeaponMeta(weaponKey);
-  const weapon = getSpecificWeaponSummary(weaponKey);
+  const weapon = getSpecificWeaponSummary(weaponKey, matchEntries);
   const rounds = weapon?.roundEntries || [];
   const attackRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "attack");
   const defenseRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "defense");
@@ -7546,14 +7600,14 @@ function summarizeWeaponRounds(matchEntries = matches) {
     .sort((a, b) => b.winrate - a.winrate || b.rounds - a.rounds || a.label.localeCompare(b.label));
 }
 
-function buildWeaponDetailTabs(weaponTypeKey = "") {
+function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStatsData().matches) {
   const exactWeapon = getStatsWeaponMeta(weaponTypeKey);
-  if (exactWeapon) return buildSpecificWeaponDetailTabs(weaponTypeKey);
+  if (exactWeapon) return buildSpecificWeaponDetailTabs(weaponTypeKey, matchEntries);
 
   const normalizedTypeKey = normalizeStatsWeaponKey(weaponTypeKey) === "sidearm"
     ? "pistol"
     : normalizeStatsWeaponKey(weaponTypeKey);
-  const weapon = summarizeWeaponRounds(matches).find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalizedTypeKey);
+  const weapon = summarizeWeaponRounds(matchEntries).find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalizedTypeKey);
   const rounds = weapon?.roundEntries || [];
   const attackRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "attack");
   const defenseRounds = rounds.filter(round => String(round?.side || "").toLowerCase() === "defense");
@@ -7809,12 +7863,13 @@ function buildRoleDetailTabs(roleName, analytics) {
 function buildCalculatedAgentDetailTabs(agentName, analytics) {
   const agent = (analytics?.agents || []).find(item => String(item.agent || "").toLowerCase() === String(agentName || "").toLowerCase());
   const roleName = agentRoles?.[agentName] || "--";
+  const scoped = getScopedStatsData();
   const coach = buildCoachRecommendation("agent", agent, analytics);
   const agentMaps = getAgentMapInsights(agentName, analytics);
   const bestMap = agentMaps[0];
   const worstMap = agentMaps[agentMaps.length - 1];
-  const attackRounds = getEntityRounds({ agentName, side: "attack" });
-  const defenseRounds = getEntityRounds({ agentName, side: "defense" });
+  const attackRounds = getEntityRounds({ agentName, side: "attack", matchEntries: scoped.matches });
+  const defenseRounds = getEntityRounds({ agentName, side: "defense", matchEntries: scoped.matches });
   const attackMetrics = getSideMetricsFromMaps(agentMaps, "attack");
   const defenseMetrics = getSideMetricsFromMaps(agentMaps, "defense");
   const weaponRates = getWeaponRoundRates([...attackRounds, ...defenseRounds]);
@@ -7882,13 +7937,14 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
 
 function buildCalculatedRoleDetailTabs(roleName, analytics) {
   const role = (analytics?.roles || []).find(item => String(item.role || "").toLowerCase() === String(roleName || "").toLowerCase());
+  const scoped = getScopedStatsData();
   const coach = buildCoachRecommendation("role", role, analytics);
   const filteredMaps = (analytics?.maps || []).filter(item => String(agentRoles?.[item.agent] || "").toLowerCase() === String(roleName || "").toLowerCase());
   const sortedMaps = filteredMaps.slice().sort((a, b) => safeDivide(safeNumber(b.matchesWon), safeNumber(b.matchesPlayed)) - safeDivide(safeNumber(a.matchesWon), safeNumber(a.matchesPlayed)));
   const bestMap = sortedMaps[0];
   const worstMap = sortedMaps[sortedMaps.length - 1];
-  const attackRounds = getEntityRounds({ roleName, side: "attack" });
-  const defenseRounds = getEntityRounds({ roleName, side: "defense" });
+  const attackRounds = getEntityRounds({ roleName, side: "attack", matchEntries: scoped.matches });
+  const defenseRounds = getEntityRounds({ roleName, side: "defense", matchEntries: scoped.matches });
   const roleAttackMetrics = getSideMetricsFromMaps(filteredMaps, "attack");
   const roleDefenseMetrics = getSideMetricsFromMaps(filteredMaps, "defense");
 
@@ -8279,6 +8335,7 @@ function openStatsDetailModal(kind, value) {
   const list = document.getElementById("lensStatsListSecondary");
   const tabsHost = document.getElementById("lensDetailTabsSecondary");
   const analytics = getPlayerModel();
+  const scopedStats = getScopedStatsData();
   if (!modal || !title || !list || !tabsHost) return;
 
   const items = [];
@@ -8295,7 +8352,7 @@ function openStatsDetailModal(kind, value) {
     items.push(statItem("Win Rate", map ? formatPercent(safeDivide(safeNumber(map.matchesWon), safeNumber(map.matchesPlayed)) * 100) : "--", map ? `matchesWon / matchesPlayed on ${value} = ${safeNumber(map.matchesWon)} / ${safeNumber(map.matchesPlayed)}` : "No imported map segment."));
     items.push(statItem("Agent", map?.agent || "--", "Highest-usage agent tied to this imported map segment."));
     items.push(statItem("Role", agentRoles?.[map?.agent] || "--", "Role derived from the roster mapping for the listed agent."));
-    items.push(...getMapEconomyStatItems(value));
+    items.push(...getMapEconomyStatItems(value, scopedStats.matches));
   } else if (kind === "agent") {
     title.textContent = `${value} Agent Review`;
     renderSecondaryLensTabs(tabsHost, list, buildCalculatedAgentDetailTabs(value, analytics));
@@ -8338,11 +8395,11 @@ function openStatsDetailModal(kind, value) {
     const normalizedTypeKey = normalizeStatsWeaponKey(value) === "sidearm" ? "pistol" : normalizeStatsWeaponKey(value);
     const weapon = exactWeapon
       ? null
-      : summarizeWeaponRounds(matches).find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalizedTypeKey) || null;
+      : summarizeWeaponRounds(scopedStats.matches).find(entry => normalizeStatsWeaponKey(entry.typeKey) === normalizedTypeKey) || null;
     title.textContent = exactWeapon
       ? `${exactWeapon.name} Weapon Breakdown`
       : `${weapon?.label || "Weapon"} Weapon Review`;
-    renderSecondaryLensTabs(tabsHost, list, buildWeaponDetailTabs(value));
+    renderSecondaryLensTabs(tabsHost, list, buildWeaponDetailTabs(value, scopedStats.matches));
     showModalById("lensModal");
     return;
   } else if (kind === "role") {
@@ -44864,7 +44921,8 @@ function renderStatsWeaponsModel() {
   const container = document.getElementById("statsWeaponsList");
   if (!container) return;
 
-  const weaponSummaries = summarizeSpecificWeaponRounds(matches);
+  const scoped = getScopedStatsData();
+  const weaponSummaries = summarizeSpecificWeaponRounds(scoped.matches);
   const summaryMap = new Map(weaponSummaries.map(weapon => [weapon.weaponKey, weapon]));
   const isMobile = isStatsMobileLayout();
   if (!STATS_WEAPON_FAMILIES.some(family => family.key === mobileStatsWeaponFamily)) {
