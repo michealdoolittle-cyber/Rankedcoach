@@ -1977,6 +1977,7 @@ function buildCoachingEvidenceLayer({
     sources: COACHING_EVIDENCE_SOURCES,
     sourcePolicy: [
       "Do not compare a player to public rank, all-time, or pro baselines unless that source exists in the current context and is fresh.",
+      "Use All-time instead of Global. When a read combines every role, agent, map, season, or match source, label it as All-inclusive / All-time stat, information, or match data so the scope is obvious.",
       "When sample size is low, say what is assumed and keep the recommendation small.",
       "Stats are weighted by role, agent, weapon mix, map, economy context, and player logs before becoming coaching advice.",
       "A stat can be useful without being the main problem; avoid over-punishing low-value stats for the player's current playstyle."
