@@ -10612,6 +10612,72 @@ function buildClientTutorialDemoMatches(count = 750) {
   ];
   const matchesOut = [];
   const maxMatches = Math.max(1, safeNumber(count, 750));
+  const todayMatchCount = Math.min(12, maxMatches);
+  const preTodayMatchCount = Math.max(0, maxMatches - todayMatchCount);
+  const rrAnchors = [
+    [0, 0],
+    [60, 260],
+    [120, 210],
+    [180, 520],
+    [260, 490],
+    [330, 870],
+    [420, 1020],
+    [500, 980],
+    [600, 1500],
+    [700, 1900],
+    [preTodayMatchCount, 2240]
+  ].filter(([matchNumber]) => matchNumber <= preTodayMatchCount);
+  const todayRRPattern = [-18, -22, -12, 24, 31, 18, -16, 20, 27, 15, 22, 31].slice(-todayMatchCount);
+  const rrCycle = [18, -16, 22, -14, 17, 19, -18, 21, -15, 16, 23, -20, 14, -13, 24, -17];
+  const seededUnit = (index, channel = 1) => {
+    const raw = Math.sin((index + 1) * 12.9898 + channel * 78.233) * 43758.5453;
+    return raw - Math.floor(raw);
+  };
+  const getPreTodayTarget = (matchNumber) => {
+    if (!rrAnchors.length) return 0;
+    for (let i = 0; i < rrAnchors.length - 1; i += 1) {
+      const [fromMatch, fromRR] = rrAnchors[i];
+      const [toMatch, toRR] = rrAnchors[i + 1];
+      if (matchNumber >= fromMatch && matchNumber <= toMatch) {
+        const progress = (matchNumber - fromMatch) / Math.max(1, toMatch - fromMatch);
+        return Math.round(fromRR + (toRR - fromRR) * progress);
+      }
+    }
+    return rrAnchors[rrAnchors.length - 1][1];
+  };
+  const rrPlan = [];
+  let plannedTotal = 0;
+  for (let i = 0; i < preTodayMatchCount; i += 1) {
+    const desiredAfter = getPreTodayTarget(i + 1);
+    const drift = desiredAfter - plannedTotal;
+    let nextRR;
+    if (i === preTodayMatchCount - 1) {
+      nextRR = drift;
+    } else if (drift > 32) {
+      nextRR = 16 + Math.floor(seededUnit(i, 1) * 12);
+    } else if (drift < -32) {
+      nextRR = -(14 + Math.floor(seededUnit(i, 2) * 10));
+    } else {
+      nextRR = rrCycle[(i + Math.floor(i / 37)) % rrCycle.length];
+      const localSlope = getPreTodayTarget(i + 8) - getPreTodayTarget(i);
+      if (localSlope < 0 && nextRR > 0 && seededUnit(i, 3) < 0.58) {
+        nextRR = -(13 + Math.floor(seededUnit(i, 4) * 9));
+      }
+      if (localSlope > 4 && nextRR < 0 && seededUnit(i, 5) < 0.48) {
+        nextRR = 15 + Math.floor(seededUnit(i, 6) * 11);
+      }
+    }
+    const projected = plannedTotal + nextRR;
+    if (i < preTodayMatchCount - 1 && Math.abs(projected - desiredAfter) > 45) {
+      nextRR = drift > 0
+        ? Math.min(28, Math.max(12, drift))
+        : -Math.min(24, Math.max(12, Math.abs(drift)));
+    }
+    nextRR = Math.max(-35, Math.min(35, Math.round(nextRR)));
+    rrPlan.push(nextRR);
+    plannedTotal += nextRR;
+  }
+  todayRRPattern.forEach(rr => rrPlan.push(rr));
 
   actPlans.forEach((act, actIndex) => {
     const actStart = new Date(act.start);
@@ -10620,14 +10686,10 @@ function buildClientTutorialDemoMatches(count = 750) {
       const profile = act.profiles[actGameIndex % act.profiles.length];
       const mapPool = act.mapPool || Object.keys(act.maps || {});
       const map = mapPool[(actGameIndex + actIndex * 2) % mapPool.length];
-      const mapShift = safeNumber(act.maps[map]);
-      const winCutoff = Math.max(20, Math.min(130, act.targetWins + mapShift));
-      const result = ((actGameIndex * act.winMod + actIndex * 9) % 150) < winCutoff ? "win" : "loss";
+      const rr = rrPlan[globalIndex] ?? 0;
+      const result = rr >= 0 ? "win" : "loss";
       const isWin = result === "win";
       const offMetaWeapon = ["Judge", "Bucky", "Shorty", "Spectre"].includes(profile.weapon);
-      const rr = isWin
-        ? Math.max(8, act.rrWin + (actGameIndex % 5) - (offMetaWeapon ? 2 : 0))
-        : -(Math.max(8, act.rrLoss + (actGameIndex % 4) + (offMetaWeapon ? 2 : 0)));
       const kills = Math.max(3, 13 + profile.kill + (isWin ? 4 : 0) + (actGameIndex % 6));
       const deaths = Math.max(4, 14 + profile.death + (isWin ? -3 : 3) + (actGameIndex % 4));
       const assists = Math.max(0, 3 + profile.assist + (actGameIndex % 5));
@@ -10636,8 +10698,16 @@ function buildClientTutorialDemoMatches(count = 750) {
       const hs = Math.max(6, Math.min(45, 17 + profile.hs + actIndex * 2 + (actGameIndex % 9)));
       const actEnd = new Date(act.end || act.start);
       const actSpanMs = Math.max(1, actEnd.getTime() - actStart.getTime());
-      const playedAtDate = new Date(actStart.getTime() + Math.round((actSpanMs * actGameIndex) / 149));
-      playedAtDate.setHours(17 + (actGameIndex % 4), (actGameIndex % 3) * 18, 0, 0);
+      const isTodayMatch = globalIndex >= maxMatches - todayMatchCount;
+      const playedAtDate = isTodayMatch
+        ? new Date()
+        : new Date(actStart.getTime() + Math.round((actSpanMs * actGameIndex) / 149));
+      if (isTodayMatch) {
+        const todayIndex = globalIndex - (maxMatches - todayMatchCount);
+        playedAtDate.setUTCHours(8 + todayIndex, (todayIndex * 11) % 60, 0, 0);
+      } else {
+        playedAtDate.setHours(17 + (actGameIndex % 4), (actGameIndex % 3) * 18, 0, 0);
+      }
       const playedAt = playedAtDate.toISOString();
       const rounds = Array.from({ length: 24 }, (_, roundIndex) => {
         const roundNumber = roundIndex + 1;
