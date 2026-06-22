@@ -1,4 +1,4 @@
-import { AGENT_FX_LIBRARY } from "./agent-effects-data.js";
+﻿import { AGENT_FX_LIBRARY } from "./agent-effects-data.js";
 
 console.log("SCRIPT START");
 
@@ -3417,27 +3417,27 @@ function formatImprovementDelta(metricKey, delta) {
     : amount.toFixed(1);
   switch (metricKey) {
     case "acs":
-      return `↑ +${rounded} ACS`;
+      return `â†‘ +${rounded} ACS`;
     case "attack_adr":
     case "defense_adr":
-      return `↑ +${rounded} ADR`;
+      return `â†‘ +${rounded} ADR`;
     case "kd":
-      return `↑ +${rounded} K/D`;
+      return `â†‘ +${rounded} K/D`;
     case "kills_per_match":
     case "assists_per_match":
     case "deaths_per_match":
-      return `↑ +${rounded} / game`;
+      return `â†‘ +${rounded} / game`;
     case "rr_per_match":
-      return `↑ +${rounded} RR`;
+      return `â†‘ +${rounded} RR`;
     case "avg_rating":
-      return `↑ +${rounded} rating`;
+      return `â†‘ +${rounded} rating`;
     case "role_plan_score":
     case "utility_timing_score":
     case "entry_timing_score":
     case "spacing_score":
-      return `↑ +${rounded} pts`;
+      return `â†‘ +${rounded} pts`;
     default:
-      return `↑ +${rounded}%`;
+      return `â†‘ +${rounded}%`;
   }
 }
 
@@ -4160,7 +4160,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     insights.push({
       type: expectationMet ? "good" : "warn",
       title: "Damage Delta Is Being Judged In Agent Context",
-      preview: `${activeAgentNameForUtility || "Current agent"} is sitting at ${Math.round(observedDamageDelta)} DDΔ/Round against a utility-damage expectation near ${Math.round(utilityDamageExpectation)}.`,
+      preview: `${activeAgentNameForUtility || "Current agent"} is sitting at ${Math.round(observedDamageDelta)} DDÎ”/Round against a utility-damage expectation near ${Math.round(utilityDamageExpectation)}.`,
       what: "The app reads damage differently depending on the agent you are playing.",
       why: "Agents with damaging utility are expected to create more pressure, so the app judges their damage with that in mind.",
       action: expectationMet
@@ -4816,7 +4816,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: "The imported Riot match count currently powering coaching reads for this profile.",
         tone: overview.matchesPlayed >= 8 ? "up" : overview.matchesPlayed >= 4 ? "warn" : "down",
         mediaText: "Data",
-        symbol: "◎"
+        symbol: "â—Ž"
       },
       {
         kicker: "Best Agent",
@@ -4848,7 +4848,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: "Stored reflections currently reinforcing the behavioral side of the coaching model.",
         tone: logs.length >= 6 ? "up" : logs.length >= 3 ? "warn" : "down",
         mediaText: "Logs",
-        symbol: "✦"
+        symbol: "âœ¦"
       },
       {
         kicker: "Primary Focus",
@@ -4858,7 +4858,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: topFocusEntry ? "Most repeated focus category across recent logs." : "A repeated focus category is reported once logs build enough pattern.",
         tone: topFocusEntry?.[1] >= 3 ? "up" : "warn",
         mediaText: "Theme",
-        symbol: "⌁"
+        symbol: "âŒ"
       },
       {
         kicker: "Mood Pattern",
@@ -4868,7 +4868,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: topMoodEntry ? "Most repeated mood marker in the stored reflection window." : "Mood signals will sharpen once more reflection sessions are logged.",
         tone: negativeMoodCount > positiveMoodCount ? "down" : positiveMoodCount > 0 ? "up" : "warn",
         mediaText: "Mood",
-        symbol: "◌"
+        symbol: "â—Œ"
       }
     ],
     role: [
@@ -4912,7 +4912,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: "Most recent match window feeding the short-term consistency read.",
         tone: recentWinRate >= 55 ? "up" : recentWinRate >= 45 ? "warn" : "down",
         mediaText: "Window",
-        symbol: "◈"
+        symbol: "â—ˆ"
       },
       {
         kicker: "Recent Match Form",
@@ -4922,7 +4922,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: recentMatches.length ? "Short-term win/loss and duel conversion read from the latest imported block." : "No data",
         tone: recentKd >= safeNumber(overview.kd) ? "up" : "down",
         mediaText: "Split",
-        symbol: "▲"
+        symbol: "â–²"
       },
       {
         kicker: "RankedCoach Model Confidence",
@@ -4932,7 +4932,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         detail: `Confidence blends imported match volume with ${logs.length} stored reflections.`,
         tone: confidenceScore >= 80 ? "up" : confidenceScore >= 55 ? "warn" : "down",
         mediaText: "Confidence",
-        symbol: "✹"
+        symbol: "âœ¹"
       }
     ]
   };
@@ -5756,8 +5756,8 @@ function normalizeAskCoachText(question = "") {
   return String(question || "")
     .trim()
     .toLowerCase()
-    .replace(/[“”]/g, "\"")
-    .replace(/[‘’]/g, "'")
+    .replace(/[â€œâ€]/g, "\"")
+    .replace(/[â€˜â€™]/g, "'")
     .replace(/[?!.,]+$/g, "")
     .replace(/\s+/g, " ");
 }
@@ -5888,11 +5888,11 @@ function answerAskCoachQuestion(question = "") {
   }
 
   if (isAskCoachGreeting(normalized)) {
-    return "Hey, I’m here. Ask me about your best agent, a map matchup, your next focus, role fit, or whether a stat read actually matters.";
+    return "Hey, Iâ€™m here. Ask me about your best agent, a map matchup, your next focus, role fit, or whether a stat read actually matters.";
   }
 
   if (isAskCoachThanks(normalized)) {
-    return "Anytime. When you want the next read, ask me about an agent, map, role, weapon pattern, or today’s focus.";
+    return "Anytime. When you want the next read, ask me about an agent, map, role, weapon pattern, or todayâ€™s focus.";
   }
 
   if (isAskCoachAcknowledgement(normalized)) {
@@ -5900,7 +5900,7 @@ function answerAskCoachQuestion(question = "") {
   }
 
   if (normalized.includes("who are you") || normalized.includes("what are you")) {
-    return "I’m Ask Coach. I use your imported matches, saved logs, role context, map results, and weapon patterns to answer quick coaching questions without making you dig through every card.";
+    return "Iâ€™m Ask Coach. I use your imported matches, saved logs, role context, map results, and weapon patterns to answer quick coaching questions without making you dig through every card.";
   }
 
   if (isAskCoachHelpRequest(normalized)) {
@@ -6098,7 +6098,7 @@ function formatAskCoachCoachTextLegacy(text = "") {
   if (!raw) return "";
 
   const normalizedListText = raw
-    .replace(/\s+[•]\s+/g, "\n- ")
+    .replace(/\s+[â€¢]\s+/g, "\n- ")
     .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n- ")
     .replace(/\s+(\d+[\).])\s+(?=[A-Z0-9])/g, "\n$1 ");
   const listLines = normalizedListText
@@ -6115,7 +6115,7 @@ function formatAskCoachCoachTextLegacy(text = "") {
   const read = sentences[0];
   const bullets = sentences
     .slice(1, 6)
-    .map(sentence => `- ${sentence.replace(/^[-•]\s*/, "")}`);
+    .map(sentence => `- ${sentence.replace(/^[-â€¢]\s*/, "")}`);
   return `${read}\n\n${bullets.join("\n")}`;
 }
 
@@ -6124,7 +6124,7 @@ function formatAskCoachCoachText(text = "") {
   if (!raw) return "";
 
   const normalizedListText = raw
-    .replace(/\s+[â€¢•]\s+/g, "\n- ")
+    .replace(/\s+[Ã¢â‚¬Â¢â€¢]\s+/g, "\n- ")
     .replace(/\s+[-*]\s+(?=[A-Za-z0-9*])/g, "\n- ")
     .replace(/\s+(\d+[\).])\s+(?=[A-Za-z0-9*])/g, "\n- ");
 
@@ -6148,7 +6148,7 @@ function formatAskCoachCoachText(text = "") {
   const read = cleanAskCoachMarkdownText(sentences[0]);
   const bullets = sentences
     .slice(1, 6)
-    .map(sentence => `- ${normalizeAskCoachBulletText(sentence.replace(/^[-â€¢•]\s*/, ""))}`)
+    .map(sentence => `- ${normalizeAskCoachBulletText(sentence.replace(/^[-Ã¢â‚¬Â¢â€¢]\s*/, ""))}`)
     .filter(line => line.length > 2);
   return `${read}\n\n${bullets.join("\n")}`;
 }
@@ -7900,7 +7900,7 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
       items: [
         statItem("Role", roleName, "Agent role mapping from the current roster table."),
         statItem("K/D", agent ? Number(agent.kd || 0).toFixed(2) : "--", `kills / deaths = ${safeNumber(agent?.kills)} / ${Math.max(1, safeNumber(agent?.deaths))}`),
-        statItem("Overall KAST", formatPercent(overallKast), `weighted side KAST = ((ATK KAST × ATK rounds) + (DEF KAST × DEF rounds)) / total rounds`),
+        statItem("Overall KAST", formatPercent(overallKast), `weighted side KAST = ((ATK KAST Ã— ATK rounds) + (DEF KAST Ã— DEF rounds)) / total rounds`),
         statItem("Average ADR", agent ? `${Math.round(agent.adr || 0)}` : "--", `damagePerRound from imported agent segment = ${safeNumber(agent?.adr).toFixed(1)}`),
         statItem("Econ Rating", agent ? `${Math.round(agent.econ || 0)}` : "--", `econRating from imported agent segment = ${Math.round(safeNumber(agent?.econ))}`),
         statItem("Best Map Win Rate", bestMap ? `${bestMap.map} | ${formatPercent(safeDivide(safeNumber(bestMap.matchesWon), safeNumber(bestMap.matchesPlayed)) * 100)}` : "--", bestMap ? `matchesWon / matchesPlayed on ${bestMap.map} = ${safeNumber(bestMap.matchesWon)} / ${safeNumber(bestMap.matchesPlayed)}` : "No imported map segment."),
@@ -8125,10 +8125,10 @@ function getTrendSignalMediaLabel(item = {}) {
 function getTrendSignalBadgeSymbol(item = {}) {
   if (item?.symbol) return String(item.symbol);
   const tone = normalizeSignalTone(item?.tone);
-  if (tone === "up") return "✦";
-  if (tone === "warn") return "◆";
-  if (tone === "down") return "▲";
-  return "◈";
+  if (tone === "up") return "âœ¦";
+  if (tone === "warn") return "â—†";
+  if (tone === "down") return "â–²";
+  return "â—ˆ";
 }
 
 function getTrendSignalIconMarkup(item = {}) {
@@ -8155,24 +8155,24 @@ function getTrendSignalIconMarkup(item = {}) {
   let icon = "";
   let iconKind = "general";
   if (combined.includes("log")) {
-    icon = "📓";
+    icon = "ðŸ““";
     iconKind = "logs";
   } else if (combined.includes("split") || combined.includes("win") || combined.includes("loss")) {
-    icon = '<span class="trend-dual-icon"><span class="trend-up-icon">↗</span><span class="trend-down-icon">↘</span></span>';
+    icon = '<span class="trend-dual-icon"><span class="trend-up-icon">â†—</span><span class="trend-down-icon">â†˜</span></span>';
     iconKind = "split";
   } else if (combined.includes("window") || combined.includes("calendar") || combined.includes("season")) {
-    icon = "📅";
+    icon = "ðŸ“…";
     iconKind = "window";
   } else if (combined.includes("form") || combined.includes("focus") || combined.includes("tilt") || combined.includes("mood")) {
     const tone = normalizeSignalTone(item?.tone);
-    icon = combined.includes("form") ? "🧘" : tone === "up" ? "👍" : tone === "down" ? "👎" : "▬";
+    icon = combined.includes("form") ? "ðŸ§˜" : tone === "up" ? "ðŸ‘" : tone === "down" ? "ðŸ‘Ž" : "â–¬";
     iconKind = combined.includes("form") ? "form" : "mood";
   } else if (combined.includes("theme") || combined.includes("chart") || combined.includes("trend") || combined.includes("performance")) {
-    icon = "📈";
+    icon = "ðŸ“ˆ";
     iconKind = "theme";
   } else if (mediaType === "text") {
     const tone = normalizeSignalTone(item?.tone);
-    icon = tone === "up" ? "👍" : tone === "down" ? "👎" : "▬";
+    icon = tone === "up" ? "ðŸ‘" : tone === "down" ? "ðŸ‘Ž" : "â–¬";
     iconKind = "mood";
   }
 
@@ -8473,7 +8473,7 @@ function calculateFocusProgress() {
 }
 
 // ========================
-// MAP INSIGHT → FOCUS
+// MAP INSIGHT â†’ FOCUS
 // ========================
 
 function mapInsightToFocus(ins) {
@@ -8606,7 +8606,7 @@ function renderInsights() {
       preview: "Play matches or log sessions to generate insights",
       what: "No matches available for analysis",
       why: "Insights require match or logging data",
-      action: "Play 3–5 matches or add logs to unlock insights",
+      action: "Play 3â€“5 matches or add logs to unlock insights",
       sources: ["System"]
     });
   }
@@ -8908,7 +8908,7 @@ function renderInsights() {
         insights.push({
           type: "good",
           title: "Performance Improving",
-          preview: `KD rising (${prevKD.toFixed(2)} → ${recentKD.toFixed(2)})`,
+          preview: `KD rising (${prevKD.toFixed(2)} â†’ ${recentKD.toFixed(2)})`,
           what: "Recent matches show improvement",
           why: "Better consistency or decision making",
           action: "Continue current playstyle",
@@ -8920,7 +8920,7 @@ function renderInsights() {
         insights.push({
           type: "bad",
           title: "Performance Dropping",
-          preview: `KD falling (${prevKD.toFixed(2)} → ${recentKD.toFixed(2)})`,
+          preview: `KD falling (${prevKD.toFixed(2)} â†’ ${recentKD.toFixed(2)})`,
           what: "Recent performance is declining",
           why: "Possible fatigue or inconsistency",
           action: "Review recent matches or take break",
@@ -9046,7 +9046,7 @@ function renderInsights() {
       preview: "Keep playing to unlock deeper insights",
       what: "Not enough data for advanced insights yet",
       why: "Insights improve with more matches and logs",
-      action: "Play 3–5 more matches or continue logging",
+      action: "Play 3â€“5 more matches or continue logging",
       sources: ["System"]
     });
   }
@@ -11117,7 +11117,7 @@ let activeInsightFocus = null;
 // FOCUS PROGRESS STATE
 // ========================
 
-let focusProgress = 0;        // 0 → 100
+let focusProgress = 0;        // 0 â†’ 100
 let focusProgressMax = 5;     // sessions required
 
 // ========================
@@ -11491,6 +11491,7 @@ function positionTooltipToHit(hit, options = {}){
   const anchorCy = Number(anchorEl.getAttribute("cy") || hit.getAttribute("cy") || 0);
   const x = svgRect.left + (((anchorCx - viewBox.x) / viewBox.width) * svgRect.width);
   const y = svgRect.top + (((anchorCy - viewBox.y) / viewBox.height) * svgRect.height);
+  const hasRankMarker = String(hit.dataset.rankChange || anchorEl.dataset.rankChange || "") === "true";
 
   tip.style.visibility = "visible";
   tip.style.opacity = 1;
@@ -11505,6 +11506,20 @@ function positionTooltipToHit(hit, options = {}){
   const tipWidth = tip.offsetWidth || 96;
   const tipHeight = tip.offsetHeight || 32;
   const viewportPad = 10;
+  if (hasRankMarker) {
+    const rankMarkerOnRight = anchorCx < PAD_LEFT + 52;
+    const sideClearance = 44;
+    const desiredLeft = rankMarkerOnRight
+      ? x - sideClearance - (tipWidth / 2)
+      : x + sideClearance + (tipWidth / 2);
+    tip.style.left = Math.max(viewportPad + tipWidth / 2, Math.min(window.innerWidth - viewportPad - tipWidth / 2, desiredLeft)) + "px";
+    tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, y)) + "px";
+    tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
+    tip.style.transform = "var(--chart-tooltip-base-transform)";
+    if (pop) animateChartTooltipPop();
+    return;
+  }
+
   const left = Math.max(viewportPad + tipWidth / 2, Math.min(window.innerWidth - viewportPad - tipWidth / 2, x));
   const flipBelow = (y - DOT_CLEARANCE_ABOVE - tipHeight) < Math.max(viewportPad, svgRect.top);
 
@@ -12362,7 +12377,7 @@ function normalizeRiotRegion(input = ""){
 
 
 // ========================
-// RIOT: ACCOUNT → MATCH FLOW
+// RIOT: ACCOUNT â†’ MATCH FLOW
 // ========================
 
 // ========================
@@ -12691,7 +12706,7 @@ function applyCompassVisual(values = {}) {
 
     if (scoreEl) scoreEl.textContent = `${score}`;
     if (tierEl) tierEl.textContent = noData ? "No Data" : getCompassTierLabel(score);
-    if (metaEl) metaEl.textContent = `Profile share ${share}% · ${COMPASS_LENS_META[key]?.summary || ""}`;
+    if (metaEl) metaEl.textContent = `Profile share ${share}% Â· ${COMPASS_LENS_META[key]?.summary || ""}`;
     if (metaEl && noData) metaEl.textContent = "No match data yet.";
     if (barEl) barEl.style.width = `${score}%`;
     if (cardEl) cardEl.classList.toggle("is-strongest", !noData && key === strongestLens);
@@ -12992,6 +13007,7 @@ data-total-rr="${point.value}"
 data-index="${point.matchIndex}"
 data-match-index="${point.matchIndex}"
 data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
+data-rank-change="${point?.rankChange?.iconUrl ? "true" : "false"}"
 ${statsAttrs}/>
 
 <circle class="${dotClass}"
@@ -13005,6 +13021,7 @@ data-match-index="${point.matchIndex}"
 data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
 data-match-id="${escapeHtml(point?.matchId || snapshot?.id || point?.match?.id || point?.match?.matchId || "")}"
 data-match-key="${escapeHtml(point?.matchKey || "")}"
+data-rank-change="${point?.rankChange?.iconUrl ? "true" : "false"}"
 data-impact-tier="${escapeHtml(snapshot?.impactTier || "")}"
 data-impact-score="${Number.isFinite(Number(snapshot?.impactScore)) ? Math.round(Number(snapshot?.impactScore)) : ""}"
 fill="${fill}"
@@ -13014,9 +13031,11 @@ style="${introStyle}"/>`;
 function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } = {}) {
   if (!point?.rankChange?.iconUrl) return "";
   const direction = point.rankChange.direction === "down" ? "down" : "up";
-  const markerX = Math.min(CHART_W - PAD_RIGHT - 28, Math.max(PAD_LEFT + 16, point.x));
-  const markerY = Math.max(PAD_TOP + 20, point.y - 30);
+  const markerOnRight = point.x < PAD_LEFT + 52;
+  const markerX = Math.min(CHART_W - PAD_RIGHT - 18, Math.max(PAD_LEFT + 18, point.x + (markerOnRight ? 34 : -34)));
+  const markerY = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, point.y));
   const arrow = direction === "down" ? "↓" : "↑";
+  const arrowX = markerX + (markerOnRight ? 19 : -19);
   const introStyle = intro
     ? `--intro-delay:${introDelayMs}ms;opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;`
     : "";
@@ -13028,10 +13047,9 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
     x="${markerX - 10}" y="${markerY - 10}"
     width="20" height="20"
     preserveAspectRatio="xMidYMid meet"></image>
-  <text class="chart-rank-arrow" x="${markerX + 19}" y="${markerY + 7}" text-anchor="middle">${arrow}</text>
+  <text class="chart-rank-arrow" x="${arrowX}" y="${markerY + 7}" text-anchor="middle">${arrow}</text>
 </g>`;
 }
-
 function buildXTicks(points, sliceLength, matchCount) {
   let xTicks = "";
 
@@ -14825,7 +14843,7 @@ function updateLoggingDebriefPreview() {
   if (map) metaParts.push(map);
   if (notes) metaParts.push(`${Math.min(notes.length, 140)} chars captured`);
   metaEl.textContent = metaParts.length
-    ? metaParts.join(" • ")
+    ? metaParts.join(" â€¢ ")
     : "No rating, mood, or map selected yet.";
 }
 
@@ -15263,8 +15281,8 @@ function updateRRMatchStats(match = null, matchIndex = null, options = {}) {
   if (rrMatchTitleEl) rrMatchTitleEl.textContent = gameLabel;
   if (rrMatchMetaEl) {
     rrMatchMetaEl.textContent = statsAvailable
-      ? `${resultLabel} · ${rrLabel} · ${agentLabel}`
-      : `${resultLabel} · ${rrLabel} · ${agentLabel} · No saved combat snapshot`;
+      ? `${resultLabel} Â· ${rrLabel} Â· ${agentLabel}`
+      : `${resultLabel} Â· ${rrLabel} Â· ${agentLabel} Â· No saved combat snapshot`;
   }
   if (rrMatchMetaEl) {
     const impactLabel = impactTier
@@ -29079,7 +29097,7 @@ function initApp(){
   syncThemeBuilderUI();
   void importCanonicalThemeSnapshotIfAvailable();
 
-  console.log("INIT COMPLETE ✔");
+  console.log("INIT COMPLETE âœ”");
 }
 
 function roundThemeBuilderSnapshotNumber(value, precision = 3) {
@@ -37077,10 +37095,10 @@ function formatTimelineDelta(item = {}) {
   }
   const delta = Number(item?.delta);
   if (!Number.isFinite(delta)) return "--";
-  if (Math.abs(delta) < 0.05) return "→ even";
+  if (Math.abs(delta) < 0.05) return "â†’ even";
 
   const unit = getTimelineDeltaUnit(item);
-  const arrow = delta > 0 ? "↑" : "↓";
+  const arrow = delta > 0 ? "â†‘" : "â†“";
   const abs = Math.abs(delta);
   const rounded = Math.abs(abs - Math.round(abs)) < 0.05
     ? String(Math.round(abs))
@@ -38074,14 +38092,14 @@ function getLogRatingBadge(rating){
   const score = Number(rating || 0);
 
   if(score >= 5){
-    return { icon: "⭐", label: String(score || 5), tone: "good" };
+    return { icon: "â­", label: String(score || 5), tone: "good" };
   }
 
   if(score >= 3){
-    return { icon: "◐", label: String(score), tone: "okay" };
+    return { icon: "â—", label: String(score), tone: "okay" };
   }
 
-  return { icon: "✕", label: String(score || "-"), tone: "bad" };
+  return { icon: "âœ•", label: String(score || "-"), tone: "bad" };
 }
 
 function getMoodTone(mood){
@@ -38234,9 +38252,9 @@ function renderLogCalendarPopover(countMap = getLogCountByDate()) {
 
   popover.innerHTML = `
     <div class="logging-calendar-head">
-      <button class="logging-calendar-nav" type="button" data-calendar-nav="-1" aria-label="Previous month">‹</button>
+      <button class="logging-calendar-nav" type="button" data-calendar-nav="-1" aria-label="Previous month">â€¹</button>
       <div class="logging-calendar-title">${escapeHtml(monthLabel)}</div>
-      <button class="logging-calendar-nav" type="button" data-calendar-nav="1" aria-label="Next month">›</button>
+      <button class="logging-calendar-nav" type="button" data-calendar-nav="1" aria-label="Next month">â€º</button>
     </div>
     <div class="logging-calendar-grid">
       ${dayNames.map(day => `<div class="logging-calendar-dow">${day}</div>`).join("")}
@@ -38468,7 +38486,7 @@ function renderLogFeed(options = {}){
               : "?"
           }</span>
           ${rrLabel ? `<span class="log-result-rr log-result-rr-${resultTone || "neutral"}">${escapeHtml(rrLabel)}</span>` : ""}
-          <span class="log-rating">⭐ ${entry.rating}</span>
+          <span class="log-rating">â­ ${entry.rating}</span>
         </div>
 
         <div class="log-body">
@@ -39131,7 +39149,7 @@ function renderProfilesUI(){
 
       <div class="profile-actions">
         <button class="profile-select-btn">Select</button>
-        <button class="profile-delete-btn">✕</button>
+        <button class="profile-delete-btn">âœ•</button>
       </div>
     `;
 
@@ -41190,7 +41208,7 @@ function undoLastMatch(){
 }
 
 // ========================
-// RR → RANK NAV
+// RR â†’ RANK NAV
 // ========================
 
 function updateNavRRToRank(){
@@ -41812,7 +41830,7 @@ if(shouldAnimateIntro){
 
 requestAnimationFrame(() => {
 
-  requestAnimationFrame(() => {  // ✅ second frame guarantees render
+  requestAnimationFrame(() => {  // âœ… second frame guarantees render
 
     if(!seg || !seg.isConnected){
       chartBusy = false;
@@ -41823,7 +41841,7 @@ requestAnimationFrame(() => {
 
     seg.style.animationPlayState = "running";
 
-    // 🛡️ SAFE LENGTH CHECK
+    // ðŸ›¡ï¸ SAFE LENGTH CHECK
     let len = 0;
 
     try{
@@ -42519,7 +42537,7 @@ function spinLoadoutFromLogging(agent, focus){
     strip.appendChild(img);
   }
 
-  // 🔥 FINAL AGENT
+  // ðŸ”¥ FINAL AGENT
   const finalImg = document.createElement("img");
   finalImg.src = getAgentIconUrl(agent);
   finalImg.className = "reel-icon";
@@ -42533,7 +42551,7 @@ function spinLoadoutFromLogging(agent, focus){
   void strip.offsetWidth;
 
   strip.style.transition =
-    `transform 700ms cubic-bezier(.23,1,.32,1)`; // 🔥 shorter spin
+    `transform 700ms cubic-bezier(.23,1,.32,1)`; // ðŸ”¥ shorter spin
 
   strip.style.transform = `translateY(${finalY}px)`;
 
@@ -42905,7 +42923,7 @@ const wrapCenterY = wrapRect.top + wrapRect.height / 2;
 let rawY;
 let placeBelow;
 
-// if button is in upper half → show below
+// if button is in upper half â†’ show below
 if (centerY < wrapCenterY) {
   rawY = rect.bottom - wrapRect.top + 8;
   placeBelow = true;
@@ -42925,7 +42943,7 @@ const minX = minPad;
 
 // clamp ONLY X
 const x = Math.max(minX, Math.min(rawX, maxX));
-const y = rawY; // 🔥 DO NOT CLAMP Y
+const y = rawY; // ðŸ”¥ DO NOT CLAMP Y
 
 compassTooltip.textContent = labels[btn.dataset.lens] || btn.dataset.lens;
 compassTooltip.style.left = x + "px";
