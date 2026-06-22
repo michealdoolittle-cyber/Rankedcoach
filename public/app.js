@@ -11358,11 +11358,12 @@ function chartScopeAllowsTooltip(size = currentSize) {
 
 function chartUsesCurrentSessionScope(size = currentSize) {
   const normalized = String(size || "5").toLowerCase();
-  return ["5", "10", "20"].includes(normalized);
+  return ["5", "10"].includes(normalized);
 }
 
 function chartUsesRecentAccountWindow(size = currentSize) {
-  return String(size || "").toLowerCase() === "50";
+  const normalized = String(size || "").toLowerCase();
+  return ["20", "50"].includes(normalized);
 }
 
 function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
@@ -11404,10 +11405,11 @@ function getChartSourceEntries(size = currentSize) {
       .map((entry, displayIndex) => ({ ...entry, displayIndex }));
     scopeLabel = `Current session ${sessionDateKey}`;
   } else if (recentAccountWindow) {
+    const recentWindowSize = Math.max(1, Number(size) || 50);
     entries = allEntries
-      .slice(-50)
+      .slice(-recentWindowSize)
       .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-    scopeLabel = "Recent 50 matches";
+    scopeLabel = `Recent ${recentWindowSize} matches`;
   }
 
   return {
@@ -41383,14 +41385,8 @@ if(chartHeight){
   const slice = chartWindow.slice;
   let visibleChartEntries = chartWindow.entries;
   const chartAxisMatchCount = chartSource.isCurrentSessionScoped
-    ? visibleChartEntries.length
+    ? chartMatchCount
     : chartMatchCount;
-  if (chartSource.isCurrentSessionScoped) {
-    visibleChartEntries = visibleChartEntries.map((entry, displayIndex) => ({
-      ...entry,
-      displayIndex
-    }));
-  }
   const chartRenderSignature = `${chartSource.scopeLabel}|${size}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
 
