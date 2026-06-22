@@ -11465,6 +11465,7 @@ function hideChartTooltip(){
   }
   chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
     marker.classList.remove("is-tooltip-paired");
+    marker.removeAttribute("transform");
   });
 }
 
@@ -11509,10 +11510,11 @@ function positionTooltipToHit(hit, options = {}){
   const tipWidth = tip.offsetWidth || 96;
   const tipHeight = tip.offsetHeight || 32;
   const viewportPad = 10;
+  svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
+    marker.classList.remove("is-tooltip-paired");
+    marker.removeAttribute("transform");
+  });
   if (hasRankMarker) {
-    svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
-      marker.classList.remove("is-tooltip-paired");
-    });
     const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
     const marker = Array.from(svg.querySelectorAll(".chart-rank-marker"))
       .find(item => String(item.dataset.matchIndex || "") === markerMatchIndex);
@@ -11520,11 +11522,34 @@ function positionTooltipToHit(hit, options = {}){
     const markerCircle = marker?.querySelector("circle");
     const markerCx = Number(markerCircle?.getAttribute("cx") || anchorCx);
     const markerCy = Number(markerCircle?.getAttribute("cy") || anchorCy);
-    const markerShiftX = safeNumber(marker?.dataset?.selectedShiftX, -44);
-    const markerScreenX = svgRect.left + ((((markerCx + markerShiftX) - viewBox.x) / viewBox.width) * svgRect.width);
-    const markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
-    const desiredLeft = markerScreenX + 24 + (tipWidth / 2);
-    tip.style.left = Math.max(viewportPad + tipWidth / 2, Math.min(window.innerWidth - viewportPad - tipWidth / 2, desiredLeft)) + "px";
+    const markerRadius = Math.max(8, Number(markerCircle?.getAttribute("r") || 14));
+    const markerRadiusPx = markerRadius * (svgRect.width / viewBox.width);
+    const markerGapPx = 8;
+    const markerBaseScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
+    const minTipLeft = viewportPad + tipWidth / 2;
+    const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
+    let markerShiftPx = -((tipWidth + markerGapPx) / 2);
+    let desiredLeft = markerBaseScreenX + markerShiftPx + markerRadiusPx + markerGapPx + (tipWidth / 2);
+    if (desiredLeft > maxTipLeft) {
+      const overflow = desiredLeft - maxTipLeft;
+      markerShiftPx -= overflow;
+      desiredLeft -= overflow;
+    }
+    if (desiredLeft < minTipLeft) {
+      const underflow = minTipLeft - desiredLeft;
+      markerShiftPx += underflow;
+      desiredLeft += underflow;
+    }
+    const markerShiftX = markerShiftPx * (viewBox.width / svgRect.width);
+    let markerShiftY = 0;
+    let markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
+    if (markerCy < anchorCy && markerScreenY - (tipHeight / 2) < viewportPad) {
+      const selectedBelowCy = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32));
+      markerShiftY = selectedBelowCy - markerCy;
+      markerScreenY = svgRect.top + ((((markerCy + markerShiftY) - viewBox.y) / viewBox.height) * svgRect.height);
+    }
+    marker?.setAttribute("transform", `translate(${markerShiftX} ${markerShiftY})`);
+    tip.style.left = Math.max(minTipLeft, Math.min(maxTipLeft, desiredLeft)) + "px";
     tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, markerScreenY)) + "px";
     tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
     tip.style.transform = "var(--chart-tooltip-base-transform)";
@@ -13053,7 +13078,7 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
     : "";
 
   return `
-<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" data-selected-shift-x="-44" style="${introStyle}">
+<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" style="${introStyle}">
   <circle cx="${markerX}" cy="${markerY}" r="14"></circle>
   <image href="${escapeHtml(point.rankChange.iconUrl)}"
     x="${markerX - 10}" y="${markerY - 10}"
