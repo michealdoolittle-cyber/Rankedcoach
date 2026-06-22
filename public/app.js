@@ -11463,6 +11463,9 @@ function hideChartTooltip(){
     crosshair.style.opacity = 0;
     crosshair.setAttribute("opacity", "0");
   }
+  chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
+    marker.classList.remove("is-tooltip-paired");
+  });
 }
 
 function animateChartTooltipPop() {
@@ -11507,13 +11510,22 @@ function positionTooltipToHit(hit, options = {}){
   const tipHeight = tip.offsetHeight || 32;
   const viewportPad = 10;
   if (hasRankMarker) {
-    const rankMarkerOnRight = anchorCx < PAD_LEFT + 52;
-    const sideClearance = 44;
-    const desiredLeft = rankMarkerOnRight
-      ? x - sideClearance - (tipWidth / 2)
-      : x + sideClearance + (tipWidth / 2);
+    svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
+      marker.classList.remove("is-tooltip-paired");
+    });
+    const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
+    const marker = Array.from(svg.querySelectorAll(".chart-rank-marker"))
+      .find(item => String(item.dataset.matchIndex || "") === markerMatchIndex);
+    marker?.classList.add("is-tooltip-paired");
+    const markerCircle = marker?.querySelector("circle");
+    const markerCx = Number(markerCircle?.getAttribute("cx") || anchorCx);
+    const markerCy = Number(markerCircle?.getAttribute("cy") || anchorCy);
+    const markerShiftX = safeNumber(marker?.dataset?.selectedShiftX, -44);
+    const markerScreenX = svgRect.left + ((((markerCx + markerShiftX) - viewBox.x) / viewBox.width) * svgRect.width);
+    const markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
+    const desiredLeft = markerScreenX + 24 + (tipWidth / 2);
     tip.style.left = Math.max(viewportPad + tipWidth / 2, Math.min(window.innerWidth - viewportPad - tipWidth / 2, desiredLeft)) + "px";
-    tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, y)) + "px";
+    tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, markerScreenY)) + "px";
     tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
     tip.style.transform = "var(--chart-tooltip-base-transform)";
     if (pop) animateChartTooltipPop();
@@ -13031,17 +13043,17 @@ style="${introStyle}"/>`;
 function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } = {}) {
   if (!point?.rankChange?.iconUrl) return "";
   const direction = point.rankChange.direction === "down" ? "down" : "up";
-  const markerOnRight = point.x < PAD_LEFT + 52;
-  const markerX = Math.min(CHART_W - PAD_RIGHT - 18, Math.max(PAD_LEFT + 18, point.x + (markerOnRight ? 34 : -34)));
-  const markerY = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, point.y));
+  const markerBelow = point.y - 34 < PAD_TOP + 18;
+  const markerX = Math.min(CHART_W - PAD_RIGHT - 18, Math.max(PAD_LEFT + 18, point.x));
+  const markerY = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, point.y + (markerBelow ? 32 : -32)));
   const arrow = direction === "down" ? "↓" : "↑";
-  const arrowX = markerX + (markerOnRight ? 19 : -19);
+  const arrowX = markerX - 19;
   const introStyle = intro
     ? `--intro-delay:${introDelayMs}ms;opacity:0;transform:scale(.2);transform-box:fill-box;transform-origin:center;`
     : "";
 
   return `
-<g class="chart-rank-marker chart-rank-${direction}" style="${introStyle}">
+<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" data-selected-shift-x="-44" style="${introStyle}">
   <circle cx="${markerX}" cy="${markerY}" r="14"></circle>
   <image href="${escapeHtml(point.rankChange.iconUrl)}"
     x="${markerX - 10}" y="${markerY - 10}"

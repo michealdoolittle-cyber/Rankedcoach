@@ -17349,6 +17349,11 @@ pointer-events:none;
 transform-box:fill-box;
 transform-origin:center;
 filter:drop-shadow(0 2px 7px rgba(0,0,0,.45));
+transition:transform .18s ease;
+}
+
+.chart-rank-marker.is-tooltip-paired{
+transform:translateX(-44px);
 }
 
 .chart-rank-marker circle{
