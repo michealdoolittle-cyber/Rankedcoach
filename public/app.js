@@ -44069,7 +44069,7 @@ async function importDemoMatches(options = {}){
   }
 
   try {
-    const res = await fetchWithTimeout("/api/demo/import-example");
+    const res = await fetchWithTimeout("/data/demo-import.json");
     const data = await res.json().catch(() => ({}));
 
     if(!res.ok){
