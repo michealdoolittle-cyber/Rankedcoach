@@ -11524,26 +11524,21 @@ function positionTooltipToHit(hit, options = {}){
     const markerCy = Number(markerCircle?.getAttribute("cy") || anchorCy);
     const markerRadius = Math.max(8, Number(markerCircle?.getAttribute("r") || 14));
     const markerRadiusPx = markerRadius * (svgRect.width / viewBox.width);
-    const markerGapPx = 8;
+    const splitGapPx = 8;
     const markerBaseScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
     const minTipLeft = viewportPad + tipWidth / 2;
     const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
-    let markerShiftPx = -((tipWidth + markerGapPx) / 2);
-    let desiredLeft = markerBaseScreenX + markerShiftPx + markerRadiusPx + markerGapPx + (tipWidth / 2);
-    if (desiredLeft > maxTipLeft) {
-      const overflow = desiredLeft - maxTipLeft;
-      markerShiftPx -= overflow;
-      desiredLeft -= overflow;
-    }
-    if (desiredLeft < minTipLeft) {
-      const underflow = minTipLeft - desiredLeft;
-      markerShiftPx += underflow;
-      desiredLeft += underflow;
-    }
+    const minMarkerScreenX = Math.max(viewportPad + markerRadiusPx, svgRect.left + markerRadiusPx);
+    const desiredMarkerScreenX = Math.max(minMarkerScreenX, x - markerRadiusPx - splitGapPx);
+    const desiredLeft = Math.max(minTipLeft, Math.min(maxTipLeft, x + splitGapPx + (tipWidth / 2)));
+    const markerShiftPx = desiredMarkerScreenX - markerBaseScreenX;
     const markerShiftX = markerShiftPx * (viewBox.width / svgRect.width);
     let markerShiftY = 0;
     let markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
-    if (markerCy < anchorCy && markerScreenY - (tipHeight / 2) < viewportPad) {
+    const tipHalfHeightChartUnits = ((tipHeight / 2) / svgRect.height) * viewBox.height;
+    const selectedNeedsBelow = markerCy < anchorCy
+      && (markerCy - tipHalfHeightChartUnits < PAD_TOP + 4 || markerScreenY - (tipHeight / 2) < viewportPad);
+    if (selectedNeedsBelow) {
       const selectedBelowCy = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32));
       markerShiftY = selectedBelowCy - markerCy;
       markerScreenY = svgRect.top + ((((markerCy + markerShiftY) - viewBox.y) / viewBox.height) * svgRect.height);
