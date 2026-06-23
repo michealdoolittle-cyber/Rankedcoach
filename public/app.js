@@ -3412,32 +3412,34 @@ function formatImprovementValue(metricKey, value) {
 
 function formatImprovementDelta(metricKey, delta) {
   const amount = safeNumber(delta);
-  const rounded = Math.abs(amount - Math.round(amount)) < 0.05
-    ? `${Math.round(amount)}`
-    : amount.toFixed(1);
+  const abs = Math.abs(amount);
+  const rounded = Math.abs(abs - Math.round(abs)) < 0.05
+    ? `${Math.round(abs)}`
+    : abs.toFixed(1);
+  const sign = amount > 0 ? "+" : amount < 0 ? "-" : "";
   switch (metricKey) {
     case "acs":
-      return `â†‘ +${rounded} ACS`;
+      return `${sign}${rounded} ACS`;
     case "attack_adr":
     case "defense_adr":
-      return `â†‘ +${rounded} ADR`;
+      return `${sign}${rounded} ADR`;
     case "kd":
-      return `â†‘ +${rounded} K/D`;
+      return `${sign}${rounded} K/D`;
     case "kills_per_match":
     case "assists_per_match":
     case "deaths_per_match":
-      return `â†‘ +${rounded} / game`;
+      return `${sign}${rounded} / game`;
     case "rr_per_match":
-      return `â†‘ +${rounded} RR`;
+      return `${sign}${rounded} RR`;
     case "avg_rating":
-      return `â†‘ +${rounded} rating`;
+      return `${sign}${rounded} rating`;
     case "role_plan_score":
     case "utility_timing_score":
     case "entry_timing_score":
     case "spacing_score":
-      return `â†‘ +${rounded} pts`;
+      return `${sign}${rounded} pts`;
     default:
-      return `â†‘ +${rounded}%`;
+      return `${sign}${rounded}%`;
   }
 }
 
@@ -37215,16 +37217,15 @@ function formatTimelineDelta(item = {}) {
   }
   const delta = Number(item?.delta);
   if (!Number.isFinite(delta)) return "--";
-  if (Math.abs(delta) < 0.05) return "â†’ even";
+  if (Math.abs(delta) < 0.05) return "even";
 
   const unit = getTimelineDeltaUnit(item);
-  const arrow = delta > 0 ? "â†‘" : "â†“";
   const abs = Math.abs(delta);
   const rounded = Math.abs(abs - Math.round(abs)) < 0.05
     ? String(Math.round(abs))
     : abs.toFixed(1);
   const sign = delta > 0 ? "+" : "-";
-  return `${arrow} ${sign}${rounded}${unit}`;
+  return `${sign}${rounded}${unit}`;
 }
 
 function setSelectedTimelineContext(matchIndex = null, { animate = true } = {}) {
