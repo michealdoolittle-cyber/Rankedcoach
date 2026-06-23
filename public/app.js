@@ -11571,7 +11571,8 @@ function positionTooltipToHit(hit, options = {}){
     const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
     const minMarkerScreenX = Math.max(viewportPad + markerRadiusPx, svgRect.left + markerRadiusPx);
     const maxMarkerScreenX = Math.min(window.innerWidth - viewportPad - markerRadiusPx, svgRect.right - markerRadiusPx);
-    const groupLeft = x - (groupWidthPx / 2);
+    const selectedGroupOffsetPx = String(currentSize || "").toLowerCase() === "20" ? -24 : 0;
+    const groupLeft = x - (groupWidthPx / 2) + selectedGroupOffsetPx;
     const desiredMarkerScreenX = Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
     const desiredLeft = Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));
     const selectedMarkerCx = viewBox.x + (((desiredMarkerScreenX - svgRect.left) / svgRect.width) * viewBox.width);
