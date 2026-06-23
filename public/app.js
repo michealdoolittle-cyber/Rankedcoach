@@ -11355,17 +11355,58 @@ function ensureChartTooltipLayer(){
 
 function chartScopeAllowsTooltip(size = currentSize) {
   const numericSize = Number(size);
-  return Number.isFinite(numericSize) && numericSize < 50;
+  return Number.isFinite(numericSize) && numericSize <= 50;
 }
 
 function chartUsesCurrentSessionScope(size = currentSize) {
-  const normalized = String(size || "5").toLowerCase();
-  return ["5", "10"].includes(normalized);
+  return false;
 }
 
 function chartUsesRecentAccountWindow(size = currentSize) {
-  const normalized = String(size || "").toLowerCase();
-  return ["20", "50"].includes(normalized);
+  return false;
+}
+
+function normalizeChartWindowSize(size = currentSize) {
+  const normalized = String(size || "5").toLowerCase();
+  return normalized === "all" ? "all" : String(Number(normalized) || 5);
+}
+
+function getChartSelectedSeasonLabel(profile = getActiveProfile?.()) {
+  const explicit = getStatsSelectedActLabel?.(profile);
+  if (explicit) return explicit;
+  const analytics = profile?.trackerAnalytics || null;
+  return String(analytics?.currentAct || activeStatsActLabel || "Current Season").trim();
+}
+
+function getChartWindowMatchRequirement(size = currentSize) {
+  const normalized = normalizeChartWindowSize(size);
+  if (normalized === "all") return 0;
+  return Math.max(1, Number(normalized) || 5);
+}
+
+function isChartWindowDisabled(size = currentSize, matchCount = 0) {
+  const normalized = normalizeChartWindowSize(size);
+  if (normalized === "all" || normalized === "5") return false;
+  return safeNumber(matchCount) < getChartWindowMatchRequirement(normalized);
+}
+
+function getAvailableChartWindowSize(size = currentSize, matchCount = 0) {
+  return isChartWindowDisabled(size, matchCount) ? "5" : normalizeChartWindowSize(size);
+}
+
+function updateChartWindowControls(matchCount = 0, activeSize = currentSize) {
+  const activeKey = normalizeChartWindowSize(activeSize);
+  document.querySelectorAll(".graph-btn").forEach((button) => {
+    const size = normalizeChartWindowSize(button.dataset.size || "5");
+    const disabled = isChartWindowDisabled(size, matchCount);
+    button.disabled = disabled;
+    button.classList.toggle("is-disabled", disabled);
+    button.setAttribute("aria-disabled", disabled ? "true" : "false");
+    button.classList.toggle("active", size === activeKey && !disabled);
+    button.title = disabled
+      ? `Play ${getChartWindowMatchRequirement(size)} games in this season to unlock this window.`
+      : "";
+  });
 }
 
 function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
@@ -11378,12 +11419,12 @@ function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
 
 function getChartSourceEntries(size = currentSize) {
   const profile = getActiveProfile?.();
-  const sessionDateKey = getActiveSessionDateKey();
-  const currentSessionActive = chartUsesCurrentSessionScope(size);
-  const recentAccountWindow = chartUsesRecentAccountWindow(size);
+  const normalizedSize = normalizeChartWindowSize(size);
   const sourceMatches = Array.isArray(profile?.matches)
     ? profile.matches
     : (matches || []);
+  const selectedSeasonLabel = getChartSelectedSeasonLabel(profile);
+  const canFilterBySeason = Boolean(selectedSeasonLabel && selectedSeasonLabel !== "Current Season");
 
   let runningRR = profile ? safeNumber(profile.startingRR) : 0;
   const allEntries = sourceMatches.map((match, index) => {
@@ -11398,27 +11439,20 @@ function getChartSourceEntries(size = currentSize) {
     };
   });
 
-  let entries = allEntries;
-  let scopeLabel = "Lifetime";
-
-  if (currentSessionActive) {
-    entries = allEntries
-      .filter((entry) => getMatchSessionDateKey(entry.match) === sessionDateKey)
-      .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-    scopeLabel = `Current session ${sessionDateKey}`;
-  } else if (recentAccountWindow) {
-    const recentWindowSize = Math.max(1, Number(size) || 50);
-    entries = allEntries
-      .slice(-recentWindowSize)
-      .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-    scopeLabel = `Recent ${recentWindowSize} matches`;
-  }
+  const seasonEntries = canFilterBySeason
+    ? allEntries.filter((entry) => getMatchSeasonLabel(entry.match) === selectedSeasonLabel)
+    : allEntries;
+  const entries = (normalizedSize === "all" ? allEntries : seasonEntries)
+    .map((entry, displayIndex) => ({ ...entry, displayIndex }));
+  const scopeLabel = normalizedSize === "all" ? "All-time profile" : selectedSeasonLabel;
 
   return {
     entries,
     scopeLabel,
-    isCurrentSessionScoped: currentSessionActive,
-    isRecentAccountWindow: recentAccountWindow,
+    seasonLabel: selectedSeasonLabel,
+    isCurrentSessionScoped: false,
+    isRecentAccountWindow: false,
+    isSeasonScoped: normalizedSize !== "all",
     matchCount: entries.length
   };
 }
@@ -12955,10 +12989,10 @@ function getChartSliceWithEntries(cumulative, entries, size) {
   const baseline = startIndex > 0 ? safeNumber(cumulative[startIndex - 1]) : 0;
   const visibleCumulative = cumulative
     .slice(startIndex)
-    .map(value => safeNumber(value) - baseline);
+    .map(value => safeNumber(value));
 
   return {
-    slice: [0, ...visibleCumulative],
+    slice: [baseline, ...visibleCumulative],
     entries: (entries || []).slice(startIndex)
   };
 }
@@ -13199,10 +13233,6 @@ function buildXTicks(points, sliceLength, matchCount) {
         game === matchCount - 50 + 1;
     }
 
-    if (visibleMatches === matchCount) {
-      showLabel = game === matchCount;
-    }
-
     if (!showLabel) continue;
 
     xTicks += `
@@ -13218,6 +13248,21 @@ function buildXTicks(points, sliceLength, matchCount) {
   }
 
   return xTicks;
+}
+
+function buildChartAxisTitle(label = "Current Season") {
+  const axisLabel = `Games from ${label || "Current Season"}`;
+  const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
+  const y = Math.min(CHART_H - 6, PAD_BOTTOM + 48);
+  return `
+<text class="chart-axis-title"
+      x="${x}"
+      y="${y}"
+      font-size="14"
+      fill="#94a3b8"
+      font-weight="800"
+      letter-spacing=".08em"
+      text-anchor="middle">${escapeHtml(axisLabel)}</text>`;
 }
 
 function buildYTicks(minTick, maxTick, y) {
@@ -41490,9 +41535,14 @@ function renderChart(size = currentSize){
   const previousSize = currentSize;
   const animationMode = pendingChartAnimationMode;
   pendingChartAnimationMode = null;
-  currentSize = size;
+  const requestedSize = normalizeChartWindowSize(size);
+  const availabilityChartSource = getChartSourceEntries("5");
+  const initialChartSource = getChartSourceEntries(requestedSize);
+  const resolvedSize = getAvailableChartWindowSize(requestedSize, availabilityChartSource.matchCount);
+  currentSize = resolvedSize;
+  updateChartWindowControls(availabilityChartSource.matchCount, resolvedSize);
 
-  const tooltipAllowedForScope = chartScopeAllowsTooltip(size);
+  const tooltipAllowedForScope = chartScopeAllowsTooltip(resolvedSize);
   const showDots = tooltipAllowedForScope;
 
   if(!chartRow) return;
@@ -41515,22 +41565,23 @@ if(chartHeight){
 }
   chartBusy = true;
 
-  const chartSource = getChartSourceEntries(size);
+  const chartSource = resolvedSize === requestedSize
+    ? initialChartSource
+    : getChartSourceEntries(resolvedSize);
   const chartEntries = chartSource.entries;
   const chartMatchCount = chartEntries.length;
   const chartMatches = chartEntries.map(entry => entry.match);
   const cumulative=buildCumulativeRR(chartMatches);
-  const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, size);
+  const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, resolvedSize);
   const slice = chartWindow.slice;
   let visibleChartEntries = chartWindow.entries;
-  const chartAxisMatchCount = chartSource.isCurrentSessionScoped
-    ? chartMatchCount
-    : chartMatchCount;
-  const chartRenderSignature = `${chartSource.scopeLabel}|${size}|${chartMatchCount}|${slice.join(",")}`;
+  const chartAxisMatchCount = chartMatchCount;
+  const chartAxisTitle = buildChartAxisTitle(chartSource.scopeLabel || chartSource.seasonLabel || "Current Season");
+  const chartRenderSignature = `${chartSource.scopeLabel}|${resolvedSize}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
 
   const isUndo = isUndoAnimating === true;
-  const scopeChanged = String(size) !== String(previousSize);
+  const scopeChanged = String(resolvedSize) !== String(previousSize);
   const shouldAnimateIntro = Boolean(
     !isUndo && (
       animationMode === CHART_ANIMATION_MODE_EMPHASIS ||
@@ -41559,7 +41610,7 @@ if(chartHeight){
   PAD_LEFT = CHART_W * 0.055;
   PAD_RIGHT = CHART_W * 0.055;
   PAD_TOP = CHART_H * 0.08;
-  PAD_BOTTOM = CHART_H * 0.87;
+  PAD_BOTTOM = CHART_H * 0.78;
 
 // ========================
 // NO MATCH PLACEHOLDER
@@ -41570,7 +41621,7 @@ if(!chartEntries.length){
   chartRow.classList.remove("chart-intro-active");
   setChartTooltipSuppressed(true);
   forceChartIntroAnimation = false;
-  lastChartRenderSignature = `empty:${size}`;
+  lastChartRenderSignature = `empty:${resolvedSize}`;
 
   const min = -25;
   const max = 25;
@@ -41604,8 +41655,8 @@ text-anchor="end">${Math.round(val)}</text>`;
   }
 
   let xTicks = "";
-  const axisWindowSize = getChartAxisWindowSize(size, 0);
-  const normalizedSize = String(size || "5").toLowerCase();
+  const axisWindowSize = getChartAxisWindowSize(resolvedSize, 0);
+  const normalizedSize = String(resolvedSize || "5").toLowerCase();
 
   for(let i=0;i<=4;i++){
 
@@ -41658,6 +41709,7 @@ stroke-width="2"/>
 
 ${yTicks}
 ${xTicks}
+${chartAxisTitle}
 
 </svg>`;
 
@@ -41698,7 +41750,7 @@ ${xTicks}
   let segments="";
   let dots="";
   let rankMarkers="";
-  const introTiming = getChartIntroTiming(size, Math.max(0, points.length - 1), useContinuousIntro);
+  const introTiming = getChartIntroTiming(resolvedSize, Math.max(0, points.length - 1), useContinuousIntro);
   const introSegmentDurationMs = introTiming.segmentMs;
   const introFinalPauseMs = introTiming.finalPauseMs;
   const introFinalSegmentDurationMs = introTiming.finalSegmentMs;
@@ -41866,6 +41918,7 @@ stroke="#94a3b8" stroke-width="2"/>
 
 ${yTicks}
 ${xTicks}
+${chartAxisTitle}
 ${area}
 
 <line id="chartCrosshair"
@@ -42798,8 +42851,7 @@ async function initUserSession(){
   // ========================
   document.querySelectorAll(".graph-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".graph-btn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+      if (btn.disabled || btn.classList.contains("is-disabled")) return;
       const size = btn.dataset.size || "5";
       queueChartAnimationMode(
         size === "5"

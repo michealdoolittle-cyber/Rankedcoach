@@ -11652,6 +11652,14 @@ width:100%;
   font-size:19px;
 }
 
+.chart-row svg text.chart-axis-title{
+  fill:#94a3b8 !important;
+  font-size:14px !important;
+  font-weight:800 !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase;
+}
+
 .chart-row svg line[stroke="#94a3b8"]{
   stroke:#cbd5f5;
 }
@@ -21775,6 +21783,23 @@ textarea,
   border-radius:inherit;
   pointer-events:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);
+}
+
+.graph-btn:disabled,
+.graph-btn.is-disabled{
+  cursor:not-allowed !important;
+  opacity:.42 !important;
+  filter:grayscale(.85) saturate(.45) !important;
+  background:linear-gradient(180deg, rgba(51,65,85,.72), rgba(15,23,42,.84)) !important;
+  border-color:rgba(148,163,184,.22) !important;
+  color:#94a3b8 !important;
+  box-shadow:none !important;
+  transform:none !important;
+}
+
+.graph-btn:disabled::after,
+.graph-btn.is-disabled::after{
+  display:none !important;
 }
 
 .profile-panel.border-standard .profile-avatar-ring{
