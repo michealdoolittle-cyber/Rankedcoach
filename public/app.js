@@ -13198,9 +13198,12 @@ function buildXTicks(points, sliceLength, matchCount) {
 
   const visibleMatches = Math.min(matchCount, sliceLength - 1);
   const startGame = matchCount - visibleMatches + 1;
-  const isMobileTwentyWindow = isMobileLayoutViewport() && String(currentSize || "").toLowerCase() === "20";
+  const normalizedSize = String(currentSize || "").toLowerCase();
+  const isFiftyWindow = normalizedSize === "50";
+  const isLifetimeWindow = normalizedSize === "all";
+  const isMobileTwentyWindow = isMobileLayoutViewport() && normalizedSize === "20";
 
-  if (points[0] && !isMobileTwentyWindow) {
+  if (points[0] && !isMobileTwentyWindow && !isFiftyWindow) {
     xTicks += `
 <line x1="${points[0].x}" y1="${PAD_BOTTOM}"
       x2="${points[0].x}" y2="${PAD_BOTTOM + 4}"
@@ -13222,15 +13225,16 @@ function buildXTicks(points, sliceLength, matchCount) {
 
     let showLabel = true;
 
+    if (isLifetimeWindow) {
+      showLabel = game === matchCount;
+    }
+
     if (isMobileTwentyWindow) {
       showLabel = game === startGame || game === matchCount;
     }
 
-    if (visibleMatches === 50) {
-      showLabel =
-        game === matchCount ||
-        game === matchCount - 25 ||
-        game === matchCount - 50 + 1;
+    if (isFiftyWindow) {
+      showLabel = game === startGame || game === matchCount;
     }
 
     if (!showLabel) continue;
