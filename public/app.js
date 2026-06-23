@@ -11464,9 +11464,48 @@ function hideChartTooltip(){
     crosshair.setAttribute("opacity", "0");
   }
   chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
-    marker.classList.remove("is-tooltip-paired");
-    marker.removeAttribute("transform");
+    resetChartRankMarkerPosition(marker);
   });
+}
+
+function setChartRankMarkerPosition(marker, centerX, centerY) {
+  if (!marker || !Number.isFinite(centerX) || !Number.isFinite(centerY)) return;
+  const circle = marker.querySelector("circle");
+  const image = marker.querySelector("image");
+  const text = marker.querySelector(".chart-rank-arrow");
+  const arrowOffset = 19;
+
+  marker.classList.add("is-tooltip-paired");
+  marker.removeAttribute("transform");
+  circle?.setAttribute("cx", centerX);
+  circle?.setAttribute("cy", centerY);
+  image?.setAttribute("x", centerX - 10);
+  image?.setAttribute("y", centerY - 10);
+  image?.setAttribute("width", 20);
+  image?.setAttribute("height", 20);
+  text?.setAttribute("x", centerX - arrowOffset);
+  text?.setAttribute("y", centerY + 7);
+}
+
+function resetChartRankMarkerPosition(marker) {
+  if (!marker) return;
+  const circle = marker.querySelector("circle");
+  const image = marker.querySelector("image");
+  const text = marker.querySelector(".chart-rank-arrow");
+  const baseX = Number(marker.dataset?.baseX || circle?.getAttribute("cx"));
+  const baseY = Number(marker.dataset?.baseY || circle?.getAttribute("cy"));
+  if (!Number.isFinite(baseX) || !Number.isFinite(baseY)) return;
+
+  marker.classList.remove("is-tooltip-paired");
+  marker.removeAttribute("transform");
+  circle?.setAttribute("cx", baseX);
+  circle?.setAttribute("cy", baseY);
+  image?.setAttribute("x", baseX - 10);
+  image?.setAttribute("y", baseY - 10);
+  image?.setAttribute("width", 20);
+  image?.setAttribute("height", 20);
+  text?.setAttribute("x", baseX - 19);
+  text?.setAttribute("y", baseY + 7);
 }
 
 function animateChartTooltipPop() {
@@ -11511,14 +11550,12 @@ function positionTooltipToHit(hit, options = {}){
   const tipHeight = tip.offsetHeight || 32;
   const viewportPad = 10;
   svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
-    marker.classList.remove("is-tooltip-paired");
-    marker.removeAttribute("transform");
+    resetChartRankMarkerPosition(marker);
   });
   if (hasRankMarker) {
     const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
     const marker = Array.from(svg.querySelectorAll(".chart-rank-marker"))
       .find(item => String(item.dataset.matchIndex || "") === markerMatchIndex);
-    marker?.classList.add("is-tooltip-paired");
     const markerCircle = marker?.querySelector("circle");
     const markerCx = Number(markerCircle?.getAttribute("cx") || anchorCx);
     const markerCy = Number(markerCircle?.getAttribute("cy") || anchorCy);
@@ -11530,7 +11567,6 @@ function positionTooltipToHit(hit, options = {}){
     const markerRightWidthPx = markerRadiusPx;
     const pairGapPx = 12;
     const groupWidthPx = markerLeftWidthPx + markerRightWidthPx + pairGapPx + tipWidth;
-    const markerBaseScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
     const minTipLeft = viewportPad + tipWidth / 2;
     const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
     const minMarkerScreenX = Math.max(viewportPad + markerRadiusPx, svgRect.left + markerRadiusPx);
@@ -11538,19 +11574,17 @@ function positionTooltipToHit(hit, options = {}){
     const groupLeft = x - (groupWidthPx / 2);
     const desiredMarkerScreenX = Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
     const desiredLeft = Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));
-    const markerShiftPx = desiredMarkerScreenX - markerBaseScreenX;
-    const markerShiftX = markerShiftPx * (viewBox.width / svgRect.width);
-    let markerShiftY = 0;
+    const selectedMarkerCx = viewBox.x + (((desiredMarkerScreenX - svgRect.left) / svgRect.width) * viewBox.width);
+    let selectedMarkerCy = markerCy;
     let markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
     const tipHalfHeightChartUnits = ((tipHeight / 2) / svgRect.height) * viewBox.height;
     const selectedNeedsBelow = markerCy < anchorCy
       && (markerCy - tipHalfHeightChartUnits < PAD_TOP + 4 || markerScreenY - (tipHeight / 2) < viewportPad);
     if (selectedNeedsBelow) {
-      const selectedBelowCy = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32));
-      markerShiftY = selectedBelowCy - markerCy;
-      markerScreenY = svgRect.top + ((((markerCy + markerShiftY) - viewBox.y) / viewBox.height) * svgRect.height);
+      selectedMarkerCy = Math.min(PAD_BOTTOM - 18, Math.max(PAD_TOP + 18, anchorCy + 32));
+      markerScreenY = svgRect.top + (((selectedMarkerCy - viewBox.y) / viewBox.height) * svgRect.height);
     }
-    marker?.setAttribute("transform", `translate(${markerShiftX} ${markerShiftY})`);
+    setChartRankMarkerPosition(marker, selectedMarkerCx, selectedMarkerCy);
     tip.style.left = Math.max(minTipLeft, Math.min(maxTipLeft, desiredLeft)) + "px";
     tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, markerScreenY)) + "px";
     tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
@@ -13080,7 +13114,7 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
     : "";
 
   return `
-<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" style="${introStyle}">
+<g class="chart-rank-marker chart-rank-${direction}" data-match-index="${point.matchIndex}" data-base-x="${markerX}" data-base-y="${markerY}" style="${introStyle}">
   <circle cx="${markerX}" cy="${markerY}" r="14"></circle>
   <image href="${escapeHtml(point.rankChange.iconUrl)}"
     x="${markerX - 10}" y="${markerY - 10}"
@@ -15411,6 +15445,11 @@ function getChartHitFromTarget(target) {
     return element;
   }
 
+  const indexedHit = getChartHitFromDot(element);
+  if (indexedHit) {
+    return indexedHit;
+  }
+
   const siblingHit = element.previousElementSibling;
   if (siblingHit?.classList?.contains("rr-hit")) {
     return siblingHit;
@@ -15426,6 +15465,14 @@ function getChartDotFromHit(hit) {
   }
 
   return null;
+}
+
+function getChartHitFromDot(dot) {
+  if (!dot) return null;
+  const matchIndex = String(dot.dataset?.matchIndex || dot.dataset?.index || "");
+  if (!matchIndex) return null;
+  return Array.from(chartRow?.querySelectorAll?.(".rr-hit") || [])
+    .find(hit => String(hit.dataset?.matchIndex || hit.dataset?.index || "") === matchIndex) || null;
 }
 
 const AGENT_REEL_STRIP_RESET_DELAY_MS = 420;
@@ -42038,7 +42085,7 @@ function scheduleSelectedChartTooltipPosition() {
       return;
     }
     if(!selectedDot) return;
-    const hit = selectedDot.previousElementSibling;
+    const hit = getChartHitFromDot(selectedDot);
     if(hit) positionTooltipToHit(hit);
   });
 }
@@ -42087,7 +42134,7 @@ function autoSelectLatest(options = {}){
   const tooltipAllowed = chartScopeAllowsTooltip(currentSize);
 
   const gold = chartRow.querySelector(".final-end");
-  const hit  = gold?.previousElementSibling;
+  const hit  = getChartHitFromDot(gold);
 
   if(!gold || !hit) {
     setSelectedTimelineContext(null, { animate: false });
