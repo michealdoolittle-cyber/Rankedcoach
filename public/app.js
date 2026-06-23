@@ -11466,6 +11466,9 @@ function hideChartTooltip(){
   chartRow?.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
     resetChartRankMarkerPosition(marker);
   });
+  chartRow?.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
+    marker.classList.remove("is-near-selected");
+  });
 }
 
 function setChartRankMarkerPosition(marker, centerX, centerY) {
@@ -11497,6 +11500,7 @@ function resetChartRankMarkerPosition(marker) {
   if (!Number.isFinite(baseX) || !Number.isFinite(baseY)) return;
 
   marker.classList.remove("is-tooltip-paired");
+  marker.classList.remove("is-near-selected");
   marker.removeAttribute("transform");
   circle?.setAttribute("cx", baseX);
   circle?.setAttribute("cy", baseY);
@@ -11506,6 +11510,41 @@ function resetChartRankMarkerPosition(marker) {
   image?.setAttribute("height", 20);
   text?.setAttribute("x", baseX - 19);
   text?.setAttribute("y", baseY + 7);
+}
+
+function updateNearbyChartRankMarkerFade(svg, activeMarker, groupBounds, activeScreenY) {
+  if (!svg || !activeMarker || !groupBounds) return;
+  const sizeKey = String(currentSize || "").toLowerCase();
+  if (!["5", "10", "20"].includes(sizeKey) || !selectedDot) return;
+
+  const viewBox = svg.viewBox.baseVal;
+  const svgRect = svg.getBoundingClientRect();
+  const markerPadding = sizeKey === "20" ? 28 : 18;
+  const verticalWindow = 52;
+  const markerArrowOffset = 19;
+  const markerArrowWidth = 13;
+
+  svg.querySelectorAll(".chart-rank-marker").forEach(marker => {
+    if (marker === activeMarker) return;
+    const circle = marker.querySelector("circle");
+    const markerCx = Number(circle?.getAttribute("cx"));
+    const markerCy = Number(circle?.getAttribute("cy"));
+    if (!Number.isFinite(markerCx) || !Number.isFinite(markerCy)) return;
+
+    const markerRadius = Math.max(8, Number(circle?.getAttribute("r") || 14));
+    const markerScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
+    const markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
+    const markerScaleX = svgRect.width / viewBox.width;
+    const markerLeft = markerScreenX - ((markerRadius + markerArrowOffset + markerArrowWidth) * markerScaleX);
+    const markerRight = markerScreenX + (markerRadius * markerScaleX);
+    const overlapsHorizontally = markerRight >= groupBounds.left - markerPadding
+      && markerLeft <= groupBounds.right + markerPadding;
+    const overlapsVertically = Math.abs(markerScreenY - activeScreenY) <= verticalWindow;
+
+    if (overlapsHorizontally && overlapsVertically) {
+      marker.classList.add("is-near-selected");
+    }
+  });
 }
 
 function animateChartTooltipPop() {
@@ -11552,6 +11591,9 @@ function positionTooltipToHit(hit, options = {}){
   svg.querySelectorAll(".chart-rank-marker.is-tooltip-paired").forEach(marker => {
     resetChartRankMarkerPosition(marker);
   });
+  svg.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
+    marker.classList.remove("is-near-selected");
+  });
   if (hasRankMarker) {
     const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
     const marker = Array.from(svg.querySelectorAll(".chart-rank-marker"))
@@ -11586,6 +11628,11 @@ function positionTooltipToHit(hit, options = {}){
       markerScreenY = svgRect.top + (((selectedMarkerCy - viewBox.y) / viewBox.height) * svgRect.height);
     }
     setChartRankMarkerPosition(marker, selectedMarkerCx, selectedMarkerCy);
+    const selectedGroupBounds = {
+      left: Math.min(desiredMarkerScreenX - markerLeftWidthPx, desiredLeft - (tipWidth / 2)),
+      right: Math.max(desiredMarkerScreenX + markerRightWidthPx, desiredLeft + (tipWidth / 2))
+    };
+    updateNearbyChartRankMarkerFade(svg, marker, selectedGroupBounds, markerScreenY);
     tip.style.left = Math.max(minTipLeft, Math.min(maxTipLeft, desiredLeft)) + "px";
     tip.style.top = Math.max(viewportPad + tipHeight / 2, Math.min(window.innerHeight - viewportPad - tipHeight / 2, markerScreenY)) + "px";
     tip.style.setProperty("--chart-tooltip-base-transform", "translate(-50%, -50%)");
