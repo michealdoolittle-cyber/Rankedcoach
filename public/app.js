@@ -11467,7 +11467,7 @@ function hideChartTooltip(){
     resetChartRankMarkerPosition(marker);
   });
   chartRow?.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
-    marker.classList.remove("is-near-selected");
+    revealChartRankMarkerImmediately(marker);
   });
 }
 
@@ -11478,6 +11478,7 @@ function setChartRankMarkerPosition(marker, centerX, centerY) {
   const text = marker.querySelector(".chart-rank-arrow");
   const arrowOffset = 19;
 
+  revealChartRankMarkerImmediately(marker);
   marker.classList.add("is-tooltip-paired");
   marker.removeAttribute("transform");
   circle?.setAttribute("cx", centerX);
@@ -11500,7 +11501,7 @@ function resetChartRankMarkerPosition(marker) {
   if (!Number.isFinite(baseX) || !Number.isFinite(baseY)) return;
 
   marker.classList.remove("is-tooltip-paired");
-  marker.classList.remove("is-near-selected");
+  revealChartRankMarkerImmediately(marker);
   marker.removeAttribute("transform");
   circle?.setAttribute("cx", baseX);
   circle?.setAttribute("cy", baseY);
@@ -11510,6 +11511,15 @@ function resetChartRankMarkerPosition(marker) {
   image?.setAttribute("height", 20);
   text?.setAttribute("x", baseX - 19);
   text?.setAttribute("y", baseY + 7);
+}
+
+function revealChartRankMarkerImmediately(marker) {
+  if (!marker) return;
+  marker.classList.remove("is-near-selected");
+  marker.style.opacity = "1";
+  marker.style.visibility = "visible";
+  marker.style.animation = "none";
+  marker.style.transform = "scale(1)";
 }
 
 function updateNearbyChartRankMarkerFade(svg, activeMarker, groupBounds, activeScreenY) {
@@ -11568,7 +11578,7 @@ function positionTooltipToHit(hit, options = {}){
     resetChartRankMarkerPosition(marker);
   });
   svg.querySelectorAll(".chart-rank-marker.is-near-selected").forEach(marker => {
-    marker.classList.remove("is-near-selected");
+    revealChartRankMarkerImmediately(marker);
   });
   if (hasRankMarker) {
     const markerMatchIndex = String(hit.dataset.matchIndex || anchorEl.dataset.matchIndex || "");
