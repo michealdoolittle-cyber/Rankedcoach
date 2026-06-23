@@ -13258,7 +13258,8 @@ function buildChartAxisTitle(label = "Current Season") {
   const axisLabel = `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
   const y = Math.min(CHART_H - 6, PAD_BOTTOM + 48);
-  const legendX = x + 14;
+  const legendWidth = 138;
+  const legendX = Math.max(PAD_LEFT, CHART_W - PAD_RIGHT - legendWidth);
   const legendItems = [
     { label: "Poor", color: "#ef4444", x: 0 },
     { label: "Solid", color: "#eab308", x: 46 },
@@ -13270,13 +13271,13 @@ function buildChartAxisTitle(label = "Current Season") {
 </g>`).join("");
   return `
 <text class="chart-axis-title"
-      x="${x - 14}"
+      x="${x}"
       y="${y}"
       font-size="14"
       fill="#94a3b8"
       font-weight="800"
       letter-spacing=".08em"
-      text-anchor="end">${escapeHtml(axisLabel)}</text>
+      text-anchor="middle">${escapeHtml(axisLabel)}</text>
 <g class="chart-axis-legend">${legendItems}</g>`;
 }
 
