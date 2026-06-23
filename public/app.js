@@ -11561,7 +11561,7 @@ function revealChartRankMarkerImmediately(marker) {
 function updateNearbyChartRankMarkerFade(svg, activeMarker, groupBounds, activeScreenY) {
   if (!svg || !activeMarker) return;
   const sizeKey = String(currentSize || "").toLowerCase();
-  if (!["5", "10", "20"].includes(sizeKey) || !selectedDot) return;
+  if (!["5", "10", "20", "50"].includes(sizeKey) || !selectedDot) return;
 
   svg.querySelectorAll(".chart-rank-marker").forEach(marker => {
     if (marker === activeMarker) return;
