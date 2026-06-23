@@ -4303,7 +4303,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       }
     });
 
-  let topInsights = uniqueInsights.slice(0, 6);
+  let allInsights = uniqueInsights.slice();
+  let topInsights = allInsights.slice(0, 6);
   let primaryInsight = topInsights[0] || null;
   const matchConfidenceScore = clampPercent(safeNumber(orderedMatches.length) * 2.4);
   const logConfidenceScore = clampPercent(safeNumber(logs.length) * 4);
@@ -5437,7 +5438,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     coachingContext
   });
 
-  topInsights = topInsights.map(insight => polishCoachingInsight(insight, coachingCopyContext));
+  allInsights = allInsights.map(insight => polishCoachingInsight(insight, coachingCopyContext));
+  topInsights = allInsights.slice(0, 6);
   primaryInsight = topInsights[0] || null;
   coachDiagnosis = primaryInsight?.what || coachDiagnosis;
   coachRecommendation = primaryInsight?.action || coachRecommendation;
@@ -5520,6 +5522,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     coachingContext,
     evidenceLayer,
     insights: topInsights,
+    allInsights,
     focus,
     weekly,
     confidenceScore,
@@ -8094,6 +8097,49 @@ function getInsightMetaToneClass(kind = "", label = "", fallbackTone = "neutral"
   if (normalizedFallback === "warn") return "tone-warn";
   if (normalizedFallback === "down") return "tone-bad";
   return "tone-neutral";
+}
+
+function normalizeInsightFilterType(insight = {}) {
+  const rawType = String(insight?.type || "").trim().toLowerCase();
+  if (["bad", "needs", "needs-work", "need-work", "down", "negative"].includes(rawType)) return "bad";
+  if (["warn", "watch", "warning", "neutral", "steady"].includes(rawType)) return "warn";
+  if (["good", "strength", "strengths", "up", "positive"].includes(rawType)) return "good";
+
+  const rawTone = String(insight?.tone || insight?.signal || insight?.status || "").trim().toLowerCase();
+  if (["bad", "needs", "needs-work", "need-work", "down", "negative"].includes(rawTone)) return "bad";
+  if (["warn", "watch", "warning", "neutral", "steady"].includes(rawTone)) return "warn";
+  if (["good", "strength", "strengths", "up", "positive"].includes(rawTone)) return "good";
+
+  const combinedCopy = [
+    insight?.tag,
+    insight?.label,
+    insight?.title,
+    insight?.preview
+  ].map(value => String(value || "").toLowerCase()).join(" ");
+
+  if (combinedCopy.includes("needs work") || combinedCopy.includes("bad") || combinedCopy.includes("loss") || combinedCopy.includes("slipping")) return "bad";
+  if (combinedCopy.includes("strength") || combinedCopy.includes("strong") || combinedCopy.includes("good") || combinedCopy.includes("winning")) return "good";
+  return "warn";
+}
+
+function getInsightFilterLabel(type = "warn") {
+  const normalizedType = normalizeInsightFilterType({ type });
+  if (normalizedType === "bad") return "Needs Work";
+  if (normalizedType === "good") return "Strength";
+  return "Watch";
+}
+
+function getInsightDisplayPool(model = getPlayerModel()) {
+  const fullList = Array.isArray(model?.allInsights) ? model.allInsights : [];
+  const topList = Array.isArray(model?.insights) ? model.insights : [];
+  return fullList.length ? fullList : topList;
+}
+
+function getFilteredInsightDisplayList(filter = activeInsightFilter, model = getPlayerModel()) {
+  const normalizedFilter = String(filter || "all").trim().toLowerCase();
+  const sourceList = getInsightDisplayPool(model);
+  if (normalizedFilter === "all") return sourceList.slice();
+  return sourceList.filter(insight => normalizeInsightFilterType(insight) === normalizedFilter);
 }
 
 function applyInsightMetaPillTone(el, className = "tone-neutral") {
@@ -15289,12 +15335,7 @@ function bindInsightCards(){
   const cards = [...container.querySelectorAll(".insight-card:not(.insight-empty)")];
   const getRenderedInsights = () => {
     const model = getPlayerModel();
-    let list = (model?.insights || []).slice();
-    if (activeInsightFilter !== "all") {
-      list = list.filter(insight => insight.type === activeInsightFilter);
-    }
-    if (!list.length) list = (model?.insights || []).slice();
-    return list;
+    return getFilteredInsightDisplayList(activeInsightFilter, model);
   };
   const closeAll = () => {
     cards.forEach(c => c.classList.remove("open"));
@@ -44736,10 +44777,11 @@ function renderStatsBreakdownModel() {
 function renderInsightsModel() {
   const model = getPlayerModel();
   const topInsights = (model?.insights || []).slice(0, 6);
+  const insightDisplayPool = getInsightDisplayPool(model);
   const topWeeklyCandidate = model?.scoring?.weeklyCandidates?.[0] || null;
   const lockedFocus = getLockedWeeklyFocus();
 
-  cachedInsights = topInsights;
+  cachedInsights = insightDisplayPool.slice();
 
   if (lockedFocus) {
     activeInsightFocus = lockedFocus;
@@ -45729,18 +45771,14 @@ function renderInsightCardsModel() {
   if (!container) return;
 
   const model = getPlayerModel();
-  const allInsights = (model?.insights || []).slice();
+  const allInsights = getInsightDisplayPool(model);
   const filterLabels = {
     all: "Priority Trends",
     bad: "Needs Work",
     warn: "Watch",
     good: "Strengths"
   };
-  let list = allInsights.slice();
-
-  if (activeInsightFilter !== "all") {
-    list = list.filter(insight => insight.type === activeInsightFilter);
-  }
+  const list = getFilteredInsightDisplayList(activeInsightFilter, model);
 
   container.innerHTML = "";
 
@@ -45768,8 +45806,9 @@ function renderInsightCardsModel() {
   }
 
   list.forEach((insight, index) => {
+    const displayType = normalizeInsightFilterType(insight);
     const el = document.createElement("div");
-    el.className = `insight-card insight-${insight.type}`;
+    el.className = `insight-card insight-${displayType}`;
     el.style.position = "relative";
     el.dataset.insightIndex = String(index);
     const signature = getInsightSignature(insight);
@@ -45778,13 +45817,13 @@ function renderInsightCardsModel() {
     const confidence = getConfidenceLabel((safeNumber(insight.priority) * 0.65) + (safeNumber(model?.confidenceScore) * 0.35));
     const priorityTone = getInsightMetaToneClass("priority", priority);
     const confidenceTone = getInsightMetaToneClass("confidence", confidence);
-    const focusTone = getInsightMetaToneClass("focus", insight.focus || model?.focus || "Build Sample", insight.type || "neutral");
-    const showPriorityMeta = String(insight.type || "").toLowerCase() !== "good";
+    const focusTone = getInsightMetaToneClass("focus", insight.focus || model?.focus || "Build Sample", displayType);
+    const showPriorityMeta = displayType !== "good";
     el.innerHTML = `
       <div class="insight-header">
         <div class="insight-header-main">
           <div class="insight-title">${escapeHtml(insight.title)}</div>
-          <div class="insight-tag">${escapeHtml(String(insight.type || "").toUpperCase())}</div>
+          <div class="insight-tag">${escapeHtml(getInsightFilterLabel(displayType))}</div>
         </div>
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
