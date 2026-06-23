@@ -8127,10 +8127,48 @@ function getTrendSignalMediaLabel(item = {}) {
 function getTrendSignalBadgeSymbol(item = {}) {
   if (item?.symbol) return String(item.symbol);
   const tone = normalizeSignalTone(item?.tone);
-  if (tone === "up") return "âœ¦";
-  if (tone === "warn") return "â—†";
-  if (tone === "down") return "â–²";
-  return "â—ˆ";
+  if (tone === "up") return "Strength";
+  if (tone === "warn") return "Watch";
+  if (tone === "down") return "Needs Work";
+  return "Neutral";
+}
+
+function getTrendSignalSvgIcon(kind = "general", tone = "neutral") {
+  const normalizedKind = String(kind || "general").trim().toLowerCase();
+  const normalizedTone = normalizeSignalTone(tone);
+  const iconClass = `trend-signal-svg trend-signal-svg-${escapeHtml(normalizedKind)} tone-${escapeHtml(normalizedTone)}`;
+
+  if (normalizedKind === "logs") {
+    return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2V4Z"></path><path d="M8 4v14a2 2 0 0 0 2 2"></path><path d="M10 8h5M10 12h5M10 16h4"></path></svg>`;
+  }
+
+  if (normalizedKind === "split") {
+    return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path class="trend-split-up" d="M6 15l5-5h-3"></path><path class="trend-split-up" d="M11 10v3"></path><path class="trend-split-down" d="M18 9l-5 5h3"></path><path class="trend-split-down" d="M13 14v-3"></path></svg>`;
+  }
+
+  if (normalizedKind === "window") {
+    return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M8 3v4M16 3v4M4 10h16M8 14h2M12 14h2M16 14h2"></path></svg>`;
+  }
+
+  if (normalizedKind === "form") {
+    return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"></circle><path d="M12 8v5M8 12l4 2 4-2M7 19l5-4 5 4M5 21h14"></path></svg>`;
+  }
+
+  if (normalizedKind === "theme") {
+    return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19h16"></path><path d="M6 16l4-5 4 3 4-7"></path><path d="M6 16v3M10 11v8M14 14v5M18 7v12"></path></svg>`;
+  }
+
+  if (normalizedKind === "mood") {
+    if (normalizedTone === "up") {
+      return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v8"></path><path d="M10 19h6.5a2 2 0 0 0 1.9-1.4l1.2-4A2 2 0 0 0 17.7 11H15l.5-3.2A2 2 0 0 0 13.5 5L10 11v8Z"></path></svg>`;
+    }
+    if (normalizedTone === "down") {
+      return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 13V5"></path><path d="M14 5H7.5a2 2 0 0 0-1.9 1.4l-1.2 4A2 2 0 0 0 6.3 13H9l-.5 3.2A2 2 0 0 0 10.5 19L14 13V5Z"></path></svg>`;
+    }
+    return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><path d="M9 10h.01M15 10h.01M9 15h6"></path></svg>`;
+  }
+
+  return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 3v3M12 18v3M3 12h3M18 12h3"></path></svg>`;
 }
 
 function getTrendSignalIconMarkup(item = {}) {
@@ -8157,25 +8195,25 @@ function getTrendSignalIconMarkup(item = {}) {
   let icon = "";
   let iconKind = "general";
   if (combined.includes("log")) {
-    icon = "ðŸ““";
     iconKind = "logs";
+    icon = getTrendSignalSvgIcon(iconKind, item?.tone);
   } else if (combined.includes("split") || combined.includes("win") || combined.includes("loss")) {
-    icon = '<span class="trend-dual-icon"><span class="trend-up-icon">â†—</span><span class="trend-down-icon">â†˜</span></span>';
     iconKind = "split";
+    icon = getTrendSignalSvgIcon(iconKind, item?.tone);
   } else if (combined.includes("window") || combined.includes("calendar") || combined.includes("season")) {
-    icon = "ðŸ“…";
     iconKind = "window";
+    icon = getTrendSignalSvgIcon(iconKind, item?.tone);
   } else if (combined.includes("form") || combined.includes("focus") || combined.includes("tilt") || combined.includes("mood")) {
     const tone = normalizeSignalTone(item?.tone);
-    icon = combined.includes("form") ? "ðŸ§˜" : tone === "up" ? "ðŸ‘" : tone === "down" ? "ðŸ‘Ž" : "â–¬";
     iconKind = combined.includes("form") ? "form" : "mood";
+    icon = getTrendSignalSvgIcon(iconKind, tone);
   } else if (combined.includes("theme") || combined.includes("chart") || combined.includes("trend") || combined.includes("performance")) {
-    icon = "ðŸ“ˆ";
     iconKind = "theme";
+    icon = getTrendSignalSvgIcon(iconKind, item?.tone);
   } else if (mediaType === "text") {
     const tone = normalizeSignalTone(item?.tone);
-    icon = tone === "up" ? "ðŸ‘" : tone === "down" ? "ðŸ‘Ž" : "â–¬";
     iconKind = "mood";
+    icon = getTrendSignalSvgIcon(iconKind, tone);
   }
 
   if (!icon) return "";
@@ -10394,7 +10432,7 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-top-card",
-    title: "Needs Attention",
+    title: "Priority Trends",
     copy: "These are the reads most likely to matter right now. Use the filters to separate problems, watch items, and strengths."
   },
   {
@@ -10406,7 +10444,7 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-trends-card",
-    title: "Other Patterns",
+    title: "Trend Groups",
     copy: "These reads show supporting patterns from matches, logs, roles, and consistency."
   }
 ];
@@ -15184,15 +15222,16 @@ function bindInsightFilters() {
   const buttons = document.querySelectorAll(".insight-filter-btn");
   if (!buttons.length) return;
 
+  const allowedFilters = new Set(["all", "bad", "warn", "good"]);
+  if (!allowedFilters.has(activeInsightFilter)) {
+    activeInsightFilter = "all";
+  }
+
   buttons.forEach(button => {
+    button.classList.toggle("active", (button.dataset.filter || "all") === activeInsightFilter);
     button.onclick = () => {
       const nextFilter = button.dataset.filter || "all";
-
-      if (nextFilter === activeInsightFilter && nextFilter !== "all") {
-        activeInsightFilter = "all";
-      } else {
-        activeInsightFilter = nextFilter;
-      }
+      activeInsightFilter = allowedFilters.has(nextFilter) ? nextFilter : "all";
 
       buttons.forEach(btn => {
         btn.classList.toggle("active", btn.dataset.filter === activeInsightFilter);
@@ -44715,6 +44754,7 @@ function renderInsightsModel() {
   updateFocusProgressUI();
   updateInsightFocusUI();
   syncWeeklyFocus(topInsights);
+  bindInsightFilters();
   renderInsightCards();
   renderTrendBreakdown();
   ensureMobileInsightCardCarousel();
@@ -45689,32 +45729,37 @@ function renderInsightCardsModel() {
   if (!container) return;
 
   const model = getPlayerModel();
-  let list = (model?.insights || []).slice();
+  const allInsights = (model?.insights || []).slice();
+  const filterLabels = {
+    all: "Priority Trends",
+    bad: "Needs Work",
+    warn: "Watch",
+    good: "Strengths"
+  };
+  let list = allInsights.slice();
 
   if (activeInsightFilter !== "all") {
     list = list.filter(insight => insight.type === activeInsightFilter);
   }
 
-  if (!list.length) {
-    list = (model?.insights || []).slice();
-  }
-
   container.innerHTML = "";
 
   if (!list.length) {
+    const hasAnyInsights = allInsights.length > 0;
+    const filterLabel = filterLabels[activeInsightFilter] || "Priority Trends";
     const emptyCard = document.createElement("div");
     emptyCard.className = "insight-card insight-empty";
     emptyCard.innerHTML = `
       <div class="insight-header">
         <div class="insight-header-main">
-          <div class="insight-title">RankedCoach Needs More Games</div>
+          <div class="insight-title">${hasAnyInsights ? `No ${escapeHtml(filterLabel)} Insights Yet` : "RankedCoach Needs More Games"}</div>
           <div class="insight-tag">INFO</div>
         </div>
       </div>
-      <div class="insight-preview">This panel fills with ranked coaching reads after you import a few matches or save a few reflections.</div>
+      <div class="insight-preview">${hasAnyInsights ? "This filter is empty for the current profile window." : "This panel fills with ranked coaching reads after you import a few matches or save a few reflections."}</div>
       <div class="insight-block">
         <div class="insight-label">NEXT STEP</div>
-        Import a few more matches or save a few reflections so RankedCoach can find a real pattern.
+        ${hasAnyInsights ? "Use All to review the available reads, or keep importing matches and logs until this group has enough signal." : "Import a few more matches or save a few reflections so RankedCoach can find a real pattern."}
       </div>
     `;
     container.appendChild(emptyCard);

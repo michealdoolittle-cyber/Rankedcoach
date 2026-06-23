@@ -49639,6 +49639,67 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-rank-icon{
   transform:none !important;
   z-index:6 !important;
 }
+
+/* Final desktop insights polish: category tags and trend icons must stay readable across themes. */
+#page-insights .insights-top-card .insight-card.insight-bad .insight-tag{
+  border-color:rgba(239,68,68,.62) !important;
+  background:linear-gradient(180deg, rgba(127,29,29,.52), rgba(15,23,42,.92)) !important;
+  color:#fecaca !important;
+  box-shadow:0 0 14px rgba(239,68,68,.18) !important;
+}
+
+#page-insights .insights-top-card .insight-card.insight-warn .insight-tag{
+  border-color:rgba(250,204,21,.62) !important;
+  background:linear-gradient(180deg, rgba(113,63,18,.48), rgba(15,23,42,.92)) !important;
+  color:#fde68a !important;
+  box-shadow:0 0 14px rgba(250,204,21,.16) !important;
+}
+
+#page-insights .insights-top-card .insight-card.insight-good .insight-tag{
+  border-color:rgba(34,197,94,.58) !important;
+  background:linear-gradient(180deg, rgba(20,83,45,.5), rgba(15,23,42,.92)) !important;
+  color:#bbf7d0 !important;
+  box-shadow:0 0 14px rgba(34,197,94,.16) !important;
+}
+
+#page-insights .trend-signal-media.has-icon{
+  width:52px !important;
+  height:40px !important;
+  border-radius:12px !important;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255,255,255,.08), transparent 42%),
+    rgba(15,23,42,.92) !important;
+}
+
+#page-insights .trend-signal-icon{
+  display:grid !important;
+  place-items:center !important;
+  width:100% !important;
+  height:100% !important;
+  color:#cbd5e1 !important;
+  line-height:1 !important;
+}
+
+#page-insights .trend-signal-svg{
+  width:27px !important;
+  height:27px !important;
+  display:block !important;
+  fill:none !important;
+  stroke:currentColor !important;
+  stroke-width:1.9 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+}
+
+#page-insights .trend-signal-media[data-icon-kind="logs"] .trend-signal-icon{ color:#93c5fd !important; }
+#page-insights .trend-signal-media[data-icon-kind="window"] .trend-signal-icon{ color:#c4b5fd !important; }
+#page-insights .trend-signal-media[data-icon-kind="form"] .trend-signal-icon{ color:#f9a8d4 !important; }
+#page-insights .trend-signal-media[data-icon-kind="theme"] .trend-signal-icon{ color:#67e8f9 !important; }
+#page-insights .trend-signal-media[data-icon-kind="mood"] .trend-signal-svg.tone-up{ color:#86efac !important; }
+#page-insights .trend-signal-media[data-icon-kind="mood"] .trend-signal-svg.tone-warn{ color:#fde68a !important; }
+#page-insights .trend-signal-media[data-icon-kind="mood"] .trend-signal-svg.tone-down{ color:#fca5a5 !important; }
+#page-insights .trend-signal-svg .trend-split-up{ stroke:#22c55e !important; }
+#page-insights .trend-signal-svg .trend-split-down{ stroke:#ef4444 !important; }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
   grid-template-columns:repeat(3,minmax(0,1fr)) !important;
   grid-template-rows:minmax(318px,1.16fr) minmax(0,1.84fr) !important;
