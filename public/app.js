@@ -13258,15 +13258,26 @@ function buildChartAxisTitle(label = "Current Season") {
   const axisLabel = `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
   const y = Math.min(CHART_H - 6, PAD_BOTTOM + 48);
+  const legendX = x + 14;
+  const legendItems = [
+    { label: "Poor", color: "#ef4444", x: 0 },
+    { label: "Solid", color: "#eab308", x: 46 },
+    { label: "Carry", color: "#22c55e", x: 96 }
+  ].map((item) => `
+<g class="chart-axis-legend-item" transform="translate(${legendX + item.x} ${y - 4})">
+  <circle class="chart-axis-legend-dot" cx="0" cy="0" r="4.5" fill="${item.color}"></circle>
+  <text class="chart-axis-legend-text" x="8" y="4">${escapeHtml(item.label)}</text>
+</g>`).join("");
   return `
 <text class="chart-axis-title"
-      x="${x}"
+      x="${x - 14}"
       y="${y}"
       font-size="14"
       fill="#94a3b8"
       font-weight="800"
       letter-spacing=".08em"
-      text-anchor="middle">${escapeHtml(axisLabel)}</text>`;
+      text-anchor="end">${escapeHtml(axisLabel)}</text>
+<g class="chart-axis-legend">${legendItems}</g>`;
 }
 
 function buildYTicks(minTick, maxTick, y) {

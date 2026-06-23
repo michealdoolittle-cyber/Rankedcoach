@@ -11660,6 +11660,24 @@ width:100%;
   text-transform:uppercase;
 }
 
+.chart-row svg .chart-axis-legend{
+  pointer-events:none;
+}
+
+.chart-row svg .chart-axis-legend-dot{
+  stroke:rgba(2,6,23,.95);
+  stroke-width:1.5;
+  filter:drop-shadow(0 1px 4px rgba(0,0,0,.35));
+}
+
+.chart-row svg text.chart-axis-legend-text{
+  fill:#cbd5e1 !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+  letter-spacing:.04em !important;
+  text-transform:uppercase;
+}
+
 .chart-row svg line[stroke="#94a3b8"]{
   stroke:#cbd5f5;
 }
