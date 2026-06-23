@@ -11513,37 +11513,13 @@ function resetChartRankMarkerPosition(marker) {
 }
 
 function updateNearbyChartRankMarkerFade(svg, activeMarker, groupBounds, activeScreenY) {
-  if (!svg || !activeMarker || !groupBounds) return;
+  if (!svg || !activeMarker) return;
   const sizeKey = String(currentSize || "").toLowerCase();
   if (!["5", "10", "20"].includes(sizeKey) || !selectedDot) return;
 
-  const viewBox = svg.viewBox.baseVal;
-  const svgRect = svg.getBoundingClientRect();
-  const markerPadding = sizeKey === "20" ? 28 : 18;
-  const verticalWindow = 52;
-  const markerArrowOffset = 19;
-  const markerArrowWidth = 13;
-
   svg.querySelectorAll(".chart-rank-marker").forEach(marker => {
     if (marker === activeMarker) return;
-    const circle = marker.querySelector("circle");
-    const markerCx = Number(circle?.getAttribute("cx"));
-    const markerCy = Number(circle?.getAttribute("cy"));
-    if (!Number.isFinite(markerCx) || !Number.isFinite(markerCy)) return;
-
-    const markerRadius = Math.max(8, Number(circle?.getAttribute("r") || 14));
-    const markerScreenX = svgRect.left + (((markerCx - viewBox.x) / viewBox.width) * svgRect.width);
-    const markerScreenY = svgRect.top + (((markerCy - viewBox.y) / viewBox.height) * svgRect.height);
-    const markerScaleX = svgRect.width / viewBox.width;
-    const markerLeft = markerScreenX - ((markerRadius + markerArrowOffset + markerArrowWidth) * markerScaleX);
-    const markerRight = markerScreenX + (markerRadius * markerScaleX);
-    const overlapsHorizontally = markerRight >= groupBounds.left - markerPadding
-      && markerLeft <= groupBounds.right + markerPadding;
-    const overlapsVertically = Math.abs(markerScreenY - activeScreenY) <= verticalWindow;
-
-    if (overlapsHorizontally && overlapsVertically) {
-      marker.classList.add("is-near-selected");
-    }
+    marker.classList.add("is-near-selected");
   });
 }
 
@@ -11613,7 +11589,7 @@ function positionTooltipToHit(hit, options = {}){
     const maxTipLeft = window.innerWidth - viewportPad - tipWidth / 2;
     const minMarkerScreenX = Math.max(viewportPad + markerRadiusPx, svgRect.left + markerRadiusPx);
     const maxMarkerScreenX = Math.min(window.innerWidth - viewportPad - markerRadiusPx, svgRect.right - markerRadiusPx);
-    const selectedGroupOffsetPx = String(currentSize || "").toLowerCase() === "20" ? -24 : 0;
+    const selectedGroupOffsetPx = 0;
     const groupLeft = x - (groupWidthPx / 2) + selectedGroupOffsetPx;
     const desiredMarkerScreenX = Math.max(minMarkerScreenX, Math.min(maxMarkerScreenX, groupLeft + markerLeftWidthPx));
     const desiredLeft = Math.max(minTipLeft, Math.min(maxTipLeft, groupLeft + markerLeftWidthPx + markerRightWidthPx + pairGapPx + (tipWidth / 2)));

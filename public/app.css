@@ -17353,7 +17353,7 @@ transition:opacity .16s ease, filter .16s ease;
 }
 
 .chart-rank-marker.is-near-selected:not(.is-tooltip-paired){
-opacity:.28;
+opacity:0;
 filter:drop-shadow(0 1px 4px rgba(0,0,0,.3)) saturate(.65);
 }
 
