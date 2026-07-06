@@ -36687,9 +36687,15 @@ function bindEvents(){
   profileAvatarAnchor?.addEventListener("pointerenter", () => {
     if (isMobileLayoutViewport()) return;
     profileAvatarWrap?.classList.add("is-hover-highlight");
+    profileAvatarWrap?.style.setProperty("outline", "2px solid var(--profile-ring-border, #ff4655)", "important");
+    profileAvatarWrap?.style.setProperty("outline-offset", "3px", "important");
+    profileAvatarWrap?.style.setProperty("filter", "drop-shadow(0 0 12px var(--profile-ring-border, #ff4655))", "important");
   });
   profileAvatarAnchor?.addEventListener("pointerleave", () => {
     profileAvatarWrap?.classList.remove("is-hover-highlight");
+    profileAvatarWrap?.style.removeProperty("outline");
+    profileAvatarWrap?.style.removeProperty("outline-offset");
+    profileAvatarWrap?.style.removeProperty("filter");
   });
   profileSwitcher?.addEventListener("pointerenter", () => {
     if (profileHoverCloseTimer) window.clearTimeout(profileHoverCloseTimer);
