@@ -70,3 +70,36 @@ Claude requested full surrounding strings for these rows before rewriting them. 
 - `public/app.js:4650` — `detail: avgKast ? "This checks whether you are surviving, trading, assisting, or converting enough rounds." : "No data",`
 - `public/app.js:4749` — `detail: "This uses Riot damage-per-round data to estimate your round-by-round damage impact."`
 - `public/app.js:4755` — `detail: bestAgent ? "Your best repeated agent gives the clearest picture of what is working in ranked." : "The app needs more repeated games on the same agents before it can identify a reliable pick."`
+
+## Approved Rows Implemented On 2026-07-06 (Round 2)
+
+Full-context rewrite, cleared after Codex pasted the surrounding sentences above. Applied in `public/app.js` with template literal interpolation preserved:
+
+- `public/app.js:2077` — replace with: `` `${matches} matches is enough to point you in a direction, but not enough to call the final verdict yet.` ``
+- `public/app.js:2104` — replace with: `` `${lowerSubject} needs a few more matches before the read is fair.` ``
+- `public/app.js:2773` — replace with: `"You haven't logged enough low-rated games yet to spot a real pattern."`
+- `public/app.js:2842` — replace with: `` `${mapName} needs a few more matches before this is a fair map read.` ``
+- `public/app.js:2884` — replace with: `` `${agentName} needs a few more games before this is a fair agent read.` ``
+- `public/app.js:4096` — replace with: `"Import matches, then add 2-3 reflection logs so your first coaching read has more to work with."`
+- `public/app.js:4350` — replace with: `"Log a few more matches and we'll sharpen this diagnosis."`
+- `public/app.js:4650` — replace with: `"Checks whether you're surviving, trading, assisting, or converting enough rounds."`
+- `public/app.js:4749` — replace with: `"Uses Riot's damage-per-round data to estimate your round-by-round impact."`
+- `public/app.js:4755` — replace with (both branches):
+  - truthy branch: `"Your best repeated agent gives the clearest picture of what's working in ranked."`
+  - falsy branch: `"Play the same agent a few more times so we can spot what's actually working."`
+
+## `app.js:4377` "Minimal confidence" — Resolved
+
+Confirmed **user-facing**: this is the `detail` text under the weekly coaching insight cards (primary/secondary/tertiary), shown right next to a High/Medium/Low confidence label the player sees. Not a backend-only string — do not strike it from the audit.
+
+Note: the same "Minimal confidence because…" pattern appears **three times**, not once — the audit only caught one. All three were fixed:
+
+- `public/app.js:4377` (primary card) — replace with: `"Low confidence — not enough repeated reflection logs yet."`
+- `public/app.js:4383` (secondary card) — replace with: `"Low confidence — weak-rating data is still sparse."`
+- `public/app.js:4389` (tertiary card) — replace with: `"Low confidence — mood and tilt mentions are still limited."`
+
+Reasoning: keeps the word "confidence" (per prior direction not to hide the concept from players) but drops "Minimal" for the more standard High/Medium/Low vocabulary already used on the label right next to it, and leads with the plain-English reason instead of a fragment.
+
+## Task 6 Documentation Gap — Completed
+
+`COACH_READINESS_UNLOCKS` / `renderCoachReadinessUI()` (public/app.js ~9855–9921) implements Task 6 (progress/building-state UI) and shipped in commit `63d13f5` ("Build secondary verification scaffolds"). The documentation gap is now backfilled in `notes/progress-ui.md`, including replaced placeholders, unlock thresholds, and the locked-state copy-pass status.

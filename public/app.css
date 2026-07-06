@@ -51206,7 +51206,7 @@ html body .profile-cleanup-copy{
 
 html body .profile-delete-confirm-actions{
   display:grid !important;
-  grid-template-columns:1fr 1.15fr !important;
+  grid-template-columns:1.15fr 1fr !important;
   gap:10px !important;
   margin-top:4px !important;
 }

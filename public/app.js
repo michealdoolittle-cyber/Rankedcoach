@@ -2074,7 +2074,7 @@ function getCoachingSampleTone(evidenceLayer = {}) {
     return {
       label: "Developing sample",
       short: `${matches} matches is developing.`,
-      sentence: `${matches} matches is enough to guide the next block, but not enough to overrule future results.`
+      sentence: `${matches} matches is enough to point you in a direction, but not enough to call the final verdict yet.`
     };
   }
   return {
@@ -2101,7 +2101,7 @@ function getWinrateCoachingSentence(subject = "This", winrate = 0, sample = 0, o
   const band = getWinrateBand(wr, count);
   const lowerSubject = String(subject || "this").trim() || "this";
   const target = options?.target || "50%";
-  if (band === "none") return `${lowerSubject} needs more matches before the read is fair.`;
+  if (band === "none") return `${lowerSubject} needs a few more matches before the read is fair.`;
   if (band === "early") return `${lowerSubject} is at ${wr}% WR, but ${count} match${count === 1 ? "" : "es"} is too small to judge hard.`;
   if (band === "strong") return `${lowerSubject} is winning at ${wr}% WR across ${count} matches, so keep testing what is working.`;
   if (band === "working") return `${lowerSubject} is above ${target} at ${wr}% WR, but the goal is to make the wins repeatable.`;
@@ -2770,7 +2770,7 @@ function polishWeeklyCandidate(candidate = {}, context = {}) {
     output.label = output.label.replace(/^Weakest self ratings/i, "Lowest self-rated focus");
     output.read = output.read && !/not enough/i.test(output.read)
       ? "This is where the player is rating their own games lowest, so it is a practical place to review first."
-      : "There is not enough low-rating log volume yet to isolate a fair self-rating pattern.";
+      : "You haven't logged enough low-rated games yet to spot a real pattern.";
   }
 
   if (key === "losses") {
@@ -2839,7 +2839,7 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 2) {
       return {
-        diagnosis: `${mapName} needs more matches before this is a fair map read.`,
+        diagnosis: `${mapName} needs a few more matches before this is a fair map read.`,
         emphasis: "One game can point at a problem, but it should not decide the whole map plan.",
         recommendation: `Play one more ${mapName} match and log what side felt harder.`
       };
@@ -2881,7 +2881,7 @@ function buildCoachRecommendation(kind, entity = {}, model = {}) {
 
     if (sample < 3) {
       return {
-        diagnosis: `${agentName} needs more games before this is a fair agent read.`,
+        diagnosis: `${agentName} needs a few more games before this is a fair agent read.`,
         emphasis: "Do not overreact to a tiny sample.",
         recommendation: `Play ${agentName} when the map fits, then check whether the next few games repeat the same pattern.`
       };
@@ -4093,7 +4093,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       preview: "Import recent competitive matches to unlock Riot-based coaching.",
       what: "The app needs match history before it can give useful coaching advice.",
       why: "All primary insight systems are derived from Riot-safe match data and your reflection logs.",
-      action: "Import matches, then add 2-3 reflection logs to unlock a stronger first coaching cycle.",
+      action: "Import matches, then add 2-3 reflection logs so your first coaching read has more to work with.",
       sources: ["System"],
       focus: "Match Import",
       category: "performance",
@@ -4347,7 +4347,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const confidenceFormula = `${evidenceLayer.sample.explanation} Confidence Rating looks at match volume, reflection logs, and stat coverage before the app decides how hard to trust a read.`;
   const priorityScore = clampPercent(primaryInsight?.priority || (hasMatchData ? ((100 - Math.round(overview.winrate || 50)) + (overview.kd < 1 ? 20 : 0)) : 0));
   const priorityLabel = getPriorityLabel(priorityScore);
-  let coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before it can report a sharper diagnosis.";
+  let coachDiagnosis = primaryInsight?.what || "Log a few more matches and we'll sharpen this diagnosis.";
   let coachRecommendation = primaryInsight?.action || "Import another block of matches and keep one weekly focus category active until the trend changes.";
 
   const focus = primaryInsight?.focus
@@ -4374,19 +4374,19 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         label: weeklyTopFocusEntry ? (weeklyTopFocusEntry[1] >= 4 ? "High" : weeklyTopFocusEntry[1] >= 2 ? "Medium" : "Low") : "Low",
         detail: weeklyTopFocusEntry
           ? `${weeklyTopFocusEntry[1]} reflection logs repeated this focus category this week. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Riot API trend support" : ""}, and coaching-model pattern matching.`
-          : "Minimal confidence because there are not enough repeated reflection logs yet."
+          : "Low confidence — not enough repeated reflection logs yet."
       },
       secondary: {
         label: weeklyLowRatedLogs.length >= 3 ? "High" : weeklyLowRatedLogs.length >= 2 ? "Medium" : "Low",
         detail: weeklyLowRatedLogs.length
           ? `${weeklyLowRatedLogs.length} low-rated reflection logs support this weekly weakness. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Riot API match outcomes" : ""}, and coaching-model weakness grouping.`
-          : "Minimal confidence because weak self-rating data is still sparse."
+          : "Low confidence — weak-rating data is still sparse."
       },
       tertiary: {
         label: weeklyTopMoodEntry && weeklyTopMoodEntry[1] >= 4 ? "High" : weeklyTopMoodEntry && weeklyTopMoodEntry[1] >= 2 ? "Medium" : "Low",
         detail: weeklyTopMoodEntry
           ? `${weeklyTopMoodEntry[1]} mood mentions point to this weekly pattern. Confidence driven by Logging, behavioral inference from the coaching model${weeklyOrderedMatches.length ? ", and Riot API recency context" : ""}.`
-          : "Minimal confidence because mood and tilt mentions are still limited."
+          : "Low confidence — mood and tilt mentions are still limited."
       }
     }
   };
@@ -4647,7 +4647,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Round Impact",
       kicker: "KAST Stability",
       value: avgKast ? `${Math.round(avgKast)}% KAST` : "No data",
-      detail: avgKast ? "This checks whether you are surviving, trading, assisting, or converting enough rounds." : "No data",
+      detail: avgKast ? "Checks whether you're surviving, trading, assisting, or converting enough rounds." : "No data",
       read: avgKast >= 75
         ? "Your round involvement is strong enough to support a stable profile."
         : "Your round involvement is low enough that the app should keep checking trades, assists, and survival.",
@@ -4746,13 +4746,13 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       selectionScore: !hasMatchData ? 18 : overview.adr < 185 ? 88 : overview.adr >= 215 ? 64 : 55,
       label: "Average ADR",
       value: `${Math.round(overview.adr || 0)} ADR`,
-      detail: "This uses Riot damage-per-round data to estimate your round-by-round damage impact."
+      detail: "Uses Riot's damage-per-round data to estimate your round-by-round impact."
     },
     {
       selectionScore: bestAgent?.matchesPlayed >= 3 ? 82 : 42,
       label: "Agent Selection",
       value: bestAgent ? `${bestAgent.agent} ${Math.round(bestAgent.winrate)}% WR` : "No stable agent yet",
-      detail: bestAgent ? "Your best repeated agent gives the clearest picture of what is working in ranked." : "The app needs more repeated games on the same agents before it can identify a reliable pick."
+      detail: bestAgent ? "Your best repeated agent gives the clearest picture of what's working in ranked." : "Play the same agent a few more times so we can spot what's actually working."
     },
     {
       selectionScore: primaryInsight ? 76 : 40,
@@ -10819,8 +10819,8 @@ function ensureProfileDeleteConfirmModal() {
       <h2 id="profileDeleteConfirmTitle">Remove this profile?</h2>
       <p id="profileDeleteConfirmCopy">This removes the selected profile from RankedCoach on this device.</p>
       <div class="profile-delete-confirm-actions">
-        <button class="profile-delete-confirm-cancel" type="button">Cancel</button>
         <button class="profile-delete-confirm-remove" type="button">Remove Profile</button>
+        <button class="profile-delete-confirm-cancel" type="button">Cancel</button>
       </div>
     </div>
   `;
