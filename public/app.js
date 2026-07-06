@@ -9900,27 +9900,60 @@ function getReadinessLockedMarkup(required, label) {
 
 function renderCoachReadinessUI() {
   const card = document.getElementById("coachReadinessCard");
-  if (!card) return;
+  const widget = document.getElementById("profileRatingWidget");
+  if (!card && !widget) return;
   const model = getCoachReadinessModel();
-  const value = document.getElementById("coachReadinessValue");
-  const copy = document.getElementById("coachReadinessCopy");
-  const fill = document.getElementById("coachReadinessFill");
-  const unlocks = document.getElementById("coachReadinessUnlocks");
 
-  card.dataset.readinessPercent = String(model.percent);
-  card.classList.toggle("is-ready", model.percent >= 100);
-  if (value) value.textContent = `${model.percent}%`;
-  if (copy) copy.textContent = model.copy;
-  if (fill) fill.style.width = `${model.percent}%`;
-  if (unlocks) {
-    unlocks.innerHTML = model.unlocks.map(item => `
-      <div class="coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
+  const writeUnlocks = (target) => {
+    if (!target) return;
+    target.innerHTML = model.unlocks.map(item => `
+      <div class="profile-rating-unlock coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
         <span>${escapeHtml(item.label)}</span>
         <strong>${item.complete ? "Unlocked" : `${model.matchCount}/${item.required}`}</strong>
         <div class="coach-readiness-mini-bar"><span style="width:${item.progress}%"></span></div>
       </div>
     `).join("");
+  };
+
+  if (card) {
+    const value = document.getElementById("coachReadinessValue");
+    const copy = document.getElementById("coachReadinessCopy");
+    const fill = document.getElementById("coachReadinessFill");
+    const unlocks = document.getElementById("coachReadinessUnlocks");
+
+    card.dataset.readinessPercent = String(model.percent);
+    card.classList.toggle("is-ready", model.percent >= 100);
+    if (value) value.textContent = `${model.percent}%`;
+    if (copy) copy.textContent = model.copy;
+    if (fill) fill.style.width = `${model.percent}%`;
+    writeUnlocks(unlocks);
   }
+
+  if (widget) {
+    const widgetValue = document.getElementById("profileRatingValue");
+    const dropdownValue = document.getElementById("profileRatingDropdownValue");
+    const copy = document.getElementById("profileRatingCopy");
+    const fill = document.getElementById("profileRatingFill");
+    const unlocks = document.getElementById("profileRatingUnlocks");
+    widget.dataset.readinessPercent = String(model.percent);
+    widget.classList.toggle("is-ready", model.percent >= 100);
+    if (widgetValue) widgetValue.textContent = `${model.percent}%`;
+    if (dropdownValue) dropdownValue.textContent = `${model.percent}%`;
+    if (copy) copy.textContent = model.copy;
+    if (fill) fill.style.width = `${model.percent}%`;
+    writeUnlocks(unlocks);
+  }
+}
+
+function setProfileRatingDropdownOpen(open) {
+  const widget = document.getElementById("profileRatingWidget");
+  const dropdown = document.getElementById("profileRatingDropdown");
+  if (!widget || !dropdown) return;
+  const shouldOpen = Boolean(open);
+  dropdown.hidden = !shouldOpen;
+  dropdown.classList.toggle("open", shouldOpen);
+  widget.classList.toggle("open", shouldOpen);
+  widget.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
 }
 
 function openHistoryImportModal(startStep = 0) {
@@ -36264,6 +36297,22 @@ function bindEvents(){
   });
   document.getElementById("historyImportModal")?.addEventListener("click", (event) => {
     if (event.target === document.getElementById("historyImportModal")) closeHistoryImportModal(false);
+  });
+  document.getElementById("profileRatingWidget")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropdown = document.getElementById("profileRatingDropdown");
+    setProfileRatingDropdownOpen(dropdown?.hidden !== false);
+  });
+  document.addEventListener("click", (event) => {
+    const anchor = document.querySelector(".profile-rating-anchor");
+    const dropdown = document.getElementById("profileRatingDropdown");
+    if (!anchor || !dropdown || dropdown.hidden) return;
+    if (anchor.contains(event.target)) return;
+    setProfileRatingDropdownOpen(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setProfileRatingDropdownOpen(false);
   });
 
   syncLogFocusSelectOptions();

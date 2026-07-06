@@ -690,6 +690,27 @@ RIOT PROFILE MODAL
           </div>
         </div>
 
+        <div class="profile-rating-anchor">
+          <button class="profile-rating-widget" id="profileRatingWidget" type="button" aria-haspopup="true" aria-expanded="false" title="Profile Rating">
+            <span id="profileRatingValue">0%</span>
+            <small>Profile Rating</small>
+          </button>
+          <div class="profile-rating-dropdown" id="profileRatingDropdown" hidden>
+            <div class="profile-rating-dropdown-head">
+              <div>
+                <span class="profile-rating-kicker">Building Profile</span>
+                <strong>Profile Rating</strong>
+              </div>
+              <span class="profile-rating-dropdown-score" id="profileRatingDropdownValue">0%</span>
+            </div>
+            <div class="profile-rating-copy" id="profileRatingCopy">Add matches to unlock stronger reads.</div>
+            <div class="profile-rating-meter" aria-label="Profile rating progress">
+              <span id="profileRatingFill"></span>
+            </div>
+            <div class="profile-rating-unlocks" id="profileRatingUnlocks"></div>
+          </div>
+        </div>
+
         <div class="profile-divider"></div>
 
         <div class="profile-info">
@@ -702,7 +723,6 @@ RIOT PROFILE MODAL
             <span class="label">Starting RR:</span>
             <span class="value" id="profileStartingRR">0</span>
           </div>
-          <a id="profileTrackerLink" class="profile-tracker-link" href="#" target="_blank" rel="noopener noreferrer" hidden>View Tracker.gg Profile</a>
         </div>
 
         <div class="profile-divider"></div>
@@ -752,6 +772,7 @@ RIOT PROFILE MODAL
           <div id="profileDropdown" class="profile-dropdown profile-dropdown-pills" aria-label="Profile menu">
             <div class="profile-menu-user">
               <div id="profileDropdownIdentity" class="profile-menu-name">Guest User</div>
+              <a id="profileTrackerLink" class="profile-tracker-link profile-menu-tracker-link" href="#" target="_blank" rel="noopener noreferrer" hidden>View Tracker.gg Profile</a>
             </div>
             <div class="profile-menu-section">
               <div class="profile-menu-label">Account</div>
@@ -1014,23 +1035,6 @@ STATS PAGE
 
     <section id="page-home" class="page active">
       <div class="home-layout dashboard-grid">
-
-        <div class="card coach-readiness-card" id="coachReadinessCard">
-          <div class="card-header">
-            <div>
-              <span class="card-pill">Building Profile</span>
-              <div class="card-title">Coach Readiness</div>
-              <div class="card-sub" id="coachReadinessCopy">Add matches to unlock stronger reads.</div>
-            </div>
-            <div class="coach-readiness-score" id="coachReadinessValue">0%</div>
-          </div>
-          <div class="coach-readiness-meter" aria-label="Coach readiness progress">
-            <div class="coach-readiness-bar">
-              <span id="coachReadinessFill"></span>
-            </div>
-          </div>
-          <div class="coach-readiness-unlocks" id="coachReadinessUnlocks"></div>
-        </div>
 
         <!-- Weekly Coaching Focus -->
         <div class="card weekly-focus-card">
@@ -2080,6 +2084,6 @@ stroke-linejoin="round"/>
   <script src="schema/match-record.js?v=20260705-build-brief-v3-01"></script>
   <script src="integrations/riot-sync.js?v=20260705-build-brief-v3-01"></script>
   <script src="themes/premium-themes.js?v=20260705-build-brief-v3-01"></script>
-  <script type="module" src="app.js?v=20260706-copy-01"></script>
+  <script type="module" src="app.js?v=20260706-profile-rating-01"></script>
 </body>
 </html>

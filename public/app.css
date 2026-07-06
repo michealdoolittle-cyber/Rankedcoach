@@ -50830,3 +50830,203 @@ html body #profileRankIcon.profile-rank-icon{
     padding:8px 10px;
   }
 }
+
+/* Live profile-rating nav widget: replaces the page-level readiness card. */
+html body .profile-rating-anchor{
+  position:relative !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex:0 0 auto !important;
+  width:auto !important;
+  min-width:0 !important;
+  overflow:visible !important;
+  z-index:1305 !important;
+}
+
+html body .profile-rating-widget{
+  width:54px !important;
+  min-width:54px !important;
+  max-width:54px !important;
+  height:54px !important;
+  min-height:54px !important;
+  max-height:54px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:2px !important;
+  padding:4px !important;
+  border-radius:14px !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#ff4655) 42%,rgba(148,163,184,.42)) !important;
+  background:
+    radial-gradient(circle at top left,color-mix(in srgb,var(--theme-accent,#ff4655) 20%,transparent),transparent 58%),
+    linear-gradient(145deg,rgba(30,41,59,.9),rgba(15,23,42,.92)) !important;
+  color:#f8fafc !important;
+  box-shadow:0 0 16px rgba(2,6,23,.62) !important;
+  cursor:pointer !important;
+  line-height:1 !important;
+  text-align:center !important;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease !important;
+}
+
+html body .profile-rating-widget:hover,
+html body .profile-rating-widget.open,
+html body .profile-rating-widget:focus-visible{
+  transform:translateY(-1px) !important;
+  border-color:color-mix(in srgb,var(--theme-accent,#ff4655) 76%,#fff 8%) !important;
+  box-shadow:0 0 20px color-mix(in srgb,var(--theme-accent,#ff4655) 34%,transparent) !important;
+  outline:none !important;
+}
+
+html body .profile-rating-widget span{
+  font:900 16px/1 var(--font-display,inherit) !important;
+  letter-spacing:.01em !important;
+  color:#f8fafc !important;
+  white-space:nowrap !important;
+}
+
+html body .profile-rating-widget small{
+  max-width:48px !important;
+  color:#cbd5e1 !important;
+  font:800 7px/.95 var(--font-display,inherit) !important;
+  letter-spacing:.04em !important;
+  text-transform:uppercase !important;
+  white-space:normal !important;
+}
+
+html body .profile-rating-dropdown{
+  position:absolute !important;
+  top:calc(100% + 10px) !important;
+  right:0 !important;
+  width:min(340px, calc(100vw - 24px)) !important;
+  display:grid !important;
+  gap:10px !important;
+  padding:14px !important;
+  border-radius:18px !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#ff4655) 42%,rgba(148,163,184,.32)) !important;
+  background:
+    radial-gradient(circle at top left,color-mix(in srgb,var(--theme-accent,#ff4655) 18%,transparent),transparent 42%),
+    linear-gradient(145deg,rgba(15,23,42,.98),rgba(2,6,23,.96)) !important;
+  box-shadow:0 22px 42px rgba(0,0,0,.42),0 0 22px color-mix(in srgb,var(--theme-accent,#ff4655) 14%,transparent) !important;
+  z-index:10020 !important;
+}
+
+html body .profile-rating-dropdown[hidden]{
+  display:none !important;
+}
+
+html body .profile-rating-dropdown-head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:12px !important;
+}
+
+html body .profile-rating-dropdown-head strong{
+  display:block !important;
+  color:#f8fafc !important;
+  font:900 16px/1.05 var(--font-display,inherit) !important;
+}
+
+html body .profile-rating-kicker{
+  display:block !important;
+  color:#94a3b8 !important;
+  font:900 10px/1 var(--font-display,inherit) !important;
+  letter-spacing:.1em !important;
+  text-transform:uppercase !important;
+  margin-bottom:4px !important;
+}
+
+html body .profile-rating-dropdown-score{
+  display:grid !important;
+  place-items:center !important;
+  min-width:62px !important;
+  height:42px !important;
+  border-radius:14px !important;
+  border:1px solid rgba(148,163,184,.26) !important;
+  background:rgba(15,23,42,.78) !important;
+  color:#f8fafc !important;
+  font:900 17px/1 var(--font-display,inherit) !important;
+}
+
+html body .profile-rating-copy{
+  color:#cbd5e1 !important;
+  font:800 12px/1.25 var(--font-display,inherit) !important;
+}
+
+html body .profile-rating-meter{
+  overflow:hidden !important;
+  height:10px !important;
+  border-radius:999px !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  background:rgba(2,6,23,.74) !important;
+}
+
+html body .profile-rating-meter span{
+  display:block !important;
+  height:100% !important;
+  border-radius:inherit !important;
+  background:linear-gradient(90deg,var(--theme-accent,#ff4655),#facc15,#22c55e) !important;
+  transition:width .35s ease !important;
+}
+
+html body .profile-rating-unlocks{
+  display:grid !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:9px !important;
+}
+
+html body .profile-rating-unlock{
+  min-height:82px !important;
+  padding:9px !important;
+}
+
+html body .profile-menu-tracker-link{
+  align-self:stretch !important;
+  margin-top:8px !important;
+  min-height:30px !important;
+  font-size:11px !important;
+  text-transform:none !important;
+}
+
+html body .profile-info .profile-tracker-link{
+  display:none !important;
+}
+
+@media (min-width:721px){
+  html body .profile-panel{
+    gap:8px !important;
+  }
+  html body .profile-info{
+    min-width:118px !important;
+  }
+}
+
+@media (max-width:720px){
+  html body.is-mobile-layout .profile-rating-widget{
+    width:42px !important;
+    min-width:42px !important;
+    max-width:42px !important;
+    height:42px !important;
+    min-height:42px !important;
+    max-height:42px !important;
+    border-radius:10px !important;
+    padding:3px !important;
+  }
+  html body.is-mobile-layout .profile-rating-widget span{
+    font-size:12px !important;
+  }
+  html body.is-mobile-layout .profile-rating-widget small{
+    max-width:36px !important;
+    font-size:5.8px !important;
+    line-height:.92 !important;
+  }
+  html body.is-mobile-layout .profile-rating-dropdown{
+    position:fixed !important;
+    top:62px !important;
+    right:8px !important;
+    width:min(330px, calc(100vw - 16px)) !important;
+    z-index:10030 !important;
+  }
+}
