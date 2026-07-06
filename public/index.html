@@ -702,6 +702,7 @@ RIOT PROFILE MODAL
             <span class="label">Starting RR:</span>
             <span class="value" id="profileStartingRR">0</span>
           </div>
+          <a id="profileTrackerLink" class="profile-tracker-link" href="#" target="_blank" rel="noopener noreferrer" hidden>View Tracker.gg Profile</a>
         </div>
 
         <div class="profile-divider"></div>
@@ -768,6 +769,12 @@ RIOT PROFILE MODAL
             <div class="profile-menu-section">
               <div class="profile-menu-label">Links</div>
               <a class="pd-item" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
+              <button class="pd-item" id="importHistoryOpenBtn" type="button">Import History</button>
+              <label class="tracker-profile-field" for="trackerProfileUrlInput">
+                <span>Tracker.gg profile URL</span>
+                <input id="trackerProfileUrlInput" type="url" inputmode="url" placeholder="https://tracker.gg/valorant/profile/...">
+              </label>
+              <button class="pd-item" id="saveTrackerProfileUrlBtn" type="button">Save Tracker Link</button>
               <a class="pd-item" href="terms.html">Terms of Service</a>
               <a class="pd-item" href="privacy.html">Privacy Policy</a>
             </div>
@@ -1008,7 +1015,22 @@ STATS PAGE
     <section id="page-home" class="page active">
       <div class="home-layout dashboard-grid">
 
-
+        <div class="card coach-readiness-card" id="coachReadinessCard">
+          <div class="card-header">
+            <div>
+              <span class="card-pill">Building Profile</span>
+              <div class="card-title">Coach Readiness</div>
+              <div class="card-sub" id="coachReadinessCopy">Add matches to unlock stronger reads.</div>
+            </div>
+            <div class="coach-readiness-score" id="coachReadinessValue">0%</div>
+          </div>
+          <div class="coach-readiness-meter" aria-label="Coach readiness progress">
+            <div class="coach-readiness-bar">
+              <span id="coachReadinessFill"></span>
+            </div>
+          </div>
+          <div class="coach-readiness-unlocks" id="coachReadinessUnlocks"></div>
+        </div>
 
         <!-- Weekly Coaching Focus -->
         <div class="card weekly-focus-card">
@@ -1710,16 +1732,38 @@ stroke-linejoin="round"/>
               <input id="manualAssists" type="number" min="0" inputmode="numeric" placeholder="5">
             </label>
             <label class="manual-field">
-              <span>ACS</span>
-              <input id="manualACS" type="number" min="0" inputmode="decimal" placeholder="220">
+              <span>ACS Range</span>
+              <select id="manualACS">
+                <option value="">Choose rough ACS</option>
+                <option value="100">Under 125</option>
+                <option value="150">125-174</option>
+                <option value="200">175-224</option>
+                <option value="250">225-274</option>
+                <option value="300">275-324</option>
+                <option value="350">325+</option>
+              </select>
             </label>
             <label class="manual-field">
-              <span>ADR</span>
-              <input id="manualADR" type="number" min="0" inputmode="decimal" placeholder="145">
+              <span>ADR Range</span>
+              <select id="manualADR">
+                <option value="">Choose rough ADR</option>
+                <option value="90">Under 100</option>
+                <option value="115">100-129</option>
+                <option value="145">130-159</option>
+                <option value="175">160-189</option>
+                <option value="205">190+</option>
+              </select>
             </label>
             <label class="manual-field">
-              <span>HS %</span>
-              <input id="manualHS" type="number" min="0" max="100" inputmode="decimal" placeholder="24">
+              <span>HS% Range</span>
+              <select id="manualHS">
+                <option value="">Choose rough HS%</option>
+                <option value="10">Under 15%</option>
+                <option value="18">15-21%</option>
+                <option value="25">22-28%</option>
+                <option value="32">29-35%</option>
+                <option value="40">36%+</option>
+              </select>
             </label>
           </div>
         </div>
@@ -1867,6 +1911,71 @@ stroke-linejoin="round"/>
   </div>
   </div>
 
+<div id="historyImportModal" class="lens-modal-overlay history-import-overlay">
+  <div class="lens-modal history-import-modal" role="dialog" aria-modal="true" aria-labelledby="historyImportTitle">
+    <div class="lens-modal-header">
+      <div>
+        <div id="historyImportKicker" class="lens-modal-kicker">Import History</div>
+        <div id="historyImportTitle" class="lens-modal-title">Let's pull in your match history</div>
+      </div>
+      <button id="historyImportClose" class="lens-modal-close" type="button">X</button>
+    </div>
+    <div class="lens-modal-body history-import-body">
+      <div class="history-import-stepper" aria-label="Import history steps">
+        <span data-history-step-dot="0" class="active">1</span>
+        <span data-history-step-dot="1">2</span>
+        <span data-history-step-dot="2">3</span>
+        <span data-history-step-dot="3">4</span>
+        <span data-history-step-dot="4">Review</span>
+      </div>
+
+      <section class="history-import-step active" data-history-step="0">
+        <h3>Let's pull in your match history</h3>
+        <p>We'll guide you to screenshot your own public profile so you don't have to type it all in.</p>
+      </section>
+
+      <section class="history-import-step" data-history-step="1">
+        <h3>Open your Tracker.gg profile</h3>
+        <p>Open Tracker.gg in a new tab, find your own Valorant profile, then come back here with screenshots.</p>
+        <a class="pd-item history-import-link" href="https://tracker.gg/valorant" target="_blank" rel="noopener noreferrer">Open Tracker.gg</a>
+      </section>
+
+      <section class="history-import-step" data-history-step="2">
+        <h3>Screenshot these sections</h3>
+        <div class="history-import-examples">
+          <div class="history-import-example"><span>Season Summary</span><small>Capture rank, RR, win rate, and KDA average.</small></div>
+          <div class="history-import-example"><span>Recent Matches</span><small>Capture agent, map, result, K/D/A, and score.</small></div>
+          <div class="history-import-example"><span>More Matches</span><small>Upload multiple images if your list spans several screens.</small></div>
+        </div>
+      </section>
+
+      <section class="history-import-step" data-history-step="3">
+        <h3>Upload your screenshots</h3>
+        <p>Images are read locally in your browser when OCR is available. Nothing is saved until you confirm the import.</p>
+        <label class="history-import-drop" for="historyImportFiles">
+          <span>Drag images here or choose files</span>
+          <small>PNG, JPG, WEBP screenshots are supported.</small>
+          <input id="historyImportFiles" type="file" accept="image/*" multiple>
+        </label>
+        <div id="historyImportStatus" class="history-import-status">Waiting for screenshots.</div>
+      </section>
+
+      <section class="history-import-step" data-history-step="4">
+        <h3>Review before saving</h3>
+        <p>Check every extracted match. Low-confidence or blank fields are highlighted so you can fix them first.</p>
+        <div id="historyImportReview" class="history-import-review"></div>
+        <div id="historyImportFailures" class="history-import-failures"></div>
+      </section>
+    </div>
+    <div class="history-import-actions">
+      <button id="historyImportSkip" type="button">Skip</button>
+      <button id="historyImportBack" type="button">Back</button>
+      <button id="historyImportNext" type="button">Next</button>
+      <button id="historyImportConfirm" type="button" hidden>Confirm Import</button>
+    </div>
+  </div>
+</div>
+
 <div id="goalRankModal" class="lens-modal-overlay">
   <div class="lens-modal">
     <div class="lens-modal-header">
@@ -1968,6 +2077,9 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
+  <script src="schema/match-record.js?v=20260705-build-brief-v3-01"></script>
+  <script src="integrations/riot-sync.js?v=20260705-build-brief-v3-01"></script>
+  <script src="themes/premium-themes.js?v=20260705-build-brief-v3-01"></script>
   <script type="module" src="app.js?v=20260623-insights-filter-02"></script>
 </body>
 </html>

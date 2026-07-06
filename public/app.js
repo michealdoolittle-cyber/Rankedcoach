@@ -1752,6 +1752,26 @@ function getSortedMatches(matchList = []) {
 }
 
 function getMatchCore(match = {}) {
+  const record = match?.matchRecord?.schemaVersion
+    ? match.matchRecord
+    : (window.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null);
+  if (record) {
+    const agent = record.agent || "Unknown";
+    return {
+      agent,
+      role: record.role || agentRoles?.[agent] || "Unknown",
+      map: record.map || "Unknown",
+      result: record.result || "draw",
+      kills: safeNumber(record.stats?.kills),
+      deaths: safeNumber(record.stats?.deaths),
+      assists: safeNumber(record.stats?.assists),
+      acs: safeNumber(record.stats?.acs),
+      adr: safeNumber(record.stats?.adr),
+      hs: safeNumber(record.stats?.hsPercent),
+      createdAt: record.playedAt || record.createdAt || nowISO()
+    };
+  }
+
   const stats = match?.segments?.[0]?.stats || {};
   const metadata = match?.metadata || {};
   const agent = metadata.agent || match.agent || "Unknown";
@@ -9676,6 +9696,23 @@ function resetManualReportForm() {
 }
 
 function buildManualMatchFromLogEntry(entry = {}) {
+  const schemaAdapter = window.RankedCoachMatchRecord;
+  if (schemaAdapter?.fromManualLogEntry && schemaAdapter?.toLegacyMatch) {
+    const record = schemaAdapter.fromManualLogEntry(entry);
+    const legacyMatch = schemaAdapter.toLegacyMatch(record);
+    return {
+      ...legacyMatch,
+      manualReport: {
+        ...(legacyMatch.manualReport || {}),
+        ...(entry.manualReport || entry.manual || {})
+      },
+      advanced: {
+        ...(legacyMatch.advanced || {}),
+        manual: true
+      }
+    };
+  }
+
   const manual = entry.manualReport || entry.manual || {};
   const createdAt = entry.createdAt || nowISO();
   const result = ["win", "loss", "draw"].includes(String(manual.result || "").toLowerCase())
@@ -9755,6 +9792,361 @@ function upsertManualMatchForLogEntry(entry = {}) {
   saveProfiles?.();
   recomputeFromMatches?.();
   return manualMatch.matchId;
+}
+
+const TRACKER_PROFILE_URL_STORAGE_NOTE = "reference-only";
+const HISTORY_IMPORT_TESSERACT_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+let historyImportState = { step: 0, records: [], failures: [], processing: false };
+
+function normalizeTrackerProfileUrl(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase();
+    if (!host.endsWith("tracker.gg")) return "";
+    if (!url.pathname.toLowerCase().includes("/valorant/profile/")) return "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+function syncTrackerProfileUrlUI(profile = getActiveProfile()) {
+  const normalizedUrl = normalizeTrackerProfileUrl(profile?.trackerProfileUrl || "");
+  const input = document.getElementById("trackerProfileUrlInput");
+  if (input) {
+    input.value = normalizedUrl;
+    input.setAttribute("data-storage-note", TRACKER_PROFILE_URL_STORAGE_NOTE);
+  }
+  const link = document.getElementById("profileTrackerLink");
+  if (!link) return;
+  link.hidden = !normalizedUrl;
+  link.href = normalizedUrl || "#";
+}
+
+function saveTrackerProfileUrlFromSettings() {
+  const input = document.getElementById("trackerProfileUrlInput");
+  const profile = getActiveProfile();
+  if (!input || !profile) return;
+  const normalizedUrl = normalizeTrackerProfileUrl(input.value || "");
+  input.classList.toggle("is-invalid", Boolean(input.value && !normalizedUrl));
+  if (input.value && !normalizedUrl) {
+    input.setCustomValidity("Use a Tracker.gg Valorant profile URL.");
+    input.reportValidity?.();
+    return;
+  }
+  input.setCustomValidity("");
+  updateProfile(profile.id, { trackerProfileUrl: normalizedUrl });
+  syncTrackerProfileUrlUI(getActiveProfile());
+}
+
+function getCanonicalMatchRecordCount() {
+  return window.RankedCoachMatchRecord?.getRuntimeRecords?.({ matches, logEntries, profile: getActiveProfile() })?.length || 0;
+}
+
+function shouldShowHistoryImportOnManualEntry() {
+  const profile = getActiveProfile();
+  if (!profile || profile.historyImportSkippedAt) return false;
+  return getCanonicalMatchRecordCount() === 0;
+}
+
+const COACH_READINESS_UNLOCKS = [
+  { key: "match-impact", label: "Post-match impact", required: 1 },
+  { key: "recent-trends", label: "Recent trends", required: 5 },
+  { key: "stats-confidence", label: "Stats confidence", required: 10 },
+  { key: "deep-insights", label: "Deep insights", required: 20 }
+];
+
+function getCoachReadinessModel() {
+  const matchCount = getCanonicalMatchRecordCount();
+  const totalProgress = COACH_READINESS_UNLOCKS.reduce((sum, item) => {
+    return sum + Math.min(1, matchCount / Math.max(1, item.required));
+  }, 0);
+  const percent = Math.round((totalProgress / COACH_READINESS_UNLOCKS.length) * 100);
+  const nextUnlock = COACH_READINESS_UNLOCKS.find(item => matchCount < item.required);
+  const unlocked = COACH_READINESS_UNLOCKS.filter(item => matchCount >= item.required);
+  const copy = nextUnlock
+    ? `${matchCount}/${nextUnlock.required} games logged for ${nextUnlock.label.toLowerCase()}.`
+    : `${matchCount} games logged. Full coaching reads are available.`;
+  return {
+    matchCount,
+    percent,
+    copy,
+    nextUnlock,
+    unlocked,
+    unlocks: COACH_READINESS_UNLOCKS.map(item => ({
+      ...item,
+      complete: matchCount >= item.required,
+      progress: Math.min(100, Math.round((matchCount / Math.max(1, item.required)) * 100))
+    }))
+  };
+}
+
+function getReadinessLockedMarkup(required, label) {
+  const model = getCoachReadinessModel();
+  const remaining = Math.max(0, required - model.matchCount);
+  return `
+    <div class="coach-readiness-locked" data-required="${required}">
+      <div class="coach-readiness-locked-title">${escapeHtml(label)}</div>
+      <div class="coach-readiness-locked-copy">
+        ${model.matchCount}/${required} games logged${remaining ? `. Add ${remaining} more to unlock this read.` : "."}
+      </div>
+      <div class="coach-readiness-locked-bar"><span style="width:${Math.min(100, Math.round((model.matchCount / Math.max(1, required)) * 100))}%"></span></div>
+    </div>
+  `;
+}
+
+function renderCoachReadinessUI() {
+  const card = document.getElementById("coachReadinessCard");
+  if (!card) return;
+  const model = getCoachReadinessModel();
+  const value = document.getElementById("coachReadinessValue");
+  const copy = document.getElementById("coachReadinessCopy");
+  const fill = document.getElementById("coachReadinessFill");
+  const unlocks = document.getElementById("coachReadinessUnlocks");
+
+  card.dataset.readinessPercent = String(model.percent);
+  card.classList.toggle("is-ready", model.percent >= 100);
+  if (value) value.textContent = `${model.percent}%`;
+  if (copy) copy.textContent = model.copy;
+  if (fill) fill.style.width = `${model.percent}%`;
+  if (unlocks) {
+    unlocks.innerHTML = model.unlocks.map(item => `
+      <div class="coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${item.complete ? "Unlocked" : `${model.matchCount}/${item.required}`}</strong>
+        <div class="coach-readiness-mini-bar"><span style="width:${item.progress}%"></span></div>
+      </div>
+    `).join("");
+  }
+}
+
+function openHistoryImportModal(startStep = 0) {
+  historyImportState.step = Math.max(0, Math.min(4, Number(startStep) || 0));
+  showModalById("historyImportModal");
+  renderHistoryImportModal();
+}
+
+function closeHistoryImportModal(markSkipped = false) {
+  if (markSkipped) {
+    const profile = getActiveProfile();
+    if (profile) updateProfile(profile.id, { historyImportSkippedAt: nowISO() });
+  }
+  hideModalById("historyImportModal");
+}
+
+function renderHistoryImportModal() {
+  const step = historyImportState.step;
+  document.querySelectorAll("[data-history-step]").forEach(panel => panel.classList.toggle("active", Number(panel.dataset.historyStep) === step));
+  document.querySelectorAll("[data-history-step-dot]").forEach(dot => dot.classList.toggle("active", Number(dot.dataset.historyStepDot) === step));
+  const title = document.getElementById("historyImportTitle");
+  const titles = ["Let's pull in your match history", "Open your Tracker.gg profile", "Screenshot these sections", "Upload your screenshots", "Review before saving"];
+  if (title) title.textContent = titles[step] || titles[0];
+  const back = document.getElementById("historyImportBack");
+  const next = document.getElementById("historyImportNext");
+  const confirm = document.getElementById("historyImportConfirm");
+  if (back) back.hidden = step <= 0;
+  if (next) next.hidden = step >= 4;
+  if (confirm) confirm.hidden = step !== 4 || !historyImportState.records.length;
+  renderHistoryImportReview();
+}
+
+function loadHistoryImportOcrEngine() {
+  if (window.Tesseract?.recognize) return Promise.resolve(window.Tesseract);
+  if (document.querySelector('script[data-history-ocr="tesseract"]')) {
+    return new Promise((resolve, reject) => {
+      const started = Date.now();
+      const tick = () => {
+        if (window.Tesseract?.recognize) return resolve(window.Tesseract);
+        if (Date.now() - started > 15000) return reject(new Error("OCR library timed out."));
+        window.setTimeout(tick, 150);
+      };
+      tick();
+    });
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = HISTORY_IMPORT_TESSERACT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.dataset.historyOcr = "tesseract";
+    script.onload = () => window.Tesseract?.recognize ? resolve(window.Tesseract) : reject(new Error("OCR library did not load."));
+    script.onerror = () => reject(new Error("OCR library failed to load."));
+    document.head.appendChild(script);
+  });
+}
+
+function findFirstKnownToken(line = "", tokens = []) {
+  const normalized = String(line || "").toLowerCase();
+  return (tokens || []).find(token => normalized.includes(String(token || "").toLowerCase())) || "";
+}
+
+function parseKdaText(text = "") {
+  const match = String(text || "").match(/(\d{1,2})\s*[\/-]\s*(\d{1,2})\s*[\/-]\s*(\d{1,2})/);
+  if (!match) return {};
+  return { kills: Number(match[1]), deaths: Number(match[2]), assists: Number(match[3]), kdaText: `${match[1]}/${match[2]}/${match[3]}` };
+}
+
+function parseTrackerOcrText(rawText = "", imageName = "") {
+  const text = String(rawText || "").replace(/\r/g, "\n");
+  const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
+  const agents = Object.keys(agentRoles || {});
+  const mapTokens = ALL_VALORANT_MAP_NAMES || COMPETITIVE_MAP_POOL || [];
+  const records = [];
+  const warnings = [];
+  const rankLine = lines.find(line => /\b(iron|bronze|silver|gold|platinum|diamond|ascendant|immortal|radiant)\b/i.test(line));
+  const rrLine = lines.find(line => /\b\d{1,4}\s*RR\b/i.test(line));
+  const overviewContext = {
+    rank: rankLine?.match(/\b(Iron|Bronze|Silver|Gold|Platinum|Diamond|Ascendant|Immortal|Radiant)\s*\d?\b/i)?.[0] || "",
+    rr: rrLine?.match(/\b(\d{1,4})\s*RR\b/i)?.[1] || null
+  };
+
+  lines.forEach((line, index) => {
+    const windowText = `${line} ${lines[index + 1] || ""} ${lines[index + 2] || ""}`;
+    const agent = findFirstKnownToken(windowText, agents);
+    const map = findFirstKnownToken(windowText, mapTokens);
+    const result = /\b(victory|won|win)\b/i.test(windowText) ? "win" : /\b(defeat|lost|loss)\b/i.test(windowText) ? "loss" : "";
+    const kda = parseKdaText(windowText);
+    if (!(agent || map) || !kda.kdaText) return;
+    const parseWarnings = [];
+    if (!result) parseWarnings.push("Result not confidently read.");
+    if (!agent) parseWarnings.push("Agent not confidently read.");
+    if (!map) parseWarnings.push("Map not confidently read.");
+    records.push(window.RankedCoachMatchRecord.fromTrackerOcrMatch({
+      agent,
+      map,
+      result: result || "unknown",
+      ...kda,
+      confidence: {
+        overall: parseWarnings.length ? "low" : "medium",
+        fields: { agent: agent ? "medium" : "low", map: map ? "medium" : "low", result: result ? "medium" : "low", kda: "medium" }
+      },
+      parseWarnings
+    }, {
+      imageName,
+      screenshotType: "recent_matches",
+      rawText,
+      rank: overviewContext.rank,
+      rr: overviewContext.rr
+    }));
+  });
+
+  if (!records.length) warnings.push("No match rows were confidently detected.");
+  return { records, overview: overviewContext, warnings };
+}
+
+async function processHistoryImportFiles(fileList) {
+  const files = [...(fileList || [])].filter(file => /^image\//i.test(file.type || ""));
+  const status = document.getElementById("historyImportStatus");
+  if (!files.length) {
+    if (status) status.textContent = "Choose one or more screenshots first.";
+    return;
+  }
+  historyImportState.processing = true;
+  historyImportState.records = [];
+  historyImportState.failures = [];
+  if (status) status.textContent = `Reading ${files.length} screenshot${files.length === 1 ? "" : "s"}...`;
+
+  let tesseract = null;
+  try {
+    tesseract = await loadHistoryImportOcrEngine();
+  } catch (error) {
+    historyImportState.failures.push({ imageName: "OCR setup", message: error?.message || "OCR library unavailable." });
+  }
+
+  for (const file of files) {
+    if (!tesseract?.recognize) {
+      historyImportState.failures.push({ imageName: file.name, message: "OCR is unavailable in this browser session." });
+      continue;
+    }
+    try {
+      const result = await tesseract.recognize(file, "eng");
+      const rawText = result?.data?.text || "";
+      const parsed = parseTrackerOcrText(rawText, file.name);
+      historyImportState.records.push(...parsed.records);
+      if (!parsed.records.length || parsed.warnings.length) {
+        historyImportState.failures.push({ imageName: file.name, message: parsed.warnings.join(" ") || "Couldn't read this one clearly.", rawText });
+      }
+    } catch (error) {
+      historyImportState.failures.push({ imageName: file.name, message: error?.message || "Couldn't read this one." });
+    }
+  }
+
+  historyImportState.processing = false;
+  historyImportState.step = 4;
+  if (status) status.textContent = `${historyImportState.records.length} possible match${historyImportState.records.length === 1 ? "" : "es"} ready for review.`;
+  renderHistoryImportModal();
+}
+
+function renderHistoryImportReview() {
+  const review = document.getElementById("historyImportReview");
+  const failures = document.getElementById("historyImportFailures");
+  if (review) {
+    review.innerHTML = !historyImportState.records.length
+      ? `<div class="history-import-empty">No matches ready yet. Upload screenshots or use the manual form.</div>`
+      : historyImportState.records.map((record, index) => `
+        <div class="history-import-record" data-history-record-index="${index}">
+          <label>Agent<input data-history-field="agent" value="${escapeHtml(record.agent || "")}"></label>
+          <label>Map<input data-history-field="map" value="${escapeHtml(record.map || "")}"></label>
+          <label>Result<select data-history-field="result">${["unknown", "win", "loss", "draw"].map(value => `<option value="${value}" ${record.result === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
+          <label>Kills<input data-history-field="kills" inputmode="numeric" value="${record.stats.kills ?? ""}"></label>
+          <label>Deaths<input data-history-field="deaths" inputmode="numeric" value="${record.stats.deaths ?? ""}"></label>
+          <label>Assists<input data-history-field="assists" inputmode="numeric" value="${record.stats.assists ?? ""}"></label>
+          ${(record.importMeta?.parseWarnings || []).length ? `<div class="history-import-warning">${escapeHtml(record.importMeta.parseWarnings.join(" "))}</div>` : ""}
+        </div>`).join("");
+    review.querySelectorAll("[data-history-record-index]").forEach(row => {
+      row.addEventListener("input", () => updateHistoryImportRecordFromRow(row));
+      row.addEventListener("change", () => updateHistoryImportRecordFromRow(row));
+    });
+  }
+  if (failures) {
+    failures.innerHTML = historyImportState.failures.map(failure => `
+      <div class="history-import-failure">
+        <strong>${escapeHtml(failure.imageName || "Screenshot")}</strong>
+        <span>${escapeHtml(failure.message || "Couldn't read this one.")}</span>
+        <button type="button" data-history-manual-fallback>Enter manually</button>
+      </div>`).join("");
+    failures.querySelectorAll("[data-history-manual-fallback]").forEach(button => {
+      button.addEventListener("click", () => {
+        closeHistoryImportModal(false);
+        document.querySelector('[data-page="logging"]')?.click?.();
+        document.getElementById("manualMatchPanel")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      });
+    });
+  }
+}
+
+function updateHistoryImportRecordFromRow(row) {
+  const index = Number(row?.dataset?.historyRecordIndex);
+  const record = historyImportState.records[index];
+  if (!record) return;
+  const read = field => row.querySelector(`[data-history-field="${field}"]`)?.value?.trim() || "";
+  record.agent = read("agent") || null;
+  record.role = record.agent ? (agentRoles?.[record.agent] || null) : null;
+  record.map = read("map") || null;
+  record.result = window.RankedCoachMatchRecord.normalizeResult(read("result"));
+  record.stats.kills = window.RankedCoachMatchRecord.readNumber(read("kills"));
+  record.stats.deaths = window.RankedCoachMatchRecord.readNumber(read("deaths"));
+  record.stats.assists = window.RankedCoachMatchRecord.readNumber(read("assists"));
+  record.confidence.overall = "high";
+}
+
+function confirmHistoryImportRecords() {
+  const profile = getActiveProfile();
+  const adapter = window.RankedCoachMatchRecord;
+  if (!profile || !adapter || !historyImportState.records.length) return;
+  const imported = historyImportState.records.map(record => adapter.toLegacyMatch({ ...record, pendingVerification: false, confidence: { ...record.confidence, overall: "high" } }));
+  matches = (Array.isArray(matches) ? matches : []).concat(imported).sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
+  profile.matches = matches.slice();
+  profile.importSource = profile.importSource || "tracker_screenshot";
+  profile.lastHistoryImportAt = nowISO();
+  saveProfiles();
+  recomputeFromMatches?.();
+  closeHistoryImportModal(false);
+  document.querySelector('[data-page="home"]')?.click?.();
+  window.setTimeout(() => alert(`${imported.length} match${imported.length === 1 ? "" : "es"} imported.`), 50);
 }
 
 function hasCompletedAppEntryChoice() {
@@ -35838,6 +36230,40 @@ function bindEvents(){
     }
     setManualEntryMode(nextEnabled);
     updateLoggingDebriefPreview?.();
+    if (nextEnabled && shouldShowHistoryImportOnManualEntry()) {
+      window.setTimeout(() => openHistoryImportModal(0), 180);
+    }
+  });
+
+  document.getElementById("importHistoryOpenBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    profileDropdown?.classList.remove("open");
+    openHistoryImportModal(0);
+  });
+
+  document.getElementById("saveTrackerProfileUrlBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    saveTrackerProfileUrlFromSettings();
+  });
+
+  document.getElementById("historyImportClose")?.addEventListener("click", () => closeHistoryImportModal(false));
+  document.getElementById("historyImportSkip")?.addEventListener("click", () => closeHistoryImportModal(true));
+  document.getElementById("historyImportBack")?.addEventListener("click", () => {
+    historyImportState.step = Math.max(0, historyImportState.step - 1);
+    renderHistoryImportModal();
+  });
+  document.getElementById("historyImportNext")?.addEventListener("click", () => {
+    historyImportState.step = Math.min(4, historyImportState.step + 1);
+    renderHistoryImportModal();
+  });
+  document.getElementById("historyImportConfirm")?.addEventListener("click", confirmHistoryImportRecords);
+  document.getElementById("historyImportFiles")?.addEventListener("change", (event) => {
+    processHistoryImportFiles(event.target.files);
+  });
+  document.getElementById("historyImportModal")?.addEventListener("click", (event) => {
+    if (event.target === document.getElementById("historyImportModal")) closeHistoryImportModal(false);
   });
 
   syncLogFocusSelectOptions();
@@ -39064,6 +39490,8 @@ function normalizeProfileRecord(profile = {}) {
     avatarUrl: profile.avatarUrl || getDefaultProfileAvatarUrl(avatarAgent),
     navBackgroundUrl: profile.navBackgroundUrl || "",
     manualEntryMode: !!profile.manualEntryMode,
+    trackerProfileUrl: normalizeTrackerProfileUrl(profile.trackerProfileUrl || ""),
+    historyImportSkippedAt: profile.historyImportSkippedAt || "",
     profileBorderColor: normalizeProfileBorderColor(profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
     profileBorderRotate: !!profile.profileBorderRotate,
@@ -39248,6 +39676,14 @@ function updateProfile(id, data){
     profile.manualEntryMode = !!data.manualEntryMode;
   }
 
+  if (data.trackerProfileUrl != null) {
+    profile.trackerProfileUrl = normalizeTrackerProfileUrl(data.trackerProfileUrl || "");
+  }
+
+  if (data.historyImportSkippedAt != null) {
+    profile.historyImportSkippedAt = String(data.historyImportSkippedAt || "");
+  }
+
   if (data.profileBorderColor != null) {
     profile.profileBorderColor = normalizeProfileBorderColor(data.profileBorderColor || "theme");
   }
@@ -39388,6 +39824,7 @@ function renderProfilesUI(){
 
   if (!currentAuthUser) {
     updateProfileHeaderUI?.();
+    syncTrackerProfileUrlUI?.(getActiveProfile());
     syncManualEntryModeUI?.();
     return;
   }
@@ -39457,6 +39894,7 @@ function renderProfilesUI(){
   }
 
   updateProfileDropdownMenu?.();
+  syncTrackerProfileUrlUI?.(active);
   syncManualEntryModeUI?.();
 }
 
@@ -41314,6 +41752,7 @@ function updateDisplays(){
   refreshImprovementTimeline({ animate: true });
   updateNavRRToRank();
   updateNavRRToGoalRank();
+  renderCoachReadinessUI();
 
   const model = getPlayerModel();
   updateCompass(model?.compass || {}, model);
@@ -41396,6 +41835,7 @@ function recomputeFromMatches(){
 
   updateNavRRToRank();
   updateNavRRToGoalRank();
+  renderCoachReadinessUI();
   refreshImprovementTimeline({ animate: true });
 }
 
@@ -43099,6 +43539,7 @@ function updateProfileHeaderUI(){
 
   applyProfileVisuals(p);
   updateProfileDropdownMenu?.();
+  syncTrackerProfileUrlUI?.(p);
 
 }
 
@@ -44727,7 +45168,7 @@ function renderStatsPerformanceModel() {
   container.className = "stats-chart-wrap stats-trends-list";
 
   if (!(model?.trends || []).length) {
-    container.innerHTML = `<div class="stats-empty">Import matches to view performance trends</div>`;
+    container.innerHTML = getReadinessLockedMarkup(5, "Recent Match Trends");
     return;
   }
 
@@ -44747,7 +45188,7 @@ function renderStatsBreakdownModel() {
 
   const model = getPlayerModel();
   if (!(model?.breakdown || []).length) {
-    container.innerHTML = `<div class="stats-empty">No breakdown available yet</div>`;
+    container.innerHTML = getReadinessLockedMarkup(5, "Data Reads");
     return;
   }
 
@@ -45872,7 +46313,7 @@ function renderStatsPerformanceClean() {
   container.className = "stats-chart-wrap stats-trends-list stats-trends-grid";
 
   if (!(model?.trends || []).length) {
-    container.innerHTML = `<div class="stats-empty">Import matches to view performance trends</div>`;
+    container.innerHTML = getReadinessLockedMarkup(5, "Recent Match Trends");
     return;
   }
 
