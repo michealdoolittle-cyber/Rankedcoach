@@ -36302,7 +36302,10 @@ function bindEvents(){
     event.preventDefault();
     event.stopPropagation();
     const dropdown = document.getElementById("profileRatingDropdown");
-    setProfileRatingDropdownOpen(dropdown?.hidden !== false);
+    const shouldOpen = dropdown?.hidden !== false;
+    profileSwitcher?.classList.remove("open");
+    profileDropdown?.classList.remove("open");
+    setProfileRatingDropdownOpen(shouldOpen);
   });
   document.addEventListener("click", (event) => {
     const anchor = document.querySelector(".profile-rating-anchor");
@@ -36593,6 +36596,7 @@ function bindEvents(){
 
   const openProfileSwitcherMenu = () => {
     profileDropdown?.classList.remove("open");
+    setProfileRatingDropdownOpen(false);
     if (!currentAuthUser) {
       syncProfileSwitcherAccessState();
     } else {
@@ -36604,6 +36608,7 @@ function bindEvents(){
 
   const openProfileSettingsMenu = (anchor = profileDropdownAnchor || profileDropdownToggle) => {
     profileSwitcher?.classList.remove("open");
+    setProfileRatingDropdownOpen(false);
     profileDropdownActiveAnchor = anchor || profileDropdownAnchor || profileDropdownToggle;
     profileDropdown?.classList.add("open");
     schedulePositionOpenProfileMenus();
