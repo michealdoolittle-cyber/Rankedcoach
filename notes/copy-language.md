@@ -42,6 +42,31 @@ Build brief v3 asked for a list-only pass. No user-facing coaching copy was rewr
 - `public/app.js:5390` — “Fallback watch score”
 - `public/app.js:5404` — “Current coaching model built from...”
 
+## Approved Rows Implemented On 2026-07-06
+
+- `Current Window` changed to `Recent Matches` where approved and on the compass visible fallback.
+- `No rating, mood, or map selected yet.` changed to `Add a rating, mood, or map to see it here.`
+- `Pending Riot sync verification` changed to `Still waiting on Riot's approval — log manually or import a screenshot for now`.
+- `No imported match sample yet.` changed to `Import a few matches to see this here.`
+- `No repeated map has enough matches yet.` changed to `Play this map a few more times and we'll show your trend here.`
+- `There are not enough mood logs yet to make a strong tilt read.` changed to `Log your mood a few more times and we'll tell you if tilt's affecting your games.`
+- The approved `Build sample`, `central evidence rules`, weapon category, imported block, imported window, fallback score, and coaching model phrases were updated in `public/app.js`.
+
 ## Current Risk
 
 Many strings still explain what a metric is instead of what a player should do with it. The next copy pass should start with match trend cards, data reads, and insight empty states because those are the highest-volume coaching surfaces.
+
+## Held For Full-Context Rewrite
+
+Claude requested full surrounding strings for these rows before rewriting them. Do not guess at these until the next copy pass.
+
+- `public/app.js:2077` — `sentence: \`${matches} matches is enough to guide the next block, but not enough to overrule future results.\``
+- `public/app.js:2104` — `if (band === "none") return \`${lowerSubject} needs more matches before the read is fair.\`;`
+- `public/app.js:2773` — `: "There is not enough low-rating log volume yet to isolate a fair self-rating pattern.";`
+- `public/app.js:2842` — `diagnosis: \`${mapName} needs more matches before this is a fair map read.\`,`
+- `public/app.js:2884` — `diagnosis: \`${agentName} needs more games before this is a fair agent read.\`,`
+- `public/app.js:4096` — `action: "Import matches, then add 2-3 reflection logs to unlock a stronger first coaching cycle.",`
+- `public/app.js:4350` — `let coachDiagnosis = primaryInsight?.what || "The player model needs more match volume before it can report a sharper diagnosis.";`
+- `public/app.js:4650` — `detail: avgKast ? "This checks whether you are surviving, trading, assisting, or converting enough rounds." : "No data",`
+- `public/app.js:4749` — `detail: "This uses Riot damage-per-round data to estimate your round-by-round damage impact."`
+- `public/app.js:4755` — `detail: bestAgent ? "Your best repeated agent gives the clearest picture of what is working in ranked." : "The app needs more repeated games on the same agents before it can identify a reliable pick."`

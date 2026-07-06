@@ -1964,7 +1964,7 @@ function buildCoachingEvidenceLayer({
   currentSignalRole = "",
   coachingContext = {},
   mechanicsAdjustment = null,
-  seasonLabel = "Current Window"
+  seasonLabel = "Recent Matches"
 } = {}) {
   const matchCount = safeNumber(overview.matchesPlayed || orderedMatches.length);
   const logCount = safeNumber(logs.length);
@@ -2059,7 +2059,7 @@ function getCoachingSampleTone(evidenceLayer = {}) {
   if (matches <= 0) {
     return {
       label: "No sample",
-      short: "No imported match sample yet.",
+      short: "Import a few matches to see this here.",
       sentence: "No imported match sample exists yet, so this should stay as setup guidance."
     };
   }
@@ -2127,7 +2127,7 @@ function buildCoachingCopyContext(context = {}) {
     allRepeatedAgentsBelowTarget: Boolean(bestAgent?.matchesPlayed >= 3 && safeNumber(bestAgent?.winrate) < 50),
     bestMapText: bestMap
       ? getWinrateCoachingSentence(bestMap.map || "Your best repeated map", bestMap.winrate, bestMap.matchesPlayed)
-      : "No repeated map has enough matches yet.",
+      : "Play this map a few more times and we'll show your trend here.",
     weakestMapText: weakestMap
       ? getWinrateCoachingSentence(weakestMap.map || "Your weakest repeated map", weakestMap.winrate, weakestMap.matchesPlayed)
       : "No repeated map weakness is stable yet.",
@@ -2763,7 +2763,7 @@ function polishWeeklyCandidate(candidate = {}, context = {}) {
       : "No repeated tilt pattern is stored yet.";
     output.read = output.read && !/not enough/i.test(output.read)
       ? "This points to session emotion affecting decisions. Treat it as a reset cue, not a character flaw."
-      : "There are not enough mood logs yet to make a strong tilt read.";
+      : "Log your mood a few more times and we'll tell you if tilt's affecting your games.";
   }
 
   if (key === "ratings") {
@@ -4354,7 +4354,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     || weeklyTopFocusEntry?.[0]
     || topFocusEntry?.[0]
     || (weakestMap ? "Map Awareness" : null)
-    || (hasMatchData ? (overview.kd < 1 ? "Fight Selection" : "Consistency") : "Build sample");
+    || (hasMatchData ? (overview.kd < 1 ? "Fight Selection" : "Consistency") : "Log More Matches");
 
   const weekly = {
     mostPracticed: weeklyTopFocusEntry ? `${weeklyTopFocusEntry[0]} (${weeklyTopFocusEntry[1]} logs)` : "No repeated focus category yet",
@@ -4541,7 +4541,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: agentHsMatches ? `${Math.round(agentHs || 0)}% HS` : "No data",
       detail: agentHsMatches
         ? mechanicsAdjustment.hasAdjustment
-          ? "This uses Riot headshot percentage data with the central evidence rules, so weapon mix can lower the importance of HS%."
+          ? "This uses Riot headshot percentage data, and how we calculate this accounts for weapon mix."
           : "This uses Riot headshot percentage data to estimate your agent-based mechanical accuracy."
         : "No data",
       read: agentHs >= mechanicsAdjustment.adjustedWatchHs
@@ -4817,7 +4817,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       value: topWeaponFamilyEntry ? `${topWeaponFamilyLabel} ${Math.round(safeNumber(topWeaponFamilyEntry[1]))}%` : "No Data",
       detail: topWeaponFamilyEntry
         ? "Weapon category usage helps the app judge mechanics and conversion with the right context."
-        : "No weapon category data reported yet."
+        : "No weapon stats yet — play a few matches with different guns and we'll break it down."
     },
     {
       selectionScore: topMoodEntry || negativeMoodCount ? 74 + (negativeMoodCount * 3) : 30,
@@ -4942,7 +4942,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         selectionScore: recentMatches.length ? Math.min(88, 56 + (Math.abs(recentKd - safeNumber(overview.kd)) * 80)) : 28,
         title: `${recentWins}W / ${recentLosses}L`,
         value: recentMatches.length ? `${recentKd.toFixed(2)} Recent K/D` : "No data",
-        detail: recentMatches.length ? "Short-term win/loss and duel conversion read from the latest imported block." : "No data",
+        detail: recentMatches.length ? "Short-term win/loss and duel conversion read from your most recent import." : "No data",
         tone: recentKd >= safeNumber(overview.kd) ? "up" : "down",
         mediaText: "Split",
         symbol: "â–²"
@@ -5144,7 +5144,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     discipline: disciplineScore
   }).sort((a, b) => a[1] - b[1])[0]?.[0] || "discipline" : "";
 
-  const compassSourceLabel = hasMatchData ? (importedAnalytics?.currentAct || "Current Imported Window") : "No Data";
+  const compassSourceLabel = hasMatchData ? (importedAnalytics?.currentAct || "Recent Imported Matches") : "No Data";
 
   const compass = {
     aim: aimScore,
@@ -5387,7 +5387,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         ? `100 - map win rate = 100 - ${Math.round(safeNumber(weeklyWeakestMap?.winrate))} = ${Math.round(100 - safeNumber(weeklyWeakestMap?.winrate))}`
         : weeklyWeakestRole?.matchesPlayed >= 2
           ? `100 - role win rate = 100 - ${Math.round(safeNumber(weeklyWeakestRole?.winrate))} = ${Math.round(100 - safeNumber(weeklyWeakestRole?.winrate))}`
-          : "Fallback watch score = 24 because there is not enough repeated loss context yet.",
+          : "Early Trend Score = 24 because there is not enough repeated loss context yet.",
       scopeLabel: `Current weekly review window: ${weeklyScopeLabel} (${weeklyOrderedMatches.length} matches reviewed).`,
       read: weeklyWeakestRole?.matchesPlayed >= 2
         ? "This is the clearest repeated losses for roles this week, so it is the best to review this role first."
@@ -5401,7 +5401,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       summary: hasMatchData ? `${COMPASS_LENS_META[weakestLens]?.label || "Core category"} compass category is currently the lowest pillar in your profile.` : "Import match history before RankedCoach calls out an impact shift.",
       score: hasMatchData ? 100 - safeNumber({ aim: contextAimScore, gamesense: contextSenseScore, teamplay: contextTeamplayScore, discipline: contextDisciplineScore }[weakestLens]) : 0,
       confidence: hasMatchData ? (orderedMatches.length >= 8 ? "High" : orderedMatches.length >= 4 ? "Medium" : "Low") : "Low",
-      sourceLabel: hasMatchData ? `Current coaching model built from Riot match history${logs.length ? " and stored Logging entries" : ""}. Category scores: Aim ${contextAimScore}, Game Sense ${contextSenseScore}, Teamwork ${contextTeamplayScore}, Discipline ${contextDisciplineScore}.` : "No imported match history available yet.",
+      sourceLabel: hasMatchData ? `Your coaching insights are based on Riot match history${logs.length ? " and stored Logging entries" : ""}. Category scores: Aim ${contextAimScore}, Game Sense ${contextSenseScore}, Teamwork ${contextTeamplayScore}, Discipline ${contextDisciplineScore}.` : "No imported match history available yet.",
       formula: hasMatchData ? `100 - weakest compass score = 100 - ${safeNumber({ aim: contextAimScore, gamesense: contextSenseScore, teamplay: contextTeamplayScore, discipline: contextDisciplineScore }[weakestLens])} = ${Math.round(100 - safeNumber({ aim: contextAimScore, gamesense: contextSenseScore, teamplay: contextTeamplayScore, discipline: contextDisciplineScore }[weakestLens]))}` : "No formula until match history is imported.",
       scopeLabel: `Current imported match window plus current stored log support in the active profile.`,
       read: hasMatchData ? `${COMPASS_LENS_META[weakestLens]?.label || "This category"} is the lowest current coaching pillar, so it represents the clearest room for improvement in your player profile.` : "No impact read is available until match history is imported."
@@ -13293,7 +13293,7 @@ function applyCompassVisual(values = {}) {
   const weakestEl = document.getElementById("compassWeakestCallout");
   const profileDescriptionEl = document.getElementById("compassProfileDescription");
 
-  if (sourcePill) sourcePill.textContent = noData ? "No Data" : (values?.source || "Current Window");
+  if (sourcePill) sourcePill.textContent = noData ? "No Data" : (values?.source || "Recent Matches");
   if (profileTitle) profileTitle.textContent = profileLabel;
   if (profileCopy) {
     profileCopy.textContent = noData
@@ -15490,7 +15490,7 @@ function updateLoggingDebriefPreview() {
   if (notes) metaParts.push(`${Math.min(notes.length, 140)} chars captured`);
   metaEl.textContent = metaParts.length
     ? metaParts.join(" â€¢ ")
-    : "No rating, mood, or map selected yet.";
+    : "Add a rating, mood, or map to see it here.";
 }
 
 function renderInsightCards() {
