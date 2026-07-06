@@ -590,6 +590,7 @@ function syncMobileViewportState() {
       ensureMobileInsightCardCarousel();
       ensureMobileInsightTrendCarousel();
       ensureMobileManualReportControls();
+      ensureMobileSwipeAffordances();
       scheduleMobileScrollExtentSync();
     });
   }
@@ -859,6 +860,7 @@ function ensureMobileLoggingTabs() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+  window.requestAnimationFrame?.(ensureMobileSwipeAffordances);
 }
 
 function ensureMobileStatsTabs() {
@@ -903,6 +905,7 @@ function ensureMobileStatsTabs() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+  window.requestAnimationFrame?.(ensureMobileSwipeAffordances);
 }
 
 function getMobileTrendTone(card) {
@@ -1191,6 +1194,123 @@ function ensureMobileInsightTrendCarousel() {
   if (counter) counter.textContent = activeCards.length ? `${mobileInsightTrendIndex + 1} / ${activeCards.length}` : "0 / 0";
   nav.hidden = !activeCards.length;
   repairTrendSignalMedia();
+}
+
+const MOBILE_SWIPE_MIN_DISTANCE = 42;
+const MOBILE_SWIPE_MAX_VERTICAL_RATIO = 1.35;
+
+function getMobileSwipeDirection(startX, startY, endX, endY) {
+  const deltaX = endX - startX;
+  const deltaY = endY - startY;
+  if (Math.abs(deltaX) < MOBILE_SWIPE_MIN_DISTANCE) return 0;
+  if (Math.abs(deltaX) < Math.abs(deltaY) * MOBILE_SWIPE_MAX_VERTICAL_RATIO) return 0;
+  return deltaX < 0 ? 1 : -1;
+}
+
+function bindMobileSwipe(element, callback, options = {}) {
+  if (!element || element.dataset.mobileSwipeBound === "true") return;
+  element.dataset.mobileSwipeBound = "true";
+  element.style.touchAction = element.style.touchAction || "pan-y";
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  const shouldIgnoreTarget = (target) => {
+    if (options.allowControls) return false;
+    return Boolean(target?.closest?.("button, a, input, textarea, select, [contenteditable='true']"));
+  };
+
+  element.addEventListener("touchstart", (event) => {
+    if (!isMobileLayoutViewport() || event.touches.length !== 1 || shouldIgnoreTarget(event.target)) {
+      tracking = false;
+      return;
+    }
+    const touch = event.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+    tracking = true;
+  }, { passive: true });
+
+  element.addEventListener("touchend", (event) => {
+    if (!tracking || !isMobileLayoutViewport()) return;
+    tracking = false;
+    const touch = event.changedTouches?.[0];
+    if (!touch) return;
+    const direction = getMobileSwipeDirection(startX, startY, touch.clientX, touch.clientY);
+    if (!direction) return;
+    callback(direction, event);
+  }, { passive: true });
+}
+
+function stepMobileValue(currentValue, values, direction) {
+  if (!values.length) return currentValue;
+  const currentIndex = Math.max(0, values.indexOf(currentValue));
+  return values[(currentIndex + direction + values.length) % values.length];
+}
+
+function ensureMobileSwipeAffordances() {
+  if (!isMobileLayoutViewport()) return;
+
+  bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction) => {
+    const order = ["home", "logging", "stats", "insights"];
+    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
+    activatePage(stepMobileValue(active, order, direction));
+    syncMobileBottomShellState();
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.getElementById("mobileLoggingTabs"), (direction) => {
+    const page = document.getElementById("page-logging");
+    if (!page) return;
+    page.dataset.mobileLoggingView = stepMobileValue(page.dataset.mobileLoggingView || "form", ["form", "feed"], direction);
+    ensureMobileLoggingTabs();
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.getElementById("mobileStatsTabs"), (direction) => {
+    const page = document.getElementById("page-stats");
+    if (!page) return;
+    page.dataset.mobileStatsView = stepMobileValue(page.dataset.mobileStatsView || "agents", ["agents", "maps", "weapons"], direction);
+    ensureMobileStatsTabs();
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.querySelector("#editProfileModal .profile-edit-nav"), (direction) => {
+    const order = ["theme", "icon", "borderColor", "border", "banner"];
+    const current = document.querySelector("#editProfileModal .profile-edit-tab.is-active")?.dataset?.profileTab || "theme";
+    activateProfileEditTab(stepMobileValue(current, order, direction));
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.querySelector("#editProfileModal .banner-category-toggle"), (direction) => {
+    const current = activeProfileBannerCategory || "official";
+    setProfileBannerCategory(stepMobileValue(current, ["official", "unofficial"], direction));
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.querySelector("#page-stats .stats-mobile-role-filter"), (direction) => {
+    mobileStatsAgentRole = stepMobileValue(mobileStatsAgentRole || "duelist", ["duelist", "controller", "initiator", "sentinel"], direction);
+    renderStatsAgentsModel();
+    ensureMobileSwipeAffordances();
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.querySelector("#page-stats .stats-mobile-weapon-filter"), (direction) => {
+    const values = STATS_WEAPON_FAMILIES.map((family) => family.key);
+    mobileStatsWeaponFamily = stepMobileValue(mobileStatsWeaponFamily || values[0] || "rifle", values, direction);
+    renderStatsWeaponsModel();
+    ensureMobileSwipeAffordances();
+  }, { allowControls: true });
+
+  bindMobileSwipe(document.getElementById("statsPerformanceChart"), (direction) => {
+    const chart = document.getElementById("statsPerformanceChart");
+    const visibleCards = [...(chart?.querySelectorAll(".stats-trend-card") || [])].filter(item => !item.classList.contains("mobile-trend-filtered"));
+    if (!visibleCards.length) return;
+    mobileStatsTrendIndex = (mobileStatsTrendIndex + direction + visibleCards.length) % visibleCards.length;
+    ensureMobileTrendCarousel();
+  });
+
+  bindMobileSwipe(document.getElementById("statsBreakdown"), (direction) => {
+    const container = document.getElementById("statsBreakdown");
+    const cards = [...(container?.querySelectorAll(".stats-breakdown-cardlet") || [])];
+    if (!cards.length) return;
+    mobileStatsBreakdownIndex = (mobileStatsBreakdownIndex + direction + cards.length) % cards.length;
+    ensureMobileStatsBreakdownCarousel();
+  });
 }
 
 function ensureMobileManualReportControls() {
@@ -11972,6 +12092,14 @@ const COMPASS_LENS_META = {
   teamplay: { label: "Teamwork", summary: "Trade value, support timing, and collaborative impact." },
   discipline: { label: "Discipline", summary: "Stability, emotional control, and repeatable habits." }
 };
+
+function isRiotSyncFeatureEnabled() {
+  try {
+    return Boolean(globalThis.RankedCoachRiotSync?.isEnabled?.());
+  } catch (_error) {
+    return false;
+  }
+}
 
 function getRRTotalAnimationStorageKey() {
   const profile = getActiveProfile?.();
@@ -45282,6 +45410,13 @@ async function importActiveProfileMatches(options = {}){
   if(!profile.riotId) throw new Error("Set Riot ID first");
   const allowDemoFallback = options.allowDemoFallback !== false && isLocalDevelopmentHost();
 
+  if (!isRiotSyncFeatureEnabled()) {
+    if (allowDemoFallback) {
+      return importDemoMatches();
+    }
+    throw new Error("Riot sync is waiting on Riot approval");
+  }
+
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
     const health = await healthRes.json().catch(() => ({}));
@@ -45481,6 +45616,10 @@ function hasSyncableRiotProfile() {
 }
 
 async function isRiotSyncConfigured() {
+  if (!isRiotSyncFeatureEnabled()) {
+    return false;
+  }
+
   try {
     const healthRes = await fetchWithTimeout("/api/riot/health");
     const health = await healthRes.json().catch(() => ({}));
@@ -45517,6 +45656,12 @@ async function performRiotSync(options = {}) {
     if (!silent) {
       showRiotProfilePrompt?.({ force: true });
     }
+    clearRiotAutoSyncTimer();
+    return null;
+  }
+
+  if (!isRiotSyncFeatureEnabled() && !canUseDemoFallback) {
+    setProfileSyncStatus("", "needs-setup", "Riot sync is waiting on Riot approval", false);
     clearRiotAutoSyncTimer();
     return null;
   }
@@ -45565,6 +45710,13 @@ async function performRiotSync(options = {}) {
 
 function scheduleRiotAutoSync() {
   clearRiotAutoSyncTimer();
+
+  if (!isRiotSyncFeatureEnabled()) {
+    if (hasSyncableRiotProfile()) {
+      setProfileSyncStatus("", "needs-setup", "Riot sync is waiting on Riot approval", false);
+    }
+    return;
+  }
 
   riotAutoSyncDeadline = Date.now() + RIOT_AUTO_SYNC_MS;
   startRiotAutoSyncCountdown();
