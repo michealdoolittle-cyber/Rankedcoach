@@ -51030,3 +51030,67 @@ html body .profile-info .profile-tracker-link{
     z-index:10030 !important;
   }
 }
+
+/* Profile rating/nav correction v23: readable widget, nav-aligned dropdown, clean profile actions. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel{
+  overflow:visible !important;
+}
+
+html body .profile-rating-widget{
+  overflow:hidden !important;
+  gap:1px !important;
+}
+
+html body .profile-rating-widget small{
+  order:1 !important;
+  display:block !important;
+  width:100% !important;
+  max-width:46px !important;
+  min-width:0 !important;
+  font-size:clamp(5.4px,.42vw,7px) !important;
+  line-height:.92 !important;
+  letter-spacing:.045em !important;
+  white-space:normal !important;
+  overflow:hidden !important;
+  overflow-wrap:anywhere !important;
+  text-wrap:balance !important;
+}
+
+html body .profile-rating-widget span{
+  order:2 !important;
+  display:block !important;
+  max-width:100% !important;
+  font-size:clamp(11px,.82vw,15px) !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-rating-dropdown{
+  right:auto !important;
+  overflow:auto !important;
+}
+
+html body .profile-actions{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  gap:8px !important;
+  align-items:center !important;
+}
+
+html body .profile-actions :is(.profile-select-btn,.profile-delete-btn){
+  min-height:32px !important;
+  padding:6px 12px !important;
+  border-radius:9px !important;
+  border:1px solid rgba(148,163,184,.34) !important;
+  background:linear-gradient(180deg,rgba(51,65,85,.92),rgba(30,41,59,.92)) !important;
+  color:#f8fafc !important;
+  font:900 12px/1 var(--font-display,inherit) !important;
+  cursor:pointer !important;
+}
+
+html body .profile-actions .profile-delete-btn{
+  color:#fecdd3 !important;
+  border-color:rgba(248,113,113,.38) !important;
+}

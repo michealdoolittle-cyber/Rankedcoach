@@ -9954,6 +9954,39 @@ function setProfileRatingDropdownOpen(open) {
   dropdown.classList.toggle("open", shouldOpen);
   widget.classList.toggle("open", shouldOpen);
   widget.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  if (shouldOpen) {
+    positionProfileRatingDropdown();
+  }
+}
+
+function positionProfileRatingDropdown() {
+  const dropdown = document.getElementById("profileRatingDropdown");
+  if (!dropdown || dropdown.hidden) return;
+
+  if (isMobileLayoutViewport?.()) {
+    ["position", "top", "left", "right", "width", "max-height"].forEach(property => {
+      dropdown.style.removeProperty(property);
+    });
+    return;
+  }
+
+  const navRight = document.querySelector(".nav-right");
+  const anchor = document.querySelector(".profile-rating-anchor");
+  const rect = navRight?.getBoundingClientRect?.() || anchor?.getBoundingClientRect?.();
+  if (!rect) return;
+
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const width = Math.min(340, Math.max(280, viewportWidth - 24));
+  const right = Math.max(8, viewportWidth - rect.right);
+  const top = Math.min(Math.max(8, rect.bottom + 8), Math.max(8, viewportHeight - 220));
+
+  dropdown.style.setProperty("position", "fixed", "important");
+  dropdown.style.setProperty("left", "auto", "important");
+  dropdown.style.setProperty("right", `${right}px`, "important");
+  dropdown.style.setProperty("top", `${top}px`, "important");
+  dropdown.style.setProperty("width", `${width}px`, "important");
+  dropdown.style.setProperty("max-height", `${Math.max(220, viewportHeight - top - 12)}px`, "important");
 }
 
 function openHistoryImportModal(startStep = 0) {
@@ -36163,6 +36196,7 @@ function bindEvents(){
   if (window.__vt_bindEventsBound) return;
   window.__vt_bindEventsBound = true;
   let profileDropdownActiveAnchor = profileDropdownAnchor || profileDropdownToggle;
+  let profileHoverCloseTimer = 0;
 
   const positionProfilePopout = (menu, anchor) => {
     if (!menu || !anchor) return;
@@ -36231,6 +36265,7 @@ function bindEvents(){
     if (profileDropdown?.classList.contains("open")) {
       positionProfilePopout(profileDropdown, profileDropdownActiveAnchor || profileDropdownAnchor || profileDropdownToggle);
     }
+    positionProfileRatingDropdown();
   };
   let profileMenuPositionRaf = 0;
   const schedulePositionOpenProfileMenus = () => {
@@ -36317,6 +36352,8 @@ function bindEvents(){
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") setProfileRatingDropdownOpen(false);
   });
+  window.addEventListener("resize", positionProfileRatingDropdown);
+  window.addEventListener("scroll", positionProfileRatingDropdown, { capture: true, passive: true });
 
   syncLogFocusSelectOptions();
   setupLogFocusCustomDropdown();
@@ -36606,6 +36643,19 @@ function bindEvents(){
     schedulePositionOpenProfileMenus();
   };
 
+  const scheduleProfileSwitcherHoverClose = () => {
+    if (profileHoverCloseTimer) window.clearTimeout(profileHoverCloseTimer);
+    profileHoverCloseTimer = window.setTimeout(() => {
+      profileHoverCloseTimer = 0;
+      if (isMobileLayoutViewport()) return;
+      const avatarHovered = profileAvatarAnchor?.matches?.(":hover") || profileAvatarWrap?.matches?.(":hover");
+      const switcherHovered = profileSwitcher?.matches?.(":hover");
+      if (!avatarHovered && !switcherHovered) {
+        profileSwitcher?.classList.remove("open");
+      }
+    }, 160);
+  };
+
   const openProfileSettingsMenu = (anchor = profileDropdownAnchor || profileDropdownToggle) => {
     profileSwitcher?.classList.remove("open");
     setProfileRatingDropdownOpen(false);
@@ -36626,6 +36676,17 @@ function bindEvents(){
       openProfileSwitcherMenu();
     }
   });
+
+  profileAvatarAnchor?.addEventListener("pointerenter", () => {
+    if (isMobileLayoutViewport()) return;
+    if (profileHoverCloseTimer) window.clearTimeout(profileHoverCloseTimer);
+    openProfileSwitcherMenu();
+  });
+  profileAvatarAnchor?.addEventListener("pointerleave", scheduleProfileSwitcherHoverClose);
+  profileSwitcher?.addEventListener("pointerenter", () => {
+    if (profileHoverCloseTimer) window.clearTimeout(profileHoverCloseTimer);
+  });
+  profileSwitcher?.addEventListener("pointerleave", scheduleProfileSwitcherHoverClose);
 
   document.getElementById("riotProfilePromptAction")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -39894,15 +39955,15 @@ function renderProfilesUI(){
 
     row.innerHTML = `
       <div class="profile-info">
-        <div class="profile-name">${profile.name}</div>
+        <div class="profile-name">${escapeHtml(profile.name || "Profile")}</div>
         <div class="profile-sub">
-          ${profile.riotId || "No Riot ID"} | ${profile.region}
+          ${escapeHtml(profile.riotId || "No Riot ID")} | ${escapeHtml(profile.region || "NA")}
         </div>
       </div>
 
       <div class="profile-actions">
-        <button class="profile-select-btn">Select</button>
-        <button class="profile-delete-btn">âœ•</button>
+        <button class="profile-select-btn" type="button">Select</button>
+        <button class="profile-delete-btn" type="button" aria-label="Remove profile">Remove</button>
       </div>
     `;
 
