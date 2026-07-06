@@ -1,2 +1,4 @@
 .wrangler/
 public/assets/hover-fx/*.mp4
+testing/visual-audit/node_modules/
+testing/visual-audit/output/

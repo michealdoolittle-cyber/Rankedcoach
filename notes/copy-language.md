@@ -100,6 +100,11 @@ Note: the same "Minimal confidence because…" pattern appears **three times**, 
 
 Reasoning: keeps the word "confidence" (per prior direction not to hide the concept from players) but drops "Minimal" for the more standard High/Medium/Low vocabulary already used on the label right next to it, and leads with the plain-English reason instead of a fragment.
 
+## Visual Passthrough Copy Fixes On 2026-07-06
+
+- `public/app.js` Insights main-focus confidence pill changed from `Confidence: High Confidence` to `Confidence: High`.
+- Rule added: if a model label already includes `Confidence`, strip the repeated noun before placing it after a `Confidence:` prefix.
+
 ## Task 6 Documentation Gap — Completed
 
 `COACH_READINESS_UNLOCKS` / `renderCoachReadinessUI()` (public/app.js ~9855–9921) implements Task 6 (progress/building-state UI) and shipped in commit `63d13f5` ("Build secondary verification scaffolds"). The documentation gap is now backfilled in `notes/progress-ui.md`, including replaced placeholders, unlock thresholds, and the locked-state copy-pass status.

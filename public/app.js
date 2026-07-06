@@ -626,6 +626,10 @@ function ensureMobileBottomShell() {
       <button type="button" class="mobile-bottom-avatar-btn" data-mobile-action="profile" aria-label="Open profile switcher">
         <img class="mobile-bottom-avatar-img" alt="" aria-hidden="true">
       </button>
+      <button type="button" class="mobile-bottom-icon-btn mobile-bottom-rating-btn" data-mobile-action="rating" aria-label="Open profile rating" aria-expanded="false">
+        <span class="mobile-bottom-rating-label">Rating</span>
+        <strong class="mobile-bottom-rating-value">0%</strong>
+      </button>
       <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="sync" aria-label="Sync profile">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M20 12a8 8 0 0 1-13.66 5.66M4 12A8 8 0 0 1 17.66 6.34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
@@ -659,11 +663,19 @@ function ensureMobileBottomShell() {
     const action = actionButton.dataset.mobileAction;
     if (action === "profile") {
       portalMobileProfileSurface("profileSwitcher");
+      setProfileRatingDropdownOpen?.(false);
       document.getElementById("profileAvatarWrap")?.click();
     } else if (action === "sync") {
+      setProfileRatingDropdownOpen?.(false);
       document.getElementById("profileSyncBtn")?.click();
+    } else if (action === "rating") {
+      profileSwitcher?.classList.remove("open");
+      profileDropdown?.classList.remove("open");
+      const dropdown = document.getElementById("profileRatingDropdown");
+      setProfileRatingDropdownOpen?.(dropdown?.hidden !== false);
     } else if (action === "menu") {
       portalMobileProfileSurface("profileDropdown");
+      setProfileRatingDropdownOpen?.(false);
       document.getElementById("profileDropdownToggle")?.click();
     }
   });
@@ -1254,6 +1266,19 @@ function syncMobileBottomShellState() {
     syncButton.classList.toggle("syncing", sourceSync.classList.contains("syncing"));
     syncButton.classList.toggle("counting", sourceSync.classList.contains("counting"));
     syncButton.title = sourceSync.title || "Sync profile";
+  }
+
+  const ratingButton = shell.querySelector('[data-mobile-action="rating"]');
+  const sourceRating = document.getElementById("profileRatingWidget");
+  const sourceRatingValue = document.getElementById("profileRatingValue")?.textContent || "0%";
+  const ratingDropdown = document.getElementById("profileRatingDropdown");
+  if (ratingButton) {
+    const value = ratingButton.querySelector(".mobile-bottom-rating-value");
+    if (value) value.textContent = sourceRatingValue;
+    ratingButton.classList.toggle("open", ratingDropdown?.hidden === false);
+    ratingButton.classList.toggle("is-ready", sourceRating?.classList.contains("is-ready"));
+    ratingButton.setAttribute("aria-expanded", ratingDropdown?.hidden === false ? "true" : "false");
+    ratingButton.title = "Profile Rating";
   }
 
   scheduleMobileScrollExtentSync();
@@ -3565,6 +3590,21 @@ function selectReadCandidatePool(items = [], limit = 3, fields = []) {
     .map(({ __readPoolIndex, selectionScore, score, ...item }) => item);
 }
 
+function dedupeRecentImprovementItems(items = []) {
+  const seen = new Set();
+
+  return (Array.isArray(items) ? items : []).filter((item) => {
+    if (!item) return false;
+    const visibleMetricKey = normalizeDisplayDedupKeyFragment(item.label || item.key || "");
+    const fallbackMetricKey = normalizeDisplayDedupKeyFragment(item.key || item.value || "");
+    const key = visibleMetricKey || fallbackMetricKey;
+    if (!key) return true;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function getImpactTierMeta(score) {
   const rounded = Math.round(clampScore(score));
   if (rounded >= 85) return { tier: "Carry", color: "#22c55e" };
@@ -5416,7 +5456,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       selectReadCandidatePool(items, 3, ["kicker", "title", "value"])
     ])
   );
-  let uniqueRecentImprovements = dedupeDisplayItems(recentImprovements, ["key", "label", "value"]);
+  let uniqueRecentImprovements = dedupeRecentImprovementItems(recentImprovements);
   let uniqueWeeklyCandidates = dedupeDisplayItems(weeklyCandidates, ["key", "label", "summary"]);
 
   const coachingCopyContext = buildCoachingCopyContext({
@@ -9955,12 +9995,18 @@ function renderCoachReadinessUI() {
 function setProfileRatingDropdownOpen(open) {
   const widget = document.getElementById("profileRatingWidget");
   const dropdown = document.getElementById("profileRatingDropdown");
-  if (!widget || !dropdown) return;
+  const mobileButton = document.querySelector('[data-mobile-action="rating"]');
+  if (!dropdown) return;
   const shouldOpen = Boolean(open);
+  if (shouldOpen && isMobileLayoutViewport?.()) {
+    portalMobileProfileSurface("profileRatingDropdown");
+  }
   dropdown.hidden = !shouldOpen;
   dropdown.classList.toggle("open", shouldOpen);
-  widget.classList.toggle("open", shouldOpen);
-  widget.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  widget?.classList.toggle("open", shouldOpen);
+  mobileButton?.classList.toggle("open", shouldOpen);
+  widget?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  mobileButton?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
   if (shouldOpen) {
     positionProfileRatingDropdown();
   }
@@ -36491,6 +36537,7 @@ function bindEvents(){
     const dropdown = document.getElementById("profileRatingDropdown");
     if (!anchor || !dropdown || dropdown.hidden) return;
     if (anchor.contains(event.target)) return;
+    if (dropdown.contains(event.target)) return;
     setProfileRatingDropdownOpen(false);
   });
   document.addEventListener("keydown", (event) => {
@@ -45974,7 +46021,8 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
     applyInsightMetaPillTone(priorityEl, getInsightMetaToneClass("priority", model?.priorityLabel || "Watch"));
   }
   if (confidenceEl) {
-    confidenceEl.textContent = `Confidence: ${model?.confidenceLabel || "Low Confidence"}`;
+    const confidenceLabel = String(model?.confidenceLabel || "Low Confidence").replace(/\s*Confidence$/i, "") || "Low";
+    confidenceEl.textContent = `Confidence: ${confidenceLabel}`;
     applyInsightMetaPillTone(confidenceEl, getInsightMetaToneClass("confidence", model?.confidenceLabel || "Low Confidence"));
   }
 }
