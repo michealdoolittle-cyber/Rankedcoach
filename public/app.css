@@ -51100,8 +51100,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap.is-ho
   border-color:color-mix(in srgb,var(--profile-ring-border,#ff4655) 82%,#fff 10%) !important;
   box-shadow:
     0 0 0 1px rgba(255,255,255,.18),
-    0 0 18px var(--profile-ring-glow,rgba(255,70,85,.48)),
-    0 0 28px color-mix(in srgb,var(--profile-ring-border,#ff4655) 34%,transparent) !important;
+    0 0 11px var(--profile-ring-glow,rgba(255,70,85,.32)),
+    0 0 17px color-mix(in srgb,var(--profile-ring-border,#ff4655) 22%,transparent) !important;
 }
 
 html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span{
@@ -51126,12 +51126,126 @@ html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked
 html body .profile-avatar-anchor:hover #profileAvatarWrap,
 html body #profileAvatarWrap.is-hover-highlight{
   outline:2px solid color-mix(in srgb,var(--profile-ring-border,#ff4655) 78%,#fff 10%) !important;
-  outline-offset:3px !important;
+  outline-offset:2px !important;
   border-radius:999px !important;
-  filter:drop-shadow(0 0 12px var(--profile-ring-glow,rgba(255,70,85,.5))) !important;
+  filter:drop-shadow(0 0 7px var(--profile-ring-glow,rgba(255,70,85,.34))) !important;
 }
 
 html body .profile-avatar-anchor:hover #profileAvatarWrap .profile-avatar-ring,
 html body #profileAvatarWrap.is-hover-highlight .profile-avatar-ring{
-  filter:drop-shadow(0 0 10px var(--profile-ring-glow,rgba(255,70,85,.5))) !important;
+  filter:drop-shadow(0 0 6px var(--profile-ring-glow,rgba(255,70,85,.34))) !important;
+}
+
+html body .profile-delete-confirm-modal,
+html body .profile-cleanup-veil{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:56000 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:18px !important;
+  background:
+    radial-gradient(circle at 50% 18%,color-mix(in srgb,var(--theme-accent,#ff4655) 18%,transparent),transparent 36%),
+    rgba(2,6,23,.72) !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+  transition:opacity .2s ease,visibility .2s ease !important;
+}
+
+html body .profile-delete-confirm-modal.is-visible,
+html body .profile-cleanup-veil.is-visible{
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+}
+
+html body .profile-delete-confirm-card,
+html body .profile-cleanup-card{
+  width:min(390px,calc(100vw - 28px)) !important;
+  display:grid !important;
+  gap:12px !important;
+  padding:18px !important;
+  border-radius:20px !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#ff4655) 48%,rgba(148,163,184,.28)) !important;
+  background:
+    radial-gradient(circle at top left,color-mix(in srgb,var(--theme-accent,#ff4655) 22%,transparent),transparent 42%),
+    linear-gradient(145deg,rgba(15,23,42,.98),rgba(2,6,23,.98)) !important;
+  color:#f8fafc !important;
+  box-shadow:0 24px 70px rgba(0,0,0,.48),0 0 28px color-mix(in srgb,var(--theme-accent,#ff4655) 18%,transparent) !important;
+  transform:translateY(8px) scale(.98) !important;
+  transition:transform .2s ease !important;
+}
+
+html body .profile-delete-confirm-modal.is-visible .profile-delete-confirm-card,
+html body .profile-cleanup-veil.is-visible .profile-cleanup-card{
+  transform:translateY(0) scale(1) !important;
+}
+
+html body .profile-delete-confirm-kicker,
+html body .profile-cleanup-kicker{
+  color:color-mix(in srgb,var(--theme-accent,#ff4655) 70%,#fff 20%) !important;
+  font:1000 12px/1 var(--font-display,inherit) !important;
+  letter-spacing:.14em !important;
+  text-transform:uppercase !important;
+}
+
+html body .profile-delete-confirm-card h2{
+  margin:0 !important;
+  color:#f8fafc !important;
+  font:1000 24px/1.05 var(--font-display,inherit) !important;
+}
+
+html body .profile-delete-confirm-card p,
+html body .profile-cleanup-copy{
+  margin:0 !important;
+  color:#cbd5e1 !important;
+  font:800 13px/1.35 var(--font-display,inherit) !important;
+}
+
+html body .profile-delete-confirm-actions{
+  display:grid !important;
+  grid-template-columns:1fr 1.15fr !important;
+  gap:10px !important;
+  margin-top:4px !important;
+}
+
+html body .profile-delete-confirm-actions button{
+  min-height:42px !important;
+  border-radius:12px !important;
+  border:1px solid rgba(148,163,184,.32) !important;
+  background:linear-gradient(180deg,rgba(51,65,85,.92),rgba(30,41,59,.92)) !important;
+  color:#f8fafc !important;
+  font:1000 13px/1 var(--font-display,inherit) !important;
+  cursor:pointer !important;
+}
+
+html body .profile-delete-confirm-actions .profile-delete-confirm-remove{
+  border-color:rgba(248,113,113,.54) !important;
+  background:linear-gradient(135deg,#ff4655,#f97316) !important;
+  box-shadow:0 12px 24px rgba(255,70,85,.2) !important;
+}
+
+html body .profile-cleanup-meter{
+  height:9px !important;
+  overflow:hidden !important;
+  border-radius:999px !important;
+  border:1px solid rgba(148,163,184,.22) !important;
+  background:rgba(2,6,23,.78) !important;
+}
+
+html body .profile-cleanup-meter span{
+  display:block !important;
+  width:0;
+  height:100% !important;
+  border-radius:inherit !important;
+  background:linear-gradient(90deg,#ff4655,#facc15,#34d399) !important;
+  transition:width .18s ease !important;
+}
+
+html body .profile-cleanup-percent{
+  justify-self:end !important;
+  color:#f8fafc !important;
+  font:1000 13px/1 var(--font-display,inherit) !important;
 }

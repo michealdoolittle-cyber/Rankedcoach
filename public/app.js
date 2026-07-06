@@ -10802,6 +10802,140 @@ async function withAppLoadingVeil(message = "Preparing your dashboard...", task 
   }
 }
 
+let profileDeleteConfirmResolver = null;
+
+function ensureProfileDeleteConfirmModal() {
+  let modal = document.getElementById("profileDeleteConfirmModal");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.id = "profileDeleteConfirmModal";
+  modal.className = "profile-delete-confirm-modal";
+  modal.setAttribute("aria-hidden", "true");
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="profile-delete-confirm-card" role="dialog" aria-modal="true" aria-labelledby="profileDeleteConfirmTitle">
+      <div class="profile-delete-confirm-kicker">Remove Profile</div>
+      <h2 id="profileDeleteConfirmTitle">Remove this profile?</h2>
+      <p id="profileDeleteConfirmCopy">This removes the selected profile from RankedCoach on this device.</p>
+      <div class="profile-delete-confirm-actions">
+        <button class="profile-delete-confirm-cancel" type="button">Cancel</button>
+        <button class="profile-delete-confirm-remove" type="button">Remove Profile</button>
+      </div>
+    </div>
+  `;
+  document.body?.appendChild(modal);
+
+  const resolveModal = (confirmed) => {
+    modal.classList.remove("is-visible");
+    modal.setAttribute("aria-hidden", "true");
+    document.body?.classList.remove("profile-delete-confirm-active");
+    window.setTimeout(() => {
+      if (!modal.classList.contains("is-visible")) modal.hidden = true;
+    }, 180);
+    const resolver = profileDeleteConfirmResolver;
+    profileDeleteConfirmResolver = null;
+    resolver?.(confirmed);
+  };
+
+  modal.querySelector(".profile-delete-confirm-cancel")?.addEventListener("click", () => resolveModal(false));
+  modal.querySelector(".profile-delete-confirm-remove")?.addEventListener("click", () => resolveModal(true));
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) resolveModal(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal.classList.contains("is-visible")) {
+      resolveModal(false);
+    }
+  });
+
+  return modal;
+}
+
+function openProfileDeleteConfirmModal(profile) {
+  const modal = ensureProfileDeleteConfirmModal();
+  const title = modal.querySelector("#profileDeleteConfirmTitle");
+  const copy = modal.querySelector("#profileDeleteConfirmCopy");
+  const profileName = String(profile?.name || profile?.riotId || "this profile").trim();
+  if (title) title.textContent = `Remove ${profileName}?`;
+  if (copy) {
+    copy.textContent = "RankedCoach will remove this profile, clear the old profile view, and rebuild the dashboard from the next active profile.";
+  }
+  profileDeleteConfirmResolver?.(false);
+  return new Promise((resolve) => {
+    profileDeleteConfirmResolver = resolve;
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body?.classList.add("profile-delete-confirm-active");
+    window.requestAnimationFrame(() => modal.classList.add("is-visible"));
+    window.setTimeout(() => modal.querySelector(".profile-delete-confirm-cancel")?.focus?.(), 30);
+  });
+}
+
+function ensureProfileCleanupVeil() {
+  let veil = document.getElementById("profileCleanupVeil");
+  if (veil) return veil;
+
+  veil = document.createElement("div");
+  veil.id = "profileCleanupVeil";
+  veil.className = "profile-cleanup-veil";
+  veil.setAttribute("aria-live", "polite");
+  veil.setAttribute("aria-hidden", "true");
+  veil.hidden = true;
+  veil.innerHTML = `
+    <div class="profile-cleanup-card">
+      <div class="profile-cleanup-kicker">Cleaning Profile Cache</div>
+      <div class="profile-cleanup-copy" id="profileCleanupCopy">Preparing cleanup...</div>
+      <div class="profile-cleanup-meter" aria-hidden="true"><span id="profileCleanupFill"></span></div>
+      <div class="profile-cleanup-percent" id="profileCleanupPercent">0%</div>
+    </div>
+  `;
+  document.body?.appendChild(veil);
+  return veil;
+}
+
+function updateProfileCleanupProgress(message, progress = 0) {
+  const veil = ensureProfileCleanupVeil();
+  const copy = document.getElementById("profileCleanupCopy");
+  const fill = document.getElementById("profileCleanupFill");
+  const percent = document.getElementById("profileCleanupPercent");
+  const safeProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+  if (copy) copy.textContent = message;
+  if (fill) fill.style.width = `${safeProgress}%`;
+  if (percent) percent.textContent = `${Math.round(safeProgress)}%`;
+  return veil;
+}
+
+async function runProfileCleanupTask(task = async () => {}) {
+  const pause = (ms) => new Promise(resolve => window.setTimeout(resolve, ms));
+  const veil = updateProfileCleanupProgress("Closing old profile view...", 8);
+  veil.hidden = false;
+  veil.setAttribute("aria-hidden", "false");
+  document.body?.classList.add("profile-cleanup-active");
+  window.requestAnimationFrame(() => veil.classList.add("is-visible"));
+
+  try {
+    await pause(90);
+    updateProfileCleanupProgress("Removing saved profile data...", 35);
+    const result = await task();
+    await pause(110);
+    updateProfileCleanupProgress("Clearing stale coaching reads...", 68);
+    await pause(110);
+    updateProfileCleanupProgress("Rebuilding your dashboard...", 92);
+    await pause(120);
+    updateProfileCleanupProgress("Cleanup complete.", 100);
+    await pause(180);
+    return result;
+  } finally {
+    veil.classList.remove("is-visible");
+    veil.setAttribute("aria-hidden", "true");
+    document.body?.classList.remove("profile-cleanup-active");
+    window.setTimeout(() => {
+      if (!veil.classList.contains("is-visible")) veil.hidden = true;
+    }, 220);
+  }
+}
+
 function enterGuestModeAfterLogout() {
   currentAuthUser = null;
   setAppEntryChoice("guest");
@@ -29737,6 +29871,9 @@ function initApp(){
   bindEvents();
 
   loadProfiles();
+  updateProfileHeaderUI();
+  rebuildProfileListUI();
+  renderCoachReadinessUI?.();
 
   const active = getActiveProfile();
   matches = active?.matches ? active.matches.slice() : [];
@@ -36688,8 +36825,8 @@ function bindEvents(){
     if (isMobileLayoutViewport()) return;
     profileAvatarWrap?.classList.add("is-hover-highlight");
     profileAvatarWrap?.style.setProperty("outline", "2px solid var(--profile-ring-border, #ff4655)", "important");
-    profileAvatarWrap?.style.setProperty("outline-offset", "3px", "important");
-    profileAvatarWrap?.style.setProperty("filter", "drop-shadow(0 0 12px var(--profile-ring-border, #ff4655))", "important");
+    profileAvatarWrap?.style.setProperty("outline-offset", "2px", "important");
+    profileAvatarWrap?.style.setProperty("filter", "drop-shadow(0 0 7px var(--profile-ring-border, #ff4655))", "important");
   });
   profileAvatarAnchor?.addEventListener("pointerleave", () => {
     profileAvatarWrap?.classList.remove("is-hover-highlight");
@@ -39744,16 +39881,117 @@ function createProfile(data){
 // DELETE PROFILE
 // ========================
 
-function deleteProfile(id){
+function createFallbackProfileAfterDelete() {
+  return normalizeProfileRecord({
+    id: uuid(),
+    name: currentAuthUser ? "Main Profile" : "Guest",
+    accountName: currentAuthUser ? getUserAccountName(currentAuthUser) : "Guest",
+    riotId: "",
+    region: "NA",
+    startingRR: 0,
+    startingRRDate: "",
+    startingRRSource: "",
+    themeKey: getActiveProfile()?.themeKey || "default",
+    frameTheme: getActiveProfile()?.frameTheme || getActiveProfile()?.themeKey || "default",
+    avatarAgent: getDefaultProfileAvatarAgent(),
+    avatarUrl: getDefaultProfileAvatarUrl(),
+    navBackgroundUrl: "",
+    manualEntryMode: false,
+    profileBorderColor: "theme",
+    profileBorder: "standard",
+    profileBorderRotate: false,
+    bannerStyle: "theme",
+    goalRank: null,
+    goalRR: null,
+    matches: [],
+    accessibility: {
+      contrastMode: "standard",
+      motionMode: "standard",
+      layoutMode: "web"
+    }
+  });
+}
+
+function clearDeletedProfileLocalCache(deletedProfileId) {
+  setProfileRatingDropdownOpen?.(false);
+  closeProfileDropdown?.();
+  profileSwitcher?.classList.remove("open");
+  profileDropdown?.classList.remove("open");
+
+  try {
+    localStorage.removeItem(WEEKLY_FOCUS_KEY);
+    localStorage.removeItem(WEEKLY_FOCUS_WEEK_KEY);
+    localStorage.removeItem(ASK_COACH_CHAT_STORAGE_KEY);
+    localStorage.removeItem(getRRTotalAnimationStorageKey());
+    localStorage.removeItem(getRRTotalAnimationPayloadKey());
+  } catch (error) {
+    console.warn("Unable to clear profile view cache", error);
+  }
+
+  if (Array.isArray(logEntries) && deletedProfileId) {
+    const nextLogEntries = logEntries.filter(entry => String(entry?.profileId || "") !== String(deletedProfileId));
+    if (nextLogEntries.length !== logEntries.length) {
+      logEntries = nextLogEntries;
+      saveLogEntries?.({ skipBackend: true });
+    }
+  }
+
+  const active = getActiveProfile();
+  matches = active?.matches ? active.matches.slice() : [];
+  recomputeFromMatches?.();
+  renderProfilesUI?.();
+  rebuildProfileListUI?.();
+  updateProfileHeaderUI?.();
+  updateDisplays?.();
+  initStatsPage?.();
+  renderStatsAgents?.();
+  renderStatsMaps?.();
+  renderStatsWeapons?.();
+  renderInsights?.();
+  renderLogFeed?.({ force: true });
+  refreshImprovementTimeline?.({ animate: false });
+  renderCoachReadinessUI?.();
+  updateNavRRToRank?.();
+  updateNavRRToGoalRank?.();
+  renderChart?.(currentSize);
+  syncManualEntryModeUI?.();
+  syncTrackerProfileUrlUI?.(active);
+}
+
+async function requestDeleteProfile(id) {
+  const profile = profiles.find(p => p.id === id);
+  if (!profile) return;
+
+  const confirmed = await openProfileDeleteConfirmModal(profile);
+  if (!confirmed) return;
+
+  await runProfileCleanupTask(() => {
+    deleteProfile(id, { cleanup: true });
+  });
+}
+
+function deleteProfile(id, options = {}){
+
+  const deletedProfileId = String(id || "");
+  const activeBeforeDelete = activeProfileId === id;
 
   profiles = profiles.filter(p => p.id !== id);
 
-  if(activeProfileId === id){
+  if(!profiles.length){
+    profiles.push(createFallbackProfileAfterDelete());
+  }
+
+  if(activeBeforeDelete || !profiles.some(profile => profile.id === activeProfileId)){
     activeProfileId = profiles[0]?.id || null;
   }
 
   saveProfiles();
-  renderProfilesUI();
+
+  if (options.cleanup) {
+    clearDeletedProfileLocalCache(deletedProfileId);
+  } else {
+    renderProfilesUI();
+  }
 
 }
 
@@ -39988,8 +40226,10 @@ function renderProfilesUI(){
       closeProfileDropdown();
     });
 
-    deleteBtn?.addEventListener("click", ()=>{
-      deleteProfile(profile.id);
+    deleteBtn?.addEventListener("click", (event)=>{
+      event.preventDefault();
+      event.stopPropagation();
+      void requestDeleteProfile(profile.id);
     });
 
     profileListEl.appendChild(row);
@@ -43497,6 +43737,18 @@ async function initUserSession(){
   if(!supabaseClient?.auth){
     updateAuthUI(null);
     return;
+  }
+
+  try {
+    const { data: { session } = {} } = await supabaseClient.auth.getSession();
+    if (session?.user) {
+      currentAuthUser = session.user;
+      updateAuthUI(session.user);
+      updateProfileHeaderUI?.();
+      rebuildProfileListUI?.();
+    }
+  } catch (error) {
+    console.warn("Unable to read cached auth session", error);
   }
 
   const { data: { user } } = await supabaseClient.auth.getUser();
