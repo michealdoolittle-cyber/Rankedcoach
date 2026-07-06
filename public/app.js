@@ -9887,13 +9887,14 @@ function getCoachReadinessModel() {
 function getReadinessLockedMarkup(required, label) {
   const model = getCoachReadinessModel();
   const remaining = Math.max(0, required - model.matchCount);
+  const progress = Math.min(100, Math.round((model.matchCount / Math.max(1, required)) * 100));
   return `
     <div class="coach-readiness-locked" data-required="${required}">
       <div class="coach-readiness-locked-title">${escapeHtml(label)}</div>
       <div class="coach-readiness-locked-copy">
         ${model.matchCount}/${required} games logged${remaining ? `. Add ${remaining} more to unlock this read.` : "."}
       </div>
-      <div class="coach-readiness-locked-bar"><span style="width:${Math.min(100, Math.round((model.matchCount / Math.max(1, required)) * 100))}%"></span></div>
+      <div class="coach-readiness-locked-bar"><span style="--profile-progress:${progress};width:${progress}%"></span></div>
     </div>
   `;
 }
@@ -9910,7 +9911,7 @@ function renderCoachReadinessUI() {
       <div class="profile-rating-unlock coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
         <span>${escapeHtml(item.label)}</span>
         <strong>${item.complete ? "Unlocked" : `${model.matchCount}/${item.required}`}</strong>
-        <div class="coach-readiness-mini-bar"><span style="width:${item.progress}%"></span></div>
+        <div class="coach-readiness-mini-bar"><span style="--profile-progress:${item.progress};width:${item.progress}%"></span></div>
       </div>
     `).join("");
   };
@@ -9925,7 +9926,10 @@ function renderCoachReadinessUI() {
     card.classList.toggle("is-ready", model.percent >= 100);
     if (value) value.textContent = `${model.percent}%`;
     if (copy) copy.textContent = model.copy;
-    if (fill) fill.style.width = `${model.percent}%`;
+    if (fill) {
+      fill.style.setProperty("--profile-progress", String(model.percent));
+      fill.style.width = `${model.percent}%`;
+    }
     writeUnlocks(unlocks);
   }
 
@@ -9940,7 +9944,10 @@ function renderCoachReadinessUI() {
     if (widgetValue) widgetValue.textContent = `${model.percent}%`;
     if (dropdownValue) dropdownValue.textContent = `${model.percent}%`;
     if (copy) copy.textContent = model.copy;
-    if (fill) fill.style.width = `${model.percent}%`;
+    if (fill) {
+      fill.style.setProperty("--profile-progress", String(model.percent));
+      fill.style.width = `${model.percent}%`;
+    }
     writeUnlocks(unlocks);
   }
 }
@@ -9978,12 +9985,12 @@ function positionProfileRatingDropdown() {
   const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
   const width = Math.min(340, Math.max(280, viewportWidth - 24));
-  const right = Math.max(8, viewportWidth - rect.right);
+  const left = Math.min(Math.max(8, rect.left), Math.max(8, viewportWidth - width - 8));
   const top = Math.min(Math.max(8, rect.bottom + 8), Math.max(8, viewportHeight - 220));
 
   dropdown.style.setProperty("position", "fixed", "important");
-  dropdown.style.setProperty("left", "auto", "important");
-  dropdown.style.setProperty("right", `${right}px`, "important");
+  dropdown.style.setProperty("left", `${left}px`, "important");
+  dropdown.style.setProperty("right", "auto", "important");
   dropdown.style.setProperty("top", `${top}px`, "important");
   dropdown.style.setProperty("width", `${width}px`, "important");
   dropdown.style.setProperty("max-height", `${Math.max(220, viewportHeight - top - 12)}px`, "important");
@@ -36679,14 +36686,14 @@ function bindEvents(){
 
   profileAvatarAnchor?.addEventListener("pointerenter", () => {
     if (isMobileLayoutViewport()) return;
-    if (profileHoverCloseTimer) window.clearTimeout(profileHoverCloseTimer);
-    openProfileSwitcherMenu();
+    profileAvatarWrap?.classList.add("is-hover-highlight");
   });
-  profileAvatarAnchor?.addEventListener("pointerleave", scheduleProfileSwitcherHoverClose);
+  profileAvatarAnchor?.addEventListener("pointerleave", () => {
+    profileAvatarWrap?.classList.remove("is-hover-highlight");
+  });
   profileSwitcher?.addEventListener("pointerenter", () => {
     if (profileHoverCloseTimer) window.clearTimeout(profileHoverCloseTimer);
   });
-  profileSwitcher?.addEventListener("pointerleave", scheduleProfileSwitcherHoverClose);
 
   document.getElementById("riotProfilePromptAction")?.addEventListener("click", (e) => {
     e.preventDefault();

@@ -51094,3 +51094,31 @@ html body .profile-actions .profile-delete-btn{
   color:#fecdd3 !important;
   border-color:rgba(248,113,113,.38) !important;
 }
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-anchor:hover #profileAvatarWrap .profile-avatar-ring,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profileAvatarWrap.is-hover-highlight .profile-avatar-ring{
+  border-color:color-mix(in srgb,var(--profile-ring-border,#ff4655) 82%,#fff 10%) !important;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.18),
+    0 0 18px var(--profile-ring-glow,rgba(255,70,85,.48)),
+    0 0 28px color-mix(in srgb,var(--profile-ring-border,#ff4655) 34%,transparent) !important;
+}
+
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span{
+  background:#ff4655 !important;
+  box-shadow:0 0 14px rgba(255,70,85,.36) !important;
+}
+
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span[style*="--profile-progress:5"],
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span[style*="--profile-progress:6"]{
+  background:#facc15 !important;
+  box-shadow:0 0 14px rgba(250,204,21,.34) !important;
+}
+
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span[style*="--profile-progress:7"],
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span[style*="--profile-progress:8"],
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span[style*="--profile-progress:9"],
+html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked-bar,.coach-readiness-mini-bar) span[style*="--profile-progress:100"]{
+  background:#34d399 !important;
+  box-shadow:0 0 14px rgba(52,211,153,.34) !important;
+}
