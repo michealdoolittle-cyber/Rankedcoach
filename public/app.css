@@ -51122,3 +51122,16 @@ html body :is(.profile-rating-meter,.coach-readiness-bar,.coach-readiness-locked
   background:#34d399 !important;
   box-shadow:0 0 14px rgba(52,211,153,.34) !important;
 }
+
+html body .profile-avatar-anchor:hover #profileAvatarWrap,
+html body #profileAvatarWrap.is-hover-highlight{
+  outline:2px solid color-mix(in srgb,var(--profile-ring-border,#ff4655) 78%,#fff 10%) !important;
+  outline-offset:3px !important;
+  border-radius:999px !important;
+  filter:drop-shadow(0 0 12px var(--profile-ring-glow,rgba(255,70,85,.5))) !important;
+}
+
+html body .profile-avatar-anchor:hover #profileAvatarWrap .profile-avatar-ring,
+html body #profileAvatarWrap.is-hover-highlight .profile-avatar-ring{
+  filter:drop-shadow(0 0 10px var(--profile-ring-glow,rgba(255,70,85,.5))) !important;
+}
