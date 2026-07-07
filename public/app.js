@@ -3983,6 +3983,7 @@ function getMatchAdvancedImpactSignals(match = {}) {
     firstDeaths,
     avgKast,
     roundWinPct,
+    firstContactRatio: firstDeaths > 0 ? safeDivide(firstBloods, firstDeaths) : (firstBloods > 0 ? firstBloods : 0),
     openingScore: clampScore(52 + (firstBloods * 8) - (firstDeaths * 9) + ((firstBloods - firstDeaths) * 4))
   };
 }
@@ -3992,6 +3993,15 @@ function getMatchResultContextScore(resultLabel = "draw") {
   if (result === "win") return 68;
   if (result === "loss") return 44;
   return 52;
+}
+
+function formatFirstContactRatioDisplay(rawValue = {}) {
+  const firstBloods = Math.round(safeNumber(rawValue?.firstBloods));
+  const firstDeaths = Math.round(safeNumber(rawValue?.firstDeaths));
+  const ratio = safeNumber(rawValue?.firstContactRatio);
+  if (!firstBloods && !firstDeaths) return "--";
+  if (firstDeaths <= 0) return `${firstBloods}:0`;
+  return `${ratio.toFixed(2)} (${firstBloods}:${firstDeaths})`;
 }
 
 function getRoleImpactComponentFormula(key, rawValue, score, roleLabel) {
@@ -4008,9 +4018,9 @@ function getRoleImpactComponentFormula(key, rawValue, score, roleLabel) {
     case "hs":
       return `${Math.round(safeNumber(rawValue))}% headshot rate scored ${roundedScore}/100 against the accuracy benchmark.`;
     case "kast":
-      return `${Math.round(safeNumber(rawValue))}% KAST scored ${roundedScore}/100 for round involvement and stability.`;
+      return `${Math.round(safeNumber(rawValue))}% KAST counts as ${roundedScore}/100 here, so this weighted lens uses the direct KAST percentage instead of a separate benchmark score.`;
     case "opening":
-      return `Opening value scored ${roundedScore}/100 from first-blood pressure minus first-death cost.`;
+      return `${Math.round(safeNumber(rawValue?.firstBloods))} first bloods vs ${Math.round(safeNumber(rawValue?.firstDeaths))} first deaths (${formatFirstContactRatioDisplay(rawValue)}) scored ${roundedScore}/100 for info and first-contact value.`;
     case "econ":
       return `Economy value scored ${roundedScore}/100 from the match economy rating.`;
     case "result":
@@ -4041,7 +4051,7 @@ function buildMatchRoleImpact(match = {}, roleName = "Unknown", importedAnalytic
     assists: scoreMetricAgainstBenchmark(assists, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.assists, modifiers.assists)),
     deaths: scoreMetricAgainstBenchmark(deaths, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.deaths, modifiers.deaths)),
     hs: scoreMetricAgainstBenchmark(hs, adjustCompassBenchmark(COMPASS_STAT_BENCHMARKS.hs, modifiers.hs)),
-    kast: advancedSignals.avgKast ? scoreMetricAgainstBenchmark(advancedSignals.avgKast, COMPASS_STAT_BENCHMARKS.kast) : 50,
+    kast: clampScore(advancedSignals.avgKast),
     opening: advancedSignals.openingScore,
     econ: econ ? scoreMetricAgainstBenchmark(econ, COMPASS_STAT_BENCHMARKS.econ) : 50,
     result: resultScore
@@ -4053,7 +4063,12 @@ function buildMatchRoleImpact(match = {}, roleName = "Unknown", importedAnalytic
     deaths,
     hs,
     kast: advancedSignals.avgKast,
-    opening: advancedSignals.openingScore,
+    opening: {
+      score: advancedSignals.openingScore,
+      firstBloods: advancedSignals.firstBloods,
+      firstDeaths: advancedSignals.firstDeaths,
+      firstContactRatio: advancedSignals.firstContactRatio
+    },
     econ,
     result: resultScore
   };
@@ -14545,8 +14560,9 @@ function buildXTicks(points, sliceLength, matchCount) {
 function buildChartAxisTitle(label = "Current Season") {
   const axisLabel = `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
-  const titleY = Math.min(CHART_H - 26, PAD_BOTTOM + 24);
-  const legendY = Math.min(CHART_H - 10, titleY + 20);
+  const isMobileFooterLayout = isMobileLayoutViewport();
+  const titleY = isMobileFooterLayout ? PAD_BOTTOM + 46 : Math.min(CHART_H - 26, PAD_BOTTOM + 24);
+  const legendY = isMobileFooterLayout ? PAD_BOTTOM + 68 : Math.min(CHART_H - 10, titleY + 20);
   const legendWidth = 146;
   const legendX = Math.max(PAD_LEFT, Math.min(x - (legendWidth / 2), CHART_W - PAD_RIGHT - legendWidth));
   const legendItems = [
@@ -17033,6 +17049,8 @@ function openImpactModal() {
     ? snapshot.impactWeights
     : getRoleImpactWeightEntries(roleKey);
   const componentMap = snapshot?.impactComponents || {};
+  const openingComponent = componentMap?.opening || null;
+  const openingRawValue = openingComponent?.rawValue || null;
   const impactWeights = roleWeightEntries.map(entry => [
     entry.label,
     `${Math.round(safeNumber(entry.weight) * 100)}%`,
@@ -17054,6 +17072,26 @@ function openImpactModal() {
     { label: "Agent", value: snapshot?.agent || core.agent || "--", formula: "Direct agent label from the selected match snapshot." },
     { label: "Match Result", value: resultLabel.replace(/^./, (char) => char.toUpperCase()), formula: "Direct result label from the selected match." }
   ].concat(componentStats);
+
+  if (openingRawValue) {
+    impactStats.push(
+      {
+        label: "First Bloods",
+        value: `${Math.round(safeNumber(openingRawValue.firstBloods))}`,
+        formula: "Direct first-blood count from the selected match."
+      },
+      {
+        label: "First Deaths",
+        value: `${Math.round(safeNumber(openingRawValue.firstDeaths))}`,
+        formula: "Direct first-death count from the selected match."
+      },
+      {
+        label: "First Contact Ratio",
+        value: formatFirstContactRatioDisplay(openingRawValue),
+        formula: "First bloods divided by first deaths, with the raw first-blood to first-death count shown in parentheses."
+      }
+    );
+  }
 
   if (title) title.textContent = "Selected Match Impact";
   if (weightingTitle) weightingTitle.textContent = "What Moved This Score";
