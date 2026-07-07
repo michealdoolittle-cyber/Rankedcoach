@@ -736,6 +736,32 @@ function ensureMobileProfilePopover() {
   return mobileProfilePopover;
 }
 
+function getRenderableProfiles(sourceProfiles = profiles) {
+  const seenIds = new Set();
+  return (Array.isArray(sourceProfiles) ? sourceProfiles : [])
+    .map(profile => normalizeProfileRecord(profile))
+    .filter((profile) => {
+      const id = String(profile?.id || "").trim();
+      if (!id || seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    });
+}
+
+function getProfileDisplayName(profile = null, index = 0) {
+  const name = String(profile?.name || "").trim();
+  if (name) return name;
+  const riotId = String(profile?.riotId || "").trim();
+  if (riotId) return riotId.split("#")[0] || riotId;
+  return `Profile ${index + 1}`;
+}
+
+function getProfileSubtitle(profile = null) {
+  const riotId = String(profile?.riotId || "").trim() || "No Riot ID";
+  const region = String(profile?.region || "").trim() || "NA";
+  return `${riotId} | ${region}`;
+}
+
 function writeMobileProfileRating(model = getCoachReadinessModel()) {
   const value = document.getElementById("mobileProfileRatingValue");
   const copy = document.getElementById("mobileProfileRatingCopy");
@@ -782,11 +808,12 @@ function renderMobileProfilePopover() {
       <button class="pd-item mobile-profile-add" type="button" data-mobile-profile-add>+ Add Profile</button>
     `;
   } else {
-    list.innerHTML = profiles.map(profile => `
+    const renderableProfiles = getRenderableProfiles();
+    list.innerHTML = renderableProfiles.map((profile, index) => `
       <button class="profile-row ${profile.id === activeProfileId ? "active" : ""}" type="button" data-mobile-profile-id="${escapeHtml(profile.id)}">
         <span class="profile-info">
-          <span class="profile-name">${escapeHtml(profile.name || "Profile")}</span>
-          <span class="profile-sub">${escapeHtml(profile.riotId || "No Riot ID")} | ${escapeHtml(profile.region || "NA")}</span>
+          <span class="profile-name">${escapeHtml(getProfileDisplayName(profile, index))}</span>
+          <span class="profile-sub">${escapeHtml(getProfileSubtitle(profile))}</span>
         </span>
       </button>
     `).join("") + `<button class="pd-item mobile-profile-add" type="button" data-mobile-profile-add>+ Add Profile</button>`;
@@ -10331,7 +10358,13 @@ function syncTrackerProfileUrlUI(profile = getActiveProfile()) {
   const link = document.getElementById("profileTrackerLink");
   if (!link) return;
   link.hidden = !normalizedUrl;
-  link.href = normalizedUrl || "#";
+  if (normalizedUrl) {
+    link.setAttribute("href", normalizedUrl);
+    link.removeAttribute("aria-disabled");
+    return;
+  }
+  link.removeAttribute("href");
+  link.setAttribute("aria-disabled", "true");
 }
 
 function saveTrackerProfileUrlFromSettings(inputEl = null) {
@@ -12914,11 +12947,13 @@ function openLensModal(lens){
   list.innerHTML = "";
 
   (lensDetail?.weighting || []).forEach(item => {
-    const pill = document.createElement("div");
-    pill.className = "lens-weight-pill";
-    pill.innerHTML = `<span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.stat)}</strong>`;
-    weightingBlock.appendChild(pill);
+    weightingBlock.appendChild(createLensWeightPill({
+      label: item.label,
+      value: item.stat,
+      formula: item.formula
+    }));
   });
+  wireLensWeightPills(weightingBlock);
 
   (lensDetail?.stats || []).forEach(item => {
     const li = document.createElement("li");
@@ -12931,6 +12966,57 @@ function openLensModal(lens){
   });
 
   showModalById("lensModalOverlay");
+}
+
+function createLensWeightPill({
+  label = "",
+  value = "",
+  formula = "",
+  prefixWeighted = false
+} = {}) {
+  const pill = document.createElement("div");
+  const safeLabel = `${prefixWeighted ? "Weighted " : ""}${String(label || "").trim() || "Category"}`;
+  const safeValue = String(value || "").trim() || "--";
+  const safeFormula = String(formula || "").trim();
+  pill.className = `lens-weight-pill${safeFormula ? " lens-weight-pill-has-info" : ""}`;
+  if (!safeFormula) {
+    pill.innerHTML = `<span>${escapeHtml(safeLabel)}</span><strong>${escapeHtml(safeValue)}</strong>`;
+    return pill;
+  }
+  pill.innerHTML = `
+    <div class="lens-weight-pill-head">
+      <div class="lens-weight-pill-copy">
+        <span>${escapeHtml(safeLabel)}</span>
+        <strong>${escapeHtml(safeValue)}</strong>
+      </div>
+      <button type="button" class="lens-weight-info-btn" data-lens-weight-info aria-expanded="false" aria-label="Show how ${escapeHtml(safeLabel)} is made">i</button>
+    </div>
+    <div class="lens-weight-formula" data-lens-weight-formula hidden>${escapeHtml(safeFormula)}</div>
+  `;
+  return pill;
+}
+
+function wireLensWeightPills(container) {
+  if (!container) return;
+  container.querySelectorAll("[data-lens-weight-info]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const pill = button.closest(".lens-weight-pill");
+      const formula = pill?.querySelector("[data-lens-weight-formula]");
+      if (!pill || !formula) return;
+      const shouldOpen = formula.hidden;
+      container.querySelectorAll(".lens-weight-pill.is-info-open").forEach((openPill) => {
+        if (openPill === pill) return;
+        openPill.classList.remove("is-info-open");
+        openPill.querySelector("[data-lens-weight-formula]")?.setAttribute("hidden", "");
+        openPill.querySelector("[data-lens-weight-info]")?.setAttribute("aria-expanded", "false");
+      });
+      pill.classList.toggle("is-info-open", shouldOpen);
+      formula.hidden = !shouldOpen;
+      button.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+    });
+  });
 }
 
 // ========================
@@ -14459,22 +14545,23 @@ function buildXTicks(points, sliceLength, matchCount) {
 function buildChartAxisTitle(label = "Current Season") {
   const axisLabel = `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
-  const y = Math.min(CHART_H - 6, PAD_BOTTOM + 48);
-  const legendWidth = 138;
-  const legendX = Math.max(PAD_LEFT, CHART_W - PAD_RIGHT - legendWidth);
+  const titleY = Math.min(CHART_H - 26, PAD_BOTTOM + 24);
+  const legendY = Math.min(CHART_H - 10, titleY + 20);
+  const legendWidth = 146;
+  const legendX = Math.max(PAD_LEFT, Math.min(x - (legendWidth / 2), CHART_W - PAD_RIGHT - legendWidth));
   const legendItems = [
     { label: "Poor", color: "#ef4444", x: 0 },
-    { label: "Solid", color: "#eab308", x: 46 },
-    { label: "Carry", color: "#22c55e", x: 96 }
+    { label: "Solid", color: "#eab308", x: 50 },
+    { label: "Carry", color: "#22c55e", x: 104 }
   ].map((item) => `
-<g class="chart-axis-legend-item" transform="translate(${legendX + item.x} ${y - 4})">
+<g class="chart-axis-legend-item" transform="translate(${legendX + item.x} ${legendY})">
   <circle class="chart-axis-legend-dot" cx="0" cy="0" r="4.5" fill="${item.color}"></circle>
   <text class="chart-axis-legend-text" x="8" y="4">${escapeHtml(item.label)}</text>
 </g>`).join("");
   return `
 <text class="chart-axis-title"
       x="${x}"
-      y="${y}"
+      y="${titleY}"
       font-size="14"
       fill="#94a3b8"
       font-weight="800"
@@ -16977,13 +17064,14 @@ function openImpactModal() {
 
   impactWeights.forEach(([label, value, formula]) => {
     if (!weightingBlock) return;
-
-    const pill = document.createElement("div");
-    pill.className = "lens-weight-pill";
-    pill.title = formula;
-    pill.innerHTML = `<span>${label}</span><strong>${value}</strong>`;
-    weightingBlock.appendChild(pill);
+    weightingBlock.appendChild(createLensWeightPill({
+      label,
+      value,
+      formula,
+      prefixWeighted: true
+    }));
   });
+  wireLensWeightPills(weightingBlock);
 
   impactStats.forEach((item) => {
     const row = document.createElement("li");
@@ -40784,7 +40872,7 @@ function renderProfilesUI(){
     return;
   }
 
-  profiles.forEach(profile => {
+  getRenderableProfiles().forEach((profile, index) => {
 
     const row = document.createElement("div");
     row.className = "profile-row";
@@ -40795,9 +40883,9 @@ function renderProfilesUI(){
 
     row.innerHTML = `
       <div class="profile-info">
-        <div class="profile-name">${escapeHtml(profile.name || "Profile")}</div>
+        <div class="profile-name">${escapeHtml(getProfileDisplayName(profile, index))}</div>
         <div class="profile-sub">
-          ${escapeHtml(profile.riotId || "No Riot ID")} | ${escapeHtml(profile.region || "NA")}
+          ${escapeHtml(getProfileSubtitle(profile))}
         </div>
       </div>
 
@@ -44527,7 +44615,7 @@ function rebuildProfileListUI(){
     return;
   }
 
-  profiles.forEach(p => {
+  getRenderableProfiles().forEach((p, index) => {
 
     const row = document.createElement("div");
     row.className = "profile-row";
@@ -44536,7 +44624,7 @@ function rebuildProfileListUI(){
       row.classList.add("active");
     }
 
-    row.textContent = p.name || "Profile";
+    row.textContent = getProfileDisplayName(p, index);
 
     row.addEventListener("click", () => {
       setActiveProfile(p.id);

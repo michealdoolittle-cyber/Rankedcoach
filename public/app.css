@@ -18292,6 +18292,66 @@ textarea {
   color:#e5e7eb;
 }
 
+.lens-weight-pill.lens-weight-pill-has-info{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:stretch;
+}
+
+.lens-weight-pill-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.lens-weight-pill-copy{
+  min-width:0;
+  flex:1 1 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.lens-weight-pill-copy span{
+  flex:1 1 auto;
+  min-width:0;
+}
+
+.lens-weight-info-btn{
+  flex:0 0 auto;
+  width:22px;
+  height:22px;
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:999px;
+  background:rgba(15,23,42,.88);
+  color:#cbd5e1;
+  font-size:11px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+}
+
+.lens-weight-info-btn:hover{
+  border-color:rgba(255,70,85,.42);
+  color:#f8fafc;
+}
+
+.lens-weight-pill.is-info-open{
+  border-color:rgba(255,70,85,.34);
+  background:rgba(255,255,255,.04);
+}
+
+.lens-weight-formula{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid rgba(148,163,184,.14);
+  color:#cbd5e1;
+  font-size:11px;
+  line-height:1.35;
+}
+
 /* ======================================
    PHOENIX FX â€“ SPRITESHEET FLAMES
    ====================================== */
@@ -21176,6 +21236,8 @@ INSIGHTS ACTION
   flex-direction:column;
   align-items:flex-start;
   gap:6px;
+  position:relative;
+  overflow:visible;
 }
 
 .logging-session-label{
