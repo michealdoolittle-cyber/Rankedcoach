@@ -15843,6 +15843,10 @@ html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr
   overflow:visible !important;
 }
 
+html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card .home-chart-wrap{
+  margin-bottom:24px !important;
+}
+
 html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card #chartRow svg{
   overflow:visible !important;
 }
