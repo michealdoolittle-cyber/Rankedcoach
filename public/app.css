@@ -50831,6 +50831,404 @@ html body #profileRankIcon.profile-rank-icon{
   }
 }
 
+/* Mobile nav redesign v1: single source of truth for the new two-row header + nav-only footer. */
+html.is-mobile-layout body.is-mobile-layout .app-header{
+  position:sticky !important;
+  top:0 !important;
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  grid-template-rows:auto auto !important;
+  align-items:stretch !important;
+  gap:8px !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:8px 10px 10px !important;
+  overflow:visible !important;
+  z-index:9200 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-left,
+html.is-mobile-layout body.is-mobile-layout .nav-right{
+  display:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-center{
+  grid-row:1 !important;
+  order:1 !important;
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  gap:8px !important;
+  padding:0 !important;
+  margin:0 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-center .nav-rr-widget{
+  width:100% !important;
+  min-width:0 !important;
+  max-width:none !important;
+  min-height:54px !important;
+  height:auto !important;
+  padding:7px 8px !important;
+  overflow:visible !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-rr-head{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) auto !important;
+  align-items:start !important;
+  gap:4px !important;
+  min-width:0 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-rr-label{
+  min-width:0 !important;
+  font-size:clamp(6.8px,1.85vw,8px) !important;
+  letter-spacing:.07em !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  line-height:1.05 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout :is(.nav-rr-value,.nav-rr-top-value,.nav-tier-text,.nav-goal-target-rr,#navNextRRText,#navNextTierText,#navGoalTargetRRText){
+  min-width:0 !important;
+  max-width:100% !important;
+  white-space:normal !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:anywhere !important;
+  line-height:1.05 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-tier-row{
+  min-width:0 !important;
+  align-items:center !important;
+  gap:4px !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .nav-tier-row img,
+html.is-mobile-layout body.is-mobile-layout .nav-rank-icon{
+  flex:0 0 15px !important;
+  width:15px !important;
+  height:15px !important;
+  min-width:15px !important;
+  object-fit:contain !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileHeaderActions.mobile-header-actions{
+  grid-row:2 !important;
+  order:2 !important;
+  display:grid !important;
+  grid-template-columns:44px minmax(0,1fr) 44px !important;
+  gap:8px !important;
+  width:100% !important;
+  height:44px !important;
+  min-height:44px !important;
+  align-items:center !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #mobileHeaderActions,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #mobileProfilePopover,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #mobilePullRefreshIndicator{
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-avatar-btn,
+html.is-mobile-layout body.is-mobile-layout .mobile-header-settings-btn,
+html.is-mobile-layout body.is-mobile-layout .mobile-header-ask-btn{
+  min-height:44px !important;
+  height:44px !important;
+  border-radius:13px !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#ff4655) 36%,rgba(148,163,184,.38)) !important;
+  background:
+    radial-gradient(circle at top left,color-mix(in srgb,var(--theme-accent,#ff4655) 16%,transparent),transparent 54%),
+    linear-gradient(180deg,rgba(51,65,85,.94),rgba(23,32,47,.94)) !important;
+  color:#f8fafc !important;
+  box-shadow:0 10px 22px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-avatar-btn{
+  position:relative !important;
+  display:grid !important;
+  place-items:center !important;
+  width:44px !important;
+  min-width:44px !important;
+  max-width:44px !important;
+  padding:0 !important;
+  overflow:visible !important;
+  isolation:isolate !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-avatar-img{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:34px !important;
+  height:34px !important;
+  max-width:34px !important;
+  max-height:34px !important;
+  object-fit:cover !important;
+  border-radius:999px !important;
+  transform:translate(-50%,-50%) !important;
+  z-index:4 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-rank-icon{
+  position:absolute !important;
+  right:-3px !important;
+  bottom:-3px !important;
+  width:18px !important;
+  height:18px !important;
+  object-fit:contain !important;
+  z-index:8 !important;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.7)) !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-avatar-btn.has-rc-mobile-frame{
+  background:transparent !important;
+  border-color:transparent !important;
+  box-shadow:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-avatar-btn.has-rc-mobile-frame .rc-mobile-avatar-frame{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-ask-btn{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  min-width:0 !important;
+  padding:0 12px !important;
+  font:1000 13px/1 var(--font-display,inherit) !important;
+  letter-spacing:.04em !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-ask-icon{
+  display:grid !important;
+  place-items:center !important;
+  width:22px !important;
+  height:22px !important;
+  flex:0 0 22px !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-ask-icon svg,
+html.is-mobile-layout body.is-mobile-layout .mobile-header-settings-btn svg{
+  display:block !important;
+  width:24px !important;
+  height:24px !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-header-settings-btn{
+  display:grid !important;
+  place-items:center !important;
+  width:44px !important;
+  min-width:44px !important;
+  max-width:44px !important;
+  padding:0 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell{
+  display:block !important;
+  height:calc(70px + env(safe-area-inset-bottom)) !important;
+  min-height:calc(70px + env(safe-area-inset-bottom)) !important;
+  padding:10px 10px calc(10px + env(safe-area-inset-bottom)) !important;
+  overflow:visible !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-pages{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:7px !important;
+  width:100% !important;
+  height:100% !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-actions{
+  display:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-page-btn{
+  min-width:0 !important;
+  min-height:46px !important;
+  height:46px !important;
+  padding:0 5px !important;
+  font-size:clamp(10px,2.65vw,12px) !important;
+  line-height:1 !important;
+  letter-spacing:.02em !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileProfilePopover{
+  position:fixed !important;
+  left:8px !important;
+  right:8px !important;
+  top:calc(var(--mobile-header-height, 112px) + env(safe-area-inset-top) + 8px) !important;
+  width:auto !important;
+  max-height:calc(100dvh - var(--mobile-header-height, 112px) - var(--mobile-bottom-nav, 70px) - 24px) !important;
+  overflow:auto !important;
+  overscroll-behavior:contain !important;
+  -webkit-overflow-scrolling:touch !important;
+  display:grid !important;
+  gap:10px !important;
+  padding:12px !important;
+  border-radius:18px !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#ff4655) 48%,rgba(148,163,184,.28)) !important;
+  background:
+    radial-gradient(circle at top left,color-mix(in srgb,var(--theme-accent,#ff4655) 20%,transparent),transparent 46%),
+    linear-gradient(145deg,rgba(15,23,42,.98),rgba(2,6,23,.96)) !important;
+  box-shadow:0 22px 44px rgba(0,0,0,.48),0 0 24px color-mix(in srgb,var(--theme-accent,#ff4655) 16%,transparent) !important;
+  z-index:24600 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileProfilePopover[hidden]{
+  display:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-profile-popover-list{
+  display:grid !important;
+  gap:8px !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileProfilePopover .profile-row{
+  width:100% !important;
+  min-height:48px !important;
+  border-radius:12px !important;
+  text-align:left !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .mobile-profile-rating-card{
+  display:grid !important;
+  gap:10px !important;
+  padding:12px !important;
+  border-radius:16px !important;
+  border:1px solid rgba(148,163,184,.24) !important;
+  background:rgba(15,23,42,.72) !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileProfilePopover .profile-rating-unlocks{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+
+html body .profile-quick-menu{
+  display:grid !important;
+  grid-template-rows:repeat(4,minmax(44px,auto)) !important;
+  gap:8px !important;
+}
+
+html body .profile-dropdown.profile-dropdown-pills{
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .profile-dropdown.profile-dropdown-pills.open{
+  position:fixed !important;
+  right:8px !important;
+  left:auto !important;
+  top:calc(var(--mobile-header-height, 112px) + env(safe-area-inset-top) + 8px) !important;
+  bottom:auto !important;
+  width:min(342px, calc(100vw - 16px)) !important;
+  max-width:calc(100vw - 16px) !important;
+  z-index:24700 !important;
+}
+
+html body #accountSupportModal .profile-edit-shell{
+  min-height:min(560px, calc(100dvh - 120px)) !important;
+}
+
+html body #accountSupportModal .account-support-row-list{
+  display:grid !important;
+  gap:10px !important;
+}
+
+html body #accountSupportModal .account-support-row,
+html body #accountSupportModal .account-support-tracker-field{
+  min-height:44px !important;
+}
+
+html body #accountSupportModal .account-support-tracker-field input{
+  width:100% !important;
+  min-height:40px !important;
+}
+
+html body #accountSupportModal .account-support-force-refresh.is-syncing{
+  opacity:.72 !important;
+  pointer-events:none !important;
+}
+
+@media (max-width:720px){
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal .lens-modal{
+    width:min(420px, calc(100vw - 18px)) !important;
+    max-height:calc(100dvh - 18px) !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal .profile-edit-shell{
+    min-height:0 !important;
+    height:auto !important;
+    max-height:none !important;
+    grid-template-columns:1fr !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal .profile-edit-nav{
+    display:grid !important;
+    grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal .profile-edit-tab{
+    min-height:38px !important;
+    padding:6px 5px !important;
+    font-size:clamp(8px,2.15vw,10px) !important;
+    white-space:normal !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal .profile-edit-panel.is-active{
+    overflow:visible !important;
+  }
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobilePullRefreshIndicator{
+  position:fixed !important;
+  top:calc(var(--mobile-header-height, 112px) + env(safe-area-inset-top) + 6px) !important;
+  left:50% !important;
+  transform:translate(-50%, calc(-14px + (18px * var(--pull-progress, 0)))) !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  z-index:24800 !important;
+  min-height:30px !important;
+  padding:8px 14px !important;
+  border-radius:999px !important;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#ff4655) 45%,rgba(148,163,184,.36)) !important;
+  background:rgba(15,23,42,.94) !important;
+  color:#f8fafc !important;
+  font:900 11px/1 var(--font-display,inherit) !important;
+  letter-spacing:.06em !important;
+  text-transform:uppercase !important;
+  box-shadow:0 14px 28px rgba(0,0,0,.32) !important;
+  transition:opacity .16s ease,transform .16s ease !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobilePullRefreshIndicator.is-visible{
+  opacity:1 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobilePullRefreshIndicator.is-ready,
+html.is-mobile-layout body.is-mobile-layout #mobilePullRefreshIndicator.is-refreshing{
+  border-color:#34d399 !important;
+}
+
 /* Live profile-rating nav widget: replaces the page-level readiness card. */
 html body .profile-rating-anchor{
   position:relative !important;

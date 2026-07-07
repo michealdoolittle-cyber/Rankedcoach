@@ -56,6 +56,14 @@ Build brief v3 asked for a list-only pass. No user-facing coaching copy was rewr
 
 Many strings still explain what a metric is instead of what a player should do with it. The next copy pass should start with match trend cards, data reads, and insight empty states because those are the highest-volume coaching surfaces.
 
+## New UI Labels Added On 2026-07-06
+
+- Mobile header: `Ask Coach`
+- Settings quick menu: `Customize`, `Manual Entry Mode`, `Account & Support`, `Log in / Sign up`
+- Account & Support tabs: `Account`, `Data & Sync`, `Support`, `Legal`
+- Data & Sync rows: `Import History`, `Tracker.gg profile URL`, `Save Tracker Link`, `Force Refresh`, `Last synced: ...`
+- Support rows: `Report a Bug`, `Contact Support`, `Tip to Dev`
+
 ## Held For Full-Context Rewrite
 
 Claude requested full surrounding strings for these rows before rewriting them. Do not guess at these until the next copy pass.

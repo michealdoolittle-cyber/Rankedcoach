@@ -55,12 +55,15 @@ const STATE_SETUP = {
     if (skip) await skip.click();
     await page.waitForTimeout(400);
     // switch to the demo-import guest profile via the real profile switcher UI
-    const avatarSelector = viewport === "mobile" ? ".mobile-bottom-avatar-btn" : "#profileAvatarWrap";
+    const avatarSelector = viewport === "mobile" ? "#mobileHeaderProfileBtn" : "#profileAvatarWrap";
     await page.click(avatarSelector).catch(() => {});
     await page.waitForTimeout(300);
-    const switcherOpen = await page.evaluate(() => document.getElementById("profileSwitcher")?.classList.contains("open")).catch(() => false);
+    const switcherOpen = await page.evaluate(() => Boolean(
+      document.getElementById("profileSwitcher")?.classList.contains("open") ||
+      document.getElementById("mobileProfilePopover")?.hidden === false
+    )).catch(() => false);
     if (switcherOpen) {
-      const demoChoice = await page.$('[data-guest-profile-choice="demo"]');
+      const demoChoice = await page.$('[data-mobile-guest-profile="demo"]') || await page.$('[data-guest-profile-choice="demo"]');
       if (demoChoice && await demoChoice.isVisible().catch(() => false)) {
         await demoChoice.click().catch(() => {});
         await page.waitForTimeout(1500);
@@ -75,12 +78,11 @@ const PAGES = ["home", "logging", "stats", "insights"];
 
 // On mobile, the desktop header cluster (#profileAvatarWrap, #profileRatingWidget,
 // #profileDropdownToggle) is hidden via CSS (`.is-mobile-layout .nav-right{display:none}`)
-// and replaced by a JS-built bottom shell (.mobile-bottom-avatar-btn / [data-mobile-action="menu"]).
-// There is NO mobile bottom-shell entry for profile-rating — that surface is intentionally
-// skipped on mobile below and flagged as a known gap rather than force-clicked.
+// and replaced by a JS-built two-row header. The bottom shell is page navigation only.
+// Profile switcher + Profile Rating share the avatar popover opened by #mobileHeaderProfileBtn.
 async function openProfileSwitcher(page, viewport) {
   if (viewport === "mobile") {
-    await page.click(".mobile-bottom-avatar-btn");
+    await page.click("#mobileHeaderProfileBtn");
   } else {
     await page.click("#profileAvatarWrap");
   }
@@ -89,7 +91,7 @@ async function openProfileSwitcher(page, viewport) {
 
 async function openProfileDropdown(page, viewport) {
   if (viewport === "mobile") {
-    await page.click('.mobile-bottom-icon-btn[data-mobile-action="menu"]');
+    await page.click("#mobileHeaderSettingsBtn");
   } else {
     await page.click("#profileDropdownToggle");
   }
@@ -101,10 +103,9 @@ const MODALS = [
   { key: "profile-switcher", open: async (page, viewport) => { await openProfileSwitcher(page, viewport); } },
   { key: "profile-rating", open: async (page, viewport) => {
       if (viewport === "mobile") {
-        await page.click('.mobile-bottom-icon-btn[data-mobile-action="rating"]');
+        await page.click("#mobileHeaderProfileBtn");
         await page.waitForTimeout(300);
         return;
-        throw new Error("SKIPPED: profile-rating has no mobile bottom-shell trigger (known gap — see CORRECTIONS.md)");
       }
       await page.click("#profileRatingWidget"); await page.waitForTimeout(300);
   } },
@@ -114,14 +115,28 @@ const MODALS = [
   } },
   { key: "import-history", open: async (page, viewport) => {
       await openProfileDropdown(page, viewport);
-      await page.click("#importHistoryOpenBtn").catch(() => {}); await page.waitForTimeout(400);
+      await page.click("#pdAccountSupportBtn").catch(() => {});
+      await page.waitForTimeout(200);
+      await page.click('[data-account-support-tab="sync"]').catch(() => {});
+      await page.waitForTimeout(100);
+      await page.click("#accountSupportImportHistoryBtn").catch(() => {});
+      await page.waitForTimeout(400);
   } },
   { key: "ask-coach", open: async (page, viewport) => {
       await page.click(viewport === "mobile" ? "#mobileAskCoachOpen" : "#askCoachOpen").catch(() => {});
       await page.waitForTimeout(500);
   } },
   { key: "bug-report", open: async (page, viewport) => {
-      await page.click(viewport === "mobile" ? "#mobileBugReportOpen" : "#bugReportOpen").catch(() => {});
+      if (viewport === "mobile") {
+        await openProfileDropdown(page, viewport);
+        await page.click("#pdAccountSupportBtn").catch(() => {});
+        await page.waitForTimeout(200);
+        await page.click('[data-account-support-tab="support"]').catch(() => {});
+        await page.waitForTimeout(100);
+        await page.click("#accountSupportBugReportBtn").catch(() => {});
+      } else {
+        await page.click("#bugReportOpen").catch(() => {});
+      }
       await page.waitForTimeout(400);
   } }
 ];

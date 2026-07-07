@@ -5,19 +5,21 @@
 
 Ranked by severity. Each entry: what's wrong, where, how confirmed, suggested fix. Add new issues to the bottom of the matching severity section using the same format — see `PASSTHROUGH-CHECKLIST.md` for the recording convention.
 
+**2026-07-06 mobile nav redesign update:** The old mobile bottom-shell action model has been superseded. Bottom nav now contains page tabs only; mobile avatar/profile rating opens through `#mobileHeaderProfileBtn`; mobile settings opens through `#mobileHeaderSettingsBtn`; Bug Report moved to Settings -> Account & Support -> Support. Full harness passed after the redesign: zero console issues and zero horizontal overflow across mobile/desktop, blank/demo, all pages and reachable modals.
+
 ---
 
 ## High Severity
 
 ### 1. Ask Coach and Report a Bug do not visibly open on mobile
-- **Status:** Fixed in this pass. Mobile audit now clicks the real `#mobileAskCoachOpen` / `#mobileBugReportOpen` triggers, the mobile bug button has explicit top-bar positioning, and late mobile-only visibility rules keep both panels visible when opened.
+- **Status:** Superseded and fixed by the mobile nav redesign. Ask Coach now opens from the labeled `#mobileAskCoachOpen` header-row pill; Bug Report now opens from Settings -> Account & Support -> Support. Verified in focused mobile smoke at 390x844 and 360x740, plus the full Playwright harness.
 - **Where:** Mobile viewport, both guest states. Desktop works correctly (screenshots: `output/desktop/*/modal-ask-coach.png`, `modal-bug-report.png` both show the panels open cleanly).
 - **Evidence:** `output/mobile/blank/modal-ask-coach.png` and `modal-bug-report.png` are pixel-identical to the plain home page — no panel appeared. Clicking the trigger icon threw no error (the button is visible/clickable), but nothing rendered. Reproduced in both blank and demo states.
 - **Likely cause:** `app.js` maintains a *separate* mobile-cloned button pair (`#mobileAskCoachOpen`, `#mobileBugReportOpen`, appended directly to `document.body` — see `ensureMobileAskCoachButton()`/`ensureMobileBugReportButton()` around app.js:704-772) alongside the original desktop `#askCoachOpen`/`#bugReportOpen`. The mobile clone's click handler re-dispatches to the original element's click / calls `openBugReportModal()` directly, but the resulting panel's mobile CSS (`.ask-coach-panel` has at least 3 separate `body.is-mobile-layout .ask-coach-panel{...}` blocks at app.css:7003, 36659, 37493, plus `.open`/`[aria-hidden="true"]` state rules at 40787 and 45089) may not be resolving to a visible state. This needs live-device/DevTools investigation, not just a code read — screenshot automation found the symptom but the exact rule at fault wasn't conclusively identified.
 - **Fix:** Reproduce manually on a real mobile viewport with DevTools open, check computed `display`/`opacity`/`transform` on `.ask-coach-panel` and the bug-report modal after tapping the mobile buttons, and consolidate the mobile CSS overrides for these two panels (see maintainability note below — this file has many redundant/conflicting mobile blocks for the same selectors).
 
 ### 2. Profile Rating / Coach Readiness has no way to open on mobile
-- **Status:** Fixed in this pass. Added `data-mobile-action="rating"` to the mobile bottom shell, synced its percent/open state, portaled `#profileRatingDropdown` out of the hidden desktop nav on mobile, and updated the harness to capture `modal-profile-rating.png`.
+- **Status:** Superseded and fixed by the mobile nav redesign. Profile Rating / Coach Readiness now lives in the combined mobile avatar popover opened by `#mobileHeaderProfileBtn`; the bottom bar is page navigation only.
 - **Where:** Mobile viewport, both guest states.
 - **Evidence:** The JS-built mobile bottom nav (`ensureMobileBottomShell()`, app.js:610-678) only wires two profile actions: `data-mobile-action="profile"` (switcher) and `data-mobile-action="menu"` (settings dropdown). There is no mobile trigger for `#profileRatingWidget`. Confirmed by reading the click-handler dispatch (app.js:654-668) and by the harness: attempting `#profileRatingWidget` on mobile times out because the element is not visible/actionable there.
 - **Impact:** The Coach Readiness / unlock-progress feature (shipped in commit `63d13f5`, documented in `notes/progress-ui.md`) is desktop-only in practice — mobile players can never see their unlock thresholds or building-profile status.

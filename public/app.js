@@ -387,6 +387,9 @@ let mobileBottomShellTimer = 0;
 let mobileAskCoachButton = null;
 let mobileBugReportButton = null;
 let mobileHeaderSyncButton = null;
+let mobileHeaderActions = null;
+let mobileProfilePopover = null;
+let mobilePullRefreshState = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
 let mobileTouchScrollState = null;
@@ -580,9 +583,7 @@ function syncMobileViewportState() {
   if (document.body) {
     window.requestAnimationFrame(() => {
       syncMobileBottomShellState();
-      syncMobileAskCoachButtonState();
-      syncMobileBugReportButtonState();
-      syncMobileHeaderSyncButtonState();
+      syncMobileHeaderActionsState();
       ensureMobileLoggingTabs();
       ensureMobileStatsTabs();
       ensureMobileTrendCarousel();
@@ -591,6 +592,7 @@ function syncMobileViewportState() {
       ensureMobileInsightTrendCarousel();
       ensureMobileManualReportControls();
       ensureMobileSwipeAffordances();
+      installMobileHomePullToRefresh();
       scheduleMobileScrollExtentSync();
     });
   }
@@ -623,27 +625,6 @@ function ensureMobileBottomShell() {
         </button>
       `).join("")}
     </div>
-    <div class="mobile-bottom-actions" aria-label="Profile actions">
-      <button type="button" class="mobile-bottom-avatar-btn" data-mobile-action="profile" aria-label="Open profile switcher">
-        <img class="mobile-bottom-avatar-img" alt="" aria-hidden="true">
-      </button>
-      <button type="button" class="mobile-bottom-icon-btn mobile-bottom-rating-btn" data-mobile-action="rating" aria-label="Open profile rating" aria-expanded="false">
-        <span class="mobile-bottom-rating-label">Rating</span>
-        <strong class="mobile-bottom-rating-value">0%</strong>
-      </button>
-      <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="sync" aria-label="Sync profile">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M20 12a8 8 0 0 1-13.66 5.66M4 12A8 8 0 0 1 17.66 6.34" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-          <path d="M15 4h3v3M6 17H3v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-        </svg>
-      </button>
-      <button type="button" class="mobile-bottom-icon-btn" data-mobile-action="menu" aria-label="Open settings menu">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M9.59 3.94c.09-.54.56-.94 1.11-.94h2.6c.55 0 1.02.4 1.11.94l.21 1.28c.06.38.31.69.65.87l.22.13c.32.2.72.26 1.07.12l1.22-.45c.51-.19 1.09.01 1.37.49l1.3 2.24c.27.48.16 1.08-.26 1.43l-1 .83c-.3.24-.44.61-.43.99v.26c-.01.38.13.75.43.99l1 .83c.42.35.53.95.26 1.43l-1.3 2.24c-.28.48-.86.68-1.37.49l-1.22-.45c-.35-.14-.75-.08-1.07.12l-.22.13c-.34.18-.59.49-.65.87l-.21 1.28c-.09.54-.56.94-1.11.94h-2.6c-.55 0-1.02-.4-1.11-.94l-.21-1.28c-.06-.38-.31-.69-.65-.87l-.22-.13c-.32-.2-.72-.26-1.07-.12l-1.22.45c-.51.19-1.09-.01-1.37-.49l-1.3-2.24c-.27-.48-.16-1.08.26-1.43l1-.83c.3-.24.44-.61.43-.99v-.26c.01-.38-.13-.75-.43-.99l-1-.83c-.42-.35-.53-.95-.26-1.43l1.3-2.24c.28-.48.86-.68 1.37-.49l1.22.45c.35.14.75.08 1.07-.12l.22-.13c.34-.18.59-.49.65-.87l.21-1.28Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-          <path d="M15.2 12a3.2 3.2 0 1 1-6.4 0 3.2 3.2 0 0 1 6.4 0Z" fill="none" stroke="currentColor" stroke-width="1.9"></path>
-        </svg>
-      </button>
-    </div>
   `;
 
   mobileBottomShell.addEventListener("click", (event) => {
@@ -656,29 +637,7 @@ function ensureMobileBottomShell() {
       return;
     }
 
-    const actionButton = event.target.closest("[data-mobile-action]");
-    if (!actionButton) return;
-    event.preventDefault();
-    event.stopPropagation();
-
-    const action = actionButton.dataset.mobileAction;
-    if (action === "profile") {
-      portalMobileProfileSurface("profileSwitcher");
-      setProfileRatingDropdownOpen?.(false);
-      document.getElementById("profileAvatarWrap")?.click();
-    } else if (action === "sync") {
-      setProfileRatingDropdownOpen?.(false);
-      document.getElementById("profileSyncBtn")?.click();
-    } else if (action === "rating") {
-      profileSwitcher?.classList.remove("open");
-      profileDropdown?.classList.remove("open");
-      const dropdown = document.getElementById("profileRatingDropdown");
-      setProfileRatingDropdownOpen?.(dropdown?.hidden !== false);
-    } else if (action === "menu") {
-      portalMobileProfileSurface("profileDropdown");
-      setProfileRatingDropdownOpen?.(false);
-      document.getElementById("profileDropdownToggle")?.click();
-    }
+    closeMobileProfilePopover();
   });
 
   document.body.appendChild(mobileBottomShell);
@@ -688,6 +647,226 @@ function ensureMobileBottomShell() {
   }
 
   return mobileBottomShell;
+}
+
+function getSettingsGearMarkup() {
+  return document.getElementById("profileDropdownToggle")?.innerHTML || `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9.59 3.94c.09-.54.56-.94 1.11-.94h2.6c.55 0 1.02.4 1.11.94l.21 1.28c.06.38.31.69.65.87l.22.13c.32.2.72.26 1.07.12l1.22-.45c.51-.19 1.09.01 1.37.49l1.3 2.24c.27.48.16 1.08-.26 1.43l-1 .83c-.3.24-.44.61-.43.99v.26c-.01.38.13.75.43.99l1 .83c.42.35.53.95.26 1.43l-1.3 2.24c-.28.48-.86.68-1.37.49l-1.22-.45c-.35-.14-.75-.08-1.07.12l-.22.13c-.34.18-.59.49-.65.87l-.21 1.28c-.09.54-.56.94-1.11.94h-2.6c-.55 0-1.02-.4-1.11-.94l-.21-1.28c-.06-.38-.31-.69-.65-.87l-.22-.13c-.32-.2-.72-.26-1.07-.12l-1.22.45c-.51.19-1.09-.01-1.37-.49l-1.3-2.24c-.27-.48-.16-1.08.26-1.43l1-.83c.3-.24.44-.61.43-.99v-.26c.01-.38-.13-.75-.43-.99l-1-.83c-.42-.35-.53-.95-.26-1.43l1.3-2.24c.28-.48.86-.68 1.37-.49l1.22.45c.35.14.75.08 1.07-.12l.22-.13c.34-.18.59-.49.65-.87l.21-1.28Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M15.2 12a3.2 3.2 0 1 1-6.4 0 3.2 3.2 0 0 1 6.4 0Z" fill="none" stroke="currentColor" stroke-width="1.9"></path>
+    </svg>
+  `;
+}
+
+function ensureMobileHeaderActions() {
+  if (mobileHeaderActions || !document.body) return mobileHeaderActions;
+
+  const header = document.querySelector(".app-header");
+  if (!header) return null;
+
+  mobileHeaderActions = document.createElement("div");
+  mobileHeaderActions.id = "mobileHeaderActions";
+  mobileHeaderActions.className = "mobile-header-actions";
+  mobileHeaderActions.setAttribute("aria-label", "Mobile profile actions");
+  mobileHeaderActions.innerHTML = `
+    <button id="mobileHeaderProfileBtn" class="mobile-header-avatar-btn mobile-bottom-avatar-btn" type="button" aria-label="Open profile and rating">
+      <img class="mobile-bottom-avatar-img mobile-header-avatar-img" alt="" aria-hidden="true">
+      <img class="mobile-header-rank-icon" alt="" aria-hidden="true">
+    </button>
+    <button id="mobileAskCoachOpen" class="mobile-header-ask-btn" type="button" aria-label="Open Ask Coach" aria-expanded="false">
+      <span class="mobile-header-ask-icon">${document.getElementById("askCoachOpen")?.innerHTML || getMobileAskCoachFallbackIcon()}</span>
+      <span class="mobile-header-ask-label">Ask Coach</span>
+    </button>
+    <button id="mobileHeaderSettingsBtn" class="mobile-header-settings-btn" type="button" aria-label="Open settings menu">
+      ${getSettingsGearMarkup()}
+    </button>
+  `;
+
+  mobileHeaderActions.querySelector("#mobileHeaderProfileBtn")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    profileSwitcher?.classList.remove("open");
+    profileDropdown?.classList.remove("open");
+    setProfileRatingDropdownOpen?.(false);
+    toggleMobileProfilePopover();
+  });
+
+  mobileHeaderActions.querySelector("#mobileAskCoachOpen")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeMobileProfilePopover();
+    document.getElementById("askCoachOpen")?.click();
+  });
+
+  mobileHeaderActions.querySelector("#mobileHeaderSettingsBtn")?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeMobileProfilePopover();
+    portalMobileProfileSurface("profileDropdown");
+    setProfileRatingDropdownOpen?.(false);
+    document.getElementById("profileDropdownToggle")?.click();
+  });
+
+  header.appendChild(mobileHeaderActions);
+  return mobileHeaderActions;
+}
+
+function ensureMobileProfilePopover() {
+  if (mobileProfilePopover || !document.body) return mobileProfilePopover;
+  mobileProfilePopover = document.createElement("div");
+  mobileProfilePopover.id = "mobileProfilePopover";
+  mobileProfilePopover.className = "mobile-profile-popover";
+  mobileProfilePopover.hidden = true;
+  mobileProfilePopover.innerHTML = `
+    <div class="mobile-profile-popover-list" id="mobileProfilePopoverList"></div>
+    <div class="mobile-profile-rating-card">
+      <div class="profile-rating-dropdown-head">
+        <div>
+          <span class="profile-rating-kicker">Building Profile</span>
+          <strong>Profile Rating</strong>
+        </div>
+        <span class="profile-rating-dropdown-score" id="mobileProfileRatingValue">0%</span>
+      </div>
+      <div class="profile-rating-copy" id="mobileProfileRatingCopy">Add matches to unlock stronger reads.</div>
+      <div class="profile-rating-meter" aria-label="Profile rating progress"><span id="mobileProfileRatingFill"></span></div>
+      <div class="profile-rating-unlocks" id="mobileProfileRatingUnlocks"></div>
+    </div>
+  `;
+  document.body.appendChild(mobileProfilePopover);
+  return mobileProfilePopover;
+}
+
+function writeMobileProfileRating(model = getCoachReadinessModel()) {
+  const value = document.getElementById("mobileProfileRatingValue");
+  const copy = document.getElementById("mobileProfileRatingCopy");
+  const fill = document.getElementById("mobileProfileRatingFill");
+  const unlocks = document.getElementById("mobileProfileRatingUnlocks");
+  if (value) value.textContent = `${model.percent}%`;
+  if (copy) copy.textContent = model.copy;
+  if (fill) {
+    fill.style.setProperty("--profile-progress", String(model.percent));
+    fill.style.width = `${model.percent}%`;
+  }
+  if (unlocks) {
+    unlocks.innerHTML = model.unlocks.map(item => `
+      <div class="profile-rating-unlock coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${item.complete ? "Unlocked" : `${model.matchCount}/${item.required}`}</strong>
+        <div class="coach-readiness-mini-bar"><span style="--profile-progress:${item.progress};width:${item.progress}%"></span></div>
+      </div>
+    `).join("");
+  }
+}
+
+function renderMobileProfilePopover() {
+  const popover = ensureMobileProfilePopover();
+  const list = document.getElementById("mobileProfilePopoverList");
+  if (!popover || !list) return popover;
+
+  const active = getActiveProfile?.();
+  if (!currentAuthUser) {
+    const hasDemoMatches = Array.isArray(active?.matches) && active.matches.length > 0;
+    list.innerHTML = `
+      <button class="profile-row ${hasDemoMatches ? "" : "active"} profile-row-guest" type="button" data-mobile-guest-profile="blank">
+        <span class="profile-info">
+          <span class="profile-name">Guest: Blank</span>
+          <span class="profile-sub">Start from an empty profile.</span>
+        </span>
+      </button>
+      <button class="profile-row ${hasDemoMatches ? "active" : ""} profile-row-guest" type="button" data-mobile-guest-profile="demo">
+        <span class="profile-info">
+          <span class="profile-name">Guest: Demo Import</span>
+          <span class="profile-sub">Load sample matches and coaching reads.</span>
+        </span>
+      </button>
+      <button class="pd-item mobile-profile-add" type="button" data-mobile-profile-add>+ Add Profile</button>
+    `;
+  } else {
+    list.innerHTML = profiles.map(profile => `
+      <button class="profile-row ${profile.id === activeProfileId ? "active" : ""}" type="button" data-mobile-profile-id="${escapeHtml(profile.id)}">
+        <span class="profile-info">
+          <span class="profile-name">${escapeHtml(profile.name || "Profile")}</span>
+          <span class="profile-sub">${escapeHtml(profile.riotId || "No Riot ID")} | ${escapeHtml(profile.region || "NA")}</span>
+        </span>
+      </button>
+    `).join("") + `<button class="pd-item mobile-profile-add" type="button" data-mobile-profile-add>+ Add Profile</button>`;
+  }
+
+  list.querySelector('[data-mobile-guest-profile="blank"]')?.addEventListener("click", () => {
+    enterGuestModeAfterLogout();
+    closeMobileProfilePopover();
+  });
+  list.querySelector('[data-mobile-guest-profile="demo"]')?.addEventListener("click", async () => {
+    enterGuestModeAfterLogout();
+    await importDemoMatches({ preferBuiltIn: true });
+    closeMobileProfilePopover();
+    rebuildProfileListUI?.();
+    updateProfileHeaderUI?.();
+    renderCoachReadinessUI?.();
+  });
+  list.querySelectorAll("[data-mobile-profile-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveProfile(button.dataset.mobileProfileId);
+      closeMobileProfilePopover();
+    });
+  });
+  list.querySelector("[data-mobile-profile-add]")?.addEventListener("click", () => {
+    closeMobileProfilePopover();
+    handleAddProfile?.();
+  });
+
+  writeMobileProfileRating();
+  return popover;
+}
+
+function setMobileProfilePopoverOpen(open) {
+  const popover = renderMobileProfilePopover();
+  if (!popover) return;
+  const shouldOpen = Boolean(open) && isMobileLayoutViewport();
+  popover.hidden = !shouldOpen;
+  popover.classList.toggle("open", shouldOpen);
+  document.getElementById("mobileHeaderProfileBtn")?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+}
+
+function toggleMobileProfilePopover() {
+  const popover = ensureMobileProfilePopover();
+  setMobileProfilePopoverOpen(popover?.hidden !== false);
+}
+
+function closeMobileProfilePopover() {
+  if (!mobileProfilePopover) return;
+  mobileProfilePopover.hidden = true;
+  mobileProfilePopover.classList.remove("open");
+  document.getElementById("mobileHeaderProfileBtn")?.setAttribute("aria-expanded", "false");
+}
+
+function syncMobileHeaderActionsState() {
+  const isMobile = isMobileLayoutViewport();
+  const actions = ensureMobileHeaderActions();
+  if (!actions) return;
+  actions.hidden = !isMobile;
+  if (!isMobile) {
+    closeMobileProfilePopover();
+    return;
+  }
+
+  const avatarImg = actions.querySelector(".mobile-bottom-avatar-img");
+  const rankIcon = actions.querySelector(".mobile-header-rank-icon");
+  const sourceAvatar = document.getElementById("profileAvatarImg");
+  const sourceRank = document.getElementById("profileRankIcon");
+  if (avatarImg && sourceAvatar?.getAttribute("src")) avatarImg.src = sourceAvatar.getAttribute("src");
+  if (rankIcon && sourceRank?.getAttribute("src")) {
+    rankIcon.src = sourceRank.getAttribute("src");
+    rankIcon.alt = sourceRank.alt || "Rank";
+  }
+  const askButton = actions.querySelector("#mobileAskCoachOpen");
+  const sourceAsk = document.getElementById("askCoachOpen");
+  if (askButton) {
+    askButton.setAttribute("aria-expanded", sourceAsk?.getAttribute("aria-expanded") || "false");
+    askButton.title = sourceAsk?.title || "Ask Coach";
+  }
+  syncMobileBottomAvatarVisuals();
+  if (mobileProfilePopover?.hidden === false) renderMobileProfilePopover();
 }
 
 function getMobileAskCoachFallbackIcon() {
@@ -1372,34 +1551,6 @@ function syncMobileBottomShellState() {
     button.classList.toggle("active", isActive);
     button.setAttribute("aria-current", isActive ? "page" : "false");
   });
-
-  const avatarImg = shell.querySelector(".mobile-bottom-avatar-img");
-  const sourceAvatar = document.getElementById("profileAvatarImg");
-  if (avatarImg && sourceAvatar?.getAttribute("src")) {
-    avatarImg.src = sourceAvatar.getAttribute("src");
-  }
-  syncMobileBottomAvatarVisuals();
-
-  const syncButton = shell.querySelector('[data-mobile-action="sync"]');
-  const sourceSync = document.getElementById("profileSyncBtn");
-  if (syncButton && sourceSync) {
-    syncButton.classList.toggle("syncing", sourceSync.classList.contains("syncing"));
-    syncButton.classList.toggle("counting", sourceSync.classList.contains("counting"));
-    syncButton.title = sourceSync.title || "Sync profile";
-  }
-
-  const ratingButton = shell.querySelector('[data-mobile-action="rating"]');
-  const sourceRating = document.getElementById("profileRatingWidget");
-  const sourceRatingValue = document.getElementById("profileRatingValue")?.textContent || "0%";
-  const ratingDropdown = document.getElementById("profileRatingDropdown");
-  if (ratingButton) {
-    const value = ratingButton.querySelector(".mobile-bottom-rating-value");
-    if (value) value.textContent = sourceRatingValue;
-    ratingButton.classList.toggle("open", ratingDropdown?.hidden === false);
-    ratingButton.classList.toggle("is-ready", sourceRating?.classList.contains("is-ready"));
-    ratingButton.setAttribute("aria-expanded", ratingDropdown?.hidden === false ? "true" : "false");
-    ratingButton.title = "Profile Rating";
-  }
 
   scheduleMobileScrollExtentSync();
 }
@@ -9639,7 +9790,6 @@ function updateProfileDropdownMenu() {
   const active = getActiveProfile?.();
   const signedIn = Boolean(currentAuthUser);
   const identityEl = document.getElementById("profileDropdownIdentity");
-  const accountBtn = document.getElementById("accountBtn");
   const logoutBtn = document.getElementById("pdLogoutBtn");
   const manualToggle = document.getElementById("manualEntryModeToggle");
 
@@ -9648,15 +9798,15 @@ function updateProfileDropdownMenu() {
     : "Guest User";
 
   if (identityEl) identityEl.textContent = displayName;
-  if (accountBtn) accountBtn.textContent = signedIn ? "Security Settings" : "Log in / Sign up";
   if (manualToggle) {
     manualToggle.hidden = false;
   }
   if (logoutBtn) {
-    logoutBtn.hidden = !signedIn;
-    logoutBtn.textContent = "Log out";
+    logoutBtn.hidden = false;
+    logoutBtn.textContent = signedIn ? "Log out" : "Log in / Sign up";
   }
   syncManualEntryModeUI?.();
+  syncAccountSupportUI?.(active);
 }
 
 function isManualEntryModeEnabled() {
@@ -9665,14 +9815,17 @@ function isManualEntryModeEnabled() {
 
 function syncManualEntryModeUI() {
   const enabled = isManualEntryModeEnabled();
-  const toggle = document.getElementById("manualEntryModeToggle");
+  const toggles = [
+    document.getElementById("manualEntryModeToggle"),
+    document.getElementById("accountSupportManualEntryToggle")
+  ].filter(Boolean);
   const panel = document.getElementById("manualMatchPanel");
   const loggingForm = document.querySelector(".logging-form");
 
-  if (toggle) {
+  toggles.forEach((toggle) => {
     toggle.classList.toggle("is-active", enabled);
     toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
-  }
+  });
 
   if (panel) panel.hidden = !enabled;
   loggingForm?.classList.toggle("manual-entry-enabled", enabled);
@@ -9687,6 +9840,198 @@ function setManualEntryMode(nextEnabled = false) {
   syncManualEntryModeUI();
   syncManualEntryModeBodyClass();
   ensureMobileManualReportControls();
+}
+
+async function toggleManualEntryModeFromUI() {
+  const nextEnabled = !isManualEntryModeEnabled();
+  if (nextEnabled) {
+    const confirmed = await openManualSessionStartPrompt();
+    if (!confirmed) return false;
+  }
+  setManualEntryMode(nextEnabled);
+  updateLoggingDebriefPreview?.();
+  syncAccountSupportUI?.();
+  if (nextEnabled && shouldShowHistoryImportOnManualEntry()) {
+    window.setTimeout(() => openHistoryImportModal(0), 180);
+  }
+  return true;
+}
+
+function formatLastSyncedLabel(value = "") {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "Last synced: Not yet";
+  return `Last synced: ${date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  })}`;
+}
+
+function syncAccountSupportUI(profile = getActiveProfile()) {
+  const signedIn = Boolean(currentAuthUser);
+  const securityBtn = document.getElementById("accountSupportSecurityBtn");
+  const authBtn = document.getElementById("accountSupportAuthBtn");
+  const logoutBtn = document.getElementById("accountSupportLogoutBtn");
+  const lastSynced = document.getElementById("accountSupportLastSynced");
+  const forceRefresh = document.getElementById("accountSupportForceRefreshBtn");
+
+  if (securityBtn) securityBtn.hidden = !signedIn;
+  if (authBtn) {
+    authBtn.hidden = signedIn;
+    authBtn.textContent = "Log in / Sign up";
+  }
+  if (logoutBtn) {
+    logoutBtn.hidden = false;
+    logoutBtn.textContent = signedIn ? "Log out" : "Log in / Sign up";
+  }
+  if (lastSynced) lastSynced.textContent = formatLastSyncedLabel(profile?.lastSyncAt || "");
+  if (forceRefresh) {
+    forceRefresh.classList.toggle("is-syncing", Boolean(riotSyncInFlight));
+    forceRefresh.disabled = Boolean(riotSyncInFlight);
+  }
+  syncManualEntryModeUI?.();
+  syncTrackerProfileUrlUI?.(profile);
+}
+
+function activateAccountSupportTab(tabKey = "account") {
+  const shell = document.querySelector("#accountSupportModal .account-support-shell");
+  const previousTab = shell?.dataset.activeAccountSupportTab || "";
+  const tabOrder = ["account", "sync", "support", "legal"];
+  const previousIndex = tabOrder.indexOf(previousTab);
+  const nextIndex = tabOrder.indexOf(tabKey);
+  const direction = previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex ? "back" : "forward";
+  if (shell) {
+    shell.dataset.activeAccountSupportTab = tabKey;
+    shell.dataset.tabDirection = direction;
+  }
+  document.querySelectorAll("[data-account-support-tab]").forEach((tab) => {
+    const activeTab = tab.dataset.accountSupportTab === tabKey;
+    tab.classList.toggle("is-active", activeTab);
+    tab.setAttribute("aria-selected", activeTab ? "true" : "false");
+  });
+  document.querySelectorAll("[data-account-support-panel]").forEach((panel) => {
+    const isActivePanel = panel.dataset.accountSupportPanel === tabKey;
+    panel.classList.toggle("is-active", isActivePanel);
+    panel.classList.remove("is-tab-entering");
+    if (isActivePanel) {
+      void panel.offsetWidth;
+      panel.classList.add("is-tab-entering");
+      window.setTimeout(() => panel.classList.remove("is-tab-entering"), 280);
+    }
+  });
+}
+
+function openAccountSupportModal(tabKey = "account") {
+  closeProfileDropdown?.();
+  closeMobileProfilePopover();
+  syncAccountSupportUI?.();
+  activateAccountSupportTab(tabKey);
+  showModalById("accountSupportModal");
+}
+
+function closeAccountSupportModal() {
+  hideModalById("accountSupportModal");
+}
+
+async function logoutOrOpenAuthFromUI() {
+  if (!currentAuthUser) {
+    openAuthModal?.();
+    return;
+  }
+  try {
+    if (supabaseClient?.auth) {
+      await supabaseClient.auth.signOut();
+    }
+  } catch (error) {
+    console.warn("Logout failed", error);
+  }
+  enterGuestModeAfterLogout();
+}
+
+async function forceRefreshActiveProfile(source = "manual") {
+  const button = document.getElementById("accountSupportForceRefreshBtn");
+  if (button) button.classList.add("is-syncing");
+  try {
+    await performRiotSync?.({
+      silent: true,
+      mode: "refresh",
+      allowDemoFallback: false
+    });
+    const profile = getActiveProfile?.();
+    if (profile) {
+      profile.lastSyncAt = nowISO();
+      profile.lastSyncSource = source;
+      saveProfiles?.();
+    }
+    updateProfileHeaderUI?.();
+    renderCoachReadinessUI?.();
+    syncAccountSupportUI?.();
+  } finally {
+    if (button) button.classList.remove("is-syncing");
+  }
+}
+
+function installMobileHomePullToRefresh() {
+  if (!isMobileLayoutViewport() || mobilePullRefreshState?.installed) return;
+  const root = document.querySelector(".app-root") || document.documentElement;
+  if (!root) return;
+
+  let startY = 0;
+  let pulling = false;
+  let distance = 0;
+  let indicator = document.getElementById("mobilePullRefreshIndicator");
+  if (!indicator) {
+    indicator = document.createElement("div");
+    indicator.id = "mobilePullRefreshIndicator";
+    indicator.className = "mobile-pull-refresh-indicator";
+    indicator.textContent = "Pull to refresh";
+    document.body.appendChild(indicator);
+  }
+
+  const resetPull = () => {
+    pulling = false;
+    distance = 0;
+    indicator.classList.remove("is-visible", "is-ready", "is-refreshing");
+    indicator.style.setProperty("--pull-progress", "0");
+  };
+
+  root.addEventListener("touchstart", (event) => {
+    if (!isMobileLayoutViewport()) return;
+    if (document.querySelector(".page.active")?.id !== "page-home") return;
+    const scrollTop = root.scrollTop || document.documentElement.scrollTop || 0;
+    if (scrollTop > 2) return;
+    startY = event.touches?.[0]?.clientY || 0;
+    pulling = true;
+    distance = 0;
+  }, { passive: true });
+
+  root.addEventListener("touchmove", (event) => {
+    if (!pulling) return;
+    const currentY = event.touches?.[0]?.clientY || 0;
+    distance = Math.max(0, currentY - startY);
+    if (distance < 12) return;
+    const progress = Math.min(1, distance / 88);
+    indicator.classList.add("is-visible");
+    indicator.classList.toggle("is-ready", progress >= 1);
+    indicator.textContent = progress >= 1 ? "Release to refresh" : "Pull to refresh";
+    indicator.style.setProperty("--pull-progress", String(progress));
+  }, { passive: true });
+
+  root.addEventListener("touchend", () => {
+    if (!pulling) return;
+    const shouldRefresh = distance >= 88;
+    resetPull();
+    if (shouldRefresh) {
+      indicator.classList.add("is-visible", "is-refreshing");
+      indicator.textContent = "Refreshing...";
+      void forceRefreshActiveProfile("pull").finally(() => {
+        window.setTimeout(resetPull, 450);
+      });
+    }
+  }, { passive: true });
+
+  mobilePullRefreshState = { installed: true };
 }
 
 function ensureManualSessionStartModal() {
@@ -9975,19 +10320,22 @@ function normalizeTrackerProfileUrl(value = "") {
 
 function syncTrackerProfileUrlUI(profile = getActiveProfile()) {
   const normalizedUrl = normalizeTrackerProfileUrl(profile?.trackerProfileUrl || "");
-  const input = document.getElementById("trackerProfileUrlInput");
-  if (input) {
+  const inputs = [
+    document.getElementById("trackerProfileUrlInput"),
+    document.getElementById("accountSupportTrackerProfileUrlInput")
+  ].filter(Boolean);
+  inputs.forEach((input) => {
     input.value = normalizedUrl;
     input.setAttribute("data-storage-note", TRACKER_PROFILE_URL_STORAGE_NOTE);
-  }
+  });
   const link = document.getElementById("profileTrackerLink");
   if (!link) return;
   link.hidden = !normalizedUrl;
   link.href = normalizedUrl || "#";
 }
 
-function saveTrackerProfileUrlFromSettings() {
-  const input = document.getElementById("trackerProfileUrlInput");
+function saveTrackerProfileUrlFromSettings(inputEl = null) {
+  const input = inputEl || document.getElementById("accountSupportTrackerProfileUrlInput") || document.getElementById("trackerProfileUrlInput");
   const profile = getActiveProfile();
   if (!input || !profile) return;
   const normalizedUrl = normalizeTrackerProfileUrl(input.value || "");
@@ -10000,6 +10348,7 @@ function saveTrackerProfileUrlFromSettings() {
   input.setCustomValidity("");
   updateProfile(profile.id, { trackerProfileUrl: normalizedUrl });
   syncTrackerProfileUrlUI(getActiveProfile());
+  syncAccountSupportUI?.();
 }
 
 function getCanonicalMatchRecordCount() {
@@ -10110,23 +10459,19 @@ function renderCoachReadinessUI() {
     }
     writeUnlocks(unlocks);
   }
+
+  writeMobileProfileRating?.(model);
 }
 
 function setProfileRatingDropdownOpen(open) {
   const widget = document.getElementById("profileRatingWidget");
   const dropdown = document.getElementById("profileRatingDropdown");
-  const mobileButton = document.querySelector('[data-mobile-action="rating"]');
   if (!dropdown) return;
   const shouldOpen = Boolean(open);
-  if (shouldOpen && isMobileLayoutViewport?.()) {
-    portalMobileProfileSurface("profileRatingDropdown");
-  }
   dropdown.hidden = !shouldOpen;
   dropdown.classList.toggle("open", shouldOpen);
   widget?.classList.toggle("open", shouldOpen);
-  mobileButton?.classList.toggle("open", shouldOpen);
   widget?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
-  mobileButton?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
   if (shouldOpen) {
     positionProfileRatingDropdown();
   }
@@ -36519,10 +36864,13 @@ function bindEvents(){
   const positionProfilePopout = (menu, anchor) => {
     if (!menu || !anchor) return;
     if (isMobileLayoutViewport()) {
+      const headerRect = document.querySelector(".app-header")?.getBoundingClientRect?.();
+      const anchorRect = anchor.getBoundingClientRect?.();
+      const top = Math.max(8, (headerRect?.bottom || anchorRect?.bottom || 96) + 8);
       menu.style.left = "auto";
       menu.style.right = "8px";
-      menu.style.bottom = "calc(var(--mobile-bottom-nav, 72px) + 8px + env(safe-area-inset-bottom))";
-      menu.style.top = "auto";
+      menu.style.bottom = "auto";
+      menu.style.top = `${top}px`;
       menu.style.width = "min(360px, calc(100vw - 16px))";
       menu.style.maxWidth = "calc(100vw - 16px)";
       menu.style.transform = "none";
@@ -36609,16 +36957,7 @@ function bindEvents(){
   document.getElementById("manualEntryModeToggle")?.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const nextEnabled = !isManualEntryModeEnabled();
-    if (nextEnabled) {
-      const confirmed = await openManualSessionStartPrompt();
-      if (!confirmed) return;
-    }
-    setManualEntryMode(nextEnabled);
-    updateLoggingDebriefPreview?.();
-    if (nextEnabled && shouldShowHistoryImportOnManualEntry()) {
-      window.setTimeout(() => openHistoryImportModal(0), 180);
-    }
+    await toggleManualEntryModeFromUI();
   });
 
   document.getElementById("importHistoryOpenBtn")?.addEventListener("click", (e) => {
@@ -37090,14 +37429,82 @@ function bindEvents(){
     e.preventDefault();
     e.stopPropagation();
     closeProfileDropdown();
-    try {
-      if (supabaseClient?.auth) {
-        await supabaseClient.auth.signOut();
-      }
-    } catch (error) {
-      console.warn("Logout failed", error);
+    await logoutOrOpenAuthFromUI();
+  });
+
+  document.getElementById("pdAccountSupportBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openAccountSupportModal("account");
+  });
+
+  document.querySelectorAll("[data-account-support-tab]").forEach((tab) => {
+    tab.addEventListener("click", (e) => {
+      e.preventDefault();
+      activateAccountSupportTab(tab.dataset.accountSupportTab || "account");
+    });
+  });
+
+  document.getElementById("accountSupportClose")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+  });
+
+  document.getElementById("accountSupportDone")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+  });
+
+  document.getElementById("accountSupportModal")?.addEventListener("click", (e) => {
+    if (e.target === document.getElementById("accountSupportModal")) {
+      closeAccountSupportModal();
     }
-    enterGuestModeAfterLogout();
+  });
+
+  document.getElementById("accountSupportSecurityBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+    openSecuritySettingsModal();
+  });
+
+  document.getElementById("accountSupportAuthBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+    openAuthModal();
+  });
+
+  document.getElementById("accountSupportManualEntryToggle")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await toggleManualEntryModeFromUI();
+  });
+
+  document.getElementById("accountSupportLogoutBtn")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+    await logoutOrOpenAuthFromUI();
+  });
+
+  document.getElementById("accountSupportImportHistoryBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+    openHistoryImportModal(0);
+  });
+
+  document.getElementById("accountSupportSaveTrackerBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    saveTrackerProfileUrlFromSettings(document.getElementById("accountSupportTrackerProfileUrlInput"));
+  });
+
+  document.getElementById("accountSupportForceRefreshBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    void forceRefreshActiveProfile("force");
+  });
+
+  document.getElementById("accountSupportBugReportBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    closeAccountSupportModal();
+    openBugReportModal();
   });
 
   document.getElementById("securitySettingsClose")?.addEventListener("click", closeSecuritySettingsModal);
@@ -37119,7 +37526,7 @@ function bindEvents(){
     openRiotModal();
   });
 
-  document.querySelectorAll(".profile-edit-tab").forEach((tab) => {
+  document.querySelectorAll("#editProfileModal .profile-edit-tab[data-profile-tab]").forEach((tab) => {
     tab.addEventListener("click", (e) => {
       e.preventDefault();
       activateProfileEditTab(tab.dataset.profileTab || "theme");
@@ -37172,11 +37579,14 @@ function bindEvents(){
     const clickedAvatar =
       profileAvatarWrap?.contains(target) ||
       profileAvatarAnchor?.contains(target) ||
+      document.getElementById("mobileHeaderProfileBtn")?.contains(target) ||
       profileDropdownToggle?.contains(target) ||
+      document.getElementById("mobileHeaderSettingsBtn")?.contains(target) ||
       profileDropdownAnchor?.contains(target);
 
     const clickedSwitcher = profileSwitcher?.contains(target);
     const clickedDropdown = profileDropdown?.contains(target);
+    const clickedMobileProfile = mobileProfilePopover?.contains(target);
     const clickedAgentModal = agentModal?.contains(target);
     const clickedGoalModal = document.getElementById("goalRankModal")?.contains(target);
 
@@ -37186,7 +37596,11 @@ function bindEvents(){
       profileSwitcher?.classList.remove("open");
     }
 
-    if (!clickedDropdown && !profileDropdownToggle?.contains(target)) {
+    if (!clickedAvatar && !clickedMobileProfile) {
+      closeMobileProfilePopover();
+    }
+
+    if (!clickedDropdown && !profileDropdownToggle?.contains(target) && !document.getElementById("mobileHeaderSettingsBtn")?.contains(target)) {
       profileDropdown?.classList.remove("open");
     }
   });
@@ -41922,10 +42336,10 @@ function activateProfileEditTab(tabKey = "theme") {
     shell.dataset.activeProfileTab = tabKey;
     shell.dataset.tabDirection = direction;
   }
-  document.querySelectorAll(".profile-edit-tab").forEach((tab) => {
+  document.querySelectorAll("#editProfileModal .profile-edit-tab").forEach((tab) => {
     tab.classList.toggle("is-active", tab.dataset.profileTab === tabKey);
   });
-  document.querySelectorAll(".profile-edit-panel").forEach((panel) => {
+  document.querySelectorAll("#editProfileModal .profile-edit-panel").forEach((panel) => {
     const isActivePanel = panel.dataset.profilePanel === tabKey;
     panel.classList.toggle("is-active", isActivePanel);
     panel.classList.remove("is-tab-entering");

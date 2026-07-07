@@ -15,11 +15,11 @@
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#071b2b">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-<link rel="stylesheet" href="app.css?v=20260706-visual-pass-01">
-  <link rel="stylesheet" href="mobile-qa-final.css?v=20260604-mobile-qa-43-proof-08">
-  <link rel="stylesheet" href="mobile-user43-proof.css?v=20260604-mobile-qa-43-proof-05">
-<link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260616-coaching-evidence-01">
-<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260616-coaching-evidence-01">
+<link rel="stylesheet" href="app.css?v=20260706-mobile-nav-01">
+  <link rel="stylesheet" href="mobile-qa-final.css?v=20260706-mobile-nav-01">
+  <link rel="stylesheet" href="mobile-user43-proof.css?v=20260706-mobile-nav-01">
+<link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260706-mobile-nav-01">
+<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260706-mobile-nav-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -437,6 +437,95 @@ RIOT PROFILE MODAL
   </div>
 </div>
 
+<div id="accountSupportModal" class="lens-modal-overlay" aria-hidden="true" style="display:none;">
+  <div class="lens-modal account-support-modal-card">
+    <div class="lens-modal-header">
+      <div class="lens-modal-title">Account &amp; Support</div>
+      <button id="accountSupportClose" class="lens-modal-close" type="button">X</button>
+    </div>
+
+    <div class="lens-modal-body profile-edit-modal-body account-support-modal-body">
+      <div class="profile-edit-shell account-support-shell">
+        <aside class="profile-edit-nav account-support-nav">
+          <button class="profile-edit-tab is-active" type="button" data-account-support-tab="account">Account</button>
+          <button class="profile-edit-tab" type="button" data-account-support-tab="sync">Data &amp; Sync</button>
+          <button class="profile-edit-tab" type="button" data-account-support-tab="support">Support</button>
+          <button class="profile-edit-tab" type="button" data-account-support-tab="legal">Legal</button>
+        </aside>
+
+        <div class="profile-edit-panels account-support-panels">
+          <section class="profile-edit-panel is-active" data-account-support-panel="account">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Account</div>
+              <div class="profile-edit-panel-copy">Manage sign-in, manual logging, and account access.</div>
+            </div>
+            <div class="account-support-row-list">
+              <button id="accountSupportSecurityBtn" class="pd-item account-support-row" type="button">Security Settings</button>
+              <button id="accountSupportAuthBtn" class="pd-item account-support-row" type="button">Log in / Sign up</button>
+              <button id="accountSupportManualEntryToggle" class="pd-item account-support-row manual-mode-toggle" type="button" aria-pressed="false">
+                <span class="manual-mode-toggle-copy">
+                  <span>Manual Entry Mode</span>
+                  <small>Offline match reports</small>
+                </span>
+                <span class="manual-mode-switch" aria-hidden="true"><span></span></span>
+              </button>
+              <button id="accountSupportLogoutBtn" class="pd-item account-support-row" type="button">Log out</button>
+            </div>
+          </section>
+
+          <section class="profile-edit-panel" data-account-support-panel="sync">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Data &amp; Sync</div>
+              <div class="profile-edit-panel-copy">Import matches, save your Tracker.gg link, or refresh this profile.</div>
+            </div>
+            <div class="account-support-row-list">
+              <button id="accountSupportImportHistoryBtn" class="pd-item account-support-row" type="button">Import History</button>
+              <label class="tracker-profile-field account-support-tracker-field" for="accountSupportTrackerProfileUrlInput">
+                <span>Tracker.gg profile URL</span>
+                <input id="accountSupportTrackerProfileUrlInput" type="url" inputmode="url" placeholder="https://tracker.gg/valorant/profile/...">
+              </label>
+              <button id="accountSupportSaveTrackerBtn" class="pd-item account-support-row" type="button">Save Tracker Link</button>
+              <button id="accountSupportForceRefreshBtn" class="pd-item account-support-row account-support-force-refresh" type="button">
+                <span class="manual-mode-toggle-copy">
+                  <span>Force Refresh</span>
+                  <small id="accountSupportLastSynced">Last synced: Not yet</small>
+                </span>
+              </button>
+            </div>
+          </section>
+
+          <section class="profile-edit-panel" data-account-support-panel="support">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Support</div>
+              <div class="profile-edit-panel-copy">Report issues or contact RankedCoach directly.</div>
+            </div>
+            <div class="account-support-row-list">
+              <button id="accountSupportBugReportBtn" class="pd-item account-support-row" type="button">Report a Bug</button>
+              <a class="pd-item account-support-row" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Contact Support</a>
+              <a class="pd-item account-support-row" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev</a>
+            </div>
+          </section>
+
+          <section class="profile-edit-panel" data-account-support-panel="legal">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Legal</div>
+              <div class="profile-edit-panel-copy">Review RankedCoach policies and Riot disclaimer links.</div>
+            </div>
+            <div class="account-support-row-list">
+              <a class="pd-item account-support-row" href="terms.html">Terms of Service</a>
+              <a class="pd-item account-support-row" href="privacy.html">Privacy Policy</a>
+            </div>
+          </section>
+        </div>
+
+        <div class="profile-edit-actions">
+          <button id="accountSupportDone" class="pd-item" type="button">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <template id="askCoachPanelTemplate">
   <div class="ask-coach-panel-inner">
     <div class="ask-coach-header">
@@ -774,10 +863,8 @@ RIOT PROFILE MODAL
               <div id="profileDropdownIdentity" class="profile-menu-name">Guest User</div>
               <a id="profileTrackerLink" class="profile-tracker-link profile-menu-tracker-link" href="#" target="_blank" rel="noopener noreferrer" hidden>View Tracker.gg Profile</a>
             </div>
-            <div class="profile-menu-section">
-              <div class="profile-menu-label">Account</div>
+            <div class="profile-menu-section profile-quick-menu">
               <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
-              <button class="pd-item" id="accountBtn" type="button">Security Settings</button>
               <button class="pd-item manual-mode-toggle" id="manualEntryModeToggle" type="button" aria-pressed="false">
                 <span class="manual-mode-toggle-copy">
                   <span>Manual Entry Mode</span>
@@ -785,21 +872,14 @@ RIOT PROFILE MODAL
                 </span>
                 <span class="manual-mode-switch" aria-hidden="true"><span></span></span>
               </button>
+              <button class="pd-item" id="pdAccountSupportBtn" type="button">
+                <span class="manual-mode-toggle-copy">
+                  <span>Account &amp; Support</span>
+                  <small>Sync, bug reports, legal</small>
+                </span>
+              </button>
               <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
             </div>
-            <div class="profile-menu-section">
-              <div class="profile-menu-label">Links</div>
-              <a class="pd-item" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Support</a>
-              <button class="pd-item" id="importHistoryOpenBtn" type="button">Import History</button>
-              <label class="tracker-profile-field" for="trackerProfileUrlInput">
-                <span>Tracker.gg profile URL</span>
-                <input id="trackerProfileUrlInput" type="url" inputmode="url" placeholder="https://tracker.gg/valorant/profile/...">
-              </label>
-              <button class="pd-item" id="saveTrackerProfileUrlBtn" type="button">Save Tracker Link</button>
-              <a class="pd-item" href="terms.html">Terms of Service</a>
-              <a class="pd-item" href="privacy.html">Privacy Policy</a>
-            </div>
-            <a class="pd-item profile-menu-donate" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev Link</a>
           </div>
         </div>
       </div>
@@ -2084,6 +2164,6 @@ stroke-linejoin="round"/>
   <script src="schema/match-record.js?v=20260705-build-brief-v3-01"></script>
   <script src="integrations/riot-sync.js?v=20260705-build-brief-v3-01"></script>
   <script src="themes/premium-themes.js?v=20260705-build-brief-v3-01"></script>
-  <script type="module" src="app.js?v=20260706-swipe-health-01"></script>
+  <script type="module" src="app.js?v=20260706-mobile-nav-01"></script>
 </body>
 </html>
