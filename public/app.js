@@ -30348,6 +30348,7 @@ const THEME_BUILDER_THEME_HOVER_DEFAULTS = {
   reaver: { hoverFxPreset: "smoke-video", hoverFxMotion: "drift", hoverFxColor: "#8b5cf6", hoverFxAccent: "#ec4899" }
 };
 const THEME_BUILDER_ADMIN_EMAILS = [];
+const PREMIUM_THEME_QA_EMAILS = ["michealdoolittle@gmail.com"];
 const THEME_BUILDER_FX_CANVAS_ID = "themeBuilderHoverFxCanvas";
 const THEME_BUILDER_FX_VIDEO_ID = "themeBuilderHoverFxVideo";
 const THEME_BUILDER_SMOKE_IMAGE_SRC = "reaver-hover-smoke.png";
@@ -32005,6 +32006,14 @@ function isCurrentUserThemeBuilderAdmin(user = currentAuthUser) {
     ["admin", "designer", "theme-designer", "owner"].includes(metadataRole) ||
     user?.app_metadata?.theme_builder === true ||
     user?.user_metadata?.theme_builder === true
+  );
+}
+
+function isPremiumThemeQaUser(user = currentAuthUser) {
+  const email = String(user?.email || "").trim().toLowerCase();
+  return Boolean(
+    email &&
+    PREMIUM_THEME_QA_EMAILS.map(entry => String(entry || "").trim().toLowerCase()).includes(email)
   );
 }
 
@@ -40363,6 +40372,31 @@ const PROFILE_THEME_PRESETS = [
   createProfileTheme("opal-green", "Opal Green", "light", { base:"#effaf1", base2:"#c7e5cd", card:"#f9fff9", card2:"#d4ead8", accent:"#15803d", accent2:"#a855f7" })
 ];
 
+const PREMIUM_PROFILE_THEME_PRESETS = [
+  createProfileTheme("radiant-focus", "Radiant Focus", "dark", {
+    accent: "#facc15",
+    accent2: "#38bdf8",
+    card: "#07111f",
+    card2: "#111827",
+    text: "#f8fafc",
+    muted: "#cbd5e1"
+  }),
+  createProfileTheme("omen-night", "Omen Night", "dark", {
+    accent: "#8b5cf6",
+    accent2: "#06b6d4",
+    card: "#090a1a",
+    card2: "#151129",
+    text: "#f5f3ff",
+    muted: "#c4b5fd"
+  })
+];
+
+function getAvailableProfileThemePresets(user = currentAuthUser) {
+  return isPremiumThemeQaUser(user)
+    ? PROFILE_THEME_PRESETS.concat(PREMIUM_PROFILE_THEME_PRESETS)
+    : PROFILE_THEME_PRESETS;
+}
+
 const PROFILE_BORDER_COLORS = [
   { value: "theme", label: "Theme", color: "" },
   { value: "iron", label: "Iron", color: "#6b7280" },
@@ -41049,7 +41083,8 @@ function getThemePreset(themeKey = "default") {
   const resolvedThemeKey = String(themeKey || "default").toLowerCase() === "reaver"
     ? "default"
     : themeKey;
-  return PROFILE_THEME_PRESETS.find(theme => theme.value === resolvedThemeKey) || PROFILE_THEME_PRESETS[0];
+  const availableThemes = getAvailableProfileThemePresets();
+  return availableThemes.find(theme => theme.value === resolvedThemeKey) || PROFILE_THEME_PRESETS[0];
 }
 
 function getProfileBorderStyle(borderStyle = "standard") {
@@ -41130,8 +41165,12 @@ function renderThemeGallery(selectedThemeKey = "default") {
   const gallery = document.getElementById("editProfileThemeGallery");
   const themeSelect = document.getElementById("editProfileTheme");
   if (!gallery) return;
+  const premiumUnlocked = isPremiumThemeQaUser();
+  const renderableThemes = premiumUnlocked
+    ? PROFILE_THEME_PRESETS.concat(PREMIUM_PROFILE_THEME_PRESETS)
+    : PROFILE_THEME_PRESETS;
 
-  gallery.innerHTML = PROFILE_THEME_PRESETS.map((theme) => {
+  gallery.innerHTML = renderableThemes.map((theme) => {
     const colors = theme?.colors || {};
     const isActive = String(theme.value) === String(selectedThemeKey);
     return `
@@ -42370,9 +42409,10 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const borderColorSelect = document.getElementById("editProfileBorderColor");
   const borderSelect = document.getElementById("editProfileBorderStyle");
   const bannerSelect = document.getElementById("editProfileBannerStyle");
+  const availableThemes = getAvailableProfileThemePresets();
 
-  if (themeSelect && !themeSelect.options.length) {
-    themeSelect.innerHTML = PROFILE_THEME_PRESETS
+  if (themeSelect) {
+    themeSelect.innerHTML = availableThemes
       .map(theme => `<option value="${theme.value}">${theme.label}</option>`)
       .join("");
   }
