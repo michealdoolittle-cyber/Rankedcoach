@@ -1501,6 +1501,11 @@ function captureMobileSwipeInlineStyles(target) {
     "transition",
     "will-change",
     "pointer-events",
+    "background-color",
+    "overflow",
+    "overflow-x",
+    "overflow-y",
+    "isolation",
     "display",
     "visibility",
     "position",
@@ -1597,16 +1602,26 @@ function getMobileSwipePreviewCompanionDisplay(target, currentTarget, options = 
   return "block";
 }
 
+function getMobileSwipePreviewBackdropColor() {
+  const bodyColor = window.getComputedStyle(document.body || document.documentElement).backgroundColor;
+  return bodyColor && bodyColor !== "rgba(0, 0, 0, 0)"
+    ? bodyColor
+    : "var(--bg, #071029)";
+}
+
 function applyMobileSwipePreview(target, offsetPx = 0) {
   if (!target) return;
-  const span = Math.max(1, safeNumber(target.getBoundingClientRect?.().width, window.innerWidth || 390));
-  const opacity = Math.max(0.52, 1 - Math.min(0.42, Math.abs(offsetPx) / span * 0.42));
   target.style.setProperty("position", target.style.getPropertyValue("position") || "relative", "important");
   target.style.setProperty("z-index", "2141", "important");
+  target.style.setProperty("background-color", getMobileSwipePreviewBackdropColor(), "important");
+  target.style.setProperty("overflow", "hidden", "important");
+  target.style.setProperty("overflow-x", "hidden", "important");
+  target.style.setProperty("overflow-y", "hidden", "important");
+  target.style.setProperty("isolation", "isolate", "important");
   target.style.setProperty("will-change", "transform, opacity", "important");
   target.style.setProperty("transition", "none", "important");
   target.style.setProperty("transform", `translate3d(${Math.round(offsetPx)}px,0,0)`, "important");
-  target.style.setProperty("opacity", opacity.toFixed(3), "important");
+  target.style.setProperty("opacity", "1", "important");
   target.style.setProperty("pointer-events", "none", "important");
 }
 
@@ -1618,8 +1633,6 @@ function applyMobileSwipeCompanionPreview(target, currentTarget, offsetPx = 0, o
   if (!currentRect) return;
   const visualSpan = Math.max(1, safeNumber(currentRect.width, getMobileSwipePreviewSpan(currentTarget, options, context)));
   const companionOffset = offsetPx + (direction > 0 ? visualSpan : -visualSpan);
-  const revealRatio = 1 - Math.min(1, Math.abs(companionOffset) / visualSpan);
-  const opacity = Math.max(0.58, 0.72 + revealRatio * 0.28);
   const companionFrame = resolveMobileSwipePreviewCompanionFrame(target, currentTarget, options, context) || {};
   const baseLeft = Number.isFinite(companionFrame.left)
     ? companionFrame.left
@@ -1641,17 +1654,22 @@ function applyMobileSwipeCompanionPreview(target, currentTarget, offsetPx = 0, o
     target.style.removeProperty("height");
   }
   target.style.setProperty("z-index", "2140", "important");
+  target.style.setProperty("background-color", getMobileSwipePreviewBackdropColor(), "important");
+  target.style.setProperty("overflow", "hidden", "important");
+  target.style.setProperty("overflow-x", "hidden", "important");
+  target.style.setProperty("overflow-y", "hidden", "important");
+  target.style.setProperty("isolation", "isolate", "important");
   target.style.setProperty("will-change", "transform, opacity", "important");
   target.style.setProperty("transition", "none", "important");
   target.style.setProperty("transform", `translate3d(${Math.round(companionOffset)}px,0,0)`, "important");
-  target.style.setProperty("opacity", opacity.toFixed(3), "important");
+  target.style.setProperty("opacity", "1", "important");
   target.style.setProperty("pointer-events", "none", "important");
 }
 
 async function animateMobileSwipeReset(target, snapshot, companionTarget = null, companionSnapshot = null) {
   if (!target) return;
   target.style.setProperty("will-change", "transform, opacity", "important");
-  target.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms ease`, "important");
+  target.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms cubic-bezier(.22,.61,.36,1)`, "important");
   target.style.setProperty("transform", "translate3d(0,0,0)", "important");
   target.style.setProperty("opacity", "1", "important");
   await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_CANCEL_MS + 24);
@@ -1671,13 +1689,13 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
 
   if (currentTarget) {
     currentTarget.style.setProperty("will-change", "transform, opacity", "important");
-    currentTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms ease`, "important");
+    currentTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1)`, "important");
     currentTarget.style.setProperty("transform", `translate3d(${Math.round(exitOffset)}px,0,0)`, "important");
-    currentTarget.style.setProperty("opacity", "0.34", "important");
+    currentTarget.style.setProperty("opacity", "1", "important");
   }
   if (usesCompanionPreview) {
     companionTarget.style.setProperty("will-change", "transform, opacity", "important");
-    companionTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms ease`, "important");
+    companionTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1)`, "important");
     companionTarget.style.setProperty("transform", "translate3d(0,0,0)", "important");
     companionTarget.style.setProperty("opacity", "1", "important");
   }
@@ -1702,10 +1720,15 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     nextTarget.style.setProperty("will-change", "transform, opacity", "important");
     nextTarget.style.setProperty("transition", "none", "important");
     nextTarget.style.setProperty("transform", `translate3d(${Math.round(-exitOffset * 0.42)}px,0,0)`, "important");
-    nextTarget.style.setProperty("opacity", "0.44", "important");
+    nextTarget.style.setProperty("background-color", getMobileSwipePreviewBackdropColor(), "important");
+    nextTarget.style.setProperty("overflow", "hidden", "important");
+    nextTarget.style.setProperty("overflow-x", "hidden", "important");
+    nextTarget.style.setProperty("overflow-y", "hidden", "important");
+    nextTarget.style.setProperty("isolation", "isolate", "important");
+    nextTarget.style.setProperty("opacity", "1", "important");
     nextTarget.style.setProperty("pointer-events", "none", "important");
     await waitForMobileSwipeFrame();
-    nextTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_ENTRY_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_ENTRY_MS}ms ease`, "important");
+    nextTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_ENTRY_MS}ms cubic-bezier(.22,.61,.36,1)`, "important");
     nextTarget.style.setProperty("transform", "translate3d(0,0,0)", "important");
     nextTarget.style.setProperty("opacity", "1", "important");
     await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_ENTRY_MS + 24);
