@@ -42604,6 +42604,52 @@ function openEditProfileModal() {
   showModalById("editProfileModal");
 }
 
+let profileEditPanelRefreshTimer = 0;
+
+function refreshProfileEditTabPanel(tabKey = "theme") {
+  const profile = getActiveProfile();
+  const themeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
+  const avatarAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
+  const borderColor = normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile?.profileBorderColor || "theme");
+  const borderStyle = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile?.profileBorder || "standard");
+  const bannerStyle = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile?.bannerStyle || "theme");
+
+  switch (tabKey) {
+    case "theme":
+      renderThemeGallery(themeKey);
+      break;
+    case "icon":
+      renderAvatarGallery(avatarAgent);
+      break;
+    case "borderColor":
+      renderBorderColorGallery(borderColor);
+      break;
+    case "border":
+      renderBorderGallery(borderStyle);
+      break;
+    case "banner":
+      renderBannerGallery(bannerStyle, themeKey);
+      break;
+    default:
+      break;
+  }
+
+  scheduleThemeBuilderAutoFitText({ resetBase: true });
+  window.requestAnimationFrame?.(ensureMobileSwipeAffordances);
+}
+
+function scheduleProfileEditTabPanelRefresh(tabKey = "theme") {
+  if (profileEditPanelRefreshTimer) {
+    window.clearTimeout(profileEditPanelRefreshTimer);
+    profileEditPanelRefreshTimer = 0;
+  }
+  window.requestAnimationFrame(() => refreshProfileEditTabPanel(tabKey));
+  profileEditPanelRefreshTimer = window.setTimeout(() => {
+    profileEditPanelRefreshTimer = 0;
+    refreshProfileEditTabPanel(tabKey);
+  }, 140);
+}
+
 function activateProfileEditTab(tabKey = "theme") {
   const shell = document.querySelector("#editProfileModal .profile-edit-shell");
   const previousTab = shell?.dataset.activeProfileTab || "";
@@ -42628,6 +42674,7 @@ function activateProfileEditTab(tabKey = "theme") {
       window.setTimeout(() => panel.classList.remove("is-tab-entering"), 280);
     }
   });
+  scheduleProfileEditTabPanelRefresh(tabKey);
 }
 
 function getProfileEditSelection(selector = "", dataAttribute = "", fallback = "") {
@@ -42729,6 +42776,59 @@ function updateNavUnderline(){
 
 let pageTransitionToken = 0;
 let pageTransitionTimer = 0;
+let mobilePageHydrationTimer = 0;
+
+function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToken) {
+  if (!isMobileLayoutViewport()) return;
+  if (token !== pageTransitionToken) return;
+  const activePageId = document.querySelector(".page.active")?.id?.replace("page-", "") || "";
+  if (activePageId !== pageId) return;
+
+  switch (pageId) {
+    case "logging":
+      ensureMobileLoggingTabs();
+      syncLogFocusCustomDropdown?.();
+      syncLoggingQuickChipStates?.();
+      updateLoggingDebriefPreview?.();
+      ensureMobileManualReportControls();
+      scheduleLoggingFeedRender({ force: true });
+      break;
+    case "stats":
+      initStatsPage?.();
+      ensureMobileStatsTabs();
+      ensureMobileTrendCarousel();
+      ensureMobileStatsBreakdownCarousel();
+      break;
+    case "insights":
+      renderInsights?.();
+      enforceInsightsActionFluidWidth();
+      ensureMobileInsightCardCarousel();
+      ensureMobileInsightTrendCarousel();
+      scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+      break;
+    case "home":
+      scheduleLoadoutValueTextFit();
+      break;
+    default:
+      break;
+  }
+
+  scheduleMobileScrollExtentSync();
+  ensureMobileSwipeAffordances();
+}
+
+function scheduleActivatedMobilePageHydration(pageId = "", token = pageTransitionToken) {
+  if (!pageId) return;
+  if (mobilePageHydrationTimer) {
+    window.clearTimeout(mobilePageHydrationTimer);
+    mobilePageHydrationTimer = 0;
+  }
+  window.requestAnimationFrame(() => runActivatedMobilePageHydration(pageId, token));
+  mobilePageHydrationTimer = window.setTimeout(() => {
+    mobilePageHydrationTimer = 0;
+    runActivatedMobilePageHydration(pageId, token);
+  }, 160);
+}
 
 function activatePage(pageId){
 
@@ -42816,9 +42916,11 @@ function activatePage(pageId){
 
   if (isMobileLayoutViewport()) {
     document.body.classList.remove("mobile-nav-hidden");
+    const activationToken = pageTransitionToken;
     window.requestAnimationFrame(() => {
       scrollMobilePageToTop();
       scheduleMobileNavVisibility();
+      scheduleActivatedMobilePageHydration(pageId, activationToken);
     });
   }
 

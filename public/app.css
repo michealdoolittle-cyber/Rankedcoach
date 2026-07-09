@@ -52065,4 +52065,88 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
     white-space:nowrap !important;
     font-size:clamp(8px,2.2vw,9px) !important;
   }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insights-action-card .insight-action-hero{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    justify-content:flex-start !important;
+    gap:6px !important;
+    min-height:0 !important;
+    height:auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insights-action-card .insight-action-hero > .insight-priority-title{
+    margin:0 !important;
+    padding-right:0 !important;
+    max-width:100% !important;
+    font-size:clamp(14px,4.2vw,18px) !important;
+    line-height:1.12 !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights .insights-action-card .insight-action-copy{
+    margin-top:0 !important;
+    white-space:normal !important;
+    line-height:1.24 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay .lens-modal-header{
+    display:flex !important;
+    align-items:center !important;
+    gap:10px !important;
+    min-height:56px !important;
+    padding:10px 12px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay .lens-modal-title{
+    flex:1 1 auto !important;
+    display:flex !important;
+    align-items:center !important;
+    min-height:36px !important;
+    min-width:0 !important;
+    line-height:1.08 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #lensModalOverlay #lensModalClose{
+    position:static !important;
+    inset:auto !important;
+    top:auto !important;
+    right:auto !important;
+    bottom:auto !important;
+    left:auto !important;
+    align-self:center !important;
+    margin-left:auto !important;
+    width:36px !important;
+    min-width:36px !important;
+    max-width:36px !important;
+    height:36px !important;
+    min-height:36px !important;
+    max-height:36px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal #editProfileThemeGallery .theme-card{
+    min-height:108px !important;
+    height:108px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal #editProfileThemeGallery .theme-card-preview{
+    padding:10px !important;
+    gap:8px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal #editProfileThemeGallery .theme-card-head{
+    min-height:24px !important;
+    align-items:flex-start !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal #editProfileThemeGallery .theme-card-name{
+    font-size:clamp(10px,3vw,12px) !important;
+    line-height:1.12 !important;
+    letter-spacing:.045em !important;
+    white-space:normal !important;
+    text-wrap:balance !important;
+  }
 }
