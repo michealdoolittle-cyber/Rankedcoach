@@ -15,11 +15,11 @@
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#071b2b">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-<link rel="stylesheet" href="app.css?v=20260709-exec-plan-01">
-  <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-exec-plan-01">
-  <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-exec-plan-01">
-<link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-exec-plan-01">
-<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260709-exec-plan-01">
+<link rel="stylesheet" href="app.css?v=20260709-premium-qol-01">
+  <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
+  <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
+<link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
+<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260709-premium-qol-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -219,6 +219,9 @@ AUTH MODAL
   </div>
 </div>
 
+<div id="premiumMomentOverlay" class="premium-moment-overlay" aria-hidden="true"></div>
+<div id="appToastStack" class="app-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
 <div id="securitySettingsModal" class="lens-modal-overlay">
   <div class="lens-modal security-settings-modal">
     <div class="lens-modal-header">
@@ -303,6 +306,24 @@ RIOT PROFILE MODAL
               <div class="profile-edit-field profile-edit-field-full">
                 <span>Theme Preview</span>
                 <div id="editProfileThemeGallery" class="theme-gallery"></div>
+              </div>
+
+              <div class="profile-edit-field">
+                <span>Custom Accent</span>
+                <div class="theme-accent-control">
+                  <input id="editProfileCustomAccent" class="theme-accent-input" type="color" value="#ff4655" aria-label="Choose a custom accent color">
+                  <button id="editProfileCustomAccentReset" class="pd-item theme-accent-reset" type="button">Theme Default</button>
+                </div>
+                <small class="profile-edit-field-note">Layer a personal accent color over the selected theme.</small>
+              </div>
+
+              <div class="profile-edit-field">
+                <span>Mobile Ambient Motion</span>
+                <select id="editProfileFreeThemeMotion" class="profile-edit-select" aria-label="Choose a mobile ambient motion style">
+                  <option value="static">Standard</option>
+                  <option value="ambient">Calm Motion</option>
+                </select>
+                <small class="profile-edit-field-note">Adds one lighter shared motion option for free themes on mobile.</small>
               </div>
             </div>
           </section>
@@ -465,6 +486,35 @@ RIOT PROFILE MODAL
 
               <div id="securitySettingsStatus" class="auth-status" aria-live="polite"></div>
               <button id="securitySettingsSave" type="button" class="pd-item auth-action-btn auth-main-btn">Save Security Settings</button>
+            </div>
+            <div class="account-support-accessibility-card">
+              <div class="account-support-accessibility-head">
+                <div class="profile-edit-panel-title">Accessibility</div>
+                <div class="profile-edit-panel-copy">Make contrast, motion, and layout easier to find for the active profile.</div>
+              </div>
+              <div class="account-support-accessibility-grid">
+                <label class="auth-field">
+                  <span>Contrast</span>
+                  <select id="accountSupportContrastMode" aria-label="Choose contrast mode">
+                    <option value="standard">Standard</option>
+                    <option value="high">High Contrast</option>
+                  </select>
+                </label>
+                <label class="auth-field">
+                  <span>Motion</span>
+                  <select id="accountSupportMotionMode" aria-label="Choose motion mode">
+                    <option value="standard">Standard</option>
+                    <option value="reduced">Reduced Motion</option>
+                  </select>
+                </label>
+                <label class="auth-field">
+                  <span>Layout</span>
+                  <select id="accountSupportLayoutMode" aria-label="Choose layout mode">
+                    <option value="web">Web Layout</option>
+                    <option value="mobile">Mobile Layout</option>
+                  </select>
+                </label>
+              </div>
             </div>
           </section>
 
@@ -2146,6 +2196,6 @@ stroke-linejoin="round"/>
   <script src="sandbox-fx.engine.js"></script>
   <script src="schema/match-record.js?v=20260705-build-brief-v3-01"></script>
   <script src="integrations/riot-sync.js?v=20260705-build-brief-v3-01"></script>
-  <script type="module" src="app.js?v=20260709-exec-plan-01"></script>
+  <script type="module" src="app.js?v=20260709-premium-qol-01"></script>
 </body>
 </html>
