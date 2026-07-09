@@ -9971,13 +9971,15 @@ function formatLastSyncedLabel(value = "") {
 
 function syncAccountSupportUI(profile = getActiveProfile()) {
   const signedIn = Boolean(currentAuthUser);
-  const securityBtn = document.getElementById("accountSupportSecurityBtn");
-  const authBtn = document.getElementById("accountSupportAuthBtn");
+  const guestNote = document.getElementById("accountSupportSecurityGuestNote");
+  const securityForm = document.getElementById("accountSupportSecurityForm");
 
-  if (securityBtn) securityBtn.hidden = !signedIn;
-  if (authBtn) {
-    authBtn.hidden = signedIn;
-    authBtn.textContent = "Log in / Sign up";
+  if (guestNote) guestNote.hidden = signedIn;
+  if (securityForm) securityForm.hidden = !signedIn;
+  if (signedIn) {
+    populateSecuritySettingsModal();
+  } else {
+    resetSecuritySettingsFormForGuest();
   }
   syncManualEntryModeUI?.();
   syncTrackerProfileUrlUI?.(profile);
@@ -10018,6 +10020,10 @@ function openAccountSupportModal(tabKey = "account") {
   syncAccountSupportUI?.();
   activateAccountSupportTab(tabKey);
   showModalById("accountSupportModal");
+  if (currentAuthUser && tabKey === "account") {
+    void hydrateSecuritySettingsFromBackend();
+    void refreshSecurityTotpState();
+  }
 }
 
 function closeAccountSupportModal() {
@@ -11147,6 +11153,22 @@ function setSecurityRecoveryMasks(email = "", phone = "") {
   if (phoneMask) phoneMask.textContent = `Current: ${maskPhone(phone)}`;
 }
 
+function resetSecuritySettingsFormForGuest() {
+  const usernameInput = document.getElementById("securityUsernameInput");
+  const recoveryEmailInput = document.getElementById("securityRecoveryEmailInput");
+  const recoveryPhoneInput = document.getElementById("securityRecoveryPhoneInput");
+  const mfaInput = document.getElementById("securityMfaEnabled");
+
+  if (usernameInput) usernameInput.value = "";
+  if (recoveryEmailInput) recoveryEmailInput.value = "";
+  if (recoveryPhoneInput) recoveryPhoneInput.value = "";
+  if (mfaInput) mfaInput.checked = false;
+  setSecurityRecoveryMasks("", "");
+  clearSecurityTotpEnrollment();
+  setSecurityTotpSetupVisibility(false);
+  setAuthStatus("securitySettingsStatus", "");
+}
+
 function populateSecuritySettingsModal() {
   const metadata = getAccountSecurityMetadata();
   const usernameInput = document.getElementById("securityUsernameInput");
@@ -11352,14 +11374,11 @@ function openSecuritySettingsModal() {
     openAuthModal?.();
     return;
   }
-  populateSecuritySettingsModal();
-  showModalById("securitySettingsModal");
-  void hydrateSecuritySettingsFromBackend();
-  void refreshSecurityTotpState();
+  openAccountSupportModal("account");
 }
 
 function closeSecuritySettingsModal() {
-  hideModalById("securitySettingsModal");
+  closeAccountSupportModal();
 }
 
 async function saveSecuritySettingsModal() {
@@ -37797,55 +37816,10 @@ function bindEvents(){
     closeAccountSupportModal();
   });
 
-  document.getElementById("accountSupportDone")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeAccountSupportModal();
-  });
-
   document.getElementById("accountSupportModal")?.addEventListener("click", (e) => {
     if (e.target === document.getElementById("accountSupportModal")) {
       closeAccountSupportModal();
     }
-  });
-
-  document.getElementById("accountSupportSecurityBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeAccountSupportModal();
-    openSecuritySettingsModal();
-  });
-
-  document.getElementById("accountSupportAuthBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeAccountSupportModal();
-    openAuthModal();
-  });
-
-  document.getElementById("accountSupportManualEntryToggle")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    await toggleManualEntryModeFromUI();
-  });
-
-  document.getElementById("accountSupportLogoutBtn")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    closeAccountSupportModal();
-    await logoutOrOpenAuthFromUI();
-  });
-
-  document.getElementById("accountSupportImportHistoryBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    closeAccountSupportModal();
-    openHistoryImportModal(0);
-  });
-
-  document.getElementById("accountSupportSaveTrackerBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    saveTrackerProfileUrlFromSettings(document.getElementById("accountSupportTrackerProfileUrlInput"));
-  });
-
-  document.getElementById("accountSupportForceRefreshBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    void forceRefreshActiveProfile("force");
   });
 
   document.getElementById("accountSupportBugReportBtn")?.addEventListener("click", (e) => {

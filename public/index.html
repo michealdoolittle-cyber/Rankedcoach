@@ -227,57 +227,9 @@ AUTH MODAL
     </div>
 
     <div class="lens-modal-body security-settings-body">
-      <label class="auth-field">
-        <span>Change username</span>
-        <input id="securityUsernameInput" type="text" placeholder="3-16 characters" maxlength="16" autocomplete="nickname" />
-      </label>
-
-      <div class="auth-recovery-grid">
-      <label class="auth-field">
-        <span>Change recovery email</span>
-        <input id="securityRecoveryEmailInput" type="email" placeholder="backup@example.com" autocomplete="email" />
-        <small id="securityRecoveryEmailMask" class="security-current-mask">Current: Not set</small>
-      </label>
-      <label class="auth-field">
-        <span>Change recovery phone number</span>
-        <input id="securityRecoveryPhoneInput" type="tel" placeholder="+1 555 555 5555" autocomplete="tel" />
-        <small id="securityRecoveryPhoneMask" class="security-current-mask">Current: Not set</small>
-      </label>
+      <div class="account-support-security-note">
+        Security settings now live in Account &amp; Support under the Account tab.
       </div>
-
-      <label class="auth-toggle-row security-toggle-row">
-        <span>
-          <strong>MFA Enable / Disable</strong>
-          <small>Uses a 6-digit code from an authenticator app.</small>
-        </span>
-        <span class="auth-switch-control" aria-hidden="true">
-          <input id="securityMfaEnabled" type="checkbox" role="switch" />
-          <span class="auth-switch-track"></span>
-        </span>
-      </label>
-
-      <div class="security-totp-setup" id="securityTotpSetup" hidden>
-        <div class="security-totp-copy">
-          <strong>Set up authenticator app</strong>
-          <span>Scan this QR code with 2FAS Auth, Google Authenticator, Authy, or another TOTP app. Then enter the 6-digit code to finish.</span>
-        </div>
-        <div class="security-totp-grid">
-          <div class="security-totp-qr-wrap">
-            <img id="securityTotpQr" class="security-totp-qr" alt="RankedCoach authenticator QR code" />
-          </div>
-          <div class="security-totp-actions">
-            <label class="auth-field">
-              <span>Authenticator code</span>
-              <input id="securityTotpCode" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" />
-            </label>
-            <div class="security-totp-secret" id="securityTotpSecret"></div>
-            <button id="securityTotpVerify" type="button" class="pd-item auth-action-btn auth-main-btn">Verify Authenticator</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="securitySettingsStatus" class="auth-status" aria-live="polite"></div>
-      <button id="securitySettingsSave" type="button" class="pd-item auth-action-btn auth-main-btn">Save Security Settings</button>
     </div>
   </div>
 </div>
@@ -456,18 +408,63 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel is-active" data-account-support-panel="account">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Account</div>
-              <div class="profile-edit-panel-copy">Manage sign-in, manual logging, and account access.</div>
+              <div class="profile-edit-panel-copy">Update your username, recovery contact, and authenticator protection here.</div>
             </div>
-            <div class="account-support-row-list">
-              <button id="accountSupportSecurityBtn" class="pd-item account-support-row" type="button">Security Settings</button>
-              <button id="accountSupportAuthBtn" class="pd-item account-support-row" type="button">Log in / Sign up</button>
-              <button id="accountSupportManualEntryToggle" class="pd-item account-support-row manual-mode-toggle" type="button" aria-pressed="false">
-                <span class="manual-mode-toggle-copy">
-                  <span>Manual Entry Mode</span>
-                  <small>Offline match reports</small>
+            <div id="accountSupportSecurityGuestNote" class="account-support-security-note" hidden>
+              Log in from the settings menu to manage recovery info and authenticator protection.
+            </div>
+            <div id="accountSupportSecurityForm" class="security-settings-body account-support-security-form">
+              <label class="auth-field">
+                <span>Change username</span>
+                <input id="securityUsernameInput" type="text" placeholder="3-16 characters" maxlength="16" autocomplete="nickname" />
+              </label>
+
+              <div class="auth-recovery-grid">
+                <label class="auth-field">
+                  <span>Change recovery email</span>
+                  <input id="securityRecoveryEmailInput" type="email" placeholder="backup@example.com" autocomplete="email" />
+                  <small id="securityRecoveryEmailMask" class="security-current-mask">Current: Not set</small>
+                </label>
+                <label class="auth-field">
+                  <span>Change recovery phone number</span>
+                  <input id="securityRecoveryPhoneInput" type="tel" placeholder="+1 555 555 5555" autocomplete="tel" />
+                  <small id="securityRecoveryPhoneMask" class="security-current-mask">Current: Not set</small>
+                </label>
+              </div>
+
+              <label class="auth-toggle-row security-toggle-row">
+                <span>
+                  <strong>MFA Enable / Disable</strong>
+                  <small>Uses a 6-digit code from an authenticator app.</small>
                 </span>
-                <span class="manual-mode-switch" aria-hidden="true"><span></span></span>
-              </button>
+                <span class="auth-switch-control" aria-hidden="true">
+                  <input id="securityMfaEnabled" type="checkbox" role="switch" />
+                  <span class="auth-switch-track"></span>
+                </span>
+              </label>
+
+              <div class="security-totp-setup" id="securityTotpSetup" hidden>
+                <div class="security-totp-copy">
+                  <strong>Set up authenticator app</strong>
+                  <span>Scan this QR code with 2FAS Auth, Google Authenticator, Authy, or another TOTP app. Then enter the 6-digit code to finish.</span>
+                </div>
+                <div class="security-totp-grid">
+                  <div class="security-totp-qr-wrap">
+                    <img id="securityTotpQr" class="security-totp-qr" alt="RankedCoach authenticator QR code" />
+                  </div>
+                  <div class="security-totp-actions">
+                    <label class="auth-field">
+                      <span>Authenticator code</span>
+                      <input id="securityTotpCode" type="text" inputmode="numeric" maxlength="10" placeholder="123456" autocomplete="one-time-code" />
+                    </label>
+                    <div class="security-totp-secret" id="securityTotpSecret"></div>
+                    <button id="securityTotpVerify" type="button" class="pd-item auth-action-btn auth-main-btn">Verify Authenticator</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="securitySettingsStatus" class="auth-status" aria-live="polite"></div>
+              <button id="securitySettingsSave" type="button" class="pd-item auth-action-btn auth-main-btn">Save Security Settings</button>
             </div>
           </section>
 
@@ -477,17 +474,18 @@ RIOT PROFILE MODAL
               <div class="profile-edit-panel-copy">Reach out, support RankedCoach, or review policy links.</div>
             </div>
             <div class="account-support-row-list">
-              <a class="pd-item account-support-row account-support-tip-row" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev</a>
-              <button id="accountSupportBugReportBtn" class="pd-item account-support-row" type="button">Report a Bug</button>
-              <a class="pd-item account-support-row" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Contact Support</a>
-              <a class="pd-item account-support-row" href="terms.html">Terms of Service</a>
-              <a class="pd-item account-support-row" href="privacy.html">Privacy Policy</a>
+              <div class="account-support-support-group">
+                <button id="accountSupportBugReportBtn" class="pd-item account-support-row" type="button">Report a Bug</button>
+                <a class="pd-item account-support-row" href="mailto:support@rankedcoach.gg?subject=RankedCoach%20Support">Contact Support</a>
+                <a class="pd-item account-support-row" href="terms.html">Terms of Service</a>
+                <a class="pd-item account-support-row" href="privacy.html">Privacy Policy</a>
+              </div>
+              <div class="account-support-tip-card">
+                <div class="account-support-tip-copy">Support RankedCoach directly if you want to help fund more polish and coaching features.</div>
+                <a class="pd-item account-support-row account-support-tip-row" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev</a>
+              </div>
             </div>
           </section>
-        </div>
-
-        <div class="profile-edit-actions">
-          <button id="accountSupportDone" class="pd-item" type="button">Done</button>
         </div>
       </div>
     </div>
@@ -832,7 +830,13 @@ RIOT PROFILE MODAL
               <a id="profileTrackerLink" class="profile-tracker-link profile-menu-tracker-link" href="#" target="_blank" rel="noopener noreferrer" hidden>View Tracker.gg Profile</a>
             </div>
             <div class="profile-menu-section profile-quick-menu">
-              <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
+              <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
+              <button class="pd-item" id="pdAccountSupportBtn" type="button">
+                <span class="manual-mode-toggle-copy">
+                  <span>Account &amp; Support</span>
+                  <small>Security, support, legal</small>
+                </span>
+              </button>
               <button class="pd-item manual-mode-toggle" id="manualEntryModeToggle" type="button" aria-pressed="false">
                 <span class="manual-mode-toggle-copy">
                   <span>Manual Entry Mode</span>
@@ -840,13 +844,7 @@ RIOT PROFILE MODAL
                 </span>
                 <span class="manual-mode-switch" aria-hidden="true"><span></span></span>
               </button>
-              <button class="pd-item" id="pdAccountSupportBtn" type="button">
-                <span class="manual-mode-toggle-copy">
-                  <span>Account &amp; Support</span>
-                  <small>Manual mode, support, legal</small>
-                </span>
-              </button>
-              <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
+              <button class="pd-item" id="pdOpenSettings" type="button">Customize</button>
             </div>
           </div>
         </div>
