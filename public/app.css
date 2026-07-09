@@ -50961,7 +50961,7 @@ html body #profileRankIcon.profile-rank-icon{
 .history-import-actions{display:flex;gap:10px;justify-content:flex-end;padding:14px 18px 18px;}
 .history-import-actions button,.history-import-failure button{border:1px solid rgba(148,163,184,.28);border-radius:12px;background:rgba(30,41,59,.9);color:#fff;font-weight:900;padding:10px 14px;}
 #historyImportConfirm{background:linear-gradient(135deg,#ff4655,#f97316);border-color:rgba(255,255,255,.18);}
-@media (max-width:720px){.logging-data-tools-actions{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"import save" "tracker tracker";align-items:start;}.history-import-examples,.history-import-record{grid-template-columns:1fr 1fr;}.history-import-agent-field,.history-import-warning{grid-column:1 / -1;}.history-import-stepper{grid-template-columns:repeat(4,minmax(0,1fr));}.history-import-stepper span:last-child{grid-column:1 / -1;}}
+@media (max-width:720px){.logging-data-tools-actions{grid-template-columns:1fr;grid-template-areas:"import" "tracker" "save";align-items:stretch;}.history-import-examples,.history-import-record{grid-template-columns:1fr 1fr;}.history-import-agent-field,.history-import-warning{grid-column:1 / -1;}.history-import-stepper{grid-template-columns:repeat(4,minmax(0,1fr));}.history-import-stepper span:last-child{grid-column:1 / -1;}}
 
 /* Build brief v3: coach readiness and locked-state progress. */
 .coach-readiness-card{
