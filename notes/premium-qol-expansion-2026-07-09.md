@@ -1,6 +1,6 @@
 # Premium Feel + Quality-of-Life Expansion — Full Directive for Codex
 
-**Status:** Spec'd 2026-07-09, not yet built. Everything below came out of a design conversation with Michael about making the two premium themes (`radiant-focus`, `omen-night`) feel genuinely premium, plus a parallel set of quality-of-life ideas he wants available to *every* user, not just premium accounts — his words: "the app is essentially and should be customizable for the users preference on look and feel," with premium being "another level of exciting" layered on top of an already-good baseline, not the only source of a good experience.
+**Status:** Spec'd 2026-07-09, closed every ambiguity/investigation gap same day (exact hook points, exact CSS values, exact selectors — no "confirm this first" placeholders remain except D4, which is deliberately left as an open scoping question for Michael, not an investigation gap). Not yet built. Everything below came out of a design conversation with Michael about making the two premium themes (`radiant-focus`, `omen-night`) feel genuinely premium, plus a parallel set of quality-of-life ideas he wants available to *every* user, not just premium accounts — his words: "the app is essentially and should be customizable for the users preference on look and feel," with premium being "another level of exciting" layered on top of an already-good baseline, not the only source of a good experience.
 
 **Hard scope constraint, applies to every item below unless explicitly marked otherwise:** Riot may still be reviewing the live desktop app as part of the API key approval process (`notes/riot-sync.md`). Every new visual/motion change in this doc is **mobile-only** — gate JS branches behind `isMobileLayoutViewport()` (`app.js:410-412`) and CSS behind the `body.is-mobile-layout` class (set `app.js:558-560`), exactly like the premium theme motion work already shipped. The only items exempt from this are ones with **zero possible desktop rendering effect** — each item below states explicitly whether it's mobile-only or safe-on-both, don't guess.
 
@@ -22,11 +22,19 @@ Build one: a small `showToast(message, { variant = "default" })` function that r
 
 **Confirmed this doesn't exist as an event today** — peak rank is tracked as passive display data only, via `computePeakProfileProgress(profile)` (`app.js:41621`, `app.js:47506`), consumed for a Stats page display element (`stats-peak-rank-icon`/`stats-peak-rank-text` around `app.js:21730-21744`). There is no boolean/event anywhere for "the player just now hit a new peak" — it's computed fresh from stored history every time, with no before/after comparison and no celebratory UI at all currently.
 
-Build this fresh: after a match save (see A3 below) or Riot sync completes, compare the newly computed peak against the previously stored peak (you'll need to persist "last known peak" somewhere — check `profile` fields for a natural place, or add one) and emit a `justHitNewPeak` boolean for that save event. This is genuinely new logic, not a hookup to something existing — budget real time for it, don't treat it as a quick wire-up.
+**Exact implementation:**
+1. Add a new persisted field, `profile.peakRR` (number, RR value of the highest point ever reached), alongside the existing profile fields mutated by `updateProfile(id, data)` (`app.js:40914-40932` — follow the exact same pattern used there for `riotId`/`region`: read the previous value, compute the next value, assign, don't touch fields not passed).
+2. In the A3 save hook (below), after the match is added to `profile.matches`, call `computePeakProfileProgress(profile)` fresh (it already re-derives from `profile.matches`, no change needed there) and compare its result to `profile.peakRR`.
+3. If the new peak is strictly greater than the stored `profile.peakRR`: set `justHitNewPeak = true` for this save event, then call `updateProfile(activeProfileId, { peakRR: newPeakValue })` and `saveProfiles()` (`app.js:40424`) so it actually persists — don't just hold it in memory, or it resets every reload and would falsely re-trigger the celebration on next launch.
+4. First-ever save for a profile with no prior `profile.peakRR` (i.e. `profile.peakRR` is `undefined`/`0`): do NOT treat this as a "new peak" celebration — initialize it silently. The celebration is for beating a *previous* peak, not for the first data point ever recorded.
 
 ### A3. Match-save completion hook
 
-Manual match logging goes through `addLogEntry()` (`app.js:39705`) — confirm this is the actual submit handler (trace what calls it from the log form) and identify the exact point where a save has just succeeded and the UI is about to re-render the feed. Screenshot-imported matches go through `confirmHistoryImportRecords()` (`app.js:10899`). **Both paths need the same post-save hook** (toast confirmation, peak-rank check, result-reveal flourish) — don't build two separate implementations; factor a shared `onMatchSaved(record, { isNewPeak })` call both paths invoke.
+**Confirmed the exact hook point.** Manual match logging's submit handler is `addLogEntry()` (`app.js:39705-39789`) — traced it directly: it pushes to `logEntries`, calls `upsertManualMatchForLogEntry(entry)` (`app.js:39736`), then re-renders (`renderLogFeed()`, `renderInsights()`, etc. at `app.js:39760-39765`) before resetting the form fields (`app.js:39767-39789`). Insert the new hook call **right after line 39765** (`syncWeeklyFocus();`), before the form-reset block begins — at that point the match is fully saved and all data-layer state is current, but the UI reset hasn't started yet, so a toast/flourish can render cleanly without fighting the form-clear.
+
+Screenshot-imported matches go through `confirmHistoryImportRecords()` (`app.js:10899`) — call the same hook there too, after its save-to-profile step completes (read the function to find its equivalent "save is now fully committed" point; it should be structurally similar — after data is written, before/independent of any modal-close UI cleanup).
+
+**Both paths call the same shared function** — write `onMatchSaved(record, { isNewPeak })` once (near `addLogEntry`, or wherever shared save-adjacent helpers already live) and call it from both sites with the actual saved record and the `justHitNewPeak` result from A2. Don't duplicate the toast/flourish/peak-check logic in two places.
 
 ---
 
@@ -41,14 +49,27 @@ Don't re-spec this — it's fully written in `notes/premium-themes.md`'s "Intens
 `PROFILE_BORDER_STYLES` (`app.js:40582-40598`) is a flat array of `{ value, label, note }`. `renderBorderGallery()` is `app.js:41450`. Each style gets a CSS class (`.profile-border-{value}` pattern) with its own `@keyframes`, gated behind `.border-animated` (see the crosshair bug fix from the earlier bug-fix pass for the exact gating pattern to copy — `.border-animated.border-crosshair`, not just `.border-crosshair`).
 
 Add two new entries, gated to premium accounts only (don't add them to the array unconditionally — branch the array construction or filter at render time on `isPremiumThemeQaUser()`, same pattern as `PREMIUM_PROFILE_THEME_PRESETS`):
-- A Radiant-Focus-exclusive ring (working name "sunburst" — gold rays/spokes radiating outward, pulsing outward on a slow loop)
-- An Omen-Night-exclusive ring (working name "eclipse" — a slow violet-to-cyan rotating crescent/arc, darker and more restrained than sunburst)
 
-Reuse `--theme-motion-duration` for timing consistency with the rest of the premium motion work.
+**"Sunburst" (Radiant Focus exclusive):** 8 short radiating spokes around the ring, built as 8 evenly-spaced `box-shadow` segments (45° apart, same technique as the existing crosshair style's 4-directional `box-shadow` segments — copy that structural approach, just double the segment count and shorten each spoke's length so it reads as a burst, not a cross). Color: `var(--accent)` core with a `color-mix(in srgb, var(--accent) 60%, transparent)` outer glow. Animation: `@keyframes profileBorderSunburstPulse` — spokes scale from `0.85` to `1.15` and opacity `0.6` to `1` over the cycle, `ease-in-out`, duration `calc(var(--theme-motion-duration) * .15)` (~2.7s at the current 18s base — noticeably faster than the ambient card motion so it reads as a distinct, more energetic ring, not just a slower echo of the card sweep).
+
+**"Eclipse" (Omen Night exclusive):** a dark crescent/shadow disc that slowly transits across the ring, distinct from the theme's existing ambient avatar halo (`themeOmenRingSpin`, a full conic-gradient rotation already used for the ambient card-motion pass — don't reuse that same visual, this needs to look different from it since both can be visible on the same avatar at once). Build via a radial-gradient "occluding" pseudo-element (`::after` on the border-ring wrapper, `background: radial-gradient(circle at var(--eclipse-x,50%) 20%, rgba(5,5,15,.85), transparent 55%)`) whose `--eclipse-x` custom property animates from `-20%` to `120%` in a straight line pass (not a rotation) over `calc(var(--theme-motion-duration) * .2)` (~3.6s), pausing/resetting with a longer gap between passes (`animation-timing-function: steps` or a keyframe with a long hold at 0%/100%) so it reads as an occasional "eclipse event," not continuous motion — reinforces the "lurk" identity from the original design brief (something happening, then still, then happening again) rather than nonstop motion.
+
+Both: gate behind `.border-animated` exactly like every other animated border style (per the crosshair bug fix precedent — the gate goes in the selector itself, not as a separate check).
 
 ### B3. One premium-exclusive banner per theme
 
-`PROFILE_BANNER_STYLES` (`app.js:40600`) entries are either Riot-art-linked (`image: "https://media.valorant-api.com/..."`) or CSS-only (`pattern: "linear-gradient(...)"`, category `"unofficial"` — confirmed via `getProfileBannerCategory()`, `app.js:41291-41294`, and `getBannerPattern()`, `app.js:41318`). **Use the CSS-pattern approach, not a Riot image link** — don't tie a monetized premium feature to Riot's own card art, and it avoids needing new image assets entirely. Build two gradient patterns using each theme's actual accent colors (`radiant-focus`: gold/blue; `omen-night`: violet/cyan), gated to premium accounts the same way as B2.
+`PROFILE_BANNER_STYLES` (`app.js:40600`) entries are either Riot-art-linked (`image: "https://media.valorant-api.com/..."`) or CSS-only (`pattern: "linear-gradient(...)"`, category `"unofficial"` — confirmed via `getProfileBannerCategory()`, `app.js:41291-41294`, and `getBannerPattern()`, `app.js:41318`). **Use the CSS-pattern approach, not a Riot image link** — don't tie a monetized premium feature to Riot's own card art, and it avoids needing new image assets entirely.
+
+Add two entries to `PROFILE_BANNER_STYLES` with `category: "unofficial"` and no `image` field, gated to premium accounts the same way as B2 (filter at the same point the array gets consumed, don't add unconditionally):
+
+```js
+{ value: "radiant-focus-signature", label: "Radiant Signature", category: "unofficial",
+  pattern: "radial-gradient(circle at 15% 20%, #facc1533, transparent 42%), linear-gradient(120deg, #facc1522 0%, transparent 45%, #38bdf822 78%, transparent 100%)" }
+{ value: "omen-night-signature", label: "Omen Signature", category: "unofficial",
+  pattern: "radial-gradient(circle at 82% 25%, #8b5cf640, transparent 45%), linear-gradient(135deg, #090a1a 0%, #151129 55%, #06b6d422 100%)" }
+```
+
+These follow the exact shape `getBannerPattern()` already expects (`app.js:41318-41328` — a CSS gradient string) so no changes to the rendering function are needed, only the new array entries plus the premium-gate filter.
 
 ### B4. Themed login overlay
 
@@ -60,11 +81,19 @@ Search `app.css` for hardcoded hex colors on buttons/chips/pills/tags that shoul
 
 ### B6. Heading and stat-number typography treatment
 
-`.card-title`/`.stat-value`-pattern classes are reused consistently across `index.html` (confirmed, ~12 occurrences of a small set of shared classes rather than scattered one-offs) — this is buildable as a small, targeted set of rules. For premium accounts, add letter-spacing/weight/subtle accent-glow treatment scoped to these shared classes, mobile-only. Do NOT touch body text, labels, or paragraph copy — headings and numbers only, so readability of the actual coaching content never degrades.
+Confirmed the two anchor classes and their current values: `.card-title` (`app.css:11795-11802` — `font-size:13px; letter-spacing:0.12em; text-transform:uppercase; color:#9ca3af; font-weight:700`) and `.stat-value` (`app.css:20079-20083` — `font-size:clamp(31px,1.72vw,36px); font-weight:800; color:#f8fafc`). Both are reused consistently, not scattered one-offs (confirmed via the ~12 shared-class occurrences in `index.html`).
+
+**Note in passing:** `.card-title`'s `color:#9ca3af` is a hardcoded gray, not theme-linked — same class of issue as B5. Fix it to `var(--muted)` while in this file region regardless of the premium work; that's a correctness fix for everyone, not premium-gated.
+
+**Exact premium deltas**, added as a `body.is-mobile-layout[data-theme="radiant-focus"] .card-title` / `[data-theme="omen-night"] .card-title` (and same pattern for `.stat-value`) override — check the actual attribute/selector the theme-apply function sets (`body.dataset.theme = themeKey`, confirmed `app.js:41563` from earlier investigation) so this targets real markup:
+- `.card-title`: `letter-spacing: 0.16em` (up from 0.12em — noticeable, not excessive), `font-weight: 800` (up from 700).
+- `.stat-value`: keep size/weight as-is (already maximal), add `text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent)` for a subtle glow on the numbers specifically — this is the "premium numbers feel alive" signal without changing legibility, since text-shadow at this opacity doesn't reduce contrast against the dark card backgrounds.
+
+Do NOT touch body text, labels, or paragraph copy — headings and numbers only, so readability of the actual coaching content never degrades.
 
 ### B7. Themed agent-icon aura during manual logging
 
-Find the agent icon element in the manual log entry form (distinct from the avatar/profile agent picker already covered by `renderAvatarGallery()`) and add a subtle pulsing ring/glow around it, premium-gated, mobile-only, reusing the `--theme-motion-duration` timing convention. Confirm the exact selector before building — trace forward from `addLogEntry()` (`app.js:39705`) to find the form markup it reads from.
+**Confirmed the exact element.** The agent icon in the manual log form is `#logAgentImg`, inside a wrapper `#logAgentDisplay` (`app.js:16155-16165`, the `updateLogAgentDisplay()` function that sets `display.dataset.agent`). Target `#logAgentDisplay` (the wrapper, not the raw `<img>`) for the aura ring — a `box-shadow`/border-glow pulse using `var(--accent)`, same `calc(var(--theme-motion-duration) * ...)` timing convention as the other premium motion work. Only render/activate when `logAgentDisplay.dataset.agent` is actually set (an agent has been picked) — don't glow an empty icon slot.
 
 ### B8. Foil-corner treatment on Coach Readiness cards
 
@@ -76,7 +105,11 @@ Find the agent icon element in the manual log entry form (distinct from the avat
 
 ### C1. Rank-up / personal-best celebration
 
-Once A2 (peak detection) exists: on `justHitNewPeak === true`, premium accounts get a distinct celebratory flourish (screen-edge flash, themed color sweep) via the A3 save hook. Non-premium accounts can get a smaller/simpler acknowledgment (or none, if Michael wants this fully premium-exclusive — confirm which before building, don't assume).
+Once A2 (peak detection) exists: on `justHitNewPeak === true`, **every account** gets an acknowledgment — this is a real accomplishment moment, and per Michael's stated principle, feel-good baseline UX isn't a premium-exclusive lever. Two tiers of the same event:
+- **Non-premium:** a clean, simple banner/toast via the A1 toast component — "New peak rank!" with the rank icon, no special color treatment beyond the app's default accent.
+- **Premium:** the amplified version — a themed screen-edge flash/color sweep (gold for Radiant Focus, violet for Omen Night) in addition to the same toast, plus (optional, only if straightforward once built) a brief extra flourish on the avatar ring.
+
+Same trigger, same underlying event (`justHitNewPeak`) — the two tiers are a rendering branch on `isPremiumThemeQaUser()`, not two separate features to build.
 
 ### C2. Match-result reveal flourish
 
