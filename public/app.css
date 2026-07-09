@@ -7,6 +7,8 @@
   --card: #0b1220;
   --muted: #94a3b8;
   --accent: #ff4655;
+  --theme-accent: #ff4655;
+  --theme-accent-2: #f97316;
   --good: #16a34a;
   --bad: #ef4444;
   --seg-bg: #0f1724;
@@ -52432,6 +52434,25 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   font-weight:800;
 }
 
+.profile-edit-field-motion > span{
+  font-size:14px;
+  line-height:1.3;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--text-main, #f8fafc);
+}
+
+#editProfileFreeThemeMotion{
+  font-size:16px;
+  line-height:1.2;
+  font-weight:900;
+}
+
+#editProfileFreeThemeMotion option{
+  font-size:16px;
+}
+
 .profile-edit-field-note{
   display:block;
   margin-top:8px;
@@ -52480,7 +52501,7 @@ body.is-mobile-layout[data-theme="omen-night"] .card-title{
 
 body.is-mobile-layout[data-theme="radiant-focus"] .stat-value,
 body.is-mobile-layout[data-theme="omen-night"] .stat-value{
-  text-shadow:0 0 10px color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  text-shadow:0 0 10px color-mix(in srgb, var(--theme-accent, var(--accent)) 35%, transparent) !important;
 }
 
 body.is-mobile-layout.theme-ambient-lite :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card){
@@ -52494,7 +52515,7 @@ body.is-mobile-layout.theme-ambient-lite :is(.card,.nav-rr-widget,.profile-panel
   border-radius:inherit;
   pointer-events:none;
   background:
-    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%),
+    radial-gradient(circle at 18% 16%, color-mix(in srgb, var(--theme-accent, var(--accent)) 12%, transparent), transparent 34%),
     linear-gradient(135deg, transparent 0 26%, rgba(255,255,255,.05) 42%, transparent 68%);
   opacity:.2;
   transform:translate3d(-2%, 1%, 0) scale(1.02);
@@ -52525,19 +52546,19 @@ body.is-mobile-layout.theme-glint-sweep :is(#profileAvatarWrap,#mobileHeaderProf
   position:absolute;
   inset:-6px;
   border-radius:inherit;
-  border:2px solid color-mix(in srgb, var(--accent) 74%, white 18%);
+  border:2px solid color-mix(in srgb, var(--theme-accent, var(--accent)) 74%, white 18%);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
-    0 0 18px color-mix(in srgb, var(--accent) 38%, transparent),
-    0 0 30px color-mix(in srgb, var(--accent-2) 20%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--theme-accent, var(--accent)) 38%, transparent),
+    0 0 30px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 20%, transparent);
   pointer-events:none;
   opacity:.88;
   animation:themeRadiantAvatarStructural calc(var(--theme-motion-duration, 18s) * .1) ease-in-out infinite;
 }
 
 @keyframes themeRadiantAvatarStructural{
-  0%,100%{ opacity:.72; transform:scale(1); box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 32%, transparent), 0 0 26px color-mix(in srgb, var(--accent-2) 16%, transparent); }
-  50%{ opacity:1; transform:scale(1.03); box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 44%, transparent), 0 0 34px color-mix(in srgb, var(--accent-2) 24%, transparent); }
+  0%,100%{ opacity:.72; transform:scale(1); box-shadow:0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 18%, transparent), 0 0 16px color-mix(in srgb, var(--theme-accent, var(--accent)) 32%, transparent), 0 0 26px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 16%, transparent); }
+  50%{ opacity:1; transform:scale(1.03); box-shadow:0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 26%, transparent), 0 0 24px color-mix(in srgb, var(--theme-accent, var(--accent)) 44%, transparent), 0 0 34px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 24%, transparent); }
 }
 
 body.is-mobile-layout.theme-shadow-drift :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn){
@@ -52550,18 +52571,18 @@ body.is-mobile-layout.theme-shadow-drift :is(#profileAvatarWrap,#mobileHeaderPro
   position:absolute;
   inset:-7px;
   border-radius:inherit;
-  border:2px solid color-mix(in srgb, var(--accent-2) 54%, white 14%);
+  border:2px solid color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 54%, white 14%);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent),
-    0 0 18px color-mix(in srgb, var(--accent-2) 24%, transparent);
+    inset 0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 22%, transparent),
+    0 0 18px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 24%, transparent);
   pointer-events:none;
   opacity:.84;
   animation:themeOmenAvatarStructural calc(var(--theme-motion-duration, 18s) * .1333) ease-in-out infinite;
 }
 
 @keyframes themeOmenAvatarStructural{
-  0%,100%{ opacity:.74; transform:scale(1); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), 0 0 16px color-mix(in srgb, var(--accent-2) 20%, transparent); }
-  50%{ opacity:.98; transform:scale(1.02); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent) 26%, transparent), 0 0 24px color-mix(in srgb, var(--accent-2) 34%, transparent); }
+  0%,100%{ opacity:.74; transform:scale(1); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 18%, transparent), 0 0 16px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 20%, transparent); }
+  50%{ opacity:.98; transform:scale(1.02); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 26%, transparent), 0 0 24px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 34%, transparent); }
 }
 
 html.is-mobile-layout body.is-mobile-layout :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-sunburst,
@@ -52709,8 +52730,8 @@ body.is-mobile-layout[data-theme="radiant-focus"] #logAgentDisplay[data-agent]::
   position:absolute;
   inset:-4px;
   border-radius:12px;
-  border:1px solid color-mix(in srgb, var(--accent) 56%, white 16%);
-  box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 28%, transparent);
+  border:1px solid color-mix(in srgb, var(--theme-accent, var(--accent)) 56%, white 16%);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--theme-accent, var(--accent)) 20%, transparent), 0 0 18px color-mix(in srgb, var(--theme-accent, var(--accent)) 28%, transparent);
   pointer-events:none;
   animation:themeRadiantAvatarStructural calc(var(--theme-motion-duration, 18s) * .12) ease-in-out infinite;
 }
@@ -52720,8 +52741,8 @@ body.is-mobile-layout[data-theme="omen-night"] #logAgentDisplay[data-agent]::aft
   position:absolute;
   inset:-4px;
   border-radius:12px;
-  border:1px solid color-mix(in srgb, var(--accent-2) 52%, white 14%);
-  box-shadow:0 0 18px color-mix(in srgb, var(--accent-2) 24%, transparent);
+  border:1px solid color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 52%, white 14%);
+  box-shadow:0 0 18px color-mix(in srgb, var(--theme-accent-2, var(--accent-2)) 24%, transparent);
   pointer-events:none;
   animation:themeOmenAvatarStructural calc(var(--theme-motion-duration, 18s) * .1333) ease-in-out infinite;
 }
@@ -52785,6 +52806,25 @@ body.access-reduced-motion .premium-moment-overlay{
 }
 
 @media (max-width:720px){
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal .profile-edit-field-motion > span{
+    font-size:15px !important;
+    line-height:1.3 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal #editProfileFreeThemeMotion{
+    min-height:50px !important;
+    padding:0 14px !important;
+    font-size:16px !important;
+    line-height:1.2 !important;
+    font-weight:900 !important;
+    letter-spacing:.02em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal #editProfileFreeThemeMotion + .profile-edit-field-note{
+    font-size:13px !important;
+    line-height:1.45 !important;
+  }
+
   .app-toast-stack{
     bottom:84px;
     width:min(420px, calc(100vw - 18px));

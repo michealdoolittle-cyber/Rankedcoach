@@ -41777,9 +41777,12 @@ function renderBorderGallery(selectedBorder = "standard") {
   const selectedThemeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
   const selectedAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
   const selectedBorderColor = document.getElementById("editProfileBorderColor")?.value || profile?.profileBorderColor || "theme";
+  const selectedCustomAccent = getEditProfileCustomAccentValue(profile);
   const theme = getThemePreset(selectedThemeKey);
   const colors = theme?.colors || {};
-  const ringColor = getResolvedProfileBorderColor(selectedBorderColor, theme);
+  const ringColor = selectedBorderColor === "theme" && selectedCustomAccent
+    ? selectedCustomAccent
+    : getResolvedProfileBorderColor(selectedBorderColor, theme);
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
   const useMobileFramePreview = true;
@@ -41967,19 +41970,23 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const strongBorder = colors.borderStrong || "rgba(148,163,184,.38)";
   const mainText = colors.text || "#e6eef8";
   const mutedText = colors.muted || "#94a3b8";
-  const primaryAccent = customAccent || colors.accent || "#ff4655";
-  const secondaryAccent = customAccent
-    ? blendHexColors(primaryAccent, colors.accent2 || colors.accent || "#f97316", 0.42)
-    : (colors.accent2 || "#f97316");
+  const primaryAccent = colors.accent || "#ff4655";
+  const secondaryAccent = colors.accent2 || "#f97316";
+  const highlightAccent = customAccent || primaryAccent;
+  const highlightAccent2 = customAccent
+    ? blendHexColors(highlightAccent, secondaryAccent || primaryAccent, 0.42)
+    : secondaryAccent;
   const buttonSurface = colors.button || childSurface;
   const buttonHoverSurface = colors.buttonHover || secondarySurface;
   const themeGlow = customAccent
-    ? `${primaryAccent}38`
+    ? `${highlightAccent}38`
     : (colors.glow || "rgba(255,70,85,.22)");
   const resolvedThemeMotion = theme.motion && theme.motion !== "static"
     ? theme.motion
     : (freeThemeMotion === "ambient" ? "ambient-lite" : "static");
-  const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
+  const resolvedBorderColor = borderColor === "theme" && customAccent
+    ? highlightAccent
+    : getResolvedProfileBorderColor(borderColor, theme);
   const ringBackground = colorMixOrFallback(
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
@@ -42037,6 +42044,8 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     root.style.setProperty("--text-muted", mutedText);
     root.style.setProperty("--accent", primaryAccent);
     root.style.setProperty("--accent-2", secondaryAccent);
+    root.style.setProperty("--theme-accent", highlightAccent);
+    root.style.setProperty("--theme-accent-2", highlightAccent2);
     root.style.setProperty("--button-bg", buttonSurface);
     root.style.setProperty("--button-hover", buttonHoverSurface);
     root.style.setProperty("--theme-glow", themeGlow);
@@ -42048,12 +42057,12 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     root.style.setProperty("--theme-bg-pattern-2", colors.pattern2 || "radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)");
     root.style.setProperty("--theme-primary-surface", cardSurface);
     root.style.setProperty("--theme-primary-surface-2", childSurface);
-    root.style.setProperty("--theme-secondary", primaryAccent);
-    root.style.setProperty("--theme-secondary-2", secondaryAccent);
+    root.style.setProperty("--theme-secondary", highlightAccent);
+    root.style.setProperty("--theme-secondary-2", highlightAccent2);
     root.style.setProperty("--theme-standout-bg", `radial-gradient(circle at 8% 0%, color-mix(in srgb, ${primaryAccent} 24%, transparent), transparent 36%), radial-gradient(circle at 92% 18%, color-mix(in srgb, ${secondaryAccent} 18%, transparent), transparent 34%), linear-gradient(135deg, color-mix(in srgb, ${cardSurface} 84%, ${primaryAccent} 16%), color-mix(in srgb, ${childSurface} 86%, ${secondaryAccent} 14%))`);
     root.style.setProperty("--theme-standout-bg-strong", `radial-gradient(circle at 0% 0%, color-mix(in srgb, ${primaryAccent} 34%, transparent), transparent 42%), linear-gradient(135deg, color-mix(in srgb, ${cardSurface} 74%, ${primaryAccent} 26%), color-mix(in srgb, ${childSurface} 82%, ${secondaryAccent} 18%))`);
-    root.style.setProperty("--theme-standout-border", `color-mix(in srgb, ${primaryAccent} 58%, ${strongBorder})`);
-    root.style.setProperty("--theme-standout-border-soft", `color-mix(in srgb, ${secondaryAccent} 42%, ${softBorder})`);
+    root.style.setProperty("--theme-standout-border", `color-mix(in srgb, ${highlightAccent} 58%, ${strongBorder})`);
+    root.style.setProperty("--theme-standout-border-soft", `color-mix(in srgb, ${highlightAccent2} 42%, ${softBorder})`);
     root.style.setProperty("--theme-standout-text", mainText);
     root.style.setProperty("--theme-standout-muted", mutedText);
   }
