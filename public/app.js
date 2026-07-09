@@ -1548,6 +1548,14 @@ function resolveMobileSwipePreviewCompanionTarget(direction = 0, options = {}, c
   return options.previewCompanionTarget || null;
 }
 
+function resolveMobileSwipePreviewCompanionFrame(target, currentTarget, options = {}, context = {}) {
+  if (!options.previewCompanionFrame) return null;
+  if (typeof options.previewCompanionFrame === "function") {
+    return options.previewCompanionFrame(target, currentTarget, context) || null;
+  }
+  return options.previewCompanionFrame || null;
+}
+
 function getMobileSwipePreviewSpan(target, options = {}, context = {}) {
   if (typeof options.previewSpan === "function") {
     return Math.max(1, safeNumber(options.previewSpan(context), 0));
@@ -1612,16 +1620,26 @@ function applyMobileSwipeCompanionPreview(target, currentTarget, offsetPx = 0, o
   const companionOffset = offsetPx + (direction > 0 ? visualSpan : -visualSpan);
   const revealRatio = 1 - Math.min(1, Math.abs(companionOffset) / visualSpan);
   const opacity = Math.max(0.58, 0.72 + revealRatio * 0.28);
-  const baseLeft = currentRect.left - safeNumber(offsetPx, 0);
+  const companionFrame = resolveMobileSwipePreviewCompanionFrame(target, currentTarget, options, context) || {};
+  const baseLeft = Number.isFinite(companionFrame.left)
+    ? companionFrame.left
+    : currentRect.left - safeNumber(offsetPx, 0);
+  const baseTop = Number.isFinite(companionFrame.top) ? companionFrame.top : currentRect.top;
+  const baseWidth = Number.isFinite(companionFrame.width) ? companionFrame.width : currentRect.width;
+  const baseHeight = Number.isFinite(companionFrame.height) ? companionFrame.height : null;
   target.style.setProperty("display", getMobileSwipePreviewCompanionDisplay(target, currentTarget, options, context), "important");
   target.style.setProperty("visibility", "visible", "important");
   target.style.setProperty("content-visibility", "visible", "important");
   target.style.setProperty("contain", "none", "important");
   target.style.setProperty("position", "fixed", "important");
-  target.style.setProperty("top", `${Math.round(currentRect.top)}px`, "important");
+  target.style.setProperty("top", `${Math.round(baseTop)}px`, "important");
   target.style.setProperty("left", `${Math.round(baseLeft)}px`, "important");
-  target.style.setProperty("width", `${Math.max(1, Math.round(currentRect.width))}px`, "important");
-  target.style.setProperty("height", `${Math.max(1, Math.round(currentRect.height))}px`, "important");
+  target.style.setProperty("width", `${Math.max(1, Math.round(baseWidth))}px`, "important");
+  if (Number.isFinite(baseHeight)) {
+    target.style.setProperty("height", `${Math.max(1, Math.round(baseHeight))}px`, "important");
+  } else {
+    target.style.removeProperty("height");
+  }
   target.style.setProperty("z-index", "2140", "important");
   target.style.setProperty("will-change", "transform, opacity", "important");
   target.style.setProperty("transition", "none", "important");
@@ -1919,7 +1937,23 @@ function ensureMobileSwipeAffordances() {
     return stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
   };
   const getActivePageSwipeTarget = () => document.querySelector(".page.active");
-  const getAdjacentPageSwipeTarget = (direction = 0) => document.getElementById(`page-${getSteppedMobilePageKey(direction)}`);
+  const getMobilePagePreviewFrame = (currentTarget) => {
+    if (!currentTarget) return null;
+    const rect = currentTarget.getBoundingClientRect?.();
+    if (!rect) return null;
+    const scrollContainer = getMobileScrollContainer();
+    const scrollTop = Math.max(0, scrollContainer?.scrollTop || document.body?.scrollTop || document.documentElement?.scrollTop || window.scrollY || 0);
+    return {
+      top: rect.top + scrollTop,
+      left: rect.left,
+      width: rect.width
+    };
+  };
+  const getAdjacentPageSwipeTarget = (direction = 0) => {
+    const nextPageKey = getSteppedMobilePageKey(direction);
+    primeMobilePageSwipePreview(nextPageKey);
+    return document.getElementById(`page-${nextPageKey}`);
+  };
   const getActiveLoggingSwipeTarget = () => {
     const page = document.getElementById("page-logging");
     if (!page) return null;
@@ -1958,6 +1992,7 @@ function ensureMobileSwipeAffordances() {
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
     previewCompanionDisplay: "block",
+    previewCompanionFrame: (_target, currentTarget) => getMobilePagePreviewFrame(currentTarget),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390,
     shouldHandleStart: (target, touch) => shouldAllowMobilePageSwipeStart(target, touch.clientX, touch.clientY)
   });
@@ -1974,6 +2009,7 @@ function ensureMobileSwipeAffordances() {
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
     previewCompanionDisplay: "block",
+    previewCompanionFrame: (_target, currentTarget) => getMobilePagePreviewFrame(currentTarget),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390
   });
 
@@ -43780,12 +43816,9 @@ let pageTransitionToken = 0;
 let pageTransitionTimer = 0;
 let mobilePageHydrationTimer = 0;
 
-function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToken) {
+function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
   if (!isMobileLayoutViewport()) return;
-  if (token !== pageTransitionToken) return;
-  const activePageId = document.querySelector(".page.active")?.id?.replace("page-", "") || "";
-  if (activePageId !== pageId) return;
-
+  const allowHiddenLayoutWork = Boolean(options?.allowHiddenLayoutWork);
   switch (pageId) {
     case "logging":
       ensureMobileLoggingTabs();
@@ -43803,20 +43836,38 @@ function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToke
       break;
     case "insights":
       renderInsights?.();
-      enforceInsightsActionFluidWidth();
+      if (allowHiddenLayoutWork) {
+        enforceInsightsActionFluidWidth();
+      }
       ensureMobileInsightCardCarousel();
       ensureMobileInsightTrendCarousel();
-      scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+      if (allowHiddenLayoutWork) {
+        scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+      }
       break;
     case "home":
-      scheduleLoadoutValueTextFit();
+      if (allowHiddenLayoutWork) {
+        scheduleLoadoutValueTextFit();
+      }
       break;
     default:
       break;
   }
+}
 
+function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToken) {
+  if (!isMobileLayoutViewport()) return;
+  if (token !== pageTransitionToken) return;
+  const activePageId = document.querySelector(".page.active")?.id?.replace("page-", "") || "";
+  if (activePageId !== pageId) return;
+  hydrateMobilePageForCurrentState(pageId, { allowHiddenLayoutWork: true });
   scheduleMobileScrollExtentSync();
   ensureMobileSwipeAffordances();
+}
+
+function primeMobilePageSwipePreview(pageId = "") {
+  if (!isMobileLayoutViewport() || !pageId) return;
+  hydrateMobilePageForCurrentState(pageId, { allowHiddenLayoutWork: false });
 }
 
 function syncEditProfileCustomAccentInput(themeKey = "default", customAccent = "") {
