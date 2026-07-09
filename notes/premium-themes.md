@@ -2,7 +2,7 @@
 
 **Status (2026-07-08):** QA-only live preview shipped. `radiant-focus` and `omen-night` now wire into the real Theme Selector for `michealdoolittle@gmail.com` through the same Edit Profile apply path as free themes, while guest and non-QA users keep the original gallery with no premium cards or theme options rendered into the DOM. `public/themes/premium-themes.js` remains a future data hook only; no subscription/payment system was added in this pass.
 
-**Status (2026-07-08, later same day):** Michael confirmed live access under his account. The two themes are currently color-only reskins — no distinct motion or texture identity, and no visible name anywhere in the card gallery (a pre-existing gap affecting every theme, not just these two). Next: give both themes a genuinely distinct, bold visual identity per §"Distinct design directive" below. **Mobile-only for this pass** — see the constraint note inside that section for why.
+**Status (2026-07-08, design pass shipped):** `radiant-focus` and `omen-night` now carry distinct mobile-only signature motion behind the same QA gate: Radiant Focus uses a glint-sweep card pass plus a pulsing gold avatar-ring glow, and Omen Night uses drifting shadow/fog, a breathing cyan edge-glow, and a rotating violet-to-cyan avatar ring. Desktop stays on the already-shipped color-only treatment, Reduced Motion falls back through the existing accessibility class, and every theme card in the live selector now shows its visible name.
 
 Build brief v3 asked for premium themes to exist as a gated proof of concept, not as a live marketplace.
 

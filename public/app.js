@@ -610,6 +610,34 @@ function getMobileNavPageLabel(page = "") {
   return labels[page] || page;
 }
 
+function closeAllMobileOverlays() {
+  closeMobileProfilePopover();
+  setProfileRatingDropdownOpen?.(false);
+  [profileSwitcher, profileDropdown].forEach((menu) => {
+    if (!menu) return;
+    menu.classList.remove("open");
+    menu.style.left = "";
+    menu.style.right = "";
+    menu.style.top = "";
+    menu.style.bottom = "";
+    menu.style.transform = "";
+  });
+  closeAskCoachModal?.();
+  closeAccountSupportModal?.();
+  hideModalById?.("editProfileModal");
+  closeSecuritySettingsModal?.();
+  closeHistoryImportModal?.(false);
+  closeRiotProfileConfirmModal?.();
+  hideModalById?.("bugReportModal");
+  hideModalById?.("goalRankModal");
+}
+
+function clearMobileBottomPagePressState() {
+  document.querySelectorAll("#mobileBottomShell [data-mobile-page].is-pressing").forEach((button) => {
+    button.classList.remove("is-pressing");
+  });
+}
+
 function ensureMobileBottomShell() {
   if (mobileBottomShell || !document.body) return mobileBottomShell;
 
@@ -627,11 +655,30 @@ function ensureMobileBottomShell() {
     </div>
   `;
 
+  mobileBottomShell.addEventListener("pointerdown", (event) => {
+    const pageButton = event.target.closest("[data-mobile-page]");
+    if (!pageButton) return;
+    clearMobileBottomPagePressState();
+    pageButton.classList.add("is-pressing");
+  });
+
+  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+    mobileBottomShell.addEventListener(eventName, (event) => {
+      const pageButton = event.target.closest?.("[data-mobile-page]");
+      if (pageButton) {
+        pageButton.classList.remove("is-pressing");
+        return;
+      }
+      clearMobileBottomPagePressState();
+    });
+  });
+
   mobileBottomShell.addEventListener("click", (event) => {
     const pageButton = event.target.closest("[data-mobile-page]");
     if (pageButton) {
       event.preventDefault();
-      event.stopPropagation();
+      closeAllMobileOverlays();
+      clearMobileBottomPagePressState();
       activatePage(pageButton.dataset.mobilePage);
       syncMobileBottomShellState();
       return;
@@ -1460,6 +1507,7 @@ function ensureMobileSwipeAffordances() {
   bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction) => {
     const order = ["home", "logging", "stats", "insights"];
     const active = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
+    closeAllMobileOverlays();
     activatePage(stepMobileValue(active, order, direction));
     syncMobileBottomShellState();
   }, { allowControls: true });
@@ -10798,19 +10846,23 @@ function activeProfileHasRiotId() {
   return Boolean(String(getActiveProfile?.()?.riotId || "").trim());
 }
 
-function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "") {
+function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "", detail = "") {
   const overlay = document.getElementById("loginInitOverlay");
   const bar = document.getElementById("loginInitProgressBar");
   const copyEl = document.getElementById("loginInitCopy");
+  const detailEl = document.getElementById("loginInitDetail");
   const titleEl = document.getElementById("loginInitTitle");
   const nextPercent = Math.max(0, Math.min(100, Math.round(percent)));
 
   if (bar) bar.style.width = `${nextPercent}%`;
-  overlay?.querySelector?.(".login-init-progress")?.setAttribute("aria-valuenow", String(nextPercent));
+  const progressEl = overlay?.querySelector?.(".login-init-progress");
+  progressEl?.setAttribute("aria-valuenow", String(nextPercent));
+  progressEl?.classList.toggle("is-busy", nextPercent > 0 && nextPercent < 100);
   if (copyEl && copy) copyEl.textContent = copy;
+  if (detailEl) detailEl.textContent = detail || "";
   if (titleEl) titleEl.textContent = nextPercent >= 100 ? "You are ready" : "Warming up your account";
 
-  const stepOrder = ["Profile", "Logs", "Coach", "Ready"];
+  const stepOrder = ["Profile", "Security", "Coach", "Ready"];
   const activeIndex = stepOrder.indexOf(activeStep);
   stepOrder.forEach((step, index) => {
     const el = document.getElementById(`loginInitStep${step}`);
@@ -10820,13 +10872,18 @@ function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "")
   });
 }
 
-function showLoginInitializationOverlay(copy = "") {
-  setLoginInitializationProgress(6, copy || "Opening your RankedCoach account.", "Profile");
+function showLoginInitializationOverlay(copy = "", detail = "") {
+  setLoginInitializationProgress(
+    6,
+    copy || "Opening your RankedCoach account.",
+    "Profile",
+    detail || "Saved profiles with more matches and notes can take a little longer to load back in."
+  );
   showModalById?.("loginInitOverlay");
 }
 
 function hideLoginInitializationOverlay() {
-  setLoginInitializationProgress(100, "Everything is ready.", "Ready");
+  setLoginInitializationProgress(100, "Everything is ready.", "Ready", "Your saved profile, settings, and coaching pages are ready.");
   window.setTimeout(() => hideModalById?.("loginInitOverlay"), 420);
 }
 
@@ -12381,11 +12438,26 @@ let activeProfileId = null;
 let activeInsightFilter = "all";
 let cachedInsights = [];
 let currentAuthUser = null;
+const ACCOUNT_STATE_RELOAD_SLEEP_MS = 5 * 60 * 1000;
+let lastAccountStateLoadAt = 0;
 const ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED = false;
 let accountSecurityPreferencesBackendAvailable = ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED;
 let accountSecurityPreferencesMissingNoticeShown = false;
 let activeLogSessionFilter = "all";
 let activeLogCalendarMonth = new Date();
+
+function markAccountStateLoadComplete() {
+  lastAccountStateLoadAt = Date.now();
+}
+
+function shouldSkipRecentAccountStateReload(user = null) {
+  const incomingUserId = String(user?.id || "").trim();
+  const currentUserId = String(currentAuthUser?.id || "").trim();
+  if (!incomingUserId || !currentUserId || incomingUserId !== currentUserId || !lastAccountStateLoadAt) {
+    return false;
+  }
+  return (Date.now() - lastAccountStateLoadAt) < ACCOUNT_STATE_RELOAD_SLEEP_MS;
+}
 
 function getMatchSessionDateKey(match = {}) {
   const rawDate =
@@ -13483,6 +13555,7 @@ async function handleSignedInUser(user) {
   currentAuthUser = user || null;
   updateAuthUI(user || null);
   if (!user) {
+    lastAccountStateLoadAt = 0;
     refreshRiotProfilePrompt?.();
     return;
   }
@@ -13496,6 +13569,7 @@ async function handleSignedInUser(user) {
   }
   updateProfileHeaderUI?.();
   refreshRiotProfilePrompt?.();
+  markAccountStateLoadComplete();
 }
 
 async function initializeSignedInAccount(user, options = {}) {
@@ -13503,18 +13577,37 @@ async function initializeSignedInAccount(user, options = {}) {
   if (loginInitializationInFlight) return;
 
   loginInitializationInFlight = true;
-  showLoginInitializationOverlay("Opening your RankedCoach account.");
+  showLoginInitializationOverlay(
+    "Opening your RankedCoach account.",
+    "Saved profiles with more matches and notes can take a little longer to load back in."
+  );
 
   try {
-    setLoginInitializationProgress(18, "Loading saved profiles, settings, and customization.", "Profile");
-    await handleSignedInUser(user);
+    setLoginInitializationProgress(
+      18,
+      "Loading your saved profiles, match history, and customization.",
+      "Profile",
+      "Larger accounts take longer here because we rebuild your saved pages from your full account history."
+    );
+    const profileLoadPromise = handleSignedInUser(user);
+    const securityLoadPromise = hydrateSecuritySettingsFromBackend?.();
 
-    setLoginInitializationProgress(46, "Merging your saved logs and coaching notes.", "Logs");
-    await hydrateSecuritySettingsFromBackend?.();
+    setLoginInitializationProgress(
+      46,
+      "Checking your security settings and sign-in preferences.",
+      "Security",
+      "This runs alongside your profile load so returning accounts get back in faster."
+    );
+    await Promise.all([profileLoadPromise, securityLoadPromise]);
 
     const active = getActiveProfile();
     if (active?.riotId) {
-      setLoginInitializationProgress(70, "Checking for fresh Riot profile data.", "Coach");
+      setLoginInitializationProgress(
+        70,
+        "Checking for fresh Riot profile data.",
+        "Coach",
+        "If your Riot profile is linked, we confirm the latest account read before opening your pages."
+      );
       await performRiotSync({
         silent: true,
         mode: "refresh",
@@ -13522,18 +13615,28 @@ async function initializeSignedInAccount(user, options = {}) {
         preserveOpenUi: true
       });
     } else {
-      setLoginInitializationProgress(72, "No Riot profile is linked yet. Logs will still be ready.", "Coach");
+      setLoginInitializationProgress(
+        72,
+        "No Riot profile is linked yet. Your coaching pages will still load.",
+        "Coach",
+        "You can add a Riot ID later from Account & Support when you are ready."
+      );
       showRiotProfilePrompt({ force: true });
     }
 
-    setLoginInitializationProgress(92, "Preparing your coaching pages.", "Ready");
+    setLoginInitializationProgress(
+      92,
+      "Preparing your coaching pages.",
+      "Ready",
+      "Rendering your dashboard, charts, and notes now."
+    );
     updateProfileHeaderUI?.();
     renderInsights?.();
     initStatsPage?.();
     renderLogFeed?.();
     renderChart?.(currentSize);
     queuePersistentAccountSave?.(options.reason || "login-initialization");
-    await new Promise(resolve => window.setTimeout(resolve, 360));
+    markAccountStateLoadComplete();
   } finally {
     hideLoginInitializationOverlay();
     loginInitializationInFlight = false;
@@ -30581,7 +30684,14 @@ function initApp(){
       void initializeSignedInAccount(session.user, { reason: "auth-state-signin" });
       return;
     }
-    void handleSignedInUser(session?.user || null);
+    if (shouldSkipRecentAccountStateReload(session?.user || null)) {
+      currentAuthUser = session.user;
+      updateAuthUI?.(session.user);
+      updateProfileDropdownMenu?.();
+      updateProfileHeaderUI?.();
+    } else {
+      void handleSignedInUser(session?.user || null);
+    }
     if (session?.user) {
       setAppEntryChoice("auth");
       closeAuthModal();
@@ -40289,7 +40399,7 @@ function createProfileTheme(value, label, mode, colors = {}) {
     value,
     label,
     mode,
-    motion: "static",
+    motion: colors.motion || "static",
     colors: {
       base,
       base2,
@@ -40379,7 +40489,8 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     card: "#07111f",
     card2: "#111827",
     text: "#f8fafc",
-    muted: "#cbd5e1"
+    muted: "#cbd5e1",
+    motion: "glint-sweep"
   }),
   createProfileTheme("omen-night", "Omen Night", "dark", {
     accent: "#8b5cf6",
@@ -40387,7 +40498,8 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     card: "#090a1a",
     card2: "#151129",
     text: "#f5f3ff",
-    muted: "#c4b5fd"
+    muted: "#c4b5fd",
+    motion: "shadow-drift"
   })
 ];
 
@@ -41165,10 +41277,7 @@ function renderThemeGallery(selectedThemeKey = "default") {
   const gallery = document.getElementById("editProfileThemeGallery");
   const themeSelect = document.getElementById("editProfileTheme");
   if (!gallery) return;
-  const premiumUnlocked = isPremiumThemeQaUser();
-  const renderableThemes = premiumUnlocked
-    ? PROFILE_THEME_PRESETS.concat(PREMIUM_PROFILE_THEME_PRESETS)
-    : PROFILE_THEME_PRESETS;
+  const renderableThemes = getAvailableProfileThemePresets();
 
   gallery.innerHTML = renderableThemes.map((theme) => {
     const colors = theme?.colors || {};
@@ -41190,7 +41299,11 @@ function renderThemeGallery(selectedThemeKey = "default") {
             --theme-card-pattern-2:${colors.pattern2 || "none"};
             background:linear-gradient(180deg, ${colors.base || "#071029"}, ${colors.base2 || "#071b2b"});
           ">
+          <div class="theme-card-head">
+            <div class="theme-card-name">${escapeHtml(theme.label)}</div>
+          </div>
           <div class="theme-card-surfaces">
+            <div class="theme-card-card"></div>
             <div class="theme-card-pills">
               <span class="theme-card-pill" style="background:${colors.accent || "#ff4655"}"></span>
               <span class="theme-card-pill" style="background:${colors.accent2 || "#f97316"}"></span>
@@ -41559,7 +41672,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (body) {
-    body.classList.remove("theme-static", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
+    body.classList.remove("theme-static", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "theme-glint-sweep", "theme-shadow-drift", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
     body.dataset.theme = themeKey;
     body.dataset.themeMode = themeVisualMode;
     body.classList.add(`theme-${theme.motion || "static"}`);
@@ -42662,6 +42775,7 @@ function activatePage(pageId){
       ensureMobileInsightTrendCarousel();
       ensureMobileManualReportControls();
       scheduleMobileScrollExtentSync();
+      ensureMobileSwipeAffordances();
     });
   } else if (nextPage && currentPage !== nextPage) {
     const token = ++pageTransitionToken;
@@ -44494,20 +44608,23 @@ async function initUserSession(){
     return;
   }
 
+  let cachedSessionUser = null;
   try {
     const { data: { session } = {} } = await supabaseClient.auth.getSession();
-    if (session?.user) {
-      currentAuthUser = session.user;
-      updateAuthUI(session.user);
-      updateProfileHeaderUI?.();
-      rebuildProfileListUI?.();
-    }
+    cachedSessionUser = session?.user || null;
   } catch (error) {
     console.warn("Unable to read cached auth session", error);
   }
 
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  await handleSignedInUser(user || null);
+  const { data: { user } = {} } = await supabaseClient.auth.getUser();
+  const resolvedUser = user || cachedSessionUser || null;
+  if (resolvedUser) {
+    setAppEntryChoice("auth");
+    await initializeSignedInAccount(resolvedUser, { reason: "session-restore" });
+    return;
+  }
+
+  await handleSignedInUser(null);
 
 }
 

@@ -8355,12 +8355,21 @@ body.theme-readable :is(
   z-index:1;
 }
 
+.theme-card-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:8px;
+  min-width:0;
+}
+
 .theme-card-name{
   color:var(--theme-card-text, #f8fafc);
   font-size:13px;
   font-weight:800;
   letter-spacing:.08em;
   text-transform:uppercase;
+  line-height:1.12;
 }
 
 .theme-card-motion{
@@ -9707,6 +9716,14 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   line-height:1.4;
 }
 
+.login-init-detail{
+  margin-top:10px;
+  color:rgba(226,232,240,.84);
+  font-size:12px;
+  font-weight:700;
+  line-height:1.45;
+}
+
 .login-init-progress{
   position:relative;
   height:12px;
@@ -9715,6 +9732,21 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   border:1px solid rgba(148,163,184,.32);
   background:rgba(2,6,23,.82);
   overflow:hidden;
+}
+
+.login-init-progress::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(110deg, transparent 0 34%, rgba(255,255,255,.26) 48%, transparent 62%);
+  opacity:0;
+  pointer-events:none;
+  transform:translateX(-140%);
+}
+
+.login-init-progress.is-busy::after{
+  opacity:.95;
+  animation:loginInitProgressSweep 1.05s linear infinite;
 }
 
 .login-init-progress-bar{
@@ -9763,6 +9795,11 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 @keyframes loginInitStepWarmth{
   0%,100%{ box-shadow:0 0 0 rgba(255,70,85,0); }
   50%{ box-shadow:0 0 18px rgba(255,70,85,.22); }
+}
+
+@keyframes loginInitProgressSweep{
+  from{ transform:translateX(-140%); }
+  to{ transform:translateX(140%); }
 }
 
 .auth-field{
@@ -17906,18 +17943,18 @@ textarea {
   justify-content:center;
   padding:0;
   border-radius:14px;
-  border:1px solid rgba(248,113,113,0.8);
-  background:linear-gradient(180deg, #ef4444, #b91c1c);
+  border:1px solid color-mix(in srgb, var(--accent, #ef4444) 72%, white 14%);
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent, #ef4444) 92%, white 8%), color-mix(in srgb, var(--accent-2, #b91c1c) 28%, var(--accent, #ef4444)));
   color:#fff;
   font-size:18px;
   font-weight:800;
   line-height:1;
-  box-shadow:0 10px 24px rgba(127,29,29,0.35);
+  box-shadow:0 10px 24px color-mix(in srgb, var(--accent, #ef4444) 32%, transparent);
 }
 
 .lens-modal-close:hover {
-  background:linear-gradient(180deg, #f87171, #dc2626);
-  border-color:#fecaca;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--accent, #ef4444) 74%, white 26%), color-mix(in srgb, var(--accent-2, #b91c1c) 44%, var(--accent, #ef4444)));
+  border-color:color-mix(in srgb, var(--accent, #ef4444) 46%, white 54%);
 }
 
 .lens-modal-body {
@@ -19532,7 +19569,7 @@ SUMMARY BAR
     border-right-color:color-mix(in srgb,var(--profile-ring-border,#ff4655) 72%,white 12%) !important;
     animation:profileBorderArcFlare 2.8s ease-in-out infinite !important;
   }
-  html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-crosshair{
+  html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-crosshair{
     box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 24%,transparent),0 -8px 0 -6px var(--profile-ring-border,#ff4655),0 8px 0 -6px var(--profile-ring-border,#ff4655),8px 0 0 -6px var(--profile-ring-border,#ff4655),-8px 0 0 -6px var(--profile-ring-border,#ff4655) !important;
     animation:profileBorderCrosshairPing 2.3s ease-out infinite !important;
   }
@@ -22219,6 +22256,72 @@ body.theme-static .app-root::after{
   animation:none;
 }
 
+body.is-mobile-layout.theme-glint-sweep :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card),
+body.is-mobile-layout.theme-shadow-drift :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card){
+  isolation:isolate;
+}
+
+body.is-mobile-layout.theme-glint-sweep :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card)::before{
+  background:linear-gradient(118deg, transparent 0 28%, rgba(255,255,255,.03) 34%, color-mix(in srgb, var(--accent) 24%, white 18%) 48%, rgba(255,255,255,.08) 52%, transparent 66%);
+  mix-blend-mode:screen;
+  opacity:.14;
+  transform:translate3d(-88%, 0, 0) skewX(-18deg);
+  animation:themeRadiantGlintSweep calc(var(--theme-motion-duration) * .1) ease-in-out infinite;
+}
+
+body.is-mobile-layout.theme-glint-sweep :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn){
+  animation:themeRadiantAvatarHalo calc(var(--theme-motion-duration) * .1) ease-in-out infinite;
+}
+
+body.is-mobile-layout.theme-glint-sweep .profile-avatar-ring::after{
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius:inherit;
+  pointer-events:none;
+  border:2px solid color-mix(in srgb, var(--accent) 74%, white 18%);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 38%, transparent), 0 0 32px color-mix(in srgb, var(--accent-2) 22%, transparent);
+  opacity:.82;
+  animation:themeRadiantRingPulse calc(var(--theme-motion-duration) * .1) ease-in-out infinite;
+}
+
+body.is-mobile-layout.theme-shadow-drift :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card)::before{
+  background:
+    radial-gradient(circle at 18% 24%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 42%),
+    radial-gradient(circle at 78% 68%, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 40%);
+  opacity:.34;
+  transform:translate3d(-3%, 2%, 0) scale(1.02);
+  animation:themeOmenFogDrift calc(var(--theme-motion-duration) * .1333) cubic-bezier(.22,.61,.36,1) infinite alternate;
+}
+
+body.is-mobile-layout.theme-shadow-drift :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card)::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--accent-2) 24%, white 6%), 0 0 18px color-mix(in srgb, var(--accent-2) 22%, transparent);
+  opacity:.38;
+  animation:themeOmenEdgeBreathe calc(var(--theme-motion-duration) * .1333) ease-in-out infinite;
+}
+
+body.is-mobile-layout.theme-shadow-drift :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn){
+  animation:themeOmenAvatarHalo calc(var(--theme-motion-duration) * .1333) ease-in-out infinite;
+}
+
+body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
+  content:"";
+  position:absolute;
+  inset:-7px;
+  border-radius:inherit;
+  pointer-events:none;
+  background:conic-gradient(from 0deg, color-mix(in srgb, var(--accent) 88%, white 12%), color-mix(in srgb, var(--accent-2) 82%, white 18%), color-mix(in srgb, var(--accent) 86%, transparent));
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 4px));
+  mask:radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 4px));
+  opacity:.92;
+  animation:themeOmenRingSpin calc(var(--theme-motion-duration) * .1333) linear infinite;
+}
+
 @keyframes themeAmbientFloat{
   from{ transform:translate3d(0,0,0) scale(1); }
   to{ transform:translate3d(-2%, 1.5%, 0) scale(1.05); }
@@ -22247,6 +22350,45 @@ body.theme-static .app-root::after{
 @keyframes themeWaveFlow{
   from{ transform:translate3d(-1%, 0, 0) scale(1.02); }
   to{ transform:translate3d(2.5%, -1.2%, 0) scale(1.06); }
+}
+
+@keyframes themeRadiantGlintSweep{
+  0%{ opacity:0; transform:translate3d(-88%, 0, 0) skewX(-18deg); }
+  18%{ opacity:.18; }
+  52%{ opacity:.72; }
+  82%{ opacity:0; transform:translate3d(88%, 0, 0) skewX(-18deg); }
+  100%{ opacity:0; transform:translate3d(88%, 0, 0) skewX(-18deg); }
+}
+
+@keyframes themeRadiantRingPulse{
+  0%,100%{ opacity:.56; transform:scale(1); }
+  50%{ opacity:.96; transform:scale(1.04); }
+}
+
+@keyframes themeRadiantAvatarHalo{
+  0%,100%{ filter:drop-shadow(0 0 10px color-mix(in srgb, var(--accent) 28%, transparent)); }
+  50%{ filter:drop-shadow(0 0 22px color-mix(in srgb, var(--accent) 44%, transparent)); }
+}
+
+@keyframes themeOmenFogDrift{
+  0%{ opacity:.22; transform:translate3d(-4%, 3%, 0) scale(1.01); }
+  50%{ opacity:.44; transform:translate3d(2%, -2%, 0) scale(1.08); }
+  100%{ opacity:.28; transform:translate3d(5%, 1%, 0) scale(1.12); }
+}
+
+@keyframes themeOmenEdgeBreathe{
+  0%,100%{ opacity:.28; }
+  50%{ opacity:.78; }
+}
+
+@keyframes themeOmenRingSpin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+@keyframes themeOmenAvatarHalo{
+  0%,100%{ filter:drop-shadow(0 0 10px color-mix(in srgb, var(--accent-2) 24%, transparent)); }
+  50%{ filter:drop-shadow(0 0 18px color-mix(in srgb, var(--accent-2) 38%, transparent)); }
 }
 
 /* =========================
@@ -33191,25 +33333,47 @@ body[data-theme="reaver"] .border-card{
   border:1px solid rgba(255,255,255,.12) !important;
   border-radius:inherit !important;
   display:flex !important;
-  align-items:flex-end !important;
-  justify-content:flex-end !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  justify-content:space-between !important;
+  gap:8px !important;
   padding:10px !important;
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card-head,
 #editProfileModal #editProfileThemeGallery .theme-card-name,
-#editProfileModal #editProfileThemeGallery .theme-card-motion,
 #editProfileModal #editProfileThemeGallery .theme-card-card{
+  display:block !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-head{
+  display:flex !important;
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-name{
+  max-width:100% !important;
+  white-space:normal !important;
+  text-shadow:0 8px 18px rgba(2,6,23,.35) !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-motion{
   display:none !important;
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card-surfaces{
-  width:auto !important;
+  width:100% !important;
   height:auto !important;
   margin:0 !important;
   display:flex !important;
-  align-items:center !important;
-  justify-content:flex-end !important;
+  align-items:flex-end !important;
+  justify-content:space-between !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-card{
+  width:52% !important;
+  height:18px !important;
 }
 
 #editProfileModal #editProfileThemeGallery .theme-card-pills{
@@ -48060,7 +48224,7 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).b
   html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-spike{border-radius:18% 18% 42% 42% / 16% 16% 64% 64% !important;clip-path:polygon(50% 0,100% 28%,86% 100%,14% 100%,0 28%) !important;animation:profileBorderSpikeCharge 2.6s ease-in-out infinite !important;}
   html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-spike img,
   html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-spike .mobile-bottom-avatar-img{clip-path:inherit !important;border-radius:inherit !important;}
-  html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-crosshair{border-radius:999px !important;box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 30%,transparent),0 -9px 0 -6px var(--profile-ring-border,#ff4655),0 9px 0 -6px var(--profile-ring-border,#ff4655),9px 0 0 -6px var(--profile-ring-border,#ff4655),-9px 0 0 -6px var(--profile-ring-border,#ff4655) !important;animation:profileBorderCrosshairPing 2.3s ease-out infinite !important;}
+  html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-crosshair{border-radius:999px !important;box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 30%,transparent),0 -9px 0 -6px var(--profile-ring-border,#ff4655),0 9px 0 -6px var(--profile-ring-border,#ff4655),9px 0 0 -6px var(--profile-ring-border,#ff4655),-9px 0 0 -6px var(--profile-ring-border,#ff4655) !important;animation:profileBorderCrosshairPing 2.3s ease-out infinite !important;}
   html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-vanguard{border-width:5px !important;border-radius:28% 28% 40% 40% !important;animation:profileBorderVanguardLock 3.1s ease-in-out infinite !important;}
 }
 
@@ -51131,6 +51295,12 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-pa
   white-space:nowrap !important;
   overflow:hidden !important;
   text-overflow:clip !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-page-btn:is(:active,.is-pressing){
+  transform:translateY(1px) scale(.96) !important;
+  filter:brightness(1.08) !important;
+  box-shadow:0 8px 18px color-mix(in srgb, var(--theme-glow, rgba(255,70,85,.24)) 48%, transparent) !important;
 }
 
 html.is-mobile-layout body.is-mobile-layout #mobileProfilePopover{
