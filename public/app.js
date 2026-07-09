@@ -1427,6 +1427,7 @@ function ensureMobileInsightTrendCarousel() {
 const MOBILE_SWIPE_MIN_DISTANCE = 42;
 const MOBILE_SWIPE_MAX_VERTICAL_RATIO = 1.35;
 const MOBILE_LOCAL_SWIPE_MAX_DURATION = 320;
+const MOBILE_PAGE_SWIPE_ORDER = ["home", "logging", "stats", "insights"];
 const MOBILE_PAGE_SWIPE_MIN_DISTANCE = 68;
 const MOBILE_PAGE_SWIPE_MIN_DURATION = 180;
 const MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO = 1.1;
@@ -1494,7 +1495,23 @@ function waitForMobileSwipeFrame() {
 
 function captureMobileSwipeInlineStyles(target) {
   if (!target) return null;
-  const properties = ["transform", "opacity", "transition", "will-change", "pointer-events"];
+  const properties = [
+    "transform",
+    "opacity",
+    "transition",
+    "will-change",
+    "pointer-events",
+    "display",
+    "visibility",
+    "position",
+    "top",
+    "left",
+    "width",
+    "height",
+    "z-index",
+    "content-visibility",
+    "contain"
+  ];
   return properties.reduce((snapshot, property) => {
     snapshot[property] = {
       value: target.style.getPropertyValue(property),
@@ -1523,6 +1540,14 @@ function resolveMobileSwipePreviewTarget(options = {}, context = {}) {
   return options.previewTarget || null;
 }
 
+function resolveMobileSwipePreviewCompanionTarget(direction = 0, options = {}, context = {}) {
+  if (!direction || !options.previewCompanionTarget) return null;
+  if (typeof options.previewCompanionTarget === "function") {
+    return options.previewCompanionTarget(direction, context) || null;
+  }
+  return options.previewCompanionTarget || null;
+}
+
 function getMobileSwipePreviewSpan(target, options = {}, context = {}) {
   if (typeof options.previewSpan === "function") {
     return Math.max(1, safeNumber(options.previewSpan(context), 0));
@@ -1549,10 +1574,27 @@ function getMobileSwipePreviewDirection(offsetPx = 0) {
   return offsetPx < 0 ? 1 : -1;
 }
 
+function getMobileSwipePreviewCompanionDisplay(target, currentTarget, options = {}, context = {}) {
+  if (typeof options.previewCompanionDisplay === "function") {
+    const value = String(options.previewCompanionDisplay(context) || "").trim();
+    if (value) return value;
+  }
+  if (typeof options.previewCompanionDisplay === "string" && options.previewCompanionDisplay.trim()) {
+    return options.previewCompanionDisplay.trim();
+  }
+  const targetDisplay = target ? window.getComputedStyle(target).display : "";
+  if (targetDisplay && targetDisplay !== "none") return targetDisplay;
+  const currentDisplay = currentTarget ? window.getComputedStyle(currentTarget).display : "";
+  if (currentDisplay && currentDisplay !== "none") return currentDisplay;
+  return "block";
+}
+
 function applyMobileSwipePreview(target, offsetPx = 0) {
   if (!target) return;
   const span = Math.max(1, safeNumber(target.getBoundingClientRect?.().width, window.innerWidth || 390));
   const opacity = Math.max(0.52, 1 - Math.min(0.42, Math.abs(offsetPx) / span * 0.42));
+  target.style.setProperty("position", target.style.getPropertyValue("position") || "relative", "important");
+  target.style.setProperty("z-index", "2141", "important");
   target.style.setProperty("will-change", "transform, opacity", "important");
   target.style.setProperty("transition", "none", "important");
   target.style.setProperty("transform", `translate3d(${Math.round(offsetPx)}px,0,0)`, "important");
@@ -1560,7 +1602,35 @@ function applyMobileSwipePreview(target, offsetPx = 0) {
   target.style.setProperty("pointer-events", "none", "important");
 }
 
-async function animateMobileSwipeReset(target, snapshot) {
+function applyMobileSwipeCompanionPreview(target, currentTarget, offsetPx = 0, options = {}, context = {}) {
+  if (!target || !currentTarget || target === currentTarget) return;
+  const direction = getMobileSwipePreviewDirection(offsetPx);
+  if (!direction) return;
+  const currentRect = currentTarget.getBoundingClientRect?.();
+  if (!currentRect) return;
+  const visualSpan = Math.max(1, safeNumber(currentRect.width, getMobileSwipePreviewSpan(currentTarget, options, context)));
+  const companionOffset = offsetPx + (direction > 0 ? visualSpan : -visualSpan);
+  const revealRatio = 1 - Math.min(1, Math.abs(companionOffset) / visualSpan);
+  const opacity = Math.max(0.58, 0.72 + revealRatio * 0.28);
+  const baseLeft = currentRect.left - safeNumber(offsetPx, 0);
+  target.style.setProperty("display", getMobileSwipePreviewCompanionDisplay(target, currentTarget, options, context), "important");
+  target.style.setProperty("visibility", "visible", "important");
+  target.style.setProperty("content-visibility", "visible", "important");
+  target.style.setProperty("contain", "none", "important");
+  target.style.setProperty("position", "fixed", "important");
+  target.style.setProperty("top", `${Math.round(currentRect.top)}px`, "important");
+  target.style.setProperty("left", `${Math.round(baseLeft)}px`, "important");
+  target.style.setProperty("width", `${Math.max(1, Math.round(currentRect.width))}px`, "important");
+  target.style.setProperty("height", `${Math.max(1, Math.round(currentRect.height))}px`, "important");
+  target.style.setProperty("z-index", "2140", "important");
+  target.style.setProperty("will-change", "transform, opacity", "important");
+  target.style.setProperty("transition", "none", "important");
+  target.style.setProperty("transform", `translate3d(${Math.round(companionOffset)}px,0,0)`, "important");
+  target.style.setProperty("opacity", opacity.toFixed(3), "important");
+  target.style.setProperty("pointer-events", "none", "important");
+}
+
+async function animateMobileSwipeReset(target, snapshot, companionTarget = null, companionSnapshot = null) {
   if (!target) return;
   target.style.setProperty("will-change", "transform, opacity", "important");
   target.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms ease`, "important");
@@ -1568,11 +1638,15 @@ async function animateMobileSwipeReset(target, snapshot) {
   target.style.setProperty("opacity", "1", "important");
   await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_CANCEL_MS + 24);
   restoreMobileSwipeInlineStyles(target, snapshot);
+  restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
 }
 
 async function animateMobileSwipeCommit(direction, context = {}, applyState = () => {}, options = {}) {
   const currentTarget = context.previewTarget || resolveMobileSwipePreviewTarget(options, context);
   const currentSnapshot = context.previewSnapshot || captureMobileSwipeInlineStyles(currentTarget);
+  const companionTarget = context.previewCompanionTarget || resolveMobileSwipePreviewCompanionTarget(direction, options, context);
+  const companionSnapshot = context.previewCompanionSnapshot || captureMobileSwipeInlineStyles(companionTarget);
+  const usesCompanionPreview = Boolean(companionTarget && companionTarget !== currentTarget);
   const span = getMobileSwipePreviewSpan(currentTarget, options, context);
   const exitDirection = direction > 0 ? -1 : 1;
   const exitOffset = exitDirection * Math.max(span * 0.92, Math.abs(context.previewOffset || 0) + 64);
@@ -1582,21 +1656,31 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     currentTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms ease`, "important");
     currentTarget.style.setProperty("transform", `translate3d(${Math.round(exitOffset)}px,0,0)`, "important");
     currentTarget.style.setProperty("opacity", "0.34", "important");
+  }
+  if (usesCompanionPreview) {
+    companionTarget.style.setProperty("will-change", "transform, opacity", "important");
+    companionTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms ease`, "important");
+    companionTarget.style.setProperty("transform", "translate3d(0,0,0)", "important");
+    companionTarget.style.setProperty("opacity", "1", "important");
+  }
+  if (currentTarget || usesCompanionPreview) {
     await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_COMMIT_MS);
   }
 
   const callbackResult = applyState(direction, context.event, context);
   if (callbackResult === false) {
     restoreMobileSwipeInlineStyles(currentTarget, currentSnapshot);
+    restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
     return false;
   }
 
   await waitForMobileSwipeFrame();
 
   const nextTarget = resolveMobileSwipePreviewTarget(options, context) || currentTarget;
+  const reusesCompanionTarget = Boolean(usesCompanionPreview && nextTarget && nextTarget === companionTarget);
   const reusesCurrentTarget = Boolean(nextTarget && currentTarget && nextTarget === currentTarget);
   const nextSnapshot = reusesCurrentTarget ? currentSnapshot : captureMobileSwipeInlineStyles(nextTarget);
-  if (nextTarget) {
+  if (nextTarget && !reusesCompanionTarget) {
     nextTarget.style.setProperty("will-change", "transform, opacity", "important");
     nextTarget.style.setProperty("transition", "none", "important");
     nextTarget.style.setProperty("transform", `translate3d(${Math.round(-exitOffset * 0.42)}px,0,0)`, "important");
@@ -1609,9 +1693,15 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_ENTRY_MS + 24);
     restoreMobileSwipeInlineStyles(nextTarget, nextSnapshot);
   }
+  if (reusesCompanionTarget) {
+    restoreMobileSwipeInlineStyles(nextTarget, companionSnapshot);
+  }
 
   if (currentTarget && currentTarget !== nextTarget) {
     restoreMobileSwipeInlineStyles(currentTarget, currentSnapshot);
+  }
+  if (usesCompanionPreview && companionTarget && companionTarget !== nextTarget) {
+    restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
   }
   return callbackResult;
 }
@@ -1636,6 +1726,9 @@ function bindMobileSwipe(element, callback, options = {}) {
   let previewTarget = null;
   let previewSnapshot = null;
   let previewOffset = 0;
+  let previewDirection = 0;
+  let previewCompanionTarget = null;
+  let previewCompanionSnapshot = null;
 
   const shouldIgnoreTarget = (target) => {
     const formFieldSelector = options.formFieldIgnoreSelector || "input, textarea, select, option, [contenteditable='true']";
@@ -1664,6 +1757,9 @@ function bindMobileSwipe(element, callback, options = {}) {
     previewTarget = null;
     previewSnapshot = null;
     previewOffset = 0;
+    previewDirection = 0;
+    previewCompanionTarget = null;
+    previewCompanionSnapshot = null;
   }, { passive: true });
 
   element.addEventListener("touchmove", (event) => {
@@ -1701,8 +1797,39 @@ function bindMobileSwipe(element, callback, options = {}) {
     });
     const maxTravel = Math.max(28, span * MOBILE_SWIPE_PREVIEW_MAX_RATIO);
     previewOffset = Math.max(-maxTravel, Math.min(maxTravel, deltaX));
+    const nextPreviewDirection = getMobileSwipePreviewDirection(previewOffset);
+    if (previewCompanionTarget && previewDirection && nextPreviewDirection !== previewDirection) {
+      restoreMobileSwipeInlineStyles(previewCompanionTarget, previewCompanionSnapshot);
+      previewCompanionTarget = null;
+      previewCompanionSnapshot = null;
+    }
+    previewDirection = nextPreviewDirection;
+    if (!previewCompanionTarget && previewDirection) {
+      previewCompanionTarget = resolveMobileSwipePreviewCompanionTarget(previewDirection, options, {
+        element,
+        startTarget,
+        startX,
+        startY,
+        event,
+        previewTarget,
+        previewOffset,
+        previewDirection
+      });
+      previewCompanionSnapshot = captureMobileSwipeInlineStyles(previewCompanionTarget);
+    }
     previewing = true;
     applyMobileSwipePreview(previewTarget, previewOffset);
+    applyMobileSwipeCompanionPreview(previewCompanionTarget, previewTarget, previewOffset, options, {
+      element,
+      startTarget,
+      startX,
+      startY,
+      event,
+      previewTarget,
+      previewOffset,
+      previewDirection,
+      previewCompanionTarget
+    });
     event.preventDefault();
   }, { passive: false });
 
@@ -1725,7 +1852,10 @@ function bindMobileSwipe(element, callback, options = {}) {
       previewing,
       previewTarget,
       previewSnapshot,
-      previewOffset
+      previewOffset,
+      previewDirection,
+      previewCompanionTarget,
+      previewCompanionSnapshot
     };
     const commitDistance = getMobileSwipeCommitDistance(previewTarget || element, options, context);
     const crossedCommitDistance = Math.max(Math.abs(touch.clientX - startX), Math.abs(previewOffset || 0)) >= commitDistance;
@@ -1738,14 +1868,14 @@ function bindMobileSwipe(element, callback, options = {}) {
 
     if (!direction || (timingFailed && !crossedCommitDistance)) {
       if (previewing && previewTarget) {
-        await animateMobileSwipeReset(previewTarget, previewSnapshot);
+        await animateMobileSwipeReset(previewTarget, previewSnapshot, previewCompanionTarget, previewCompanionSnapshot);
       }
       return;
     }
 
     if (!crossedCommitDistance) {
       if (previewing && previewTarget) {
-        await animateMobileSwipeReset(previewTarget, previewSnapshot);
+        await animateMobileSwipeReset(previewTarget, previewSnapshot, previewCompanionTarget, previewCompanionSnapshot);
       }
       return;
     }
@@ -1762,13 +1892,16 @@ function bindMobileSwipe(element, callback, options = {}) {
 
   element.addEventListener("touchcancel", async () => {
     if (previewing && previewTarget) {
-      await animateMobileSwipeReset(previewTarget, previewSnapshot);
+      await animateMobileSwipeReset(previewTarget, previewSnapshot, previewCompanionTarget, previewCompanionSnapshot);
     }
     tracking = false;
     previewing = false;
     previewTarget = null;
     previewSnapshot = null;
     previewOffset = 0;
+    previewDirection = 0;
+    previewCompanionTarget = null;
+    previewCompanionSnapshot = null;
   }, { passive: true });
 }
 
@@ -1781,7 +1914,12 @@ function stepMobileValue(currentValue, values, direction) {
 function ensureMobileSwipeAffordances() {
   if (!isMobileLayoutViewport()) return;
 
+  const getSteppedMobilePageKey = (direction = 0) => {
+    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || MOBILE_PAGE_SWIPE_ORDER[0];
+    return stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
+  };
   const getActivePageSwipeTarget = () => document.querySelector(".page.active");
+  const getAdjacentPageSwipeTarget = (direction = 0) => document.getElementById(`page-${getSteppedMobilePageKey(direction)}`);
   const getActiveLoggingSwipeTarget = () => {
     const page = document.getElementById("page-logging");
     if (!page) return null;
@@ -1804,9 +1942,8 @@ function ensureMobileSwipeAffordances() {
   const getBannerCategorySwipeTarget = () => document.querySelector("#editProfileModal .profile-edit-panel[data-profile-panel=\"banner\"].is-active") || document.getElementById("editProfileBannerGallery");
 
   bindMobileSwipe(document.querySelector(".app-root"), (direction) => {
-    const order = ["home", "logging", "stats", "insights"];
-    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
-    const nextPage = stepMobileValue(active, order, direction);
+    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || MOBILE_PAGE_SWIPE_ORDER[0];
+    const nextPage = stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
     if (nextPage === active) return false;
     closeAllMobileOverlays();
     activatePage(nextPage);
@@ -1819,21 +1956,24 @@ function ensureMobileSwipeAffordances() {
     maxVerticalRatio: MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO,
     previewStartMinDurationMs: 90,
     previewTarget: getActivePageSwipeTarget,
+    previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
+    previewCompanionDisplay: "block",
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390,
     shouldHandleStart: (target, touch) => shouldAllowMobilePageSwipeStart(target, touch.clientX, touch.clientY)
   });
 
   bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction) => {
-    const order = ["home", "logging", "stats", "insights"];
-    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
+    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || MOBILE_PAGE_SWIPE_ORDER[0];
     closeAllMobileOverlays();
-    activatePage(stepMobileValue(active, order, direction));
+    activatePage(stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction));
     syncMobileBottomShellState();
   }, {
     allowControls: true,
     bindKey: "bottomPages",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewTarget: getActivePageSwipeTarget,
+    previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
+    previewCompanionDisplay: "block",
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390
   });
 
