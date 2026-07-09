@@ -1430,6 +1430,11 @@ const MOBILE_LOCAL_SWIPE_MAX_DURATION = 320;
 const MOBILE_PAGE_SWIPE_MIN_DISTANCE = 68;
 const MOBILE_PAGE_SWIPE_MIN_DURATION = 180;
 const MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO = 1.1;
+const MOBILE_SWIPE_PREVIEW_START_DISTANCE = 12;
+const MOBILE_SWIPE_PREVIEW_MAX_RATIO = 0.28;
+const MOBILE_SWIPE_PREVIEW_CANCEL_MS = 180;
+const MOBILE_SWIPE_PREVIEW_COMMIT_MS = 170;
+const MOBILE_SWIPE_PREVIEW_ENTRY_MS = 210;
 let mobileSwipeHandledTimestamp = -1;
 let mobileSwipeSuppressClickUntil = 0;
 let mobileSwipeClickGuardInstalled = false;
@@ -1475,6 +1480,142 @@ function ensureMobileSwipeClickGuard() {
   }, true);
 }
 
+function waitForMobileSwipeAnimation(durationMs = 0) {
+  return new Promise((resolve) => window.setTimeout(resolve, Math.max(0, durationMs)));
+}
+
+function waitForMobileSwipeFrame() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(resolve);
+    });
+  });
+}
+
+function captureMobileSwipeInlineStyles(target) {
+  if (!target) return null;
+  const properties = ["transform", "opacity", "transition", "will-change", "pointer-events"];
+  return properties.reduce((snapshot, property) => {
+    snapshot[property] = {
+      value: target.style.getPropertyValue(property),
+      priority: target.style.getPropertyPriority(property)
+    };
+    return snapshot;
+  }, {});
+}
+
+function restoreMobileSwipeInlineStyles(target, snapshot) {
+  if (!target || !snapshot) return;
+  Object.entries(snapshot).forEach(([property, state]) => {
+    if (state?.value) {
+      target.style.setProperty(property, state.value, state.priority || "");
+    } else {
+      target.style.removeProperty(property);
+    }
+  });
+}
+
+function resolveMobileSwipePreviewTarget(options = {}, context = {}) {
+  if (!options.previewTarget) return null;
+  if (typeof options.previewTarget === "function") {
+    return options.previewTarget(context) || null;
+  }
+  return options.previewTarget || null;
+}
+
+function getMobileSwipePreviewSpan(target, options = {}, context = {}) {
+  if (typeof options.previewSpan === "function") {
+    return Math.max(1, safeNumber(options.previewSpan(context), 0));
+  }
+  if (Number.isFinite(options.previewSpan)) {
+    return Math.max(1, options.previewSpan);
+  }
+  return Math.max(1, safeNumber(target?.getBoundingClientRect?.().width, window.innerWidth || 390));
+}
+
+function getMobileSwipeCommitDistance(target, options = {}, context = {}) {
+  if (typeof options.commitDistance === "function") {
+    return Math.max(MOBILE_SWIPE_MIN_DISTANCE, safeNumber(options.commitDistance(context), MOBILE_SWIPE_MIN_DISTANCE));
+  }
+  if (Number.isFinite(options.commitDistance)) {
+    return Math.max(MOBILE_SWIPE_MIN_DISTANCE, options.commitDistance);
+  }
+  const span = getMobileSwipePreviewSpan(target, options, context);
+  return Math.max(MOBILE_SWIPE_MIN_DISTANCE, Math.min(96, span * 0.18));
+}
+
+function getMobileSwipePreviewDirection(offsetPx = 0) {
+  if (!Number.isFinite(offsetPx) || Math.abs(offsetPx) < 1) return 0;
+  return offsetPx < 0 ? 1 : -1;
+}
+
+function applyMobileSwipePreview(target, offsetPx = 0) {
+  if (!target) return;
+  const span = Math.max(1, safeNumber(target.getBoundingClientRect?.().width, window.innerWidth || 390));
+  const opacity = Math.max(0.52, 1 - Math.min(0.42, Math.abs(offsetPx) / span * 0.42));
+  target.style.setProperty("will-change", "transform, opacity", "important");
+  target.style.setProperty("transition", "none", "important");
+  target.style.setProperty("transform", `translate3d(${Math.round(offsetPx)}px,0,0)`, "important");
+  target.style.setProperty("opacity", opacity.toFixed(3), "important");
+  target.style.setProperty("pointer-events", "none", "important");
+}
+
+async function animateMobileSwipeReset(target, snapshot) {
+  if (!target) return;
+  target.style.setProperty("will-change", "transform, opacity", "important");
+  target.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_CANCEL_MS}ms ease`, "important");
+  target.style.setProperty("transform", "translate3d(0,0,0)", "important");
+  target.style.setProperty("opacity", "1", "important");
+  await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_CANCEL_MS + 24);
+  restoreMobileSwipeInlineStyles(target, snapshot);
+}
+
+async function animateMobileSwipeCommit(direction, context = {}, applyState = () => {}, options = {}) {
+  const currentTarget = context.previewTarget || resolveMobileSwipePreviewTarget(options, context);
+  const currentSnapshot = context.previewSnapshot || captureMobileSwipeInlineStyles(currentTarget);
+  const span = getMobileSwipePreviewSpan(currentTarget, options, context);
+  const exitDirection = direction > 0 ? -1 : 1;
+  const exitOffset = exitDirection * Math.max(span * 0.92, Math.abs(context.previewOffset || 0) + 64);
+
+  if (currentTarget) {
+    currentTarget.style.setProperty("will-change", "transform, opacity", "important");
+    currentTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms ease`, "important");
+    currentTarget.style.setProperty("transform", `translate3d(${Math.round(exitOffset)}px,0,0)`, "important");
+    currentTarget.style.setProperty("opacity", "0.34", "important");
+    await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_COMMIT_MS);
+  }
+
+  const callbackResult = applyState(direction, context.event, context);
+  if (callbackResult === false) {
+    restoreMobileSwipeInlineStyles(currentTarget, currentSnapshot);
+    return false;
+  }
+
+  await waitForMobileSwipeFrame();
+
+  const nextTarget = resolveMobileSwipePreviewTarget(options, context) || currentTarget;
+  const reusesCurrentTarget = Boolean(nextTarget && currentTarget && nextTarget === currentTarget);
+  const nextSnapshot = reusesCurrentTarget ? currentSnapshot : captureMobileSwipeInlineStyles(nextTarget);
+  if (nextTarget) {
+    nextTarget.style.setProperty("will-change", "transform, opacity", "important");
+    nextTarget.style.setProperty("transition", "none", "important");
+    nextTarget.style.setProperty("transform", `translate3d(${Math.round(-exitOffset * 0.42)}px,0,0)`, "important");
+    nextTarget.style.setProperty("opacity", "0.44", "important");
+    nextTarget.style.setProperty("pointer-events", "none", "important");
+    await waitForMobileSwipeFrame();
+    nextTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_ENTRY_MS}ms cubic-bezier(.22,.61,.36,1), opacity ${MOBILE_SWIPE_PREVIEW_ENTRY_MS}ms ease`, "important");
+    nextTarget.style.setProperty("transform", "translate3d(0,0,0)", "important");
+    nextTarget.style.setProperty("opacity", "1", "important");
+    await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_ENTRY_MS + 24);
+    restoreMobileSwipeInlineStyles(nextTarget, nextSnapshot);
+  }
+
+  if (currentTarget && currentTarget !== nextTarget) {
+    restoreMobileSwipeInlineStyles(currentTarget, currentSnapshot);
+  }
+  return callbackResult;
+}
+
 function bindMobileSwipe(element, callback, options = {}) {
   if (!element) return;
   ensureMobileSwipeClickGuard();
@@ -1491,6 +1632,10 @@ function bindMobileSwipe(element, callback, options = {}) {
   let startedAt = 0;
   let startTarget = null;
   let tracking = false;
+  let previewing = false;
+  let previewTarget = null;
+  let previewSnapshot = null;
+  let previewOffset = 0;
 
   const shouldIgnoreTarget = (target) => {
     const formFieldSelector = options.formFieldIgnoreSelector || "input, textarea, select, option, [contenteditable='true']";
@@ -1515,36 +1660,115 @@ function bindMobileSwipe(element, callback, options = {}) {
     startedAt = Date.now();
     startTarget = event.target;
     tracking = true;
+    previewing = false;
+    previewTarget = null;
+    previewSnapshot = null;
+    previewOffset = 0;
   }, { passive: true });
 
-  element.addEventListener("touchend", (event) => {
+  element.addEventListener("touchmove", (event) => {
+    if (!tracking || !isMobileLayoutViewport()) return;
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    const elapsedMs = Date.now() - startedAt;
+    if (Number.isFinite(options.previewStartMinDurationMs) && elapsedMs < options.previewStartMinDurationMs) return;
+    if (Number.isFinite(options.previewStartMaxDurationMs) && elapsedMs > options.previewStartMaxDurationMs) return;
+
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+    if (Math.abs(deltaX) < MOBILE_SWIPE_PREVIEW_START_DISTANCE) return;
+    if (Math.abs(deltaX) < Math.abs(deltaY) * 0.92) return;
+
+    if (!previewTarget) {
+      previewTarget = resolveMobileSwipePreviewTarget(options, {
+        element,
+        startTarget,
+        startX,
+        startY,
+        event
+      });
+      previewSnapshot = captureMobileSwipeInlineStyles(previewTarget);
+    }
+    if (!previewTarget) return;
+
+    const span = getMobileSwipePreviewSpan(previewTarget, options, {
+      element,
+      startTarget,
+      startX,
+      startY,
+      event,
+      previewTarget
+    });
+    const maxTravel = Math.max(28, span * MOBILE_SWIPE_PREVIEW_MAX_RATIO);
+    previewOffset = Math.max(-maxTravel, Math.min(maxTravel, deltaX));
+    previewing = true;
+    applyMobileSwipePreview(previewTarget, previewOffset);
+    event.preventDefault();
+  }, { passive: false });
+
+  element.addEventListener("touchend", async (event) => {
     if (!tracking || !isMobileLayoutViewport()) return;
     tracking = false;
     if (mobileSwipeHandledTimestamp === event.timeStamp) return;
     const touch = event.changedTouches?.[0];
     if (!touch) return;
     const durationMs = Date.now() - startedAt;
-    if (Number.isFinite(options.minDurationMs) && durationMs < options.minDurationMs) return;
-    if (Number.isFinite(options.maxDurationMs) && durationMs > options.maxDurationMs) return;
-    const direction = getMobileSwipeDirection(startX, startY, touch.clientX, touch.clientY, options);
-    if (!direction) return;
-    const handled = callback(direction, event, {
+    const context = {
       durationMs,
       startTarget,
       startX,
       startY,
       endX: touch.clientX,
       endY: touch.clientY,
-      element
-    });
+      element,
+      event,
+      previewing,
+      previewTarget,
+      previewSnapshot,
+      previewOffset
+    };
+    const commitDistance = getMobileSwipeCommitDistance(previewTarget || element, options, context);
+    const crossedCommitDistance = Math.max(Math.abs(touch.clientX - startX), Math.abs(previewOffset || 0)) >= commitDistance;
+    let direction = getMobileSwipeDirection(startX, startY, touch.clientX, touch.clientY, options);
+    if (!direction && previewing && crossedCommitDistance) {
+      direction = getMobileSwipePreviewDirection(previewOffset);
+    }
+    const timingFailed = (Number.isFinite(options.minDurationMs) && durationMs < options.minDurationMs)
+      || (Number.isFinite(options.maxDurationMs) && durationMs > options.maxDurationMs);
+
+    if (!direction || (timingFailed && !crossedCommitDistance)) {
+      if (previewing && previewTarget) {
+        await animateMobileSwipeReset(previewTarget, previewSnapshot);
+      }
+      return;
+    }
+
+    if (!crossedCommitDistance) {
+      if (previewing && previewTarget) {
+        await animateMobileSwipeReset(previewTarget, previewSnapshot);
+      }
+      return;
+    }
+
+    const handled = previewTarget
+      ? await animateMobileSwipeCommit(direction, context, callback, options)
+      : callback(direction, event, context);
+
     if (handled !== false) {
       mobileSwipeHandledTimestamp = event.timeStamp;
       mobileSwipeSuppressClickUntil = Date.now() + 380;
     }
   }, { passive: true });
 
-  element.addEventListener("touchcancel", () => {
+  element.addEventListener("touchcancel", async () => {
+    if (previewing && previewTarget) {
+      await animateMobileSwipeReset(previewTarget, previewSnapshot);
+    }
     tracking = false;
+    previewing = false;
+    previewTarget = null;
+    previewSnapshot = null;
+    previewOffset = 0;
   }, { passive: true });
 }
 
@@ -1556,6 +1780,28 @@ function stepMobileValue(currentValue, values, direction) {
 
 function ensureMobileSwipeAffordances() {
   if (!isMobileLayoutViewport()) return;
+
+  const getActivePageSwipeTarget = () => document.querySelector(".page.active");
+  const getActiveLoggingSwipeTarget = () => {
+    const page = document.getElementById("page-logging");
+    if (!page) return null;
+    return page.dataset.mobileLoggingView === "feed"
+      ? page.querySelector(".logging-feed-card")
+      : page.querySelector(".logging-card");
+  };
+  const getActiveStatsViewSwipeTarget = () => {
+    const page = document.getElementById("page-stats");
+    if (!page) return null;
+    const view = page.dataset.mobileStatsView || "agents";
+    const selectorMap = {
+      agents: ".stats-agents-card",
+      maps: ".stats-maps-card",
+      weapons: ".stats-weapons-card"
+    };
+    return page.querySelector(selectorMap[view] || selectorMap.agents);
+  };
+  const getActiveProfileEditPanelTarget = () => document.querySelector("#editProfileModal .profile-edit-panel.is-active");
+  const getBannerCategorySwipeTarget = () => document.querySelector("#editProfileModal .profile-edit-panel[data-profile-panel=\"banner\"].is-active") || document.getElementById("editProfileBannerGallery");
 
   bindMobileSwipe(document.querySelector(".app-root"), (direction) => {
     const order = ["home", "logging", "stats", "insights"];
@@ -1571,6 +1817,9 @@ function ensureMobileSwipeAffordances() {
     minDistance: MOBILE_PAGE_SWIPE_MIN_DISTANCE,
     minDurationMs: MOBILE_PAGE_SWIPE_MIN_DURATION,
     maxVerticalRatio: MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO,
+    previewStartMinDurationMs: 90,
+    previewTarget: getActivePageSwipeTarget,
+    previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390,
     shouldHandleStart: (target, touch) => shouldAllowMobilePageSwipeStart(target, touch.clientX, touch.clientY)
   });
 
@@ -1580,45 +1829,87 @@ function ensureMobileSwipeAffordances() {
     closeAllMobileOverlays();
     activatePage(stepMobileValue(active, order, direction));
     syncMobileBottomShellState();
-  }, { allowControls: true, bindKey: "bottomPages", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "bottomPages",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewTarget: getActivePageSwipeTarget,
+    previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390
+  });
 
   bindMobileSwipe(document.getElementById("mobileLoggingTabs"), (direction) => {
     const page = document.getElementById("page-logging");
     if (!page) return;
     page.dataset.mobileLoggingView = stepMobileValue(page.dataset.mobileLoggingView || "form", ["form", "feed"], direction);
     ensureMobileLoggingTabs();
-  }, { allowControls: true, bindKey: "loggingTabs", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "loggingTabs",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: getActiveLoggingSwipeTarget
+  });
 
   bindMobileSwipe(document.getElementById("mobileStatsTabs"), (direction) => {
     const page = document.getElementById("page-stats");
     if (!page) return;
     page.dataset.mobileStatsView = stepMobileValue(page.dataset.mobileStatsView || "agents", ["agents", "maps", "weapons"], direction);
     ensureMobileStatsTabs();
-  }, { allowControls: true, bindKey: "statsTabs", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "statsTabs",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: getActiveStatsViewSwipeTarget
+  });
 
   bindMobileSwipe(document.querySelector("#editProfileModal .profile-edit-nav"), (direction) => {
     const order = ["theme", "icon", "borderColor", "border", "banner"];
     const current = document.querySelector("#editProfileModal .profile-edit-tab.is-active")?.dataset?.profileTab || "theme";
     activateProfileEditTab(stepMobileValue(current, order, direction));
-  }, { allowControls: true, bindKey: "profileTabs", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "profileTabs",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: getActiveProfileEditPanelTarget
+  });
 
   bindMobileSwipe(document.querySelector("#editProfileModal .banner-category-toggle"), (direction) => {
     const current = activeProfileBannerCategory || "official";
     setProfileBannerCategory(stepMobileValue(current, ["official", "unofficial"], direction));
-  }, { allowControls: true, bindKey: "bannerCategories", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "bannerCategories",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: getBannerCategorySwipeTarget
+  });
 
   bindMobileSwipe(document.querySelector("#page-stats .stats-agents-card"), (direction) => {
     mobileStatsAgentRole = stepMobileValue(mobileStatsAgentRole || "duelist", ["duelist", "controller", "initiator", "sentinel"], direction);
     renderStatsAgentsModel();
     ensureMobileSwipeAffordances();
-  }, { allowControls: true, bindKey: "statsAgentsCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "statsAgentsCard",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: () => document.querySelector("#page-stats .stats-agents-card")
+  });
 
   bindMobileSwipe(document.querySelector("#page-stats .stats-weapons-card"), (direction) => {
     const values = STATS_WEAPON_FAMILIES.map((family) => family.key);
     mobileStatsWeaponFamily = stepMobileValue(mobileStatsWeaponFamily || values[0] || "rifle", values, direction);
     renderStatsWeaponsModel();
     ensureMobileSwipeAffordances();
-  }, { allowControls: true, bindKey: "statsWeaponsCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "statsWeaponsCard",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: () => document.querySelector("#page-stats .stats-weapons-card")
+  });
 
   bindMobileSwipe(document.querySelector("#page-stats .stats-performance-card"), (direction, event, context) => {
     if (context?.startTarget?.closest?.("#mobileTrendTabs, .mobile-trend-tabs")) {
@@ -1635,7 +1926,13 @@ function ensureMobileSwipeAffordances() {
     if (!visibleCards.length) return;
     mobileStatsTrendIndex = (mobileStatsTrendIndex + direction + visibleCards.length) % visibleCards.length;
     ensureMobileTrendCarousel();
-  }, { allowControls: true, bindKey: "statsPerformanceCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "statsPerformanceCard",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: () => document.querySelector("#page-stats .stats-performance-card")
+  });
 
   bindMobileSwipe(document.querySelector("#page-stats .stats-breakdown-card"), (direction) => {
     const container = document.getElementById("statsBreakdown");
@@ -1643,7 +1940,13 @@ function ensureMobileSwipeAffordances() {
     if (!cards.length) return;
     mobileStatsBreakdownIndex = (mobileStatsBreakdownIndex + direction + cards.length) % cards.length;
     ensureMobileStatsBreakdownCarousel();
-  }, { allowControls: true, bindKey: "statsBreakdownCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "statsBreakdownCard",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: () => document.querySelector("#page-stats .stats-breakdown-card")
+  });
 
   bindMobileSwipe(document.querySelector("#page-insights .insights-top-card"), (direction) => {
     const container = document.getElementById("insightsList");
@@ -1652,7 +1955,13 @@ function ensureMobileSwipeAffordances() {
     mobileInsightCardIndex = (mobileInsightCardIndex + direction + cards.length) % cards.length;
     ensureMobileInsightCardCarousel();
     return true;
-  }, { allowControls: true, bindKey: "insightCards", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "insightCards",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: () => document.querySelector("#page-insights .insights-top-card")
+  });
 
   bindMobileSwipe(document.querySelector("#page-insights .insights-trends-card"), (direction, event, context) => {
     const wrap = document.querySelector("#page-insights .insight-trends");
@@ -1674,7 +1983,13 @@ function ensureMobileSwipeAffordances() {
     mobileInsightTrendIndex = (mobileInsightTrendIndex + direction + cards.length) % cards.length;
     ensureMobileInsightTrendCarousel();
     return true;
-  }, { allowControls: true, bindKey: "insightTrendCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+  }, {
+    allowControls: true,
+    bindKey: "insightTrendCard",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: () => document.querySelector("#page-insights .insights-trends-card")
+  });
 }
 
 function ensureMobileManualReportControls() {
