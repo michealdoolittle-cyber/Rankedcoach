@@ -97,3 +97,22 @@ Goal for this pass: make `radiant-focus` and `omen-night` actually visible and s
 4. Toggle Reduced Motion in accessibility settings, confirm both new animations stop (or reduce to the same treatment `theme-static` gets under that setting).
 5. Confirm every free (non-premium) theme card and the two premium cards all now show a visible name label, both viewports, and that this addition doesn't visually break the existing swatch/pill layout (`testing/visual-audit/PASSTHROUGH-CHECKLIST.md`'s theme-surface row).
 6. Run the scoped visual-audit passthrough for theme/profile surfaces (mobile viewport, QA account) - zero console errors, zero horizontal overflow, before reporting done.
+
+---
+
+## Intensity follow-up (2026-07-09) — check the cache-bust fix first, then tune if it's still weak
+
+**Read `notes/mobile-bug-fixes-2026-07-08.md` item #13 before touching this.** `app.css` shipped this motion work without a cache-bust version bump, so it's plausible Michael has never actually seen this pass render with fresh CSS. Fix #13 first, hard-refresh, and re-evaluate before changing any of the numbers below — don't tune blind against a screenshot that might have been taken against stale CSS.
+
+If it's still too subtle on a confirmed-fresh load: I rendered both themes directly (forced the motion classes on real card markup, screenshotted across the animation cycle) and confirmed the effects are real and correctly wired, but under-deliver on "bold." Two specific weaknesses, both fixable without a redesign:
+
+1. **The glint-sweep spends too much of its cycle invisible.** Current keyframe (`themeRadiantGlintSweep`, `app.css:~22345`) goes `0% opacity → 18% → 72% (peak, brief) → 0% → 0%` across the ~1.8s loop - roughly half the cycle reads as nothing happening, so catching it requires the right instant. Widen the peak plateau (hold near-.7+ opacity for a longer stretch instead of a quick spike) and raise the floor so it never drops fully to invisible - it should read as continuously present, not as an occasional flash.
+2. **The avatar ring effects are too subtle to register at this size.** `themeRadiantAvatarHalo`/`themeOmenAvatarHalo` (`app.css:~22355`, `~22380`) pulse a `filter:drop-shadow(...)` on a ~38px avatar that already has a busy profile picture on it - in my screenshots this was effectively invisible even looking for it. Replace or supplement with a persistent, structural ring treatment instead of a filter-only pulse - reuse the same visual weight the existing border-style system already uses for things like the crosshair/notched border rings (a real `box-shadow`/border ring that's visibly present at rest and pulses in intensity, not one that's built entirely out of a barely-perceptible shadow blur).
+
+Omen Night's fog-drift and edge-breathe effects read better in my screenshots than Radiant Focus's sweep did, but give them the same opacity-floor check while in this code - same principle, don't let either effect spend most of its cycle at near-zero visibility.
+
+### Testing for this follow-up
+
+1. Confirm on a guaranteed-fresh CSS load (incognito or confirmed cache-bumped) before making any changes.
+2. Screenshot at 4-5 points across one full animation cycle for each theme (not just once) - the fix should read as "clearly present" in most of those frames, not just the one lucky frame that catches the peak.
+3. Re-run the Reduced Motion and desktop-untouched checks from the original testing checklist above - don't regress those while tuning intensity.
