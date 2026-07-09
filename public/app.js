@@ -1439,6 +1439,7 @@ const MOBILE_SWIPE_PREVIEW_ENTRY_MS = 210;
 let mobileSwipeHandledTimestamp = -1;
 let mobileSwipeSuppressClickUntil = 0;
 let mobileSwipeClickGuardInstalled = false;
+const mobileSwipePreviewClassState = new WeakMap();
 
 function getMobileSwipeDirection(startX, startY, endX, endY, options = {}) {
   const minDistance = Number.isFinite(options.minDistance) ? options.minDistance : MOBILE_SWIPE_MIN_DISTANCE;
@@ -1535,6 +1536,23 @@ function restoreMobileSwipeInlineStyles(target, snapshot) {
       target.style.removeProperty(property);
     }
   });
+}
+
+function prepareMobileSwipePreviewClasses(target, options = {}) {
+  if (!target || !options.previewCompanionMirrorActive || mobileSwipePreviewClassState.has(target)) return;
+  mobileSwipePreviewClassState.set(target, {
+    active: target.classList.contains("active"),
+    preview: target.classList.contains("is-mobile-swipe-preview")
+  });
+  target.classList.add("active", "is-mobile-swipe-preview");
+}
+
+function restoreMobileSwipePreviewClasses(target, options = {}) {
+  if (!target || !mobileSwipePreviewClassState.has(target)) return;
+  const snapshot = mobileSwipePreviewClassState.get(target);
+  mobileSwipePreviewClassState.delete(target);
+  if (!snapshot?.preview) target.classList.remove("is-mobile-swipe-preview");
+  if (!options.keepActive && !snapshot?.active) target.classList.remove("active");
 }
 
 function resolveMobileSwipePreviewTarget(options = {}, context = {}) {
@@ -1682,6 +1700,7 @@ async function animateMobileSwipeReset(target, snapshot, companionTarget = null,
   await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_CANCEL_MS + 24);
   restoreMobileSwipeInlineStyles(target, snapshot);
   restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
+  restoreMobileSwipePreviewClasses(companionTarget);
 }
 
 async function animateMobileSwipeCommit(direction, context = {}, applyState = () => {}, options = {}) {
@@ -1714,6 +1733,7 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
   if (callbackResult === false) {
     restoreMobileSwipeInlineStyles(currentTarget, currentSnapshot);
     restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
+    restoreMobileSwipePreviewClasses(companionTarget);
     return false;
   }
 
@@ -1742,10 +1762,8 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     restoreMobileSwipeInlineStyles(nextTarget, nextSnapshot);
   }
   if (reusesCompanionTarget) {
-    await waitForMobileSwipeFrame();
-    void nextTarget.offsetWidth;
-    await waitForMobileSwipeFrame();
     restoreMobileSwipeInlineStyles(nextTarget, companionSnapshot);
+    restoreMobileSwipePreviewClasses(nextTarget, { keepActive: true });
   }
 
   if (currentTarget && currentTarget !== nextTarget) {
@@ -1753,6 +1771,7 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
   }
   if (usesCompanionPreview && companionTarget && companionTarget !== nextTarget) {
     restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
+    restoreMobileSwipePreviewClasses(companionTarget);
   }
   return callbackResult;
 }
@@ -1851,6 +1870,7 @@ function bindMobileSwipe(element, callback, options = {}) {
     const nextPreviewDirection = getMobileSwipePreviewDirection(previewOffset);
     if (previewCompanionTarget && previewDirection && nextPreviewDirection !== previewDirection) {
       restoreMobileSwipeInlineStyles(previewCompanionTarget, previewCompanionSnapshot);
+      restoreMobileSwipePreviewClasses(previewCompanionTarget);
       previewCompanionTarget = null;
       previewCompanionSnapshot = null;
     }
@@ -1867,6 +1887,20 @@ function bindMobileSwipe(element, callback, options = {}) {
         previewDirection
       });
       previewCompanionSnapshot = captureMobileSwipeInlineStyles(previewCompanionTarget);
+      prepareMobileSwipePreviewClasses(previewCompanionTarget, options);
+      if (typeof options.onPreviewCompanionPrepared === "function") {
+        options.onPreviewCompanionPrepared(previewCompanionTarget, {
+          element,
+          startTarget,
+          startX,
+          startY,
+          event,
+          previewTarget,
+          previewOffset,
+          previewDirection,
+          previewCompanionTarget
+        });
+      }
     }
     previewing = true;
     applyMobileSwipePreview(previewTarget, previewOffset);
@@ -1944,6 +1978,8 @@ function bindMobileSwipe(element, callback, options = {}) {
   element.addEventListener("touchcancel", async () => {
     if (previewing && previewTarget) {
       await animateMobileSwipeReset(previewTarget, previewSnapshot, previewCompanionTarget, previewCompanionSnapshot);
+    } else {
+      restoreMobileSwipePreviewClasses(previewCompanionTarget);
     }
     tracking = false;
     previewing = false;
@@ -1965,11 +2001,13 @@ function stepMobileValue(currentValue, values, direction) {
 function ensureMobileSwipeAffordances() {
   if (!isMobileLayoutViewport()) return;
 
+  const getCurrentPageElement = () => document.querySelector(".page.active:not(.is-mobile-swipe-preview)") || document.querySelector(".page.active");
+  const getPageKeyFromElement = (page) => page?.id?.replace("page-", "") || "";
   const getSteppedMobilePageKey = (direction = 0) => {
-    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || MOBILE_PAGE_SWIPE_ORDER[0];
+    const active = getPageKeyFromElement(getCurrentPageElement()) || MOBILE_PAGE_SWIPE_ORDER[0];
     return stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
   };
-  const getActivePageSwipeTarget = () => document.querySelector(".page.active");
+  const getActivePageSwipeTarget = () => getCurrentPageElement();
   const getMobilePagePreviewFrame = (currentTarget, context = {}) => {
     if (!currentTarget) return null;
     const rect = currentTarget.getBoundingClientRect?.();
@@ -1987,6 +2025,11 @@ function ensureMobileSwipeAffordances() {
     const nextPageKey = getSteppedMobilePageKey(direction);
     primeMobilePageSwipePreview(nextPageKey);
     return document.getElementById(`page-${nextPageKey}`);
+  };
+  const preparePageSwipePreviewLayout = (target) => {
+    const pageKey = getPageKeyFromElement(target);
+    if (!pageKey) return;
+    hydrateMobilePageForCurrentState(pageKey, { allowHiddenLayoutWork: true, immediatePreview: true });
   };
   const getActiveLoggingSwipeTarget = () => {
     const page = document.getElementById("page-logging");
@@ -2009,8 +2052,8 @@ function ensureMobileSwipeAffordances() {
   const getActiveProfileEditPanelTarget = () => document.querySelector("#editProfileModal .profile-edit-panel.is-active");
   const getBannerCategorySwipeTarget = () => document.querySelector("#editProfileModal .profile-edit-panel[data-profile-panel=\"banner\"].is-active") || document.getElementById("editProfileBannerGallery");
 
-  bindMobileSwipe(document.querySelector(".app-root"), (direction) => {
-    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || MOBILE_PAGE_SWIPE_ORDER[0];
+  bindMobileSwipe(document.querySelector(".app-root"), (direction, _event, context = {}) => {
+    const active = getPageKeyFromElement(context.previewTarget) || getPageKeyFromElement(getCurrentPageElement()) || MOBILE_PAGE_SWIPE_ORDER[0];
     const nextPage = stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
     if (nextPage === active) return false;
     closeAllMobileOverlays();
@@ -2025,14 +2068,16 @@ function ensureMobileSwipeAffordances() {
     previewStartDistance: 4,
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
+    previewCompanionMirrorActive: true,
+    onPreviewCompanionPrepared: preparePageSwipePreviewLayout,
     previewCompanionDisplay: "block",
     previewCompanionFrame: (_target, currentTarget, context) => getMobilePagePreviewFrame(currentTarget, context),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390,
     shouldHandleStart: (target, touch) => shouldAllowMobilePageSwipeStart(target, touch.clientX, touch.clientY)
   });
 
-  bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction) => {
-    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || MOBILE_PAGE_SWIPE_ORDER[0];
+  bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction, _event, context = {}) => {
+    const active = getPageKeyFromElement(context.previewTarget) || getPageKeyFromElement(getCurrentPageElement()) || MOBILE_PAGE_SWIPE_ORDER[0];
     closeAllMobileOverlays();
     activatePage(stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction));
     syncMobileBottomShellState();
@@ -2043,6 +2088,8 @@ function ensureMobileSwipeAffordances() {
     previewStartDistance: 4,
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
+    previewCompanionMirrorActive: true,
+    onPreviewCompanionPrepared: preparePageSwipePreviewLayout,
     previewCompanionDisplay: "block",
     previewCompanionFrame: (_target, currentTarget, context) => getMobilePagePreviewFrame(currentTarget, context),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390
@@ -43867,6 +43914,7 @@ let mobilePageHydrationTimer = 0;
 function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
   if (!isMobileLayoutViewport()) return;
   const allowHiddenLayoutWork = Boolean(options?.allowHiddenLayoutWork);
+  const immediatePreview = Boolean(options?.immediatePreview);
   switch (pageId) {
     case "logging":
       ensureMobileLoggingTabs();
@@ -43874,7 +43922,12 @@ function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
       syncLoggingQuickChipStates?.();
       updateLoggingDebriefPreview?.();
       ensureMobileManualReportControls();
-      scheduleLoggingFeedRender({ force: true });
+      if (immediatePreview) {
+        cancelScheduledLoggingFeedRender?.();
+        renderLogFeed?.({ force: true });
+      } else {
+        scheduleLoggingFeedRender({ force: true });
+      }
       break;
     case "stats":
       initStatsPage?.();
@@ -43894,6 +43947,11 @@ function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
       }
       break;
     case "home":
+      if (immediatePreview) {
+        recomputeFromMatches?.();
+        updateDisplays?.();
+        renderChart?.(currentSize);
+      }
       if (allowHiddenLayoutWork) {
         scheduleLoadoutValueTextFit();
       }
@@ -43915,7 +43973,7 @@ function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToke
 
 function primeMobilePageSwipePreview(pageId = "") {
   if (!isMobileLayoutViewport() || !pageId) return;
-  hydrateMobilePageForCurrentState(pageId, { allowHiddenLayoutWork: false });
+  hydrateMobilePageForCurrentState(pageId, { allowHiddenLayoutWork: true, immediatePreview: true });
 }
 
 function syncEditProfileCustomAccentInput(themeKey = "default", customAccent = "") {
