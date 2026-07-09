@@ -1426,26 +1426,78 @@ function ensureMobileInsightTrendCarousel() {
 
 const MOBILE_SWIPE_MIN_DISTANCE = 42;
 const MOBILE_SWIPE_MAX_VERTICAL_RATIO = 1.35;
+const MOBILE_LOCAL_SWIPE_MAX_DURATION = 320;
+const MOBILE_PAGE_SWIPE_MIN_DISTANCE = 68;
+const MOBILE_PAGE_SWIPE_MIN_DURATION = 180;
+const MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO = 1.1;
+let mobileSwipeHandledTimestamp = -1;
+let mobileSwipeSuppressClickUntil = 0;
+let mobileSwipeClickGuardInstalled = false;
 
-function getMobileSwipeDirection(startX, startY, endX, endY) {
+function getMobileSwipeDirection(startX, startY, endX, endY, options = {}) {
+  const minDistance = Number.isFinite(options.minDistance) ? options.minDistance : MOBILE_SWIPE_MIN_DISTANCE;
+  const maxVerticalRatio = Number.isFinite(options.maxVerticalRatio) ? options.maxVerticalRatio : MOBILE_SWIPE_MAX_VERTICAL_RATIO;
   const deltaX = endX - startX;
   const deltaY = endY - startY;
-  if (Math.abs(deltaX) < MOBILE_SWIPE_MIN_DISTANCE) return 0;
-  if (Math.abs(deltaX) < Math.abs(deltaY) * MOBILE_SWIPE_MAX_VERTICAL_RATIO) return 0;
+  if (Math.abs(deltaX) < minDistance) return 0;
+  if (Math.abs(deltaX) < Math.abs(deltaY) * maxVerticalRatio) return 0;
   return deltaX < 0 ? 1 : -1;
 }
 
+function isMobileSwipeInsideCenterZone(x, y) {
+  const viewportWidth = window.innerWidth || document.documentElement?.clientWidth || 390;
+  const viewportHeight = window.innerHeight || document.documentElement?.clientHeight || 844;
+  const sideInset = Math.max(28, viewportWidth * 0.14);
+  const topInset = Math.max(96, viewportHeight * 0.16);
+  const bottomInset = Math.max(118, viewportHeight * 0.16);
+  return x >= sideInset
+    && x <= viewportWidth - sideInset
+    && y >= topInset
+    && y <= viewportHeight - bottomInset;
+}
+
+function shouldAllowMobilePageSwipeStart(target, startX, startY) {
+  if (!isMobileLayoutViewport()) return false;
+  if (document.body?.classList.contains("mobile-modal-open")) return false;
+  if (!target?.closest?.(".page.active")) return false;
+  if (!isMobileSwipeInsideCenterZone(startX, startY)) return false;
+  return !target?.closest?.("input, textarea, select, option, [contenteditable='true']");
+}
+
+function ensureMobileSwipeClickGuard() {
+  if (mobileSwipeClickGuardInstalled) return;
+  mobileSwipeClickGuardInstalled = true;
+  document.addEventListener("click", (event) => {
+    if (!isMobileLayoutViewport()) return;
+    if (Date.now() >= mobileSwipeSuppressClickUntil) return;
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+}
+
 function bindMobileSwipe(element, callback, options = {}) {
-  if (!element || element.dataset.mobileSwipeBound === "true") return;
-  element.dataset.mobileSwipeBound = "true";
+  if (!element) return;
+  ensureMobileSwipeClickGuard();
+  const bindingKey = String(options.bindKey || "default")
+    .replace(/[^a-z0-9]+/gi, " ")
+    .trim()
+    .replace(/(?:^|\s+)([a-z])/g, (_, char) => char.toUpperCase());
+  const datasetKey = `mobileSwipeBound${bindingKey || "Default"}`;
+  if (element.dataset[datasetKey] === "true") return;
+  element.dataset[datasetKey] = "true";
   element.style.touchAction = element.style.touchAction || "pan-y";
   let startX = 0;
   let startY = 0;
+  let startedAt = 0;
+  let startTarget = null;
   let tracking = false;
 
   const shouldIgnoreTarget = (target) => {
+    const formFieldSelector = options.formFieldIgnoreSelector || "input, textarea, select, option, [contenteditable='true']";
+    if (target?.closest?.(formFieldSelector)) return true;
     if (options.allowControls) return false;
-    return Boolean(target?.closest?.("button, a, input, textarea, select, [contenteditable='true']"));
+    const ignoreSelector = options.ignoreSelector || "button, a, [role='button'], [role='option'], [tabindex]";
+    return Boolean(target?.closest?.(ignoreSelector));
   };
 
   element.addEventListener("touchstart", (event) => {
@@ -1454,19 +1506,45 @@ function bindMobileSwipe(element, callback, options = {}) {
       return;
     }
     const touch = event.touches[0];
+    if (typeof options.shouldHandleStart === "function" && !options.shouldHandleStart(event.target, touch, event, element)) {
+      tracking = false;
+      return;
+    }
     startX = touch.clientX;
     startY = touch.clientY;
+    startedAt = Date.now();
+    startTarget = event.target;
     tracking = true;
   }, { passive: true });
 
   element.addEventListener("touchend", (event) => {
     if (!tracking || !isMobileLayoutViewport()) return;
     tracking = false;
+    if (mobileSwipeHandledTimestamp === event.timeStamp) return;
     const touch = event.changedTouches?.[0];
     if (!touch) return;
-    const direction = getMobileSwipeDirection(startX, startY, touch.clientX, touch.clientY);
+    const durationMs = Date.now() - startedAt;
+    if (Number.isFinite(options.minDurationMs) && durationMs < options.minDurationMs) return;
+    if (Number.isFinite(options.maxDurationMs) && durationMs > options.maxDurationMs) return;
+    const direction = getMobileSwipeDirection(startX, startY, touch.clientX, touch.clientY, options);
     if (!direction) return;
-    callback(direction, event);
+    const handled = callback(direction, event, {
+      durationMs,
+      startTarget,
+      startX,
+      startY,
+      endX: touch.clientX,
+      endY: touch.clientY,
+      element
+    });
+    if (handled !== false) {
+      mobileSwipeHandledTimestamp = event.timeStamp;
+      mobileSwipeSuppressClickUntil = Date.now() + 380;
+    }
+  }, { passive: true });
+
+  element.addEventListener("touchcancel", () => {
+    tracking = false;
   }, { passive: true });
 }
 
@@ -1479,67 +1557,124 @@ function stepMobileValue(currentValue, values, direction) {
 function ensureMobileSwipeAffordances() {
   if (!isMobileLayoutViewport()) return;
 
+  bindMobileSwipe(document.querySelector(".app-root"), (direction) => {
+    const order = ["home", "logging", "stats", "insights"];
+    const active = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
+    const nextPage = stepMobileValue(active, order, direction);
+    if (nextPage === active) return false;
+    closeAllMobileOverlays();
+    activatePage(nextPage);
+    syncMobileBottomShellState();
+  }, {
+    bindKey: "pageRoot",
+    allowControls: true,
+    minDistance: MOBILE_PAGE_SWIPE_MIN_DISTANCE,
+    minDurationMs: MOBILE_PAGE_SWIPE_MIN_DURATION,
+    maxVerticalRatio: MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO,
+    shouldHandleStart: (target, touch) => shouldAllowMobilePageSwipeStart(target, touch.clientX, touch.clientY)
+  });
+
   bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction) => {
     const order = ["home", "logging", "stats", "insights"];
     const active = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
     closeAllMobileOverlays();
     activatePage(stepMobileValue(active, order, direction));
     syncMobileBottomShellState();
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "bottomPages", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
   bindMobileSwipe(document.getElementById("mobileLoggingTabs"), (direction) => {
     const page = document.getElementById("page-logging");
     if (!page) return;
     page.dataset.mobileLoggingView = stepMobileValue(page.dataset.mobileLoggingView || "form", ["form", "feed"], direction);
     ensureMobileLoggingTabs();
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "loggingTabs", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
   bindMobileSwipe(document.getElementById("mobileStatsTabs"), (direction) => {
     const page = document.getElementById("page-stats");
     if (!page) return;
     page.dataset.mobileStatsView = stepMobileValue(page.dataset.mobileStatsView || "agents", ["agents", "maps", "weapons"], direction);
     ensureMobileStatsTabs();
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "statsTabs", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
   bindMobileSwipe(document.querySelector("#editProfileModal .profile-edit-nav"), (direction) => {
     const order = ["theme", "icon", "borderColor", "border", "banner"];
     const current = document.querySelector("#editProfileModal .profile-edit-tab.is-active")?.dataset?.profileTab || "theme";
     activateProfileEditTab(stepMobileValue(current, order, direction));
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "profileTabs", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
   bindMobileSwipe(document.querySelector("#editProfileModal .banner-category-toggle"), (direction) => {
     const current = activeProfileBannerCategory || "official";
     setProfileBannerCategory(stepMobileValue(current, ["official", "unofficial"], direction));
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "bannerCategories", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
-  bindMobileSwipe(document.querySelector("#page-stats .stats-mobile-role-filter"), (direction) => {
+  bindMobileSwipe(document.querySelector("#page-stats .stats-agents-card"), (direction) => {
     mobileStatsAgentRole = stepMobileValue(mobileStatsAgentRole || "duelist", ["duelist", "controller", "initiator", "sentinel"], direction);
     renderStatsAgentsModel();
     ensureMobileSwipeAffordances();
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "statsAgentsCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
-  bindMobileSwipe(document.querySelector("#page-stats .stats-mobile-weapon-filter"), (direction) => {
+  bindMobileSwipe(document.querySelector("#page-stats .stats-weapons-card"), (direction) => {
     const values = STATS_WEAPON_FAMILIES.map((family) => family.key);
     mobileStatsWeaponFamily = stepMobileValue(mobileStatsWeaponFamily || values[0] || "rifle", values, direction);
     renderStatsWeaponsModel();
     ensureMobileSwipeAffordances();
-  }, { allowControls: true });
+  }, { allowControls: true, bindKey: "statsWeaponsCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
-  bindMobileSwipe(document.getElementById("statsPerformanceChart"), (direction) => {
+  bindMobileSwipe(document.querySelector("#page-stats .stats-performance-card"), (direction, event, context) => {
+    if (context?.startTarget?.closest?.("#mobileTrendTabs, .mobile-trend-tabs")) {
+      const page = document.getElementById("page-stats");
+      const filters = ["all", "needs", "watch", "strengths"];
+      if (!page) return false;
+      page.dataset.mobileTrendFilter = stepMobileValue(page.dataset.mobileTrendFilter || "all", filters, direction);
+      mobileStatsTrendIndex = 0;
+      ensureMobileTrendCarousel();
+      return true;
+    }
     const chart = document.getElementById("statsPerformanceChart");
     const visibleCards = [...(chart?.querySelectorAll(".stats-trend-card") || [])].filter(item => !item.classList.contains("mobile-trend-filtered"));
     if (!visibleCards.length) return;
     mobileStatsTrendIndex = (mobileStatsTrendIndex + direction + visibleCards.length) % visibleCards.length;
     ensureMobileTrendCarousel();
-  });
+  }, { allowControls: true, bindKey: "statsPerformanceCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 
-  bindMobileSwipe(document.getElementById("statsBreakdown"), (direction) => {
+  bindMobileSwipe(document.querySelector("#page-stats .stats-breakdown-card"), (direction) => {
     const container = document.getElementById("statsBreakdown");
     const cards = [...(container?.querySelectorAll(".stats-breakdown-cardlet") || [])];
     if (!cards.length) return;
     mobileStatsBreakdownIndex = (mobileStatsBreakdownIndex + direction + cards.length) % cards.length;
     ensureMobileStatsBreakdownCarousel();
-  });
+  }, { allowControls: true, bindKey: "statsBreakdownCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+
+  bindMobileSwipe(document.querySelector("#page-insights .insights-top-card"), (direction) => {
+    const container = document.getElementById("insightsList");
+    const cards = [...(container?.querySelectorAll(".insight-card:not(.insight-empty)") || [])];
+    if (!cards.length) return false;
+    mobileInsightCardIndex = (mobileInsightCardIndex + direction + cards.length) % cards.length;
+    ensureMobileInsightCardCarousel();
+    return true;
+  }, { allowControls: true, bindKey: "insightCards", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
+
+  bindMobileSwipe(document.querySelector("#page-insights .insights-trends-card"), (direction, event, context) => {
+    const wrap = document.querySelector("#page-insights .insight-trends");
+    const rows = [...(wrap?.querySelectorAll(".insight-trend-row[data-trend]") || [])];
+    if (!rows.length) return false;
+
+    if (context?.startTarget?.closest?.("#mobileInsightTrendTabs, .mobile-insight-trend-tabs, .insight-trend-row[data-trend]")) {
+      const values = rows.map((row) => String(row.dataset.trend || "").toLowerCase()).filter(Boolean);
+      if (!values.length) return false;
+      mobileInsightTrendKey = stepMobileValue(mobileInsightTrendKey || values[0], values, direction);
+      mobileInsightTrendIndex = 0;
+      ensureMobileInsightTrendCarousel();
+      return true;
+    }
+
+    const activeContent = wrap.querySelector(".trend-content.is-mobile-trend-content-active") || wrap.querySelector(".trend-content");
+    const cards = [...(activeContent?.querySelectorAll(".trend-signal-card") || [])];
+    if (!cards.length) return false;
+    mobileInsightTrendIndex = (mobileInsightTrendIndex + direction + cards.length) % cards.length;
+    ensureMobileInsightTrendCarousel();
+    return true;
+  }, { allowControls: true, bindKey: "insightTrendCard", maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION });
 }
 
 function ensureMobileManualReportControls() {
