@@ -1,8 +1,22 @@
 # Mobile Bug Fixes - Directive for Codex
 
-**Status:** Built 2026-07-08. Resolved: #1, #2, #3, #4, #5, #6, #7, #8 (cached signed-in session restore path identified from source and now routed through the existing loading UI), and #12. Item #11 shipped the confirmed theme-aware close-button polish, but the original "gray button" repro still needs a live screenshot if it appears again. Still open pending live-only repro: #9 notched border animation and #10 exit-X alignment.
+**Status:** Built 2026-07-08. Resolved: #1, #2, #3, #4, #5, #6, #7, #8 (cached signed-in session restore path identified from source and now routed through the existing loading UI), and #12. Item #11 shipped the confirmed theme-aware close-button polish, but the original "gray button" repro still needs a live screenshot if it appears again. Still open pending live-only repro: #9 notched border animation and #10 exit-X alignment. **New #13 added 2026-07-09 — high severity, read first, likely explains why #9/#10/premium-theme-motion still look unfixed live.**
 
 Grouped by severity: **High** (real functional regressions), **Medium** (perf/clarity), **Low/Unconfirmed** (couldn't reproduce from source, needs live re-check first).
+
+---
+
+## 13. CSS cache-bust version never bumped across the last 3 commits — likely masking every CSS fix since 07-08
+
+**Found 2026-07-09, not from a bug report — from investigating why a confirmed, shipped fix (#11's close-button alignment, re-attempted in commit `1a0c45c`) still looked broken in a live screenshot Michael sent.**
+
+Every commit through `302d67f` (Jul 6) consistently bumped **both** `public/index.html`'s `<link rel="stylesheet" href="app.css?v=...">` and `<script src="app.js?v=...">` query strings together — confirmed via `git log -p -- public/index.html`, every prior commit pairs them. Starting with `a12571f` (Jul 8, 13:43), that stopped: `a12571f` bumped only the `.js` version; `7033622` (Jul 8, 22:19, 196 lines of `app.css` changes — the premium theme motion CSS) and `1a0c45c` (Jul 9, 06:13, 84 more lines of `app.css` changes — the `#lensModalClose` alignment fix, among others) touched `app.css` substantially but **neither commit touched `index.html` at all.** The `<link>` tag has been sitting at `app.css?v=20260706-mobile-nav-01` since Jul 6, while the file it points to has changed twice since.
+
+**Why this matters:** any browser (or CDN/edge cache in front of the static host) that already fetched `app.css` under that exact URL before Jul 8 has no reason to ever re-fetch it — the URL, including the query string, hasn't changed. That browser keeps serving the pre-Jul-8 stylesheet indefinitely, silently, with no error. This would fully explain: Michael's "very minor" read of the premium theme motion (possibly seeing zero of the new `theme-glint-sweep`/`theme-shadow-drift` keyframes, not just an under-tuned version of them), and the `#lensModalClose` button still looking gray/misaligned in his screenshot despite two separate shipped fixes targeting exactly that.
+
+**Fix directive:** Bump `app.css?v=...` in `index.html` to a fresh value in the same commit as any future `app.css` change, restoring the convention every commit followed through Jul 6. Do this now for the current state (there are two unbumped `app.css` changes stacked up). Consider whether this should be automated (e.g. a pre-commit check or a build step that hashes the file into the query string) rather than relying on manually remembering it every time — this is exactly the kind of thing that's easy to forget under time pressure and expensive when it silently ships nothing.
+
+**Testing directive:** After bumping, confirm via a hard-refresh test (or an incognito/private window, which has no prior cache) that #9, #10, #11, and the premium theme motion all now render current behavior. If any of them *still* don't reproduce correctly after a guaranteed-fresh CSS load, then and only then treat them as genuinely open bugs needing further investigation — don't spend more investigation time on any of them until this is ruled out first.
 
 ---
 

@@ -101,3 +101,35 @@ Remove the dedicated Sync icon/button (mobile `.mobile-bottom-icon-btn[data-mobi
 7. Confirm pull-to-refresh on Home doesn't fight with any existing scroll-lock/overscroll behavior elsewhere on that page, and that the Force Refresh row's timestamp updates after a manual trigger.
 8. Confirm desktop is unaffected: `output/desktop/*/` screenshots for the header icons should be pixel-identical to the pre-change baseline; only the settings dropdown's *content* should differ (now quick-menu + modal instead of one long list).
 9. Update `testing/visual-audit/CORRECTIONS.md` marking the relevant prior findings (Ask Coach/Bug Report mobile, Profile Rating mobile gap) as superseded by this rebuild, and note the outcome of each item above.
+
+---
+
+## 9. Follow-up (2026-07-09) — collapse Account & Support from 4 tabs to 2
+
+Now that the shipped version has been used for a few days, Michael wants the tab structure simplified. Current structure (`index.html:441-520`): tabs `account` / `sync` (labeled "Data & Sync") / `support` / `legal`. Target: **two tabs — `account` and `support`.**
+
+1. **Delete the "Data & Sync" tab entirely.** Its three contents get redistributed, not deleted:
+   - `#accountSupportImportHistoryBtn` (`index.html:483`) and the Tracker.gg URL field + `#accountSupportSaveTrackerBtn` (`index.html:484-488`) move to the **Logging page** — this is where a player is already thinking about match data, and it's a more discoverable spot than three taps deep in Settings. Exact placement within Logging is your call — near the existing manual-entry form is the obvious fit since both are "add match data" actions — but don't bury it below the fold on mobile.
+   - `#accountSupportForceRefreshBtn` (`index.html:489-494`) gets **deleted, not moved.** Pull-to-refresh already shipped in the original mobile nav redesign (§6 above) and covers the same need; keeping a second manual "Force Refresh" control is redundant now that the swipe gesture exists.
+   - The Manual Entry Mode toggle already lives in the `account` tab (`index.html:466-472`) — nothing to move, the Data & Sync tab was never the source of truth for it.
+
+2. **Delete the "Legal" tab, fold its two links into Support.** `terms.html`/`privacy.html` links (`index.html:516-517`) move into the `support` panel's row list, after the existing three rows.
+
+3. **Remove the duplicate Log out row from the Account tab.** `#accountSupportLogoutBtn` (`index.html:473`) is redundant — Log out already lives in the mobile quick menu (row 4, per §5a above) one tap away from anywhere. Keep it only there; the Account tab drops to 3 rows: Security Settings, Log in / Sign up, Manual Entry Mode.
+
+4. **Tip to Dev needs better placement, not just a tab shuffle.** Michael's complaint is specifically that it's hard to find where it currently lives (`index.html:506`, bottom of the Support list). Collapsing tabs alone doesn't fix that — it's still gear → Account & Support → Support tab → last row. Two options, pick one (or propose a third) rather than leaving it where it is:
+   - **(a)** Move it to the top of the Support row list instead of the bottom, and/or give it a small distinct visual treatment (different from a plain gray row) so it doesn't read as identical-priority to "Report a Bug."
+   - **(b)** Surface it somewhere outside this modal entirely — e.g. a small persistent row on the Home page or the mobile quick menu itself — if the goal is genuinely more visibility rather than just easier-to-find-when-you're-already-looking.
+   Flag which you pick in the status update; this is a product call as much as a layout one.
+
+5. **Resulting structure to verify:** `account` tab (Security Settings, Log in/Sign up, Manual Entry Mode — 3 rows) and `support` tab (Report a Bug, Contact Support, Tip to Dev, Terms of Service, Privacy Policy — 5 rows, in whatever order #4 lands on). Confirm 5 rows still fits without scrolling on the smallest tested viewport (§8.3's constraint carries over — this modal's "never scrolls" bar doesn't relax just because content moved tabs).
+
+### Testing checklist for this pass
+
+1. Open Account & Support on mobile — confirm exactly 2 tabs, both fit without scrolling their row lists.
+2. Confirm Import History and the Tracker.gg URL field are reachable and functional from the Logging page, and that the import flow itself (modal, OCR, review screen) is unchanged — only the entry point moved.
+3. Confirm Force Refresh is gone and pull-to-refresh still works on Home as the sole manual-refresh mechanism.
+4. Confirm Log out still works from the quick menu and is no longer duplicated inside the Account tab.
+5. Confirm Terms of Service / Privacy Policy links work from inside the Support tab.
+6. Confirm desktop's settings dropdown reflects the same 2-tab content reorganization (per the original §2 note: desktop shares this modal's content structure, only the entry point differs) — no leftover reference to a "Data & Sync" or "Legal" tab anywhere.
+7. Update this file's own status and `testing/visual-audit/CORRECTIONS.md`/`PASSTHROUGH-CHECKLIST.md` mobile selector notes if any `data-account-support-tab`/`panel` selectors the harness references changed.
