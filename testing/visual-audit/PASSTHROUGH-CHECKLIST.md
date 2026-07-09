@@ -20,7 +20,7 @@ Output lands in `testing/visual-audit/output/<viewport>/<state>/*.png`, plus `co
 
 **2026-07-06 mobile nav redesign:** Mobile Profile Rating / Coach Readiness is now inside the combined avatar popover opened by `#mobileHeaderProfileBtn`. Mobile settings open from `#mobileHeaderSettingsBtn`. The bottom bar is page navigation only (`.mobile-bottom-page-btn[data-mobile-page="..."]`).
 
-**Account & Support modal:** Import History, Tracker.gg link, Force Refresh, Bug Report, support links, and legal links now live behind Settings -> Account & Support. When adding modal tests, open `#pdAccountSupportBtn` first and then choose the relevant tab.
+**Account & Support modal:** Import History and the Tracker.gg profile URL field now live on the Logging page near manual entry. Settings -> Account & Support is now a 2-tab modal (`Account` / `Support`) used for security/auth actions, Bug Report, Tip to Dev, support links, and legal links. When adding modal tests, open `#pdAccountSupportBtn` first and then choose the relevant tab.
 
 The harness is intentionally cheap to extend — add a new page to `PAGES` or a new entry to `MODALS` in `audit.js` when a brief adds a new screen or modal, so it stays current instead of drifting from the real nav.
 

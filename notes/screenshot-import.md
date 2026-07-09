@@ -1,5 +1,7 @@
 # Screenshot Import
 
+**Status (2026-07-09):** Structural fixes are shipped in the current local build: anchored KDA parsing, score-based result inference, agent icon picker, map select, safe non-match failures, warning-text wrapping, and the Logging-page entry point move. A rerun against Michael's original real screenshots is still pending because those source images are not in this workspace.
+
 ## 2026-07-09 — first real-screenshot test result (the deferred "next review step" from 07-05, finally done)
 
 Michael uploaded two real screenshots together: a Tracker.gg match-history list (7 matches across two date groups) and a separate aggregate "Competitive Overview" profile-stats screenshot. Root-caused against the actual parser in `public/app.js` (`parseTrackerOcrText`, `~10672-10718`), not just the review-screen symptoms. Three real bugs found, all with a known mechanism — not "OCR is flaky," specific fixable defects:

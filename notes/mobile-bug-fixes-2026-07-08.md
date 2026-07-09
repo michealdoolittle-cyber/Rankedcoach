@@ -2,6 +2,8 @@
 
 **Status:** Built 2026-07-08. Resolved: #1, #2, #3, #4, #5, #6, #7, #8 (cached signed-in session restore path identified from source and now routed through the existing loading UI), and #12. Item #11 shipped the confirmed theme-aware close-button polish, but the original "gray button" repro still needs a live screenshot if it appears again. Still open pending live-only repro: #9 notched border animation and #10 exit-X alignment. **New #13 added 2026-07-09 — high severity, read first, likely explains why #9/#10/premium-theme-motion still look unfixed live.**
 
+**Status (2026-07-09 follow-up):** #13 is now shipped through the `20260709-exec-plan-01` cache-bust on both CSS and app assets and was rechecked on a fresh local build. #9, #10, and the original live-only version of #11 still need a true post-deploy screenshot if they appear again; none of them reproduced in the fresh local pass.
+
 Grouped by severity: **High** (real functional regressions), **Medium** (perf/clarity), **Low/Unconfirmed** (couldn't reproduce from source, needs live re-check first).
 
 ---

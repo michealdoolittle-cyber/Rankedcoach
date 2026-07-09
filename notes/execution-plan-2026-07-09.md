@@ -2,7 +2,7 @@
 
 Everything currently queued across `notes/*.md`, in the order it should actually be worked, with the reasoning for that order. This file doesn't repeat the detailed directives — it points at them and says what to do first and why. Update the status line here as phases complete; the detailed status still lives in each source file.
 
-**Status:** Not started.
+**Status:** Phase 1 shipped. Phase 2 was rechecked on a fresh local cache-busted build, and the manual-mode overlay stack issue was fixed there. Phase 3 structural screenshot-import fixes shipped, but a rerun against Michael's original real screenshots is still pending because those source images are not in this workspace. Phase 4 shipped, and the visual audit passed clean.
 
 ---
 

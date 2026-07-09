@@ -9935,6 +9935,11 @@ function setManualEntryMode(nextEnabled = false) {
 async function toggleManualEntryModeFromUI() {
   const nextEnabled = !isManualEntryModeEnabled();
   if (nextEnabled) {
+    const accountSupportWasOpen = Boolean(document.getElementById("accountSupportModal")?.classList.contains("active"));
+    if (accountSupportWasOpen) {
+      closeAccountSupportModal?.();
+      await new Promise((resolve) => window.setTimeout(resolve, 300));
+    }
     if (isMobileLayoutViewport()) {
       closeMobileProfilePopover?.();
       closeProfileDropdown?.();
@@ -9968,23 +9973,11 @@ function syncAccountSupportUI(profile = getActiveProfile()) {
   const signedIn = Boolean(currentAuthUser);
   const securityBtn = document.getElementById("accountSupportSecurityBtn");
   const authBtn = document.getElementById("accountSupportAuthBtn");
-  const logoutBtn = document.getElementById("accountSupportLogoutBtn");
-  const lastSynced = document.getElementById("accountSupportLastSynced");
-  const forceRefresh = document.getElementById("accountSupportForceRefreshBtn");
 
   if (securityBtn) securityBtn.hidden = !signedIn;
   if (authBtn) {
     authBtn.hidden = signedIn;
     authBtn.textContent = "Log in / Sign up";
-  }
-  if (logoutBtn) {
-    logoutBtn.hidden = false;
-    logoutBtn.textContent = signedIn ? "Log out" : "Log in / Sign up";
-  }
-  if (lastSynced) lastSynced.textContent = formatLastSyncedLabel(profile?.lastSyncAt || "");
-  if (forceRefresh) {
-    forceRefresh.classList.toggle("is-syncing", Boolean(riotSyncInFlight));
-    forceRefresh.disabled = Boolean(riotSyncInFlight);
   }
   syncManualEntryModeUI?.();
   syncTrackerProfileUrlUI?.(profile);
@@ -9993,21 +9986,22 @@ function syncAccountSupportUI(profile = getActiveProfile()) {
 function activateAccountSupportTab(tabKey = "account") {
   const shell = document.querySelector("#accountSupportModal .account-support-shell");
   const previousTab = shell?.dataset.activeAccountSupportTab || "";
-  const tabOrder = ["account", "sync", "support", "legal"];
+  const tabOrder = ["account", "support"];
+  const nextTabKey = tabOrder.includes(tabKey) ? tabKey : "account";
   const previousIndex = tabOrder.indexOf(previousTab);
-  const nextIndex = tabOrder.indexOf(tabKey);
+  const nextIndex = tabOrder.indexOf(nextTabKey);
   const direction = previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex ? "back" : "forward";
   if (shell) {
-    shell.dataset.activeAccountSupportTab = tabKey;
+    shell.dataset.activeAccountSupportTab = nextTabKey;
     shell.dataset.tabDirection = direction;
   }
   document.querySelectorAll("[data-account-support-tab]").forEach((tab) => {
-    const activeTab = tab.dataset.accountSupportTab === tabKey;
+    const activeTab = tab.dataset.accountSupportTab === nextTabKey;
     tab.classList.toggle("is-active", activeTab);
     tab.setAttribute("aria-selected", activeTab ? "true" : "false");
   });
   document.querySelectorAll("[data-account-support-panel]").forEach((panel) => {
-    const isActivePanel = panel.dataset.accountSupportPanel === tabKey;
+    const isActivePanel = panel.dataset.accountSupportPanel === nextTabKey;
     panel.classList.toggle("is-active", isActivePanel);
     panel.classList.remove("is-tab-entering");
     if (isActivePanel) {
@@ -10437,7 +10431,7 @@ function syncTrackerProfileUrlUI(profile = getActiveProfile()) {
 }
 
 function saveTrackerProfileUrlFromSettings(inputEl = null) {
-  const input = inputEl || document.getElementById("accountSupportTrackerProfileUrlInput") || document.getElementById("trackerProfileUrlInput");
+  const input = inputEl || document.getElementById("trackerProfileUrlInput") || document.getElementById("accountSupportTrackerProfileUrlInput");
   const profile = getActiveProfile();
   if (!input || !profile) return;
   const normalizedUrl = normalizeTrackerProfileUrl(input.value || "");
@@ -10675,10 +10669,82 @@ function parseKdaText(text = "") {
   return { kills: Number(match[1]), deaths: Number(match[2]), assists: Number(match[3]), kdaText: `${match[1]}/${match[2]}/${match[3]}` };
 }
 
+function parseTrackerRoundScoreText(text = "") {
+  const match = String(text || "").match(/\b(\d{1,2})\s*:\s*(\d{1,2})\b/);
+  if (!match) return {};
+  return {
+    ourScore: Number(match[1]),
+    theirScore: Number(match[2]),
+    scoreText: `${match[1]}:${match[2]}`
+  };
+}
+
+function inferTrackerResultFromScore(score = {}) {
+  const ourScore = Number(score?.ourScore);
+  const theirScore = Number(score?.theirScore);
+  if (!Number.isFinite(ourScore) || !Number.isFinite(theirScore)) return "";
+  if (ourScore === theirScore) return "draw";
+  return ourScore > theirScore ? "win" : "loss";
+}
+
+function normalizeHistoryImportAgentValue(value = "") {
+  const normalized = String(value || "").trim().toLowerCase();
+  return allAgents.find((agent) => String(agent || "").trim().toLowerCase() === normalized) || "";
+}
+
+function renderHistoryImportAgentPicker(selectedAgent = "") {
+  const normalizedSelected = String(normalizeHistoryImportAgentValue(selectedAgent) || "").toLowerCase();
+  return `
+    <div class="history-import-agent-picker" role="group" aria-label="Choose agent">
+      ${allAgents.map((agent) => {
+        const normalizedAgent = String(agent || "").toLowerCase();
+        const isActive = normalizedAgent === normalizedSelected;
+        return `
+          <button
+            type="button"
+            class="history-import-agent-option ${isActive ? "is-active" : ""}"
+            data-history-agent-option="${escapeHtml(agent)}"
+            aria-pressed="${isActive ? "true" : "false"}"
+            aria-label="${escapeHtml(agent)}">
+            <img src="${escapeHtml(getAgentIconUrl(normalizedAgent))}" alt="${escapeHtml(agent)} icon">
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderHistoryImportMapOptions(selectedMap = "") {
+  const maps = [...new Set([...(ALL_VALORANT_MAP_NAMES || []), ...(COMPETITIVE_MAP_POOL || [])].filter(Boolean))];
+  return `
+    <option value="" ${selectedMap ? "" : "selected"}>Choose map</option>
+    ${maps.map((mapName) => `
+      <option value="${escapeHtml(mapName)}" ${String(selectedMap || "").toLowerCase() === String(mapName || "").toLowerCase() ? "selected" : ""}>
+        ${escapeHtml(mapName)}
+      </option>
+    `).join("")}
+  `;
+}
+
+function syncHistoryImportAgentPicker(row, selectedAgent = "") {
+  const normalizedSelected = String(normalizeHistoryImportAgentValue(selectedAgent) || "").toLowerCase();
+  row?.querySelectorAll?.("[data-history-agent-option]")?.forEach((button) => {
+    const isActive = String(button.getAttribute("data-history-agent-option") || "").toLowerCase() === normalizedSelected;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function setHistoryImportAgentSelection(row, nextAgent = "") {
+  const input = row?.querySelector?.('[data-history-field="agent"]');
+  const normalizedAgent = normalizeHistoryImportAgentValue(nextAgent);
+  if (input) input.value = normalizedAgent;
+  syncHistoryImportAgentPicker(row, normalizedAgent);
+}
+
 function parseTrackerOcrText(rawText = "", imageName = "") {
   const text = String(rawText || "").replace(/\r/g, "\n");
   const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
-  const agents = Object.keys(agentRoles || {});
   const mapTokens = ALL_VALORANT_MAP_NAMES || COMPETITIVE_MAP_POOL || [];
   const records = [];
   const warnings = [];
@@ -10689,25 +10755,36 @@ function parseTrackerOcrText(rawText = "", imageName = "") {
     rr: rrLine?.match(/\b(\d{1,4})\s*RR\b/i)?.[1] || null
   };
 
-  lines.forEach((line, index) => {
-    const windowText = `${line} ${lines[index + 1] || ""} ${lines[index + 2] || ""}`;
-    const agent = findFirstKnownToken(windowText, agents);
+  const seenWindows = new Set();
+  const kdaAnchorIndexes = lines.reduce((indexes, line, index) => {
+    if (parseKdaText(line).kdaText) indexes.push(index);
+    return indexes;
+  }, []);
+
+  kdaAnchorIndexes.forEach((index) => {
+    const windowLines = lines.slice(Math.max(0, index - 2), Math.min(lines.length, index + 3));
+    const windowSignature = windowLines.join("|").toLowerCase();
+    if (seenWindows.has(windowSignature)) return;
+    seenWindows.add(windowSignature);
+
+    const windowText = windowLines.join(" ");
     const map = findFirstKnownToken(windowText, mapTokens);
-    const result = /\b(victory|won|win)\b/i.test(windowText) ? "win" : /\b(defeat|lost|loss)\b/i.test(windowText) ? "loss" : "";
+    const score = parseTrackerRoundScoreText(windowText);
+    const result = inferTrackerResultFromScore(score);
     const kda = parseKdaText(windowText);
-    if (!(agent || map) || !kda.kdaText) return;
+    if (!kda.kdaText) return;
     const parseWarnings = [];
-    if (!result) parseWarnings.push("Result not confidently read.");
-    if (!agent) parseWarnings.push("Agent not confidently read.");
-    if (!map) parseWarnings.push("Map not confidently read.");
+    parseWarnings.push("Choose the agent icon for this match.");
+    if (!result) parseWarnings.push("Result needs a quick score check.");
+    if (!map) parseWarnings.push("Map needs a quick check.");
     records.push(window.RankedCoachMatchRecord.fromTrackerOcrMatch({
-      agent,
+      agent: "",
       map,
       result: result || "unknown",
       ...kda,
       confidence: {
         overall: parseWarnings.length ? "low" : "medium",
-        fields: { agent: agent ? "medium" : "low", map: map ? "medium" : "low", result: result ? "medium" : "low", kda: "medium" }
+        fields: { agent: "low", map: map ? "medium" : "low", result: result ? "medium" : "low", kda: "medium" }
       },
       parseWarnings
     }, {
@@ -10715,11 +10792,18 @@ function parseTrackerOcrText(rawText = "", imageName = "") {
       screenshotType: "recent_matches",
       rawText,
       rank: overviewContext.rank,
-      rr: overviewContext.rr
+      rr: overviewContext.rr,
+      roundScore: score.scoreText || ""
     }));
   });
 
-  if (!records.length) warnings.push("No match rows were confidently detected.");
+  if (!records.length) {
+    if (overviewContext.rank || overviewContext.rr) {
+      warnings.push("This screenshot looks like a season overview. Add a Recent Matches list screenshot too.");
+    } else {
+      warnings.push("No recent match rows were found. Upload the Tracker.gg Recent Matches list screenshot.");
+    }
+  }
   return { records, overview: overviewContext, warnings };
 }
 
@@ -10774,8 +10858,12 @@ function renderHistoryImportReview() {
       ? `<div class="history-import-empty">No matches ready yet. Upload screenshots or use the manual form.</div>`
       : historyImportState.records.map((record, index) => `
         <div class="history-import-record" data-history-record-index="${index}">
-          <label>Agent<input data-history-field="agent" value="${escapeHtml(record.agent || "")}"></label>
-          <label>Map<input data-history-field="map" value="${escapeHtml(record.map || "")}"></label>
+          <label class="history-import-agent-field">
+            <span>Agent</span>
+            <input type="hidden" data-history-field="agent" value="${escapeHtml(normalizeHistoryImportAgentValue(record.agent || ""))}">
+            ${renderHistoryImportAgentPicker(record.agent || "")}
+          </label>
+          <label>Map<select data-history-field="map">${renderHistoryImportMapOptions(record.map || "")}</select></label>
           <label>Result<select data-history-field="result">${["unknown", "win", "loss", "draw"].map(value => `<option value="${value}" ${record.result === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
           <label>Kills<input data-history-field="kills" inputmode="numeric" value="${record.stats.kills ?? ""}"></label>
           <label>Deaths<input data-history-field="deaths" inputmode="numeric" value="${record.stats.deaths ?? ""}"></label>
@@ -10783,6 +10871,13 @@ function renderHistoryImportReview() {
           ${(record.importMeta?.parseWarnings || []).length ? `<div class="history-import-warning">${escapeHtml(record.importMeta.parseWarnings.join(" "))}</div>` : ""}
         </div>`).join("");
     review.querySelectorAll("[data-history-record-index]").forEach(row => {
+      row.addEventListener("click", (event) => {
+        const button = event.target.closest?.("[data-history-agent-option]");
+        if (!button) return;
+        event.preventDefault();
+        setHistoryImportAgentSelection(row, button.getAttribute("data-history-agent-option") || "");
+        updateHistoryImportRecordFromRow(row);
+      });
       row.addEventListener("input", () => updateHistoryImportRecordFromRow(row));
       row.addEventListener("change", () => updateHistoryImportRecordFromRow(row));
     });
@@ -10809,7 +10904,7 @@ function updateHistoryImportRecordFromRow(row) {
   const record = historyImportState.records[index];
   if (!record) return;
   const read = field => row.querySelector(`[data-history-field="${field}"]`)?.value?.trim() || "";
-  record.agent = read("agent") || null;
+  record.agent = normalizeHistoryImportAgentValue(read("agent")) || null;
   record.role = record.agent ? (agentRoles?.[record.agent] || null) : null;
   record.map = read("map") || null;
   record.result = window.RankedCoachMatchRecord.normalizeResult(read("result"));
@@ -10817,6 +10912,7 @@ function updateHistoryImportRecordFromRow(row) {
   record.stats.deaths = window.RankedCoachMatchRecord.readNumber(read("deaths"));
   record.stats.assists = window.RankedCoachMatchRecord.readNumber(read("assists"));
   record.confidence.overall = "high";
+  syncHistoryImportAgentPicker(row, record.agent || "");
 }
 
 function confirmHistoryImportRecords() {

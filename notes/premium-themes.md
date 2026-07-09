@@ -4,6 +4,8 @@
 
 **Status (2026-07-08, design pass shipped):** `radiant-focus` and `omen-night` now carry distinct mobile-only signature motion behind the same QA gate: Radiant Focus uses a glint-sweep card pass plus a pulsing gold avatar-ring glow, and Omen Night uses drifting shadow/fog, a breathing cyan edge-glow, and a rotating violet-to-cyan avatar ring. Desktop stays on the already-shipped color-only treatment, Reduced Motion falls back through the existing accessibility class, and every theme card in the live selector now shows its visible name.
 
+**Status (2026-07-09 follow-up):** The cache-bust gap called out in mobile bug fix #13 is now closed, and a fresh guest/mobile gallery check confirmed the current named-card layout. The intensity follow-up is still pending a QA-account recheck on a guaranteed-fresh mobile load before any opacity or avatar-ring tuning is changed.
+
 Build brief v3 asked for premium themes to exist as a gated proof of concept, not as a live marketplace.
 
 ## Implemented
