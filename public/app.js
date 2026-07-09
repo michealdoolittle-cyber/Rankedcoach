@@ -9935,6 +9935,12 @@ function setManualEntryMode(nextEnabled = false) {
 async function toggleManualEntryModeFromUI() {
   const nextEnabled = !isManualEntryModeEnabled();
   if (nextEnabled) {
+    if (isMobileLayoutViewport()) {
+      closeMobileProfilePopover?.();
+      closeProfileDropdown?.();
+      profileSwitcher?.classList.remove("open");
+      setProfileRatingDropdownOpen?.(false);
+    }
     const confirmed = await openManualSessionStartPrompt();
     if (!confirmed) return false;
   }
@@ -41130,6 +41136,11 @@ function renderProfilesUI(){
 function closeProfileDropdown(){
   if(!profileDropdown) return;
   profileDropdown.classList.remove("open");
+  profileDropdown.style.left = "";
+  profileDropdown.style.right = "";
+  profileDropdown.style.top = "";
+  profileDropdown.style.bottom = "";
+  profileDropdown.style.transform = "";
 }
 
 function getStatsSelectedActLabel(profile = getActiveProfile()) {
@@ -41303,7 +41314,6 @@ function renderThemeGallery(selectedThemeKey = "default") {
             <div class="theme-card-name">${escapeHtml(theme.label)}</div>
           </div>
           <div class="theme-card-surfaces">
-            <div class="theme-card-card"></div>
             <div class="theme-card-pills">
               <span class="theme-card-pill" style="background:${colors.accent || "#ff4655"}"></span>
               <span class="theme-card-pill" style="background:${colors.accent2 || "#f97316"}"></span>
@@ -42817,17 +42827,23 @@ function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToke
   ensureMobileSwipeAffordances();
 }
 
-function scheduleActivatedMobilePageHydration(pageId = "", token = pageTransitionToken) {
+function scheduleActivatedMobilePageHydration(pageId = "", token = pageTransitionToken, options = {}) {
+  const immediate = Boolean(options?.immediate);
+  const followUpDelay = Math.max(32, Number(options?.followUpDelay) || (immediate ? 72 : 120));
   if (!pageId) return;
   if (mobilePageHydrationTimer) {
     window.clearTimeout(mobilePageHydrationTimer);
     mobilePageHydrationTimer = 0;
   }
-  window.requestAnimationFrame(() => runActivatedMobilePageHydration(pageId, token));
+  if (immediate) {
+    runActivatedMobilePageHydration(pageId, token);
+  } else {
+    window.requestAnimationFrame(() => runActivatedMobilePageHydration(pageId, token));
+  }
   mobilePageHydrationTimer = window.setTimeout(() => {
     mobilePageHydrationTimer = 0;
     runActivatedMobilePageHydration(pageId, token);
-  }, 160);
+  }, followUpDelay);
 }
 
 function activatePage(pageId){
@@ -42863,20 +42879,9 @@ function activatePage(pageId){
       page.classList.remove("entering", "exiting");
     });
 
-    window.requestAnimationFrame(() => {
-      if (token !== pageTransitionToken || !nextPage.isConnected) return;
-      scrollMobilePageToTop();
-      syncMobileBottomShellState();
-      ensureMobileLoggingTabs();
-      ensureMobileStatsTabs();
-      ensureMobileTrendCarousel();
-      ensureMobileStatsBreakdownCarousel();
-      ensureMobileInsightCardCarousel();
-      ensureMobileInsightTrendCarousel();
-      ensureMobileManualReportControls();
-      scheduleMobileScrollExtentSync();
-      ensureMobileSwipeAffordances();
-    });
+    scrollMobilePageToTop();
+    syncMobileBottomShellState();
+    scheduleActivatedMobilePageHydration(pageId, token, { immediate: true, followUpDelay: 72 });
   } else if (nextPage && currentPage !== nextPage) {
     const token = ++pageTransitionToken;
     if (pageTransitionTimer) {
@@ -42916,12 +42921,14 @@ function activatePage(pageId){
 
   if (isMobileLayoutViewport()) {
     document.body.classList.remove("mobile-nav-hidden");
-    const activationToken = pageTransitionToken;
-    window.requestAnimationFrame(() => {
-      scrollMobilePageToTop();
-      scheduleMobileNavVisibility();
-      scheduleActivatedMobilePageHydration(pageId, activationToken);
-    });
+    scheduleMobileNavVisibility();
+    if (!isMobilePageSwitch) {
+      const activationToken = pageTransitionToken;
+      window.requestAnimationFrame(() => {
+        scrollMobilePageToTop();
+        scheduleActivatedMobilePageHydration(pageId, activationToken);
+      });
+    }
   }
 
   if(pageId === "home" && pendingAgentFromLog){

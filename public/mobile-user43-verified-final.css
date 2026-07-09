@@ -1104,6 +1104,14 @@
     touch-action: pan-y;
   }
 
+  html.is-mobile-layout body.is-mobile-layout .page,
+  html.is-mobile-layout body.is-mobile-layout .page.active,
+  html.is-mobile-layout body.is-mobile-layout .page.entering,
+  html.is-mobile-layout body.is-mobile-layout .page.exiting {
+    transition: none !important;
+    transform: none !important;
+  }
+
   html.is-mobile-layout body.is-mobile-layout :is(
     button,
     input,
@@ -10964,9 +10972,9 @@
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-areas:
-      "status"
-      "copy" !important;
-    align-items: stretch !important;
+      "copy"
+      "status" !important;
+    align-items: start !important;
     gap: 8px !important;
   }
 
@@ -10974,22 +10982,25 @@
     grid-area: status !important;
     justify-self: stretch !important;
     width: 100% !important;
-    min-height: 32px !important;
-    display: grid !important;
-    place-items: center !important;
-    padding: 6px 8px !important;
+    min-height: 0 !important;
+    display: block !important;
+    padding: 8px 10px !important;
     font-size: clamp(8px, 2.25vw, 10px) !important;
-    line-height: 1.05 !important;
-    white-space: nowrap !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: left !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-head > div:first-child {
     grid-area: copy !important;
     display: grid !important;
-    grid-template-columns: minmax(0, .78fr) minmax(0, 1.22fr) !important;
-    grid-template-areas: "kicker title" !important;
-    align-items: center !important;
-    gap: 8px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas:
+      "kicker"
+      "title" !important;
+    align-items: start !important;
+    gap: 4px !important;
     min-width: 0 !important;
   }
 
@@ -11005,8 +11016,10 @@
     grid-area: title !important;
     margin: 0 !important;
     font-size: clamp(10px, 2.9vw, 12px) !important;
-    line-height: 1.08 !important;
-    text-align: right !important;
+    line-height: 1.18 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-logging#page-logging#page-logging.page.active #manualMatchPanel.manual-match-panel .manual-match-grid {
