@@ -1582,6 +1582,13 @@ function getMobileSwipeCommitDistance(target, options = {}, context = {}) {
   return Math.max(MOBILE_SWIPE_MIN_DISTANCE, Math.min(96, span * 0.18));
 }
 
+function getMobileSwipePreviewStartDistance(options = {}) {
+  if (Number.isFinite(options.previewStartDistance)) {
+    return Math.max(1, options.previewStartDistance);
+  }
+  return MOBILE_SWIPE_PREVIEW_START_DISTANCE;
+}
+
 function getMobileSwipePreviewDirection(offsetPx = 0) {
   if (!Number.isFinite(offsetPx) || Math.abs(offsetPx) < 1) return 0;
   return offsetPx < 0 ? 1 : -1;
@@ -1735,6 +1742,9 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     restoreMobileSwipeInlineStyles(nextTarget, nextSnapshot);
   }
   if (reusesCompanionTarget) {
+    await waitForMobileSwipeFrame();
+    void nextTarget.offsetWidth;
+    await waitForMobileSwipeFrame();
     restoreMobileSwipeInlineStyles(nextTarget, companionSnapshot);
   }
 
@@ -1813,7 +1823,7 @@ function bindMobileSwipe(element, callback, options = {}) {
 
     const deltaX = touch.clientX - startX;
     const deltaY = touch.clientY - startY;
-    if (Math.abs(deltaX) < MOBILE_SWIPE_PREVIEW_START_DISTANCE) return;
+    if (Math.abs(deltaX) < getMobileSwipePreviewStartDistance(options)) return;
     if (Math.abs(deltaX) < Math.abs(deltaY) * 0.92) return;
 
     if (!previewTarget) {
@@ -1960,15 +1970,16 @@ function ensureMobileSwipeAffordances() {
     return stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
   };
   const getActivePageSwipeTarget = () => document.querySelector(".page.active");
-  const getMobilePagePreviewFrame = (currentTarget) => {
+  const getMobilePagePreviewFrame = (currentTarget, context = {}) => {
     if (!currentTarget) return null;
     const rect = currentTarget.getBoundingClientRect?.();
     if (!rect) return null;
     const scrollContainer = getMobileScrollContainer();
     const scrollTop = Math.max(0, scrollContainer?.scrollTop || document.body?.scrollTop || document.documentElement?.scrollTop || window.scrollY || 0);
+    const previewOffset = safeNumber(context?.previewOffset, 0);
     return {
       top: rect.top + scrollTop,
-      left: rect.left,
+      left: rect.left - previewOffset,
       width: rect.width
     };
   };
@@ -2011,11 +2022,11 @@ function ensureMobileSwipeAffordances() {
     minDistance: MOBILE_PAGE_SWIPE_MIN_DISTANCE,
     minDurationMs: MOBILE_PAGE_SWIPE_MIN_DURATION,
     maxVerticalRatio: MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO,
-    previewStartMinDurationMs: 90,
+    previewStartDistance: 4,
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
     previewCompanionDisplay: "block",
-    previewCompanionFrame: (_target, currentTarget) => getMobilePagePreviewFrame(currentTarget),
+    previewCompanionFrame: (_target, currentTarget, context) => getMobilePagePreviewFrame(currentTarget, context),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390,
     shouldHandleStart: (target, touch) => shouldAllowMobilePageSwipeStart(target, touch.clientX, touch.clientY)
   });
@@ -2029,10 +2040,11 @@ function ensureMobileSwipeAffordances() {
     allowControls: true,
     bindKey: "bottomPages",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartDistance: 4,
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
     previewCompanionDisplay: "block",
-    previewCompanionFrame: (_target, currentTarget) => getMobilePagePreviewFrame(currentTarget),
+    previewCompanionFrame: (_target, currentTarget, context) => getMobilePagePreviewFrame(currentTarget, context),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390
   });
 
@@ -18006,6 +18018,19 @@ function showModalById(id) {
 function hideModalById(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
+  const style = window.getComputedStyle(modal);
+  const hasVisibleModalState =
+    modal.classList.contains("active")
+    || modal.classList.contains("is-opening")
+    || modal.classList.contains("is-closing");
+  const isAlreadyHidden =
+    modal.hidden
+    || modal.getAttribute("aria-hidden") === "true"
+    || style.display === "none"
+    || style.visibility === "hidden"
+    || style.pointerEvents === "none"
+    || Number.parseFloat(style.opacity || "1") <= 0;
+  if (!hasVisibleModalState && isAlreadyHidden) return;
   if (modal.contains(document.activeElement) && typeof document.activeElement?.blur === "function") {
     document.activeElement.blur();
   }
