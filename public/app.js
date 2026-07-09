@@ -632,12 +632,6 @@ function closeAllMobileOverlays() {
   hideModalById?.("goalRankModal");
 }
 
-function clearMobileBottomPagePressState() {
-  document.querySelectorAll("#mobileBottomShell [data-mobile-page].is-pressing").forEach((button) => {
-    button.classList.remove("is-pressing");
-  });
-}
-
 function ensureMobileBottomShell() {
   if (mobileBottomShell || !document.body) return mobileBottomShell;
 
@@ -655,30 +649,11 @@ function ensureMobileBottomShell() {
     </div>
   `;
 
-  mobileBottomShell.addEventListener("pointerdown", (event) => {
-    const pageButton = event.target.closest("[data-mobile-page]");
-    if (!pageButton) return;
-    clearMobileBottomPagePressState();
-    pageButton.classList.add("is-pressing");
-  });
-
-  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
-    mobileBottomShell.addEventListener(eventName, (event) => {
-      const pageButton = event.target.closest?.("[data-mobile-page]");
-      if (pageButton) {
-        pageButton.classList.remove("is-pressing");
-        return;
-      }
-      clearMobileBottomPagePressState();
-    });
-  });
-
   mobileBottomShell.addEventListener("click", (event) => {
     const pageButton = event.target.closest("[data-mobile-page]");
     if (pageButton) {
       event.preventDefault();
       closeAllMobileOverlays();
-      clearMobileBottomPagePressState();
       activatePage(pageButton.dataset.mobilePage);
       syncMobileBottomShellState();
       return;
