@@ -402,10 +402,27 @@ let mobileInsightTrendKey = "performance";
 let mobileInsightTrendIndex = 0;
 let lastStatsMobileRenderState = null;
 const mobileProfilePortalMarkers = new Map();
+let cachedViewportWidth = 0;
+
+function refreshViewportWidthCache() {
+  cachedViewportWidth = Math.max(
+    1,
+    Number(window.visualViewport?.width)
+      || Number(window.innerWidth)
+      || Number(document.documentElement?.clientWidth)
+      || APP_BASE_WIDTH
+  );
+  return cachedViewportWidth;
+}
 
 function getViewportWidth() {
-  return window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || APP_BASE_WIDTH;
+  return cachedViewportWidth || refreshViewportWidthCache();
 }
+
+refreshViewportWidthCache();
+window.addEventListener("resize", refreshViewportWidthCache, { passive: true });
+window.addEventListener("orientationchange", refreshViewportWidthCache, { passive: true });
+window.visualViewport?.addEventListener("resize", refreshViewportWidthCache, { passive: true });
 
 function isMobileLayoutViewport() {
   return getViewportWidth() <= MOBILE_LAYOUT_MAX_WIDTH;
@@ -430,15 +447,14 @@ function setMobilePageCompositorReady(page, enabled = false) {
   if (!(page instanceof HTMLElement)) return;
   const properties = ["will-change", "backface-visibility"];
   if (enabled) {
-    if (!mobilePageCompositorStyleState.has(page)) {
-      mobilePageCompositorStyleState.set(page, properties.reduce((snapshot, property) => {
-        snapshot[property] = {
-          value: page.style.getPropertyValue(property),
-          priority: page.style.getPropertyPriority(property)
-        };
-        return snapshot;
-      }, {}));
-    }
+    if (mobilePageCompositorStyleState.has(page)) return;
+    mobilePageCompositorStyleState.set(page, properties.reduce((snapshot, property) => {
+      snapshot[property] = {
+        value: page.style.getPropertyValue(property),
+        priority: page.style.getPropertyPriority(property)
+      };
+      return snapshot;
+    }, {}));
     page.style.setProperty("will-change", "transform", "important");
     page.style.setProperty("backface-visibility", "hidden", "important");
     return;
@@ -459,15 +475,14 @@ function setMobilePageCompositorReady(page, enabled = false) {
 function setMobilePageWarmLayout(page, shouldWarm = false) {
   if (!(page instanceof HTMLElement)) return;
   if (shouldWarm) {
-    if (!mobilePageWarmStyleState.has(page)) {
-      mobilePageWarmStyleState.set(page, MOBILE_PAGE_WARM_STYLE_PROPERTIES.reduce((snapshot, property) => {
-        snapshot[property] = {
-          value: page.style.getPropertyValue(property),
-          priority: page.style.getPropertyPriority(property)
-        };
-        return snapshot;
-      }, {}));
-    }
+    if (mobilePageWarmStyleState.has(page)) return;
+    mobilePageWarmStyleState.set(page, MOBILE_PAGE_WARM_STYLE_PROPERTIES.reduce((snapshot, property) => {
+      snapshot[property] = {
+        value: page.style.getPropertyValue(property),
+        priority: page.style.getPropertyPriority(property)
+      };
+      return snapshot;
+    }, {}));
     const warmStyles = {
       position: "fixed",
       display: "block",
@@ -769,13 +784,45 @@ function ensureMobileBottomShell() {
     </div>
   `;
 
+  let pageTouchStart = null;
+  let suppressPageClickUntil = 0;
+  const selectMobileBottomPage = (pageButton) => {
+    if (!pageButton) return;
+    closeAllMobileOverlays();
+    const pageId = pageButton.dataset.mobilePage;
+    if (getActivePageElement()?.id !== `page-${pageId}`) {
+      activatePage(pageId, { mobileNavHandoff: true });
+    }
+  };
+
+  mobileBottomShell.addEventListener("touchstart", (event) => {
+    const pageButton = event.target.closest("[data-mobile-page]");
+    const touch = event.touches?.[0];
+    pageTouchStart = pageButton && touch
+      ? { button: pageButton, identifier: touch.identifier, x: touch.clientX, y: touch.clientY }
+      : null;
+  }, { passive: true });
+
+  mobileBottomShell.addEventListener("touchend", (event) => {
+    const start = pageTouchStart;
+    pageTouchStart = null;
+    if (!start) return;
+    const touch = Array.from(event.changedTouches || []).find(item => item.identifier === start.identifier);
+    if (!touch || Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 14) return;
+    event.preventDefault();
+    suppressPageClickUntil = Date.now() + 500;
+    selectMobileBottomPage(start.button);
+  }, { passive: false });
+
+  mobileBottomShell.addEventListener("touchcancel", () => {
+    pageTouchStart = null;
+  }, { passive: true });
+
   mobileBottomShell.addEventListener("click", (event) => {
     const pageButton = event.target.closest("[data-mobile-page]");
     if (pageButton) {
       event.preventDefault();
-      closeAllMobileOverlays();
-      activatePage(pageButton.dataset.mobilePage);
-      syncMobileBottomShellState();
+      if (Date.now() >= suppressPageClickUntil) selectMobileBottomPage(pageButton);
       return;
     }
 
@@ -785,7 +832,9 @@ function ensureMobileBottomShell() {
   document.body.appendChild(mobileBottomShell);
 
   if (!mobileBottomShellTimer) {
-    mobileBottomShellTimer = window.setInterval(syncMobileBottomShellState, 1200);
+    mobileBottomShellTimer = window.setInterval(() => {
+      syncMobileBottomShellState({ deferExtent: true });
+    }, 1200);
   }
 
   return mobileBottomShell;
@@ -1560,6 +1609,7 @@ let mobileSwipeHandledTimestamp = -1;
 let mobileSwipeSuppressClickUntil = 0;
 let mobileSwipeClickGuardInstalled = false;
 const mobileSwipePreviewClassState = new WeakMap();
+const mobileSwipeTouchStartOwners = new WeakMap();
 
 function getMobileSwipeDirection(startX, startY, endX, endY, options = {}) {
   const minDistance = Number.isFinite(options.minDistance) ? options.minDistance : MOBILE_SWIPE_MIN_DISTANCE;
@@ -2003,6 +2053,11 @@ function bindMobileSwipe(element, callback, options = {}) {
   };
 
   element.addEventListener("touchstart", (event) => {
+    const existingOwner = mobileSwipeTouchStartOwners.get(event);
+    if (existingOwner && existingOwner !== element) {
+      tracking = false;
+      return;
+    }
     if (!isMobileLayoutViewport() || event.touches.length !== 1 || shouldIgnoreTarget(event.target)) {
       tracking = false;
       return;
@@ -2012,6 +2067,9 @@ function bindMobileSwipe(element, callback, options = {}) {
       tracking = false;
       return;
     }
+    // Touchstart bubbles from the deepest bound card to the app root. Claiming
+    // it here gives nested carousels priority without changing their wraparound.
+    mobileSwipeTouchStartOwners.set(event, element);
     startX = touch.clientX;
     startY = touch.clientY;
     startedAt = Date.now();
@@ -2512,7 +2570,7 @@ function ensureMobileManualReportControls() {
   }
 }
 
-function syncMobileBottomShellState() {
+function syncMobileBottomShellState(options = {}) {
   const isMobile = isMobileLayoutViewport();
   const shell = ensureMobileBottomShell();
   if (!shell) return;
@@ -2523,11 +2581,16 @@ function syncMobileBottomShellState() {
   const activePageId = getActivePageElement()?.id?.replace("page-", "") || "home";
   shell.querySelectorAll("[data-mobile-page]").forEach((button) => {
     const isActive = button.dataset.mobilePage === activePageId;
-    button.classList.toggle("active", isActive);
-    button.setAttribute("aria-current", isActive ? "page" : "false");
+    if (button.classList.contains("active") !== isActive) {
+      button.classList.toggle("active", isActive);
+    }
+    const ariaCurrent = isActive ? "page" : "false";
+    if (button.getAttribute("aria-current") !== ariaCurrent) {
+      button.setAttribute("aria-current", ariaCurrent);
+    }
   });
 
-  scheduleMobileScrollExtentSync();
+  if (!options.deferExtent) scheduleMobileScrollExtentSync();
 }
 
 function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
@@ -2822,13 +2885,13 @@ function installMobileTouchScrollGuard() {
   }, { passive: true });
 }
 
-function scrollMobilePageToTop() {
+function scrollMobilePageToTop(options = {}) {
   if (isMobileLayoutViewport()) {
     const scrollContainer = getMobileScrollContainer();
     if (scrollContainer) scrollContainer.scrollTop = 0;
     if (document.body) document.body.scrollTop = 0;
     if (document.documentElement) document.documentElement.scrollTop = 0;
-    scheduleMobileScrollExtentSync();
+    if (!options.deferExtent) scheduleMobileScrollExtentSync();
   }
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
@@ -44210,11 +44273,26 @@ function getEditProfileCustomAccentValue(profile = getActiveProfile()) {
 
 function scheduleActivatedMobilePageHydration(pageId = "", token = pageTransitionToken, options = {}) {
   const immediate = Boolean(options?.immediate);
+  const startDelay = Math.max(0, Number(options?.startDelay) || 0);
   const followUpDelay = Math.max(32, Number(options?.followUpDelay) || (immediate ? 72 : 120));
   if (!pageId) return;
   if (mobilePageHydrationTimer) {
     window.clearTimeout(mobilePageHydrationTimer);
     mobilePageHydrationTimer = 0;
+  }
+  if (startDelay) {
+    mobilePageHydrationTimer = window.setTimeout(() => {
+      mobilePageHydrationTimer = 0;
+      window.requestAnimationFrame(() => {
+        runActivatedMobilePageHydration(pageId, token);
+        if (token !== pageTransitionToken) return;
+        mobilePageHydrationTimer = window.setTimeout(() => {
+          mobilePageHydrationTimer = 0;
+          runActivatedMobilePageHydration(pageId, token);
+        }, followUpDelay);
+      });
+    }, startDelay);
+    return;
   }
   if (immediate) {
     runActivatedMobilePageHydration(pageId, token);
@@ -44231,7 +44309,9 @@ function activatePage(pageId, options = {}){
 
   hideChartTooltip();
   const mobileSwipeHandoff = Boolean(options?.mobileSwipeHandoff && isMobileLayoutViewport());
-  if (pageId === "home" && !mobileSwipeHandoff) {
+  const mobileNavHandoff = Boolean(options?.mobileNavHandoff && isMobileLayoutViewport());
+  const mobileFastHandoff = mobileSwipeHandoff || mobileNavHandoff;
+  if (pageId === "home" && !mobileFastHandoff) {
     scheduleLoadoutValueTextFit();
   }
 
@@ -44278,10 +44358,12 @@ function activatePage(pageId, options = {}){
       allPages.forEach(page => void page.offsetHeight);
     }
 
-    scrollMobilePageToTop();
-    syncMobileBottomShellState();
+    scrollMobilePageToTop({ deferExtent: mobileNavHandoff });
+    syncMobileBottomShellState({ deferExtent: mobileNavHandoff });
     if (mobileSwipeHandoff) {
       scheduleMobileScrollExtentSync();
+    } else if (mobileNavHandoff) {
+      scheduleActivatedMobilePageHydration(pageId, token, { startDelay: 260, followUpDelay: 96 });
     } else {
       scheduleActivatedMobilePageHydration(pageId, token, { immediate: true, followUpDelay: 72 });
     }
@@ -44324,7 +44406,7 @@ function activatePage(pageId, options = {}){
 
   if (isMobileLayoutViewport()) {
     document.body.classList.remove("mobile-nav-hidden");
-    scheduleMobileNavVisibility();
+    if (!mobileNavHandoff) scheduleMobileNavVisibility();
     if (!isMobilePageSwitch) {
       const activationToken = pageTransitionToken;
       window.requestAnimationFrame(() => {
@@ -44337,7 +44419,7 @@ function activatePage(pageId, options = {}){
   if (pageId !== "logging") cancelScheduledLoggingFeedRender();
 
   const runPageActivationWork = () => {
-    if (mobileSwipeHandoff) {
+    if (mobileFastHandoff) {
       const activePageId = getActivePageElement()?.id?.replace("page-", "") || "";
       if (activePageId !== pageId) return;
       if (pageId === "home" && pendingAgentFromLog) {

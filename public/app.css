@@ -51319,6 +51319,8 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-pa
   white-space:nowrap !important;
   overflow:hidden !important;
   text-overflow:clip !important;
+  transition:none !important;
+  animation:none !important;
 }
 
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-page-btn:active{
