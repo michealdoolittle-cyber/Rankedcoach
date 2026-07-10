@@ -113,15 +113,6 @@ const MODALS = [
       await openProfileDropdown(page, viewport);
       await page.click("#pdOpenSettings").catch(() => {}); await page.waitForTimeout(400);
   } },
-  { key: "import-history", open: async (page, viewport) => {
-      await openProfileDropdown(page, viewport);
-      await page.click("#pdAccountSupportBtn").catch(() => {});
-      await page.waitForTimeout(200);
-      await page.click('[data-account-support-tab="sync"]').catch(() => {});
-      await page.waitForTimeout(100);
-      await page.click("#accountSupportImportHistoryBtn").catch(() => {});
-      await page.waitForTimeout(400);
-  } },
   { key: "ask-coach", open: async (page, viewport) => {
       await page.click(viewport === "mobile" ? "#mobileAskCoachOpen" : "#askCoachOpen").catch(() => {});
       await page.waitForTimeout(500);

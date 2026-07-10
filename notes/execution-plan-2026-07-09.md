@@ -2,7 +2,7 @@
 
 Everything currently queued across `notes/*.md`, in the order it should actually be worked, with the reasoning for that order. This file doesn't repeat the detailed directives — it points at them and says what to do first and why. Update the status line here as phases complete; the detailed status still lives in each source file.
 
-**Status:** Phase 1 shipped. Phase 2 was rechecked on a fresh local cache-busted build, and the manual-mode overlay stack issue was fixed there. Phase 3 structural screenshot-import fixes shipped, but a rerun against Michael's original real screenshots is still pending because those source images are not in this workspace. Phase 4 shipped, and the visual audit passed clean.
+**Status:** Phase 1 shipped. Phase 2 was rechecked on a fresh local cache-busted build, and the manual-mode overlay stack issue was fixed there. Phase 3 is retired and its Tracker.gg/OCR feature was removed on 2026-07-10 in favor of HenrikDev Riot-ID sync. Phase 4 shipped, and the visual audit passed clean.
 
 ---
 
@@ -38,7 +38,7 @@ Only after Phase 1 is confirmed fixed and re-tested fresh:
 
 ## Phase 3 — screenshot import structural fixes — **RETIRED 2026-07-10**
 
-**Superseded, do not continue this phase.** Real HenrikDev API access is now live (`notes/henrikdev-integration.md`), making screenshot-OCR import unnecessary — it's being removed, not further fixed. See `notes/henrikdev-integration.md`'s "Removal" section for the actual directive. Original phase text kept below for history only.
+**Superseded and removed, do not continue this phase.** HenrikDev Riot-ID sync makes screenshot-OCR import unnecessary. The reachable feature was removed on 2026-07-10; see `notes/henrikdev-integration.md`. Original phase text remains below for history only.
 
 **`notes/screenshot-import.md`**, the 2026-07-09 entry. This is the highest real user-value item in this batch — it's the primary non-manual data path into the app, and the first real-screenshot test just proved two of its core fields (Agent, Result) can never work as currently built, not just "need tuning." In order:
 

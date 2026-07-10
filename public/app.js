@@ -761,7 +761,6 @@ function closeAllMobileOverlays() {
   closeAccountSupportModal?.();
   hideModalById?.("editProfileModal");
   closeSecuritySettingsModal?.();
-  closeHistoryImportModal?.(false);
   closeRiotProfileConfirmModal?.();
   hideModalById?.("bugReportModal");
   hideModalById?.("goalRankModal");
@@ -10950,9 +10949,6 @@ async function toggleManualEntryModeFromUI() {
   setManualEntryMode(nextEnabled);
   updateLoggingDebriefPreview?.();
   syncAccountSupportUI?.();
-  if (nextEnabled && shouldShowHistoryImportOnManualEntry()) {
-    window.setTimeout(() => openHistoryImportModal(0), 180);
-  }
   return true;
 }
 
@@ -10981,7 +10977,6 @@ function syncAccountSupportUI(profile = getActiveProfile()) {
   }
   syncAccountSupportAccessibilityControls(profile);
   syncManualEntryModeUI?.();
-  syncTrackerProfileUrlUI?.(profile);
 }
 
 function syncAccountSupportAccessibilityControls(profile = getActiveProfile()) {
@@ -11560,81 +11555,15 @@ function onMatchSaved(record, options = {}) {
   const title = importedCount > 1 ? "History updated" : "Match saved";
   const message = importedCount > 1
     ? `${importedCount} matches imported into this profile.`
-    : options.source === "history-import"
-      ? "Match imported into this profile."
-      : "Match report saved to this profile.";
+    : "Match report saved to this profile.";
   showToast(message, { title, variant });
   if (result === "win" || result === "loss") {
     triggerPremiumMoment("result", { result });
   }
 }
 
-const TRACKER_PROFILE_URL_STORAGE_NOTE = "reference-only";
-const HISTORY_IMPORT_TESSERACT_SRC = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
-let historyImportState = { step: 0, records: [], failures: [], processing: false };
-
-function normalizeTrackerProfileUrl(value = "") {
-  const raw = String(value || "").trim();
-  if (!raw) return "";
-  try {
-    const url = new URL(raw);
-    const host = url.hostname.toLowerCase();
-    if (!host.endsWith("tracker.gg")) return "";
-    if (!url.pathname.toLowerCase().includes("/valorant/profile/")) return "";
-    url.hash = "";
-    return url.toString();
-  } catch {
-    return "";
-  }
-}
-
-function syncTrackerProfileUrlUI(profile = getActiveProfile()) {
-  const normalizedUrl = normalizeTrackerProfileUrl(profile?.trackerProfileUrl || "");
-  const inputs = [
-    document.getElementById("trackerProfileUrlInput"),
-    document.getElementById("accountSupportTrackerProfileUrlInput")
-  ].filter(Boolean);
-  inputs.forEach((input) => {
-    input.value = normalizedUrl;
-    input.setAttribute("data-storage-note", TRACKER_PROFILE_URL_STORAGE_NOTE);
-  });
-  const link = document.getElementById("profileTrackerLink");
-  if (!link) return;
-  link.hidden = !normalizedUrl;
-  if (normalizedUrl) {
-    link.setAttribute("href", normalizedUrl);
-    link.removeAttribute("aria-disabled");
-    return;
-  }
-  link.removeAttribute("href");
-  link.setAttribute("aria-disabled", "true");
-}
-
-function saveTrackerProfileUrlFromSettings(inputEl = null) {
-  const input = inputEl || document.getElementById("trackerProfileUrlInput") || document.getElementById("accountSupportTrackerProfileUrlInput");
-  const profile = getActiveProfile();
-  if (!input || !profile) return;
-  const normalizedUrl = normalizeTrackerProfileUrl(input.value || "");
-  input.classList.toggle("is-invalid", Boolean(input.value && !normalizedUrl));
-  if (input.value && !normalizedUrl) {
-    input.setCustomValidity("Use a Tracker.gg Valorant profile URL.");
-    input.reportValidity?.();
-    return;
-  }
-  input.setCustomValidity("");
-  updateProfile(profile.id, { trackerProfileUrl: normalizedUrl });
-  syncTrackerProfileUrlUI(getActiveProfile());
-  syncAccountSupportUI?.();
-}
-
 function getCanonicalMatchRecordCount() {
   return window.RankedCoachMatchRecord?.getRuntimeRecords?.({ matches, logEntries, profile: getActiveProfile() })?.length || 0;
-}
-
-function shouldShowHistoryImportOnManualEntry() {
-  const profile = getActiveProfile();
-  if (!profile || profile.historyImportSkippedAt) return false;
-  return getCanonicalMatchRecordCount() === 0;
 }
 
 const COACH_READINESS_UNLOCKS = [
@@ -11781,338 +11710,6 @@ function positionProfileRatingDropdown() {
   dropdown.style.setProperty("top", `${top}px`, "important");
   dropdown.style.setProperty("width", `${width}px`, "important");
   dropdown.style.setProperty("max-height", `${Math.max(220, viewportHeight - top - 12)}px`, "important");
-}
-
-function openHistoryImportModal(startStep = 0) {
-  historyImportState.step = Math.max(0, Math.min(4, Number(startStep) || 0));
-  showModalById("historyImportModal");
-  renderHistoryImportModal();
-}
-
-function closeHistoryImportModal(markSkipped = false) {
-  if (markSkipped) {
-    const profile = getActiveProfile();
-    if (profile) updateProfile(profile.id, { historyImportSkippedAt: nowISO() });
-  }
-  hideModalById("historyImportModal");
-}
-
-function renderHistoryImportModal() {
-  const step = historyImportState.step;
-  document.querySelectorAll("[data-history-step]").forEach(panel => panel.classList.toggle("active", Number(panel.dataset.historyStep) === step));
-  document.querySelectorAll("[data-history-step-dot]").forEach(dot => dot.classList.toggle("active", Number(dot.dataset.historyStepDot) === step));
-  const title = document.getElementById("historyImportTitle");
-  const titles = ["Let's pull in your match history", "Open your Tracker.gg profile", "Screenshot these sections", "Upload your screenshots", "Review before saving"];
-  if (title) title.textContent = titles[step] || titles[0];
-  const back = document.getElementById("historyImportBack");
-  const next = document.getElementById("historyImportNext");
-  const confirm = document.getElementById("historyImportConfirm");
-  if (back) back.hidden = step <= 0;
-  if (next) next.hidden = step >= 4;
-  if (confirm) confirm.hidden = step !== 4 || !historyImportState.records.length;
-  renderHistoryImportReview();
-}
-
-function loadHistoryImportOcrEngine() {
-  if (window.Tesseract?.recognize) return Promise.resolve(window.Tesseract);
-  if (document.querySelector('script[data-history-ocr="tesseract"]')) {
-    return new Promise((resolve, reject) => {
-      const started = Date.now();
-      const tick = () => {
-        if (window.Tesseract?.recognize) return resolve(window.Tesseract);
-        if (Date.now() - started > 15000) return reject(new Error("OCR library timed out."));
-        window.setTimeout(tick, 150);
-      };
-      tick();
-    });
-  }
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = HISTORY_IMPORT_TESSERACT_SRC;
-    script.async = true;
-    script.defer = true;
-    script.dataset.historyOcr = "tesseract";
-    script.onload = () => window.Tesseract?.recognize ? resolve(window.Tesseract) : reject(new Error("OCR library did not load."));
-    script.onerror = () => reject(new Error("OCR library failed to load."));
-    document.head.appendChild(script);
-  });
-}
-
-function findFirstKnownToken(line = "", tokens = []) {
-  const normalized = String(line || "").toLowerCase();
-  return (tokens || []).find(token => normalized.includes(String(token || "").toLowerCase())) || "";
-}
-
-function parseKdaText(text = "") {
-  const match = String(text || "").match(/(\d{1,2})\s*[\/-]\s*(\d{1,2})\s*[\/-]\s*(\d{1,2})/);
-  if (!match) return {};
-  return { kills: Number(match[1]), deaths: Number(match[2]), assists: Number(match[3]), kdaText: `${match[1]}/${match[2]}/${match[3]}` };
-}
-
-function parseTrackerRoundScoreText(text = "") {
-  const match = String(text || "").match(/\b(\d{1,2})\s*:\s*(\d{1,2})\b/);
-  if (!match) return {};
-  return {
-    ourScore: Number(match[1]),
-    theirScore: Number(match[2]),
-    scoreText: `${match[1]}:${match[2]}`
-  };
-}
-
-function inferTrackerResultFromScore(score = {}) {
-  const ourScore = Number(score?.ourScore);
-  const theirScore = Number(score?.theirScore);
-  if (!Number.isFinite(ourScore) || !Number.isFinite(theirScore)) return "";
-  if (ourScore === theirScore) return "draw";
-  return ourScore > theirScore ? "win" : "loss";
-}
-
-function normalizeHistoryImportAgentValue(value = "") {
-  const normalized = String(value || "").trim().toLowerCase();
-  return allAgents.find((agent) => String(agent || "").trim().toLowerCase() === normalized) || "";
-}
-
-function renderHistoryImportAgentPicker(selectedAgent = "") {
-  const normalizedSelected = String(normalizeHistoryImportAgentValue(selectedAgent) || "").toLowerCase();
-  return `
-    <div class="history-import-agent-picker" role="group" aria-label="Choose agent">
-      ${allAgents.map((agent) => {
-        const normalizedAgent = String(agent || "").toLowerCase();
-        const isActive = normalizedAgent === normalizedSelected;
-        return `
-          <button
-            type="button"
-            class="history-import-agent-option ${isActive ? "is-active" : ""}"
-            data-history-agent-option="${escapeHtml(agent)}"
-            aria-pressed="${isActive ? "true" : "false"}"
-            aria-label="${escapeHtml(agent)}">
-            <img src="${escapeHtml(getAgentIconUrl(normalizedAgent))}" alt="${escapeHtml(agent)} icon">
-          </button>
-        `;
-      }).join("")}
-    </div>
-  `;
-}
-
-function renderHistoryImportMapOptions(selectedMap = "") {
-  const maps = [...new Set([...(ALL_VALORANT_MAP_NAMES || []), ...(COMPETITIVE_MAP_POOL || [])].filter(Boolean))];
-  return `
-    <option value="" ${selectedMap ? "" : "selected"}>Choose map</option>
-    ${maps.map((mapName) => `
-      <option value="${escapeHtml(mapName)}" ${String(selectedMap || "").toLowerCase() === String(mapName || "").toLowerCase() ? "selected" : ""}>
-        ${escapeHtml(mapName)}
-      </option>
-    `).join("")}
-  `;
-}
-
-function syncHistoryImportAgentPicker(row, selectedAgent = "") {
-  const normalizedSelected = String(normalizeHistoryImportAgentValue(selectedAgent) || "").toLowerCase();
-  row?.querySelectorAll?.("[data-history-agent-option]")?.forEach((button) => {
-    const isActive = String(button.getAttribute("data-history-agent-option") || "").toLowerCase() === normalizedSelected;
-    button.classList.toggle("is-active", isActive);
-    button.setAttribute("aria-pressed", isActive ? "true" : "false");
-  });
-}
-
-function setHistoryImportAgentSelection(row, nextAgent = "") {
-  const input = row?.querySelector?.('[data-history-field="agent"]');
-  const normalizedAgent = normalizeHistoryImportAgentValue(nextAgent);
-  if (input) input.value = normalizedAgent;
-  syncHistoryImportAgentPicker(row, normalizedAgent);
-}
-
-function parseTrackerOcrText(rawText = "", imageName = "") {
-  const text = String(rawText || "").replace(/\r/g, "\n");
-  const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
-  const mapTokens = ALL_VALORANT_MAP_NAMES || COMPETITIVE_MAP_POOL || [];
-  const records = [];
-  const warnings = [];
-  const rankLine = lines.find(line => /\b(iron|bronze|silver|gold|platinum|diamond|ascendant|immortal|radiant)\b/i.test(line));
-  const rrLine = lines.find(line => /\b\d{1,4}\s*RR\b/i.test(line));
-  const overviewContext = {
-    rank: rankLine?.match(/\b(Iron|Bronze|Silver|Gold|Platinum|Diamond|Ascendant|Immortal|Radiant)\s*\d?\b/i)?.[0] || "",
-    rr: rrLine?.match(/\b(\d{1,4})\s*RR\b/i)?.[1] || null
-  };
-
-  const seenWindows = new Set();
-  const kdaAnchorIndexes = lines.reduce((indexes, line, index) => {
-    if (parseKdaText(line).kdaText) indexes.push(index);
-    return indexes;
-  }, []);
-
-  kdaAnchorIndexes.forEach((index) => {
-    const windowLines = lines.slice(Math.max(0, index - 2), Math.min(lines.length, index + 3));
-    const windowSignature = windowLines.join("|").toLowerCase();
-    if (seenWindows.has(windowSignature)) return;
-    seenWindows.add(windowSignature);
-
-    const windowText = windowLines.join(" ");
-    const map = findFirstKnownToken(windowText, mapTokens);
-    const score = parseTrackerRoundScoreText(windowText);
-    const result = inferTrackerResultFromScore(score);
-    const kda = parseKdaText(windowText);
-    if (!kda.kdaText) return;
-    const parseWarnings = [];
-    parseWarnings.push("Choose the agent icon for this match.");
-    if (!result) parseWarnings.push("Result needs a quick score check.");
-    if (!map) parseWarnings.push("Map needs a quick check.");
-    records.push(window.RankedCoachMatchRecord.fromTrackerOcrMatch({
-      agent: "",
-      map,
-      result: result || "unknown",
-      ...kda,
-      confidence: {
-        overall: parseWarnings.length ? "low" : "medium",
-        fields: { agent: "low", map: map ? "medium" : "low", result: result ? "medium" : "low", kda: "medium" }
-      },
-      parseWarnings
-    }, {
-      imageName,
-      screenshotType: "recent_matches",
-      rawText,
-      rank: overviewContext.rank,
-      rr: overviewContext.rr,
-      roundScore: score.scoreText || ""
-    }));
-  });
-
-  if (!records.length) {
-    if (overviewContext.rank || overviewContext.rr) {
-      warnings.push("This screenshot looks like a season overview. Add a Recent Matches list screenshot too.");
-    } else {
-      warnings.push("No recent match rows were found. Upload the Tracker.gg Recent Matches list screenshot.");
-    }
-  }
-  return { records, overview: overviewContext, warnings };
-}
-
-async function processHistoryImportFiles(fileList) {
-  const files = [...(fileList || [])].filter(file => /^image\//i.test(file.type || ""));
-  const status = document.getElementById("historyImportStatus");
-  if (!files.length) {
-    if (status) status.textContent = "Choose one or more screenshots first.";
-    return;
-  }
-  historyImportState.processing = true;
-  historyImportState.records = [];
-  historyImportState.failures = [];
-  if (status) status.textContent = `Reading ${files.length} screenshot${files.length === 1 ? "" : "s"}...`;
-
-  let tesseract = null;
-  try {
-    tesseract = await loadHistoryImportOcrEngine();
-  } catch (error) {
-    historyImportState.failures.push({ imageName: "OCR setup", message: error?.message || "OCR library unavailable." });
-  }
-
-  for (const file of files) {
-    if (!tesseract?.recognize) {
-      historyImportState.failures.push({ imageName: file.name, message: "OCR is unavailable in this browser session." });
-      continue;
-    }
-    try {
-      const result = await tesseract.recognize(file, "eng");
-      const rawText = result?.data?.text || "";
-      const parsed = parseTrackerOcrText(rawText, file.name);
-      historyImportState.records.push(...parsed.records);
-      if (!parsed.records.length || parsed.warnings.length) {
-        historyImportState.failures.push({ imageName: file.name, message: parsed.warnings.join(" ") || "Couldn't read this one clearly.", rawText });
-      }
-    } catch (error) {
-      historyImportState.failures.push({ imageName: file.name, message: error?.message || "Couldn't read this one." });
-    }
-  }
-
-  historyImportState.processing = false;
-  historyImportState.step = 4;
-  if (status) status.textContent = `${historyImportState.records.length} possible match${historyImportState.records.length === 1 ? "" : "es"} ready for review.`;
-  renderHistoryImportModal();
-}
-
-function renderHistoryImportReview() {
-  const review = document.getElementById("historyImportReview");
-  const failures = document.getElementById("historyImportFailures");
-  if (review) {
-    review.innerHTML = !historyImportState.records.length
-      ? `<div class="history-import-empty">No matches ready yet. Upload screenshots or use the manual form.</div>`
-      : historyImportState.records.map((record, index) => `
-        <div class="history-import-record" data-history-record-index="${index}">
-          <label class="history-import-agent-field">
-            <span>Agent</span>
-            <input type="hidden" data-history-field="agent" value="${escapeHtml(normalizeHistoryImportAgentValue(record.agent || ""))}">
-            ${renderHistoryImportAgentPicker(record.agent || "")}
-          </label>
-          <label>Map<select data-history-field="map">${renderHistoryImportMapOptions(record.map || "")}</select></label>
-          <label>Result<select data-history-field="result">${["unknown", "win", "loss", "draw"].map(value => `<option value="${value}" ${record.result === value ? "selected" : ""}>${value}</option>`).join("")}</select></label>
-          <label>Kills<input data-history-field="kills" inputmode="numeric" value="${record.stats.kills ?? ""}"></label>
-          <label>Deaths<input data-history-field="deaths" inputmode="numeric" value="${record.stats.deaths ?? ""}"></label>
-          <label>Assists<input data-history-field="assists" inputmode="numeric" value="${record.stats.assists ?? ""}"></label>
-          ${(record.importMeta?.parseWarnings || []).length ? `<div class="history-import-warning">${escapeHtml(record.importMeta.parseWarnings.join(" "))}</div>` : ""}
-        </div>`).join("");
-    review.querySelectorAll("[data-history-record-index]").forEach(row => {
-      row.addEventListener("click", (event) => {
-        const button = event.target.closest?.("[data-history-agent-option]");
-        if (!button) return;
-        event.preventDefault();
-        setHistoryImportAgentSelection(row, button.getAttribute("data-history-agent-option") || "");
-        updateHistoryImportRecordFromRow(row);
-      });
-      row.addEventListener("input", () => updateHistoryImportRecordFromRow(row));
-      row.addEventListener("change", () => updateHistoryImportRecordFromRow(row));
-    });
-  }
-  if (failures) {
-    failures.innerHTML = historyImportState.failures.map(failure => `
-      <div class="history-import-failure">
-        <strong>${escapeHtml(failure.imageName || "Screenshot")}</strong>
-        <span>${escapeHtml(failure.message || "Couldn't read this one.")}</span>
-        <button type="button" data-history-manual-fallback>Enter manually</button>
-      </div>`).join("");
-    failures.querySelectorAll("[data-history-manual-fallback]").forEach(button => {
-      button.addEventListener("click", () => {
-        closeHistoryImportModal(false);
-        document.querySelector('[data-page="logging"]')?.click?.();
-        document.getElementById("manualMatchPanel")?.scrollIntoView?.({ behavior: "smooth", block: "center" });
-      });
-    });
-  }
-}
-
-function updateHistoryImportRecordFromRow(row) {
-  const index = Number(row?.dataset?.historyRecordIndex);
-  const record = historyImportState.records[index];
-  if (!record) return;
-  const read = field => row.querySelector(`[data-history-field="${field}"]`)?.value?.trim() || "";
-  record.agent = normalizeHistoryImportAgentValue(read("agent")) || null;
-  record.role = record.agent ? (agentRoles?.[record.agent] || null) : null;
-  record.map = read("map") || null;
-  record.result = window.RankedCoachMatchRecord.normalizeResult(read("result"));
-  record.stats.kills = window.RankedCoachMatchRecord.readNumber(read("kills"));
-  record.stats.deaths = window.RankedCoachMatchRecord.readNumber(read("deaths"));
-  record.stats.assists = window.RankedCoachMatchRecord.readNumber(read("assists"));
-  record.confidence.overall = "high";
-  syncHistoryImportAgentPicker(row, record.agent || "");
-}
-
-function confirmHistoryImportRecords() {
-  const profile = getActiveProfile();
-  const adapter = window.RankedCoachMatchRecord;
-  if (!profile || !adapter || !historyImportState.records.length) return;
-  const imported = historyImportState.records.map(record => adapter.toLegacyMatch({ ...record, pendingVerification: false, confidence: { ...record.confidence, overall: "high" } }));
-  matches = (Array.isArray(matches) ? matches : []).concat(imported).sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
-  profile.matches = matches.slice();
-  profile.importSource = profile.importSource || "tracker_screenshot";
-  profile.lastHistoryImportAt = nowISO();
-  saveProfiles();
-  recomputeFromMatches?.();
-  onMatchSaved(imported[imported.length - 1] || null, {
-    profile,
-    source: "history-import",
-    importedCount: imported.length
-  });
-  closeHistoryImportModal(false);
-  document.querySelector('[data-page="home"]')?.click?.();
 }
 
 function hasCompletedAppEntryChoice() {
@@ -38538,36 +38135,6 @@ function bindEvents(){
     await toggleManualEntryModeFromUI();
   });
 
-  document.getElementById("importHistoryOpenBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    profileDropdown?.classList.remove("open");
-    openHistoryImportModal(0);
-  });
-
-  document.getElementById("saveTrackerProfileUrlBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    saveTrackerProfileUrlFromSettings();
-  });
-
-  document.getElementById("historyImportClose")?.addEventListener("click", () => closeHistoryImportModal(false));
-  document.getElementById("historyImportSkip")?.addEventListener("click", () => closeHistoryImportModal(true));
-  document.getElementById("historyImportBack")?.addEventListener("click", () => {
-    historyImportState.step = Math.max(0, historyImportState.step - 1);
-    renderHistoryImportModal();
-  });
-  document.getElementById("historyImportNext")?.addEventListener("click", () => {
-    historyImportState.step = Math.min(4, historyImportState.step + 1);
-    renderHistoryImportModal();
-  });
-  document.getElementById("historyImportConfirm")?.addEventListener("click", confirmHistoryImportRecords);
-  document.getElementById("historyImportFiles")?.addEventListener("change", (event) => {
-    processHistoryImportFiles(event.target.files);
-  });
-  document.getElementById("historyImportModal")?.addEventListener("click", (event) => {
-    if (event.target === document.getElementById("historyImportModal")) closeHistoryImportModal(false);
-  });
   document.getElementById("profileRatingWidget")?.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -42013,8 +41580,6 @@ function normalizeProfileRecord(profile = {}) {
     avatarUrl: profile.avatarUrl || getDefaultProfileAvatarUrl(avatarAgent),
     navBackgroundUrl: profile.navBackgroundUrl || "",
     manualEntryMode: !!profile.manualEntryMode,
-    trackerProfileUrl: normalizeTrackerProfileUrl(profile.trackerProfileUrl || ""),
-    historyImportSkippedAt: profile.historyImportSkippedAt || "",
     profileBorderColor: normalizeProfileBorderColor(profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
     profileBorderRotate: !!profile.profileBorderRotate,
@@ -42222,7 +41787,6 @@ function clearDeletedProfileLocalCache(deletedProfileId) {
   updateNavRRToGoalRank?.();
   renderChart?.(currentSize);
   syncManualEntryModeUI?.();
-  syncTrackerProfileUrlUI?.(active);
 }
 
 async function requestDeleteProfile(id) {
@@ -42323,14 +41887,6 @@ function updateProfile(id, data){
 
   if (data.manualEntryMode != null) {
     profile.manualEntryMode = !!data.manualEntryMode;
-  }
-
-  if (data.trackerProfileUrl != null) {
-    profile.trackerProfileUrl = normalizeTrackerProfileUrl(data.trackerProfileUrl || "");
-  }
-
-  if (data.historyImportSkippedAt != null) {
-    profile.historyImportSkippedAt = String(data.historyImportSkippedAt || "");
   }
 
   if (data.profileBorderColor != null) {
@@ -42476,7 +42032,6 @@ function renderProfilesUI(){
 
   if (!currentAuthUser) {
     updateProfileHeaderUI?.();
-    syncTrackerProfileUrlUI?.(getActiveProfile());
     syncManualEntryModeUI?.();
     return;
   }
@@ -42548,7 +42103,6 @@ function renderProfilesUI(){
   }
 
   updateProfileDropdownMenu?.();
-  syncTrackerProfileUrlUI?.(active);
   syncManualEntryModeUI?.();
 }
 
@@ -46474,7 +46028,6 @@ function updateProfileHeaderUI(){
 
   applyProfileVisuals(p);
   updateProfileDropdownMenu?.();
-  syncTrackerProfileUrlUI?.(p);
 
 }
 

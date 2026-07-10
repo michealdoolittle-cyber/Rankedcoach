@@ -1,6 +1,6 @@
 # HenrikDev API Bridge — Data Integration for Coaching Engine
 
-**Status (2026-07-10):** Step B from the handoff doc (`RankedCoach_HenrikDev_Handoff_Guide.pdf`) is complete and **positive**. Real API test confirms the free Basic key's Raw endpoint carries everything needed — no fallback to a direct Riot-internal-endpoint client required. Step C (build the formula layer) is unblocked and ready to spec whenever this gets prioritized against the rest of the current queue.
+**Status (2026-07-10): SHIPPED.** Worker routing, the secret-backed Henrik proxy, round-level canonical records, incremental Riot-ID match sync, validated KAST, provisional rank benchmarks, and the Tracker.gg/OCR removal are implemented. The known real match produces exactly 17/22 KAST rounds (77%) with three trade-window saves. Production match pulls remain intentionally unavailable until `HENRIKDEV_API_KEY` is added as a Cloudflare Worker secret; local secret-backed validation is complete.
 
 ## Background — why this exists
 
@@ -121,6 +121,6 @@ Now that real match data can be pulled live from just a Riot ID, the manual scre
 - `notes/execution-plan-2026-07-09.md` — Phase 3 (screenshot import structural fixes) is now moot. Mark it retired rather than leaving it as an active phase Codex might still pick up — the dedupe/agent-picker/result-detection fixes speced there no longer matter if the feature's being removed.
 - `notes/mobile-nav-redesign.md` §9 — the Import History / Tracker.gg relocation work it describes as shipped is about to be deleted again; add a note there so it doesn't read as contradictory history.
 
-## Not yet done
+## Production handoff
 
-Everything in "Full build directive" above. This is a genuinely large, multi-part build (Worker routing fix, server-side proxy, schema extension, formula layer, UI removal) — bigger than any single item in the existing UI/bug-fix queue. Sequence it as its own track rather than folding into the existing execution plan's phase numbering.
+The build directive is complete. Add `HENRIKDEV_API_KEY` in the Cloudflare Worker settings (or run `wrangler secret put HENRIKDEV_API_KEY` from an authenticated workstation), redeploy, then confirm `/api/henrik/health` reports `configured: true`. The key must remain server-side and must never be added to `public/app.js` or any committed file.

@@ -1,6 +1,6 @@
 # Screenshot Import
 
-**Status (2026-07-10): SUPERSEDED, scheduled for removal.** Michael now has a real HenrikDev API key and confirmed live match-data access (see `notes/henrikdev-integration.md`) — real match stats can be pulled from just a Riot ID, making the manual screenshot-OCR workaround unnecessary. The removal directive (exact elements/functions to delete) lives in `notes/henrikdev-integration.md`'s "Removal" section. Don't continue fixing or polishing this feature — it's coming out, not staying.
+**Status (2026-07-10): SUPERSEDED AND REMOVED.** HenrikDev Riot-ID match sync replaces this workaround. The Tracker.gg link, URL storage, screenshot-import UI, OCR parser/state, Tesseract loader, and reachable app handlers have been removed; only the dormant canonical `fromTrackerOcrMatch()` adapter remains as required by `notes/henrikdev-integration.md`.
 
 **Status (2026-07-09), for history only:** Structural fixes are shipped in the current local build: anchored KDA parsing, score-based result inference, agent icon picker, map select, safe non-match failures, warning-text wrapping, and the Logging-page entry point move. A rerun against Michael's original real screenshots is still pending because those source images are not in this workspace. This work is now moot given the 2026-07-10 status above, but left in the file as a record of what was built.
 

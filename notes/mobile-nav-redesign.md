@@ -6,7 +6,7 @@
 
 **Status (2026-07-09 follow-up):** The Account & Support simplification is now shipped: the modal is down to `account` and `support`, Import History plus the Tracker.gg profile controls moved onto the Logging page near manual entry, Force Refresh was removed, the duplicate Account-tab Log out row was removed, Tip to Dev moved to the top of Support, and Manual Entry Mode now closes Account & Support before opening the starting RR prompt so the two mobile layers do not overlap.
 
-**Status (2026-07-10 follow-up):** The Import History / Tracker.gg controls this relocated onto the Logging page are being **removed entirely**, not kept — real HenrikDev API sync supersedes the manual screenshot workflow. See `notes/henrikdev-integration.md`'s "Removal" section. Don't read the line above as still-current for those two specific controls; everything else in this file's Account & Support work stands.
+**Status (2026-07-10 follow-up):** The relocated Import History / Tracker.gg controls were **removed entirely**. HenrikDev Riot-ID sync supersedes the screenshot workflow. Everything else in this file's Account & Support work still stands.
 
 ---
 

@@ -46,7 +46,7 @@ Build brief v3 asked for a list-only pass. No user-facing coaching copy was rewr
 
 - `Current Window` changed to `Recent Matches` where approved and on the compass visible fallback.
 - `No rating, mood, or map selected yet.` changed to `Add a rating, mood, or map to see it here.`
-- `Pending Riot sync verification` changed to `Still waiting on Riot's approval — log manually or import a screenshot for now`.
+- Manual fallback copy now says live sync uses the player's Riot ID and asks them to use the report only when a match cannot be pulled.
 - `No imported match sample yet.` changed to `Import a few matches to see this here.`
 - `No repeated map has enough matches yet.` changed to `Play this map a few more times and we'll show your trend here.`
 - `There are not enough mood logs yet to make a strong tilt read.` changed to `Log your mood a few more times and we'll tell you if tilt's affecting your games.`
@@ -61,7 +61,7 @@ Many strings still explain what a metric is instead of what a player should do w
 - Mobile header: `Ask Coach`
 - Settings quick menu: `Customize`, `Manual Entry Mode`, `Account & Support`, `Log in / Sign up`
 - Account & Support tabs: `Account`, `Data & Sync`, `Support`, `Legal`
-- Data & Sync rows: `Import History`, `Tracker.gg profile URL`, `Save Tracker Link`, `Force Refresh`, `Last synced: ...`
+- Historical Data & Sync labels for Tracker.gg and screenshot import were removed on 2026-07-10 when HenrikDev Riot-ID sync shipped.
 - Support rows: `Report a Bug`, `Contact Support`, `Tip to Dev`
 
 ## Held For Full-Context Rewrite

@@ -51,7 +51,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260709-mobile-nav-priority-01">
+<link rel="stylesheet" href="app.css?v=20260710-henrik-live-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -913,7 +913,6 @@ RIOT PROFILE MODAL
           <div id="profileDropdown" class="profile-dropdown profile-dropdown-pills" aria-label="Profile menu">
             <div class="profile-menu-user">
               <div id="profileDropdownIdentity" class="profile-menu-name">Guest User</div>
-              <a id="profileTrackerLink" class="profile-tracker-link profile-menu-tracker-link" href="#" target="_blank" rel="noopener noreferrer" hidden>View Tracker.gg Profile</a>
             </div>
             <div class="profile-menu-section profile-quick-menu">
               <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
@@ -1825,30 +1824,13 @@ stroke-linejoin="round"/>
           </div>
         </div>
 
-        <div class="logging-row">
-          <div class="logging-pill logging-data-tools">
-            <div class="logging-data-tools-copy">
-              <span class="pill-label">Match Data</span>
-              <p>Import Tracker screenshots or keep your profile link ready for later.</p>
-            </div>
-            <div class="logging-data-tools-actions">
-              <button id="importHistoryOpenBtn" class="pd-item logging-data-btn" type="button">Import History</button>
-              <label class="tracker-profile-field logging-tracker-field" for="trackerProfileUrlInput">
-                <span>Tracker.gg profile URL</span>
-                <input id="trackerProfileUrlInput" type="url" inputmode="url" placeholder="https://tracker.gg/valorant/profile/...">
-              </label>
-              <button id="saveTrackerProfileUrlBtn" class="pd-item logging-data-btn" type="button">Save Tracker Link</button>
-            </div>
-          </div>
-        </div>
-
         <div id="manualMatchPanel" class="manual-match-panel" hidden>
           <div class="manual-match-head">
             <div>
               <div class="manual-match-kicker">Offline Match Report</div>
-              <div class="manual-match-title">Add match stats when Riot sync is unavailable.</div>
+              <div class="manual-match-title">Add match stats when live match sync is unavailable.</div>
             </div>
-            <div class="manual-match-status">Still waiting on Riot's approval — log manually or import a screenshot for now</div>
+            <div class="manual-match-status">Live sync uses your Riot ID. Use this report when a match cannot be pulled.</div>
           </div>
 
           <div class="manual-match-grid">
@@ -2064,71 +2046,6 @@ stroke-linejoin="round"/>
   </div>
   </div>
 
-<div id="historyImportModal" class="lens-modal-overlay history-import-overlay">
-  <div class="lens-modal history-import-modal" role="dialog" aria-modal="true" aria-labelledby="historyImportTitle">
-    <div class="lens-modal-header">
-      <div>
-        <div id="historyImportKicker" class="lens-modal-kicker">Import History</div>
-        <div id="historyImportTitle" class="lens-modal-title">Let's pull in your match history</div>
-      </div>
-      <button id="historyImportClose" class="lens-modal-close" type="button">X</button>
-    </div>
-    <div class="lens-modal-body history-import-body">
-      <div class="history-import-stepper" aria-label="Import history steps">
-        <span data-history-step-dot="0" class="active">1</span>
-        <span data-history-step-dot="1">2</span>
-        <span data-history-step-dot="2">3</span>
-        <span data-history-step-dot="3">4</span>
-        <span data-history-step-dot="4">Review</span>
-      </div>
-
-      <section class="history-import-step active" data-history-step="0">
-        <h3>Let's pull in your match history</h3>
-        <p>We'll guide you to screenshot your own public profile so you don't have to type it all in.</p>
-      </section>
-
-      <section class="history-import-step" data-history-step="1">
-        <h3>Open your Tracker.gg profile</h3>
-        <p>Open Tracker.gg in a new tab, find your own Valorant profile, then come back here with screenshots.</p>
-        <a class="pd-item history-import-link" href="https://tracker.gg/valorant" target="_blank" rel="noopener noreferrer">Open Tracker.gg</a>
-      </section>
-
-      <section class="history-import-step" data-history-step="2">
-        <h3>Screenshot these sections</h3>
-        <div class="history-import-examples">
-          <div class="history-import-example"><span>Season Summary</span><small>Capture rank, RR, win rate, and KDA average.</small></div>
-          <div class="history-import-example"><span>Recent Matches</span><small>Capture agent, map, result, K/D/A, and score.</small></div>
-          <div class="history-import-example"><span>More Matches</span><small>Upload multiple images if your list spans several screens.</small></div>
-        </div>
-      </section>
-
-      <section class="history-import-step" data-history-step="3">
-        <h3>Upload your screenshots</h3>
-        <p>Images are read locally in your browser when OCR is available. Nothing is saved until you confirm the import.</p>
-        <label class="history-import-drop" for="historyImportFiles">
-          <span>Drag images here or choose files</span>
-          <small>PNG, JPG, WEBP screenshots are supported.</small>
-          <input id="historyImportFiles" type="file" accept="image/*" multiple>
-        </label>
-        <div id="historyImportStatus" class="history-import-status">Waiting for screenshots.</div>
-      </section>
-
-      <section class="history-import-step" data-history-step="4">
-        <h3>Review before saving</h3>
-        <p>Check every extracted match. Low-confidence or blank fields are highlighted so you can fix them first.</p>
-        <div id="historyImportReview" class="history-import-review"></div>
-        <div id="historyImportFailures" class="history-import-failures"></div>
-      </section>
-    </div>
-    <div class="history-import-actions">
-      <button id="historyImportSkip" type="button">Skip</button>
-      <button id="historyImportBack" type="button">Back</button>
-      <button id="historyImportNext" type="button">Next</button>
-      <button id="historyImportConfirm" type="button" hidden>Confirm Import</button>
-    </div>
-  </div>
-</div>
-
 <div id="goalRankModal" class="lens-modal-overlay">
   <div class="lens-modal">
     <div class="lens-modal-header">
@@ -2234,6 +2151,6 @@ stroke-linejoin="round"/>
   <script src="analytics/round-metrics.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="integrations/riot-sync.js?v=20260710-henrik-sync-01"></script>
-  <script type="module" src="app.js?v=20260710-henrik-formulas-01"></script>
+  <script type="module" src="app.js?v=20260710-henrik-live-01"></script>
 </body>
 </html>
