@@ -1,4 +1,4 @@
-export type MatchRecordSource = "manual" | "tracker_screenshot" | "riot_sync" | "demo" | "legacy";
+export type MatchRecordSource = "manual" | "tracker_screenshot" | "riot_sync" | "henrik_sync" | "demo" | "legacy";
 
 export type MatchRecordResult = "win" | "loss" | "draw" | "unknown";
 
@@ -23,6 +23,56 @@ export interface MatchRecordStats {
 export interface MatchRecordRounds {
   won: number | null;
   lost: number | null;
+}
+
+export interface MatchRecordTrackedPlayer {
+  puuid: string | null;
+  teamId: string | null;
+  agentId: string | null;
+  competitiveTier: number | null;
+  teammatePuuids: string[];
+  behaviorFactors: Record<string, unknown>;
+}
+
+export interface MatchRecordKillEvent {
+  killer: string | null;
+  victim: string | null;
+  assistants: string[];
+  roundTime: number | null;
+  gameTime: number | null;
+  finishingDamage: {
+    damageType: string | null;
+    damageItem: string | null;
+    isSecondaryFireMode: boolean;
+  };
+}
+
+export interface MatchRecordRound {
+  roundIndex: number;
+  roundNum: number;
+  side: "attack" | "defense" | null;
+  sideSource: string | null;
+  attackingTeam: string | null;
+  winningTeam: string | null;
+  won: boolean;
+  roundResult: string | null;
+  roundResultCode: string | null;
+  roundCeremony: string | null;
+  bombPlanter: string | null;
+  bombDefuser: string | null;
+  playerEconomy: {
+    loadoutValue: number | null;
+    weapon: string | null;
+    armor: string | null;
+    remaining: number | null;
+    spent: number | null;
+  };
+  playerScore: number | null;
+  damageDealt: number | null;
+  wasAfk: boolean;
+  wasPenalized: boolean;
+  stayedInSpawn: boolean;
+  kills: MatchRecordKillEvent[];
 }
 
 export interface MatchRecordRankSnapshot {
@@ -52,7 +102,7 @@ export interface MatchRecordImportMeta {
 }
 
 export interface MatchRecord {
-  schemaVersion: 1;
+  schemaVersion: 2;
   id: string;
   source: MatchRecordSource;
   createdAt: string;
@@ -66,6 +116,8 @@ export interface MatchRecord {
   result: MatchRecordResult;
   stats: MatchRecordStats;
   rounds: MatchRecordRounds;
+  trackedPlayer: MatchRecordTrackedPlayer;
+  roundByRound: MatchRecordRound[];
   rank: MatchRecordRankSnapshot;
   reflection: MatchRecordReflection;
   confidence: MatchRecordConfidenceMap;
@@ -75,4 +127,4 @@ export interface MatchRecord {
   manualLogId: string | null;
 }
 
-export const MATCH_RECORD_SCHEMA_VERSION = 1;
+export const MATCH_RECORD_SCHEMA_VERSION = 2;
