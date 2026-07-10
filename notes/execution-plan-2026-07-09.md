@@ -36,7 +36,9 @@ Only after Phase 1 is confirmed fixed and re-tested fresh:
 
 ---
 
-## Phase 3 — screenshot import structural fixes
+## Phase 3 — screenshot import structural fixes — **RETIRED 2026-07-10**
+
+**Superseded, do not continue this phase.** Real HenrikDev API access is now live (`notes/henrikdev-integration.md`), making screenshot-OCR import unnecessary — it's being removed, not further fixed. See `notes/henrikdev-integration.md`'s "Removal" section for the actual directive. Original phase text kept below for history only.
 
 **`notes/screenshot-import.md`**, the 2026-07-09 entry. This is the highest real user-value item in this batch — it's the primary non-manual data path into the app, and the first real-screenshot test just proved two of its core fields (Agent, Result) can never work as currently built, not just "need tuning." In order:
 
