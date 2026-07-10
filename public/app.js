@@ -13810,6 +13810,7 @@ let riotAutoSyncTimer = null;
 let riotAutoSyncTicker = null;
 let riotAutoSyncDeadline = 0;
 let riotSyncInFlight = false;
+let matchSyncConfigured = null;
 let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
@@ -13825,7 +13826,7 @@ const COMPASS_LENS_META = {
 
 function isRiotSyncFeatureEnabled() {
   try {
-    return Boolean(globalThis.RankedCoachRiotSync?.isEnabled?.());
+    return Boolean(globalThis.RankedCoachRiotSync?.isHenrikEnabled?.());
   } catch (_error) {
     return false;
   }
@@ -33397,6 +33398,16 @@ function isCurrentUserThemeBuilderAdmin(user = currentAuthUser) {
   );
 }
 
+function normalizeHenrikRegion(input = "") {
+  const raw = String(input || "").trim().toLowerCase();
+  if (["na", "americas", "us"].includes(raw)) return "na";
+  if (["latam", "br"].includes(raw)) return raw;
+  if (["eu", "euw", "eune", "tr", "ru", "europe"].includes(raw)) return "eu";
+  if (["kr"].includes(raw)) return "kr";
+  if (["ap", "jp", "oce", "asia"].includes(raw)) return "ap";
+  return "na";
+}
+
 function isPremiumThemeQaUser(user = currentAuthUser) {
   const email = String(user?.email || "").trim().toLowerCase();
   return Boolean(
@@ -41941,6 +41952,7 @@ function normalizeProfileRecord(profile = {}) {
     name: profile.name || "Main",
     accountName: sanitizeAccountName(profile.accountName || profile.name || "Guest", "Guest"),
     riotId: profile.riotId || "",
+    puuid: profile.puuid || "",
     region: profile.region || "NA",
     startingRR: safeNumber(profile.startingRR),
     startingRRDate: String(profile.startingRRDate || ""),
@@ -42239,6 +42251,7 @@ function updateProfile(id, data){
   if (nextRiotId !== previousRiotId || nextRegion !== previousRegion) {
     profile.startingRRDate = "";
     profile.startingRRSource = "";
+    profile.puuid = "";
   }
 
   if (data.themeKey != null || data.frameTheme != null) {
@@ -47461,6 +47474,9 @@ if (!window.__vt_riotProfileSaveBound) {
 
       const p = getActiveProfile();
       if(p){
+        if (String(p.riotId || "").trim().toLowerCase() !== riotId.toLowerCase()) {
+          p.puuid = "";
+        }
         p.riotId = riotId;
         p.region = region || "NA";
         p.startingRRDate = "";
@@ -47601,7 +47617,7 @@ function applyImportedMatches(matchList = [], options = {}){
   const nextSessionTotal = sumRRForSession(normalized, sessionDateKey);
   const importSource = options.source || "riot";
 
-  if (importSource === "riot") {
+  if (["riot", "henrik"].includes(importSource)) {
     const todayKey = getCurrentDayKey();
     if (profile.startingRRDate !== todayKey) {
       const previousAbsolute = safeNumber(profile.startingRR) + previousTotal;
@@ -47741,72 +47757,57 @@ async function importActiveProfileMatches(options = {}){
   }
 
   try {
-    const healthRes = await fetchWithTimeout("/api/riot/health");
-    const health = await healthRes.json().catch(() => ({}));
-
-    if (!healthRes.ok || health?.configured === false) {
-      if (allowDemoFallback) {
-        return importDemoMatches();
-      }
-      throw new Error("Riot sync is not configured");
-    }
-  } catch (_error) {
-    if (allowDemoFallback) {
-      return importDemoMatches();
-    }
-    throw new Error("Riot sync is unavailable");
-  }
-
-  try {
-    const res = await fetchWithTimeout("/api/riot/import-matches", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        riotId: profile.riotId,
-        region: normalizeRiotRegion(profile.region),
-        count: 20
-      })
+    const existingMatches = Array.isArray(profile.matches) ? profile.matches : [];
+    const knownMatchIds = existingMatches
+      .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
+      .filter(Boolean);
+    const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
+      riotId: profile.riotId,
+      puuid: profile.puuid,
+      region: normalizeHenrikRegion(profile.region),
+      count: 5,
+      knownMatchIds
     });
+    profile.puuid = pullResult?.puuid || profile.puuid || "";
+    profile.lastSyncSource = "henrik";
 
-    const data = await res.json().catch(() => ({}));
-
-    if(!res.ok){
-      throw new Error(data?.error || `Import failed (${res.status})`);
+    const canonicalRecords = Array.isArray(pullResult?.records) ? pullResult.records : [];
+    if (!canonicalRecords.length) {
+      profile.lastSyncAt = nowISO();
+      saveProfiles();
+      return {
+        count: 0,
+        checked: safeNumber(pullResult?.checked),
+        source: "henrik",
+        failures: pullResult?.failures || []
+      };
     }
 
-    const matchList = Array.isArray(data?.matches) ? data.matches : [];
-    if(!matchList.length){
-      throw new Error("No recent competitive matches found");
-    }
+    const importedMatches = canonicalRecords.map(record =>
+      globalThis.RankedCoachMatchRecord.toLegacyMatch(record)
+    );
+    const mergedById = new Map(existingMatches.map(match => [String(match?.matchId || match?.id || ""), match]));
+    importedMatches.forEach(match => mergedById.set(String(match?.matchId || match?.id || ""), match));
+    const matchList = Array.from(mergedById.values()).filter(Boolean);
 
     applyImportedMatches(matchList, {
-      source: "riot",
+      source: "henrik",
       animationMode: options.mode === "refresh"
         ? CHART_ANIMATION_MODE_LATEST_ONLY
         : null
     });
 
     return {
-      count: matchList.length,
-      source: "riot"
+      count: importedMatches.length,
+      checked: safeNumber(pullResult?.checked),
+      source: "henrik",
+      failures: pullResult?.failures || []
     };
   } catch (error) {
-    const message = String(error?.message || "");
-    const shouldFallbackToDemo =
-      message.includes("not configured") ||
-      message.includes("500") ||
-      message.includes("Import failed") ||
-      message.includes("403") ||
-      message.toLowerCase().includes("forbidden") ||
-      message.includes("No recent competitive matches found");
-
-    if(!shouldFallbackToDemo || !allowDemoFallback){
-      throw error;
+    if (allowDemoFallback) {
+      return importDemoMatches();
     }
-
-    return importDemoMatches();
+    throw error;
   }
 }
 
@@ -47886,6 +47887,10 @@ function refreshProfileSyncCountdown() {
   }
 
   if (!riotAutoSyncDeadline) {
+    if (matchSyncConfigured === false) {
+      setProfileSyncStatus("", "needs-setup", "Riot match sync is temporarily unavailable", false);
+      return;
+    }
     if (!hasSyncableRiotProfile()) {
       setProfileSyncStatus("", "needs-setup", "Add a Riot profile to sync Riot data", false);
       return;
@@ -47944,10 +47949,12 @@ async function isRiotSyncConfigured() {
   }
 
   try {
-    const healthRes = await fetchWithTimeout("/api/riot/health");
+    const healthRes = await fetchWithTimeout("/api/henrik/health");
     const health = await healthRes.json().catch(() => ({}));
-    return Boolean(healthRes.ok && health?.configured !== false);
+    matchSyncConfigured = Boolean(healthRes.ok && health?.configured !== false);
+    return matchSyncConfigured;
   } catch (_error) {
+    matchSyncConfigured = false;
     return false;
   }
 }
@@ -47984,7 +47991,7 @@ async function performRiotSync(options = {}) {
   }
 
   if (!isRiotSyncFeatureEnabled() && !canUseDemoFallback) {
-    setProfileSyncStatus("", "needs-setup", "Riot sync is waiting on Riot approval", false);
+    setProfileSyncStatus("", "needs-setup", "Riot match sync is temporarily unavailable", false);
     clearRiotAutoSyncTimer();
     return null;
   }
@@ -47992,7 +47999,9 @@ async function performRiotSync(options = {}) {
   if (!canUseDemoFallback) {
     const configured = await isRiotSyncConfigured();
     if (!configured) {
-      scheduleRiotAutoSync();
+      setProfileSyncStatus("", "needs-setup", "Riot match sync is temporarily unavailable", false);
+      if (!silent) alert("Riot match sync is temporarily unavailable.");
+      clearRiotAutoSyncTimer();
       return null;
     }
   }
@@ -48011,15 +48020,17 @@ async function performRiotSync(options = {}) {
 
     if (!silent) {
       if (result?.source === "demo-fixture") {
-        alert(`Riot access is still restricted, so ${result.count} demo matches were loaded from the example dataset.`);
+        alert(`Live match sync is unavailable, so ${result.count} demo matches were loaded from the example dataset.`);
       } else {
-        alert(`${mode === "refresh" ? "Synced" : "Imported"} ${result.count} recent matches from Riot.`);
+        alert(result.count
+          ? `${mode === "refresh" ? "Synced" : "Imported"} ${result.count} new competitive ${result.count === 1 ? "match" : "matches"}.`
+          : "Your recent competitive matches are already up to date.");
       }
     }
 
     return result;
   } catch (err) {
-    console.error("RIOT SYNC ERROR", err);
+    console.error("MATCH SYNC ERROR", err);
     if (!silent) {
       alert(err?.message || "Failed to sync Riot matches");
     }
@@ -48036,8 +48047,13 @@ function scheduleRiotAutoSync() {
 
   if (!isRiotSyncFeatureEnabled()) {
     if (hasSyncableRiotProfile()) {
-      setProfileSyncStatus("", "needs-setup", "Riot sync is waiting on Riot approval", false);
+      setProfileSyncStatus("", "needs-setup", "Riot match sync is temporarily unavailable", false);
     }
+    return;
+  }
+
+  if (matchSyncConfigured === false) {
+    setProfileSyncStatus("", "needs-setup", "Riot match sync is temporarily unavailable", false);
     return;
   }
 
