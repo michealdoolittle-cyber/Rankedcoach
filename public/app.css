@@ -52848,3 +52848,18 @@ body.access-reduced-motion .premium-moment-overlay{
     width:min(360px, calc(100vw - 32px));
   }
 }
+
+/* Touch browsers can leave :hover stuck on the card beneath a completed swipe.
+   Keep those desktop lift/scale effects from changing the settled page geometry. */
+@media (hover:none), (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout :is(
+    .card,
+    .agent-frame,
+    .insight-card,
+    .stats-map-card,
+    .stats-agent-row,
+    .compass-score-card
+  ):hover{
+    transform:none !important;
+  }
+}
