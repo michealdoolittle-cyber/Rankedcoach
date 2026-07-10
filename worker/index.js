@@ -20,6 +20,22 @@ import {
   onRequestOptions as optionsThemeSnapshot,
   onRequestPost as postThemeSnapshot
 } from "../functions/api/dev/theme-snapshot.js";
+import {
+  onRequestGet as getHenrikHealth,
+  onRequestOptions as optionsHenrikHealth
+} from "../functions/api/henrik/health.js";
+import {
+  onRequestOptions as optionsHenrikAccount,
+  onRequestPost as postHenrikAccount
+} from "../functions/api/henrik/account.js";
+import {
+  onRequestOptions as optionsHenrikMatches,
+  onRequestPost as postHenrikMatches
+} from "../functions/api/henrik/matches.js";
+import {
+  onRequestOptions as optionsHenrikRaw,
+  onRequestPost as postHenrikRaw
+} from "../functions/api/henrik/raw.js";
 
 const API_ROUTES = new Map([
   ["GET /api/riot/health", getRiotHealth],
@@ -33,7 +49,15 @@ const API_ROUTES = new Map([
   ["OPTIONS /api/dev/overlay-snapshot", optionsOverlaySnapshot],
   ["GET /api/dev/theme-snapshot", getThemeSnapshot],
   ["POST /api/dev/theme-snapshot", postThemeSnapshot],
-  ["OPTIONS /api/dev/theme-snapshot", optionsThemeSnapshot]
+  ["OPTIONS /api/dev/theme-snapshot", optionsThemeSnapshot],
+  ["GET /api/henrik/health", getHenrikHealth],
+  ["OPTIONS /api/henrik/health", optionsHenrikHealth],
+  ["POST /api/henrik/account", postHenrikAccount],
+  ["OPTIONS /api/henrik/account", optionsHenrikAccount],
+  ["POST /api/henrik/matches", postHenrikMatches],
+  ["OPTIONS /api/henrik/matches", optionsHenrikMatches],
+  ["POST /api/henrik/raw", postHenrikRaw],
+  ["OPTIONS /api/henrik/raw", optionsHenrikRaw]
 ]);
 
 function jsonResponse(payload, init = {}) {
@@ -62,6 +86,13 @@ async function handleApiRequest(request, env, executionContext) {
       return jsonResponse({ error: "Method not allowed" }, { status: 405 });
     }
     return jsonResponse({ ok: true, runtime: "cloudflare-worker" });
+  }
+
+  if (url.pathname.startsWith("/api/henrik/") && request.method === "POST") {
+    const origin = request.headers.get("Origin");
+    if (origin && origin !== url.origin) {
+      return jsonResponse({ error: "Cross-origin Henrik requests are not allowed." }, { status: 403 });
+    }
   }
 
   const handler = API_ROUTES.get(`${request.method} ${url.pathname}`);
