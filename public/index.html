@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="app-booting">
 
 <head>
   <meta charset="UTF-8">
@@ -15,7 +15,43 @@
   <meta name="twitter:card" content="summary">
   <meta name="theme-color" content="#071b2b">
   <meta name="vip-theme-snapshot" content="2026-04-25T13:25:19.267Z">
-<link rel="stylesheet" href="app.css?v=20260709-swipe-parity-01">
+  <style id="appBootGuardStyles">
+    html.app-booting,
+    html.app-booting body{
+      min-height:100%;
+      overflow:hidden !important;
+      background:#050814 !important;
+    }
+    html.app-booting body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:2147483646;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(255,70,85,.16), transparent 34%),
+        radial-gradient(circle at 84% 18%, rgba(56,189,248,.12), transparent 36%),
+        linear-gradient(180deg, #08111f, #050814);
+    }
+    html.app-booting .app-root{
+      visibility:hidden !important;
+      opacity:0 !important;
+      pointer-events:none !important;
+    }
+    html.app-booting #loginInitOverlay{
+      display:flex !important;
+      visibility:visible !important;
+      opacity:1 !important;
+      pointer-events:auto !important;
+      background:#050814 !important;
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+    }
+    html.app-booting #loginInitOverlay .login-init-card{
+      opacity:1 !important;
+      transform:translate3d(0,0,0) scale(1) !important;
+    }
+  </style>
+<link rel="stylesheet" href="app.css?v=20260709-mobile-fluidity-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -201,17 +237,17 @@ AUTH MODAL
   </div>
 </div>
 
-<div id="loginInitOverlay" class="lens-modal-overlay login-init-overlay" aria-live="polite">
+<div id="loginInitOverlay" class="lens-modal-overlay login-init-overlay active app-boot-overlay" aria-live="polite" aria-hidden="false">
   <div class="login-init-card">
     <div class="login-init-kicker">RankedCoach</div>
-    <div class="login-init-title" id="loginInitTitle">Warming up your account</div>
-    <div class="login-init-copy" id="loginInitCopy">Loading your saved profile, logs, and coaching setup.</div>
-    <div class="login-init-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-      <div class="login-init-progress-bar" id="loginInitProgressBar"></div>
+    <div class="login-init-title" id="loginInitTitle">Starting RankedCoach</div>
+    <div class="login-init-copy" id="loginInitCopy">Loading your session and preparing the coaching dashboard.</div>
+    <div class="login-init-progress is-busy" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+      <div class="login-init-progress-bar" id="loginInitProgressBar" style="width:8%"></div>
     </div>
-    <div class="login-init-detail" id="loginInitDetail">Saved profiles with more matches and notes can take a little longer to load back in.</div>
+    <div class="login-init-detail" id="loginInitDetail">Your dashboard stays covered until every saved view is ready.</div>
     <div class="login-init-steps">
-      <span id="loginInitStepProfile">Profile</span>
+      <span id="loginInitStepProfile" class="is-active">Profile</span>
       <span id="loginInitStepSecurity">Security</span>
       <span id="loginInitStepCoach">Coaching</span>
       <span id="loginInitStepReady">Ready</span>
@@ -2196,6 +2232,6 @@ stroke-linejoin="round"/>
   <script src="sandbox-fx.engine.js"></script>
   <script src="schema/match-record.js?v=20260705-build-brief-v3-01"></script>
   <script src="integrations/riot-sync.js?v=20260705-build-brief-v3-01"></script>
-  <script type="module" src="app.js?v=20260709-premium-qol-01"></script>
+  <script type="module" src="app.js?v=20260709-mobile-fluidity-01"></script>
 </body>
 </html>

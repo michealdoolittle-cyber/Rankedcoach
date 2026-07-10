@@ -52863,3 +52863,11 @@ body.access-reduced-motion .premium-moment-overlay{
     transform:none !important;
   }
 }
+
+@media (max-width:767px){
+  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) *,
+  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) *::before,
+  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) *::after{
+    animation-play-state:paused !important;
+  }
+}

@@ -411,6 +411,115 @@ function isMobileLayoutViewport() {
   return getViewportWidth() <= MOBILE_LAYOUT_MAX_WIDTH;
 }
 
+function getActivePageElement() {
+  return document.querySelector(".page.is-current-page")
+    || document.querySelector(".page.active:not(.is-mobile-swipe-preview)")
+    || document.querySelector(".page.active");
+}
+
+// Keep inactive mobile pages fully laid out but invisible so swipes stay compositor-only.
+const MOBILE_PAGE_WARM_STYLE_PROPERTIES = [
+  "position", "display", "top", "left", "right", "bottom", "width", "max-width",
+  "height", "margin", "visibility", "opacity", "pointer-events", "content-visibility",
+  "contain", "overflow", "transform", "z-index"
+];
+const mobilePageWarmStyleState = new WeakMap();
+const mobilePageCompositorStyleState = new WeakMap();
+
+function setMobilePageCompositorReady(page, enabled = false) {
+  if (!(page instanceof HTMLElement)) return;
+  const properties = ["will-change", "backface-visibility"];
+  if (enabled) {
+    if (!mobilePageCompositorStyleState.has(page)) {
+      mobilePageCompositorStyleState.set(page, properties.reduce((snapshot, property) => {
+        snapshot[property] = {
+          value: page.style.getPropertyValue(property),
+          priority: page.style.getPropertyPriority(property)
+        };
+        return snapshot;
+      }, {}));
+    }
+    page.style.setProperty("will-change", "transform", "important");
+    page.style.setProperty("backface-visibility", "hidden", "important");
+    return;
+  }
+
+  const snapshot = mobilePageCompositorStyleState.get(page);
+  if (!snapshot) return;
+  mobilePageCompositorStyleState.delete(page);
+  Object.entries(snapshot).forEach(([property, state]) => {
+    if (state?.value) {
+      page.style.setProperty(property, state.value, state.priority || "");
+    } else {
+      page.style.removeProperty(property);
+    }
+  });
+}
+
+function setMobilePageWarmLayout(page, shouldWarm = false) {
+  if (!(page instanceof HTMLElement)) return;
+  if (shouldWarm) {
+    if (!mobilePageWarmStyleState.has(page)) {
+      mobilePageWarmStyleState.set(page, MOBILE_PAGE_WARM_STYLE_PROPERTIES.reduce((snapshot, property) => {
+        snapshot[property] = {
+          value: page.style.getPropertyValue(property),
+          priority: page.style.getPropertyPriority(property)
+        };
+        return snapshot;
+      }, {}));
+    }
+    const warmStyles = {
+      position: "fixed",
+      display: "block",
+      top: "0px",
+      left: "0px",
+      right: "auto",
+      bottom: "auto",
+      width: "calc(100vw - 24px)",
+      "max-width": "calc(100vw - 24px)",
+      height: "auto",
+      margin: "0px",
+      visibility: "hidden",
+      opacity: "0",
+      "pointer-events": "none",
+      "content-visibility": "visible",
+      contain: "layout paint style",
+      overflow: "hidden",
+      transform: "none",
+      "z-index": "-1"
+    };
+    Object.entries(warmStyles).forEach(([property, value]) => {
+      page.style.setProperty(property, value, "important");
+    });
+    return;
+  }
+
+  const snapshot = mobilePageWarmStyleState.get(page);
+  if (!snapshot) return;
+  mobilePageWarmStyleState.delete(page);
+  Object.entries(snapshot).forEach(([property, state]) => {
+    if (state?.value) {
+      page.style.setProperty(property, state.value, state.priority || "");
+    } else {
+      page.style.removeProperty(property);
+    }
+  });
+}
+
+function syncMobilePageWarmLayouts() {
+  const isMobile = isMobileLayoutViewport();
+  document.querySelectorAll(".page").forEach(page => {
+    if (page.classList.contains("is-mobile-swipe-preview") || page.classList.contains("is-mobile-swipe-outgoing")) {
+      return;
+    }
+    const shouldWarm = isMobile
+      && page.classList.contains("is-mobile-page-ready")
+      && !page.classList.contains("is-current-page")
+      && !page.classList.contains("is-mobile-swipe-preview");
+    setMobilePageWarmLayout(page, shouldWarm);
+  });
+}
+
 function isStatsMobileLayout() {
   return (
     isMobileLayoutViewport() ||
@@ -569,6 +678,13 @@ function syncMobileViewportState() {
   if (isMobile) installMobileTouchScrollGuard();
 
   if (!isMobile) {
+    const currentPage = getActivePageElement();
+    document.querySelectorAll(".page").forEach(page => {
+      page.classList.remove("is-mobile-page-ready", "is-current-page", "is-mobile-swipe-preview", "is-mobile-swipe-outgoing");
+      if (page !== currentPage) page.classList.remove("active", "entering", "exiting");
+      setMobilePageCompositorReady(page, false);
+    });
+    syncMobilePageWarmLayouts();
     document.body?.classList.remove("mobile-nav-hidden");
     document.body?.classList.remove("mobile-modal-open");
     restoreMobileProfileSurfaces();
@@ -594,6 +710,10 @@ function syncMobileViewportState() {
       ensureMobileSwipeAffordances();
       installMobileHomePullToRefresh();
       scheduleMobileScrollExtentSync();
+      if (isMobile && !document.querySelector(".page.is-mobile-page-ready")) {
+        const activePageId = getActivePageElement()?.id?.replace("page-", "") || "home";
+        activatePage(activePageId);
+      }
     });
   }
 
@@ -1516,7 +1636,8 @@ function captureMobileSwipeInlineStyles(target) {
     "height",
     "z-index",
     "content-visibility",
-    "contain"
+    "contain",
+    "backface-visibility"
   ];
   return properties.reduce((snapshot, property) => {
     snapshot[property] = {
@@ -1600,6 +1721,18 @@ function getMobileSwipeCommitDistance(target, options = {}, context = {}) {
   return Math.max(MOBILE_SWIPE_MIN_DISTANCE, Math.min(96, span * 0.18));
 }
 
+function getMobileSwipeCommitDuration(span = 1, previewOffset = 0, options = {}, context = {}) {
+  if (typeof options.commitDurationMs === "function") {
+    return Math.max(80, safeNumber(options.commitDurationMs({ span, previewOffset, ...context }), MOBILE_SWIPE_PREVIEW_COMMIT_MS));
+  }
+  if (Number.isFinite(options.commitDurationMs)) {
+    return Math.max(80, options.commitDurationMs);
+  }
+  if (!options.fluidPageSwipe) return MOBILE_SWIPE_PREVIEW_COMMIT_MS;
+  const remainingRatio = Math.max(0, Math.min(1, 1 - (Math.abs(previewOffset) / Math.max(1, span))));
+  return Math.round(130 + (remainingRatio * 130));
+}
+
 function getMobileSwipePreviewStartDistance(options = {}) {
   if (Number.isFinite(options.previewStartDistance)) {
     return Math.max(1, options.previewStartDistance);
@@ -1634,58 +1767,75 @@ function getMobileSwipePreviewBackdropColor() {
     : "var(--bg, #071029)";
 }
 
-function applyMobileSwipePreview(target, offsetPx = 0) {
+function applyMobileSwipePreview(target, offsetPx = 0, renderState = null) {
   if (!target) return;
-  target.style.setProperty("position", target.style.getPropertyValue("position") || "relative", "important");
-  target.style.setProperty("z-index", "2141", "important");
-  target.style.setProperty("background-color", getMobileSwipePreviewBackdropColor(), "important");
-  target.style.setProperty("overflow", "hidden", "important");
-  target.style.setProperty("overflow-x", "hidden", "important");
-  target.style.setProperty("overflow-y", "hidden", "important");
-  target.style.setProperty("isolation", "isolate", "important");
-  target.style.setProperty("will-change", "transform, opacity", "important");
-  target.style.setProperty("transition", "none", "important");
+  if (!renderState?.currentPrepared) {
+    target.style.setProperty("position", target.style.getPropertyValue("position") || "relative", "important");
+    target.style.setProperty("z-index", "2141", "important");
+    target.style.setProperty("background-color", renderState?.backdropColor || getMobileSwipePreviewBackdropColor(), "important");
+    target.style.setProperty("overflow", "hidden", "important");
+    target.style.setProperty("overflow-x", "hidden", "important");
+    target.style.setProperty("overflow-y", "hidden", "important");
+    target.style.setProperty("isolation", "isolate", "important");
+    target.style.setProperty("will-change", "transform", "important");
+    target.style.setProperty("transition", "none", "important");
+    target.style.setProperty("backface-visibility", "hidden", "important");
+    if (renderState) renderState.currentPrepared = true;
+  }
   target.style.setProperty("transform", `translate3d(${Math.round(offsetPx)}px,0,0)`, "important");
   target.style.setProperty("opacity", "1", "important");
   target.style.setProperty("pointer-events", "none", "important");
 }
 
-function applyMobileSwipeCompanionPreview(target, currentTarget, offsetPx = 0, options = {}, context = {}) {
+function applyMobileSwipeCompanionPreview(target, currentTarget, offsetPx = 0, options = {}, context = {}, renderState = null) {
   if (!target || !currentTarget || target === currentTarget) return;
   const direction = getMobileSwipePreviewDirection(offsetPx);
   if (!direction) return;
-  const currentRect = currentTarget.getBoundingClientRect?.();
-  if (!currentRect) return;
-  const visualSpan = Math.max(1, safeNumber(currentRect.width, getMobileSwipePreviewSpan(currentTarget, options, context)));
-  const companionOffset = offsetPx + (direction > 0 ? visualSpan : -visualSpan);
-  const companionFrame = resolveMobileSwipePreviewCompanionFrame(target, currentTarget, options, context) || {};
-  const baseLeft = Number.isFinite(companionFrame.left)
-    ? companionFrame.left
-    : currentRect.left - safeNumber(offsetPx, 0);
-  const baseTop = Number.isFinite(companionFrame.top) ? companionFrame.top : currentRect.top;
-  const baseWidth = Number.isFinite(companionFrame.width) ? companionFrame.width : currentRect.width;
-  const baseHeight = Number.isFinite(companionFrame.height) ? companionFrame.height : null;
-  target.style.setProperty("display", getMobileSwipePreviewCompanionDisplay(target, currentTarget, options, context), "important");
-  target.style.setProperty("visibility", "visible", "important");
-  target.style.setProperty("content-visibility", "visible", "important");
-  target.style.setProperty("contain", "none", "important");
-  target.style.setProperty("position", "fixed", "important");
-  target.style.setProperty("top", `${Math.round(baseTop)}px`, "important");
-  target.style.setProperty("left", `${Math.round(baseLeft)}px`, "important");
-  target.style.setProperty("width", `${Math.max(1, Math.round(baseWidth))}px`, "important");
-  if (Number.isFinite(baseHeight)) {
-    target.style.setProperty("height", `${Math.max(1, Math.round(baseHeight))}px`, "important");
-  } else {
-    target.style.removeProperty("height");
+  let layout = renderState?.companionLayout || null;
+  if (!layout) {
+    const currentRect = currentTarget.getBoundingClientRect?.();
+    if (!currentRect) return;
+    const visualSpan = Math.max(1, safeNumber(currentRect.width, getMobileSwipePreviewSpan(currentTarget, options, context)));
+    const companionFrame = resolveMobileSwipePreviewCompanionFrame(target, currentTarget, options, { ...context, currentRect }) || {};
+    layout = {
+      visualSpan,
+      baseLeft: Number.isFinite(companionFrame.left)
+        ? companionFrame.left
+        : currentRect.left - safeNumber(offsetPx, 0),
+      baseTop: Number.isFinite(companionFrame.top) ? companionFrame.top : currentRect.top,
+      baseWidth: Number.isFinite(companionFrame.width) ? companionFrame.width : currentRect.width,
+      baseHeight: Number.isFinite(companionFrame.height) ? companionFrame.height : null,
+      display: getMobileSwipePreviewCompanionDisplay(target, currentTarget, options, context)
+    };
+    if (renderState) renderState.companionLayout = layout;
   }
-  target.style.setProperty("z-index", "2140", "important");
-  target.style.setProperty("background-color", getMobileSwipePreviewBackdropColor(), "important");
-  target.style.setProperty("overflow", "hidden", "important");
-  target.style.setProperty("overflow-x", "hidden", "important");
-  target.style.setProperty("overflow-y", "hidden", "important");
-  target.style.setProperty("isolation", "isolate", "important");
-  target.style.setProperty("will-change", "transform, opacity", "important");
-  target.style.setProperty("transition", "none", "important");
+  const visualSpan = layout.visualSpan;
+  const companionOffset = offsetPx + (direction > 0 ? visualSpan : -visualSpan);
+  if (!renderState?.companionPrepared) {
+    target.style.setProperty("display", layout.display, "important");
+    target.style.setProperty("visibility", "visible", "important");
+    target.style.setProperty("content-visibility", "visible", "important");
+    target.style.setProperty("contain", "layout paint style", "important");
+    target.style.setProperty("position", "fixed", "important");
+    target.style.setProperty("top", `${Math.round(layout.baseTop)}px`, "important");
+    target.style.setProperty("left", `${Math.round(layout.baseLeft)}px`, "important");
+    target.style.setProperty("width", `${Math.max(1, Math.round(layout.baseWidth))}px`, "important");
+    if (Number.isFinite(layout.baseHeight)) {
+      target.style.setProperty("height", `${Math.max(1, Math.round(layout.baseHeight))}px`, "important");
+    } else {
+      target.style.removeProperty("height");
+    }
+    target.style.setProperty("z-index", "2140", "important");
+    target.style.setProperty("background-color", renderState?.backdropColor || getMobileSwipePreviewBackdropColor(), "important");
+    target.style.setProperty("overflow", "hidden", "important");
+    target.style.setProperty("overflow-x", "hidden", "important");
+    target.style.setProperty("overflow-y", "hidden", "important");
+    target.style.setProperty("isolation", "isolate", "important");
+    target.style.setProperty("will-change", "transform", "important");
+    target.style.setProperty("transition", "none", "important");
+    target.style.setProperty("backface-visibility", "hidden", "important");
+    if (renderState) renderState.companionPrepared = true;
+  }
   target.style.setProperty("transform", `translate3d(${Math.round(companionOffset)}px,0,0)`, "important");
   target.style.setProperty("opacity", "1", "important");
   target.style.setProperty("pointer-events", "none", "important");
@@ -1701,6 +1851,8 @@ async function animateMobileSwipeReset(target, snapshot, companionTarget = null,
   restoreMobileSwipeInlineStyles(target, snapshot);
   restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
   restoreMobileSwipePreviewClasses(companionTarget);
+  target.classList.remove("is-mobile-swipe-outgoing");
+  syncMobilePageWarmLayouts();
 }
 
 async function animateMobileSwipeCommit(direction, context = {}, applyState = () => {}, options = {}) {
@@ -1710,23 +1862,24 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
   const companionSnapshot = context.previewCompanionSnapshot || captureMobileSwipeInlineStyles(companionTarget);
   const usesCompanionPreview = Boolean(companionTarget && companionTarget !== currentTarget);
   const span = getMobileSwipePreviewSpan(currentTarget, options, context);
+  const commitDuration = getMobileSwipeCommitDuration(span, context.previewOffset || 0, options, context);
   const exitDirection = direction > 0 ? -1 : 1;
-  const exitOffset = exitDirection * Math.max(span * 0.92, Math.abs(context.previewOffset || 0) + 64);
+  const exitOffset = exitDirection * Math.max(span, Math.abs(context.previewOffset || 0) + 48);
 
   if (currentTarget) {
     currentTarget.style.setProperty("will-change", "transform, opacity", "important");
-    currentTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1)`, "important");
+    currentTarget.style.setProperty("transition", `transform ${commitDuration}ms cubic-bezier(.2,.78,.24,1)`, "important");
     currentTarget.style.setProperty("transform", `translate3d(${Math.round(exitOffset)}px,0,0)`, "important");
     currentTarget.style.setProperty("opacity", "1", "important");
   }
   if (usesCompanionPreview) {
     companionTarget.style.setProperty("will-change", "transform, opacity", "important");
-    companionTarget.style.setProperty("transition", `transform ${MOBILE_SWIPE_PREVIEW_COMMIT_MS}ms cubic-bezier(.22,.61,.36,1)`, "important");
+    companionTarget.style.setProperty("transition", `transform ${commitDuration}ms cubic-bezier(.2,.78,.24,1)`, "important");
     companionTarget.style.setProperty("transform", "translate3d(0,0,0)", "important");
     companionTarget.style.setProperty("opacity", "1", "important");
   }
   if (currentTarget || usesCompanionPreview) {
-    await waitForMobileSwipeAnimation(MOBILE_SWIPE_PREVIEW_COMMIT_MS);
+    await waitForMobileSwipeAnimation(commitDuration);
   }
 
   const callbackResult = applyState(direction, context.event, context);
@@ -1734,6 +1887,8 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     restoreMobileSwipeInlineStyles(currentTarget, currentSnapshot);
     restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
     restoreMobileSwipePreviewClasses(companionTarget);
+    currentTarget?.classList.remove("is-mobile-swipe-outgoing");
+    syncMobilePageWarmLayouts();
     return false;
   }
 
@@ -1773,6 +1928,8 @@ async function animateMobileSwipeCommit(direction, context = {}, applyState = ()
     restoreMobileSwipeInlineStyles(companionTarget, companionSnapshot);
     restoreMobileSwipePreviewClasses(companionTarget);
   }
+  currentTarget?.classList.remove("is-mobile-swipe-outgoing");
+  syncMobilePageWarmLayouts();
   return callbackResult;
 }
 
@@ -1799,6 +1956,43 @@ function bindMobileSwipe(element, callback, options = {}) {
   let previewDirection = 0;
   let previewCompanionTarget = null;
   let previewCompanionSnapshot = null;
+  let previewSpan = 0;
+  let previewRenderFrame = 0;
+  let previewRenderContext = null;
+  let previewRenderState = null;
+
+  const renderMobileSwipeFrame = () => {
+    previewRenderFrame = 0;
+    if (!previewTarget || !previewRenderContext) return;
+    applyMobileSwipePreview(previewTarget, previewOffset, previewRenderState);
+    applyMobileSwipeCompanionPreview(
+      previewCompanionTarget,
+      previewTarget,
+      previewOffset,
+      options,
+      previewRenderContext,
+      previewRenderState
+    );
+  };
+
+  const scheduleMobileSwipeFrame = () => {
+    if (previewRenderFrame) return;
+    previewRenderFrame = window.requestAnimationFrame(renderMobileSwipeFrame);
+  };
+
+  const flushMobileSwipeFrame = () => {
+    if (previewRenderFrame) {
+      window.cancelAnimationFrame(previewRenderFrame);
+      previewRenderFrame = 0;
+    }
+    renderMobileSwipeFrame();
+  };
+
+  const cancelMobileSwipeFrame = () => {
+    if (!previewRenderFrame) return;
+    window.cancelAnimationFrame(previewRenderFrame);
+    previewRenderFrame = 0;
+  };
 
   const shouldIgnoreTarget = (target) => {
     const formFieldSelector = options.formFieldIgnoreSelector || "input, textarea, select, option, [contenteditable='true']";
@@ -1830,6 +2024,10 @@ function bindMobileSwipe(element, callback, options = {}) {
     previewDirection = 0;
     previewCompanionTarget = null;
     previewCompanionSnapshot = null;
+    previewSpan = 0;
+    previewRenderContext = null;
+    previewRenderState = null;
+    cancelMobileSwipeFrame();
   }, { passive: true });
 
   element.addEventListener("touchmove", (event) => {
@@ -1854,18 +2052,24 @@ function bindMobileSwipe(element, callback, options = {}) {
         event
       });
       previewSnapshot = captureMobileSwipeInlineStyles(previewTarget);
+      if (options.fluidPageSwipe) previewTarget?.classList.add("is-mobile-swipe-outgoing");
     }
     if (!previewTarget) return;
 
-    const span = getMobileSwipePreviewSpan(previewTarget, options, {
-      element,
-      startTarget,
-      startX,
-      startY,
-      event,
-      previewTarget
-    });
-    const maxTravel = Math.max(28, span * MOBILE_SWIPE_PREVIEW_MAX_RATIO);
+    if (!previewSpan) {
+      previewSpan = getMobileSwipePreviewSpan(previewTarget, options, {
+        element,
+        startTarget,
+        startX,
+        startY,
+        event,
+        previewTarget
+      });
+    }
+    const previewMaxRatio = Number.isFinite(options.previewMaxRatio)
+      ? Math.max(0.1, Math.min(1, options.previewMaxRatio))
+      : MOBILE_SWIPE_PREVIEW_MAX_RATIO;
+    const maxTravel = Math.max(28, previewSpan * previewMaxRatio);
     previewOffset = Math.max(-maxTravel, Math.min(maxTravel, deltaX));
     const nextPreviewDirection = getMobileSwipePreviewDirection(previewOffset);
     if (previewCompanionTarget && previewDirection && nextPreviewDirection !== previewDirection) {
@@ -1873,6 +2077,10 @@ function bindMobileSwipe(element, callback, options = {}) {
       restoreMobileSwipePreviewClasses(previewCompanionTarget);
       previewCompanionTarget = null;
       previewCompanionSnapshot = null;
+      if (previewRenderState) {
+        previewRenderState.companionPrepared = false;
+        previewRenderState.companionLayout = null;
+      }
     }
     previewDirection = nextPreviewDirection;
     if (!previewCompanionTarget && previewDirection) {
@@ -1903,8 +2111,15 @@ function bindMobileSwipe(element, callback, options = {}) {
       }
     }
     previewing = true;
-    applyMobileSwipePreview(previewTarget, previewOffset);
-    applyMobileSwipeCompanionPreview(previewCompanionTarget, previewTarget, previewOffset, options, {
+    if (!previewRenderState) {
+      previewRenderState = {
+        currentPrepared: false,
+        companionPrepared: false,
+        companionLayout: null,
+        backdropColor: getMobileSwipePreviewBackdropColor()
+      };
+    }
+    previewRenderContext = {
       element,
       startTarget,
       startX,
@@ -1914,7 +2129,8 @@ function bindMobileSwipe(element, callback, options = {}) {
       previewOffset,
       previewDirection,
       previewCompanionTarget
-    });
+    };
+    scheduleMobileSwipeFrame();
     event.preventDefault();
   }, { passive: false });
 
@@ -1924,6 +2140,7 @@ function bindMobileSwipe(element, callback, options = {}) {
     if (mobileSwipeHandledTimestamp === event.timeStamp) return;
     const touch = event.changedTouches?.[0];
     if (!touch) return;
+    if (previewing) flushMobileSwipeFrame();
     const durationMs = Date.now() - startedAt;
     const context = {
       durationMs,
@@ -1976,6 +2193,7 @@ function bindMobileSwipe(element, callback, options = {}) {
   }, { passive: true });
 
   element.addEventListener("touchcancel", async () => {
+    cancelMobileSwipeFrame();
     if (previewing && previewTarget) {
       await animateMobileSwipeReset(previewTarget, previewSnapshot, previewCompanionTarget, previewCompanionSnapshot);
     } else {
@@ -1989,6 +2207,9 @@ function bindMobileSwipe(element, callback, options = {}) {
     previewDirection = 0;
     previewCompanionTarget = null;
     previewCompanionSnapshot = null;
+    previewSpan = 0;
+    previewRenderContext = null;
+    previewRenderState = null;
   }, { passive: true });
 }
 
@@ -2001,7 +2222,7 @@ function stepMobileValue(currentValue, values, direction) {
 function ensureMobileSwipeAffordances() {
   if (!isMobileLayoutViewport()) return;
 
-  const getCurrentPageElement = () => document.querySelector(".page.active:not(.is-mobile-swipe-preview)") || document.querySelector(".page.active");
+  const getCurrentPageElement = () => getActivePageElement();
   const getPageKeyFromElement = (page) => page?.id?.replace("page-", "") || "";
   const getSteppedMobilePageKey = (direction = 0) => {
     const active = getPageKeyFromElement(getCurrentPageElement()) || MOBILE_PAGE_SWIPE_ORDER[0];
@@ -2010,7 +2231,7 @@ function ensureMobileSwipeAffordances() {
   const getActivePageSwipeTarget = () => getCurrentPageElement();
   const getMobilePagePreviewFrame = (currentTarget, context = {}) => {
     if (!currentTarget) return null;
-    const rect = currentTarget.getBoundingClientRect?.();
+    const rect = context.currentRect || currentTarget.getBoundingClientRect?.();
     if (!rect) return null;
     const scrollContainer = getMobileScrollContainer();
     const scrollTop = Math.max(0, scrollContainer?.scrollTop || document.body?.scrollTop || document.documentElement?.scrollTop || window.scrollY || 0);
@@ -2023,13 +2244,7 @@ function ensureMobileSwipeAffordances() {
   };
   const getAdjacentPageSwipeTarget = (direction = 0) => {
     const nextPageKey = getSteppedMobilePageKey(direction);
-    primeMobilePageSwipePreview(nextPageKey);
     return document.getElementById(`page-${nextPageKey}`);
-  };
-  const preparePageSwipePreviewLayout = (target) => {
-    const pageKey = getPageKeyFromElement(target);
-    if (!pageKey) return;
-    hydrateMobilePageForCurrentState(pageKey, { allowHiddenLayoutWork: true, immediatePreview: true });
   };
   const getActiveLoggingSwipeTarget = () => {
     const page = document.getElementById("page-logging");
@@ -2057,7 +2272,7 @@ function ensureMobileSwipeAffordances() {
     const nextPage = stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction);
     if (nextPage === active) return false;
     closeAllMobileOverlays();
-    activatePage(nextPage);
+    activatePage(nextPage, { mobileSwipeHandoff: true });
     syncMobileBottomShellState();
   }, {
     bindKey: "pageRoot",
@@ -2066,10 +2281,11 @@ function ensureMobileSwipeAffordances() {
     minDurationMs: MOBILE_PAGE_SWIPE_MIN_DURATION,
     maxVerticalRatio: MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO,
     previewStartDistance: 4,
+    previewMaxRatio: 1,
+    fluidPageSwipe: true,
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
     previewCompanionMirrorActive: true,
-    onPreviewCompanionPrepared: preparePageSwipePreviewLayout,
     previewCompanionDisplay: "block",
     previewCompanionFrame: (_target, currentTarget, context) => getMobilePagePreviewFrame(currentTarget, context),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390,
@@ -2079,17 +2295,18 @@ function ensureMobileSwipeAffordances() {
   bindMobileSwipe(document.querySelector("#mobileBottomShell .mobile-bottom-pages"), (direction, _event, context = {}) => {
     const active = getPageKeyFromElement(context.previewTarget) || getPageKeyFromElement(getCurrentPageElement()) || MOBILE_PAGE_SWIPE_ORDER[0];
     closeAllMobileOverlays();
-    activatePage(stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction));
+    activatePage(stepMobileValue(active, MOBILE_PAGE_SWIPE_ORDER, direction), { mobileSwipeHandoff: true });
     syncMobileBottomShellState();
   }, {
     allowControls: true,
     bindKey: "bottomPages",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewStartDistance: 4,
+    previewMaxRatio: 1,
+    fluidPageSwipe: true,
     previewTarget: getActivePageSwipeTarget,
     previewCompanionTarget: (direction) => getAdjacentPageSwipeTarget(direction),
     previewCompanionMirrorActive: true,
-    onPreviewCompanionPrepared: preparePageSwipePreviewLayout,
     previewCompanionDisplay: "block",
     previewCompanionFrame: (_target, currentTarget, context) => getMobilePagePreviewFrame(currentTarget, context),
     previewSpan: () => window.innerWidth || document.documentElement?.clientWidth || 390
@@ -2303,7 +2520,7 @@ function syncMobileBottomShellState() {
   shell.hidden = !isMobile;
   if (!isMobile) return;
 
-  const activePageId = document.querySelector(".page.active")?.id?.replace("page-", "") || "home";
+  const activePageId = getActivePageElement()?.id?.replace("page-", "") || "home";
   shell.querySelectorAll("[data-mobile-page]").forEach((button) => {
     const isActive = button.dataset.mobilePage === activePageId;
     button.classList.toggle("active", isActive);
@@ -2450,20 +2667,11 @@ function getMobileActivePageContentBottom(root, activePage) {
   if (!root || !activePage) return 0;
   const rootRect = root.getBoundingClientRect();
   const rootScrollTop = root.scrollTop || 0;
-  const getBottom = (el) => {
-    const rect = el.getBoundingClientRect();
-    if (!rect.width && !rect.height) return 0;
-    return rect.bottom - rootRect.top + rootScrollTop;
-  };
-
-  let bottom = getBottom(activePage);
-  activePage.querySelectorAll("*").forEach((el) => {
-    const style = window.getComputedStyle(el);
-    if (style.display === "none" || style.visibility === "hidden") return;
-    bottom = Math.max(bottom, getBottom(el));
-  });
-
-  return Math.max(0, bottom);
+  const pageRect = activePage.getBoundingClientRect();
+  if (!pageRect.width && !pageRect.height) return 0;
+  const pageTop = pageRect.top - rootRect.top + rootScrollTop;
+  const pageHeight = Math.max(pageRect.height, activePage.scrollHeight || 0);
+  return Math.max(0, pageTop + pageHeight);
 }
 
 function syncMobileScrollExtent() {
@@ -2476,7 +2684,7 @@ function syncMobileScrollExtent() {
     return;
   }
 
-  const activePage = document.querySelector(".page.active");
+  const activePage = getActivePageElement();
   if (!activePage) {
     sentinel.hidden = true;
     return;
@@ -7617,7 +7825,7 @@ function getBugReportContext() {
     riotId: profile?.riotId || "",
     region: profile?.region || "",
     isGuest: !currentAuthUser,
-    page: document.querySelector(".page.active")?.id || "",
+    page: getActivePageElement()?.id || "",
     theme: document.body?.dataset?.theme || "",
     url: location.href,
     userAgent: navigator.userAgent || "",
@@ -10803,7 +11011,7 @@ function installMobileHomePullToRefresh() {
 
   root.addEventListener("touchstart", (event) => {
     if (!isMobileLayoutViewport()) return;
-    if (document.querySelector(".page.active")?.id !== "page-home") return;
+    if (getActivePageElement()?.id !== "page-home") return;
     const scrollTop = root.scrollTop || document.documentElement.scrollTop || 0;
     if (scrollTop > 2) return;
     startY = event.touches?.[0]?.clientY || 0;
@@ -11854,9 +12062,15 @@ function showLoginInitializationOverlay(copy = "", detail = "") {
   showModalById?.("loginInitOverlay");
 }
 
+function releaseInitialAppBootGuard() {
+  document.documentElement?.classList.remove("app-booting");
+  document.getElementById("loginInitOverlay")?.classList.remove("app-boot-overlay");
+}
+
 function hideLoginInitializationOverlay() {
   setLoginInitializationProgress(100, "Everything is ready.", "Ready", "Your saved profile, settings, and coaching pages are ready.");
   window.setTimeout(() => {
+    releaseInitialAppBootGuard();
     hideModalById?.("loginInitOverlay");
     clearLoginInitializationTheme();
   }, 420);
@@ -18274,7 +18488,7 @@ if (img) {
       e.preventDefault();
       e.stopPropagation();
 
-      const isLogging = !!document.querySelector("#page-logging.active");
+      const isLogging = getActivePageElement()?.id === "page-logging";
 
       if(isLogging){
         selectAgentInstant(agent);
@@ -40320,7 +40534,7 @@ let loggingFeedRenderRaf = 0;
 const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 3";
 
 function isLoggingPageActive() {
-  return Boolean(document.querySelector("#page-logging.active"));
+  return getActivePageElement()?.id === "page-logging";
 }
 
 function cancelScheduledLoggingFeedRender() {
@@ -43964,7 +44178,7 @@ function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
 function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToken) {
   if (!isMobileLayoutViewport()) return;
   if (token !== pageTransitionToken) return;
-  const activePageId = document.querySelector(".page.active")?.id?.replace("page-", "") || "";
+  const activePageId = getActivePageElement()?.id?.replace("page-", "") || "";
   if (activePageId !== pageId) return;
   hydrateMobilePageForCurrentState(pageId, { allowHiddenLayoutWork: true });
   scheduleMobileScrollExtentSync();
@@ -44013,10 +44227,11 @@ function scheduleActivatedMobilePageHydration(pageId = "", token = pageTransitio
   }, followUpDelay);
 }
 
-function activatePage(pageId){
+function activatePage(pageId, options = {}){
 
   hideChartTooltip();
-  if (pageId === "home") {
+  const mobileSwipeHandoff = Boolean(options?.mobileSwipeHandoff && isMobileLayoutViewport());
+  if (pageId === "home" && !mobileSwipeHandoff) {
     scheduleLoadoutValueTextFit();
   }
 
@@ -44031,24 +44246,45 @@ function activatePage(pageId){
 
   const targetId = "page-" + pageId;
   const nextPage = document.getElementById(targetId);
-  const currentPage = document.querySelector(".page.active");
+  const currentPage = getActivePageElement();
   const isMobilePageSwitch = isMobileLayoutViewport();
+  const allPages = Array.from(document.querySelectorAll(".page"));
+  if (!isMobilePageSwitch) {
+    allPages.forEach(page => {
+      page.classList.remove("is-mobile-page-ready", "is-current-page", "is-mobile-swipe-outgoing");
+      if (page !== currentPage) page.classList.remove("active", "entering", "exiting");
+      setMobilePageCompositorReady(page, false);
+    });
+    syncMobilePageWarmLayouts();
+  }
 
   if (isMobilePageSwitch && nextPage) {
     const token = ++pageTransitionToken;
+    const needsMobileLayoutWarmup = allPages.some(page => !page.classList.contains("is-mobile-page-ready"));
     if (pageTransitionTimer) {
       window.clearTimeout(pageTransitionTimer);
       pageTransitionTimer = 0;
     }
 
-    document.querySelectorAll(".page").forEach(page => {
-      page.classList.toggle("active", page === nextPage);
+    allPages.forEach(page => {
+      page.classList.add("active", "is-mobile-page-ready");
+      page.classList.toggle("is-current-page", page === nextPage);
       page.classList.remove("entering", "exiting");
+      setMobilePageCompositorReady(page, true);
     });
+    syncMobilePageWarmLayouts();
+
+    if (needsMobileLayoutWarmup) {
+      allPages.forEach(page => void page.offsetHeight);
+    }
 
     scrollMobilePageToTop();
     syncMobileBottomShellState();
-    scheduleActivatedMobilePageHydration(pageId, token, { immediate: true, followUpDelay: 72 });
+    if (mobileSwipeHandoff) {
+      scheduleMobileScrollExtentSync();
+    } else {
+      scheduleActivatedMobilePageHydration(pageId, token, { immediate: true, followUpDelay: 72 });
+    }
   } else if (nextPage && currentPage !== nextPage) {
     const token = ++pageTransitionToken;
     if (pageTransitionTimer) {
@@ -44098,41 +44334,65 @@ function activatePage(pageId){
     }
   }
 
-  if(pageId === "home" && pendingAgentFromLog){
+  if (pageId !== "logging") cancelScheduledLoggingFeedRender();
 
-  spinLoadoutFromLogging(
-    pendingAgentFromLog,
-    pendingFocusFromLog
-  );
+  const runPageActivationWork = () => {
+    if (mobileSwipeHandoff) {
+      const activePageId = getActivePageElement()?.id?.replace("page-", "") || "";
+      if (activePageId !== pageId) return;
+      if (pageId === "home" && pendingAgentFromLog) {
+        const queuedAgent = pendingAgentFromLog;
+        const queuedFocus = pendingFocusFromLog;
+        pendingAgentFromLog = null;
+        pendingFocusFromLog = null;
+        window.setTimeout(() => {
+          if (getActivePageElement()?.id !== "page-home") return;
+          spinLoadoutFromLogging(queuedAgent, queuedFocus);
+          recomputeFromMatches();
+          updateDisplays();
+          requestAnimationFrame(() => renderChart(currentSize));
+        }, 96);
+      }
+      if (pageId === "insights") {
+        requestAnimationFrame(() => enforceInsightsActionFluidWidth());
+      }
+      return;
+    }
 
-  pendingAgentFromLog = null;
-  pendingFocusFromLog = null;
-}
+    if(pageId === "home" && pendingAgentFromLog){
+      spinLoadoutFromLogging(
+        pendingAgentFromLog,
+        pendingFocusFromLog
+      );
+      pendingAgentFromLog = null;
+      pendingFocusFromLog = null;
+    }
 
-  if (pageId === "home") {
-    recomputeFromMatches();
-    updateDisplays();
-    forceChartIntroAnimation = true;
-    requestAnimationFrame(() => renderChart(currentSize));
-  }
+    if (pageId === "home") {
+      scheduleLoadoutValueTextFit();
+      recomputeFromMatches();
+      updateDisplays();
+      forceChartIntroAnimation = true;
+      requestAnimationFrame(() => renderChart(currentSize));
+    }
 
-  if (pageId === "insights") {
-    requestAnimationFrame(() => {
-      enforceInsightsActionFluidWidth();
-      scheduleInsightListOverflowSync(document.getElementById("insightsList"));
-      replayOpenInsightTrendAnimation();
-    });
-  }
+    if (pageId === "insights") {
+      requestAnimationFrame(() => {
+        enforceInsightsActionFluidWidth();
+        scheduleInsightListOverflowSync(document.getElementById("insightsList"));
+        replayOpenInsightTrendAnimation();
+      });
+    }
 
-  if (pageId === "logging") {
-    scheduleLoggingFeedRender({ force: true });
-  } else {
-    cancelScheduledLoggingFeedRender();
-  }
+    if (pageId === "logging") {
+      scheduleLoggingFeedRender({ force: true });
+    }
 
-  scheduleThemeBuilderAutoFitText({ resetBase: true });
+    scheduleThemeBuilderAutoFitText({ resetBase: true });
+    updateNavUnderline();
+  };
 
-  updateNavUnderline();
+  runPageActivationWork();
 }
 
 
@@ -45881,6 +46141,7 @@ function randomizeInitialReel(){
 async function initUserSession(){
   if(!supabaseClient?.auth){
     updateAuthUI(null);
+    hideLoginInitializationOverlay();
     return;
   }
 
@@ -45892,7 +46153,13 @@ async function initUserSession(){
     console.warn("Unable to read cached auth session", error);
   }
 
-  const { data: { user } = {} } = await supabaseClient.auth.getUser();
+  let user = null;
+  try {
+    const result = await supabaseClient.auth.getUser();
+    user = result?.data?.user || null;
+  } catch (error) {
+    console.warn("Unable to verify auth session", error);
+  }
   const resolvedUser = user || cachedSessionUser || null;
   if (resolvedUser) {
     setAppEntryChoice("auth");
@@ -45901,6 +46168,7 @@ async function initUserSession(){
   }
 
   await handleSignedInUser(null);
+  hideLoginInitializationOverlay();
 
 }
 
