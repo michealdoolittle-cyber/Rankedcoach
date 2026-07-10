@@ -5305,6 +5305,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const maps = rankBuckets(mapBuckets, "map");
   const agents = rankBuckets(agentBuckets, "agent");
   const roles = rankBuckets(roleBuckets, "role");
+  const roundMetrics = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.(orderedMatches) || null;
+  const averageAcs = orderedMatches.length ? totalAcs / Math.max(1, orderedMatches.length) : 0;
 
   const overview = {
     matchesPlayed: orderedMatches.length || safeNumber(importedAnalytics?.overview?.matchesPlayed),
@@ -5315,10 +5317,22 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     hs: orderedMatches.length ? totalHs / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.hs),
     assists: orderedMatches.length ? totalAssists / Math.max(1, orderedMatches.length) : 0,
     winrate: orderedMatches.length ? (wins / Math.max(1, orderedMatches.length)) * 100 : safeNumber(importedAnalytics?.overview?.winrate),
-    attackKAST: safeNumber(importedAnalytics?.overview?.attackKAST),
-    defenseKAST: safeNumber(importedAnalytics?.overview?.defenseKAST),
+    attackKAST: roundMetrics?.attack?.totalRounds
+      ? safeNumber(roundMetrics.attack.percentage)
+      : safeNumber(importedAnalytics?.overview?.attackKAST),
+    defenseKAST: roundMetrics?.defense?.totalRounds
+      ? safeNumber(roundMetrics.defense.percentage)
+      : safeNumber(importedAnalytics?.overview?.defenseKAST),
+    overallKAST: roundMetrics?.overall?.totalRounds ? safeNumber(roundMetrics.overall.percentage) : 0,
+    kastTradeSavedRounds: safeNumber(roundMetrics?.overall?.tradeSavedRounds),
     econ: safeNumber(importedAnalytics?.overview?.econ)
   };
+  const currentRankLabel = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "";
+  const rankComparison = globalThis.RankedCoachRankBenchmarks?.compareRankMetrics?.(currentRankLabel, {
+    hsPercent: overview.hs,
+    acs: averageAcs,
+    kd: overview.kd
+  }) || null;
   const hasMatchData = safeNumber(overview.matchesPlayed) > 0;
 
   const ratingValues = logs.map((entry) => safeNumber(entry.rating)).filter((value) => value > 0);
@@ -5453,6 +5467,34 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       focus: "Match Import",
       category: "performance",
       priority: 100
+    });
+  }
+
+  if (rankComparison && orderedMatches.length >= 3) {
+    const metrics = Object.values(rankComparison.metrics).filter(Boolean);
+    const weakest = metrics.slice().sort((a, b) => a.relativeDelta - b.relativeDelta)[0];
+    const belowCount = metrics.filter(metric => metric.direction === "below").length;
+    const actionByMetric = {
+      "HS%": "Keep crosshair placement as the focus, but judge it alongside fight selection instead of chasing headshots alone.",
+      ACS: "Look for earlier useful damage, cleaner utility-to-fight timing, and more impact before rounds are already decided.",
+      "K/D": "Trim low-percentage peeks and stay close enough to teammates for trades before taking the next duel."
+    };
+    insights.push({
+      type: belowCount >= 2 ? "warn" : "good",
+      title: `${rankComparison.rankLabel} Benchmark Check`,
+      preview: `Provisional ${rankComparison.rankLabel} reference: ${overview.hs.toFixed(1)}% HS, ${Math.round(averageAcs)} ACS, ${overview.kd.toFixed(2)} K/D.`,
+      what: weakest?.direction === "below"
+        ? `The coach sees ${weakest.label.toLowerCase()} as the clearest rank-relative gap in this match window.`
+        : `The coach sees this match window holding near or above the available ${rankComparison.rankLabel} references.`,
+      why: `This compares your recent matches with a provisional ${rankComparison.rankLabel} community sample. Your existing agent, map, and trend reads still compare you with your own history.`,
+      action: weakest?.direction === "below"
+        ? actionByMetric[weakest.shortLabel]
+        : "Keep the same approach for the next match window and watch which number stays repeatable.",
+      sources: ["Recent Competitive Matches", `UpForge ${rankComparison.rankLabel} sample (July 2026)`],
+      focus: weakest?.shortLabel || "Rank Context",
+      category: "performance",
+      priority: belowCount >= 2 ? 89 : 73,
+      benchmark: rankComparison
     });
   }
 
@@ -6888,6 +6930,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     currentAct: importedAnalytics?.currentAct || "Current Window",
     acts: importedAnalytics?.acts?.length ? importedAnalytics.acts : ["Current Window"],
     overview,
+    roundMetrics,
+    rankComparison,
     maps: maps.length ? maps : (importedAnalytics?.maps || []),
     agents: agents.length ? agents : (importedAnalytics?.agents || []),
     roles: roles.length ? roles : (importedAnalytics?.roles || []),
