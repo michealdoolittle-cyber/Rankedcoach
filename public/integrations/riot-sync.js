@@ -44,6 +44,13 @@
     return globalThis.RankedCoachMatchRecord.fromHenrikRawMatch(match, context);
   }
 
+  function mapHenrikV4Match(match = {}, context = {}) {
+    if (!globalThis.RankedCoachMatchRecord?.fromHenrikV4Match) {
+      throw new Error("Match Record adapter is required before Henrik sync can map data.");
+    }
+    return globalThis.RankedCoachMatchRecord.fromHenrikV4Match(match, context);
+  }
+
   async function requestJson(path, body, options = {}) {
     const baseUrl = String(options.baseUrl || "").replace(/\/$/, "");
     const controller = new AbortController();
@@ -69,7 +76,7 @@
   }
 
   function getParsedMatchId(match = {}) {
-    return String(match?.metadata?.matchid || match?.metadata?.match_id || match?.matchId || "").trim();
+    return String(match?.metadata?.match_id || match?.metadata?.matchid || match?.matchId || "").trim();
   }
 
   async function pullMatches(options = {}) {
@@ -79,7 +86,8 @@
 
     const riotId = String(options.riotId || "").trim();
     const region = String(options.region || "na").trim().toLowerCase();
-    const count = Math.min(10, Math.max(1, Number(options.count) || 5));
+    const historyLimit = Math.min(50, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
+    const pageSize = Math.min(10, historyLimit);
     let puuid = String(options.puuid || "").trim();
     let account = null;
 
@@ -91,12 +99,23 @@
       if (!puuid) throw new Error("Henrik did not return a PUUID for this Riot ID.");
     }
 
-    const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count }, options);
-    const parsedMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
+    const parsedMatches = [];
+    let historyExhausted = false;
+    for (let start = 0; start < historyLimit; start += pageSize) {
+      const count = Math.min(pageSize, historyLimit - start);
+      const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count, start }, options);
+      const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
+      parsedMatches.push(...pageMatches);
+      if (pageMatches.length < count) {
+        historyExhausted = true;
+        break;
+      }
+    }
     const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
+    const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const pendingMatches = parsedMatches.filter(match => {
       const matchId = getParsedMatchId(match);
-      return matchId && !knownMatchIds.has(matchId);
+      return matchId && (!knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
     });
     const records = [];
     const failures = [];
@@ -104,8 +123,7 @@
     for (const parsedMatch of pendingMatches) {
       const matchId = getParsedMatchId(parsedMatch);
       try {
-        const rawMatch = await requestJson("/api/henrik/raw", { matchId, region }, options);
-        records.push(mapHenrikRawMatch(rawMatch, { puuid, parsedMatch }));
+        records.push(mapHenrikV4Match(parsedMatch, { puuid }));
       } catch (error) {
         failures.push({ matchId, error: error?.message || "Match mapping failed." });
       }
@@ -123,7 +141,10 @@
       records,
       failures,
       checked: parsedMatches.length,
-      newMatches: records.length
+      newMatches: records.length,
+      historyLimit,
+      historyExhausted,
+      historyWindowComplete: historyExhausted || parsedMatches.length >= historyLimit
     };
   }
 
@@ -136,6 +157,7 @@
     createRsoAuthorizationUrl,
     mapRiotMatch,
     mapHenrikRawMatch,
+    mapHenrikV4Match,
     pullMatches
   });
 })();

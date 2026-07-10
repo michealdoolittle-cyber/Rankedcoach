@@ -30,6 +30,22 @@ async function main() {
   loadBrowserScript("public/schema/match-record.js");
   loadBrowserScript("public/analytics/round-metrics.js");
 
+  const history = await postJson("/api/henrik/matches", { puuid, region: "na", count: 10, start: 0 });
+  const parsedMatch = (Array.isArray(history?.data) ? history.data : [])
+    .find(match => match?.metadata?.match_id === matchId);
+  assert.ok(parsedMatch, "Known match was not returned by the first v4 history page.");
+  const v4Record = globalThis.RankedCoachMatchRecord.fromHenrikV4Match(parsedMatch, { puuid });
+  const v4Kast = globalThis.RankedCoachRoundMetrics.computeMatchKast(v4Record);
+  const legacyRecord = globalThis.RankedCoachMatchRecord.toLegacyMatch(v4Record);
+
+  assert.equal(v4Record.act, "Episode 11 Act 3");
+  assert.equal(legacyRecord.act, "Episode 11 Act 3");
+  assert.equal(legacyRecord.metadata.act, "Episode 11 Act 3");
+  assert.equal(v4Kast.overall.qualifyingRounds, 17);
+  assert.equal(v4Kast.overall.totalRounds, 22);
+  assert.equal(Math.round(v4Kast.overall.percentage), 77);
+  assert.equal(v4Kast.overall.tradeSavedRounds, 3);
+
   const rawMatch = await postJson("/api/henrik/raw", { matchId, region: "na" });
   const record = globalThis.RankedCoachMatchRecord.fromHenrikRawMatch(rawMatch, { puuid });
   const kast = globalThis.RankedCoachRoundMetrics.computeMatchKast(record);
@@ -44,7 +60,7 @@ async function main() {
   assert.equal(Math.round(kast.overall.percentage), 77);
   assert.equal(kast.overall.tradeSavedRounds, 3);
 
-  console.log("Known match passed: 17/22 KAST (77%), 3 trade-window saves.");
+  console.log("Known v4 and Raw match passed: Episode 11 Act 3, 17/22 KAST (77%), 3 trade-window saves.");
 }
 
 main().catch(error => {

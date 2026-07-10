@@ -8,6 +8,12 @@ Manual-entry coaching insight was inaccurate regardless of match volume — not 
 
 **Key management:** `HENRIKDEV_API_KEY` lives in `.dev.vars` (gitignored, confirmed via `git check-ignore`) for local dev — never commit it. Production will need it set via `wrangler secret put HENRIKDEV_API_KEY` when this ships to the live Worker.
 
+## Historical season backfill (2026-07-10)
+
+Henrik v4 pagination confirms GoopyWetDiaper's previous Competitive data is available. The first 40 matches span `Episode 11 Act 3` (2), `Episode 10 Act 6` (32), and `Episode 10 Act 5` (6). RankedCoach now imports that 40-match window on the profile's first backfill, preserves the act label on runtime records, and derives the Stats season selector from real matches instead of demo-only analytics. Later syncs return to a ten-match recent window.
+
+Historical RR is a separate limitation: Henrik's stored MMR endpoint currently has only ten entries for this account and reports them as Unrated with 0 RR/change. Do not invent an RR timeline from wins and losses. Previous-act match, round, KAST, agent, map, and combat stats are usable; historical RR remains unavailable until the provider has trustworthy entries.
+
 ## Step B result — Raw endpoint test (2026-07-10)
 
 Tested against a real match from Michael's own account (`GoopyWetDiaper#Goopy`, NA), a genuine 22-round Competitive match (`matchid: 145aceda-cda0-47ce-a177-0eae09a9fd06` — had to skip several Team Deathmatch matches first since TDM has no rounds/economy/buy-phase structure and wouldn't have tested anything meaningful).

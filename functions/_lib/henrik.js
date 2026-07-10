@@ -112,9 +112,10 @@ async function getHenrikMatches(env, options = {}) {
   const puuid = requireUuid(options.puuid, "puuid");
   const region = normalizeRegion(options.region);
   const count = Math.min(10, Math.max(1, Number(options.count) || 5));
+  const start = Math.min(1000, Math.max(0, Math.floor(Number(options.start) || 0)));
   return henrikFetch(
     apiKey,
-    `/valorant/v3/by-puuid/matches/${region}/${encodeURIComponent(puuid)}?mode=competitive&size=${count}`
+    `/valorant/v4/by-puuid/matches/${region}/pc/${encodeURIComponent(puuid)}?mode=competitive&size=${count}&start=${start}`
   );
 }
 

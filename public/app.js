@@ -5242,6 +5242,10 @@ function getMechanicsContextAdjustment(agentName = "", coachingContext = {}) {
 
 function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null) {
   const orderedMatches = getSortedMatches(matchList);
+  const derivedActs = getMatchSeasonLabels(orderedMatches);
+  const importedActs = Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [];
+  const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
+  const currentAct = importedAnalytics?.currentAct || derivedActs[0] || "Current Window";
   const recentMatches = orderedMatches.slice(-8);
   const recentWindow = orderedMatches.slice(-5);
   const logs = (logList || []).slice();
@@ -6926,8 +6930,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     : "";
 
   return {
-    currentAct: importedAnalytics?.currentAct || "Current Window",
-    acts: importedAnalytics?.acts?.length ? importedAnalytics.acts : ["Current Window"],
+    currentAct,
+    acts: actOptions.length ? actOptions : [currentAct],
     overview,
     roundMetrics,
     rankComparison,
@@ -6975,20 +6979,22 @@ function getPlayerModel() {
 
 function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const importedAnalytics = profile?.trackerAnalytics || null;
-  const actOptions = Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [];
-  const selectedAct = String(
-    Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
-      ? options.actLabel || ""
-      : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
-        ? activeStatsActLabel
-        : importedAnalytics?.currentAct || ""
-  ).trim();
-  const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
   const sourceMatches = Array.isArray(options?.matches)
     ? options.matches
     : Array.isArray(profile?.matches)
       ? profile.matches
       : (matches || []);
+  const derivedActs = getMatchSeasonLabels(sourceMatches);
+  const importedActs = Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [];
+  const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
+  const selectedAct = String(
+    Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
+      ? options.actLabel || ""
+      : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
+        ? activeStatsActLabel
+        : importedAnalytics?.currentAct || derivedActs[0] || ""
+  ).trim();
+  const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
   const sourceLogs = Array.isArray(options?.logs)
     ? options.logs
     : (logEntries || []);
@@ -6999,11 +7005,13 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     ? sourceLogs.filter((entry) => String(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act || "").trim() === selectedAct)
     : sourceLogs;
   const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
-  const scopedAnalytics = importedAnalytics
-    ? { ...importedAnalytics, currentAct: selectedAct || importedAnalytics.currentAct || "Current Window" }
-    : null;
+  const scopedAnalytics = {
+    ...(importedAnalytics || {}),
+    currentAct: selectedAct || importedAnalytics?.currentAct || derivedActs[0] || "Current Window",
+    acts: actOptions
+  };
   return {
-    selectedAct: selectedAct || importedAnalytics?.currentAct || "Current Window",
+    selectedAct: scopedAnalytics.currentAct,
     matches: actMatches,
     logs: scopedLogs,
     analytics: scopedAnalytics
@@ -13455,6 +13463,7 @@ let matchSyncConfigured = null;
 let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
+const HENRIK_HISTORY_BACKFILL_SIZE = 40;
 let crestPreviewTimer = null;
 let crestPreviewIndex = 0;
 let crestPreviewActive = false;
@@ -41568,6 +41577,8 @@ function normalizeProfileRecord(profile = {}) {
     startingRR: safeNumber(profile.startingRR),
     startingRRDate: String(profile.startingRRDate || ""),
     startingRRSource: String(profile.startingRRSource || ""),
+    henrikHistoryWindowSize: Math.max(0, safeNumber(profile.henrikHistoryWindowSize)),
+    henrikHistoryBackfillCompleteAt: String(profile.henrikHistoryBackfillCompleteAt || ""),
     goalRank: profile.goalRank || null,
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
     peakRR: safeNumber(profile.peakRR),
@@ -41860,6 +41871,8 @@ function updateProfile(id, data){
     profile.startingRRDate = "";
     profile.startingRRSource = "";
     profile.puuid = "";
+    profile.henrikHistoryWindowSize = 0;
+    profile.henrikHistoryBackfillCompleteAt = "";
   }
 
   if (data.themeKey != null || data.frameTheme != null) {
@@ -42118,15 +42131,29 @@ function closeProfileDropdown(){
 
 function getStatsSelectedActLabel(profile = getActiveProfile()) {
   const analytics = profile?.trackerAnalytics || null;
-  const actOptions = Array.isArray(analytics?.acts) ? analytics.acts : [];
+  const derivedActs = getMatchSeasonLabels(profile?.matches || []);
+  const actOptions = [...new Set([...derivedActs, ...(Array.isArray(analytics?.acts) ? analytics.acts : [])].filter(Boolean))];
   const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
     ? activeStatsActLabel
-    : analytics?.currentAct || "";
+    : analytics?.currentAct || derivedActs[0] || "";
   return selectedAct && actOptions.includes(selectedAct) ? selectedAct : "";
 }
 
 function getMatchSeasonLabel(match = {}) {
-  return String(match?.metadata?.demoAct || match?.metadata?.act || match?.demoAct || match?.act || "").trim();
+  const value = String(
+    match?.metadata?.demoAct
+    || match?.metadata?.act
+    || match?.demoAct
+    || match?.act
+    || match?.matchRecord?.act
+    || ""
+  ).trim();
+  return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(value) || value;
+}
+
+function getMatchSeasonLabels(matchList = []) {
+  const newestFirst = getSortedMatches(matchList).slice().reverse();
+  return [...new Set(newestFirst.map(getMatchSeasonLabel).filter(Boolean))];
 }
 
 function computePeakProfileProgress(profile = getActiveProfile(), options = {}) {
@@ -47234,6 +47261,8 @@ function applyImportedMatches(matchList = [], options = {}){
 
   if(options.analytics){
     profile.trackerAnalytics = options.analytics;
+  } else if (importSource === "henrik") {
+    profile.trackerAnalytics = null;
   }
 
   if(options.source === "demo-fixture"){
@@ -47358,15 +47387,29 @@ async function importActiveProfileMatches(options = {}){
     const knownMatchIds = existingMatches
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
+    const refreshMatchIds = existingMatches
+      .filter(match => !getMatchSeasonLabel(match))
+      .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
+      .filter(Boolean);
+    const needsHistoryBackfill = !profile.henrikHistoryBackfillCompleteAt;
+    const historyLimit = needsHistoryBackfill ? HENRIK_HISTORY_BACKFILL_SIZE : 10;
     const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
       riotId: profile.riotId,
       puuid: profile.puuid,
       region: normalizeHenrikRegion(profile.region),
-      count: 5,
-      knownMatchIds
+      historyLimit,
+      knownMatchIds,
+      refreshMatchIds
     });
     profile.puuid = pullResult?.puuid || profile.puuid || "";
     profile.lastSyncSource = "henrik";
+    if (pullResult?.historyWindowComplete) {
+      profile.henrikHistoryWindowSize = Math.max(
+        safeNumber(profile.henrikHistoryWindowSize),
+        safeNumber(pullResult.checked)
+      );
+      if (needsHistoryBackfill) profile.henrikHistoryBackfillCompleteAt = nowISO();
+    }
 
     const canonicalRecords = Array.isArray(pullResult?.records) ? pullResult.records : [];
     if (!canonicalRecords.length) {
@@ -47376,6 +47419,7 @@ async function importActiveProfileMatches(options = {}){
         count: 0,
         checked: safeNumber(pullResult?.checked),
         source: "henrik",
+        historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
         failures: pullResult?.failures || []
       };
     }
@@ -47398,6 +47442,7 @@ async function importActiveProfileMatches(options = {}){
       count: importedMatches.length,
       checked: safeNumber(pullResult?.checked),
       source: "henrik",
+      historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
       failures: pullResult?.failures || []
     };
   } catch (error) {

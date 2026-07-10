@@ -37,6 +37,12 @@
     return RESULT_VALUES.has(text) ? text : "unknown";
   }
 
+  function formatHenrikActLabel(value = "") {
+    const shortCode = cleanString(value, "").toLowerCase();
+    const match = shortCode.match(/^e(\d+)a(\d+)$/);
+    return match ? `Episode ${Number(match[1])} Act ${Number(match[2])}` : cleanString(value);
+  }
+
   function normalizeConfidence(value, fallback = "unknown") {
     const text = cleanString(value, fallback).toLowerCase();
     return ["high", "medium", "low", "unknown"].includes(text) ? text : fallback;
@@ -493,6 +499,143 @@
     }, context);
   }
 
+  function getV4PlayerId(player = {}) {
+    return cleanString(player?.puuid || player);
+  }
+
+  function getV4PlayerTeam(player = {}) {
+    return cleanString(player?.team || player?.team_id);
+  }
+
+  function normalizeV4Kill(kill = {}) {
+    return {
+      killer: getV4PlayerId(kill.killer),
+      victim: getV4PlayerId(kill.victim),
+      assistants: (Array.isArray(kill.assistants) ? kill.assistants : []).map(getV4PlayerId).filter(Boolean),
+      roundTime: readNumber(kill.time_in_round_in_ms),
+      gameTime: readNumber(kill.time_in_match_in_ms),
+      finishingDamage: {
+        damageType: cleanString(kill.weapon?.type),
+        damageItem: cleanString(kill.weapon?.name),
+        isSecondaryFireMode: Boolean(kill.secondary_fire_mode)
+      }
+    };
+  }
+
+  function getV4RoundAttackingTeam(round = {}, index = 0, teamIds = [], initialAttackingTeam = null) {
+    const planterTeam = getV4PlayerTeam(round.plant?.player);
+    if (planterTeam) return { teamId: planterTeam, source: "bomb_planter" };
+    const defuserTeam = getV4PlayerTeam(round.defuse?.player);
+    if (defuserTeam) return { teamId: getOtherTeam(teamIds, defuserTeam), source: "bomb_defuser" };
+    if (index < 12) return { teamId: initialAttackingTeam, source: "regulation_order" };
+    if (index < 24) return { teamId: getOtherTeam(teamIds, initialAttackingTeam), source: "regulation_order" };
+    return {
+      teamId: (index - 24) % 2 === 0 ? initialAttackingTeam : getOtherTeam(teamIds, initialAttackingTeam),
+      source: "overtime_order"
+    };
+  }
+
+  function inferV4InitialAttackingTeam(rounds = [], teamIds = []) {
+    for (const round of rounds.slice(0, 12)) {
+      const planterTeam = getV4PlayerTeam(round?.plant?.player);
+      if (planterTeam) return planterTeam;
+      const defuserTeam = getV4PlayerTeam(round?.defuse?.player);
+      if (defuserTeam) return getOtherTeam(teamIds, defuserTeam);
+    }
+    return teamIds.includes("Red") ? "Red" : teamIds[0] || null;
+  }
+
+  function fromHenrikV4Match(payload = {}, context = {}) {
+    const match = payload?.data?.metadata?.match_id ? payload.data : payload;
+    const puuid = cleanString(context.puuid);
+    if (!puuid) throw new Error("Henrik match mapping requires the tracked player's PUUID.");
+
+    const players = Array.isArray(match.players) ? match.players : [];
+    const player = players.find(entry => getV4PlayerId(entry) === puuid);
+    if (!player) throw new Error("Tracked player was not found in the Henrik match.");
+
+    const trackedTeam = cleanString(player.team_id);
+    const teamIds = cleanStringArray((Array.isArray(match.teams) ? match.teams : []).map(team => team?.team_id));
+    const teammatePuuids = players
+      .filter(entry => cleanString(entry?.team_id) === trackedTeam && getV4PlayerId(entry) !== puuid)
+      .map(getV4PlayerId)
+      .filter(Boolean);
+    const rounds = Array.isArray(match.rounds) ? match.rounds : [];
+    const kills = Array.isArray(match.kills) ? match.kills : [];
+    const initialAttackingTeam = inferV4InitialAttackingTeam(rounds, teamIds);
+    const roundByRound = rounds.map((round, index) => {
+      const playerRound = (Array.isArray(round?.stats) ? round.stats : [])
+        .find(entry => getV4PlayerId(entry?.player) === puuid) || {};
+      const attack = getV4RoundAttackingTeam(round, index, teamIds, initialAttackingTeam);
+      const economy = playerRound.economy || {};
+      return {
+        roundIndex: index,
+        roundNum: readNumber(round?.id, index) + 1,
+        side: attack.teamId === trackedTeam ? "attack" : "defense",
+        sideSource: attack.source,
+        attackingTeam: attack.teamId,
+        winningTeam: round?.winning_team,
+        won: cleanString(round?.winning_team) === trackedTeam,
+        roundResult: round?.result,
+        roundCeremony: round?.ceremony,
+        bombPlanter: getV4PlayerId(round?.plant?.player),
+        bombDefuser: getV4PlayerId(round?.defuse?.player),
+        playerEconomy: {
+          loadoutValue: economy.loadout_value,
+          weapon: economy.weapon?.name,
+          armor: economy.armor?.name,
+          remaining: economy.remaining
+        },
+        playerScore: playerRound.stats?.score,
+        damageDealt: (Array.isArray(playerRound.damage_events) ? playerRound.damage_events : [])
+          .reduce((total, event) => total + (readNumber(event?.damage, 0) || 0), 0),
+        wasAfk: playerRound.was_afk,
+        wasPenalized: playerRound.received_penalty,
+        stayedInSpawn: playerRound.stayed_in_spawn,
+        kills: kills.filter(kill => readNumber(kill?.round) === index).map(normalizeV4Kill)
+      };
+    });
+
+    const team = (Array.isArray(match.teams) ? match.teams : [])
+      .find(entry => cleanString(entry?.team_id) === trackedTeam) || {};
+    const roundsPlayed = rounds.length || (readNumber(team.rounds?.won, 0) || 0) + (readNumber(team.rounds?.lost, 0) || 0) || 1;
+    const stats = player.stats || {};
+    const totalShots = [stats.headshots, stats.bodyshots, stats.legshots]
+      .reduce((total, value) => total + (readNumber(value, 0) || 0), 0);
+    const seasonShort = cleanString(match.metadata?.season?.short);
+
+    return fromRiotMatch({
+      id: match.metadata?.match_id,
+      matchId: match.metadata?.match_id,
+      source: "henrik_sync",
+      createdAt: match.metadata?.started_at,
+      playedAt: match.metadata?.started_at,
+      season: match.metadata?.season?.id,
+      act: formatHenrikActLabel(seasonShort),
+      agent: player.agent?.name,
+      map: match.metadata?.map?.name,
+      result: team.won === true ? "win" : team.won === false ? "loss" : "unknown",
+      kills: stats.kills,
+      deaths: stats.deaths,
+      assists: stats.assists,
+      acs: readNumber(stats.score, 0) / roundsPlayed,
+      adr: readNumber(stats.damage?.dealt, 0) / roundsPlayed,
+      hsPercent: totalShots ? ((readNumber(stats.headshots, 0) || 0) / totalShots) * 100 : null,
+      roundsWon: team.rounds?.won,
+      roundsLost: team.rounds?.lost,
+      rank: player.tier?.name,
+      trackedPlayer: {
+        puuid,
+        teamId: trackedTeam,
+        agentId: player.agent?.id,
+        competitiveTier: player.tier?.id,
+        teammatePuuids,
+        behaviorFactors: player.behavior
+      },
+      roundByRound
+    }, context);
+  }
+
   function toLegacyMatch(record = {}) {
     const normalized = record?.schemaVersion === SCHEMA_VERSION ? record : emptyRecord(record);
     const matchId = normalized.legacyMatchId || normalized.id;
@@ -500,6 +643,8 @@
       id: matchId,
       matchId,
       source: normalized.source,
+      season: normalized.season,
+      act: normalized.act,
       manual: normalized.source === "manual",
       pendingVerification: normalized.pendingVerification,
       rr: readNumber(normalized.rank.rrDelta, 0),
@@ -517,7 +662,9 @@
         mapName: normalized.map || "Unknown",
         result: normalized.result,
         playedAt: normalized.playedAt || normalized.createdAt,
-        source: normalized.source
+        source: normalized.source,
+        season: normalized.season,
+        act: normalized.act
       },
       segments: [{
         type: "overview",
@@ -572,6 +719,8 @@
     fromTrackerOcrMatch,
     fromRiotMatch,
     fromHenrikRawMatch,
+    fromHenrikV4Match,
+    formatHenrikActLabel,
     toLegacyMatch,
     getRuntimeRecords,
     normalizeResult,

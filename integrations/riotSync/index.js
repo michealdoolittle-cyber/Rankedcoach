@@ -30,10 +30,10 @@ function mapRiotMatchToCanonicalRecord(match, context = {}, matchRecordAdapter =
 }
 
 function mapHenrikMatchToCanonicalRecord(match, context = {}, matchRecordAdapter = globalThis.RankedCoachMatchRecord) {
-  if (!matchRecordAdapter?.fromHenrikRawMatch) {
+  if (!matchRecordAdapter?.fromHenrikV4Match) {
     throw new Error("Match Record adapter is required before Henrik sync can map data.");
   }
-  return matchRecordAdapter.fromHenrikRawMatch(match, context);
+  return matchRecordAdapter.fromHenrikV4Match(match, context);
 }
 
 async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.RankedCoachMatchRecord) {
@@ -53,7 +53,8 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     return payload;
   };
   const region = String(options.region || "na").toLowerCase();
-  const count = Math.min(10, Math.max(1, Number(options.count) || 5));
+  const historyLimit = Math.min(50, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
+  const pageSize = Math.min(10, historyLimit);
   let puuid = String(options.puuid || "").trim();
   let account = null;
   if (!puuid) {
@@ -62,23 +63,44 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     puuid = String(account?.puuid || "").trim();
   }
   if (!puuid) throw new Error("Henrik did not return a PUUID for this Riot ID.");
-  const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count });
-  const parsedMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
+  const parsedMatches = [];
+  let historyExhausted = false;
+  for (let start = 0; start < historyLimit; start += pageSize) {
+    const count = Math.min(pageSize, historyLimit - start);
+    const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count, start });
+    const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
+    parsedMatches.push(...pageMatches);
+    if (pageMatches.length < count) {
+      historyExhausted = true;
+      break;
+    }
+  }
   const known = new Set((options.knownMatchIds || []).map(String));
+  const refresh = new Set((options.refreshMatchIds || []).map(String));
   const records = [];
   const failures = [];
   for (const parsedMatch of parsedMatches) {
-    const matchId = String(parsedMatch?.metadata?.matchid || parsedMatch?.metadata?.match_id || "");
-    if (!matchId || known.has(matchId)) continue;
+    const matchId = String(parsedMatch?.metadata?.match_id || parsedMatch?.metadata?.matchid || "");
+    if (!matchId || (known.has(matchId) && !refresh.has(matchId))) continue;
     try {
-      const rawMatch = await requestJson("/api/henrik/raw", { matchId, region });
-      records.push(mapHenrikMatchToCanonicalRecord(rawMatch, { puuid, parsedMatch }, matchRecordAdapter));
+      records.push(mapHenrikMatchToCanonicalRecord(parsedMatch, { puuid }, matchRecordAdapter));
     } catch (error) {
       failures.push({ matchId, error: error?.message || "Match mapping failed." });
     }
   }
   if (failures.length && !records.length) throw new Error(failures[0].error);
-  return { enabled: true, provider: "henrik", puuid, account, records, failures, checked: parsedMatches.length };
+  return {
+    enabled: true,
+    provider: "henrik",
+    puuid,
+    account,
+    records,
+    failures,
+    checked: parsedMatches.length,
+    historyLimit,
+    historyExhausted,
+    historyWindowComplete: historyExhausted || parsedMatches.length >= historyLimit
+  };
 }
 
 module.exports = {
