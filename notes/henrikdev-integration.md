@@ -1,6 +1,6 @@
 # HenrikDev API Bridge — Data Integration for Coaching Engine
 
-**Status (2026-07-10): SHIPPED.** Worker routing, the secret-backed Henrik proxy, round-level canonical records, incremental Riot-ID match sync, validated KAST, provisional rank benchmarks, and the Tracker.gg/OCR removal are implemented. The known real match produces exactly 17/22 KAST rounds (77%) with three trade-window saves. Production match pulls remain intentionally unavailable until `HENRIKDEV_API_KEY` is added as a Cloudflare Worker secret; local secret-backed validation is complete.
+**Status (2026-07-10): SHIPPED.** Worker routing, the production secret-backed Henrik proxy, round-level canonical records, resumable retained-history sync, Stored MMR History v2 enrichment, validated KAST, provisional rank benchmarks, and the Tracker.gg/OCR removal are implemented. The known real match produces exactly 17/22 KAST rounds (77%) with three trade-window saves.
 
 ## Background — why this exists
 
@@ -10,9 +10,9 @@ Manual-entry coaching insight was inaccurate regardless of match volume — not 
 
 ## Historical season backfill (2026-07-10)
 
-Henrik v4 pagination confirms GoopyWetDiaper's previous Competitive data is available. The first 40 matches span `Episode 11 Act 3` (2), `Episode 10 Act 6` (32), and `Episode 10 Act 5` (6). RankedCoach now imports that 40-match window on the profile's first backfill, preserves the act label on runtime records, and derives the Stats season selector from real matches instead of demo-only analytics. Later syncs return to a ten-match recent window.
+Henrik v4 pagination currently exhausts at 86 retained Competitive matches for GoopyWetDiaper, spanning 2024-05-28 through 2026-06-01. RankedCoach now requests up to 100 matches per retained-history pass, resumes from a stored cursor if an account exceeds that window, preserves act labels, and derives the Stats season selector from the full provider-retained set. This is not the player's complete Riot lifetime: Henrik only returns matches its service retained, so earlier acts require Riot RSO or another user-authorized source.
 
-Historical RR is a separate limitation: Henrik's stored MMR endpoint currently has only ten entries for this account and reports them as Unrated with 0 RR/change. Do not invent an RR timeline from wins and losses. Previous-act match, round, KAST, agent, map, and combat stats are usable; historical RR remains unavailable until the provider has trustworthy entries.
+Historical RR is sparse rather than entirely absent. Stored MMR History v2 currently returns ten snapshots for this account: two Unrated zero-value entries, three verified `Episode 10 Act 6` Diamond 2 entries, and five verified `Episode 9 Act 1` Diamond 1 entries. RankedCoach joins those snapshots by match ID and charts only verified RR deltas; missing games remain gaps and are never estimated from wins or losses.
 
 ## Step B result — Raw endpoint test (2026-07-10)
 

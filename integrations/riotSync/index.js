@@ -36,6 +36,73 @@ function mapHenrikMatchToCanonicalRecord(match, context = {}, matchRecordAdapter
   return matchRecordAdapter.fromHenrikV4Match(match, context);
 }
 
+function getMmrSnapshotMatchId(snapshot = {}) {
+  return String(snapshot?.match_id || snapshot?.matchId || "").trim();
+}
+
+function isVerifiedMmrSnapshot(snapshot = {}) {
+  const hasNumber = value => value !== null
+    && value !== undefined
+    && String(value).trim() !== ""
+    && Number.isFinite(Number(value));
+  return Number(snapshot?.tier?.id) > 0
+    && hasNumber(snapshot?.rr)
+    && hasNumber(snapshot?.last_change);
+}
+
+function enrichLegacyMatchesWithMmr(matchList = [], mmrHistory = []) {
+  const snapshots = new Map(
+    (Array.isArray(mmrHistory) ? mmrHistory : [])
+      .map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot])
+      .filter(([matchId]) => matchId)
+  );
+  return (Array.isArray(matchList) ? matchList : []).map(match => {
+    const source = String(match?.source || match?.metadata?.source || "").toLowerCase();
+    if (source !== "henrik_sync") return match;
+    const matchId = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim();
+    const snapshot = snapshots.get(matchId);
+    if (!snapshot) return match;
+    const verified = isVerifiedMmrSnapshot(snapshot);
+    const rankPatch = verified ? {
+      rank: String(snapshot?.tier?.name || match?.rank || match?.matchRecord?.rank?.rank || "").trim() || null,
+      rr: Number(snapshot.rr),
+      rrDelta: Number(snapshot.last_change),
+      elo: Number.isFinite(Number(snapshot.elo)) ? Number(snapshot.elo) : null,
+      verified: true,
+      source: "henrik-stored-mmr-v2",
+      capturedAt: snapshot.date || null
+    } : {
+      ...(match?.matchRecord?.rank || {}),
+      rr: null,
+      rrDelta: null,
+      elo: null,
+      verified: false,
+      source: null,
+      capturedAt: null
+    };
+    return {
+      ...match,
+      rr: null,
+      verifiedRrDelta: verified ? rankPatch.rrDelta : null,
+      rrTotal: verified ? rankPatch.rr : null,
+      rrVerified: verified,
+      rank: rankPatch.rank || match?.rank || null,
+      rankElo: rankPatch.elo,
+      rankDataSource: rankPatch.source,
+      rankCapturedAt: rankPatch.capturedAt,
+      matchRecord: match?.matchRecord ? { ...match.matchRecord, rank: rankPatch } : match?.matchRecord,
+      metadata: {
+        ...(match?.metadata || {}),
+        rank: rankPatch.rank || match?.metadata?.rank || null,
+        rrVerified: verified,
+        rankElo: rankPatch.elo,
+        rankDataSource: rankPatch.source,
+        rankCapturedAt: rankPatch.capturedAt
+      }
+    };
+  });
+}
+
 async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.RankedCoachMatchRecord) {
   if (!isHenrikSyncEnabled()) {
     return { enabled: false, reason: "henrik_sync_feature_flag_off", records: [] };
@@ -53,7 +120,8 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     return payload;
   };
   const region = String(options.region || "na").toLowerCase();
-  const historyLimit = Math.min(50, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
+  const historyLimit = Math.min(100, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
+  const historyStart = Math.min(1000, Math.max(0, Math.floor(Number(options.historyStart) || 0)));
   const pageSize = Math.min(10, historyLimit);
   let puuid = String(options.puuid || "").trim();
   let account = null;
@@ -63,10 +131,13 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     puuid = String(account?.puuid || "").trim();
   }
   if (!puuid) throw new Error("Henrik did not return a PUUID for this Riot ID.");
+  const mmrHistoryPromise = requestJson("/api/henrik/mmr-history", { puuid, region, size: 100, page: 1 })
+    .catch(error => ({ data: [], error: error?.message || "MMR history unavailable." }));
   const parsedMatches = [];
   let historyExhausted = false;
-  for (let start = 0; start < historyLimit; start += pageSize) {
-    const count = Math.min(pageSize, historyLimit - start);
+  for (let offset = 0; offset < historyLimit; offset += pageSize) {
+    const start = historyStart + offset;
+    const count = Math.min(pageSize, historyLimit - offset);
     const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count, start });
     const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
     parsedMatches.push(...pageMatches);
@@ -75,6 +146,9 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
       break;
     }
   }
+  const mmrPayload = await mmrHistoryPromise;
+  const mmrHistory = Array.isArray(mmrPayload?.data) ? mmrPayload.data : [];
+  const mmrByMatchId = new Map(mmrHistory.map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot]));
   const known = new Set((options.knownMatchIds || []).map(String));
   const refresh = new Set((options.refreshMatchIds || []).map(String));
   const records = [];
@@ -83,7 +157,10 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     const matchId = String(parsedMatch?.metadata?.match_id || parsedMatch?.metadata?.matchid || "");
     if (!matchId || (known.has(matchId) && !refresh.has(matchId))) continue;
     try {
-      records.push(mapHenrikMatchToCanonicalRecord(parsedMatch, { puuid }, matchRecordAdapter));
+      records.push(mapHenrikMatchToCanonicalRecord(parsedMatch, {
+        puuid,
+        mmrSnapshot: mmrByMatchId.get(matchId) || null
+      }, matchRecordAdapter));
     } catch (error) {
       failures.push({ matchId, error: error?.message || "Match mapping failed." });
     }
@@ -98,8 +175,11 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     failures,
     checked: parsedMatches.length,
     historyLimit,
+    historyStart,
     historyExhausted,
-    historyWindowComplete: historyExhausted || parsedMatches.length >= historyLimit
+    historyWindowComplete: historyExhausted,
+    mmrHistory,
+    mmrHistoryError: mmrPayload?.error || ""
   };
 }
 
@@ -111,5 +191,6 @@ module.exports = {
   createRsoAuthorizationUrl,
   mapRiotMatchToCanonicalRecord,
   mapHenrikMatchToCanonicalRecord,
+  enrichLegacyMatchesWithMmr,
   pullRiotMatches
 };

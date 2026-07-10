@@ -68,12 +68,18 @@ async function run() {
       matches: [{
         id: "match-1",
         matchId: "match-1",
+        source: "henrik_sync",
+        act: "Episode 11 Act 3",
         createdAt: "2026-07-10T12:00:00Z",
-        rr: 18,
+        rr: null,
+        verifiedRrDelta: 18,
+        rrTotal: 50,
+        rrVerified: true,
+        rank: "Diamond 2",
         result: "win",
         agent: "Sova",
         map: "Haven",
-        metadata: { matchId: "match-1", agent: "Sova", mapName: "Haven", result: "win" }
+        metadata: { matchId: "match-1", source: "henrik_sync", act: "Episode 11 Act 3", agent: "Sova", mapName: "Haven", result: "win", rrVerified: true }
       }]
     }]));
     localStorage.setItem("valtracker_log_entries_v2:guest", JSON.stringify([{
@@ -96,6 +102,9 @@ async function run() {
   try {
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "networkidle" });
     await page.click('[data-mobile-page="logging"]');
+    const debriefMeta = await page.locator("#loggingLiveMeta").innerText();
+    assert.equal(debriefMeta, "Add a rating, mood, or map to see it here.");
+    assert.doesNotMatch(debriefMeta, /null|â|Ã/);
     await page.click('[data-mobile-logging-view="feed"]');
     const placeholder = page.locator(".log-entry-placeholder");
     await placeholder.waitFor({ state: "visible" });
@@ -106,6 +115,12 @@ async function run() {
     await placeholder.locator(".log-edit-btn").click();
     assert.equal(await page.locator("#logMap").inputValue(), "Haven");
     assert.equal(await page.locator("#logAgentDisplay").getAttribute("data-agent"), "Sova");
+    await page.click('[data-mobile-page="home"]');
+    await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("active"));
+    await page.click('.graph-btn[data-size="5"]');
+    await page.waitForFunction(() => document.getElementById("rrChartDataStatus")?.textContent?.includes("verified RR snapshots"));
+    assert.match(await page.locator("#rrChartDataStatus").innerText(), /1 of 1 retained matches have verified RR snapshots/);
+    assert.equal(await page.locator(".rr-hit").last().getAttribute("data-rank-rr"), "50");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     assert.equal(overflow, false);
     assert.deepEqual(consoleErrors, []);

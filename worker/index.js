@@ -33,6 +33,10 @@ import {
   onRequestPost as postHenrikMatches
 } from "../functions/api/henrik/matches.js";
 import {
+  onRequestOptions as optionsHenrikMmrHistory,
+  onRequestPost as postHenrikMmrHistory
+} from "../functions/api/henrik/mmr-history.js";
+import {
   onRequestOptions as optionsHenrikRaw,
   onRequestPost as postHenrikRaw
 } from "../functions/api/henrik/raw.js";
@@ -56,6 +60,8 @@ const API_ROUTES = new Map([
   ["OPTIONS /api/henrik/account", optionsHenrikAccount],
   ["POST /api/henrik/matches", postHenrikMatches],
   ["OPTIONS /api/henrik/matches", optionsHenrikMatches],
+  ["POST /api/henrik/mmr-history", postHenrikMmrHistory],
+  ["OPTIONS /api/henrik/mmr-history", optionsHenrikMmrHistory],
   ["POST /api/henrik/raw", postHenrikRaw],
   ["OPTIONS /api/henrik/raw", optionsHenrikRaw]
 ]);

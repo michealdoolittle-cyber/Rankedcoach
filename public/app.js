@@ -13468,7 +13468,8 @@ let matchSyncConfigured = null;
 let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
-const HENRIK_HISTORY_BACKFILL_SIZE = 40;
+const HENRIK_HISTORY_BACKFILL_SIZE = 100;
+const HENRIK_HISTORY_BACKFILL_VERSION = 2;
 let crestPreviewTimer = null;
 let crestPreviewIndex = 0;
 let crestPreviewActive = false;
@@ -13660,6 +13661,34 @@ function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
   return sourceMatches.reduce((total, match) => total + safeNumber(match?.rr), start);
 }
 
+function isVerifiedHenrikRrMatch(match = {}) {
+  return match?.rrVerified === true || match?.metadata?.rrVerified === true || match?.matchRecord?.rank?.verified === true;
+}
+
+function getChartMatchRRDelta(match = {}) {
+  if (isVerifiedHenrikRrMatch(match)) {
+    return safeNumber(match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta);
+  }
+  return safeNumber(match?.rr);
+}
+
+function updateRRChartDataStatus(chartSource = {}) {
+  const status = document.getElementById("rrChartDataStatus");
+  if (!status) return;
+  status.dataset.retainedMatchCount = String(safeNumber(chartSource.totalMatchCount));
+  status.dataset.verifiedRrCount = String(safeNumber(chartSource.verifiedRrCount));
+  status.dataset.hasHenrikMatches = chartSource.hasHenrikMatches ? "true" : "false";
+  if (!chartSource.hasHenrikMatches) {
+    status.textContent = "Click a game dot to inspect the imported match.";
+    return;
+  }
+  const total = safeNumber(chartSource.totalMatchCount);
+  const verified = safeNumber(chartSource.verifiedRrCount);
+  status.textContent = verified
+    ? `${verified} of ${total} retained matches have verified RR snapshots. Missing RR is not estimated.`
+    : `Match stats are available for ${total} retained matches, but Henrik has no verified RR snapshots for this selection.`;
+}
+
 function getChartSourceEntries(size = currentSize) {
   const profile = getActiveProfile?.();
   const normalizedSize = normalizeChartWindowSize(size);
@@ -13669,10 +13698,10 @@ function getChartSourceEntries(size = currentSize) {
   const selectedSeasonLabel = getChartSelectedSeasonLabel(profile);
   const canFilterBySeason = Boolean(selectedSeasonLabel && selectedSeasonLabel !== "Current Season");
 
-  let runningRR = profile ? safeNumber(profile.startingRR) : 0;
+  let runningRR = 0;
   const allEntries = sourceMatches.map((match, index) => {
     const absoluteBefore = runningRR;
-    runningRR += safeNumber(match?.rr);
+    runningRR += getChartMatchRRDelta(match);
     return {
       match,
       index,
@@ -13685,7 +13714,18 @@ function getChartSourceEntries(size = currentSize) {
   const seasonEntries = canFilterBySeason
     ? allEntries.filter((entry) => getMatchSeasonLabel(entry.match) === selectedSeasonLabel)
     : allEntries;
-  const entries = (normalizedSize === "all" ? allEntries : seasonEntries)
+  const scopedEntries = normalizedSize === "all" ? allEntries : seasonEntries;
+  const hasHenrikMatches = scopedEntries.some(entry =>
+    String(entry?.match?.source || entry?.match?.metadata?.source || "").toLowerCase() === "henrik_sync"
+  );
+  const verifiedRrCount = scopedEntries.filter(entry => isVerifiedHenrikRrMatch(entry.match)).length;
+  const chartEntries = hasHenrikMatches
+    ? scopedEntries.filter(entry => {
+        const source = String(entry?.match?.source || entry?.match?.metadata?.source || "").toLowerCase();
+        return source !== "henrik_sync" || isVerifiedHenrikRrMatch(entry.match);
+      })
+    : scopedEntries;
+  const entries = chartEntries
     .map((entry, displayIndex) => ({ ...entry, displayIndex }));
   const scopeLabel = normalizedSize === "all" ? "All-time profile" : selectedSeasonLabel;
 
@@ -13696,7 +13736,10 @@ function getChartSourceEntries(size = currentSize) {
     isCurrentSessionScoped: false,
     isRecentAccountWindow: false,
     isSeasonScoped: normalizedSize !== "all",
-    matchCount: entries.length
+    matchCount: entries.length,
+    totalMatchCount: scopedEntries.length,
+    verifiedRrCount,
+    hasHenrikMatches
   };
 }
 
@@ -13842,7 +13885,12 @@ function positionTooltipToHit(hit, options = {}){
 
   tip.style.visibility = "visible";
   tip.style.opacity = 1;
-  tip.textContent = `${safeNumber(hit.dataset.totalRr, hit.dataset.rr)} RR`;
+  const rankRr = String(hit.dataset.rankRr || "").trim();
+  const rankLabel = String(hit.dataset.rankLabel || "").trim();
+  const rrDelta = safeNumber(hit.dataset.rr);
+  tip.textContent = rankRr
+    ? `${rankLabel ? `${rankLabel} ` : ""}${rankRr} RR | ${rrDelta >= 0 ? "+" : ""}${rrDelta} RR`
+    : `${safeNumber(hit.dataset.totalRr, hit.dataset.rr)} RR`;
 
   // ========================
   // SMART TOOLTIP POSITION
@@ -15356,7 +15404,7 @@ function buildCumulativeRR(matchList) {
   let total = 0;
 
   matchList.forEach(match => {
-    total += Number(match?.rr || 0);
+    total += getChartMatchRRDelta(match);
     cumulative.push(total);
   });
 
@@ -15444,6 +15492,7 @@ function getChartSliceWithEntries(cumulative, entries, size) {
 
 function getChartRankChange(entry = null) {
   if (!entry) return null;
+  if (isVerifiedHenrikRrMatch(entry.match)) return null;
   const before = getTierRank(safeNumber(entry.absoluteBefore));
   const after = getTierRank(safeNumber(entry.absoluteAfter));
   if (!before || !after || before.tierLabel === after.tierLabel) return null;
@@ -15546,6 +15595,12 @@ function buildChartPoints(slice, y, visibleEntries = null) {
       match,
       snapshot,
       rankChange: getChartRankChange(scopedEntry),
+      rankRr: isVerifiedHenrikRrMatch(match)
+        ? safeNumber(match?.rrTotal ?? match?.matchRecord?.rank?.rr)
+        : null,
+      rankLabel: isVerifiedHenrikRrMatch(match)
+        ? String(match?.rank || match?.matchRecord?.rank?.rank || "").trim()
+        : "",
       matchId: String((match?.id || match?.matchId || snapshot?.id || snapshot?.matchId || "")),
       matchKey: getMatchIdentityKey(match || snapshot || {})
     };
@@ -15592,6 +15647,8 @@ cy="${point.y}"
 r="${HIT_RADIUS}"
 data-rr="${point.rr}"
 data-total-rr="${point.value}"
+data-rank-rr="${point.rankRr !== null && point.rankRr !== undefined && String(point.rankRr).trim() !== "" && Number.isFinite(Number(point.rankRr)) ? Number(point.rankRr) : ""}"
+data-rank-label="${escapeHtml(point.rankLabel || "")}"
 data-index="${point.matchIndex}"
 data-match-index="${point.matchIndex}"
 data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
@@ -15604,6 +15661,8 @@ cy="${point.y}"
 r="${DOT_RADIUS}"
 data-rr="${point.rr}"
 data-total-rr="${point.value}"
+data-rank-rr="${point.rankRr !== null && point.rankRr !== undefined && String(point.rankRr).trim() !== "" && Number.isFinite(Number(point.rankRr)) ? Number(point.rankRr) : ""}"
+data-rank-label="${escapeHtml(point.rankLabel || "")}"
 data-index="${point.matchIndex}"
 data-match-index="${point.matchIndex}"
 data-session-index="${Number.isInteger(point.sessionIndex) ? point.sessionIndex : point.matchIndex}"
@@ -17452,15 +17511,19 @@ function updateLoggingDebriefPreview() {
     ? `${focusParts.join(" | ")}`
     : "Pick an agent and focus category to build the debrief.";
 
+  const hasSelectedNumber = value => value !== null
+    && value !== undefined
+    && String(value).trim() !== ""
+    && Number.isFinite(Number(value));
   const metaParts = [];
-  if (Number.isFinite(Number(selectedLogRating))) metaParts.push(`Self Rating ${selectedLogRating}/5`);
+  if (hasSelectedNumber(selectedLogRating)) metaParts.push(`Self Rating ${selectedLogRating}/5`);
   if (selectedLogMood) metaParts.push(selectedLogMood);
-  if (Number.isFinite(Number(selectedLogTeamComms))) metaParts.push(`Team Comms ${selectedLogTeamComms}/5`);
-  if (Number.isFinite(Number(selectedLogSelfComms))) metaParts.push(`Self Comms ${selectedLogSelfComms}/5`);
+  if (hasSelectedNumber(selectedLogTeamComms)) metaParts.push(`Team Comms ${selectedLogTeamComms}/5`);
+  if (hasSelectedNumber(selectedLogSelfComms)) metaParts.push(`Self Comms ${selectedLogSelfComms}/5`);
   if (map) metaParts.push(map);
   if (notes) metaParts.push(`${Math.min(notes.length, 140)} chars captured`);
   metaEl.textContent = metaParts.length
-    ? metaParts.join(" â€¢ ")
+    ? metaParts.join(" | ")
     : "Add a rating, mood, or map to see it here.";
 }
 
@@ -41717,6 +41780,8 @@ function normalizeProfileRecord(profile = {}) {
     startingRRDate: String(profile.startingRRDate || ""),
     startingRRSource: String(profile.startingRRSource || ""),
     henrikHistoryWindowSize: Math.max(0, safeNumber(profile.henrikHistoryWindowSize)),
+    henrikHistoryCursor: Math.max(0, safeNumber(profile.henrikHistoryCursor)),
+    henrikHistoryBackfillVersion: Math.max(0, safeNumber(profile.henrikHistoryBackfillVersion)),
     henrikHistoryBackfillCompleteAt: String(profile.henrikHistoryBackfillCompleteAt || ""),
     goalRank: profile.goalRank || null,
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
@@ -42011,6 +42076,8 @@ function updateProfile(id, data){
     profile.startingRRSource = "";
     profile.puuid = "";
     profile.henrikHistoryWindowSize = 0;
+    profile.henrikHistoryCursor = 0;
+    profile.henrikHistoryBackfillVersion = 0;
     profile.henrikHistoryBackfillCompleteAt = "";
   }
 
@@ -44741,6 +44808,7 @@ if(chartHeight){
   const chartSource = resolvedSize === requestedSize
     ? initialChartSource
     : getChartSourceEntries(resolvedSize);
+  updateRRChartDataStatus(chartSource);
   const chartEntries = chartSource.entries;
   const chartMatchCount = chartEntries.length;
   const chartMatches = chartEntries.map(entry => entry.match);
@@ -47539,31 +47607,55 @@ async function importActiveProfileMatches(options = {}){
       .filter(match => !getMatchSeasonLabel(match))
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
-    const needsHistoryBackfill = !profile.henrikHistoryBackfillCompleteAt;
+    const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
+    if (needsHistoryVersionUpgrade) {
+      profile.henrikHistoryCursor = 0;
+      profile.henrikHistoryBackfillCompleteAt = "";
+    }
+    const needsHistoryBackfill = needsHistoryVersionUpgrade || !profile.henrikHistoryBackfillCompleteAt;
+    const historyStart = needsHistoryBackfill ? Math.max(0, safeNumber(profile.henrikHistoryCursor)) : 0;
     const historyLimit = needsHistoryBackfill ? HENRIK_HISTORY_BACKFILL_SIZE : 10;
     const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
       riotId: profile.riotId,
       puuid: profile.puuid,
       region: normalizeHenrikRegion(profile.region),
       historyLimit,
+      historyStart,
       knownMatchIds,
       refreshMatchIds
     });
     profile.puuid = pullResult?.puuid || profile.puuid || "";
     profile.lastSyncSource = "henrik";
-    if (pullResult?.historyWindowComplete) {
-      profile.henrikHistoryWindowSize = Math.max(
-        safeNumber(profile.henrikHistoryWindowSize),
-        safeNumber(pullResult.checked)
-      );
-      if (needsHistoryBackfill) profile.henrikHistoryBackfillCompleteAt = nowISO();
+    if (needsHistoryBackfill) {
+      const nextCursor = historyStart + safeNumber(pullResult?.checked);
+      profile.henrikHistoryCursor = nextCursor;
+      profile.henrikHistoryWindowSize = Math.max(safeNumber(profile.henrikHistoryWindowSize), nextCursor);
+      if (pullResult?.historyWindowComplete) {
+        profile.henrikHistoryBackfillVersion = HENRIK_HISTORY_BACKFILL_VERSION;
+        profile.henrikHistoryBackfillCompleteAt = nowISO();
+      }
     }
 
     const canonicalRecords = Array.isArray(pullResult?.records) ? pullResult.records : [];
+    const mmrHistory = Array.isArray(pullResult?.mmrHistory) ? pullResult.mmrHistory : [];
+    const enrichMmr = globalThis.RankedCoachRiotSync?.enrichLegacyMatchesWithMmr;
     if (!canonicalRecords.length) {
+      const enrichedExisting = typeof enrichMmr === "function"
+        ? enrichMmr(existingMatches, mmrHistory)
+        : existingMatches;
+      profile.matches = enrichedExisting.slice();
+      matches = enrichedExisting.slice();
       profile.lastSyncAt = nowISO();
-      syncRankedMatchPlaceholderLogs(existingMatches, profile);
+      syncRankedMatchPlaceholderLogs(enrichedExisting, profile);
       saveProfiles();
+      recomputeFromMatches();
+      initStatsPage();
+      renderStatsAgents();
+      renderStatsMaps();
+      renderInsights();
+      renderLogFeed();
+      updateDisplays();
+      renderChart(currentSize);
       return {
         count: 0,
         checked: safeNumber(pullResult?.checked),
@@ -47578,7 +47670,10 @@ async function importActiveProfileMatches(options = {}){
     );
     const mergedById = new Map(existingMatches.map(match => [String(match?.matchId || match?.id || ""), match]));
     importedMatches.forEach(match => mergedById.set(String(match?.matchId || match?.id || ""), match));
-    const matchList = Array.from(mergedById.values()).filter(Boolean);
+    const mergedMatches = Array.from(mergedById.values()).filter(Boolean);
+    const matchList = typeof enrichMmr === "function"
+      ? enrichMmr(mergedMatches, mmrHistory)
+      : mergedMatches;
 
     applyImportedMatches(matchList, {
       source: "henrik",

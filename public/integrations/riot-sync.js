@@ -79,6 +79,77 @@
     return String(match?.metadata?.match_id || match?.metadata?.matchid || match?.matchId || "").trim();
   }
 
+  function getMmrSnapshotMatchId(snapshot = {}) {
+    return String(snapshot?.match_id || snapshot?.matchId || "").trim();
+  }
+
+  function isVerifiedMmrSnapshot(snapshot = {}) {
+    const hasNumber = value => value !== null
+      && value !== undefined
+      && String(value).trim() !== ""
+      && Number.isFinite(Number(value));
+    return Number(snapshot?.tier?.id) > 0
+      && hasNumber(snapshot?.rr)
+      && hasNumber(snapshot?.last_change);
+  }
+
+  function enrichLegacyMatchesWithMmr(matchList = [], mmrHistory = []) {
+    const snapshots = new Map(
+      (Array.isArray(mmrHistory) ? mmrHistory : [])
+        .map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot])
+        .filter(([matchId]) => matchId)
+    );
+
+    return (Array.isArray(matchList) ? matchList : []).map(match => {
+      const source = String(match?.source || match?.metadata?.source || "").toLowerCase();
+      if (source !== "henrik_sync") return match;
+      const matchId = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim();
+      const snapshot = snapshots.get(matchId);
+      if (!snapshot) return match;
+      const verified = isVerifiedMmrSnapshot(snapshot);
+      const rankPatch = verified ? {
+        rank: String(snapshot?.tier?.name || match?.rank || match?.matchRecord?.rank?.rank || "").trim() || null,
+        rr: Number(snapshot.rr),
+        rrDelta: Number(snapshot.last_change),
+        elo: Number.isFinite(Number(snapshot.elo)) ? Number(snapshot.elo) : null,
+        verified: true,
+        source: "henrik-stored-mmr-v2",
+        capturedAt: snapshot.date || null
+      } : {
+        ...(match?.matchRecord?.rank || {}),
+        rr: null,
+        rrDelta: null,
+        elo: null,
+        verified: false,
+        source: null,
+        capturedAt: null
+      };
+      return {
+        ...match,
+        rr: null,
+        verifiedRrDelta: verified ? rankPatch.rrDelta : null,
+        rrTotal: verified ? rankPatch.rr : null,
+        rrVerified: verified,
+        rank: rankPatch.rank || match?.rank || null,
+        rankElo: rankPatch.elo,
+        rankDataSource: rankPatch.source,
+        rankCapturedAt: rankPatch.capturedAt,
+        matchRecord: match?.matchRecord ? {
+          ...match.matchRecord,
+          rank: rankPatch
+        } : match?.matchRecord,
+        metadata: {
+          ...(match?.metadata || {}),
+          rank: rankPatch.rank || match?.metadata?.rank || null,
+          rrVerified: verified,
+          rankElo: rankPatch.elo,
+          rankDataSource: rankPatch.source,
+          rankCapturedAt: rankPatch.capturedAt
+        }
+      };
+    });
+  }
+
   async function pullMatches(options = {}) {
     if (!isHenrikEnabled()) {
       return { enabled: false, reason: "henrik_sync_feature_flag_off", records: [] };
@@ -86,7 +157,8 @@
 
     const riotId = String(options.riotId || "").trim();
     const region = String(options.region || "na").trim().toLowerCase();
-    const historyLimit = Math.min(50, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
+    const historyLimit = Math.min(100, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
+    const historyStart = Math.min(1000, Math.max(0, Math.floor(Number(options.historyStart) || 0)));
     const pageSize = Math.min(10, historyLimit);
     let puuid = String(options.puuid || "").trim();
     let account = null;
@@ -99,10 +171,18 @@
       if (!puuid) throw new Error("Henrik did not return a PUUID for this Riot ID.");
     }
 
+    const mmrHistoryPromise = requestJson("/api/henrik/mmr-history", {
+      puuid,
+      region,
+      size: 100,
+      page: 1
+    }, options).catch(error => ({ data: [], error: error?.message || "MMR history unavailable." }));
+
     const parsedMatches = [];
     let historyExhausted = false;
-    for (let start = 0; start < historyLimit; start += pageSize) {
-      const count = Math.min(pageSize, historyLimit - start);
+    for (let offset = 0; offset < historyLimit; offset += pageSize) {
+      const start = historyStart + offset;
+      const count = Math.min(pageSize, historyLimit - offset);
       const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count, start }, options);
       const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
       parsedMatches.push(...pageMatches);
@@ -111,6 +191,9 @@
         break;
       }
     }
+    const mmrPayload = await mmrHistoryPromise;
+    const mmrHistory = Array.isArray(mmrPayload?.data) ? mmrPayload.data : [];
+    const mmrByMatchId = new Map(mmrHistory.map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot]));
     const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const pendingMatches = parsedMatches.filter(match => {
@@ -123,7 +206,10 @@
     for (const parsedMatch of pendingMatches) {
       const matchId = getParsedMatchId(parsedMatch);
       try {
-        records.push(mapHenrikV4Match(parsedMatch, { puuid }));
+        records.push(mapHenrikV4Match(parsedMatch, {
+          puuid,
+          mmrSnapshot: mmrByMatchId.get(matchId) || null
+        }));
       } catch (error) {
         failures.push({ matchId, error: error?.message || "Match mapping failed." });
       }
@@ -143,8 +229,11 @@
       checked: parsedMatches.length,
       newMatches: records.length,
       historyLimit,
+      historyStart,
       historyExhausted,
-      historyWindowComplete: historyExhausted || parsedMatches.length >= historyLimit
+      historyWindowComplete: historyExhausted,
+      mmrHistory,
+      mmrHistoryError: mmrPayload?.error || ""
     };
   }
 
@@ -158,6 +247,7 @@
     mapRiotMatch,
     mapHenrikRawMatch,
     mapHenrikV4Match,
+    enrichLegacyMatchesWithMmr,
     pullMatches
   });
 })();

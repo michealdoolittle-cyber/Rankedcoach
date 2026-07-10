@@ -160,6 +160,10 @@
         rank: cleanString(overrides.rank?.rank),
         rr: readNumber(overrides.rank?.rr),
         rrDelta: readNumber(overrides.rank?.rrDelta),
+        elo: readNumber(overrides.rank?.elo),
+        verified: overrides.rank?.verified === true,
+        source: cleanString(overrides.rank?.source),
+        capturedAt: cleanString(overrides.rank?.capturedAt),
         peakRank: cleanString(overrides.rank?.peakRank),
         peakRR: readNumber(overrides.rank?.peakRR)
       },
@@ -271,6 +275,10 @@
         rank: match.rank || metadata.rank,
         rr: match.rrTotal ?? match.rr,
         rrDelta: match.rr,
+        elo: match.rankElo ?? metadata.rankElo,
+        verified: match.rrVerified === true || metadata.rrVerified === true,
+        source: match.rankDataSource || metadata.rankDataSource,
+        capturedAt: match.rankCapturedAt || metadata.rankCapturedAt,
         peakRank: match.peakRank,
         peakRR: match.peakRR
       },
@@ -350,7 +358,11 @@
       rank: {
         rank: match.rank,
         rr: match.rr,
-        rrDelta: match.rrDelta
+        rrDelta: match.rrDelta,
+        elo: match.rankElo,
+        verified: match.rrVerified === true,
+        source: match.rankDataSource,
+        capturedAt: match.rankCapturedAt
       },
       confidence: { overall: "high", fields: {} },
       pendingVerification: false,
@@ -603,6 +615,13 @@
     const totalShots = [stats.headshots, stats.bodyshots, stats.legshots]
       .reduce((total, value) => total + (readNumber(value, 0) || 0), 0);
     const seasonShort = cleanString(match.metadata?.season?.short);
+    const mmrSnapshot = context?.mmrSnapshot && typeof context.mmrSnapshot === "object"
+      ? context.mmrSnapshot
+      : null;
+    const snapshotTierId = readNumber(mmrSnapshot?.tier?.id, 0);
+    const snapshotRR = readNumber(mmrSnapshot?.rr);
+    const snapshotDelta = readNumber(mmrSnapshot?.last_change);
+    const hasVerifiedRR = Boolean(snapshotTierId > 0 && snapshotRR !== null && snapshotDelta !== null);
 
     return fromRiotMatch({
       id: match.metadata?.match_id,
@@ -623,7 +642,13 @@
       hsPercent: totalShots ? ((readNumber(stats.headshots, 0) || 0) / totalShots) * 100 : null,
       roundsWon: team.rounds?.won,
       roundsLost: team.rounds?.lost,
-      rank: player.tier?.name,
+      rank: hasVerifiedRR ? mmrSnapshot?.tier?.name : player.tier?.name,
+      rr: hasVerifiedRR ? snapshotRR : null,
+      rrDelta: hasVerifiedRR ? snapshotDelta : null,
+      rankElo: hasVerifiedRR ? readNumber(mmrSnapshot?.elo) : null,
+      rrVerified: hasVerifiedRR,
+      rankDataSource: hasVerifiedRR ? "henrik-stored-mmr-v2" : null,
+      rankCapturedAt: hasVerifiedRR ? mmrSnapshot?.date : null,
       trackedPlayer: {
         puuid,
         teamId: trackedTeam,
@@ -647,8 +672,14 @@
       act: normalized.act,
       manual: normalized.source === "manual",
       pendingVerification: normalized.pendingVerification,
-      rr: readNumber(normalized.rank.rrDelta, 0),
+      rr: normalized.source === "henrik_sync" ? null : readNumber(normalized.rank.rrDelta),
+      verifiedRrDelta: normalized.rank.verified === true ? readNumber(normalized.rank.rrDelta) : null,
       rrTotal: readNumber(normalized.rank.rr),
+      rrVerified: normalized.rank.verified === true,
+      rank: normalized.rank.rank,
+      rankElo: readNumber(normalized.rank.elo),
+      rankDataSource: normalized.rank.source,
+      rankCapturedAt: normalized.rank.capturedAt,
       result: normalized.result,
       createdAt: normalized.playedAt || normalized.createdAt,
       agent: normalized.agent || "Unknown",
@@ -664,7 +695,12 @@
         playedAt: normalized.playedAt || normalized.createdAt,
         source: normalized.source,
         season: normalized.season,
-        act: normalized.act
+        act: normalized.act,
+        rank: normalized.rank.rank,
+        rrVerified: normalized.rank.verified === true,
+        rankElo: readNumber(normalized.rank.elo),
+        rankDataSource: normalized.rank.source,
+        rankCapturedAt: normalized.rank.capturedAt
       },
       segments: [{
         type: "overview",
