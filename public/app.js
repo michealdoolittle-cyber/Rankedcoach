@@ -6998,7 +6998,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
   const sourceLogs = Array.isArray(options?.logs)
     ? options.logs
-    : (logEntries || []);
+    : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
   const actMatches = shouldFilterByAct
     ? sourceMatches.filter((match) => getMatchSeasonLabel(match) === selectedAct)
     : sourceMatches;
@@ -11572,7 +11572,11 @@ function onMatchSaved(record, options = {}) {
 }
 
 function getCanonicalMatchRecordCount() {
-  return window.RankedCoachMatchRecord?.getRuntimeRecords?.({ matches, logEntries, profile: getActiveProfile() })?.length || 0;
+  return window.RankedCoachMatchRecord?.getRuntimeRecords?.({
+    matches,
+    logEntries: getProfileLogEntries(activeProfileId, { authoredOnly: true }),
+    profile: getActiveProfile()
+  })?.length || 0;
 }
 
 const COACH_READINESS_UNLOCKS = [
@@ -14072,7 +14076,8 @@ const glowClearDelay = 260;
 // ========================
 const STORAGE_KEY_PROFILES = "valtracker_profiles_v1";
 const STORAGE_KEY_ACTIVE_ID = "valtracker_active_profile_id";
-const STORAGE_KEY_LOG_ENTRIES = "valtracker_log_entries_v1";
+const STORAGE_KEY_LOG_ENTRIES = "valtracker_log_entries_v2";
+const STORAGE_KEY_LOG_ENTRIES_LEGACY = "valtracker_log_entries_v1";
 const STORAGE_KEY_LAST_BACKEND_SYNC = "valtracker_last_backend_sync_v1";
 const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 
@@ -14178,19 +14183,89 @@ function getInsightFeedbackSummary() {
   };
 }
 
-function readLocalLogEntries() {
+function getLogEntriesStorageKey(user = currentAuthUser) {
+  const owner = String(user?.id || "guest").replace(/[^a-z0-9_-]/gi, "_");
+  return `${STORAGE_KEY_LOG_ENTRIES}:${owner}`;
+}
+
+function sanitizeStoredLogEntries(entries = [], options = {}) {
+  return globalThis.RankedCoachLogPolicy?.sanitizeLogEntries?.(entries, {
+    signedIn: options.signedIn ?? Boolean(currentAuthUser),
+    profileId: options.profileId || activeProfileId || getActiveProfile?.()?.id || ""
+  }) || (Array.isArray(entries) ? entries : []);
+}
+
+function isPlayerAuthoredLogEntry(entry = {}) {
+  return globalThis.RankedCoachLogPolicy?.isPlayerAuthored?.(entry) !== false;
+}
+
+function isMatchPlaceholderLogEntry(entry = {}) {
+  return globalThis.RankedCoachLogPolicy?.isMatchPlaceholder?.(entry) === true;
+}
+
+function getProfileLogEntries(profileId = activeProfileId, options = {}) {
+  const targetProfileId = String(profileId || "").trim();
+  return (logEntries || []).filter(entry => {
+    const entryProfileId = String(entry?.profileId || "").trim();
+    if (targetProfileId && !entryProfileId) return false;
+    if (targetProfileId && entryProfileId !== targetProfileId) return false;
+    return options.authoredOnly ? isPlayerAuthoredLogEntry(entry) : true;
+  });
+}
+
+function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfile(), options = {}) {
+  const policy = globalThis.RankedCoachLogPolicy;
+  const profileId = String(profile?.id || "").trim();
+  if (!policy?.syncMatchPlaceholders || !profileId) return 0;
+
+  const placeholderMatches = (Array.isArray(matchList) ? matchList : []).map(match => {
+    const core = getMatchCore(match);
+    return {
+      id: match?.matchId || match?.id || match?.metadata?.matchId || "",
+      createdAt: core.createdAt || match?.createdAt || match?.metadata?.playedAt || "",
+      result: core.result || match?.result || match?.metadata?.result || "",
+      rr: match?.rr,
+      agent: core.agent,
+      role: core.role,
+      map: core.map
+    };
+  });
+  const synced = policy.syncMatchPlaceholders(logEntries, placeholderMatches, profileId);
+  if (!synced.added) return 0;
+
+  logEntries = sanitizeStoredLogEntries(synced.entries, {
+    signedIn: Boolean(currentAuthUser),
+    profileId
+  });
+  if (!options.skipSave) {
+    saveLogEntries({ skipBackend: options.skipBackend === true });
+  }
+  return synced.added;
+}
+
+function readLocalLogEntries(options = {}) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_LOG_ENTRIES);
+    const storageKey = getLogEntriesStorageKey(options.user ?? currentAuthUser);
+    const legacyRaw = !currentAuthUser ? localStorage.getItem(STORAGE_KEY_LOG_ENTRIES_LEGACY) : null;
+    const raw = localStorage.getItem(storageKey) || legacyRaw;
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    return sanitizeStoredLogEntries(parsed, {
+      signedIn: options.signedIn ?? Boolean(currentAuthUser),
+      profileId: options.profileId
+    });
   } catch (_error) {
     return [];
   }
 }
 
 function saveLogEntries(options = {}) {
+  logEntries = sanitizeStoredLogEntries(logEntries, {
+    signedIn: Boolean(currentAuthUser),
+    profileId: activeProfileId
+  });
   try {
-    localStorage.setItem(STORAGE_KEY_LOG_ENTRIES, JSON.stringify(logEntries || []));
+    localStorage.setItem(getLogEntriesStorageKey(), JSON.stringify(logEntries || []));
+    if (currentAuthUser) localStorage.removeItem(STORAGE_KEY_LOG_ENTRIES_LEGACY);
   } catch (error) {
     console.warn("Unable to save local log cache", error);
   }
@@ -14198,19 +14273,6 @@ function saveLogEntries(options = {}) {
   if (!options.skipBackend) {
     queuePersistentAccountSave("logs");
   }
-}
-
-function mergeLogEntries(primary = [], secondary = []) {
-  const merged = new Map();
-  [...secondary, ...primary].forEach((entry) => {
-    if (!entry || typeof entry !== "object") return;
-    const id = String(entry.id || "").trim() || uuid();
-    merged.set(id, { ...entry, id });
-  });
-
-  return [...merged.values()].sort((a, b) =>
-    new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime()
-  );
 }
 
 function serializePersistentAccountState() {
@@ -14240,7 +14302,10 @@ function applyPersistentAccountState(state = {}) {
     }
 
     if (Array.isArray(state.logEntries)) {
-      logEntries = mergeLogEntries(state.logEntries, readLocalLogEntries());
+      logEntries = sanitizeStoredLogEntries(state.logEntries, {
+        signedIn: true,
+        profileId: activeProfileId
+      });
       saveLogEntries({ skipBackend: true });
     }
 
@@ -14273,6 +14338,13 @@ function applyPersistentAccountState(state = {}) {
       applyThemeBuilderRuntimeStyles?.();
       }
     }
+
+    profiles.forEach(profile => {
+      if (profile?.lastSyncSource === "henrik" || profile?.importSource === "henrik") {
+        syncRankedMatchPlaceholderLogs(profile.matches, profile, { skipSave: true });
+      }
+    });
+    saveLogEntries({ skipBackend: true });
 
     const active = getActiveProfile();
     matches = active?.matches ? active.matches.slice() : [];
@@ -14313,11 +14385,10 @@ function queuePersistentAccountSave(reason = "state") {
 }
 
 function buildLogRowsForSupabase(userId) {
-  const activeProfile = getActiveProfile();
   return (logEntries || []).map((entry) => ({
     id: String(entry.id || uuid()),
     user_id: userId,
-    profile_id: String(activeProfile?.id || activeProfileId || "default"),
+    profile_id: String(entry.profileId || activeProfileId || "default"),
     match_id: entry.matchId || null,
     agent: entry.agent || null,
     role: entry.role || null,
@@ -14371,6 +14442,11 @@ async function savePersistentAccountState(reason = "state") {
   const user = await getSupabaseUser();
   if (!user) return;
 
+  logEntries = sanitizeStoredLogEntries(logEntries, {
+    signedIn: true,
+    profileId: activeProfileId
+  });
+
   const state = serializePersistentAccountState();
   const active = getActiveProfile();
 
@@ -14407,12 +14483,17 @@ async function savePersistentAccountState(reason = "state") {
   }
 
   const logRows = buildLogRowsForSupabase(user.id);
+  let logRowsSaved = true;
   if (logRows.length) {
     const { error } = await supabaseClient
       .from("reflection_logs")
       .upsert(logRows, { onConflict: "id" });
-    if (error) console.warn("Supabase log save failed", error);
+    if (error) {
+      logRowsSaved = false;
+      console.warn("Supabase log save failed", error);
+    }
   }
+  if (logRowsSaved) await reconcilePersistentLogRows(user.id, logRows);
 
   const matchRows = buildMatchRowsForSupabase(user.id);
   if (matchRows.length) {
@@ -14440,6 +14521,36 @@ async function deletePersistentLogEntry(id) {
   if (error) console.warn("Supabase log delete failed", error);
 }
 
+async function reconcilePersistentLogRows(userId, rows = []) {
+  if (!userId || !supabaseClient?.from) return;
+  const { data, error } = await supabaseClient
+    .from("reflection_logs")
+    .select("id, entry_json")
+    .eq("user_id", userId);
+  if (error) {
+    console.warn("Supabase log reconciliation read failed", error);
+    return;
+  }
+
+  const keepIds = new Set((rows || []).map(row => String(row.id || "")).filter(Boolean));
+  const staleIds = (data || [])
+    .filter(row => globalThis.RankedCoachLogPolicy?.isSyntheticDemoLog?.(row?.entry_json || {}))
+    .map(row => String(row?.id || ""))
+    .filter(id => id && !keepIds.has(id));
+  for (let index = 0; index < staleIds.length; index += 100) {
+    const batch = staleIds.slice(index, index + 100);
+    const { error: deleteError } = await supabaseClient
+      .from("reflection_logs")
+      .delete()
+      .eq("user_id", userId)
+      .in("id", batch);
+    if (deleteError) {
+      console.warn("Supabase synthetic log cleanup failed", deleteError);
+      return;
+    }
+  }
+}
+
 async function loadPersistentAccountState(user) {
   if (!user || !supabaseClient) return;
 
@@ -14459,10 +14570,13 @@ async function loadPersistentAccountState(user) {
     applyPersistentAccountState({
       activeProfileId: data.active_profile_id,
       profiles: data.profiles_json,
-      logEntries: data.log_entries_json,
+      logEntries: Array.isArray(data.log_entries_json) ? data.log_entries_json : [],
       themeBuilderState: data.theme_builder_json,
       themeBuilderUiState: data.theme_builder_ui_json
     });
+  } else {
+    logEntries = [];
+    saveLogEntries({ skipBackend: true });
   }
 
   await savePersistentAccountState(data ? "auth-merge" : "auth-initial-save");
@@ -14470,6 +14584,14 @@ async function loadPersistentAccountState(user) {
 
 async function handleSignedInUser(user) {
   currentAuthUser = user || null;
+  if (user) {
+    logEntries = readLocalLogEntries({
+      user,
+      signedIn: true,
+      profileId: activeProfileId
+    });
+    renderLogFeed?.({ force: true });
+  }
   updateAuthUI(user || null);
   if (!user) {
     lastAccountStateLoadAt = 0;
@@ -40259,7 +40381,8 @@ function scheduleLoggingFeedRender(options = {}) {
 
 function isFirstGameOfCurrentSession() {
   const todayKey = new Date().toISOString().slice(0, 10);
-  const todaysEntries = (logEntries || []).filter(entry => String(entry?.createdAt || "").slice(0, 10) === todayKey);
+  const todaysEntries = getProfileLogEntries(activeProfileId, { authoredOnly: true })
+    .filter(entry => String(entry?.createdAt || "").slice(0, 10) === todayKey);
   return todaysEntries.length === 0;
 }
 
@@ -40542,6 +40665,16 @@ function addLogEntry(){
   if (!validateLogFormBeforeSave(entry)) return;
   const editingId = editingLogEntryId;
   const isEditing = Boolean(editingId);
+  const previousEntry = isEditing
+    ? (logEntries.find(existing => existing.id === editingId) || editingLogEntrySnapshot)
+    : null;
+  const completesPlaceholder = isMatchPlaceholderLogEntry(previousEntry || {});
+
+  entry.profileId = activeProfileId || entry.profileId || "";
+  entry.isPlayerAuthored = true;
+  entry.isMatchPlaceholder = false;
+  entry.source = completesPlaceholder ? "player-reflection" : (entry.source || "player-reflection");
+  entry.authoredAt = entry.authoredAt || nowISO();
 
 if(!entry.focus || entry.focus === "Select Focus"){
   entry.focus = "general";
@@ -40793,7 +40926,7 @@ function getMoodTone(mood){
 function getLogSessions() {
   const grouped = new Map();
 
-  (logEntries || []).forEach(entry => {
+  getProfileLogEntries().forEach(entry => {
     const key = String(entry.createdAt || nowISO()).slice(0, 10);
     if (!grouped.has(key)) {
       grouped.set(key, []);
@@ -40807,7 +40940,7 @@ function getLogSessions() {
 }
 
 function getLogAverageSummary() {
-  const entries = logEntries || [];
+  const entries = getProfileLogEntries(activeProfileId, { authoredOnly: true });
   const now = new Date();
   const weekStart = getWeekStart(now);
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -40871,7 +41004,7 @@ function getLogEntryMatchContext(entry = {}) {
 
 function getLogCountByDate() {
   const counts = new Map();
-  (logEntries || []).forEach(entry => {
+  getProfileLogEntries().forEach(entry => {
     const key = String(entry.createdAt || nowISO()).slice(0, 10);
     counts.set(key, (counts.get(key) || 0) + 1);
   });
@@ -41105,7 +41238,8 @@ function renderLogFeed(options = {}){
   loggingFeedDirty = false;
   loggingFeedRendered = true;
 
-  if(!logEntries.length){
+  const profileEntries = getProfileLogEntries();
+  if(!profileEntries.length){
     container.innerHTML = `
       <div class="log-empty">
         No logs yet -- track your sessions to unlock insights
@@ -41154,8 +41288,12 @@ function renderLogFeed(options = {}){
         ? `${matchContext.rr > 0 ? "+" : ""}${Math.round(matchContext.rr)} RR`
         : "";
       const isEditingEntry = entry.id === editingLogEntryId;
+      const isPlaceholder = isMatchPlaceholderLogEntry(entry);
+      const notesCopy = isPlaceholder
+        ? "Add your reflection for this ranked match."
+        : (entry.notes || "-");
       const el = document.createElement("div");
-      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}${isEditingEntry ? " log-entry-editing" : ""}`;
+      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}${isEditingEntry ? " log-entry-editing" : ""}${isPlaceholder ? " log-entry-placeholder" : ""}`;
 
       el.innerHTML = `
         <div class="log-header">
@@ -41165,7 +41303,7 @@ function renderLogFeed(options = {}){
               : "?"
           }</span>
           ${rrLabel ? `<span class="log-result-rr log-result-rr-${resultTone || "neutral"}">${escapeHtml(rrLabel)}</span>` : ""}
-          <span class="log-rating">â­ ${entry.rating}</span>
+          <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>
         </div>
 
         <div class="log-body">
@@ -41175,17 +41313,17 @@ function renderLogFeed(options = {}){
                 ? `<img src="${getAgentIconUrl(entry.agent)}" alt="${entry.agent}">`
                 : "?"
             }</span>
-            <span>${entry.role || "-"}</span>
-            <span>Tilt: ${entry.tilt}</span>
+            <span>${escapeHtml(entry.role || "-")}</span>
+            <span>Mood: ${escapeHtml(moodLabel)}</span>
           </div>
 
           <div class="log-notes">
-            ${entry.notes || ""}
+            ${escapeHtml(notesCopy)}
           </div>
         </div>
 
         <div class="log-actions">
-          <button class="log-edit-btn">${isEditingEntry ? "Editing" : "Edit"}</button>
+          <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
         </div>
       `;
 
@@ -41199,31 +41337,31 @@ function renderLogFeed(options = {}){
         meta.innerHTML = `
           <div class="log-tier-row">
             <span class="log-tier-label">Focus Category</span>
-            <span class="log-tier-value">${entry.focus || "-"}</span>
+            <span class="log-tier-value">${escapeHtml(entry.focus || "-")}</span>
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Map</span>
-            <span class="log-tier-value">${entry.map || "-"}</span>
+            <span class="log-tier-value">${escapeHtml(entry.map || "-")}</span>
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Self Rating</span>
-            <span class="log-tier-value log-rating log-rating-${ratingBadge.tone}">${entry.rating || "-"}</span>
+            <span class="log-tier-value log-rating log-rating-${ratingBadge.tone}">${escapeHtml(entry.rating ?? "-")}</span>
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Mood</span>
-            <span class="log-tier-value log-mood log-mood-${moodTone}">${moodLabel}</span>
+            <span class="log-tier-value log-mood log-mood-${moodTone}">${escapeHtml(moodLabel)}</span>
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Team Comms</span>
-            <span class="log-tier-value">${entry.teamComms || "-"}</span>
+            <span class="log-tier-value">${escapeHtml(entry.teamComms ?? "-")}</span>
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Self Comms</span>
-            <span class="log-tier-value">${entry.selfComms || "-"}</span>
+            <span class="log-tier-value">${escapeHtml(entry.selfComms ?? "-")}</span>
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Warmup</span>
-            <span class="log-tier-value">${entry.warmup ? "Yes" : "No"}</span>
+            <span class="log-tier-value">${isPlaceholder ? "-" : entry.warmup ? "Yes" : "No"}</span>
           </div>
         `;
       }
@@ -41233,7 +41371,7 @@ function renderLogFeed(options = {}){
         notes.outerHTML = `
           <div class="log-tier-row log-tier-notes">
             <span class="log-tier-label">Notes</span>
-            <div class="log-notes">${entry.notes || ""}</div>
+            <div class="log-notes">${escapeHtml(notesCopy)}</div>
           </div>
         `;
       }
@@ -41614,8 +41752,6 @@ function loadProfiles(){
   }
 
   profiles = (profiles || []).map(normalizeProfileRecord);
-  logEntries = readLocalLogEntries();
-
   activeProfileId =
     localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
 
@@ -41661,6 +41797,8 @@ function loadProfiles(){
 
     saveProfiles();
   }
+
+  logEntries = readLocalLogEntries({ profileId: activeProfileId });
 
 }
 
@@ -41954,6 +42092,10 @@ function setActiveProfile(id){
 
   // restore matches
   matches = next?.matches ? next.matches.slice() : [];
+  if (next?.lastSyncSource === "henrik" || next?.importSource === "henrik") {
+    syncRankedMatchPlaceholderLogs(matches, next);
+  }
+  activeLogSessionFilter = "all";
 
   recomputeFromMatches();
 
@@ -41965,6 +42107,7 @@ function setActiveProfile(id){
 
   renderChart(currentSize);
   renderInsights?.();
+  renderLogFeed?.({ force: true });
   scheduleRiotAutoSync();
 
 }
@@ -47276,6 +47419,10 @@ function applyImportedMatches(matchList = [], options = {}){
 
   matches = normalized.slice();
 
+  if (importSource === "henrik") {
+    syncRankedMatchPlaceholderLogs(matches, profile);
+  }
+
   saveProfiles();
   recomputeFromMatches();
 
@@ -47415,6 +47562,7 @@ async function importActiveProfileMatches(options = {}){
     const canonicalRecords = Array.isArray(pullResult?.records) ? pullResult.records : [];
     if (!canonicalRecords.length) {
       profile.lastSyncAt = nowISO();
+      syncRankedMatchPlaceholderLogs(existingMatches, profile);
       saveProfiles();
       return {
         count: 0,

@@ -18992,6 +18992,23 @@ min-height:0;
   color:#fde68a !important;
 }
 
+.log-entry-placeholder{
+  border-style:dashed;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent,#ff4655) 7%, transparent), transparent 42%),
+    linear-gradient(180deg, rgba(15,23,42,.96), rgba(2,6,23,.98));
+}
+
+.log-entry-placeholder .log-notes{
+  color:var(--text-muted,#a8b3c7);
+  font-style:italic;
+}
+
+.log-entry-placeholder .log-edit-btn{
+  border-color:color-mix(in srgb, var(--accent,#ff4655) 48%, rgba(148,163,184,.28));
+  color:color-mix(in srgb, var(--accent,#ff4655) 68%, white 32%);
+}
+
 .log-result-rr{
   margin-left:8px;
   padding:4px 8px;
