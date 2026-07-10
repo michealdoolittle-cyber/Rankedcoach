@@ -764,6 +764,7 @@ function closeAllMobileOverlays() {
   closeRiotProfileConfirmModal?.();
   hideModalById?.("bugReportModal");
   hideModalById?.("goalRankModal");
+  closeStatsActMobileMenu?.();
 }
 
 function ensureMobileBottomShell() {
@@ -48590,6 +48591,108 @@ function renderStatsWeaponsModel() {
   });
 }
 
+let statsActMobileMenu = null;
+
+function applyStatsActSelection(nextLabel = "") {
+  activeStatsActLabel = String(nextLabel || "").trim();
+  initStatsPage();
+  renderStatsAgents();
+  renderStatsMaps();
+  renderStatsWeaponsModel();
+  renderInsights();
+  if (typeof updateHomeFromMatches === "function") updateHomeFromMatches();
+  renderChart(currentSize);
+}
+
+function positionStatsActMobileMenu() {
+  const trigger = document.getElementById("statsActMobileTrigger");
+  const panel = statsActMobileMenu?.querySelector?.(".stats-act-mobile-menu-panel");
+  if (!trigger || !panel || statsActMobileMenu?.hidden) return;
+  const rect = trigger.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 390;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 844;
+  const width = Math.min(Math.max(rect.width, 220), viewportWidth - 24);
+  const optionCount = statsActMobileMenu.querySelectorAll("[data-stats-act-option]").length;
+  const estimatedHeight = Math.min(292, 58 + (optionCount * 47));
+  const left = Math.min(Math.max(12, rect.left), Math.max(12, viewportWidth - width - 12));
+  const bottomNavHeight = document.getElementById("mobileBottomShell")?.getBoundingClientRect?.().height || 0;
+  const usableBottom = viewportHeight - bottomNavHeight - 12;
+  const spaceBelow = usableBottom - rect.bottom - 8;
+  const top = spaceBelow >= estimatedHeight
+    ? rect.bottom + 8
+    : Math.max(12, rect.top - estimatedHeight - 8);
+  panel.style.left = `${Math.round(left)}px`;
+  panel.style.top = `${Math.round(top)}px`;
+  panel.style.width = `${Math.round(width)}px`;
+}
+
+function ensureStatsActMobileMenu() {
+  if (statsActMobileMenu?.isConnected) return statsActMobileMenu;
+  statsActMobileMenu = document.createElement("div");
+  statsActMobileMenu.id = "statsActMobileMenu";
+  statsActMobileMenu.className = "stats-act-mobile-menu-overlay";
+  statsActMobileMenu.hidden = true;
+  statsActMobileMenu.innerHTML = `
+    <div class="stats-act-mobile-menu-panel" role="listbox" aria-labelledby="statsActLabel">
+      <div class="stats-act-mobile-menu-head">
+        <span>Season Stats For</span>
+        <button class="stats-act-mobile-menu-close" type="button" aria-label="Close season selector">Close</button>
+      </div>
+      <div class="stats-act-mobile-menu-list"></div>
+    </div>
+  `;
+  statsActMobileMenu.addEventListener("click", (event) => {
+    if (event.target === statsActMobileMenu || event.target.closest(".stats-act-mobile-menu-close")) {
+      closeStatsActMobileMenu();
+      return;
+    }
+    const option = event.target.closest("[data-stats-act-option]");
+    if (!option) return;
+    closeStatsActMobileMenu();
+    applyStatsActSelection(option.dataset.statsActOption || "");
+  });
+  statsActMobileMenu.addEventListener("touchmove", (event) => event.stopPropagation(), { passive: true });
+  document.body.appendChild(statsActMobileMenu);
+  window.addEventListener("resize", positionStatsActMobileMenu, { passive: true });
+  window.addEventListener("scroll", positionStatsActMobileMenu, { passive: true, capture: true });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !statsActMobileMenu.hidden) closeStatsActMobileMenu();
+  });
+  return statsActMobileMenu;
+}
+
+function closeStatsActMobileMenu() {
+  if (!statsActMobileMenu) return;
+  statsActMobileMenu.hidden = true;
+  statsActMobileMenu.classList.remove("is-open");
+  document.body.classList.remove("stats-act-menu-open");
+  const trigger = document.getElementById("statsActMobileTrigger");
+  trigger?.setAttribute("aria-expanded", "false");
+}
+
+function openStatsActMobileMenu(options = [], selectedLabel = "") {
+  if (!isMobileLayoutViewport()) return;
+  const menu = ensureStatsActMobileMenu();
+  const list = menu.querySelector(".stats-act-mobile-menu-list");
+  list.innerHTML = options.map((label) => {
+    const isSelected = label === selectedLabel;
+    return `
+      <button class="stats-act-mobile-option ${isSelected ? "is-selected" : ""}" type="button" role="option" aria-selected="${isSelected ? "true" : "false"}" data-stats-act-option="${escapeHtml(label)}">
+        <span>${escapeHtml(label)}</span>
+        <span class="stats-act-mobile-option-mark" aria-hidden="true">${isSelected ? "Selected" : ""}</span>
+      </button>
+    `;
+  }).join("");
+  menu.hidden = false;
+  menu.classList.add("is-open");
+  document.body.classList.add("stats-act-menu-open");
+  document.getElementById("statsActMobileTrigger")?.setAttribute("aria-expanded", "true");
+  positionStatsActMobileMenu();
+  window.requestAnimationFrame(() => {
+    list.querySelector(".is-selected")?.scrollIntoView?.({ block: "nearest" });
+  });
+}
+
 function renderStatsSummaryMetaModel() {
   const selector = document.getElementById("statsActSelector");
   if (!selector) return;
@@ -48617,16 +48720,18 @@ function renderStatsSummaryMetaModel() {
   });
   selector.value = options.includes(currentLabel) ? currentLabel : options[0] || currentLabel;
   activeStatsActLabel = selector.value || activeStatsActLabel || currentLabel;
-  selector.onchange = () => {
-    activeStatsActLabel = selector.value || "";
-    initStatsPage();
-    renderStatsAgents();
-    renderStatsMaps();
-    renderStatsWeaponsModel();
-    renderInsights();
-    if (typeof updateHomeFromMatches === "function") updateHomeFromMatches();
-    renderChart(currentSize);
-  };
+  selector.onchange = () => applyStatsActSelection(selector.value || "");
+
+  const mobileTrigger = document.getElementById("statsActMobileTrigger");
+  const mobileValue = document.getElementById("statsActMobileValue");
+  const isMobile = isMobileLayoutViewport();
+  if (mobileTrigger) {
+    mobileTrigger.hidden = !isMobile;
+    mobileTrigger.setAttribute("aria-expanded", "false");
+    mobileTrigger.onclick = () => openStatsActMobileMenu(options, selector.value || currentLabel);
+  }
+  if (mobileValue) mobileValue.textContent = selector.value || currentLabel;
+  if (!isMobile) closeStatsActMobileMenu();
 
   selector.disabled = false;
 }

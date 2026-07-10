@@ -52823,3 +52823,159 @@ body.access-reduced-motion .premium-moment-overlay{
     animation-play-state:paused !important;
   }
 }
+
+/* Mobile season selector: use an app-owned scroll surface instead of the
+   platform select popup so touch scrolling and rounded corners stay reliable. */
+.stats-act-mobile-trigger,
+.stats-act-mobile-menu-overlay{
+  display:none;
+}
+
+@media (max-width:767px){
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select-wrap{
+    position:relative !important;
+    min-width:min(220px, 100%) !important;
+    width:min(220px, 100%) !important;
+    height:auto !important;
+    min-height:42px !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select-wrap::after{
+    display:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select{
+    display:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-mobile-trigger:not([hidden]){
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    gap:12px !important;
+    width:100% !important;
+    min-width:0 !important;
+    min-height:42px !important;
+    height:42px !important;
+    padding:8px 12px !important;
+    border:1px solid color-mix(in srgb, var(--accent,#ff4655) 42%, rgba(148,163,184,.34)) !important;
+    border-radius:14px !important;
+    overflow:hidden !important;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(255,255,255,.1), transparent 38%),
+      linear-gradient(180deg, color-mix(in srgb, var(--surface-card,#1e293b) 92%, white 8%), color-mix(in srgb, var(--surface-input,#0f172a) 96%, black 4%)) !important;
+    color:var(--text-main,#f8fafc) !important;
+    font:850 clamp(12px,3.45vw,14px)/1 var(--font-display,"Rajdhani",sans-serif) !important;
+    letter-spacing:.02em !important;
+    text-align:left !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 9px 20px rgba(0,0,0,.2) !important;
+    touch-action:manipulation !important;
+  }
+
+  .stats-act-mobile-chevron{
+    flex:0 0 auto;
+    width:9px;
+    height:9px;
+    margin:0 2px 4px 0;
+    border-right:2px solid currentColor;
+    border-bottom:2px solid currentColor;
+    transform:rotate(45deg);
+    opacity:.86;
+  }
+
+  .stats-act-mobile-menu-overlay:not([hidden]){
+    display:block !important;
+    position:fixed !important;
+    inset:0 !important;
+    z-index:250000 !important;
+    background:rgba(2,6,23,.18) !important;
+    touch-action:pan-y !important;
+  }
+
+  .stats-act-mobile-menu-panel{
+    position:fixed !important;
+    display:flex !important;
+    flex-direction:column !important;
+    max-width:calc(100vw - 24px) !important;
+    max-height:min(292px,44dvh) !important;
+    border:1px solid color-mix(in srgb, var(--accent,#ff4655) 46%, rgba(148,163,184,.3)) !important;
+    border-radius:18px !important;
+    overflow:hidden !important;
+    background:
+      radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--accent,#ff4655) 12%, transparent), transparent 42%),
+      linear-gradient(160deg, color-mix(in srgb, var(--surface-card,#172033) 96%, black 4%), color-mix(in srgb, var(--surface-input,#070d1d) 98%, black 2%)) !important;
+    box-shadow:0 22px 48px rgba(0,0,0,.46),inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+
+  .stats-act-mobile-menu-head{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    min-height:48px;
+    padding:9px 10px 9px 14px;
+    border-bottom:1px solid rgba(148,163,184,.18);
+    color:var(--text-muted,#a8b3c7);
+    font:850 10px/1 var(--font-display,"Rajdhani",sans-serif);
+    letter-spacing:.12em;
+    text-transform:uppercase;
+  }
+
+  .stats-act-mobile-menu-close{
+    min-height:30px;
+    padding:6px 10px;
+    border:1px solid rgba(148,163,184,.26);
+    border-radius:999px;
+    background:rgba(15,23,42,.78);
+    color:var(--text-main,#f8fafc);
+    font:800 10px/1 var(--font-display,"Rajdhani",sans-serif);
+    letter-spacing:.06em;
+    text-transform:uppercase;
+  }
+
+  .stats-act-mobile-menu-list{
+    display:grid;
+    gap:7px;
+    min-height:0;
+    padding:8px;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    touch-action:pan-y !important;
+    scrollbar-width:thin;
+    scrollbar-color:color-mix(in srgb, var(--accent,#ff4655) 55%, transparent) transparent;
+  }
+
+  .stats-act-mobile-option{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    width:100%;
+    min-height:44px;
+    padding:9px 11px;
+    border:1px solid rgba(148,163,184,.2);
+    border-radius:12px;
+    background:rgba(15,23,42,.72);
+    color:var(--text-main,#f8fafc);
+    font:850 13px/1.1 var(--font-display,"Rajdhani",sans-serif);
+    text-align:left;
+    touch-action:manipulation !important;
+  }
+
+  .stats-act-mobile-option.is-selected{
+    border-color:color-mix(in srgb, var(--accent,#ff4655) 72%, white 8%);
+    background:color-mix(in srgb, var(--accent,#ff4655) 18%, rgba(15,23,42,.88));
+    box-shadow:inset 3px 0 0 var(--accent,#ff4655);
+  }
+
+  .stats-act-mobile-option-mark{
+    color:color-mix(in srgb, var(--accent,#ff4655) 70%, white 30%);
+    font-size:9px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+}

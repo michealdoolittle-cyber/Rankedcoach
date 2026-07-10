@@ -51,7 +51,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260710-henrik-live-01">
+<link rel="stylesheet" href="app.css?v=20260710-season-selector-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -1091,10 +1091,14 @@ STATS PAGE
                   <div class="stats-proof-card-head">
                     <div class="stats-proof-kicker">Peak Progress</div>
                     <div class="stats-summary-selector-row">
-                      <label class="stats-act-select-wrap">
-                        <span class="stats-act-label">Season Stats For</span>
-                        <select id="statsActSelector" class="stats-act-select"></select>
-                      </label>
+                      <div class="stats-act-select-wrap">
+                        <span id="statsActLabel" class="stats-act-label">Season Stats For</span>
+                        <select id="statsActSelector" class="stats-act-select" aria-labelledby="statsActLabel"></select>
+                        <button id="statsActMobileTrigger" class="stats-act-mobile-trigger" type="button" aria-labelledby="statsActLabel statsActMobileValue" aria-haspopup="listbox" aria-expanded="false" hidden>
+                          <span id="statsActMobileValue">Select season</span>
+                          <span class="stats-act-mobile-chevron" aria-hidden="true"></span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div class="stats-proof-rank-row">
@@ -2151,6 +2155,6 @@ stroke-linejoin="round"/>
   <script src="analytics/round-metrics.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="integrations/riot-sync.js?v=20260710-henrik-history-01"></script>
-  <script type="module" src="app.js?v=20260710-henrik-history-01"></script>
+  <script type="module" src="app.js?v=20260710-season-selector-01"></script>
 </body>
 </html>
