@@ -73,13 +73,7 @@
       killer: cleanString(kill.killer),
       victim: cleanString(kill.victim),
       assistants: cleanStringArray(kill.assistants),
-      roundTime: readNumber(kill.roundTime),
-      gameTime: readNumber(kill.gameTime),
-      finishingDamage: {
-        damageType: cleanString(kill.finishingDamage?.damageType),
-        damageItem: cleanString(kill.finishingDamage?.damageItem),
-        isSecondaryFireMode: Boolean(kill.finishingDamage?.isSecondaryFireMode)
-      }
+      roundTime: readNumber(kill.roundTime)
     };
   }
 
@@ -90,6 +84,15 @@
       armor: cleanString(economy.armor),
       remaining: readNumber(economy.remaining),
       spent: readNumber(economy.spent)
+    };
+  }
+
+  function normalizeUtilityCasts(casts = {}) {
+    return {
+      grenade: readNumber(casts.grenade, 0),
+      ability1: readNumber(casts.ability1 ?? casts.ability_1, 0),
+      ability2: readNumber(casts.ability2 ?? casts.ability_2, 0),
+      ultimate: readNumber(casts.ultimate, 0)
     };
   }
 
@@ -108,6 +111,7 @@
       bombPlanter: cleanString(round.bombPlanter),
       bombDefuser: cleanString(round.bombDefuser),
       playerEconomy: normalizeEconomy(round.playerEconomy),
+      utilityCasts: normalizeUtilityCasts(round.utilityCasts),
       playerScore: readNumber(round.playerScore),
       damageDealt: readNumber(round.damageDealt, 0),
       wasAfk: Boolean(round.wasAfk),
@@ -156,6 +160,7 @@
         behaviorFactors: copyPlainObject(overrides.trackedPlayer?.behaviorFactors)
       },
       roundByRound: (Array.isArray(overrides.roundByRound) ? overrides.roundByRound : []).map(normalizeRoundEntry),
+      advanced: copyPlainObject(overrides.advanced),
       rank: {
         rank: cleanString(overrides.rank?.rank),
         rr: readNumber(overrides.rank?.rr),
@@ -271,16 +276,17 @@
       },
       trackedPlayer: canonical.trackedPlayer || match.trackedPlayer,
       roundByRound: canonical.roundByRound || match.roundByRound,
+      advanced: canonical.advanced || match.advanced,
       rank: {
-        rank: match.rank || metadata.rank,
-        rr: match.rrTotal ?? match.rr,
-        rrDelta: match.rr,
-        elo: match.rankElo ?? metadata.rankElo,
-        verified: match.rrVerified === true || metadata.rrVerified === true,
-        source: match.rankDataSource || metadata.rankDataSource,
-        capturedAt: match.rankCapturedAt || metadata.rankCapturedAt,
-        peakRank: match.peakRank,
-        peakRR: match.peakRR
+        rank: match.rank || metadata.rank || canonical.rank?.rank,
+        rr: match.rrTotal ?? canonical.rank?.rr ?? match.rr,
+        rrDelta: match.verifiedRrDelta ?? canonical.rank?.rrDelta ?? match.rr,
+        elo: match.rankElo ?? metadata.rankElo ?? canonical.rank?.elo,
+        verified: match.rrVerified === true || metadata.rrVerified === true || canonical.rank?.verified === true,
+        source: match.rankDataSource || metadata.rankDataSource || canonical.rank?.source,
+        capturedAt: match.rankCapturedAt || metadata.rankCapturedAt || canonical.rank?.capturedAt,
+        peakRank: match.peakRank || canonical.rank?.peakRank,
+        peakRR: match.peakRR ?? canonical.rank?.peakRR
       },
       confidence: match.matchRecord?.confidence || { overall: "high", fields: {} },
       pendingVerification: Boolean(match.pendingVerification),
@@ -457,6 +463,7 @@
         bombPlanter: round?.bombPlanter,
         bombDefuser: round?.bombDefuser,
         playerEconomy: economy,
+        utilityCasts: playerRound.abilityCasts || playerRound.ability_casts,
         playerScore: playerRound.score,
         damageDealt: (Array.isArray(playerRound.damage) ? playerRound.damage : [])
           .reduce((total, item) => total + (readNumber(item?.damage, 0) || 0), 0),
@@ -524,13 +531,7 @@
       killer: getV4PlayerId(kill.killer),
       victim: getV4PlayerId(kill.victim),
       assistants: (Array.isArray(kill.assistants) ? kill.assistants : []).map(getV4PlayerId).filter(Boolean),
-      roundTime: readNumber(kill.time_in_round_in_ms),
-      gameTime: readNumber(kill.time_in_match_in_ms),
-      finishingDamage: {
-        damageType: cleanString(kill.weapon?.type),
-        damageItem: cleanString(kill.weapon?.name),
-        isSecondaryFireMode: Boolean(kill.secondary_fire_mode)
-      }
+      roundTime: readNumber(kill.time_in_round_in_ms)
     };
   }
 
@@ -598,6 +599,7 @@
           armor: economy.armor?.name,
           remaining: economy.remaining
         },
+        utilityCasts: playerRound.ability_casts,
         playerScore: playerRound.stats?.score,
         damageDealt: (Array.isArray(playerRound.damage_events) ? playerRound.damage_events : [])
           .reduce((total, event) => total + (readNumber(event?.damage, 0) || 0), 0),
@@ -664,6 +666,8 @@
   function toLegacyMatch(record = {}) {
     const normalized = record?.schemaVersion === SCHEMA_VERSION ? record : emptyRecord(record);
     const matchId = normalized.legacyMatchId || normalized.id;
+    const projectedAdvanced = globalThis.RankedCoachRoundMetrics?.deriveAdvancedContextFromRoundByRound?.(normalized) || {};
+    const projectedRoundMetrics = globalThis.RankedCoachRoundMetrics?.computeMatchRoundMetrics?.(normalized) || null;
     return {
       id: matchId,
       matchId,
@@ -685,6 +689,7 @@
       agent: normalized.agent || "Unknown",
       map: normalized.map || "Unknown",
       matchRecord: normalized,
+      roundMetrics: projectedRoundMetrics,
       metadata: {
         id: matchId,
         matchId,
@@ -727,6 +732,8 @@
         pendingVerification: normalized.pendingVerification
       } : undefined,
       advanced: {
+        ...(normalized.advanced || {}),
+        ...projectedAdvanced,
         manual: normalized.source === "manual",
         roundsWon: normalized.rounds.won,
         roundsLost: normalized.rounds.lost

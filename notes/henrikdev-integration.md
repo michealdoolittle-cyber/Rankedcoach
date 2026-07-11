@@ -174,3 +174,7 @@ Per the handoff doc's own framing, manual entry should shrink to qualitative-onl
 ### Priority order
 
 1 (wiring) unlocks the most value for the least new design work — do it first. 2-6 are independent of each other and of 1, pick based on what's most interesting to ship next. 7 is UI-dependent (needs round-level match detail display to exist first) — sequence it after checking that prerequisite.
+
+**Follow-up status (2026-07-10): SHIPPED.** `roundByRound` now projects into the existing `advanced` side/economy/opening-event shape, and saved profiles hydrate that projection without requiring a re-import. Home, Stats, Insights, agent/map/weapon detail formulas, season switching, RR history, current/peak rank, and profile rank badges now consume the retained Henrik data. New round metrics cover closer-round finishes, repeated discipline flags, real 2K/3K/4K/ace counts, role-aware trades received vs. given, and damage standard deviation.
+
+Two data/UI limits remain explicit rather than estimated. Henrik v4 provides per-round ability-cast counts but no cast timestamps, so utility timing stays unavailable instead of being inferred as "before contact." The optional manual round-intent tag remains gated because the selected-match UI still does not expose a round-by-round detail view; adding the field before that prerequisite would give players no reliable round reference.

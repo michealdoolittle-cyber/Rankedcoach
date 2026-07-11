@@ -3134,6 +3134,7 @@ function createPerformanceBucket(label) {
     deaths: 0,
     assists: 0,
     acsTotal: 0,
+    adrTotal: 0,
     hsTotal: 0
   };
 }
@@ -3151,7 +3152,8 @@ function finalizePerformanceBucket(bucket = {}) {
     matchesLost,
     winrate: matchesPlayed ? (matchesWon / matchesPlayed) * 100 : 0,
     kd: deaths ? safeNumber(bucket.kills) / deaths : safeNumber(bucket.kills),
-    adr: matchesPlayed ? safeNumber(bucket.acsTotal) / matchesPlayed : 0,
+    acs: matchesPlayed ? safeNumber(bucket.acsTotal) / matchesPlayed : 0,
+    adr: matchesPlayed ? safeNumber(bucket.adrTotal) / matchesPlayed : 0,
     hs: matchesPlayed ? safeNumber(bucket.hsTotal) / matchesPlayed : 0
   };
 }
@@ -4487,6 +4489,7 @@ function summarizeAdvancedContextMatches(matchEntries = []) {
     full: { played: 0, won: 0 }
   };
   let utilityBeforeContactCount = 0;
+  let utilityTimingKnownCount = 0;
   let firstBloodRounds = 0;
   let firstDeathRounds = 0;
 
@@ -4502,7 +4505,11 @@ function summarizeAdvancedContextMatches(matchEntries = []) {
       else if (buyType.includes("full")) buyBuckets.full.won += 1;
     }
 
-    if (String(round?.utilityPattern || "").toLowerCase().includes("before contact")) {
+    const utilityPattern = String(round?.utilityPattern || "").toLowerCase();
+    if (utilityPattern && !utilityPattern.includes("unavailable") && !utilityPattern.includes("no-utility")) {
+      utilityTimingKnownCount += 1;
+    }
+    if (utilityPattern.includes("before contact")) {
       utilityBeforeContactCount += 1;
     }
     if (round?.firstEvent === "first-blood") firstBloodRounds += 1;
@@ -4532,7 +4539,10 @@ function summarizeAdvancedContextMatches(matchEntries = []) {
     fullBuyWinRate: safeDivide(buyBuckets.full.won * 100, buyBuckets.full.played),
     ecoWinRate: safeDivide(buyBuckets.eco.won * 100, buyBuckets.eco.played),
     lightBuyWinRate: safeDivide(buyBuckets.light.won * 100, buyBuckets.light.played),
-    utilityBeforeContactRate: safeDivide(utilityBeforeContactCount * 100, roundEntries.length),
+    utilityBeforeContactRate: utilityTimingKnownCount
+      ? safeDivide(utilityBeforeContactCount * 100, utilityTimingKnownCount)
+      : null,
+    utilityTimingKnownRounds: utilityTimingKnownCount,
     firstBloodRoundRate: safeDivide(firstBloodRounds * 100, roundEntries.length),
     firstDeathAvoidRate: 100 - safeDivide(firstDeathRounds * 100, roundEntries.length),
     roundWinRate: safeDivide((attackWins + defenseWins) * 100, totalRounds)
@@ -4594,6 +4604,11 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
       defense_kast: "Defense KAST",
       attack_adr: "Attack ADR",
       defense_adr: "Defense ADR",
+      full_buy_win_rate: "Full-Buy Win Rate",
+      eco_win_rate: "Eco Win Rate",
+      light_buy_win_rate: "Light-Buy Win Rate",
+      first_blood_round_rate: "First-Blood Round Rate",
+      first_death_avoid_rate: "First-Death Avoidance",
       avg_rating: "Average Self Rating",
       positive_mood_rate: "Positive Mood Rate"
     },
@@ -4684,6 +4699,11 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
     defense_kast: "Defense-side participation and survival are trending up.",
     attack_adr: "Attack-side damage output is trending up.",
     defense_adr: "Defense-side damage output is trending up.",
+    full_buy_win_rate: "Full-buy rounds in this role window are converting more often.",
+    eco_win_rate: "Low-economy rounds in this role window are stealing more wins.",
+    light_buy_win_rate: "Light-buy rounds in this role window are converting more cleanly.",
+    first_blood_round_rate: "The player is creating the first elimination in more rounds.",
+    first_death_avoid_rate: "The player is avoiding the first death in more rounds.",
     avg_rating: "Self-rated performance is improving in the same role window.",
     positive_mood_rate: "The emotional read from logs is trending more positive."
   };
@@ -4717,6 +4737,11 @@ function getImprovementFormulaText(metricKey = "", delta = 0) {
     defense_kast: `Recent defense KAST minus earlier defense KAST = +${rounded}%`,
     attack_adr: `Recent attack ADR minus earlier attack ADR = +${rounded} ADR`,
     defense_adr: `Recent defense ADR minus earlier defense ADR = +${rounded} ADR`,
+    full_buy_win_rate: `Recent full-buy round win % minus earlier full-buy round win % = +${rounded}%`,
+    eco_win_rate: `Recent eco round win % minus earlier eco round win % = +${rounded}%`,
+    light_buy_win_rate: `Recent light-buy round win % minus earlier light-buy round win % = +${rounded}%`,
+    first_blood_round_rate: `Recent first-blood round rate minus earlier first-blood round rate = +${rounded}%`,
+    first_death_avoid_rate: `Recent first-death avoidance minus earlier first-death avoidance = +${rounded}%`,
     avg_rating: `Recent self-rating average minus earlier self-rating average = +${rounded}`,
     positive_mood_rate: `Recent positive-mood rate minus earlier positive-mood rate = +${rounded}%`
   };
@@ -4727,7 +4752,7 @@ function getImprovementMethodLabel(metricKey = "") {
   if (["avg_rating", "positive_mood_rate"].includes(metricKey)) {
     return "Derived from Logging entries tied to the selected role/session window.";
   }
-  if (["attack_win_pct", "defense_win_pct", "attack_first_blood_rate", "defense_first_blood_rate", "attack_opening_survival", "defense_opening_survival", "attack_kast", "defense_kast", "attack_adr", "defense_adr", "rr_per_match"].includes(metricKey)) {
+  if (["attack_win_pct", "defense_win_pct", "attack_first_blood_rate", "defense_first_blood_rate", "attack_opening_survival", "defense_opening_survival", "attack_kast", "defense_kast", "attack_adr", "defense_adr", "full_buy_win_rate", "eco_win_rate", "light_buy_win_rate", "first_blood_round_rate", "first_death_avoid_rate", "rr_per_match"].includes(metricKey)) {
     return "Derived from Riot match history plus per-round/side data in the selected role window.";
   }
   return "Derived from Riot match history in the selected role window.";
@@ -4815,6 +4840,11 @@ function buildRecentImprovementCandidates(context = {}) {
     { key: "defense_kast", current: ctx => ctx.recentAdvanced.defenseKAST, baseline: ctx => ctx.baselineAdvanced.defenseKAST, minMatches: 3 },
     { key: "attack_adr", current: ctx => ctx.recentAdvanced.attackADR, baseline: ctx => ctx.baselineAdvanced.attackADR, minMatches: 3 },
     { key: "defense_adr", current: ctx => ctx.recentAdvanced.defenseADR, baseline: ctx => ctx.baselineAdvanced.defenseADR, minMatches: 3 },
+    { key: "full_buy_win_rate", current: ctx => ctx.recentAdvanced.fullBuyWinRate, baseline: ctx => ctx.baselineAdvanced.fullBuyWinRate, minMatches: 3 },
+    { key: "eco_win_rate", current: ctx => ctx.recentAdvanced.ecoWinRate, baseline: ctx => ctx.baselineAdvanced.ecoWinRate, minMatches: 3 },
+    { key: "light_buy_win_rate", current: ctx => ctx.recentAdvanced.lightBuyWinRate, baseline: ctx => ctx.baselineAdvanced.lightBuyWinRate, minMatches: 3 },
+    { key: "first_blood_round_rate", current: ctx => ctx.recentAdvanced.firstBloodRoundRate, baseline: ctx => ctx.baselineAdvanced.firstBloodRoundRate, minMatches: 3 },
+    { key: "first_death_avoid_rate", current: ctx => ctx.recentAdvanced.firstDeathAvoidRate, baseline: ctx => ctx.baselineAdvanced.firstDeathAvoidRate, minMatches: 3 },
     { key: "avg_rating", current: ctx => ctx.recentLogs.avgRating, baseline: ctx => ctx.baselineLogs.avgRating, minLogs: 2 },
     { key: "positive_mood_rate", current: ctx => ctx.recentLogs.positiveMoodRate, baseline: ctx => ctx.baselineLogs.positiveMoodRate, minLogs: 2 }
   ];
@@ -5260,6 +5290,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   let totalDeaths = 0;
   let totalAssists = 0;
   let totalAcs = 0;
+  let totalAdr = 0;
   let totalHs = 0;
   let wins = 0;
   let losses = 0;
@@ -5292,6 +5323,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       bucket.deaths += core.deaths;
       bucket.assists += core.assists;
       bucket.acsTotal += core.acs;
+      bucket.adrTotal += core.adr;
       bucket.hsTotal += core.hs;
       if (core.result === "win") bucket.matchesWon += 1;
       if (core.result === "loss") bucket.matchesLost += 1;
@@ -5301,6 +5333,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     totalDeaths += core.deaths;
     totalAssists += core.assists;
     totalAcs += core.acs;
+    totalAdr += core.adr;
     totalHs += core.hs;
     if (core.result === "win") wins += 1;
     if (core.result === "loss") losses += 1;
@@ -5310,6 +5343,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const agents = rankBuckets(agentBuckets, "agent");
   const roles = rankBuckets(roleBuckets, "role");
   const roundMetrics = globalThis.RankedCoachRoundMetrics?.aggregateMatchKast?.(orderedMatches) || null;
+  const roundSignals = globalThis.RankedCoachRoundMetrics?.aggregateMatchRoundMetrics?.(orderedMatches) || null;
+  const recentRoundSignals = globalThis.RankedCoachRoundMetrics?.aggregateMatchRoundMetrics?.(orderedMatches.slice(-10)) || null;
   const averageAcs = orderedMatches.length ? totalAcs / Math.max(1, orderedMatches.length) : 0;
 
   const overview = {
@@ -5317,7 +5352,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     matchesWon: wins || safeNumber(importedAnalytics?.overview?.matchesWon),
     matchesLost: losses || safeNumber(importedAnalytics?.overview?.matchesLost),
     kd: orderedMatches.length ? (totalDeaths ? totalKills / totalDeaths : totalKills) : safeNumber(importedAnalytics?.overview?.kd),
-    adr: orderedMatches.length ? totalAcs / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.adr),
+    adr: orderedMatches.length ? totalAdr / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.adr),
     hs: orderedMatches.length ? totalHs / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.hs),
     assists: orderedMatches.length ? totalAssists / Math.max(1, orderedMatches.length) : 0,
     winrate: orderedMatches.length ? (wins / Math.max(1, orderedMatches.length)) * 100 : safeNumber(importedAnalytics?.overview?.winrate),
@@ -5329,9 +5364,30 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       : safeNumber(importedAnalytics?.overview?.defenseKAST),
     overallKAST: roundMetrics?.overall?.totalRounds ? safeNumber(roundMetrics.overall.percentage) : 0,
     kastTradeSavedRounds: safeNumber(roundMetrics?.overall?.tradeSavedRounds),
-    econ: safeNumber(importedAnalytics?.overview?.econ)
+    econ: safeNumber(importedAnalytics?.overview?.econ),
+    roundsPlayed: safeNumber(roundSignals?.totalRounds),
+    roundsWon: safeNumber(roundSignals?.roundsWon),
+    kills2K: safeNumber(roundSignals?.kills2K, safeNumber(importedAnalytics?.overview?.kills2K)),
+    kills3K: safeNumber(roundSignals?.kills3K, safeNumber(importedAnalytics?.overview?.kills3K)),
+    kills4K: safeNumber(roundSignals?.kills4K, safeNumber(importedAnalytics?.overview?.kills4K)),
+    kills5K: safeNumber(roundSignals?.kills5K, safeNumber(importedAnalytics?.overview?.kills5K)),
+    clutchRounds: safeNumber(roundSignals?.clutchRounds),
+    clutchWins: safeNumber(roundSignals?.clutchWins),
+    clutchConversionRate: getOptionalFiniteNumber(roundSignals?.clutchConversionRate),
+    tradeReceivedRate: getOptionalFiniteNumber(roundSignals?.tradeReceivedRate),
+    tradeGivenRate: getOptionalFiniteNumber(roundSignals?.tradeGivenRate),
+    damageStandardDeviation: getOptionalFiniteNumber(roundSignals?.damage?.standardDeviation),
+    damageCoefficientOfVariation: getOptionalFiniteNumber(roundSignals?.damage?.coefficientOfVariation),
+    disciplineAffectedMatches: safeNumber(roundSignals?.discipline?.affectedMatches),
+    afkRounds: safeNumber(roundSignals?.discipline?.afkRounds),
+    stayedInSpawnRounds: safeNumber(roundSignals?.discipline?.stayedInSpawnRounds),
+    fullBuyWinRate: safeNumber(importedAnalytics?.overview?.fullBuyWinRate),
+    ecoWinRate: safeNumber(importedAnalytics?.overview?.ecoWinRate),
+    lightBuyWinRate: safeNumber(importedAnalytics?.overview?.lightBuyWinRate),
+    firstBloodRoundRate: safeNumber(importedAnalytics?.overview?.firstBloodRoundRate),
+    firstDeathAvoidRate: safeNumber(importedAnalytics?.overview?.firstDeathAvoidRate)
   };
-  const currentRankLabel = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "";
+  const currentRankLabel = getProfileCurrentRankSnapshot()?.rankLabel || getTierRank(computeCurrentRRAbsolute())?.tierLabel || "";
   const rankComparison = globalThis.RankedCoachRankBenchmarks?.compareRankMetrics?.(currentRankLabel, {
     hsPercent: overview.hs,
     acs: averageAcs,
@@ -5396,6 +5452,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       bucket.deaths += core.deaths;
       bucket.assists += core.assists;
       bucket.acsTotal += core.acs;
+      bucket.adrTotal += core.adr;
       bucket.hsTotal += core.hs;
       if (core.result === "win") bucket.matchesWon += 1;
       if (core.result === "loss") bucket.matchesLost += 1;
@@ -5411,12 +5468,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const weakestMap = maps.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0] || null;
   const bestRole = roles[0] || null;
   const weakestRole = roles.filter((entry) => entry.matchesPlayed >= 2).slice().sort((a, b) => a.winrate - b.winrate)[0] || null;
-  const multiKillPressure = safeNumber(importedAnalytics?.overview?.kills2K) + (safeNumber(importedAnalytics?.overview?.kills3K) * 1.5) + (safeNumber(importedAnalytics?.overview?.kills4K) * 2) + (safeNumber(importedAnalytics?.overview?.kills5K) * 3);
-  const multiKillRoundCount = safeNumber(importedAnalytics?.overview?.kills2K)
-    + safeNumber(importedAnalytics?.overview?.kills3K)
-    + safeNumber(importedAnalytics?.overview?.kills4K)
-    + safeNumber(importedAnalytics?.overview?.kills5K);
-  const estimatedRoundWins = Math.max(0, safeNumber(importedAnalytics?.overview?.matchesWon || wins) * 13);
+  const multiKillPressure = overview.kills2K + (overview.kills3K * 1.5) + (overview.kills4K * 2) + (overview.kills5K * 3);
+  const multiKillRoundCount = overview.kills2K + overview.kills3K + overview.kills4K + overview.kills5K;
+  const estimatedRoundWins = Math.max(0, overview.roundsWon || (wins * 13));
   const multiKillConversionPct = estimatedRoundWins ? Math.min(100, safeDivide(multiKillRoundCount * 100, estimatedRoundWins)) : 0;
   const sideBiasMaps = (importedAnalytics?.maps || [])
     .map((entry) => {
@@ -5551,7 +5605,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     insights.push({
       type: "good",
       title: "Multi-Kill Impact Is Showing Up",
-      preview: `${Math.round(safeNumber(importedAnalytics?.overview?.kills2K || 0))} 2Ks and ${Math.round(safeNumber(importedAnalytics?.overview?.kills3K || 0))} 3Ks are reinforcing round snowball potential.`,
+      preview: `${Math.round(overview.kills2K)} 2Ks and ${Math.round(overview.kills3K)} 3Ks are reinforcing round snowball potential.`,
       what: "Your multi-kill rounds are showing up often enough to affect round conversion.",
       why: "Multi-kills usually mean your spacing, timing, or follow-up fights are creating real round impact.",
       action: "When you get the first advantage, look for safe ways to turn it into a round snowball while maintaining discipline.",
@@ -5559,6 +5613,79 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       focus: "Snowball Potential",
       category: "performance",
       priority: 86
+    });
+  }
+
+  if (overview.clutchRounds >= 3) {
+    insights.push({
+      type: overview.clutchConversionRate >= 50 ? "good" : "warn",
+      title: "Clutch Closing",
+      preview: `You closed ${Math.round(overview.clutchWins)} of ${Math.round(overview.clutchRounds)} retained closer rounds.`,
+      what: `The coach sees ${Math.round(overview.clutchWins)} player-finished wins across ${Math.round(overview.clutchRounds)} rounds Henrik marked as close finishes.`,
+      why: "This uses the round ceremony plus the final recorded kill, so it measures who actually finished the round rather than treating every close score as a clutch.",
+      action: overview.clutchConversionRate >= 50
+        ? "Keep the same late-round patience and make the final fight happen on your timing."
+        : "In close rounds, slow the final decision down and preserve one tradeable path before taking the last fight.",
+      sources: ["Henrik Round History", "Round Ceremony"],
+      focus: "Clutch Conversion",
+      category: "performance",
+      priority: overview.clutchConversionRate >= 50 ? 78 : 88
+    });
+  }
+
+  if (roundSignals?.tradeReceivedOpportunities >= 10 && roundSignals?.tradeGivenOpportunities >= 10) {
+    const roleKey = getCompassRoleKey(currentSignalRole);
+    const entryRole = roleKey === "duelist";
+    const expectedRate = entryRole ? overview.tradeReceivedRate : overview.tradeGivenRate;
+    const counterpartRate = entryRole ? overview.tradeGivenRate : overview.tradeReceivedRate;
+    insights.push({
+      type: expectedRate >= counterpartRate ? "good" : "warn",
+      title: "Trade Support Split",
+      preview: `${Math.round(overview.tradeReceivedRate || 0)}% traded after your deaths | ${Math.round(overview.tradeGivenRate || 0)}% of teammate-death rounds answered by you.`,
+      what: entryRole
+        ? "The coach compares how often teammates recover your entry deaths with how often you recover theirs."
+        : "The coach compares how often you recover teammate deaths with how often teammates recover yours.",
+      why: `That split matters for ${currentSignalRole || "your role"}; entry roles lean more on trades received, while support and anchor roles should return more trades themselves.`,
+      action: expectedRate >= counterpartRate
+        ? "Keep your spacing connected enough that this role-specific trade pattern remains repeatable."
+        : "Close the spacing gap before first contact so the next death can be answered inside the five-second trade window.",
+      sources: ["Henrik Kill Timeline", `${currentSignalRole || "Role"} Context`],
+      focus: "Trade Timing",
+      category: "teamplay",
+      priority: expectedRate >= counterpartRate ? 74 : 90
+    });
+  }
+
+  if (overview.roundsPlayed >= 40 && Number.isFinite(overview.damageCoefficientOfVariation)) {
+    const consistencyPct = Math.max(0, 100 - (overview.damageCoefficientOfVariation * 100));
+    insights.push({
+      type: consistencyPct >= 40 ? "good" : "warn",
+      title: "Damage Consistency",
+      preview: `${Math.round(overview.adr)} ADR with a ${Math.round(overview.damageStandardDeviation || 0)}-damage round spread.`,
+      what: `The coach sees ${Math.round(overview.damageStandardDeviation || 0)} damage of round-to-round variation around your average.`,
+      why: "Two players can have the same ADR while one contributes steadily and the other depends on a few spike rounds.",
+      action: consistencyPct >= 40
+        ? "Keep creating useful damage before the round becomes chaotic; the output is arriving consistently enough to trust."
+        : "Build one repeatable early-round damage plan so more rounds contribute before the occasional high-damage spike.",
+      sources: ["Henrik Round Damage", "Recent Match Window"],
+      focus: "Damage Reliability",
+      category: "performance",
+      priority: consistencyPct >= 40 ? 70 : 84
+    });
+  }
+
+  if (recentRoundSignals?.matches >= 4 && recentRoundSignals?.discipline?.affectedMatches >= 4) {
+    insights.push({
+      type: "warn",
+      title: "Repeated Availability Flag",
+      preview: `${recentRoundSignals.discipline.affectedMatches} of the last ${recentRoundSignals.matches} retained matches include AFK or stayed-in-spawn rounds.`,
+      what: "The coach sees this availability flag repeating across multiple matches, not as a one-round mistake.",
+      why: "RankedCoach only surfaces this after four affected matches so a disconnect or one unusual round is not treated as a player habit.",
+      action: "Protect the next queue window: resolve the interruption first, then only queue when the full match is available.",
+      sources: ["Henrik Behavior Factors", "Last 10 Matches"],
+      focus: "Queue Readiness",
+      category: "discipline",
+      priority: 96
     });
   }
 
@@ -6126,8 +6253,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       mediaType: "agent",
       mediaValue: currentSignalAgent,
       proofItems: [
-        statItem("2Ks", `${Math.round(safeNumber(importedAnalytics?.overview?.kills2K))}`, "Imported two-kill rounds."),
-        statItem("3Ks", `${Math.round(safeNumber(importedAnalytics?.overview?.kills3K))}`, "Imported three-kill rounds."),
+        statItem("2Ks", `${Math.round(overview.kills2K)}`, "Two-kill rounds computed from Henrik's kill timeline."),
+        statItem("3Ks", `${Math.round(overview.kills3K)}`, "Three-kill rounds computed from Henrik's kill timeline."),
         statItem("Conversion Share", estimatedRoundWins ? `${Math.round(multiKillConversionPct)}%` : "No Data", "Multi-kill rounds divided by estimated converted round wins."),
         statItem("Read", "Round swing", "Higher multi-kill pressure can change match outcomes.")
       ]
@@ -6935,6 +7062,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     acts: actOptions.length ? actOptions : [currentAct],
     overview,
     roundMetrics,
+    roundSignals,
     rankComparison,
     maps: maps.length ? maps : (importedAnalytics?.maps || []),
     agents: agents.length ? agents : (importedAnalytics?.agents || []),
@@ -6978,6 +7106,42 @@ function getPlayerModel() {
   return buildPlayerModel(scoped.matches, scoped.logs, scoped.analytics);
 }
 
+function buildRoundDerivedAnalytics(matchList = [], currentAct = "Current Window", acts = []) {
+  const advanced = summarizeAdvancedContextMatches(matchList);
+  const rounds = globalThis.RankedCoachRoundMetrics?.aggregateMatchRoundMetrics?.(matchList) || null;
+  if (!rounds?.matches) return { currentAct, acts };
+  return {
+    currentAct,
+    acts,
+    roundMetrics: rounds,
+    overview: {
+      attackKAST: advanced.attackKAST,
+      defenseKAST: advanced.defenseKAST,
+      econ: advanced.fullBuyWinRate,
+      fullBuyWinRate: advanced.fullBuyWinRate,
+      ecoWinRate: advanced.ecoWinRate,
+      lightBuyWinRate: advanced.lightBuyWinRate,
+      firstBloodRoundRate: advanced.firstBloodRoundRate,
+      firstDeathAvoidRate: advanced.firstDeathAvoidRate,
+      kills2K: rounds.kills2K,
+      kills3K: rounds.kills3K,
+      kills4K: rounds.kills4K,
+      kills5K: rounds.kills5K,
+      clutchRounds: rounds.clutchRounds,
+      clutchWins: rounds.clutchWins,
+      clutchConversionRate: rounds.clutchConversionRate,
+      tradeReceivedRate: rounds.tradeReceivedRate,
+      tradeGivenRate: rounds.tradeGivenRate,
+      damageStandardDeviation: rounds.damage.standardDeviation,
+      damageCoefficientOfVariation: rounds.damage.coefficientOfVariation,
+      disciplineAffectedMatches: rounds.discipline.affectedMatches,
+      afkRounds: rounds.discipline.afkRounds,
+      stayedInSpawnRounds: rounds.discipline.stayedInSpawnRounds,
+      utilityTimingAvailable: false
+    }
+  };
+}
+
 function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const importedAnalytics = profile?.trackerAnalytics || null;
   const sourceMatches = Array.isArray(options?.matches)
@@ -6999,15 +7163,21 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const sourceLogs = Array.isArray(options?.logs)
     ? options.logs
     : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
-  const actMatches = shouldFilterByAct
+  const actMatches = (shouldFilterByAct
     ? sourceMatches.filter((match) => getMatchSeasonLabel(match) === selectedAct)
-    : sourceMatches;
+    : sourceMatches).map(hydrateMatchDerivedData);
   const actLogs = shouldFilterByAct
     ? sourceLogs.filter((entry) => String(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act || "").trim() === selectedAct)
     : sourceLogs;
   const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
+  const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || derivedActs[0] || "Current Window", actOptions);
   const scopedAnalytics = {
     ...(importedAnalytics || {}),
+    ...derivedRoundAnalytics,
+    overview: {
+      ...(importedAnalytics?.overview || {}),
+      ...(derivedRoundAnalytics.overview || {})
+    },
     currentAct: selectedAct || importedAnalytics?.currentAct || derivedActs[0] || "Current Window",
     acts: actOptions
   };
@@ -10897,6 +11067,7 @@ function updateProfileDropdownMenu() {
   if (manualToggle) {
     manualToggle.hidden = false;
   }
+
   if (logoutBtn) {
     logoutBtn.hidden = false;
     logoutBtn.textContent = signedIn ? "Log out" : "Log in / Sign up";
@@ -13654,6 +13825,10 @@ function updateChartWindowControls(matchCount = 0, activeSize = currentSize) {
 }
 
 function getFreshCurrentRRAbsolute(profile = getActiveProfile?.()) {
+  if (profile && isHenrikProfileData(profile)) {
+    const snapshotRR = getRankSnapshotAbsoluteRR(getProfileCurrentRankSnapshot(profile));
+    if (Number.isFinite(snapshotRR)) return snapshotRR;
+  }
   const sourceMatches = Array.isArray(profile?.matches)
     ? profile.matches
     : (matches || []);
@@ -13700,8 +13875,13 @@ function getChartSourceEntries(size = currentSize) {
 
   let runningRR = 0;
   const allEntries = sourceMatches.map((match, index) => {
-    const absoluteBefore = runningRR;
-    runningRR += getChartMatchRRDelta(match);
+    const snapshot = getMatchRankSnapshot(match);
+    const snapshotAbsolute = isVerifiedHenrikRrMatch(match) ? getRankSnapshotAbsoluteRR(snapshot) : null;
+    const delta = getChartMatchRRDelta(match);
+    const absoluteBefore = Number.isFinite(snapshotAbsolute)
+      ? snapshotAbsolute - delta
+      : runningRR;
+    runningRR = Number.isFinite(snapshotAbsolute) ? snapshotAbsolute : runningRR + delta;
     return {
       match,
       index,
@@ -15579,7 +15759,6 @@ function getChartSliceWithEntries(cumulative, entries, size) {
 
 function getChartRankChange(entry = null) {
   if (!entry) return null;
-  if (isVerifiedHenrikRrMatch(entry.match)) return null;
   const before = getTierRank(safeNumber(entry.absoluteBefore));
   const after = getTierRank(safeNumber(entry.absoluteAfter));
   if (!before || !after || before.tierLabel === after.tierLabel) return null;
@@ -16154,8 +16333,67 @@ function getTierRank(rr){
   return rank;
 }
 
+function getOptionalFiniteNumber(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function isMeaningfulRankLabel(label = "") {
+  const normalized = normalizeTierLabel(label);
+  return Boolean(normalized && !["Unrated", "Unknown", "--"].includes(normalized));
+}
+
+function getMatchRankSnapshot(match = {}) {
+  const canonicalRank = match?.matchRecord?.rank || {};
+  const tierId = getOptionalFiniteNumber(match?.matchRecord?.trackedPlayer?.competitiveTier);
+  const tierIdLabel = tierId >= 3 && tierId <= (RANK_THRESHOLDS.length + 2)
+    ? RANK_THRESHOLDS[tierId - 3]?.tierLabel
+    : "";
+  const rawLabel = match?.rank || match?.metadata?.rank || canonicalRank.rank || tierIdLabel || "";
+  const rankLabel = normalizeTierLabel(rawLabel);
+  return {
+    rankLabel,
+    rr: getOptionalFiniteNumber(match?.rrTotal ?? canonicalRank.rr),
+    rrDelta: getOptionalFiniteNumber(match?.verifiedRrDelta ?? canonicalRank.rrDelta ?? match?.rr),
+    verified: match?.rrVerified === true || match?.metadata?.rrVerified === true || canonicalRank.verified === true,
+    playedAt: match?.createdAt || match?.metadata?.playedAt || match?.matchRecord?.playedAt || "",
+    match
+  };
+}
+
+function isHenrikProfileData(profile = getActiveProfile?.()) {
+  if (["henrik", "henrik_sync"].includes(String(profile?.lastSyncSource || profile?.importSource || "").toLowerCase())) return true;
+  return (profile?.matches || []).some(match =>
+    String(match?.source || match?.metadata?.source || match?.matchRecord?.source || "").toLowerCase() === "henrik_sync"
+  );
+}
+
+function getProfileCurrentRankSnapshot(profile = getActiveProfile?.(), matchList = null) {
+  const sourceMatches = Array.isArray(matchList)
+    ? matchList
+    : Array.isArray(profile?.matches)
+      ? profile.matches
+      : (matches || []);
+  const snapshots = getSortedMatches(sourceMatches)
+    .slice()
+    .reverse()
+    .map(getMatchRankSnapshot)
+    .filter(snapshot => isMeaningfulRankLabel(snapshot.rankLabel));
+  return snapshots[0] || null;
+}
+
+function getRankSnapshotAbsoluteRR(snapshot = null) {
+  if (!snapshot || !isMeaningfulRankLabel(snapshot.rankLabel)) return null;
+  return getAbsoluteRRForRankLocalRR(snapshot.rankLabel, snapshot.rr ?? 0);
+}
+
 function computeCurrentRRAbsolute() {
   const profile = getActiveProfile?.();
+  if (profile && isHenrikProfileData(profile)) {
+    const snapshotRR = getRankSnapshotAbsoluteRR(getProfileCurrentRankSnapshot(profile));
+    if (Number.isFinite(snapshotRR)) return snapshotRR;
+  }
   const start = profile ? safeNumber(profile.startingRR) : 0;
   return start + rrSum;
 }
@@ -18031,8 +18269,14 @@ function updateRRMatchStats(match = null, matchIndex = null, options = {}) {
   const gameLabel = Number.isInteger(displayIndex) && displayIndex >= 0
     ? `Game ${displayIndex + 1}`
     : "Selected Game";
-  const rrDelta = safeNumber(match?.rr);
-  const rrLabel = rrDelta > 0 ? `+${rrDelta} RR` : `${rrDelta} RR`;
+  const rrDelta = getOptionalFiniteNumber(
+    isVerifiedHenrikRrMatch(match)
+      ? match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta
+      : match?.rr
+  );
+  const rrLabel = Number.isFinite(rrDelta)
+    ? `${rrDelta > 0 ? "+" : ""}${rrDelta} RR`
+    : "RR unavailable";
   const resultLabel = String(match?.result || match?.metadata?.result || "draw")
     .replace(/^./, char => char.toUpperCase());
   const agentLabel = match?.metadata?.agent || match?.agent || "Unknown Agent";
@@ -42482,6 +42726,43 @@ function computePeakProfileProgress(profile = getActiveProfile(), options = {}) 
     ? matchList.filter((_match, index) => selectedIndexSet.has(index))
     : matchList;
 
+  if (isHenrikProfileData(profile)) {
+    const rankSnapshots = getSortedMatches(scopedMatches)
+      .map(getMatchRankSnapshot)
+      .filter(snapshot => isMeaningfulRankLabel(snapshot.rankLabel))
+      .map(snapshot => ({ ...snapshot, absoluteRR: getRankSnapshotAbsoluteRR(snapshot) }))
+      .filter(snapshot => Number.isFinite(snapshot.absoluteRR));
+    if (rankSnapshots.length) {
+      const peakSnapshot = rankSnapshots.reduce((best, snapshot) => snapshot.absoluteRR > best.absoluteRR ? snapshot : best);
+      const startSnapshot = rankSnapshots[0];
+      return {
+        peakRR: peakSnapshot.absoluteRR,
+        tierLabel: peakSnapshot.rankLabel,
+        rankIconUrl: getRankIconUrl(peakSnapshot.rankLabel),
+        gainFromStart: peakSnapshot.absoluteRR - startSnapshot.absoluteRR,
+        startRR: startSnapshot.absoluteRR,
+        scopeLabel: useSeasonScope ? selectedAct : "Profile Timeline",
+        isSeasonScoped: useSeasonScope,
+        matchCount: scopedMatches.length
+      };
+    }
+    const fallbackSnapshot = getProfileCurrentRankSnapshot(profile, matchList);
+    const fallbackAbsoluteRR = getRankSnapshotAbsoluteRR(fallbackSnapshot);
+    if (fallbackSnapshot && Number.isFinite(fallbackAbsoluteRR)) {
+      return {
+        peakRR: fallbackAbsoluteRR,
+        tierLabel: fallbackSnapshot.rankLabel,
+        rankIconUrl: getRankIconUrl(fallbackSnapshot.rankLabel),
+        gainFromStart: 0,
+        startRR: fallbackAbsoluteRR,
+        scopeLabel: useSeasonScope ? selectedAct : "Profile Timeline",
+        isSeasonScoped: useSeasonScope,
+        rankDataFallback: true,
+        matchCount: scopedMatches.length
+      };
+    }
+  }
+
   scopedMatches.forEach((match) => {
     running += safeNumber(match?.rr);
     if (running > peak) peak = running;
@@ -42879,6 +43160,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const ring = document.querySelector(".profile-avatar-ring");
   const mobileAvatarButton = document.querySelector(".mobile-bottom-avatar-btn");
   const peak = computePeakProfileProgress(profile);
+  const currentRankSnapshot = getProfileCurrentRankSnapshot(profile);
   const avatarUrl = profile?.avatarUrl || getDefaultProfileAvatarUrl(profile?.avatarAgent);
   const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
   const theme = getThemePreset(requestedThemeKey);
@@ -42934,8 +43216,10 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (rankIcon) {
-    rankIcon.src = getRankIconUrl(getTierRank(computeCurrentRRAbsolute())?.tierLabel || peak.tierLabel);
-    rankIcon.alt = peak.tierLabel;
+    const rankLabel = currentRankSnapshot?.rankLabel || getTierRank(computeCurrentRRAbsolute())?.tierLabel || peak.tierLabel;
+    rankIcon.src = getRankIconUrl(rankLabel);
+    rankIcon.alt = rankLabel;
+    rankIcon.hidden = !isMeaningfulRankLabel(rankLabel);
   }
 
   borderTargets.forEach((target) => {
@@ -44585,6 +44869,8 @@ function updateImpactBar(percent){
 
 function recomputeFromMatches(){
 
+  matches = (matches || []).map(hydrateMatchDerivedData);
+
   rrSum = 0;
 
   (matches || []).forEach(m => {
@@ -46191,6 +46477,29 @@ async function initUserSession(){
 
 }
 
+function hydrateMatchDerivedData(match = {}) {
+  const compactRecord = match?.matchRecord?.schemaVersion
+    ? globalThis.RankedCoachMatchRecord?.emptyRecord?.(match.matchRecord) || match.matchRecord
+    : match?.matchRecord;
+  const hydratedMatch = compactRecord && compactRecord !== match.matchRecord
+    ? { ...match, matchRecord: compactRecord }
+    : match;
+  const projected = globalThis.RankedCoachRoundMetrics?.deriveAdvancedContextFromRoundByRound?.(hydratedMatch) || {};
+  if (!Array.isArray(projected.rounds) || !projected.rounds.length) return hydratedMatch;
+  const roundMetrics = globalThis.RankedCoachRoundMetrics?.computeMatchRoundMetrics?.(hydratedMatch) || null;
+  return {
+    ...hydratedMatch,
+    roundMetrics,
+    advanced: {
+      ...(hydratedMatch?.advanced || {}),
+      ...projected,
+      manual: hydratedMatch?.advanced?.manual === true || hydratedMatch?.manual === true,
+      roundsWon: hydratedMatch?.advanced?.roundsWon ?? compactRecord?.rounds?.won,
+      roundsLost: hydratedMatch?.advanced?.roundsLost ?? compactRecord?.rounds?.lost
+    }
+  };
+}
+
 
   // ========================
   // WEEKLY FOCUS DATE
@@ -47499,7 +47808,7 @@ function normalizeImportedMatchEntry(match = {}){
     nowISO();
   const core = getMatchCore(match);
 
-  return {
+  return hydrateMatchDerivedData({
     ...match,
     rr: safeNumber(
       match?.rr,
@@ -47516,7 +47825,7 @@ function normalizeImportedMatchEntry(match = {}){
       result,
       playedAt: match?.metadata?.playedAt || createdAt
     }
-  };
+  });
 }
 
 function applyImportedMatches(matchList = [], options = {}){
@@ -49082,7 +49391,9 @@ function renderStatsPeakProgress() {
   if (rrText) rrText.textContent = formatRankLocalRR(peak.peakRR, { suffix: " peak" });
   if (note) {
     const scopeLabel = peak.isSeasonScoped ? peak.scopeLabel : "this profile timeline";
-    note.textContent = peak.gainFromStart > 0
+    note.textContent = peak.rankDataFallback
+      ? `No usable tier snapshot exists in ${scopeLabel}; showing the latest meaningful retained rank instead.`
+      : peak.gainFromStart > 0
       ? `Visual proof of progress: +${Math.round(peak.gainFromStart)} RR above ${peak.isSeasonScoped ? `${peak.scopeLabel} starting point` : "your profile starting point"}.`
       : peak.matchCount
         ? `Highest point reached in ${scopeLabel} so far.`

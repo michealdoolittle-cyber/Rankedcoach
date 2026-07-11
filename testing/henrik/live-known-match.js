@@ -37,6 +37,7 @@ async function main() {
   const v4Record = globalThis.RankedCoachMatchRecord.fromHenrikV4Match(parsedMatch, { puuid });
   const v4Kast = globalThis.RankedCoachRoundMetrics.computeMatchKast(v4Record);
   const legacyRecord = globalThis.RankedCoachMatchRecord.toLegacyMatch(v4Record);
+  const v4RoundMetrics = globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(v4Record);
 
   assert.equal(v4Record.act, "Episode 11 Act 3");
   assert.equal(legacyRecord.act, "Episode 11 Act 3");
@@ -45,6 +46,32 @@ async function main() {
   assert.equal(v4Kast.overall.totalRounds, 22);
   assert.equal(Math.round(v4Kast.overall.percentage), 77);
   assert.equal(v4Kast.overall.tradeSavedRounds, 3);
+  assert.equal(legacyRecord.advanced.rounds.length, 22);
+  assert.equal(legacyRecord.advanced.attack.roundsPlayed, 12);
+  assert.equal(legacyRecord.advanced.attack.roundsWon, 8);
+  assert.equal(legacyRecord.advanced.attack.firstBloods, 1);
+  assert.equal(legacyRecord.advanced.attack.kast, 75);
+  assert.equal(legacyRecord.advanced.defense.roundsPlayed, 10);
+  assert.equal(legacyRecord.advanced.defense.firstDeaths, 2);
+  assert.equal(legacyRecord.advanced.defense.kast, 80);
+  assert.equal(legacyRecord.advanced.rounds.filter(round => round.buyType === "eco").length, 4);
+  assert.equal(legacyRecord.advanced.rounds.filter(round => round.buyType === "light").length, 1);
+  assert.equal(legacyRecord.advanced.rounds.filter(round => round.buyType === "full").length, 17);
+  assert.equal(legacyRecord.advanced.utilityTimingAvailable, false);
+  assert.equal(v4RoundMetrics.ceremonyCounts.CeremonyCloser, 3);
+  assert.equal(v4RoundMetrics.ceremonyCounts.CeremonyFlawless, 1);
+  assert.equal(v4RoundMetrics.multiKills.kills2K, 4);
+  assert.equal(v4RoundMetrics.trade.receivedRounds, 3);
+  assert.equal(v4RoundMetrics.trade.givenRounds, 3);
+  assert.equal(Math.round(v4RoundMetrics.damage.standardDeviation), 124);
+  assert.equal(v4RoundMetrics.discipline.affected, false);
+
+  const oversizedRecord = structuredClone(v4Record);
+  oversizedRecord.roundByRound[0].kills[0].gameTime = 12345;
+  oversizedRecord.roundByRound[0].kills[0].finishingDamage = { damageItem: "Vandal", damageType: "Weapon" };
+  const compactRecord = globalThis.RankedCoachMatchRecord.emptyRecord(oversizedRecord);
+  assert.equal("gameTime" in compactRecord.roundByRound[0].kills[0], false);
+  assert.equal("finishingDamage" in compactRecord.roundByRound[0].kills[0], false);
 
   const rawMatch = await postJson("/api/henrik/raw", { matchId, region: "na" });
   const record = globalThis.RankedCoachMatchRecord.fromHenrikRawMatch(rawMatch, { puuid });
@@ -60,7 +87,7 @@ async function main() {
   assert.equal(Math.round(kast.overall.percentage), 77);
   assert.equal(kast.overall.tradeSavedRounds, 3);
 
-  console.log("Known v4 and Raw match passed: Episode 11 Act 3, 17/22 KAST (77%), 3 trade-window saves.");
+  console.log("Known v4 and Raw match passed: advanced economy/opening projection, 17/22 KAST, ceremonies, multi-kills, trades, and damage variance.");
 }
 
 main().catch(error => {

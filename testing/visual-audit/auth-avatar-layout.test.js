@@ -61,7 +61,28 @@ async function seedAvatarProfile(page, profileBorder, profileBorderRotate) {
       profileBorder,
       profileBorderColor: "gold",
       profileBorderRotate,
-      matches: []
+      importSource: "henrik",
+      lastSyncSource: "henrik",
+      startingRR: 99999,
+      matches: [{
+        id: "verified-diamond-match",
+        matchId: "verified-diamond-match",
+        source: "henrik_sync",
+        rank: "Diamond 2",
+        rrTotal: 54,
+        verifiedRrDelta: 17,
+        rrVerified: true,
+        result: "win",
+        createdAt: "2026-07-09T12:00:00Z",
+        agent: "Killjoy",
+        map: "Haven",
+        metadata: {
+          source: "henrik_sync",
+          rank: "Diamond 2",
+          rrVerified: true,
+          playedAt: "2026-07-09T12:00:00Z"
+        }
+      }]
     }]));
   }, { profileBorder, profileBorderRotate });
 }
@@ -73,6 +94,7 @@ async function run() {
 
   try {
     const authPage = await browser.newPage(mobile);
+    await authPage.addInitScript(() => localStorage.clear());
     await authPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await authPage.waitForTimeout(500);
     const modalBefore = await getRect(authPage, "#authModal .auth-modal-card");
@@ -97,6 +119,7 @@ async function run() {
       const button = await getRect(page, "#mobileHeaderProfileBtn");
       const frame = await getRect(page, "#mobileHeaderProfileBtn .rc-mobile-avatar-frame");
       const image = await getRect(page, "#mobileHeaderProfileBtn .mobile-header-avatar-img");
+      const rankIcon = await getRect(page, "#mobileHeaderProfileBtn .mobile-header-rank-icon");
       const mainAnimation = await page.locator("#mobileHeaderProfileBtn .rc-mobile-frame-main").evaluate(element => getComputedStyle(element).animationName);
 
       assert.equal(button.width, 52);
@@ -106,12 +129,16 @@ async function run() {
       assert.equal(image.width, 38);
       assert.equal(image.height, 38);
       assert.ok(frame.x < image.x && frame.y < image.y);
+      assert.ok(rankIcon.x > image.x + (image.width / 2));
+      assert.ok(rankIcon.y > image.y + (image.height / 2));
       assert.equal(documentWidthOverflow(await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth
       }))), 0);
       if (profile.profileBorderRotate) {
         assert.notEqual(mainAnimation, "none");
+        assert.equal(await page.locator("#mobileHeaderProfileBtn .mobile-header-rank-icon").getAttribute("alt"), "Diamond 2");
+        assert.equal(await page.locator("#navCurrentTierText").innerText(), "Diamond 2");
       } else {
         assert.equal(mainAnimation, "none");
       }
