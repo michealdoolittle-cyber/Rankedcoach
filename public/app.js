@@ -14132,6 +14132,8 @@ const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 const backendSyncState = {
   applyingRemote: false,
   saveTimer: null,
+  savePromise: null,
+  pendingSaveReason: "",
   lastSaveReason: "",
   lastError: null
 };
@@ -14460,17 +14462,29 @@ function buildMatchRowsForSupabase(userId) {
     (profile.matches || []).forEach((match, index) => {
       const core = getMatchCore(match);
       const matchId = String(match?.id || match?.matchId || match?.metadata?.matchId || `${profile.id}_${index}`);
+      const profileId = String(profile.id || "default");
+      const rowId = globalThis.RankedCoachPersistencePolicy?.buildScopedMatchRowId?.(
+        userId,
+        profileId,
+        matchId
+      ) || `${userId}:${profileId}:${matchId}`;
+      const rawRrChange = match?.rr;
       rows.push({
-        id: matchId,
+        id: rowId,
         user_id: userId,
-        profile_id: String(profile.id || "default"),
+        profile_id: profileId,
         riot_match_id: match?.metadata?.matchId || match?.matchId || null,
-        source: profile.importSource || match?.source || "app",
+        source: match?.source || match?.metadata?.source || profile.importSource || "app",
         map: core?.map || match?.map || match?.metadata?.map || null,
         agent: core?.agent || match?.agent || match?.metadata?.agent || null,
         role: match?.role || null,
         result: match?.result || match?.metadata?.result || null,
-        rr_change: safeNumber(match?.rr),
+        rr_change: rawRrChange !== null
+          && rawRrChange !== undefined
+          && String(rawRrChange).trim() !== ""
+          && Number.isFinite(Number(rawRrChange))
+            ? Number(rawRrChange)
+            : null,
         kills: Number.isFinite(core?.kills) ? core.kills : safeNumber(match?.kills, null),
         deaths: Number.isFinite(core?.deaths) ? core.deaths : safeNumber(match?.deaths, null),
         assists: Number.isFinite(core?.assists) ? core.assists : safeNumber(match?.assists, null),
@@ -14481,10 +14495,30 @@ function buildMatchRowsForSupabase(userId) {
       });
     });
   });
-  return rows;
+  return globalThis.RankedCoachPersistencePolicy?.dedupeRowsById?.(rows) || rows;
 }
 
 async function savePersistentAccountState(reason = "state") {
+  if (backendSyncState.savePromise) {
+    backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
+    return backendSyncState.savePromise;
+  }
+
+  const savePromise = performPersistentAccountStateSave(reason);
+  backendSyncState.savePromise = savePromise;
+  try {
+    return await savePromise;
+  } finally {
+    backendSyncState.savePromise = null;
+    const pendingReason = backendSyncState.pendingSaveReason;
+    backendSyncState.pendingSaveReason = "";
+    if (pendingReason) {
+      queueMicrotask(() => void savePersistentAccountState(pendingReason));
+    }
+  }
+}
+
+async function performPersistentAccountStateSave(reason = "state") {
   if (backendSyncState.applyingRemote || !supabaseClient?.auth) return;
 
   const user = await getSupabaseUser();
@@ -14544,12 +14578,11 @@ async function savePersistentAccountState(reason = "state") {
   if (logRowsSaved) await reconcilePersistentLogRows(user.id, logRows);
 
   const matchRows = buildMatchRowsForSupabase(user.id);
-  if (matchRows.length) {
-    const { error } = await supabaseClient
-      .from("match_snapshots")
-      .upsert(matchRows, { onConflict: "id" });
-    if (error) console.warn("Supabase match save failed", error);
+  const matchRowsSaved = await upsertPersistentMatchRows(matchRows);
+  if (!matchRowsSaved) {
+    return;
   }
+  await reconcilePersistentMatchRows(user.id, matchRows);
 
   localStorage.setItem(STORAGE_KEY_LAST_BACKEND_SYNC, nowISO());
   backendSyncState.lastError = null;
@@ -14567,6 +14600,60 @@ async function deletePersistentLogEntry(id) {
     .eq("id", String(id));
 
   if (error) console.warn("Supabase log delete failed", error);
+}
+
+async function upsertPersistentMatchRows(rows = []) {
+  const batches = globalThis.RankedCoachPersistencePolicy?.chunkRows?.(rows, 6)
+    || (rows.length ? [rows] : []);
+  for (let index = 0; index < batches.length; index += 1) {
+    const { error } = await supabaseClient
+      .from("match_snapshots")
+      .upsert(batches[index], { onConflict: "id" });
+    if (error) {
+      backendSyncState.lastError = error;
+      console.warn("Supabase match save failed", {
+        batch: index + 1,
+        batchCount: batches.length,
+        rowCount: batches[index].length,
+        code: error.code || "",
+        message: error.message || "",
+        details: error.details || "",
+        hint: error.hint || ""
+      });
+      return false;
+    }
+  }
+  return true;
+}
+
+async function reconcilePersistentMatchRows(userId, rows = []) {
+  if (!userId || !supabaseClient?.from) return;
+  const { data, error } = await supabaseClient
+    .from("match_snapshots")
+    .select("id")
+    .eq("user_id", userId);
+  if (error) {
+    console.warn("Supabase match reconciliation read failed", error);
+    return;
+  }
+
+  const keepIds = new Set((rows || []).map(row => String(row?.id || "")).filter(Boolean));
+  const staleIds = (data || [])
+    .map(row => String(row?.id || ""))
+    .filter(id => id && !keepIds.has(id));
+  const batches = globalThis.RankedCoachPersistencePolicy?.chunkRows?.(staleIds, 100)
+    || (staleIds.length ? [staleIds] : []);
+  for (const batch of batches) {
+    const { error: deleteError } = await supabaseClient
+      .from("match_snapshots")
+      .delete()
+      .eq("user_id", userId)
+      .in("id", batch);
+    if (deleteError) {
+      console.warn("Supabase stale match cleanup failed", deleteError);
+      return;
+    }
+  }
 }
 
 async function reconcilePersistentLogRows(userId, rows = []) {
