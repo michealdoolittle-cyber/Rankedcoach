@@ -32367,8 +32367,7 @@ function initApp(){
   randomizeInitialReel();
   updateImpactBar(75);
   updateNavUnderline();
-  initUserSession();
-  supabaseClient?.auth?.onAuthStateChange?.((event, session) => {
+  const authStateListener = supabaseClient?.auth?.onAuthStateChange?.((event, session) => {
     if (authRecoveryInProgress || event === "PASSWORD_RECOVERY") {
       authRecoveryInProgress = true;
       if (session?.user) {
@@ -32377,10 +32376,19 @@ function initApp(){
       }
       if (event === "PASSWORD_RECOVERY") {
         authRecoverySessionReady = true;
+        dismissLoginInitializationOverlay();
         setAuthPanel?.("forgot");
         setPasswordRecoveryStage?.("password");
         showModalById?.("authModal");
       }
+      return;
+    }
+    if (event === "INITIAL_SESSION") {
+      if (session?.user) {
+        setAppEntryChoice("auth");
+        closeAuthModal();
+      }
+      window.setTimeout(() => void initUserSession(session?.user || null), 0);
       return;
     }
     if (session?.user && (authPasswordLoginInProgress || authMfaChallengeInProgress)) {
@@ -32407,6 +32415,7 @@ function initApp(){
       closeAuthModal();
     }
   });
+  if (!authStateListener) void initUserSession();
   scheduleRiotAutoSync();
 
   updateWeeklyFocusDateLabel();
@@ -46713,19 +46722,26 @@ function randomizeInitialReel(){
 
 
 
-async function initUserSession(){
+async function initUserSession(initialSessionUser = null){
   if(!supabaseClient?.auth){
     updateAuthUI(null);
     hideLoginInitializationOverlay();
     return;
   }
 
-  let cachedSessionUser = null;
-  try {
-    const { data: { session } = {} } = await supabaseClient.auth.getSession();
-    cachedSessionUser = session?.user || null;
-  } catch (error) {
-    console.warn("Unable to read cached auth session", error);
+  let cachedSessionUser = initialSessionUser || null;
+  if (cachedSessionUser) {
+    showLoginInitializationOverlay(
+      "Restoring your saved session.",
+      "Keeping the dashboard covered while your saved account and coaching pages are rebuilt."
+    );
+  } else {
+    try {
+      const { data: { session } = {} } = await supabaseClient.auth.getSession();
+      cachedSessionUser = session?.user || null;
+    } catch (error) {
+      console.warn("Unable to read cached auth session", error);
+    }
   }
 
   let user = null;

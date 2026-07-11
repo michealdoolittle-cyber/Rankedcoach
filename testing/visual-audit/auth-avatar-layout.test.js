@@ -103,7 +103,10 @@ async function run() {
               auth: {
                 getSession: async () => ({ data: { session: null } }),
                 getUser: async () => ({ data: { user: null } }),
-                onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+                onAuthStateChange(callback) {
+                  setTimeout(() => callback("INITIAL_SESSION", null), 0);
+                  return { data: { subscription: { unsubscribe() {} } } };
+                },
                 signInWithPassword: () => new Promise(() => {}),
                 mfa: {
                   getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }),
@@ -129,6 +132,61 @@ async function run() {
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await desktopAuthPage.screenshot({ path: path.join(__dirname, "tmp", "desktop-login-loading.png"), fullPage: true });
     await desktopAuthPage.close();
+
+    const returningAuthPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await returningAuthPage.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({
+      contentType: "text/javascript",
+      body: `
+        window.supabase = {
+          createClient() {
+            const cachedUser = {
+              id: "cached-desktop-user",
+              email: "returning@example.com",
+              user_metadata: { account_name: "Returning Player" }
+            };
+            return {
+              auth: {
+                getSession: async () => ({ data: { session: null } }),
+                getUser: async () => ({ data: { user: null } }),
+                onAuthStateChange(callback) {
+                  setTimeout(() => callback("INITIAL_SESSION", { user: cachedUser }), 80);
+                  return { data: { subscription: { unsubscribe() {} } } };
+                },
+                mfa: {
+                  getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }),
+                  listFactors: async () => ({ data: { all: [] } })
+                }
+              },
+              from() {
+                return {
+                  select() { return this; },
+                  eq() { return this; },
+                  maybeSingle() { return new Promise(() => {}); }
+                };
+              }
+            };
+          }
+        };
+      `
+    }));
+    await returningAuthPage.addInitScript(() => localStorage.clear());
+    await returningAuthPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
+    await returningAuthPage.waitForTimeout(900);
+    await returningAuthPage.locator("#loginInitOverlay.active").waitFor({ state: "visible" });
+    assert.match(await returningAuthPage.locator("#loginInitCopy").innerText(), /saved profiles|security settings/i);
+    assert.equal(await returningAuthPage.locator("#loginInitOverlay").getAttribute("aria-hidden"), "false");
+    const returningCardPaintState = await returningAuthPage.locator("#loginInitOverlay .login-init-card").evaluate(card => {
+      const rect = card.getBoundingClientRect();
+      const topElement = document.elementFromPoint(rect.left + (rect.width / 2), rect.top + (rect.height / 2));
+      return {
+        opacity: getComputedStyle(card).opacity,
+        paintedOnTop: Boolean(topElement && (topElement === card || card.contains(topElement)))
+      };
+    });
+    assert.equal(returningCardPaintState.opacity, "1");
+    assert.equal(returningCardPaintState.paintedOnTop, true);
+    await returningAuthPage.screenshot({ path: path.join(__dirname, "tmp", "desktop-returning-session-loading.png"), fullPage: true });
+    await returningAuthPage.close();
 
     const authPage = await browser.newPage(mobile);
     await authPage.addInitScript(() => localStorage.clear());
@@ -187,7 +245,7 @@ async function run() {
       await page.close();
     }
 
-    console.log("Auth and avatar layout check passed: desktop login loading is visible, password reveal is stable, and mobile frames fully cover the avatar.");
+    console.log("Auth and avatar layout check passed: direct and cached desktop login loading are visible, password reveal is stable, and mobile frames fully cover the avatar.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
