@@ -55,6 +55,7 @@ async function run() {
 
   await page.addInitScript(() => {
     const profileId = "profile-log-test";
+    const playedAt = new Date().toISOString();
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     localStorage.setItem("valtracker_active_profile_id", profileId);
     localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
@@ -70,7 +71,7 @@ async function run() {
         matchId: "match-1",
         source: "henrik_sync",
         act: "Episode 11 Act 3",
-        createdAt: "2026-07-10T12:00:00Z",
+        createdAt: playedAt,
         rr: null,
         verifiedRrDelta: 18,
         rrTotal: 50,
@@ -89,7 +90,7 @@ async function run() {
       source: "henrik-match-placeholder",
       isMatchPlaceholder: true,
       isPlayerAuthored: false,
-      createdAt: "2026-07-10T12:00:00Z",
+      createdAt: playedAt,
       result: "win",
       rr: 18,
       agent: "Sova",
@@ -101,7 +102,10 @@ async function run() {
 
   try {
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(900);
+    await page.click("#dailyWarmupSkip").catch(() => {});
     await page.click('[data-mobile-page="logging"]');
+    await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
     const debriefMeta = await page.locator("#loggingLiveMeta").innerText();
     assert.equal(debriefMeta, "Add a rating, mood, or map to see it here.");
     assert.doesNotMatch(debriefMeta, /null|â|Ã/);

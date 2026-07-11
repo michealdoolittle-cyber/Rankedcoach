@@ -1,6 +1,6 @@
 # Daily Warm-Up Check — Research + Full Feature Directive
 
-**Status:** Spec'd 2026-07-11, not yet built. Michael wants a minor feature aimed at consistency: a pre-session prompt (before the first loadout of the day) that gets players to warm up with proven range techniques, then 2 matches of Deathmatch/TDM, with the option to skip. Goal is twofold — help players actually warm up using techniques with real track records instead of queuing cold, and generate a real data point (did they warm up today) that can eventually be correlated against that day's competitive performance.
+**Status:** Built and locally verified 2026-07-11. The once-daily Home/Logging prompt, seven-drill playlist, four-drill cap, skip path, per-profile warm-up log, isolated Henrik DM/TDM verification, and sample-gated ranked correlation insight are implemented. Production deployment is tracked by the shipping commit.
 
 ---
 

@@ -1,5 +1,6 @@
 const HENRIK_API_ORIGIN = "https://api.henrikdev.xyz";
 const VALID_REGIONS = new Set(["na", "latam", "br", "eu", "ap", "kr"]);
+const VALID_MATCH_MODES = new Set(["competitive", "deathmatch", "teamdeathmatch"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 class HenrikApiError extends Error {
@@ -25,6 +26,14 @@ function normalizeRegion(value = "na") {
     throw new HenrikApiError("Unsupported Valorant region.", 400, "invalid_region");
   }
   return region;
+}
+
+function normalizeMatchMode(value = "competitive") {
+  const mode = String(value || "competitive").trim().toLowerCase();
+  if (!VALID_MATCH_MODES.has(mode)) {
+    throw new HenrikApiError("Unsupported Valorant match mode.", 400, "invalid_match_mode");
+  }
+  return mode;
 }
 
 function parseRiotId(value = "") {
@@ -111,11 +120,12 @@ async function getHenrikMatches(env, options = {}) {
   const apiKey = requireApiKey(env);
   const puuid = requireUuid(options.puuid, "puuid");
   const region = normalizeRegion(options.region);
+  const mode = normalizeMatchMode(options.mode);
   const count = Math.min(10, Math.max(1, Number(options.count) || 5));
   const start = Math.min(1000, Math.max(0, Math.floor(Number(options.start) || 0)));
   return henrikFetch(
     apiKey,
-    `/valorant/v4/by-puuid/matches/${region}/pc/${encodeURIComponent(puuid)}?mode=competitive&size=${count}&start=${start}`
+    `/valorant/v4/by-puuid/matches/${region}/pc/${encodeURIComponent(puuid)}?mode=${encodeURIComponent(mode)}&size=${count}&start=${start}`
   );
 }
 
@@ -173,6 +183,7 @@ export {
   henrikErrorResponse,
   jsonResponse,
   optionsResponse,
+  normalizeMatchMode,
   parseRiotId,
   requireApiKey
 };

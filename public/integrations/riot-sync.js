@@ -79,6 +79,51 @@
     return String(match?.metadata?.match_id || match?.metadata?.matchid || match?.matchId || "").trim();
   }
 
+  function getParsedMatchStartedAt(match = {}) {
+    return String(
+      match?.metadata?.started_at
+      || match?.metadata?.game_start
+      || match?.metadata?.game_start_patched
+      || match?.started_at
+      || ""
+    ).trim();
+  }
+
+  async function checkWarmupMatches(options = {}) {
+    if (!isHenrikEnabled()) return { enabled: false, matches: [], failures: [] };
+    const puuid = String(options.puuid || "").trim();
+    const region = String(options.region || "na").trim().toLowerCase();
+    if (!puuid) return { enabled: true, matches: [], failures: [{ mode: "all", error: "No linked Henrik profile." }] };
+    const modes = Array.isArray(options.modes) && options.modes.length
+      ? options.modes
+      : ["deathmatch", "teamdeathmatch"];
+    const settled = await Promise.allSettled(modes.map(async mode => {
+      const payload = await requestJson("/api/henrik/matches", {
+        puuid,
+        region,
+        mode,
+        count: Math.min(10, Math.max(1, Number(options.count) || 10)),
+        start: 0
+      }, options);
+      return (Array.isArray(payload?.data) ? payload.data : []).map(match => ({
+        id: getParsedMatchId(match),
+        mode,
+        playedAt: getParsedMatchStartedAt(match)
+      }));
+    }));
+    const matches = [];
+    const failures = [];
+    settled.forEach((result, index) => {
+      if (result.status === "fulfilled") matches.push(...result.value);
+      else failures.push({ mode: modes[index], error: result.reason?.message || "Warm-up match check failed." });
+    });
+    return {
+      enabled: true,
+      matches: [...new Map(matches.filter(match => match.id || match.playedAt).map(match => [`${match.mode}:${match.id || match.playedAt}`, match])).values()],
+      failures
+    };
+  }
+
   function getMmrSnapshotMatchId(snapshot = {}) {
     return String(snapshot?.match_id || snapshot?.matchId || "").trim();
   }
@@ -248,6 +293,7 @@
     mapHenrikRawMatch,
     mapHenrikV4Match,
     enrichLegacyMatchesWithMmr,
+    checkWarmupMatches,
     pullMatches
   });
 })();

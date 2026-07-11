@@ -46,14 +46,18 @@ const STATE_SETUP = {
     await page.waitForSelector("#guestTutorialSkipBtn", { timeout: 5000 }).catch(() => {});
     const skip = await page.$("#guestTutorialSkipBtn");
     if (skip) await skip.click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(900);
+    await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.waitForTimeout(350);
   },
   demo: async (page, viewport) => {
     await page.click("#authGuestBtn");
     await page.waitForSelector("#guestTutorialSkipBtn", { timeout: 5000 }).catch(() => {});
     const skip = await page.$("#guestTutorialSkipBtn");
     if (skip) await skip.click();
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(900);
+    await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.waitForTimeout(350);
     // switch to the demo-import guest profile via the real profile switcher UI
     const avatarSelector = viewport === "mobile" ? "#mobileHeaderProfileBtn" : "#profileAvatarWrap";
     await page.click(avatarSelector).catch(() => {});

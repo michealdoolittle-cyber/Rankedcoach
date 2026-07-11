@@ -85,6 +85,7 @@ async function run() {
 
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1400);
+    await page.click("#dailyWarmupSkip").catch(() => {});
 
     assert.equal(await page.locator("#navGoalTargetIcon").getAttribute("alt"), "Diamond 3");
     const storedGoal = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.goalRank);

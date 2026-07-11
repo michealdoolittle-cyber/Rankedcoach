@@ -164,6 +164,344 @@ function scheduleWeeklyFocusRollover() {
   }, Math.max(1000, nextWeekStart.getTime() - now.getTime()));
 }
 
+const DAILY_WARMUP_DRILL_LIMIT = 4;
+const DAILY_WARMUP_PROMPT_STORAGE_PREFIX = "valtracker_daily_warmup_prompt_v1:";
+const DAILY_WARMUP_DRILLS = Object.freeze({
+  aimstars: "Aimstars",
+  miyagi: "Miyagi Method",
+  "range-accuracy": "Range Accuracy",
+  "range-tracking": "Range Tracking",
+  reaction: "Reaction Pass",
+  weapon: "Weapon Pass",
+  "gunfight-hygiene": "Gunfight Hygiene"
+});
+let dailyWarmupPromptTimer = 0;
+const warmupVerificationInFlight = new Set();
+
+function getDailyWarmupPromptDate(profile = getActiveProfile?.()) {
+  if (!profile?.id) return "";
+  let localDate = "";
+  try {
+    localDate = localStorage.getItem(`${DAILY_WARMUP_PROMPT_STORAGE_PREFIX}${profile.id}`) || "";
+  } catch (_error) {
+    // The synced profile field still enforces the guard if storage is unavailable.
+  }
+  return String(profile.lastWarmupPromptDate || localDate || "");
+}
+
+function markDailyWarmupPromptDate(profile, date) {
+  if (!profile?.id || !date) return;
+  try {
+    localStorage.setItem(`${DAILY_WARMUP_PROMPT_STORAGE_PREFIX}${profile.id}`, date);
+  } catch (_error) {
+    // Profile persistence below remains the source of truth across devices.
+  }
+}
+
+function normalizeWarmupLogEntry(entry = {}) {
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(entry?.date || "")) ? String(entry.date) : "";
+  if (!date) return null;
+  const drillsSelected = [...new Set((Array.isArray(entry?.drillsSelected) ? entry.drillsSelected : [])
+    .map(value => String(value || "").trim())
+    .filter(value => Object.prototype.hasOwnProperty.call(DAILY_WARMUP_DRILLS, value)))]
+    .slice(0, DAILY_WARMUP_DRILL_LIMIT);
+  return {
+    date,
+    drillsSelected,
+    weapon: String(entry?.weapon || "").trim().slice(0, 30),
+    rangeDrillsSelfReported: entry?.rangeDrillsSelfReported === true,
+    dmTdmSelfReported: entry?.dmTdmSelfReported === true,
+    dmTdmAutoVerified: entry?.dmTdmAutoVerified === true,
+    dmTdmVerifiedMatches: Math.max(0, safeNumber(entry?.dmTdmVerifiedMatches)),
+    skipped: entry?.skipped === true,
+    status: ["prompted", "completed", "skipped"].includes(entry?.status) ? entry.status : "prompted",
+    promptedAt: String(entry?.promptedAt || ""),
+    completedAt: String(entry?.completedAt || ""),
+    verifiedAt: String(entry?.verifiedAt || "")
+  };
+}
+
+function normalizeWarmupLog(entries = []) {
+  const byDate = new Map();
+  (Array.isArray(entries) ? entries : []).forEach(entry => {
+    const normalized = normalizeWarmupLogEntry(entry);
+    if (normalized) byDate.set(normalized.date, normalized);
+  });
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-180);
+}
+
+function getDailyWarmupRecord(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
+  return normalizeWarmupLog(profile?.warmupLog).find(entry => entry.date === date) || null;
+}
+
+function writeDailyWarmupRecord(profile, patch = {}) {
+  if (!profile?.id) return null;
+  const date = String(patch.date || formatLocalDateKey());
+  const current = getDailyWarmupRecord(profile, date) || { date, status: "prompted" };
+  const next = normalizeWarmupLogEntry({ ...current, ...patch, date });
+  const warmupLog = normalizeWarmupLog([
+    ...normalizeWarmupLog(profile.warmupLog).filter(entry => entry.date !== date),
+    next
+  ]);
+  updateProfile(profile.id, {
+    warmupLog,
+    lastWarmupPromptDate: patch.lastWarmupPromptDate ?? profile.lastWarmupPromptDate
+  });
+  return next;
+}
+
+function getWarmupCorrelation(profile = getActiveProfile?.()) {
+  return globalThis.RankedCoachWarmupCorrelation?.compute?.({
+    warmupLog: profile?.warmupLog || [],
+    matches: profile?.matches || []
+  }) || { ready: false, status: "unavailable" };
+}
+
+function renderDailyWarmupCorrelationStatus(profile = getActiveProfile?.()) {
+  const target = document.getElementById("dailyWarmupCorrelationStatus");
+  if (!target) return;
+  const correlation = getWarmupCorrelation(profile);
+  if (correlation.ready) {
+    target.textContent = `${correlation.confidence}: ${correlation.warm.days} warm-up days vs ${correlation.comparison.days} comparison days. Correlation is shown as context, not proof of cause.`;
+    return;
+  }
+  const required = correlation.requiredDaysPerGroup || 7;
+  target.textContent = correlation.status === "no-warmup-days"
+    ? `Correlation starts after ${required} warm-up days and ${required} comparison days with ranked matches.`
+    : `Building correlation sample: ${correlation.warm?.days || 0}/${required} warm-up days and ${correlation.comparison?.days || 0}/${required} comparison days.`;
+}
+
+function renderDailyWarmupVerification(profile = getActiveProfile?.()) {
+  const target = document.getElementById("dailyWarmupVerification");
+  if (!target) return;
+  const record = getDailyWarmupRecord(profile);
+  target.classList.toggle("is-verified", record?.dmTdmAutoVerified === true);
+  if (record?.dmTdmAutoVerified) {
+    target.textContent = `Henrik verified ${record.dmTdmVerifiedMatches || 1} DM/TDM warm-up match${record.dmTdmVerifiedMatches === 1 ? "" : "es"} today.`;
+  } else if (profile?.puuid) {
+    target.textContent = "Henrik verification will check today's retained DM/TDM history after sync.";
+  } else {
+    target.textContent = "Range drills and DM/TDM stay self-reported until a Henrik profile is linked.";
+  }
+}
+
+function resetDailyWarmupModal(profile = getActiveProfile?.()) {
+  const record = getDailyWarmupRecord(profile);
+  const selected = new Set(record?.drillsSelected || []);
+  document.querySelectorAll("[data-warmup-drill]").forEach(button => {
+    const isSelected = selected.has(button.dataset.warmupDrill);
+    button.classList.toggle("is-selected", isSelected);
+    button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+  });
+  const count = document.getElementById("dailyWarmupCount");
+  if (count) count.textContent = `${selected.size} / ${DAILY_WARMUP_DRILL_LIMIT}`;
+  const weaponField = document.getElementById("dailyWarmupWeaponField");
+  if (weaponField) weaponField.hidden = !selected.has("weapon");
+  const weapon = document.getElementById("dailyWarmupWeapon");
+  if (weapon) weapon.value = record?.weapon || "";
+  const dmTdm = document.getElementById("dailyWarmupDmTdm");
+  if (dmTdm) dmTdm.checked = record?.dmTdmSelfReported === true;
+  renderDailyWarmupVerification(profile);
+  renderDailyWarmupCorrelationStatus(profile);
+}
+
+function openDailyWarmupCheck() {
+  const profile = getActiveProfile?.();
+  if (!profile?.id) return false;
+  const today = formatLocalDateKey();
+  if (getDailyWarmupPromptDate(profile) === today) return false;
+  markDailyWarmupPromptDate(profile, today);
+  writeDailyWarmupRecord(profile, {
+    date: today,
+    status: "prompted",
+    skipped: false,
+    promptedAt: nowISO(),
+    lastWarmupPromptDate: today
+  });
+  resetDailyWarmupModal(getActiveProfile());
+  showModalById?.("dailyWarmupModal");
+  return true;
+}
+
+function canOpenDailyWarmupCheck() {
+  if (document.documentElement?.classList.contains("app-booting")) return false;
+  if (!hasCompletedAppEntryChoice?.()) return false;
+  const activePage = getActivePageElement?.()?.id || "";
+  if (!["page-home", "page-logging"].includes(activePage)) return false;
+  const blockingModal = [...document.querySelectorAll(".lens-modal-overlay.active, .lens-modal-overlay.is-opening")]
+    .some(modal => modal.id !== "dailyWarmupModal" && modal.getAttribute("aria-hidden") !== "true");
+  return !blockingModal;
+}
+
+function scheduleDailyWarmupCheck(delay = 700) {
+  if (dailyWarmupPromptTimer) window.clearTimeout(dailyWarmupPromptTimer);
+  const profile = getActiveProfile?.();
+  if (!profile || getDailyWarmupPromptDate(profile) === formatLocalDateKey()) return;
+  dailyWarmupPromptTimer = window.setTimeout(() => {
+    dailyWarmupPromptTimer = 0;
+    if (canOpenDailyWarmupCheck()) openDailyWarmupCheck();
+    else if (["page-home", "page-logging"].includes(getActivePageElement?.()?.id || "")) scheduleDailyWarmupCheck(700);
+  }, Math.max(100, delay));
+}
+
+function skipDailyWarmupCheck() {
+  const profile = getActiveProfile?.();
+  if (profile) {
+    writeDailyWarmupRecord(profile, {
+      date: formatLocalDateKey(),
+      status: "skipped",
+      skipped: true,
+      drillsSelected: [],
+      rangeDrillsSelfReported: false,
+      dmTdmSelfReported: false
+    });
+  }
+  hideModalById?.("dailyWarmupModal");
+  showToast?.("Warm-up skipped for today. Queue when you feel ready.", { tone: "neutral" });
+}
+
+async function refreshWarmupAutoVerification(profile = getActiveProfile?.(), options = {}) {
+  if (!profile?.id || !profile?.puuid || !globalThis.RankedCoachRiotSync?.checkWarmupMatches) return null;
+  if (warmupVerificationInFlight.has(profile.id)) return null;
+  warmupVerificationInFlight.add(profile.id);
+  const target = document.getElementById("dailyWarmupVerification");
+  if (target && getActiveProfile?.()?.id === profile.id) target.textContent = "Checking Henrik for today's DM/TDM matches...";
+  try {
+    const result = await globalThis.RankedCoachRiotSync.checkWarmupMatches({
+      puuid: profile.puuid,
+      region: profile.region,
+      count: 10
+    });
+    const countsByDate = new Map();
+    (result?.matches || []).forEach(match => {
+      const key = formatLocalDateKey(new Date(match.playedAt || 0));
+      if (!key) return;
+      countsByDate.set(key, (countsByDate.get(key) || 0) + 1);
+    });
+    const currentProfile = profiles.find(item => item.id === profile.id);
+    if (!currentProfile) return result;
+    let changed = false;
+    const warmupLog = normalizeWarmupLog(currentProfile.warmupLog).map(entry => {
+      const verifiedMatches = countsByDate.get(entry.date) || 0;
+      if (!verifiedMatches || (entry.dmTdmAutoVerified && entry.dmTdmVerifiedMatches === verifiedMatches)) return entry;
+      changed = true;
+      return {
+        ...entry,
+        dmTdmAutoVerified: true,
+        dmTdmVerifiedMatches: verifiedMatches,
+        verifiedAt: nowISO()
+      };
+    });
+    if (changed) {
+      updateProfile(currentProfile.id, { warmupLog });
+      renderInsights?.();
+      if (options.announce !== false) showToast?.("Henrik verified today's DM/TDM warm-up.", { tone: "success" });
+    }
+    if (getActiveProfile?.()?.id === profile.id) {
+      renderDailyWarmupVerification(getActiveProfile());
+      renderDailyWarmupCorrelationStatus(getActiveProfile());
+    }
+    return result;
+  } catch (error) {
+    if (target && getActiveProfile?.()?.id === profile.id) target.textContent = "Henrik DM/TDM verification is unavailable right now; your self-report is still saved.";
+    return { matches: [], failures: [{ error: error?.message || "Verification failed." }] };
+  } finally {
+    warmupVerificationInFlight.delete(profile.id);
+  }
+}
+
+function saveDailyWarmupCheck() {
+  const profile = getActiveProfile?.();
+  if (!profile) return;
+  const drillsSelected = [...document.querySelectorAll("[data-warmup-drill].is-selected")]
+    .map(button => button.dataset.warmupDrill)
+    .filter(Boolean)
+    .slice(0, DAILY_WARMUP_DRILL_LIMIT);
+  const dmTdmSelfReported = document.getElementById("dailyWarmupDmTdm")?.checked === true;
+  if (!drillsSelected.length && !dmTdmSelfReported) {
+    const target = document.getElementById("dailyWarmupVerification");
+    if (target) target.textContent = "Choose at least one drill, mark DM/TDM complete, or skip today.";
+    return;
+  }
+  const record = writeDailyWarmupRecord(profile, {
+    date: formatLocalDateKey(),
+    status: "completed",
+    skipped: false,
+    drillsSelected,
+    weapon: drillsSelected.includes("weapon") ? document.getElementById("dailyWarmupWeapon")?.value || "" : "",
+    rangeDrillsSelfReported: drillsSelected.length > 0,
+    dmTdmSelfReported,
+    completedAt: nowISO()
+  });
+  hideModalById?.("dailyWarmupModal");
+  showToast?.(`Warm-up saved: ${record?.drillsSelected?.length || 0} drill${record?.drillsSelected?.length === 1 ? "" : "s"}${dmTdmSelfReported ? " plus DM/TDM" : ""}.`, { tone: "success" });
+  void refreshWarmupAutoVerification(getActiveProfile(), { announce: true });
+}
+
+function bindDailyWarmupEvents() {
+  if (window.__rankedCoachDailyWarmupBound) return;
+  window.__rankedCoachDailyWarmupBound = true;
+  document.addEventListener("click", event => {
+    const drill = event.target?.closest?.("[data-warmup-drill]");
+    if (drill) {
+      const selected = [...document.querySelectorAll("[data-warmup-drill].is-selected")];
+      const shouldSelect = !drill.classList.contains("is-selected");
+      if (shouldSelect && selected.length >= DAILY_WARMUP_DRILL_LIMIT) {
+        const target = document.getElementById("dailyWarmupVerification");
+        if (target) target.textContent = "Choose up to four drills so the warm-up stays focused.";
+        return;
+      }
+      drill.classList.toggle("is-selected", shouldSelect);
+      drill.setAttribute("aria-pressed", shouldSelect ? "true" : "false");
+      const count = document.getElementById("dailyWarmupCount");
+      const nextCount = document.querySelectorAll("[data-warmup-drill].is-selected").length;
+      if (count) count.textContent = `${nextCount} / ${DAILY_WARMUP_DRILL_LIMIT}`;
+      const weaponField = document.getElementById("dailyWarmupWeaponField");
+      if (weaponField) weaponField.hidden = !document.querySelector('[data-warmup-drill="weapon"].is-selected');
+      renderDailyWarmupVerification(getActiveProfile?.());
+      return;
+    }
+    if (event.target?.id === "dailyWarmupSave") saveDailyWarmupCheck();
+    if (["dailyWarmupSkip", "dailyWarmupClose"].includes(event.target?.id)) skipDailyWarmupCheck();
+    if (event.target?.id === "dailyWarmupModal") skipDailyWarmupCheck();
+  });
+}
+
+function buildWarmupCorrelationInsight(profile = getActiveProfile?.()) {
+  const correlation = getWarmupCorrelation(profile);
+  if (!correlation.ready) return null;
+  const winDelta = Math.round(correlation.delta.winRate);
+  const kastDelta = Number.isFinite(correlation.delta.kast) ? Math.round(correlation.delta.kast) : null;
+  const acsDelta = Number.isFinite(correlation.delta.acs) ? Math.round(correlation.delta.acs) : null;
+  const sampleCopy = `${correlation.warm.days} warm-up days and ${correlation.comparison.days} comparison days`;
+  if (correlation.direction === "positive") {
+    return {
+      type: "good",
+      title: "Warm-Up Days Are Holding Up Better",
+      preview: `Ranked win rate is ${Math.abs(winDelta)} points higher on logged warm-up days in this sample.`,
+      what: `The coach sees better ranked results on warm-up days across ${sampleCopy}.`,
+      why: `This is correlation, not proof that warm-up caused the change${kastDelta !== null ? `; KAST is ${kastDelta >= 0 ? "+" : ""}${kastDelta} points different` : ""}${acsDelta !== null ? ` and ACS is ${acsDelta >= 0 ? "+" : ""}${acsDelta}` : ""}.`,
+      action: "Keep the routine short and repeatable, then carry the same crosshair and fight discipline into the first ranked rounds.",
+      sources: ["Daily Warm-Up Check", "Henrik Match History"],
+      focus: "Session Preparation",
+      category: "discipline",
+      priority: 72
+    };
+  }
+  return {
+    type: correlation.direction === "negative" ? "warn" : "good",
+    title: correlation.direction === "negative" ? "Warm-Up Has Not Transferred Yet" : "Warm-Up Results Are Still Even",
+    preview: `The current warm-up and comparison samples are within ${Math.abs(winDelta)} win-rate points.`,
+    what: `The coach sees no reliable ranked lift from warm-up yet across ${sampleCopy}.`,
+    why: "Range and DM mechanics do not automatically transfer into live-round decisions, utility timing, or trade spacing.",
+    action: "Keep one drill, then name the exact match habit it should change before queueing.",
+    sources: ["Daily Warm-Up Check", "Henrik Match History"],
+    focus: "Practice Transfer",
+    category: "discipline",
+    priority: 64
+  };
+}
+
 function getWeekEnd(date = new Date()) {
   const d = getWeekStart(date);
   d.setDate(d.getDate() + 6);
@@ -1261,6 +1599,9 @@ function ensureMobileLoggingTabs() {
       event.preventDefault();
       page.dataset.mobileLoggingView = button.dataset.mobileLoggingView || "form";
       ensureMobileLoggingTabs();
+      if (page.dataset.mobileLoggingView === "feed") {
+        scheduleLoggingFeedRender({ force: true });
+      }
     });
   }
 
@@ -5685,9 +6026,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     insights.push({
       type: "warn",
       title: "No Match History Yet",
-      preview: "Import recent competitive matches to unlock Riot-based coaching.",
+      preview: "Import recent competitive matches to unlock Henrik-backed coaching.",
       what: "The app needs match history before it can give useful coaching advice.",
-      why: "All primary insight systems are derived from Riot-safe match data and your reflection logs.",
+      why: "All primary insight systems are derived from retained Henrik match data and your reflection logs.",
       action: "Import matches, then add 2-3 reflection logs so your first coaching read has more to work with.",
       sources: ["System"],
       focus: "Match Import",
@@ -5732,7 +6073,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: `${bestAgent.agent} is currently your most reliable pick based on match history from ${importedAnalytics?.currentAct || "Current Window"}.`,
       why: "This usually means your decisions, utility, and comfort are more consistent on that agent.",
       action: `Use ${bestAgent.agent} as your main ranked pick for now, and only swap when the map or team comp clearly needs it.`,
-      sources: ["Riot Match History"],
+      sources: ["Henrik Match History"],
       focus: "Agent Mastery",
       category: "role",
       priority: 82
@@ -5747,7 +6088,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: `${weakestMap.map} is currently your weakest map in this season's match history.`,
       why: "This usually means your setup, timings, or mid-round decisions are less stable on this map.",
       action: `Review ${weakestMap.map} map preparation next. Build one simple attack plan and one simple defense fallback plan.`,
-      sources: ["Riot Match History"],
+      sources: ["Henrik Match History"],
       focus: "Map Awareness",
       category: "performance",
       priority: 94
@@ -5762,7 +6103,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "The map pool is losing more than it wins in this selected window.",
       why: "When the best repeated map is still below 50%, the answer is not to praise that map. The profile needs cleaner round plans, side discipline, and role fit across the pool.",
       action: "Pick one repeated map first. Build one attack plan, one defense default, and one fallback call before queueing it again.",
-      sources: ["Riot Match History", "Map Context"],
+      sources: ["Henrik Match History", "Map Context"],
       focus: "Map Awareness",
       category: "performance",
       priority: 99
@@ -5777,7 +6118,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "Your multi-kill rounds are showing up often enough to affect round conversion.",
       why: "Multi-kills usually mean your spacing, timing, or follow-up fights are creating real round impact.",
       action: "When you get the first advantage, look for safe ways to turn it into a round snowball while maintaining discipline.",
-      sources: ["Riot Import", "Performance"],
+      sources: ["Henrik Match History", "Performance"],
       focus: "Snowball Potential",
       category: "performance",
       priority: 86
@@ -5866,7 +6207,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: `Your results on ${mapBias.map} are much stronger on one side than the other.`,
       why: "Some maps are easier on attack or defense, so the app compares your results by side instead of treating the map as even.",
       action: `When reviewing ${mapBias.map}, spend more time on the side that is costing you rounds.`,
-      sources: ["Riot Import", "Map Context"],
+      sources: ["Henrik Match History", "Map Context"],
       focus: "Side Context",
       category: "performance",
       priority: 82
@@ -5884,7 +6225,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       action: expectationMet
         ? "Use your damaging abilities more effectively to gain an advantageous fight."
         : "Review rounds where your ability damage landed, but did not lead to an easier fight or round advantage.",
-      sources: ["Riot Import", "Agent Context"],
+      sources: ["Henrik Match History", "Agent Context"],
       focus: "Damage Output",
       category: "performance",
       priority: expectationMet ? 74 : 84
@@ -5899,7 +6240,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "RankedCoach is changing how it reads your mechanics because your weapon mix affects the value of raw headshot percentage.",
       why: evidenceLayer.metricWeights.headshot.presumption,
       action: "Review fight conversion, damage timing, positioning, and round impact before blaming aim alone.",
-      sources: ["Riot Match History", "Weapon Context"],
+      sources: ["Henrik Match History", "Weapon Context"],
       focus: "Fight Conversion",
       category: "performance",
       priority: 83
@@ -5914,7 +6255,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "You are losing too many direct fights in the current match sample.",
       why: "This can come from crosshair placement, overpeeking, poor spacing, or taking low-percentage fights too early.",
       action: "Pick one duel focus category for the week: cleaner crosshair placement, better trade positioning, or fewer ego peeks.",
-      sources: ["Riot Match History"],
+      sources: ["Henrik Match History"],
       focus: "Fight Selection",
       category: "performance",
       priority: 98
@@ -5927,7 +6268,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "Winning direct duels is currently one of your biggest strengths.",
       why: "You are consistently finding more value in your fights than you are giving away.",
       action: "Take initiative on your strongest agents and maps, but maintain awareness and general discipline.",
-      sources: ["Riot Match History"],
+      sources: ["Henrik Match History"],
       focus: "Aim",
       category: "performance",
       priority: 70
@@ -5942,7 +6283,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "Your recent matches are underperforming compared to your usual match sample.",
       why: "This can happen when confidence drops, decisions get rushed, or the match quality gets more competitive.",
       action: "RankedCoach will use your recent losses to find the pattern most likely causing the dip, such as aim issues, repeated focus category tags, teammate issues, or map-specific problems.",
-      sources: ["Riot Match History", "Recent Trend"],
+      sources: ["Henrik Match History", "Recent Trend"],
       focus: "Consistency",
       category: "consistency",
       priority: 96
@@ -5955,7 +6296,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: "Your recent matches are performing better than your usual match sample.",
       why: "Your current playstyle is leading to more consistent rounds with cleaner results and match wins.",
       action: "Keep the same agent pool, ranked discipline, and focus category for the next set of matches.",
-      sources: ["Riot Match History", "Recent Trend"],
+      sources: ["Henrik Match History", "Recent Trend"],
       focus: "Consistency",
       category: "consistency",
       priority: 72
@@ -6000,12 +6341,15 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       what: `${bestRole.role} is currently working better for you than ${weakestRole.role}.`,
       why: `Your current playstyle is showing better results on ${bestRole.role} than ${weakestRole.role}.`,
       action: `To retain more competitive queue consistency, play more ${bestRole.role} for now while RankedCoach builds a clearer plan for ${weakestRole.role}.`,
-      sources: ["Riot Match History"],
+      sources: ["Henrik Match History"],
       focus: "Role Discipline",
       category: "role",
       priority: 79
     });
   }
+
+  const warmupCorrelationInsight = buildWarmupCorrelationInsight(getActiveProfile());
+  if (warmupCorrelationInsight) insights.push(warmupCorrelationInsight);
 
   const uniqueInsights = [];
   const seenInsightTitles = new Set();
@@ -6069,19 +6413,19 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       primary: {
         label: weeklyTopFocusEntry ? (weeklyTopFocusEntry[1] >= 4 ? "High" : weeklyTopFocusEntry[1] >= 2 ? "Medium" : "Low") : "Low",
         detail: weeklyTopFocusEntry
-          ? `${weeklyTopFocusEntry[1]} reflection logs repeated this focus category this week. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Riot API trend support" : ""}, and coaching-model pattern matching.`
+          ? `${weeklyTopFocusEntry[1]} reflection logs repeated this focus category this week. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Henrik match trends" : ""}, and coaching-model pattern matching.`
           : "Low confidence — not enough repeated reflection logs yet."
       },
       secondary: {
         label: weeklyLowRatedLogs.length >= 3 ? "High" : weeklyLowRatedLogs.length >= 2 ? "Medium" : "Low",
         detail: weeklyLowRatedLogs.length
-          ? `${weeklyLowRatedLogs.length} low-rated reflection logs support this weekly weakness. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Riot API match outcomes" : ""}, and coaching-model weakness grouping.`
+          ? `${weeklyLowRatedLogs.length} low-rated reflection logs support this weekly weakness. Confidence driven by Logging${weeklyOrderedMatches.length ? ", Henrik match outcomes" : ""}, and coaching-model weakness grouping.`
           : "Low confidence — weak-rating data is still sparse."
       },
       tertiary: {
         label: weeklyTopMoodEntry && weeklyTopMoodEntry[1] >= 4 ? "High" : weeklyTopMoodEntry && weeklyTopMoodEntry[1] >= 2 ? "Medium" : "Low",
         detail: weeklyTopMoodEntry
-          ? `${weeklyTopMoodEntry[1]} mood mentions point to this weekly pattern. Confidence driven by Logging, behavioral inference from the coaching model${weeklyOrderedMatches.length ? ", and Riot API recency context" : ""}.`
+          ? `${weeklyTopMoodEntry[1]} mood mentions point to this weekly pattern. Confidence driven by Logging, behavioral inference from the coaching model${weeklyOrderedMatches.length ? ", and Henrik recency context" : ""}.`
           : "Low confidence — mood and tilt mentions are still limited."
       }
     }
@@ -6890,7 +7234,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       teamplay: {
         title: "Teamwork",
         weighting: [
-          statItem("Assists / Match", assistsPerMatch ? assistsPerMatch.toFixed(1) : "--", "Assist output is the cleanest Riot-safe teamwork proxy."),
+          statItem("Assists / Match", assistsPerMatch ? assistsPerMatch.toFixed(1) : "--", "Assist output is the cleanest retained-match teamwork proxy."),
           statItem("Avg. KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average of attack and defense KAST from the current imported sample."),
           statItem("Win Rate", `${Math.round(safeNumber(overview.winrate))}%`, "Team-based conversion helps validate cooperative value.")
         ],
@@ -10465,10 +10809,10 @@ function renderInsights() {
     insights.push({
       type: "warn",
       title: "No Data Yet",
-      preview: "Play matches or log sessions to generate insights",
-      what: "No matches available for analysis",
-      why: "Insights require match or logging data",
-      action: "Play 3â€“5 matches or add logs to unlock insights",
+      preview: "No retained ranked matches or reflection logs are available yet.",
+      what: "The coach cannot see a real match pattern for this profile yet.",
+      why: "Map, agent, duel, and round reads need Henrik match history or player-authored reflections.",
+      action: "Sync your ranked history, then save a reflection after the next match so the first read has context.",
       sources: ["System"]
     });
   }
@@ -10480,10 +10824,10 @@ function renderInsights() {
     insights.push({
       type: "good",
       title: "Logging Active",
-      preview: "Insights improving as you log sessions",
-      what: "You are actively tracking performance",
-      why: "Logging builds awareness of habits",
-      action: "Continue logging to unlock deeper insights",
+      preview: "Your saved reflections are building a read while ranked history is unavailable.",
+      what: "The coach can see which focus categories and session habits you keep calling out.",
+      why: "Those notes can expose repeated confidence, comms, or decision patterns even before match stats arrive.",
+      action: "Keep each reflection specific to one round habit, then sync Henrik history when it is available.",
       sources: ["Logging"]
     });
   }
@@ -10508,10 +10852,10 @@ function renderInsights() {
         insights.push({
           type: "bad",
           title: "Tilt Detected",
-          preview: `Average tilt level ${tiltAvg.toFixed(1)} in recent sessions`,
-          what: "Tilt levels are consistently elevated",
-          why: "Emotional play is affecting decision making",
-          action: "Take breaks after losses and reset mental before next match",
+          preview: `Recent reflections average ${tiltAvg.toFixed(1)} for tilt, enough to change how the next queue should be handled.`,
+          what: "The same match block is repeatedly being logged with elevated tilt.",
+          why: "Tilt often shows up as revenge peeks, rushed utility, or another queue before focus has reset.",
+          action: "Step away after the current block, then return with one agent and one fight rule instead of trying to win RR back immediately.",
           sources: ["Logging", "Behavior"]
         });
       }
@@ -10532,10 +10876,10 @@ function renderInsights() {
           insights.push({
             type: "good",
             title: "Consistent Focus Area",
-            preview: `${topFocus} focus category is reported in ${count} recent sessions`,
-            what: `You are repeatedly logging the ${topFocus} focus category`,
-            why: "Deliberate practice is being applied",
-            action: "Continue this focus category and measure improvement in stats",
+            preview: `${topFocus} appears in ${count} recent reflections, making it the clearest repeated practice target.`,
+            what: `The coach keeps seeing ${topFocus} after your matches rather than a different issue every session.`,
+            why: "A repeated focus is useful when it points to the same live-round habit instead of a broad stat.",
+            action: `Keep ${topFocus} for the next match block and name the exact peek, utility timing, or positioning choice you are testing.`,
             sources: ["Logging"]
           });
         }
@@ -10551,10 +10895,10 @@ function renderInsights() {
         insights.push({
           type: "warn",
           title: "Low Performance Confidence",
-          preview: `Average self-rating ${ratingAvg.toFixed(1)}`,
-          what: "You rate your performance below average",
-          why: "Possible inconsistency or frustration",
-          action: "Review strong games to reinforce confidence",
+          preview: `Recent self-ratings average ${ratingAvg.toFixed(1)} out of 5.`,
+          what: "Your own match reads show confidence staying below the middle of the scale.",
+          why: "Low confidence can turn clean holds into hesitation or make the next duel feel like it has to fix the last one.",
+          action: "Review one round where your setup worked, then carry that same decision into the next queue instead of chasing a highlight play.",
           sources: ["Logging", "Behavior"]
         });
       }
@@ -10579,11 +10923,11 @@ function renderInsights() {
         insights.push({
           type: "bad",
           title: "Loss + Tilt Pattern",
-          preview: "Loss streak aligns with high tilt levels",
-          what: `${recentLosses} losses in last 5 matches`,
-          why: "Tilt is likely impacting performance",
-          action: "Stop queueing after 2 consecutive losses",
-          sources: ["Riot API", "Logging", "Behavior"]
+          preview: `${recentLosses} losses in the last 5 matches line up with elevated tilt logs.`,
+          what: "The same rough match block is showing up in both the results and your own session read.",
+          why: "Tilt often turns into revenge peeks, rushed utility, or spacing that leaves the next fight untradeable.",
+          action: "End the block after two straight losses, reset, and return with one simple fight rule.",
+          sources: ["Henrik Match History", "Logging", "Behavior"]
         });
       }
     }
@@ -10609,26 +10953,22 @@ function renderInsights() {
 
     if (streak >= 3) {
       if (lastResult === "win") {
+        const streakCopy = globalThis.RankedCoachValorantVocabulary?.selectCardVariant?.("winStreak", streak, { streak }) || {};
         insights.push({
           type: "good",
           title: "Win Streak Active",
-          preview: `${streak} consecutive wins`,
-          what: `You are on a ${streak} game win streak`,
-          why: "Current playstyle is effective",
-          action: "Continue same approach and avoid over-aggression",
-          sources: ["Riot API", "Trend"]
+          ...streakCopy,
+          sources: ["Henrik Match History", "Recent Match Window"]
         });
       }
 
       if (lastResult === "loss") {
+        const streakCopy = globalThis.RankedCoachValorantVocabulary?.selectCardVariant?.("lossStreak", streak, { streak }) || {};
         insights.push({
           type: "bad",
           title: "Loss Streak",
-          preview: `${streak} consecutive losses`,
-          what: `You are on a ${streak} game loss streak`,
-          why: "Performance or decisions are trending negatively",
-          action: "Take a break or reset approach",
-          sources: ["Riot API", "Trend"]
+          ...streakCopy,
+          sources: ["Henrik Match History", "Recent Match Window"]
         });
       }
     }
@@ -10676,7 +11016,7 @@ function renderInsights() {
           what: `Highest win rate agent is ${best.agent}`,
           why: "Strong familiarity or role fit",
           action: "Prioritize this agent in ranked",
-          sources: ["Riot API"]
+          sources: ["Henrik Match History"]
         });
       }
 
@@ -10688,7 +11028,7 @@ function renderInsights() {
           what: `Low success rate on ${worst.agent}`,
           why: "Possible discomfort or role mismatch",
           action: "Review gameplay or avoid this agent",
-          sources: ["Riot API"]
+          sources: ["Henrik Match History"]
         });
       }
     }
@@ -10736,7 +11076,7 @@ function renderInsights() {
           what: "Different success rates across roles",
           why: "Role playstyle mismatch",
           action: "Queue into your strongest role more consistently",
-          sources: ["Riot API", "Trend"]
+          sources: ["Henrik Match History", "Recent Match Window"]
         });
       }
     }
@@ -10774,7 +11114,7 @@ function renderInsights() {
           what: "Recent matches show improvement",
           why: "Better consistency or decision making",
           action: "Continue current playstyle",
-          sources: ["Riot API", "Trend"]
+          sources: ["Henrik Match History", "Recent Match Window"]
         });
       }
 
@@ -10786,7 +11126,7 @@ function renderInsights() {
           what: "Recent performance is declining",
           why: "Possible fatigue or inconsistency",
           action: "Review recent matches or take break",
-          sources: ["Riot API", "Trend"]
+          sources: ["Henrik Match History", "Recent Match Window"]
         });
       }
     }
@@ -10810,7 +11150,7 @@ function renderInsights() {
         what: `Loss rate is ${Math.round(lossRate)}%`,
         why: "Recent performance trend is negative",
         action: "Review last 3 losses and identify repeated mistakes",
-        sources: ["Riot API", "Trend"]
+        sources: ["Henrik Match History", "Recent Match Window"]
       });
     }
 
@@ -10838,7 +11178,7 @@ function renderInsights() {
         what: `KD is ${kd.toFixed(2)}`,
         why: "You are winning more fights than losing",
         action: "Take more opening engagements",
-        sources: ["Riot API"]
+        sources: ["Henrik Match History"]
       });
     }
 
@@ -10850,7 +11190,7 @@ function renderInsights() {
         what: "KD is below 1.0",
         why: "Losing more fights than winning",
         action: "Focus on crosshair placement and positioning",
-        sources: ["Riot API"]
+        sources: ["Henrik Match History"]
       });
     }
 
@@ -10892,7 +11232,7 @@ function renderInsights() {
           what: "Large performance difference across maps",
           why: "Inconsistent map understanding or strategy",
           action: "Review gameplay on weakest map",
-          sources: ["Riot API", "Trend"]
+          sources: ["Henrik Match History", "Recent Match Window"]
         });
       }
     }
@@ -32328,6 +32668,7 @@ function initApp(){
   cacheDOM();
   scaleImpactCard();
   bindEvents();
+  bindDailyWarmupEvents();
 
   loadProfiles();
   updateProfileHeaderUI();
@@ -42391,6 +42732,8 @@ function normalizeProfileRecord(profile = {}) {
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
     peakRR: safeNumber(profile.peakRR),
     matches: Array.isArray(profile.matches) ? profile.matches : [],
+    lastWarmupPromptDate: String(profile.lastWarmupPromptDate || ""),
+    warmupLog: normalizeWarmupLog(profile.warmupLog),
     themeKey: profile.themeKey || "default",
     frameTheme: profile.frameTheme || profile.themeKey || "default",
     customAccent: normalizeThemeAccentColor(profile.customAccent || ""),
@@ -42454,6 +42797,8 @@ function loadProfiles(){
       goalRank: null,
       goalRR: null,
       peakRR: 0,
+      lastWarmupPromptDate: "",
+      warmupLog: [],
       accessibility: {
         contrastMode: "standard",
         motionMode: "standard",
@@ -42674,6 +43019,12 @@ function updateProfile(id, data){
   if (data.peakRR != null) {
     profile.peakRR = nextPeakRR;
   }
+  if (data.lastWarmupPromptDate != null) {
+    profile.lastWarmupPromptDate = String(data.lastWarmupPromptDate || "");
+  }
+  if (data.warmupLog != null) {
+    profile.warmupLog = normalizeWarmupLog(data.warmupLog);
+  }
 
   if (nextRiotId !== previousRiotId || nextRegion !== previousRegion) {
     profile.startingRRDate = "";
@@ -42780,6 +43131,7 @@ function setActiveProfile(id){
   renderInsights?.();
   renderLogFeed?.({ force: true });
   scheduleRiotAutoSync();
+  scheduleDailyWarmupCheck(450);
 
 }
 
@@ -44921,6 +45273,9 @@ function activatePage(pageId, options = {}){
     if (mobileFastHandoff) {
       const activePageId = getActivePageElement()?.id?.replace("page-", "") || "";
       if (activePageId !== pageId) return;
+      if (pageId === "logging") {
+        scheduleLoggingFeedRender({ force: true });
+      }
       if (pageId === "home" && pendingAgentFromLog) {
         const queuedAgent = pendingAgentFromLog;
         const queuedFocus = pendingFocusFromLog;
@@ -44974,6 +45329,7 @@ function activatePage(pageId, options = {}){
   };
 
   runPageActivationWork();
+  if (["home", "logging"].includes(pageId)) scheduleDailyWarmupCheck(700);
 }
 
 
@@ -48599,6 +48955,7 @@ async function performRiotSync(options = {}) {
     if (syncedProfile) {
       syncedProfile.lastSyncAt = result?.syncedAt || nowISO();
       saveProfiles();
+      void refreshWarmupAutoVerification(syncedProfile, { announce: true });
     }
 
     if (!silent) {

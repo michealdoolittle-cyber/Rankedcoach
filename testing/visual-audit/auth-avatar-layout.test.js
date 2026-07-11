@@ -209,7 +209,9 @@ async function run() {
       const page = await browser.newPage(mobile);
       await seedAvatarProfile(page, profile.profileBorder, profile.profileBorderRotate);
       await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(650);
+      await page.waitForTimeout(900);
+      await page.click("#dailyWarmupSkip").catch(() => {});
+      await page.waitForTimeout(350);
 
       const button = await getRect(page, "#mobileHeaderProfileBtn");
       const frame = await getRect(page, "#mobileHeaderProfileBtn .rc-mobile-avatar-frame");

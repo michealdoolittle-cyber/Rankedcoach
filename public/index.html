@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260711-returning-session-loading-01">
+<link rel="stylesheet" href="app.css?v=20260711-daily-warmup-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -261,6 +261,63 @@ AUTH MODAL
 
 <div id="premiumMomentOverlay" class="premium-moment-overlay" aria-hidden="true"></div>
 <div id="appToastStack" class="app-toast-stack" aria-live="polite" aria-atomic="true"></div>
+
+<div id="dailyWarmupModal" class="lens-modal-overlay daily-warmup-overlay" aria-hidden="true" style="display:none;">
+  <div class="lens-modal daily-warmup-card" role="dialog" aria-modal="true" aria-labelledby="dailyWarmupTitle">
+    <div class="lens-modal-header daily-warmup-header">
+      <div>
+        <div class="daily-warmup-kicker">Daily Warm-Up Check</div>
+        <div class="lens-modal-title" id="dailyWarmupTitle">Get your first fights ready</div>
+      </div>
+      <button id="dailyWarmupClose" class="lens-modal-close" type="button" aria-label="Skip today's warm-up check">X</button>
+    </div>
+    <div class="daily-warmup-body">
+      <div class="daily-warmup-intro">
+        Pick up to four drills before ranked. Range work is self-reported; DM and TDM can be checked against Henrik after your next sync.
+        Warm-up helps your mechanics, but the real test is carrying the same discipline into live rounds.
+      </div>
+      <div class="daily-warmup-count"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
+      <div class="daily-warmup-grid" id="dailyWarmupGrid">
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="aimstars" aria-pressed="false">
+          <strong>Aimstars</strong><span>Flicking, tracking, and target switching in Aim Lab.</span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="miyagi" aria-pressed="false">
+          <strong>Miyagi Method</strong><span>Track the head first, then fire only when the shot is clean.</span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="range-accuracy" aria-pressed="false">
+          <strong>Range Accuracy</strong><span>Headshot-only bots with controlled strafing.</span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="range-tracking" aria-pressed="false">
+          <strong>Range Tracking</strong><span>Follow a moving bot's head without losing placement.</span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="reaction" aria-pressed="false">
+          <strong>Reaction Pass</strong><span>Training mode from easy to hard, accuracy before speed.</span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="weapon" aria-pressed="false">
+          <strong>Weapon Pass</strong><span>Practice the gun you expect to lean on this session.</span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="gunfight-hygiene" aria-pressed="false">
+          <strong>Gunfight Hygiene</strong><span>Burst-tap, spray, and strafe based on weapon and range.</span>
+        </button>
+      </div>
+      <a class="daily-warmup-external" href="https://aimlabs.com/" target="_blank" rel="noopener noreferrer">Open Aim Lab for the Aimstars routine</a>
+      <label id="dailyWarmupWeaponField" class="daily-warmup-weapon" hidden>
+        <span>Weapon for today's pass</span>
+        <input id="dailyWarmupWeapon" type="text" maxlength="30" placeholder="Vandal, Phantom, Operator...">
+      </label>
+      <label class="daily-warmup-livefire">
+        <input id="dailyWarmupDmTdm" type="checkbox">
+        <span><strong>I finished 1-2 DM/TDM matches</strong><small>Self-reported now; Henrik can auto-verify this after sync.</small></span>
+      </label>
+      <div id="dailyWarmupVerification" class="daily-warmup-verification" aria-live="polite"></div>
+      <div id="dailyWarmupCorrelationStatus" class="daily-warmup-correlation" aria-live="polite"></div>
+      <div class="daily-warmup-actions">
+        <button id="dailyWarmupSkip" type="button" class="daily-warmup-skip">Skip today</button>
+        <button id="dailyWarmupSave" type="button" class="daily-warmup-save">Save warm-up</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="securitySettingsModal" class="lens-modal-overlay">
   <div class="lens-modal security-settings-modal">
@@ -2161,12 +2218,13 @@ stroke-linejoin="round"/>
   <script src="sandbox-fx.engine.js"></script>
   <script src="schema/match-record.js?v=20260711-season-scope-01"></script>
   <script src="analytics/round-metrics.js?v=20260710-henrik-surfaces-01"></script>
+  <script src="analytics/warmup-correlation.js?v=20260711-daily-warmup-01"></script>
   <script src="analytics/coaching-rules.js?v=20260711-coaching-rules-01"></script>
-  <script src="language/valorant-vocabulary.js?v=20260711-valorant-voice-01"></script>
+  <script src="language/valorant-vocabulary.js?v=20260711-daily-warmup-01"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="integrations/riot-sync.js?v=20260710-henrik-full-history-01"></script>
-  <script type="module" src="app.js?v=20260711-returning-session-loading-01"></script>
+  <script src="integrations/riot-sync.js?v=20260711-daily-warmup-01"></script>
+  <script type="module" src="app.js?v=20260711-daily-warmup-01"></script>
 </body>
 </html>

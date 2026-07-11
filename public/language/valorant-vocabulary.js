@@ -85,6 +85,46 @@
         action: "Keep the agent and focus fixed, then note what happens immediately after your team gets first contact."
       }
     ],
+    winStreak: [
+      {
+        preview: "{{streak}} wins in a row with the current round plan holding up.",
+        what: "This match block is converting advantages instead of giving rounds back.",
+        why: "Your agent plan, trade spacing, or late-round decisions are repeating well enough to trust for another game.",
+        action: "Keep the setup stable and do not turn the first pick into an unnecessary second peek."
+      },
+      {
+        preview: "The current queue block has reached {{streak}} straight wins.",
+        what: "Your recent rounds are staying playable from first contact through the close.",
+        why: "The same defaults and fight choices are producing enough space, trades, and round conversions to repeat.",
+        action: "Queue the same agent plan, but reset after each match so momentum does not become autopilot."
+      },
+      {
+        preview: "{{streak}} consecutive wins are giving this profile real momentum.",
+        what: "The current approach is winning without needing a new fix every round.",
+        why: "Stable utility timing and fewer forced peeks are helping advantages survive the mid-round.",
+        action: "Keep one clear attack default and defense setup, then stop if focus starts slipping."
+      }
+    ],
+    lossStreak: [
+      {
+        preview: "{{streak}} losses in a row call for a queue reset before another match.",
+        what: "This block is repeating enough lost rounds to review the pattern, not just the final score.",
+        why: "A rushed opening fight, weak trade spacing, or the same failed retake can drag several games in the same direction.",
+        action: "Review the first lost gun round, then take one fight rule into the next queue."
+      },
+      {
+        preview: "The current match block has reached {{streak}} straight losses.",
+        what: "Recent rounds are breaking before the team can settle into a reliable default.",
+        why: "Changing agents, plans, and mechanics together makes it harder to find the one read that keeps failing.",
+        action: "Take a real break, then return with one agent, one focus, and no solo opening death."
+      },
+      {
+        preview: "{{streak}} consecutive losses mean the next queue needs a smaller plan.",
+        what: "The same block is giving away too many playable rounds.",
+        why: "Fatigue or tilt can show up as extra peeks, late utility, and spacing that leaves trades unavailable.",
+        action: "Reset first, then judge the next game by clean first contact and tradeable positioning instead of the scoreboard alone."
+      }
+    ],
     weeklyFocus: [
       {
         what: "{{focus}} keeps showing up in your saved reflections this week.",
