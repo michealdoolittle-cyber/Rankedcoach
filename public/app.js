@@ -227,6 +227,7 @@ function normalizeWarmupLogEntry(entry = {}) {
     dmTdmSelfReported: entry?.dmTdmSelfReported === true,
     dmTdmAutoVerified: entry?.dmTdmAutoVerified === true,
     dmTdmVerifiedMatches: Math.max(0, safeNumber(entry?.dmTdmVerifiedMatches)),
+    warmupLogEntryId: String(entry?.warmupLogEntryId || ""),
     postGameAimTrainingCommitted: entry?.postGameAimTrainingCommitted === true,
     postGameCommittedAt: String(entry?.postGameCommittedAt || ""),
     postGameLogEntryId: String(entry?.postGameLogEntryId || ""),
@@ -271,6 +272,31 @@ function getDailyTrainingEntries(date = formatLocalDateKey(), profileId = active
     .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
 }
 
+function resolveWarmupTrainingEntry(entries = [], record = null) {
+  if (!record || !isDailyWarmupCompleted(record)) return null;
+  const ordered = (Array.isArray(entries) ? entries : [])
+    .slice()
+    .sort((a, b) => new Date(a?.createdAt || 0) - new Date(b?.createdAt || 0));
+  const explicit = ordered.find(entry => String(entry.id) === String(record.warmupLogEntryId || ""));
+  if (explicit) return explicit;
+  const completedAt = new Date(record.completedAt || 0).getTime();
+  if (Number.isFinite(completedAt) && completedAt > 0) {
+    return ordered.find(entry => new Date(entry?.createdAt || 0).getTime() >= completedAt) || null;
+  }
+  const manuallyMarked = ordered.find(entry => entry?.warmup === true);
+  if (manuallyMarked) return manuallyMarked;
+  return ordered[0] || null;
+}
+
+function persistWarmupTrainingEntry(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
+  const record = getDailyWarmupRecord(profile, date);
+  if (!profile?.id || !record || record.warmupLogEntryId) return null;
+  const linkedEntry = resolveWarmupTrainingEntry(getDailyTrainingEntries(date, profile.id), record);
+  if (!linkedEntry?.id) return null;
+  writeDailyWarmupRecord(profile, { date, warmupLogEntryId: String(linkedEntry.id) });
+  return linkedEntry;
+}
+
 function getDailyTrainingFeedMarkers(entries = getProfileLogEntries?.(), profile = getActiveProfile?.()) {
   const groups = new Map();
   (Array.isArray(entries) ? entries : []).forEach(entry => {
@@ -285,10 +311,10 @@ function getDailyTrainingFeedMarkers(entries = getProfileLogEntries?.(), profile
     const record = getDailyWarmupRecord(profile, date);
     if (!record) return;
     const ordered = dayEntries.slice().sort((a, b) => new Date(a?.createdAt || 0) - new Date(b?.createdAt || 0));
-    const first = ordered[0] || null;
+    const linkedWarmup = resolveWarmupTrainingEntry(ordered, record);
     const linkedPostGame = ordered.find(entry => String(entry.id) === String(record.postGameLogEntryId || "")) || null;
-    if (first && isDailyWarmupCompleted(record)) {
-      markers.set(first.id, { ...(markers.get(first.id) || {}), warmup: true, date });
+    if (linkedWarmup) {
+      markers.set(linkedWarmup.id, { ...(markers.get(linkedWarmup.id) || {}), warmup: true, date });
     }
     if (record.postGameAimTrainingCommitted && linkedPostGame) {
       markers.set(linkedPostGame.id, { ...(markers.get(linkedPostGame.id) || {}), postGame: true, date });
@@ -592,8 +618,9 @@ function saveDailyWarmupCheck() {
     weapon: drillsSelected.includes("weapon-choice") ? document.getElementById("dailyWarmupWeapon")?.value || "" : "",
     rangeDrillsSelfReported: drillsSelected.length > 0,
     dmTdmSelfReported,
-    completedAt: nowISO()
+    completedAt: getDailyWarmupRecord(profile, date)?.completedAt || nowISO()
   });
+  persistWarmupTrainingEntry(getActiveProfile(), date);
   hideModalById?.("dailyWarmupModal");
   renderLoggingTrainingMenuState(getActiveProfile());
   renderLogFeed?.({ force: true });
@@ -41906,6 +41933,10 @@ if(!entry.focus || entry.focus === "Select Focus"){
     ));
   }
 
+  if (!isEditing) {
+    persistWarmupTrainingEntry(getActiveProfile(), getTrainingEntryDate(entry));
+  }
+
   editingLogEntryId = null;
   editingLogEntrySnapshot = null;
 
@@ -42502,6 +42533,8 @@ function renderLogFeed(options = {}){
               : "?"
           }</span>
           ${rrLabel ? `<span class="log-result-rr log-result-rr-${resultTone || "neutral"}">${escapeHtml(rrLabel)}</span>` : ""}
+          ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit warm-up for this session" title="Edit"><span class="log-training-fire-glyph" aria-hidden="true">&#128293;</span></button>` : ""}
+          ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit post-game aim training for this session" title="Edit">${getTrainingCrosshairMarkup()}</button>` : ""}
           <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>
         </div>
 
@@ -42522,8 +42555,6 @@ function renderLogFeed(options = {}){
         </div>
 
         <div class="log-actions">
-          ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" aria-label="Edit warm-up for this session" title="Edit warm-up">&#128293;</button>` : ""}
-          ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" aria-label="Edit post-game aim training for this session" title="Edit post-game aim training">${getTrainingCrosshairMarkup()}</button>` : ""}
           <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
         </div>
       `;

@@ -20228,17 +20228,50 @@ SUMMARY BAR
 }
 
 .log-training-icon{
-  width:30px;
-  height:30px;
+  position:relative;
+  width:26px;
+  height:26px;
   display:inline-grid;
   place-items:center;
-  flex:0 0 30px;
+  flex:0 0 26px;
   padding:0;
   border:1px solid var(--border-soft,rgba(148,163,184,.28));
   border-radius:9px;
   background:var(--button-bg,rgba(30,41,59,.9));
   color:var(--text-main,#f8fafc);
   line-height:1;
+  isolation:isolate;
+  overflow:visible;
+}
+
+.log-header .log-training-icon{
+  margin-left:3px;
+}
+
+.log-training-icon::after{
+  content:attr(data-tooltip);
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 7px);
+  z-index:5;
+  padding:4px 7px;
+  border:1px solid var(--border-soft,rgba(148,163,184,.28));
+  border-radius:6px;
+  background:var(--surface-modal,#080d18);
+  color:var(--text-main,#f8fafc);
+  font:800 10px/1 var(--font-body,"Rajdhani",sans-serif);
+  letter-spacing:.04em;
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,4px);
+  transition:opacity .16s ease,transform .16s ease;
+  white-space:nowrap;
+}
+
+.log-training-icon:hover::after,
+.log-training-icon:focus-visible::after{
+  opacity:1;
+  transform:translate(-50%,0);
 }
 
 .log-training-fire{
@@ -20247,18 +20280,41 @@ SUMMARY BAR
   font-size:15px;
 }
 
+.log-training-fire-glyph{
+  display:inline-block;
+  animation:log-training-fire-idle 2.4s ease-in-out infinite;
+}
+
 .log-training-crosshair{
   border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 58%,var(--border-soft,rgba(148,163,184,.28)));
   background:color-mix(in srgb,var(--accent-2,#38bdf8) 10%,var(--button-bg,#1e293b));
 }
 
 .log-training-crosshair svg{
-  width:17px;
-  height:17px;
+  width:15px;
+  height:15px;
   fill:none;
   stroke:var(--accent-2,#38bdf8);
   stroke-width:1.9;
   stroke-linecap:round;
+  animation:log-training-crosshair-idle 3.2s ease-in-out infinite;
+}
+
+@keyframes log-training-fire-idle{
+  0%,100%{transform:translateY(0) rotate(-2deg);filter:drop-shadow(0 0 2px rgba(249,115,22,.28));}
+  50%{transform:translateY(-1px) rotate(2deg);filter:drop-shadow(0 0 5px rgba(249,115,22,.62));}
+}
+
+@keyframes log-training-crosshair-idle{
+  0%,100%{transform:rotate(0deg) scale(1);filter:drop-shadow(0 0 2px color-mix(in srgb,var(--accent-2,#38bdf8) 35%,transparent));}
+  50%{transform:rotate(45deg) scale(1.08);filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent-2,#38bdf8) 68%,transparent));}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .log-training-fire-glyph,
+  .log-training-crosshair svg{
+    animation:none !important;
+  }
 }
 
 .daily-warmup-actions{

@@ -136,6 +136,29 @@ async function seedProfile(page, id) {
   }, { id });
 }
 
+async function submitManualReflection(page, { agent, focus, map, rating, mood, notes }) {
+  await page.evaluate(agentName => {
+    const display = document.getElementById("logAgentDisplay");
+    if (display) display.dataset.agent = agentName;
+  }, agent);
+  await page.selectOption("#logFocusSelect", focus);
+  await page.fill("#logMap", map);
+  await page.click(`#logRatingRow [data-rating="${rating}"]`);
+  await page.click(`#logMoodRow [data-mood="${mood}"]`);
+  await page.click('#logTeamCommsRow [data-team-comms="3"]');
+  await page.click('#logSelfCommsRow [data-self-comms="3"]');
+  await page.fill("#logNotes", notes);
+  await page.click("#logSaveBtn");
+  await page.waitForFunction(expectedNotes => {
+    const entries = JSON.parse(localStorage.getItem("valtracker_log_entries_v2:guest") || "[]");
+    return entries.some(entry => entry.notes === expectedNotes);
+  }, notes);
+  return page.evaluate(expectedNotes => {
+    const entries = JSON.parse(localStorage.getItem("valtracker_log_entries_v2:guest") || "[]");
+    return entries.find(entry => entry.notes === expectedNotes)?.id || "";
+  }, notes);
+}
+
 function buildCorrelationFixture(daysPerGroup = 7) {
   const warmupLog = [];
   const matches = [];
@@ -256,6 +279,31 @@ async function run() {
     await page.locator('.nav-btn[data-page="logging"]').click();
     await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("active"));
     assert.equal(await page.locator("#loggingTrainingMenuTitle").innerText(), "POST-GAME AIM TRAINING");
+    const warmupGameId = await submitManualReflection(page, {
+      agent: "Jett",
+      focus: "Aim",
+      map: "Ascent",
+      rating: 4,
+      mood: "Fun",
+      notes: "First manual game after today's warm-up."
+    });
+    const aimTrainingGameId = await submitManualReflection(page, {
+      agent: "Sova",
+      focus: "Positioning",
+      map: "Haven",
+      rating: 5,
+      mood: "Focused",
+      notes: "Second manual game before post-game aim training."
+    });
+    assert.ok(warmupGameId);
+    assert.ok(aimTrainingGameId);
+    assert.notEqual(warmupGameId, aimTrainingGameId);
+    await page.waitForFunction(expectedId => {
+      const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0];
+      return profile?.warmupLog?.[0]?.warmupLogEntryId === expectedId;
+    }, warmupGameId);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).count(), 1);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 0);
     await page.click("#loggingTrainingMenuBtn");
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     assert.equal(await page.locator("#dailyWarmupGrid").isVisible(), false);
@@ -269,34 +317,41 @@ async function run() {
     });
 
     const trainingRecord = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]);
-    assert.equal(trainingRecord.postGameLogEntryId, "training-last-game");
+    assert.equal(trainingRecord.warmupLogEntryId, warmupGameId);
+    assert.equal(trainingRecord.postGameLogEntryId, aimTrainingGameId);
     await page.waitForTimeout(3000);
-    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 1);
-    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-crosshair').count(), 0);
-    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 1);
-    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-fire').count(), 0);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).count(), 1);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-crosshair`).count(), 0);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).count(), 1);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-fire`).count(), 0);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).getAttribute("title"), "Edit");
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).getAttribute("title"), "Edit");
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).evaluate(button => button.parentElement?.classList.contains("log-header")), true);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).evaluate(button => button.parentElement?.classList.contains("log-header")), true);
+    await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).hover();
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).evaluate(button => getComputedStyle(button, "::after").content), '"Edit"');
     await page.locator("#loggingTrainingMenuBtn").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-desktop.png") });
     await page.locator(".logging-feed-card").screenshot({ path: path.join(__dirname, "tmp", "daily-training-feed-icons-desktop.png") });
 
-    await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').click();
+    await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).click();
     await page.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
     assert.equal(await page.locator('[data-warmup-drill="weapon-choice"]').getAttribute("aria-pressed"), "true");
     await page.click("#dailyWarmupClose");
-    await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').click();
+    await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).click();
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     assert.equal(await page.locator("#dailyWarmupPostgameCommit").getAttribute("aria-pressed"), "true");
     await page.click("#dailyWarmupPostgameCommit");
     await page.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]?.postGameAimTrainingCommitted === false);
-    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 0);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).count(), 0);
     await page.click("#loggingTrainingMenuBtn");
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     await page.click("#dailyWarmupPostgameCommit");
     await page.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]?.postGameAimTrainingCommitted === true);
-    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 1);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).count(), 1);
 
-    await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-edit-btn').click();
+    await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-edit-btn`).click();
     assert.equal(await page.locator("#logMap").inputValue(), "Ascent");
-    assert.equal(await page.locator("#logNotes").inputValue(), "");
+    assert.equal(await page.locator("#logNotes").inputValue(), "First manual game after today's warm-up.");
     assert.equal(await page.locator("#page-logging").getAttribute("data-mobile-logging-view"), "form");
 
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -340,6 +395,15 @@ async function run() {
     await mobile.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
     await mobile.click('[data-warmup-drill="head-tracking"]');
     await mobile.click("#dailyWarmupSave");
+    const mobileTrainingGameId = await submitManualReflection(mobile, {
+      agent: "Jett",
+      focus: "Crosshair Discipline",
+      map: "Ascent",
+      rating: 4,
+      mood: "Focused",
+      notes: "Mobile manual game after warm-up."
+    });
+    assert.ok(mobileTrainingGameId);
     await mobile.click("#loggingTrainingMenuBtn");
     await mobile.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     await mobile.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-mobile.png") });
@@ -348,8 +412,8 @@ async function run() {
     await mobile.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]?.postGameAimTrainingCommitted === true);
     await mobile.click('[data-mobile-logging-view="feed"]');
     await mobile.waitForTimeout(3000);
-    assert.equal(await mobile.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 1);
-    assert.equal(await mobile.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 1);
+    assert.equal(await mobile.locator(`.log-entry[data-log-entry-id="${mobileTrainingGameId}"] .log-training-fire`).count(), 1);
+    assert.equal(await mobile.locator(`.log-entry[data-log-entry-id="${mobileTrainingGameId}"] .log-training-crosshair`).count(), 1);
     await mobile.locator(".logging-feed-card").screenshot({ path: path.join(__dirname, "tmp", "daily-training-feed-icons-mobile.png") });
     await mobile.close();
 
