@@ -53055,12 +53055,32 @@ body.access-reduced-motion .premium-moment-overlay{
 
 /* Desktop uses the same app-owned season menu so the list cannot be clipped by
    the compact Stats summary card or inherit square platform-select corners. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
+  grid-template-rows:minmax(280px,296px) minmax(0,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-layout,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-right,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-row,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card{
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card{
+  display:grid !important;
+  grid-template-columns:minmax(116px,auto) minmax(0,1fr) !important;
+  grid-template-rows:auto auto minmax(32px,auto) !important;
+  align-content:start !important;
+  gap:3px 8px !important;
+}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card-head{
   display:grid !important;
   grid-template-columns:auto minmax(176px,1fr) !important;
   align-items:end !important;
   gap:6px 10px !important;
   overflow:visible !important;
+  transform:none !important;
+  grid-column:1 / -1 !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-selector-row,
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-act-select-wrap{
@@ -53068,10 +53088,36 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-act-s
   width:100% !important;
   overflow:visible !important;
 }
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-act-select-wrap{
+  display:grid !important;
+  grid-template-columns:auto minmax(0,1fr) !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-act-label{
+  white-space:nowrap !important;
+}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-history-boundary-note{
   grid-column:1 / -1 !important;
   max-width:none !important;
   margin:0 !important;
+  font-size:10px !important;
+  line-height:1.3 !important;
+  padding-bottom:6px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-row,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-note{
+  min-height:0 !important;
+  overflow:visible !important;
+  margin:0 !important;
+  transform:none !important;
+  align-self:center !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-note{
+  line-height:1.15 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home > .site-footer{
+  margin-top:80px !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-act-select,
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-act-select-wrap::after{

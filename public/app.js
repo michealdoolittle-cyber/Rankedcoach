@@ -981,7 +981,7 @@ function writeMobileProfileRating(model = getCoachReadinessModel()) {
     unlocks.innerHTML = model.unlocks.map(item => `
       <div class="profile-rating-unlock coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
         <span>${escapeHtml(item.label)}</span>
-        <strong>${item.complete ? "Unlocked" : `${model.matchCount}/${item.required}`}</strong>
+        <strong>${item.complete ? "Unlocked" : escapeHtml(item.progressLabel)}</strong>
         <div class="coach-readiness-mini-bar"><span style="--profile-progress:${item.progress};width:${item.progress}%"></span></div>
       </div>
     `).join("");
@@ -11930,10 +11930,10 @@ function getCanonicalMatchRecordCount() {
 }
 
 const COACH_READINESS_UNLOCKS = [
-  { key: "match-impact", label: "Post-match impact", required: 1 },
-  { key: "recent-trends", label: "Recent trends", required: 5 },
-  { key: "stats-confidence", label: "Stats confidence", required: 10 },
-  { key: "deep-insights", label: "Deep insights", required: 20 }
+  { key: "match-impact", label: "Post-match impact", requiredMatches: 1 },
+  { key: "recent-trends", label: "Recent trends", requiredCurrentSeasonMatches: 5 },
+  { key: "stats-confidence", label: "Stats confidence", requiredCurrentSeasonMatches: 10 },
+  { key: "deep-insights", label: "Deep insights", requiredMatches: 20, requiredCurrentSeasonMatches: 10, requiredLogs: 5 }
 ];
 
 function getCoachReadinessModel() {
@@ -11962,13 +11962,34 @@ function getCoachReadinessModel() {
     + (reflectionProgress * 25)
     + (completenessProgress * 10)
   );
-  const nextUnlock = COACH_READINESS_UNLOCKS.find(item => matchCount < item.required);
-  const unlocked = COACH_READINESS_UNLOCKS.filter(item => matchCount >= item.required);
+  const unlocks = COACH_READINESS_UNLOCKS.map(item => {
+    const requirements = [];
+    if (item.requiredMatches) {
+      requirements.push({ current: matchCount, required: item.requiredMatches, label: "games" });
+    }
+    if (item.requiredCurrentSeasonMatches) {
+      requirements.push({ current: currentSeasonMatchCount, required: item.requiredCurrentSeasonMatches, label: "season" });
+    }
+    if (item.requiredLogs) {
+      requirements.push({ current: authoredLogCount, required: item.requiredLogs, label: "logs" });
+    }
+    const complete = requirements.every(requirement => requirement.current >= requirement.required);
+    const progress = requirements.length
+      ? Math.min(...requirements.map(requirement => Math.min(100, Math.round((requirement.current / requirement.required) * 100))))
+      : 0;
+    const progressLabel = requirements
+      .filter(requirement => requirement.current < requirement.required)
+      .map(requirement => `${Math.min(requirement.current, requirement.required)}/${requirement.required} ${requirement.label}`)
+      .join(" · ");
+    return { ...item, complete, progress, progressLabel };
+  });
+  const nextUnlock = unlocks.find(item => !item.complete);
+  const unlocked = unlocks.filter(item => item.complete);
   const copyParts = [`${matchCount} ranked matches imported`];
   copyParts.push(`${currentSeasonMatchCount}/10 current-season matches`);
   copyParts.push(`${authoredLogCount}/5 reflection logs`);
   const copy = nextUnlock
-    ? `${copyParts.join(". ")}. ${nextUnlock.label} unlocks at ${nextUnlock.required} matches.`
+    ? `${copyParts.join(". ")}. Next: ${nextUnlock.label} (${nextUnlock.progressLabel}).`
     : `${copyParts.join(". ")}. Match-driven reads are unlocked; rating grows with current-season play and your own reflections.`;
   return {
     matchCount,
@@ -11979,11 +12000,7 @@ function getCoachReadinessModel() {
     copy,
     nextUnlock,
     unlocked,
-    unlocks: COACH_READINESS_UNLOCKS.map(item => ({
-      ...item,
-      complete: matchCount >= item.required,
-      progress: Math.min(100, Math.round((matchCount / Math.max(1, item.required)) * 100))
-    }))
+    unlocks
   };
 }
 
@@ -12013,7 +12030,7 @@ function renderCoachReadinessUI() {
     target.innerHTML = model.unlocks.map(item => `
       <div class="profile-rating-unlock coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
         <span>${escapeHtml(item.label)}</span>
-        <strong>${item.complete ? "Unlocked" : `${model.matchCount}/${item.required}`}</strong>
+        <strong>${item.complete ? "Unlocked" : escapeHtml(item.progressLabel)}</strong>
         <div class="coach-readiness-mini-bar"><span style="--profile-progress:${item.progress};width:${item.progress}%"></span></div>
       </div>
     `).join("");
@@ -16233,8 +16250,8 @@ function buildChartAxisTitle(label = "Current Season") {
   const axisLabel = `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
   const isMobileFooterLayout = isMobileLayoutViewport();
-  const titleY = isMobileFooterLayout ? PAD_BOTTOM + 46 : Math.min(CHART_H - 26, PAD_BOTTOM + 24);
-  const legendY = isMobileFooterLayout ? PAD_BOTTOM + 68 : Math.min(CHART_H - 10, titleY + 20);
+  const titleY = isMobileFooterLayout ? PAD_BOTTOM + 46 : Math.min(CHART_H - 28, PAD_BOTTOM + 58);
+  const legendY = isMobileFooterLayout ? PAD_BOTTOM + 68 : Math.min(CHART_H - 4, titleY + 24);
   const legendWidth = 146;
   const legendX = Math.max(PAD_LEFT, Math.min(x - (legendWidth / 2), CHART_W - PAD_RIGHT - legendWidth));
   const legendItems = [
@@ -45471,7 +45488,7 @@ if(chartHeight){
   PAD_LEFT = CHART_W * 0.055;
   PAD_RIGHT = CHART_W * 0.055;
   PAD_TOP = CHART_H * 0.08;
-  PAD_BOTTOM = CHART_H * 0.78;
+  PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.64);
 
 // ========================
 // NO MATCH PLACEHOLDER

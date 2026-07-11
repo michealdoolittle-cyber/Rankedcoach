@@ -100,9 +100,61 @@ async function run() {
 
     const rating = Number((await page.locator("#profileRatingValue").innerText()).replace("%", ""));
     assert.ok(rating > 0 && rating < 100, `expected partial readiness, received ${rating}%`);
+    await page.locator("#profileRatingWidget").click();
+    const unlockState = await page.locator("#profileRatingUnlocks .coach-readiness-unlock").evaluateAll(items => items.map(item => ({
+      complete: item.classList.contains("is-complete"),
+      text: item.innerText
+    })));
+    assert.deepEqual(unlockState.map(item => item.complete), [true, false, false, false]);
+    assert.match(unlockState[1].text, /0\/5 season/);
+    assert.match(unlockState[2].text, /0\/10 season/);
+    assert.match(unlockState[3].text, /0\/10 season.*0\/5 logs/s);
+    assert.doesNotMatch(await page.locator("#profileRatingCopy").innerText(), /undefined/i);
+    await page.locator("#profileRatingWidget").click();
+
+    const chartGeometry = await page.locator(".rr-chart-card").evaluate(card => {
+      const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
+      const title = card.querySelector(".chart-axis-title").getBoundingClientRect();
+      const legend = card.querySelector(".chart-axis-legend").getBoundingClientRect();
+      const numericTicks = [...card.querySelectorAll("#chartRow svg > text")]
+        .filter(element => /^\d+$/.test(String(element.textContent || "").trim()))
+        .map(element => element.getBoundingClientRect());
+      const footer = document.getElementById("siteFooter").getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      return {
+        tickBottom: Math.max(...numericTicks.map(rect => rect.bottom)),
+        titleTop: title.top,
+        titleBottom: title.bottom,
+        legendTop: legend.top,
+        legendBottom: legend.bottom,
+        wrapBottom: chartWrap.bottom,
+        cardBottom: cardRect.bottom,
+        footerTop: footer.top
+      };
+    });
+    assert.ok(chartGeometry.tickBottom < chartGeometry.titleTop, JSON.stringify(chartGeometry));
+    assert.ok(chartGeometry.titleBottom < chartGeometry.legendTop, JSON.stringify(chartGeometry));
+    assert.ok(chartGeometry.legendBottom <= chartGeometry.wrapBottom + 1, JSON.stringify(chartGeometry));
+    assert.ok(chartGeometry.cardBottom < chartGeometry.footerTop, JSON.stringify(chartGeometry));
+    fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
+    await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-chart-spacing.png"), fullPage: true });
 
     await page.locator('[data-page="stats"]').click();
     await page.waitForTimeout(250);
+    const proofContainment = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
+      const parent = card.getBoundingClientRect();
+      return [".stats-proof-card-head", ".stats-history-boundary-note", ".stats-proof-rank-row", ".stats-proof-note"].map(selector => {
+        const rect = card.querySelector(selector).getBoundingClientRect();
+        return { selector, top: rect.top, bottom: rect.bottom, parentTop: parent.top, parentBottom: parent.bottom };
+      });
+    });
+    proofContainment.forEach(item => {
+      assert.ok(item.top >= item.parentTop - 1 && item.bottom <= item.parentBottom + 1, JSON.stringify(item));
+    });
+    assert.ok(proofContainment[0].bottom <= proofContainment[1].top, JSON.stringify(proofContainment));
+    assert.ok(proofContainment[1].bottom <= proofContainment[2].top, JSON.stringify(proofContainment));
+    assert.ok(proofContainment[1].bottom <= proofContainment[3].top, JSON.stringify(proofContainment));
+    await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-stats-proof-card.png") });
     const trigger = page.locator("#statsActMobileTrigger");
     assert.equal(await trigger.isVisible(), true);
     const triggerRadius = parseFloat(await trigger.evaluate(element => getComputedStyle(element).borderTopLeftRadius));
@@ -116,7 +168,6 @@ async function run() {
     });
     assert.ok(panelMetrics.radius >= 12);
     assert.ok(panelMetrics.left >= 0 && panelMetrics.right <= panelMetrics.viewport);
-    fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-season-menu.png"), fullPage: true });
 
     await page.locator(".stats-act-mobile-menu-close").click();
@@ -127,7 +178,7 @@ async function run() {
     assert.ok(filterState.some(item => item.filter !== "all" && item.disabled), JSON.stringify(filterState));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-insight-filters.png"), fullPage: true });
 
-    console.log("Goal, readiness, long Riot ID, rounded desktop season selector, and empty insight-filter checks passed.");
+    console.log("Goal, readiness gates, chart spacing, Stats containment, rounded season selector, long Riot ID, and empty insight-filter checks passed.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
