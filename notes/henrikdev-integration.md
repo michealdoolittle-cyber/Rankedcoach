@@ -129,4 +129,48 @@ Now that real match data can be pulled live from just a Riot ID, the manual scre
 
 ## Production handoff
 
-The build directive is complete. Add `HENRIKDEV_API_KEY` in the Cloudflare Worker settings (or run `wrangler secret put HENRIKDEV_API_KEY` from an authenticated workstation), redeploy, then confirm `/api/henrik/health` reports `configured: true`. The key must remain server-side and must never be added to `public/app.js` or any committed file.
+The build directive is complete. Add `HENRIKDEV_API_KEY` in the Cloudflare Worker settings (or run `wrangler secret put HENRIKDEV_API_KEY` from an authenticated workstation), redeploy, then confirm `/api/henrik/health` reports `configured: true`. The key must remain server-side and must never be added to `public/app.js` or any committed file. **Confirmed live in production 2026-07-10** — `https://www.rankedcoach.gg/api/henrik/health` returns `{"ok":true,"configured":true}`.
+
+---
+
+## Formula layer follow-up (2026-07-10) — wire existing formulas to real data, then add new ones
+
+Full review of every formula currently in `buildPlayerModel()` and its helpers, done before writing this — not guessing at what exists. Verdict: the app has more formula sophistication already than the original handoff doc's diagnosis suggested (weapon-context HS% calibration, sample-confidence weighting, coaching-language governance are all genuinely good, keep as-is). **The real finding: a complete, well-designed formula suite already exists for economy/first-blood/utility-timing analysis, but it reads from a data shape (`match.advanced.*`) that the new Henrik adapter never populates.** This is plumbing work, not new formula design, and it's the highest-value item in this follow-up because the hard part (formula design) is already done.
+
+### 1. Wire `roundByRound` into the existing advanced-stats formula suite — do this first
+
+`summarizeAdvancedContextMatches()` (`app.js:4476-4540`, consumed at `app.js:6652-6654` feeding the role-adjusted "Compass" scoring) expects each match to carry:
+- `match.advanced.attack` / `match.advanced.defense`: `{roundsPlayed, roundsWon, firstBloods, firstDeaths, kast, damagePerRound}`
+- `match.advanced.rounds[]`: `{buyType, roundWon, utilityPattern, firstEvent}`
+
+The Henrik adapter (`fromHenrikRawMatch`, `public/schema/match-record.js:417`) populates `roundByRound[]` instead, with real per-round `side` ("attack"/"defense"), `won`, `playerEconomy` (real `loadoutValue`/`spent`/`remaining`, not a text buy-type label), `damageDealt`, and `kills[]` (which already has `roundTime` for first-blood detection — same kill array `round-metrics.js`'s KAST formula already consumes). **Build a small projection function** (e.g. `deriveAdvancedContextFromRoundByRound(record)`) that computes the `match.advanced` shape from `roundByRound` — classify `playerEconomy.loadoutValue` into eco/light/full-buy tiers (pick reasonable credit thresholds, e.g. <2000 eco, 2000-3500 light, 3500+ full — cross-check against real observed loadout values in a few matches before finalizing the cutoffs), derive `firstEvent` from whichever kill in the round has the lowest `roundTime` and whether the tracked player was killer or victim in it, and reuse the already-working KAST value from `round-metrics.js` instead of recomputing it separately. Call this projection wherever a Henrik-sourced record gets built (either inside `fromHenrikRawMatch` itself, or as a separate step right after) so `match.advanced` is populated transparently and `summarizeAdvancedContextMatches()` needs zero changes.
+
+**Test:** re-run `testing/henrik/live-known-match.js` (extend it, don't replace it) asserting real non-zero `fullBuyWinRate`/`firstBloodRoundRate`/etc. against the same known match — same rigor as the KAST validation already there.
+
+### 2. New: clutch/ace recognition from `roundCeremony`
+
+Confirmed present and genuinely populated (not a static default) on `roundByRound[].roundCeremony` — your own test match had `CeremonyCloser` ×3, `CeremonyFlawless` ×1. Nothing currently counts this. Add a formula (new function, e.g. in `round-metrics.js` alongside the KAST logic since it's the same round-level data source) that tallies ceremony counts per match/season and computes a clutch conversion rate for rounds where the tracked player specifically got the `CeremonyCloser` credit. Surface as a new insight card, same pattern as existing `insights.push({...})` blocks (`app.js:5445+`) — "You've closed out 2 of your last 5 clutch rounds" is a genuinely new, high-value read this unlocks.
+
+### 3. New: discipline signals from `wasAfk`/`stayedInSpawn`/`behaviorFactors`
+
+Confirmed present, confirmed unused anywhere. `roundByRound[].wasAfk`/`.stayedInSpawn` are per-round; `behaviorFactors` (per-player, match-level, not currently mapped into the canonical record at all — check `fromHenrikRawMatch` and add it if missing) has `afkRounds`, `damageParticipationOutgoing`, `friendlyFireIncoming`/`Outgoing`, `stayedInSpawnRounds`. Build a low-frequency insight (this should be rare/notable, not a recurring nag) that flags a pattern only when it's genuinely repeated across multiple matches — one AFK round means nothing, AFK rounds in 4 of the last 10 matches is worth surfacing. Follow the existing `COACHING_LANGUAGE_RULES` sample-size discipline (`app.js:3373`) for how cautious to be before stating this as a pattern.
+
+### 4. New: multi-kill/ace rate from real kill data
+
+`roundByRound[].kills[]` already has every kill in the round. Count kills-per-round attributed to the tracked player (`kills.filter(k => k.killer === puuid).length` per round) and bucket into 2K/3K/4K/ace rates. **Don't rely on `importedAnalytics.kills2K`/`kills3K` etc.** (referenced at `app.js:5414-5416` for `multiKillPressure`) unless you've confirmed the Henrik path actually populates those fields — computing directly from `roundByRound[].kills` is more reliable now that real round data exists, and removes a dependency on the old import-analytics shape.
+
+### 5. New: trade-efficiency asymmetry — extend `round-metrics.js`, don't rebuild it
+
+`evaluateKastRound()` (`public/analytics/round-metrics.js:12`) already computes `traded`/`tradeSaved`/`tradeOnly` per round. Add two new aggregate splits on top of the existing `summarizeEvaluations()`: **trade-received rate** (of the rounds where the tracked player died, what fraction were traded — already computable from `tradeSaved`) vs. **trade-given rate** (of the rounds where a teammate died, what fraction did the tracked player personally trade — needs a new check: did tracked player's kill happen within the 5s window after ANY teammate's death, not just their own). These read very differently for an entry fragger (high trade-received expected) vs. an anchor/support (high trade-given expected) — pair with role context the same way `getMechanicsContextAdjustment` already pairs HS% with weapon context.
+
+### 6. New: damage consistency (variance), not just average ADR
+
+`roundByRound[].damageDealt` is already real per-round data. Compute standard deviation (or a simpler consistency band) across rounds within a match, and trend it across recent matches. Two players with identical average ADR can have very different reliability — this is a distinct signal from ADR itself and currently nothing captures it.
+
+### 7. Manual logging addition — round-tagged "what were you trying to do"
+
+Per the handoff doc's own framing, manual entry should shrink to qualitative-only now that objective data is real. `summarizeLogContext()` (`app.js:4542+`) already tracks mood/comms/distraction rates from manual logs — good existing pattern, extend it rather than replacing it. Add one new optional field to the manual reflection log: a short free-text tag optionally associated with a specific round number from that match (only meaningful once round numbers are visible to the player somewhere in the UI — check whether match detail views currently show round-by-round breakdown at all before building this; if not, that's a prerequisite UI piece, not just a data field). This is the one thing no API will ever provide — why a specific call was made — and pairing it with real round data (e.g. "round 14, the one you got traded in") makes both halves more useful than either alone.
+
+### Priority order
+
+1 (wiring) unlocks the most value for the least new design work — do it first. 2-6 are independent of each other and of 1, pick based on what's most interesting to ship next. 7 is UI-dependent (needs round-level match detail display to exist first) — sequence it after checking that prerequisite.
