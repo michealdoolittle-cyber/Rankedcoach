@@ -110,3 +110,19 @@ Don't force these into the existing 300 immediately — flag them for Codex to a
 3. DM/TDM auto-verification: play (or simulate via test data) a real TDM match after marking the check, confirm the app correctly flags `dmTdmAutoVerified: true` once that match syncs — this needs a live test against the validated account, not just a code read, same rigor as every other Henrik claim in this project.
 4. Confirm the correlation formula stays silent/hedged until a real sample exists — don't let it fire confidently on day 3.
 5. Confirm skipping the check entirely has zero negative UI consequence (no guilt-tripping copy, no blocked navigation) — this is an opt-in consistency tool, not a gate.
+
+---
+
+## Gap found on verification (2026-07-11) — surface the proven-method sourcing, it's already mapped internally
+
+Checked the shipped code directly rather than trusting the "Built" status line. The core mechanics are real and correctly built, but **the actual proven-method names Michael specifically asked for never made it into the player-facing UI**. Confirmed via `DAILY_WARMUP_DRILL_ALIASES` (`app.js:182-190`) — the mapping already exists internally: `aimstars → drone-target-switching`, `miyagi → head-tracking`, `gunfight-hygiene → burst-peeking`, `range-accuracy → easy-bots-flicking`, `range-tracking → head-tracking-strafe`, `reaction → hard-bots-flicking`. But `DAILY_WARMUP_DRILLS` (`app.js:169-181`), the actual player-facing labels, are generic ("Head Tracking," "Burst Peeking") with zero mention anywhere in `app.js` or `index.html` of Aimstars, Miyagi, or gunfight hygiene.
+
+This matters because the whole point of the request was "proven warm up techniques" — a player picking "Head Tracking" has no idea it's the Miyagi Method with a real track record; a player picking "Burst Peeking" has no idea it's Woohoojin's gunfight hygiene concept. The credibility signal that was the actual ask got lost in the translation from named method to generic drill, even though the underlying mechanic is correct.
+
+**Directive:** using the existing `DAILY_WARMUP_DRILL_ALIASES` mapping as the source of truth (don't invent a new mapping, this one's already correct), add a short subtitle/description to each drill in the picker UI naming its source method where one exists:
+- Head Tracking → *"Based on the Miyagi Method — track the head without shooting until you're locked on, then take the shot."*
+- Drone Target Switching → *"Based on the Aimstars routine — trains flicking and target-switching under pressure."*
+- Burst Peeking / Tap Fire Rhythm Training → *"Woohoojin's gunfight hygiene — burst-tap discipline instead of holding the trigger."*
+- Drills without a named-method mapping (Weapon Choice, Spray Control Target Dummy, the plain bot-flicking tiers) don't need an invented attribution — only label the ones with a real source, don't fabricate credibility for the rest.
+
+Small, scoped fix — this is a copy/label change using data that already exists in the alias map, not new logic.
