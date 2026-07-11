@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260711-warmup-playlists-01">
+<link rel="stylesheet" href="app.css?v=20260711-training-feed-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -266,22 +266,22 @@ AUTH MODAL
   <div class="lens-modal daily-warmup-card" role="dialog" aria-modal="true" aria-labelledby="dailyWarmupTitle">
     <div class="lens-modal-header daily-warmup-header">
       <div>
-        <div class="daily-warmup-kicker">Daily Warm-Up Check</div>
+        <div class="daily-warmup-kicker" id="dailyWarmupKicker">Daily Warm-Up Check</div>
         <div class="lens-modal-title" id="dailyWarmupTitle">Get your first fights ready</div>
       </div>
       <button id="dailyWarmupClose" class="lens-modal-close" type="button" aria-label="Skip today's warm-up check">X</button>
     </div>
     <div class="daily-warmup-body">
-      <div class="daily-warmup-intro">
+      <div class="daily-warmup-intro" data-daily-training-section="warmup">
         Pick up to four drills before ranked. Range work is self-reported; DM and TDM can be checked against Henrik after your next sync.
         Warm-up helps your mechanics, but the real test is carrying the same discipline into live rounds.
       </div>
-      <div class="daily-warmup-count"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
-      <div class="daily-warmup-section-heading">
+      <div class="daily-warmup-count" data-daily-training-section="warmup"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
+      <div class="daily-warmup-section-heading" data-daily-training-section="warmup">
         <strong>Before Ranked Playlist</strong>
         <span>Choose the four mechanics you want ready before queueing.</span>
       </div>
-      <div class="daily-warmup-grid" id="dailyWarmupGrid">
+      <div class="daily-warmup-grid" id="dailyWarmupGrid" data-daily-training-section="warmup">
         <button type="button" class="daily-warmup-drill" data-warmup-drill="weapon-choice" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
           <span class="daily-warmup-drill-copy"><strong>Weapon Choice</strong><span>Set the weapon you want this session's mechanics built around.</span></span>
@@ -327,17 +327,17 @@ AUTH MODAL
           <span class="daily-warmup-drill-copy"><strong>Spray Control Target Dummy</strong><span>Hold the pattern on one dummy, then reset before repeating.</span></span>
         </button>
       </div>
-      <label id="dailyWarmupWeaponField" class="daily-warmup-weapon" hidden>
+      <label id="dailyWarmupWeaponField" class="daily-warmup-weapon" data-daily-training-section="warmup" hidden>
         <span>Weapon for today's training</span>
         <input id="dailyWarmupWeapon" type="text" maxlength="30" placeholder="Vandal, Phantom, Operator...">
       </label>
-      <label class="daily-warmup-livefire">
+      <label class="daily-warmup-livefire" data-daily-training-section="warmup">
         <input id="dailyWarmupDmTdm" type="checkbox">
         <span><strong>I finished 1-2 DM/TDM matches</strong><small>Self-reported now; Henrik can auto-verify this after sync.</small></span>
       </label>
-      <div id="dailyWarmupVerification" class="daily-warmup-verification" aria-live="polite"></div>
-      <div id="dailyWarmupCorrelationStatus" class="daily-warmup-correlation" aria-live="polite"></div>
-      <section class="daily-warmup-postgame" aria-labelledby="dailyWarmupPostgameTitle">
+      <div id="dailyWarmupVerification" class="daily-warmup-verification" data-daily-training-section="warmup" aria-live="polite"></div>
+      <div id="dailyWarmupCorrelationStatus" class="daily-warmup-correlation" data-daily-training-section="warmup" aria-live="polite"></div>
+      <section class="daily-warmup-postgame" data-daily-training-section="postgame" aria-labelledby="dailyWarmupPostgameTitle" hidden>
         <div class="daily-warmup-postgame-copy">
           <div class="daily-warmup-postgame-kicker">After Ranked</div>
           <strong id="dailyWarmupPostgameTitle">Post-Game Session Playlist</strong>
@@ -347,8 +347,13 @@ AUTH MODAL
           <a href="https://aimlabs.com/" target="_blank" rel="noopener noreferrer">Open Aim Lab</a>
           <a href="https://www.kovaaks.com/" target="_blank" rel="noopener noreferrer">Open KovaaK's</a>
         </div>
+        <button id="dailyWarmupPostgameCommit" class="daily-warmup-postgame-commit" type="button" aria-pressed="false">
+          <span class="daily-warmup-postgame-check" aria-hidden="true"></span>
+          <span id="dailyWarmupPostgameCommitText">Mark post-game training complete</span>
+        </button>
+        <div id="dailyWarmupPostgameStatus" class="daily-warmup-postgame-status" aria-live="polite"></div>
       </section>
-      <div class="daily-warmup-actions">
+      <div class="daily-warmup-actions" data-daily-training-section="warmup">
         <button id="dailyWarmupSkip" type="button" class="daily-warmup-skip">Skip today</button>
         <button id="dailyWarmupSave" type="button" class="daily-warmup-save">Save warm-up</button>
       </div>
@@ -1930,6 +1935,20 @@ stroke-linejoin="round"/>
           </div>
         </div>
 
+        <div class="logging-training-menu-row">
+          <button id="loggingTrainingMenuBtn" class="logging-training-menu-btn" type="button">
+            <span id="loggingTrainingMenuFire" class="logging-training-menu-icon" aria-hidden="true">&#128293;</span>
+            <span id="loggingTrainingMenuCrosshair" class="logging-training-menu-icon logging-training-crosshair" aria-hidden="true" hidden>
+              <svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v5M12 17v5M2 12h5M17 12h5"></path></svg>
+            </span>
+            <span class="logging-training-menu-copy">
+              <strong id="loggingTrainingMenuTitle">Warm-Up Menu</strong>
+              <small id="loggingTrainingMenuStatus">Choose up to four drills before your first ranked game.</small>
+            </span>
+            <span class="logging-training-menu-arrow" aria-hidden="true">&gt;</span>
+          </button>
+        </div>
+
         <div id="manualMatchPanel" class="manual-match-panel" hidden>
           <div class="manual-match-head">
             <div>
@@ -2079,7 +2098,6 @@ stroke-linejoin="round"/>
         <button type="button" class="logging-quick-close ui-interactive" id="logQuickCloseBtn">Done</button>
       </div>
       <div class="logging-quick-strip">
-        <button type="button" class="logging-quick-chip" id="logWarmupChip" data-log-quick="Warmup." data-warmup-only="true">Warmup</button>
         <button type="button" class="logging-quick-chip" data-log-quick="Good attack half performance.">Good attack half performance</button>
         <button type="button" class="logging-quick-chip" data-log-quick="Good defense half performance.">Good defense half performance</button>
         <button type="button" class="logging-quick-chip" data-log-quick="Snowballing attack half.">Snowballing attack half</button>
@@ -2255,13 +2273,13 @@ stroke-linejoin="round"/>
   <script src="sandbox-fx.engine.js"></script>
   <script src="schema/match-record.js?v=20260711-season-scope-01"></script>
   <script src="analytics/round-metrics.js?v=20260710-henrik-surfaces-01"></script>
-  <script src="analytics/warmup-correlation.js?v=20260711-warmup-playlists-01"></script>
+  <script src="analytics/warmup-correlation.js?v=20260711-training-feed-01"></script>
   <script src="analytics/coaching-rules.js?v=20260711-coaching-rules-01"></script>
-  <script src="language/valorant-vocabulary.js?v=20260711-warmup-playlists-01"></script>
+  <script src="language/valorant-vocabulary.js?v=20260711-training-feed-01"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="integrations/riot-sync.js?v=20260711-warmup-playlists-01"></script>
-  <script type="module" src="app.js?v=20260711-warmup-playlists-01"></script>
+  <script src="integrations/riot-sync.js?v=20260711-training-feed-01"></script>
+  <script type="module" src="app.js?v=20260711-training-feed-01"></script>
 </body>
 </html>

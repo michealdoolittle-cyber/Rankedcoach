@@ -1,6 +1,6 @@
 # Daily Warm-Up Check — Research + Full Feature Directive
 
-**Status:** Built and locally verified 2026-07-11. The once-daily Home/Logging prompt now presents eleven requested pre-ranked training choices with themed selection feedback, a four-drill cap, and a separate optional post-game trainer section. The skip path, per-profile warm-up log, isolated Henrik DM/TDM verification, and sample-gated ranked correlation insight remain implemented. Production deployment is tracked by the shipping commit.
+**Status:** Built and locally verified 2026-07-11. The once-daily Home/Logging prompt presents eleven requested pre-ranked training choices with themed selection feedback and a four-drill cap. Logging now has permanent below-Map access: before completion it opens the warm-up checklist, then switches to a post-game-only training view. The Feed derives a clickable fire marker on the day's first game and stores a clickable crosshair marker against the exact game followed by post-game aim training; both reopen their focused edit view while normal reflection editing continues to expose the full log form and notes. The skip path, per-profile warm-up log, isolated Henrik DM/TDM verification, and sample-gated ranked correlation insight remain implemented. Production deployment is tracked by the shipping commit.
 
 ---
 
@@ -88,7 +88,7 @@ Once enough days of data exist, build a new formula (same module pattern as `rou
 
 ### Post-game aim training — separate, lighter, non-blocking
 
-Distinct from the pre-session check, the training surface now includes a separate optional post-game section with Aim Lab and KovaaK's launch links. It is visually separated, does not count toward the four warm-up choices, and does not gate navigation. A future automatic session-end trigger remains a separate product decision.
+Distinct from the pre-session check, the permanent Logging control becomes a focused post-game training menu after that day's warm-up is complete. It includes Aim Lab and KovaaK's launch links, does not count toward the four warm-up choices, and does not gate navigation. Committing it records the exact latest ranked feed entry rather than a floating daily flag, so later games do not move the crosshair marker. The Feed's fire and crosshair controls reopen the corresponding warm-up or post-game editor for that date.
 
 ---
 

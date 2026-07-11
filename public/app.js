@@ -227,6 +227,9 @@ function normalizeWarmupLogEntry(entry = {}) {
     dmTdmSelfReported: entry?.dmTdmSelfReported === true,
     dmTdmAutoVerified: entry?.dmTdmAutoVerified === true,
     dmTdmVerifiedMatches: Math.max(0, safeNumber(entry?.dmTdmVerifiedMatches)),
+    postGameAimTrainingCommitted: entry?.postGameAimTrainingCommitted === true,
+    postGameCommittedAt: String(entry?.postGameCommittedAt || ""),
+    postGameLogEntryId: String(entry?.postGameLogEntryId || ""),
     skipped: entry?.skipped === true,
     status: ["prompted", "completed", "skipped"].includes(entry?.status) ? entry.status : "prompted",
     promptedAt: String(entry?.promptedAt || ""),
@@ -246,6 +249,56 @@ function normalizeWarmupLog(entries = []) {
 
 function getDailyWarmupRecord(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
   return normalizeWarmupLog(profile?.warmupLog).find(entry => entry.date === date) || null;
+}
+
+function isDailyWarmupCompleted(record = null) {
+  return Boolean(record && record.skipped !== true && (
+    record.status === "completed"
+    || record.dmTdmSelfReported === true
+    || record.dmTdmAutoVerified === true
+    || (Array.isArray(record.drillsSelected) && record.drillsSelected.length > 0)
+  ));
+}
+
+function getTrainingEntryDate(entry = {}) {
+  const date = new Date(entry?.createdAt || 0);
+  return Number.isNaN(date.getTime()) ? "" : formatLocalDateKey(date);
+}
+
+function getDailyTrainingEntries(date = formatLocalDateKey(), profileId = activeProfileId) {
+  return getProfileLogEntries?.(profileId)
+    .filter(entry => getTrainingEntryDate(entry) === date)
+    .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
+}
+
+function getDailyTrainingFeedMarkers(entries = getProfileLogEntries?.(), profile = getActiveProfile?.()) {
+  const groups = new Map();
+  (Array.isArray(entries) ? entries : []).forEach(entry => {
+    const date = getTrainingEntryDate(entry);
+    if (!date) return;
+    if (!groups.has(date)) groups.set(date, []);
+    groups.get(date).push(entry);
+  });
+
+  const markers = new Map();
+  groups.forEach((dayEntries, date) => {
+    const record = getDailyWarmupRecord(profile, date);
+    if (!record) return;
+    const ordered = dayEntries.slice().sort((a, b) => new Date(a?.createdAt || 0) - new Date(b?.createdAt || 0));
+    const first = ordered[0] || null;
+    const linkedPostGame = ordered.find(entry => String(entry.id) === String(record.postGameLogEntryId || "")) || null;
+    if (first && isDailyWarmupCompleted(record)) {
+      markers.set(first.id, { ...(markers.get(first.id) || {}), warmup: true, date });
+    }
+    if (record.postGameAimTrainingCommitted && linkedPostGame) {
+      markers.set(linkedPostGame.id, { ...(markers.get(linkedPostGame.id) || {}), postGame: true, date });
+    }
+  });
+  return markers;
+}
+
+function getTrainingCrosshairMarkup() {
+  return `<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v5M12 17v5M2 12h5M17 12h5"></path></svg>`;
 }
 
 function writeDailyWarmupRecord(profile, patch = {}) {
@@ -285,10 +338,10 @@ function renderDailyWarmupCorrelationStatus(profile = getActiveProfile?.()) {
     : `Building correlation sample: ${correlation.warm?.days || 0}/${required} warm-up days and ${correlation.comparison?.days || 0}/${required} comparison days.`;
 }
 
-function renderDailyWarmupVerification(profile = getActiveProfile?.()) {
+function renderDailyWarmupVerification(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
   const target = document.getElementById("dailyWarmupVerification");
   if (!target) return;
-  const record = getDailyWarmupRecord(profile);
+  const record = getDailyWarmupRecord(profile, date);
   target.classList.toggle("is-verified", record?.dmTdmAutoVerified === true);
   if (record?.dmTdmAutoVerified) {
     target.textContent = `Henrik verified ${record.dmTdmVerifiedMatches || 1} DM/TDM warm-up match${record.dmTdmVerifiedMatches === 1 ? "" : "es"} today.`;
@@ -299,8 +352,76 @@ function renderDailyWarmupVerification(profile = getActiveProfile?.()) {
   }
 }
 
-function resetDailyWarmupModal(profile = getActiveProfile?.()) {
+function renderLoggingTrainingMenuState(profile = getActiveProfile?.()) {
+  const button = document.getElementById("loggingTrainingMenuBtn");
+  if (!button) return;
   const record = getDailyWarmupRecord(profile);
+  const warmupComplete = isDailyWarmupCompleted(record);
+  const postGameComplete = record?.postGameAimTrainingCommitted === true;
+  const fire = document.getElementById("loggingTrainingMenuFire");
+  const crosshair = document.getElementById("loggingTrainingMenuCrosshair");
+  const title = document.getElementById("loggingTrainingMenuTitle");
+  const status = document.getElementById("loggingTrainingMenuStatus");
+  button.dataset.trainingMode = warmupComplete ? "postgame" : "warmup";
+  button.classList.toggle("is-complete", postGameComplete);
+  if (fire) fire.hidden = warmupComplete;
+  if (crosshair) crosshair.hidden = !warmupComplete;
+  if (title) title.textContent = warmupComplete ? "Post-Game Aim Training" : "Warm-Up Menu";
+  if (status) {
+    status.textContent = postGameComplete
+      ? "Completed after your latest linked game. Tap to review or remove it."
+      : warmupComplete
+        ? "Warm-up saved. Return here after your final game."
+        : "Choose up to four drills before your first ranked game.";
+  }
+  button.setAttribute("aria-label", `${title?.textContent || "Training menu"}. ${status?.textContent || ""}`);
+}
+
+function renderDailyPostgameState(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
+  const record = getDailyWarmupRecord(profile, date);
+  const committed = record?.postGameAimTrainingCommitted === true;
+  const button = document.getElementById("dailyWarmupPostgameCommit");
+  const text = document.getElementById("dailyWarmupPostgameCommitText");
+  const status = document.getElementById("dailyWarmupPostgameStatus");
+  const entries = getDailyTrainingEntries(date, profile?.id);
+  button?.classList.toggle("is-complete", committed);
+  button?.setAttribute("aria-pressed", committed ? "true" : "false");
+  if (text) text.textContent = committed ? "Post-game training completed" : "Mark post-game training complete";
+  if (status) {
+    status.textContent = committed
+      ? "Linked to the game this training followed. Select again to remove the marker."
+      : entries.length
+        ? "Completion will attach to your latest game from this session."
+        : "Complete or import a ranked game before marking post-game training.";
+  }
+  if (button) button.disabled = !committed && entries.length === 0;
+}
+
+function setDailyTrainingModalMode(mode = "warmup", options = {}) {
+  const modal = document.getElementById("dailyWarmupModal");
+  const resolvedMode = mode === "postgame" ? "postgame" : "warmup";
+  if (!modal) return;
+  modal.dataset.trainingMode = resolvedMode;
+  modal.dataset.trainingDate = String(options.date || formatLocalDateKey());
+  modal.dataset.dismissBehavior = options.dismissBehavior === "skip" ? "skip" : "close";
+  document.querySelectorAll('[data-daily-training-section="warmup"]').forEach(element => {
+    element.hidden = resolvedMode !== "warmup";
+  });
+  const postGame = document.querySelector('[data-daily-training-section="postgame"]');
+  if (postGame) postGame.hidden = resolvedMode !== "postgame";
+  const kicker = document.getElementById("dailyWarmupKicker");
+  const title = document.getElementById("dailyWarmupTitle");
+  const skip = document.getElementById("dailyWarmupSkip");
+  const close = document.getElementById("dailyWarmupClose");
+  if (kicker) kicker.textContent = resolvedMode === "postgame" ? "Post-Game Aim Training" : "Daily Warm-Up Check";
+  if (title) title.textContent = resolvedMode === "postgame" ? "Close the session with clean reps" : "Get your first fights ready";
+  if (skip) skip.textContent = modal.dataset.dismissBehavior === "skip" ? "Skip today" : "Close";
+  if (close) close.setAttribute("aria-label", resolvedMode === "postgame" ? "Close post-game aim training" : "Close warm-up menu");
+}
+
+function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey()) {
+  const record = getDailyWarmupRecord(profile, date);
+  const warmupMode = document.getElementById("dailyWarmupModal")?.dataset.trainingMode !== "postgame";
   const selected = new Set(record?.drillsSelected || []);
   document.querySelectorAll("[data-warmup-drill]").forEach(button => {
     const isSelected = selected.has(button.dataset.warmupDrill);
@@ -310,13 +431,30 @@ function resetDailyWarmupModal(profile = getActiveProfile?.()) {
   const count = document.getElementById("dailyWarmupCount");
   if (count) count.textContent = `${selected.size} / ${DAILY_WARMUP_DRILL_LIMIT}`;
   const weaponField = document.getElementById("dailyWarmupWeaponField");
-  if (weaponField) weaponField.hidden = !selected.has("weapon-choice");
+  if (weaponField) weaponField.hidden = !warmupMode || !selected.has("weapon-choice");
   const weapon = document.getElementById("dailyWarmupWeapon");
   if (weapon) weapon.value = record?.weapon || "";
   const dmTdm = document.getElementById("dailyWarmupDmTdm");
   if (dmTdm) dmTdm.checked = record?.dmTdmSelfReported === true;
-  renderDailyWarmupVerification(profile);
+  renderDailyWarmupVerification(profile, date);
   renderDailyWarmupCorrelationStatus(profile);
+  renderDailyPostgameState(profile, date);
+  renderLoggingTrainingMenuState(profile);
+}
+
+function openDailyTrainingMenu(options = {}) {
+  const profile = getActiveProfile?.();
+  if (!profile?.id) return false;
+  const date = String(options.date || formatLocalDateKey());
+  const record = getDailyWarmupRecord(profile, date);
+  const mode = options.mode || (isDailyWarmupCompleted(record) ? "postgame" : "warmup");
+  setDailyTrainingModalMode(mode, {
+    date,
+    dismissBehavior: options.dismissBehavior || "close"
+  });
+  resetDailyWarmupModal(profile, date);
+  showModalById?.("dailyWarmupModal");
+  return true;
 }
 
 function openDailyWarmupCheck() {
@@ -332,9 +470,7 @@ function openDailyWarmupCheck() {
     promptedAt: nowISO(),
     lastWarmupPromptDate: today
   });
-  resetDailyWarmupModal(getActiveProfile());
-  showModalById?.("dailyWarmupModal");
-  return true;
+  return openDailyTrainingMenu({ mode: "warmup", date: today, dismissBehavior: "skip" });
 }
 
 function canOpenDailyWarmupCheck() {
@@ -360,9 +496,10 @@ function scheduleDailyWarmupCheck(delay = 700) {
 
 function skipDailyWarmupCheck() {
   const profile = getActiveProfile?.();
+  const date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey();
   if (profile) {
     writeDailyWarmupRecord(profile, {
-      date: formatLocalDateKey(),
+      date,
       status: "skipped",
       skipped: true,
       drillsSelected: [],
@@ -372,6 +509,15 @@ function skipDailyWarmupCheck() {
   }
   hideModalById?.("dailyWarmupModal");
   showToast?.("Warm-up skipped for today. Queue when you feel ready.", { tone: "neutral" });
+}
+
+function closeDailyTrainingMenu() {
+  const modal = document.getElementById("dailyWarmupModal");
+  if (modal?.dataset.dismissBehavior === "skip" && modal?.dataset.trainingMode === "warmup") {
+    skipDailyWarmupCheck();
+    return;
+  }
+  hideModalById?.("dailyWarmupModal");
 }
 
 async function refreshWarmupAutoVerification(profile = getActiveProfile?.(), options = {}) {
@@ -427,6 +573,7 @@ async function refreshWarmupAutoVerification(profile = getActiveProfile?.(), opt
 function saveDailyWarmupCheck() {
   const profile = getActiveProfile?.();
   if (!profile) return;
+  const date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey();
   const drillsSelected = [...document.querySelectorAll("[data-warmup-drill].is-selected")]
     .map(button => button.dataset.warmupDrill)
     .filter(Boolean)
@@ -438,7 +585,7 @@ function saveDailyWarmupCheck() {
     return;
   }
   const record = writeDailyWarmupRecord(profile, {
-    date: formatLocalDateKey(),
+    date,
     status: "completed",
     skipped: false,
     drillsSelected,
@@ -448,8 +595,37 @@ function saveDailyWarmupCheck() {
     completedAt: nowISO()
   });
   hideModalById?.("dailyWarmupModal");
+  renderLoggingTrainingMenuState(getActiveProfile());
+  renderLogFeed?.({ force: true });
   showToast?.(`Warm-up saved: ${record?.drillsSelected?.length || 0} drill${record?.drillsSelected?.length === 1 ? "" : "s"}${dmTdmSelfReported ? " plus DM/TDM" : ""}.`, { tone: "success" });
   void refreshWarmupAutoVerification(getActiveProfile(), { announce: true });
+}
+
+function toggleDailyPostgameTraining() {
+  const profile = getActiveProfile?.();
+  if (!profile) return;
+  const modal = document.getElementById("dailyWarmupModal");
+  const date = modal?.dataset.trainingDate || formatLocalDateKey();
+  const record = getDailyWarmupRecord(profile, date);
+  const removing = record?.postGameAimTrainingCommitted === true;
+  const entries = getDailyTrainingEntries(date, profile.id);
+  const latest = entries[entries.length - 1] || null;
+  if (!removing && !latest) {
+    renderDailyPostgameState(profile, date);
+    return;
+  }
+  writeDailyWarmupRecord(profile, {
+    date,
+    postGameAimTrainingCommitted: !removing,
+    postGameCommittedAt: removing ? "" : nowISO(),
+    postGameLogEntryId: removing ? "" : String(latest.id || "")
+  });
+  renderLoggingTrainingMenuState(getActiveProfile());
+  renderLogFeed?.({ force: true });
+  hideModalById?.("dailyWarmupModal");
+  showToast?.(removing ? "Post-game training marker removed." : "Post-game aim training linked to your latest game.", {
+    tone: removing ? "neutral" : "success"
+  });
 }
 
 function bindDailyWarmupEvents() {
@@ -472,12 +648,20 @@ function bindDailyWarmupEvents() {
       if (count) count.textContent = `${nextCount} / ${DAILY_WARMUP_DRILL_LIMIT}`;
       const weaponField = document.getElementById("dailyWarmupWeaponField");
       if (weaponField) weaponField.hidden = !document.querySelector('[data-warmup-drill="weapon-choice"].is-selected');
-      renderDailyWarmupVerification(getActiveProfile?.());
+      const date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey();
+      renderDailyWarmupVerification(getActiveProfile?.(), date);
       return;
     }
     if (event.target?.id === "dailyWarmupSave") saveDailyWarmupCheck();
-    if (["dailyWarmupSkip", "dailyWarmupClose"].includes(event.target?.id)) skipDailyWarmupCheck();
-    if (event.target?.id === "dailyWarmupModal") skipDailyWarmupCheck();
+    if (event.target?.closest?.("#dailyWarmupPostgameCommit")) toggleDailyPostgameTraining();
+    if (event.target?.closest?.("#loggingTrainingMenuBtn")) openDailyTrainingMenu();
+    if (event.target?.id === "dailyWarmupSkip") {
+      const modal = document.getElementById("dailyWarmupModal");
+      if (modal?.dataset.dismissBehavior === "skip") skipDailyWarmupCheck();
+      else closeDailyTrainingMenu();
+    }
+    if (event.target?.id === "dailyWarmupClose") closeDailyTrainingMenu();
+    if (event.target?.id === "dailyWarmupModal") closeDailyTrainingMenu();
   });
 }
 
@@ -32702,7 +32886,6 @@ function initApp(){
   renderStatsMaps();
   renderInsights();
   renderLogFeed();
-  updateWarmupQuickChipState();
   syncLoggingQuickChipStates();
   bindInsightFilters();
 
@@ -41408,14 +41591,6 @@ function isFirstGameOfCurrentSession() {
   return todaysEntries.length === 0;
 }
 
-function updateWarmupQuickChipState() {
-  const chip = document.getElementById("logWarmupChip");
-  if (!chip) return;
-  const enabled = isFirstGameOfCurrentSession();
-  chip.disabled = !enabled;
-  chip.title = enabled ? "Use this on the first game of the session." : "Warmup is only recorded on the first logged game of the session.";
-}
-
 function getLoggingQuickChipButtons() {
   return [...document.querySelectorAll("[data-log-quick]")];
 }
@@ -41797,7 +41972,6 @@ if(entry.focus){
   setLoggingQuickMenuOpen(false);
   syncLoggingQuickChipStates();
   updateLoggingDebriefPreview();
-  updateWarmupQuickChipState();
   saveLogEntries();
   scrollLoggingFormToTopAfterSave();
 }
@@ -42255,12 +42429,13 @@ function renderLogFeed(options = {}){
   }
 
   renderLogSessionSelector();
-  updateWarmupQuickChipState();
+  renderLoggingTrainingMenuState();
   container.innerHTML = "";
   loggingFeedDirty = false;
   loggingFeedRendered = true;
 
   const profileEntries = getProfileLogEntries();
+  const trainingMarkers = getDailyTrainingFeedMarkers(profileEntries, getActiveProfile());
   if(!profileEntries.length){
     container.innerHTML = `
       <div class="log-empty">
@@ -42311,11 +42486,13 @@ function renderLogFeed(options = {}){
         : "";
       const isEditingEntry = entry.id === editingLogEntryId;
       const isPlaceholder = isMatchPlaceholderLogEntry(entry);
+      const trainingMarker = trainingMarkers.get(entry.id) || null;
       const notesCopy = isPlaceholder
         ? "Add your reflection for this ranked match."
         : (entry.notes || "-");
       const el = document.createElement("div");
       el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}${isEditingEntry ? " log-entry-editing" : ""}${isPlaceholder ? " log-entry-placeholder" : ""}`;
+      el.dataset.logEntryId = String(entry.id || "");
 
       el.innerHTML = `
         <div class="log-header">
@@ -42345,6 +42522,8 @@ function renderLogFeed(options = {}){
         </div>
 
         <div class="log-actions">
+          ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" aria-label="Edit warm-up for this session" title="Edit warm-up">&#128293;</button>` : ""}
+          ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" aria-label="Edit post-game aim training for this session" title="Edit post-game aim training">${getTrainingCrosshairMarkup()}</button>` : ""}
           <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
         </div>
       `;
@@ -42383,7 +42562,7 @@ function renderLogFeed(options = {}){
           </div>
           <div class="log-tier-row">
             <span class="log-tier-label">Warmup</span>
-            <span class="log-tier-value">${isPlaceholder ? "-" : entry.warmup ? "Yes" : "No"}</span>
+            <span class="log-tier-value">${trainingMarker?.warmup ? "Yes" : "No"}</span>
           </div>
         `;
       }
@@ -42399,8 +42578,20 @@ function renderLogFeed(options = {}){
       }
 
       const editBtn = el.querySelector(".log-edit-btn");
+      const warmupBtn = el.querySelector(".log-training-fire");
+      const postGameBtn = el.querySelector(".log-training-crosshair");
 
       editBtn?.addEventListener("click", () => editLogEntry(entry.id));
+      warmupBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openDailyTrainingMenu({ mode: "warmup", date: warmupBtn.dataset.trainingDate, dismissBehavior: "close" });
+      });
+      postGameBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openDailyTrainingMenu({ mode: "postgame", date: postGameBtn.dataset.trainingDate, dismissBehavior: "close" });
+      });
 
       sessionWrap.appendChild(el);
 

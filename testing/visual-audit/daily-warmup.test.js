@@ -82,6 +82,10 @@ function supabaseStub() {
 
 async function seedProfile(page, id) {
   await page.addInitScript(({ id }) => {
+    const firstGame = new Date();
+    firstGame.setHours(10, 0, 0, 0);
+    const lastGame = new Date();
+    lastGame.setHours(12, 0, 0, 0);
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     localStorage.setItem("valtracker_active_profile_id", id);
     localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
@@ -97,6 +101,38 @@ async function seedProfile(page, id) {
         createdAt: new Date(Date.now() - 86400000).toISOString()
       }]
     }]));
+    localStorage.setItem("valtracker_log_entries_v2:guest", JSON.stringify([
+      {
+        id: "training-last-game",
+        matchId: "training-last-match",
+        profileId: id,
+        source: "henrik-match-placeholder",
+        isMatchPlaceholder: true,
+        isPlayerAuthored: false,
+        createdAt: lastGame.toISOString(),
+        result: "loss",
+        rr: -14,
+        agent: "Sova",
+        role: "Initiator",
+        map: "Haven",
+        notes: ""
+      },
+      {
+        id: "training-first-game",
+        matchId: "training-first-match",
+        profileId: id,
+        source: "henrik-match-placeholder",
+        isMatchPlaceholder: true,
+        isPlayerAuthored: false,
+        createdAt: firstGame.toISOString(),
+        result: "win",
+        rr: 18,
+        agent: "Jett",
+        role: "Duelist",
+        map: "Ascent",
+        notes: ""
+      }
+    ]));
   }, { id });
 }
 
@@ -168,7 +204,7 @@ async function run() {
     ];
     assert.deepEqual(await page.locator("[data-warmup-drill] .daily-warmup-drill-copy strong").allTextContents(), expectedDrills);
     assert.equal(await page.locator("[data-warmup-drill] .daily-warmup-select-indicator").count(), expectedDrills.length);
-    assert.equal(await page.locator(".daily-warmup-postgame").isVisible(), true);
+    assert.equal(await page.locator(".daily-warmup-postgame").isVisible(), false);
     assert.equal(await page.locator(".daily-warmup-postgame-links a").count(), 2);
     const rankedMatchCountBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.matches?.length || 0);
 
@@ -199,7 +235,6 @@ async function run() {
     assert.equal(await page.locator("[data-warmup-drill].is-selected").count(), 4);
     await page.fill("#dailyWarmupWeapon", "Vandal");
     await page.screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-desktop.png"), fullPage: true });
-    await page.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-desktop.png") });
     await page.check("#dailyWarmupDmTdm");
     await page.click("#dailyWarmupSave");
     await page.waitForFunction(() => {
@@ -217,6 +252,52 @@ async function run() {
     assert.equal(saved.warmupLog[0].dmTdmSelfReported, true);
     assert.equal(saved.warmupLog[0].dmTdmAutoVerified, true);
     assert.equal(saved.lastWarmupPromptDate, saved.warmupLog[0].date);
+
+    await page.locator('.nav-btn[data-page="logging"]').click();
+    await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("active"));
+    assert.equal(await page.locator("#loggingTrainingMenuTitle").innerText(), "POST-GAME AIM TRAINING");
+    await page.click("#loggingTrainingMenuBtn");
+    await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
+    assert.equal(await page.locator("#dailyWarmupGrid").isVisible(), false);
+    assert.equal(await page.locator(".daily-warmup-postgame").isVisible(), true);
+    await page.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-desktop.png") });
+    assert.equal(await page.locator("#dailyWarmupPostgameCommit").isEnabled(), true);
+    await page.click("#dailyWarmupPostgameCommit");
+    await page.waitForFunction(() => {
+      const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0];
+      return profile?.warmupLog?.[0]?.postGameAimTrainingCommitted === true;
+    });
+
+    const trainingRecord = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]);
+    assert.equal(trainingRecord.postGameLogEntryId, "training-last-game");
+    await page.waitForTimeout(3000);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 1);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-crosshair').count(), 0);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 1);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-fire').count(), 0);
+    await page.locator("#loggingTrainingMenuBtn").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-desktop.png") });
+    await page.locator(".logging-feed-card").screenshot({ path: path.join(__dirname, "tmp", "daily-training-feed-icons-desktop.png") });
+
+    await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').click();
+    await page.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
+    assert.equal(await page.locator('[data-warmup-drill="weapon-choice"]').getAttribute("aria-pressed"), "true");
+    await page.click("#dailyWarmupClose");
+    await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').click();
+    await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
+    assert.equal(await page.locator("#dailyWarmupPostgameCommit").getAttribute("aria-pressed"), "true");
+    await page.click("#dailyWarmupPostgameCommit");
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]?.postGameAimTrainingCommitted === false);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 0);
+    await page.click("#loggingTrainingMenuBtn");
+    await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
+    await page.click("#dailyWarmupPostgameCommit");
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]?.postGameAimTrainingCommitted === true);
+    assert.equal(await page.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 1);
+
+    await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-edit-btn').click();
+    assert.equal(await page.locator("#logMap").inputValue(), "Ascent");
+    assert.equal(await page.locator("#logNotes").inputValue(), "");
+    assert.equal(await page.locator("#page-logging").getAttribute("data-mobile-logging-view"), "form");
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1400);
@@ -246,15 +327,33 @@ async function run() {
     await mobile.waitForTimeout(220);
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-mobile.png"), fullPage: true });
     assert.equal(await mobile.locator("[data-warmup-drill].is-selected").count(), 2);
-    assert.equal(await mobile.locator(".daily-warmup-postgame").isVisible(), true);
-    await mobile.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-mobile.png") });
+    assert.equal(await mobile.locator(".daily-warmup-postgame").isVisible(), false);
     await mobile.click("#dailyWarmupSkip");
     const skipped = await mobile.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]);
     assert.equal(skipped.warmupLog[0].skipped, true);
     assert.equal(skipped.lastWarmupPromptDate, skipped.warmupLog[0].date);
+    await mobile.click('[data-mobile-page="logging"]');
+    await mobile.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
+    await mobile.waitForTimeout(3000);
+    await mobile.locator("#loggingTrainingMenuBtn").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-mobile.png") });
+    await mobile.click("#loggingTrainingMenuBtn");
+    await mobile.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
+    await mobile.click('[data-warmup-drill="head-tracking"]');
+    await mobile.click("#dailyWarmupSave");
+    await mobile.click("#loggingTrainingMenuBtn");
+    await mobile.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
+    await mobile.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-mobile.png") });
+    assert.equal(await mobile.locator("#dailyWarmupGrid").isVisible(), false);
+    await mobile.click("#dailyWarmupPostgameCommit");
+    await mobile.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]?.postGameAimTrainingCommitted === true);
+    await mobile.click('[data-mobile-logging-view="feed"]');
+    await mobile.waitForTimeout(3000);
+    assert.equal(await mobile.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 1);
+    assert.equal(await mobile.locator('.log-entry[data-log-entry-id="training-last-game"] .log-training-crosshair').count(), 1);
+    await mobile.locator(".logging-feed-card").screenshot({ path: path.join(__dirname, "tmp", "daily-training-feed-icons-mobile.png") });
     await mobile.close();
 
-    console.log("Daily warm-up checks passed: eleven-item catalog, themed checks, separate post-game playlist, once-per-day trigger, persistence, Henrik isolation, and sample gating.");
+    console.log("Daily training checks passed: form access, warm-up/post-game modes, first/linked-last feed markers, editable reflections, persistence, Henrik isolation, and mobile layout.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
