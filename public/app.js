@@ -12186,6 +12186,12 @@ function hideLoginInitializationOverlay() {
   }, 420);
 }
 
+function dismissLoginInitializationOverlay() {
+  releaseInitialAppBootGuard();
+  hideModalById?.("loginInitOverlay");
+  clearLoginInitializationTheme();
+}
+
 function shouldShowRiotProfilePrompt(options = {}) {
   if (!currentAuthUser) return false;
   if (activeProfileHasRiotId()) return false;
@@ -47653,21 +47659,34 @@ document.addEventListener("click", async (e) => {
     }
 
     authPasswordLoginInProgress = true;
+    showLoginInitializationOverlay(
+      "Signing you in.",
+      "Checking your account before loading saved profiles, matches, and coaching pages."
+    );
     const restoreButton = setAuthButtonLoading(e.target, "Checking...");
-    const { error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password: pass
-    });
+    let signInError = null;
+    let signInRequestFailed = false;
+    try {
+      ({ error: signInError } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password: pass
+      }));
+    } catch (requestError) {
+      signInRequestFailed = true;
+      signInError = requestError || new Error("Unable to reach the sign-in service.");
+    }
 
-    if(error){
+    if(signInError){
       authPasswordLoginInProgress = false;
+      dismissLoginInitializationOverlay();
       restoreButton();
-      alert("Invalid username or password.");
+      alert(signInRequestFailed ? "Unable to reach the sign-in service. Please try again." : "Invalid username or password.");
       return;
     }
 
     try {
       if (await prepareMfaChallengeAfterLogin()) {
+        dismissLoginInitializationOverlay();
         restoreButton();
         return;
       }
@@ -47675,9 +47694,11 @@ document.addEventListener("click", async (e) => {
       setAppEntryChoice("auth");
       closeAuthModal();
       const signedInUser = (await supabaseClient.auth.getUser()).data?.user || null;
+      if (!signedInUser) throw new Error("Your signed-in account could not be loaded. Please try again.");
       await initializeSignedInAccount(signedInUser, { reason: "password-login" });
     } catch (mfaError) {
       authPasswordLoginInProgress = false;
+      dismissLoginInitializationOverlay();
       await supabaseClient.auth.signOut();
       alert(mfaError?.message || "Unable to check 2-factor authentication for this account.");
     } finally {

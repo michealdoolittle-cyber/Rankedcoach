@@ -93,6 +93,43 @@ async function run() {
   const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 
   try {
+    const desktopAuthPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await desktopAuthPage.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({
+      contentType: "text/javascript",
+      body: `
+        window.supabase = {
+          createClient() {
+            return {
+              auth: {
+                getSession: async () => ({ data: { session: null } }),
+                getUser: async () => ({ data: { user: null } }),
+                onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+                signInWithPassword: () => new Promise(() => {}),
+                mfa: {
+                  getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }),
+                  listFactors: async () => ({ data: { all: [] } })
+                }
+              }
+            };
+          }
+        };
+      `
+    }));
+    await desktopAuthPage.addInitScript(() => localStorage.clear());
+    await desktopAuthPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
+    await desktopAuthPage.waitForTimeout(500);
+    await desktopAuthPage.fill("#authEmail", "desktop-loading@example.com");
+    await desktopAuthPage.fill("#authPassword", "not-a-real-password");
+    await desktopAuthPage.click("#authLoginBtn");
+    await desktopAuthPage.locator("#loginInitOverlay.active").waitFor({ state: "visible" });
+    await desktopAuthPage.waitForTimeout(280);
+    assert.match(await desktopAuthPage.locator("#loginInitCopy").innerText(), /Signing you in/i);
+    assert.equal(await desktopAuthPage.locator("#loginInitOverlay").getAttribute("aria-hidden"), "false");
+    assert.equal(await desktopAuthPage.locator("#loginInitOverlay .login-init-card").evaluate(element => getComputedStyle(element).opacity), "1");
+    fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
+    await desktopAuthPage.screenshot({ path: path.join(__dirname, "tmp", "desktop-login-loading.png"), fullPage: true });
+    await desktopAuthPage.close();
+
     const authPage = await browser.newPage(mobile);
     await authPage.addInitScript(() => localStorage.clear());
     await authPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
@@ -150,7 +187,7 @@ async function run() {
       await page.close();
     }
 
-    console.log("Auth and avatar layout check passed: password reveal is stable and mobile frames fully cover the avatar.");
+    console.log("Auth and avatar layout check passed: desktop login loading is visible, password reveal is stable, and mobile frames fully cover the avatar.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

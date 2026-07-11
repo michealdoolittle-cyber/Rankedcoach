@@ -9688,6 +9688,7 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   transition:transform .24s cubic-bezier(.22,1,.36,1), opacity .18s ease;
 }
 
+.login-init-overlay.is-opening .login-init-card,
 .login-init-overlay.active .login-init-card{
   transform:translateY(0) scale(1);
   opacity:1;
