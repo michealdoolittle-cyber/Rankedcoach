@@ -953,6 +953,19 @@ function getProfileSubtitle(profile = null) {
   return `${riotId} | ${region}`;
 }
 
+function renderProfileRiotId(target, riotId = "") {
+  if (!target) return;
+  const normalized = String(riotId || "RiotID#TAG").trim() || "RiotID#TAG";
+  const separatorIndex = normalized.lastIndexOf("#");
+  const gameName = separatorIndex > 0 ? normalized.slice(0, separatorIndex) : normalized;
+  const tagLine = separatorIndex > 0 ? normalized.slice(separatorIndex) : "";
+  target.innerHTML = `
+    <span class="profile-riot-name">${escapeHtml(gameName)}</span>
+    ${tagLine ? `<span class="profile-riot-tag">${escapeHtml(tagLine)}</span>` : ""}
+  `;
+  target.title = normalized;
+}
+
 function writeMobileProfileRating(model = getCoachReadinessModel()) {
   const value = document.getElementById("mobileProfileRatingValue");
   const copy = document.getElementById("mobileProfileRatingCopy");
@@ -3754,6 +3767,7 @@ function polishCoachingInsight(insight = {}, context = {}) {
   const bestRole = context.bestRole || {};
   const weakestRole = context.weakestRole || {};
   const overview = context.overview || {};
+  const vocabularyVariant = (key, seed, values = {}) => globalThis.RankedCoachValorantVocabulary?.selectCardVariant?.(key, seed, values) || null;
 
   if (title === "core agent strength" && bestAgent?.agent) {
     const wr = Math.round(safeNumber(bestAgent.winrate));
@@ -3767,10 +3781,11 @@ function polishCoachingInsight(insight = {}, context = {}) {
       output.action = `Keep ${bestAgent.agent} only if the map fits, then give the next game one clear ${formatReadableLabel(agentRoles?.[bestAgent.agent] || "role")} job.`;
       output.priority = Math.max(safeNumber(output.priority), 86);
     } else {
-      output.preview = `${bestAgent.agent} is winning at ${wr}% WR across ${games} repeated games.`;
-      output.what = `${bestAgent.agent} is one of the cleaner parts of this profile right now.`;
-      output.why = `The agent is winning often enough to treat as working, while still watching whether the wins come from role impact or raw duels.`;
-      output.action = `Keep ${bestAgent.agent} in the active pool and repeat the same map plans before adding new ones.`;
+      Object.assign(output, vocabularyVariant("agentStrength", `${bestAgent.agent}:${games}:${wr}`, {
+        agent: bestAgent.agent,
+        games,
+        winrate: wr
+      }) || {});
     }
   }
 
@@ -3784,10 +3799,11 @@ function polishCoachingInsight(insight = {}, context = {}) {
       output.action = "Pick one map to simplify first: one attack plan, one defense default, and one mid-round fallback.";
       output.priority = Math.max(safeNumber(output.priority), 96);
     } else {
-      output.preview = `${weakestMap.map} is the repeated map most worth reviewing at ${Math.round(safeNumber(weakestMap.winrate))}% WR.`;
-      output.what = `${weakestMap.map} is the weakest repeated map in this selected window.`;
-      output.why = "A repeated low map result usually means your default plan, side balance, or comfort pick is not stable enough there.";
-      output.action = `Before the next ${weakestMap.map} game, choose one attack plan and one defense fallback.`;
+      Object.assign(output, vocabularyVariant("mapWeakness", `${weakestMap.map}:${weakestMap.matchesPlayed}:${Math.round(safeNumber(weakestMap.winrate))}`, {
+        map: weakestMap.map,
+        games: safeNumber(weakestMap.matchesPlayed),
+        winrate: Math.round(safeNumber(weakestMap.winrate))
+      }) || {});
     }
   }
 
@@ -3839,23 +3855,59 @@ function polishCoachingInsight(insight = {}, context = {}) {
 
   if (title === "recent mechanical form is slipping") {
     output.title = "Recent Form Is Slipping";
-    output.what = "The latest match block is performing worse than the broader sample.";
-    output.why = "That can come from tilt, fatigue, tougher games, weaker maps, or trying to fix too many things at once.";
-    output.action = "Make the next game boring on purpose: one agent, one focus, one reset rule.";
+    Object.assign(output, vocabularyVariant("recentLosses", `${overview.matchesPlayed}:${overview.matchesLost}`) || {});
   }
 
   if (title === "recent mechanical form is strong") {
     output.title = "Recent Form Is Working";
-    output.what = "The latest match block is holding up better than the broader sample.";
-    output.why = "The current setup is producing more playable rounds, so changing too much now would hide what is working.";
-    output.action = "Repeat the same agent pool and focus category for the next few games.";
+    Object.assign(output, vocabularyVariant("recentWins", `${overview.matchesPlayed}:${overview.matchesWon}`) || {});
   }
 
   if (title === "focus category to observe") {
     output.title = "Repeated Focus Category";
-    output.what = `${output.focus || "This focus"} keeps showing up in your saved logs.`;
-    output.why = "When the same focus keeps coming back, the player usually feels that part of the game breaking down in real rounds.";
-    output.action = `Keep ${output.focus || "this focus"} active until the next block shows it improving or stops repeating.`;
+    Object.assign(output, vocabularyVariant("weeklyFocus", `${output.focus}:${context.logs?.length || 0}`, {
+      focus: output.focus || "This focus"
+    }) || {});
+  }
+
+  if (title.endsWith("benchmark check")) {
+    output.preview = `${output.benchmark?.rankLabel || "Rank"} check: ${Number(safeNumber(overview.kd)).toFixed(2)} K/D, ${Math.round(safeNumber(overview.adr))} ADR, ${Math.round(safeNumber(overview.hs))}% HS in this window.`;
+    output.what = output.what || "The current match window has one rank-relative gap worth watching.";
+    output.why = "The rank sample is context, not a verdict. Agent, map, weapon, and round decisions still decide what the number means.";
+  }
+
+  if (title === "no map is winning enough yet") {
+    output.title = "Map Pool Is Not Converting Yet";
+    output.what = "No repeated map is turning enough rounds into match wins in this window.";
+    output.why = "When the whole pool is below 50%, start with defaults, side plans, and comfort picks instead of blaming one map.";
+    output.action = "Choose one map, one attack default, one defense setup, and one fallback call before the next queue.";
+  }
+
+  if (title === "clutch closing") {
+    output.what = `${Math.round(safeNumber(overview.clutchWins))} of ${Math.round(safeNumber(overview.clutchRounds))} late rounds ended with you getting the final kill.`;
+    output.why = "These are rounds where your timing and last-fight choice decided whether the advantage actually closed.";
+    output.action = safeNumber(overview.clutchConversionRate) >= 50
+      ? "Keep isolating the final duel and make the opponent swing into your timing."
+      : "Slow the last fight down, clear the trade, and use the spike clock before giving the opponent a clean duel.";
+  }
+
+  if (title === "trade support split") {
+    output.what = "The trade window shows how often teammates answer your death and how often you answer theirs.";
+    output.why = "A gap between those two rates usually points to spacing, entry timing, or being too far away when first contact happens.";
+    output.action = "Start the next hit close enough to swing the same angle within the trade window, then reset together after the pick.";
+  }
+
+  if (title === "damage consistency") {
+    output.what = "Your round-to-round damage is changing enough to affect how reliable your pressure feels.";
+    output.why = "Big swings often come from taking very different fights each round, arriving late, or getting removed before utility creates a clean duel.";
+    output.action = "Repeat the same opening job for a few rounds and judge whether your damage arrives before the round is already decided.";
+  }
+
+  if (title === "repeated availability flag") {
+    output.title = "Rounds Lost Before You Could Play Them";
+    output.what = "The import found repeated rounds where you were unavailable before your normal role value could be used.";
+    output.why = "AFK or spawn-idle rounds distort combat stats and leave the team playing the round short-handed.";
+    output.action = "Treat this as a queue-readiness issue, not an aim issue; only start when you can play the full match.";
   }
 
   if (title === "confidence is running low") {
@@ -9195,9 +9247,8 @@ function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedS
       label: "ATK/DEF",
       items: [
         statItem("Attack Win Rate", hasSample ? formatPercent(weapon.attackWinrate) : "--", `attack wins / attack rounds with ${meta?.name || "this weapon"} = ${attackRounds.filter(round => round?.roundWon).length} / ${attackRounds.length || 1}`),
-        statItem("Attack Share", hasSample ? formatPercent(safeDivide(attackRounds.length * 100, rounds.length)) : "--", "Attack rounds with this weapon divided by all rounds reported with it."),
         statItem("Defense Win Rate", hasSample ? formatPercent(weapon.defenseWinrate) : "--", `defense wins / defense rounds with ${meta?.name || "this weapon"} = ${defenseRounds.filter(round => round?.roundWon).length} / ${defenseRounds.length || 1}`),
-        statItem("Defense Share", hasSample ? formatPercent(safeDivide(defenseRounds.length * 100, rounds.length)) : "--", "Defense rounds with this weapon divided by all rounds reported with it."),
+        statItem("Def/Atk Share", hasSample ? `${formatPercent(safeDivide(defenseRounds.length * 100, rounds.length))} / ${formatPercent(safeDivide(attackRounds.length * 100, rounds.length))}` : "-- / --", "Defense and attack rounds with this weapon divided by all rounds reported with it."),
         statItem("Kills / Round", hasSample ? Number(weapon.killsPerRound || 0).toFixed(2) : "--", "Estimated kills divided by rounds reported on this weapon."),
         statItem("Deaths / Round", hasSample ? Number(weapon.deathsPerRound || 0).toFixed(2) : "--", "Estimated deaths divided by rounds reported on this weapon.")
       ]
@@ -11886,18 +11937,44 @@ const COACH_READINESS_UNLOCKS = [
 ];
 
 function getCoachReadinessModel() {
+  const profile = getActiveProfile();
   const matchCount = getCanonicalMatchRecordCount();
-  const totalProgress = COACH_READINESS_UNLOCKS.reduce((sum, item) => {
-    return sum + Math.min(1, matchCount / Math.max(1, item.required));
-  }, 0);
-  const percent = Math.round((totalProgress / COACH_READINESS_UNLOCKS.length) * 100);
+  const authoredLogCount = getProfileLogEntries(activeProfileId, { authoredOnly: true }).length;
+  const profileMatches = Array.isArray(profile?.matches) ? profile.matches : [];
+  const currentSeasonLabel = normalizeValorantSeasonLabel(profile?.trackerAnalytics?.currentAct || CURRENT_VALORANT_SEASON_LABEL);
+  const currentSeasonMatchCount = profileMatches.filter(match => getMatchSeasonLabel(match) === currentSeasonLabel).length;
+  const recentMatches = getSortedMatches(profileMatches).slice(-20);
+  const completeMatches = recentMatches.filter(match => {
+    const core = getMatchCore(match);
+    return core.map && core.map !== "Unknown"
+      && core.agent && core.agent !== "Unknown"
+      && Number.isFinite(Number(core.kills))
+      && Number.isFinite(Number(core.deaths))
+      && ["win", "loss", "draw"].includes(String(core.result || "").toLowerCase());
+  }).length;
+  const historyProgress = Math.min(1, matchCount / 20);
+  const currentSeasonProgress = Math.min(1, currentSeasonMatchCount / 10);
+  const reflectionProgress = Math.min(1, authoredLogCount / 5);
+  const completenessProgress = recentMatches.length ? completeMatches / recentMatches.length : 0;
+  const percent = Math.round(
+    (historyProgress * 40)
+    + (currentSeasonProgress * 25)
+    + (reflectionProgress * 25)
+    + (completenessProgress * 10)
+  );
   const nextUnlock = COACH_READINESS_UNLOCKS.find(item => matchCount < item.required);
   const unlocked = COACH_READINESS_UNLOCKS.filter(item => matchCount >= item.required);
+  const copyParts = [`${matchCount} ranked matches imported`];
+  copyParts.push(`${currentSeasonMatchCount}/10 current-season matches`);
+  copyParts.push(`${authoredLogCount}/5 reflection logs`);
   const copy = nextUnlock
-    ? `${matchCount}/${nextUnlock.required} games logged for ${nextUnlock.label.toLowerCase()}.`
-    : `${matchCount} games logged. Full coaching reads are available.`;
+    ? `${copyParts.join(". ")}. ${nextUnlock.label} unlocks at ${nextUnlock.required} matches.`
+    : `${copyParts.join(". ")}. Match-driven reads are unlocked; rating grows with current-season play and your own reflections.`;
   return {
     matchCount,
+    authoredLogCount,
+    currentSeasonMatchCount,
+    completenessProgress,
     percent,
     copy,
     nextUnlock,
@@ -16356,15 +16433,32 @@ function getCurrentGoalMinimum(){
   return { currentRR, currentRank, currentRankMin, currentActRR, radiantMinRR };
 }
 
-function isGoalRankSelectionAllowed(label, requestedRR = null){
-  const normalized = normalizeTierLabel(label);
-  if(normalized === "Radiant +") return true;
+function getNextGoalRankSelection(){
+  const minimum = getCurrentGoalMinimum();
+  const nextRank = RANK_THRESHOLDS.find(rank => safeNumber(rank.min) > minimum.currentRR);
+  if(nextRank){
+    const target = getGoalRankTarget(nextRank.tierLabel);
+    return {
+      goalRank: nextRank.tierLabel,
+      goalRR: null,
+      target
+    };
+  }
 
+  const goalRR = getMinimumRadiantGoalRR("Radiant +");
+  return {
+    goalRank: "Radiant +",
+    goalRR,
+    target: getGoalRankTarget("Radiant +", goalRR)
+  };
+}
+
+function isGoalRankSelectionAllowed(label, requestedRR = null){
   const target = getGoalRankTarget(label, requestedRR);
   if(!target?.bounds) return false;
 
   const minimum = getCurrentGoalMinimum();
-  if(target.bounds.min < minimum.currentRankMin) return false;
+  if(target.targetRR <= minimum.currentRR) return false;
   if(target.bounds.tierLabel === "Radiant" && safeNumber(target.goalRR, 0) < getMinimumRadiantGoalRR(target.goalRankLabel || target.bounds.tierLabel)) return false;
 
   return true;
@@ -16380,19 +16474,28 @@ function getClampedGoalRankSelection(label, requestedRR = null){
     };
   }
 
-  const minimum = getCurrentGoalMinimum();
-  const minimumRankLabel = minimum.currentRank?.tierLabel || RANK_THRESHOLDS[0].tierLabel;
-  const fallbackRank = normalizeTierLabel(minimumRankLabel) === "Radiant" ? "Radiant +" : minimumRankLabel;
-  const fallbackRR = fallbackRank === "Radiant +" || fallbackRank === "Radiant"
-    ? getMinimumRadiantGoalRR(fallbackRank)
-    : null;
-  const fallbackTarget = getGoalRankTarget(fallbackRank, fallbackRR);
+  return getNextGoalRankSelection();
+}
 
-  return {
-    goalRank: fallbackTarget?.goalRankLabel || fallbackRank,
-    goalRR: fallbackTarget?.goalRR ?? null,
-    target: fallbackTarget
-  };
+function ensureProfileGoalRank(profile = getActiveProfile()){
+  if(!profile) return null;
+  const existingTarget = getProfileGoalTarget(profile);
+  const currentRR = getCurrentGoalMinimum().currentRR;
+  if(existingTarget?.bounds && existingTarget.targetRR > currentRR){
+    return existingTarget;
+  }
+
+  const nextGoal = getNextGoalRankSelection();
+  const changed = profile.goalRank !== nextGoal.goalRank || profile.goalRR !== nextGoal.goalRR;
+  profile.goalRank = nextGoal.goalRank;
+  profile.goalRR = nextGoal.goalRR;
+  if(changed){
+    profiles = profiles.map(item => item.id === profile.id
+      ? { ...item, goalRank: profile.goalRank, goalRR: profile.goalRR }
+      : item);
+    saveProfiles();
+  }
+  return nextGoal.target;
 }
 
 // ========================
@@ -18152,9 +18255,19 @@ function bindInsightFilters() {
     activeInsightFilter = "all";
   }
 
+  if (activeInsightFilter !== "all" && !getFilteredInsightDisplayList(activeInsightFilter).length) {
+    activeInsightFilter = "all";
+  }
+
   buttons.forEach(button => {
-    button.classList.toggle("active", (button.dataset.filter || "all") === activeInsightFilter);
+    const filter = button.dataset.filter || "all";
+    const hasCards = filter === "all" || getFilteredInsightDisplayList(filter).length > 0;
+    button.disabled = !hasCards;
+    button.classList.toggle("is-empty", !hasCards);
+    button.setAttribute("aria-disabled", hasCards ? "false" : "true");
+    button.classList.toggle("active", filter === activeInsightFilter && hasCards);
     button.onclick = () => {
+      if (button.disabled) return;
       const nextFilter = button.dataset.filter || "all";
       activeInsightFilter = allowedFilters.has(nextFilter) ? nextFilter : "all";
 
@@ -39738,7 +39851,7 @@ function bindEvents(){
     if (!shell || !menu || !trigger) return false;
 
     const activeProfile = getActiveProfile();
-    const clampedGoal = getClampedGoalRankSelection(activeProfile?.goalRank || "Gold 1", activeProfile?.goalRR);
+    const clampedGoal = getClampedGoalRankSelection(activeProfile?.goalRank, activeProfile?.goalRR);
     goalRankSelect.value = clampedGoal.goalRank;
     if (goalRadiantRRInput) {
       goalRadiantRRInput.value = String(Math.max(safeNumber(goalRadiantRRInput.min, RADIANT_MIN_RR), Math.round(safeNumber(clampedGoal.goalRR, RADIANT_MIN_RR))));
@@ -39810,7 +39923,7 @@ function bindEvents(){
 
       const activeProfile = getActiveProfile();
       if (goalRankSelect) {
-        const clampedGoal = getClampedGoalRankSelection(activeProfile?.goalRank || "Gold 1", activeProfile?.goalRR);
+        const clampedGoal = getClampedGoalRankSelection(activeProfile?.goalRank, activeProfile?.goalRR);
         goalRankSelect.value = clampedGoal.goalRank;
         if (goalRadiantRRInput) {
           goalRadiantRRInput.value = String(Math.max(safeNumber(goalRadiantRRInput.min, RADIANT_MIN_RR), Math.round(safeNumber(clampedGoal.goalRR, RADIANT_MIN_RR))));
@@ -40446,7 +40559,7 @@ function buildTimelineEventsFromModel(model = getPlayerModel()) {
       date: Number.isNaN(date.getTime())
         ? "Current Window"
         : date.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-      title: `Game ${safeNumber(snapshot?.matchIndex, index) + 1} | ${snapshot?.impactTier || "Impact"} ${Math.round(safeNumber(snapshot?.impactScore, 0))} on ${snapshot?.map || "Unknown"}`
+      title: `Game ${safeNumber(snapshot?.matchIndex, index) + 1} | ${snapshot?.impactTier || "Impact"} ${Math.round(safeNumber(snapshot?.impactScore, 0))}% on ${snapshot?.map || "Unknown"}`
     });
   });
 
@@ -42773,7 +42886,7 @@ function renderProfilesUI(){
   }
 
   if(profileRiotIdEl){
-    profileRiotIdEl.textContent = active?.riotId || "Not set";
+    renderProfileRiotId(profileRiotIdEl, active?.riotId || "Not set");
   }
 
   if(profileRegionEl){
@@ -45193,14 +45306,14 @@ function updateNavRRToGoalRank(){
     currentIcon.alt = current.tierLabel;
   }
 
-  if(!profile || !profile.goalRank){
+  if(!profile){
     label.textContent = "Set Goal";
     bar.style.width = "100%";
     applyStaticTrackGradient(bar, 0, "horizontal");
     return;
   }
 
-  const goalTarget = getProfileGoalTarget(profile);
+  const goalTarget = ensureProfileGoalRank(profile);
   if(!goalTarget?.bounds){
     label.textContent = "Invalid Goal";
     bar.style.width = "100%";
@@ -46784,7 +46897,7 @@ function updateProfileHeaderUI(){
   }
 
   if(profileRiotIdEl){
-    profileRiotIdEl.textContent = p.riotId || "RiotID#TAG";
+    renderProfileRiotId(profileRiotIdEl, p.riotId || "RiotID#TAG");
   }
 
   if(profileRegionEl){
@@ -49450,7 +49563,6 @@ function closeStatsActMobileMenu() {
 }
 
 function openStatsActMobileMenu(options = [], selectedLabel = "") {
-  if (!isMobileLayoutViewport()) return;
   const menu = ensureStatsActMobileMenu();
   const list = menu.querySelector(".stats-act-mobile-menu-list");
   list.innerHTML = options.map((label) => {
@@ -49503,14 +49615,12 @@ function renderStatsSummaryMetaModel() {
 
   const mobileTrigger = document.getElementById("statsActMobileTrigger");
   const mobileValue = document.getElementById("statsActMobileValue");
-  const isMobile = isMobileLayoutViewport();
   if (mobileTrigger) {
-    mobileTrigger.hidden = !isMobile;
+    mobileTrigger.hidden = false;
     mobileTrigger.setAttribute("aria-expanded", "false");
     mobileTrigger.onclick = () => openStatsActMobileMenu(options, selector.value || currentLabel);
   }
   if (mobileValue) mobileValue.textContent = selector.value || currentLabel;
-  if (!isMobile) closeStatsActMobileMenu();
 
   selector.disabled = false;
   renderStatsHistoryBoundaryNote();
@@ -49684,6 +49794,7 @@ function renderInsightCardsModel() {
 
   const model = getPlayerModel();
   const allInsights = getInsightDisplayPool(model);
+  bindInsightFilters();
   const filterLabels = {
     all: "Priority Trends",
     bad: "Needs Work",

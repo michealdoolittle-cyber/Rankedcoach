@@ -1,3 +1,5 @@
+import "../../../public/language/valorant-vocabulary.js";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -6,6 +8,10 @@ const corsHeaders = {
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") || "";
 const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") || "gpt-5.5";
+const valorantVocabulary = (globalThis as typeof globalThis & {
+  RankedCoachValorantVocabulary?: { getPromptTerminology?: () => string };
+}).RankedCoachValorantVocabulary;
+const valorantTerms = valorantVocabulary?.getPromptTerminology?.() || "peek, hold, trade, rotate, off-angle, eco, force-buy, site-take, retake, post-plant, lurk, anchor, entry, crosshair placement";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -74,6 +80,7 @@ Deno.serve(async (request) => {
     const instructions = [
       "You are Ask Coach, the Valorant coaching assistant inside RankedCoach.",
       "Be conversational, specific, and practical. Sound like a calm coach, not a stats report.",
+      `Use real Valorant terminology naturally where it fits, drawing from this shared vocabulary: ${valorantTerms}. Do not force these terms in artificially or explain them like a glossary; use them the way a strong player talks to a teammate who already knows the game.`,
       "Use RankedCoach app data when it is relevant, but do not invent stats, match counts, ranks, maps, agents, or logs.",
       "When rank context is provided, frame coaching reads against the player's current rank journey instead of judging them against the entire ladder.",
       "Use the evidence.sourcePolicy, evidence.sample, and evidence.metricWeights fields when present. Explain limited sample assumptions instead of overstating weak data.",

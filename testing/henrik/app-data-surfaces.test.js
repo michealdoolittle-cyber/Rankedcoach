@@ -154,7 +154,7 @@ async function run() {
     assert.equal(seasonOptions.some(label => /Episode 1[01]/.test(label)), false);
     assert.match(await page.locator("#statsHistoryBoundaryNote").innerText(), /May 28, 2024/);
 
-    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" });
+    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" }, { force: true });
     await page.waitForTimeout(600);
     const statsDebug = await page.evaluate(() => ({
       selectedAct: document.getElementById("statsActSelector")?.value,
@@ -171,7 +171,7 @@ async function run() {
     assert.ok(await page.locator("#statsMapsList .stats-map-card:not([disabled])").count() > 0);
     assert.ok(await page.locator("#statsWeaponsList button:not([disabled])").count() > 0);
 
-    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 5" });
+    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 5" }, { force: true });
     await page.waitForTimeout(600);
     const comparisonStats = await page.evaluate(() => ({
       selectedAct: document.getElementById("statsActSelector")?.value,
@@ -183,7 +183,7 @@ async function run() {
     assert.notDeepEqual(comparisonStats.overview, statsDebug.overview);
     assert.notDeepEqual(comparisonStats.activeAgents, statsDebug.activeAgents);
     assert.notDeepEqual(comparisonStats.activeMaps, statsDebug.activeMaps);
-    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" });
+    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" }, { force: true });
     await page.waitForTimeout(600);
 
     await page.click('.nav-btn[data-page="insights"]');

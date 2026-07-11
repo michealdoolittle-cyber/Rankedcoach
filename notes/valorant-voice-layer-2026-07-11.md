@@ -1,6 +1,6 @@
 # Valorant Voice Layer — Design for Player-Facing Language, Full Directive
 
-**Status:** Spec'd 2026-07-11, not yet built. Michael's assessment after reading `docs/COACHING-LANGUAGE-RULES.md`: Ask Coach is good in general but leans robotic instead of Valorant-native and human. The rest of the app's player-facing cards (Home/Stats/Insights) are the bigger problem — generic enough that players either bounce immediately because the app doesn't feel like it's actually about Valorant, or waste time decoding what a card is implying because it avoids real game mechanics language.
+**Status:** Built 2026-07-11. The shared vocabulary bank, deterministic high-frequency card variants, and active insight-copy audit are wired and verified. Ask Coach source now consumes the same bank; live Edge Function deployment is pending Supabase CLI authentication on this workstation. Michael's assessment after reading `docs/COACHING-LANGUAGE-RULES.md`: Ask Coach is good in general but leans robotic instead of Valorant-native and human. The rest of the app's player-facing cards (Home/Stats/Insights) are the bigger problem — generic enough that players either bounce immediately because the app doesn't feel like it's actually about Valorant, or waste time decoding what a card is implying because it avoids real game mechanics language.
 
 ## The actual finding, not a guess — the app already knows how to do this well in places
 
