@@ -19879,6 +19879,24 @@ SUMMARY BAR
   font-size:17px;
 }
 
+.daily-warmup-section-heading{
+  display:grid;
+  gap:3px;
+  padding-top:2px;
+}
+
+.daily-warmup-section-heading strong{
+  color:var(--text-main,#f8fafc);
+  font:900 14px/1.1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-section-heading span{
+  color:var(--text-muted,#a8b3c7);
+  font:700 12px/1.3 var(--font-body,"Rajdhani",sans-serif);
+}
+
 .daily-warmup-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -19888,37 +19906,82 @@ SUMMARY BAR
 .daily-warmup-drill{
   min-height:78px;
   display:grid;
-  align-content:center;
-  gap:5px;
+  grid-template-columns:24px minmax(0,1fr);
+  align-items:center;
+  gap:11px;
   padding:12px 14px;
   border:1px solid var(--border-soft,rgba(148,163,184,.24));
   border-radius:14px;
   background:linear-gradient(150deg,var(--surface-card-2,#111827),var(--surface-card,#0b1220));
   color:var(--text-main,#f8fafc);
   text-align:left;
+  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
 }
 
-.daily-warmup-drill strong{
+.daily-warmup-drill:last-child:nth-child(odd){
+  grid-column:1 / -1;
+}
+
+.daily-warmup-select-indicator{
+  position:relative;
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  border:2px solid var(--border-strong,rgba(148,163,184,.52));
+  border-radius:50%;
+  background:color-mix(in srgb,var(--surface-card,#0b1220) 84%,white 6%);
+  box-shadow:inset 0 0 0 3px var(--surface-card,#0b1220);
+  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+
+.daily-warmup-select-indicator::after{
+  content:"";
+  width:9px;
+  height:5px;
+  border-left:3px solid var(--good,#34d399);
+  border-bottom:3px solid var(--good,#34d399);
+  opacity:0;
+  transform:translateY(-1px) rotate(-45deg) scale(.4);
+  transition:opacity .16s ease,transform .2s cubic-bezier(.22,1,.36,1);
+}
+
+.daily-warmup-drill-copy{
+  min-width:0;
+  display:grid;
+  gap:5px;
+}
+
+.daily-warmup-drill-copy strong{
   font:900 14px/1.1 var(--font-display,"Rajdhani",sans-serif);
   letter-spacing:.04em;
 }
 
-.daily-warmup-drill span{
+.daily-warmup-drill-copy > span{
   color:var(--text-muted,#a8b3c7);
   font:700 12px/1.28 var(--font-body,"Rajdhani",sans-serif);
 }
 
 .daily-warmup-drill.is-selected{
+  border-color:var(--accent,#ff4655);
   border-color:color-mix(in srgb,var(--accent,#ff4655) 78%,white 10%);
   background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 22%,var(--surface-card-2,#111827)),var(--surface-card,#0b1220));
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#ff4655) 25%,transparent),0 10px 24px color-mix(in srgb,var(--accent,#ff4655) 14%,transparent);
 }
 
-.daily-warmup-external{
-  width:max-content;
-  max-width:100%;
-  color:var(--accent-2,#38bdf8);
-  font:800 12px/1.2 var(--font-body,"Rajdhani",sans-serif);
+.daily-warmup-drill.is-selected .daily-warmup-select-indicator{
+  border-color:var(--good,#34d399);
+  background:color-mix(in srgb,var(--good,#34d399) 13%,var(--surface-card,#0b1220));
+  box-shadow:inset 0 0 0 3px var(--surface-card,#0b1220),0 0 13px color-mix(in srgb,var(--good,#34d399) 38%,transparent);
+}
+
+.daily-warmup-drill.is-selected .daily-warmup-select-indicator::after{
+  opacity:1;
+  transform:translateY(-1px) rotate(-45deg) scale(1);
+}
+
+.daily-warmup-drill.is-selected .daily-warmup-drill-copy strong{
+  color:color-mix(in srgb,var(--accent,#ff4655) 48%,var(--text-main,#f8fafc));
 }
 
 .daily-warmup-weapon{
@@ -19969,6 +20032,64 @@ SUMMARY BAR
   color:var(--good,#34d399);
 }
 
+.daily-warmup-postgame{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:18px;
+  padding:15px 16px;
+  border:1px solid color-mix(in srgb,var(--accent-2,#38bdf8) 42%,var(--border-soft,rgba(148,163,184,.24)));
+  border-radius:16px;
+  background:
+    linear-gradient(125deg,color-mix(in srgb,var(--accent-2,#38bdf8) 10%,var(--surface-card,#0b1220)),var(--surface-card-2,#111827));
+}
+
+.daily-warmup-postgame-copy{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.daily-warmup-postgame-kicker{
+  color:var(--accent-2,#38bdf8);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-postgame-copy > strong{
+  color:var(--text-main,#f8fafc);
+  font:900 15px/1.1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-postgame-copy > span{
+  color:var(--text-muted,#a8b3c7);
+  font:700 12px/1.32 var(--font-body,"Rajdhani",sans-serif);
+}
+
+.daily-warmup-postgame-links{
+  display:grid;
+  grid-template-columns:repeat(2,max-content);
+  gap:8px;
+}
+
+.daily-warmup-postgame-links a{
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:9px 12px;
+  border:1px solid color-mix(in srgb,var(--accent-2,#38bdf8) 58%,white 8%);
+  border-radius:11px;
+  background:color-mix(in srgb,var(--accent-2,#38bdf8) 12%,var(--button-bg,#1e293b));
+  color:var(--text-main,#f8fafc);
+  font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.04em;
+  text-decoration:none;
+}
+
 .daily-warmup-actions{
   display:grid;
   grid-template-columns:minmax(120px,.7fr) minmax(180px,1.3fr);
@@ -20009,6 +20130,16 @@ SUMMARY BAR
 
   html.is-mobile-layout body.is-mobile-layout .daily-warmup-drill{
     min-height:68px;
+    grid-column:auto;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-postgame{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-postgame-links{
+    grid-template-columns:repeat(2,minmax(0,1fr));
   }
 
   html.is-mobile-layout body.is-mobile-layout .daily-warmup-actions{

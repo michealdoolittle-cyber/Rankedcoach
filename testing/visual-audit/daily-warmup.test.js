@@ -110,7 +110,7 @@ function buildCorrelationFixture(daysPerGroup = 7) {
     warmupLog.push({
       date: key,
       status: warmed ? "completed" : "skipped",
-      drillsSelected: warmed ? ["range-accuracy"] : [],
+      drillsSelected: warmed ? ["easy-bots-flicking"] : [],
       skipped: !warmed
     });
     const matchCount = 2;
@@ -153,15 +153,53 @@ async function run() {
     await page.locator("#dailyWarmupModal.active").waitFor({ state: "visible", timeout: 5000 });
     await page.waitForTimeout(350);
     assert.equal(await page.locator("#dailyWarmupModal .daily-warmup-card").evaluate(element => getComputedStyle(element).opacity), "1");
-    await page.screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-desktop.png"), fullPage: true });
+    const expectedDrills = [
+      "Weapon Choice",
+      "Burst Peeking",
+      "Burst Peeking w/ Strafe",
+      "Tap Fire Rhythm Training",
+      "Easy Bots Flicking",
+      "Medium Bots Flicking",
+      "Hard Bots Flicking",
+      "Head Tracking",
+      "Head Tracking w/ Strafe",
+      "Drone Target Switching",
+      "Spray Control Target Dummy"
+    ];
+    assert.deepEqual(await page.locator("[data-warmup-drill] .daily-warmup-drill-copy strong").allTextContents(), expectedDrills);
+    assert.equal(await page.locator("[data-warmup-drill] .daily-warmup-select-indicator").count(), expectedDrills.length);
+    assert.equal(await page.locator(".daily-warmup-postgame").isVisible(), true);
+    assert.equal(await page.locator(".daily-warmup-postgame-links a").count(), 2);
     const rankedMatchCountBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.matches?.length || 0);
 
-    for (const drill of ["aimstars", "miyagi", "weapon", "gunfight-hygiene"]) {
+    const weaponChoice = page.locator('[data-warmup-drill="weapon-choice"]');
+    const unselectedStyle = await weaponChoice.evaluate(element => ({
+      border: getComputedStyle(element).borderColor,
+      background: getComputedStyle(element).backgroundImage
+    }));
+    await weaponChoice.click();
+    await page.waitForTimeout(220);
+    const selectedStyle = await weaponChoice.evaluate(element => ({
+      selected: element.classList.contains("is-selected"),
+      border: getComputedStyle(element).borderColor,
+      background: getComputedStyle(element).backgroundImage,
+      checkOpacity: getComputedStyle(element.querySelector(".daily-warmup-select-indicator"), "::after").opacity,
+      checkColor: getComputedStyle(element.querySelector(".daily-warmup-select-indicator"), "::after").borderLeftColor
+    }));
+    assert.equal(selectedStyle.selected, true);
+    assert.notEqual(selectedStyle.border, unselectedStyle.border);
+    assert.notEqual(selectedStyle.background, unselectedStyle.background);
+    assert.ok(Number(selectedStyle.checkOpacity) >= 0.85, selectedStyle.checkOpacity);
+    assert.match(selectedStyle.checkColor, /52, 211, 153|34, 197, 94|22, 163, 74/);
+
+    for (const drill of ["burst-peeking", "head-tracking", "drone-target-switching"]) {
       await page.click(`[data-warmup-drill="${drill}"]`);
     }
-    await page.click('[data-warmup-drill="reaction"]');
+    await page.click('[data-warmup-drill="spray-control-dummy"]');
     assert.equal(await page.locator("[data-warmup-drill].is-selected").count(), 4);
     await page.fill("#dailyWarmupWeapon", "Vandal");
+    await page.screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-desktop.png"), fullPage: true });
+    await page.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-desktop.png") });
     await page.check("#dailyWarmupDmTdm");
     await page.click("#dailyWarmupSave");
     await page.waitForFunction(() => {
@@ -203,14 +241,20 @@ async function run() {
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await mobile.locator("#dailyWarmupModal.active").waitFor({ state: "visible", timeout: 5000 });
     await mobile.waitForTimeout(350);
+    await mobile.click('[data-warmup-drill="burst-peeking-strafe"]');
+    await mobile.click('[data-warmup-drill="tap-fire-rhythm"]');
+    await mobile.waitForTimeout(220);
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-mobile.png"), fullPage: true });
+    assert.equal(await mobile.locator("[data-warmup-drill].is-selected").count(), 2);
+    assert.equal(await mobile.locator(".daily-warmup-postgame").isVisible(), true);
+    await mobile.locator(".daily-warmup-postgame").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-postgame-mobile.png") });
     await mobile.click("#dailyWarmupSkip");
     const skipped = await mobile.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]);
     assert.equal(skipped.warmupLog[0].skipped, true);
     assert.equal(skipped.lastWarmupPromptDate, skipped.warmupLog[0].date);
     await mobile.close();
 
-    console.log("Daily warm-up checks passed: once-per-day trigger, four-drill limit, persistence, Henrik DM verification isolation, mobile layout, and sample gating.");
+    console.log("Daily warm-up checks passed: eleven-item catalog, themed checks, separate post-game playlist, once-per-day trigger, persistence, Henrik isolation, and sample gating.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

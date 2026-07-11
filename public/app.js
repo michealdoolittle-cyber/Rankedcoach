@@ -167,13 +167,26 @@ function scheduleWeeklyFocusRollover() {
 const DAILY_WARMUP_DRILL_LIMIT = 4;
 const DAILY_WARMUP_PROMPT_STORAGE_PREFIX = "valtracker_daily_warmup_prompt_v1:";
 const DAILY_WARMUP_DRILLS = Object.freeze({
-  aimstars: "Aimstars",
-  miyagi: "Miyagi Method",
-  "range-accuracy": "Range Accuracy",
-  "range-tracking": "Range Tracking",
-  reaction: "Reaction Pass",
-  weapon: "Weapon Pass",
-  "gunfight-hygiene": "Gunfight Hygiene"
+  "weapon-choice": "Weapon Choice",
+  "burst-peeking": "Burst Peeking",
+  "burst-peeking-strafe": "Burst Peeking w/ Strafe",
+  "tap-fire-rhythm": "Tap Fire Rhythm Training",
+  "easy-bots-flicking": "Easy Bots Flicking",
+  "medium-bots-flicking": "Medium Bots Flicking",
+  "hard-bots-flicking": "Hard Bots Flicking",
+  "head-tracking": "Head Tracking",
+  "head-tracking-strafe": "Head Tracking w/ Strafe",
+  "drone-target-switching": "Drone Target Switching",
+  "spray-control-dummy": "Spray Control Target Dummy"
+});
+const DAILY_WARMUP_DRILL_ALIASES = Object.freeze({
+  aimstars: "drone-target-switching",
+  miyagi: "head-tracking",
+  "range-accuracy": "easy-bots-flicking",
+  "range-tracking": "head-tracking-strafe",
+  reaction: "hard-bots-flicking",
+  weapon: "weapon-choice",
+  "gunfight-hygiene": "burst-peeking"
 });
 let dailyWarmupPromptTimer = 0;
 const warmupVerificationInFlight = new Set();
@@ -203,6 +216,7 @@ function normalizeWarmupLogEntry(entry = {}) {
   if (!date) return null;
   const drillsSelected = [...new Set((Array.isArray(entry?.drillsSelected) ? entry.drillsSelected : [])
     .map(value => String(value || "").trim())
+    .map(value => DAILY_WARMUP_DRILL_ALIASES[value] || value)
     .filter(value => Object.prototype.hasOwnProperty.call(DAILY_WARMUP_DRILLS, value)))]
     .slice(0, DAILY_WARMUP_DRILL_LIMIT);
   return {
@@ -296,7 +310,7 @@ function resetDailyWarmupModal(profile = getActiveProfile?.()) {
   const count = document.getElementById("dailyWarmupCount");
   if (count) count.textContent = `${selected.size} / ${DAILY_WARMUP_DRILL_LIMIT}`;
   const weaponField = document.getElementById("dailyWarmupWeaponField");
-  if (weaponField) weaponField.hidden = !selected.has("weapon");
+  if (weaponField) weaponField.hidden = !selected.has("weapon-choice");
   const weapon = document.getElementById("dailyWarmupWeapon");
   if (weapon) weapon.value = record?.weapon || "";
   const dmTdm = document.getElementById("dailyWarmupDmTdm");
@@ -428,7 +442,7 @@ function saveDailyWarmupCheck() {
     status: "completed",
     skipped: false,
     drillsSelected,
-    weapon: drillsSelected.includes("weapon") ? document.getElementById("dailyWarmupWeapon")?.value || "" : "",
+    weapon: drillsSelected.includes("weapon-choice") ? document.getElementById("dailyWarmupWeapon")?.value || "" : "",
     rangeDrillsSelfReported: drillsSelected.length > 0,
     dmTdmSelfReported,
     completedAt: nowISO()
@@ -457,7 +471,7 @@ function bindDailyWarmupEvents() {
       const nextCount = document.querySelectorAll("[data-warmup-drill].is-selected").length;
       if (count) count.textContent = `${nextCount} / ${DAILY_WARMUP_DRILL_LIMIT}`;
       const weaponField = document.getElementById("dailyWarmupWeaponField");
-      if (weaponField) weaponField.hidden = !document.querySelector('[data-warmup-drill="weapon"].is-selected');
+      if (weaponField) weaponField.hidden = !document.querySelector('[data-warmup-drill="weapon-choice"].is-selected');
       renderDailyWarmupVerification(getActiveProfile?.());
       return;
     }

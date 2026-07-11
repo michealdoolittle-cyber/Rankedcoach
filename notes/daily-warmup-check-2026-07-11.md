@@ -1,6 +1,6 @@
 # Daily Warm-Up Check — Research + Full Feature Directive
 
-**Status:** Built and locally verified 2026-07-11. The once-daily Home/Logging prompt, seven-drill playlist, four-drill cap, skip path, per-profile warm-up log, isolated Henrik DM/TDM verification, and sample-gated ranked correlation insight are implemented. Production deployment is tracked by the shipping commit.
+**Status:** Built and locally verified 2026-07-11. The once-daily Home/Logging prompt now presents eleven requested pre-ranked training choices with themed selection feedback, a four-drill cap, and a separate optional post-game trainer section. The skip path, per-profile warm-up log, isolated Henrik DM/TDM verification, and sample-gated ranked correlation insight remain implemented. Production deployment is tracked by the shipping commit.
 
 ---
 
@@ -53,13 +53,17 @@ Rank 1 Radiant peak, coaching content on YouTube/ProGuides/Discord, known for di
 
 Present as a **selectable set, not a fixed sequence** — a player picks the drills that fit their session, not a forced script:
 
-1. **Aimstars flick/tracking routine** (Aim Lab, external link)
-2. **Miyagi Method** (in-range/DM instructions shown in-app, since it's simple enough not to need an external tool)
-3. **Range accuracy pass** (headshot-only bots, Practice mode)
-4. **Range tracking pass** (crosshair-follow on a moving bot)
-5. **Reaction training** (Training mode, easy→hard)
-6. **Weapon-specific pass** (spray control on whatever weapon the player expects to lean on — let them type/select which)
-7. **Gunfight hygiene pass** (Woohoojin's range×weapon technique — burst-tap vs. spray practice matched to weapon category)
+1. **Weapon Choice**
+2. **Burst Peeking**
+3. **Burst Peeking w/ Strafe**
+4. **Tap Fire Rhythm Training**
+5. **Easy Bots Flicking**
+6. **Medium Bots Flicking**
+7. **Hard Bots Flicking**
+8. **Head Tracking**
+9. **Head Tracking w/ Strafe**
+10. **Drone Target Switching**
+11. **Spray Control Target Dummy**
 
 Let players pick up to 4 per Michael's "4 small warm-ups" framing, in any combination — some days a player might want flick+tracking, other days weapon-specific+reaction training.
 
@@ -84,7 +88,7 @@ Once enough days of data exist, build a new formula (same module pattern as `rou
 
 ### Post-game aim training — separate, lighter, non-blocking
 
-Distinct from the pre-session check: after a session (however "session end" gets defined — worth a short discussion with Michael on the exact trigger, e.g. app close, inactivity timeout, or a manual "end session" action), surface a lightweight, dismissible card recommending an external aim-trainer playlist (Aim Lab or KovaaK's) rather than gating anything. This matches the research finding that aim-trainer work is conventionally a post-session, not pre-session, activity, and it should feel like a suggestion, not a second checklist.
+Distinct from the pre-session check, the training surface now includes a separate optional post-game section with Aim Lab and KovaaK's launch links. It is visually separated, does not count toward the four warm-up choices, and does not gate navigation. A future automatic session-end trigger remains a separate product decision.
 
 ---
 

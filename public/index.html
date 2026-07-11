@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260711-daily-warmup-01">
+<link rel="stylesheet" href="app.css?v=20260711-warmup-playlists-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -277,32 +277,58 @@ AUTH MODAL
         Warm-up helps your mechanics, but the real test is carrying the same discipline into live rounds.
       </div>
       <div class="daily-warmup-count"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
+      <div class="daily-warmup-section-heading">
+        <strong>Before Ranked Playlist</strong>
+        <span>Choose the four mechanics you want ready before queueing.</span>
+      </div>
       <div class="daily-warmup-grid" id="dailyWarmupGrid">
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="aimstars" aria-pressed="false">
-          <strong>Aimstars</strong><span>Flicking, tracking, and target switching in Aim Lab.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="weapon-choice" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Weapon Choice</strong><span>Set the weapon you want this session's mechanics built around.</span></span>
         </button>
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="miyagi" aria-pressed="false">
-          <strong>Miyagi Method</strong><span>Track the head first, then fire only when the shot is clean.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="burst-peeking" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Burst Peeking</strong><span>Counter-strafe into short rifle bursts, then fully reset.</span></span>
         </button>
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="range-accuracy" aria-pressed="false">
-          <strong>Range Accuracy</strong><span>Headshot-only bots with controlled strafing.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="burst-peeking-strafe" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Burst Peeking w/ Strafe</strong><span>Burst, move off the return shot, then stop cleanly for the next fight.</span></span>
         </button>
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="range-tracking" aria-pressed="false">
-          <strong>Range Tracking</strong><span>Follow a moving bot's head without losing placement.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="tap-fire-rhythm" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Tap Fire Rhythm Training</strong><span>Tap only after recoil settles so every shot stays deliberate.</span></span>
         </button>
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="reaction" aria-pressed="false">
-          <strong>Reaction Pass</strong><span>Training mode from easy to hard, accuracy before speed.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="easy-bots-flicking" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Easy Bots Flicking</strong><span>Build smooth head-level flicks without rushing the confirm.</span></span>
         </button>
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="weapon" aria-pressed="false">
-          <strong>Weapon Pass</strong><span>Practice the gun you expect to lean on this session.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="medium-bots-flicking" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Medium Bots Flicking</strong><span>Raise the pace while keeping the crosshair stop controlled.</span></span>
         </button>
-        <button type="button" class="daily-warmup-drill" data-warmup-drill="gunfight-hygiene" aria-pressed="false">
-          <strong>Gunfight Hygiene</strong><span>Burst-tap, spray, and strafe based on weapon and range.</span>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="hard-bots-flicking" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Hard Bots Flicking</strong><span>Test reaction speed without turning misses into panic flicks.</span></span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="head-tracking" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Head Tracking</strong><span>Hold the crosshair on a moving head before taking the shot.</span></span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="head-tracking-strafe" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Head Tracking w/ Strafe</strong><span>Track the head while moving, then stop cleanly before firing.</span></span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="drone-target-switching" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Drone Target Switching</strong><span>Move between drones with one controlled crosshair path per target.</span></span>
+        </button>
+        <button type="button" class="daily-warmup-drill" data-warmup-drill="spray-control-dummy" aria-pressed="false">
+          <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
+          <span class="daily-warmup-drill-copy"><strong>Spray Control Target Dummy</strong><span>Hold the pattern on one dummy, then reset before repeating.</span></span>
         </button>
       </div>
-      <a class="daily-warmup-external" href="https://aimlabs.com/" target="_blank" rel="noopener noreferrer">Open Aim Lab for the Aimstars routine</a>
       <label id="dailyWarmupWeaponField" class="daily-warmup-weapon" hidden>
-        <span>Weapon for today's pass</span>
+        <span>Weapon for today's training</span>
         <input id="dailyWarmupWeapon" type="text" maxlength="30" placeholder="Vandal, Phantom, Operator...">
       </label>
       <label class="daily-warmup-livefire">
@@ -311,6 +337,17 @@ AUTH MODAL
       </label>
       <div id="dailyWarmupVerification" class="daily-warmup-verification" aria-live="polite"></div>
       <div id="dailyWarmupCorrelationStatus" class="daily-warmup-correlation" aria-live="polite"></div>
+      <section class="daily-warmup-postgame" aria-labelledby="dailyWarmupPostgameTitle">
+        <div class="daily-warmup-postgame-copy">
+          <div class="daily-warmup-postgame-kicker">After Ranked</div>
+          <strong id="dailyWarmupPostgameTitle">Post-Game Session Playlist</strong>
+          <span>Optional mechanics work after the session. This does not count toward today's four warm-up selections.</span>
+        </div>
+        <div class="daily-warmup-postgame-links">
+          <a href="https://aimlabs.com/" target="_blank" rel="noopener noreferrer">Open Aim Lab</a>
+          <a href="https://www.kovaaks.com/" target="_blank" rel="noopener noreferrer">Open KovaaK's</a>
+        </div>
+      </section>
       <div class="daily-warmup-actions">
         <button id="dailyWarmupSkip" type="button" class="daily-warmup-skip">Skip today</button>
         <button id="dailyWarmupSave" type="button" class="daily-warmup-save">Save warm-up</button>
@@ -2218,13 +2255,13 @@ stroke-linejoin="round"/>
   <script src="sandbox-fx.engine.js"></script>
   <script src="schema/match-record.js?v=20260711-season-scope-01"></script>
   <script src="analytics/round-metrics.js?v=20260710-henrik-surfaces-01"></script>
-  <script src="analytics/warmup-correlation.js?v=20260711-daily-warmup-01"></script>
+  <script src="analytics/warmup-correlation.js?v=20260711-warmup-playlists-01"></script>
   <script src="analytics/coaching-rules.js?v=20260711-coaching-rules-01"></script>
-  <script src="language/valorant-vocabulary.js?v=20260711-daily-warmup-01"></script>
+  <script src="language/valorant-vocabulary.js?v=20260711-warmup-playlists-01"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="integrations/riot-sync.js?v=20260711-daily-warmup-01"></script>
-  <script type="module" src="app.js?v=20260711-daily-warmup-01"></script>
+  <script src="integrations/riot-sync.js?v=20260711-warmup-playlists-01"></script>
+  <script type="module" src="app.js?v=20260711-warmup-playlists-01"></script>
 </body>
 </html>
