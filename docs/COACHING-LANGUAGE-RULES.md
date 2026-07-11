@@ -333,3 +333,7 @@ Not every rule below is currently checkable against available data (some need ut
 - These are reference heuristics, not automatically-triggered insights. Every match against a player's stats still needs to pass through the existing sample-size and coaching-language governance (`app.js:3283`, `app.js:3373`) before reaching a player.
 - Several rules (utility timing, exact positional death-clustering, voice-comms content) reference data the app doesn't currently have — mark these clearly as aspirational/future when building the matching layer, don't fake a match against unavailable data.
 - Rules should be revisited and expanded as the game's meta evolves — this list reflects mid-2026 Valorant coaching consensus, not a permanent, unchanging reference.
+
+### Current app coverage (2026-07-11)
+
+The first structured slice lives in `public/analytics/coaching-rules.js`: 30 source-linked entries, five per category, with 20 executable matchers. Rules that require cast timestamps, positional events, or voice-chat content are marked `blocked` or `policy`; they cannot emit an insight. Executable candidates still pass through `buildCoachingEvidenceLayer()`, sample minimums, priority/deduplication, and `polishCoachingInsight()` before display. `testing/henrik/coaching-rules.test.js` verifies every structured entry still points to a numbered rule in this document so the machine-readable slice cannot silently drift away from this source of truth.

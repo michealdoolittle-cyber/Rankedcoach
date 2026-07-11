@@ -65,6 +65,53 @@ assert.equal(aggregate.overall.qualifyingRounds, 6);
 assert.equal(aggregate.overall.totalRounds, 8);
 assert.equal(aggregate.overall.percentage, 75);
 
+const signalRecord = {
+  id: "round-signal-fixture",
+  trackedPlayer: {
+    puuid: me,
+    teammatePuuids: [teammate],
+    behaviorFactors: { afkRounds: 1, stayedInSpawnRounds: 1 }
+  },
+  roundByRound: [
+    {
+      roundNum: 1,
+      side: "attack",
+      won: true,
+      roundCeremony: "CeremonyCloser",
+      damageDealt: 100,
+      wasAfk: true,
+      kills: [
+        { killer: "enemy-a", victim: teammate, assistants: [], roundTime: 1000 },
+        { killer: me, victim: "enemy-a", assistants: [], roundTime: 3000 },
+        { killer: me, victim: "enemy-b", assistants: [], roundTime: 5000 },
+        { killer: me, victim: "enemy-c", assistants: [], roundTime: 7000 },
+        { killer: me, victim: "enemy-d", assistants: [], roundTime: 9000 },
+        { killer: me, victim: "enemy-e", assistants: [], roundTime: 11000 }
+      ]
+    },
+    {
+      roundNum: 2,
+      side: "defense",
+      won: false,
+      roundCeremony: "CeremonyDefault",
+      damageDealt: 300,
+      stayedInSpawn: true,
+      kills: []
+    }
+  ]
+};
+const signals = globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(signalRecord);
+assert.equal(signals.clutchRounds, 1);
+assert.equal(signals.clutchWins, 1);
+assert.equal(signals.multiKills.kills5K, 1);
+assert.equal(signals.trade.givenOpportunities, 1);
+assert.equal(signals.trade.givenRounds, 1);
+assert.equal(signals.damage.mean, 200);
+assert.equal(signals.damage.standardDeviation, 100);
+assert.equal(signals.discipline.afkRounds, 1);
+assert.equal(signals.discipline.stayedInSpawnRounds, 1);
+assert.equal(signals.discipline.affected, true);
+
 const gold = globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Gold 2", {
   hsPercent: 22.7,
   acs: 213,
@@ -76,4 +123,4 @@ assert.equal(gold.source.provisional, true);
 assert.equal(globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Radiant", {}), null);
 assert.equal(globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Immortal 3", {}), null);
 
-console.log("Henrik formula checks passed: 3/4 KAST, 1 trade save, benchmark gaps preserved.");
+console.log("Henrik formula checks passed: KAST, clutch/ace, discipline, trades, damage variance, and benchmark gaps preserved.");

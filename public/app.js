@@ -3475,7 +3475,10 @@ function normalizeCoachCopyObject(value) {
   if (Array.isArray(value)) return value.map(item => normalizeCoachCopyObject(item));
   if (!value || typeof value !== "object") return normalizeRankedCoachCopy(value);
   return Object.fromEntries(
-    Object.entries(value).map(([key, entry]) => [key, normalizeCoachCopyObject(entry)])
+    Object.entries(value).map(([key, entry]) => [
+      key,
+      key === "coachingRuleId" ? entry : normalizeCoachCopyObject(entry)
+    ])
   );
 }
 
@@ -5271,6 +5274,103 @@ function getMechanicsContextAdjustment(agentName = "", coachingContext = {}) {
   };
 }
 
+function summarizeCoachingRuleEconomy(matchEntries = []) {
+  let pistolOpportunities = 0;
+  let pistolWins = 0;
+  let postPistolOpportunities = 0;
+  let postPistolWins = 0;
+  (matchEntries || []).forEach(match => {
+    const rounds = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
+    [0, 12].forEach(index => {
+      const pistol = rounds[index];
+      const followUp = rounds[index + 1];
+      if (!pistol) return;
+      pistolOpportunities += 1;
+      if (pistol.roundWon) pistolWins += 1;
+      if (pistol.roundWon && followUp) {
+        postPistolOpportunities += 1;
+        if (followUp.roundWon) postPistolWins += 1;
+      }
+    });
+  });
+  return {
+    pistolOpportunities,
+    pistolWinRate: safeDivide(pistolWins * 100, pistolOpportunities),
+    postPistolOpportunities,
+    postPistolWinRate: safeDivide(postPistolWins * 100, postPistolOpportunities)
+  };
+}
+
+function buildCoachingRuleContext({
+  orderedMatches = [],
+  logs = [],
+  overview = {},
+  maps = [],
+  agents = [],
+  roles = [],
+  rankComparison = null,
+  roundSignals = null,
+  evidenceLayer = null,
+  coachingContext = null,
+  currentRole = "",
+  totalKills = 0
+} = {}) {
+  const matchSummaries = orderedMatches.map(match => {
+    const core = getMatchCore(match);
+    const rounds = Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : [];
+    return {
+      ...core,
+      utilityCastCount: rounds.reduce((sum, round) => sum + safeNumber(round?.utilityCastCount), 0),
+      utilityKnownRounds: rounds.filter(round => safeNumber(round?.utilityCastCount) > 0).length
+    };
+  });
+  const allRounds = orderedMatches.flatMap(match => Array.isArray(match?.advanced?.rounds) ? match.advanced.rounds : []);
+  const utilityCasts = allRounds.reduce((sum, round) => sum + safeNumber(round?.utilityCastCount), 0);
+  const communicationMentions = logs.filter(entry => /\b(comm|comms|callout|communication|silent|voice)\b/i.test([
+    entry?.notes,
+    entry?.why,
+    entry?.reflection,
+    entry?.teammateNote,
+    entry?.focus
+  ].filter(Boolean).join(" "))).length;
+  const negativeMoodCount = logs.filter(entry => ["annoyed", "tilted", "frustrated"].includes(String(entry?.mood || "").toLowerCase())).length;
+  const commsEnabledCount = logs.filter(entry => entry?.commsDisabled !== true).length;
+  const advanced = summarizeAdvancedContextMatches(orderedMatches);
+
+  return {
+    sample: evidenceLayer?.sample || {},
+    overview: {
+      ...overview,
+      killsPerMatch: orderedMatches.length ? safeDivide(totalKills, orderedMatches.length) : 0
+    },
+    maps,
+    agents,
+    roles,
+    rankComparison,
+    roundSignals,
+    currentRole,
+    advanced,
+    matches: matchSummaries,
+    weapons: {
+      rounds: safeNumber(coachingContext?.weaponRounds),
+      shares: coachingContext?.familyShares || {},
+      families: coachingContext?.familySummaries || []
+    },
+    utility: {
+      timingAvailable: false,
+      knownRounds: allRounds.filter(round => safeNumber(round?.utilityCastCount) > 0).length,
+      castsPerRound: allRounds.length ? safeDivide(utilityCasts, allRounds.length) : 0
+    },
+    economy: summarizeCoachingRuleEconomy(orderedMatches),
+    logs: {
+      count: logs.length,
+      commsEnabledRate: safeDivide(commsEnabledCount * 100, logs.length),
+      negativeMoodRate: safeDivide(negativeMoodCount * 100, logs.length),
+      communicationMentions
+    }
+  };
+}
+
 function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null) {
   const orderedMatches = getSortedMatches(matchList);
   const derivedActs = getMatchSeasonLabels(orderedMatches);
@@ -5512,6 +5612,22 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   })();
 
   const insights = [];
+  const coachingRuleContext = buildCoachingRuleContext({
+    orderedMatches,
+    logs,
+    overview,
+    maps,
+    agents,
+    roles,
+    rankComparison,
+    roundSignals,
+    evidenceLayer,
+    coachingContext,
+    currentRole: currentSignalRole,
+    totalKills
+  });
+  const coachingRuleMatches = globalThis.RankedCoachCoachingRules?.matchRules?.(coachingRuleContext, { maxResults: 4 }) || [];
+  insights.push(...coachingRuleMatches);
 
   if (!orderedMatches.length && !logs.length) {
     insights.push({
@@ -7071,6 +7187,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     breakdown: uniqueBreakdown,
     trendBreakdown: uniqueTrendBreakdown,
     coachingContext,
+    coachingRuleMatches,
     evidenceLayer,
     insights: topInsights,
     allInsights,
@@ -7255,7 +7372,9 @@ function buildAskCoachAIContext() {
     preview: insight?.preview || "",
     action: insight?.action || "",
     type: insight?.type || "",
-    priority: insight?.priority || ""
+    priority: insight?.priority || "",
+    coachingRuleId: insight?.coachingRuleId || "",
+    coachingRuleNumber: insight?.coachingRuleNumber || null
   }));
   const agentSummary = (model?.agents || []).slice(0, 6).map((agent) => ({
     agent: agent?.agent || agent?.name || "",
@@ -7305,7 +7424,15 @@ function buildAskCoachAIContext() {
       metricWeights: model?.evidenceLayer?.metricWeights || null,
       sourcePolicy: model?.evidenceLayer?.sourcePolicy || [],
       sources: model?.evidenceLayer?.sources || [],
-      languageRules: COACHING_LANGUAGE_RULES
+      languageRules: COACHING_LANGUAGE_RULES,
+      matchedCoachingRules: (model?.coachingRuleMatches || []).map(rule => ({
+        id: rule?.coachingRuleId || "",
+        sourceRule: rule?.coachingRuleNumber || null,
+        category: rule?.category || "",
+        title: rule?.title || "",
+        action: rule?.action || "",
+        confidence: rule?.confidence || model?.confidenceLabel || "Low Confidence"
+      }))
     },
     currentFocus: model?.focus || "",
     coachDiagnosis: model?.coachDiagnosis || "",
@@ -49386,6 +49513,30 @@ function renderStatsSummaryMetaModel() {
   if (!isMobile) closeStatsActMobileMenu();
 
   selector.disabled = false;
+  renderStatsHistoryBoundaryNote();
+}
+
+function renderStatsHistoryBoundaryNote(profile = getActiveProfile()) {
+  const note = document.getElementById("statsHistoryBoundaryNote");
+  if (!note) return;
+  const retainedMatches = (Array.isArray(profile?.matches) ? profile.matches : [])
+    .filter(match => ["henrik", "henrik_sync"].includes(String(match?.source || match?.metadata?.source || "").toLowerCase()))
+    .map(match => new Date(match?.createdAt || match?.metadata?.playedAt || match?.matchRecord?.playedAt || ""))
+    .filter(date => !Number.isNaN(date.getTime()))
+    .sort((a, b) => a - b);
+  const show = isHenrikProfileData(profile) && retainedMatches.length > 0;
+  note.hidden = !show;
+  if (!show) {
+    note.textContent = "";
+    return;
+  }
+  const oldestDate = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(retainedMatches[0]);
+  note.textContent = `Ranked match history is available from ${oldestDate}. Earlier matches are not retained by the current data source.`;
 }
 
 function renderStatsPeakProgress() {
@@ -49570,6 +49721,7 @@ function renderInsightCardsModel() {
     const displayType = normalizeInsightFilterType(insight);
     const el = document.createElement("div");
     el.className = `insight-card insight-${displayType}`;
+    if (insight?.coachingRuleId) el.dataset.coachingRule = insight.coachingRuleId;
     el.style.position = "relative";
     el.dataset.insightIndex = String(index);
     const signature = getInsightSignature(insight);

@@ -53024,6 +53024,18 @@ body.access-reduced-motion .premium-moment-overlay{
   display:none;
 }
 
+.stats-history-boundary-note{
+  max-width:360px;
+  margin:7px 0 0;
+  color:var(--text-muted,#a8b3c7);
+  font:700 11px/1.35 var(--font-body,"Rajdhani",sans-serif);
+  letter-spacing:.01em;
+}
+
+.stats-history-boundary-note[hidden]{
+  display:none !important;
+}
+
 @media (max-width:767px){
   html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select-wrap{
     position:relative !important;
@@ -53032,6 +53044,13 @@ body.access-reduced-motion .premium-moment-overlay{
     height:auto !important;
     min-height:42px !important;
     overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-stats .stats-history-boundary-note{
+    max-width:100%;
+    margin-top:8px;
+    font-size:12px;
+    line-height:1.4;
   }
 
   html.is-mobile-layout body.is-mobile-layout #page-stats .stats-act-select-wrap::after{

@@ -152,6 +152,7 @@ async function run() {
     assert.ok(seasonOptions.includes("Season 2025 Act 2"));
     assert.ok(seasonOptions.includes("Episode 8 Act 3"));
     assert.equal(seasonOptions.some(label => /Episode 1[01]/.test(label)), false);
+    assert.match(await page.locator("#statsHistoryBoundaryNote").innerText(), /May 28, 2024/);
 
     await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" });
     await page.waitForTimeout(600);
@@ -165,7 +166,7 @@ async function run() {
       agentsText: document.getElementById("statsAgentsList")?.innerText || "",
       mapsText: document.getElementById("statsMapsList")?.innerText || ""
     }));
-    assert.notEqual(await page.locator("#statsPeakRankText").innerText(), "Radiant");
+    assert.equal(await page.locator("#statsPeakRankText").innerText(), "Diamond 3");
     assert.ok(statsDebug.activeAgentRows > 0, JSON.stringify(statsDebug));
     assert.ok(await page.locator("#statsMapsList .stats-map-card:not([disabled])").count() > 0);
     assert.ok(await page.locator("#statsWeaponsList button:not([disabled])").count() > 0);
@@ -190,6 +191,7 @@ async function run() {
     const insightText = await page.locator("#insightsList").innerText();
     assert.match(insightText, /Trade Support Split|Damage Consistency|Clutch Closing|Multi-Kill Impact/);
     assert.doesNotMatch(insightText, /No Match History Yet/);
+    assert.ok(await page.locator("#insightsList [data-coaching-rule]").count() > 0, "No governed coaching rule reached the real-data insight pool.");
 
     await page.click('.nav-btn[data-page="home"]');
     await page.click('.graph-btn[data-size="all"]');
@@ -245,6 +247,7 @@ async function run() {
     await mobilePage.click('[data-stats-act-option="Season 2025 Act 6"]');
     await mobilePage.waitForTimeout(600);
     assert.equal(await mobilePage.locator("#statsActSelector option").count(), 8);
+    assert.match(await mobilePage.locator("#statsHistoryBoundaryNote").innerText(), /May 28, 2024/);
     assert.ok(await mobilePage.locator("#statsAgentsList .stats-agent-row.stats-select-card").count() > 0);
     assert.ok(await mobilePage.locator("#statsMapsList .stats-map-card:not([disabled])").count() > 0);
     assert.ok(await mobilePage.locator("#statsWeaponsList .stats-weapon-tile:not([disabled])").count() > 0);
@@ -255,6 +258,27 @@ async function run() {
     assert.equal(await mobilePage.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1), false);
     assert.deepEqual(mobileIssues, []);
     await mobileContext.close();
+
+    const guestContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    await guestContext.addInitScript(() => {
+      localStorage.clear();
+      localStorage.setItem("valtracker_entry_choice_v1", "guest");
+      localStorage.setItem("valtracker_active_profile_id", "manual-empty-profile");
+      localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
+        id: "manual-empty-profile",
+        name: "Manual Empty Profile",
+        importSource: "manual",
+        matches: []
+      }]));
+    });
+    const guestPage = await guestContext.newPage();
+    await guestPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
+    await guestPage.waitForTimeout(700);
+    await guestPage.click('[data-mobile-page="stats"]');
+    assert.equal(await guestPage.locator("#statsHistoryBoundaryNote").isHidden(), true);
+    await guestPage.click('[data-mobile-page="insights"]');
+    assert.ok(await guestPage.locator("#insightsList .insight-card").count() > 0);
+    await guestContext.close();
 
     console.log(`Henrik app surface check passed: ${matches.length} matches, ${acts.length} acts, ${allRoundMetrics.totalRounds} rounds, desktop/mobile Stats/Insights/RR/rank all populated.`);
   } finally {
