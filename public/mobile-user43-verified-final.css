@@ -15668,8 +15668,8 @@ html.is-mobile-layout body.is-mobile-layout .app-header.app-header .mobile-heade
 
 html.is-mobile-layout body.is-mobile-layout .app-header.app-header .mobile-header-rank-icon{
   position:absolute !important;
-  right:-3px !important;
-  bottom:-3px !important;
+  right:5px !important;
+  bottom:4px !important;
   width:18px !important;
   height:18px !important;
   object-fit:contain !important;

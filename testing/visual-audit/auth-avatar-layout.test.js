@@ -120,6 +120,7 @@ async function run() {
       const frame = await getRect(page, "#mobileHeaderProfileBtn .rc-mobile-avatar-frame");
       const image = await getRect(page, "#mobileHeaderProfileBtn .mobile-header-avatar-img");
       const rankIcon = await getRect(page, "#mobileHeaderProfileBtn .mobile-header-rank-icon");
+      const askCoach = await getRect(page, "#mobileAskCoachOpen");
       const mainAnimation = await page.locator("#mobileHeaderProfileBtn .rc-mobile-frame-main").evaluate(element => getComputedStyle(element).animationName);
 
       assert.equal(button.width, 52);
@@ -130,7 +131,11 @@ async function run() {
       assert.equal(image.height, 38);
       assert.ok(frame.x < image.x && frame.y < image.y);
       assert.ok(rankIcon.x > image.x + (image.width / 2));
-      assert.ok(rankIcon.y > image.y + (image.height / 2));
+      assert.ok(rankIcon.y + (rankIcon.height / 2) > image.y + (image.height / 2));
+      assert.ok(
+        Math.abs((rankIcon.y + rankIcon.height) - (askCoach.y + askCoach.height)) <= 1,
+        JSON.stringify({ rankIcon, askCoach })
+      );
       assert.equal(documentWidthOverflow(await page.evaluate(() => ({
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth

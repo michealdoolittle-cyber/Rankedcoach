@@ -5274,9 +5274,9 @@ function getMechanicsContextAdjustment(agentName = "", coachingContext = {}) {
 function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null) {
   const orderedMatches = getSortedMatches(matchList);
   const derivedActs = getMatchSeasonLabels(orderedMatches);
-  const importedActs = Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [];
-  const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
-  const currentAct = importedAnalytics?.currentAct || derivedActs[0] || "Current Window";
+  const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : []).map(normalizeValorantSeasonLabel);
+  const actOptions = [...new Set([...(importedActs.length ? importedActs : derivedActs), ...derivedActs].filter(Boolean))];
+  const currentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct) || derivedActs[0] || "Current Window";
   const recentMatches = orderedMatches.slice(-8);
   const recentWindow = orderedMatches.slice(-5);
   const logs = (logList || []).slice();
@@ -7150,14 +7150,15 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
       ? profile.matches
       : (matches || []);
   const derivedActs = getMatchSeasonLabels(sourceMatches);
-  const importedActs = Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [];
+  const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : []).map(normalizeValorantSeasonLabel);
+  const importedCurrentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct);
   const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
   const selectedAct = String(
     Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
       ? options.actLabel || ""
       : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
         ? activeStatsActLabel
-        : importedAnalytics?.currentAct || derivedActs[0] || ""
+        : importedCurrentAct || derivedActs[0] || ""
   ).trim();
   const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
   const sourceLogs = Array.isArray(options?.logs)
@@ -7167,7 +7168,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     ? sourceMatches.filter((match) => getMatchSeasonLabel(match) === selectedAct)
     : sourceMatches).map(hydrateMatchDerivedData);
   const actLogs = shouldFilterByAct
-    ? sourceLogs.filter((entry) => String(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act || "").trim() === selectedAct)
+    ? sourceLogs.filter((entry) => normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedAct)
     : sourceLogs;
   const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
   const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || derivedActs[0] || "Current Window", actOptions);
@@ -7178,7 +7179,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
       ...(importedAnalytics?.overview || {}),
       ...(derivedRoundAnalytics.overview || {})
     },
-    currentAct: selectedAct || importedAnalytics?.currentAct || derivedActs[0] || "Current Window",
+    currentAct: selectedAct || importedCurrentAct || derivedActs[0] || "Current Window",
     acts: actOptions
   };
   return {
@@ -42674,11 +42675,17 @@ function closeProfileDropdown(){
 function getStatsSelectedActLabel(profile = getActiveProfile()) {
   const analytics = profile?.trackerAnalytics || null;
   const derivedActs = getMatchSeasonLabels(profile?.matches || []);
-  const actOptions = [...new Set([...derivedActs, ...(Array.isArray(analytics?.acts) ? analytics.acts : [])].filter(Boolean))];
+  const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : []).map(normalizeValorantSeasonLabel);
+  const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
   const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
     ? activeStatsActLabel
-    : analytics?.currentAct || derivedActs[0] || "";
+    : normalizeValorantSeasonLabel(analytics?.currentAct) || derivedActs[0] || "";
   return selectedAct && actOptions.includes(selectedAct) ? selectedAct : "";
+}
+
+function normalizeValorantSeasonLabel(value = "") {
+  const label = String(value || "").trim();
+  return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(label) || label;
 }
 
 function getMatchSeasonLabel(match = {}) {
@@ -42690,7 +42697,7 @@ function getMatchSeasonLabel(match = {}) {
     || match?.matchRecord?.act
     || ""
   ).trim();
-  return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(value) || value;
+  return normalizeValorantSeasonLabel(value);
 }
 
 function getMatchSeasonLabels(matchList = []) {
@@ -49014,7 +49021,13 @@ function renderStatsMapsModel() {
     maps.map(map => [String(map?.map || "").toLowerCase(), map])
   );
   const selectedAct = model?.currentAct || activeStatsActLabel || "";
-  const activePool = DEMO_ACT_MAP_POOLS[selectedAct] || COMPETITIVE_MAP_POOL;
+  const playedMapNames = maps
+    .filter(map => safeNumber(map?.matchesPlayed || map?.matches) > 0)
+    .map(map => String(map?.map || "").trim())
+    .filter(Boolean);
+  const configuredPool = DEMO_ACT_MAP_POOLS[selectedAct] || [];
+  const activePool = [...new Set([...configuredPool, ...playedMapNames])];
+  if (!activePool.length) activePool.push(...COMPETITIVE_MAP_POOL);
   const poolSet = new Set(activePool.map(mapName => String(mapName).toLowerCase()));
   const activeMapNames = activePool.slice().sort((a, b) => {
     const mapA = mapByName.get(String(a).toLowerCase());

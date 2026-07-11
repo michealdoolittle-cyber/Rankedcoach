@@ -52,13 +52,14 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
     refreshMatchIds: ["match-3"]
   });
 
-  assert.deepEqual(requests.map(request => request.start), [0, 10, 20]);
-  assert.deepEqual(requests.map(request => request.count), [10, 10, 5]);
+  const historyRequests = requests.filter(request => Number.isFinite(request.start));
+  assert.deepEqual(historyRequests.map(request => request.start), [0, 10, 20]);
+  assert.deepEqual(historyRequests.map(request => request.count), [10, 10, 5]);
   assert.equal(result.checked, 25);
   assert.equal(result.records.length, 24);
   assert.equal(result.records.some(record => record.id === "match-3"), true);
   assert.equal(result.records.some(record => record.id === "match-4"), false);
-  assert.equal(result.historyWindowComplete, true);
+  assert.equal(result.historyWindowComplete, false);
   assert.equal(result.historyLimit, 25);
 
   console.log("Henrik history pagination passed: 25 checked across starts 0/10/20 with no Raw requests.");

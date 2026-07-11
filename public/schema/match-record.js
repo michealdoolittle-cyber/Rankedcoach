@@ -38,9 +38,16 @@
   }
 
   function formatHenrikActLabel(value = "") {
-    const shortCode = cleanString(value, "").toLowerCase();
-    const match = shortCode.match(/^e(\d+)a(\d+)$/);
-    return match ? `Episode ${Number(match[1])} Act ${Number(match[2])}` : cleanString(value);
+    const label = cleanString(value, "");
+    const normalized = label.toLowerCase();
+    const match = normalized.match(/^e(\d+)a(\d+)$/)
+      || normalized.match(/^episode\s+(\d+)\s+act\s+(\d+)$/);
+    if (!match) return label;
+    const episode = Number(match[1]);
+    const act = Number(match[2]);
+    return episode <= 9
+      ? `Episode ${episode} Act ${act}`
+      : `Season ${episode + 2015} Act ${act}`;
   }
 
   function normalizeConfidence(value, fallback = "unknown") {

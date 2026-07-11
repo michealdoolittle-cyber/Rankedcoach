@@ -39,9 +39,12 @@ async function main() {
   const legacyRecord = globalThis.RankedCoachMatchRecord.toLegacyMatch(v4Record);
   const v4RoundMetrics = globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(v4Record);
 
-  assert.equal(v4Record.act, "Episode 11 Act 3");
-  assert.equal(legacyRecord.act, "Episode 11 Act 3");
-  assert.equal(legacyRecord.metadata.act, "Episode 11 Act 3");
+  assert.equal(globalThis.RankedCoachMatchRecord.formatHenrikActLabel("e9a3"), "Episode 9 Act 3");
+  assert.equal(globalThis.RankedCoachMatchRecord.formatHenrikActLabel("e10a1"), "Season 2025 Act 1");
+  assert.equal(globalThis.RankedCoachMatchRecord.formatHenrikActLabel("Episode 11 Act 3"), "Season 2026 Act 3");
+  assert.equal(v4Record.act, "Season 2026 Act 3");
+  assert.equal(legacyRecord.act, "Season 2026 Act 3");
+  assert.equal(legacyRecord.metadata.act, "Season 2026 Act 3");
   assert.equal(v4Kast.overall.qualifyingRounds, 17);
   assert.equal(v4Kast.overall.totalRounds, 22);
   assert.equal(Math.round(v4Kast.overall.percentage), 77);

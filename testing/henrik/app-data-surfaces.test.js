@@ -132,6 +132,7 @@ async function run() {
       lastSyncSource: "henrik",
       lastSyncAt: new Date().toISOString(),
       startingRR: 99999,
+      trackerAnalytics: { currentAct: "Episode 10 Act 6", acts: ["Episode 10 Act 6", "Episode 11 Act 3"] },
       matches
     }]));
   }, { matches, puuid });
@@ -146,16 +147,21 @@ async function run() {
     await page.click('.nav-btn[data-page="stats"]');
     await page.waitForTimeout(500);
     const seasonOptions = await page.locator("#statsActSelector option").allTextContents();
-    assert.deepEqual(seasonOptions, acts);
-    assert.ok(seasonOptions.includes("Episode 11 Act 3"));
+    assert.deepEqual(seasonOptions.slice().sort(), acts.slice().sort());
+    assert.ok(seasonOptions.includes("Season 2026 Act 3"));
+    assert.ok(seasonOptions.includes("Season 2025 Act 2"));
     assert.ok(seasonOptions.includes("Episode 8 Act 3"));
+    assert.equal(seasonOptions.some(label => /Episode 1[01]/.test(label)), false);
 
-    await page.selectOption("#statsActSelector", { label: "Episode 10 Act 6" });
+    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" });
     await page.waitForTimeout(600);
     const statsDebug = await page.evaluate(() => ({
       selectedAct: document.getElementById("statsActSelector")?.value,
+      overview: ["statKD", "statWinrate", "statADR", "statHS"].map(id => document.getElementById(id)?.textContent || ""),
       agentRows: document.querySelectorAll("#statsAgentsList .stats-agent-mini-card").length,
       activeAgentRows: document.querySelectorAll("#statsAgentsList .stats-agent-mini-card:not([disabled])").length,
+      activeAgents: [...document.querySelectorAll("#statsAgentsList .stats-agent-mini-card:not([disabled])")].map(card => card.textContent.trim()),
+      activeMaps: [...document.querySelectorAll("#statsMapsList .stats-map-card:not([disabled])")].map(card => card.textContent.trim()),
       agentsText: document.getElementById("statsAgentsList")?.innerText || "",
       mapsText: document.getElementById("statsMapsList")?.innerText || ""
     }));
@@ -163,6 +169,21 @@ async function run() {
     assert.ok(statsDebug.activeAgentRows > 0, JSON.stringify(statsDebug));
     assert.ok(await page.locator("#statsMapsList .stats-map-card:not([disabled])").count() > 0);
     assert.ok(await page.locator("#statsWeaponsList button:not([disabled])").count() > 0);
+
+    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 5" });
+    await page.waitForTimeout(600);
+    const comparisonStats = await page.evaluate(() => ({
+      selectedAct: document.getElementById("statsActSelector")?.value,
+      overview: ["statKD", "statWinrate", "statADR", "statHS"].map(id => document.getElementById(id)?.textContent || ""),
+      activeAgents: [...document.querySelectorAll("#statsAgentsList .stats-agent-mini-card:not([disabled])")].map(card => card.textContent.trim()),
+      activeMaps: [...document.querySelectorAll("#statsMapsList .stats-map-card:not([disabled])")].map(card => card.textContent.trim())
+    }));
+    assert.equal(comparisonStats.selectedAct, "Season 2025 Act 5");
+    assert.notDeepEqual(comparisonStats.overview, statsDebug.overview);
+    assert.notDeepEqual(comparisonStats.activeAgents, statsDebug.activeAgents);
+    assert.notDeepEqual(comparisonStats.activeMaps, statsDebug.activeMaps);
+    await page.selectOption("#statsActSelector", { label: "Season 2025 Act 6" });
+    await page.waitForTimeout(600);
 
     await page.click('.nav-btn[data-page="insights"]');
     await page.waitForTimeout(500);
@@ -205,6 +226,7 @@ async function run() {
         lastSyncSource: "henrik",
         lastSyncAt: new Date().toISOString(),
         startingRR: 99999,
+        trackerAnalytics: { currentAct: "Episode 10 Act 6", acts: ["Episode 10 Act 6", "Episode 11 Act 3"] },
         matches
       }]));
     }, { matches, puuid });
@@ -220,7 +242,7 @@ async function run() {
 
     await mobilePage.click('[data-mobile-page="stats"]');
     await mobilePage.click("#statsActMobileTrigger");
-    await mobilePage.click('[data-stats-act-option="Episode 10 Act 6"]');
+    await mobilePage.click('[data-stats-act-option="Season 2025 Act 6"]');
     await mobilePage.waitForTimeout(600);
     assert.equal(await mobilePage.locator("#statsActSelector option").count(), 8);
     assert.ok(await mobilePage.locator("#statsAgentsList .stats-agent-row.stats-select-card").count() > 0);

@@ -51197,8 +51197,8 @@ html.is-mobile-layout body.is-mobile-layout .mobile-header-avatar-img{
 
 html.is-mobile-layout body.is-mobile-layout .mobile-header-rank-icon{
   position:absolute !important;
-  right:2px !important;
-  bottom:2px !important;
+  right:5px !important;
+  bottom:4px !important;
   width:18px !important;
   height:18px !important;
   object-fit:contain !important;
