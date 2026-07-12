@@ -109,7 +109,7 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
     await desktop.click('[data-gamesense-topic="maps"]');
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card).backgroundImage.includes("assets/library/maps"))), true);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card).backgroundImage.includes("/assets/library/maps"))), true);
     await desktop.click('[data-gamesense-item="bind"]');
     assert.equal(await desktop.locator(".gamesense-note-block").count(), 2);
     assert.equal(await desktop.locator(".gamesense-note-block").first().locator("li").count(), 3);

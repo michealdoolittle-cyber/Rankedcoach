@@ -19,7 +19,7 @@
   }
 
   function getAgentIcon(agent = "") {
-    return `assets/library/agents/${assetSlug(agent)}/icon.png`;
+    return `/assets/library/agents/${assetSlug(agent)}/icon.png`;
   }
 
   function getMaps() {

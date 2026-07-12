@@ -14,8 +14,8 @@
     {
       id: "bind",
       label: "Bind",
-      cardImage: "assets/library/maps/bind-card.png",
-      layoutImage: "assets/library/maps/bind-layout.png",
+      cardImage: "/assets/library/maps/bind-card.png",
+      layoutImage: "/assets/library/maps/bind-layout.png",
       callouts: [
         { label: "A Site", x: 27, y: 28 },
         { label: "A Bath", x: 14, y: 43 },
@@ -63,8 +63,8 @@
     {
       id: "breeze",
       label: "Breeze",
-      cardImage: "assets/library/maps/breeze-card.png",
-      layoutImage: "assets/library/maps/breeze-layout.png",
+      cardImage: "/assets/library/maps/breeze-card.png",
+      layoutImage: "/assets/library/maps/breeze-layout.png",
       callouts: [
         { label: "A Site", x: 25, y: 29 },
         { label: "A Main", x: 18, y: 50 },
@@ -109,8 +109,8 @@
     {
       id: "split",
       label: "Split",
-      cardImage: "assets/library/maps/split-card.png",
-      layoutImage: "assets/library/maps/split-layout.png",
+      cardImage: "/assets/library/maps/split-card.png",
+      layoutImage: "/assets/library/maps/split-layout.png",
       callouts: [
         { label: "A Site", x: 27, y: 25 },
         { label: "A Main", x: 18, y: 48 },

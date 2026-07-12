@@ -4,8 +4,8 @@
 (function () {
   "use strict";
 
-  const agentAsset = (agent, file) => `assets/library/agents/${agent}/${file}.png`;
-  const weaponAsset = name => `assets/weapons/${name}.png`;
+  const agentAsset = (agent, file) => `/assets/library/agents/${agent}/${file}.png`;
+  const weaponAsset = name => `/assets/weapons/${name}.png`;
 
   function ability(id, name, slot, agent, summary, stats, purpose, setup) {
     return { id, name, slot, icon: agentAsset(agent, id), summary, stats, purpose, setup };
