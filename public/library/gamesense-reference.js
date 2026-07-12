@@ -114,6 +114,17 @@
     return { id, label, image: weaponAsset(id), cost, magazine, fireRate, penetration, damageRanges, focus };
   }
 
+  const currentAgentRates = {
+    jett: { pickRate: 29.6, pickRateDelta: -0.1, maps: ["Breeze"], mapWinRates: { Breeze: 49.58 } },
+    sova: { pickRate: 15.3, pickRateDelta: 3.5, maps: ["Breeze"], mapWinRates: { Breeze: 50.04 } },
+    omen: { pickRate: 9.6, pickRateDelta: 0, maps: ["Split"], mapWinRates: { Split: 46.33 } },
+    viper: { pickRate: 0.9, pickRateDelta: -0.2, maps: ["Breeze"], mapWinRates: { Breeze: 49.71 } },
+    cypher: { pickRate: 6.4, pickRateDelta: 0, maps: ["Split"], mapWinRates: { Split: 49.79 } },
+    sage: { pickRate: 3.6, pickRateDelta: -0.4, maps: ["Split"], mapWinRates: { Split: 51.38 } },
+    raze: { pickRate: 5.4, pickRateDelta: -0.1, maps: ["Split"], mapWinRates: { Split: 49.82 } }
+  };
+  const currentAgents = agents.map(agent => ({ ...agent, ...(currentAgentRates[agent.id] || {}) }));
+
   const weaponCatalog = {
     vandal: weapon("vandal", "Vandal", 2900, 25, "9.75 rounds/sec", "Medium", [{ range: "0-50m", head: 160, body: 40, legs: 34 }], "No damage falloff. Favor clean taps and short bursts once the first controlled shots are gone."),
     phantom: weapon("phantom", "Phantom", 2900, 30, "11 rounds/sec", "Medium", [{ range: "0-20m", head: 156, body: 39, legs: 33 }, { range: "20-50m", head: 140, body: 35, legs: 30 }], "Higher fire rate and a silenced profile reward close-to-mid fights; respect the long-range headshot falloff."),
@@ -133,9 +144,18 @@
     sheriff: weapon("sheriff", "Sheriff", 800, 6, "4 rounds/sec", "High", [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], "Protect the 0-30m one-shot headshot range and let recoil settle. Long-range headshots no longer kill full armor." )
   };
 
+  const currentWeaponUsage = {
+    vandal: 37.6, phantom: 21.2, operator: 5.8, outlaw: 2.4, marshal: 4.1,
+    guardian: 3.1, bulldog: 3.5, spectre: 5.9, stinger: 2.8, judge: 2.2,
+    bucky: 1.1, shorty: 1.5, classic: 4.8, frenzy: 1.9, ghost: 8.1, sheriff: 5.7
+  };
+  Object.entries(currentWeaponUsage).forEach(([id, pickRate]) => {
+    if (weaponCatalog[id]) weaponCatalog[id].pickRate = pickRate;
+  });
+
   const weapons = [
     { id: "rifles", label: "Rifles", examples: "Vandal, Phantom", range: "Mid-range default", weaponIds: ["vandal", "phantom"], fundamentals: ["Adjust headshot expectations to rifle rounds, not every weapon combined.", "Tap or burst once recoil leaves the first controlled shots.", "Repeated close-range losses to SMGs often point to positioning, not rifle weakness."], economy: ["Buy rifle, armor, and required utility as one loadout decision.", "Do not split from a coordinated team buy just to preserve a comfort rifle."] },
-    { id: "precision", label: "Precision Rifles", examples: "Guardian, Bulldog", range: "Mid to long range", weaponIds: ["guardian", "bulldog"], fundamentals: ["Guardian and Bulldog punish full-auto habits copied from Vandal or Phantom.", "Let the burst or single-shot reset before the next commitment.", "Use the cleaner first-shot profile to hold narrow head-level lanes."], economy: ["Treat these as deliberate economy choices, not failed rifle buys.", "Keep enough credits for armor and utility instead of forcing the most expensive gun available."] },
+    { id: "precision", label: "Light Rifles", examples: "Guardian, Bulldog", range: "Mid to long range", weaponIds: ["guardian", "bulldog"], fundamentals: ["Guardian and Bulldog punish full-auto habits copied from Vandal or Phantom.", "Let the burst or single-shot reset before the next commitment.", "Use the cleaner first-shot profile to hold narrow head-level lanes."], economy: ["Treat these as deliberate economy choices, not failed rifle buys.", "Keep enough credits for armor and utility instead of forcing the most expensive gun available."] },
     { id: "snipers", label: "Snipers", examples: "Operator, Outlaw, Marshal", range: "Long sightlines", weaponIds: ["operator", "outlaw", "marshal"], fundamentals: ["Multiple shots per kill can reveal a first-shot or pre-aim gap.", "Deaths while scoped often point to weak off-angle awareness or no escape plan.", "Defensive holds and aggressive opening picks need different expectations."], economy: ["Operator rounds need team economy support.", "Marshal or Outlaw can preserve pressure in lighter buy rounds without breaking the next full buy."] },
     { id: "smgs", label: "SMGs", examples: "Spectre, Stinger", range: "Close-range pressure", weaponIds: ["spectre", "stinger"], fundamentals: ["SMGs are expected in eco and light-buy rounds.", "Close distance before committing instead of testing rifles at their preferred range.", "Movement and target transfer matter more than chasing rifle-like headshot numbers."], economy: ["Use the lower cost to keep armor and utility.", "Plan the path to recover an enemy rifle after the first conversion kill."] },
     { id: "shotguns", label: "Shotguns", examples: "Judge, Bucky, Shorty", range: "Close-range only", weaponIds: ["judge", "bucky", "shorty"], fundamentals: ["High opening kills and high opening deaths together usually mean the position is powerful but overcommitted.", "Long-sightline losses are weapon misuse, not proof the shotgun is weak.", "Primary and alternate fire serve different distances."], economy: ["Choose a position that protects the weapon's range before buying it.", "Have a route to upgrade from a dropped rifle after contact."] },
@@ -156,5 +176,10 @@
     "spray-control-dummy": ["Use the large range-finder target dummy, select the shortest distance, and turn infinite ammo off.", "Hold one full spray and judge accuracy by bullets hitting the dummy, not precision at the center bullseye.", "Move up one distance setting at a time only while the spray continues to land, then reload and repeat through the longest setting."]
   };
 
-  globalThis.RankedCoachGamesenseReference = Object.freeze({ agents, weapons, warmupDetails });
+  globalThis.RankedCoachGamesenseReference = Object.freeze({
+    agents: currentAgents,
+    weapons,
+    warmupDetails,
+    season: { label: "Season 2026 Act 4", patch: "13.00", updatedAt: "2026-07-12" }
+  });
 })();

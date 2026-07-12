@@ -381,6 +381,13 @@ async function run() {
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await mobile.locator("#dailyWarmupModal.active").waitFor({ state: "visible", timeout: 5000 });
     await mobile.waitForTimeout(350);
+    const mobileWarmupHeader = await mobile.locator(".daily-warmup-header").evaluate(header => {
+      const headerRect = header.getBoundingClientRect();
+      const closeRect = document.getElementById("dailyWarmupClose").getBoundingClientRect();
+      return { headerTop: headerRect.top, closeTop: closeRect.top, closeRight: closeRect.right, viewportWidth: innerWidth };
+    });
+    assert.ok(mobileWarmupHeader.headerTop >= 0 && mobileWarmupHeader.closeTop >= 0 && mobileWarmupHeader.closeRight <= mobileWarmupHeader.viewportWidth, JSON.stringify(mobileWarmupHeader));
+    assert.equal(await mobile.locator("#dailyWarmupClose").isVisible(), true);
     await mobile.click('[data-warmup-drill="burst-peeking-strafe"]');
     await mobile.click('[data-warmup-drill="tap-fire-rhythm"]');
     await mobile.waitForTimeout(220);

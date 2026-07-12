@@ -2,6 +2,8 @@
 
 **Status:** Built and locally verified 2026-07-11. The once-daily Home/Logging prompt presents eleven requested pre-ranked training choices with themed selection feedback and a four-drill cap. Logging has permanent below-Map access: before completion it opens the warm-up checklist, then switches to a post-game-only training view. The Feed persists a clickable fire marker on the first match logged after warm-up completion and a clickable crosshair marker against the exact match followed by post-game aim training. Both compact, animated actions sit directly after RR, show `Edit` on hover, and reopen their date-specific editor while normal reflection editing continues to expose the full log form and notes. The skip path, per-profile warm-up log, isolated Henrik DM/TDM verification, and sample-gated ranked correlation insight remain implemented. Production deployment is tracked by the shipping commit.
 
+**Status (2026-07-12 QoL pass):** The mobile warm-up surface is now a safe-area-aware full-height sheet with a sticky header and a permanently reachable 44px close control. Ranked match days, completed warm-ups, and weekly post-game aim training now produce guarded streak congratulations for signed-in profiles. Ranked streak milestones are Hot Streak (5), Frenzy (10), Rampage (15), Riot (20), Nightmare (25), and Ranked Demon (30); warm-ups count consecutive days and aim training needs one completion per consecutive week. Profile Rating now includes a theme-aware 30-day ranked activity heatmap.
+
 ---
 
 ## Research — real, sourced methods, not invented

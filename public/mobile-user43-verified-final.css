@@ -15509,6 +15509,67 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-pa
   rotate:0deg !important;
 }
 
+/* Mobile selected-state motion: the selected child moves, never its parent card. */
+@keyframes rc-mobile-selected-slide{
+  from{opacity:.64;transform:translate3d(-12px,0,0);}
+  to{opacity:1;transform:translate3d(0,0,0);}
+}
+
+@keyframes rc-mobile-popup-slide{
+  from{opacity:0;transform:translate3d(14px,0,0) scale(.985);}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1);}
+}
+
+html.is-mobile-layout body.is-mobile-layout :is(
+  #mobileLoggingTabs button.active,
+  #mobileStatsTabs button.active,
+  #mobileTrendTabs button.active,
+  #mobileInsightTrendTabs button.active,
+  .mobile-insight-trend-tabs button.active,
+  .mobile-insight-card-nav button:active,
+  .mobile-trend-nav button:active,
+  .mobile-breakdown-nav button:active,
+  .graph-btn.active,
+  .weekly-focus-pill.is-active,
+  .insight-filter-btn.active,
+  [data-mobile-trend-filter].active,
+  [data-mobile-stats-view].active,
+  [data-mobile-logging-view].active,
+  .stats-tab-btn.active,
+  .logging-mobile-tab.active,
+  .insights-trend-tab.active,
+  .trend-group-btn.active,
+  .priority-trend-btn.active,
+  #page-insights :is(.insight-card,.trend-signal-card).is-active,
+  #page-stats :is(.stats-trend-card,.stats-breakdown-cardlet):active
+){
+  animation:rc-mobile-selected-slide .25s cubic-bezier(.2,.78,.24,1) both !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout :is(
+  #mobileProfilePopover:not([hidden]),
+  #profileDropdown.open,
+  #goalRankModal.active .lens-modal,
+  #accountSupportModal.active .lens-modal,
+  #securitySettingsModal.active .lens-modal,
+  .ask-coach-panel.open .ask-coach-panel-inner,
+  #askCoachModal.active .lens-modal,
+  #askCoachOverlay.active .lens-modal,
+  .ask-coach-modal.active,
+  .profile-rating-dropdown.open
+){
+  animation:rc-mobile-popup-slide .28s cubic-bezier(.2,.78,.24,1) both !important;
+}
+
+body.access-reduced-motion :is(
+  #mobileLoggingTabs button.active,
+  #mobileStatsTabs button.active,
+  #mobileTrendTabs button.active,
+  #mobileInsightTrendTabs button.active,
+  #mobileProfilePopover:not([hidden]),
+  #profileDropdown.open
+){animation:none !important;}
+
 /* Mobile nav redesign final lock v1: this file loads after the legacy mobile locks. */
 html.is-mobile-layout body.is-mobile-layout{
   --mobile-header-height:120px !important;

@@ -111,7 +111,14 @@ async function run() {
     assert.match(unlockState[2].text, /0\/10 season/);
     assert.match(unlockState[3].text, /0\/10 season.*0\/5 logs/s);
     assert.doesNotMatch(await page.locator("#profileRatingCopy").innerText(), /undefined/i);
+    assert.equal(await page.locator("#profileRatingUnlocks .profile-activity-day").count(), 30);
     await page.locator("#profileRatingWidget").click();
+
+    await page.locator('.graph-btn[data-size="all"]').click();
+    await page.waitForTimeout(350);
+    assert.match(await page.locator(".chart-axis-title").textContent(), /Matches across all-time rank history/i);
+    const lifetimeAxisLabels = await page.locator("#chartRow text").allTextContents();
+    assert.ok(lifetimeAxisLabels.some(label => /Diamond/i.test(label)), JSON.stringify(lifetimeAxisLabels));
 
     const chartGeometry = await page.locator(".rr-chart-card").evaluate(card => {
       const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
@@ -142,6 +149,13 @@ async function run() {
 
     await page.locator('[data-page="stats"]').click();
     await page.waitForTimeout(250);
+    assert.equal(await page.locator("#statFirstBloods").count(), 1);
+    assert.equal(await page.locator("#statDamagePerRound").count(), 1);
+    const breakdownVisuals = await page.locator("#statsBreakdown").evaluate(container => ({
+      cards: container.querySelectorAll(".stats-breakdown-cardlet").length,
+      visuals: container.querySelectorAll(".stats-data-visual,.stats-confidence-visual,.coaching-category-visual").length
+    }));
+    assert.ok(breakdownVisuals.cards > 0 && breakdownVisuals.visuals === breakdownVisuals.cards, JSON.stringify(breakdownVisuals));
     const proofContainment = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
       const parent = card.getBoundingClientRect();
       return [".stats-proof-card-head", ".stats-history-boundary-note", ".stats-proof-rank-row", ".stats-proof-note"].map(selector => {
@@ -174,10 +188,44 @@ async function run() {
     await page.locator(".stats-act-mobile-menu-close").click();
     await page.locator('[data-page="insights"]').click();
     await page.waitForTimeout(250);
+    const insightVisuals = await page.locator("#insightsList").evaluate(container => ({
+      cards: container.querySelectorAll(".insight-card:not(.insight-empty)").length,
+      visuals: container.querySelectorAll(".insight-card:not(.insight-empty) .coaching-category-visual").length
+    }));
+    assert.equal(insightVisuals.visuals, insightVisuals.cards, JSON.stringify(insightVisuals));
     const filterState = await page.locator(".insight-filter-btn").evaluateAll(buttons => buttons.map(button => ({ filter: button.dataset.filter, disabled: button.disabled })));
     assert.equal(filterState.find(item => item.filter === "all")?.disabled, false);
     assert.ok(filterState.some(item => item.filter !== "all" && item.disabled), JSON.stringify(filterState));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-insight-filters.png"), fullPage: true });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1500);
+    await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.locator('.graph-btn[data-size="all"]').click();
+    await page.waitForTimeout(350);
+    const mobileLifetimeGeometry = await page.locator(".rr-chart-card").evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const title = card.querySelector(".chart-axis-title").getBoundingClientRect();
+      const legend = card.querySelector(".chart-axis-legend").getBoundingClientRect();
+      const controls = card.querySelector(".graph-controls, .graph-buttons, .rr-graph-controls") || card.querySelector('.graph-btn[data-size="5"]')?.parentElement;
+      const controlsRect = controls.getBoundingClientRect();
+      const rankLabels = [...card.querySelectorAll(".chart-rank-axis-label")].map(label => label.getBoundingClientRect());
+      return {
+        cardLeft: cardRect.left,
+        cardRight: cardRect.right,
+        titleBottom: title.bottom,
+        legendTop: legend.top,
+        legendBottom: legend.bottom,
+        controlsTop: controlsRect.top,
+        rankLabels: rankLabels.map(rect => ({ left: rect.left, right: rect.right }))
+      };
+    });
+    assert.ok(mobileLifetimeGeometry.titleBottom < mobileLifetimeGeometry.legendTop, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.legendBottom < mobileLifetimeGeometry.controlsTop, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.rankLabels.length >= 3, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.rankLabels.every(rect => rect.left >= mobileLifetimeGeometry.cardLeft - 1 && rect.right <= mobileLifetimeGeometry.cardRight + 1), JSON.stringify(mobileLifetimeGeometry));
+    await page.screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-lifetime-rank-chart.png"), fullPage: true });
 
     console.log("Goal, readiness gates, chart spacing, Stats containment, rounded season selector, long Riot ID, and empty insight-filter checks passed.");
   } finally {

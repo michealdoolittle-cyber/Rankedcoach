@@ -183,6 +183,7 @@ const DAILY_WARMUP_DRILL_ALIASES = Object.freeze({
   "gunfight-hygiene": "burst-peeking"
 });
 let dailyWarmupPromptTimer = 0;
+let profileStreakAnnouncementTimer = 0;
 const warmupVerificationInFlight = new Set();
 
 function getDailyWarmupPromptDate(profile = getActiveProfile?.()) {
@@ -240,6 +241,147 @@ function normalizeWarmupLog(entries = []) {
     if (normalized) byDate.set(normalized.date, normalized);
   });
   return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-180);
+}
+
+function getProfileMatchDateKeys(profile = getActiveProfile?.()) {
+  const profileMatches = Array.isArray(profile?.matches)
+    ? profile.matches
+    : (profile?.id === activeProfileId && Array.isArray(matches) ? matches : []);
+  return [...new Set(profileMatches.map(match => {
+    const core = getMatchCore(match);
+    const playedAt = core?.createdAt || match?.createdAt || match?.metadata?.playedAt || match?.matchRecord?.playedAt || "";
+    const date = new Date(playedAt);
+    return Number.isNaN(date.getTime()) ? "" : formatLocalDateKey(date);
+  }).filter(Boolean))];
+}
+
+function getConsecutiveDayStreak(dateKeys = [], anchorDate = new Date()) {
+  const dates = new Set(dateKeys);
+  const cursor = new Date(anchorDate);
+  cursor.setHours(12, 0, 0, 0);
+  if (!dates.has(formatLocalDateKey(cursor))) return 0;
+  let streak = 0;
+  while (dates.has(formatLocalDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function getTrainingWeekKey(dateValue = new Date()) {
+  const date = dateValue instanceof Date ? new Date(dateValue) : new Date(`${dateValue}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setHours(12, 0, 0, 0);
+  const day = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - day);
+  return formatLocalDateKey(date);
+}
+
+function getConsecutiveAimWeekStreak(warmupLog = [], anchorDate = new Date()) {
+  const completedWeeks = new Set(normalizeWarmupLog(warmupLog)
+    .filter(entry => entry.postGameAimTrainingCommitted)
+    .map(entry => getTrainingWeekKey(entry.date))
+    .filter(Boolean));
+  const cursor = new Date(anchorDate);
+  cursor.setHours(12, 0, 0, 0);
+  cursor.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7));
+  if (!completedWeeks.has(formatLocalDateKey(cursor))) return 0;
+  let streak = 0;
+  while (completedWeeks.has(formatLocalDateKey(cursor))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
+function getProfileTrainingStreaks(profile = getActiveProfile?.()) {
+  const warmupLog = normalizeWarmupLog(profile?.warmupLog);
+  const completedWarmupDates = warmupLog.filter(isDailyWarmupCompleted).map(entry => entry.date);
+  return {
+    games: getConsecutiveDayStreak(getProfileMatchDateKeys(profile)),
+    warmups: getConsecutiveDayStreak(completedWarmupDates),
+    aimWeeks: getConsecutiveAimWeekStreak(warmupLog)
+  };
+}
+
+function getRankedGameStreakLabel(days = 0) {
+  if (days >= 30) return "Ranked Demon";
+  if (days >= 25) return "Nightmare Streak";
+  if (days >= 20) return "Riot Streak";
+  if (days >= 15) return "Rampage Streak";
+  if (days >= 10) return "Frenzy Streak";
+  if (days >= 5) return "Hot Streak";
+  return `${days}-Day Ranked Streak`;
+}
+
+function announceProfileStreaks(profile = getActiveProfile?.()) {
+  if (!profile?.id || !currentAuthUser) return;
+  const streaks = getProfileTrainingStreaks(profile);
+  const messages = [];
+  if (streaks.games > 0) messages.push(`${getRankedGameStreakLabel(streaks.games)}: ${streaks.games} consecutive game day${streaks.games === 1 ? "" : "s"}.`);
+  if (streaks.warmups > 0) messages.push(`${streaks.warmups}-day warm-up streak.`);
+  if (streaks.aimWeeks > 0) messages.push(`${streaks.aimWeeks}-week aim-training streak.`);
+  if (!messages.length) return;
+  const today = formatLocalDateKey();
+  const fingerprint = `${streaks.games}:${streaks.warmups}:${streaks.aimWeeks}`;
+  const storageKey = `rankedcoach-streak-announcement:${profile.id}:${today}`;
+  try {
+    if (localStorage.getItem(storageKey) === fingerprint) return;
+    localStorage.setItem(storageKey, fingerprint);
+  } catch (_error) {
+    // A blocked storage write should not block the player-facing confirmation.
+  }
+  showToast?.(messages.join(" "), {
+    title: streaks.games >= 5 ? getRankedGameStreakLabel(streaks.games) : "Training streak updated",
+    tone: "success"
+  });
+}
+
+function scheduleProfileStreakAnnouncement(delay = 850) {
+  window.clearTimeout(profileStreakAnnouncementTimer);
+  profileStreakAnnouncementTimer = window.setTimeout(() => {
+    profileStreakAnnouncementTimer = 0;
+    announceProfileStreaks(getActiveProfile?.());
+  }, Math.max(0, delay));
+}
+
+function buildProfileActivityHeatmapMarkup(profile = getActiveProfile?.()) {
+  const counts = new Map();
+  const profileMatches = Array.isArray(profile?.matches)
+    ? profile.matches
+    : (profile?.id === activeProfileId && Array.isArray(matches) ? matches : []);
+  profileMatches.forEach(match => {
+    const core = getMatchCore(match);
+    const date = new Date(core?.createdAt || match?.createdAt || match?.metadata?.playedAt || 0);
+    if (Number.isNaN(date.getTime())) return;
+    const key = formatLocalDateKey(date);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  });
+  const days = [];
+  let activeDays = 0;
+  const cursor = new Date();
+  cursor.setHours(12, 0, 0, 0);
+  cursor.setDate(cursor.getDate() - 29);
+  for (let index = 0; index < 30; index += 1) {
+    const date = new Date(cursor);
+    date.setDate(cursor.getDate() + index);
+    const key = formatLocalDateKey(date);
+    const count = counts.get(key) || 0;
+    if (count > 0) activeDays += 1;
+    const level = count === 0 ? 0 : count === 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4;
+    const label = `${date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}: ${count} ranked game${count === 1 ? "" : "s"}`;
+    days.push(`<span class="profile-activity-day level-${level}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></span>`);
+  }
+  return `
+    <section class="profile-activity-heatmap" aria-label="Ranked games played over the last 30 days">
+      <div class="profile-activity-heading">
+        <strong>30-Day Ranked Activity</strong>
+        <span>${activeDays} active days</span>
+      </div>
+      <div class="profile-activity-grid">${days.join("")}</div>
+      <div class="profile-activity-legend"><span>Less</span><i class="level-0"></i><i class="level-1"></i><i class="level-2"></i><i class="level-3"></i><i class="level-4"></i><span>More</span></div>
+    </section>
+  `;
 }
 
 function getDailyWarmupRecord(profile = getActiveProfile?.(), date = formatLocalDateKey()) {
@@ -619,6 +761,7 @@ function saveDailyWarmupCheck() {
   renderLoggingTrainingMenuState(getActiveProfile());
   renderLogFeed?.({ force: true });
   showToast?.(`Warm-up saved: ${record?.drillsSelected?.length || 0} drill${record?.drillsSelected?.length === 1 ? "" : "s"}${dmTdmSelfReported ? " plus DM/TDM" : ""}.`, { tone: "success" });
+  scheduleProfileStreakAnnouncement();
   void refreshWarmupAutoVerification(getActiveProfile(), { announce: true });
 }
 
@@ -647,6 +790,7 @@ function toggleDailyPostgameTraining() {
   showToast?.(removing ? "Post-game training marker removed." : "Post-game aim training linked to your latest game.", {
     tone: removing ? "neutral" : "success"
   });
+  if (!removing) scheduleProfileStreakAnnouncement();
 }
 
 function bindDailyWarmupEvents() {
@@ -1543,7 +1687,7 @@ function writeMobileProfileRating(model = getCoachReadinessModel()) {
         <strong>${item.complete ? "Unlocked" : escapeHtml(item.progressLabel)}</strong>
         <div class="coach-readiness-mini-bar"><span style="--profile-progress:${item.progress};width:${item.progress}%"></span></div>
       </div>
-    `).join("");
+    `).join("") + buildProfileActivityHeatmapMarkup(getActiveProfile?.());
   }
 }
 
@@ -2992,7 +3136,8 @@ function ensureMobileSwipeAffordances() {
     bindKey: "statsPerformanceCard",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewStartMaxDurationMs: 170,
-    previewTarget: () => document.querySelector("#page-stats .stats-performance-card")
+    previewTarget: () => document.querySelector("#page-stats .stats-trend-card.is-mobile-trend-active")
+      || document.querySelector("#page-stats .stats-trend-card:not(.mobile-trend-filtered)")
   });
 
   bindMobileSwipe(document.querySelector("#page-stats .stats-breakdown-card"), (direction) => {
@@ -3006,7 +3151,8 @@ function ensureMobileSwipeAffordances() {
     bindKey: "statsBreakdownCard",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewStartMaxDurationMs: 170,
-    previewTarget: () => document.querySelector("#page-stats .stats-breakdown-card")
+    previewTarget: () => document.querySelector("#page-stats .stats-breakdown-cardlet.is-mobile-breakdown-active")
+      || document.querySelector("#page-stats .stats-breakdown-cardlet")
   });
 
   bindMobileSwipe(document.querySelector("#page-insights .insights-top-card"), (direction) => {
@@ -3021,7 +3167,8 @@ function ensureMobileSwipeAffordances() {
     bindKey: "insightCards",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewStartMaxDurationMs: 170,
-    previewTarget: () => document.querySelector("#page-insights .insights-top-card")
+    previewTarget: () => document.querySelector("#page-insights .insight-card.is-mobile-insight-active")
+      || document.querySelector("#page-insights .insight-card:not(.insight-empty)")
   });
 
   bindMobileSwipe(document.querySelector("#page-insights .insights-trends-card"), (direction, event, context) => {
@@ -3049,7 +3196,8 @@ function ensureMobileSwipeAffordances() {
     bindKey: "insightTrendCard",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewStartMaxDurationMs: 170,
-    previewTarget: () => document.querySelector("#page-insights .insights-trends-card")
+    previewTarget: () => document.querySelector("#page-insights .trend-signal-card.is-mobile-insight-trend-active")
+      || document.querySelector("#page-insights .trend-content.is-mobile-trend-content-active .trend-signal-card")
   });
 }
 
@@ -12204,6 +12352,7 @@ function onMatchSaved(record, options = {}) {
     });
     triggerPremiumMoment("peak", { result });
     pulsePremiumAvatarCelebration();
+    scheduleProfileStreakAnnouncement(1150);
     return;
   }
   const title = importedCount > 1 ? "History updated" : "Match saved";
@@ -12214,6 +12363,7 @@ function onMatchSaved(record, options = {}) {
   if (result === "win" || result === "loss") {
     triggerPremiumMoment("result", { result });
   }
+  scheduleProfileStreakAnnouncement(1150);
 }
 
 function getCanonicalMatchRecordCount() {
@@ -12320,7 +12470,7 @@ function renderCoachReadinessUI() {
   if (!card && !widget) return;
   const model = getCoachReadinessModel();
 
-  const writeUnlocks = (target) => {
+  const writeUnlocks = (target, options = {}) => {
     if (!target) return;
     target.innerHTML = model.unlocks.map(item => `
       <div class="profile-rating-unlock coach-readiness-unlock ${item.complete ? "is-complete" : "is-locked"}">
@@ -12328,7 +12478,7 @@ function renderCoachReadinessUI() {
         <strong>${item.complete ? "Unlocked" : escapeHtml(item.progressLabel)}</strong>
         <div class="coach-readiness-mini-bar"><span style="--profile-progress:${item.progress};width:${item.progress}%"></span></div>
       </div>
-    `).join("");
+    `).join("") + (options.includeActivity ? buildProfileActivityHeatmapMarkup(getActiveProfile?.()) : "");
   };
 
   if (card) {
@@ -12363,10 +12513,11 @@ function renderCoachReadinessUI() {
       fill.style.setProperty("--profile-progress", String(model.percent));
       fill.style.width = `${model.percent}%`;
     }
-    writeUnlocks(unlocks);
+    writeUnlocks(unlocks, { includeActivity: true });
   }
 
   writeMobileProfileRating?.(model);
+  scheduleProfileStreakAnnouncement(1300);
 }
 
 function setProfileRatingDropdownOpen(open) {
@@ -14356,6 +14507,11 @@ function updateRRChartDataStatus(chartSource = {}) {
   }
   const total = safeNumber(chartSource.totalMatchCount);
   const verified = safeNumber(chartSource.verifiedRrCount);
+  const rankSnapshots = safeNumber(chartSource.rankSnapshotCount);
+  if (chartSource.isLifetimeRankTimeline && rankSnapshots) {
+    status.textContent = `${rankSnapshots} retained matches include rank snapshots. Lifetime plots rank position without estimating missing RR gains or losses.`;
+    return;
+  }
   status.textContent = verified
     ? `${verified} of ${total} retained matches have verified RR snapshots. Missing RR is not estimated.`
     : `Match stats are available for ${total} retained matches, but Henrik has no verified RR snapshots for this selection.`;
@@ -14396,12 +14552,18 @@ function getChartSourceEntries(size = currentSize) {
     String(entry?.match?.source || entry?.match?.metadata?.source || "").toLowerCase() === "henrik_sync"
   );
   const verifiedRrCount = scopedEntries.filter(entry => isVerifiedHenrikRrMatch(entry.match)).length;
-  const chartEntries = hasHenrikMatches
-    ? scopedEntries.filter(entry => {
+  const rankSnapshotEntries = scopedEntries.filter(entry => {
+    const snapshot = getMatchRankSnapshot(entry.match);
+    return Number.isFinite(getRankSnapshotAbsoluteRR(snapshot));
+  });
+  const chartEntries = normalizedSize === "all"
+    ? rankSnapshotEntries
+    : hasHenrikMatches
+      ? scopedEntries.filter(entry => {
         const source = String(entry?.match?.source || entry?.match?.metadata?.source || "").toLowerCase();
         return source !== "henrik_sync" || isVerifiedHenrikRrMatch(entry.match);
       })
-    : scopedEntries;
+      : scopedEntries;
   const entries = chartEntries
     .map((entry, displayIndex) => ({ ...entry, displayIndex }));
   const scopeLabel = normalizedSize === "all" ? "All-time profile" : selectedSeasonLabel;
@@ -14416,6 +14578,8 @@ function getChartSourceEntries(size = currentSize) {
     matchCount: entries.length,
     totalMatchCount: scopedEntries.length,
     verifiedRrCount,
+    rankSnapshotCount: rankSnapshotEntries.length,
+    isLifetimeRankTimeline: normalizedSize === "all",
     hasHenrikMatches
   };
 }
@@ -16156,6 +16320,56 @@ function buildCumulativeRR(matchList) {
   return cumulative;
 }
 
+function buildLifetimeRankSeries(entries = []) {
+  const rankedEntries = (entries || []).map(entry => {
+    const snapshot = getMatchRankSnapshot(entry?.match || {});
+    const absolute = getRankSnapshotAbsoluteRR(snapshot);
+    return Number.isFinite(absolute) ? { ...entry, lifetimeRankAbsolute: absolute } : null;
+  }).filter(Boolean);
+  if (!rankedEntries.length) return { entries: [], slice: [] };
+  const first = rankedEntries[0];
+  const firstDelta = getOptionalFiniteNumber(first?.match?.verifiedRrDelta ?? first?.match?.matchRecord?.rank?.rrDelta ?? first?.match?.rr) || 0;
+  return {
+    entries: rankedEntries,
+    slice: [first.lifetimeRankAbsolute - firstDelta, ...rankedEntries.map(entry => entry.lifetimeRankAbsolute)]
+  };
+}
+
+function getLifetimeRankBounds(slice = []) {
+  const finite = slice.filter(Number.isFinite);
+  const fallback = getRankSnapshotAbsoluteRR(getProfileCurrentRankSnapshot()) || 0;
+  const lowValue = finite.length ? Math.min(...finite) : fallback;
+  const highValue = finite.length ? Math.max(...finite) : fallback;
+  const lowMatch = RANK_THRESHOLDS.findIndex(rank => lowValue >= rank.min && lowValue < rank.max);
+  const highMatch = RANK_THRESHOLDS.findIndex(rank => highValue >= rank.min && highValue < rank.max);
+  const lowIndex = Math.max(0, lowMatch);
+  const highIndex = Math.max(lowIndex, highMatch < 0 ? RANK_THRESHOLDS.length - 1 : highMatch);
+  const startIndex = Math.max(0, lowIndex - 1);
+  const endIndex = Math.min(RANK_THRESHOLDS.length - 1, Math.max(highIndex + 1, startIndex + 2));
+  const minTick = safeNumber(RANK_THRESHOLDS[startIndex]?.min);
+  const endRank = RANK_THRESHOLDS[endIndex];
+  const maxTick = Number.isFinite(endRank?.max) ? endRank.max : safeNumber(endRank?.min) + 500;
+  return { minTick, maxTick, startIndex, endIndex };
+}
+
+function buildLifetimeRankYTicks(bounds, y) {
+  const start = safeNumber(bounds?.startIndex);
+  const end = Math.max(start, safeNumber(bounds?.endIndex));
+  const span = Math.max(1, end - start);
+  const step = Math.max(1, Math.ceil(span / 5));
+  const indexes = [];
+  for (let index = start; index <= end; index += step) indexes.push(index);
+  if (indexes[indexes.length - 1] !== end) indexes.push(end);
+  return indexes.map(index => {
+    const rank = RANK_THRESHOLDS[index];
+    const value = safeNumber(rank?.min);
+    const yy = y(value);
+    return `
+<line x1="${PAD_LEFT}" y1="${yy}" x2="${CHART_W - PAD_RIGHT}" y2="${yy}" stroke="rgba(148,163,184,0.25)"/>
+<text class="chart-rank-axis-label" x="${PAD_LEFT - 10}" y="${yy + 4}" fill="#94a3b8" font-size="14" font-weight="700" text-anchor="end">${escapeHtml(rank?.tierLabel || "")}</text>`;
+  }).join("");
+}
+
 function getMatchIdentityKey(match = {}) {
   if (!match) return "";
 
@@ -16492,8 +16706,10 @@ function buildXTicks(points, sliceLength, matchCount) {
   return xTicks;
 }
 
-function buildChartAxisTitle(label = "Current Season") {
-  const axisLabel = `Games from ${label || "Current Season"}`;
+function buildChartAxisTitle(label = "Current Season", options = {}) {
+  const axisLabel = options?.lifetimeRankTimeline
+    ? "Matches across all-time rank history"
+    : `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
   const isMobileFooterLayout = isMobileLayoutViewport();
   const titleY = isMobileFooterLayout ? PAD_BOTTOM + 46 : Math.min(CHART_H - 28, PAD_BOTTOM + 58);
@@ -45101,15 +45317,21 @@ if(chartHeight){
     ? initialChartSource
     : getChartSourceEntries(resolvedSize);
   updateRRChartDataStatus(chartSource);
-  const chartEntries = chartSource.entries;
+  const isLifetimeRankTimeline = String(resolvedSize).toLowerCase() === "all";
+  const lifetimeRankSeries = isLifetimeRankTimeline ? buildLifetimeRankSeries(chartSource.entries) : null;
+  const chartEntries = isLifetimeRankTimeline ? lifetimeRankSeries.entries : chartSource.entries;
   const chartMatchCount = chartEntries.length;
   const chartMatches = chartEntries.map(entry => entry.match);
-  const cumulative=buildCumulativeRR(chartMatches);
-  const chartWindow = getChartSliceWithEntries(cumulative, chartEntries, resolvedSize);
+  const cumulative = isLifetimeRankTimeline ? lifetimeRankSeries.slice.slice(1) : buildCumulativeRR(chartMatches);
+  const chartWindow = isLifetimeRankTimeline
+    ? { slice: lifetimeRankSeries.slice, entries: chartEntries }
+    : getChartSliceWithEntries(cumulative, chartEntries, resolvedSize);
   const slice = chartWindow.slice;
   let visibleChartEntries = chartWindow.entries;
   const chartAxisMatchCount = chartMatchCount;
-  const chartAxisTitle = buildChartAxisTitle(chartSource.scopeLabel || chartSource.seasonLabel || "Current Season");
+  const chartAxisTitle = buildChartAxisTitle(chartSource.scopeLabel || chartSource.seasonLabel || "Current Season", {
+    lifetimeRankTimeline: isLifetimeRankTimeline
+  });
   const chartRenderSignature = `${chartSource.scopeLabel}|${resolvedSize}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
 
@@ -45140,7 +45362,7 @@ if(chartHeight){
     chartTooltipSuppressed = false;
   }
 	 
-  PAD_LEFT = CHART_W * 0.055;
+  PAD_LEFT = CHART_W * (isLifetimeRankTimeline ? (isMobileLayoutViewport() ? 0.22 : 0.12) : 0.055);
   PAD_RIGHT = CHART_W * 0.055;
   PAD_TOP = CHART_H * 0.08;
   PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.64);
@@ -45255,7 +45477,7 @@ ${chartAxisTitle}
   // BUILD DATA
   // ========================
 
-  const bounds=getChartBounds(slice);
+  const bounds = isLifetimeRankTimeline ? getLifetimeRankBounds(slice) : getChartBounds(slice);
 
   const y=makeChartY(
     bounds.minTick,
@@ -45270,11 +45492,9 @@ ${chartAxisTitle}
     chartAxisMatchCount
   );
 
-  const yTicks=buildYTicks(
-    bounds.minTick,
-    bounds.maxTick,
-    y
-  );
+  const yTicks = isLifetimeRankTimeline
+    ? buildLifetimeRankYTicks(bounds, y)
+    : buildYTicks(bounds.minTick, bounds.maxTick, y);
 
   // ========================
   // SEGMENTS
@@ -48293,6 +48513,51 @@ function renderStatsPerformanceModel() {
   `).join("");
 }
 
+function getCoachingCategoryVisualMarkup(category = "") {
+  const normalized = String(category || "").toLowerCase();
+  let symbol = "crosshair";
+  if (/map|position|space|site|rotation/.test(normalized)) symbol = "map";
+  else if (/comm|team|trade|utility/.test(normalized)) symbol = "team";
+  else if (/econom|buy|weapon/.test(normalized)) symbol = "economy";
+  else if (/mental|mood|confidence|consisten/.test(normalized)) symbol = "focus";
+  const symbols = {
+    crosshair: `<circle cx="24" cy="24" r="9"></circle><path d="M24 5v10M24 33v10M5 24h10M33 24h10"></path><circle cx="24" cy="24" r="2"></circle>`,
+    map: `<path d="M8 12l10-5 12 5 10-5v29l-10 5-12-5-10 5z"></path><path d="M18 7v29M30 12v29"></path><circle cx="30" cy="23" r="3"></circle>`,
+    team: `<circle cx="18" cy="18" r="6"></circle><circle cx="34" cy="20" r="5"></circle><path d="M7 39c1-9 6-13 11-13s10 4 11 13M27 38c1-7 4-10 8-10 4 0 7 3 8 10"></path>`,
+    economy: `<path d="M9 14h30v22H9z"></path><path d="M15 20h18M15 30h10"></path><circle cx="34" cy="31" r="7"></circle><path d="M34 27v8M31 30h6"></path>`,
+    focus: `<path d="M24 7l5 10 11 2-8 8 2 11-10-5-10 5 2-11-8-8 11-2z"></path><circle cx="24" cy="24" r="5"></circle>`
+  };
+  return `<span class="coaching-category-visual" data-category-visual="${symbol}" aria-hidden="true"><svg viewBox="0 0 48 48">${symbols[symbol]}</svg></span>`;
+}
+
+function getDataBarsVisualMarkup() {
+  return `
+    <span class="stats-data-visual" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><path class="stats-data-axis" d="M8 8v32h34"></path><rect x="13" y="29" width="6" height="11" rx="2"></rect><rect x="23" y="22" width="6" height="18" rx="2"></rect><rect x="33" y="12" width="6" height="28" rx="2"></rect><path class="stats-data-rise" d="M14 24l10-7 8 2 9-10"></path></svg>
+    </span>`;
+}
+
+function getConfidenceVisualMarkup(value = "") {
+  const numeric = Number.parseFloat(String(value || "").replace(/[^\d.-]/g, ""));
+  const normalized = String(value || "").toLowerCase();
+  const high = (Number.isFinite(numeric) && numeric >= 70) || /high|strong|ready/.test(normalized);
+  const low = (Number.isFinite(numeric) && numeric < 40) || /low|weak|limited/.test(normalized);
+  if (high) {
+    return `<span class="stats-confidence-visual is-high" aria-label="High confidence"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 16l9 8 8-14 8 14 9-8-4 23H11z"></path><path d="M12 34h24"></path><circle cx="24" cy="27" r="3"></circle></svg></span>`;
+  }
+  if (low) {
+    return `<span class="stats-confidence-visual is-low" aria-label="Low confidence"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 16h20l-2 25H16z"></path><path d="M11 16h26M19 11h10M20 22v12M28 22v12"></path><path class="stats-stink-line" d="M17 8c-3-3 2-4 0-7M25 8c-3-3 2-4 0-7M33 8c-3-3 2-4 0-7"></path></svg></span>`;
+  }
+  return `<span class="stats-confidence-visual is-mid" aria-label="Building confidence"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="17"></circle><circle cx="18" cy="21" r="2"></circle><circle cx="30" cy="21" r="2"></circle><path d="M17 31c4-3 10-3 14 0"></path></svg></span>`;
+}
+
+function getStatsBreakdownVisualMarkup(card = {}) {
+  const label = String(card?.label || "");
+  if (/confidence/i.test(label)) return getConfidenceVisualMarkup(card?.value || card?.detail || "");
+  if (/category|focus/i.test(label)) return getCoachingCategoryVisualMarkup(card?.value || card?.detail || label);
+  return getDataBarsVisualMarkup();
+}
+
 function renderStatsBreakdownModel() {
   const container = document.getElementById("statsBreakdown");
   if (!container) return;
@@ -48311,6 +48576,7 @@ function renderStatsBreakdownModel() {
     const detail = normalizeRankedCoachCopy(card.detail || "No data");
     return `
     <button type="button" class="stats-breakdown-cardlet stats-select-card ${escapeHtml(card.className || "")} ${isDisabled ? "is-disabled" : ""}" data-kind="breakdown" data-value="${escapeHtml(rawLabel)}" ${card.tooltip ? `data-tooltip="${escapeHtml(normalizeRankedCoachCopy(card.tooltip))}"` : ""} ${isDisabled ? `disabled aria-disabled="true"` : ""}>
+      ${getStatsBreakdownVisualMarkup(card)}
       <div class="stats-breakdown-label">${escapeHtml(label)}</div>
       <div class="stats-breakdown-value">${escapeHtml(value)}</div>
       <div class="stats-breakdown-detail">${escapeHtml(detail)}</div>
@@ -48727,8 +48993,12 @@ function initStatsPageModel() {
   const wrEl = document.getElementById("statWinrate");
   const adrEl = document.getElementById("statADR");
   const hsEl = document.getElementById("statHS");
+  const firstBloodsEl = document.getElementById("statFirstBloods");
+  const damagePerRoundEl = document.getElementById("statDamagePerRound");
   const model = getPlayerModel();
   const overview = model?.overview || {};
+  const scopedMatches = getScopedStatsData(getActiveProfile()).matches || [];
+  const firstBloods = scopedMatches.reduce((total, match) => total + safeNumber(getMatchAdvancedImpactSignals(match).firstBloods), 0);
 
   if (!kdEl) return;
 
@@ -48736,6 +49006,8 @@ function initStatsPageModel() {
   wrEl.textContent = overview.matchesPlayed ? `${Math.round(overview.winrate)}%` : "--";
   adrEl.textContent = overview.matchesPlayed ? `${Math.round(overview.adr)}` : "--";
   hsEl.textContent = overview.matchesPlayed ? `${Math.round(overview.hs)}%` : "--";
+  if (firstBloodsEl) firstBloodsEl.textContent = overview.matchesPlayed ? `${Math.round(firstBloods)}` : "--";
+  if (damagePerRoundEl) damagePerRoundEl.textContent = overview.matchesPlayed ? `${Math.round(overview.adr)}` : "--";
 }
 
 let renderStatsPerformance = renderStatsPerformanceModel;
@@ -49509,6 +49781,7 @@ function renderInsightCardsModel() {
     const showPriorityMeta = displayType !== "good";
     el.innerHTML = `
       <div class="insight-header">
+        ${getCoachingCategoryVisualMarkup(insight.focus || model?.focus || insight.title)}
         <div class="insight-header-main">
           <div class="insight-title">${escapeHtml(insight.title)}</div>
           <div class="insight-tag">${escapeHtml(getInsightFilterLabel(displayType))}</div>

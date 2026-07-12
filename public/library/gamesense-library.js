@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", mapZoom: 1, compAgent: "" };
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
@@ -22,6 +22,10 @@
     return `/assets/library/agents/${assetSlug(agent)}/icon.png`;
   }
 
+  function getAgentFallbackIcon(agent = "") {
+    return `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/${assetSlug(agent)}.png`;
+  }
+
   function getMaps() {
     return Array.isArray(globalThis.RankedCoachGamesenseMaps) ? globalThis.RankedCoachGamesenseMaps : [];
   }
@@ -36,8 +40,10 @@
   }
 
   function renderOverview() {
+    const season = getReference().season || {};
     return `
       <div class="gamesense-overview">
+        <div class="gamesense-season-scope"><span>Current Season Only</span><strong>${escapeHtml(season.label || "Current Season")} | Patch ${escapeHtml(season.patch || "Current")}</strong><p>Agent, map, and weapon rates on this page use the current competitive season, not historical profile data.</p></div>
         <div class="gamesense-briefing">
           <span>Reference Room</span>
           <strong>Build the round before the barrier drops.</strong>
@@ -107,13 +113,25 @@
   }
 
   function renderMarkedMap(map) {
+    const isPlants = state.mapView === "plants";
+    const markers = isPlants ? map.plantSpots || [] : map.callouts || [];
     return `
       <section class="gamesense-tactical-card">
-        <div class="gamesense-section-heading"><span>Marked Tactical Map</span><strong>Named fight locations</strong></div>
-        <div class="gamesense-tactical-scroll" tabindex="0" aria-label="Scrollable ${escapeHtml(map.label)} tactical map">
-          <div class="gamesense-tactical-stage">
+        <div class="gamesense-section-heading gamesense-map-heading"><span>Marked Tactical Map</span><strong>Map Location Info</strong></div>
+        <div class="gamesense-map-view-tabs" role="tablist" aria-label="${escapeHtml(map.label)} tactical map layer">
+          <button type="button" data-gamesense-map-view="locations" class="${isPlants ? "" : "active"}" aria-selected="${isPlants ? "false" : "true"}">Map Locations</button>
+          <button type="button" data-gamesense-map-view="plants" class="${isPlants ? "active" : ""}" aria-selected="${isPlants ? "true" : "false"}">Spike Plant Hot Spots</button>
+        </div>
+        <div class="gamesense-map-tools" aria-label="Map zoom controls">
+          <button type="button" data-gamesense-map-zoom="out" aria-label="Zoom out">-</button>
+          <button type="button" data-gamesense-map-zoom="reset">Fit</button>
+          <span data-gamesense-map-zoom-value>${Math.round(state.mapZoom * 100)}%</span>
+          <button type="button" data-gamesense-map-zoom="in" aria-label="Zoom in">+</button>
+        </div>
+        <div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} tactical map">
+          <div class="gamesense-tactical-stage" data-gamesense-map-stage style="--map-zoom:${state.mapZoom}">
             <img src="${escapeHtml(map.layoutImage)}" alt="${escapeHtml(map.label)} tactical layout" loading="eager">
-            ${(map.callouts || []).map(callout => `<span class="gamesense-callout" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`).join("")}
+            ${markers.map(callout => `<span class="gamesense-callout ${isPlants ? "gamesense-plant-marker" : ""}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`).join("")}
           </div>
         </div>
       </section>`;
@@ -127,7 +145,7 @@
         <details class="gamesense-role-menu">
           <summary>${activeRole ? `${escapeHtml(activeRole)} notes selected` : "Open role-specific notes"}</summary>
           <div class="gamesense-role-options">
-            ${roles.map(role => `<button type="button" data-gamesense-role="${role}" class="${role === activeRole ? "active" : ""}">${role}</button>`).join("")}
+            ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}">${role}</button>`).join("")}
           </div>
         </details>
         ${activeRole ? renderList(`${activeRole} Plan`, map.roleNotes?.[activeRole] || [], "gamesense-role-result") : `<p class="gamesense-role-prompt">Choose your role to turn the map overview into a job for your next round.</p>`}
@@ -135,13 +153,33 @@
   }
 
   function renderComp(map) {
+    const comps = Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps.slice(0, 3) : [map.metaComp];
+    const hasCurrentSample = comps.some(comp => Array.isArray(comp?.agents) && comp.agents.length === 5 && comp?.sample);
+    const selectedAgent = state.compAgent;
+    const selectedInsight = selectedAgent ? map.agentInsights?.[selectedAgent] : "";
+    if (!hasCurrentSample) {
+      return `
+        <section class="gamesense-comp-card gamesense-comp-unavailable">
+          <div><span>Current-Season Comps</span><strong>Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
+          <p>${escapeHtml(map.compStatus || "No verified current-season composition sample is available for this map.")}</p>
+        </section>`;
+    }
     return `
       <section class="gamesense-comp-card">
-        <div><span>Current Meta Comp</span><strong>${escapeHtml(map.metaComp?.winRate)} win rate</strong></div>
-        <div class="gamesense-comp-agents">${(map.metaComp?.agents || []).map(agent => `
-          <figure><img src="${escapeHtml(getAgentIcon(agent))}" alt="${escapeHtml(agent)}" loading="lazy"><figcaption>${escapeHtml(agent)}</figcaption></figure>
+        <div><span>Top Win Rate Among 20 Most-Played Comps</span><strong>Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
+        <p class="gamesense-comp-source">Current Season 26 Act 4 ranked sample from OP.GG. Win rate uses wins divided by all games, including draws.</p>
+        <div class="gamesense-comp-list">${comps.map((comp, index) => `
+          <article class="gamesense-comp-option">
+            <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong>${escapeHtml(comp.winRate)} win rate | ${Number(comp.sample).toLocaleString()} games</strong></div>
+            <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
+              <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
+                <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="lazy"><span>${escapeHtml(agent)}</span>
+              </button>
+            `).join("")}</div>
+            <p>${escapeHtml(comp.composition)}</p>
+          </article>
         `).join("")}</div>
-        <p>${escapeHtml(map.metaComp?.composition)}</p>
+        ${selectedInsight ? `<div class="gamesense-comp-agent-read"><strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(selectedInsight)}</p></div>` : `<p class="gamesense-comp-prompt">Select an agent to see why the pick succeeds on ${escapeHtml(map.label)}.</p>`}
       </section>`;
   }
 
@@ -156,11 +194,11 @@
         ${renderList("Defense", map.macro?.defense)}
         ${renderList("Attack", map.macro?.attack)}
         ${renderRoleNotes(map)}
-        <section class="gamesense-controller-callout">
+        ${state.role === "Controller" ? `<section class="gamesense-controller-callout">
           <span>Controller Notes</span>
           <p>${escapeHtml(map.macro?.controllerNotes)}</p>
           <strong>${escapeHtml(map.macro?.macroPrinciple)}</strong>
-        </section>
+        </section>` : ""}
         ${renderComp(map)}
         <section class="gamesense-lineups">
           <div><span>Find Lineups</span></div>
@@ -194,7 +232,10 @@
         <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
       </div>
       <section class="gamesense-agent-hero">
-        <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
+        <div class="gamesense-agent-portrait-wrap">
+          <div class="gamesense-agent-rate ${Number(agent.pickRateDelta) >= 0 ? "is-up" : "is-down"}"><span>Global pick rate ${safePercent(agent.pickRate)}</span><strong>${Number(agent.pickRateDelta) >= 0 ? "&#8593;" : "&#8595;"} ${Math.abs(Number(agent.pickRateDelta || 0)).toFixed(1)}% vs previous season</strong></div>
+          <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
+        </div>
         <div>${renderList("Role Fundamentals", agent.fundamentals)}${renderList("Round Checklist", agent.signature)}</div>
       </section>
       <section class="gamesense-selector-section">
@@ -205,9 +246,17 @@
         ${renderAbilityDetail(agent, selected)}
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
-        <div><span>Map Fit</span><strong>Open the matching plan</strong></div>
-        <div class="gamesense-agent-chips">${agent.maps.map(map => `<button type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(map.toLowerCase())}">${escapeHtml(map)}</button>`).join("")}</div>
+        <div><span>Map Fit</span><strong>Current-season win rate</strong></div>
+        <div class="gamesense-map-fit-grid">${agent.maps.map(mapName => {
+          const map = getMaps().find(item => item.label.toLowerCase() === mapName.toLowerCase());
+          const winRate = agent.mapWinRates?.[mapName];
+          return `<button type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(mapName.toLowerCase())}"><img src="${escapeHtml(map?.cardImage || "")}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(1)}% WR` : "Current data pending"}</strong></button>`;
+        }).join("")}</div>
       </section>`;
+  }
+
+  function safePercent(value) {
+    return Number.isFinite(Number(value)) ? `${Number(value).toFixed(1)}%` : "Pending";
   }
 
   function renderDamageTable(weapon) {
@@ -223,7 +272,7 @@
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
         <div class="gamesense-weapon-panel-art"><img src="${escapeHtml(weapon.image)}" alt="${escapeHtml(weapon.label)}"></div>
-        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><p>${escapeHtml(weapon.focus)}</p></div>
+        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><strong class="gamesense-global-rate">Global usage ${safePercent(weapon.pickRate)}</strong><p>${escapeHtml(weapon.focus)}</p></div>
         ${renderStatChips({ Cost: `${weapon.cost} credits`, Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
       </article>`;
@@ -256,10 +305,85 @@
     return renderWeaponDetail(item);
   }
 
+  function applyMapZoom(nextZoom, anchor = null) {
+    state.mapZoom = Math.max(1, Math.min(3, Math.round(Number(nextZoom || 1) * 10) / 10));
+    const viewport = document.querySelector("[data-gamesense-map-viewport]");
+    const stage = document.querySelector("[data-gamesense-map-stage]");
+    const value = document.querySelector("[data-gamesense-map-zoom-value]");
+    if (!viewport || !stage) return;
+    const previousWidth = Math.max(1, stage.getBoundingClientRect().width);
+    const anchorX = anchor?.x ?? viewport.clientWidth / 2;
+    const anchorY = anchor?.y ?? viewport.clientHeight / 2;
+    const contentX = (viewport.scrollLeft + anchorX) / previousWidth;
+    const contentY = (viewport.scrollTop + anchorY) / previousWidth;
+    stage.style.setProperty("--map-zoom", String(state.mapZoom));
+    viewport.classList.toggle("is-zoomed", state.mapZoom > 1);
+    if (value) value.textContent = `${Math.round(state.mapZoom * 100)}%`;
+    requestAnimationFrame(() => {
+      const nextWidth = Math.max(1, stage.getBoundingClientRect().width);
+      viewport.scrollLeft = Math.max(0, (contentX * nextWidth) - anchorX);
+      viewport.scrollTop = Math.max(0, (contentY * nextWidth) - anchorY);
+    });
+  }
+
+  function bindMapPanZoom() {
+    const viewport = document.querySelector("[data-gamesense-map-viewport]");
+    if (!viewport || viewport.dataset.panZoomBound === "true") return;
+    viewport.dataset.panZoomBound = "true";
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+    let pinchDistance = 0;
+    let pinchZoom = state.mapZoom;
+    const distance = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    viewport.addEventListener("pointerdown", event => {
+      if (state.mapZoom <= 1 || event.pointerType === "touch") return;
+      dragging = true;
+      startX = event.clientX;
+      startY = event.clientY;
+      startLeft = viewport.scrollLeft;
+      startTop = viewport.scrollTop;
+      viewport.classList.add("is-grabbing");
+      viewport.setPointerCapture?.(event.pointerId);
+    });
+    viewport.addEventListener("pointermove", event => {
+      if (!dragging) return;
+      viewport.scrollLeft = startLeft - (event.clientX - startX);
+      viewport.scrollTop = startTop - (event.clientY - startY);
+    });
+    const stopDrag = () => { dragging = false; viewport.classList.remove("is-grabbing"); };
+    viewport.addEventListener("pointerup", stopDrag);
+    viewport.addEventListener("pointercancel", stopDrag);
+    viewport.addEventListener("touchstart", event => {
+      if (event.touches.length !== 2) return;
+      pinchDistance = distance(event.touches);
+      pinchZoom = state.mapZoom;
+    }, { passive: true });
+    viewport.addEventListener("touchmove", event => {
+      if (event.touches.length !== 2 || !pinchDistance) return;
+      event.preventDefault();
+      const rect = viewport.getBoundingClientRect();
+      applyMapZoom(pinchZoom * (distance(event.touches) / pinchDistance), {
+        x: ((event.touches[0].clientX + event.touches[1].clientX) / 2) - rect.left,
+        y: ((event.touches[0].clientY + event.touches[1].clientY) / 2) - rect.top
+      });
+    }, { passive: false });
+    viewport.addEventListener("touchend", () => { pinchDistance = 0; }, { passive: true });
+  }
+
   function render() {
     const root = document.getElementById("gamesenseLibraryView");
     if (!root) return;
     root.innerHTML = state.topic === "overview" ? renderOverview() : state.itemId ? renderDetail(state.topic, state.itemId) : renderGallery(state.topic);
+    root.querySelectorAll("img[data-agent-fallback]").forEach(img => {
+      img.addEventListener("error", () => {
+        const fallback = img.dataset.agentFallback;
+        if (fallback && img.src !== fallback) img.src = fallback;
+      }, { once: true });
+    });
+    bindMapPanZoom();
   }
 
   function openLibrary(topic = "overview", itemId = "") {
@@ -267,8 +391,15 @@
     state.itemId = itemId;
     state.role = "";
     state.detailId = "";
-    document.querySelector('.nav-btn[data-page="library"]')?.click();
-    document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]')?.click();
+    state.mapView = "locations";
+    state.mapZoom = 1;
+    state.compAgent = "";
+    const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
+    const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
+    const selectedNav = document.documentElement.classList.contains("is-mobile-layout") ? mobileNav : desktopNav;
+    if (!selectedNav?.classList.contains("active")) {
+      selectedNav?.click();
+    }
     render();
   }
 
@@ -305,6 +436,21 @@
   }
 
   document.addEventListener("click", event => {
+    const libraryNav = event.target.closest?.('.nav-btn[data-page="library"], .mobile-bottom-page-btn[data-mobile-page="library"]');
+    const libraryPage = document.getElementById("page-library");
+    if (libraryNav && libraryPage?.classList.contains("active") && state.topic !== "overview") {
+      state.topic = "overview";
+      state.itemId = "";
+      state.role = "";
+      state.detailId = "";
+      state.mapView = "locations";
+      state.mapZoom = 1;
+      state.compAgent = "";
+      render();
+      const owner = document.documentElement.classList.contains("is-mobile-layout") ? document.querySelector(".app-root") : libraryPage;
+      if (owner) owner.scrollTop = 0;
+      return;
+    }
     const warmupToggle = event.target.closest?.("[data-warmup-info]");
     if (warmupToggle) {
       event.preventDefault();
@@ -324,6 +470,9 @@
       state.itemId = "";
       state.role = "";
       state.detailId = "";
+      state.mapView = "locations";
+      state.mapZoom = 1;
+      state.compAgent = "";
       render();
       return;
     }
@@ -332,6 +481,27 @@
       state.itemId = item.dataset.gamesenseItem;
       state.role = "";
       state.detailId = "";
+      state.mapView = "locations";
+      state.mapZoom = 1;
+      state.compAgent = "";
+      render();
+      return;
+    }
+    const mapView = event.target.closest?.("[data-gamesense-map-view]");
+    if (mapView) {
+      state.mapView = mapView.dataset.gamesenseMapView === "plants" ? "plants" : "locations";
+      render();
+      return;
+    }
+    const mapZoom = event.target.closest?.("[data-gamesense-map-zoom]");
+    if (mapZoom) {
+      const action = mapZoom.dataset.gamesenseMapZoom;
+      applyMapZoom(action === "in" ? state.mapZoom + .25 : action === "out" ? state.mapZoom - .25 : 1);
+      return;
+    }
+    const compAgent = event.target.closest?.("[data-gamesense-comp-agent]");
+    if (compAgent) {
+      state.compAgent = state.compAgent === compAgent.dataset.gamesenseCompAgent ? "" : compAgent.dataset.gamesenseCompAgent;
       render();
       return;
     }
@@ -359,6 +529,9 @@
       state.itemId = "";
       state.role = "";
       state.detailId = "";
+      state.mapView = "locations";
+      state.mapZoom = 1;
+      state.compAgent = "";
       render();
     }
   }, true);

@@ -28,6 +28,12 @@
         { label: "Elbow", x: 82, y: 39 },
         { label: "Garden", x: 82, y: 54 }
       ],
+      plantSpots: [
+        { label: "A Default", x: 29, y: 31 },
+        { label: "A Triple", x: 34, y: 27 },
+        { label: "B Default", x: 72, y: 31 },
+        { label: "B Open", x: 77, y: 27 }
+      ],
       macro: {
         _researchNote: "internal only, do not render",
         _researchUrl: "https://www.zleague.gg/theportal/woohoojin-mastering-the-bind-map-in-valorant/",
@@ -50,10 +56,19 @@
         Sentinel: ["Place flank utility where it survives common prefire paths and still catches teleporter rotations.", "Anchor from a position that can punish Hookah drop, B Long, A Short, or Bath contact without giving a free first death.", "Change trap and camera height between gun rounds so the same clear does not solve the setup twice."]
       },
       metaComp: {
-        agents: ["Brimstone", "Raze", "Skye", "Sage", "Fade"],
-        composition: "2 Initiators, 1 Controller, 1 Duelist, 1 Sentinel",
-        winRate: "57%",
-        patch: "12.10"
+        agents: [],
+        composition: "No current ranked composition sample",
+        winRate: "Unavailable",
+        patch: "13.00"
+      },
+      metaComps: [],
+      compStatus: "Bind is outside the Season 26 Act 4 competitive rotation, so OP.GG reports no current Patch 13.00 ranked composition sample.",
+      agentInsights: {
+        Clove: "Post-death smokes keep both teleporter rotations covered after an opening fight.",
+        Raze: "Explosive movement and clearing utility break Bind's narrow Hookah, Bath, and A Short chokes.",
+        Fade: "Haunt and Prowlers clear Lamps, Hookah, and site corners immediately before contact.",
+        Cypher: "Flank information survives teleporter rotations; B is the higher-success anchor site in this current sample.",
+        Skye: "Guiding Light can curve through both compact site entrances and support fast re-clears."
       },
       lineupLinks: [
         { label: "LineupsValorant — Bind", url: "https://lineupsvalorant.com/" },
@@ -76,6 +91,12 @@
         { label: "B Main", x: 83, y: 51 },
         { label: "Back Site", x: 82, y: 20 }
       ],
+      plantSpots: [
+        { label: "A Default", x: 25, y: 31 },
+        { label: "A Pyramids", x: 31, y: 27 },
+        { label: "B Default", x: 77, y: 31 },
+        { label: "B Open", x: 71, y: 27 }
+      ],
       macro: {
         _researchNote: "internal only, do not render",
         _researchUrl: "https://www.youtube.com/watch?v=0VLyBGR5sNA",
@@ -96,10 +117,26 @@
         Sentinel: ["Use flank utility to protect the long rotations, then survive so that information remains useful.", "Anchor from off-angles that force attackers to clear after crossing open ground.", "Do not stack every piece of utility on one site when Mid pressure can break the setup from behind."]
       },
       metaComp: {
-        agents: ["Viper", "Jett", "Sova", "Killjoy", "KAY/O"],
-        composition: "1 Controller, 1 Duelist, 1 Initiator (Sova), 1 Sentinel, 1 Initiator (KAY/O)",
-        winRate: "57.5%",
-        patch: "12.10"
+        agents: ["Clove", "Jett", "Sova", "Sage", "Viper"],
+        composition: "2 Controllers, 1 Duelist, 1 Initiator, 1 Sentinel",
+        winRate: "54.1%",
+        patch: "13.00"
+      },
+      metaComps: [
+        { agents: ["Chamber", "Clove", "Jett", "Neon", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "56.9%", sample: 4639 },
+        { agents: ["Chamber", "Clove", "Neon", "Reyna", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "55.6%", sample: 2314 },
+        { agents: ["Chamber", "Clove", "Iso", "Jett", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "54.2%", sample: 2579 }
+      ],
+      agentInsights: {
+        Chamber: "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
+        Clove: "Long-range smoke placement stays useful through Breeze rotations, and post-death utility protects late hits.",
+        Jett: "Dash and Updraft create a safe exit from the long Operator lanes that define first contact.",
+        Neon: "High Gear closes Breeze's long gaps quickly enough to punish defenders before cross-map help arrives.",
+        Reyna: "Dismiss gives a self-sufficient escape after winning one of Breeze's exposed long-range duels.",
+        Iso: "Double Tap and Contingency help isolate one long sightline instead of fighting the full open site.",
+        Sova: "Recon and Drone clear wide sightlines where close-range flashes cannot cover every defender.",
+        Sage: "Barrier and Slow Orbs compress open entrances; A is the stronger current anchor site for her stall package.",
+        Viper: "Toxic Screen divides the open sites into playable halves and preserves fuel for post-plant denial."
       },
       lineupLinks: [
         { label: "LineupsValorant — Breeze", url: "https://lineupsvalorant.com/" },
@@ -123,6 +160,12 @@
         { label: "B Site", x: 76, y: 25 },
         { label: "B Main", x: 82, y: 49 }
       ],
+      plantSpots: [
+        { label: "A Default", x: 27, y: 28 },
+        { label: "A Screens", x: 22, y: 24 },
+        { label: "B Default", x: 76, y: 28 },
+        { label: "B Safe", x: 71, y: 24 }
+      ],
       macro: {
         _researchNote: "internal only, do not render",
         _researchUrl: "https://www.youtube.com/watch?v=I2kxN3-V4zg",
@@ -143,10 +186,26 @@
         Sentinel: ["Trap the route that connects Mid to the site hit so defenders receive the rotation warning early.", "Compact sites reward layered stall utility, but leave enough spacing that one grenade cannot clear everything.", "Rotate setups between B Main, Mid, and A Main pressure so attackers must re-clear the map each gun round."]
       },
       metaComp: {
-        agents: ["Omen", "Raze", "Breach", "Cypher", "Sage"],
-        composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels (double-sentinel)",
-        winRate: "56.8%",
-        patch: "12.10"
+        agents: ["Clove", "Raze", "Fade", "Sage", "Cypher"],
+        composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels",
+        winRate: "54.7%",
+        patch: "13.00"
+      },
+      metaComps: [
+        { agents: ["Clove", "Jett", "Raze", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "54.1%", sample: 3866 },
+        { agents: ["Clove", "Cypher", "Jett", "Neon", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "53.5%", sample: 1733 },
+        { agents: ["Clove", "Raze", "Reyna", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "53.3%", sample: 2669 }
+      ],
+      agentInsights: {
+        Clove: "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",
+        Jett: "Dash breaks the first compact choke and Updraft contests Split's stacked Heaven positions.",
+        Raze: "Paint Shells and Blast Packs punish Split's compact chokes and vertical defender pockets.",
+        Neon: "Fast Lane and High Gear turn a Mid opening into site pressure before defenders reset their vertical crossfires.",
+        Reyna: "Dismiss lets her escape the close first duel, but the comp still relies on Skye to make that fight favorable.",
+        Skye: "Guiding Light bends through Split's tight corners and Trailblazer clears the close pockets before both duelists commit.",
+        Fade: "Prowlers clear close corners while Haunt confirms the stacked vertical positions around Mid.",
+        Sage: "Wall and Slow Orbs delay narrow site entrances; B currently gives her the higher anchor conversion.",
+        Cypher: "Trips control Mid-to-site rotations and let the anchor survive instead of guessing which choke broke."
       },
       lineupLinks: [
         { label: "LineupsValorant — Split", url: "https://lineupsvalorant.com/" },

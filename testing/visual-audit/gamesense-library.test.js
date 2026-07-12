@@ -79,6 +79,9 @@ async function run() {
     await seed(desktop, "gamesense-desktop");
     await desktop.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(desktop);
+    await desktop.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
+    await dismissWarmup(desktop);
+    await desktop.locator('.nav-btn[data-page="library"]').waitFor({ state: "visible", timeout: 10000 });
 
     assert.equal(await desktop.locator('.nav-btn[data-page]').count(), 5);
     const desktopNavState = await desktop.locator('.nav-btn[data-page="library"]').evaluate(button => ({
@@ -87,6 +90,8 @@ async function run() {
       display: getComputedStyle(button).display,
       visibility: getComputedStyle(button).visibility,
       opacity: getComputedStyle(button).opacity,
+      style: button.getAttribute("style"),
+      animations: button.getAnimations().map(animation => ({ playState: animation.playState, currentTime: animation.currentTime, effect: animation.effect?.getComputedTiming?.() })),
       rect: button.getBoundingClientRect().toJSON(),
       parentRect: button.parentElement.getBoundingClientRect().toJSON(),
       ancestors: [button.parentElement, button.parentElement?.parentElement, button.closest(".app-header"), button.closest(".app")].filter(Boolean).map(element => ({ className: element.className, display: getComputedStyle(element).display, visibility: getComputedStyle(element).visibility, opacity: getComputedStyle(element).opacity })),
@@ -107,8 +112,9 @@ async function run() {
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
+    assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator("#page-library").getByText(/Round Plan|Role Read|Gunfight Plan/).count(), 0);
-    assert.equal(await desktop.locator("#page-library strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
+    assert.equal(await desktop.locator(".gamesense-topic-card strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
@@ -117,7 +123,16 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-note-block").first().locator("li").count(), 3);
     assert.equal(await desktop.locator(".gamesense-tactical-stage img").count(), 1);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 10);
-    assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 5);
+    assert.equal(await desktop.locator(".gamesense-comp-option").count(), 0);
+    assert.match(await desktop.locator(".gamesense-comp-unavailable").innerText(), /outside.*competitive rotation.*no current/is);
+    assert.equal(await desktop.locator(".gamesense-role-result").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-map-view-tabs button").count(), 2);
+    assert.equal(await desktop.locator(".gamesense-map-heading strong").evaluate(heading => getComputedStyle(heading).textAlign), "left");
+    await desktop.click('[data-gamesense-map-view="plants"]');
+    assert.equal(await desktop.locator(".gamesense-callout.gamesense-plant-marker").count(), 4);
+    await desktop.click('[data-gamesense-map-view="locations"]');
+    await desktop.click('[data-gamesense-map-zoom="in"]');
+    assert.ok(Number.parseInt(await desktop.locator("[data-gamesense-map-zoom-value]").innerText(), 10) > 100);
     const desktopMapOrder = await desktop.evaluate(() => {
       const detail = document.querySelector(".gamesense-detail-grid");
       const map = document.querySelector(".gamesense-tactical-card");
@@ -134,7 +149,7 @@ async function run() {
     await desktop.click('[data-gamesense-role="Controller"]');
     assert.match(await desktop.locator(".gamesense-role-result").innerText(), /A Heaven|Lamps/i);
     await desktop.locator(".gamesense-tactical-card").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-marked.png") });
-    assert.match(await desktop.locator(".gamesense-patch").innerText(), /Patch 12\.10/i);
+    assert.match(await desktop.locator(".gamesense-patch").innerText(), /Patch 13\.00/i);
     assert.equal(await desktop.locator(".gamesense-lineups a").count(), 2);
     await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-desktop.png"), fullPage: true });
     const renderedText = (await desktop.locator("#page-library").innerText()).toLowerCase();
@@ -152,6 +167,14 @@ async function run() {
     });
     assert.deepEqual(exactMapContent.rendered, exactMapContent.expected);
 
+    await desktop.click('[data-gamesense-back="maps"]');
+    await desktop.click('[data-gamesense-item="breeze"]');
+    assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
+    assert.match(await desktop.locator(".gamesense-comp-option").first().innerText(), /56\.9%.*4,639 games/is);
+    await desktop.locator("[data-gamesense-comp-agent]").first().click();
+    assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /B.*stronger.*defensive success/is);
+
     await desktop.click('.nav-btn[data-page="stats"]');
     await desktop.click('[data-gamesense-open="agents"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
@@ -162,18 +185,25 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-ability-panel").count(), 1);
     await desktop.click('[data-gamesense-ability="cloudburst"]');
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
+    await desktop.waitForTimeout(2200);
+    assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /29\.6%.*(?:↓|down).*0\.1/is);
+    assert.ok(await desktop.locator(".gamesense-map-fit img").count() >= 1);
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-ability.png") });
     assert.equal((await desktop.locator("#page-library").innerText()).includes("First Slice"), false);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
     assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 6);
     assert.ok(await desktop.locator('.gamesense-weapon-entry-card img').count() >= 15);
+    assert.match(await desktop.locator('[data-gamesense-item="precision"]').innerText(), /Light Rifles/i);
     await desktop.click('[data-gamesense-item="rifles"]');
     assert.equal(await desktop.locator("[data-gamesense-weapon]").count(), 2);
     await desktop.click('[data-gamesense-weapon="phantom"]');
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /2900 credits/i);
+    assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /21\.2%/i);
     assert.ok(await desktop.locator(".gamesense-damage-table [role=row]").count() >= 3);
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-detail.png") });
+    await desktop.click('.nav-btn[data-page="library"]');
+    assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
 
     await desktop.click('.nav-btn[data-page="logging"]');
     await desktop.click("#loggingTrainingMenuBtn");
@@ -197,6 +227,8 @@ async function run() {
     await mobile.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await seed(mobile, "gamesense-mobile");
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
+    await dismissWarmup(mobile);
+    await mobile.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
     await dismissWarmup(mobile);
     assert.equal(await mobile.locator(".mobile-bottom-page-btn").count(), 5);
     await dismissWarmup(mobile);
