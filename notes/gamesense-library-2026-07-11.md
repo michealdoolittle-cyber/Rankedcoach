@@ -1,6 +1,20 @@
 # Gamesense Library — Research + Full Feature Directive
 
-**Status:** Spec'd 2026-07-11, not yet built. Two asks in this pass: (1) a small addition to the just-shipped Daily Warm-Up Check — info tags/expanded detail so players understand exactly what's being asked of them; (2) a much larger new feature — a browsable reference library (weapon/map/agent) covering meta team comps, pro strats, lineup knowledge, and direct tips from named creators (Woohoojin, Dopai), none of which the app currently has any of.
+**Status:** Content written and committed 2026-07-11 (`public/library/gamesense-maps.js` — real, sourced Bind/Breeze/Split entries). UI/wiring not yet built — that's this directive. Michael pre-approved this structure directly; build against it. Two asks in this pass: (1) a small addition to the just-shipped Daily Warm-Up Check — info tags/expanded detail so players understand exactly what's being asked of them; (2) a much larger new feature — a browsable reference library (weapon/map/agent) covering meta team comps, pro strats, lineup knowledge, and direct tips from named creators (Woohoojin, Dopai), none of which the app currently has any of.
+
+## What this looks like as an end result — concrete walkthrough
+
+A new nav entry (working name "Gamesense," final label is a copy-layer decision, follow `notes/copy-language.md` conventions) opens a topic picker: three cards — **Maps**, **Agents**, **Weapons**. Tapping Maps shows the map grid (Bind, Breeze, Split in the first slice, same visual pattern as the existing map-select UI elsewhere in the app — reuse, don't reinvent). Tapping a map opens a detail page with this exact structure, matching the content already written in `public/library/gamesense-maps.js`:
+
+- A header with the map name and a small "via Woohoojin" (or whichever source) attribution line right under it — visible before the player reads any content, not buried at the bottom.
+- Two columns or stacked sections: **Defense** and **Attack**, each a short bulleted list (2-3 real points, e.g. Bind's "shower control is the priority defensive anchor" / "double up to contest the weak-side lane") — not paragraphs, scannable like the rest of the app's card language.
+- A **Controller notes** callout — since smoke/utility placement is consistently the most specific, actionable content in the sourced material (e.g. Breeze's "smoke Mid Nest to remove the Operator angle").
+- A **Current Meta Comp** card — the five agents, composition breakdown (roles), win rate, and a visible patch tag ("as of Patch 12.10") so it reads as time-bound data, not a permanent claim.
+- A **Find Lineups** section at the bottom — outbound link buttons to LineupsValorant/UpForge for that specific map, same visual treatment as the existing Aim Lab/KovaaK's buttons on the post-game training card. This is the outsourced part — RankedCoach sends players to the databases that already do this well, never tries to host its own lineup screenshots.
+
+Agents and Weapons work the same navigational pattern (topic grid → detail page), but **their content already exists** — see "Reuse existing content" below, don't write new agent/weapon copy from scratch.
+
+Every page in this feature carries the same visible sourcing discipline: named attribution up top, patch/date tags on anything time-bound, outbound links instead of attempted rehosting. That consistency is what makes the "no direct info coming from esports/pro players" gap Michael flagged actually get closed credibly, rather than the app inventing generic advice and passing it off as expert-sourced.
 
 ---
 
@@ -63,10 +77,30 @@ Don't attempt full coverage (every map, every agent, every weapon) in one pass. 
 
 ---
 
+## Implementation directive — content is written, this is the build
+
+### Nav placement — real constraint, don't violate it
+
+`notes/mobile-nav-redesign.md` explicitly established the mobile bottom bar as **exactly 4 tabs, "nothing else ever goes here again"** — a hard constraint from that prior work, not a suggestion. **Do not add a 5th bottom-nav tab for this feature.** Reachable entry points instead: the mobile settings quick menu (same pattern as "Customize"/"Account & Support"), and/or a card or link from Home. Contextual entry points from Stats/Insights (per the design above) don't touch the bottom nav at all and are safe regardless. If a standalone destination genuinely needs its own top-level nav slot, that's a real product decision to bring back to Michael, not something to silently decide by adding a 5th tab.
+
+### Data — already written, load it, don't regenerate it
+
+`public/library/gamesense-maps.js` is real, committed content — three full entries (Bind, Breeze, Split), each with `macro.defense[]`, `macro.attack[]`, `macro.controllerNotes`, `macro.source`/`sourceUrl`, `metaComp` (agents/composition/winRate/patch/source), and `lineupLinks[]`. Load this via `<script src="library/gamesense-maps.js?v=...">` (remember the cache-bust version bump every time this file changes — this project has hit the stale-cache bug on `app.css` before, don't repeat it on a new file) and consume `globalThis.RankedCoachGamesenseMaps`. **Don't invent new map copy or restructure the schema without checking with Claude first** — this content was researched and sourced deliberately; changing the wording changes what's being attributed to Woohoojin.
+
+### Reuse existing content for Agents and Weapons — don't author new copy
+
+`docs/COACHING-LANGUAGE-RULES.md` already has 50 rules each for Agents (51-100) and Weapons (101-150), several already citing real mechanics (Woohoojin's gunfight hygiene matrix is rules 101-150's natural anchor). Build a lightweight structured version of a curated subset of these (not all 50 each — pick the ones that read well as standalone reference entries rather than stat-matching conditions) formatted the same way as the maps content, rather than writing original agent/weapon copy. This keeps one source of truth for coaching content instead of two independent copies that can drift apart.
+
+### Page structure
+
+Topic grid (Maps/Agents/Weapons) → category grid (map names / agent names / weapon categories) → detail page. Reuse existing card-gallery UI patterns already in the app (the theme gallery, avatar gallery, border gallery all follow the same `renderXGallery()` + `.x-card` pattern — follow that convention for a `renderGamesenseMapGallery()` etc. rather than building a new component style from scratch).
+
 ## Testing
 
 1. Confirm every creator-attributed entry has a visible source citation, not silently presented as RankedCoach's own voice.
 2. Confirm lineup-related content routes to outbound links, not an attempt at in-app illustrated lineups.
 3. Confirm meta-comp entries show a patch/date tag.
-4. Confirm the library is reachable both as a standalone destination and contextually from relevant Stats/Insights surfaces.
-5. Info tags on warm-up drills: confirm the expanded detail is genuinely more actionable than the existing one-liner, not just a longer restatement of the same sentence.
+4. Confirm the library is reachable without adding a 5th bottom-nav tab — verify against `notes/mobile-nav-redesign.md`'s 4-tab constraint explicitly, don't just eyeball it.
+5. Confirm the library is reachable both as a standalone destination and contextually from relevant Stats/Insights surfaces.
+6. Info tags on warm-up drills: confirm the expanded detail is genuinely more actionable than the existing one-liner, not just a longer restatement of the same sentence.
+7. Confirm `library/gamesense-maps.js` content renders exactly as written — no paraphrasing or "improving" the sourced copy during implementation, since that would silently change what's attributed to a named creator.
