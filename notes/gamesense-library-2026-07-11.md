@@ -1,20 +1,20 @@
 # Gamesense Library — Research + Full Feature Directive
 
-**Status:** Content written and committed 2026-07-11 (`public/library/gamesense-maps.js` — real, sourced Bind/Breeze/Split entries). UI/wiring not yet built — that's this directive. Michael pre-approved this structure directly; build against it. Two asks in this pass: (1) a small addition to the just-shipped Daily Warm-Up Check — info tags/expanded detail so players understand exactly what's being asked of them; (2) a much larger new feature — a browsable reference library (weapon/map/agent) covering meta team comps, pro strats, lineup knowledge, and direct tips from named creators (Woohoojin, Dopai), none of which the app currently has any of.
+**Status:** Content written and committed 2026-07-11 (`public/library/gamesense-maps.js` — real Bind/Breeze/Split entries, written in original language from research, not scraped). UI/wiring not yet built — that's this directive. Michael pre-approved this structure directly; build against it. Two asks in this pass: (1) a small addition to the just-shipped Daily Warm-Up Check — info tags/expanded detail so players understand exactly what's being asked of them; (2) a much larger new feature — a browsable reference library (weapon/map/agent) covering meta team comps, pro strats, and lineup knowledge.
+
+**Attribution policy, updated 2026-07-11 — read before building the UI:** Michael's call: no visible creator attribution in the player-facing app. His reasoning, and it's a sound one: game mechanics and strategic knowledge aren't gatekept or copyrightable — only a creator's specific *expression* (their exact script, their video) would need attribution, and this content was never that in the first place, it's original writing based on understanding the underlying mechanics. The original draft of this doc called for visible "via Woohoojin" style attribution; **that's reversed now.** Source research notes stay in `public/library/gamesense-maps.js` as underscore-prefixed internal fields (`_researchNote`, `_researchUrl`) for the team's own future reference — **never render these fields to players.**
 
 ## What this looks like as an end result — concrete walkthrough
 
 A new nav entry (working name "Gamesense," final label is a copy-layer decision, follow `notes/copy-language.md` conventions) opens a topic picker: three cards — **Maps**, **Agents**, **Weapons**. Tapping Maps shows the map grid (Bind, Breeze, Split in the first slice, same visual pattern as the existing map-select UI elsewhere in the app — reuse, don't reinvent). Tapping a map opens a detail page with this exact structure, matching the content already written in `public/library/gamesense-maps.js`:
 
-- A header with the map name and a small "via Woohoojin" (or whichever source) attribution line right under it — visible before the player reads any content, not buried at the bottom.
+- A header with the map name — no attribution line, per the updated policy above.
 - Two columns or stacked sections: **Defense** and **Attack**, each a short bulleted list (2-3 real points, e.g. Bind's "shower control is the priority defensive anchor" / "double up to contest the weak-side lane") — not paragraphs, scannable like the rest of the app's card language.
-- A **Controller notes** callout — since smoke/utility placement is consistently the most specific, actionable content in the sourced material (e.g. Breeze's "smoke Mid Nest to remove the Operator angle").
-- A **Current Meta Comp** card — the five agents, composition breakdown (roles), win rate, and a visible patch tag ("as of Patch 12.10") so it reads as time-bound data, not a permanent claim.
+- A **Controller notes** callout — since smoke/utility placement is consistently the most specific, actionable content (e.g. Breeze's "smoke Mid Nest to remove the Operator angle").
+- A **Current Meta Comp** card — the five agents, composition breakdown (roles), win rate, and a visible patch tag ("as of Patch 12.10") so it reads as time-bound data, not a permanent claim. **This tag stays visible** — it's a data-freshness indicator, not attribution, different category from the creator-sourcing question.
 - A **Find Lineups** section at the bottom — outbound link buttons to LineupsValorant/UpForge for that specific map, same visual treatment as the existing Aim Lab/KovaaK's buttons on the post-game training card. This is the outsourced part — RankedCoach sends players to the databases that already do this well, never tries to host its own lineup screenshots.
 
 Agents and Weapons work the same navigational pattern (topic grid → detail page), but **their content already exists** — see "Reuse existing content" below, don't write new agent/weapon copy from scratch.
-
-Every page in this feature carries the same visible sourcing discipline: named attribution up top, patch/date tags on anything time-bound, outbound links instead of attempted rehosting. That consistency is what makes the "no direct info coming from esports/pro players" gap Michael flagged actually get closed credibly, rather than the app inventing generic advice and passing it off as expert-sourced.
 
 ---
 
@@ -60,11 +60,11 @@ Michael's own framing left this open ("not sure if this would be a section on th
 - **Agents**: role fundamentals (this can directly reuse/link to the existing Agent section of `docs/COACHING-LANGUAGE-RULES.md`, rules 51-100, rather than duplicating content), signature ability usage notes, which current-meta comps/maps favor this agent.
 - **Weapons**: Woohoojin's gunfight hygiene matrix (already researched during the warm-up work — burst-tap vs. spray by range, per weapon category), paired with the existing Weapons rule section (101-150).
 
-### Sourcing and legal guardrails — non-negotiable
+### Sourcing guardrails — updated 2026-07-11, no visible attribution
 
-Same hard-safety-rule discipline already established for Tracker.gg (`notes/screenshot-import.md`'s original rule: no scraping, ever) applies here:
-- **Never scrape or rehost video transcripts, screenshots, or lineup images from creators or third-party sites.** Everything creator-attributed in this library must be an original short summary written from publicly available secondary sources (the same approach used for the Woohoojin/Dopai research in this doc and the warm-up doc), clearly attributed by name, not presented as verbatim reproduction.
-- **Always attribute.** Content derived from a named creator's teaching should say so in the UI ("via Woohoojin's Bind guide"), not get folded into RankedCoach's voice as if it were the app's own original expertise.
+Same hard-safety-rule discipline already established for Tracker.gg (`notes/screenshot-import.md`'s original rule: no scraping, ever) still applies to *how content gets written*, even though attribution is no longer shown to players:
+- **Never scrape or rehost video transcripts, screenshots, or lineup images from creators or third-party sites.** Everything in this library must be original writing that reflects an understanding of the underlying game mechanics/strategy, sourced from publicly available secondary material — not a verbatim or near-verbatim reproduction of any creator's specific wording. This is the actual line that matters legally (expression vs. fact), and it's independent of whether attribution is shown.
+- **No visible attribution in the player-facing UI** — per Michael's policy above. Keep research provenance as internal-only metadata (underscore-prefixed fields) for the team's own future reference, never rendered.
 - **Prefer outbound links over rehosting wherever visual/illustrated content is involved** (lineups specifically) — link to the databases that already do this well instead of attempting to reproduce their content.
 
 ### Maintenance
@@ -85,7 +85,7 @@ Don't attempt full coverage (every map, every agent, every weapon) in one pass. 
 
 ### Data — already written, load it, don't regenerate it
 
-`public/library/gamesense-maps.js` is real, committed content — three full entries (Bind, Breeze, Split), each with `macro.defense[]`, `macro.attack[]`, `macro.controllerNotes`, `macro.source`/`sourceUrl`, `metaComp` (agents/composition/winRate/patch/source), and `lineupLinks[]`. Load this via `<script src="library/gamesense-maps.js?v=...">` (remember the cache-bust version bump every time this file changes — this project has hit the stale-cache bug on `app.css` before, don't repeat it on a new file) and consume `globalThis.RankedCoachGamesenseMaps`. **Don't invent new map copy or restructure the schema without checking with Claude first** — this content was researched and sourced deliberately; changing the wording changes what's being attributed to Woohoojin.
+`public/library/gamesense-maps.js` is real, committed content — three full entries (Bind, Breeze, Split), each with `macro.defense[]`, `macro.attack[]`, `macro.controllerNotes`, `macro._researchNote`/`_researchUrl` (internal only, never render), `metaComp` (agents/composition/winRate/patch), and `lineupLinks[]`. Load this via `<script src="library/gamesense-maps.js?v=...">` (remember the cache-bust version bump every time this file changes — this project has hit the stale-cache bug on `app.css` before, don't repeat it on a new file) and consume `globalThis.RankedCoachGamesenseMaps`. **Don't invent new map copy or restructure the schema without checking with Claude first** — this content was researched deliberately, and the underscore-prefixed fields must stay out of any render path.
 
 ### Reuse existing content for Agents and Weapons — don't author new copy
 
@@ -97,10 +97,10 @@ Topic grid (Maps/Agents/Weapons) → category grid (map names / agent names / we
 
 ## Testing
 
-1. Confirm every creator-attributed entry has a visible source citation, not silently presented as RankedCoach's own voice.
+1. **Confirm no creator names or `_researchNote`/`_researchUrl` fields render anywhere in the UI** — search the rendered DOM output for "Woohoojin," "Dopai," and any raw URL from the internal fields, confirm zero matches. This is the inverse of the original testing item and matters more now that the policy flipped — verify it explicitly, don't assume the rename to underscore-prefixed fields alone prevents accidental rendering.
 2. Confirm lineup-related content routes to outbound links, not an attempt at in-app illustrated lineups.
-3. Confirm meta-comp entries show a patch/date tag.
+3. Confirm meta-comp entries show a patch/date tag (this one stays visible — it's freshness data, not attribution).
 4. Confirm the library is reachable without adding a 5th bottom-nav tab — verify against `notes/mobile-nav-redesign.md`'s 4-tab constraint explicitly, don't just eyeball it.
 5. Confirm the library is reachable both as a standalone destination and contextually from relevant Stats/Insights surfaces.
 6. Info tags on warm-up drills: confirm the expanded detail is genuinely more actionable than the existing one-liner, not just a longer restatement of the same sentence.
-7. Confirm `library/gamesense-maps.js` content renders exactly as written — no paraphrasing or "improving" the sourced copy during implementation, since that would silently change what's attributed to a named creator.
+7. Confirm `library/gamesense-maps.js` content renders exactly as written — no paraphrasing or "improving" the sourced copy during implementation.

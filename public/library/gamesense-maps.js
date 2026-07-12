@@ -1,8 +1,12 @@
 // Gamesense Library — Map content, first slice (Bind, Breeze, Split).
-// Sourced from written coverage of named creators/analysts, not scraped or
-// reproduced verbatim. Every "source" field must render as a visible
-// attribution in the UI — this content is not RankedCoach's own voice.
-// Meta comp data is patch-dependent — see "patch" field, needs periodic review.
+// Written in original language from secondary research, not scraped or
+// reproduced verbatim from any script or transcript. Underscore-prefixed
+// fields (_researchNote, _researchUrl) are internal provenance only —
+// for the team's own future reference if content ever needs revisiting —
+// and must NEVER be rendered in the player-facing UI. Game mechanics and
+// strategy are not gatekept knowledge; no creator attribution is shown to
+// players. The "patch" field on metaComp IS meant to be player-visible —
+// it's a data-freshness indicator, not attribution.
 (function () {
   "use strict";
 
@@ -11,12 +15,12 @@
       id: "bind",
       label: "Bind",
       macro: {
-        source: "Woohoojin",
-        sourceUrl: "https://www.zleague.gg/theportal/woohoojin-mastering-the-bind-map-in-valorant/",
+        _researchNote: "internal only, do not render",
+        _researchUrl: "https://www.zleague.gg/theportal/woohoojin-mastering-the-bind-map-in-valorant/",
         defense: [
           "Double up to contest the weak-side lane rather than spreading thin — accept giving up a low-value area to reinforce a high-value one instead.",
           "Shower control is the priority defensive anchor on this map — losing it tends to cascade into losing the rest of the defensive setup.",
-          "Watch for predictable attacker patterns (a late shower lurk is the named example) — recognizing the pattern opens a window to punish it."
+          "Watch for predictable attacker patterns (a late shower lurk is a common one) — recognizing the pattern opens a window to punish it."
         ],
         attack: [
           "Bind has no mid, so once you commit to a site the rotation is fully committed too — there's no cheap way to redirect mid-execute.",
@@ -29,8 +33,7 @@
         agents: ["Brimstone", "Raze", "Skye", "Sage", "Fade"],
         composition: "2 Initiators, 1 Controller, 1 Duelist, 1 Sentinel",
         winRate: "57%",
-        patch: "12.10",
-        source: "Community meta tracking (esportsinsider.com, alviran.net), July 2026"
+        patch: "12.10"
       },
       lineupLinks: [
         { label: "LineupsValorant — Bind", url: "https://lineupsvalorant.com/" },
@@ -41,8 +44,8 @@
       id: "breeze",
       label: "Breeze",
       macro: {
-        source: "Community map analysis (Woohoojin content referenced, Viper-specific techniques)",
-        sourceUrl: "https://www.youtube.com/watch?v=0VLyBGR5sNA",
+        _researchNote: "internal only, do not render",
+        _researchUrl: "https://www.youtube.com/watch?v=0VLyBGR5sNA",
         defense: [
           "Mid is the strategic core of this map — mid control is less about the space itself and more about the pressure it lets you apply to both sites at once."
         ],
@@ -57,8 +60,7 @@
         agents: ["Viper", "Jett", "Sova", "Killjoy", "KAY/O"],
         composition: "1 Controller, 1 Duelist, 1 Initiator (Sova), 1 Sentinel, 1 Initiator (KAY/O)",
         winRate: "57.5%",
-        patch: "12.10",
-        source: "Community meta tracking (esportsinsider.com), July 2026 — currently the highest top-comp win rate of any map in the pool"
+        patch: "12.10"
       },
       lineupLinks: [
         { label: "LineupsValorant — Breeze", url: "https://lineupsvalorant.com/" },
@@ -69,8 +71,8 @@
       id: "split",
       label: "Split",
       macro: {
-        source: "Community map analysis (Woohoojin has published Split-specific content)",
-        sourceUrl: "https://www.youtube.com/watch?v=I2kxN3-V4zg",
+        _researchNote: "internal only, do not render",
+        _researchUrl: "https://www.youtube.com/watch?v=I2kxN3-V4zg",
         defense: [
           "Split's compact design means mid connects both sites more directly than on most maps — losing mid control lets attackers move and threaten either site quickly."
         ],
@@ -85,8 +87,7 @@
         agents: ["Omen", "Raze", "Breach", "Cypher", "Sage"],
         composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels (double-sentinel)",
         winRate: "56.8%",
-        patch: "12.10",
-        source: "Community meta tracking (esportsinsider.com), July 2026"
+        patch: "12.10"
       },
       lineupLinks: [
         { label: "LineupsValorant — Split", url: "https://lineupsvalorant.com/" },
