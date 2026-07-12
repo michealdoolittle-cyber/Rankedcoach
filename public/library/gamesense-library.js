@@ -3,9 +3,9 @@
 
   const state = { topic: "overview", itemId: "", role: "", detailId: "" };
   const topicMeta = {
-    maps: { label: "Maps", eyebrow: "Round Plan", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
-    agents: { label: "Agents", eyebrow: "Role Read", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
-    weapons: { label: "Weapons", eyebrow: "Gunfight Plan", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." }
+    maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
+    agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
+    weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." }
   };
 
   function escapeHtml(value = "") {
@@ -47,7 +47,6 @@
           ${Object.entries(topicMeta).map(([key, meta], index) => `
             <button class="gamesense-topic-card" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
               <span class="gamesense-topic-number">0${index + 1}</span>
-              <span class="gamesense-topic-eyebrow">${escapeHtml(meta.eyebrow)}</span>
               <strong>${escapeHtml(meta.label)}</strong>
               <small>${escapeHtml(meta.copy)}</small>
               <span class="gamesense-topic-action">Open dossier</span>
@@ -92,7 +91,7 @@
     return `
       <div class="gamesense-gallery-head">
         <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
-        <div><span>${escapeHtml(meta.eyebrow)}</span><strong>${escapeHtml(meta.label)} Library</strong></div>
+        <div><strong>${escapeHtml(meta.label)} Library</strong></div>
       </div>
       <div class="gamesense-entry-grid gamesense-entry-grid-${topic}">
         ${items.map((item, index) => topic === "maps" ? renderMapCard(item, index) : topic === "agents" ? renderAgentCard(item, index) : renderWeaponCard(item, index)).join("")}
@@ -153,7 +152,6 @@
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
         <span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span>
       </div>
-      ${renderMarkedMap(map)}
       <div class="gamesense-detail-grid">
         ${renderList("Defense", map.macro?.defense)}
         ${renderList("Attack", map.macro?.attack)}
@@ -168,7 +166,8 @@
           <div><span>Find Lineups</span></div>
           <div>${(map.lineupLinks || []).map(link => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a>`).join("")}</div>
         </section>
-      </div>`;
+      </div>
+      ${renderMarkedMap(map)}`;
   }
 
   function renderStatChips(stats = {}) {

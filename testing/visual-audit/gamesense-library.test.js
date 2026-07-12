@@ -107,6 +107,8 @@ async function run() {
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
+    assert.equal(await desktop.locator("#page-library").getByText(/Round Plan|Role Read|Gunfight Plan/).count(), 0);
+    assert.equal(await desktop.locator("#page-library strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
@@ -116,6 +118,18 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-tactical-stage img").count(), 1);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 10);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 5);
+    const desktopMapOrder = await desktop.evaluate(() => {
+      const detail = document.querySelector(".gamesense-detail-grid");
+      const map = document.querySelector(".gamesense-tactical-card");
+      return Boolean(detail && map && (detail.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING));
+    });
+    assert.equal(desktopMapOrder, true);
+    const desktopScroll = await desktop.locator("#page-library").evaluate(page => {
+      page.scrollTop = page.scrollHeight;
+      return { clientHeight: page.clientHeight, scrollHeight: page.scrollHeight, scrollTop: page.scrollTop, overflowY: getComputedStyle(page).overflowY };
+    });
+    assert.ok(desktopScroll.scrollHeight > desktopScroll.clientHeight && desktopScroll.scrollTop > 0 && desktopScroll.overflowY === "auto", JSON.stringify(desktopScroll));
+    await desktop.locator("#page-library").evaluate(page => { page.scrollTop = 0; });
     await desktop.click(".gamesense-role-menu summary");
     await desktop.click('[data-gamesense-role="Controller"]');
     assert.match(await desktop.locator(".gamesense-role-result").innerText(), /A Heaven|Lamps/i);
@@ -193,6 +207,32 @@ async function run() {
     await mobile.click('[data-gamesense-item="bind"]');
     assert.equal(await mobile.locator(".gamesense-tactical-stage img").isVisible(), true);
     assert.equal(await mobile.locator(".gamesense-callout").count(), 10);
+    const mobileMapOrder = await mobile.evaluate(() => {
+      const detail = document.querySelector(".gamesense-detail-grid");
+      const map = document.querySelector(".gamesense-tactical-card");
+      return Boolean(detail && map && (detail.compareDocumentPosition(map) & Node.DOCUMENT_POSITION_FOLLOWING));
+    });
+    assert.equal(mobileMapOrder, true);
+    const mobileScroll = await mobile.evaluate(() => {
+      const candidates = [document.documentElement, document.body, document.querySelector(".app-scale-wrap"), document.querySelector(".app-root"), document.querySelector(".app")].filter(Boolean);
+      const scrollOwner = candidates.find(element => element.scrollHeight > element.clientHeight + 1 && ["auto", "scroll"].includes(getComputedStyle(element).overflowY));
+      if (scrollOwner) scrollOwner.scrollTop = scrollOwner.scrollHeight;
+      const tactical = document.querySelector(".gamesense-tactical-scroll");
+      return {
+        owner: scrollOwner ? scrollOwner.className || scrollOwner.tagName : "missing",
+        clientHeight: scrollOwner?.clientHeight || 0,
+        scrollHeight: scrollOwner?.scrollHeight || 0,
+        scrollTop: scrollOwner?.scrollTop || 0,
+        overflowY: scrollOwner ? getComputedStyle(scrollOwner).overflowY : "missing",
+        candidates: candidates.map(element => ({ name: element.className || element.tagName, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight, overflowY: getComputedStyle(element).overflowY })),
+        tacticalOverflowY: tactical ? getComputedStyle(tactical).overflowY : "missing"
+      };
+    });
+    assert.ok(mobileScroll.scrollHeight > mobileScroll.clientHeight && mobileScroll.scrollTop > 0 && mobileScroll.overflowY === "auto", JSON.stringify(mobileScroll));
+    assert.equal(mobileScroll.tacticalOverflowY, "hidden", JSON.stringify(mobileScroll));
+    await mobile.evaluate(() => {
+      [document.documentElement, document.body, document.querySelector(".app-scale-wrap"), document.querySelector(".app-root"), document.querySelector(".app")].filter(Boolean).forEach(element => { element.scrollTop = 0; });
+    });
     const mobileMetrics = await mobile.evaluate(() => ({
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
       labels: [...document.querySelectorAll(".mobile-bottom-page-btn")].map(button => ({ text: button.textContent.trim(), top: button.getBoundingClientRect().top, width: button.getBoundingClientRect().width, height: button.getBoundingClientRect().height, whiteSpace: getComputedStyle(button).whiteSpace }))
@@ -204,7 +244,7 @@ async function run() {
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-mobile-360x740.png"), fullPage: true });
     await mobile.close();
 
-    console.log("Gamesense Library checks passed: equal desktop nav sizing, image galleries, marked maps, role notes, agent abilities, weapon analysis, corrected warm-up details, attribution guard, and 360x740 containment.");
+    console.log("Gamesense Library checks passed: page scrolling, bottom tactical maps, centered headings, clean topic labels, equal desktop nav sizing, visual galleries, role notes, agent abilities, weapon analysis, attribution guard, and 360x740 containment.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
