@@ -302,7 +302,13 @@ async function run() {
       const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0];
       return profile?.warmupLog?.[0]?.warmupLogEntryId === expectedId;
     }, warmupGameId);
-    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).count(), 1);
+    const warmupMarkerDebug = await page.evaluate(expectedId => ({
+      expectedId,
+      profile: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0],
+      storedEntries: JSON.parse(localStorage.getItem("valtracker_log_entries_v2:guest") || "[]").map(entry => ({ id: entry.id, profileId: entry.profileId, createdAt: entry.createdAt })),
+      renderedEntries: [...document.querySelectorAll(".log-entry")].map(entry => ({ id: entry.dataset.logEntryId, warmup: Boolean(entry.querySelector(".log-training-fire")) }))
+    }), warmupGameId);
+    assert.equal(await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).count(), 1, JSON.stringify(warmupMarkerDebug));
     assert.equal(await page.locator('.log-entry[data-log-entry-id="training-first-game"] .log-training-fire').count(), 0);
     await page.click("#loggingTrainingMenuBtn");
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });

@@ -1,6 +1,6 @@
 # Full Codebase Cleanup — Dead Code, Performance, File Organization
 
-**Status:** Spec'd 2026-07-11, not yet built. Everything below is grounded in real scans run against the actual current codebase tonight, not a general "clean things up" guess. Ranked by risk/value so Codex works the safe, high-value items first and treats the riskier ones with real caution rather than bulk-deleting anything.
+**Status (2026-07-11 implementation):** Root debug artifacts were removed and ignored, the repeated `.nav-right`, `.nav-left`, and `.nav-btn` exact-rule blocks were consolidated with a visual-audit pass after each selector, and all 46 dead-function candidates were removed only after confirming each declaration had no other reference across public JavaScript or inline HTML. Theme Builder extraction is parked rather than forced: a deeper scan found roughly 440 `themeBuilder` references plus launch-locked code that still closes over live app-local auth, profile, layout, and override helpers. A safe extraction needs an explicit dependency interface first; moving the block directly into a standalone script would create dangling lexical dependencies despite the UI gate.
 
 ---
 

@@ -4228,11 +4228,6 @@
     pointer-events:auto !important;
   }
 
-  body.is-mobile-layout .nav-left,
-  body.is-mobile-layout .nav-right{
-    display:none !important;
-  }
-
   body.is-mobile-layout .nav-center,
   body.is-mobile-layout .nav-middle{
     position:fixed !important;
@@ -5845,9 +5840,7 @@
     background:transparent !important;
   }
 
-  body.is-mobile-layout .nav-left,
-  body.is-mobile-layout .nav-links,
-  body.is-mobile-layout .nav-right{
+  body.is-mobile-layout .nav-links{
     display:none !important;
   }
 
@@ -6792,12 +6785,6 @@ html, body{
     pointer-events:none !important;
   }
 
-  body.is-mobile-layout .nav-left{
-    display:block !important;
-    width:100% !important;
-    min-width:0 !important;
-  }
-
   body.is-mobile-layout .nav-logo{
     display:block !important;
     width:100% !important;
@@ -6815,20 +6802,6 @@ html, body{
     gap:4px !important;
     width:100% !important;
     min-width:0 !important;
-  }
-
-  body.is-mobile-layout .nav-btn{
-    width:100% !important;
-    min-width:0 !important;
-    min-height:42px !important;
-    height:42px !important;
-    padding:0 3px !important;
-    border-radius:10px !important;
-    font-size:clamp(8px, 2.45vw, 10px) !important;
-    letter-spacing:.05em !important;
-    line-height:1 !important;
-    text-align:center !important;
-    white-space:nowrap !important;
   }
 
   body.is-mobile-layout .nav-center,
@@ -6885,14 +6858,6 @@ html, body{
   body.is-mobile-layout .nav-tier-text{
     font-size:9px !important;
     line-height:1 !important;
-  }
-
-  body.is-mobile-layout .nav-right{
-    display:flex !important;
-    justify-content:flex-end !important;
-    width:auto !important;
-    min-width:0 !important;
-    max-width:none !important;
   }
 
   body.is-mobile-layout .profile-panel{
@@ -7552,12 +7517,6 @@ html, body{
     padding-right:5px !important;
   }
 
-  body.is-mobile-layout .nav-btn{
-    font-size:8px !important;
-    min-height:40px !important;
-    height:40px !important;
-  }
-
   body.is-mobile-layout .profile-panel{
     grid-template-columns:36px 36px 36px !important;
     width:118px !important;
@@ -7761,6 +7720,10 @@ transform:translateY(0) scale(0.98);
   gap:6px;
   justify-content:flex-start;
   min-height:100%;
+  position:relative !important;
+  z-index:3 !important;
+  grid-column:1 !important;
+  justify-self:start !important;
 
   min-width:0;          /* ðŸ”¥ allows shrinking */
   flex-shrink:1;        /* ðŸ”¥ allows compression */
@@ -7801,22 +7764,6 @@ transform:translateY(0) scale(0.98);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: 1px;
-}
-
-.nav-btn {
-  background: transparent;
-  border: none;
-  color: #c9d6e4;
-  min-height: 0;
-  padding: 7px 18px;
-  font-size: clamp(17px, calc(var(--app-vw) * 0.95), 22px);
-  line-height: 1.05;
-  cursor: pointer;
-  border-radius: 10px;
-  transition: 0.15s;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .nav-btn:hover {
@@ -8034,23 +7981,6 @@ z-index:5;
 /* ===========================
    PROFILE PANEL + DROPDOWN
 =========================== */
-.nav-right {
-  display:flex;
-  align-items:center;
-  align-self:stretch;
-  justify-content:flex-end;
-  gap:10px;
-  position:relative;
-  z-index:1100;
-  min-height:100%;
-  min-width:0;
-  width:auto;
-  max-width:none;
-  flex:0 0 auto;
-  justify-self:end;
-  margin-left:0;
-  overflow:visible;
-}
 .profile-panel {
   display: flex;
   align-items: center;
@@ -18538,19 +18468,11 @@ min-height:0;
   }
 
   .nav-left,
-  .nav-center,
-  .nav-right{
+  .nav-center{
     flex:1 1 100%;
     justify-content:center;
   }
 
-  .nav-right{
-    justify-content:flex-end;
-    justify-self:end;
-    width:auto;
-    max-width:none;
-    flex:0 0 auto;
-  }
 }
 
 @media (max-width: 760px){
@@ -18571,10 +18493,6 @@ min-height:0;
 
   }
 
-  .nav-btn{
-    font-size:12px;
-    padding:6px 12px;
-  }
 }
 
 .navbar{
@@ -29345,8 +29263,7 @@ to{ stroke-dashoffset: 0; }
   }
 
   .nav-left,
-  .nav-center,
-  .nav-right{
+  .nav-center{
     gap:6px !important;
   }
 
@@ -29360,14 +29277,6 @@ to{ stroke-dashoffset: 0; }
 
   .nav-links{
     gap:4px !important;
-  }
-
-  .nav-btn{
-    padding:6px 13px !important;
-    font-size:14px !important;
-    line-height:1 !important;
-    border-radius:10px !important;
-    letter-spacing:.03em !important;
   }
 
   .nav-center{
@@ -29527,8 +29436,7 @@ to{ stroke-dashoffset: 0; }
 }
 
 .nav-left,
-.nav-center,
-.nav-right{
+.nav-center{
   gap:calc(6px * var(--app-1080-scale)) !important;
 }
 
@@ -29545,10 +29453,19 @@ to{ stroke-dashoffset: 0; }
 }
 
 .nav-btn{
+  background:transparent;
+  border:none;
+  color:#c9d6e4;
+  min-width:0;
+  min-height:0;
   padding:calc(6px * var(--app-1080-scale)) calc(13px * var(--app-1080-scale)) !important;
   font-size:calc(14px * var(--app-1080-scale)) !important;
   line-height:1 !important;
   border-radius:calc(10px * var(--app-1080-scale)) !important;
+  cursor:pointer;
+  transition:.15s;
+  font-weight:600;
+  text-transform:uppercase;
   letter-spacing:.03em !important;
 }
 
@@ -34982,17 +34899,6 @@ body[data-theme="reaver"] .profile-dropdown.profile-dropdown-pills.open{
   flex:1 1 0 !important;
 }
 
-.nav-right{
-  grid-column:3 !important;
-  justify-self:end !important;
-  justify-content:flex-end !important;
-  flex:0 1 auto !important;
-  min-width:420px !important;
-  width:min(620px, 100%) !important;
-  max-width:min(620px, 100%) !important;
-  margin-left:auto !important;
-}
-
 .profile-panel{
   min-height:60px !important;
   height:60px !important;
@@ -35018,17 +34924,6 @@ body[data-theme="reaver"] .profile-dropdown.profile-dropdown-pills.open{
   max-width:none !important;
   overflow:visible !important;
   text-overflow:clip !important;
-}
-
-.nav-left,
-.nav-right{
-  position:relative !important;
-  z-index:3 !important;
-}
-
-.nav-left{
-  grid-column:1 !important;
-  justify-self:start !important;
 }
 
 .security-settings-modal{
@@ -35999,34 +35894,9 @@ body[data-theme] :is(
     border-bottom:0 !important;
   }
 
-  .nav-left{
-    grid-column:1 !important;
-    display:grid !important;
-    grid-template-columns:auto repeat(4, minmax(0, 1fr)) !important;
-    width:100% !important;
-    min-width:0 !important;
-    gap:5px !important;
-  }
-
   .logo-img{
     width:58px !important;
     height:38px !important;
-  }
-
-  .nav-btn{
-    min-width:0 !important;
-    height:38px !important;
-    padding:0 7px !important;
-    font-size:10px !important;
-    letter-spacing:.03em !important;
-  }
-
-  .nav-right{
-    grid-column:2 !important;
-    min-width:0 !important;
-    width:auto !important;
-    flex:0 0 auto !important;
-    gap:5px !important;
   }
 
   .nav-right .profile-panel{
@@ -36342,15 +36212,6 @@ body[data-theme] :is(
 }
 
 @media (max-width: 520px){
-  .nav-left{
-    grid-template-columns:auto repeat(4, minmax(44px, 1fr)) !important;
-  }
-
-  .nav-btn{
-    font-size:9px !important;
-    padding:0 5px !important;
-  }
-
   .logo-img{
     width:48px !important;
   }
@@ -36506,13 +36367,6 @@ body.is-mobile-layout .app-header::after{
   pointer-events:none !important;
 }
 
-body.is-mobile-layout .nav-left{
-  grid-column:1 !important;
-  display:block !important;
-  min-width:0 !important;
-  width:100% !important;
-}
-
 body.is-mobile-layout .nav-logo{
   display:grid !important;
   grid-template-columns:42px minmax(0, 1fr) !important;
@@ -36535,19 +36389,6 @@ body.is-mobile-layout .nav-links{
   gap:4px !important;
   width:100% !important;
   min-width:0 !important;
-}
-
-body.is-mobile-layout .nav-btn{
-  width:100% !important;
-  min-width:0 !important;
-  height:38px !important;
-  min-height:38px !important;
-  padding:0 4px !important;
-  border-radius:10px !important;
-  font-size:9px !important;
-  line-height:1 !important;
-  letter-spacing:.04em !important;
-  white-space:nowrap !important;
 }
 
 body.is-mobile-layout .nav-underline{
@@ -36596,16 +36437,6 @@ body.is-mobile-layout .nav-rr-title{
 body.is-mobile-layout .nav-rr-value,
 body.is-mobile-layout .nav-goal-btn{
   font-size:11px !important;
-}
-
-body.is-mobile-layout .nav-right{
-  grid-column:2 !important;
-  display:flex !important;
-  justify-content:flex-end !important;
-  align-items:center !important;
-  width:auto !important;
-  min-width:0 !important;
-  max-width:126px !important;
 }
 
 body.is-mobile-layout .profile-panel{
@@ -38042,10 +37873,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     --mobile-top-ranks:80px;
   }
 
-  body.is-mobile-layout .nav-btn{
-    font-size:8.5px !important;
-  }
-
   body.is-mobile-layout .profile-panel{
     max-width:96px !important;
   }
@@ -38126,11 +37953,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     box-shadow:none !important;
     overflow:visible !important;
     pointer-events:none !important;
-  }
-
-  body.is-mobile-layout .app-header .nav-left,
-  body.is-mobile-layout .app-header .nav-right{
-    display:none !important;
   }
 
   body.is-mobile-layout .app-header .nav-center,
@@ -39357,9 +39179,7 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     display:block !important;
   }
 
-  body.is-mobile-layout .site-footer,
-  body.is-mobile-layout .nav-left,
-  body.is-mobile-layout .nav-right{
+  body.is-mobile-layout .site-footer{
     display:none !important;
   }
 
@@ -49665,7 +49485,6 @@ html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #
 /* Desktop/mobile regression guard v19: keep shared nav and stats branches isolated. */
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(#mobileBottomShell,#mobileBugReportOpen,#mobileAskCoachOpen,#mobileHeaderSyncBtn){display:none !important;visibility:hidden !important;pointer-events:none !important;}
 
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right{min-width:490px !important;width:min(700px, 100%) !important;max-width:min(700px, 100%) !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel{min-width:490px !important;max-width:700px !important;gap:8px !important;overflow:visible !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right :is(.profile-dropdown-toggle,.profile-sync-btn,.ask-coach-nav-btn,.bug-report-nav-btn){width:50px !important;min-width:50px !important;max-width:50px !important;height:50px !important;min-height:50px !important;max-height:50px !important;display:grid !important;place-items:center !important;flex:0 0 50px !important;padding:0 !important;}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right :is(.profile-dropdown-toggle,.profile-sync-btn,.ask-coach-nav-btn,.bug-report-nav-btn) svg{width:34px !important;height:34px !important;min-width:34px !important;min-height:34px !important;display:block !important;overflow:visible !important;}
@@ -49729,11 +49548,6 @@ html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active #
 /* Desktop stats/nav correction v20: contain every desktop panel without affecting mobile. */
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-header{
   grid-template-columns:minmax(280px,1fr) minmax(420px,680px) minmax(540px,720px) !important;
-}
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right{
-  min-width:540px !important;
-  width:min(720px,38vw) !important;
-  max-width:720px !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel{
   min-width:540px !important;
@@ -49946,10 +49760,22 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .app-header{
   grid-template-columns:minmax(320px,1fr) minmax(560px,680px) minmax(430px,480px) !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right{
+  display:flex !important;
+  align-items:center !important;
+  align-self:stretch !important;
+  justify-content:flex-end !important;
+  grid-column:3 !important;
   min-width:430px !important;
   width:min(480px,25vw) !important;
   max-width:480px !important;
+  min-height:100% !important;
+  gap:calc(6px * var(--app-1080-scale)) !important;
+  position:relative !important;
+  z-index:3 !important;
+  flex:0 1 auto !important;
   justify-self:end !important;
+  margin-left:auto !important;
+  overflow:visible !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-panel{
   min-width:430px !important;
@@ -51849,8 +51675,8 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell{
 
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-pages{
   display:grid !important;
-  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
-  gap:7px !important;
+  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+  gap:5px !important;
   width:100% !important;
   height:100% !important;
 }
@@ -51863,10 +51689,10 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell .mobile-bottom-pa
   min-width:0 !important;
   min-height:46px !important;
   height:46px !important;
-  padding:0 5px !important;
-  font-size:clamp(10px,2.65vw,12px) !important;
+  padding:0 3px !important;
+  font-size:clamp(8.5px,2.35vw,10.5px) !important;
   line-height:1 !important;
-  letter-spacing:.02em !important;
+  letter-spacing:.01em !important;
   white-space:nowrap !important;
   overflow:hidden !important;
   text-overflow:clip !important;

@@ -39,6 +39,14 @@ const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 900 }
 ];
 
+async function dismissDailyWarmup(page) {
+  const modal = page.locator("#dailyWarmupModal.active");
+  if (await modal.isVisible().catch(() => false)) {
+    await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.waitForTimeout(250);
+  }
+}
+
 // Each entry: name, async fn(page) that navigates/opens something, then we screenshot.
 const STATE_SETUP = {
   blank: async (page) => {
@@ -71,6 +79,7 @@ const STATE_SETUP = {
       if (demoChoice && await demoChoice.isVisible().catch(() => false)) {
         await demoChoice.click().catch(() => {});
         await page.waitForTimeout(1500);
+        await dismissDailyWarmup(page);
       }
     }
     // close switcher if still open
@@ -78,7 +87,7 @@ const STATE_SETUP = {
   }
 };
 
-const PAGES = ["home", "logging", "stats", "insights"];
+const PAGES = ["home", "logging", "stats", "insights", "library"];
 
 // On mobile, the desktop header cluster (#profileAvatarWrap, #profileRatingWidget,
 // #profileDropdownToggle) is hidden via CSS (`.is-mobile-layout .nav-right{display:none}`)
@@ -201,6 +210,7 @@ async function run() {
         // corrupted later modals (inline display:none outlives the class toggle).
         await page.reload({ waitUntil: "networkidle" });
         await page.waitForTimeout(500);
+        await dismissDailyWarmup(page);
         await page.click(navSelector("home")).catch(() => {});
         await page.waitForTimeout(200);
         try {

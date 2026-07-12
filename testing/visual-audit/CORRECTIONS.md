@@ -7,6 +7,8 @@ Ranked by severity. Each entry: what's wrong, where, how confirmed, suggested fi
 
 **2026-07-06 mobile nav redesign update:** The old mobile bottom-shell action model has been superseded. Bottom nav now contains page tabs only; mobile avatar/profile rating opens through `#mobileHeaderProfileBtn`; mobile settings opens through `#mobileHeaderSettingsBtn`; Bug Report moved to Settings -> Account & Support -> Support. Full harness passed after the redesign: zero console issues and zero horizontal overflow across mobile/desktop, blank/demo, all pages and reachable modals.
 
+**2026-07-11 Gamesense and cleanup update:** `Library` is the deliberate fifth desktop/mobile page tab. The duplicate exact `.nav-right`, `.nav-left`, and `.nav-btn` blocks were consolidated one selector at a time, and the audit harness now dismisses the scheduled Daily Warm-Up modal before testing unrelated mobile overlays so its midnight trigger cannot create false timeouts.
+
 ---
 
 ## High Severity

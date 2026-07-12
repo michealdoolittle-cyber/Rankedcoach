@@ -2,6 +2,13 @@
 public/assets/hover-fx/*.mp4
 testing/visual-audit/node_modules/
 testing/visual-audit/output/
+testing/visual-audit/tmp/
+testing/visual-audit/run*.log
+/.codex-static-server.js
+/codex-*.png
+/output/
+/test-results/
+/tmp/
 .dev.vars
 .env
 .env.*

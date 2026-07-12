@@ -14,9 +14,11 @@ node audit.js
 This serves `public/` on `127.0.0.1:41777`, drives the real guest-entry UI (no test-only hooks — it clicks the same buttons a player clicks), and captures for every combination of:
 - **Viewport**: `mobile` (390x844) and `desktop` (1440x900)
 - **Guest state**: `blank` (empty profile, tests empty/locked states) and `demo` (sample matches loaded, tests populated states)
-- **Surface**: Home / Logging / Stats / Insights pages, plus profile dropdown, profile switcher, profile rating dropdown, edit-profile theme selector, import-history modal, Ask Coach panel, bug-report modal
+- **Surface**: Home / Logging / Stats / Insights / Library pages, plus profile dropdown, profile switcher, profile rating dropdown, edit-profile theme selector, import-history modal, Ask Coach panel, bug-report modal
 
 Output lands in `testing/visual-audit/output/<viewport>/<state>/*.png`, plus `console.log.json` (browser console errors/warnings per run) and `report.json` (horizontal-overflow flags per surface).
+
+**2026-07-11 Gamesense Library:** The deliberate fifth top-level page is `Library`. Desktop and mobile must both show five equal-priority page tabs, and mobile verification includes 360x740 containment with all five buttons on one row. The harness `PAGES` list includes `library`.
 
 **2026-07-06 mobile nav redesign:** Mobile Profile Rating / Coach Readiness is now inside the combined avatar popover opened by `#mobileHeaderProfileBtn`. Mobile settings open from `#mobileHeaderSettingsBtn`. The bottom bar is page navigation only (`.mobile-bottom-page-btn[data-mobile-page="..."]`).
 
@@ -24,7 +26,7 @@ Output lands in `testing/visual-audit/output/<viewport>/<state>/*.png`, plus `co
 
 The harness is intentionally cheap to extend — add a new page to `PAGES` or a new entry to `MODALS` in `audit.js` when a brief adds a new screen or modal, so it stays current instead of drifting from the real nav.
 
-**Mobile vs desktop use different DOM entry points for the same action** � desktop keeps the real header controls (`#profileAvatarWrap`, `#profileDropdownToggle`, `#profileRatingWidget`, `#askCoachOpen`, `#bugReportOpen`, `#profileSyncBtn`). Mobile now uses the rebuilt two-row header (`#mobileHeaderProfileBtn`, `#mobileAskCoachOpen`, `#mobileHeaderSettingsBtn`) and a nav-only bottom shell (`.mobile-bottom-page-btn[data-mobile-page="..."]`). Profile Rating lives inside the avatar popover, and Bug Report lives under Settings -> Account & Support -> Support.
+**Mobile vs desktop use different DOM entry points for the same action** — desktop keeps the real header controls (`#profileAvatarWrap`, `#profileDropdownToggle`, `#profileRatingWidget`, `#askCoachOpen`, `#bugReportOpen`, `#profileSyncBtn`). Mobile now uses the rebuilt two-row header (`#mobileHeaderProfileBtn`, `#mobileAskCoachOpen`, `#mobileHeaderSettingsBtn`) and a nav-only bottom shell (`.mobile-bottom-page-btn[data-mobile-page="..."]`). Profile Rating lives inside the avatar popover, and Bug Report lives under Settings -> Account & Support -> Support.
 
 **Full-page screenshots don't capture nested scroll containers past their visible bounds.** `page.screenshot({fullPage:true})` expands to the outer page's scroll height, but a modal with its own internal `overflow:auto` panel (e.g. the Theme Selector's swatch gallery) only shows what's visible in that panel at capture time — a partially-visible last row at the bottom of such a panel is very likely just normal scrollable content, not a clipping bug. Confirm by manually scrolling before filing it as a correction (see `CORRECTIONS.md` #7 for an example this tripped on).
 
@@ -52,7 +54,8 @@ Run this instead of the full pass when a change is narrow. Match the change to t
 | If you touched... | Check these surfaces |
 | --- | --- |
 | `public/app.css` global rules, CSS variables, or root layout | Full passthrough — global CSS regresses everywhere |
-| Nav bar / header | Home, Logging, Stats, Insights (nav is shared across all four) |
+| Nav bar / header | Home, Logging, Stats, Insights, Library (nav is shared across all five) |
+| Gamesense Library or warm-up drill info | Library, Stats contextual links, Insights contextual link, daily warm-up modal, both viewports |
 | Profile avatar, border, or theme code | profile-switcher, profile-dropdown, edit-profile-theme modal, both viewports |
 | Match Record schema / manual mode fields | Logging page, Stats page (any card reading match stats) |
 | Screenshot import flow | import-history modal, both viewports, both states |

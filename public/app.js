@@ -80,12 +80,6 @@ function logCountLabel(count = 0) {
   return `${safeCount} log${safeCount === 1 ? "" : "s"}`;
 }
 
-function formatPct(value, digits = 0) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return "--";
-  return `${n.toFixed(digits)}%`;
-}
-
 function parseLocalDate(value) {
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const [year, month, day] = value.split("-").map(Number);
@@ -659,6 +653,7 @@ function bindDailyWarmupEvents() {
   if (window.__rankedCoachDailyWarmupBound) return;
   window.__rankedCoachDailyWarmupBound = true;
   document.addEventListener("click", event => {
+    if (event.target?.closest?.("[data-warmup-info]")) return;
     const drill = event.target?.closest?.("[data-warmup-drill]");
     if (drill) {
       const selected = [...document.querySelectorAll("[data-warmup-drill].is-selected")];
@@ -1303,7 +1298,8 @@ function getMobileNavPageLabel(page = "") {
     home: "Home",
     logging: "Logging",
     stats: "Stats",
-    insights: "Insights"
+    insights: "Insights",
+    library: "Library"
   };
   return labels[page] || page;
 }
@@ -1339,7 +1335,7 @@ function ensureMobileBottomShell() {
   mobileBottomShell.setAttribute("aria-label", "Mobile app navigation");
   mobileBottomShell.innerHTML = `
     <div class="mobile-bottom-pages" aria-label="Pages">
-      ${["home", "logging", "stats", "insights"].map((page) => `
+      ${["home", "logging", "stats", "insights", "library"].map((page) => `
         <button type="button" class="mobile-bottom-page-btn" data-mobile-page="${page}" aria-label="${getMobileNavPageLabel(page)} page">
           ${getMobileNavPageLabel(page)}
         </button>
@@ -1707,22 +1703,6 @@ function ensureMobileAskCoachButton() {
   return mobileAskCoachButton;
 }
 
-function syncMobileAskCoachButtonState() {
-  const isMobile = isMobileLayoutViewport();
-  const button = ensureMobileAskCoachButton();
-  if (!button) return;
-
-  button.hidden = !isMobile;
-  if (!isMobile) return;
-
-  const source = document.getElementById("askCoachOpen");
-  if (source?.innerHTML && source.innerHTML !== button.innerHTML) {
-    button.innerHTML = source.innerHTML;
-  }
-  button.setAttribute("aria-expanded", source?.getAttribute("aria-expanded") || "false");
-  button.title = source?.title || "Ask Coach";
-}
-
 function ensureMobileBugReportButton() {
   if (mobileBugReportButton || !document.body) return mobileBugReportButton;
 
@@ -1740,21 +1720,6 @@ function ensureMobileBugReportButton() {
   });
   document.body.appendChild(mobileBugReportButton);
   return mobileBugReportButton;
-}
-
-function syncMobileBugReportButtonState() {
-  const isMobile = isMobileLayoutViewport();
-  const button = ensureMobileBugReportButton();
-  if (!button) return;
-
-  button.hidden = !isMobile;
-  if (!isMobile) return;
-
-  const source = document.getElementById("bugReportOpen");
-  if (source?.innerHTML && source.innerHTML !== button.innerHTML) {
-    button.innerHTML = source.innerHTML;
-  }
-  button.title = source?.title || "Report a bug";
 }
 
 function getMobileSyncFallbackIcon() {
@@ -1785,22 +1750,6 @@ function ensureMobileHeaderSyncButton() {
   });
   document.body.appendChild(mobileHeaderSyncButton);
   return mobileHeaderSyncButton;
-}
-
-function syncMobileHeaderSyncButtonState() {
-  const isMobile = isMobileLayoutViewport();
-  const button = ensureMobileHeaderSyncButton();
-  if (!button) return;
-
-  button.hidden = !isMobile;
-  if (!isMobile) return;
-
-  const source = document.getElementById("profileSyncBtn");
-  const icon = source?.querySelector(".profile-sync-face-icon")?.innerHTML;
-  if (icon && button.innerHTML !== icon) button.innerHTML = icon;
-  button.classList.toggle("syncing", source?.classList.contains("syncing"));
-  button.classList.toggle("counting", source?.classList.contains("counting"));
-  button.title = source?.title || "Sync profile";
 }
 
 function ensureMobileLoggingTabs() {
@@ -2175,7 +2124,7 @@ function ensureMobileInsightTrendCarousel() {
 const MOBILE_SWIPE_MIN_DISTANCE = 42;
 const MOBILE_SWIPE_MAX_VERTICAL_RATIO = 1.35;
 const MOBILE_LOCAL_SWIPE_MAX_DURATION = 320;
-const MOBILE_PAGE_SWIPE_ORDER = ["home", "logging", "stats", "insights"];
+const MOBILE_PAGE_SWIPE_ORDER = ["home", "logging", "stats", "insights", "library"];
 const MOBILE_PAGE_SWIPE_MIN_DISTANCE = 68;
 const MOBILE_PAGE_SWIPE_MIN_DURATION = 180;
 const MOBILE_PAGE_SWIPE_MAX_VERTICAL_RATIO = 1.1;
@@ -8444,32 +8393,6 @@ function normalizeAskCoachBulletText(text = "") {
     .trim();
 }
 
-function formatAskCoachCoachTextLegacy(text = "") {
-  const raw = String(text || "").trim().replace(/\r\n/g, "\n");
-  if (!raw) return "";
-
-  const normalizedListText = raw
-    .replace(/\s+[â€¢]\s+/g, "\n- ")
-    .replace(/\s+-\s+(?=[A-Z0-9])/g, "\n- ")
-    .replace(/\s+(\d+[\).])\s+(?=[A-Z0-9])/g, "\n$1 ");
-  const listLines = normalizedListText
-    .split("\n")
-    .map(line => line.trim())
-    .filter(Boolean);
-  const existingListCount = listLines.filter(line => /^(-|\d+[\).])\s+/.test(line)).length;
-  if (existingListCount >= 2) return listLines.join("\n");
-  if (normalizedListText.length < 260) return normalizedListText;
-
-  const sentences = splitAskCoachSentences(normalizedListText);
-  if (sentences.length < 3) return normalizedListText;
-
-  const read = sentences[0];
-  const bullets = sentences
-    .slice(1, 6)
-    .map(sentence => `- ${sentence.replace(/^[-â€¢]\s*/, "")}`);
-  return `${read}\n\n${bullets.join("\n")}`;
-}
-
 function formatAskCoachCoachText(text = "") {
   const raw = String(text || "").trim().replace(/\r\n/g, "\n");
   if (!raw) return "";
@@ -9062,14 +8985,6 @@ function renderStatsSummaryMeta() {
   return renderStatsSummaryMetaModel();
 }
 
-function renderStatsPerformanceCoach() {
-  return renderStatsPerformanceModel();
-}
-
-function renderStatsBreakdownCoach() {
-  return renderStatsBreakdownModel();
-}
-
 function clampMetric(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
@@ -9590,13 +9505,6 @@ function getStatsWeaponMeta(value = "") {
   return null;
 }
 
-function getStatsWeaponFamilyMeta(value = "") {
-  const key = normalizeStatsWeaponKey(value);
-  if (!key) return null;
-  if (key === "sidearm") return STATS_WEAPON_FAMILIES.find(family => family.key === "pistol") || null;
-  return STATS_WEAPON_FAMILIES.find(family => family.key === key || family.typeKey === key) || getStatsWeaponMeta(value)?.family || null;
-}
-
 function getStatsWeaponAssetPath(value = "") {
   const meta = getStatsWeaponMeta(value);
   return meta ? `assets/weapons/${meta.key}.png` : "";
@@ -10082,135 +9990,6 @@ function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "a
       ];
 }
 
-function buildAgentDetailTabs(agentName, analytics) {
-  const agent = (analytics?.agents || []).find(item => String(item.agent || "").toLowerCase() === String(agentName || "").toLowerCase());
-  const roleName = agentRoles?.[agentName] || "--";
-  const agentMaps = getAgentMapInsights(agentName, analytics);
-  const bestMap = agentMaps[0];
-  const worstMap = agentMaps[agentMaps.length - 1];
-  const attackRounds = getEntityRounds({ agentName, side: "attack" });
-  const defenseRounds = getEntityRounds({ agentName, side: "defense" });
-  const allRounds = [...attackRounds, ...defenseRounds];
-  const attackMetrics = getSideMetricsFromMaps(agentMaps, "attack");
-  const defenseMetrics = getSideMetricsFromMaps(agentMaps, "defense");
-  const weaponRates = getWeaponRoundRates(allRounds);
-  const bestGun = weaponRates[0] || null;
-  const worstGun = weaponRates[weaponRates.length - 1] || null;
-  const overallKast = safeDivide(
-    (safeNumber(attackMetrics.kast) * safeNumber(attackMetrics.roundsPlayed)) + (safeNumber(defenseMetrics.kast) * safeNumber(defenseMetrics.roundsPlayed)),
-    safeNumber(attackMetrics.roundsPlayed) + safeNumber(defenseMetrics.roundsPlayed)
-  );
-  const bestRoundConversion = bestMap ? safeDivide(safeNumber(bestMap.roundsWon), safeNumber(bestMap.roundsPlayed)) * 100 : 0;
-  const lossRoundConversion = worstMap ? safeDivide(safeNumber(worstMap.roundsWon), safeNumber(worstMap.roundsPlayed)) * 100 : 0;
-
-  return [
-    {
-      key: "general",
-      label: "General",
-      items: [
-        statItem("Role", roleName, "Agent role mapping from the current roster table."),
-        statItem("K/D", agent ? Number(agent.kd || 0).toFixed(2) : "--", `kills / deaths = ${safeNumber(agent?.kills)} / ${Math.max(1, safeNumber(agent?.deaths))}`),
-        statItem("Overall KAST", formatPercent(overallKast), "weighted side KAST = ((ATK KAST x ATK rounds) + (DEF KAST x DEF rounds)) / total rounds"),
-        statItem("Average ADR", agent ? `${Math.round(agent.adr || 0)}` : "--", `damagePerRound from imported agent segment = ${safeNumber(agent?.adr).toFixed(1)}`),
-        statItem("Econ Rating", agent ? `${Math.round(agent.econ || 0)}` : "--", `econRating from imported agent segment = ${Math.round(safeNumber(agent?.econ))}`),
-        ["Best Map Win Rate", bestMap ? `${bestMap.map} | ${formatPercent(safeNumber(bestMap.matchesWon) / Math.max(1, safeNumber(bestMap.matchesPlayed)) * 100)}` : "--"],
-        ["Worst Map Win Rate", worstMap ? `${worstMap.map} | ${formatPercent(safeNumber(worstMap.matchesWon) / Math.max(1, safeNumber(worstMap.matchesPlayed)) * 100)}` : "--"],
-        ["Best Gun Kill Conversion", bestGun === "--" ? "--" : `${bestGun} | ${formatPercent(clampMetric(bestRoundConversion + 6, 24, 88))}`],
-        ["Worst Gun Kill Conversion", worstGun === "--" ? "--" : `${worstGun} | ${formatPercent(clampMetric(lossRoundConversion - 4, 10, 70))}`],
-        ["Best Round Win Conversion", formatPercent(bestRoundConversion)],
-        ["Loss Round Recovery", formatPercent(lossRoundConversion)]
-      ]
-    },
-    {
-      key: "attack",
-      label: "Attack",
-      items: [
-        ["Attack Win Rate", formatPercent(attackMetrics.winPct)],
-        ["Attack KAST", formatPercent(attackMetrics.kast)],
-        ["Attack ADR", attackMetrics.damagePerRound ? `${Math.round(attackMetrics.damagePerRound)}` : "--"],
-        ["Attack Kills", attackMetrics.kills ? `${Math.round(attackMetrics.kills)}` : "--"],
-        ...buildRoleSideMetrics(roleName, attackMetrics, attackRounds, "attack")
-      ]
-    },
-    {
-      key: "defense",
-      label: "Defense",
-      items: [
-        ["Defense Win Rate", formatPercent(defenseMetrics.winPct)],
-        ["Defense KAST", formatPercent(defenseMetrics.kast)],
-        ["Defense ADR", defenseMetrics.damagePerRound ? `${Math.round(defenseMetrics.damagePerRound)}` : "--"],
-        ["Defense Kills", defenseMetrics.kills ? `${Math.round(defenseMetrics.kills)}` : "--"],
-        ...buildRoleSideMetrics(roleName, defenseMetrics, defenseRounds, "defense")
-      ]
-    }
-  ];
-}
-
-function buildRoleDetailTabs(roleName, analytics) {
-  const role = (analytics?.roles || []).find(item => String(item.role || "").toLowerCase() === String(roleName || "").toLowerCase());
-  const roleMaps = (analytics?.maps || []).filter(item => String(agentRoles?.[item.agent] || "").toLowerCase() === String(roleName || "").toLowerCase());
-  const sortedMaps = roleMaps.slice().sort((a, b) => {
-    const wrA = safeNumber(a.matchesWon) / Math.max(1, safeNumber(a.matchesPlayed));
-    const wrB = safeNumber(b.matchesWon) / Math.max(1, safeNumber(b.matchesPlayed));
-    return wrB - wrA;
-  });
-  const bestMap = sortedMaps[0];
-  const worstMap = sortedMaps[sortedMaps.length - 1];
-  const attackRounds = getEntityRounds({ roleName, side: "attack" });
-  const defenseRounds = getEntityRounds({ roleName, side: "defense" });
-  const filteredMaps = (analytics?.maps || []).filter(item => String(agentRoles?.[item.agent] || "").toLowerCase() === String(roleName || "").toLowerCase());
-  const roleAttackMetrics = {
-    winPct: averageValue(filteredMaps.map(item => item.attackWinPct)),
-    kast: safeNumber(analytics?.overview?.attackKAST),
-    damagePerRound: averageValue(filteredMaps.map(item => item.adr)),
-    kills: averageValue(filteredMaps.map(item => item.attackKills))
-  };
-  const roleDefenseMetrics = {
-    winPct: averageValue(filteredMaps.map(item => item.defenseWinPct)),
-    kast: safeNumber(analytics?.overview?.defenseKAST),
-    damagePerRound: averageValue(filteredMaps.map(item => item.adr)),
-    kills: averageValue(filteredMaps.map(item => item.defenseKills))
-  };
-
-  return [
-    {
-      key: "general",
-      label: "General",
-      items: [
-        ["Role", roleName],
-        ["Role Win Rate", role ? formatPercent(safeNumber(role.matchesWon) / Math.max(1, safeNumber(role.matchesPlayed)) * 100) : "--"],
-        ["K/D", role ? Number(role.kd || 0).toFixed(2) : "--"],
-        ["Average ADR", role ? `${Math.round(role.adr || 0)}` : "--"],
-        ["Headshot %", role ? formatPercent(role.hs) : "--"],
-        ["Best Map", bestMap ? `${bestMap.map} | ${formatPercent(safeNumber(bestMap.matchesWon) / Math.max(1, safeNumber(bestMap.matchesPlayed)) * 100)}` : "--"],
-        ["Worst Map", worstMap ? `${worstMap.map} | ${formatPercent(safeNumber(worstMap.matchesWon) / Math.max(1, safeNumber(worstMap.matchesPlayed)) * 100)}` : "--"]
-      ]
-    },
-    {
-      key: "attack",
-      label: "Attack",
-      items: [
-        ["Attack Win Rate", formatPercent(roleAttackMetrics.winPct)],
-        ["Attack KAST", formatPercent(roleAttackMetrics.kast)],
-        ["Attack ADR", roleAttackMetrics.damagePerRound ? `${Math.round(roleAttackMetrics.damagePerRound)}` : "--"],
-        ["Attack Kills", roleAttackMetrics.kills ? `${Math.round(roleAttackMetrics.kills)}` : "--"],
-        ...buildRoleSideMetrics(roleName, roleAttackMetrics, attackRounds, "attack")
-      ]
-    },
-    {
-      key: "defense",
-      label: "Defense",
-      items: [
-        ["Defense Win Rate", formatPercent(roleDefenseMetrics.winPct)],
-        ["Defense KAST", formatPercent(roleDefenseMetrics.kast)],
-        ["Defense ADR", roleDefenseMetrics.damagePerRound ? `${Math.round(roleDefenseMetrics.damagePerRound)}` : "--"],
-        ["Defense Kills", roleDefenseMetrics.kills ? `${Math.round(roleDefenseMetrics.kills)}` : "--"],
-        ...buildRoleSideMetrics(roleName, roleDefenseMetrics, defenseRounds, "defense")
-      ]
-    }
-  ];
-}
-
 function buildCalculatedAgentDetailTabs(agentName, analytics) {
   const agent = (analytics?.agents || []).find(item => String(item.agent || "").toLowerCase() === String(agentName || "").toLowerCase());
   const roleName = agentRoles?.[agentName] || "--";
@@ -10513,15 +10292,6 @@ function getTrendSignalMediaLabel(item = {}) {
   if (kicker) return kicker;
 
   return "Insight";
-}
-
-function getTrendSignalBadgeSymbol(item = {}) {
-  if (item?.symbol) return String(item.symbol);
-  const tone = normalizeSignalTone(item?.tone);
-  if (tone === "up") return "Strength";
-  if (tone === "warn") return "Watch";
-  if (tone === "down") return "Needs Work";
-  return "Neutral";
 }
 
 function getTrendSignalSvgIcon(kind = "general", tone = "neutral") {
@@ -10907,37 +10677,13 @@ function calculateFocusProgress() {
 // MAP INSIGHT â†’ FOCUS
 // ========================
 
-function mapInsightToFocus(ins) {
-  if (!ins) return null;
-
-  const title = ins.title.toLowerCase();
-
-  if (title.includes("tilt")) return "mental";
-  if (title.includes("loss")) return "Consistency";
-  if (title.includes("streak")) return "Momentum Control";
-  if (title.includes("kd") || title.includes("duel")) return "Aim";
-  if (title.includes("agent")) return "Agent Mastery";
-  if (title.includes("role")) return "Role Discipline";
-  if (title.includes("map")) return "Map Awareness";
-
-  return "Game Sense";
-}
-
 // ========================
 // SMART EXPLANATION ENGINE
 // ========================
 
-function enhanceInsight(ins, ctx) {
-  return ins;
-}
-
 // ========================
 // INSIGHT CONTEXT ENGINE
 // ========================
-
-function buildInsightContext() {
-  return {};
-}
 
 // ========================
 // AUTO NEXT FOCUS ENGINE
@@ -11007,11 +10753,6 @@ function setLockedWeeklyFocus(focus) {
 
   localStorage.setItem(WEEKLY_FOCUS_KEY, focus);
   localStorage.setItem(WEEKLY_FOCUS_WEEK_KEY, getCurrentWeekKey());
-}
-
-function clearLockedWeeklyFocus() {
-  localStorage.removeItem(WEEKLY_FOCUS_KEY);
-  localStorage.removeItem(WEEKLY_FOCUS_WEEK_KEY);
 }
 
 // ========================
@@ -11666,7 +11407,7 @@ function getWeeklySessions() {
     const createdAt = new Date(entry.createdAt || nowISO());
     if (createdAt < start || createdAt > end) return;
 
-    const key = createdAt.toISOString().slice(0, 10);
+    const key = formatLocalDateKey(createdAt);
     if (!grouped.has(key)) {
       grouped.set(key, []);
     }
@@ -11874,17 +11615,6 @@ async function toggleManualEntryModeFromUI() {
   updateLoggingDebriefPreview?.();
   syncAccountSupportUI?.();
   return true;
-}
-
-function formatLastSyncedLabel(value = "") {
-  const date = value ? new Date(value) : null;
-  if (!date || Number.isNaN(date.getTime())) return "Last synced: Not yet";
-  return `Last synced: ${date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
-  })}`;
 }
 
 function syncAccountSupportUI(profile = getActiveProfile()) {
@@ -13213,20 +12943,6 @@ function getUserAccountName(user = currentAuthUser) {
   return sanitizeAccountName(raw, "User");
 }
 
-function clearGuestDemoStateForLive() {
-  if (isLocalDevelopmentHost()) return;
-  const active = getActiveProfile?.();
-  if (active) active.matches = [];
-  matches = [];
-  logEntries = [];
-  saveProfiles?.();
-  saveLogEntries?.({ skipBackend: true });
-  recomputeFromMatches?.();
-  updateDisplays?.();
-  renderChart?.(currentSize);
-  renderLogFeed?.({ force: true });
-}
-
 function createGuestProfileRecord() {
   return normalizeProfileRecord({
     id: uuid(),
@@ -14373,10 +14089,6 @@ function sumRRForSession(matchList = matches, dateKey = getActiveSessionDateKey(
   return sumRRForMatchEntries(getSessionMatchEntries(dateKey, matchList));
 }
 
-function getCurrentSessionMatches() {
-  return getSessionMatchEntries().map(entry => entry.match);
-}
-
 // ========================
 // CHART STATE
 // ========================
@@ -14564,14 +14276,6 @@ function ensureChartTooltipLayer(){
 function chartScopeAllowsTooltip(size = currentSize) {
   const numericSize = Number(size);
   return Number.isFinite(numericSize) && numericSize <= 50;
-}
-
-function chartUsesCurrentSessionScope(size = currentSize) {
-  return false;
-}
-
-function chartUsesRecentAccountWindow(size = currentSize) {
-  return false;
 }
 
 function normalizeChartWindowSize(size = currentSize) {
@@ -16061,17 +15765,6 @@ const improvementStatsPool = [
 // RIOT API CONFIG
 // ========================
 
-function normalizeRiotRegion(input = ""){
-  const raw = String(input || "").trim().toLowerCase();
-
-  if(["na", "latam", "br", "americas", "us"].includes(raw)) return "americas";
-  if(["eu", "euw", "eune", "tr", "ru", "europe"].includes(raw)) return "europe";
-  if(["ap", "kr", "jp", "oce", "asia"].includes(raw)) return "asia";
-
-  return "americas";
-}
-
-
 // ========================
 // RIOT: ACCOUNT â†’ MATCH FLOW
 // ========================
@@ -16451,14 +16144,6 @@ function cancelChartFrame() {
   }
 }
 
-function resetChartFlags() {
-  chartAnimating = false;
-  chartBusy = false;
-  isUndoAnimating = false;
-  undoDirection = false;
-  skipNextChartAnimation = false;
-}
-
 function buildCumulativeRR(matchList) {
   const cumulative = [];
   let total = 0;
@@ -16521,16 +16206,6 @@ function findImpactSnapshotForMatch(match, matchIndex, impactSnapshots = []) {
   }
 
   return null;
-}
-
-function getChartSlice(cumulative, size, matchCount) {
-  const maxWindow = size === "all"
-    ? matchCount
-    : Math.min(matchCount, Number(size) || 5);
-
-  const slice = cumulative.slice(-maxWindow);
-  slice.unshift(0);
-  return slice;
 }
 
 function getChartSliceWithEntries(cumulative, entries, size) {
@@ -17126,20 +16801,6 @@ function normalizeTierLabel(label){
 // SCORE / RR HELPERS
 // ========================
 
-function countResults(matchList) {
-  let wins = 0;
-  let losses = 0;
-  let draws = 0;
-
-  matchList.forEach(match => {
-    if (match.result === "win") wins++;
-    else if (match.result === "loss") losses++;
-    else draws++;
-  });
-
-  return { wins, losses, draws };
-}
-
 // ========================
 // GET TIER RANK HELPER
 // ========================
@@ -17417,17 +17078,6 @@ function bindLoadoutValueTextFitObservers() {
   }
 
   scheduleLoadoutValueTextFit();
-}
-
-function chartY(v, minVal, maxVal) {
-  const span = maxVal - minVal || 1;
-  const ratio = (v - minVal) / span;
-  return PAD_BOTTOM - ratio * (PAD_BOTTOM - PAD_TOP);
-}
-
-function computeAnchors(cumulative) {
-  if (cumulative.length === 1) return [0, cumulative[0]];
-  return cumulative.slice();
 }
 
 function triggerStatGlow(el){
@@ -17950,244 +17600,6 @@ function clearAgentFxRuntime() {
     delete frame.dataset.agent;
   }
   frame?.classList.remove("agent-selected");
-}
-
-function mountFadeCustomFx() {
-  const behindHost = agentFxBehind;
-  const frontHost = agentFxFront;
-  if (!behindHost || !frontHost) return;
-
-  let disposed = false;
-  let spawnTimer = null;
-  const bootTimers = [];
-  const tendrilLoops = [];
-
-  const clearNodes = () => {
-    behindHost.querySelectorAll(".fx-fade-runtime-mote").forEach((node) => node.remove());
-    frontHost.querySelectorAll(".fx-fade-runtime-mote").forEach((node) => node.remove());
-    behindHost.querySelectorAll(".fx-fade-flame-svg").forEach((node) => node.remove());
-    frontHost.querySelectorAll(".fx-fade-flame-svg").forEach((node) => node.remove());
-  };
-
-  const mountFlames = () => {
-    const hostSets = [
-      { host: behindHost, count: 7, alpha: 0.94, blur: 4 }
-    ];
-
-    hostSets.forEach(({ host, count, alpha, blur }) => {
-      const svgNS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("viewBox", "0 0 100 100");
-      svg.setAttribute("preserveAspectRatio", "none");
-      svg.classList.add("fx-fade-flame-svg");
-      Object.assign(svg.style, {
-        position: "absolute",
-        inset: "0",
-        width: "100%",
-        height: "100%",
-        overflow: "visible",
-        pointerEvents: "none",
-        zIndex: "2",
-        filter: `blur(${blur}px) drop-shadow(0 0 14px rgba(127,29,29,0.42))`
-      });
-      host.appendChild(svg);
-
-      for (let i = 0; i < count; i += 1) {
-        const body = document.createElementNS(svgNS, "path");
-        const glow = document.createElementNS(svgNS, "path");
-        const anchorX = 8 + Math.random() * 84;
-        const baseY = 76 + Math.random() * 22;
-        const height = 22 + Math.random() * 34;
-        const lean = (Math.random() * 26) - 13;
-        const width = 8 + Math.random() * 10;
-        const phase = Math.random() * Math.PI * 2;
-        const speed = 0.001 + Math.random() * 0.0005;
-
-        [body, glow].forEach((path) => {
-          path.setAttribute("fill", "none");
-          path.setAttribute("stroke-linecap", "round");
-          path.setAttribute("stroke-linejoin", "round");
-        });
-
-        body.setAttribute("stroke", `rgba(8,8,10,${alpha})`);
-        body.setAttribute("stroke-width", `${width}`);
-        glow.setAttribute("stroke", `rgba(127,29,29,${alpha * 0.58})`);
-        glow.setAttribute("stroke-width", `${Math.max(3, width * 0.4)}`);
-
-        svg.appendChild(body);
-        svg.appendChild(glow);
-
-        const tick = () => {
-          if (disposed) return;
-          const t = performance.now() * speed + phase;
-          const kink1x = anchorX + (lean * 0.36) + Math.sin(t * 1.4) * 3;
-          const kink1y = baseY - (height * 0.32);
-          const kink2x = anchorX - (lean * 0.18) + Math.cos(t * 1.8) * 4;
-          const kink2y = baseY - (height * 0.64);
-          const tipX = anchorX + lean + Math.sin(t * 2.1) * 5;
-          const tipY = baseY - height;
-          const d = `M ${anchorX} ${baseY} L ${kink1x} ${kink1y} L ${kink2x} ${kink2y} L ${tipX} ${tipY}`;
-          body.setAttribute("d", d);
-          glow.setAttribute("d", d);
-          body.style.opacity = `${alpha * (0.84 + Math.sin(t * 1.6) * 0.08)}`;
-          glow.style.opacity = `${alpha * 0.58}`;
-        };
-
-        tick();
-        const loop = window.setInterval(tick, 33);
-        tendrilLoops.push(loop);
-      }
-    });
-  };
-
-  const spawnMote = () => {
-    if (disposed) return;
-
-    const host = Math.random() > 0.35 ? behindHost : frontHost;
-    const mote = document.createElement("div");
-    mote.className = "fx-fade-runtime-mote";
-
-    const x = 10 + Math.random() * 80;
-    const y = 18 + Math.random() * 60;
-    const size = 4 + Math.random() * 14;
-    const driftX = (Math.random() * 90) - 45;
-    const driftY = -20 - (Math.random() * 54);
-    const rotate = (Math.random() * 120) - 60;
-    const duration = 2200 + Math.random() * 1800;
-
-    Object.assign(mote.style, {
-      position: "absolute",
-      left: `${x}%`,
-      top: `${y}%`,
-      width: `${size}px`,
-      height: `${Math.max(3, size * 0.62)}px`,
-      opacity: "0",
-      pointerEvents: "none",
-      zIndex: host === frontHost ? "6" : "2",
-      borderRadius: "999px",
-      background: Math.random() > 0.55
-        ? "radial-gradient(circle, rgba(255,86,86,0.95) 0%, rgba(154,52,18,0.55) 44%, rgba(0,0,0,0) 76%)"
-        : "radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(239,68,68,0.45) 42%, rgba(0,0,0,0) 76%)",
-      filter: "blur(0.4px) drop-shadow(0 0 8px rgba(239,68,68,0.42))",
-      transform: `translate(-50%, -50%) rotate(${rotate}deg)`
-    });
-
-    host.appendChild(mote);
-
-    mote.animate(
-      [
-        { opacity: 0, transform: `translate(-50%, -50%) translate(0px, 0px) rotate(${rotate}deg) scale(0.6)` },
-        { opacity: 0.96, transform: `translate(-50%, -50%) translate(${driftX * 0.25}px, ${driftY * 0.18}px) rotate(${rotate + 22}deg) scale(1)` },
-        { opacity: 0.42, transform: `translate(-50%, -50%) translate(${driftX * 0.7}px, ${driftY * 0.72}px) rotate(${rotate + 54}deg) scale(0.92)` },
-        { opacity: 0, transform: `translate(-50%, -50%) translate(${driftX}px, ${driftY}px) rotate(${rotate + 92}deg) scale(0.8)` }
-      ],
-      {
-        duration,
-        easing: "cubic-bezier(.22,.7,.22,1)",
-        fill: "forwards"
-      }
-    );
-
-    window.setTimeout(() => mote.remove(), duration + 60);
-  };
-
-  spawnTimer = window.setInterval(() => {
-    const burstCount = 1 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < burstCount; i += 1) {
-      spawnMote();
-    }
-  }, 240);
-
-  for (let i = 0; i < 8; i += 1) {
-    bootTimers.push(window.setTimeout(spawnMote, i * 120));
-  }
-
-  mountFlames();
-
-  agentCustomFxCleanup = () => {
-    disposed = true;
-    if (spawnTimer) window.clearInterval(spawnTimer);
-    tendrilLoops.forEach((loop) => window.clearInterval(loop));
-    bootTimers.forEach((timer) => window.clearTimeout(timer));
-    clearNodes();
-  };
-}
-
-function mountNeonCustomFx() {
-  const behindHost = agentFxBehind;
-  const frontHost = agentFxFront;
-  if (!behindHost || !frontHost) return;
-
-  let disposed = false;
-  const loops = [];
-
-  const clearNodes = () => {
-    behindHost.querySelectorAll(".fx-neon-runtime-spark").forEach((node) => node.remove());
-    frontHost.querySelectorAll(".fx-neon-runtime-spark").forEach((node) => node.remove());
-  };
-
-  const spawnSpark = () => {
-    if (disposed) return;
-    const host = Math.random() > 0.58 ? frontHost : behindHost;
-    const spark = document.createElement("div");
-    spark.className = "fx-neon-runtime-spark";
-
-    const onLeft = Math.random() > 0.5;
-    const x = onLeft ? (6 + Math.random() * 26) : (68 + Math.random() * 26);
-    const y = 14 + Math.random() * 66;
-    const width = 10 + Math.random() * 18;
-    const height = 2 + Math.random() * 2.2;
-    const dx = onLeft ? (10 + Math.random() * 22) : (-10 - Math.random() * 22);
-    const dy = (Math.random() * 6) - 3;
-    const duration = 180 + Math.random() * 120;
-    const rotA = (Math.random() * 16) - 8;
-    const rotB = rotA + ((Math.random() * 12) - 6);
-    const palette = Math.random() > 0.5
-      ? "linear-gradient(90deg, rgba(234,179,8,0), rgba(234,179,8,0.92) 26%, rgba(255,255,255,0.96) 46%, rgba(59,130,246,0.9) 70%, rgba(59,130,246,0))"
-      : "linear-gradient(90deg, rgba(59,130,246,0), rgba(96,165,250,0.94) 24%, rgba(255,255,255,0.96) 48%, rgba(250,204,21,0.92) 74%, rgba(250,204,21,0))";
-
-    Object.assign(spark.style, {
-      position: "absolute",
-      left: `${x}%`,
-      top: `${y}%`,
-      width: `${width}px`,
-      height: `${height}px`,
-      opacity: "0",
-      pointerEvents: "none",
-      borderRadius: "999px",
-      background: palette,
-      filter: "blur(0.15px) drop-shadow(0 0 8px rgba(59,130,246,0.52)) drop-shadow(0 0 8px rgba(234,179,8,0.34))",
-      transform: "translate(-50%, -50%)"
-    });
-
-    host.appendChild(spark);
-    spark.animate(
-      [
-        { opacity: 0, transform: "translate(-50%, -50%) translate(0px,0px) rotate(0deg) scaleX(0.5) scaleY(0.8)" },
-        { opacity: 1, transform: `translate(-50%, -50%) translate(${dx * 0.36}px, ${dy * 0.35}px) rotate(${rotA}deg) scaleX(1) scaleY(1)` },
-        { opacity: 0, transform: `translate(-50%, -50%) translate(${dx}px, ${dy}px) rotate(${rotB}deg) scaleX(0.72) scaleY(0.82)` }
-      ],
-      { duration, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" }
-    );
-
-    window.setTimeout(() => spark.remove(), duration + 40);
-  };
-
-  loops.push(window.setInterval(() => {
-    spawnSpark();
-    spawnSpark();
-    if (Math.random() > 0.65) spawnSpark();
-  }, 120));
-
-  for (let i = 0; i < 14; i += 1) {
-    window.setTimeout(spawnSpark, i * 45);
-  }
-
-  agentCustomFxCleanup = () => {
-    disposed = true;
-    loops.forEach((loop) => window.clearInterval(loop));
-    clearNodes();
-  };
 }
 
 function applyAgentFx(agentNameStr) {
@@ -19037,19 +18449,6 @@ function bindInsightTrendRows(){
 // ========================
 // MODAL / INSIGHT HELPERS
 // ========================
-
-function createLensStatRow(label, value){
-
-  const row = document.createElement("div");
-  row.className = "lens-stat-row";
-
-  row.innerHTML = `
-    <span class="lens-stat-label">${label}</span>
-    <span class="lens-stat-value">${value}</span>
-  `;
-
-  return row;
-}
 
 function getMatchPanelStats(match = null) {
   const core = getMatchCore(match || {});
@@ -33150,10 +32549,6 @@ function getThemeBuilderGroupsForParent(parentId) {
   return THEME_BUILDER_GROUP_CONFIGS.filter(group => group.parentId === parentId);
 }
 
-function getThemeBuilderGroupById(parentId, groupId) {
-  return THEME_BUILDER_GROUP_CONFIGS.find(group => group.parentId === parentId && group.id === groupId) || null;
-}
-
 function isThemeBuilderAgentFrameGroup(groupOrParentId, groupId = "") {
   if (groupOrParentId && typeof groupOrParentId === "object") {
     return groupOrParentId.parentId === "loadout-card" && groupOrParentId.id === "agent-frame";
@@ -33458,73 +32853,6 @@ function collectThemeBuilderParentHoverSnapshot(themeKey, config, themeState = {
     renderer,
     generatedCssRule
   };
-}
-
-function collectThemeBuilderElementSnapshots(themeKey, config, themeState = {}, viewportModel = getThemeBuilderViewportModel()) {
-  const elementStates = themeState.elements?.[config.id] || {};
-  return discoverThemeBuilderElementTargets(config).map((target) => {
-    const saved = elementStates[target.id] || {};
-    const defaults = getThemeBuilderElementDefaults(target);
-    const defaultValues = THEME_BUILDER_ELEMENT_FIELDS.reduce((acc, field) => {
-      acc[field] = field === "auraEnabled"
-        ? Boolean(defaults[field])
-        : String(defaults[field] ?? "").trim();
-      return acc;
-    }, {});
-    const savedValues = THEME_BUILDER_ELEMENT_FIELDS.reduce((acc, field) => {
-      if (field === "auraEnabled") {
-        acc[field] = Boolean(saved[field]);
-      } else {
-        acc[field] = Object.prototype.hasOwnProperty.call(saved, field) ? String(saved[field] ?? "").trim() : "";
-      }
-      return acc;
-    }, {});
-    const cssValues = buildThemeBuilderElementCssValues(savedValues);
-    const element = document.querySelector(target.selector);
-    const computed = element ? getComputedStyle(element) : null;
-    const rect = element?.getBoundingClientRect?.() || null;
-    const viewportRect = rectToThemeBuilderSnapshotRect(rect);
-
-    return {
-      id: target.id,
-      label: target.label,
-      selector: target.selector,
-      tagName: target.tagName,
-      depth: target.depth,
-      sourceName: target.sourceName,
-      role: target.role,
-      groupId: target.groupId,
-      groupLabel: target.groupLabel,
-      groupSelector: target.groupSelector,
-      groupRole: target.groupRole,
-      isGroupRoot: Boolean(target.isGroupRoot),
-      order: target.order,
-      defaultValues,
-      savedValues,
-      cssValues,
-      generatedCssRule: buildThemeBuilderElementSnapshotCss(themeKey, target, cssValues),
-      rect: viewportRect,
-      viewportRect,
-      designRect: getThemeBuilderDesignRect(element, viewportModel),
-      computedValues: computed
-        ? {
-            background: computed.backgroundColor,
-            color: computed.color,
-            fill: computed.fill,
-            stroke: computed.stroke,
-            borderColor: computed.borderColor,
-            fontFamily: computed.fontFamily,
-            fontSize: computed.fontSize,
-            translate: computed.getPropertyValue("translate").trim(),
-            scale: computed.getPropertyValue("scale").trim(),
-            width: computed.width,
-            height: computed.height,
-            opacity: computed.opacity,
-            position: computed.position
-          }
-        : {}
-    };
-  });
 }
 
 function collectThemeBuilderGroupSnapshots(themeKey, config, themeState = {}, viewportModel = getThemeBuilderViewportModel()) {
@@ -34735,10 +34063,6 @@ function getThemeBuilderSelectorMatches(selectorList = "") {
   return matches;
 }
 
-function getThemeBuilderSelectorCount(selectorList = "") {
-  return getThemeBuilderSelectorMatches(selectorList).length;
-}
-
 function escapeCssIdent(value = "") {
   const raw = String(value || "");
   if (window.CSS?.escape) return CSS.escape(raw);
@@ -35111,28 +34435,6 @@ function isThemeBuilderVisibleObjectGroup(group) {
 
 function getThemeBuilderVisibleObjectGroups(parentId) {
   return getThemeBuilderGroupsForParent(parentId).filter(isThemeBuilderVisibleObjectGroup);
-}
-
-function getThemeBuilderElementRole(element) {
-  if (!element) return "shell";
-  const tag = element.tagName.toLowerCase();
-  const name = `${element.id || ""} ${Array.from(element.classList || []).join(" ")}`.toLowerCase();
-  const directText = Array.from(element.childNodes || [])
-    .some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0);
-
-  if (["img", "svg", "canvas", "video", "picture"].includes(tag) || /\b(icon|image|avatar|chart|graph|art|svg|logo|ring|reel)\b/.test(name)) {
-    return "media";
-  }
-  if (["button", "input", "select", "textarea", "a"].includes(tag) || /\b(btn|button|tab|pill|chip|select|toggle|filter|action)\b/.test(name)) {
-    return "action";
-  }
-  if (/^(h[1-6]|p|span|strong|small|label|text)$/.test(tag) || directText || /\b(title|label|copy|text|value|stat|score|meta|sub)\b/.test(name)) {
-    return "text";
-  }
-  if (["header", "footer", "nav", "section", "article", "main"].includes(tag) || /\b(header|footer|section|card|panel|grid|row|column|shell|wrap|container|body|content)\b/.test(name)) {
-    return "group";
-  }
-  return "shell";
 }
 
 function getThemeBuilderVisualGroupRoot(config, element, parentElement) {
@@ -35611,58 +34913,6 @@ function hydrateThemeBuilderElementFreeFormSourceValues(parentId, elementId, ele
   return changed;
 }
 
-function hydrateThemeBuilderFreeFormSourceValues(themeKey = getCurrentThemeBuilderThemeKey(), options = {}) {
-  const themeState = ensureThemeBuilderThemeState(themeKey);
-  const needsSourceTruthRefresh = themeState.freeSourceTruthVersion !== THEME_BUILDER_FREE_SOURCE_TRUTH_VERSION;
-  const forceZero = Boolean(options.forceZero) && needsSourceTruthRefresh;
-  const includeMissing = Boolean(options.includeMissing) || needsSourceTruthRefresh;
-  const elementTargetCache = options.elementTargetCache instanceof Map ? options.elementTargetCache : new Map();
-  const elementDefaultsCache = options.elementDefaultsCache instanceof Map ? options.elementDefaultsCache : new Map();
-  let changed = false;
-
-  if (includeMissing) {
-    THEME_BUILDER_PARENT_CONFIGS.forEach((config) => {
-      if (!themeState.parents[config.id] || typeof themeState.parents[config.id] !== "object") {
-        themeState.parents[config.id] = {};
-        changed = true;
-      }
-      if (!themeState.elements[config.id] || typeof themeState.elements[config.id] !== "object") {
-        themeState.elements[config.id] = {};
-        changed = true;
-      }
-      getThemeBuilderCachedElementTargets(config, elementTargetCache).forEach((target) => {
-        if (!themeState.elements[config.id][target.id] || typeof themeState.elements[config.id][target.id] !== "object") {
-          themeState.elements[config.id][target.id] = {};
-          changed = true;
-        }
-      });
-    });
-  }
-
-  Object.entries(themeState.parents || {}).forEach(([parentId, parentState]) => {
-    if (hydrateThemeBuilderParentFreeFormSourceValues(parentId, parentState, { forceZero, includeMissing })) changed = true;
-  });
-
-  Object.entries(themeState.elements || {}).forEach(([parentId, elementMap]) => {
-    Object.entries(elementMap || {}).forEach(([elementId, elementState]) => {
-      if (hydrateThemeBuilderElementFreeFormSourceValues(parentId, elementId, elementState, {
-        forceZero,
-        includeMissing,
-        elementTargetCache,
-        elementDefaultsCache
-      })) changed = true;
-    });
-  });
-
-  if (needsSourceTruthRefresh) {
-    themeState.freeSourceTruthHydrated = true;
-    themeState.freeSourceTruthVersion = THEME_BUILDER_FREE_SOURCE_TRUTH_VERSION;
-    changed = true;
-  }
-
-  return changed;
-}
-
 function escapeCssString(value = "") {
   return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
 }
@@ -35888,115 +35138,6 @@ function buildThemeBuilderOuterAuraCssValues(values = {}) {
     scale: String(scale),
     zIndex
   };
-}
-
-function getThemeBuilderHoverFxPattern(preset = "solid") {
-  const color = "var(--tb-hover-fx-color)";
-  const accent = "var(--tb-hover-fx-accent)";
-  const intensity = "var(--tb-hover-fx-intensity)";
-  const patterns = {
-    solid: `radial-gradient(circle at 50% 50%, color-mix(in srgb, ${color} calc(42% * ${intensity}), transparent), transparent 64%)`,
-    smoke: `radial-gradient(circle at 22% 72%, color-mix(in srgb, ${color} calc(28% * ${intensity}), transparent), transparent 34%), radial-gradient(circle at 72% 24%, color-mix(in srgb, ${accent} calc(20% * ${intensity}), transparent), transparent 32%), linear-gradient(115deg, transparent, color-mix(in srgb, ${color} calc(14% * ${intensity}), transparent), transparent)`,
-    vines: `radial-gradient(ellipse at 16% 88%, color-mix(in srgb, ${color} calc(38% * ${intensity}), transparent), transparent 30%), repeating-linear-gradient(115deg, transparent 0 22px, color-mix(in srgb, ${accent} calc(20% * ${intensity}), transparent) 23px 27px, transparent 28px 58px)`,
-    prismatic: `conic-gradient(from 20deg, color-mix(in srgb, ${color} calc(36% * ${intensity}), transparent), color-mix(in srgb, ${accent} calc(32% * ${intensity}), transparent), rgba(250,204,21,.18), color-mix(in srgb, ${color} calc(28% * ${intensity}), transparent))`,
-    ice: `linear-gradient(135deg, transparent 0 18%, color-mix(in srgb, ${accent} calc(28% * ${intensity}), transparent) 20% 24%, transparent 26% 54%, color-mix(in srgb, ${color} calc(24% * ${intensity}), transparent) 56% 60%, transparent 62%), radial-gradient(circle at 80% 18%, color-mix(in srgb, #ffffff calc(20% * ${intensity}), transparent), transparent 20%)`,
-    earth: `radial-gradient(ellipse at 50% 105%, color-mix(in srgb, ${color} calc(42% * ${intensity}), transparent), transparent 42%), repeating-linear-gradient(8deg, transparent 0 18px, color-mix(in srgb, ${accent} calc(18% * ${intensity}), transparent) 20px 24px, transparent 26px 54px)`,
-    flames: `radial-gradient(ellipse at 35% 105%, color-mix(in srgb, ${color} calc(46% * ${intensity}), transparent), transparent 40%), radial-gradient(ellipse at 70% 110%, color-mix(in srgb, ${accent} calc(36% * ${intensity}), transparent), transparent 36%)`,
-    electric: `repeating-linear-gradient(128deg, transparent 0 30px, color-mix(in srgb, ${color} calc(32% * ${intensity}), transparent) 31px 34px, transparent 35px 70px), radial-gradient(circle at 76% 18%, color-mix(in srgb, ${accent} calc(28% * ${intensity}), transparent), transparent 24%)`,
-    recon: `linear-gradient(90deg, transparent 0 38%, color-mix(in srgb, ${color} calc(42% * ${intensity}), transparent) 48%, color-mix(in srgb, ${accent} calc(18% * ${intensity}), transparent) 52%, transparent 62%), repeating-linear-gradient(0deg, transparent 0 18px, color-mix(in srgb, ${color} calc(10% * ${intensity}), transparent) 19px 20px)`,
-    plasma: `radial-gradient(circle at 32% 45%, color-mix(in srgb, ${color} calc(42% * ${intensity}), transparent), transparent 28%), radial-gradient(circle at 68% 52%, color-mix(in srgb, ${accent} calc(34% * ${intensity}), transparent), transparent 34%), conic-gradient(from 180deg, transparent, color-mix(in srgb, ${color} calc(16% * ${intensity}), transparent), transparent)`,
-    wind: `repeating-linear-gradient(170deg, transparent 0 24px, color-mix(in srgb, ${color} calc(24% * ${intensity}), transparent) 25px 28px, transparent 29px 68px), linear-gradient(100deg, transparent, color-mix(in srgb, ${accent} calc(16% * ${intensity}), transparent), transparent)`,
-    cloud: `radial-gradient(circle at 25% 65%, color-mix(in srgb, ${color} calc(28% * ${intensity}), transparent), transparent 28%), radial-gradient(circle at 48% 48%, color-mix(in srgb, ${accent} calc(24% * ${intensity}), transparent), transparent 34%), radial-gradient(circle at 72% 72%, color-mix(in srgb, #ffffff calc(16% * ${intensity}), transparent), transparent 30%)`,
-    hex: `radial-gradient(circle at 50% 50%, color-mix(in srgb, ${color} calc(28% * ${intensity}), transparent), transparent 38%), repeating-linear-gradient(60deg, transparent 0 20px, color-mix(in srgb, ${accent} calc(20% * ${intensity}), transparent) 21px 23px, transparent 24px 42px), repeating-linear-gradient(120deg, transparent 0 20px, color-mix(in srgb, ${color} calc(18% * ${intensity}), transparent) 21px 23px, transparent 24px 42px)`,
-    laser: `linear-gradient(100deg, transparent 0 44%, color-mix(in srgb, ${color} calc(48% * ${intensity}), transparent) 49%, color-mix(in srgb, ${accent} calc(30% * ${intensity}), transparent) 51%, transparent 58%)`,
-    lava: `radial-gradient(ellipse at 46% 112%, color-mix(in srgb, ${color} calc(48% * ${intensity}), transparent), transparent 38%), repeating-linear-gradient(92deg, transparent 0 34px, color-mix(in srgb, ${accent} calc(22% * ${intensity}), transparent) 36px 42px, transparent 44px 74px)`,
-    water: `radial-gradient(circle at 30% 80%, color-mix(in srgb, ${color} calc(32% * ${intensity}), transparent), transparent 26%), repeating-radial-gradient(circle at 72% 72%, transparent 0 14px, color-mix(in srgb, ${accent} calc(18% * ${intensity}), transparent) 15px 17px, transparent 18px 34px)`,
-    graffiti: `radial-gradient(circle at 24% 28%, color-mix(in srgb, ${color} calc(34% * ${intensity}), transparent), transparent 16%), radial-gradient(circle at 68% 70%, color-mix(in srgb, ${accent} calc(32% * ${intensity}), transparent), transparent 18%), repeating-linear-gradient(150deg, transparent 0 28px, color-mix(in srgb, ${color} calc(18% * ${intensity}), transparent) 29px 31px, transparent 32px 60px)`,
-    ink: `radial-gradient(circle at 22% 30%, color-mix(in srgb, ${color} calc(38% * ${intensity}), transparent), transparent 30%), radial-gradient(circle at 74% 68%, color-mix(in srgb, ${accent} calc(26% * ${intensity}), transparent), transparent 36%), linear-gradient(145deg, transparent, rgba(0,0,0,.32), transparent)`,
-    music: `repeating-radial-gradient(circle at 16% 72%, transparent 0 14px, color-mix(in srgb, ${color} calc(22% * ${intensity}), transparent) 15px 17px, transparent 18px 34px), repeating-radial-gradient(circle at 84% 72%, transparent 0 14px, color-mix(in srgb, ${accent} calc(22% * ${intensity}), transparent) 15px 17px, transparent 18px 34px)`,
-    crystal: `linear-gradient(135deg, transparent 0 20%, color-mix(in srgb, ${color} calc(28% * ${intensity}), transparent) 21% 30%, transparent 31% 52%, color-mix(in srgb, ${accent} calc(26% * ${intensity}), transparent) 53% 62%, transparent 63%), radial-gradient(circle at 70% 22%, color-mix(in srgb, #ffffff calc(18% * ${intensity}), transparent), transparent 24%)`
-  };
-  return patterns[preset] || patterns.solid;
-}
-
-function getThemeBuilderHoverFxAnimation(motion = "static") {
-  const animations = {
-    static: "",
-    pulse: "themeBuilderHoverPulse var(--tb-hover-fx-duration, 3s) ease-in-out infinite",
-    snake: "themeBuilderHoverSnake var(--tb-hover-fx-duration, 3s) linear infinite",
-    wave: "themeBuilderHoverWave var(--tb-hover-fx-duration, 3s) ease-in-out infinite",
-    sweep: "themeBuilderHoverSweep var(--tb-hover-fx-duration, 3s) linear infinite",
-    drift: "themeBuilderHoverDrift var(--tb-hover-fx-duration, 3s) ease-in-out infinite alternate",
-    surge: "themeBuilderHoverSurge var(--tb-hover-fx-duration, 3s) cubic-bezier(.22,1,.36,1) infinite",
-    flicker: "themeBuilderHoverFlicker var(--tb-hover-fx-duration, 3s) steps(5, end) infinite"
-  };
-  return animations[motion] || "";
-}
-
-function buildThemeBuilderChildCssValues(values = {}) {
-  const childX = String(values.childBoxX ?? "").trim();
-  const childY = String(values.childBoxY ?? "").trim();
-  const layoutMode = normalizeThemeBuilderLayoutMode(values.childLayoutMode);
-  const childScale = String(values.childScale ?? "").trim();
-  const translateX = layoutMode === "visual" && (childX || childY)
-    ? appendThemeBuilderPx(childX || "0", "x")
-    : "";
-  const translateY = layoutMode === "visual" && (childX || childY)
-    ? appendThemeBuilderPx(childY || "0", "y")
-    : "";
-  const normalizedScale = childScale && Number(childScale) !== 1 ? childScale : "";
-
-  return {
-    layoutMode,
-    translate: translateX || translateY ? `${translateX || "0px"} ${translateY || "0px"}` : "",
-    marginLeft: layoutMode === "flow" && childX ? appendThemeBuilderPx(childX, "x") : "",
-    marginTop: layoutMode === "flow" && childY ? appendThemeBuilderPx(childY, "y") : "",
-    left: layoutMode === "free" && childX ? appendThemeBuilderPx(childX, "x") : "",
-    top: layoutMode === "free" && childY ? appendThemeBuilderPx(childY, "y") : "",
-    width: values.childBoxWidth ? appendThemeBuilderPxIfNeeded(values.childBoxWidth, "px", "x") : "",
-    height: values.childBoxHeight ? appendThemeBuilderPxIfNeeded(values.childBoxHeight, "px", "y") : "",
-    scale: normalizedScale,
-    transform: buildThemeBuilderTransformValue({ translateX, translateY, scale: layoutMode === "flow" ? "" : normalizedScale }),
-    zoom: layoutMode === "flow" && normalizedScale ? normalizedScale : "",
-    fontSize: values.childFontSize ? appendThemeBuilderPxIfNeeded(values.childFontSize, "px", "uniform") : "",
-    zIndex: normalizeThemeBuilderZIndex(values.childZIndex)
-  };
-}
-
-function buildThemeBuilderChildSnapshotCss(themeKey, config, cssValues = {}) {
-  const hasValues = ["translate", "marginLeft", "marginTop", "left", "top", "width", "height", "scale", "zoom", "fontSize", "zIndex"]
-    .some(key => Boolean(cssValues[key]));
-  if (!hasValues || !config.childSelector) return "";
-
-  const declarations = ["box-sizing:border-box !important;"];
-  const useTransformFallback = !browserFeatureSupport.individualTransform && cssValues.transform;
-  if (cssValues.layoutMode === "free") {
-    declarations.push("position:absolute !important;");
-    declarations.push("transform-origin:left top !important;");
-    if (cssValues.left) declarations.push(`left:${cssValues.left} !important;`);
-    if (cssValues.top) declarations.push(`top:${cssValues.top} !important;`);
-  } else {
-    declarations.push("position:relative !important;");
-    if (cssValues.layoutMode === "flow") {
-      if (cssValues.marginLeft) declarations.push(`margin-left:${cssValues.marginLeft} !important;`);
-      if (cssValues.marginTop) declarations.push(`margin-top:${cssValues.marginTop} !important;`);
-      if (cssValues.zoom) declarations.push(`zoom:${cssValues.zoom} !important;`);
-    }
-    if (browserFeatureSupport.individualTransform && cssValues.translate) {
-      declarations.push(`translate:${cssValues.translate} !important;`);
-    }
-  }
-  if (browserFeatureSupport.individualTransform) {
-    if (cssValues.layoutMode !== "flow" && cssValues.scale) declarations.push(`scale:${cssValues.scale} !important;`);
-  } else if (useTransformFallback) {
-    declarations.push(`transform:${cssValues.transform} !important;`);
-  }
-  if (cssValues.width) declarations.push(`width:${cssValues.width} !important;`);
-  if (cssValues.height) declarations.push(`height:${cssValues.height} !important;`);
-  if (cssValues.fontSize) declarations.push(`font-size:${cssValues.fontSize} !important;`);
-  if (cssValues.zIndex) declarations.push(`z-index:${cssValues.zIndex} !important;`);
-
-  return `${scopeThemeBuilderSelectorList(themeKey, config.childSelector)}{${declarations.join("")}}`;
 }
 
 function getThemeBuilderElementLayoutMode(value = "", fallback = "flow") {
@@ -37387,14 +36528,6 @@ function parseThemeBuilderFxColor(value = "", fallback = "#ffffff") {
 
 function themeBuilderFxRgba(color, alpha = 1) {
   return `rgba(${color.r},${color.g},${color.b},${Math.max(0, Math.min(1, alpha))})`;
-}
-
-function themeBuilderFxMix(a, b, amount = 0.5) {
-  return {
-    r: Math.round(a.r + (b.r - a.r) * amount),
-    g: Math.round(a.g + (b.g - a.g) * amount),
-    b: Math.round(a.b + (b.b - a.b) * amount)
-  };
 }
 
 function themeBuilderFxNumber(value, fallback = 0) {
@@ -40969,17 +40102,6 @@ function shuffleArray(arr) {
   return copy;
 }
 
-function pickUniqueTimelineStats(sourceStats, count = 4) {
-  const valid = TIMELINE_POOL.filter(item => sourceStats[item.key] != null);
-
-  return shuffleArray(valid)
-    .slice(0, count)
-    .map(item => ({
-      ...item,
-      value: sourceStats[item.key]
-    }));
-}
-
 function getTimelineToneFromDelta(delta) {
   const value = Number(delta);
   if (!Number.isFinite(value)) return "neutral";
@@ -41612,9 +40734,9 @@ function scheduleLoggingFeedRender(options = {}) {
 }
 
 function isFirstGameOfCurrentSession() {
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = formatLocalDateKey(new Date());
   const todaysEntries = getProfileLogEntries(activeProfileId, { authoredOnly: true })
-    .filter(entry => String(entry?.createdAt || "").slice(0, 10) === todayKey);
+    .filter(entry => getTrainingEntryDate(entry) === todayKey);
   return todaysEntries.length === 0;
 }
 
@@ -42010,21 +41132,6 @@ if(entry.focus){
 // DELETE LOG ENTRY
 // ========================
 
-function deleteLogEntry(id){
-
-  if (editingLogEntryId === id) {
-    editingLogEntryId = null;
-    editingLogEntrySnapshot = null;
-  }
-
-  logEntries = logEntries.filter(e => e.id !== id);
-  saveLogEntries();
-  void deletePersistentLogEntry(id);
-
-  renderLogFeed();
-  renderInsights();
-}
-
 // ========================
 // EDIT LOG ENTRY
 // ========================
@@ -42154,7 +41261,7 @@ function getLogSessions() {
   const grouped = new Map();
 
   getProfileLogEntries().forEach(entry => {
-    const key = String(entry.createdAt || nowISO()).slice(0, 10);
+    const key = getTrainingEntryDate(entry) || formatLocalDateKey(new Date());
     if (!grouped.has(key)) {
       grouped.set(key, []);
     }
@@ -42232,7 +41339,7 @@ function getLogEntryMatchContext(entry = {}) {
 function getLogCountByDate() {
   const counts = new Map();
   getProfileLogEntries().forEach(entry => {
-    const key = String(entry.createdAt || nowISO()).slice(0, 10);
+    const key = getTrainingEntryDate(entry) || formatLocalDateKey(new Date());
     counts.set(key, (counts.get(key) || 0) + 1);
   });
   return counts;
@@ -43065,46 +42172,6 @@ function getActiveProfile(){
 // ========================
 // CREATE PROFILE
 // ========================
-
-function createProfile(data){
-
-  const profile = normalizeProfileRecord({
-    id: uuid(),
-    name: data.name || "New Profile",
-    accountName: sanitizeAccountName(data.accountName || data.name || "User", "User"),
-    riotId: data.riotId || "",
-    region: data.region || "NA",
-    startingRR: 0,
-    startingRRDate: "",
-    startingRRSource: "",
-    themeKey: data.themeKey || "default",
-    frameTheme: data.frameTheme || data.themeKey || "default",
-    customAccent: normalizeThemeAccentColor(data.customAccent || ""),
-    freeThemeMotion: normalizeFreeThemeMotionMode(data.freeThemeMotion),
-    avatarAgent: data.avatarAgent || getDefaultProfileAvatarAgent(),
-    avatarUrl: data.avatarUrl || getDefaultProfileAvatarUrl(data.avatarAgent),
-    navBackgroundUrl: data.navBackgroundUrl || "",
-    manualEntryMode: !!data.manualEntryMode,
-    profileBorderColor: normalizeProfileBorderColor(data.profileBorderColor || "theme"),
-    profileBorder: normalizeProfileBorderStyle(data.profileBorder || "standard"),
-    profileBorderRotate: !!data.profileBorderRotate,
-    bannerStyle: normalizeProfileBannerStyle(data.bannerStyle || "theme"),
-    peakRR: safeNumber(data.peakRR),
-    accessibility: {
-      contrastMode: data?.accessibility?.contrastMode || "standard",
-      motionMode: data?.accessibility?.motionMode || "standard",
-      layoutMode: normalizeAccessibilityLayoutMode(data?.accessibility?.layoutMode)
-    }
-  });
-
-  profiles.push(profile);
-
-  activeProfileId = profile.id;
-
-  saveProfiles();
-  renderProfilesUI();
-
-}
 
 // ========================
 // DELETE PROFILE
@@ -45335,11 +44402,6 @@ function runActivatedMobilePageHydration(pageId = "", token = pageTransitionToke
   ensureMobileSwipeAffordances();
 }
 
-function primeMobilePageSwipePreview(pageId = "") {
-  if (!isMobileLayoutViewport() || !pageId) return;
-  hydrateMobilePageForCurrentState(pageId, { allowHiddenLayoutWork: true, immediatePreview: true });
-}
-
 function syncEditProfileCustomAccentInput(themeKey = "default", customAccent = "") {
   const input = document.getElementById("editProfileCustomAccent");
   if (!input) return;
@@ -45995,20 +45057,6 @@ function bindRRButtons(){
     undoLastMatch();
   });
 
-}
-
-function handleLossInput(){
-
-  const v = safeNumber(rrInput?.value || 0);
-
-  if(!v) return;
-
-  addRRChange(-Math.abs(v),{result:"loss"});
-}
-
-function handleDrawInput(){
-
-  addRRChange(0,{result:"draw"});
 }
 
 function renderChart(size = currentSize){
@@ -47710,37 +46758,6 @@ compassBtns.forEach(btn => {
 // ========================
 // IMPROVEMENT STAT ENGINE
 // ========================
-
-function generateImprovementStats(){
-
-const pills = document.querySelectorAll(".improvement-pill");
-if(!pills.length) return;
-
-const pool = [...improvementStatsPool];
-
-for(let i=0;i<pills.length;i++){
-
-const pill = pills[i];
-
-const label = pill.querySelector(".imp-label");
-const value = pill.querySelector(".imp-value");
-
-if(!label || !value) continue;
-
-const index = Math.floor(Math.random()*pool.length);
-const stat = pool.splice(index,1)[0];
-
-label.textContent = stat.stat;
-
-value.classList.remove("imp-roll");
-void value.offsetWidth;
-
-value.textContent = "+"+stat.change+"%";
-value.classList.add("imp-roll");
-
-}
-
-}
 
 // ========================
 // COMPASS MODAL CLOSE

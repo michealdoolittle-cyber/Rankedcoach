@@ -55,11 +55,12 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260711-training-feed-02">
+<link rel="stylesheet" href="app.css?v=20260711-gamesense-library-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
-<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260711-season-scope-01">
+<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260711-gamesense-library-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260711-gamesense-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -854,6 +855,7 @@ RIOT PROFILE MODAL
         <button class="nav-btn" data-page="logging">Logging</button>
         <button class="nav-btn" data-page="stats">Stats</button>
         <button class="nav-btn" data-page="insights">Insights</button>
+        <button class="nav-btn" data-page="library">Library</button>
         <div class="nav-underline"></div>
       </nav>
 	  </div>
@@ -1045,6 +1047,28 @@ RIOT PROFILE MODAL
 
   <div class="app">
     <!-- =========================
+GAMESENSE LIBRARY
+========================= -->
+    <section id="page-library" class="page gamesense-page">
+      <div class="gamesense-shell">
+        <header class="gamesense-hero">
+          <div>
+            <span class="gamesense-hero-kicker">Ranked Field Guide</span>
+            <h1>Gamesense Library</h1>
+            <p>Map plans, agent jobs, and weapon decisions you can review before the queue pops.</p>
+          </div>
+          <div class="gamesense-topic-nav" aria-label="Gamesense topics">
+            <button type="button" data-gamesense-topic-nav="overview" class="active">Overview</button>
+            <button type="button" data-gamesense-topic-nav="maps">Maps</button>
+            <button type="button" data-gamesense-topic-nav="agents">Agents</button>
+            <button type="button" data-gamesense-topic-nav="weapons">Weapons</button>
+          </div>
+        </header>
+        <div id="gamesenseLibraryView" class="gamesense-library-view" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- =========================
 INSIGHTS PAGE
 ========================= -->
     <section id="page-insights" class="page">
@@ -1052,6 +1076,7 @@ INSIGHTS PAGE
 
         <div class="card insights-action-card">
           <div class="insight-action-kicker insight-action-kicker-top">Main Focus</div>
+          <button class="gamesense-context-link gamesense-context-link-insights" type="button" data-gamesense-open="overview">Open Gamesense Library</button>
 
           <div class="insight-action">
           <div class="insight-action-hero">
@@ -1239,17 +1264,17 @@ STATS PAGE
           </div>
 
           <div class="card stats-maps-card">
-            <div class="card-sub">Map Stats</div>
+            <div class="stats-library-head"><div class="card-sub">Map Stats</div><button type="button" data-gamesense-open="maps">Learn Maps</button></div>
             <div id="statsMapsList" class="stats-map-list"></div>
           </div>
 
           <div class="card stats-agents-card">
-            <div class="card-sub">Agent Stats</div>
+            <div class="stats-library-head"><div class="card-sub">Agent Stats</div><button type="button" data-gamesense-open="agents">Learn Agents</button></div>
             <div id="statsAgentsList" class="stats-agent-list"></div>
           </div>
 
           <div class="card stats-weapons-card">
-            <div class="card-sub">Weapon Stats</div>
+            <div class="stats-library-head"><div class="card-sub">Weapon Stats</div><button type="button" data-gamesense-open="weapons">Learn Weapons</button></div>
             <div id="statsWeaponsList" class="stats-weapon-list"></div>
           </div>
         </div>
@@ -2279,7 +2304,10 @@ stroke-linejoin="round"/>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
+  <script src="library/gamesense-maps.js?v=20260711-gamesense-01"></script>
+  <script src="library/gamesense-reference.js?v=20260711-gamesense-01"></script>
+  <script src="library/gamesense-library.js?v=20260711-gamesense-01"></script>
   <script src="integrations/riot-sync.js?v=20260711-training-feed-02"></script>
-  <script type="module" src="app.js?v=20260711-training-feed-02"></script>
+  <script type="module" src="app.js?v=20260711-gamesense-library-01"></script>
 </body>
 </html>
