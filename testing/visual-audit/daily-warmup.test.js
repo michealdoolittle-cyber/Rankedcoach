@@ -82,10 +82,8 @@ function supabaseStub() {
 
 async function seedProfile(page, id) {
   await page.addInitScript(({ id }) => {
-    const firstGame = new Date();
-    firstGame.setHours(10, 0, 0, 0);
-    const lastGame = new Date();
-    lastGame.setHours(12, 0, 0, 0);
+    const firstGame = new Date(Date.now() - (3 * 60 * 60 * 1000));
+    const lastGame = new Date(Date.now() - (2 * 60 * 60 * 1000));
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     localStorage.setItem("valtracker_active_profile_id", id);
     localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{

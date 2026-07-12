@@ -60,7 +60,7 @@
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260711-gamesense-library-01">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260711-gamesense-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260712-gamesense-depth-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -289,11 +289,11 @@ AUTH MODAL
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="burst-peeking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Burst Peeking</strong><span>Counter-strafe into short rifle bursts, then fully reset.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Burst Peeking</strong><span>Keep Strafe mode off, stop your own peek, and fire a controlled burst.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="burst-peeking-strafe" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Burst Peeking w/ Strafe</strong><span>Burst, move off the return shot, then stop cleanly for the next fight.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Burst Peeking w/ Strafe</strong><span>Turn on Strafe mode and track each bot's movement before a controlled burst.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="tap-fire-rhythm" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
@@ -301,15 +301,15 @@ AUTH MODAL
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="easy-bots-flicking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Easy Bots Flicking</strong><span>Build smooth head-level flicks without rushing the confirm.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Easy Bots Flicking</strong><span>Stay still and build smooth head-level flicks without rushing the confirm.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="medium-bots-flicking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Medium Bots Flicking</strong><span>Raise the pace while keeping the crosshair stop controlled.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Medium Bots Flicking</strong><span>Stay still while raising the pace and keeping every crosshair stop controlled.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="hard-bots-flicking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Hard Bots Flicking</strong><span>Test reaction speed without turning misses into panic flicks.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Hard Bots Flicking</strong><span>Stay still and test reaction speed without turning misses into panic flicks.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="head-tracking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
@@ -317,15 +317,15 @@ AUTH MODAL
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="head-tracking-strafe" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Head Tracking w/ Strafe</strong><span>Track the head while moving, then stop cleanly before firing.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Head Tracking w/ Strafe</strong><span>Turn on Strafe mode and track the moving bot while you remain stationary.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="drone-target-switching" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Drone Target Switching</strong><span>Move between drones with one controlled crosshair path per target.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Drone Target Switching</strong><span>Stay still, disable infinite ammo, and transfer one held burst between drones.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="spray-control-dummy" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Spray Control Target Dummy</strong><span>Hold the pattern on one dummy, then reset before repeating.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Spray Control Target Dummy</strong><span>Use the large range dummy, disable infinite ammo, and climb the distance settings.</span></span>
         </button>
       </div>
       <label id="dailyWarmupWeaponField" class="daily-warmup-weapon" data-daily-training-section="warmup" hidden>
@@ -1056,12 +1056,6 @@ GAMESENSE LIBRARY
             <span class="gamesense-hero-kicker">Ranked Field Guide</span>
             <h1>Gamesense Library</h1>
             <p>Map plans, agent jobs, and weapon decisions you can review before the queue pops.</p>
-          </div>
-          <div class="gamesense-topic-nav" aria-label="Gamesense topics">
-            <button type="button" data-gamesense-topic-nav="overview" class="active">Overview</button>
-            <button type="button" data-gamesense-topic-nav="maps">Maps</button>
-            <button type="button" data-gamesense-topic-nav="agents">Agents</button>
-            <button type="button" data-gamesense-topic-nav="weapons">Weapons</button>
           </div>
         </header>
         <div id="gamesenseLibraryView" class="gamesense-library-view" aria-live="polite"></div>
@@ -2304,9 +2298,9 @@ stroke-linejoin="round"/>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="library/gamesense-maps.js?v=20260711-gamesense-01"></script>
-  <script src="library/gamesense-reference.js?v=20260711-gamesense-01"></script>
-  <script src="library/gamesense-library.js?v=20260711-gamesense-01"></script>
+  <script src="library/gamesense-maps.js?v=20260712-gamesense-depth-01"></script>
+  <script src="library/gamesense-reference.js?v=20260712-gamesense-depth-01"></script>
+  <script src="library/gamesense-library.js?v=20260712-gamesense-depth-01"></script>
   <script src="integrations/riot-sync.js?v=20260711-training-feed-02"></script>
   <script type="module" src="app.js?v=20260711-gamesense-library-01"></script>
 </body>
