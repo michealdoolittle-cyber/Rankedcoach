@@ -222,12 +222,12 @@
 .gamesense-map-entry-card{
   min-height:250px;
   isolation:isolate;
-  background-image:linear-gradient(180deg,rgba(2,6,23,.08),rgba(2,6,23,.2) 40%,rgba(2,6,23,.96)),var(--map-card-image) !important;
-  background-size:cover !important;
-  background-position:center !important;
+  background:var(--gamesense-panel) !important;
 }
 
 .gamesense-map-entry-card > *{position:relative;z-index:2;}
+.gamesense-map-entry-card::after{content:"";position:absolute;inset:0;z-index:0;background-image:linear-gradient(180deg,rgba(2,6,23,.08),rgba(2,6,23,.2) 40%,rgba(2,6,23,.96)),var(--map-card-image);background-size:cover;background-position:center;pointer-events:none;}
+.gamesense-map-entry-card::before{z-index:3;}
 .gamesense-map-card-shade{position:absolute;inset:0;z-index:1;background:linear-gradient(120deg,color-mix(in srgb,var(--accent,#ff4655) 14%,transparent),transparent 45%);}
 
 .gamesense-agent-entry-card{
