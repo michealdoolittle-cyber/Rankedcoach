@@ -8,6 +8,8 @@
 
 **Status (2026-07-10 follow-up):** The relocated Import History / Tracker.gg controls were **removed entirely**. HenrikDev Riot-ID sync supersedes the screenshot workflow. Everything else in this file's Account & Support work still stands.
 
+**Policy amendment (2026-07-11):** §4's "bottom bar is page navigation only, exactly 4 tabs, nothing else ever goes here again" rule is **no longer absolute**. Michael's explicit call, made for the Gamesense Library feature (`notes/gamesense-library-2026-07-11.md`): a 5th tab is acceptable on both mobile and desktop when a feature is significant and thorough enough to earn a top-level destination — Gamesense is the first exception. This isn't a blanket reopening of the bottom bar to anything — it's a deliberate one-time exception for a specific, substantial feature, made by Michael directly. Don't treat this as license to keep adding tabs freely; a future 6th+ tab request should still be treated as a real decision to confirm, not an assumed-fine default now that the "exactly 4" line has moved once.
+
 ---
 
 ## 1. The problem (why this exists)

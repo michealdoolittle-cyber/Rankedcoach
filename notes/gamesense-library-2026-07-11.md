@@ -79,9 +79,9 @@ Don't attempt full coverage (every map, every agent, every weapon) in one pass. 
 
 ## Implementation directive — content is written, this is the build
 
-### Nav placement — real constraint, don't violate it
+### Nav placement — policy reversed 2026-07-11, this IS a 5th tab now
 
-`notes/mobile-nav-redesign.md` explicitly established the mobile bottom bar as **exactly 4 tabs, "nothing else ever goes here again"** — a hard constraint from that prior work, not a suggestion. **Do not add a 5th bottom-nav tab for this feature.** Reachable entry points instead: the mobile settings quick menu (same pattern as "Customize"/"Account & Support"), and/or a card or link from Home. Contextual entry points from Stats/Insights (per the design above) don't touch the bottom nav at all and are safe regardless. If a standalone destination genuinely needs its own top-level nav slot, that's a real product decision to bring back to Michael, not something to silently decide by adding a 5th tab.
+**Overrides the earlier "don't add a 5th tab" directive.** Michael's explicit call: he doesn't want this buried where players won't find it, and considers a 5th tab acceptable on both mobile and desktop as long as it's built thoroughly. `notes/mobile-nav-redesign.md`'s original "exactly 4 tabs, nothing else ever goes here again" rule is being amended by this decision — see the note added there. Build Gamesense as a real 5th bottom-nav tab (mobile) and the equivalent top-level nav item (desktop), matching the visual/interaction pattern the existing 4 tabs already use (`.mobile-bottom-page-btn[data-mobile-page="..."]`, `app.js:1343`) — same tap-target sizing, same active-state styling, no second-class treatment relative to Home/Logging/Stats/Insights. "Extremely thorough" was the explicit bar — this isn't a quick add-on, budget real UI/UX effort matching the other four tabs' polish level, not a bare-bones placeholder.
 
 ### Data — already written, load it, don't regenerate it
 
@@ -100,7 +100,13 @@ Topic grid (Maps/Agents/Weapons) → category grid (map names / agent names / we
 1. **Confirm no creator names or `_researchNote`/`_researchUrl` fields render anywhere in the UI** — search the rendered DOM output for "Woohoojin," "Dopai," and any raw URL from the internal fields, confirm zero matches. This is the inverse of the original testing item and matters more now that the policy flipped — verify it explicitly, don't assume the rename to underscore-prefixed fields alone prevents accidental rendering.
 2. Confirm lineup-related content routes to outbound links, not an attempt at in-app illustrated lineups.
 3. Confirm meta-comp entries show a patch/date tag (this one stays visible — it's freshness data, not attribution).
-4. Confirm the library is reachable without adding a 5th bottom-nav tab — verify against `notes/mobile-nav-redesign.md`'s 4-tab constraint explicitly, don't just eyeball it.
-5. Confirm the library is reachable both as a standalone destination and contextually from relevant Stats/Insights surfaces.
+4. Confirm the new 5th tab matches the visual/interaction polish of the existing 4 — same tap targets, same active-state treatment, works identically on desktop's top-level nav equivalent. "Thorough" was the explicit bar, verify it reads that way, not like a bolted-on afterthought.
+5. Confirm the library is reachable both as its own tab and contextually from relevant Stats/Insights surfaces.
 6. Info tags on warm-up drills: confirm the expanded detail is genuinely more actionable than the existing one-liner, not just a longer restatement of the same sentence.
 7. Confirm `library/gamesense-maps.js` content renders exactly as written — no paraphrasing or "improving" the sourced copy during implementation.
+
+---
+
+## Future direction, noted not built — content-suggestion engine
+
+Michael wants this flagged for later, not built now: eventually, the app should proactively suggest specific Gamesense Library entries to a player based on identified weaknesses, rather than the library only being something a player browses cold. Example: a player with a low win rate specifically on Bind defense gets a surfaced suggestion pointing at the Bind macro entry; a player whose formulas flag a weapon-hygiene gap gets pointed at the relevant Weapons entry. This is a natural extension of the existing insight-generation pipeline (`buildPlayerModel()`, the coaching-rules matching layer from the formula-wiring directive) — once a weakness is identified, the same matching logic that generates a coaching insight could also attach a "read this" library link. Don't build this now; it depends on the library existing first and having real usage to validate the format before recommending it proactively. Revisit once the library's first slice has shipped and stabilized.
