@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", mapZoom: 1, compAgent: "" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "" };
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -69,7 +69,11 @@
   function getTopicCollageImages(topic = "") {
     if (topic === "maps") return ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
     if (topic === "agents") return ["/assets/library/agents/jett/portrait.png", "/assets/library/agents/omen/portrait.png", "/assets/library/agents/sova/portrait.png"];
-    return ["/assets/library/weapons-dossier-v2.webp"];
+    return [
+      "https://media.valorant-api.com/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872/displayicon.png",
+      "https://media.valorant-api.com/weapons/ec845bf4-4f79-ddda-a3da-0db3774b2794/displayicon.png",
+      "https://media.valorant-api.com/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7/displayicon.png"
+    ];
   }
 
   function getMaps() {
@@ -151,15 +155,6 @@
       </section>`;
   }
 
-  function renderMapPlan(title, items = []) {
-    const open = document.documentElement.classList.contains("is-mobile-layout") ? "" : " open";
-    return `
-      <details class="gamesense-note-block gamesense-map-plan"${open}>
-        <summary>${escapeHtml(title)}</summary>
-        <ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-      </details>`;
-  }
-
   function renderMarkedMap(map) {
     const isPlants = state.mapView === "plants";
     const markers = isPlants ? map.plantSpots || [] : map.callouts || [];
@@ -199,22 +194,54 @@
       </section>`;
   }
 
-  function renderRoleNotes(map) {
+  function renderMapTips(map) {
     const roles = ["Duelist", "Initiator", "Controller", "Sentinel"];
     const activeRole = roles.includes(state.role) ? state.role : "";
+    const categories = [
+      { id: "attack", label: "Attack side" },
+      { id: "defense", label: "Defense side" },
+      { id: "sites", label: "Site-specific" },
+      { id: "teamplay", label: "Teamplay strats" }
+    ];
+    const activeCategory = categories.some(item => item.id === state.tipView) ? state.tipView : "attack";
+    const baseTips = activeCategory === "attack"
+      ? map.macro?.attack || []
+      : activeCategory === "defense"
+        ? map.macro?.defense || []
+        : activeCategory === "sites"
+          ? map.siteTips || []
+          : map.teamplayTips || [];
+    const roleTips = activeRole
+      ? (map.roleNotes?.[activeRole] || []).filter(item => typeof item === "string" || item.category === activeCategory)
+      : [];
+    const tips = [...baseTips, ...roleTips].filter(item => {
+      const tipRoles = Array.isArray(item?.roles) ? item.roles : [];
+      return !activeRole || !tipRoles.length || tipRoles.includes(activeRole);
+    });
     return `
-      <section class="gamesense-role-notes">
-        <details class="gamesense-role-menu">
-          <summary>${activeRole ? `<span data-role-tone="${activeRole.toLowerCase()}">${escapeHtml(activeRole)}</span> notes selected` : "Open role-specific notes"}</summary>
+      <section class="gamesense-tips-hub${activeRole ? ` has-role-filter" data-role-tone="${activeRole.toLowerCase()}` : ""}">
+        <div class="gamesense-section-heading gamesense-tips-heading"><span>Tips</span><strong>${escapeHtml(map.label)} round plans</strong></div>
+        <div class="gamesense-tips-tabs" role="tablist" aria-label="${escapeHtml(map.label)} tip categories">
+          ${categories.map(category => `<button type="button" role="tab" data-gamesense-tip-view="${category.id}" class="${category.id === activeCategory ? "active" : ""}" aria-selected="${category.id === activeCategory}">${category.label}</button>`).join("")}
+        </div>
+        <div class="gamesense-tips-role-filter">
+          <span>Role lens</span>
           <div class="gamesense-role-options">
-            ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}">${role}</button>`).join("")}
+            <button type="button" data-gamesense-role="all" class="${activeRole ? "" : "active"}" aria-pressed="${activeRole ? "false" : "true"}">All roles</button>
+            ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}" aria-pressed="${role === activeRole}">${role}</button>`).join("")}
           </div>
-        </details>
-        ${activeRole ? `
-          <details class="gamesense-role-result-shell" open>
-            <summary><span data-role-tone="${activeRole.toLowerCase()}">${escapeHtml(activeRole)} plan</span></summary>
-            ${renderList(`${activeRole} Plan`, map.roleNotes?.[activeRole] || [], "gamesense-role-result")}
-          </details>` : `<p class="gamesense-role-prompt">Choose your role to turn the map overview into a job for your next round.</p>`}
+        </div>
+        <div class="gamesense-tips-panel" role="tabpanel">
+          <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
+          <div class="gamesense-tip-grid">
+            ${tips.map(item => {
+              const text = typeof item === "string" ? item : item.text;
+              const label = typeof item === "string" ? "Round read" : item.label || "Round read";
+              const isRoleTip = Boolean(activeRole && roleTips.includes(item));
+              return `<article class="gamesense-tip${isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(isRoleTip ? activeRole : label)}</span><p>${escapeHtml(text)}</p></article>`;
+            }).join("")}
+          </div>
+        </div>
       </section>`;
   }
 
@@ -272,14 +299,7 @@
         <button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button>
       </div>
       <div class="gamesense-detail-grid">
-        ${renderMapPlan("Defense", map.macro?.defense)}
-        ${renderMapPlan("Attack", map.macro?.attack)}
-        ${renderRoleNotes(map)}
-        ${state.role === "Controller" ? `<section class="gamesense-controller-callout">
-          <span>Controller Notes</span>
-          <p>${escapeHtml(map.macro?.controllerNotes)}</p>
-          <strong>${escapeHtml(map.macro?.macroPrinciple)}</strong>
-        </section>` : ""}
+        ${renderMapTips(map)}
         ${renderComp(map)}
         ${renderWeaponSuggestions(map)}
         <section class="gamesense-lineups">
@@ -305,20 +325,36 @@
       </article>`;
   }
 
+  function renderAgentFacts(agent) {
+    const history = Array.isArray(agent.patchHistory) ? agent.patchHistory : [];
+    const facts = Array.isArray(agent.facts) ? agent.facts : [];
+    return `
+      <section class="gamesense-note-block gamesense-agent-facts">
+        <h3>Agent Facts and Stats</h3>
+        <div class="gamesense-agent-fact-list">
+          ${facts.map(item => `<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><p>${escapeHtml(item.note || "")}</p></article>`).join("")}
+        </div>
+        <details class="gamesense-patch-history">
+          <summary>Buff and nerf history</summary>
+          <ol>${history.map(item => `<li><span>Patch ${escapeHtml(item.patch)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot patch notes</a>` : ""}</li>`).join("")}</ol>
+        </details>
+      </section>`;
+  }
+
   function renderAgentDetail(agent) {
     const abilities = agent.abilities || [];
     const selected = abilities.find(ability => ability.id === state.detailId) || abilities[0];
     return `
       <div class="gamesense-detail-head gamesense-agent-detail-head">
-        <div><div class="gamesense-agent-kicker-row"><span>${escapeHtml(agent.role)} Field Guide</span><span class="gamesense-patch">Active season</span></div><h2>${escapeHtml(agent.label)}</h2></div>
-        <button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button>
+        <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
+        <div class="gamesense-agent-detail-actions"><span class="gamesense-patch">Active season</span><button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button></div>
       </div>
       <section class="gamesense-agent-hero">
         <div class="gamesense-agent-portrait-wrap">
           <div class="gamesense-agent-rate"><span>Global pick rate ${safePercent(agent.pickRate)}</span><strong>${escapeHtml(agent.sampleLabel || "Tracker Network | Past two weeks")}</strong></div>
           <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
         </div>
-        <div>${renderList("Role Fundamentals", agent.fundamentals)}${renderList("Round Checklist", agent.signature)}</div>
+        <div>${renderList("Agent Fundamentals", agent.fundamentals)}${renderAgentFacts(agent)}</div>
       </section>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Ability Analysis</span><strong>Select an ability</strong></div>
@@ -330,7 +366,8 @@
       <section class="gamesense-comp-card gamesense-map-fit">
         <div><span>Map Fit</span><strong>Tracker Network | Past two weeks</strong></div>
         <div class="gamesense-map-fit-grid">${agent.maps.slice(0, 3).map(mapName => {
-           const map = getMaps().find(item => item.label.toLowerCase() === mapName.toLowerCase());
+          const normalizedMapName = assetSlug(mapName);
+          const map = getMaps().find(item => item.id === normalizedMapName || assetSlug(item.label) === normalizedMapName);
            const winRate = agent.mapWinRates?.[mapName];
           const pickRate = agent.mapPickRates?.[mapName];
           const tagName = map ? "button" : "article";
@@ -360,6 +397,14 @@
         <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><strong class="gamesense-global-rate">Global usage ${safePercent(weapon.pickRate)}</strong><p>${escapeHtml(weapon.focus)}</p></div>
         ${renderStatChips({ Cost: `${weapon.cost} credits`, Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
+        <div class="gamesense-weapon-guidance">
+          <section><span>When to use it</span><ul>${(weapon.whenToUse || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
+          <section><span>How to use it</span><ul>${(weapon.howToUse || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
+        </div>
+        <details class="gamesense-patch-history gamesense-weapon-history">
+          <summary>Patch history</summary>
+          <ol>${(weapon.patchHistory || []).map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("")}</ol>
+        </details>
       </article>`;
   }
 
@@ -372,7 +417,6 @@
         <span class="gamesense-patch">${escapeHtml(group.examples)}</span>
         <button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button>
       </div>
-      <div class="gamesense-detail-grid gamesense-weapon-overview">${renderList("Fight Plan", group.fundamentals)}${renderList("Economy Read", group.economy)}</div>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Arsenal</span><strong>Select a weapon</strong></div>
         <div class="gamesense-weapon-grid">${weapons.map(weapon => `
@@ -501,7 +545,6 @@
     if (!root) return;
     const direction = ["forward", "backward", "replace"].includes(options.direction) ? options.direction : "none";
     const shouldAnimate = direction !== "none"
-      && document.documentElement.classList.contains("is-mobile-layout")
       && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     if (!shouldAnimate) {
       commitRender(root);
@@ -541,6 +584,7 @@
     state.role = "";
     state.detailId = "";
     state.mapView = "locations";
+    state.tipView = "attack";
     state.mapZoom = 1;
     state.compAgent = "";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
@@ -558,6 +602,7 @@
     state.role = "";
     state.detailId = "";
     state.mapView = "locations";
+    state.tipView = "attack";
     state.mapZoom = 1;
     state.compAgent = "";
     render({ direction: "backward" });
@@ -626,6 +671,7 @@
       state.role = "";
       state.detailId = "";
       state.mapView = "locations";
+      state.tipView = "attack";
       state.mapZoom = 1;
       state.compAgent = "";
       render({ direction: "forward" });
@@ -637,6 +683,7 @@
       state.role = "";
       state.detailId = "";
       state.mapView = "locations";
+      state.tipView = "attack";
       state.mapZoom = 1;
       state.compAgent = "";
       render({ direction: "forward" });
@@ -647,6 +694,12 @@
       const previousView = state.mapView;
       state.mapView = mapView.dataset.gamesenseMapView === "plants" ? "plants" : "locations";
       render({ direction: previousView === "plants" ? "backward" : "forward" });
+      return;
+    }
+    const tipView = event.target.closest?.("[data-gamesense-tip-view]");
+    if (tipView) {
+      state.tipView = ["attack", "defense", "sites", "teamplay"].includes(tipView.dataset.gamesenseTipView) ? tipView.dataset.gamesenseTipView : "attack";
+      render({ direction: "replace" });
       return;
     }
     const mapZoom = event.target.closest?.("[data-gamesense-map-zoom]");
@@ -661,15 +714,17 @@
       const selectedAgent = state.compAgent;
       const transition = render({ direction: "replace" });
       if (selectedAgent && document.documentElement.classList.contains("is-mobile-layout")) {
+        const revealSelectedAgent = () => document.querySelector(".gamesense-comp-agent-read")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        requestAnimationFrame(() => window.setTimeout(revealSelectedAgent, 60));
         Promise.resolve(transition?.finished).catch(() => {}).finally(() => {
-          window.setTimeout(() => document.querySelector(".gamesense-comp-agent-read")?.scrollIntoView({ behavior: "smooth", block: "center" }), 40);
+          window.setTimeout(revealSelectedAgent, 40);
         });
       }
       return;
     }
     const role = event.target.closest?.("[data-gamesense-role]");
     if (role) {
-      state.role = role.dataset.gamesenseRole;
+      state.role = role.dataset.gamesenseRole === "all" ? "" : role.dataset.gamesenseRole;
       render({ direction: "replace" });
       return;
     }
@@ -692,6 +747,7 @@
       state.role = "";
       state.detailId = "";
       state.mapView = "locations";
+      state.tipView = "attack";
       state.mapZoom = 1;
       state.compAgent = "";
       render({ direction: "backward" });

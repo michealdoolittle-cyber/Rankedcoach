@@ -111,19 +111,34 @@ async function run() {
     assert.ok(Math.abs(desktopControlSizes.logo - desktopControlSizes.right) <= 2 && Math.abs(desktopControlSizes.nav - desktopControlSizes.right) <= 2, JSON.stringify(desktopControlSizes));
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
+    await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
+    assert.deepEqual(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => image.src.includes("media.valorant-api.com/weapons/"))), [true, true, true]);
+    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] img[src*="weapons-dossier-v2"]').count(), 0);
+    const weaponTopicArt = await desktop.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
+      const title = card.querySelector(":scope > strong").getBoundingClientRect();
+      const images = [...card.querySelectorAll(".gamesense-topic-collage img")];
+      return { titleTop: title.top, imageBottom: Math.max(...images.map(image => image.getBoundingClientRect().bottom)), filters: images.map(image => getComputedStyle(image).filter) };
+    });
+    assert.ok(weaponTopicArt.imageBottom <= weaponTopicArt.titleTop && weaponTopicArt.filters.every(filter => filter.includes("grayscale")), JSON.stringify(weaponTopicArt));
+    await desktop.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-desktop.png") });
     assert.equal(await desktop.getByText("Reference Room", { exact: true }).count(), 0);
     assert.equal(await desktop.locator("#page-library").getByText(/Round Plan|Role Read|Gunfight Plan/).count(), 0);
     assert.equal(await desktop.locator(".gamesense-topic-card strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
+    await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
     assert.deepEqual(await desktop.locator('.gamesense-map-entry-card').allInnerTexts(), ["BIND", "BREEZE", "SPLIT"]);
     await desktop.click('[data-gamesense-item="bind"]');
-    assert.equal(await desktop.locator(".gamesense-note-block").count(), 2);
-    assert.equal(await desktop.locator(".gamesense-note-block").first().locator("li").count(), 3);
+    await desktop.locator(".gamesense-tips-hub").waitFor({ state: "visible" });
+    assert.equal(await desktop.locator(".gamesense-tips-hub").count(), 1);
+    assert.equal(await desktop.locator("[data-gamesense-tip-view]").count(), 4);
+    assert.equal(await desktop.locator("[data-gamesense-role]").count(), 5);
+    assert.equal(await desktop.locator('.gamesense-tip-grid .gamesense-tip').count(), 2);
     assert.equal(await desktop.locator(".gamesense-tactical-stage img").count(), 1);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 10);
     const bindSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
@@ -134,10 +149,12 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-map-view-tabs button").count(), 2);
     assert.equal(await desktop.locator(".gamesense-map-heading strong").evaluate(heading => getComputedStyle(heading).textAlign), "left");
     await desktop.click('[data-gamesense-map-view="plants"]');
+    await desktop.locator(".gamesense-callout.gamesense-plant-marker").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-callout.gamesense-plant-marker").count(), 5);
     assert.equal(await desktop.locator(".gamesense-plant-legend > div").count(), 5);
     assert.match(await desktop.locator(".gamesense-plant-legend").innerText(), /N\/A.*outside the active competitive rotation/is);
     await desktop.click('[data-gamesense-map-view="locations"]');
+    await desktop.locator('[data-gamesense-map-view="locations"].active').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-map-zoom="in"]');
     assert.ok(Number.parseInt(await desktop.locator("[data-gamesense-map-zoom-value]").innerText(), 10) > 100);
     const desktopMapViewport = desktop.locator("[data-gamesense-map-viewport]");
@@ -178,12 +195,14 @@ async function run() {
     });
     assert.ok(desktopScroll.scrollHeight > desktopScroll.clientHeight && desktopScroll.scrollTop > 0 && desktopScroll.overflowY === "auto", JSON.stringify(desktopScroll));
     await desktop.locator("#page-library").evaluate(page => { page.scrollTop = 0; });
-    await desktop.click(".gamesense-role-menu summary");
     await desktop.click('[data-gamesense-role="Controller"]');
-    assert.match(await desktop.locator(".gamesense-role-result").innerText(), /A Heaven|Lamps/i);
-    assert.equal(await desktop.locator(".gamesense-role-result-shell[open]").count(), 1);
-    await desktop.locator(".gamesense-role-result-shell > summary").click();
-    assert.equal(await desktop.locator(".gamesense-role-result-shell[open]").count(), 0);
+    await desktop.locator('[data-gamesense-role="Controller"].active').waitFor({ state: "visible" });
+    await desktop.click('[data-gamesense-tip-view="sites"]');
+    await desktop.locator('[data-gamesense-tip-view="sites"].active').waitFor({ state: "visible" });
+    assert.match(await desktop.locator(".gamesense-tips-panel").innerText(), /Controller lens.*A Heaven|A Heaven.*Controller lens/is);
+    assert.ok(await desktop.locator(".gamesense-tip.is-role-tip").count() >= 1);
+    await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    await desktop.locator(".gamesense-tips-hub").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-tips-desktop.png") });
     await desktop.locator(".gamesense-tactical-card").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-marked.png") });
     assert.match(await desktop.locator(".gamesense-patch").innerText(), /Patch 13\.00/i);
     assert.equal(await desktop.locator(".gamesense-lineups a").count(), 2);
@@ -196,15 +215,21 @@ async function run() {
     assert.equal(renderedText.includes("stairs"), false);
     assert.equal(renderedText.includes("use an illustrated lineup database"), false);
     assert.equal(renderedText.includes("entries in this first field guide"), false);
+    await desktop.click('[data-gamesense-role="all"]');
+    await desktop.locator('[data-gamesense-role="all"].active').waitFor({ state: "visible" });
+    await desktop.click('[data-gamesense-tip-view="defense"]');
+    await desktop.locator('[data-gamesense-tip-view="defense"].active').waitFor({ state: "visible" });
     const exactMapContent = await desktop.evaluate(() => {
       const bind = globalThis.RankedCoachGamesenseMaps.find(map => map.id === "bind");
-      const rendered = [...document.querySelectorAll(".gamesense-detail-grid > .gamesense-note-block:first-child li")].map(item => item.textContent.trim());
+      const rendered = [...document.querySelectorAll(".gamesense-tip-grid .gamesense-tip p")].map(item => item.textContent.trim());
       return { expected: bind.macro.defense, rendered };
     });
     assert.deepEqual(exactMapContent.rendered, exactMapContent.expected);
 
     await desktop.click('[data-gamesense-back="maps"]');
+    await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-item="breeze"]');
+    await desktop.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
     assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG|win rate|\d{1,3},\d{3} games/i);
@@ -219,10 +244,13 @@ async function run() {
     await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
     assert.equal(await desktop.locator(".gamesense-comp-agents img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
     await desktop.locator("[data-gamesense-comp-agent]").first().click();
+    await desktop.locator(".gamesense-comp-agent-read").waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /Clove.*smoke/is);
 
     await desktop.click('[data-gamesense-back="maps"]');
+    await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-item="split"]');
+    await desktop.locator(".gamesense-tactical-stage img").waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /split-layout-trn\.png/);
     const splitSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
     assert.ok(splitSitePositions["A Site"] > 75 && splitSitePositions["B Site"] < 20, JSON.stringify(splitSitePositions));
@@ -230,33 +258,101 @@ async function run() {
     await desktop.click('.nav-btn[data-page="stats"]');
     await desktop.click('[data-gamesense-open="agents"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
+    await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').first().waitFor({ state: "visible" });
+    await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     assert.equal(await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').count(), 6);
     assert.equal(await desktop.locator('.gamesense-agent-entry-card img').count(), 6);
+    const desktopAgentTile = await desktop.locator(".gamesense-agent-entry-card").first().evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
+      const image = card.querySelector("img").getBoundingClientRect();
+      const name = card.querySelector(".gamesense-entry-copy strong").getBoundingClientRect();
+      const hidden = [...card.querySelectorAll("small,.gamesense-entry-copy > span")].every(item => getComputedStyle(item).display === "none");
+      return { card: cardRect.toJSON(), index: index.toJSON(), image: image.toJSON(), name: name.toJSON(), hidden };
+    });
+    assert.ok(desktopAgentTile.index.left > desktopAgentTile.card.left + desktopAgentTile.card.width / 2, JSON.stringify(desktopAgentTile));
+    assert.ok(desktopAgentTile.image.left <= desktopAgentTile.card.left + 2 && desktopAgentTile.image.bottom >= desktopAgentTile.card.bottom - 2, JSON.stringify(desktopAgentTile));
+    assert.ok(desktopAgentTile.name.left > desktopAgentTile.card.left + desktopAgentTile.card.width / 2 && desktopAgentTile.hidden, JSON.stringify(desktopAgentTile));
+    await desktop.locator(".gamesense-entry-grid-agents").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-gallery-desktop.png") });
     await desktop.click('[data-gamesense-item="jett"]');
     await desktop.waitForTimeout(400);
+    const agentHeader = await desktop.locator(".gamesense-agent-detail-head").evaluate(header => {
+      const patch = header.querySelector(".gamesense-patch").getBoundingClientRect();
+      const back = header.querySelector(".gamesense-back").getBoundingClientRect();
+      return { patch: patch.toJSON(), back: back.toJSON() };
+    });
+    assert.ok(agentHeader.patch.bottom <= agentHeader.back.top + 1 && Math.abs(agentHeader.patch.right - agentHeader.back.right) <= 2, JSON.stringify(agentHeader));
+    assert.match(await desktop.locator(".gamesense-agent-hero").innerText(), /Agent Fundamentals.*Tailwind.*Agent Facts and Stats.*Global pick rate.*Buff and nerf history/is);
+    await desktop.locator(".gamesense-agent-hero").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-fundamentals-desktop.png") });
     assert.equal(await desktop.locator("[data-gamesense-ability]").count(), 4);
     assert.equal(await desktop.locator(".gamesense-ability-panel").count(), 1);
     await desktop.click('[data-gamesense-ability="cloudburst"]');
+    await desktop.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "replace");
+    await desktop.locator('[data-gamesense-ability="cloudburst"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
+    assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
+    assert.match(await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
     await desktop.waitForTimeout(2200);
     assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /10\.4%.*Tracker Network.*Past two weeks/is);
     assert.equal(await desktop.locator(".gamesense-map-fit-item").count(), 3);
     assert.match(await desktop.locator(".gamesense-map-fit-item").first().innerText(), /pick.*win/is);
+    const mapFitGeometry = await desktop.locator(".gamesense-map-fit-item").evaluateAll(cards => cards.map(card => {
+      const cardWidth = card.getBoundingClientRect().width;
+      const pillGrid = card.querySelector(":scope > div");
+      const pills = [...pillGrid.querySelectorAll(":scope > strong")].map(item => item.getBoundingClientRect().width);
+      return { tag: card.tagName, cardWidth, pills, cardJustifyItems: getComputedStyle(card).justifyItems, pillGrid: { width: pillGrid.getBoundingClientRect().width, computedWidth: getComputedStyle(pillGrid).width, justifySelf: getComputedStyle(pillGrid).justifySelf, display: getComputedStyle(pillGrid).display } };
+    }));
+    assert.equal(mapFitGeometry[0].tag, "BUTTON");
+    assert.ok(mapFitGeometry.every(card => card.pills.every(width => width >= card.cardWidth * .4)), JSON.stringify(mapFitGeometry));
+    await desktop.locator(".gamesense-map-fit").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-map-fit-desktop.png") });
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-ability.png") });
     assert.equal((await desktop.locator("#page-library").innerText()).includes("First Slice"), false);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
+    await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').first().waitFor({ state: "visible" });
+    await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 6);
     assert.ok(await desktop.locator('.gamesense-weapon-entry-card img').count() >= 15);
     assert.match(await desktop.locator('[data-gamesense-item="precision"]').innerText(), /Light Rifles/i);
+    const centeredWeaponArt = await desktop.locator('[data-gamesense-item="precision"],[data-gamesense-item="snipers"]').evaluateAll(cards => cards.map(card => {
+      const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
+      const images = [...card.querySelectorAll(".gamesense-weapon-card-art img")].map(image => image.getBoundingClientRect());
+      const groupLeft = Math.min(...images.map(image => image.left));
+      const groupRight = Math.max(...images.map(image => image.right));
+      return { count: images.length, delta: Math.abs((groupLeft + groupRight) / 2 - (art.left + art.right) / 2) };
+    }));
+    assert.deepEqual(centeredWeaponArt.map(item => item.count), [2, 3]);
+    assert.ok(centeredWeaponArt.every(item => item.delta <= 3), JSON.stringify(centeredWeaponArt));
+    await desktop.locator(".gamesense-entry-grid-weapons").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-gallery-desktop.png") });
     await desktop.click('[data-gamesense-item="rifles"]');
+    await desktop.locator(".gamesense-weapon-panel").waitFor({ state: "visible" });
     assert.equal(await desktop.locator("[data-gamesense-weapon]").count(), 2);
+    assert.equal(await desktop.getByText("Fight Plan", { exact: true }).count(), 0);
+    assert.equal(await desktop.getByText("Economy Read", { exact: true }).count(), 0);
     await desktop.click('[data-gamesense-weapon="phantom"]');
+    await desktop.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "replace");
+    await desktop.locator('[data-gamesense-weapon="phantom"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /2900 credits/i);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /21\.2%/i);
+    assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /When to use it.*How to use it.*Patch history/is);
+    assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"].active').count(), 1);
+    assert.match(await desktop.locator('[data-gamesense-weapon="phantom"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
+    await desktop.locator(".gamesense-weapon-history summary").click();
+    assert.ok(await desktop.locator(".gamesense-weapon-history li").count() >= 2);
+    await desktop.locator(".gamesense-weapon-guidance").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-guidance-desktop.png") });
+    await desktop.locator(".gamesense-weapon-history").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-history-desktop.png") });
     assert.ok(await desktop.locator(".gamesense-damage-table [role=row]").count() >= 3);
+    const contentCoverage = await desktop.evaluate(() => {
+      const reference = globalThis.RankedCoachGamesenseReference;
+      return {
+        agents: reference.agents.every(agent => agent.fundamentals.length >= 3 && agent.facts.length >= 2 && agent.patchHistory.length >= 2),
+        weapons: reference.weapons.flatMap(group => group.weapons).every(weapon => weapon.whenToUse.length >= 2 && weapon.howToUse.length >= 2 && weapon.patchHistory.length >= 1)
+      };
+    });
+    assert.deepEqual(contentCoverage, { agents: true, weapons: true });
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-detail.png") });
     await desktop.click('.nav-btn[data-page="library"]');
+    await desktop.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
     assert.equal(await desktop.locator(".lens-modal-close").count(), 0);
 
@@ -289,7 +385,16 @@ async function run() {
     await dismissWarmup(mobile);
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
     await mobile.locator("#page-library.is-current-page").waitFor({ state: "visible" });
+    await mobile.waitForTimeout(700);
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
+    await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    const mobileWeaponTopicArt = await mobile.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
+      const title = card.querySelector(":scope > strong").getBoundingClientRect();
+      const images = [...card.querySelectorAll(".gamesense-topic-collage img")].map(image => image.getBoundingClientRect());
+      return { titleTop: title.top, imageBottom: Math.max(...images.map(image => image.bottom)) };
+    });
+    assert.ok(mobileWeaponTopicArt.imageBottom <= mobileWeaponTopicArt.titleTop, JSON.stringify(mobileWeaponTopicArt));
+    await mobile.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-mobile.png") });
     const topicNumberLayout = await mobile.locator(".gamesense-topic-card").first().evaluate(card => {
       const number = card.querySelector(".gamesense-topic-number").getBoundingClientRect();
       const title = card.querySelector("strong").getBoundingClientRect();
@@ -302,10 +407,10 @@ async function run() {
     await mobile.waitForTimeout(360);
     assert.equal(await mobile.locator(".gamesense-tactical-stage img").isVisible(), true);
     assert.equal(await mobile.locator(".gamesense-callout").count(), 10);
-    assert.equal(await mobile.locator(".gamesense-map-plan").count(), 2);
-    assert.equal(await mobile.locator(".gamesense-map-plan[open]").count(), 0);
-    await mobile.locator(".gamesense-map-plan summary").first().click();
-    assert.equal(await mobile.locator(".gamesense-map-plan[open]").count(), 1);
+    assert.equal(await mobile.locator(".gamesense-tips-hub").count(), 1);
+    assert.equal(await mobile.locator("[data-gamesense-tip-view]").count(), 4);
+    assert.equal(await mobile.locator('[data-gamesense-tip-view="attack"].active').count(), 1);
+    await mobile.locator(".gamesense-tips-hub").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-tips-mobile.png") });
     const mapHeaderOrder = await mobile.locator(".gamesense-map-detail-head").evaluate(header => {
       const back = header.querySelector(".gamesense-back").getBoundingClientRect();
       const patch = header.querySelector(".gamesense-patch").getBoundingClientRect();
@@ -413,6 +518,7 @@ async function run() {
 
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents"));
     await mobile.locator(".gamesense-agent-entry-card").first().waitFor({ state: "visible" });
+    await mobile.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     const mobileAgentTile = await mobile.locator(".gamesense-agent-entry-card").first().evaluate(card => {
       const cardRect = card.getBoundingClientRect();
       const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
@@ -424,28 +530,37 @@ async function run() {
     assert.ok(mobileAgentTile.index.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2, JSON.stringify(mobileAgentTile));
     assert.ok(mobileAgentTile.image.left <= mobileAgentTile.card.left + 2 && mobileAgentTile.image.bottom >= mobileAgentTile.card.bottom - 2, JSON.stringify(mobileAgentTile));
     assert.ok(mobileAgentTile.name.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2 && mobileAgentTile.hidden, JSON.stringify(mobileAgentTile));
+    await mobile.locator(".gamesense-entry-grid-agents").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-gallery-mobile.png") });
     await mobile.locator(".gamesense-agent-entry-card").first().click();
     await mobile.locator(".gamesense-agent-rate").waitFor({ state: "visible" });
+    await mobile.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     const mobileAgentDetail = await mobile.evaluate(() => {
       const rate = document.querySelector(".gamesense-agent-rate").getBoundingClientRect();
       const art = document.querySelector(".gamesense-agent-portrait-wrap > img").getBoundingClientRect();
-      const kicker = document.querySelector(".gamesense-agent-kicker-row > span:first-child").getBoundingClientRect();
-      const active = document.querySelector(".gamesense-agent-kicker-row .gamesense-patch").getBoundingClientRect();
+      const fieldGuide = document.querySelector(".gamesense-agent-detail-head > div:first-child > span").getBoundingClientRect();
+      const active = document.querySelector(".gamesense-agent-detail-actions .gamesense-patch").getBoundingClientRect();
+      const back = document.querySelector(".gamesense-agent-detail-actions .gamesense-back").getBoundingClientRect();
       const abilityHeading = document.querySelector(".gamesense-selector-section .gamesense-section-heading strong");
-      return { gap: art.top - rate.bottom, kickerTop: kicker.top, activeTop: active.top, abilityAlign: getComputedStyle(abilityHeading).textAlign };
+      return { gap: art.top - rate.bottom, activeBottom: active.bottom, backTop: back.top, fieldGuideLeft: fieldGuide.left, activeLeft: active.left, abilityAlign: getComputedStyle(abilityHeading).textAlign };
     });
-    assert.ok(mobileAgentDetail.gap <= 12 && Math.abs(mobileAgentDetail.kickerTop - mobileAgentDetail.activeTop) <= 8 && mobileAgentDetail.abilityAlign === "left", JSON.stringify(mobileAgentDetail));
+    assert.ok(mobileAgentDetail.gap <= 12 && mobileAgentDetail.activeBottom <= mobileAgentDetail.backTop + 1 && mobileAgentDetail.fieldGuideLeft < mobileAgentDetail.activeLeft && mobileAgentDetail.abilityAlign === "left", JSON.stringify(mobileAgentDetail));
+    await mobile.locator(".gamesense-agent-detail-head").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-header-mobile.png") });
 
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
     await mobile.locator(".gamesense-weapon-entry-card").first().waitFor({ state: "visible" });
+    await mobile.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     const mobileWeaponTile = await mobile.locator(".gamesense-weapon-entry-card").first().evaluate(card => {
       const cardRect = card.getBoundingClientRect();
       const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
       const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
-      return { card: cardRect.toJSON(), index: index.toJSON(), art: art.toJSON() };
+      const images = [...card.querySelectorAll(".gamesense-weapon-card-art img")].map(image => image.getBoundingClientRect());
+      const groupLeft = Math.min(...images.map(image => image.left));
+      const groupRight = Math.max(...images.map(image => image.right));
+      return { card: cardRect.toJSON(), index: index.toJSON(), art: art.toJSON(), count: images.length, groupCenter: (groupLeft + groupRight) / 2 };
     });
     assert.ok(mobileWeaponTile.index.left > mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2, JSON.stringify(mobileWeaponTile));
-    assert.ok(Math.abs((mobileWeaponTile.art.left + mobileWeaponTile.art.width / 2) - (mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2)) <= 3, JSON.stringify(mobileWeaponTile));
+    assert.ok(mobileWeaponTile.count === 2 && Math.abs(mobileWeaponTile.groupCenter - (mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2)) <= 3, JSON.stringify(mobileWeaponTile));
+    await mobile.locator(".gamesense-entry-grid-weapons").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-gallery-mobile.png") });
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
     await mobile.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
@@ -453,7 +568,7 @@ async function run() {
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-mobile-360x740.png"), fullPage: true });
     await mobile.close();
 
-    console.log("Gamesense Library checks passed: page scrolling, bottom tactical maps, centered headings, clean topic labels, equal desktop nav sizing, visual galleries, role notes, agent abilities, weapon analysis, attribution guard, and 360x740 containment.");
+    console.log("Gamesense Library checks passed: page scrolling, bottom tactical maps, centered headings, real weapon art, equal desktop nav sizing, visual galleries, unified map tips, agent facts, weapon guidance, selected-state transitions, attribution guard, and 360x740 containment.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

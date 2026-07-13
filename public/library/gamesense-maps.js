@@ -52,15 +52,24 @@
         attack: [
           "Bind has no mid, so once you commit to a site the rotation is fully committed too — there's no cheap way to redirect mid-execute.",
           "Target whatever gap the enemy's agent picks create, rather than defaulting to the same site read every round."
-        ],
-        controllerNotes: "Smokes should deny Bind's actual fight lines: A Heaven and Lamps on A, or Defender Spawn and Elbow on B. The goal is controlling where defenders can take the next fight, not placing a generic sightline block.",
-        macroPrinciple: "Understand the conditions that make a site hit actually succeed, then deny those specific conditions on defense rather than just holding angles."
+        ]
       },
+      siteTips: [
+        { label: "A Short", text: "Clear Lamps before the spike crosses Truck; leaving it live lets one defender split the entire plant setup.", roles: ["Duelist", "Initiator"] },
+        { label: "A Bath", text: "Bath control creates the open plant and removes the safest close retake path. Hold it through the plant instead of abandoning it on entry.", roles: ["Controller", "Sentinel"] },
+        { label: "B Hookah", text: "Pair the Hookah drop with B Long pressure so defenders cannot aim at both elevations at once.", roles: ["Duelist", "Initiator"] },
+        { label: "B Long", text: "Keep Elbow and Defender Spawn cut while the spike is planted for Long; otherwise the planter is exposed before the post-plant begins.", roles: ["Controller", "Sentinel"] }
+      ],
+      teamplayTips: [
+        { label: "Teleport timing", text: "Call teleporter audio immediately and name the exit. The rotation is only useful if the destination player is ready for the next fight." },
+        { label: "Two-lane hits", text: "Pressure both entrances to a site before committing so one defender cannot hold every attacker in a single choke." },
+        { label: "Post-plant jobs", text: "Assign one player to the spike and one to the flank before chasing exits; Bind's teleporters make late routes arrive quickly." }
+      ],
       roleNotes: {
-        Duelist: ["Take first space through A Short, Bath, Hookah, or B Long after support utility lands.", "Clear Lamps and Hookah with movement or explosive utility before teammates cross the choke.", "On defense, contest one high-value lane with an escape plan instead of dry re-peeking after contact."],
-        Initiator: ["Reveal or clear Hookah, B Long, Bath, and A Short immediately before the entry moves.", "Use flashes and scans to isolate Lamps, A Heaven, Elbow, and Defender Spawn rather than covering empty space.", "Track teleporter audio so the team can rotate before the destination fight is already lost."],
-        Controller: ["For A hits, remove A Heaven and Lamps; for B hits, remove Defender Spawn and Elbow.", "One-way smokes are possible around ledges and boxes, but they are setup-dependent and should not replace the execute smokes.", "Keep one smoke or damage tool for the post-plant because Bind retakes often arrive through narrow named lanes."],
-        Sentinel: ["Place flank utility where it survives common prefire paths and still catches teleporter rotations.", "Anchor from a position that can punish Hookah drop, B Long, A Short, or Bath contact without giving a free first death.", "Change trap and camera height between gun rounds so the same clear does not solve the setup twice."]
+        Duelist: [{ category: "attack", text: "Take first space through A Short, Bath, Hookah, or B Long after support utility lands." }, { category: "sites", text: "Clear Lamps and Hookah with movement or explosive utility before teammates cross the choke." }, { category: "defense", text: "Contest one high-value lane with an escape plan instead of dry re-peeking after contact." }],
+        Initiator: [{ category: "attack", text: "Reveal or clear Hookah, B Long, Bath, and A Short immediately before the entry moves." }, { category: "sites", text: "Use flashes and scans to isolate Lamps, A Heaven, Elbow, and Defender Spawn rather than covering empty space." }, { category: "teamplay", text: "Track teleporter audio so the team can rotate before the destination fight is already lost." }],
+        Controller: [{ category: "sites", text: "For A hits, remove A Heaven and Lamps; for B hits, remove Defender Spawn and Elbow." }, { category: "teamplay", text: "One-way smokes are setup-dependent and should not replace the smokes the execute needs." }, { category: "defense", text: "Keep one smoke or damage tool for the post-plant because Bind retakes arrive through narrow named lanes." }],
+        Sentinel: [{ category: "teamplay", text: "Place flank utility where it survives common prefire paths and still catches teleporter rotations." }, { category: "defense", text: "Anchor where you can punish Hookah drop, B Long, A Short, or Bath contact without giving a free first death." }, { category: "defense", text: "Change trap and camera height between gun rounds so the same clear does not solve the setup twice." }]
       },
       metaComp: {
         agents: [],
@@ -122,15 +131,24 @@
         attack: [
           "Smoking Mid Nest removes the Operator angle that otherwise dominates that lane — a specific, repeatable utility play, not just a generic smoke.",
           "Smoking Tunnel forces defenders into a binary choice: play the tunnel more aggressively than they'd like, or fall back and give up the space."
-        ],
-        controllerNotes: "Breeze rewards deliberate, named-target smokes (Mid Nest, Tunnel) over general area denial, since the map's long sightlines make a poorly placed smoke nearly worthless.",
-        macroPrinciple: "Because Breeze's sites are far apart, mid control functions as leverage over both sites simultaneously — it's the map's actual contested resource, not either site directly."
+        ]
       },
+      siteTips: [
+        { label: "A Pyramids", text: "Split the two pyramids into separate clears. Plant only after the close side and Back Site lane have been accounted for.", roles: ["Duelist", "Initiator"] },
+        { label: "A Bridge", text: "Keep Bridge denied during the plant; its elevation watches both the site crossing and several pyramid plants.", roles: ["Controller", "Sentinel"] },
+        { label: "B Pillar", text: "Use Pillar to isolate the first defender, then clear Back Site before spreading into the open plant lanes.", roles: ["Duelist", "Initiator"] },
+        { label: "B Tunnel", text: "Tunnel control shortens the defender rotation and protects a B split, but only if the Mid player can be traded.", roles: ["Controller", "Sentinel"] }
+      ],
+      teamplayTips: [
+        { label: "Mid leverage", text: "Keep one player connected to Mid while the site group pressures Main; that threat prevents both defenders from leaning into one entrance." },
+        { label: "Long trades", text: "Breeze spacing stretches trade distance. Say who follows the first contact before crossing an open lane." },
+        { label: "Late information", text: "Save one scan, camera, or flank trap for the rotation because a wrong site read costs more time here than on compact maps." }
+      ],
       roleNotes: {
-        Duelist: ["Use movement to cross the long exposed lanes after recon or a flash removes the first angle.", "Create pressure from Mid or Hall so defenders cannot hold one site entrance with every rifle.", "Operator rounds need a planned escape route; do not repeat the same long angle after revealing the weapon."],
-        Initiator: ["Scan or drone the long sightline the duelist is about to cross, not the site after contact begins.", "Use Mid Nest, Tunnel, Back Site, and Hall as named utility targets so the team knows what is actually cleared.", "Save one information tool for the late rotation because the distance between sites makes false reads expensive."],
-        Controller: ["Viper-style walls are strongest when they split a site into a playable front half and an isolated defender half.", "Remove Mid Nest or Tunnel when taking center control; both positions can hold multiple rotation paths.", "One-way setups exist but are difficult to repeat on Breeze's open geometry; prioritize complete lane denial and fuel timing."],
-        Sentinel: ["Use flank utility to protect the long rotations, then survive so that information remains useful.", "Anchor from off-angles that force attackers to clear after crossing open ground.", "Do not stack every piece of utility on one site when Mid pressure can break the setup from behind."]
+        Duelist: [{ category: "attack", text: "Use movement to cross the long exposed lanes after recon or a flash removes the first angle." }, { category: "attack", text: "Create pressure from Mid or Hall so defenders cannot hold one site entrance with every rifle." }, { category: "defense", text: "Operator rounds need a planned escape route; do not repeat the same long angle after revealing the weapon." }],
+        Initiator: [{ category: "attack", text: "Scan or drone the long sightline the duelist is about to cross, not the site after contact begins." }, { category: "sites", text: "Use Mid Nest, Tunnel, Back Site, and Hall as named utility targets so the team knows what is actually cleared." }, { category: "teamplay", text: "Save one information tool for the late rotation because the distance between sites makes false reads expensive." }],
+        Controller: [{ category: "sites", text: "Viper-style walls are strongest when they split a site into a playable front half and an isolated defender half." }, { category: "attack", text: "Remove Mid Nest or Tunnel when taking center control; both positions can hold multiple rotation paths." }, { category: "teamplay", text: "Prioritize complete lane denial and fuel timing over difficult one-way setups on Breeze's open geometry." }],
+        Sentinel: [{ category: "teamplay", text: "Use flank utility to protect the long rotations, then survive so that information remains useful." }, { category: "defense", text: "Anchor from off-angles that force attackers to clear after crossing open ground." }, { category: "defense", text: "Do not stack every piece of utility on one site when Mid pressure can break the setup from behind." }]
       },
       metaComp: {
         agents: ["Clove", "Jett", "Sova", "Sage", "Viper"],
@@ -198,15 +216,24 @@
         attack: [
           "A and B sites are small and sit at opposite ends of the map — a slow read on which site is live costs more here than on a map with a real mid buffer.",
           "Controlling the center is often the deciding factor for both attack and defense, since it enables fast movement between points and keeps the defense guessing."
-        ],
-        controllerNotes: "Because sites are compact, smokes and mollies have outsized value per-use on Split relative to open maps — a single well-placed piece of utility can lock down a small area almost entirely.",
-        macroPrinciple: "Treat mid as the map's actual swing resource, the same way Breeze treats mid as shared leverage — Split just compresses the effect into a smaller, faster-paced map."
+        ]
       },
+      siteTips: [
+        { label: "A Site", text: "Clear A Heaven and Screens as separate jobs before settling the plant; one smoke does not confirm either space is empty.", roles: ["Duelist", "Initiator"] },
+        { label: "A Ramps", text: "Ramps control splits the defender's Heaven setup and gives the attack a safer route out of A Main.", roles: ["Controller", "Sentinel"] },
+        { label: "B Site", text: "Pair B Main pressure with Mail or B Heaven utility so the entry is not fighting both elevations at once.", roles: ["Duelist", "Initiator"] },
+        { label: "B Alley", text: "Keep the defender rotation lane blocked until the spike is secure, then shift the smoke or stall toward the retake choke.", roles: ["Controller", "Sentinel"] }
+      ],
+      teamplayTips: [
+        { label: "Mid split", text: "Treat Vents and Mail as two separate clears. The site group should wait until the Mid group can pressure the matching Heaven lane." },
+        { label: "Utility spacing", text: "Compact sites amplify utility, but stacked tools can be cleared together. Leave enough distance that one grenade cannot erase the full setup." },
+        { label: "Retake reserve", text: "Hold one flash, smoke, slow, or damage tool for the retake; Split's small sites let one late cast touch most of the fight." }
+      ],
       roleNotes: {
-        Duelist: ["Use movement or explosive utility to break the first choke at A Main, B Main, or Mid.", "Take vertical space in A Heaven, B Heaven, Vents, and Mail after support utility forces defenders off the angle.", "On defense, pressure a choke only when you can fall back before the trade arrives."],
-        Initiator: ["Narrow lanes reward flashes, stuns, and damage utility that land immediately before the swing.", "Clear A Heaven, Screens, B Heaven, Mail, and Vents as separate jobs instead of calling an entire site clear.", "Hold one piece of retake utility because Split sites are compact enough for a single well-timed cast to change the round."],
-        Controller: ["On A, remove A Heaven and Screens; on B, remove B Heaven and the defender rotation lane.", "Mid control usually needs a smoke at Mail or Vents so the team can fight one elevation at a time.", "One-way smokes are available on several ledges, but use them only when the height is consistent and teammates know the exposed lane."],
-        Sentinel: ["Trap the route that connects Mid to the site hit so defenders receive the rotation warning early.", "Compact sites reward layered stall utility, but leave enough spacing that one grenade cannot clear everything.", "Rotate setups between B Main, Mid, and A Main pressure so attackers must re-clear the map each gun round."]
+        Duelist: [{ category: "attack", text: "Use movement or explosive utility to break the first choke at A Main, B Main, or Mid." }, { category: "sites", text: "Take vertical space in A Heaven, B Heaven, Vents, and Mail after support utility forces defenders off the angle." }, { category: "defense", text: "Pressure a choke only when you can fall back before the trade arrives." }],
+        Initiator: [{ category: "attack", text: "Narrow lanes reward flashes, stuns, and damage utility that land immediately before the swing." }, { category: "sites", text: "Clear A Heaven, Screens, B Heaven, Mail, and Vents as separate jobs instead of calling an entire site clear." }, { category: "defense", text: "Hold one piece of retake utility because Split sites are compact enough for a single well-timed cast to change the round." }],
+        Controller: [{ category: "sites", text: "On A, remove A Heaven and Screens; on B, remove B Heaven and the defender rotation lane." }, { category: "attack", text: "Mid control usually needs a smoke at Mail or Vents so the team can fight one elevation at a time." }, { category: "teamplay", text: "Use ledge one-ways only when the height is consistent and teammates know the exposed lane." }],
+        Sentinel: [{ category: "teamplay", text: "Trap the route that connects Mid to the site hit so defenders receive the rotation warning early." }, { category: "defense", text: "Layer stall utility with enough spacing that one grenade cannot clear everything." }, { category: "defense", text: "Rotate setups between B Main, Mid, and A Main pressure so attackers must re-clear the map each gun round." }]
       },
       metaComp: {
         agents: ["Clove", "Raze", "Fade", "Sage", "Cypher"],
