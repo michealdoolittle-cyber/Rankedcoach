@@ -8423,6 +8423,67 @@ body.theme-readable :is(
   .stats-breakdown-cardlet > :is(.stats-data-visual,.stats-confidence-visual,.coaching-category-visual) svg{width:23px;height:23px;}
 }
 
+/* 2026-07-12 desktop/mobile interaction completion pass */
+@media (min-width:821px){
+  body[data-page-slide-direction="forward"] .page.entering{transform:translate3d(72px,0,0) scale(.992);}
+  body[data-page-slide-direction="forward"] .page.exiting{transform:translate3d(-52px,0,0) scale(.996);}
+  body[data-page-slide-direction="backward"] .page.entering{transform:translate3d(-72px,0,0) scale(.992);}
+  body[data-page-slide-direction="backward"] .page.exiting{transform:translate3d(52px,0,0) scale(.996);}
+
+  #page-insights{overflow-y:auto !important;}
+  #page-insights .insights-top-card:has(.insights-list.has-open-card){height:auto !important;min-height:330px !important;overflow:visible !important;flex:0 0 auto !important;}
+  #page-insights .insights-top-card:has(.insights-list.has-open-card) .insights-top-shell{height:auto !important;overflow:visible !important;}
+  #page-insights .insights-list.has-open-card{height:auto !important;max-height:none !important;overflow:visible !important;}
+  #page-insights .insights-list.has-open-card .insight-card.open{height:auto !important;min-height:250px !important;max-height:none !important;overflow:visible !important;flex:0 0 auto !important;}
+  #page-insights .insights-list.has-open-card .insight-card.open .insight-expand{height:auto !important;min-height:118px !important;max-height:none !important;grid-template-rows:auto auto !important;overflow:visible !important;}
+  #page-insights .insights-list.has-open-card .insight-card.open .insight-block{height:auto !important;min-height:82px !important;overflow:visible !important;}
+
+  #page-stats .stats-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+  #page-stats .stats-map-card:not(.is-empty):not(.is-locked):not(:disabled):hover,
+  #page-stats .stats-map-card:not(.is-empty):not(.is-locked):not(:disabled):focus-visible{transform:none !important;}
+}
+
+.profile-activity-day,
+.profile-activity-legend i{border-color:rgba(226,232,240,.28);box-shadow:inset 0 1px 0 rgba(255,255,255,.11);}
+.profile-activity-day.level-1,.profile-activity-legend i.level-1{background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 24%,#0f172a),color-mix(in srgb,var(--accent,#ff4655) 36%,#020617));}
+.profile-activity-day.level-2,.profile-activity-legend i.level-2{background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 44%,#172033),color-mix(in srgb,var(--accent,#ff4655) 58%,#020617));}
+.profile-activity-day.level-3,.profile-activity-legend i.level-3{background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 68%,#fff 6%),color-mix(in srgb,var(--accent,#ff4655) 80%,#020617));}
+.profile-activity-day.level-4,.profile-activity-legend i.level-4{background:linear-gradient(145deg,color-mix(in srgb,var(--accent,#ff4655) 88%,#fff 22%),var(--accent,#ff4655));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 0 10px color-mix(in srgb,var(--accent,#ff4655) 52%,transparent);}
+
+#page-insights .trend-signal-media.has-icon{display:grid !important;place-items:center !important;opacity:1 !important;visibility:visible !important;}
+#page-insights .trend-signal-media.has-icon .trend-signal-icon{display:grid;width:100%;height:100%;place-items:center;}
+#page-insights .trend-signal-media.has-icon svg{display:block;width:72%;height:72%;fill:none;stroke:currentColor;stroke-width:1.8;}
+
+.lens-modal-close{display:none !important;}
+:is(.lens-modal-overlay,.agent-modal){--rc-modal-motion-ms:320ms;}
+.lens-modal-overlay > .lens-modal,
+.agent-modal .agent-modal-inner{transform:translate3d(0,38px,0) scale(.975) !important;transition:opacity 240ms ease,transform var(--rc-modal-motion-ms) cubic-bezier(.2,.84,.24,1) !important;}
+.lens-modal-overlay.active > .lens-modal,
+.agent-modal.active .agent-modal-inner{transform:translate3d(0,0,0) scale(1) !important;}
+.lens-modal-overlay.is-closing > .lens-modal,
+.agent-modal.is-closing .agent-modal-inner{opacity:0 !important;transform:translate3d(0,72px,0) scale(.975) !important;}
+
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(.app-boot-overlay) > .lens-modal{
+    width:calc(100vw - 16px) !important;
+    max-width:calc(100vw - 16px) !important;
+    height:auto !important;
+    max-height:calc(100dvh - 16px) !important;
+    margin:8px !important;
+    overflow:auto !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #dailyWarmupModal > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal > .lens-modal{
+    height:calc(100dvh - 16px) !important;
+    min-height:0 !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce){
+  body[data-page-slide-direction] .page.entering,
+  body[data-page-slide-direction] .page.exiting{transform:none !important;}
+}
+
 .theme-card-head{
   display:flex;
   align-items:flex-start;
@@ -53921,4 +53982,34 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .stats-act-mobile-option
     letter-spacing:.08em;
     text-transform:uppercase;
   }
+}
+
+/* Final cascade lock for shared interaction behavior. */
+@media (min-width:821px){
+  body[data-page-slide-direction="forward"] .page.entering{transform:translate3d(72px,0,0) scale(.992) !important;}
+  body[data-page-slide-direction="forward"] .page.exiting{transform:translate3d(-52px,0,0) scale(.996) !important;}
+  body[data-page-slide-direction="backward"] .page.entering{transform:translate3d(-72px,0,0) scale(.992) !important;}
+  body[data-page-slide-direction="backward"] .page.exiting{transform:translate3d(52px,0,0) scale(.996) !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card:not(.is-empty):not(.is-locked):not(:disabled):hover,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card:not(.is-empty):not(.is-locked):not(:disabled):focus-visible{transform:none !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights{overflow-y:auto !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){height:auto !important;min-height:330px !important;overflow:visible !important;flex:0 0 auto !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card{height:auto !important;max-height:none !important;overflow:visible !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{height:auto !important;min-height:250px !important;max-height:none !important;overflow:visible !important;flex:0 0 auto !important;}
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand{height:auto !important;min-height:118px !important;max-height:none !important;grid-template-rows:auto auto !important;overflow:visible !important;}
+}
+
+html body .lens-modal-close{display:none !important;}
+html body .lens-modal-overlay > .lens-modal,
+html body .agent-modal .agent-modal-inner{transform:translate3d(0,38px,0) scale(.975) !important;transition:opacity 240ms ease,transform 320ms cubic-bezier(.2,.84,.24,1) !important;}
+html body .lens-modal-overlay.active > .lens-modal,
+html body .agent-modal.active .agent-modal-inner{transform:translate3d(0,0,0) scale(1) !important;}
+html body .lens-modal-overlay.is-closing > .lens-modal,
+html body .agent-modal.is-closing .agent-modal-inner{opacity:0 !important;transform:translate3d(0,72px,0) scale(.975) !important;}
+
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout .lens-modal-overlay:not(.app-boot-overlay) > .lens-modal{width:calc(100vw - 16px) !important;max-width:calc(100vw - 16px) !important;max-height:calc(100dvh - 16px) !important;margin:8px !important;overflow:auto !important;}
+  html.is-mobile-layout body.is-mobile-layout #dailyWarmupModal > .lens-modal,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal > .lens-modal{height:calc(100dvh - 16px) !important;min-height:0 !important;}
 }

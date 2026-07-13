@@ -112,7 +112,8 @@ async function run() {
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
-    assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Season 2026 Act 4.*Patch 13\.00/is);
+    assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
+    assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
     assert.equal(await desktop.locator("#page-library").getByText(/Round Plan|Role Read|Gunfight Plan/).count(), 0);
     assert.equal(await desktop.locator(".gamesense-topic-card strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
@@ -123,16 +124,46 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-note-block").first().locator("li").count(), 3);
     assert.equal(await desktop.locator(".gamesense-tactical-stage img").count(), 1);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 10);
+    const bindSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
+    assert.ok(bindSitePositions["A Site"] > 65 && bindSitePositions["B Site"] < 40, JSON.stringify(bindSitePositions));
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 0);
     assert.match(await desktop.locator(".gamesense-comp-unavailable").innerText(), /outside.*competitive rotation.*no current/is);
     assert.equal(await desktop.locator(".gamesense-role-result").count(), 0);
     assert.equal(await desktop.locator(".gamesense-map-view-tabs button").count(), 2);
     assert.equal(await desktop.locator(".gamesense-map-heading strong").evaluate(heading => getComputedStyle(heading).textAlign), "left");
     await desktop.click('[data-gamesense-map-view="plants"]');
-    assert.equal(await desktop.locator(".gamesense-callout.gamesense-plant-marker").count(), 4);
+    assert.equal(await desktop.locator(".gamesense-callout.gamesense-plant-marker").count(), 5);
+    assert.equal(await desktop.locator(".gamesense-plant-legend > div").count(), 5);
+    assert.match(await desktop.locator(".gamesense-plant-legend").innerText(), /N\/A.*outside the active competitive rotation/is);
     await desktop.click('[data-gamesense-map-view="locations"]');
     await desktop.click('[data-gamesense-map-zoom="in"]');
     assert.ok(Number.parseInt(await desktop.locator("[data-gamesense-map-zoom-value]").innerText(), 10) > 100);
+    const desktopMapViewport = desktop.locator("[data-gamesense-map-viewport]");
+    const desktopMapBox = await desktopMapViewport.boundingBox();
+    await desktop.mouse.move(desktopMapBox.x + desktopMapBox.width * .62, desktopMapBox.y + desktopMapBox.height * .5);
+    await desktop.mouse.down();
+    await desktop.mouse.move(desktopMapBox.x + desktopMapBox.width * .42, desktopMapBox.y + desktopMapBox.height * .5, { steps: 5 });
+    await desktop.mouse.up();
+    assert.ok(await desktopMapViewport.evaluate(viewport => viewport.scrollLeft > 0));
+    await desktop.click('[data-gamesense-map-zoom="reset"]');
+    await desktop.waitForTimeout(100);
+    const desktopFit = await desktopMapViewport.evaluate(viewport => {
+      const stage = viewport.querySelector("[data-gamesense-map-stage]");
+      const viewportRect = viewport.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      return {
+        scrollLeft: viewport.scrollLeft,
+        scrollTop: viewport.scrollTop,
+        scrollWidth: viewport.scrollWidth,
+        clientWidth: viewport.clientWidth,
+        stageTop: stageRect.top,
+        stageBottom: stageRect.bottom,
+        viewportTop: viewportRect.top,
+        viewportBottom: viewportRect.bottom
+      };
+    });
+    assert.ok(desktopFit.scrollWidth <= desktopFit.clientWidth + 1 && desktopFit.scrollLeft === 0 && desktopFit.scrollTop === 0, JSON.stringify(desktopFit));
+    assert.ok(desktopFit.stageTop >= desktopFit.viewportTop - 1 && desktopFit.stageBottom <= desktopFit.viewportBottom + 1, JSON.stringify(desktopFit));
     const desktopMapOrder = await desktop.evaluate(() => {
       const detail = document.querySelector(".gamesense-detail-grid");
       const map = document.querySelector(".gamesense-tactical-card");
@@ -172,6 +203,8 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
     assert.match(await desktop.locator(".gamesense-comp-option").first().innerText(), /56\.9%.*4,639 games/is);
+    await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
+    assert.equal(await desktop.locator(".gamesense-comp-agents img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
     await desktop.locator("[data-gamesense-comp-agent]").first().click();
     assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /B.*stronger.*defensive success/is);
 
@@ -181,13 +214,15 @@ async function run() {
     assert.equal(await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').count(), 6);
     assert.equal(await desktop.locator('.gamesense-agent-entry-card img').count(), 6);
     await desktop.click('[data-gamesense-item="jett"]');
+    await desktop.waitForTimeout(400);
     assert.equal(await desktop.locator("[data-gamesense-ability]").count(), 4);
     assert.equal(await desktop.locator(".gamesense-ability-panel").count(), 1);
     await desktop.click('[data-gamesense-ability="cloudburst"]');
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
     await desktop.waitForTimeout(2200);
     assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /29\.6%.*(?:↓|down).*0\.1/is);
-    assert.ok(await desktop.locator(".gamesense-map-fit img").count() >= 1);
+    assert.equal(await desktop.locator(".gamesense-map-fit-item").count(), 3);
+    assert.match(await desktop.locator(".gamesense-map-fit-item").first().innerText(), /pick.*win/is);
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-ability.png") });
     assert.equal((await desktop.locator("#page-library").innerText()).includes("First Slice"), false);
 
@@ -204,6 +239,7 @@ async function run() {
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-detail.png") });
     await desktop.click('.nav-btn[data-page="library"]');
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
+    assert.equal(await desktop.locator(".lens-modal-close").count(), 0);
 
     await desktop.click('.nav-btn[data-page="logging"]');
     await desktop.click("#loggingTrainingMenuBtn");
@@ -239,6 +275,32 @@ async function run() {
     await mobile.click('[data-gamesense-item="bind"]');
     assert.equal(await mobile.locator(".gamesense-tactical-stage img").isVisible(), true);
     assert.equal(await mobile.locator(".gamesense-callout").count(), 10);
+    assert.equal(await mobile.locator(".gamesense-map-plan").count(), 2);
+    assert.equal(await mobile.locator(".gamesense-map-plan[open]").count(), 0);
+    await mobile.locator(".gamesense-map-plan summary").first().click();
+    assert.equal(await mobile.locator(".gamesense-map-plan[open]").count(), 1);
+    await mobile.locator('[data-gamesense-map-zoom="in"]').click();
+    const zoomState = await mobile.locator("[data-gamesense-map-viewport]").evaluate(viewport => ({
+      zoom: getComputedStyle(viewport.querySelector("[data-gamesense-map-stage]")).getPropertyValue("--map-zoom"),
+      mapWidth: getComputedStyle(viewport.querySelector("[data-gamesense-map-stage]")).getPropertyValue("--map-width"),
+      stageWidth: getComputedStyle(viewport.querySelector("[data-gamesense-map-stage]")).width,
+      inline: viewport.querySelector("[data-gamesense-map-stage]").getAttribute("style"),
+      scrollWidth: viewport.scrollWidth,
+      clientWidth: viewport.clientWidth
+    }));
+    assert.ok(Number.parseFloat(zoomState.zoom) > 1 && zoomState.scrollWidth > zoomState.clientWidth, JSON.stringify(zoomState));
+    const viewportBox = await mobile.locator("[data-gamesense-map-viewport]").boundingBox();
+    const mobilePan = await mobile.locator("[data-gamesense-map-viewport]").evaluate((viewport, box) => {
+      const startX = box.x + box.width * .7;
+      const startY = box.y + box.height * .45;
+      viewport.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 41, pointerType: "touch", clientX: startX, clientY: startY }));
+      viewport.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 41, pointerType: "touch", clientX: startX - 70, clientY: startY }));
+      viewport.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 41, pointerType: "touch", clientX: startX - 70, clientY: startY }));
+      return viewport.scrollLeft;
+    }, viewportBox);
+    assert.ok(mobilePan > 0, `expected touch pan to move the map, received ${mobilePan}`);
+    await mobile.locator('[data-gamesense-map-view="plants"]').click();
+    assert.equal(await mobile.locator(".gamesense-plant-legend").isVisible(), true);
     const mobileMapOrder = await mobile.evaluate(() => {
       const detail = document.querySelector(".gamesense-detail-grid");
       const map = document.querySelector(".gamesense-tactical-card");
@@ -261,7 +323,7 @@ async function run() {
       };
     });
     assert.ok(mobileScroll.scrollHeight > mobileScroll.clientHeight && mobileScroll.scrollTop > 0 && mobileScroll.overflowY === "auto", JSON.stringify(mobileScroll));
-    assert.equal(mobileScroll.tacticalOverflowY, "hidden", JSON.stringify(mobileScroll));
+    assert.equal(mobileScroll.tacticalOverflowY, "auto", JSON.stringify(mobileScroll));
     await mobile.evaluate(() => {
       [document.documentElement, document.body, document.querySelector(".app-scale-wrap"), document.querySelector(".app-root"), document.querySelector(".app")].filter(Boolean).forEach(element => { element.scrollTop = 0; });
     });
@@ -272,6 +334,8 @@ async function run() {
     assert.equal(mobileMetrics.overflow, false, JSON.stringify(mobileMetrics));
     assert.ok(mobileMetrics.labels.every(label => label.height >= 44 && label.width > 0 && label.whiteSpace === "nowrap"), JSON.stringify(mobileMetrics));
     assert.equal(new Set(mobileMetrics.labels.map(label => Math.round(label.top))).size, 1, JSON.stringify(mobileMetrics));
+    await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
+    assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
     await mobile.waitForTimeout(3000);
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-mobile-360x740.png"), fullPage: true });
     await mobile.close();

@@ -117,8 +117,12 @@ async function run() {
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
     assert.match(await page.locator(".chart-axis-title").textContent(), /Matches across all-time rank history/i);
-    const lifetimeAxisLabels = await page.locator("#chartRow text").allTextContents();
-    assert.ok(lifetimeAxisLabels.some(label => /Diamond/i.test(label)), JSON.stringify(lifetimeAxisLabels));
+    const lifetimeRankIcons = await page.locator("#chartRow .chart-rank-axis-icon").evaluateAll(groups => groups.map(group => ({
+      label: group.getAttribute("aria-label"),
+      href: group.querySelector("image")?.getAttribute("href") || ""
+    })));
+    assert.ok(lifetimeRankIcons.length >= 3, JSON.stringify(lifetimeRankIcons));
+    assert.ok(lifetimeRankIcons.some(icon => /Diamond/i.test(icon.label) && icon.href), JSON.stringify(lifetimeRankIcons));
 
     const chartGeometry = await page.locator(".rr-chart-card").evaluate(card => {
       const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
@@ -148,6 +152,12 @@ async function run() {
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-chart-spacing.png"), fullPage: true });
 
     await page.locator('[data-page="stats"]').click();
+    const desktopPageMotion = await page.evaluate(() => ({
+      direction: document.body.dataset.pageSlideDirection,
+      outgoing: document.getElementById("page-home")?.classList.contains("exiting"),
+      incoming: document.getElementById("page-stats")?.classList.contains("active")
+    }));
+    assert.deepEqual(desktopPageMotion, { direction: "forward", outgoing: true, incoming: true });
     await page.waitForTimeout(250);
     assert.equal(await page.locator("#statFirstBloods").count(), 1);
     assert.equal(await page.locator("#statDamagePerRound").count(), 1);
@@ -156,6 +166,19 @@ async function run() {
       visuals: container.querySelectorAll(".stats-data-visual,.stats-confidence-visual,.coaching-category-visual").length
     }));
     assert.ok(breakdownVisuals.cards > 0 && breakdownVisuals.visuals === breakdownVisuals.cards, JSON.stringify(breakdownVisuals));
+    const summaryGrid = await page.locator("#page-stats .stats-summary-grid").evaluate(grid => ({
+      columns: getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length,
+      rows: new Set([...grid.children].map(child => Math.round(child.getBoundingClientRect().top))).size,
+      items: grid.children.length
+    }));
+    assert.equal(summaryGrid.columns, 3, JSON.stringify(summaryGrid));
+    assert.equal(summaryGrid.rows, 2, JSON.stringify(summaryGrid));
+    assert.equal(summaryGrid.items, 6, JSON.stringify(summaryGrid));
+    const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
+    if (await mapStatCard.count()) {
+      await mapStatCard.hover();
+      assert.equal(await mapStatCard.evaluate(card => getComputedStyle(card).transform), "none");
+    }
     const proofContainment = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
       const parent = card.getBoundingClientRect();
       return [".stats-proof-card-head", ".stats-history-boundary-note", ".stats-proof-rank-row", ".stats-proof-note"].map(selector => {
@@ -192,16 +215,60 @@ async function run() {
       cards: container.querySelectorAll(".insight-card:not(.insight-empty)").length,
       visuals: container.querySelectorAll(".insight-card:not(.insight-empty) .coaching-category-visual").length
     }));
+    assert.ok(insightVisuals.cards > 0, JSON.stringify(insightVisuals));
     assert.equal(insightVisuals.visuals, insightVisuals.cards, JSON.stringify(insightVisuals));
+    const firstInsight = page.locator("#insightsList .insight-card:not(.insight-empty)").first();
+    await firstInsight.click();
+    await page.waitForTimeout(350);
+    const expandedInsight = await firstInsight.evaluate(card => {
+      const host = card.closest(".insights-top-card");
+      const expand = card.querySelector(".insight-expand");
+      const cardRect = card.getBoundingClientRect();
+      const hostRect = host.getBoundingClientRect();
+      return {
+        open: card.classList.contains("open"),
+        cardBottom: cardRect.bottom,
+        hostBottom: hostRect.bottom,
+        expandClientHeight: expand.clientHeight,
+        expandScrollHeight: expand.scrollHeight,
+        overflow: getComputedStyle(card).overflow
+      };
+    });
+    assert.ok(expandedInsight.open && expandedInsight.cardBottom <= expandedInsight.hostBottom + 1, JSON.stringify(expandedInsight));
+    assert.ok(expandedInsight.expandScrollHeight <= expandedInsight.expandClientHeight + 1, JSON.stringify(expandedInsight));
+    const trendMedia = await page.locator("#page-insights .trend-signal-media").evaluateAll(items => items.map(item => ({
+      visible: item.getBoundingClientRect().width > 0 && item.getBoundingClientRect().height > 0,
+      populated: Boolean(item.querySelector("img,svg,.trend-signal-media-label"))
+    })));
+    assert.ok(trendMedia.length > 0 && trendMedia.every(item => item.populated), JSON.stringify(trendMedia));
+    assert.ok(trendMedia.some(item => item.visible), JSON.stringify(trendMedia));
     const filterState = await page.locator(".insight-filter-btn").evaluateAll(buttons => buttons.map(button => ({ filter: button.dataset.filter, disabled: button.disabled })));
     assert.equal(filterState.find(item => item.filter === "all")?.disabled, false);
     assert.ok(filterState.some(item => item.filter !== "all" && item.disabled), JSON.stringify(filterState));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-insight-filters.png"), fullPage: true });
 
+    await page.locator("#profileDropdownToggle").click();
+    await page.locator("#pdAccountSupportBtn").click();
+    await page.locator("#accountSupportModal.active").waitFor({ state: "visible" });
+    assert.equal(await page.locator("#accountSupportModal .lens-modal-close").count(), 0);
+    const modalMotion = await page.locator("#accountSupportModal > .lens-modal").evaluate(modal => ({
+      duration: getComputedStyle(modal).transitionDuration,
+      property: getComputedStyle(modal).transitionProperty
+    }));
+    assert.match(modalMotion.duration, /0\.32s|320ms/);
+    assert.match(modalMotion.property, /transform/);
+    await page.locator("#accountSupportModal").click({ position: { x: 2, y: 2 } });
+    assert.equal(await page.locator("#accountSupportModal").evaluate(modal => modal.classList.contains("is-closing")), true);
+    await page.waitForFunction(() => document.getElementById("accountSupportModal")?.getAttribute("aria-hidden") === "true");
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
     await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.locator('.mobile-bottom-page-btn[data-mobile-page="stats"]').click();
+    await page.waitForFunction(() => document.getElementById("page-stats")?.getAnimations().some(animation => animation.id === "rankedcoach-page-button-slide"));
+    await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
+    await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
     const mobileLifetimeGeometry = await page.locator(".rr-chart-card").evaluate(card => {
@@ -210,7 +277,7 @@ async function run() {
       const legend = card.querySelector(".chart-axis-legend").getBoundingClientRect();
       const controls = card.querySelector(".graph-controls, .graph-buttons, .rr-graph-controls") || card.querySelector('.graph-btn[data-size="5"]')?.parentElement;
       const controlsRect = controls.getBoundingClientRect();
-      const rankLabels = [...card.querySelectorAll(".chart-rank-axis-label")].map(label => label.getBoundingClientRect());
+      const rankLabels = [...card.querySelectorAll(".chart-rank-axis-icon image")].map(label => label.getBoundingClientRect());
       return {
         cardLeft: cardRect.left,
         cardRight: cardRect.right,

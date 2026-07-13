@@ -17,22 +17,30 @@
       cardImage: "/assets/library/maps/bind-card.png",
       layoutImage: "/assets/library/maps/bind-layout.png",
       callouts: [
-        { label: "A Site", x: 27, y: 28 },
-        { label: "A Bath", x: 14, y: 43 },
-        { label: "A Short", x: 39, y: 53 },
-        { label: "Lamps", x: 40, y: 42 },
-        { label: "A Heaven", x: 31, y: 19 },
-        { label: "B Site", x: 72, y: 29 },
-        { label: "B Long", x: 91, y: 49 },
-        { label: "Hookah", x: 67, y: 45 },
-        { label: "Elbow", x: 82, y: 39 },
-        { label: "Garden", x: 82, y: 54 }
+        { label: "A Site", x: 73.4, y: 33.3 },
+        { label: "A Bath", x: 83.9, y: 43.0 },
+        { label: "A Short", x: 62.4, y: 49.7 },
+        { label: "A Lamps", x: 58.2, y: 33.9 },
+        { label: "A Tower", x: 72.8, y: 20.8 },
+        { label: "B Site", x: 29.2, y: 31.2 },
+        { label: "B Long", x: 19.3, y: 51.5 },
+        { label: "B Window", x: 32.3, y: 44.7 },
+        { label: "B Elbow", x: 15.8, y: 30.6 },
+        { label: "B Garden", x: 24.7, y: 42.8 }
       ],
       plantSpots: [
-        { label: "A Default", x: 29, y: 31 },
-        { label: "A Triple", x: 34, y: 27 },
-        { label: "B Default", x: 72, y: 31 },
-        { label: "B Open", x: 77, y: 27 }
+        { number: 1, site: "A", label: "A Truck Default", rate: null, x: 75.6, y: 34.5 },
+        { number: 2, site: "A", label: "A Open Plant", rate: null, x: 68.5, y: 35.7 },
+        { number: 1, site: "B", label: "B Default", rate: null, x: 31.4, y: 31.3 },
+        { number: 2, site: "B", label: "B Long Plant", rate: null, x: 26.7, y: 31.3 },
+        { number: 3, site: "B", label: "B Window Plant", rate: null, x: 29.1, y: 32.4 }
+      ],
+      plantRateNote: "Bind is outside the active competitive rotation, so no active-season PC plant-rate sample is available.",
+      weaponSuggestions: [
+        { weapon: "Phantom", fit: "Strong", locations: "Hookah, Lamps, Bath", note: "Compact chokes and frequent smoke fights reward the Phantom's close-range control." },
+        { weapon: "Vandal", fit: "Strong", locations: "B Long, A Short, A Tower", note: "Use the Vandal when your round plan keeps you on Bind's longer first-fight lanes." },
+        { weapon: "Operator", fit: "Viable", locations: "B Long, A Tower, A Short", note: "Long lanes create early picks, but the lack of mid makes a missed read expensive. Pair it with an escape tool or a planned teleporter rotation." },
+        { weapon: "Judge / Spectre", fit: "Niche", locations: "Hookah, Lamps, Bath", note: "High value in tight pockets, but weak once the fight spills into open site or a long retake lane." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
@@ -81,21 +89,31 @@
       cardImage: "/assets/library/maps/breeze-card.png",
       layoutImage: "/assets/library/maps/breeze-layout.png",
       callouts: [
-        { label: "A Site", x: 25, y: 29 },
-        { label: "A Main", x: 18, y: 50 },
-        { label: "A Hall", x: 10, y: 31 },
-        { label: "Mid Nest", x: 49, y: 35 },
-        { label: "Mid Doors", x: 47, y: 53 },
-        { label: "Tunnel", x: 61, y: 49 },
-        { label: "B Site", x: 77, y: 29 },
-        { label: "B Main", x: 83, y: 51 },
-        { label: "Back Site", x: 82, y: 20 }
+        { label: "A Site", x: 90.8, y: 49.5 },
+        { label: "A Lobby", x: 70.3, y: 92.1 },
+        { label: "Mid Hall", x: 63.9, y: 53.5 },
+        { label: "Mid Nest", x: 48.4, y: 22.8 },
+        { label: "Mid Wood Doors", x: 64.4, y: 49.5 },
+        { label: "B Tunnel", x: 36.4, y: 38.2 },
+        { label: "B Site", x: 7.0, y: 38.2 },
+        { label: "B Main", x: 15.4, y: 58.5 },
+        { label: "B Back", x: 6.8, y: 30.5 }
       ],
       plantSpots: [
-        { label: "A Default", x: 25, y: 31 },
-        { label: "A Pyramids", x: 31, y: 27 },
-        { label: "B Default", x: 77, y: 31 },
-        { label: "B Open", x: 71, y: 27 }
+        { number: 1, site: "A", label: "A Pyramid Default", rate: 44.15, x: 91.4, y: 47.8 },
+        { number: 2, site: "A", label: "A Open Pyramid", rate: 13.00, x: 81.7, y: 47.8 },
+        { number: 3, site: "A", label: "A Deep Pyramid", rate: 20.30, x: 93.7, y: 47.8 },
+        { number: 4, site: "A", label: "A Safe Pyramid", rate: 7.44, x: 84.7, y: 47.8 },
+        { number: 1, site: "B", label: "B Pillar Default", rate: 83.61, x: 14.0, y: 31.6 },
+        { number: 2, site: "B", label: "B Open Plant", rate: 0.71, x: 17.1, y: 30.5 },
+        { number: 3, site: "B", label: "B Back Plant", rate: 1.51, x: 10.6, y: 31.9 }
+      ],
+      plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
+      weaponSuggestions: [
+        { weapon: "Vandal", fit: "Best rifle fit", locations: "A Main, B Main, Mid", note: "Breeze's long sightlines reward clean one-tap range and punish close-range damage falloff." },
+        { weapon: "Operator", fit: "Highly viable", locations: "A Main, B Main, Mid Nest", note: "The map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after first contact." },
+        { weapon: "Guardian / Outlaw", fit: "Viable", locations: "Mid, Hall, B Main", note: "Both can pressure long lanes for less than a full Operator buy when your team can protect the reset." },
+        { weapon: "Stinger / Judge", fit: "Very niche", locations: "Tunnel and close Hall pockets", note: "Use only with a deliberate close-range setup; most Breeze fights expose their range limit." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
@@ -149,22 +167,30 @@
       cardImage: "/assets/library/maps/split-card.png",
       layoutImage: "/assets/library/maps/split-layout.png",
       callouts: [
-        { label: "A Site", x: 27, y: 25 },
-        { label: "A Main", x: 18, y: 48 },
-        { label: "A Heaven", x: 34, y: 34 },
-        { label: "Screens", x: 17, y: 30 },
-        { label: "Mid", x: 50, y: 50 },
-        { label: "Vents", x: 42, y: 41 },
-        { label: "Mail", x: 60, y: 42 },
-        { label: "B Heaven", x: 68, y: 34 },
-        { label: "B Site", x: 76, y: 25 },
-        { label: "B Main", x: 82, y: 49 }
+        { label: "A Site", x: 31.5, y: 18.4 },
+        { label: "A Main", x: 49.2, y: 20.8 },
+        { label: "A Rafters", x: 35.4, y: 27.4 },
+        { label: "A Screens", x: 15.0, y: 25.7 },
+        { label: "Mid Bottom", x: 61.6, y: 54.8 },
+        { label: "Mid Vent", x: 42.6, y: 45.1 },
+        { label: "Mid Mail", x: 46.7, y: 60.7 },
+        { label: "B Tower", x: 43.0, y: 68.4 },
+        { label: "B Site", x: 35.4, y: 86.7 },
+        { label: "B Garage", x: 54.2, y: 86.8 }
       ],
       plantSpots: [
-        { label: "A Default", x: 27, y: 28 },
-        { label: "A Screens", x: 22, y: 24 },
-        { label: "B Default", x: 76, y: 28 },
-        { label: "B Safe", x: 71, y: 24 }
+        { number: 1, site: "A", label: "A Default", rate: 15.39, x: 29.6, y: 15.7 },
+        { number: 2, site: "A", label: "A Screens Plant", rate: 4.83, x: 25.4, y: 6.4 },
+        { number: 3, site: "A", label: "A Open Plant", rate: 18.58, x: 33.8, y: 7.4 },
+        { number: 1, site: "B", label: "B Open Plant", rate: 26.94, x: 29.6, y: 88.9 },
+        { number: 2, site: "B", label: "B Default", rate: 53.76, x: 34.4, y: 87.7 }
+      ],
+      plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
+      weaponSuggestions: [
+        { weapon: "Phantom", fit: "Best rifle fit", locations: "A Main, B Main, Vents, Mail", note: "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control." },
+        { weapon: "Vandal", fit: "Strong", locations: "A Ramps, Mid, B Main", note: "Choose it when your plan emphasizes the map's longer approach lanes rather than the site pockets." },
+        { weapon: "Operator", fit: "Viable", locations: "A Ramps, B Main, Mid", note: "Strong for an opening pick, but tight rotations make a missed shot dangerous without an escape path." },
+        { weapon: "Judge / Spectre", fit: "High-value niche", locations: "B Tower, Vents, A Main", note: "Compact corners can force close fights, but do not carry the setup into open Mid without utility support." }
       ],
       macro: {
         _researchNote: "internal only, do not render",

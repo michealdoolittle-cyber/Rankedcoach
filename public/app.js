@@ -1132,6 +1132,7 @@ function isMobileLayoutViewport() {
 
 function getActivePageElement() {
   return document.querySelector(".page.is-current-page")
+    || document.querySelector(".page.active:not(.exiting):not(.is-mobile-swipe-preview)")
     || document.querySelector(".page.active:not(.is-mobile-swipe-preview)")
     || document.querySelector(".page.active");
 }
@@ -1493,6 +1494,10 @@ function ensureMobileBottomShell() {
     if (!pageButton) return;
     closeAllMobileOverlays();
     const pageId = pageButton.dataset.mobilePage;
+    if (pageId === "library" && getActivePageElement()?.id === "page-library") {
+      globalThis.RankedCoachGamesenseLibrary?.reset?.();
+      return;
+    }
     if (getActivePageElement()?.id !== `page-${pageId}`) {
       activatePage(pageId, { mobileNavHandoff: true });
     }
@@ -10525,7 +10530,10 @@ function getTrendSignalIconMarkup(item = {}) {
     icon = getTrendSignalSvgIcon(iconKind, tone);
   }
 
-  if (!icon) return "";
+  if (!icon) {
+    iconKind = "general";
+    icon = getTrendSignalSvgIcon(iconKind, item?.tone);
+  }
   return `
     <div class="trend-signal-media has-icon" data-icon-kind="${escapeHtml(iconKind)}">
       <span class="trend-signal-icon" aria-hidden="true">${icon}</span>
@@ -11967,7 +11975,6 @@ function ensureManualSessionStartModal() {
           <div class="lens-modal-kicker">Manual Entry Session</div>
           <div id="manualSessionStartTitle" class="lens-modal-title">Set today's starting RR</div>
         </div>
-        <button id="manualSessionStartClose" class="lens-modal-close" type="button">X</button>
       </div>
       <div class="manual-session-start-copy">
         Enter your RR inside your current rank before the first manual match of the day. RankedCoach uses this to keep RR to next rank and RR to goal rank accurate.
@@ -13474,7 +13481,6 @@ function ensureGuestTutorialShells() {
         <div class="lens-modal guest-tutorial-choice-card">
           <div class="lens-modal-header">
             <div class="lens-modal-title">Guest Tutorial</div>
-            <button id="guestTutorialCancelBtn" class="lens-modal-close" type="button">X</button>
           </div>
           <div class="lens-modal-body guest-tutorial-choice-body">
             <div class="guest-tutorial-choice-kicker">RankedCoach Guest Mode</div>
@@ -13516,7 +13522,6 @@ function ensureGuestTutorialShells() {
         <div class="lens-modal guest-tutorial-choice-card guest-tutorial-complete-card">
           <div class="lens-modal-header">
             <div class="lens-modal-title">Tutorial Complete</div>
-            <button id="guestTutorialCompleteClose" class="lens-modal-close" type="button">X</button>
           </div>
           <div class="lens-modal-body guest-tutorial-choice-body">
             <div class="guest-tutorial-choice-kicker">Nice work</div>
@@ -16364,9 +16369,14 @@ function buildLifetimeRankYTicks(bounds, y) {
     const rank = RANK_THRESHOLDS[index];
     const value = safeNumber(rank?.min);
     const yy = y(value);
+    const iconSize = isMobileLayoutViewport() ? 26 : 30;
+    const iconUrl = getRankIconUrl(rank?.tierLabel || "");
     return `
 <line x1="${PAD_LEFT}" y1="${yy}" x2="${CHART_W - PAD_RIGHT}" y2="${yy}" stroke="rgba(148,163,184,0.25)"/>
-<text class="chart-rank-axis-label" x="${PAD_LEFT - 10}" y="${yy + 4}" fill="#94a3b8" font-size="14" font-weight="700" text-anchor="end">${escapeHtml(rank?.tierLabel || "")}</text>`;
+<g class="chart-rank-axis-icon" aria-label="${escapeHtml(rank?.tierLabel || "Rank")}">
+  <title>${escapeHtml(rank?.tierLabel || "Rank")}</title>
+  <image href="${escapeHtml(iconUrl)}" x="${PAD_LEFT - iconSize - 10}" y="${yy - (iconSize / 2)}" width="${iconSize}" height="${iconSize}" preserveAspectRatio="xMidYMid meet"/>
+</g>`;
   }).join("");
 }
 
@@ -18984,8 +18994,58 @@ function hideModalById(id) {
     modal.style.display = "none";
     modal.setAttribute("aria-hidden", "true");
     refreshActiveModalState();
-  }, 280);
+  }, 340);
 }
+
+function dismissLensModal(modal) {
+  if (!(modal instanceof HTMLElement)) return;
+  switch (modal.id) {
+    case "dailyWarmupModal":
+      closeDailyTrainingMenu();
+      break;
+    case "authModal":
+      closeAuthModal();
+      break;
+    case "riotModal":
+      closeRiotModal();
+      break;
+    case "riotProfileConfirmModal":
+      closeRiotProfileConfirmModal();
+      break;
+    case "accountSupportModal":
+      closeAccountSupportModal();
+      break;
+    case "securitySettingsModal":
+      closeSecuritySettingsModal();
+      break;
+    case "timelineStatsModal":
+      setTimelinePulloutOpen(false);
+      hideModalById(modal.id);
+      break;
+    case "guestTutorialChoiceModal":
+      closeGuestTutorialChoice();
+      break;
+    case "guestTutorialCompleteModal":
+      closeGuestTutorialComplete();
+      break;
+    default:
+      hideModalById(modal.id);
+  }
+}
+
+document.addEventListener("click", event => {
+  const modal = event.target;
+  if (!(modal instanceof HTMLElement) || !modal.matches(".lens-modal-overlay")) return;
+  if (!modal.classList.contains("active") && !modal.classList.contains("is-opening")) return;
+  dismissLensModal(modal);
+});
+
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  const activeModals = [...document.querySelectorAll(".lens-modal-overlay.active, .lens-modal-overlay.is-opening")];
+  const modal = activeModals[activeModals.length - 1];
+  if (modal) dismissLensModal(modal);
+});
 
 function openAuthModal() {
   const closeBtn = document.getElementById("authModalClose");
@@ -44692,6 +44752,16 @@ function activatePage(pageId, options = {}){
   const targetId = "page-" + pageId;
   const nextPage = document.getElementById(targetId);
   const currentPage = getActivePageElement();
+  const currentPageId = currentPage?.id?.replace("page-", "") || pageId;
+  const pageOrder = Array.isArray(MOBILE_PAGE_SWIPE_ORDER)
+    ? MOBILE_PAGE_SWIPE_ORDER
+    : ["home", "logging", "stats", "insights", "library"];
+  const currentPageIndex = Math.max(0, pageOrder.indexOf(currentPageId));
+  const nextPageIndex = Math.max(0, pageOrder.indexOf(pageId));
+  const pageSlideDirection = nextPageIndex >= currentPageIndex ? 1 : -1;
+  if (document.body) {
+    document.body.dataset.pageSlideDirection = pageSlideDirection > 0 ? "forward" : "backward";
+  }
   const isMobilePageSwitch = isMobileLayoutViewport();
   const allPages = Array.from(document.querySelectorAll(".page"));
   if (!isMobilePageSwitch) {
@@ -44718,6 +44788,29 @@ function activatePage(pageId, options = {}){
       setMobilePageCompositorReady(page, true);
     });
     syncMobilePageWarmLayouts();
+
+    if (
+      mobileNavHandoff
+      && currentPage
+      && currentPage !== nextPage
+      && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+    ) {
+      window.requestAnimationFrame(() => {
+        if (token !== pageTransitionToken || !nextPage.isConnected) return;
+        nextPage.getAnimations?.().forEach(animation => {
+          if (animation.id === "rankedcoach-page-button-slide") animation.cancel();
+        });
+        const animation = nextPage.animate([
+          { opacity: .45, transform: `translate3d(${pageSlideDirection * 22}vw,0,0)` },
+          { opacity: 1, transform: "translate3d(0,0,0)" }
+        ], {
+          duration: 285,
+          easing: "cubic-bezier(.2,.82,.24,1)",
+          fill: "none"
+        });
+        animation.id = "rankedcoach-page-button-slide";
+      });
+    }
 
     if (needsMobileLayoutWarmup) {
       allPages.forEach(page => void page.offsetHeight);

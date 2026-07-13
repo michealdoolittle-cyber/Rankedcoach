@@ -340,7 +340,9 @@ async function run() {
     await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).click();
     await page.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
     assert.equal(await page.locator('[data-warmup-drill="weapon-choice"]').getAttribute("aria-pressed"), "true");
-    await page.click("#dailyWarmupClose");
+    assert.equal(await page.locator("#dailyWarmupModal .lens-modal-close").count(), 0);
+    await page.locator("#dailyWarmupModal").click({ position: { x: 2, y: 2 } });
+    await page.waitForFunction(() => !document.getElementById("dailyWarmupModal")?.classList.contains("active"));
     await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).click();
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     assert.equal(await page.locator("#dailyWarmupPostgameCommit").getAttribute("aria-pressed"), "true");
@@ -383,11 +385,11 @@ async function run() {
     await mobile.waitForTimeout(350);
     const mobileWarmupHeader = await mobile.locator(".daily-warmup-header").evaluate(header => {
       const headerRect = header.getBoundingClientRect();
-      const closeRect = document.getElementById("dailyWarmupClose").getBoundingClientRect();
-      return { headerTop: headerRect.top, closeTop: closeRect.top, closeRight: closeRect.right, viewportWidth: innerWidth };
+      const modalRect = document.querySelector("#dailyWarmupModal > .lens-modal").getBoundingClientRect();
+      return { headerTop: headerRect.top, modalTop: modalRect.top, modalRight: modalRect.right, viewportWidth: innerWidth };
     });
-    assert.ok(mobileWarmupHeader.headerTop >= 0 && mobileWarmupHeader.closeTop >= 0 && mobileWarmupHeader.closeRight <= mobileWarmupHeader.viewportWidth, JSON.stringify(mobileWarmupHeader));
-    assert.equal(await mobile.locator("#dailyWarmupClose").isVisible(), true);
+    assert.ok(mobileWarmupHeader.headerTop >= 0 && mobileWarmupHeader.modalTop >= 0 && mobileWarmupHeader.modalRight <= mobileWarmupHeader.viewportWidth, JSON.stringify(mobileWarmupHeader));
+    assert.equal(await mobile.locator("#dailyWarmupModal .lens-modal-close").count(), 0);
     await mobile.click('[data-warmup-drill="burst-peeking-strafe"]');
     await mobile.click('[data-warmup-drill="tap-fire-rhythm"]');
     await mobile.waitForTimeout(220);

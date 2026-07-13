@@ -7,6 +7,27 @@
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
     weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." }
   };
+  const agentUuids = Object.freeze({
+    chamber: "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
+    clove: "1dbf2edd-4729-0984-3115-daa5eed44993",
+    cypher: "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
+    iso: "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
+    jett: "add6443a-41bd-e414-f6ad-e58d267f4e95",
+    neon: "bb2a4828-46eb-8cd1-e765-15848195d751",
+    raze: "f94c3b30-42be-e959-889c-5aa313dba261",
+    reyna: "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
+    sage: "569fdd95-4d10-43ab-ca70-79becc718b46",
+    skye: "6f2a04ca-43e0-be17-7f36-b3908627744d",
+    sova: "320b2a48-4d9b-a075-30f1-1f93a9b638fa"
+  });
+  const mapUuids = Object.freeze({
+    ascent: "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
+    breeze: "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
+    haven: "2bee0dc9-4ffe-519b-1cbd-7fbe763a6047",
+    lotus: "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
+    split: "d960549e-485c-e861-8d71-aa9d1aed12a2",
+    sunset: "92584fbe-486a-b1b2-9faa-39b0f486b498"
+  });
 
   function escapeHtml(value = "") {
     return String(value).replace(/[&<>"']/g, character => ({
@@ -19,11 +40,31 @@
   }
 
   function getAgentIcon(agent = "") {
-    return `/assets/library/agents/${assetSlug(agent)}/icon.png`;
+    const slug = assetSlug(agent);
+    const uuid = agentUuids[slug];
+    return uuid
+      ? `https://media.valorant-api.com/agents/${uuid}/displayicon.png`
+      : `/assets/library/agents/${slug}/icon.png`;
   }
 
   function getAgentFallbackIcon(agent = "") {
-    return `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/${assetSlug(agent)}.png`;
+    const uuid = agentUuids[assetSlug(agent)];
+    return uuid
+      ? `https://media.valorant-api.com/agents/${uuid}/displayicon.png`
+      : `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/${assetSlug(agent)}.png`;
+  }
+
+  function getMapArtwork(mapName = "") {
+    const slug = assetSlug(mapName);
+    const local = getMaps().find(map => map.id === slug)?.cardImage;
+    const uuid = mapUuids[slug];
+    return local || (uuid ? `https://media.valorant-api.com/maps/${uuid}/splash.png` : "");
+  }
+
+  function getTopicCollageImages(topic = "") {
+    if (topic === "maps") return ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
+    if (topic === "agents") return ["/assets/library/agents/jett/portrait.png", "/assets/library/agents/omen/portrait.png", "/assets/library/agents/sova/portrait.png"];
+    return ["/assets/weapons/vandal.png", "/assets/weapons/operator.png", "/assets/weapons/phantom.png"];
   }
 
   function getMaps() {
@@ -43,7 +84,7 @@
     const season = getReference().season || {};
     return `
       <div class="gamesense-overview">
-        <div class="gamesense-season-scope"><span>Current Season Only</span><strong>${escapeHtml(season.label || "Current Season")} | Patch ${escapeHtml(season.patch || "Current")}</strong><p>Agent, map, and weapon rates on this page use the current competitive season, not historical profile data.</p></div>
+        <div class="gamesense-season-scope"><span>Active Season</span><strong>${escapeHtml(season.label || "Active Season")} | Patch ${escapeHtml(season.patch || "Current")}</strong><p>Agent, map, and weapon rates on this page use the active competitive season, not historical profile data.</p></div>
         <div class="gamesense-briefing">
           <span>Reference Room</span>
           <strong>Build the round before the barrier drops.</strong>
@@ -52,6 +93,7 @@
         <div class="gamesense-topic-grid">
           ${Object.entries(topicMeta).map(([key, meta], index) => `
             <button class="gamesense-topic-card" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
+              <span class="gamesense-topic-collage" aria-hidden="true">${getTopicCollageImages(key).map(src => `<img src="${escapeHtml(src)}" alt="" loading="lazy">`).join("")}</span>
               <span class="gamesense-topic-number">0${index + 1}</span>
               <strong>${escapeHtml(meta.label)}</strong>
               <small>${escapeHtml(meta.copy)}</small>
@@ -68,6 +110,7 @@
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
         <span class="gamesense-map-card-shade"></span>
         <strong>${escapeHtml(item.label)}</strong>
+        <span class="gamesense-map-card-patch">As of Patch ${escapeHtml(item.metaComp?.patch || getReference().season?.patch || "Current")}</span>
         <small>${escapeHtml(item.metaComp?.composition)}</small>
         <span>Open marked map</span>
       </button>`;
@@ -95,9 +138,9 @@
     const meta = topicMeta[topic];
     const items = getTopicItems(topic);
     return `
-      <div class="gamesense-gallery-head">
-        <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
+      <div class="gamesense-gallery-head gamesense-${escapeHtml(topic)}-gallery-head">
         <div><strong>${escapeHtml(meta.label)} Library</strong></div>
+        <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
       </div>
       <div class="gamesense-entry-grid gamesense-entry-grid-${topic}">
         ${items.map((item, index) => topic === "maps" ? renderMapCard(item, index) : topic === "agents" ? renderAgentCard(item, index) : renderWeaponCard(item, index)).join("")}
@@ -110,6 +153,15 @@
         <h3>${escapeHtml(title)}</h3>
         <ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       </section>`;
+  }
+
+  function renderMapPlan(title, items = []) {
+    const open = document.documentElement.classList.contains("is-mobile-layout") ? "" : " open";
+    return `
+      <details class="gamesense-note-block gamesense-map-plan"${open}>
+        <summary>${escapeHtml(title)}</summary>
+        <ul>${items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      </details>`;
   }
 
   function renderMarkedMap(map) {
@@ -128,11 +180,18 @@
           <span data-gamesense-map-zoom-value>${Math.round(state.mapZoom * 100)}%</span>
           <button type="button" data-gamesense-map-zoom="in" aria-label="Zoom in">+</button>
         </div>
-        <div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} tactical map">
-          <div class="gamesense-tactical-stage" data-gamesense-map-stage style="--map-zoom:${state.mapZoom}">
-            <img src="${escapeHtml(map.layoutImage)}" alt="${escapeHtml(map.label)} tactical layout" loading="eager">
-            ${markers.map(callout => `<span class="gamesense-callout ${isPlants ? "gamesense-plant-marker" : ""}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`).join("")}
+        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}">
+          <div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} tactical map">
+            <div class="gamesense-tactical-stage" data-gamesense-map-stage style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
+              <img src="${escapeHtml(map.layoutImage)}" alt="${escapeHtml(map.label)} tactical layout" loading="eager" draggable="false">
+              ${markers.map(callout => `<span class="gamesense-callout ${isPlants ? "gamesense-plant-marker" : ""}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${isPlants ? escapeHtml(`${callout.site}${callout.number}`) : escapeHtml(callout.label)}</span>`).join("")}
+            </div>
           </div>
+          ${isPlants ? `<aside class="gamesense-plant-legend" aria-label="${escapeHtml(map.label)} plant location rates">
+            <strong>Active-season plant share</strong>
+            ${(map.plantSpots || []).map(spot => `<div><i></i><b>${escapeHtml(`${spot.site}${spot.number}`)}</b><em>${spot.rate != null && Number.isFinite(Number(spot.rate)) ? `${Number(spot.rate).toFixed(2)}%` : "N/A"}</em><span>${escapeHtml(spot.label)}</span></div>`).join("")}
+            <p>${escapeHtml(map.plantRateNote || "Plant share is unavailable for this map.")}</p>
+          </aside>` : ""}
         </div>
       </section>`;
   }
@@ -143,12 +202,24 @@
     return `
       <section class="gamesense-role-notes">
         <details class="gamesense-role-menu">
-          <summary>${activeRole ? `${escapeHtml(activeRole)} notes selected` : "Open role-specific notes"}</summary>
+          <summary>${activeRole ? `<span data-role-tone="${activeRole.toLowerCase()}">${escapeHtml(activeRole)}</span> notes selected` : "Open role-specific notes"}</summary>
           <div class="gamesense-role-options">
             ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}">${role}</button>`).join("")}
           </div>
         </details>
         ${activeRole ? renderList(`${activeRole} Plan`, map.roleNotes?.[activeRole] || [], "gamesense-role-result") : `<p class="gamesense-role-prompt">Choose your role to turn the map overview into a job for your next round.</p>`}
+      </section>`;
+  }
+
+  function renderWeaponSuggestions(map) {
+    const suggestions = Array.isArray(map.weaponSuggestions) ? map.weaponSuggestions : [];
+    if (!suggestions.length) return "";
+    return `
+      <section class="gamesense-weapon-suggestions">
+        <div><span>Weapon Suggestions</span><strong>Where each buy earns value</strong></div>
+        <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
+          <article><span>${escapeHtml(item.fit)}</span><h3>${escapeHtml(item.weapon)}</h3><strong>${escapeHtml(item.locations)}</strong><p>${escapeHtml(item.note)}</p></article>
+        `).join("")}</div>
       </section>`;
   }
 
@@ -173,7 +244,7 @@
             <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong>${escapeHtml(comp.winRate)} win rate | ${Number(comp.sample).toLocaleString()} games</strong></div>
             <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
               <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
-                <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="lazy"><span>${escapeHtml(agent)}</span>
+                <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
               </button>
             `).join("")}</div>
             <p>${escapeHtml(comp.composition)}</p>
@@ -185,14 +256,14 @@
 
   function renderMapDetail(map) {
     return `
-      <div class="gamesense-detail-head">
-        <button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button>
+      <div class="gamesense-detail-head gamesense-map-detail-head">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
         <span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span>
+        <button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button>
       </div>
       <div class="gamesense-detail-grid">
-        ${renderList("Defense", map.macro?.defense)}
-        ${renderList("Attack", map.macro?.attack)}
+        ${renderMapPlan("Defense", map.macro?.defense)}
+        ${renderMapPlan("Attack", map.macro?.attack)}
         ${renderRoleNotes(map)}
         ${state.role === "Controller" ? `<section class="gamesense-controller-callout">
           <span>Controller Notes</span>
@@ -200,6 +271,7 @@
           <strong>${escapeHtml(map.macro?.macroPrinciple)}</strong>
         </section>` : ""}
         ${renderComp(map)}
+        ${renderWeaponSuggestions(map)}
         <section class="gamesense-lineups">
           <div><span>Find Lineups</span></div>
           <div>${(map.lineupLinks || []).map(link => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a>`).join("")}</div>
@@ -227,9 +299,10 @@
     const abilities = agent.abilities || [];
     const selected = abilities.find(ability => ability.id === state.detailId) || abilities[0];
     return `
-      <div class="gamesense-detail-head">
-        <button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button>
+      <div class="gamesense-detail-head gamesense-agent-detail-head">
         <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
+        <span class="gamesense-patch">Active season</span>
+        <button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button>
       </div>
       <section class="gamesense-agent-hero">
         <div class="gamesense-agent-portrait-wrap">
@@ -247,10 +320,13 @@
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
         <div><span>Map Fit</span><strong>Current-season win rate</strong></div>
-        <div class="gamesense-map-fit-grid">${agent.maps.map(mapName => {
-          const map = getMaps().find(item => item.label.toLowerCase() === mapName.toLowerCase());
-          const winRate = agent.mapWinRates?.[mapName];
-          return `<button type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(mapName.toLowerCase())}"><img src="${escapeHtml(map?.cardImage || "")}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(1)}% WR` : "Current data pending"}</strong></button>`;
+        <div class="gamesense-map-fit-grid">${agent.maps.slice(0, 3).map(mapName => {
+           const map = getMaps().find(item => item.label.toLowerCase() === mapName.toLowerCase());
+           const winRate = agent.mapWinRates?.[mapName];
+          const pickRate = agent.mapPickRates?.[mapName];
+          const tagName = map ? "button" : "article";
+          const action = map ? ` type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(map.id)}"` : "";
+          return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(getMapArtwork(mapName))}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
         }).join("")}</div>
       </section>`;
   }
@@ -282,10 +358,10 @@
     const weapons = group.weapons || [];
     const selected = weapons.find(weapon => weapon.id === state.detailId) || weapons[0];
     return `
-      <div class="gamesense-detail-head">
-        <button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button>
+      <div class="gamesense-detail-head gamesense-weapon-detail-head">
         <div><span>${escapeHtml(group.range)}</span><h2>${escapeHtml(group.label)}</h2></div>
         <span class="gamesense-patch">${escapeHtml(group.examples)}</span>
+        <button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button>
       </div>
       <div class="gamesense-detail-grid gamesense-weapon-overview">${renderList("Fight Plan", group.fundamentals)}${renderList("Economy Read", group.economy)}</div>
       <section class="gamesense-selector-section">
@@ -317,6 +393,7 @@
     const contentX = (viewport.scrollLeft + anchorX) / previousWidth;
     const contentY = (viewport.scrollTop + anchorY) / previousWidth;
     stage.style.setProperty("--map-zoom", String(state.mapZoom));
+    stage.style.setProperty("--map-width", `${state.mapZoom * 100}%`);
     viewport.classList.toggle("is-zoomed", state.mapZoom > 1);
     if (value) value.textContent = `${Math.round(state.mapZoom * 100)}%`;
     requestAnimationFrame(() => {
@@ -330,47 +407,73 @@
     const viewport = document.querySelector("[data-gamesense-map-viewport]");
     if (!viewport || viewport.dataset.panZoomBound === "true") return;
     viewport.dataset.panZoomBound = "true";
+    const pointers = new Map();
     let dragging = false;
+    let dragPointerId = null;
     let startX = 0;
     let startY = 0;
     let startLeft = 0;
     let startTop = 0;
     let pinchDistance = 0;
     let pinchZoom = state.mapZoom;
-    const distance = touches => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-    viewport.addEventListener("pointerdown", event => {
-      if (state.mapZoom <= 1 || event.pointerType === "touch") return;
-      dragging = true;
-      startX = event.clientX;
-      startY = event.clientY;
+    const pointerDistance = values => Math.hypot(values[0].x - values[1].x, values[0].y - values[1].y);
+    const beginDrag = pointer => {
+      dragging = state.mapZoom > 1;
+      dragPointerId = pointer.id;
+      startX = pointer.x;
+      startY = pointer.y;
       startLeft = viewport.scrollLeft;
       startTop = viewport.scrollTop;
-      viewport.classList.add("is-grabbing");
-      viewport.setPointerCapture?.(event.pointerId);
+      viewport.classList.toggle("is-grabbing", dragging);
+    };
+    viewport.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      pointers.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
+      try {
+        viewport.setPointerCapture?.(event.pointerId);
+      } catch (_error) {
+        // Pointer capture can fail after an interrupted touch; dragging still works without it.
+      }
+      const values = [...pointers.values()];
+      if (values.length === 1) beginDrag(values[0]);
+      if (values.length === 2) {
+        dragging = false;
+        viewport.classList.remove("is-grabbing");
+        pinchDistance = pointerDistance(values);
+        pinchZoom = state.mapZoom;
+      }
     });
     viewport.addEventListener("pointermove", event => {
-      if (!dragging) return;
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
+      const values = [...pointers.values()];
+      if (values.length >= 2 && pinchDistance) {
+        event.preventDefault();
+        const rect = viewport.getBoundingClientRect();
+        const centerX = ((values[0].x + values[1].x) / 2) - rect.left;
+        const centerY = ((values[0].y + values[1].y) / 2) - rect.top;
+        applyMapZoom(pinchZoom * (pointerDistance(values) / pinchDistance), { x: centerX, y: centerY });
+        return;
+      }
+      if (!dragging || dragPointerId !== event.pointerId || state.mapZoom <= 1) return;
+      event.preventDefault();
       viewport.scrollLeft = startLeft - (event.clientX - startX);
       viewport.scrollTop = startTop - (event.clientY - startY);
     });
-    const stopDrag = () => { dragging = false; viewport.classList.remove("is-grabbing"); };
-    viewport.addEventListener("pointerup", stopDrag);
-    viewport.addEventListener("pointercancel", stopDrag);
-    viewport.addEventListener("touchstart", event => {
-      if (event.touches.length !== 2) return;
-      pinchDistance = distance(event.touches);
-      pinchZoom = state.mapZoom;
-    }, { passive: true });
-    viewport.addEventListener("touchmove", event => {
-      if (event.touches.length !== 2 || !pinchDistance) return;
-      event.preventDefault();
-      const rect = viewport.getBoundingClientRect();
-      applyMapZoom(pinchZoom * (distance(event.touches) / pinchDistance), {
-        x: ((event.touches[0].clientX + event.touches[1].clientX) / 2) - rect.left,
-        y: ((event.touches[0].clientY + event.touches[1].clientY) / 2) - rect.top
-      });
-    }, { passive: false });
-    viewport.addEventListener("touchend", () => { pinchDistance = 0; }, { passive: true });
+    const stopPointer = event => {
+      pointers.delete(event.pointerId);
+      pinchDistance = 0;
+      const remaining = [...pointers.values()];
+      if (remaining.length === 1) beginDrag(remaining[0]);
+      else {
+        dragging = false;
+        dragPointerId = null;
+        viewport.classList.remove("is-grabbing");
+      }
+    };
+    viewport.addEventListener("pointerup", stopPointer);
+    viewport.addEventListener("pointercancel", stopPointer);
+    viewport.addEventListener("dragstart", event => event.preventDefault());
   }
 
   function render() {
@@ -401,6 +504,22 @@
       selectedNav?.click();
     }
     render();
+  }
+
+  function resetLibrary() {
+    state.topic = "overview";
+    state.itemId = "";
+    state.role = "";
+    state.detailId = "";
+    state.mapView = "locations";
+    state.mapZoom = 1;
+    state.compAgent = "";
+    render();
+    const libraryPage = document.getElementById("page-library");
+    const owner = document.documentElement.classList.contains("is-mobile-layout")
+      ? document.querySelector(".app-root")
+      : libraryPage;
+    if (owner) owner.scrollTop = 0;
   }
 
   function decorateWarmupDrills() {
@@ -437,18 +556,8 @@
 
   document.addEventListener("click", event => {
     const libraryNav = event.target.closest?.('.nav-btn[data-page="library"], .mobile-bottom-page-btn[data-mobile-page="library"]');
-    const libraryPage = document.getElementById("page-library");
-    if (libraryNav && libraryPage?.classList.contains("active") && state.topic !== "overview") {
-      state.topic = "overview";
-      state.itemId = "";
-      state.role = "";
-      state.detailId = "";
-      state.mapView = "locations";
-      state.mapZoom = 1;
-      state.compAgent = "";
-      render();
-      const owner = document.documentElement.classList.contains("is-mobile-layout") ? document.querySelector(".app-root") : libraryPage;
-      if (owner) owner.scrollTop = 0;
+    if (libraryNav?.classList.contains("active") && state.topic !== "overview") {
+      resetLibrary();
       return;
     }
     const warmupToggle = event.target.closest?.("[data-warmup-info]");
@@ -546,5 +655,5 @@
 
   decorateWarmupDrills();
   render();
-  globalThis.RankedCoachGamesenseLibrary = Object.freeze({ open: openLibrary, render });
+  globalThis.RankedCoachGamesenseLibrary = Object.freeze({ open: openLibrary, render, reset: resetLibrary });
 })();

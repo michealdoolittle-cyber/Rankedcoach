@@ -55,12 +55,12 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260712-mobile-qol-library-01">
+<link rel="stylesheet" href="app.css?v=20260712-library-motion-map-02">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
-<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260712-mobile-qol-library-01">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260712-mobile-qol-library-01">
+<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260712-library-motion-map-02">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260712-library-motion-map-02">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -74,7 +74,6 @@ AUTH MODAL
   <div class="lens-modal auth-modal-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title" id="authModalTitle" aria-live="polite"></div>
-      <button id="authModalClose" class="lens-modal-close" type="button">X</button>
     </div>
 
     <form class="lens-modal-body auth-flow" id="authForm">
@@ -270,7 +269,6 @@ AUTH MODAL
         <div class="daily-warmup-kicker" id="dailyWarmupKicker">Daily Warm-Up Check</div>
         <div class="lens-modal-title" id="dailyWarmupTitle">Get your first fights ready</div>
       </div>
-      <button id="dailyWarmupClose" class="lens-modal-close" type="button" aria-label="Skip today's warm-up check">X</button>
     </div>
     <div class="daily-warmup-body">
       <div class="daily-warmup-intro" data-daily-training-section="warmup">
@@ -366,7 +364,6 @@ AUTH MODAL
   <div class="lens-modal security-settings-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Security Settings</div>
-      <button id="securitySettingsClose" class="lens-modal-close" type="button">X</button>
     </div>
 
     <div class="lens-modal-body security-settings-body">
@@ -384,7 +381,6 @@ RIOT PROFILE MODAL
   <div class="lens-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Set Riot Profile</div>
-      <button id="riotModalClose" class="lens-modal-close" type="button">X</button>
     </div>
 
     <div class="lens-modal-body">
@@ -402,7 +398,6 @@ RIOT PROFILE MODAL
   <div class="lens-modal riot-profile-confirm-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Add Riot Profile</div>
-      <button id="riotProfileConfirmClose" class="lens-modal-close" type="button">X</button>
     </div>
     <div class="lens-modal-body">
       <div class="riot-profile-confirm-copy">
@@ -420,7 +415,6 @@ RIOT PROFILE MODAL
   <div class="lens-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Edit Profile</div>
-      <button id="editProfileClose" class="lens-modal-close" type="button">X</button>
     </div>
 
     <div class="lens-modal-body profile-edit-modal-body">
@@ -555,7 +549,6 @@ RIOT PROFILE MODAL
   <div class="lens-modal account-support-modal-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Account &amp; Support</div>
-      <button id="accountSupportClose" class="lens-modal-close" type="button">X</button>
     </div>
 
     <div class="lens-modal-body profile-edit-modal-body account-support-modal-body">
@@ -724,7 +717,6 @@ RIOT PROFILE MODAL
   <div class="lens-modal bug-report-modal-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Report a Bug</div>
-      <button id="bugReportClose" class="lens-modal-close" type="button">X</button>
     </div>
     <div class="lens-modal-body bug-report-modal-body">
       <div class="bug-report-copy">Tell us what broke, what page you were on, and what you expected to happen. RankedCoach attaches your profile/user context automatically.</div>
@@ -1321,7 +1313,6 @@ STATS PAGE
           <div class="lens-modal">
             <div class="lens-modal-header">
               <div class="lens-modal-title">This Week's Focus</div>
-              <button class="lens-modal-close" id="weeklyFocusClose">X</button>
             </div>
             <div class="lens-modal-body">
               <div id="weeklyFocusModalContent" class="timeline-insight-panel"></div>
@@ -1392,7 +1383,6 @@ STATS PAGE
             </aside>
             <div class="lens-modal-header">
               <div class="lens-modal-title">Session Improvements</div>
-              <button class="lens-modal-close" id="timelineStatsClose">X</button>
             </div>
 
             <div class="lens-modal-body timeline-modal-layout" id="timelineModalLayout">
@@ -1843,7 +1833,6 @@ stroke-linejoin="round"/>
         <div class="lens-modal">
           <div class="lens-modal-header">
             <div class="lens-modal-title" id="lensModalTitle">Lens</div>
-            <button class="lens-modal-close" id="lensModalClose">X</button>
           </div>
           <div class="lens-modal-body">
             <div class="lens-modal-section">
@@ -2201,7 +2190,6 @@ stroke-linejoin="round"/>
   <div class="lens-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Set Goal Rank</div>
-      <button id="goalRankClose" class="lens-modal-close">X</button>
     </div>
 
     <div class="lens-modal-body">
@@ -2261,7 +2249,6 @@ stroke-linejoin="round"/>
     <div class="lens-modal">
       <div class="lens-modal-header">
         <div class="lens-modal-title" id="lensModalTitleSecondary">Info</div>
-        <button class="lens-modal-close" id="lensModalCloseSecondary">X</button>
       </div>
 
       <div class="lens-modal-body">
@@ -2306,10 +2293,10 @@ stroke-linejoin="round"/>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="library/gamesense-maps.js?v=20260712-mobile-qol-library-01"></script>
-  <script src="library/gamesense-reference.js?v=20260712-mobile-qol-library-01"></script>
-  <script src="library/gamesense-library.js?v=20260712-mobile-qol-library-01"></script>
+  <script src="library/gamesense-maps.js?v=20260712-library-motion-map-02"></script>
+  <script src="library/gamesense-reference.js?v=20260712-library-motion-map-02"></script>
+  <script src="library/gamesense-library.js?v=20260712-library-motion-map-02"></script>
   <script src="integrations/riot-sync.js?v=20260711-training-feed-02"></script>
-  <script type="module" src="app.js?v=20260712-mobile-qol-library-01"></script>
+  <script type="module" src="app.js?v=20260712-library-motion-map-02"></script>
 </body>
 </html>
