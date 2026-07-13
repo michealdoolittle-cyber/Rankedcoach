@@ -114,11 +114,13 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
+    assert.equal(await desktop.getByText("Reference Room", { exact: true }).count(), 0);
     assert.equal(await desktop.locator("#page-library").getByText(/Round Plan|Role Read|Gunfight Plan/).count(), 0);
     assert.equal(await desktop.locator(".gamesense-topic-card strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
+    assert.deepEqual(await desktop.locator('.gamesense-map-entry-card').allInnerTexts(), ["BIND", "BREEZE", "SPLIT"]);
     await desktop.click('[data-gamesense-item="bind"]');
     assert.equal(await desktop.locator(".gamesense-note-block").count(), 2);
     assert.equal(await desktop.locator(".gamesense-note-block").first().locator("li").count(), 3);
@@ -127,7 +129,7 @@ async function run() {
     const bindSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
     assert.ok(bindSitePositions["A Site"] > 65 && bindSitePositions["B Site"] < 40, JSON.stringify(bindSitePositions));
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 0);
-    assert.match(await desktop.locator(".gamesense-comp-unavailable").innerText(), /outside.*competitive rotation.*no current/is);
+    assert.match(await desktop.locator(".gamesense-comp-unavailable").innerText(), /outside Tracker Network.*rolling Competitive.*no current/is);
     assert.equal(await desktop.locator(".gamesense-role-result").count(), 0);
     assert.equal(await desktop.locator(".gamesense-map-view-tabs button").count(), 2);
     assert.equal(await desktop.locator(".gamesense-map-heading strong").evaluate(heading => getComputedStyle(heading).textAlign), "left");
@@ -179,6 +181,9 @@ async function run() {
     await desktop.click(".gamesense-role-menu summary");
     await desktop.click('[data-gamesense-role="Controller"]');
     assert.match(await desktop.locator(".gamesense-role-result").innerText(), /A Heaven|Lamps/i);
+    assert.equal(await desktop.locator(".gamesense-role-result-shell[open]").count(), 1);
+    await desktop.locator(".gamesense-role-result-shell > summary").click();
+    assert.equal(await desktop.locator(".gamesense-role-result-shell[open]").count(), 0);
     await desktop.locator(".gamesense-tactical-card").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-marked.png") });
     assert.match(await desktop.locator(".gamesense-patch").innerText(), /Patch 13\.00/i);
     assert.equal(await desktop.locator(".gamesense-lineups a").count(), 2);
@@ -202,11 +207,25 @@ async function run() {
     await desktop.click('[data-gamesense-item="breeze"]');
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
-    assert.match(await desktop.locator(".gamesense-comp-option").first().innerText(), /56\.9%.*4,639 games/is);
+    assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG|win rate|\d{1,3},\d{3} games/i);
+    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /Tracker Network.*rolling Competitive sample/is);
+    assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-weapon-suggestion[open]").count(), 0);
+    await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
+    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /kills per round|average damage/i);
+    const suggestionCategories = await desktop.evaluate(() => globalThis.RankedCoachGamesenseMaps.find(map => map.id === "breeze").weaponSuggestions.map(item => item.category));
+    assert.equal(new Set(suggestionCategories).size, suggestionCategories.length);
     await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
     assert.equal(await desktop.locator(".gamesense-comp-agents img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
     await desktop.locator("[data-gamesense-comp-agent]").first().click();
-    assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /B.*stronger.*defensive success/is);
+    assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /Clove.*smoke/is);
+
+    await desktop.click('[data-gamesense-back="maps"]');
+    await desktop.click('[data-gamesense-item="split"]');
+    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /split-layout-trn\.png/);
+    const splitSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
+    assert.ok(splitSitePositions["A Site"] > 75 && splitSitePositions["B Site"] < 20, JSON.stringify(splitSitePositions));
 
     await desktop.click('.nav-btn[data-page="stats"]');
     await desktop.click('[data-gamesense-open="agents"]');
@@ -220,7 +239,7 @@ async function run() {
     await desktop.click('[data-gamesense-ability="cloudburst"]');
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
     await desktop.waitForTimeout(2200);
-    assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /29\.6%.*(?:↓|down).*0\.1/is);
+    assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /10\.4%.*Tracker Network.*Past two weeks/is);
     assert.equal(await desktop.locator(".gamesense-map-fit-item").count(), 3);
     assert.match(await desktop.locator(".gamesense-map-fit-item").first().innerText(), /pick.*win/is);
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-ability.png") });
@@ -271,14 +290,29 @@ async function run() {
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
     await mobile.locator("#page-library.is-current-page").waitFor({ state: "visible" });
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
+    const topicNumberLayout = await mobile.locator(".gamesense-topic-card").first().evaluate(card => {
+      const number = card.querySelector(".gamesense-topic-number").getBoundingClientRect();
+      const title = card.querySelector("strong").getBoundingClientRect();
+      return { numberCenter: number.left + number.width / 2, titleCenter: title.left + title.width / 2, numberBottom: number.bottom, titleTop: title.top };
+    });
+    assert.ok(Math.abs(topicNumberLayout.numberCenter - topicNumberLayout.titleCenter) <= 2 && topicNumberLayout.numberBottom <= topicNumberLayout.titleTop, JSON.stringify(topicNumberLayout));
     await mobile.click('[data-gamesense-topic="maps"]');
+    await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
     await mobile.click('[data-gamesense-item="bind"]');
+    await mobile.waitForTimeout(360);
     assert.equal(await mobile.locator(".gamesense-tactical-stage img").isVisible(), true);
     assert.equal(await mobile.locator(".gamesense-callout").count(), 10);
     assert.equal(await mobile.locator(".gamesense-map-plan").count(), 2);
     assert.equal(await mobile.locator(".gamesense-map-plan[open]").count(), 0);
     await mobile.locator(".gamesense-map-plan summary").first().click();
     assert.equal(await mobile.locator(".gamesense-map-plan[open]").count(), 1);
+    const mapHeaderOrder = await mobile.locator(".gamesense-map-detail-head").evaluate(header => {
+      const back = header.querySelector(".gamesense-back").getBoundingClientRect();
+      const patch = header.querySelector(".gamesense-patch").getBoundingClientRect();
+      const title = header.querySelector("h2").getBoundingClientRect();
+      return { backTop: back.top, patchTop: patch.top, titleLeft: title.left, headerLeft: header.getBoundingClientRect().left };
+    });
+    assert.ok(mapHeaderOrder.backTop < mapHeaderOrder.patchTop && mapHeaderOrder.titleLeft <= mapHeaderOrder.headerLeft + 20, JSON.stringify(mapHeaderOrder));
     await mobile.locator('[data-gamesense-map-zoom="in"]').click();
     const zoomState = await mobile.locator("[data-gamesense-map-viewport]").evaluate(viewport => ({
       zoom: getComputedStyle(viewport.querySelector("[data-gamesense-map-stage]")).getPropertyValue("--map-zoom"),
@@ -299,8 +333,40 @@ async function run() {
       return viewport.scrollLeft;
     }, viewportBox);
     assert.ok(mobilePan > 0, `expected touch pan to move the map, received ${mobilePan}`);
+    await mobile.locator('[data-gamesense-map-zoom="reset"]').click();
+    const pinchZoom = await mobile.locator("[data-gamesense-map-viewport]").evaluate(viewport => {
+      const rect = viewport.getBoundingClientRect();
+      const y = rect.top + rect.height / 2;
+      const left = rect.left + rect.width / 2 - 30;
+      const right = rect.left + rect.width / 2 + 30;
+      const fire = (type, pointerId, x) => viewport.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId, pointerType: "touch", clientX: x, clientY: y }));
+      fire("pointerdown", 51, left);
+      fire("pointerdown", 52, right);
+      fire("pointermove", 51, left - 35);
+      fire("pointermove", 52, right + 35);
+      fire("pointerup", 51, left - 35);
+      fire("pointerup", 52, right + 35);
+      return Number.parseFloat(getComputedStyle(viewport.querySelector("[data-gamesense-map-stage]")).getPropertyValue("--map-zoom"));
+    });
+    assert.ok(pinchZoom > 1, `expected pinch zoom above 1, received ${pinchZoom}`);
+    const mobileCdp = await mobile.context().newCDPSession(mobile);
+    const ownedMapBox = await mobile.locator("[data-gamesense-map-viewport]").boundingBox();
+    const ownedY = ownedMapBox.y + ownedMapBox.height * .5;
+    await mobileCdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: ownedMapBox.x + ownedMapBox.width * .72, y: ownedY }] });
+    await mobile.waitForTimeout(220);
+    await mobileCdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: ownedMapBox.x + ownedMapBox.width * .28, y: ownedY }] });
+    await mobileCdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    assert.equal(await mobile.locator("#page-library").getAttribute("class").then(value => value.includes("is-current-page")), true);
     await mobile.locator('[data-gamesense-map-view="plants"]').click();
+    await mobile.waitForTimeout(360);
+    await mobile.locator('[data-gamesense-map-zoom="reset"]').click();
     assert.equal(await mobile.locator(".gamesense-plant-legend").isVisible(), true);
+    const markerBadges = await mobile.locator(".gamesense-plant-marker b").evaluateAll(items => items.map(item => {
+      const rect = item.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, visible: rect.width > 0 && rect.height > 0 };
+    }));
+    assert.ok(markerBadges.every(item => item.visible), JSON.stringify(markerBadges));
+    assert.ok(markerBadges.every((item, index) => markerBadges.every((other, otherIndex) => index === otherIndex || item.right <= other.left || item.left >= other.right || item.bottom <= other.top || item.top >= other.bottom)), JSON.stringify(markerBadges));
     const mobileMapOrder = await mobile.evaluate(() => {
       const detail = document.querySelector(".gamesense-detail-grid");
       const map = document.querySelector(".gamesense-tactical-card");
@@ -323,7 +389,7 @@ async function run() {
       };
     });
     assert.ok(mobileScroll.scrollHeight > mobileScroll.clientHeight && mobileScroll.scrollTop > 0 && mobileScroll.overflowY === "auto", JSON.stringify(mobileScroll));
-    assert.equal(mobileScroll.tacticalOverflowY, "auto", JSON.stringify(mobileScroll));
+    assert.equal(mobileScroll.tacticalOverflowY, "hidden", JSON.stringify(mobileScroll));
     await mobile.evaluate(() => {
       [document.documentElement, document.body, document.querySelector(".app-scale-wrap"), document.querySelector(".app-root"), document.querySelector(".app")].filter(Boolean).forEach(element => { element.scrollTop = 0; });
     });
@@ -334,7 +400,54 @@ async function run() {
     assert.equal(mobileMetrics.overflow, false, JSON.stringify(mobileMetrics));
     assert.ok(mobileMetrics.labels.every(label => label.height >= 44 && label.width > 0 && label.whiteSpace === "nowrap"), JSON.stringify(mobileMetrics));
     assert.equal(new Set(mobileMetrics.labels.map(label => Math.round(label.top))).size, 1, JSON.stringify(mobileMetrics));
+
+    await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "breeze"));
+    await mobile.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
+    await mobile.locator("[data-gamesense-comp-agent]").first().click();
+    await mobile.waitForTimeout(500);
+    const compReadPosition = await mobile.locator(".gamesense-comp-agent-read").evaluate(read => {
+      const rect = read.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, viewport: innerHeight };
+    });
+    assert.ok(compReadPosition.top >= 0 && compReadPosition.bottom <= compReadPosition.viewport, JSON.stringify(compReadPosition));
+
+    await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents"));
+    await mobile.locator(".gamesense-agent-entry-card").first().waitFor({ state: "visible" });
+    const mobileAgentTile = await mobile.locator(".gamesense-agent-entry-card").first().evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
+      const image = card.querySelector("img").getBoundingClientRect();
+      const name = card.querySelector(".gamesense-entry-copy strong").getBoundingClientRect();
+      const hidden = [...card.querySelectorAll("small,.gamesense-entry-copy > span")].every(item => getComputedStyle(item).display === "none");
+      return { card: cardRect.toJSON(), index: index.toJSON(), image: image.toJSON(), name: name.toJSON(), hidden };
+    });
+    assert.ok(mobileAgentTile.index.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2, JSON.stringify(mobileAgentTile));
+    assert.ok(mobileAgentTile.image.left <= mobileAgentTile.card.left + 2 && mobileAgentTile.image.bottom >= mobileAgentTile.card.bottom - 2, JSON.stringify(mobileAgentTile));
+    assert.ok(mobileAgentTile.name.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2 && mobileAgentTile.hidden, JSON.stringify(mobileAgentTile));
+    await mobile.locator(".gamesense-agent-entry-card").first().click();
+    await mobile.locator(".gamesense-agent-rate").waitFor({ state: "visible" });
+    const mobileAgentDetail = await mobile.evaluate(() => {
+      const rate = document.querySelector(".gamesense-agent-rate").getBoundingClientRect();
+      const art = document.querySelector(".gamesense-agent-portrait-wrap > img").getBoundingClientRect();
+      const kicker = document.querySelector(".gamesense-agent-kicker-row > span:first-child").getBoundingClientRect();
+      const active = document.querySelector(".gamesense-agent-kicker-row .gamesense-patch").getBoundingClientRect();
+      const abilityHeading = document.querySelector(".gamesense-selector-section .gamesense-section-heading strong");
+      return { gap: art.top - rate.bottom, kickerTop: kicker.top, activeTop: active.top, abilityAlign: getComputedStyle(abilityHeading).textAlign };
+    });
+    assert.ok(mobileAgentDetail.gap <= 12 && Math.abs(mobileAgentDetail.kickerTop - mobileAgentDetail.activeTop) <= 8 && mobileAgentDetail.abilityAlign === "left", JSON.stringify(mobileAgentDetail));
+
+    await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
+    await mobile.locator(".gamesense-weapon-entry-card").first().waitFor({ state: "visible" });
+    const mobileWeaponTile = await mobile.locator(".gamesense-weapon-entry-card").first().evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
+      const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
+      return { card: cardRect.toJSON(), index: index.toJSON(), art: art.toJSON() };
+    });
+    assert.ok(mobileWeaponTile.index.left > mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2, JSON.stringify(mobileWeaponTile));
+    assert.ok(Math.abs((mobileWeaponTile.art.left + mobileWeaponTile.art.width / 2) - (mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2)) <= 3, JSON.stringify(mobileWeaponTile));
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
+    await mobile.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
     await mobile.waitForTimeout(3000);
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-mobile-360x740.png"), fullPage: true });

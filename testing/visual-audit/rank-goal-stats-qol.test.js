@@ -257,8 +257,15 @@ async function run() {
     }));
     assert.match(modalMotion.duration, /0\.32s|320ms/);
     assert.match(modalMotion.property, /transform/);
+    await page.waitForTimeout(350);
+    const openBackdrop = await page.locator("#accountSupportModal").evaluate(modal => getComputedStyle(modal).backdropFilter || getComputedStyle(modal).webkitBackdropFilter);
+    assert.match(openBackdrop, /blur\(12px\)/);
     await page.locator("#accountSupportModal").click({ position: { x: 2, y: 2 } });
     assert.equal(await page.locator("#accountSupportModal").evaluate(modal => modal.classList.contains("is-closing")), true);
+    await page.waitForTimeout(180);
+    const closingBackdrop = await page.locator("#accountSupportModal").evaluate(modal => getComputedStyle(modal).backdropFilter || getComputedStyle(modal).webkitBackdropFilter);
+    const closingBlur = Number.parseFloat(closingBackdrop.match(/blur\(([\d.]+)px\)/)?.[1] || "0");
+    assert.ok(closingBlur < 12, closingBackdrop);
     await page.waitForFunction(() => document.getElementById("accountSupportModal")?.getAttribute("aria-hidden") === "true");
 
     await page.setViewportSize({ width: 390, height: 844 });

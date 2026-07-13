@@ -116,39 +116,39 @@
 
   const currentAgentRates = {
     jett: {
-      pickRate: 29.6, pickRateDelta: -0.1, maps: ["Breeze", "Ascent", "Haven"],
-      mapPickRates: { Breeze: 14.37, Ascent: 14.13, Haven: 14.07 },
-      mapWinRates: { Breeze: 49.59, Ascent: 49.46, Haven: 49.45 }
+      pickRate: 10.4, sampleLabel: "Tracker Network | Past two weeks", maps: ["Breeze", "Ascent", "Haven"],
+      mapPickRates: { Breeze: 11.7, Ascent: 11.3, Haven: 11.3 },
+      mapWinRates: { Breeze: 50.4, Ascent: 49.9, Haven: 50.0 }
     },
     sova: {
-      pickRate: 15.3, pickRateDelta: 3.5, maps: ["Ascent", "Breeze", "Haven"],
-      mapPickRates: { Ascent: 12.11, Breeze: 11.82, Haven: 11.77 },
-      mapWinRates: { Ascent: 50.27, Breeze: 50.04, Haven: 49.91 }
+      pickRate: 4.8, sampleLabel: "Tracker Network | Past two weeks", maps: ["Ascent", "Haven", "Breeze"],
+      mapPickRates: { Ascent: 8.4, Haven: 7.9, Breeze: 7.7 },
+      mapWinRates: { Ascent: 51.3, Haven: 50.8, Breeze: 50.8 }
     },
     omen: {
-      pickRate: 9.6, pickRateDelta: 0, maps: ["Ascent", "Lotus", "Haven"],
-      mapPickRates: { Ascent: 5.57, Lotus: 5.52, Haven: 5.42 },
-      mapWinRates: { Ascent: 46.53, Lotus: 46.51, Haven: 46.70 }
+      pickRate: 4.7, sampleLabel: "Tracker Network | Past two weeks", maps: ["Haven", "Ascent", "Lotus"],
+      mapPickRates: { Haven: 5.6, Ascent: 5.3, Lotus: 5.2 },
+      mapWinRates: { Haven: 47.6, Ascent: 47.6, Lotus: 47.5 }
     },
     viper: {
-      pickRate: 0.9, pickRateDelta: -0.2, maps: ["Breeze", "Split", "Lotus"],
-      mapPickRates: { Breeze: 4.74, Split: 0.48, Lotus: 0.32 },
-      mapWinRates: { Breeze: 49.68, Split: 47.12, Lotus: 47.45 }
+      pickRate: 0.9, sampleLabel: "Tracker Network | Past two weeks", maps: ["Breeze", "Split", "Lotus"],
+      mapPickRates: { Breeze: 3.9, Split: 0.6, Lotus: 0.5 },
+      mapWinRates: { Breeze: 50.4, Split: 47.9, Lotus: 48.2 }
     },
     cypher: {
-      pickRate: 6.4, pickRateDelta: 0, maps: ["Sunset", "Split", "Haven"],
-      mapPickRates: { Sunset: 6.15, Split: 6.14, Haven: 4.20 },
-      mapWinRates: { Sunset: 49.67, Split: 49.79, Haven: 49.96 }
+      pickRate: 3.3, sampleLabel: "Tracker Network | Past two weeks", maps: ["Split", "Sunset", "Haven"],
+      mapPickRates: { Split: 4.9, Sunset: 4.5, Haven: 3.8 },
+      mapWinRates: { Split: 50.2, Sunset: 50.1, Haven: 50.6 }
     },
     sage: {
-      pickRate: 3.6, pickRateDelta: -0.4, maps: ["Split", "Sunset", "Haven"],
-      mapPickRates: { Split: 6.35, Sunset: 3.57, Haven: 3.06 },
-      mapWinRates: { Split: 51.39, Sunset: 50.68, Haven: 50.06 }
+      pickRate: 6.6, sampleLabel: "Tracker Network | Past two weeks", maps: ["Split", "Sunset", "Haven"],
+      mapPickRates: { Split: 8.9, Sunset: 6.7, Haven: 6.5 },
+      mapWinRates: { Split: 52.3, Sunset: 51.9, Haven: 51.5 }
     },
     raze: {
-      pickRate: 5.4, pickRateDelta: -0.1, maps: ["Lotus", "Split", "Sunset"],
-      mapPickRates: { Lotus: 7.11, Split: 6.10, Sunset: 4.26 },
-      mapWinRates: { Lotus: 49.48, Split: 49.82, Sunset: 49.29 }
+      pickRate: 4.0, sampleLabel: "Tracker Network | Past two weeks", maps: ["Lotus", "Split", "Sunset"],
+      mapPickRates: { Lotus: 6.5, Split: 5.9, Sunset: 4.4 },
+      mapWinRates: { Lotus: 50.6, Split: 50.7, Sunset: 50.3 }
     }
   };
   const currentAgents = agents.map(agent => ({ ...agent, ...(currentAgentRates[agent.id] || {}) }));

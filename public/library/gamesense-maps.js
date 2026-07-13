@@ -37,10 +37,9 @@
       ],
       plantRateNote: "Bind is outside the active competitive rotation, so no active-season PC plant-rate sample is available.",
       weaponSuggestions: [
-        { weapon: "Phantom", fit: "Strong", locations: "Hookah, Lamps, Bath", note: "Compact chokes and frequent smoke fights reward the Phantom's close-range control." },
-        { weapon: "Vandal", fit: "Strong", locations: "B Long, A Short, A Tower", note: "Use the Vandal when your round plan keeps you on Bind's longer first-fight lanes." },
-        { weapon: "Operator", fit: "Viable", locations: "B Long, A Tower, A Short", note: "Long lanes create early picks, but the lack of mid makes a missed read expensive. Pair it with an escape tool or a planned teleporter rotation." },
-        { weapon: "Judge / Spectre", fit: "Niche", locations: "Hookah, Lamps, Bath", note: "High value in tight pockets, but weak once the fight spills into open site or a long retake lane." }
+        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Best rifle fit", evidence: "0.84 kills per round | 202 average damage", locations: "Hookah, Lamps, Bath", note: "Compact chokes and frequent smoke fights reward the Phantom's close-range control." },
+        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Strong sniper fit", evidence: "0.80 kills per round | 220 average damage", locations: "B Long, A Tower, A Short", note: "Long lanes create early picks, but the lack of mid makes a missed read expensive. Pair it with an escape tool or planned teleporter rotation." },
+        { weapon: "Stinger", image: "/assets/weapons/stinger.png", category: "eco", fit: "Eco outlier", evidence: "228 average damage | 1,100 credits", locations: "Hookah, Lamps, Bath", note: "The low-cost damage output is useful only when the setup protects a close fight and a short magazine." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
@@ -70,7 +69,7 @@
         patch: "13.00"
       },
       metaComps: [],
-      compStatus: "Bind is outside the Season 26 Act 4 competitive rotation, so OP.GG reports no current Patch 13.00 ranked composition sample.",
+      compStatus: "Bind is outside Tracker Network's current rolling Competitive map sample, so no current composition reference is shown.",
       agentInsights: {
         Clove: "Post-death smokes keep both teleporter rotations covered after an opening fight.",
         Raze: "Explosive movement and clearing utility break Bind's narrow Hookah, Bath, and A Short chokes.",
@@ -110,10 +109,9 @@
       ],
       plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
       weaponSuggestions: [
-        { weapon: "Vandal", fit: "Best rifle fit", locations: "A Main, B Main, Mid", note: "Breeze's long sightlines reward clean one-tap range and punish close-range damage falloff." },
-        { weapon: "Operator", fit: "Highly viable", locations: "A Main, B Main, Mid Nest", note: "The map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after first contact." },
-        { weapon: "Guardian / Outlaw", fit: "Viable", locations: "Mid, Hall, B Main", note: "Both can pressure long lanes for less than a full Operator buy when your team can protect the reset." },
-        { weapon: "Stinger / Judge", fit: "Very niche", locations: "Tunnel and close Hall pockets", note: "Use only with a deliberate close-range setup; most Breeze fights expose their range limit." }
+        { weapon: "Vandal", image: "/assets/weapons/vandal.png", category: "rifle", fit: "Best rifle fit", evidence: "0.84 kills per round | 29.2% headshots", locations: "A Main, B Main, Mid", note: "Breeze's long sightlines reward the Vandal's no-falloff headshot and punish close-range-only plans." },
+        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "High-value sniper", evidence: "0.80 kills per round | 220 average damage", locations: "A Main, B Main, Mid Nest", note: "The map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after contact." },
+        { weapon: "Stinger", image: "/assets/weapons/stinger.png", category: "eco", fit: "Niche eco outlier", evidence: "228 average damage | 1,100 credits", locations: "Tunnel and close Hall pockets", note: "Use it only with a deliberate close-range setup; most Breeze fights expose its range limit." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
@@ -141,9 +139,9 @@
         patch: "13.00"
       },
       metaComps: [
-        { agents: ["Chamber", "Clove", "Jett", "Neon", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "56.9%", sample: 4639 },
-        { agents: ["Chamber", "Clove", "Neon", "Reyna", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "55.6%", sample: 2314 },
-        { agents: ["Chamber", "Clove", "Iso", "Jett", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "54.2%", sample: 2579 }
+        { agents: ["Clove", "Jett", "Sage", "Sova", "Gekko"], composition: "1 Controller, 1 Duelist, 2 Initiators, 1 Sentinel" },
+        { agents: ["Clove", "Jett", "Sage", "Sova", "Viper"], composition: "2 Controllers, 1 Duelist, 1 Initiator, 1 Sentinel" },
+        { agents: ["Clove", "Jett", "Killjoy", "Sage", "Sova"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" }
       ],
       agentInsights: {
         Chamber: "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
@@ -165,32 +163,31 @@
       id: "split",
       label: "Split",
       cardImage: "/assets/library/maps/split-card.png",
-      layoutImage: "/assets/library/maps/split-layout.png",
+      layoutImage: "/assets/library/maps/split-layout-trn.png",
       callouts: [
-        { label: "A Site", x: 31.5, y: 18.4 },
-        { label: "A Main", x: 49.2, y: 20.8 },
-        { label: "A Rafters", x: 35.4, y: 27.4 },
-        { label: "A Screens", x: 15.0, y: 25.7 },
-        { label: "Mid Bottom", x: 61.6, y: 54.8 },
-        { label: "Mid Vent", x: 42.6, y: 45.1 },
-        { label: "Mid Mail", x: 46.7, y: 60.7 },
-        { label: "B Tower", x: 43.0, y: 68.4 },
-        { label: "B Site", x: 35.4, y: 86.7 },
-        { label: "B Garage", x: 54.2, y: 86.8 }
+        { label: "A Site", x: 81.6, y: 31.5 },
+        { label: "A Main", x: 79.2, y: 49.2 },
+        { label: "A Rafters", x: 72.6, y: 35.4 },
+        { label: "A Screens", x: 74.3, y: 15.0 },
+        { label: "Mid Bottom", x: 45.2, y: 61.6 },
+        { label: "Mid Vent", x: 54.9, y: 42.6 },
+        { label: "Mid Mail", x: 39.3, y: 46.7 },
+        { label: "B Tower", x: 31.6, y: 43.0 },
+        { label: "B Site", x: 13.3, y: 35.4 },
+        { label: "B Garage", x: 13.2, y: 54.2 }
       ],
       plantSpots: [
-        { number: 1, site: "A", label: "A Default", rate: 15.39, x: 29.6, y: 15.7 },
-        { number: 2, site: "A", label: "A Screens Plant", rate: 4.83, x: 25.4, y: 6.4 },
-        { number: 3, site: "A", label: "A Open Plant", rate: 18.58, x: 33.8, y: 7.4 },
-        { number: 1, site: "B", label: "B Open Plant", rate: 26.94, x: 29.6, y: 88.9 },
-        { number: 2, site: "B", label: "B Default", rate: 53.76, x: 34.4, y: 87.7 }
+        { number: 1, site: "A", label: "A Default", rate: 15.39, x: 84.3, y: 29.6 },
+        { number: 2, site: "A", label: "A Screens Plant", rate: 4.83, x: 93.6, y: 25.4 },
+        { number: 3, site: "A", label: "A Open Plant", rate: 18.58, x: 92.6, y: 33.8 },
+        { number: 1, site: "B", label: "B Open Plant", rate: 26.94, x: 11.1, y: 29.6 },
+        { number: 2, site: "B", label: "B Default", rate: 53.76, x: 12.3, y: 34.4 }
       ],
       plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
       weaponSuggestions: [
-        { weapon: "Phantom", fit: "Best rifle fit", locations: "A Main, B Main, Vents, Mail", note: "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control." },
-        { weapon: "Vandal", fit: "Strong", locations: "A Ramps, Mid, B Main", note: "Choose it when your plan emphasizes the map's longer approach lanes rather than the site pockets." },
-        { weapon: "Operator", fit: "Viable", locations: "A Ramps, B Main, Mid", note: "Strong for an opening pick, but tight rotations make a missed shot dangerous without an escape path." },
-        { weapon: "Judge / Spectre", fit: "High-value niche", locations: "B Tower, Vents, A Main", note: "Compact corners can force close fights, but do not carry the setup into open Mid without utility support." }
+        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Best rifle fit", evidence: "0.84 kills per round | 202 average damage", locations: "A Main, B Main, Vents, Mail", note: "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control." },
+        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Viable sniper", evidence: "0.80 kills per round | 220 average damage", locations: "A Ramps, B Main, Mid", note: "Strong for an opening pick, but tight rotations make a missed shot dangerous without an escape path." },
+        { weapon: "Stinger", image: "/assets/weapons/stinger.png", category: "eco", fit: "Eco outlier", evidence: "228 average damage | 1,100 credits", locations: "B Tower, Vents, A Main", note: "The low price and damage output fit compact corners, but do not carry the setup into open Mid." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
@@ -218,9 +215,9 @@
         patch: "13.00"
       },
       metaComps: [
-        { agents: ["Clove", "Jett", "Raze", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "54.1%", sample: 3866 },
-        { agents: ["Clove", "Cypher", "Jett", "Neon", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "53.5%", sample: 1733 },
-        { agents: ["Clove", "Raze", "Reyna", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: "53.3%", sample: 2669 }
+        { agents: ["Clove", "Fade", "Killjoy", "Raze", "Sage"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" },
+        { agents: ["Clove", "Cypher", "Raze", "Sage", "Skye"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" },
+        { agents: ["Clove", "Fade", "Jett", "Raze", "Sage"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" }
       ],
       agentInsights: {
         Clove: "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",

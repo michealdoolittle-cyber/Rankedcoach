@@ -54013,3 +54013,21 @@ html body .agent-modal.is-closing .agent-modal-inner{opacity:0 !important;transf
   html.is-mobile-layout body.is-mobile-layout #dailyWarmupModal > .lens-modal,
   html.is-mobile-layout body.is-mobile-layout #editProfileModal > .lens-modal{height:calc(100dvh - 16px) !important;min-height:0 !important;}
 }
+
+/* Shared modal focus transition: blur in behind the card, then release while it exits. */
+html body :is(.lens-modal-overlay,.agent-modal,.profile-edit-overlay,.auth-modal-overlay){
+  background-color:rgba(2,6,23,0) !important;
+  backdrop-filter:blur(0) saturate(1) !important;
+  -webkit-backdrop-filter:blur(0) saturate(1) !important;
+  transition:opacity 320ms ease,background-color 320ms ease,backdrop-filter 320ms ease,-webkit-backdrop-filter 320ms ease !important;
+}
+html body :is(.lens-modal-overlay,.agent-modal,.profile-edit-overlay,.auth-modal-overlay).active{
+  background-color:rgba(2,6,23,.58) !important;
+  backdrop-filter:blur(12px) saturate(.86) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(.86) !important;
+}
+html body :is(.lens-modal-overlay,.agent-modal,.profile-edit-overlay,.auth-modal-overlay).is-closing{
+  background-color:rgba(2,6,23,0) !important;
+  backdrop-filter:blur(0) saturate(1) !important;
+  -webkit-backdrop-filter:blur(0) saturate(1) !important;
+}

@@ -2314,6 +2314,7 @@ function shouldAllowMobilePageSwipeStart(target, startX, startY) {
   if (!isMobileLayoutViewport()) return false;
   if (document.body?.classList.contains("mobile-modal-open")) return false;
   if (!target?.closest?.(".page.active")) return false;
+  if (target?.closest?.("[data-gamesense-map-viewport], .gamesense-map-tools, .gamesense-map-view-tabs")) return false;
   if (!isMobileSwipeInsideCenterZone(startX, startY)) return false;
   return !target?.closest?.("input, textarea, select, option, [contenteditable='true']");
 }
