@@ -44,6 +44,22 @@
     return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   }
 
+  function sortPatchHistoryNewestFirst(history = []) {
+    return history.map((item, index) => {
+      const match = String(item?.patch || "").match(/(\d+)(?:\.(\d+))?/);
+      return {
+        item,
+        index,
+        major: match ? Number(match[1]) : -1,
+        minor: match ? Number(match[2] || 0) : -1
+      };
+    }).sort((left, right) => (
+      right.major - left.major
+      || right.minor - left.minor
+      || left.index - right.index
+    )).map(entry => entry.item);
+  }
+
   function getAgentIcon(agent = "") {
     const slug = assetSlug(agent);
     const uuid = agentUuids[slug];
@@ -251,11 +267,17 @@
     return `
       <section class="gamesense-weapon-suggestions">
         <div><span>Weapon Suggestions</span><strong>Highest-value choices by buy type</strong></div>
-        <p class="gamesense-weapon-source">Efficiency evidence uses Blitz Competitive weapon stats. The map read includes full buys, pistol rounds, eco choices, and whether a sniper can convert as reliably as a Judge or Bucky setup.</p>
+        <p class="gamesense-weapon-source">Round conversion percent uses the vstats active-season Competitive map and economy sample. Kills-per-round and average-damage context uses Blitz Competitive weapon stats.</p>
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
-            <summary><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><span>${escapeHtml(item.fit)}</span><i aria-hidden="true"></i></summary>
-            <div><strong>${escapeHtml(item.evidence)}</strong><small>${escapeHtml(item.locations)}</small>${item.conversion ? `<em>${escapeHtml(item.conversion)}</em>` : ""}<p>${escapeHtml(item.note)}</p></div>
+            <summary><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><span class="gamesense-weapon-summary-tags"><span>${escapeHtml(item.fit)}</span>${item.side ? `<b>${escapeHtml(item.side)}</b>` : ""}</span><i aria-hidden="true"></i></summary>
+            <div>
+              <strong>${escapeHtml(item.evidence)}</strong>
+              <small>${escapeHtml(item.locations)}</small>
+              ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong>${escapeHtml(item.roundConversion.scope)} round conversion percent: ${Number(item.roundConversion.value).toFixed(2)}%</strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
+              ${item.conversion ? `<em>${escapeHtml(item.conversion)}</em>` : ""}
+              <p>${escapeHtml(item.note)}</p>
+            </div>
           </details>
         `).join("")}</div>
       </section>`;
@@ -326,7 +348,7 @@
   }
 
   function renderAgentFacts(agent) {
-    const history = Array.isArray(agent.patchHistory) ? agent.patchHistory : [];
+    const history = sortPatchHistoryNewestFirst(Array.isArray(agent.patchHistory) ? agent.patchHistory : []);
     const facts = Array.isArray(agent.facts) ? agent.facts : [];
     return `
       <section class="gamesense-note-block gamesense-agent-facts">
@@ -403,7 +425,7 @@
         </div>
         <details class="gamesense-patch-history gamesense-weapon-history">
           <summary>Patch history</summary>
-          <ol>${(weapon.patchHistory || []).map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("")}</ol>
+          <ol>${sortPatchHistoryNewestFirst(weapon.patchHistory || []).map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("")}</ol>
         </details>
       </article>`;
   }
@@ -413,9 +435,8 @@
     const selected = weapons.find(weapon => weapon.id === state.detailId) || weapons[0];
     return `
       <div class="gamesense-detail-head gamesense-weapon-detail-head">
-        <div><span>${escapeHtml(group.range)}</span><h2>${escapeHtml(group.label)}</h2></div>
-        <span class="gamesense-patch">${escapeHtml(group.examples)}</span>
-        <button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button>
+        <div><span>Weapon Dossier</span><h2>${escapeHtml(group.label)}</h2></div>
+        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch">${escapeHtml(group.examples)} | ${escapeHtml(group.range)}</span><button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
       </div>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Arsenal</span><strong>Select a weapon</strong></div>
