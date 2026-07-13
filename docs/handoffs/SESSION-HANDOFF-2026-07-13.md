@@ -12,7 +12,7 @@ This document is written for a new Codex session with no prior knowledge of Rank
 - Supabase provides authentication and persisted profile/match data.
 - HenrikDev is the current server-side source for Riot ID, Competitive match history, rank, MMR snapshots, and raw round data. Official Riot RSO remains a future path.
 
-## 2. Exact State at Handoff
+## 2. Original State at Handoff
 
 - Branch: `main`
 - Live product baseline before this documentation-only handoff commit: `57b7badb039c2ab3c046e72204c1efec255b055e`
@@ -36,6 +36,63 @@ f9ea794 Polish mobile progression and gamesense library
 6e266d0 Expand Gamesense Library visual guides
 419475e Add Gamesense Library and consolidate navigation
 ```
+
+## 2A. Post-Handoff Release Update
+
+The repository advanced after the original handoff. Treat this as the current shipped baseline:
+
+- Current branch/remote: `main`, with local HEAD and `origin/main` both at `a63266fd19fe1eeacb5b6ff67c97de4833217f7c` when this update was recorded.
+- Current product commit: `a63266f - Improve profile sync and post-game workflow`.
+- Current production cache key: `20260713-profile-sync-ui-01`.
+- Production verification confirmed that cache key and a healthy configured Henrik bridge at `/api/henrik/health`.
+- Michael reported the complete release passed automated, live-data, desktop, mobile, and production checks, was pushed/deployed, and sent its release notification.
+
+The three post-handoff commits are:
+
+```text
+a63266f Improve profile sync and post-game workflow
+e42d9d5 Harden Henrik sync rate-limit handling
+988dc70 Refine Gamesense Library follow-up
+```
+
+### `988dc70` - Gamesense Library Follow-Up
+
+- Replaced the generated Weapons dossier image with real Valorant weapon presentation; the committed `public/assets/library/weapons-dossier-v2.webp` was deleted.
+- Refined focus-label sizing, Stats selector placement, dossier highlights, dropdown transitions, and expandable Role Lens controls.
+- Expanded pistol, shotgun, and sniper guidance with clearer use cases, economy context, conversion comparisons, and weapon-specific details.
+- Updated the focused Gamesense visual regression coverage with the new dossier behavior.
+
+### `e42d9d5` - Henrik Rate-Limit Resilience
+
+- Treats HTTP 429, timeouts, and upstream 5xx responses as retryable Henrik failures.
+- Adds bounded retry/backoff behavior and clearer rate-limit state instead of treating a temporary shared-key quota event as missing player data.
+- Adds dedicated data-layer and visual regression tests for rate-limit resilience.
+- The triggering incident reproduced against unrelated PUUIDs and cleared later, confirming a shared Henrik quota event rather than an account-specific failure.
+
+### `a63266f` - Profile Sync and Post-Game Workflow
+
+- Replaced browser `prompt()` profile creation with a compact profile setup menu for name, Riot ID, and region.
+- New profiles display loading progress while account resolution and retained Competitive-history sync run.
+- Retained-history sync can page much deeper than the previous single 100-match window while remaining bounded.
+- Imported Competitive games receive verified RR when Henrik supplies it; null/absent RR is no longer coerced into a false zero.
+- The latest imported game from today can prefill the reflection form without overwriting an existing player draft.
+- Post-game aim training can be added, displayed, edited, or removed against the correct session.
+- Signed-in initialization uses the retained-history flow and updates the loading veil as batches progress.
+- Added `testing/visual-audit/profile-sync-workflow.test.js` and expanded Henrik, log-policy, warm-up, Library, and data-surface checks.
+
+### Untracked Files at This Update
+
+Do not assume these were part of the shipped release or delete them without checking with Michael:
+
+```text
+notes/gamesense-library-followup-2026-07-13.md
+notes/riot-sync-rate-limit-2026-07-13.md
+public/assets/library/weapons-dossier-v2.webp
+testing/visual-audit/audit-run.log
+testing/visual-audit/library-drill.js
+```
+
+The WebP path is intentionally absent from current Git because `988dc70` deleted the generated asset; its reappearance is an untracked local artifact.
 
 ## 3. Application Architecture
 
