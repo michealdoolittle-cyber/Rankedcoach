@@ -51,6 +51,43 @@
     return globalThis.RankedCoachMatchRecord.fromHenrikV4Match(match, context);
   }
 
+  function createSyncRequestError(message, details = {}) {
+    const error = new Error(String(message || "Match sync failed."));
+    error.name = "RiotSyncRequestError";
+    error.code = String(details.code || "henrik_request_failed");
+    error.status = Number(details.status) || 0;
+    error.retryable = Boolean(details.retryable);
+    return error;
+  }
+
+  function isTransientSyncError(error) {
+    const status = Number(error?.status) || 0;
+    const code = String(error?.code || "").toLowerCase();
+    return Boolean(
+      error?.retryable
+      || status === 408
+      || status === 429
+      || status >= 500
+      || [
+        "henrik_408",
+        "henrik_429",
+        "henrik_500",
+        "henrik_502",
+        "henrik_503",
+        "henrik_504",
+        "henrik_timeout",
+        "henrik_unavailable"
+      ].includes(code)
+    );
+  }
+
+  function waitForRetry(delayMs = 0, options = {}, context = {}) {
+    if (typeof options.waitForRetry === "function") {
+      return Promise.resolve(options.waitForRetry(delayMs, context));
+    }
+    return new Promise(resolve => setTimeout(resolve, Math.max(0, Number(delayMs) || 0)));
+  }
+
   async function requestJson(path, body, options = {}) {
     const baseUrl = String(options.baseUrl || "").replace(/\/$/, "");
     const controller = new AbortController();
@@ -64,14 +101,56 @@
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(payload?.error || `Match sync failed (${response.status}).`);
+        throw createSyncRequestError(payload?.error || `Match sync failed (${response.status}).`, {
+          code: payload?.code || `henrik_${response.status}`,
+          status: response.status,
+          retryable: [408, 429].includes(response.status) || response.status >= 500
+        });
       }
       return payload;
     } catch (error) {
-      if (error?.name === "AbortError") throw new Error("Match sync timed out.");
+      if (error?.name === "AbortError") {
+        throw createSyncRequestError("Match sync timed out.", {
+          code: "henrik_timeout",
+          status: 504,
+          retryable: true
+        });
+      }
+      if (error?.code || error?.status) throw error;
+      if (error instanceof TypeError) {
+        throw createSyncRequestError(error?.message || "Match sync could not connect.", {
+          code: "henrik_unavailable",
+          status: 502,
+          retryable: true
+        });
+      }
       throw error;
     } finally {
       clearTimeout(timeoutId);
+    }
+  }
+
+  async function requestJsonWithRetry(path, body, options = {}) {
+    const requestOptions = {
+      ...options,
+      timeoutMs: Math.max(1000, Number(options.matchTimeoutMs || options.timeoutMs) || 15000)
+    };
+    const retryDelaysMs = Array.isArray(options.matchRetryDelaysMs)
+      ? options.matchRetryDelaysMs.map(value => Math.max(0, Number(value) || 0))
+      : [750, 1500];
+    let attempt = 0;
+    while (true) {
+      try {
+        return await requestJson(path, body, requestOptions);
+      } catch (error) {
+        const delayMs = retryDelaysMs[attempt];
+        if (!isTransientSyncError(error) || delayMs === undefined) {
+          error.attempts = attempt + 1;
+          throw error;
+        }
+        attempt += 1;
+        await waitForRetry(delayMs, options, { attempt, error, path, body });
+      }
     }
   }
 
@@ -225,10 +304,25 @@
 
     const parsedMatches = [];
     let historyExhausted = false;
+    let matchSyncError = null;
     for (let offset = 0; offset < historyLimit; offset += pageSize) {
       const start = historyStart + offset;
       const count = Math.min(pageSize, historyLimit - offset);
-      const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count, start }, options);
+      let matchesPayload;
+      try {
+        matchesPayload = await requestJsonWithRetry("/api/henrik/matches", { puuid, region, count, start }, options);
+      } catch (error) {
+        matchSyncError = {
+          code: String(error?.code || "henrik_request_failed"),
+          status: Number(error?.status) || 0,
+          message: error?.message || "Match history is temporarily unavailable.",
+          retryable: isTransientSyncError(error),
+          attempts: Number(error?.attempts) || 1,
+          start,
+          count
+        };
+        break;
+      }
       const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
       parsedMatches.push(...pageMatches);
       if (pageMatches.length < count) {
@@ -246,7 +340,7 @@
       return matchId && (!knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
     });
     const records = [];
-    const failures = [];
+    const failures = matchSyncError ? [{ stage: "matches", ...matchSyncError }] : [];
 
     for (const parsedMatch of pendingMatches) {
       const matchId = getParsedMatchId(parsedMatch);
@@ -276,9 +370,10 @@
       historyLimit,
       historyStart,
       historyExhausted,
-      historyWindowComplete: historyExhausted,
+      historyWindowComplete: historyExhausted && !matchSyncError,
       mmrHistory,
-      mmrHistoryError: mmrPayload?.error || ""
+      mmrHistoryError: mmrPayload?.error || "",
+      matchSyncError
     };
   }
 

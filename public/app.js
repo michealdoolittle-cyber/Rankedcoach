@@ -48246,6 +48246,24 @@ async function importActiveProfileMatches(options = {}){
     });
     profile.puuid = pullResult?.puuid || profile.puuid || "";
     profile.lastSyncSource = "henrik";
+    const matchSyncError = pullResult?.matchSyncError || null;
+    if (matchSyncError) {
+      profile.lastSyncErrorCode = String(matchSyncError.code || "henrik_request_failed");
+      profile.lastSyncErrorAt = nowISO();
+    } else {
+      profile.lastSyncErrorCode = "";
+      profile.lastSyncErrorAt = "";
+    }
+    saveProfiles();
+    if (matchSyncError && safeNumber(pullResult?.checked) === 0) {
+      const syncError = new Error(matchSyncError.message || "Riot match history is temporarily unavailable.");
+      syncError.name = "RiotMatchSyncError";
+      syncError.code = matchSyncError.code || "henrik_request_failed";
+      syncError.status = safeNumber(matchSyncError.status);
+      syncError.retryable = Boolean(matchSyncError.retryable);
+      syncError.attempts = safeNumber(matchSyncError.attempts) || 1;
+      throw syncError;
+    }
     if (needsHistoryBackfill) {
       const nextCursor = historyStart + safeNumber(pullResult?.checked);
       profile.henrikHistoryCursor = nextCursor;
@@ -48281,7 +48299,9 @@ async function importActiveProfileMatches(options = {}){
         checked: safeNumber(pullResult?.checked),
         source: "henrik",
         historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
-        failures: pullResult?.failures || []
+        failures: pullResult?.failures || [],
+        syncError: matchSyncError,
+        partial: Boolean(matchSyncError)
       };
     }
 
@@ -48307,7 +48327,9 @@ async function importActiveProfileMatches(options = {}){
       checked: safeNumber(pullResult?.checked),
       source: "henrik",
       historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
-      failures: pullResult?.failures || []
+      failures: pullResult?.failures || [],
+      syncError: matchSyncError,
+      partial: Boolean(matchSyncError)
     };
   } catch (error) {
     if (allowDemoFallback) {
@@ -48465,6 +48487,40 @@ async function isRiotSyncConfigured() {
   }
 }
 
+function getPlayerFacingRiotSyncError(error = {}) {
+  const code = String(error?.code || "").trim().toLowerCase();
+  const status = safeNumber(error?.status);
+  const rawMessage = String(error?.message || "").trim();
+  if (status === 429 || code === "henrik_429" || /rate limit/i.test(rawMessage)) {
+    return {
+      title: "Riot sync paused",
+      message: "Riot's data provider is busy right now — try again in a minute."
+    };
+  }
+  if (status === 408 || status === 504 || ["henrik_408", "henrik_504", "henrik_timeout"].includes(code)) {
+    return {
+      title: "Riot sync paused",
+      message: "Riot match data took too long to respond — try again in a minute."
+    };
+  }
+  if (status >= 500 || ["henrik_500", "henrik_502", "henrik_503", "henrik_unavailable"].includes(code)) {
+    return {
+      title: "Riot sync paused",
+      message: "Riot match data is temporarily unavailable — try again in a minute."
+    };
+  }
+  if (code.startsWith("henrik_")) {
+    return {
+      title: "Riot sync paused",
+      message: "Riot match data could not be refreshed right now. Try again shortly."
+    };
+  }
+  return {
+    title: "Riot sync needs attention",
+    message: rawMessage || "Riot matches could not be synced. Try again shortly."
+  };
+}
+
 async function performRiotSync(options = {}) {
   const { silent = false, mode = "sync", allowDemoFallback = true } = options;
   const activeProfile = getActiveProfile();
@@ -48526,7 +48582,17 @@ async function performRiotSync(options = {}) {
     }
 
     if (!silent) {
-      if (result?.source === "demo-fixture") {
+      if (result?.syncError) {
+        const playerError = getPlayerFacingRiotSyncError(result.syncError);
+        const savedPrefix = result.count
+          ? `${mode === "refresh" ? "Synced" : "Imported"} ${result.count} new competitive ${result.count === 1 ? "match" : "matches"}. `
+          : "";
+        setProfileSyncStatus("", "needs-setup", playerError.message, false);
+        showToast(`${savedPrefix}${playerError.message}`, {
+          title: result.count ? "Matches saved; sync paused" : playerError.title,
+          durationMs: 4200
+        });
+      } else if (result?.source === "demo-fixture") {
         alert(`Live match sync is unavailable, so ${result.count} demo matches were loaded from the example dataset.`);
       } else {
         alert(result.count
@@ -48537,9 +48603,21 @@ async function performRiotSync(options = {}) {
 
     return result;
   } catch (err) {
-    console.error("MATCH SYNC ERROR", err);
+    const playerError = getPlayerFacingRiotSyncError(err);
+    console.error("MATCH SYNC ERROR", {
+      code: err?.code || "",
+      status: safeNumber(err?.status),
+      retryable: Boolean(err?.retryable),
+      attempts: safeNumber(err?.attempts),
+      technicalMessage: err?.message || "Unknown Riot sync error.",
+      error: err
+    });
+    setProfileSyncStatus("", "needs-setup", playerError.message, false);
     if (!silent) {
-      alert(err?.message || "Failed to sync Riot matches");
+      showToast(playerError.message, {
+        title: playerError.title,
+        durationMs: 4200
+      });
     }
     return null;
   } finally {
