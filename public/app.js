@@ -13152,6 +13152,11 @@ function showAppLoadingVeil(message = "Preparing your dashboard...") {
   document.body?.classList.add("app-loading-active");
 }
 
+function setAppLoadingVeilMessage(message = "Preparing your dashboard...") {
+  const copy = document.getElementById("appLoadingCopy");
+  if (copy) copy.textContent = message;
+}
+
 function hideAppLoadingVeil({ force = false } = {}) {
   appLoadingVeilDepth = force ? 0 : Math.max(0, appLoadingVeilDepth - 1);
   if (appLoadingVeilDepth > 0) return;
@@ -14298,11 +14303,14 @@ let riotAutoSyncTicker = null;
 let riotAutoSyncDeadline = 0;
 let riotSyncInFlight = false;
 let matchSyncConfigured = null;
+let dailyRiotSyncTimer = null;
 let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
 const HENRIK_HISTORY_BACKFILL_SIZE = 100;
 const HENRIK_HISTORY_BACKFILL_VERSION = 2;
+const HENRIK_HISTORY_MAX_START = 1000;
+const HENRIK_HISTORY_MAX_BATCHES = 11;
 let crestPreviewTimer = null;
 let crestPreviewIndex = 0;
 let crestPreviewActive = false;
@@ -15128,8 +15136,6 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     };
   });
   const synced = policy.syncMatchPlaceholders(logEntries, placeholderMatches, profileId);
-  if (!synced.added) return 0;
-
   logEntries = sanitizeStoredLogEntries(synced.entries, {
     signedIn: Boolean(currentAuthUser),
     profileId
@@ -15138,6 +15144,33 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     saveLogEntries({ skipBackend: options.skipBackend === true });
   }
   return synced.added;
+}
+
+function hasPlayerReflectionDraft() {
+  if (editingLogEntryId) return true;
+  if (selectedLogRating != null || selectedLogMood || selectedLogTeamComms != null || selectedLogSelfComms != null) return true;
+  const values = [
+    document.getElementById("logNotes")?.value,
+    document.getElementById("logFocusSelect")?.value,
+    document.getElementById("logFocusOther")?.value
+  ];
+  return values.some(value => {
+    const cleaned = String(value || "").trim();
+    return cleaned && !["select focus", "other"].includes(cleaned.toLowerCase());
+  });
+}
+
+function prefillLatestImportedReflection(options = {}) {
+  const profileId = String(options.profileId || activeProfileId || "").trim();
+  if (!profileId || hasPlayerReflectionDraft()) return null;
+  const today = formatLocalDateKey(new Date());
+  const latest = getProfileLogEntries(profileId)
+    .filter(entry => isMatchPlaceholderLogEntry(entry) && getTrainingEntryDate(entry) === today)
+    .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())[0] || null;
+  if (!latest) return null;
+  activeLogSessionFilter = today;
+  editLogEntry(latest.id, { scroll: false });
+  return latest;
 }
 
 function readLocalLogEntries(options = {}) {
@@ -15629,11 +15662,14 @@ async function initializeSignedInAccount(user, options = {}) {
         "Coach",
         "If your Riot profile is linked, we confirm the latest account read before opening your pages."
       );
-      await performRiotSync({
-        silent: true,
+      await syncProfileRetainedHistory({
         mode: "refresh",
-        allowDemoFallback: false,
-        preserveOpenUi: true
+        onProgress: progress => setLoginInitializationProgress(
+          Math.min(86, 70 + Math.max(0, progress.batch - 1) * 3),
+          progress.message,
+          "Riot history",
+          "RankedCoach is finishing the retained competitive history before opening your dashboard."
+        )
       });
     } else {
       setLoginInitializationProgress(
@@ -41413,7 +41449,7 @@ if(entry.focus){
 // EDIT LOG ENTRY
 // ========================
 
-function editLogEntry(id){
+function editLogEntry(id, options = {}){
 
   const entry = logEntries.find(e => e.id === id);
   if(!entry) return;
@@ -41470,7 +41506,9 @@ function editLogEntry(id){
   syncLoggingQuickChipStates();
   updateLoggingDebriefPreview();
   renderLogFeed({ force: true });
-  snapLoggingFormToTarget(document.querySelector("#page-logging .logging-card") || document.getElementById("mobileLoggingTabs"));
+  if (options.scroll !== false) {
+    snapLoggingFormToTarget(document.querySelector("#page-logging .logging-card") || document.getElementById("mobileLoggingTabs"));
+  }
 }
 
 // ========================
@@ -41604,9 +41642,9 @@ function getLogEntryMatchContext(entry = {}) {
 
   const core = linkedMatch ? getMatchCore(linkedMatch) : {};
   const result = String(entry.result || core.result || "").toLowerCase();
-  const rr = Number.isFinite(Number(entry.rr))
+  const rr = entry.rr !== null && entry.rr !== undefined && entry.rr !== "" && Number.isFinite(Number(entry.rr))
     ? Number(entry.rr)
-    : Number.isFinite(Number(linkedMatch?.rr))
+    : linkedMatch?.rr !== null && linkedMatch?.rr !== undefined && linkedMatch?.rr !== "" && Number.isFinite(Number(linkedMatch?.rr))
       ? Number(linkedMatch.rr)
       : null;
 
@@ -41979,6 +42017,10 @@ function renderLogFeed(options = {}){
             <span class="log-tier-label">Warmup</span>
             <span class="log-tier-value">${trainingMarker?.warmup ? "Yes" : "No"}</span>
           </div>
+          <div class="log-tier-row">
+            <span class="log-tier-label">Post-game aim</span>
+            <span class="log-tier-value">${trainingMarker?.postGame ? "Yes" : "No"}</span>
+          </div>
         `;
       }
 
@@ -42347,7 +42389,10 @@ function normalizeProfileRecord(profile = {}) {
     henrikHistoryWindowSize: Math.max(0, safeNumber(profile.henrikHistoryWindowSize)),
     henrikHistoryCursor: Math.max(0, safeNumber(profile.henrikHistoryCursor)),
     henrikHistoryBackfillVersion: Math.max(0, safeNumber(profile.henrikHistoryBackfillVersion)),
+    henrikHistoryBackfillTargetVersion: Math.max(0, safeNumber(profile.henrikHistoryBackfillTargetVersion)),
     henrikHistoryBackfillCompleteAt: String(profile.henrikHistoryBackfillCompleteAt || ""),
+    henrikHistoryReachedLimit: profile.henrikHistoryReachedLimit === true,
+    lastDailyProfileSyncDate: String(profile.lastDailyProfileSyncDate || ""),
     goalRank: profile.goalRank || null,
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
     peakRR: safeNumber(profile.peakRR),
@@ -42613,6 +42658,7 @@ function updateProfile(id, data){
     profile.henrikHistoryWindowSize = 0;
     profile.henrikHistoryCursor = 0;
     profile.henrikHistoryBackfillVersion = 0;
+    profile.henrikHistoryBackfillTargetVersion = 0;
     profile.henrikHistoryBackfillCompleteAt = "";
   }
 
@@ -42719,27 +42765,98 @@ function setActiveProfile(id){
 // PROFILE ACTIONS (MANUAL)
 // ========================
 
+let profileAddMenu = null;
+
+function closeProfileAddMenu() {
+  if (!profileAddMenu) return;
+  profileAddMenu.hidden = true;
+  profileAddMenu.classList.remove("is-open");
+}
+
+function positionProfileAddMenu(anchor = document.getElementById("profileAddBtn")) {
+  if (!profileAddMenu || profileAddMenu.hidden || !anchor) return;
+  const rect = anchor.getBoundingClientRect();
+  const width = Math.min(340, Math.max(280, window.innerWidth - 24));
+  const left = Math.min(window.innerWidth - width - 12, Math.max(12, rect.right - width));
+  const top = Math.max(12, Math.min(window.innerHeight - 360, Math.max(12, rect.bottom + 8)));
+  profileAddMenu.style.width = `${width}px`;
+  profileAddMenu.style.left = `${left}px`;
+  profileAddMenu.style.top = `${top}px`;
+}
+
+function ensureProfileAddMenu() {
+  if (profileAddMenu?.isConnected) return profileAddMenu;
+  profileAddMenu = document.createElement("div");
+  profileAddMenu.id = "profileAddMenu";
+  profileAddMenu.className = "profile-add-menu";
+  profileAddMenu.setAttribute("role", "dialog");
+  profileAddMenu.setAttribute("aria-label", "Add Riot profile");
+  profileAddMenu.hidden = true;
+  profileAddMenu.innerHTML = `
+    <form id="profileAddForm" class="profile-add-form" novalidate>
+      <div class="profile-add-head"><div><span>New player profile</span><strong>Connect a Riot account</strong></div><button type="button" data-profile-add-close aria-label="Close profile menu">X</button></div>
+      <label><span>Profile name</span><input id="profileAddName" name="name" maxlength="30" value="Alt Account" autocomplete="off" required></label>
+      <label><span>Riot ID</span><input id="profileAddRiotId" name="riotId" maxlength="40" placeholder="PlayerName#TAG" autocomplete="off" required></label>
+      <label><span>Region</span><select id="profileAddRegion" name="region"><option value="NA">North America</option><option value="EU">Europe</option><option value="AP">Asia Pacific</option><option value="KR">Korea</option><option value="LATAM">Latin America</option><option value="BR">Brazil</option></select></label>
+      <p id="profileAddError" class="profile-add-error" role="alert" hidden></p>
+      <div class="profile-add-actions"><button type="button" class="profile-add-cancel" data-profile-add-close>Cancel</button><button type="submit" class="profile-add-submit">Add &amp; sync</button></div>
+    </form>`;
+  profileAddMenu.addEventListener("click", event => {
+    event.stopPropagation();
+    if (event.target.closest("[data-profile-add-close]")) closeProfileAddMenu();
+  });
+  profileAddMenu.querySelector("form")?.addEventListener("submit", submitProfileAddForm);
+  document.body.appendChild(profileAddMenu);
+  if (!window.__rankedCoachProfileAddMenuBound) {
+    window.__rankedCoachProfileAddMenuBound = true;
+    document.addEventListener("click", event => {
+      if (!event.target.closest("#profileAddMenu, #profileAddBtn")) closeProfileAddMenu();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeProfileAddMenu();
+    });
+    window.addEventListener("resize", () => positionProfileAddMenu());
+  }
+  return profileAddMenu;
+}
+
 function handleAddProfile() {
+  const menu = ensureProfileAddMenu();
+  const anchor = document.getElementById("profileAddBtn");
+  profileSwitcher?.classList.remove("open");
+  menu.hidden = false;
+  menu.classList.add("is-open");
+  const error = menu.querySelector("#profileAddError");
+  if (error) error.hidden = true;
+  positionProfileAddMenu(anchor);
+  window.requestAnimationFrame(() => menu.querySelector("#profileAddRiotId")?.focus());
+}
 
-  const name = prompt(
-    "New profile name:",
-    "Alt Account"
-  );
-
-  if (!name) return;
-
-  const riotId =
-    prompt(
-      "Riot ID (Name#TAG):",
-      "RiotID#TAG"
-    ) || "RiotID#TAG";
-
-  const region =
-    prompt(
-      "Region (e.g. NA, EU):",
-      "NA"
-    ) || "NA";
-
+async function submitProfileAddForm(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const name = String(form.elements.name?.value || "").trim();
+  const riotId = String(form.elements.riotId?.value || "").trim();
+  const region = String(form.elements.region?.value || "NA").trim().toUpperCase();
+  const error = form.querySelector("#profileAddError");
+  const submit = form.querySelector(".profile-add-submit");
+  const showError = message => {
+    if (!error) return;
+    error.textContent = message;
+    error.hidden = false;
+  };
+  if (!name) {
+    showError("Give this profile a short name.");
+    form.elements.name?.focus();
+    return;
+  }
+  if (!/^.+#[^#]+$/.test(riotId)) {
+    showError("Enter a Riot ID in PlayerName#TAG format.");
+    form.elements.riotId?.focus();
+    return;
+  }
+  submit.disabled = true;
+  submit.textContent = "Connecting...";
   const newProfile = {
 
     id: "p_" + Date.now(),
@@ -42771,11 +42888,48 @@ function handleAddProfile() {
     matches: []
   };
 
-  profiles.push(normalizeProfileRecord(newProfile));
-
-  saveProfiles();
-
-  setActiveProfile(newProfile.id);
+  try {
+    profiles.push(normalizeProfileRecord(newProfile));
+    saveProfiles();
+    setActiveProfile(newProfile.id);
+    if (dailyWarmupPromptTimer) {
+      window.clearTimeout(dailyWarmupPromptTimer);
+      dailyWarmupPromptTimer = 0;
+    }
+    closeProfileAddMenu();
+    showAppLoadingVeil("Resolving the Riot account...");
+    const syncResult = await syncProfileRetainedHistory({
+      mode: "import",
+      onProgress: progress => setAppLoadingVeilMessage(progress.message)
+    });
+    prefillLatestImportedReflection({ profileId: newProfile.id });
+    if (syncResult?.success && !syncResult?.partial) {
+      const imported = syncResult.totalImported || 0;
+      showToast(imported
+        ? `${imported} competitive ${imported === 1 ? "match" : "matches"} are ready. Your latest game is waiting in the reflection form.`
+        : "This Riot profile is connected and already up to date.", {
+        title: "Profile synced",
+        tone: "success",
+        durationMs: 5200
+      });
+    } else {
+      showToast(syncResult?.playerError?.message || "The profile was added. Riot history can be synced again shortly.", {
+        title: "Profile added; sync paused",
+        durationMs: 4600
+      });
+    }
+  } catch (syncError) {
+    console.error("PROFILE ONBOARDING SYNC ERROR", syncError);
+    showToast("The profile was added, but Riot history could not finish syncing. Use the sync button to try again.", {
+      title: "Profile added; sync paused",
+      durationMs: 4600
+    });
+  } finally {
+    hideAppLoadingVeil({ force: true });
+    scheduleDailyWarmupCheck(1800);
+    submit.disabled = false;
+    submit.textContent = "Add & sync";
+  }
 }
 
 // ========================
@@ -48031,13 +48185,16 @@ function normalizeImportedMatchEntry(match = {}){
     match?.metadata?.playedAt ||
     nowISO();
   const core = getMatchCore(match);
+  const isHenrikMatch = String(match?.source || match?.metadata?.source || "").toLowerCase() === "henrik_sync";
+  const importedRr = isHenrikMatch
+    ? (isVerifiedHenrikRrMatch(match)
+      ? getOptionalFiniteNumber(match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta)
+      : null)
+    : getOptionalFiniteNumber(match?.rr);
 
   return hydrateMatchDerivedData({
     ...match,
-    rr: safeNumber(
-      match?.rr,
-      result === "win" ? 18 : result === "loss" ? -16 : 0
-    ),
+    rr: importedRr,
     kills: Number.isFinite(core?.kills) ? core.kills : safeNumber(match?.kills, 0),
     deaths: Number.isFinite(core?.deaths) ? core.deaths : safeNumber(match?.deaths, 0),
     assists: Number.isFinite(core?.assists) ? core.assists : safeNumber(match?.assists, 0),
@@ -48228,9 +48385,12 @@ async function importActiveProfileMatches(options = {}){
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
     const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
-    if (needsHistoryVersionUpgrade) {
+    const beginsNewHistoryVersion = needsHistoryVersionUpgrade
+      && safeNumber(profile.henrikHistoryBackfillTargetVersion) !== HENRIK_HISTORY_BACKFILL_VERSION;
+    if (beginsNewHistoryVersion) {
       profile.henrikHistoryCursor = 0;
       profile.henrikHistoryBackfillCompleteAt = "";
+      profile.henrikHistoryBackfillTargetVersion = HENRIK_HISTORY_BACKFILL_VERSION;
     }
     const needsHistoryBackfill = needsHistoryVersionUpgrade || !profile.henrikHistoryBackfillCompleteAt;
     const historyStart = needsHistoryBackfill ? Math.max(0, safeNumber(profile.henrikHistoryCursor)) : 0;
@@ -48268,9 +48428,11 @@ async function importActiveProfileMatches(options = {}){
       const nextCursor = historyStart + safeNumber(pullResult?.checked);
       profile.henrikHistoryCursor = nextCursor;
       profile.henrikHistoryWindowSize = Math.max(safeNumber(profile.henrikHistoryWindowSize), nextCursor);
-      if (pullResult?.historyWindowComplete) {
+      const reachedProviderWindow = nextCursor >= HENRIK_HISTORY_MAX_START;
+      if (pullResult?.historyWindowComplete || reachedProviderWindow) {
         profile.henrikHistoryBackfillVersion = HENRIK_HISTORY_BACKFILL_VERSION;
         profile.henrikHistoryBackfillCompleteAt = nowISO();
+        profile.henrikHistoryReachedLimit = reachedProviderWindow && !pullResult?.historyWindowComplete;
       }
     }
 
@@ -48522,7 +48684,13 @@ function getPlayerFacingRiotSyncError(error = {}) {
 }
 
 async function performRiotSync(options = {}) {
-  const { silent = false, mode = "sync", allowDemoFallback = true } = options;
+  const {
+    silent = false,
+    mode = "sync",
+    allowDemoFallback = true,
+    verifyWarmup = true,
+    prefillReflection = true
+  } = options;
   const activeProfile = getActiveProfile();
   const hasRiotId = Boolean(String(activeProfile?.riotId || "").trim());
   const canUseDemoFallback = Boolean(allowDemoFallback && isLocalDevelopmentHost());
@@ -48578,8 +48746,9 @@ async function performRiotSync(options = {}) {
     if (syncedProfile) {
       syncedProfile.lastSyncAt = result?.syncedAt || nowISO();
       saveProfiles();
-      void refreshWarmupAutoVerification(syncedProfile, { announce: true });
+      if (verifyWarmup) void refreshWarmupAutoVerification(syncedProfile, { announce: !silent });
     }
+    if (prefillReflection) prefillLatestImportedReflection();
 
     if (!silent) {
       if (result?.syncError) {
@@ -48627,8 +48796,95 @@ async function performRiotSync(options = {}) {
   }
 }
 
+async function syncProfileRetainedHistory(options = {}) {
+  const profile = getActiveProfile();
+  if (!profile?.riotId) {
+    return { success: false, totalImported: 0, playerError: getPlayerFacingRiotSyncError({ message: "Add a Riot ID before syncing." }) };
+  }
+  const maxBatches = Math.max(1, Math.min(HENRIK_HISTORY_MAX_BATCHES, safeNumber(options.maxBatches, HENRIK_HISTORY_MAX_BATCHES)));
+  let totalImported = 0;
+  let totalChecked = 0;
+  let lastResult = null;
+
+  for (let batch = 0; batch < maxBatches; batch += 1) {
+    const current = getActiveProfile();
+    const retainedCount = Array.isArray(current?.matches) ? current.matches.length : 0;
+    options.onProgress?.({
+      batch: batch + 1,
+      retainedCount,
+      message: batch === 0
+        ? "Resolving the Riot account and checking competitive history..."
+        : `Importing retained competitive history... ${retainedCount} matches ready`
+    });
+    const result = await performRiotSync({
+      silent: true,
+      mode: options.mode || (batch === 0 ? "refresh" : "import"),
+      allowDemoFallback: false,
+      verifyWarmup: false,
+      prefillReflection: false
+    });
+    if (!result) {
+      const latestProfile = getActiveProfile();
+      const error = {
+        code: latestProfile?.lastSyncErrorCode || "henrik_request_failed",
+        message: "Riot match history could not be refreshed right now."
+      };
+      return { success: false, totalImported, totalChecked, lastResult, playerError: getPlayerFacingRiotSyncError(error) };
+    }
+    lastResult = result;
+    totalImported += safeNumber(result.count);
+    totalChecked += safeNumber(result.checked);
+    const latestProfile = getActiveProfile();
+    if (result.syncError) {
+      prefillLatestImportedReflection();
+      return {
+        success: totalChecked > 0,
+        partial: true,
+        totalImported,
+        totalChecked,
+        lastResult,
+        playerError: getPlayerFacingRiotSyncError(result.syncError)
+      };
+    }
+    if (latestProfile?.henrikHistoryBackfillCompleteAt || safeNumber(result.checked) === 0) break;
+    await new Promise(resolve => window.setTimeout(resolve, 220));
+  }
+
+  const syncedProfile = getActiveProfile();
+  if (syncedProfile) {
+    syncedProfile.lastDailyProfileSyncDate = formatLocalDateKey(new Date());
+    saveProfiles();
+    void refreshWarmupAutoVerification(syncedProfile, { announce: false });
+  }
+  const prefilled = prefillLatestImportedReflection();
+  options.onProgress?.({
+    batch: -1,
+    retainedCount: Array.isArray(syncedProfile?.matches) ? syncedProfile.matches.length : 0,
+    message: prefilled
+      ? "Preparing your latest game in the reflection form..."
+      : "Finalizing season stats and coaching reads..."
+  });
+  return { success: Boolean(lastResult), totalImported, totalChecked, lastResult, prefilled };
+}
+
+function scheduleDailyProfileSync() {
+  if (dailyRiotSyncTimer) window.clearTimeout(dailyRiotSyncTimer);
+  const now = new Date();
+  const nextDay = new Date(now);
+  nextDay.setHours(24, 0, 8, 0);
+  dailyRiotSyncTimer = window.setTimeout(async () => {
+    dailyRiotSyncTimer = null;
+    const profile = getActiveProfile();
+    if (profile?.riotId && profile.lastDailyProfileSyncDate !== formatLocalDateKey(new Date())) {
+      await syncProfileRetainedHistory({ mode: "refresh", maxBatches: 1 });
+    }
+    scheduleDailyProfileSync();
+  }, Math.max(1000, nextDay.getTime() - now.getTime()));
+}
+
 function scheduleRiotAutoSync() {
   clearRiotAutoSyncTimer();
+  scheduleDailyProfileSync();
 
   if (!isRiotSyncFeatureEnabled()) {
     if (hasSyncableRiotProfile()) {

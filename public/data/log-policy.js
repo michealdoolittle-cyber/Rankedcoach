@@ -59,7 +59,9 @@
       lockedOutcome: true,
       createdAt: clean(match.createdAt) || new Date().toISOString(),
       result: clean(match.result).toLowerCase() || "unknown",
-      rr: Number.isFinite(Number(match.rr)) ? Number(match.rr) : 0,
+      rr: match.rr !== null && match.rr !== undefined && match.rr !== "" && Number.isFinite(Number(match.rr))
+        ? Number(match.rr)
+        : null,
       agent: clean(match.agent),
       role: clean(match.role),
       map: clean(match.map),
@@ -77,8 +79,29 @@
   function syncMatchPlaceholders(entries = [], matches = [], profileId = "") {
     const ownerProfileId = clean(profileId);
     const existing = Array.isArray(entries) ? entries.filter(Boolean) : [];
+    const matchesById = new Map(
+      (Array.isArray(matches) ? matches : [])
+        .map(match => [clean(match?.matchId || match?.id), match])
+        .filter(([matchId]) => matchId)
+    );
+    const updatedEntries = existing.map(entry => {
+      if (!isMatchPlaceholder(entry) || (ownerProfileId && clean(entry.profileId) !== ownerProfileId)) return entry;
+      const match = matchesById.get(clean(entry.matchId || entry.riotMatchId));
+      if (!match) return entry;
+      const verifiedRr = match.rr !== null && match.rr !== undefined && match.rr !== "" && Number.isFinite(Number(match.rr))
+        ? Number(match.rr)
+        : null;
+      return {
+        ...entry,
+        result: clean(match.result).toLowerCase() || entry.result,
+        rr: verifiedRr,
+        agent: clean(match.agent) || entry.agent,
+        role: clean(match.role) || entry.role,
+        map: clean(match.map) || entry.map
+      };
+    });
     const linkedMatchIds = new Set(
-      existing
+      updatedEntries
         .filter(entry => !ownerProfileId || clean(entry.profileId) === ownerProfileId)
         .map(entry => clean(entry.matchId || entry.riotMatchId))
         .filter(Boolean)
@@ -95,7 +118,7 @@
     });
 
     return {
-      entries: [...existing, ...additions],
+      entries: [...updatedEntries, ...additions],
       added: additions.length
     };
   }

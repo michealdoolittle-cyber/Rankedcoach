@@ -229,7 +229,18 @@
       if (source !== "henrik_sync") return match;
       const matchId = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim();
       const snapshot = snapshots.get(matchId);
-      if (!snapshot) return match;
+      if (!snapshot) {
+        const alreadyVerified = match?.rrVerified === true
+          && match?.verifiedRrDelta !== null
+          && match?.verifiedRrDelta !== undefined
+          && Number.isFinite(Number(match.verifiedRrDelta));
+        return {
+          ...match,
+          rr: alreadyVerified ? Number(match.verifiedRrDelta) : null,
+          verifiedRrDelta: alreadyVerified ? Number(match.verifiedRrDelta) : null,
+          rrVerified: alreadyVerified
+        };
+      }
       const verified = isVerifiedMmrSnapshot(snapshot);
       const rankPatch = verified ? {
         rank: String(snapshot?.tier?.name || match?.rank || match?.matchRecord?.rank?.rank || "").trim() || null,
@@ -250,7 +261,9 @@
       };
       return {
         ...match,
-        rr: null,
+        // The stored MMR snapshot is the only RR delta we can prove belongs
+        // to this match. Never substitute a result-based estimate here.
+        rr: verified ? rankPatch.rrDelta : null,
         verifiedRrDelta: verified ? rankPatch.rrDelta : null,
         rrTotal: verified ? rankPatch.rr : null,
         rrVerified: verified,

@@ -74,11 +74,12 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
     metadata: { matchId: "match-1", source: "henrik_sync" },
     matchRecord: { rank: {} }
   }], result.mmrHistory);
-  assert.equal(enriched[0].rr, null);
+  assert.equal(enriched[0].rr, -18);
   assert.equal(enriched[0].verifiedRrDelta, -18);
   assert.equal(enriched[0].rrTotal, 50);
   assert.equal(enriched[0].rrVerified, true);
   assert.notEqual(enriched[1].rrVerified, true);
+  assert.equal(enriched[1].rr, null);
   assert.equal(enriched[1].rrTotal, undefined);
 
   const preserved = globalThis.RankedCoachRiotSync.enrichLegacyMatchesWithMmr([{
@@ -89,6 +90,7 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
     verifiedRrDelta: -16
   }], []);
   assert.equal(preserved[0].rrVerified, true);
+  assert.equal(preserved[0].rr, -16);
   assert.equal(preserved[0].rrTotal, 61);
   console.log("Henrik history checks passed: 86-match exhaustion, 100-match window, and verified MMR enrichment.");
 })().catch(error => {

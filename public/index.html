@@ -55,12 +55,12 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260713-library-followup-01">
+<link rel="stylesheet" href="app.css?v=20260713-profile-sync-ui-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260712-library-motion-map-02">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260713-library-followup-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260713-profile-sync-ui-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1215,16 +1215,6 @@ STATS PAGE
                 <div class="stats-proof-card">
                   <div class="stats-proof-card-head">
                     <div class="stats-proof-kicker">Peak Progress</div>
-                    <div class="stats-summary-selector-row">
-                      <div class="stats-act-select-wrap">
-                        <span id="statsActLabel" class="stats-act-label">Season Stats For</span>
-                        <select id="statsActSelector" class="stats-act-select" aria-labelledby="statsActLabel"></select>
-                        <button id="statsActMobileTrigger" class="stats-act-mobile-trigger" type="button" aria-labelledby="statsActLabel statsActMobileValue" aria-haspopup="listbox" aria-expanded="false" hidden>
-                          <span id="statsActMobileValue">Select season</span>
-                          <span class="stats-act-mobile-chevron" aria-hidden="true"></span>
-                        </button>
-                      </div>
-                    </div>
                   </div>
                   <p id="statsHistoryBoundaryNote" class="stats-history-boundary-note" hidden></p>
                   <div class="stats-proof-rank-row">
@@ -1235,6 +1225,16 @@ STATS PAGE
                     </div>
                   </div>
                   <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile timeline.</div>
+                  <div class="stats-summary-selector-row stats-summary-selector-bottom">
+                    <div class="stats-act-select-wrap">
+                      <span id="statsActLabel" class="stats-act-label">Season Stats For</span>
+                      <select id="statsActSelector" class="stats-act-select" aria-labelledby="statsActLabel"></select>
+                      <button id="statsActMobileTrigger" class="stats-act-mobile-trigger" type="button" aria-labelledby="statsActLabel statsActMobileValue" aria-haspopup="listbox" aria-expanded="false" hidden>
+                        <span id="statsActMobileValue">Select season</span>
+                        <span class="stats-act-mobile-chevron" aria-hidden="true"></span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="stats-role-progress-card">
@@ -2291,12 +2291,12 @@ stroke-linejoin="round"/>
   <script src="analytics/coaching-rules.js?v=20260711-coaching-rules-01"></script>
   <script src="language/valorant-vocabulary.js?v=20260711-training-feed-02"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
-  <script src="data/log-policy.js?v=20260710-log-isolation-01"></script>
+  <script src="data/log-policy.js?v=20260713-profile-sync-ui-01"></script>
   <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="library/gamesense-maps.js?v=20260713-library-followup-01"></script>
+  <script src="library/gamesense-maps.js?v=20260713-profile-sync-ui-01"></script>
   <script src="library/gamesense-reference.js?v=20260713-library-followup-01"></script>
-  <script src="library/gamesense-library.js?v=20260713-library-followup-01"></script>
-  <script src="integrations/riot-sync.js?v=20260713-riot-sync-resilience-01"></script>
-  <script type="module" src="app.js?v=20260713-riot-sync-resilience-01"></script>
+  <script src="library/gamesense-library.js?v=20260713-profile-sync-ui-01"></script>
+  <script src="integrations/riot-sync.js?v=20260713-profile-sync-ui-01"></script>
+  <script type="module" src="app.js?v=20260713-profile-sync-ui-01"></script>
 </body>
 </html>

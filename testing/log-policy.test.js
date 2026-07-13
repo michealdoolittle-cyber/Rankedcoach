@@ -35,13 +35,14 @@ assert.deepEqual(signedLogs.map(entry => entry.id), ["authored-1", "ranked-match
 assert.equal(signedLogs[0].profileId, "profile-1");
 
 const synced = policy.syncMatchPlaceholders([authored, placeholder], [
-  { id: "match-1", createdAt: "2026-07-09T10:00:00Z" },
+  { id: "match-1", createdAt: "2026-07-09T10:00:00Z", rr: 21, agent: "Sova", map: "Lotus" },
   { id: "match-2", createdAt: "2026-07-08T10:00:00Z", agent: "Omen", map: "Haven" }
 ], "profile-1");
 assert.equal(synced.added, 1);
 assert.equal(synced.entries.length, 3);
 assert.equal(synced.entries[2].matchId, "match-2");
 assert.equal(synced.entries[2].notes, "");
+assert.equal(synced.entries.find(entry => entry.matchId === "match-1").rr, 21);
 
 const completed = { ...placeholder, isMatchPlaceholder: false, isPlayerAuthored: true, notes: "My review" };
 assert.equal(policy.isPlayerAuthored(completed), true);

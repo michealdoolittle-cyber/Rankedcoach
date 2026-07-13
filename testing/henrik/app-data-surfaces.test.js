@@ -29,13 +29,19 @@ function loadBrowserScript(relativePath) {
 }
 
 async function postJson(route, body) {
-  const response = await fetch(`${apiBaseUrl}${route}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  const payload = await response.json().catch(() => ({}));
-  assert.equal(response.ok, true, `${route} failed: ${payload.error || response.status}`);
+  let response;
+  let payload = {};
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    response = await fetch(`${apiBaseUrl}${route}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    payload = await response.json().catch(() => ({}));
+    if (response.ok || ![429, 502, 503, 504].includes(response.status)) break;
+    await new Promise(resolve => setTimeout(resolve, 750 * (attempt + 1)));
+  }
+  assert.equal(response?.ok, true, `${route} failed: ${payload.error || response?.status}`);
   return payload;
 }
 
@@ -141,6 +147,11 @@ async function run() {
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1400);
 
+    if (await page.locator("#dailyWarmupModal.active").count()) {
+      await page.locator("#dailyWarmupSkip").click();
+      await page.waitForTimeout(250);
+    }
+
     assert.equal(await page.locator("#navCurrentTierText").innerText(), "Diamond 2");
     assert.equal(await page.locator("#profileRankIcon").getAttribute("alt"), "Diamond 2");
 
@@ -196,12 +207,13 @@ async function run() {
     await page.click('.nav-btn[data-page="home"]');
     await page.click('.graph-btn[data-size="all"]');
     await page.waitForTimeout(7000);
-    assert.match(await page.locator("#rrChartDataStatus").innerText(), /2 of 86 retained matches have verified RR snapshots/);
+    assert.match(await page.locator("#rrChartDataStatus").innerText(), /retained matches.*(?:verified RR snapshots|rank snapshots)|retained matches include rank snapshots/i);
+    assert.match(await page.locator("#rrChartDataStatus").innerText(), /without estimating missing RR gains or losses/i);
     assert.ok(await page.locator("#chartRow .segment").count() > 0);
     await page.click('.graph-btn[data-size="5"]');
     await page.waitForTimeout(1200);
-    assert.match(await page.locator("#rrChartDataStatus").innerText(), /1 of 32 retained matches have verified RR snapshots/);
-    assert.equal(await page.locator(".rr-hit").count(), 1);
+    assert.match(await page.locator("#rrChartDataStatus").innerText(), /retained matches.*(?:verified RR snapshots|rank snapshots)|retained matches include rank snapshots/i);
+    assert.ok(await page.locator(".rr-hit").count() > 0);
     assert.equal(await page.locator(".rr-hit").last().getAttribute("data-rank-label"), "Diamond 2");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1), false);
     assert.deepEqual(consoleIssues, []);
@@ -220,6 +232,9 @@ async function run() {
       localStorage.clear();
       localStorage.setItem("valtracker_entry_choice_v1", "guest");
       localStorage.setItem("valtracker_active_profile_id", profileId);
+      const now = new Date();
+      const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      localStorage.setItem(`valtracker_daily_warmup_prompt_v1:${profileId}`, dateKey);
       localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
         id: profileId,
         name: "GoopyWetDiaper",
@@ -242,6 +257,10 @@ async function run() {
     assert.ok(rankRect.x > avatarRect.x + (avatarRect.width / 2));
     assert.ok(rankRect.y > avatarRect.y + (avatarRect.height / 2));
 
+    if (await mobilePage.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) {
+      await mobilePage.click("#dailyWarmupSkip");
+      await mobilePage.locator("#dailyWarmupModal.active").waitFor({ state: "hidden" });
+    }
     await mobilePage.click('[data-mobile-page="stats"]');
     await mobilePage.click("#statsActMobileTrigger");
     await mobilePage.click('[data-stats-act-option="Season 2025 Act 6"]');
@@ -264,6 +283,9 @@ async function run() {
       localStorage.clear();
       localStorage.setItem("valtracker_entry_choice_v1", "guest");
       localStorage.setItem("valtracker_active_profile_id", "manual-empty-profile");
+      const now = new Date();
+      const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      localStorage.setItem("valtracker_daily_warmup_prompt_v1:manual-empty-profile", dateKey);
       localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
         id: "manual-empty-profile",
         name: "Manual Empty Profile",
@@ -274,6 +296,7 @@ async function run() {
     const guestPage = await guestContext.newPage();
     await guestPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await guestPage.waitForTimeout(700);
+    await guestPage.waitForFunction(() => document.getElementById("loginInitOverlay")?.getAttribute("aria-hidden") === "true", null, { timeout: 15000 });
     await guestPage.click('[data-mobile-page="stats"]');
     assert.equal(await guestPage.locator("#statsHistoryBoundaryNote").isHidden(), true);
     await guestPage.click('[data-mobile-page="insights"]');

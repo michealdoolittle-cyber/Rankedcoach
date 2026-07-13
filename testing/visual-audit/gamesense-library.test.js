@@ -195,8 +195,12 @@ async function run() {
     });
     assert.ok(desktopScroll.scrollHeight > desktopScroll.clientHeight && desktopScroll.scrollTop > 0 && desktopScroll.overflowY === "auto", JSON.stringify(desktopScroll));
     await desktop.locator("#page-library").evaluate(page => { page.scrollTop = 0; });
+    assert.equal(await desktop.locator(".gamesense-role-lens-menu").getAttribute("open"), null);
+    assert.equal(await desktop.locator(".gamesense-role-lens-menu summary").innerText().then(text => /All roles/i.test(text)), true);
+    await desktop.click(".gamesense-role-lens-menu summary");
     await desktop.click('[data-gamesense-role="Controller"]');
-    await desktop.locator('[data-gamesense-role="Controller"].active').waitFor({ state: "visible" });
+    await desktop.locator('[data-gamesense-role="Controller"].active').waitFor({ state: "attached" });
+    assert.match(await desktop.locator(".gamesense-role-lens-menu summary").innerText(), /Controller/i);
     await desktop.click('[data-gamesense-tip-view="sites"]');
     await desktop.locator('[data-gamesense-tip-view="sites"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-tips-panel").innerText(), /Controller lens.*A Heaven|A Heaven.*Controller lens/is);
@@ -215,8 +219,9 @@ async function run() {
     assert.equal(renderedText.includes("stairs"), false);
     assert.equal(renderedText.includes("use an illustrated lineup database"), false);
     assert.equal(renderedText.includes("entries in this first field guide"), false);
+    await desktop.click(".gamesense-role-lens-menu summary");
     await desktop.click('[data-gamesense-role="all"]');
-    await desktop.locator('[data-gamesense-role="all"].active').waitFor({ state: "visible" });
+    await desktop.locator('[data-gamesense-role="all"].active').waitFor({ state: "attached" });
     await desktop.click('[data-gamesense-tip-view="defense"]');
     await desktop.locator('[data-gamesense-tip-view="defense"].active').waitFor({ state: "visible" });
     const exactMapContent = await desktop.evaluate(() => {
@@ -234,13 +239,15 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
     assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG|win rate|\d{1,3},\d{3} games/i);
     assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /Tracker Network.*rolling Competitive sample/is);
-    assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 3);
-    assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 5);
+    assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion[open]").count(), 0);
     await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /kills per round|average damage/i);
     const suggestionCategories = await desktop.evaluate(() => globalThis.RankedCoachGamesenseMaps.find(map => map.id === "breeze").weaponSuggestions.map(item => item.category));
     assert.equal(new Set(suggestionCategories).size, suggestionCategories.length);
+    assert.ok(suggestionCategories.includes("pistol"));
+    assert.ok(suggestionCategories.includes("shotgun"));
     await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
     assert.equal(await desktop.locator(".gamesense-comp-agents img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
     await desktop.locator("[data-gamesense-comp-agent]").first().click();
@@ -287,7 +294,7 @@ async function run() {
     assert.equal(await desktop.locator("[data-gamesense-ability]").count(), 4);
     assert.equal(await desktop.locator(".gamesense-ability-panel").count(), 1);
     await desktop.click('[data-gamesense-ability="cloudburst"]');
-    await desktop.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "replace");
+    assert.equal(await desktop.locator("html").getAttribute("data-gamesense-transition"), null);
     await desktop.locator('[data-gamesense-ability="cloudburst"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
     assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
@@ -330,7 +337,7 @@ async function run() {
     assert.equal(await desktop.getByText("Fight Plan", { exact: true }).count(), 0);
     assert.equal(await desktop.getByText("Economy Read", { exact: true }).count(), 0);
     await desktop.click('[data-gamesense-weapon="phantom"]');
-    await desktop.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "replace");
+    assert.equal(await desktop.locator("html").getAttribute("data-gamesense-transition"), null);
     await desktop.locator('[data-gamesense-weapon="phantom"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /2900 credits/i);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /21\.2%/i);

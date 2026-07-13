@@ -235,7 +235,7 @@ async function run() {
       background: getComputedStyle(element).backgroundImage
     }));
     await weaponChoice.click();
-    await page.waitForTimeout(220);
+    await page.waitForTimeout(500);
     const selectedStyle = await weaponChoice.evaluate(element => ({
       selected: element.classList.contains("is-selected"),
       border: getComputedStyle(element).borderColor,

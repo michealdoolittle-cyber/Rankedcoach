@@ -224,13 +224,13 @@
         <div class="gamesense-tips-tabs" role="tablist" aria-label="${escapeHtml(map.label)} tip categories">
           ${categories.map(category => `<button type="button" role="tab" data-gamesense-tip-view="${category.id}" class="${category.id === activeCategory ? "active" : ""}" aria-selected="${category.id === activeCategory}">${category.label}</button>`).join("")}
         </div>
-        <div class="gamesense-tips-role-filter">
-          <span>Role lens</span>
+        <details class="gamesense-tips-role-filter gamesense-role-lens-menu">
+          <summary><span>Role lens</span><strong${activeRole ? ` data-role-tone="${activeRole.toLowerCase()}"` : ""}>${activeRole ? escapeHtml(activeRole) : "All roles"}</strong><i aria-hidden="true"></i></summary>
           <div class="gamesense-role-options">
             <button type="button" data-gamesense-role="all" class="${activeRole ? "" : "active"}" aria-pressed="${activeRole ? "false" : "true"}">All roles</button>
             ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}" aria-pressed="${role === activeRole}">${role}</button>`).join("")}
           </div>
-        </div>
+        </details>
         <div class="gamesense-tips-panel" role="tabpanel">
           <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
           <div class="gamesense-tip-grid">
@@ -251,11 +251,11 @@
     return `
       <section class="gamesense-weapon-suggestions">
         <div><span>Weapon Suggestions</span><strong>Highest-value choices by buy type</strong></div>
-        <p class="gamesense-weapon-source">Efficiency evidence uses Blitz Competitive weapon stats. Map fit explains where that weapon can protect its strongest fight.</p>
+        <p class="gamesense-weapon-source">Efficiency evidence uses Blitz Competitive weapon stats. The map read includes full buys, pistol rounds, eco choices, and whether a sniper can convert as reliably as a Judge or Bucky setup.</p>
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
             <summary><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><span>${escapeHtml(item.fit)}</span><i aria-hidden="true"></i></summary>
-            <div><strong>${escapeHtml(item.evidence)}</strong><small>${escapeHtml(item.locations)}</small><p>${escapeHtml(item.note)}</p></div>
+            <div><strong>${escapeHtml(item.evidence)}</strong><small>${escapeHtml(item.locations)}</small>${item.conversion ? `<em>${escapeHtml(item.conversion)}</em>` : ""}<p>${escapeHtml(item.note)}</p></div>
           </details>
         `).join("")}</div>
       </section>`;
@@ -544,7 +544,7 @@
     const root = document.getElementById("gamesenseLibraryView");
     if (!root) return;
     const direction = ["forward", "backward", "replace"].includes(options.direction) ? options.direction : "none";
-    const shouldAnimate = direction !== "none"
+    const shouldAnimate = ["forward", "backward"].includes(direction)
       && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     if (!shouldAnimate) {
       commitRender(root);
@@ -691,9 +691,8 @@
     }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");
     if (mapView) {
-      const previousView = state.mapView;
       state.mapView = mapView.dataset.gamesenseMapView === "plants" ? "plants" : "locations";
-      render({ direction: previousView === "plants" ? "backward" : "forward" });
+      render({ direction: "replace" });
       return;
     }
     const tipView = event.target.closest?.("[data-gamesense-tip-view]");
