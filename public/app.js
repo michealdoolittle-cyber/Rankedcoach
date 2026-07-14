@@ -50362,7 +50362,7 @@ function renderStatsHistoryBoundaryNote(profile = getActiveProfile()) {
     return;
   }
   const oldestDate = formatRetainedHistoryDate(retainedMatches[0]);
-  note.textContent = `History limit: Ranked match history is available from ${oldestDate}. Earlier matches are not retained by the current data source.`;
+  note.textContent = `History limit: Riot's upstream match-history feed has an active retention limit of roughly 2 years. This account's available history begins ${oldestDate}; earlier matches are no longer retained.`;
 }
 
 function renderStatsPeakProgress() {

@@ -250,12 +250,41 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG.*56\.9% win rate.*4,639 games.*55\.6% win rate.*2,314 games.*54\.2% win rate.*2,579 games/is);
     assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /strongest measured compositions.*20 most-played.*active-season ranked sample/is);
     assert.deepEqual(await desktop.locator(".gamesense-comp-winrate").allInnerTexts(), ["56.9% WIN RATE", "55.6% WIN RATE", "54.2% WIN RATE"]);
+    assert.equal(await desktop.locator(".gamesense-comp-composition").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-comp-makeup i").count(), 15);
+    const compPresentation = await desktop.locator(".gamesense-comp-option").first().evaluate(option => {
+      const line = option.querySelector(".gamesense-comp-line").getBoundingClientRect();
+      const agents = option.querySelector(".gamesense-comp-agents").getBoundingClientRect();
+      const makeup = option.querySelector(".gamesense-comp-makeup").getBoundingClientRect();
+      const buttons = [...option.querySelectorAll(".gamesense-comp-agents button")].map(button => ({
+        role: button.dataset.roleTone,
+        background: getComputedStyle(button).backgroundImage,
+        border: getComputedStyle(button).borderColor
+      }));
+      const icons = [...option.querySelectorAll(".gamesense-comp-makeup i")].map(icon => ({
+        role: icon.dataset.roleTone,
+        mask: getComputedStyle(icon, "::before").webkitMaskImage || getComputedStyle(icon, "::before").maskImage,
+        color: getComputedStyle(icon, "::before").backgroundColor
+      }));
+      return { line: line.toJSON(), agents: agents.toJSON(), makeup: makeup.toJSON(), buttons, icons };
+    });
+    assert.ok(compPresentation.agents.right <= compPresentation.makeup.left + 1 && compPresentation.makeup.right <= compPresentation.line.right + 1, JSON.stringify(compPresentation));
+    assert.ok(compPresentation.buttons.every(button => button.background.includes("linear-gradient") && button.role), JSON.stringify(compPresentation));
+    assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
+    await desktop.locator(".gamesense-comp-list").screenshot({ path: path.join(__dirname, "tmp", "gamesense-current-comps-desktop.png") });
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion[open]").count(), 0);
     await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /kills per round|average damage/i);
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Combined round conversion percent: 50\.87%.*Second rifle Vandal: 50\.41% round conversion percent/is);
+    assert.doesNotMatch(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /A Main|B Main|Mid Nest/i);
+    assert.equal(await desktop.locator(".gamesense-weapon-suggestion").first().locator(".gamesense-weapon-suggestion-detail > :first-child").getAttribute("class"), "gamesense-round-conversion");
+    await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator("summary").click();
+    assert.deepEqual(
+      await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator(".gamesense-weapon-suggestion-detail > *").evaluateAll(items => items.slice(0, 4).map(item => item.className)),
+      ["gamesense-round-conversion", "gamesense-conversion-read", "gamesense-weapon-evidence", "gamesense-weapon-context"]
+    );
     assert.deepEqual(await desktop.locator(".gamesense-weapon-side").allInnerTexts(), ["DEF", "DEF"]);
     const desktopWeaponSuggestion = await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").evaluate(summary => {
       const image = summary.querySelector("img").getBoundingClientRect();
@@ -321,6 +350,8 @@ async function run() {
     assert.ok(agentHeader.patch.bottom <= agentHeader.back.top + 1 && Math.abs(agentHeader.patch.right - agentHeader.back.right) <= 2, JSON.stringify(agentHeader));
     assert.match(await desktop.locator(".gamesense-agent-hero").innerText(), /Agent Fundamentals.*Tailwind.*Lore and History.*South Korea.*Gameplay history/is);
     assert.doesNotMatch(await desktop.locator(".gamesense-agent-facts").innerText(), /Global pick rate/i);
+    assert.equal(await desktop.locator(".gamesense-agent-rate span").evaluate(label => getComputedStyle(label).color), "rgb(246, 196, 83)");
+    assert.match(await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
     const agentPatchOrder = await desktop.locator(".gamesense-agent-facts .gamesense-patch-history li > span").allInnerTexts();
     assert.deepEqual(agentPatchOrder, [...agentPatchOrder].sort((left, right) => Number.parseFloat(right.replace(/[^\d.]/g, "")) - Number.parseFloat(left.replace(/[^\d.]/g, ""))));
     await desktop.locator(".gamesense-agent-hero").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-fundamentals-desktop.png") });
@@ -340,10 +371,13 @@ async function run() {
       const cardWidth = card.getBoundingClientRect().width;
       const pillGrid = card.querySelector(":scope > div");
       const pills = [...pillGrid.querySelectorAll(":scope > strong")].map(item => item.getBoundingClientRect().width);
-      return { tag: card.tagName, cardWidth, pills, cardJustifyItems: getComputedStyle(card).justifyItems, pillGrid: { width: pillGrid.getBoundingClientRect().width, computedWidth: getComputedStyle(pillGrid).width, justifySelf: getComputedStyle(pillGrid).justifySelf, display: getComputedStyle(pillGrid).display } };
+      const name = card.querySelector(":scope > span").getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      return { tag: card.tagName, cardWidth, pills, nameTopOffset: name.top - cardRect.top, nameLeftOffset: name.left - cardRect.left, cardJustifyItems: getComputedStyle(card).justifyItems, pillGrid: { width: pillGrid.getBoundingClientRect().width, computedWidth: getComputedStyle(pillGrid).width, justifySelf: getComputedStyle(pillGrid).justifySelf, display: getComputedStyle(pillGrid).display } };
     }));
     assert.equal(mapFitGeometry[0].tag, "BUTTON");
     assert.ok(mapFitGeometry.every(card => card.pills.every(width => width >= card.cardWidth * .4)), JSON.stringify(mapFitGeometry));
+    assert.ok(mapFitGeometry.every(card => card.nameTopOffset <= 15 && card.nameLeftOffset <= 15), JSON.stringify(mapFitGeometry));
     await desktop.locator(".gamesense-map-fit").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-map-fit-desktop.png") });
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-ability.png") });
     assert.equal((await desktop.locator("#page-library").innerText()).includes("First Slice"), false);
@@ -376,6 +410,7 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /21\.2%/i);
     assert.match(await desktop.locator(".gamesense-global-rate").innerText(), /Global usage.*Global kill conversion 1\.03 K\/D.*Global round conversion Economy-filtered/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /When to use it.*How to use it.*Patch history/is);
+    assert.match(await desktop.locator(".gamesense-weapon-panel-art").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
     assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"].active').count(), 1);
     assert.match(await desktop.locator('[data-gamesense-weapon="phantom"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
     await desktop.locator(".gamesense-weapon-history summary").click();

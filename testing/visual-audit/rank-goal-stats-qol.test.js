@@ -167,6 +167,7 @@ async function run() {
     await page.waitForTimeout(650);
     assert.equal(await page.locator("#statFirstBloods").count(), 1);
     assert.equal(await page.locator("#statDamagePerRound").count(), 1);
+    assert.match(await page.locator("#statsHistoryBoundaryNote").innerText(), /Riot's upstream match-history feed.*active retention limit of roughly 2 years.*available history begins Jun 1, 2026/is);
     const breakdownVisuals = await page.locator("#statsBreakdown").evaluate(container => ({
       cards: container.querySelectorAll(".stats-breakdown-cardlet").length,
       visuals: container.querySelectorAll(".stats-data-visual,.stats-confidence-visual,.coaching-category-visual").length
@@ -191,14 +192,32 @@ async function run() {
     });
     assert.ok(statsLayoutGeometry.main.top - statsLayoutGeometry.summary.bottom <= 12, JSON.stringify(statsLayoutGeometry));
     assert.ok(statsLayoutGeometry.summary.bottom - statsLayoutGeometry.summaryContent.bottom <= 10, JSON.stringify(statsLayoutGeometry));
-    assert.ok(statsLayoutGeometry.summary.height <= 170, JSON.stringify(statsLayoutGeometry));
-    assert.ok(statsLayoutGeometry.icon.width >= 60 && statsLayoutGeometry.icon.height >= 60, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.summary.height <= 145, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.icon.width >= 50 && statsLayoutGeometry.icon.height >= 50, JSON.stringify(statsLayoutGeometry));
     assert.ok(statsLayoutGeometry.main.bottom <= statsLayoutGeometry.viewportHeight + 1, JSON.stringify(statsLayoutGeometry));
     assert.ok(statsLayoutGeometry.bottomCards.length === 3, JSON.stringify(statsLayoutGeometry));
     statsLayoutGeometry.bottomCards.forEach(card => {
       assert.ok(card.bottom <= statsLayoutGeometry.viewportHeight + 1, JSON.stringify(statsLayoutGeometry));
-      assert.ok(card.height >= 325, JSON.stringify(statsLayoutGeometry));
+      assert.ok(card.height >= 390, JSON.stringify(statsLayoutGeometry));
     });
+    const lowerStatsContent = await page.locator("#page-stats .stats-main-grid").evaluate(main => {
+      const cardBottom = selector => main.querySelector(selector).getBoundingClientRect().bottom;
+      const visibleCount = (selector, parentSelector) => {
+        const bottom = cardBottom(parentSelector);
+        return [...main.querySelectorAll(selector)].filter(item => item.getBoundingClientRect().bottom <= bottom + 1).length;
+      };
+      return {
+        mapTotal: main.querySelectorAll(".stats-map-meta").length,
+        mapVisible: visibleCount(".stats-map-meta", ".stats-maps-card"),
+        agentTotal: main.querySelectorAll(".stats-agent-mini-image").length,
+        agentVisible: visibleCount(".stats-agent-mini-image", ".stats-agents-card"),
+        weaponTotal: main.querySelectorAll(".stats-weapon-art").length,
+        weaponVisible: visibleCount(".stats-weapon-art", ".stats-weapons-card")
+      };
+    });
+    assert.equal(lowerStatsContent.mapVisible, lowerStatsContent.mapTotal, JSON.stringify(lowerStatsContent));
+    assert.ok(lowerStatsContent.agentVisible >= 8, JSON.stringify(lowerStatsContent));
+    assert.equal(lowerStatsContent.weaponVisible, lowerStatsContent.weaponTotal, JSON.stringify(lowerStatsContent));
     const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
     if (await mapStatCard.count()) {
       await mapStatCard.hover();
@@ -207,16 +226,18 @@ async function run() {
     const proofContainment = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
       const parent = card.getBoundingClientRect();
       const items = [".stats-proof-card-head", ".stats-history-boundary-note", ".stats-proof-rank-row", ".stats-proof-note", ".stats-summary-selector-bottom"].map(selector => {
-        const rect = card.querySelector(selector).getBoundingClientRect();
-        return { selector, top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, parentTop: parent.top, parentRight: parent.right, parentBottom: parent.bottom, parentLeft: parent.left };
+        const element = card.querySelector(selector);
+        const rect = element.getBoundingClientRect();
+        return { selector, hidden: getComputedStyle(element).display === "none", top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, parentTop: parent.top, parentRight: parent.right, parentBottom: parent.bottom, parentLeft: parent.left };
       });
       return items;
     });
     proofContainment.forEach(item => {
+      if (item.hidden) return;
       assert.ok(item.top >= item.parentTop - 1 && item.bottom <= item.parentBottom + 1 && item.left >= item.parentLeft - 1 && item.right <= item.parentRight + 1, JSON.stringify(item));
     });
     assert.ok(proofContainment[0].bottom <= proofContainment[1].top, JSON.stringify(proofContainment));
-    assert.ok(proofContainment[1].bottom <= proofContainment[3].top + 1, JSON.stringify(proofContainment));
+    assert.ok(proofContainment[3].hidden || proofContainment[1].bottom <= proofContainment[3].top + 1, JSON.stringify(proofContainment));
     assert.ok(proofContainment[2].right <= proofContainment[4].left + 1 || proofContainment[2].bottom <= proofContainment[4].top + 1, JSON.stringify(proofContainment));
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-stats-proof-card.png") });
     const trigger = page.locator("#statsActMobileTrigger");
@@ -236,14 +257,19 @@ async function run() {
 
     await page.locator(".stats-act-mobile-menu-close").click();
     await page.setViewportSize({ width: 1366, height: 768 });
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(650);
     const compactStatsGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => ({
       viewportHeight: innerHeight,
       summaryHeight: layout.querySelector(".stats-summary-card").getBoundingClientRect().height,
-      bottomCards: [...layout.querySelectorAll(".stats-maps-card,.stats-agents-card,.stats-weapons-card")].map(card => card.getBoundingClientRect().toJSON())
+      bottomCards: [...layout.querySelectorAll(".stats-maps-card,.stats-agents-card,.stats-weapons-card")].map(card => card.getBoundingClientRect().toJSON()),
+      mapMeta: [...layout.querySelectorAll(".stats-map-meta")].map(item => item.getBoundingClientRect().toJSON()),
+      mapCardBottom: layout.querySelector(".stats-maps-card").getBoundingClientRect().bottom,
+      clippedTrendDetails: [...layout.querySelectorAll(".stats-trend-detail")].filter(detail => detail.getBoundingClientRect().bottom > detail.closest(".stats-trend-card").getBoundingClientRect().bottom + 1).length
     }));
-    assert.ok(compactStatsGeometry.summaryHeight <= 160, JSON.stringify(compactStatsGeometry));
+    assert.ok(compactStatsGeometry.summaryHeight <= 130, JSON.stringify(compactStatsGeometry));
     compactStatsGeometry.bottomCards.forEach(card => assert.ok(card.bottom <= compactStatsGeometry.viewportHeight + 1, JSON.stringify(compactStatsGeometry)));
+    compactStatsGeometry.mapMeta.forEach(item => assert.ok(item.bottom <= compactStatsGeometry.mapCardBottom + 1, JSON.stringify(compactStatsGeometry)));
+    assert.equal(compactStatsGeometry.clippedTrendDetails, 0, JSON.stringify(compactStatsGeometry));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-compact-desktop-stats.png"), fullPage: true });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(150);

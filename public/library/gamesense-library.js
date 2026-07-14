@@ -280,12 +280,11 @@
               <span class="gamesense-weapon-suggestion-art"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><i aria-hidden="true"></i></span>
               <strong class="gamesense-weapon-suggestion-name">${escapeHtml(item.weapon)}</strong>
             </summary>
-            <div>
-              <strong>${escapeHtml(item.evidence)}</strong>
-              <small>${escapeHtml(item.locations)}</small>
+            <div class="gamesense-weapon-suggestion-detail">
               ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong>${escapeHtml(item.roundConversion.scope)} round conversion percent: ${Number(item.roundConversion.value).toFixed(2)}%</strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
-              ${item.conversion ? `<em>${escapeHtml(item.conversion)}</em>` : ""}
-              <p>${escapeHtml(item.note)}</p>
+              ${item.conversion ? `<em class="gamesense-conversion-read">${escapeHtml(item.conversion)}</em>` : ""}
+              <p class="gamesense-weapon-evidence">${escapeHtml(item.evidence)}</p>
+              <p class="gamesense-weapon-context">${escapeHtml(item.note)}</p>
             </div>
           </details>
         `).join("")}</div>
@@ -311,17 +310,25 @@
       <section class="gamesense-comp-card">
         <div><span>Current Competitive Comps</span><strong>OP.GG | Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
         <p class="gamesense-comp-source">Reference win rates are the strongest measured compositions among the 20 most-played combinations in the active-season ranked sample.</p>
-        <div class="gamesense-comp-list">${comps.map((comp, index) => `
+        <div class="gamesense-comp-list">${comps.map((comp, index) => {
+          const roleOrder = ["controller", "duelist", "initiator", "sentinel"];
+          const makeupRoles = (comp.agents || [])
+            .map(agent => compAgentRoles[assetSlug(agent)] || "")
+            .filter(Boolean)
+            .sort((left, right) => roleOrder.indexOf(left) - roleOrder.indexOf(right));
+          return `
           <article class="gamesense-comp-option">
             <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-winrate">${Number(comp.winRate).toFixed(1)}% win rate</b><small>${Number(comp.sample || 0).toLocaleString()} games</small></strong></div>
-            <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
-              <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" data-role-tone="${escapeHtml(compAgentRoles[assetSlug(agent)] || "")}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
-                <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
-              </button>
-            `).join("")}</div>
-            <p class="gamesense-comp-composition">${escapeHtml(comp.composition)}</p>
-          </article>
-        `).join("")}</div>
+            <div class="gamesense-comp-line">
+              <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
+                <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" data-role-tone="${escapeHtml(compAgentRoles[assetSlug(agent)] || "")}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
+                  <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
+                </button>
+              `).join("")}</div>
+              <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(comp.composition)}">${makeupRoles.map(role => `<i data-role-tone="${role}" title="${role}" aria-hidden="true"></i>`).join("")}</div>
+            </div>
+          </article>`;
+        }).join("")}</div>
         ${selectedInsight ? `<div class="gamesense-comp-agent-read"><strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(selectedInsight)}</p></div>` : `<p class="gamesense-comp-prompt">Select an agent to see why the pick succeeds on ${escapeHtml(map.label)}.</p>`}
       </section>`;
   }

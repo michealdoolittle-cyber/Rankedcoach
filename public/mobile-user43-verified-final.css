@@ -16364,18 +16364,18 @@ html.is-mobile-layout body.is-mobile-layout :is(
 /* Keep the late-loaded compatibility sheet aligned with the viewport-fit
    desktop Stats rules in app.css. */
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
-  grid-template-rows:168px minmax(0,1fr) !important;
+  grid-template-rows:142px minmax(0,1fr) !important;
   overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
-  min-height:168px !important;
-  height:168px !important;
-  max-height:168px !important;
+  min-height:142px !important;
+  height:142px !important;
+  max-height:142px !important;
   overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
-  min-height:154px !important;
-  height:154px !important;
+  min-height:128px !important;
+  height:128px !important;
   overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card{
@@ -16385,37 +16385,69 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof
   overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
-  grid-template-rows:270px minmax(0,1fr) !important;
+  grid-template-rows:240px minmax(0,1fr) !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-performance-card,.stats-breakdown-card){
-  min-height:270px !important;
+  min-height:240px !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
-  grid-template-rows:repeat(2,minmax(104px,1fr)) !important;
-  grid-auto-rows:minmax(104px,1fr) !important;
+  grid-template-rows:repeat(2,minmax(90px,1fr)) !important;
+  grid-auto-rows:minmax(90px,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  min-height:0 !important;
+  padding:6px 8px !important;
+  gap:2px !important;
 }
 
 @media (min-width:768px) and (max-height:820px){
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
-    grid-template-rows:156px minmax(0,1fr) !important;
+    grid-template-rows:128px minmax(0,1fr) !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
-    min-height:156px !important;
-    height:156px !important;
-    max-height:156px !important;
+    min-height:128px !important;
+    height:128px !important;
+    max-height:128px !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
-    min-height:144px !important;
-    height:144px !important;
+    min-height:116px !important;
+    height:116px !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
-    grid-template-rows:225px minmax(0,1fr) !important;
+    grid-template-rows:200px minmax(0,1fr) !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-performance-card,.stats-breakdown-card){
-    min-height:225px !important;
+    min-height:200px !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
-    grid-template-rows:repeat(2,minmax(82px,1fr)) !important;
-    grid-auto-rows:minmax(82px,1fr) !important;
+    grid-template-rows:repeat(2,minmax(72px,1fr)) !important;
+    grid-auto-rows:minmax(72px,1fr) !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+    min-height:0 !important;
+    padding:5px 7px !important;
+    gap:1px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card :is(.stats-main-text,.stats-sub-text){
+    font-size:13px !important;
+    line-height:1 !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+    font-size:9px !important;
+    line-height:1.08 !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card{
+    padding:5px !important;
+    grid-template-rows:minmax(40px,.7fr) minmax(28px,.3fr) !important;
+    gap:3px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-image{
+    min-height:40px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta .stats-main-text{
+    font-size:11px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta .stats-sub-text{
+    font-size:7.5px !important;
   }
 }
