@@ -16451,3 +16451,47 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
     font-size:7.5px !important;
   }
 }
+
+/* 2026-07-14 desktop Stats live-preview consolidation. */
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-meta.stats-value-positive{
+    color:#22c55e !important;
+    text-shadow:0 0 14px rgba(34,197,94,.18) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-desktop-weapon-family-meta.stats-value-negative{
+    color:#ff5b69 !important;
+    text-shadow:0 0 14px rgba(255,91,105,.16) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-card{
+    position:relative !important;
+    isolation:isolate !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-image{
+    position:absolute !important;
+    inset:0 !important;
+    z-index:0 !important;
+    width:100% !important;
+    min-width:100% !important;
+    height:100% !important;
+    min-height:100% !important;
+    max-height:none !important;
+    border-radius:inherit !important;
+    object-fit:cover !important;
+    object-position:center !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-meta{
+    position:relative !important;
+    z-index:2 !important;
+    grid-row:1 / -1 !important;
+    align-self:end !important;
+    width:100% !important;
+    padding:18px 6px 6px !important;
+    border-radius:0 0 7px 7px !important;
+    background:linear-gradient(180deg,transparent,rgba(2,6,23,.9)) !important;
+    text-shadow:0 2px 8px rgba(0,0,0,.92) !important;
+  }
+}

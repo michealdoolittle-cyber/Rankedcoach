@@ -150,8 +150,9 @@
     return `
       <button class="gamesense-entry-card gamesense-weapon-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
+        <strong class="gamesense-weapon-entry-title">${escapeHtml(item.label)}</strong>
         <span class="gamesense-weapon-card-art">${(item.weapons || []).slice(0, 3).map(weapon => `<img src="${escapeHtml(weapon.image)}" alt="" loading="lazy">`).join("")}</span>
-        <span class="gamesense-entry-copy"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.examples)} | ${escapeHtml(item.range)}</small><span>Inspect weapons</span></span>
+        <span class="gamesense-entry-copy"><small>${escapeHtml(item.examples)} | ${escapeHtml(item.range)}</small><span>Inspect weapons</span></span>
       </button>`;
   }
 

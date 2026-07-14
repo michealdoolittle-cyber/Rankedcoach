@@ -53,6 +53,13 @@ async function run() {
         assists: 5,
         agent: "Killjoy",
         map: "Haven",
+        advanced: {
+          rounds: Array.from({ length: 4 }, (_round, roundIndex) => ({
+            weapon: index % 2 === 0 ? "Vandal" : "Classic",
+            roundWon: index % 2 === 0 ? roundIndex < 3 : roundIndex === 0,
+            side: roundIndex % 2 === 0 ? "attack" : "defense"
+          }))
+        },
         createdAt: `2026-06-${String((index % 25) + 1).padStart(2, "0")}T12:00:00Z`,
         metadata: {
           source: "henrik_sync",
@@ -209,6 +216,11 @@ async function run() {
       return {
         mapTotal: main.querySelectorAll(".stats-map-meta").length,
         mapVisible: visibleCount(".stats-map-meta", ".stats-maps-card"),
+        mapImageCoverage: [...main.querySelectorAll(".stats-map-card")].map(card => {
+          const cardRect = card.getBoundingClientRect();
+          const imageRect = card.querySelector(".stats-map-image").getBoundingClientRect();
+          return Math.max(Math.abs(cardRect.left - imageRect.left), Math.abs(cardRect.top - imageRect.top), Math.abs(cardRect.right - imageRect.right), Math.abs(cardRect.bottom - imageRect.bottom));
+        }),
         agentTotal: main.querySelectorAll(".stats-agent-mini-image").length,
         agentVisible: visibleCount(".stats-agent-mini-image", ".stats-agents-card"),
         weaponTotal: main.querySelectorAll(".stats-weapons-card img").length,
@@ -217,6 +229,7 @@ async function run() {
     });
     assert.ok(lowerStatsContent.mapTotal > 0 && lowerStatsContent.agentTotal > 0 && lowerStatsContent.weaponTotal > 0, JSON.stringify(lowerStatsContent));
     assert.equal(lowerStatsContent.mapVisible, lowerStatsContent.mapTotal, JSON.stringify(lowerStatsContent));
+    assert.ok(lowerStatsContent.mapImageCoverage.every(delta => delta <= 2), JSON.stringify(lowerStatsContent));
     assert.ok(lowerStatsContent.agentVisible >= 8, JSON.stringify(lowerStatsContent));
     assert.equal(lowerStatsContent.weaponVisible, lowerStatsContent.weaponTotal, JSON.stringify(lowerStatsContent));
     const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
@@ -257,6 +270,18 @@ async function run() {
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-season-menu.png"), fullPage: true });
 
     await page.locator(".stats-act-mobile-menu-close").click();
+    await page.selectOption("#statsActSelector", { label: "Season 2026 Act 2" }, { force: true });
+    await page.waitForTimeout(350);
+    const weaponFamilyTones = await page.locator(".stats-desktop-weapon-family-meta").evaluateAll(items => items
+      .filter(item => !item.textContent.includes("No Data"))
+      .map(item => ({
+        text: item.textContent.trim(),
+        positive: item.classList.contains("stats-value-positive"),
+        negative: item.classList.contains("stats-value-negative"),
+        color: getComputedStyle(item).color
+      })));
+    assert.ok(weaponFamilyTones.some(item => item.positive && item.color === "rgb(34, 197, 94)"), JSON.stringify(weaponFamilyTones));
+    assert.ok(weaponFamilyTones.some(item => item.negative && item.color === "rgb(255, 91, 105)"), JSON.stringify(weaponFamilyTones));
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.waitForTimeout(650);
     const compactStatsGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => ({
