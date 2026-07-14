@@ -19997,7 +19997,7 @@ SUMMARY BAR
   height:100%;
   border-radius:inherit;
   background:linear-gradient(90deg, #ff4655, #f97316, #22c55e);
-  transition:width .36s cubic-bezier(.22,1,.36,1);
+  transition:none;
 }
 
 .daily-warmup-card{
