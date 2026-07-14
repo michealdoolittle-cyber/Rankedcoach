@@ -19153,6 +19153,13 @@ min-height:0;
   color:#cbd5e1;
 }
 
+.log-result-rr-unverified{
+  color:rgba(203,213,225,.72);
+  border-color:rgba(148,163,184,.22);
+  background:rgba(15,23,42,.56);
+  font-size:11px;
+}
+
 .guest-tutorial-choice-overlay{
   z-index:12050;
 }

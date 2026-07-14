@@ -36,6 +36,9 @@ globalThis.fetch = async (url, options = {}) => {
     accountRequests += 1;
     return response(200, { data: { puuid: resolvedPuuid, name: "Subroza", tag: "RULT" } });
   }
+  if (String(url).includes("/api/henrik/mmr-history-live")) {
+    return response(200, { data: [{ account: { puuid: resolvedPuuid }, history: [] }] });
+  }
   if (String(url).includes("/api/henrik/mmr-history")) {
     return response(200, { data: [] });
   }

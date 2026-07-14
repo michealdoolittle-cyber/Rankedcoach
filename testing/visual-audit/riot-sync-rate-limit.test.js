@@ -95,6 +95,11 @@ async function run() {
       accountRequests += 1;
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, data: { puuid, name: "Subroza", tag: "RULT" } }) });
     });
+    await page.route("**/api/henrik/mmr-history-live", route => route.fulfill({
+      status: failureMode ? 429 : 200,
+      contentType: "application/json",
+      body: JSON.stringify(failureMode ? { ok: false, error: rawRateLimitMessage, code: "henrik_429" } : { ok: true, data: [{ account: { puuid }, history: [] }] })
+    }));
     await page.route("**/api/henrik/mmr-history", route => route.fulfill({
       status: failureMode ? 429 : 200,
       contentType: "application/json",

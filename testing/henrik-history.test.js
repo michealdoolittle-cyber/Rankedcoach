@@ -6,6 +6,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 
 const matchPages = [];
+const mmrRequests = [];
 const makeMatch = index => ({ metadata: { match_id: `match-${index}` } });
 globalThis.RankedCoachMatchRecord = {
   fromHenrikV4Match(match, context) {
@@ -14,18 +15,57 @@ globalThis.RankedCoachMatchRecord = {
 };
 globalThis.fetch = async (_url, options = {}) => {
   const body = JSON.parse(options.body || "{}");
-  if (String(_url).includes("/api/henrik/mmr-history")) {
+  if (String(_url).includes("/api/henrik/mmr-history-live")) {
+    mmrRequests.push("live");
     return {
       ok: true,
       async json() {
         return {
           data: [{
-            match_id: "match-0",
-            tier: { id: 19, name: "Diamond 2" },
-            rr: 50,
-            last_change: -18,
-            elo: 1650
+            account: { puuid: "test-puuid" },
+            history: [
+              {
+                match_id: "match-0",
+                tier: { id: 19, name: "Diamond 2" },
+                rr: 61,
+                last_change: 11,
+                elo: 1661
+              },
+              {
+                match_id: "match-2",
+                tier: { id: 19, name: "Diamond 2" },
+                rr: 78,
+                last_change: 17,
+                elo: 1678
+              }
+            ]
           }]
+        };
+      }
+    };
+  }
+  if (String(_url).includes("/api/henrik/mmr-history")) {
+    mmrRequests.push("stored");
+    return {
+      ok: true,
+      async json() {
+        return {
+          data: [
+            {
+              match_id: "match-0",
+              tier: { id: 19, name: "Diamond 2" },
+              rr: 50,
+              last_change: -18,
+              elo: 1650
+            },
+            {
+              match_id: "match-1",
+              tier: { id: 18, name: "Diamond 1" },
+              rr: 44,
+              last_change: 16,
+              elo: 1544
+            }
+          ]
         };
       }
     };
@@ -59,7 +99,15 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
   assert.equal(result.records.length, 86);
   assert.equal(result.historyWindowComplete, true);
   assert.deepEqual(matchPages, [0, 10, 20, 30, 40, 50, 60, 70, 80]);
-  assert.equal(result.records[0].context.mmrSnapshot.rr, 50);
+  assert.deepEqual(mmrRequests.sort(), ["live", "stored"]);
+  assert.equal(result.mmrHistory.length, 3);
+  assert.equal(result.records[0].context.mmrSnapshot.rr, 61);
+  assert.equal(result.records[0].context.mmrSnapshot.last_change, 11);
+  assert.equal(result.records[0].context.mmrSnapshot.rankedCoachSource, "henrik-live-mmr-v2");
+  assert.equal(result.records[1].context.mmrSnapshot.rr, 44);
+  assert.equal(result.records[1].context.mmrSnapshot.rankedCoachSource, "henrik-stored-mmr-v2");
+  assert.equal(result.records[2].context.mmrSnapshot.rr, 78);
+  assert.equal(result.records[2].context.mmrSnapshot.rankedCoachSource, "henrik-live-mmr-v2");
 
   const enriched = globalThis.RankedCoachRiotSync.enrichLegacyMatchesWithMmr([{
     id: "match-0",
@@ -73,14 +121,33 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
     source: "henrik_sync",
     metadata: { matchId: "match-1", source: "henrik_sync" },
     matchRecord: { rank: {} }
+  }, {
+    id: "match-2",
+    matchId: "match-2",
+    source: "henrik_sync",
+    metadata: { matchId: "match-2", source: "henrik_sync" },
+    matchRecord: { rank: {} }
+  }, {
+    id: "match-3",
+    matchId: "match-3",
+    source: "henrik_sync",
+    metadata: { matchId: "match-3", source: "henrik_sync" },
+    matchRecord: { rank: {} }
   }], result.mmrHistory);
-  assert.equal(enriched[0].rr, -18);
-  assert.equal(enriched[0].verifiedRrDelta, -18);
-  assert.equal(enriched[0].rrTotal, 50);
+  assert.equal(enriched[0].rr, 11);
+  assert.equal(enriched[0].verifiedRrDelta, 11);
+  assert.equal(enriched[0].rrTotal, 61);
   assert.equal(enriched[0].rrVerified, true);
-  assert.notEqual(enriched[1].rrVerified, true);
-  assert.equal(enriched[1].rr, null);
-  assert.equal(enriched[1].rrTotal, undefined);
+  assert.equal(enriched[0].rankDataSource, "henrik-live-mmr-v2");
+  assert.equal(enriched[1].rr, 16);
+  assert.equal(enriched[1].rrTotal, 44);
+  assert.equal(enriched[1].rankDataSource, "henrik-stored-mmr-v2");
+  assert.equal(enriched[2].rr, 17);
+  assert.equal(enriched[2].rrTotal, 78);
+  assert.equal(enriched[2].rankDataSource, "henrik-live-mmr-v2");
+  assert.notEqual(enriched[3].rrVerified, true);
+  assert.equal(enriched[3].rr, null);
+  assert.equal(enriched[3].rrTotal, undefined);
 
   const preserved = globalThis.RankedCoachRiotSync.enrichLegacyMatchesWithMmr([{
     id: "older-match",
@@ -92,7 +159,7 @@ vm.runInThisContext(source, { filename: "public/integrations/riot-sync.js" });
   assert.equal(preserved[0].rrVerified, true);
   assert.equal(preserved[0].rr, -16);
   assert.equal(preserved[0].rrTotal, 61);
-  console.log("Henrik history checks passed: 86-match exhaustion, 100-match window, and verified MMR enrichment.");
+  console.log("Henrik history checks passed: 86-match exhaustion, live-over-stored MMR merge, and verified enrichment.");
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

@@ -41934,9 +41934,20 @@ function renderLogFeed(options = {}){
         : matchContext.result === "loss"
           ? "loss"
           : "";
-      const rrLabel = Number.isFinite(matchContext.rr)
+      const hasVerifiedRr = Number.isFinite(matchContext.rr);
+      const matchSource = String(
+        matchContext.match?.source
+        || matchContext.match?.metadata?.source
+        || entry.source
+        || ""
+      ).toLowerCase();
+      const isSyncedHenrikMatch = matchSource === "henrik_sync" || matchSource === "henrik-match-placeholder";
+      const rrLabel = hasVerifiedRr
         ? `${matchContext.rr > 0 ? "+" : ""}${Math.round(matchContext.rr)} RR`
-        : "";
+        : isSyncedHenrikMatch ? "RR unverified" : "";
+      const rrClasses = hasVerifiedRr
+        ? `log-result-rr-${resultTone || "neutral"}`
+        : "log-result-rr-neutral log-result-rr-unverified";
       const isEditingEntry = entry.id === editingLogEntryId;
       const isPlaceholder = isMatchPlaceholderLogEntry(entry);
       const trainingMarker = trainingMarkers.get(entry.id) || null;
@@ -41954,7 +41965,7 @@ function renderLogFeed(options = {}){
               ? `<img src="${getAgentIconUrl(entry.agent)}" alt="${entry.agent}">`
               : "?"
           }</span>
-          ${rrLabel ? `<span class="log-result-rr log-result-rr-${resultTone || "neutral"}">${escapeHtml(rrLabel)}</span>` : ""}
+          ${rrLabel ? `<span class="log-result-rr ${rrClasses}">${escapeHtml(rrLabel)}</span>` : ""}
           ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit warm-up for this session" title="Edit"><span class="log-training-fire-glyph" aria-hidden="true">&#128293;</span></button>` : ""}
           ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit post-game aim training for this session" title="Edit">${getTrainingCrosshairMarkup()}</button>` : ""}
           <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>

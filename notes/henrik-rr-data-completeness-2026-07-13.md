@@ -1,6 +1,6 @@
 # Henrik RR/MMR Data Completeness — Wrong Endpoint for Rank Tracking (2026-07-13)
 
-**Status:** Ready to build. Independent of the Gamesense Library follow-up and the Riot sync rate-limit note from the same day — this is a data-source correctness issue in the Henrik MMR bridge (`functions/_lib/henrik.js`, `public/integrations/riot-sync.js`, `public/app.js`), not a UI issue. Safe to work after or in parallel with those batches.
+**Status:** Shipped 2026-07-13. RankedCoach now merges live and stored Henrik MMR with live precedence, preserves stored-only depth, records rank-source provenance, and shows `RR unverified` for synced rows without a verified snapshot. Real-account verification confirmed the live payload fields and merge behavior; the sampled accounts' live rows already overlapped stored MMR at test time, so no unsupported badge-count increase is claimed. The provider-retained history ceiling remains unchanged.
 
 **How this was found:** Michael compared RankedCoach's competitive-only stats against Tracker.gg and Blitz.gg for both his own account and older friends' accounts. Tracker/Blitz line up with each other; RankedCoach's match rows are missing RR and, on the older accounts, don't go as deep historically. This was investigated end-to-end (Henrik's own API docs, this app's actual source, and a live-match test already in the repo) rather than guessed at.
 

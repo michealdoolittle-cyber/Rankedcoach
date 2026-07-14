@@ -3,6 +3,8 @@
 
   const RIOT_SYNC_FEATURE_FLAG = false;
   const HENRIK_SYNC_FEATURE_FLAG = true;
+  const HENRIK_LIVE_MMR_SOURCE = "henrik-live-mmr-v2";
+  const HENRIK_STORED_MMR_SOURCE = "henrik-stored-mmr-v2";
 
   function isEnabled() {
     return Boolean(RIOT_SYNC_FEATURE_FLAG && globalThis.RANKEDCOACH_FEATURES?.riotSync === true);
@@ -217,6 +219,32 @@
       && hasNumber(snapshot?.last_change);
   }
 
+  function normalizeMmrHistory(payload = {}, rankedCoachSource = HENRIK_STORED_MMR_SOURCE) {
+    const data = payload?.data;
+    let snapshots = [];
+    if (Array.isArray(data)) {
+      snapshots = data.some(item => Array.isArray(item?.history))
+        ? data.flatMap(item => Array.isArray(item?.history) ? item.history : [])
+        : data;
+    } else if (Array.isArray(data?.history)) {
+      snapshots = data.history;
+    } else if (Array.isArray(payload?.history)) {
+      snapshots = payload.history;
+    }
+    return snapshots
+      .filter(snapshot => snapshot && getMmrSnapshotMatchId(snapshot))
+      .map(snapshot => ({ ...snapshot, rankedCoachSource }));
+  }
+
+  function mergeMmrHistories(storedPayload = {}, livePayload = {}) {
+    const byMatchId = new Map();
+    normalizeMmrHistory(storedPayload, HENRIK_STORED_MMR_SOURCE)
+      .forEach(snapshot => byMatchId.set(getMmrSnapshotMatchId(snapshot), snapshot));
+    normalizeMmrHistory(livePayload, HENRIK_LIVE_MMR_SOURCE)
+      .forEach(snapshot => byMatchId.set(getMmrSnapshotMatchId(snapshot), snapshot));
+    return [...byMatchId.values()];
+  }
+
   function enrichLegacyMatchesWithMmr(matchList = [], mmrHistory = []) {
     const snapshots = new Map(
       (Array.isArray(mmrHistory) ? mmrHistory : [])
@@ -248,7 +276,7 @@
         rrDelta: Number(snapshot.last_change),
         elo: Number.isFinite(Number(snapshot.elo)) ? Number(snapshot.elo) : null,
         verified: true,
-        source: "henrik-stored-mmr-v2",
+        source: String(snapshot?.rankedCoachSource || HENRIK_STORED_MMR_SOURCE).trim(),
         capturedAt: snapshot.date || null
       } : {
         ...(match?.matchRecord?.rank || {}),
@@ -261,7 +289,7 @@
       };
       return {
         ...match,
-        // The stored MMR snapshot is the only RR delta we can prove belongs
+        // A Henrik MMR snapshot is the only RR delta we can prove belongs
         // to this match. Never substitute a result-based estimate here.
         rr: verified ? rankPatch.rrDelta : null,
         verifiedRrDelta: verified ? rankPatch.rrDelta : null,
@@ -308,12 +336,15 @@
       if (!puuid) throw new Error("Henrik did not return a PUUID for this Riot ID.");
     }
 
-    const mmrHistoryPromise = requestJson("/api/henrik/mmr-history", {
-      puuid,
-      region,
-      size: 100,
-      page: 1
-    }, options).catch(error => ({ data: [], error: error?.message || "MMR history unavailable." }));
+    const mmrHistoryPromise = Promise.allSettled([
+      requestJsonWithRetry("/api/henrik/mmr-history-live", { puuid, region }, options),
+      requestJsonWithRetry("/api/henrik/mmr-history", {
+        puuid,
+        region,
+        size: 100,
+        page: 1
+      }, options)
+    ]);
 
     const parsedMatches = [];
     let historyExhausted = false;
@@ -343,8 +374,18 @@
         break;
       }
     }
-    const mmrPayload = await mmrHistoryPromise;
-    const mmrHistory = Array.isArray(mmrPayload?.data) ? mmrPayload.data : [];
+    const [liveMmrResult, storedMmrResult] = await mmrHistoryPromise;
+    const liveMmrPayload = liveMmrResult.status === "fulfilled" ? liveMmrResult.value : { data: [] };
+    const storedMmrPayload = storedMmrResult.status === "fulfilled" ? storedMmrResult.value : { data: [] };
+    const mmrHistory = mergeMmrHistories(storedMmrPayload, liveMmrPayload);
+    const mmrHistoryErrors = {
+      live: liveMmrResult.status === "rejected"
+        ? liveMmrResult.reason?.message || "Live MMR history unavailable."
+        : "",
+      stored: storedMmrResult.status === "rejected"
+        ? storedMmrResult.reason?.message || "Stored MMR history unavailable."
+        : ""
+    };
     const mmrByMatchId = new Map(mmrHistory.map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot]));
     const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
@@ -385,7 +426,11 @@
       historyExhausted,
       historyWindowComplete: historyExhausted && !matchSyncError,
       mmrHistory,
-      mmrHistoryError: mmrPayload?.error || "",
+      mmrHistoryError: Object.entries(mmrHistoryErrors)
+        .filter(([, message]) => message)
+        .map(([source, message]) => `${source}: ${message}`)
+        .join(" "),
+      mmrHistoryErrors,
       matchSyncError
     };
   }
@@ -400,6 +445,8 @@
     mapRiotMatch,
     mapHenrikRawMatch,
     mapHenrikV4Match,
+    normalizeMmrHistory,
+    mergeMmrHistories,
     enrichLegacyMatchesWithMmr,
     checkWarmupMatches,
     pullMatches

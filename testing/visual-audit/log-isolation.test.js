@@ -81,6 +81,21 @@ async function run() {
         agent: "Sova",
         map: "Haven",
         metadata: { matchId: "match-1", source: "henrik_sync", act: "Episode 11 Act 3", agent: "Sova", mapName: "Haven", result: "win", rrVerified: true }
+      }, {
+        id: "match-2",
+        matchId: "match-2",
+        source: "henrik_sync",
+        act: "Episode 11 Act 3",
+        createdAt: new Date(Date.now() - 60000).toISOString(),
+        rr: null,
+        verifiedRrDelta: null,
+        rrTotal: null,
+        rrVerified: false,
+        rank: "Diamond 2",
+        result: "loss",
+        agent: "Jett",
+        map: "Bind",
+        metadata: { matchId: "match-2", source: "henrik_sync", act: "Episode 11 Act 3", agent: "Jett", mapName: "Bind", result: "loss", rrVerified: false }
       }]
     }]));
     localStorage.setItem("valtracker_log_entries_v2:guest", JSON.stringify([{
@@ -97,6 +112,20 @@ async function run() {
       role: "Initiator",
       map: "Haven",
       notes: ""
+    }, {
+      id: "ranked-match-log:profile-log-test:match-2",
+      matchId: "match-2",
+      profileId,
+      source: "henrik-match-placeholder",
+      isMatchPlaceholder: true,
+      isPlayerAuthored: false,
+      createdAt: new Date(Date.now() - 60000).toISOString(),
+      result: "loss",
+      rr: null,
+      agent: "Jett",
+      role: "Duelist",
+      map: "Bind",
+      notes: ""
     }]));
   });
 
@@ -110,8 +139,12 @@ async function run() {
     assert.equal(debriefMeta, "Add a rating, mood, or map to see it here.");
     assert.doesNotMatch(debriefMeta, /null|â|Ã/);
     await page.click('[data-mobile-logging-view="feed"]');
-    const placeholder = page.locator(".log-entry-placeholder");
+    const placeholder = page.locator(".log-entry-placeholder").first();
     await placeholder.waitFor({ state: "visible" });
+    const unverifiedRr = page.locator(".log-result-rr-unverified");
+    assert.equal(await unverifiedRr.count(), 1);
+    assert.equal(await unverifiedRr.innerText(), "RR unverified");
+    assert.ok(await unverifiedRr.evaluate(element => element.classList.contains("log-result-rr-neutral")));
     assert.match(await placeholder.innerText(), /Add your reflection for this ranked match\./);
     assert.equal(await placeholder.locator(".log-edit-btn").innerText(), "Add Reflection");
     assert.match(await placeholder.innerText(), /Haven/);
@@ -123,12 +156,12 @@ async function run() {
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("active"));
     await page.click('.graph-btn[data-size="5"]');
     await page.waitForFunction(() => document.getElementById("rrChartDataStatus")?.textContent?.includes("verified RR snapshots"));
-    assert.match(await page.locator("#rrChartDataStatus").innerText(), /1 of 1 retained matches have verified RR snapshots/);
+    assert.match(await page.locator("#rrChartDataStatus").innerText(), /1 of 2 retained matches have verified RR snapshots/);
     assert.equal(await page.locator(".rr-hit").last().getAttribute("data-rank-rr"), "50");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
     assert.equal(overflow, false);
     assert.deepEqual(consoleErrors, []);
-    console.log("Log isolation browser check passed: mobile placeholder renders, opens for editing, and has no overflow/errors.");
+    console.log("Log isolation browser check passed: verified and unverified RR states render honestly with no overflow/errors.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

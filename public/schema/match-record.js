@@ -631,6 +631,7 @@
     const snapshotRR = readNumber(mmrSnapshot?.rr);
     const snapshotDelta = readNumber(mmrSnapshot?.last_change);
     const hasVerifiedRR = Boolean(snapshotTierId > 0 && snapshotRR !== null && snapshotDelta !== null);
+    const snapshotSource = cleanString(mmrSnapshot?.rankedCoachSource) || "henrik-stored-mmr-v2";
 
     return fromRiotMatch({
       id: match.metadata?.match_id,
@@ -656,7 +657,7 @@
       rrDelta: hasVerifiedRR ? snapshotDelta : null,
       rankElo: hasVerifiedRR ? readNumber(mmrSnapshot?.elo) : null,
       rrVerified: hasVerifiedRR,
-      rankDataSource: hasVerifiedRR ? "henrik-stored-mmr-v2" : null,
+      rankDataSource: hasVerifiedRR ? snapshotSource : null,
       rankCapturedAt: hasVerifiedRR ? mmrSnapshot?.date : null,
       trackedPlayer: {
         puuid,

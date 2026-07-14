@@ -141,6 +141,16 @@ async function getHenrikMmrHistory(env, options = {}) {
   );
 }
 
+async function getHenrikLiveMmrHistory(env, options = {}) {
+  const apiKey = requireApiKey(env);
+  const puuid = requireUuid(options.puuid, "puuid");
+  const region = normalizeRegion(options.region);
+  return henrikFetch(
+    apiKey,
+    `/valorant/v2/by-puuid/mmr-history/${region}/pc/${encodeURIComponent(puuid)}`
+  );
+}
+
 async function getHenrikRawMatch(env, options = {}) {
   const apiKey = requireApiKey(env);
   const matchId = requireUuid(options.matchId, "match id");
@@ -178,6 +188,7 @@ export {
   HenrikApiError,
   getHenrikAccount,
   getHenrikMatches,
+  getHenrikLiveMmrHistory,
   getHenrikMmrHistory,
   getHenrikRawMatch,
   henrikErrorResponse,

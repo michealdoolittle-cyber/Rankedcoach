@@ -98,6 +98,11 @@ async function run() {
     await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await page.route("**/api/henrik/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, configured: true }) }));
     await page.route("**/api/henrik/account", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { puuid, name: "Workflow", tag: "TEST" } }) }));
+    await page.route("**/api/henrik/mmr-history-live", route => route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ data: [{ account: { puuid }, history: [{ match_id: "profile-sync-0", tier: { id: 19, name: "Diamond 2" }, rr: 66, last_change: 25, elo: 1666, date: new Date().toISOString() }] }] })
+    }));
     await page.route("**/api/henrik/mmr-history", route => route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -148,7 +153,7 @@ async function run() {
     });
     assert.deepEqual(state.profile && { matchCount: state.profile.matchCount, cursor: state.profile.cursor, complete: state.profile.complete }, { matchCount: 100, cursor: 100, complete: true }, JSON.stringify(matchStarts));
     assert.ok(state.profile.dailySync);
-    assert.deepEqual(state.latestLog, { rr: 23, agent: "Sova", map: "Breeze" });
+    assert.deepEqual(state.latestLog, { rr: 25, agent: "Sova", map: "Breeze" });
     assert.match(state.formAgent || "", /Sova/i);
     assert.equal(state.formMap, "Breeze");
     assert.equal(matchRequests, 11);

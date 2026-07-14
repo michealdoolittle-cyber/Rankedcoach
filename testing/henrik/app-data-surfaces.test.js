@@ -54,8 +54,12 @@ async function loadRetainedProfileMatches() {
     if (page.length < 10) break;
   }
 
-  const mmrPayload = await postJson("/api/henrik/mmr-history", { puuid, region: "na", size: 100, page: 1 });
-  const mmrByMatchId = new Map((mmrPayload?.data || []).map(snapshot => [snapshot.match_id, snapshot]));
+  const [liveMmrPayload, storedMmrPayload] = await Promise.all([
+    postJson("/api/henrik/mmr-history-live", { puuid, region: "na" }),
+    postJson("/api/henrik/mmr-history", { puuid, region: "na", size: 100, page: 1 })
+  ]);
+  const mmrHistory = globalThis.RankedCoachRiotSync.mergeMmrHistories(storedMmrPayload, liveMmrPayload);
+  const mmrByMatchId = new Map(mmrHistory.map(snapshot => [snapshot.match_id, snapshot]));
   return parsedMatches.map(match => {
     const record = globalThis.RankedCoachMatchRecord.fromHenrikV4Match(match, {
       puuid,
@@ -93,6 +97,7 @@ function startServer() {
 async function run() {
   loadBrowserScript("public/schema/match-record.js");
   loadBrowserScript("public/analytics/round-metrics.js");
+  loadBrowserScript("public/integrations/riot-sync.js");
   const matches = await loadRetainedProfileMatches();
   const acts = [...new Set(matches.map(match => match.act).filter(Boolean))];
   const allRoundMetrics = globalThis.RankedCoachRoundMetrics.aggregateMatchRoundMetrics(matches);
