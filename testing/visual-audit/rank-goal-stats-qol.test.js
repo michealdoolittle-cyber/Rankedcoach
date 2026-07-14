@@ -37,6 +37,11 @@ async function run() {
   const server = await startServer();
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const consoleIssues = [];
+  page.on("console", message => {
+    if (message.type() === "error") consoleIssues.push(`[console] ${message.text()}`);
+  });
+  page.on("pageerror", error => consoleIssues.push(`[pageerror] ${error.message}`));
 
   try {
     await page.addInitScript(() => {
@@ -221,6 +226,15 @@ async function run() {
           const imageRect = card.querySelector(".stats-map-image").getBoundingClientRect();
           return Math.max(Math.abs(cardRect.left - imageRect.left), Math.abs(cardRect.top - imageRect.top), Math.abs(cardRect.right - imageRect.right), Math.abs(cardRect.bottom - imageRect.bottom));
         }),
+        mapMetaCoverage: [...main.querySelectorAll(".stats-map-card")].map(card => {
+          const cardRect = card.getBoundingClientRect();
+          const meta = card.querySelector(".stats-map-meta");
+          const metaRect = meta.getBoundingClientRect();
+          return {
+            edgeDelta: Math.max(Math.abs(cardRect.left - metaRect.left), Math.abs(cardRect.right - metaRect.right), Math.abs(cardRect.bottom - metaRect.bottom)),
+            background: getComputedStyle(meta).backgroundImage
+          };
+        }),
         agentTotal: main.querySelectorAll(".stats-agent-mini-image").length,
         agentVisible: visibleCount(".stats-agent-mini-image", ".stats-agents-card"),
         weaponTotal: main.querySelectorAll(".stats-weapons-card img").length,
@@ -230,6 +244,7 @@ async function run() {
     assert.ok(lowerStatsContent.mapTotal > 0 && lowerStatsContent.agentTotal > 0 && lowerStatsContent.weaponTotal > 0, JSON.stringify(lowerStatsContent));
     assert.equal(lowerStatsContent.mapVisible, lowerStatsContent.mapTotal, JSON.stringify(lowerStatsContent));
     assert.ok(lowerStatsContent.mapImageCoverage.every(delta => delta <= 2), JSON.stringify(lowerStatsContent));
+    assert.ok(lowerStatsContent.mapMetaCoverage.every(item => item.edgeDelta <= 2 && item.background.includes("linear-gradient")), JSON.stringify(lowerStatsContent));
     assert.ok(lowerStatsContent.agentVisible >= 8, JSON.stringify(lowerStatsContent));
     assert.equal(lowerStatsContent.weaponVisible, lowerStatsContent.weaponTotal, JSON.stringify(lowerStatsContent));
     const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
@@ -349,7 +364,8 @@ async function run() {
     assert.match(modalMotion.property, /transform/);
     await page.waitForTimeout(350);
     const openBackdrop = await page.locator("#accountSupportModal").evaluate(modal => getComputedStyle(modal).backdropFilter || getComputedStyle(modal).webkitBackdropFilter);
-    assert.match(openBackdrop, /blur\(12px\)/);
+    const openBlur = Number.parseFloat(openBackdrop.match(/blur\(([\d.]+)px\)/)?.[1] || "0");
+    assert.ok(openBlur >= 11.9, openBackdrop);
     await page.locator("#accountSupportModal").click({ position: { x: 2, y: 2 } });
     assert.equal(await page.locator("#accountSupportModal").evaluate(modal => modal.classList.contains("is-closing")), true);
     await page.waitForTimeout(180);
@@ -365,6 +381,21 @@ async function run() {
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="stats"]').click();
     await page.waitForFunction(() => document.getElementById("page-stats")?.getAnimations().some(animation => animation.id === "rankedcoach-page-button-slide"));
     await page.waitForTimeout(400);
+    await page.locator('#mobileStatsTabs [data-mobile-stats-view="maps"]').click();
+    await page.waitForTimeout(150);
+    const mobileMapCoverage = await page.locator("#page-stats .stats-map-card").evaluateAll(cards => cards.map(card => {
+      const cardRect = card.getBoundingClientRect();
+      const imageRect = card.querySelector(".stats-map-image").getBoundingClientRect();
+      const meta = card.querySelector(".stats-map-meta");
+      const metaRect = meta.getBoundingClientRect();
+      return {
+        imageDelta: Math.max(Math.abs(cardRect.left - imageRect.left), Math.abs(cardRect.top - imageRect.top), Math.abs(cardRect.right - imageRect.right), Math.abs(cardRect.bottom - imageRect.bottom)),
+        metaDelta: Math.max(Math.abs(cardRect.left - metaRect.left), Math.abs(cardRect.right - metaRect.right), Math.abs(cardRect.bottom - metaRect.bottom)),
+        background: getComputedStyle(meta).backgroundImage
+      };
+    }));
+    assert.ok(mobileMapCoverage.length > 0 && mobileMapCoverage.every(item => item.imageDelta <= 2 && item.metaDelta <= 2 && item.background.includes("linear-gradient")), JSON.stringify(mobileMapCoverage));
+    await page.screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-map-fade.png"), fullPage: true });
     const mobilePeakGeometry = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
       const parent = card.getBoundingClientRect();
       const visual = card.querySelector(".stats-peak-visual").getBoundingClientRect();
@@ -410,6 +441,7 @@ async function run() {
     assert.ok(mobileLifetimeGeometry.rankLabels.every(rect => rect.left >= mobileLifetimeGeometry.cardLeft - 1 && rect.right <= mobileLifetimeGeometry.cardRight + 1), JSON.stringify(mobileLifetimeGeometry));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-lifetime-rank-chart.png"), fullPage: true });
 
+    assert.deepEqual(consoleIssues, []);
     console.log("Goal, readiness gates, chart spacing, Stats containment, rounded season selector, long Riot ID, and empty insight-filter checks passed.");
   } finally {
     await browser.close();
