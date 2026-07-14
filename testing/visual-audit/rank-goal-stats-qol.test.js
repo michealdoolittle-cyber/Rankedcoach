@@ -181,17 +181,18 @@ async function run() {
     }
     const proofContainment = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
       const parent = card.getBoundingClientRect();
-      return [".stats-proof-card-head", ".stats-history-boundary-note", ".stats-proof-rank-row", ".stats-proof-note"].map(selector => {
+      const items = [".stats-proof-card-head", ".stats-history-boundary-note", ".stats-proof-rank-row", ".stats-proof-note", ".stats-summary-selector-bottom"].map(selector => {
         const rect = card.querySelector(selector).getBoundingClientRect();
-        return { selector, top: rect.top, bottom: rect.bottom, parentTop: parent.top, parentBottom: parent.bottom };
+        return { selector, top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, parentTop: parent.top, parentRight: parent.right, parentBottom: parent.bottom, parentLeft: parent.left };
       });
+      return items;
     });
     proofContainment.forEach(item => {
-      assert.ok(item.top >= item.parentTop - 1 && item.bottom <= item.parentBottom + 1, JSON.stringify(item));
+      assert.ok(item.top >= item.parentTop - 1 && item.bottom <= item.parentBottom + 1 && item.left >= item.parentLeft - 1 && item.right <= item.parentRight + 1, JSON.stringify(item));
     });
     assert.ok(proofContainment[0].bottom <= proofContainment[1].top, JSON.stringify(proofContainment));
-    assert.ok(proofContainment[1].bottom <= proofContainment[2].top, JSON.stringify(proofContainment));
     assert.ok(proofContainment[1].bottom <= proofContainment[3].top, JSON.stringify(proofContainment));
+    assert.ok(proofContainment[2].right <= proofContainment[4].left + 1 || proofContainment[2].bottom <= proofContainment[4].top + 1, JSON.stringify(proofContainment));
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-stats-proof-card.png") });
     const trigger = page.locator("#statsActMobileTrigger");
     assert.equal(await trigger.isVisible(), true);
@@ -274,6 +275,18 @@ async function run() {
     await page.click("#dailyWarmupSkip").catch(() => {});
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="stats"]').click();
     await page.waitForFunction(() => document.getElementById("page-stats")?.getAnimations().some(animation => animation.id === "rankedcoach-page-button-slide"));
+    await page.waitForTimeout(400);
+    const mobilePeakGeometry = await page.locator("#page-stats .stats-proof-card").evaluate(card => {
+      const parent = card.getBoundingClientRect();
+      const visual = card.querySelector(".stats-peak-visual").getBoundingClientRect();
+      const details = card.querySelector(".stats-peak-details").getBoundingClientRect();
+      const selector = card.querySelector(".stats-summary-selector-bottom").getBoundingClientRect();
+      return { parent: parent.toJSON(), visual: visual.toJSON(), details: details.toJSON(), selector: selector.toJSON() };
+    });
+    assert.ok(mobilePeakGeometry.visual.left < mobilePeakGeometry.details.left && mobilePeakGeometry.visual.right <= mobilePeakGeometry.details.left + 1, JSON.stringify(mobilePeakGeometry));
+    assert.ok(Math.abs(mobilePeakGeometry.visual.width - mobilePeakGeometry.details.width) <= 12, JSON.stringify(mobilePeakGeometry));
+    assert.ok(mobilePeakGeometry.selector.top >= Math.max(mobilePeakGeometry.visual.bottom, mobilePeakGeometry.details.bottom) - 1 && mobilePeakGeometry.selector.bottom <= mobilePeakGeometry.parent.bottom + 1, JSON.stringify(mobilePeakGeometry));
+    await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-stats-proof-card.png") });
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
     await page.locator('.graph-btn[data-size="all"]').click();

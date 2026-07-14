@@ -985,3 +985,58 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   html.is-mobile-layout .gamesense-weapon-detail-actions .gamesense-patch{grid-column:2;grid-row:1;align-self:center;justify-self:end;max-width:145px;padding:5px 7px;font-size:8px;text-align:center;}
   html.is-mobile-layout .gamesense-weapon-detail-actions .gamesense-back{grid-column:2;grid-row:2;align-self:end;justify-self:end;}
 }
+
+/* 2026-07-13 dossier evidence and responsive suggestion-card layout */
+.gamesense-comp-rank > strong{display:flex;align-items:baseline;justify-content:flex-end;gap:8px;text-align:right !important;}
+.gamesense-comp-rank > strong b{color:var(--text-main,#f8fafc);font:900 15px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
+.gamesense-comp-rank > strong small{color:var(--text-muted,#a8b3c7);font:800 10px/1 var(--font-body,"Rajdhani",sans-serif);white-space:nowrap;}
+.gamesense-comp-composition{color:var(--text-muted,#a8b3c7) !important;font-size:10px !important;text-transform:uppercase;}
+
+.gamesense-map-detail-head,
+.gamesense-agent-detail-head,
+.gamesense-weapon-detail-head{grid-template-columns:minmax(0,1fr) auto;align-items:stretch;}
+.gamesense-map-detail-actions,
+.gamesense-agent-detail-actions,
+.gamesense-weapon-detail-actions{display:grid !important;align-content:space-between;justify-items:end;gap:8px;}
+.gamesense-map-detail-actions .gamesense-back,
+.gamesense-agent-detail-actions .gamesense-back,
+.gamesense-weapon-detail-actions .gamesense-back{grid-column:auto;grid-row:auto;justify-self:end;}
+.gamesense-agent-facts{align-self:start;align-content:start;grid-auto-rows:max-content;}
+.gamesense-agent-fact-list{align-content:start;grid-auto-rows:max-content;}
+
+.gamesense-weapon-suggestion summary{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:9px;min-height:176px;padding:12px;list-style:none;}
+.gamesense-weapon-suggestion summary::-webkit-details-marker{display:none;}
+.gamesense-weapon-suggestion summary > img{order:1;width:100%;height:76px;object-fit:contain;}
+.gamesense-weapon-suggestion-head{order:3;display:flex !important;align-items:center;justify-content:flex-end;gap:8px;width:100%;padding:0 !important;border:0 !important;border-radius:0 !important;background:none !important;}
+.gamesense-weapon-suggestion-head > strong{display:none;}
+.gamesense-weapon-suggestion-action{display:flex !important;align-items:center;justify-content:flex-end;gap:10px;margin-left:auto;padding:0 !important;border:0 !important;border-radius:0 !important;background:none !important;}
+.gamesense-weapon-suggestion-action > b{min-width:36px;padding:5px 7px;border:1px solid color-mix(in srgb,var(--gamesense-warm) 55%,transparent);border-radius:999px;background:color-mix(in srgb,var(--gamesense-warm) 13%,rgba(7,16,24,.88));color:var(--gamesense-warm);font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);text-align:center;}
+.gamesense-weapon-suggestion-action > i{position:relative;display:grid;place-items:center;width:24px;height:24px;}
+.gamesense-weapon-suggestion-action > i::before{content:"+";position:static;translate:none;color:var(--accent,#ff4655);font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);font-style:normal;}
+.gamesense-weapon-suggestion[open] .gamesense-weapon-suggestion-action > i::before{content:"-";}
+.gamesense-weapon-fit{order:2;align-self:center;padding:6px 9px !important;border:1px solid color-mix(in srgb,var(--accent,#ff4655) 45%,transparent) !important;border-radius:999px !important;background:none !important;color:var(--accent,#ff4655) !important;font:900 9px/1 var(--font-display,"Rajdhani",sans-serif) !important;text-align:center;text-transform:uppercase;}
+
+@media (max-width:820px){
+  html.is-mobile-layout :is(.gamesense-map-detail-head,.gamesense-agent-detail-head,.gamesense-weapon-detail-head) > div:first-child > span{
+    white-space:nowrap;
+    font-size:8px;
+    letter-spacing:.1em;
+  }
+  html.is-mobile-layout .gamesense-map-detail-head > div:first-child,
+  html.is-mobile-layout .gamesense-map-detail-head .gamesense-map-detail-actions{display:contents !important;}
+  html.is-mobile-layout .gamesense-map-detail-head > div:first-child > span{grid-column:1;grid-row:1;align-self:center;}
+  html.is-mobile-layout .gamesense-map-detail-actions .gamesense-patch{grid-column:2;grid-row:1;align-self:center;justify-self:end;padding:5px 7px;}
+  html.is-mobile-layout .gamesense-map-detail-actions .gamesense-back{grid-column:2;grid-row:2;align-self:end;justify-self:end;}
+
+  html.is-mobile-layout .gamesense-agent-detail-head > div:first-child > span,
+  html.is-mobile-layout .gamesense-agent-detail-actions .gamesense-patch{align-self:center;line-height:1;}
+
+  html.is-mobile-layout .gamesense-weapon-suggestion summary{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(92px,1fr) auto;gap:8px;min-height:170px;padding:11px 12px;}
+  html.is-mobile-layout .gamesense-weapon-suggestion-head{order:initial;grid-row:1;display:flex !important;justify-content:space-between;}
+  html.is-mobile-layout .gamesense-weapon-suggestion-head > strong{display:block;color:var(--text-main,#f8fafc);font:900 15px/1 var(--font-display,"Rajdhani",sans-serif);text-align:left !important;text-transform:uppercase;}
+  html.is-mobile-layout .gamesense-weapon-suggestion-action{margin-left:auto;}
+  html.is-mobile-layout .gamesense-weapon-suggestion summary > img{order:initial;grid-row:2;width:100%;height:100%;min-height:92px;max-height:132px;object-fit:contain;}
+  html.is-mobile-layout .gamesense-weapon-fit{order:initial;grid-row:3;justify-self:start;align-self:start;}
+  html.is-mobile-layout .gamesense-comp-rank{align-items:flex-start;}
+  html.is-mobile-layout .gamesense-comp-rank > strong{display:grid;justify-items:end;gap:4px;}
+}

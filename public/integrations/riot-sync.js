@@ -256,6 +256,14 @@
       const source = String(match?.source || match?.metadata?.source || "").toLowerCase();
       if (source !== "henrik_sync") return match;
       const matchId = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim();
+      const completedResult = ["win", "loss"].includes(String(match?.result || match?.metadata?.result || "").toLowerCase());
+      const hasRoundData = Array.isArray(match?.matchRecord?.roundByRound)
+        ? match.matchRecord.roundByRound.length > 0
+        : Number(match?.advanced?.roundsWon || 0) + Number(match?.advanced?.roundsLost || 0) > 0;
+      const isPlacementMatch = match?.isPlacementMatch === true
+        || match?.metadata?.isPlacementMatch === true
+        || match?.matchRecord?.isPlacementMatch === true
+        || (Number(match?.matchRecord?.trackedPlayer?.competitiveTier) === 0 && completedResult && hasRoundData);
       const snapshot = snapshots.get(matchId);
       if (!snapshot) {
         const alreadyVerified = match?.rrVerified === true
@@ -266,7 +274,10 @@
           ...match,
           rr: alreadyVerified ? Number(match.verifiedRrDelta) : null,
           verifiedRrDelta: alreadyVerified ? Number(match.verifiedRrDelta) : null,
-          rrVerified: alreadyVerified
+          rrVerified: alreadyVerified,
+          isPlacementMatch,
+          matchRecord: match?.matchRecord ? { ...match.matchRecord, isPlacementMatch } : match?.matchRecord,
+          metadata: { ...(match?.metadata || {}), isPlacementMatch }
         };
       }
       const verified = isVerifiedMmrSnapshot(snapshot);
@@ -295,16 +306,19 @@
         verifiedRrDelta: verified ? rankPatch.rrDelta : null,
         rrTotal: verified ? rankPatch.rr : null,
         rrVerified: verified,
+        isPlacementMatch: verified ? false : isPlacementMatch,
         rank: rankPatch.rank || match?.rank || null,
         rankElo: rankPatch.elo,
         rankDataSource: rankPatch.source,
         rankCapturedAt: rankPatch.capturedAt,
         matchRecord: match?.matchRecord ? {
           ...match.matchRecord,
+          isPlacementMatch: verified ? false : isPlacementMatch,
           rank: rankPatch
         } : match?.matchRecord,
         metadata: {
           ...(match?.metadata || {}),
+          isPlacementMatch: verified ? false : isPlacementMatch,
           rank: rankPatch.rank || match?.metadata?.rank || null,
           rrVerified: verified,
           rankElo: rankPatch.elo,

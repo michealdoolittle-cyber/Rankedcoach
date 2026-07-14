@@ -14424,6 +14424,75 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsBreakd
   overflow:hidden !important;
   padding-right:0 !important;
 }
+
+/* Mobile Peak Progress: visual proof on the left, explanation on the right. */
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-card.stats-proof-card{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-rows:auto auto !important;
+  min-height:190px !important;
+  padding:10px !important;
+  gap:9px !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-peak-layout{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  align-items:stretch !important;
+  gap:10px !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-peak-visual,
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-peak-details{
+  display:grid !important;
+  align-content:start !important;
+  min-width:0 !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-peak-visual{
+  place-items:center !important;
+  padding-right:9px !important;
+  border-right:1px solid rgba(148,163,184,.2) !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-rank-row{
+  display:grid !important;
+  justify-items:center !important;
+  gap:5px !important;
+  width:100% !important;
+  text-align:center !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-rank-icon{
+  width:min(78px,22vw) !important;
+  height:min(78px,22vw) !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-rank-copy{
+  display:grid !important;
+  justify-items:center !important;
+  gap:3px !important;
+  width:100% !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-rank-copy :is(strong,span){
+  width:100% !important;
+  text-align:center !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-card-head{
+  display:block !important;
+  margin:0 0 7px !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-proof-kicker{
+  font-size:12px !important;
+  line-height:1.05 !important;
+  text-align:left !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-peak-details :is(.stats-history-boundary-note,.stats-proof-note){
+  margin:0 0 6px !important;
+  padding:0 !important;
+  font-size:10px !important;
+  line-height:1.3 !important;
+  text-align:left !important;
+}
+html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-summary-selector-bottom{
+  width:100% !important;
+  margin:0 !important;
+  padding:0 !important;
+}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
   grid-template-columns:repeat(3,minmax(0,1fr)) !important;
   grid-auto-rows:minmax(0,1fr) !important;
@@ -16280,4 +16349,28 @@ html.is-mobile-layout body.is-mobile-layout :is(
 ) .rc-mobile-avatar-frame[data-mobile-frame="vanguard"] .rc-mobile-frame-glint{
   stroke-dasharray:12 88 !important;
   animation:rcMobileSvgFrameReverseSweep 1.65s linear infinite !important;
+}
+
+/* Desktop Stats is loaded before this compatibility sheet; keep Peak Progress
+   and its selector inside the summary row instead of restoring the old clamp. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
+  grid-template-rows:minmax(360px,380px) minmax(0,1fr) !important;
+  overflow:auto !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
+  min-height:360px !important;
+  height:360px !important;
+  max-height:360px !important;
+  overflow:visible !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
+  min-height:220px !important;
+  height:220px !important;
+  overflow:visible !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card{
+  min-height:220px !important;
+  height:220px !important;
+  max-height:220px !important;
+  overflow:visible !important;
 }

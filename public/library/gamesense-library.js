@@ -269,7 +269,11 @@
         <p class="gamesense-weapon-source">Round conversion percent uses the vstats active-season Competitive map and economy sample. Kills-per-round and average-damage context uses Blitz Competitive weapon stats.</p>
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
-            <summary><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><span class="gamesense-weapon-summary-tags"><span>${escapeHtml(item.fit)}</span>${item.side ? `<b>${escapeHtml(item.side)}</b>` : ""}</span><i aria-hidden="true"></i></summary>
+            <summary>
+              <span class="gamesense-weapon-suggestion-head"><strong>${escapeHtml(item.weapon)}</strong><span class="gamesense-weapon-suggestion-action">${item.side ? `<b>${escapeHtml(item.side)}</b>` : ""}<i aria-hidden="true"></i></span></span>
+              <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}">
+              <span class="gamesense-weapon-fit">${escapeHtml(item.fit)}</span>
+            </summary>
             <div>
               <strong>${escapeHtml(item.evidence)}</strong>
               <small>${escapeHtml(item.locations)}</small>
@@ -283,7 +287,10 @@
   }
 
   function renderComp(map) {
-    const comps = Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps.slice(0, 3) : [map.metaComp];
+    const comps = (Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps : [map.metaComp])
+      .slice()
+      .sort((left, right) => Number(right?.winRate || 0) - Number(left?.winRate || 0))
+      .slice(0, 3);
     const hasCurrentSample = comps.some(comp => Array.isArray(comp?.agents) && comp.agents.length === 5);
     const selectedAgent = state.compAgent;
     const selectedInsight = selectedAgent ? map.agentInsights?.[selectedAgent] : "";
@@ -296,16 +303,17 @@
     }
     return `
       <section class="gamesense-comp-card">
-        <div><span>Current Competitive Comps</span><strong>Tracker Network | Past two weeks</strong></div>
-        <p class="gamesense-comp-source">Agent and map rates use Tracker Network's rolling Competitive sample. These five-agent combinations are tactical references built from current map leaders, not measured composition win-rate claims.</p>
+        <div><span>Current Competitive Comps</span><strong>OP.GG | Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
+        <p class="gamesense-comp-source">Reference win rates are the strongest measured compositions among the 20 most-played combinations in the active-season ranked sample.</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => `
           <article class="gamesense-comp-option">
-            <div class="gamesense-comp-rank"><span>Reference ${String(index + 1).padStart(2, "0")}</span><strong>${escapeHtml(comp.composition)}</strong></div>
+            <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-winrate">${Number(comp.winRate).toFixed(1)}% win rate</b><small>${Number(comp.sample || 0).toLocaleString()} games</small></strong></div>
             <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
               <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
                 <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
               </button>
             `).join("")}</div>
+            <p class="gamesense-comp-composition">${escapeHtml(comp.composition)}</p>
           </article>
         `).join("")}</div>
         ${selectedInsight ? `<div class="gamesense-comp-agent-read"><strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(selectedInsight)}</p></div>` : `<p class="gamesense-comp-prompt">Select an agent to see why the pick succeeds on ${escapeHtml(map.label)}.</p>`}
@@ -316,8 +324,7 @@
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
-        <span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span>
-        <button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button>
+        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
       <div class="gamesense-detail-grid">
         ${renderMapTips(map)}
@@ -435,7 +442,7 @@
     return `
       <div class="gamesense-detail-head gamesense-weapon-detail-head">
         <div><span>Weapon Dossier</span><h2>${escapeHtml(group.label)}</h2></div>
-        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch">${escapeHtml(group.examples)} | ${escapeHtml(group.range)}</span><button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
+        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(getReference().season?.patch || "Current")}</span><button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
       </div>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Arsenal</span><strong>Select a weapon</strong></div>

@@ -223,6 +223,7 @@ function normalizeWarmupLogEntry(entry = {}) {
     dmTdmAutoVerified: entry?.dmTdmAutoVerified === true,
     dmTdmVerifiedMatches: Math.max(0, safeNumber(entry?.dmTdmVerifiedMatches)),
     warmupLogEntryId: String(entry?.warmupLogEntryId || ""),
+    warmupFeedMarkerHidden: entry?.warmupFeedMarkerHidden === true,
     postGameAimTrainingCommitted: entry?.postGameAimTrainingCommitted === true,
     postGameCommittedAt: String(entry?.postGameCommittedAt || ""),
     postGameLogEntryId: String(entry?.postGameLogEntryId || ""),
@@ -409,7 +410,7 @@ function getDailyTrainingEntries(date = formatLocalDateKey(), profileId = active
 }
 
 function resolveWarmupTrainingEntry(entries = [], record = null) {
-  if (!record || !isDailyWarmupCompleted(record)) return null;
+  if (!record || record.warmupFeedMarkerHidden === true || !isDailyWarmupCompleted(record)) return null;
   const ordered = (Array.isArray(entries) ? entries : [])
     .slice()
     .sort((a, b) => new Date(a?.createdAt || 0) - new Date(b?.createdAt || 0));
@@ -666,7 +667,9 @@ function skipDailyWarmupCheck() {
       skipped: true,
       drillsSelected: [],
       rangeDrillsSelfReported: false,
-      dmTdmSelfReported: false
+      dmTdmSelfReported: false,
+      warmupLogEntryId: "",
+      warmupFeedMarkerHidden: true
     });
   }
   hideModalById?.("dailyWarmupModal");
@@ -742,6 +745,26 @@ function saveDailyWarmupCheck() {
     .slice(0, DAILY_WARMUP_DRILL_LIMIT);
   const dmTdmSelfReported = document.getElementById("dailyWarmupDmTdm")?.checked === true;
   if (!drillsSelected.length && !dmTdmSelfReported) {
+    const currentRecord = getDailyWarmupRecord(profile, date);
+    if (currentRecord && (isDailyWarmupCompleted(currentRecord) || currentRecord.warmupLogEntryId)) {
+      writeDailyWarmupRecord(profile, {
+        date,
+        status: "prompted",
+        skipped: false,
+        drillsSelected: [],
+        weapon: "",
+        rangeDrillsSelfReported: false,
+        dmTdmSelfReported: false,
+        completedAt: "",
+        warmupLogEntryId: "",
+        warmupFeedMarkerHidden: true
+      });
+      hideModalById?.("dailyWarmupModal");
+      renderLoggingTrainingMenuState(getActiveProfile());
+      renderLogFeed?.({ force: true });
+      showToast?.("Warm-up marker removed from this session.", { tone: "neutral" });
+      return;
+    }
     const target = document.getElementById("dailyWarmupVerification");
     if (target) target.textContent = "Choose at least one drill, mark DM/TDM complete, or skip today.";
     return;
@@ -754,6 +777,7 @@ function saveDailyWarmupCheck() {
     weapon: drillsSelected.includes("weapon-choice") ? document.getElementById("dailyWarmupWeapon")?.value || "" : "",
     rangeDrillsSelfReported: drillsSelected.length > 0,
     dmTdmSelfReported,
+    warmupFeedMarkerHidden: false,
     completedAt: getDailyWarmupRecord(profile, date)?.completedAt || nowISO()
   });
   persistWarmupTrainingEntry(getActiveProfile(), date);
@@ -14584,6 +14608,7 @@ function getChartSourceEntries(size = currentSize) {
 
   return {
     entries,
+    scopeEntries: scopedEntries,
     scopeLabel,
     seasonLabel: selectedSeasonLabel,
     isCurrentSessionScoped: false,
@@ -14986,6 +15011,7 @@ const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 
 const backendSyncState = {
   applyingRemote: false,
+  hydratingUserId: "",
   saveTimer: null,
   savePromise: null,
   pendingSaveReason: "",
@@ -15130,6 +15156,7 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
       createdAt: core.createdAt || match?.createdAt || match?.metadata?.playedAt || "",
       result: core.result || match?.result || match?.metadata?.result || "",
       rr: match?.rr,
+      isPlacementMatch: isPlacementRankedMatch(match),
       agent: core.agent,
       role: core.role,
       map: core.map
@@ -15225,10 +15252,23 @@ function applyPersistentAccountState(state = {}) {
   backendSyncState.applyingRemote = true;
   try {
     if (Array.isArray(state.profiles) && state.profiles.length) {
-      profiles = state.profiles.map(normalizeProfileRecord);
-      activeProfileId = state.activeProfileId || profiles[0]?.id || activeProfileId;
+      const consolidated = globalThis.RankedCoachPersistencePolicy?.consolidateProfiles?.(
+        state.profiles,
+        state.activeProfileId
+      ) || { profiles: state.profiles, activeProfileId: state.activeProfileId, idMap: {} };
+      profiles = consolidated.profiles.map(normalizeProfileRecord);
+      activeProfileId = consolidated.activeProfileId || profiles[0]?.id || activeProfileId;
       localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
       localStorage.setItem(STORAGE_KEY_ACTIVE_ID, activeProfileId || "");
+      if (Array.isArray(state.logEntries)) {
+        state = {
+          ...state,
+          logEntries: state.logEntries.map(entry => ({
+            ...entry,
+            profileId: consolidated.idMap?.[String(entry?.profileId || "")] || entry?.profileId
+          }))
+        };
+      }
     }
 
     if (Array.isArray(state.logEntries)) {
@@ -15305,7 +15345,7 @@ async function getSupabaseUser() {
 }
 
 function queuePersistentAccountSave(reason = "state") {
-  if (backendSyncState.applyingRemote || !supabaseClient?.auth) return;
+  if (backendSyncState.applyingRemote || backendSyncState.hydratingUserId || !currentAuthUser?.id || !supabaseClient?.auth) return;
 
   backendSyncState.lastSaveReason = reason;
   window.clearTimeout(backendSyncState.saveTimer);
@@ -15399,7 +15439,7 @@ async function savePersistentAccountState(reason = "state") {
 }
 
 async function performPersistentAccountStateSave(reason = "state") {
-  if (backendSyncState.applyingRemote || !supabaseClient?.auth) return;
+  if (backendSyncState.applyingRemote || backendSyncState.hydratingUserId || !currentAuthUser?.id || !supabaseClient?.auth) return;
 
   const user = await getSupabaseUser();
   if (!user) return;
@@ -15566,8 +15606,76 @@ async function reconcilePersistentLogRows(userId, rows = []) {
   }
 }
 
+function restorePersistentLogRow(row = {}) {
+  if (row?.entry_json && typeof row.entry_json === "object") return row.entry_json;
+  return {
+    id: String(row.id || uuid()),
+    profileId: String(row.profile_id || ""),
+    matchId: row.match_id || null,
+    agent: row.agent || "",
+    role: row.role || "",
+    map: row.map || "",
+    focus: row.focus || "",
+    rating: row.rating,
+    mood: row.mood || "",
+    teamComms: row.team_comms,
+    selfComms: row.self_comms,
+    notes: row.notes || "",
+    warmup: row.warmup === true,
+    createdAt: row.created_at || nowISO()
+  };
+}
+
+async function loadNormalizedPersistentAccountState(user) {
+  if (!user?.id || !supabaseClient?.from) return null;
+  const [profileResult, logsResult, matchesResult] = await Promise.all([
+    supabaseClient.from("users_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+    supabaseClient.from("reflection_logs").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+    supabaseClient.from("match_snapshots").select("*").eq("user_id", user.id).order("played_at", { ascending: true })
+  ]);
+  const profileRow = profileResult?.data || null;
+  const logRows = Array.isArray(logsResult?.data) ? logsResult.data : [];
+  const matchRows = Array.isArray(matchesResult?.data) ? matchesResult.data : [];
+  if (!profileRow && !logRows.length && !matchRows.length) return null;
+
+  const baseProfile = profileRow?.profile_json && typeof profileRow.profile_json === "object"
+    ? { ...profileRow.profile_json }
+    : null;
+  const profileIds = new Set(matchRows.map(row => String(row?.profile_id || "").trim()).filter(Boolean));
+  if (baseProfile?.id) profileIds.add(String(baseProfile.id));
+  logRows.forEach(row => {
+    const profileId = String(row?.profile_id || "").trim();
+    if (profileId) profileIds.add(profileId);
+  });
+  if (!profileIds.size && baseProfile) profileIds.add(String(baseProfile.id || uuid()));
+
+  const recoveredProfiles = [...profileIds].map((profileId, index) => {
+    const profile = index === 0 && baseProfile
+      ? { ...baseProfile, id: profileId }
+      : {
+          id: profileId,
+          name: index === 0 ? "Main Profile" : `Profile ${index + 1}`,
+          accountName: getUserAccountName(user),
+          riotId: index === 0 ? profileRow?.riot_id || "" : "",
+          region: index === 0 ? profileRow?.region || "NA" : "NA"
+        };
+    const recoveredMatches = matchRows
+      .filter(row => String(row?.profile_id || "") === profileId)
+      .map(row => row?.match_json)
+      .filter(match => match && typeof match === "object");
+    return normalizeProfileRecord({ ...profile, matches: recoveredMatches.length ? recoveredMatches : profile.matches });
+  });
+
+  return {
+    activeProfileId: baseProfile?.id || recoveredProfiles[0]?.id || null,
+    profiles: recoveredProfiles,
+    logEntries: logRows.map(restorePersistentLogRow),
+    recoveredFromNormalizedTables: true
+  };
+}
+
 async function loadPersistentAccountState(user) {
-  if (!user || !supabaseClient) return;
+  if (!user || !supabaseClient) return { shouldSave: false, loadedRemote: false };
 
   const { data, error } = await supabaseClient
     .from("vip_app_state")
@@ -15578,7 +15686,6 @@ async function loadPersistentAccountState(user) {
   if (error) {
     backendSyncState.lastError = error;
     console.warn("Supabase app-state load failed", error);
-    return;
   }
 
   if (data) {
@@ -15589,15 +15696,26 @@ async function loadPersistentAccountState(user) {
       themeBuilderState: data.theme_builder_json,
       themeBuilderUiState: data.theme_builder_ui_json
     });
-  } else {
-    logEntries = [];
-    saveLogEntries({ skipBackend: true });
+    return { shouldSave: true, loadedRemote: true, reason: "auth-merge" };
   }
 
-  await savePersistentAccountState(data ? "auth-merge" : "auth-initial-save");
+  const recoveredState = await loadNormalizedPersistentAccountState(user).catch(normalizedError => {
+    backendSyncState.lastError = normalizedError;
+    console.warn("Supabase normalized account recovery failed", normalizedError);
+    return null;
+  });
+  if (recoveredState) {
+    applyPersistentAccountState(recoveredState);
+    return { shouldSave: true, loadedRemote: true, reason: "auth-normalized-recovery" };
+  }
+
+  if (error) return { shouldSave: false, loadedRemote: false };
+  return { shouldSave: true, loadedRemote: false, reason: "auth-initial-save" };
 }
 
 async function handleSignedInUser(user) {
+  window.clearTimeout(backendSyncState.saveTimer);
+  backendSyncState.saveTimer = null;
   currentAuthUser = user || null;
   if (user) {
     logEntries = readLocalLogEntries({
@@ -15609,11 +15727,21 @@ async function handleSignedInUser(user) {
   }
   updateAuthUI(user || null);
   if (!user) {
+    backendSyncState.hydratingUserId = "";
     lastAccountStateLoadAt = 0;
     refreshRiotProfilePrompt?.();
     return;
   }
-  await loadPersistentAccountState(user);
+  backendSyncState.hydratingUserId = String(user.id || "");
+  let loadResult = null;
+  try {
+    loadResult = await loadPersistentAccountState(user);
+  } finally {
+    backendSyncState.hydratingUserId = "";
+  }
+  if (loadResult?.shouldSave) {
+    await savePersistentAccountState(loadResult.reason || "auth-merge");
+  }
   const active = getActiveProfile();
   const accountName = getUserAccountName(user);
   if (active && (!active.accountName || active.accountName === "Guest")) {
@@ -16375,6 +16503,40 @@ function buildLifetimeRankSeries(entries = []) {
     entries: rankedEntries,
     slice: [first.lifetimeRankAbsolute - firstDelta, ...rankedEntries.map(entry => entry.lifetimeRankAbsolute)]
   };
+}
+
+function getLifetimeSeasonTransitions(entries = []) {
+  const transitions = [];
+  let previousSeason = "";
+  (entries || []).forEach((entry) => {
+    const season = getMatchSeasonLabel(entry?.match || {});
+    if (!season) return;
+    if (previousSeason && season !== previousSeason) {
+      transitions.push({
+        index: Number(entry?.index),
+        season,
+        isPlacementMatch: isPlacementRankedMatch(entry?.match)
+      });
+    }
+    previousSeason = season;
+  });
+  return transitions;
+}
+
+function buildLifetimeSeasonBoundaryMarkup(transitions = [], points = []) {
+  return (transitions || []).map((transition) => {
+    const nextPointIndex = points.findIndex(point => point?.matchIndex >= transition.index);
+    if (nextPointIndex < 1) return "";
+    const nextPoint = points[nextPointIndex];
+    const previousPoint = points[nextPointIndex - 1] || nextPoint;
+    const x = (safeNumber(previousPoint.x) + safeNumber(nextPoint.x)) / 2;
+    const label = transition.isPlacementMatch ? "New Season - Placements" : "New Season";
+    return `
+      <g class="chart-season-boundary" data-season="${escapeHtml(transition.season)}">
+        <line x1="${x}" y1="${PAD_TOP}" x2="${x}" y2="${PAD_BOTTOM}" />
+        <text x="${x + 6}" y="${PAD_TOP + 14}">${escapeHtml(label)}</text>
+      </g>`;
+  }).join("");
 }
 
 function getLifetimeRankBounds(slice = []) {
@@ -41651,6 +41813,12 @@ function getLogEntryMatchContext(entry = {}) {
   return { match: linkedMatch, result, rr };
 }
 
+function isPlacementRankedMatch(match = {}) {
+  return match?.isPlacementMatch === true
+    || match?.metadata?.isPlacementMatch === true
+    || match?.matchRecord?.isPlacementMatch === true;
+}
+
 function getLogCountByDate() {
   const counts = new Map();
   getProfileLogEntries().forEach(entry => {
@@ -41942,12 +42110,15 @@ function renderLogFeed(options = {}){
         || ""
       ).toLowerCase();
       const isSyncedHenrikMatch = matchSource === "henrik_sync" || matchSource === "henrik-match-placeholder";
+      const isPlacementMatch = isPlacementRankedMatch(matchContext.match) || entry.isPlacementMatch === true;
       const rrLabel = hasVerifiedRr
         ? `${matchContext.rr > 0 ? "+" : ""}${Math.round(matchContext.rr)} RR`
-        : isSyncedHenrikMatch ? "RR unverified" : "";
+        : isPlacementMatch ? "Placements" : isSyncedHenrikMatch ? "RR unverified" : "";
       const rrClasses = hasVerifiedRr
         ? `log-result-rr-${resultTone || "neutral"}`
-        : "log-result-rr-neutral log-result-rr-unverified";
+        : isPlacementMatch
+          ? "log-result-rr-neutral log-result-rr-placement"
+          : "log-result-rr-neutral log-result-rr-unverified";
       const isEditingEntry = entry.id === editingLogEntryId;
       const isPlaceholder = isMatchPlaceholderLogEntry(entry);
       const trainingMarker = trainingMarkers.get(entry.id) || null;
@@ -45744,6 +45915,12 @@ ${chartAxisTitle}
   );
 
   const points=buildChartPoints(slice,y,visibleChartEntries);
+  const seasonBoundaries = isLifetimeRankTimeline
+    ? buildLifetimeSeasonBoundaryMarkup(
+        getLifetimeSeasonTransitions(chartSource.scopeEntries),
+        points
+      )
+    : "";
 
   const xTicks=buildXTicks(
     points,
@@ -45932,6 +46109,7 @@ ${yTicks}
 ${xTicks}
 ${chartAxisTitle}
 ${area}
+${seasonBoundaries}
 
 <line id="chartCrosshair"
 x1="0"

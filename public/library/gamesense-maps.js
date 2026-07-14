@@ -163,9 +163,9 @@
         patch: "13.00"
       },
       metaComps: [
-        { agents: ["Clove", "Jett", "Sage", "Sova", "Gekko"], composition: "1 Controller, 1 Duelist, 2 Initiators, 1 Sentinel" },
-        { agents: ["Clove", "Jett", "Sage", "Sova", "Viper"], composition: "2 Controllers, 1 Duelist, 1 Initiator, 1 Sentinel" },
-        { agents: ["Clove", "Jett", "Killjoy", "Sage", "Sova"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" }
+        { agents: ["Chamber", "Clove", "Jett", "Neon", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: 56.9, sample: 4639 },
+        { agents: ["Chamber", "Clove", "Neon", "Reyna", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: 55.6, sample: 2314 },
+        { agents: ["Chamber", "Clove", "Iso", "Jett", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: 54.2, sample: 2579 }
       ],
       agentInsights: {
         Chamber: "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
@@ -250,9 +250,9 @@
         patch: "13.00"
       },
       metaComps: [
-        { agents: ["Clove", "Fade", "Killjoy", "Raze", "Sage"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" },
-        { agents: ["Clove", "Cypher", "Raze", "Sage", "Skye"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" },
-        { agents: ["Clove", "Fade", "Jett", "Raze", "Sage"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" }
+        { agents: ["Clove", "Jett", "Raze", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: 54.1, sample: 3866 },
+        { agents: ["Clove", "Cypher", "Jett", "Neon", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: 53.5, sample: 1733 },
+        { agents: ["Clove", "Raze", "Reyna", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel", winRate: 53.3, sample: 2669 }
       ],
       agentInsights: {
         Clove: "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",

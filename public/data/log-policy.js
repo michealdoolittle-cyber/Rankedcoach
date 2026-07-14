@@ -59,6 +59,7 @@
       lockedOutcome: true,
       createdAt: clean(match.createdAt) || new Date().toISOString(),
       result: clean(match.result).toLowerCase() || "unknown",
+      isPlacementMatch: match.isPlacementMatch === true,
       rr: match.rr !== null && match.rr !== undefined && match.rr !== "" && Number.isFinite(Number(match.rr))
         ? Number(match.rr)
         : null,
@@ -94,6 +95,7 @@
       return {
         ...entry,
         result: clean(match.result).toLowerCase() || entry.result,
+        isPlacementMatch: match.isPlacementMatch === true,
         rr: verifiedRr,
         agent: clean(match.agent) || entry.agent,
         role: clean(match.role) || entry.role,

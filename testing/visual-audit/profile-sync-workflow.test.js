@@ -158,6 +158,31 @@ async function run() {
     assert.equal(state.formMap, "Breeze");
     assert.equal(matchRequests, 11);
     assert.deepEqual(consoleErrors, []);
+    if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
+    await page.click('.nav-btn[data-page="home"]');
+    await page.waitForFunction(() => document.getElementById("totalGames")?.textContent?.trim() === "100");
+    const homeData = await page.evaluate(() => ({
+      wins: document.getElementById("winsCount")?.textContent?.trim(),
+      losses: document.getElementById("lossCount")?.textContent?.trim(),
+      games: document.getElementById("totalGames")?.textContent?.trim(),
+      impact: document.getElementById("impactScoreLabel")?.textContent?.trim(),
+      timeline: [...document.querySelectorAll("#timelineGrid .timeline-pill")].map(item => item.textContent.trim()),
+      chartStatus: document.getElementById("rrChartDataStatus")?.textContent?.trim(),
+      latestDot: Boolean(document.querySelector('.rr-hit[data-match-id="profile-sync-0"]'))
+    }));
+    assert.deepEqual({ wins: homeData.wins, losses: homeData.losses, games: homeData.games }, { wins: "100", losses: "0", games: "100" });
+    assert.match(homeData.impact || "", /\d+%/);
+    assert.equal(homeData.timeline.some(item => /Loading\.\.\./i.test(item)), false, JSON.stringify(homeData.timeline));
+    assert.match(homeData.chartStatus || "", /1 of 100 retained matches have verified RR snapshots/i);
+    assert.equal(homeData.latestDot, true);
+    await page.locator('.rr-hit[data-match-id="profile-sync-0"]').dispatchEvent("click");
+    await page.waitForFunction(() => document.getElementById("rrKills")?.textContent?.trim() === "20");
+    assert.deepEqual(await page.evaluate(() => ({
+      kills: document.getElementById("rrKills")?.textContent?.trim(),
+      deaths: document.getElementById("rrDeaths")?.textContent?.trim(),
+      assists: document.getElementById("rrAssists")?.textContent?.trim(),
+      acs: document.getElementById("rrACS")?.textContent?.trim()
+    })), { kills: "20", deaths: "14", assists: "7", acs: "236" });
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click('.nav-btn[data-page="logging"]');
@@ -168,14 +193,26 @@ async function run() {
     assert.ok(focusFit.scrollWidth <= focusFit.clientWidth + 1, JSON.stringify(focusFit));
     await page.locator("#page-logging .logging-form").screenshot({ path: path.join(__dirname, "tmp", "profile-sync-prefill.png") });
     await page.click('.nav-btn[data-page="stats"]');
-    const statsPlacement = await page.locator(".stats-proof-card").evaluate(card => {
+    await page.waitForTimeout(700);
+    const peakCard = page.locator("#statsActSelector").locator("xpath=ancestor::div[contains(@class,'stats-proof-card')]");
+    await peakCard.screenshot({ path: path.join(__dirname, "tmp", "peak-progress-desktop.png") });
+    const statsPlacement = await peakCard.evaluate(card => {
       const rank = card.querySelector(".stats-proof-rank-row").getBoundingClientRect();
-      const selector = card.querySelector(".stats-summary-selector-bottom").getBoundingClientRect();
-      return { rankBottom: rank.bottom, selectorTop: selector.top, cardRight: card.getBoundingClientRect().right, selectorRight: selector.right };
+      const selectorElement = card.querySelector(".stats-summary-selector-bottom");
+      const selector = selectorElement.getBoundingClientRect();
+      const layout = card.querySelector(".stats-peak-layout").getBoundingClientRect();
+      const bounds = card.getBoundingClientRect();
+      const selectorStyle = getComputedStyle(selectorElement);
+      const mainGrid = document.querySelector("#page-stats .stats-main-grid").getBoundingClientRect();
+      return { rankBottom: rank.bottom, rankRight: rank.right, selectorTop: selector.top, selectorLeft: selector.left, selectorHeight: selector.height, selectorDisplay: selectorStyle.display, selectorVisibility: selectorStyle.visibility, selectorOpacity: selectorStyle.opacity, cardTop: bounds.top, cardBottom: bounds.bottom, layoutTop: layout.top, layoutBottom: layout.bottom, cardRight: bounds.right, selectorRight: selector.right, mainGridTop: mainGrid.top };
     });
-    assert.ok(statsPlacement.selectorTop >= statsPlacement.rankBottom - 1, JSON.stringify(statsPlacement));
+    assert.ok(statsPlacement.selectorLeft >= statsPlacement.rankRight - 1 || statsPlacement.selectorTop >= statsPlacement.rankBottom - 1, JSON.stringify(statsPlacement));
+    assert.ok(statsPlacement.selectorHeight >= 30 && statsPlacement.selectorTop < statsPlacement.cardBottom, JSON.stringify(statsPlacement));
+    assert.equal(statsPlacement.selectorVisibility, "visible", JSON.stringify(statsPlacement));
+    assert.notEqual(statsPlacement.selectorOpacity, "0", JSON.stringify(statsPlacement));
+    assert.ok(statsPlacement.mainGridTop >= statsPlacement.cardBottom - 1, JSON.stringify(statsPlacement));
     assert.ok(Math.abs(statsPlacement.cardRight - statsPlacement.selectorRight) <= 24, JSON.stringify(statsPlacement));
-    console.log("Profile sync workflow passed: compact add menu, loading screen, full retained backfill, verified RR placeholder, and latest-game form prefill.");
+    console.log("Profile sync workflow passed: retained backfill, verified RR, form prefill, scoreboard, impact, improvement timeline, and chart detail all use imported match data.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

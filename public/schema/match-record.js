@@ -144,6 +144,7 @@
       role: cleanString(overrides.role),
       map: cleanString(overrides.map),
       result: normalizeResult(overrides.result),
+      isPlacementMatch: overrides.isPlacementMatch === true,
       stats: {
         kills: readNumber(overrides.stats?.kills),
         deaths: readNumber(overrides.stats?.deaths),
@@ -269,6 +270,9 @@
       agent: metadata.agent || match.agent,
       map: metadata.mapName || match.map,
       result: metadata.result || match.result,
+      isPlacementMatch: match.isPlacementMatch === true
+        || metadata.isPlacementMatch === true
+        || canonical.isPlacementMatch === true,
       stats: {
         kills: stats.kills?.value ?? match.kills,
         deaths: stats.deaths?.value ?? match.deaths,
@@ -313,6 +317,7 @@
       agent: match.agent,
       map: match.map,
       result: match.result,
+      isPlacementMatch: match.isPlacementMatch === true,
       stats: {
         kills: match.kills,
         deaths: match.deaths,
@@ -354,6 +359,7 @@
       role: match.role,
       map: match.map || match.mapName,
       result: match.result,
+      isPlacementMatch: match.isPlacementMatch === true,
       stats: {
         kills: match.kills,
         deaths: match.deaths,
@@ -632,6 +638,13 @@
     const snapshotDelta = readNumber(mmrSnapshot?.last_change);
     const hasVerifiedRR = Boolean(snapshotTierId > 0 && snapshotRR !== null && snapshotDelta !== null);
     const snapshotSource = cleanString(mmrSnapshot?.rankedCoachSource) || "henrik-stored-mmr-v2";
+    const playerTierId = readNumber(player.tier?.id);
+    const hasCompletedMatchData = (team.won === true || team.won === false)
+      && rounds.length > 0
+      && readNumber(stats.kills) !== null
+      && readNumber(stats.deaths) !== null
+      && readNumber(stats.assists) !== null;
+    const isPlacementMatch = playerTierId === 0 && hasCompletedMatchData;
 
     return fromRiotMatch({
       id: match.metadata?.match_id,
@@ -644,6 +657,7 @@
       agent: player.agent?.name,
       map: match.metadata?.map?.name,
       result: team.won === true ? "win" : team.won === false ? "loss" : "unknown",
+      isPlacementMatch,
       kills: stats.kills,
       deaths: stats.deaths,
       assists: stats.assists,
@@ -684,6 +698,7 @@
       act: normalized.act,
       manual: normalized.source === "manual",
       pendingVerification: normalized.pendingVerification,
+      isPlacementMatch: normalized.isPlacementMatch === true,
       rr: normalized.source === "henrik_sync" ? null : readNumber(normalized.rank.rrDelta),
       verifiedRrDelta: normalized.rank.verified === true ? readNumber(normalized.rank.rrDelta) : null,
       rrTotal: readNumber(normalized.rank.rr),
@@ -709,6 +724,7 @@
         source: normalized.source,
         season: normalized.season,
         act: normalized.act,
+        isPlacementMatch: normalized.isPlacementMatch === true,
         rank: normalized.rank.rank,
         rrVerified: normalized.rank.verified === true,
         rankElo: readNumber(normalized.rank.elo),

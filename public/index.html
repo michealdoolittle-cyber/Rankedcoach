@@ -55,12 +55,12 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260713-live-mmr-01">
+<link rel="stylesheet" href="app.css?v=20260714-placement-account-ui-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
-<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260712-library-motion-map-02">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260713-dossier-no-numbers-01">
+<link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260714-placement-account-ui-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260714-placement-account-ui-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1213,18 +1213,24 @@ STATS PAGE
             <div class="stats-summary-right">
               <div class="stats-proof-row">
                 <div class="stats-proof-card">
-                  <div class="stats-proof-card-head">
-                    <div class="stats-proof-kicker">Peak Progress</div>
-                  </div>
-                  <p id="statsHistoryBoundaryNote" class="stats-history-boundary-note" hidden></p>
-                  <div class="stats-proof-rank-row">
-                    <img id="statsPeakRankIcon" class="stats-proof-rank-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/iron_1_rank.png" alt="Peak rank">
-                    <div class="stats-proof-rank-copy">
-                      <strong id="statsPeakRankText">Iron 1</strong>
-                      <span id="statsPeakRRText">0 RR peak</span>
+                  <div class="stats-peak-layout">
+                    <div class="stats-peak-visual">
+                      <div class="stats-proof-rank-row">
+                        <img id="statsPeakRankIcon" class="stats-proof-rank-icon" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/iron_1_rank.png" alt="Peak rank">
+                        <div class="stats-proof-rank-copy">
+                          <strong id="statsPeakRankText">Iron 1</strong>
+                          <span id="statsPeakRRText">0 RR peak</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="stats-peak-details">
+                      <div class="stats-proof-card-head">
+                        <div class="stats-proof-kicker">Peak Progress</div>
+                      </div>
+                      <p id="statsHistoryBoundaryNote" class="stats-history-boundary-note" hidden></p>
+                      <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile timeline.</div>
                     </div>
                   </div>
-                  <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile timeline.</div>
                   <div class="stats-summary-selector-row stats-summary-selector-bottom">
                     <div class="stats-act-select-wrap">
                       <span id="statsActLabel" class="stats-act-label">Season Stats For</span>
@@ -2285,18 +2291,18 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script src="schema/match-record.js?v=20260713-live-mmr-01"></script>
+  <script src="schema/match-record.js?v=20260714-placement-account-ui-01"></script>
   <script src="analytics/round-metrics.js?v=20260710-henrik-surfaces-01"></script>
   <script src="analytics/warmup-correlation.js?v=20260711-training-feed-02"></script>
   <script src="analytics/coaching-rules.js?v=20260711-coaching-rules-01"></script>
   <script src="language/valorant-vocabulary.js?v=20260711-training-feed-02"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
-  <script src="data/log-policy.js?v=20260713-library-conversion-01"></script>
-  <script src="data/persistence-policy.js?v=20260710-snapshot-batches-01"></script>
-  <script src="library/gamesense-maps.js?v=20260713-library-conversion-01"></script>
+  <script src="data/log-policy.js?v=20260714-placement-account-ui-01"></script>
+  <script src="data/persistence-policy.js?v=20260714-placement-account-ui-01"></script>
+  <script src="library/gamesense-maps.js?v=20260714-placement-account-ui-01"></script>
   <script src="library/gamesense-reference.js?v=20260713-library-followup-01"></script>
-  <script src="library/gamesense-library.js?v=20260713-dossier-no-numbers-01"></script>
-  <script src="integrations/riot-sync.js?v=20260713-live-mmr-01"></script>
-  <script type="module" src="app.js?v=20260713-live-mmr-01"></script>
+  <script src="library/gamesense-library.js?v=20260714-placement-account-ui-01"></script>
+  <script src="integrations/riot-sync.js?v=20260714-placement-account-ui-01"></script>
+  <script type="module" src="app.js?v=20260714-placement-account-ui-01"></script>
 </body>
 </html>

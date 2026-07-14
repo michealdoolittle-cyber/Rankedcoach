@@ -40,10 +40,14 @@ const VIEWPORTS = [
 ];
 
 async function dismissDailyWarmup(page) {
-  const modal = page.locator("#dailyWarmupModal.active");
-  if (await modal.isVisible().catch(() => false)) {
-    await page.click("#dailyWarmupSkip").catch(() => {});
-    await page.waitForTimeout(250);
+  // The prompt can be scheduled shortly after profile hydration, so one
+  // immediate visibility check is not enough after a reload.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.waitForTimeout(attempt === 0 ? 650 : 250);
+    const modal = page.locator("#dailyWarmupModal.active");
+    if (!(await modal.isVisible().catch(() => false))) continue;
+    await page.locator("#dailyWarmupSkip").click({ force: true }).catch(() => {});
+    await page.waitForFunction(() => !document.getElementById("dailyWarmupModal")?.classList.contains("active"), null, { timeout: 1500 }).catch(() => {});
   }
 }
 

@@ -19160,6 +19160,28 @@ min-height:0;
   font-size:11px;
 }
 
+.log-result-rr-placement{
+  border-color: rgba(250, 204, 21, .58);
+  background: rgba(250, 204, 21, .12);
+  color: #fde68a;
+}
+
+.chart-season-boundary line{
+  stroke: rgba(250, 204, 21, .78);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+}
+
+.chart-season-boundary text{
+  fill: #fde68a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  paint-order: stroke;
+  stroke: rgba(4, 9, 24, .9);
+  stroke-width: 3px;
+}
+
 .guest-tutorial-choice-overlay{
   z-index:12050;
 }
@@ -54096,4 +54118,77 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-selector-bottom .stats-act-select-wrap{
   width:min(100%,305px) !important;
   margin-left:auto !important;
+}
+
+/* Peak Progress owns a stable two-part layout instead of sharing positional rows. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
+  grid-template-rows:minmax(360px,380px) minmax(0,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card{
+  display:grid !important;
+  grid-template-columns:minmax(112px,34%) minmax(0,1fr) !important;
+  grid-template-rows:minmax(0,1fr) auto !important;
+  gap:6px !important;
+  padding:9px !important;
+  min-height:220px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-layout{
+  display:contents;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-visual,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-details{
+  display:grid;
+  min-width:0;
+  align-content:start;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-visual{
+  grid-column:1;
+  grid-row:1 / span 2;
+  place-items:center;
+  padding-right:10px;
+  border-right:1px solid rgba(148,163,184,.18);
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-details{
+  grid-column:2;
+  grid-row:1;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-row{
+  display:grid !important;
+  justify-items:center;
+  gap:3px !important;
+  text-align:center;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-icon{
+  width:54px !important;
+  height:54px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-rank-copy{
+  display:grid;
+  justify-items:center;
+  gap:2px;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card-head{
+  display:block !important;
+  margin:0 0 5px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-details :is(.stats-history-boundary-note,.stats-proof-note){
+  grid-column:auto !important;
+  margin:0 0 4px !important;
+  padding:0 !important;
+  line-height:1.25 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-selector-bottom{
+  grid-column:2;
+  grid-row:2;
+  margin:0 !important;
+  padding:0 !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
+  min-height:220px !important;
+  height:220px !important;
+  overflow:visible !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
+  min-height:220px !important;
+  height:220px !important;
 }

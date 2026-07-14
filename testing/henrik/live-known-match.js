@@ -45,6 +45,9 @@ async function main() {
   assert.equal(v4Record.act, "Season 2026 Act 3");
   assert.equal(legacyRecord.act, "Season 2026 Act 3");
   assert.equal(legacyRecord.metadata.act, "Season 2026 Act 3");
+  assert.equal(v4Record.isPlacementMatch, true);
+  assert.equal(legacyRecord.isPlacementMatch, true);
+  assert.equal(legacyRecord.metadata.isPlacementMatch, true);
   assert.equal(v4Kast.overall.qualifyingRounds, 17);
   assert.equal(v4Kast.overall.totalRounds, 22);
   assert.equal(Math.round(v4Kast.overall.percentage), 77);

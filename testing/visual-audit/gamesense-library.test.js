@@ -241,15 +241,23 @@ async function run() {
     await desktop.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
-    assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG|win rate|\d{1,3},\d{3} games/i);
-    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /Tracker Network.*rolling Competitive sample/is);
+    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG.*56\.9% win rate.*4,639 games.*55\.6% win rate.*2,314 games.*54\.2% win rate.*2,579 games/is);
+    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /strongest measured compositions.*20 most-played.*active-season ranked sample/is);
+    assert.deepEqual(await desktop.locator(".gamesense-comp-winrate").allInnerTexts(), ["56.9% WIN RATE", "55.6% WIN RATE", "54.2% WIN RATE"]);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion[open]").count(), 0);
     await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /kills per round|average damage/i);
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Combined round conversion percent: 50\.87%.*Second rifle Vandal: 50\.41% round conversion percent/is);
-    assert.deepEqual(await desktop.locator(".gamesense-weapon-summary-tags > b").allInnerTexts(), ["DEF", "DEF"]);
+    assert.deepEqual(await desktop.locator(".gamesense-weapon-suggestion-action > b").allInnerTexts(), ["DEF", "DEF"]);
+    const desktopWeaponSuggestion = await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").evaluate(summary => {
+      const image = summary.querySelector("img").getBoundingClientRect();
+      const fit = summary.querySelector(".gamesense-weapon-fit").getBoundingClientRect();
+      const action = summary.querySelector(".gamesense-weapon-suggestion-action").getBoundingClientRect();
+      return { image: image.toJSON(), fit: fit.toJSON(), action: action.toJSON() };
+    });
+    assert.ok(desktopWeaponSuggestion.image.bottom <= desktopWeaponSuggestion.fit.top + 1 && desktopWeaponSuggestion.fit.bottom <= desktopWeaponSuggestion.action.top + 1, JSON.stringify(desktopWeaponSuggestion));
     assert.match(await desktop.locator(".gamesense-weapon-source").innerText(), /vstats.*active-season.*Blitz/is);
     const sideSpecificWeapons = await desktop.evaluate(() => globalThis.RankedCoachGamesenseMaps.find(map => map.id === "breeze").weaponSuggestions.filter(item => item.side));
     assert.ok(sideSpecificWeapons.every(item => item.side === "DEF" && /^On defense,/i.test(item.note)), JSON.stringify(sideSpecificWeapons));
@@ -262,7 +270,7 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-comp-agents img").evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)), true);
     await desktop.locator("[data-gamesense-comp-agent]").first().click();
     await desktop.locator(".gamesense-comp-agent-read").waitFor({ state: "visible" });
-    assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /Clove.*smoke/is);
+    assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /Chamber.*Trademark/is);
 
     await desktop.click('[data-gamesense-back="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
@@ -550,6 +558,16 @@ async function run() {
 
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "breeze"));
     await mobile.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
+    const mobileWeaponSuggestion = await mobile.locator(".gamesense-weapon-suggestion").first().locator("summary").evaluate(summary => {
+      const head = summary.querySelector(".gamesense-weapon-suggestion-head").getBoundingClientRect();
+      const title = summary.querySelector(".gamesense-weapon-suggestion-head > strong").getBoundingClientRect();
+      const action = summary.querySelector(".gamesense-weapon-suggestion-action").getBoundingClientRect();
+      const image = summary.querySelector("img").getBoundingClientRect();
+      return { head: head.toJSON(), title: title.toJSON(), action: action.toJSON(), image: image.toJSON(), summary: summary.getBoundingClientRect().toJSON() };
+    });
+    assert.ok(mobileWeaponSuggestion.title.left < mobileWeaponSuggestion.action.left && Math.abs(mobileWeaponSuggestion.title.top - mobileWeaponSuggestion.action.top) <= 6, JSON.stringify(mobileWeaponSuggestion));
+    assert.ok(mobileWeaponSuggestion.image.top >= mobileWeaponSuggestion.head.bottom && mobileWeaponSuggestion.image.width >= mobileWeaponSuggestion.summary.width * .55, JSON.stringify(mobileWeaponSuggestion));
+    await mobile.locator(".gamesense-weapon-suggestions").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-weapons-mobile.png") });
     await mobile.locator("[data-gamesense-comp-agent]").first().click();
     await mobile.waitForTimeout(500);
     const compReadPosition = await mobile.locator(".gamesense-comp-agent-read").evaluate(read => {
@@ -616,7 +634,7 @@ async function run() {
     assert.ok(mobileWeaponHeader.label.left <= mobileWeaponHeader.header.left + 20 && mobileWeaponHeader.title.left <= mobileWeaponHeader.header.left + 20, JSON.stringify(mobileWeaponHeader));
     assert.ok(Math.abs((mobileWeaponHeader.label.top + mobileWeaponHeader.label.height / 2) - (mobileWeaponHeader.patch.top + mobileWeaponHeader.patch.height / 2)) <= 4, JSON.stringify(mobileWeaponHeader));
     assert.ok(mobileWeaponHeader.patch.bottom <= mobileWeaponHeader.back.top + 1, JSON.stringify(mobileWeaponHeader));
-    assert.match(await mobile.locator(".gamesense-weapon-detail-head").innerText(), /Weapon Dossier.*Rifles.*Vandal.*Phantom.*Back to weapons/is);
+    assert.match(await mobile.locator(".gamesense-weapon-detail-head").innerText(), /Weapon Dossier.*Rifles.*As of Patch 13\.00.*Back to weapons/is);
     await mobile.locator(".gamesense-weapon-detail-head").evaluate(header => header.scrollIntoView({ block: "center" }));
     await mobile.waitForTimeout(100);
     await mobile.locator(".gamesense-weapon-detail-head").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-header-mobile.png") });

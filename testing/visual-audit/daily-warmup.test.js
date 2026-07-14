@@ -340,9 +340,15 @@ async function run() {
     await page.locator(`.log-entry[data-log-entry-id="${warmupGameId}"] .log-training-fire`).click();
     await page.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
     assert.equal(await page.locator('[data-warmup-drill="weapon-choice"]').getAttribute("aria-pressed"), "true");
+    await page.locator("[data-warmup-drill].is-selected").evaluateAll(drills => drills.forEach(drill => drill.click()));
+    if (await page.locator("#dailyWarmupDmTdm").isChecked()) await page.uncheck("#dailyWarmupDmTdm");
+    await page.click("#dailyWarmupSave");
+    await page.waitForFunction(expectedId => !document.querySelector(`.log-entry[data-log-entry-id="${expectedId}"] .log-training-fire`), warmupGameId);
+    const clearedWarmup = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.warmupLog?.[0]);
+    assert.equal(clearedWarmup.warmupLogEntryId, "");
+    assert.equal(clearedWarmup.warmupFeedMarkerHidden, true);
+    assert.deepEqual(clearedWarmup.drillsSelected, []);
     assert.equal(await page.locator("#dailyWarmupModal .lens-modal-close").count(), 0);
-    await page.locator("#dailyWarmupModal").click({ position: { x: 2, y: 2 } });
-    await page.waitForFunction(() => !document.getElementById("dailyWarmupModal")?.classList.contains("active"));
     await page.locator(`.log-entry[data-log-entry-id="${aimTrainingGameId}"] .log-training-crosshair`).click();
     await page.locator('#dailyWarmupModal.active[data-training-mode="postgame"]').waitFor({ state: "visible" });
     assert.equal(await page.locator("#dailyWarmupPostgameCommit").getAttribute("aria-pressed"), "true");
