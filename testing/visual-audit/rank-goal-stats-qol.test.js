@@ -211,10 +211,11 @@ async function run() {
         mapVisible: visibleCount(".stats-map-meta", ".stats-maps-card"),
         agentTotal: main.querySelectorAll(".stats-agent-mini-image").length,
         agentVisible: visibleCount(".stats-agent-mini-image", ".stats-agents-card"),
-        weaponTotal: main.querySelectorAll(".stats-weapon-art").length,
-        weaponVisible: visibleCount(".stats-weapon-art", ".stats-weapons-card")
+        weaponTotal: main.querySelectorAll(".stats-weapons-card img").length,
+        weaponVisible: visibleCount(".stats-weapons-card img", ".stats-weapons-card")
       };
     });
+    assert.ok(lowerStatsContent.mapTotal > 0 && lowerStatsContent.agentTotal > 0 && lowerStatsContent.weaponTotal > 0, JSON.stringify(lowerStatsContent));
     assert.equal(lowerStatsContent.mapVisible, lowerStatsContent.mapTotal, JSON.stringify(lowerStatsContent));
     assert.ok(lowerStatsContent.agentVisible >= 8, JSON.stringify(lowerStatsContent));
     assert.equal(lowerStatsContent.weaponVisible, lowerStatsContent.weaponTotal, JSON.stringify(lowerStatsContent));
