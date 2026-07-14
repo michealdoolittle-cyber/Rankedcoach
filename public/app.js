@@ -16492,6 +16492,42 @@ function buildCumulativeRR(matchList) {
   return cumulative;
 }
 
+function getRetainedMatchDate(match = {}) {
+  const rawDate =
+    match?.metadata?.playedAt ||
+    match?.matchRecord?.playedAt ||
+    match?.playedAt ||
+    match?.createdAt ||
+    match?.metadata?.createdAt ||
+    "";
+  const date = new Date(rawDate);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getRetainedHenrikMatchDates(profile = getActiveProfile?.()) {
+  return (Array.isArray(profile?.matches) ? profile.matches : [])
+    .filter(match => ["henrik", "henrik_sync"].includes(String(
+      match?.source || match?.metadata?.source || match?.matchRecord?.source || ""
+    ).toLowerCase()))
+    .map(getRetainedMatchDate)
+    .filter(Boolean)
+    .sort((a, b) => a - b);
+}
+
+function getOldestRetainedHenrikMatchDate(profile = getActiveProfile?.()) {
+  return getRetainedHenrikMatchDates(profile)[0] || null;
+}
+
+function formatRetainedHistoryDate(date, { includeDay = true } = {}) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    ...(includeDay ? { day: "numeric" } : {}),
+    year: "numeric",
+    timeZone: "UTC"
+  }).format(date);
+}
+
 function buildLifetimeRankSeries(entries = []) {
   const rankedEntries = (entries || []).map(entry => {
     const snapshot = getMatchRankSnapshot(entry?.match || {});
@@ -16878,6 +16914,55 @@ function buildRankChangeMarkerMarkup(point, { intro = false, introDelayMs = 0 } 
   <text class="chart-rank-arrow" x="${arrowX}" y="${markerY + 7}" text-anchor="middle">${arrow}</text>
 </g>`;
 }
+function buildLifetimeDateTicks(points = []) {
+  const datedPoints = (points || [])
+    .map((point, index) => ({ point, index, date: getRetainedMatchDate(point?.match || {}) }))
+    .filter(entry => entry.date);
+  if (!datedPoints.length) return "";
+
+  const first = datedPoints[0];
+  const last = datedPoints[datedPoints.length - 1];
+  const firstX = safeNumber(points[0]?.x, first.point.x);
+  const lastX = safeNumber(last.point.x, firstX);
+  const ticks = [{
+    x: firstX,
+    date: first.date,
+    label: formatRetainedHistoryDate(first.date),
+    anchor: "start",
+    kind: "start"
+  }];
+
+  if (first.date.getUTCFullYear() !== last.date.getUTCFullYear()) {
+    for (let year = first.date.getUTCFullYear() + 1; year <= last.date.getUTCFullYear(); year += 1) {
+      const yearStart = Date.UTC(year, 0, 1);
+      const entry = datedPoints.find(candidate => candidate.date.getTime() >= yearStart);
+      if (!entry || entry === last) continue;
+      const x = safeNumber(entry.point.x);
+      if (x - firstX < 72 || lastX - x < 72) continue;
+      ticks.push({ x, date: entry.date, label: String(year), anchor: "middle", kind: "year" });
+    }
+  }
+
+  if (last !== first) {
+    ticks.push({
+      x: lastX,
+      date: last.date,
+      label: formatRetainedHistoryDate(last.date),
+      anchor: "end",
+      kind: "end"
+    });
+  }
+
+  return ticks.map(tick => `
+<g class="chart-lifetime-date-tick chart-lifetime-date-${tick.kind}" data-date="${escapeHtml(tick.date.toISOString())}">
+  <line x1="${tick.x}" y1="${PAD_BOTTOM}"
+        x2="${tick.x}" y2="${PAD_BOTTOM + 5}"
+        stroke="#64748b" stroke-width="1"/>
+  <text class="chart-lifetime-date-label" x="${tick.x}" y="${PAD_BOTTOM + 23}"
+        text-anchor="${tick.anchor}">${escapeHtml(tick.label)}</text>
+</g>`).join("");
+}
+
 function buildXTicks(points, sliceLength, matchCount) {
   let xTicks = "";
 
@@ -16887,6 +16972,10 @@ function buildXTicks(points, sliceLength, matchCount) {
   const isFiftyWindow = normalizedSize === "50";
   const isLifetimeWindow = normalizedSize === "all";
   const isMobileTwentyWindow = isMobileLayoutViewport() && normalizedSize === "20";
+
+  if (isLifetimeWindow) {
+    return buildLifetimeDateTicks(points);
+  }
 
   if (points[0] && !isMobileTwentyWindow && !isFiftyWindow) {
     xTicks += `
@@ -16909,10 +16998,6 @@ function buildXTicks(points, sliceLength, matchCount) {
     const game = startGame + i - 1;
 
     let showLabel = true;
-
-    if (isLifetimeWindow) {
-      showLabel = game === matchCount;
-    }
 
     if (isMobileTwentyWindow) {
       showLabel = game === startGame || game === matchCount;
@@ -16941,7 +17026,9 @@ function buildXTicks(points, sliceLength, matchCount) {
 
 function buildChartAxisTitle(label = "Current Season", options = {}) {
   const axisLabel = options?.lifetimeRankTimeline
-    ? "Matches across all-time rank history"
+    ? options?.oldestRetainedDate
+      ? `Matches since ${formatRetainedHistoryDate(options.oldestRetainedDate)}`
+      : "Matches in available rank history"
     : `Games from ${label || "Current Season"}`;
   const x = PAD_LEFT + ((CHART_W - PAD_LEFT - PAD_RIGHT) / 2);
   const isMobileFooterLayout = isMobileLayoutViewport();
@@ -45814,7 +45901,10 @@ if(chartHeight){
   let visibleChartEntries = chartWindow.entries;
   const chartAxisMatchCount = chartMatchCount;
   const chartAxisTitle = buildChartAxisTitle(chartSource.scopeLabel || chartSource.seasonLabel || "Current Season", {
-    lifetimeRankTimeline: isLifetimeRankTimeline
+    lifetimeRankTimeline: isLifetimeRankTimeline,
+    oldestRetainedDate: isLifetimeRankTimeline
+      ? getOldestRetainedHenrikMatchDate(getActiveProfile?.())
+      : null
   });
   const chartRenderSignature = `${chartSource.scopeLabel}|${resolvedSize}|${chartMatchCount}|${slice.join(",")}`;
   activeChartRenderSignature = chartRenderSignature;
@@ -50228,24 +50318,15 @@ function renderStatsSummaryMetaModel() {
 function renderStatsHistoryBoundaryNote(profile = getActiveProfile()) {
   const note = document.getElementById("statsHistoryBoundaryNote");
   if (!note) return;
-  const retainedMatches = (Array.isArray(profile?.matches) ? profile.matches : [])
-    .filter(match => ["henrik", "henrik_sync"].includes(String(match?.source || match?.metadata?.source || "").toLowerCase()))
-    .map(match => new Date(match?.createdAt || match?.metadata?.playedAt || match?.matchRecord?.playedAt || ""))
-    .filter(date => !Number.isNaN(date.getTime()))
-    .sort((a, b) => a - b);
+  const retainedMatches = getRetainedHenrikMatchDates(profile);
   const show = isHenrikProfileData(profile) && retainedMatches.length > 0;
   note.hidden = !show;
   if (!show) {
     note.textContent = "";
     return;
   }
-  const oldestDate = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    timeZone: "UTC"
-  }).format(retainedMatches[0]);
-  note.textContent = `Ranked match history is available from ${oldestDate}. Earlier matches are not retained by the current data source.`;
+  const oldestDate = formatRetainedHistoryDate(retainedMatches[0]);
+  note.textContent = `History limit: Ranked match history is available from ${oldestDate}. Earlier matches are not retained by the current data source.`;
 }
 
 function renderStatsPeakProgress() {

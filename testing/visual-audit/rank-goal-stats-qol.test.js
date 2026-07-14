@@ -116,7 +116,11 @@ async function run() {
 
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
-    assert.match(await page.locator(".chart-axis-title").textContent(), /Matches across all-time rank history/i);
+    assert.match(await page.locator(".chart-axis-title").textContent(), /Matches since Jun 1, 2026/i);
+    assert.deepEqual(
+      await page.locator(".chart-lifetime-date-label").allTextContents(),
+      ["Jun 1, 2026", "Jun 25, 2026"]
+    );
     const lifetimeRankIcons = await page.locator("#chartRow .chart-rank-axis-icon").evaluateAll(groups => groups.map(group => ({
       label: group.getAttribute("aria-label"),
       href: group.querySelector("image")?.getAttribute("href") || ""
@@ -131,13 +135,12 @@ async function run() {
       const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
       const title = card.querySelector(".chart-axis-title").getBoundingClientRect();
       const legend = card.querySelector(".chart-axis-legend").getBoundingClientRect();
-      const numericTicks = [...card.querySelectorAll("#chartRow svg > text")]
-        .filter(element => /^\d+$/.test(String(element.textContent || "").trim()))
+      const dateTicks = [...card.querySelectorAll(".chart-lifetime-date-label")]
         .map(element => element.getBoundingClientRect());
       const footer = document.getElementById("siteFooter").getBoundingClientRect();
       const cardRect = card.getBoundingClientRect();
       return {
-        tickBottom: Math.max(...numericTicks.map(rect => rect.bottom)),
+        tickBottom: Math.max(...dateTicks.map(rect => rect.bottom)),
         titleTop: title.top,
         titleBottom: title.bottom,
         legendTop: legend.top,

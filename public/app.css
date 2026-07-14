@@ -54327,3 +54327,31 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-
   font-size:10px;
   font-weight:850;
 }
+
+.chart-row svg text.chart-lifetime-date-label{
+  fill:#cbd5e1 !important;
+  font-size:12px !important;
+  font-weight:850 !important;
+  letter-spacing:.035em !important;
+  paint-order:stroke;
+  stroke:rgba(4,9,24,.92);
+  stroke-width:3px;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-peak-details .stats-history-boundary-note{
+  margin:1px 0 6px !important;
+  padding:6px 8px !important;
+  border-left:3px solid rgba(250,204,21,.72);
+  border-radius:3px 7px 7px 3px;
+  background:rgba(250,204,21,.075);
+  color:#dbe5f4;
+  font-size:11px !important;
+  line-height:1.35 !important;
+}
+
+@media (max-width:767px){
+  .chart-row svg text.chart-lifetime-date-label{
+    font-size:10px !important;
+    letter-spacing:.015em !important;
+  }
+}
