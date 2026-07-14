@@ -116,6 +116,7 @@ async function run() {
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.every(card => card.getBoundingClientRect().height >= 380)), true);
     assert.equal(await desktop.locator(".gamesense-topic-number").count(), 0);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
@@ -139,6 +140,10 @@ async function run() {
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
     assert.deepEqual(await desktop.locator('.gamesense-map-entry-card').allInnerTexts(), ["BIND\nOUT OF SEASON", "BREEZE", "SPLIT"]);
+    const outOfSeasonMap = desktop.locator('.gamesense-map-entry-card.is-out-of-season');
+    assert.equal(await outOfSeasonMap.count(), 1);
+    assert.equal(await outOfSeasonMap.isEnabled(), true);
+    assert.match(await outOfSeasonMap.evaluate(card => getComputedStyle(card).filter), /grayscale/);
     const mapGalleryAlignment = await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.map(card => {
       const cardRect = card.getBoundingClientRect();
       const title = card.querySelector(".gamesense-map-card-copy strong").getBoundingClientRect();
@@ -150,7 +155,7 @@ async function run() {
       };
     }));
     assert.ok(mapGalleryAlignment.every(card => card.titleCenterDelta <= 2 && card.titleVerticalDelta <= 24), JSON.stringify(mapGalleryAlignment));
-    assert.deepEqual(mapGalleryAlignment[0].status, { color: "rgb(251, 113, 133)", fontSize: 20 });
+    assert.deepEqual(mapGalleryAlignment[0].status, { color: "rgb(203, 213, 225)", fontSize: 20 });
     await desktop.click('[data-gamesense-item="bind"]');
     await desktop.locator(".gamesense-tips-hub").waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-tips-hub").count(), 1);
@@ -261,9 +266,11 @@ async function run() {
     await desktop.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
-    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /OP\.GG.*56\.9% win rate.*4,639 games.*55\.6% win rate.*2,314 games.*54\.2% win rate.*2,579 games/is);
-    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /strongest measured compositions.*20 most-played.*active-season ranked sample/is);
-    assert.deepEqual(await desktop.locator(".gamesense-comp-winrate").allInnerTexts(), ["56.9% WIN RATE", "55.6% WIN RATE", "54.2% WIN RATE"]);
+    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /All ranks.*Primary reference.*Strong alternative.*Alternate look/is);
+    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /individual-agent strength.*blended all-rank Competitive sample.*not measured five-agent lineup win rates.*not Ascendant\+ specific/is);
+    assert.equal(await desktop.locator(".gamesense-comp-winrate").count(), 0);
+    assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /\d+\.\d+% win rate|\d{1,3}(?:,\d{3})+ games|strongest measured compositions/i);
+    assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["PRIMARY REFERENCE", "STRONG ALTERNATIVE", "ALTERNATE LOOK"]);
     assert.equal(await desktop.locator(".gamesense-comp-composition").count(), 0);
     assert.equal(await desktop.locator(".gamesense-comp-makeup i").count(), 15);
     const compPresentation = await desktop.locator(".gamesense-comp-option").first().evaluate(option => {
@@ -285,6 +292,8 @@ async function run() {
     assert.ok(compPresentation.agents.right <= compPresentation.makeup.left + 1 && compPresentation.makeup.right <= compPresentation.line.right + 1, JSON.stringify(compPresentation));
     assert.ok(compPresentation.buttons.every(button => button.background.includes("linear-gradient") && button.role), JSON.stringify(compPresentation));
     assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
+    await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
+    await desktop.waitForTimeout(120);
     await desktop.locator(".gamesense-comp-list").screenshot({ path: path.join(__dirname, "tmp", "gamesense-current-comps-desktop.png") });
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 5);
@@ -364,7 +373,12 @@ async function run() {
     assert.ok(agentHeader.patch.bottom <= agentHeader.back.top + 1 && Math.abs(agentHeader.patch.right - agentHeader.back.right) <= 2, JSON.stringify(agentHeader));
     assert.match(await desktop.locator(".gamesense-agent-hero").innerText(), /Agent Fundamentals.*Tailwind.*Lore and History.*South Korea.*Gameplay history/is);
     assert.doesNotMatch(await desktop.locator(".gamesense-agent-facts").innerText(), /Global pick rate/i);
-    assert.equal(await desktop.locator(".gamesense-agent-rate span").evaluate(label => getComputedStyle(label).color), "rgb(246, 196, 83)");
+    assert.equal(await desktop.locator(".gamesense-agent-rate-label").evaluate(label => getComputedStyle(label).color), "rgb(246, 196, 83)");
+    const fundamentalSpacing = await desktop.locator(".gamesense-agent-hero .gamesense-note-block:not(.gamesense-agent-facts) ul").evaluate(list => ({
+      gap: Number.parseFloat(getComputedStyle(list).rowGap),
+      distribution: getComputedStyle(list).alignContent
+    }));
+    assert.ok(fundamentalSpacing.gap >= 18 && fundamentalSpacing.distribution === "space-evenly", JSON.stringify(fundamentalSpacing));
     assert.match(await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
     const desktopAgentPortrait = await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(panel => {
       const image = panel.querySelector(":scope > img");
@@ -383,7 +397,7 @@ async function run() {
     assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
     assert.match(await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
     await desktop.waitForTimeout(2200);
-    assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /10\.4%.*Tracker Network.*Past two weeks/is);
+    assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /Global Pick Rate.*10\.3%.*Rank #1.*Tracker Network.*Past two weeks/is);
     assert.equal(await desktop.locator(".gamesense-map-fit-item").count(), 3);
     assert.match(await desktop.locator(".gamesense-map-fit-item").first().innerText(), /pick.*win/is);
     const mapFitGeometry = await desktop.locator(".gamesense-map-fit-item").evaluateAll(cards => cards.map(card => {

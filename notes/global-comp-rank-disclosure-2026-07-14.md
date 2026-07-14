@@ -1,6 +1,6 @@
 # Current-Season Comps — Rank-Blend Disclosure and Honest Win-Rate Framing (2026-07-14)
 
-**Status:** Ready to build. Michael asked whether the map dossier's "Current-Season Comps" card (what he referred to as the "global comp" section) is reflective of high-elo play (Ascendant 1+) specifically. Investigated against the actual source — it isn't, and the current copy overstates how measured the numbers are. Two related fixes below; both are about honesty of presentation, not new data sourcing.
+**Status:** Implemented and verified on 2026-07-14. The comp card now identifies its blended all-rank Competitive scope, explicitly says it is not Ascendant+ specific, and presents the three lineups as qualitative tactical references instead of unsupported exact five-agent win rates or sample counts.
 
 **Scope:** `public/library/gamesense-maps.js` (data: `metaComp`/`metaComps` per map) and `public/library/gamesense-library.js` `renderComp()` (`~line 295-333`, the rendering). Currently only Breeze and Split have populated `metaComps` arrays; Bind's is empty (`gamesense-maps.js:85`) and already falls back to an honest "unavailable" message (`compStatus`, `gamesense-maps.js:86`) — that fallback pattern is correct and is the model to extend, not replace.
 

@@ -130,10 +130,11 @@
   }
 
   function renderMapCard(item, index) {
+    const isOutOfSeason = item.inCompetitivePool === false;
     return `
-      <button class="gamesense-entry-card gamesense-map-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(item.cardImage)}')">
+      <button class="gamesense-entry-card gamesense-map-entry-card${isOutOfSeason ? " is-out-of-season" : ""}" type="button" data-gamesense-item="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)}${isOutOfSeason ? ", out of season" : ""}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(item.cardImage)}')">
         <span class="gamesense-map-card-shade"></span>
-        <span class="gamesense-map-card-copy"><strong>${escapeHtml(item.label)}</strong>${item.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</span>
+        <span class="gamesense-map-card-copy"><strong>${escapeHtml(item.label)}</strong>${isOutOfSeason ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</span>
       </button>`;
   }
 
@@ -295,7 +296,6 @@
   function renderComp(map) {
     const comps = (Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps : [map.metaComp])
       .slice()
-      .sort((left, right) => Number(right?.winRate || 0) - Number(left?.winRate || 0))
       .slice(0, 3);
     const hasCurrentSample = comps.some(comp => Array.isArray(comp?.agents) && comp.agents.length === 5);
     const selectedAgent = state.compAgent;
@@ -309,9 +309,10 @@
     }
     return `
       <section class="gamesense-comp-card">
-        <div><span>Current Competitive Comps</span><strong>OP.GG | Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
-        <p class="gamesense-comp-source">Reference win rates are the strongest measured compositions among the 20 most-played combinations in the active-season ranked sample.</p>
+        <div><span>Current Competitive Comps</span><strong>All ranks | Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
+        <p class="gamesense-comp-source">Built from current individual-agent strength across Tracker Network's blended all-rank Competitive sample. These are tactical references, not measured five-agent lineup win rates, and are not Ascendant+ specific.</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
+          const referenceLabels = ["Primary reference", "Strong alternative", "Alternate look"];
           const roleOrder = ["controller", "duelist", "initiator", "sentinel"];
           const makeupRoles = (comp.agents || [])
             .map(agent => compAgentRoles[assetSlug(agent)] || "")
@@ -319,7 +320,7 @@
             .sort((left, right) => roleOrder.indexOf(left) - roleOrder.indexOf(right));
           return `
           <article class="gamesense-comp-option">
-            <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-winrate">${Number(comp.winRate).toFixed(1)}% win rate</b><small>${Number(comp.sample || 0).toLocaleString()} games</small></strong></div>
+            <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b><small>Individual agent strength</small></strong></div>
             <div class="gamesense-comp-line">
               <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
                 <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" data-role-tone="${escapeHtml(compAgentRoles[assetSlug(agent)] || "")}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
@@ -412,7 +413,11 @@
       </div>
       <section class="gamesense-agent-hero">
         <div class="gamesense-agent-portrait-wrap">
-          <div class="gamesense-agent-rate"><span>Global pick rate ${safePercent(agent.pickRate)}</span><strong>${escapeHtml(agent.sampleLabel || "Tracker Network | Past two weeks")}</strong></div>
+          <div class="gamesense-agent-rate">
+            <span class="gamesense-agent-rate-label">Global Pick Rate</span>
+            <span class="gamesense-agent-rate-value"><strong>${safePercent(agent.pickRate)}</strong><b>Rank #${Number.isFinite(Number(agent.pickRateRank)) ? Number(agent.pickRateRank) : "Unavailable"}</b></span>
+            <small>${escapeHtml(agent.sampleLabel || "Tracker Network | Past two weeks")}</small>
+          </div>
           <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
         </div>
         <div>${renderList("Agent Fundamentals", agent.fundamentals)}${renderAgentLoreHistory(agent)}</div>

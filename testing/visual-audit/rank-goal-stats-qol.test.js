@@ -305,12 +305,19 @@ async function run() {
       bottomCards: [...layout.querySelectorAll(".stats-maps-card,.stats-agents-card,.stats-weapons-card")].map(card => card.getBoundingClientRect().toJSON()),
       mapMeta: [...layout.querySelectorAll(".stats-map-meta")].map(item => item.getBoundingClientRect().toJSON()),
       mapCardBottom: layout.querySelector(".stats-maps-card").getBoundingClientRect().bottom,
-      clippedTrendDetails: [...layout.querySelectorAll(".stats-trend-detail")].filter(detail => detail.getBoundingClientRect().bottom > detail.closest(".stats-trend-card").getBoundingClientRect().bottom + 1).length
+      trendDetails: [...layout.querySelectorAll(".stats-trend-detail")].map(detail => {
+        const style = getComputedStyle(detail);
+        const rect = detail.getBoundingClientRect();
+        const card = detail.closest(".stats-trend-card").getBoundingClientRect();
+        return { bottom: rect.bottom, cardBottom: card.bottom, lineClamp: style.webkitLineClamp, overflow: style.overflow, textOverflow: style.textOverflow, fontWeight: Number(style.fontWeight) };
+      }),
+      fineStatWeights: [...layout.querySelectorAll(".stats-map-meta .stats-sub-text,.stats-agent-mini-meta .stats-sub-text,.stats-desktop-weapon-family-meta,.stats-weapon-mini")].map(item => Number(getComputedStyle(item).fontWeight))
     }));
     assert.ok(compactStatsGeometry.summaryHeight <= 130, JSON.stringify(compactStatsGeometry));
     compactStatsGeometry.bottomCards.forEach(card => assert.ok(card.bottom <= compactStatsGeometry.viewportHeight + 1, JSON.stringify(compactStatsGeometry)));
     compactStatsGeometry.mapMeta.forEach(item => assert.ok(item.bottom <= compactStatsGeometry.mapCardBottom + 1, JSON.stringify(compactStatsGeometry)));
-    assert.equal(compactStatsGeometry.clippedTrendDetails, 0, JSON.stringify(compactStatsGeometry));
+    assert.ok(compactStatsGeometry.trendDetails.every(item => item.bottom <= item.cardBottom + 1 && item.lineClamp === "none" && item.overflow === "visible" && item.textOverflow === "clip" && item.fontWeight <= 500), JSON.stringify(compactStatsGeometry));
+    assert.ok(compactStatsGeometry.fineStatWeights.length > 0 && compactStatsGeometry.fineStatWeights.every(weight => weight <= 500), JSON.stringify(compactStatsGeometry));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-compact-desktop-stats.png"), fullPage: true });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(150);
