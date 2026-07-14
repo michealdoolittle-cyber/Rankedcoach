@@ -9846,6 +9846,31 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   line-height:1.4;
 }
 
+.login-init-progress-meta,
+.app-loading-progress-meta{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:#cbd5e1;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.login-init-progress-meta{
+  margin-top:16px;
+}
+
+.login-init-progress-meta strong,
+.app-loading-progress-meta strong{
+  color:#fff7ed;
+  font-size:14px;
+  letter-spacing:.02em;
+}
+
 .login-init-detail{
   margin-top:10px;
   color:rgba(226,232,240,.84);
@@ -9857,7 +9882,7 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 .login-init-progress{
   position:relative;
   height:12px;
-  margin-top:18px;
+  margin-top:7px;
   border-radius:999px;
   border:1px solid rgba(148,163,184,.32);
   background:rgba(2,6,23,.82);
@@ -19954,6 +19979,10 @@ SUMMARY BAR
   font-weight:800;
 }
 
+.app-loading-progress-meta{
+  margin-top:2px;
+}
+
 .app-loading-bar{
   width:100%;
   height:8px;
@@ -19964,16 +19993,11 @@ SUMMARY BAR
 
 .app-loading-bar span{
   display:block;
-  width:42%;
+  width:0%;
   height:100%;
   border-radius:inherit;
   background:linear-gradient(90deg, #ff4655, #f97316, #22c55e);
-  animation:rcLoadingSweep 1.05s ease-in-out infinite alternate;
-}
-
-@keyframes rcLoadingSweep{
-  from{ transform:translateX(-18%); }
-  to{ transform:translateX(158%); }
+  transition:width .36s cubic-bezier(.22,1,.36,1);
 }
 
 .daily-warmup-card{
@@ -54202,16 +54226,20 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats{
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
   height:auto !important;
   min-height:calc(100vh - var(--nav-height)) !important;
-  grid-template-rows:minmax(244px,auto) minmax(640px,auto) !important;
+  grid-template-rows:minmax(234px,auto) minmax(640px,auto) !important;
   gap:12px !important;
   overflow:visible !important;
 }
-html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
+  height:234px !important;
+  min-height:234px !important;
+  max-height:234px !important;
+}
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-layout,
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-right,
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-row{
-  height:244px !important;
-  min-height:244px !important;
+  height:220px !important;
+  min-height:220px !important;
   max-height:none !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{

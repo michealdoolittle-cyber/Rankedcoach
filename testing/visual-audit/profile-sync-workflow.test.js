@@ -124,6 +124,7 @@ async function run() {
     });
 
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
+    assert.match(await page.locator("#loginInitProgressPercent").textContent(), /^\d+%$/);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click("#profileAvatarWrap");
@@ -137,7 +138,21 @@ async function run() {
     await page.click(".profile-add-submit");
     await page.locator("#appLoadingVeil.is-visible").waitFor({ state: "visible" });
     assert.match(await page.locator("#appLoadingCopy").innerText(), /Riot account|competitive history/i);
+    assert.match(await page.locator("#appLoadingTitle").innerText(), /Building your profile/i);
+    assert.equal(await page.locator("#appLoadingProgress").getAttribute("role"), "progressbar");
+    assert.match(await page.locator("#appLoadingPercent").innerText(), /^\d+%$/);
+    await page.waitForFunction(() => Number.parseInt(document.getElementById("appLoadingPercent")?.textContent || "0", 10) >= 18);
+    const loadingProgress = await page.locator("#appLoadingProgress").evaluate(progress => ({
+      value: Number(progress.getAttribute("aria-valuenow")),
+      fillWidth: progress.querySelector("#appLoadingProgressBar")?.getBoundingClientRect().width || 0,
+      trackWidth: progress.getBoundingClientRect().width
+    }));
+    assert.ok(loadingProgress.value >= 18 && loadingProgress.fillWidth > 0 && loadingProgress.fillWidth < loadingProgress.trackWidth, JSON.stringify(loadingProgress));
+    fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
+    await page.screenshot({ path: path.join(__dirname, "tmp", "profile-first-sync-progress.png"), fullPage: true });
     await page.waitForFunction(() => document.getElementById("appLoadingVeil")?.getAttribute("aria-hidden") === "true", null, { timeout: 30000 });
+    assert.equal(await page.locator("#appLoadingPercent").innerText(), "100%");
+    assert.equal(await page.locator("#appLoadingProgress").getAttribute("aria-valuenow"), "100");
 
     const state = await page.evaluate(() => {
       const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");

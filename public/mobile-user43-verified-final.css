@@ -16361,16 +16361,16 @@ html.is-mobile-layout body.is-mobile-layout :is(
   animation:rcMobileSvgFrameReverseSweep 1.65s linear infinite !important;
 }
 
-/* Desktop Stats is loaded before this compatibility sheet; keep Peak Progress
-   and its selector inside the summary row instead of restoring the old clamp. */
+/* Desktop Stats is loaded before this compatibility sheet. Match the summary
+   row to its 220px content plus balanced padding so it cannot leave a blank band. */
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
-  grid-template-rows:minmax(360px,380px) minmax(0,1fr) !important;
+  grid-template-rows:minmax(234px,auto) minmax(640px,auto) !important;
   overflow:auto !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
-  min-height:360px !important;
-  height:360px !important;
-  max-height:360px !important;
+  min-height:234px !important;
+  height:234px !important;
+  max-height:234px !important;
   overflow:visible !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){

@@ -12619,12 +12619,14 @@ function activeProfileHasRiotId() {
 function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "", detail = "") {
   const overlay = document.getElementById("loginInitOverlay");
   const bar = document.getElementById("loginInitProgressBar");
+  const percentEl = document.getElementById("loginInitProgressPercent");
   const copyEl = document.getElementById("loginInitCopy");
   const detailEl = document.getElementById("loginInitDetail");
   const titleEl = document.getElementById("loginInitTitle");
   const nextPercent = Math.max(0, Math.min(100, Math.round(percent)));
 
   if (bar) bar.style.width = `${nextPercent}%`;
+  if (percentEl) percentEl.textContent = `${nextPercent}%`;
   const progressEl = overlay?.querySelector?.(".login-init-progress");
   progressEl?.setAttribute("aria-valuenow", String(nextPercent));
   progressEl?.classList.toggle("is-busy", nextPercent > 0 && nextPercent < 100);
@@ -13159,20 +13161,37 @@ function ensureAppLoadingVeil() {
   veil.innerHTML = `
     <div class="app-loading-card">
       <div class="app-loading-mark">RC</div>
-      <div class="app-loading-title">Loading RankedCoach</div>
+      <div class="app-loading-title" id="appLoadingTitle">Loading RankedCoach</div>
       <div class="app-loading-copy" id="appLoadingCopy">Preparing your dashboard...</div>
-      <div class="app-loading-bar" aria-hidden="true"><span></span></div>
+      <div class="app-loading-progress-meta"><span id="appLoadingProgressLabel">Loading</span><strong id="appLoadingPercent">0%</strong></div>
+      <div class="app-loading-bar" id="appLoadingProgress" role="progressbar" aria-label="Loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="appLoadingProgressBar"></span></div>
     </div>
   `;
   document.body?.appendChild(veil);
   return veil;
 }
 
-function showAppLoadingVeil(message = "Preparing your dashboard...") {
+function setAppLoadingVeilProgress(percent = 0, message = "") {
+  const nextPercent = Math.max(0, Math.min(100, Math.round(safeNumber(percent))));
+  const progress = document.getElementById("appLoadingProgress");
+  const bar = document.getElementById("appLoadingProgressBar");
+  const percentEl = document.getElementById("appLoadingPercent");
+  if (bar) bar.style.width = `${nextPercent}%`;
+  if (percentEl) percentEl.textContent = `${nextPercent}%`;
+  progress?.setAttribute("aria-valuenow", String(nextPercent));
+  if (message) setAppLoadingVeilMessage(message);
+}
+
+function showAppLoadingVeil(message = "Preparing your dashboard...", options = {}) {
   const veil = ensureAppLoadingVeil();
   appLoadingVeilDepth += 1;
+  const title = document.getElementById("appLoadingTitle");
+  const progressLabel = document.getElementById("appLoadingProgressLabel");
   const copy = document.getElementById("appLoadingCopy");
+  if (title) title.textContent = options.title || "Loading RankedCoach";
+  if (progressLabel) progressLabel.textContent = options.progressLabel || "Loading";
   if (copy) copy.textContent = message;
+  setAppLoadingVeilProgress(options.percent ?? 8);
   veil.hidden = false;
   veil.setAttribute("aria-hidden", "false");
   veil.classList.add("is-visible");
@@ -13198,13 +13217,16 @@ function hideAppLoadingVeil({ force = false } = {}) {
 }
 
 async function withAppLoadingVeil(message = "Preparing your dashboard...", task = async () => {}) {
-  showAppLoadingVeil(message);
+  showAppLoadingVeil(message, { percent: 8 });
   const startedAt = Date.now();
   try {
     return await task();
   } finally {
     const remaining = Math.max(0, 520 - (Date.now() - startedAt));
-    window.setTimeout(() => hideAppLoadingVeil(), remaining);
+    window.setTimeout(() => {
+      setAppLoadingVeilProgress(100);
+      hideAppLoadingVeil();
+    }, remaining);
   }
 }
 
@@ -43211,12 +43233,23 @@ async function submitProfileAddForm(event) {
       dailyWarmupPromptTimer = 0;
     }
     closeProfileAddMenu();
-    showAppLoadingVeil("Resolving the Riot account...");
+    showAppLoadingVeil("Resolving the Riot account...", {
+      title: "Building your profile",
+      progressLabel: "Profile sync",
+      percent: 6
+    });
     const syncResult = await syncProfileRetainedHistory({
       mode: "import",
-      onProgress: progress => setAppLoadingVeilMessage(progress.message)
+      onProgress: progress => setAppLoadingVeilProgress(progress.percent, progress.message)
     });
     prefillLatestImportedReflection({ profileId: newProfile.id });
+    setAppLoadingVeilProgress(
+      100,
+      syncResult?.success && !syncResult?.partial
+        ? "Your profile is ready."
+        : "Your profile was added. Sync can continue shortly."
+    );
+    await new Promise(resolve => window.setTimeout(resolve, 220));
     if (syncResult?.success && !syncResult?.partial) {
       const imported = syncResult.totalImported || 0;
       showToast(imported
@@ -43233,7 +43266,6 @@ async function submitProfileAddForm(event) {
       });
     }
   } catch (syncError) {
-    console.error("PROFILE ONBOARDING SYNC ERROR", syncError);
     showToast("The profile was added, but Riot history could not finish syncing. Use the sync button to try again.", {
       title: "Profile added; sync paused",
       durationMs: 4600
@@ -49136,7 +49168,9 @@ async function syncProfileRetainedHistory(options = {}) {
     const retainedCount = Array.isArray(current?.matches) ? current.matches.length : 0;
     options.onProgress?.({
       batch: batch + 1,
+      maxBatches,
       retainedCount,
+      percent: Math.min(88, 12 + Math.round((batch / maxBatches) * 76)),
       message: batch === 0
         ? "Resolving the Riot account and checking competitive history..."
         : `Importing retained competitive history... ${retainedCount} matches ready`
@@ -49184,7 +49218,9 @@ async function syncProfileRetainedHistory(options = {}) {
   const prefilled = prefillLatestImportedReflection();
   options.onProgress?.({
     batch: -1,
+    maxBatches,
     retainedCount: Array.isArray(syncedProfile?.matches) ? syncedProfile.matches.length : 0,
+    percent: 94,
     message: prefilled
       ? "Preparing your latest game in the reflection form..."
       : "Finalizing season stats and coaching reads..."

@@ -183,11 +183,14 @@ async function run() {
     assert.equal(await page.locator("#statsActMobileValue").innerText(), "Season 2026 Act 3");
     const statsLayoutGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => {
       const summary = layout.querySelector(".stats-summary-card").getBoundingClientRect();
+      const summaryContent = layout.querySelector(".stats-summary-layout").getBoundingClientRect();
       const main = layout.querySelector(".stats-main-grid").getBoundingClientRect();
       const icon = layout.querySelector(".stats-proof-rank-icon").getBoundingClientRect();
-      return { summary: summary.toJSON(), main: main.toJSON(), icon: icon.toJSON(), scrollHeight: layout.scrollHeight, clientHeight: layout.clientHeight };
+      return { summary: summary.toJSON(), summaryContent: summaryContent.toJSON(), main: main.toJSON(), icon: icon.toJSON(), scrollHeight: layout.scrollHeight, clientHeight: layout.clientHeight };
     });
-    assert.ok(statsLayoutGeometry.main.top - statsLayoutGeometry.summary.bottom <= 40, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.main.top - statsLayoutGeometry.summary.bottom <= 16, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.summary.bottom - statsLayoutGeometry.summaryContent.bottom <= 10, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.summary.height <= 245, JSON.stringify(statsLayoutGeometry));
     assert.ok(statsLayoutGeometry.icon.width >= 70 && statsLayoutGeometry.icon.height >= 70, JSON.stringify(statsLayoutGeometry));
     const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
     if (await mapStatCard.count()) {
