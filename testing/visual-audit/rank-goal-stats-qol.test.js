@@ -164,7 +164,7 @@ async function run() {
       incoming: document.getElementById("page-stats")?.classList.contains("active")
     }));
     assert.deepEqual(desktopPageMotion, { direction: "forward", outgoing: true, incoming: true });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(650);
     assert.equal(await page.locator("#statFirstBloods").count(), 1);
     assert.equal(await page.locator("#statDamagePerRound").count(), 1);
     const breakdownVisuals = await page.locator("#statsBreakdown").evaluate(container => ({
@@ -186,12 +186,19 @@ async function run() {
       const summaryContent = layout.querySelector(".stats-summary-layout").getBoundingClientRect();
       const main = layout.querySelector(".stats-main-grid").getBoundingClientRect();
       const icon = layout.querySelector(".stats-proof-rank-icon").getBoundingClientRect();
-      return { summary: summary.toJSON(), summaryContent: summaryContent.toJSON(), main: main.toJSON(), icon: icon.toJSON(), scrollHeight: layout.scrollHeight, clientHeight: layout.clientHeight };
+      const bottomCards = [...layout.querySelectorAll(".stats-maps-card,.stats-agents-card,.stats-weapons-card")].map(card => card.getBoundingClientRect().toJSON());
+      return { summary: summary.toJSON(), summaryContent: summaryContent.toJSON(), main: main.toJSON(), icon: icon.toJSON(), bottomCards, viewportHeight: innerHeight, scrollHeight: layout.scrollHeight, clientHeight: layout.clientHeight };
     });
-    assert.ok(statsLayoutGeometry.main.top - statsLayoutGeometry.summary.bottom <= 16, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.main.top - statsLayoutGeometry.summary.bottom <= 12, JSON.stringify(statsLayoutGeometry));
     assert.ok(statsLayoutGeometry.summary.bottom - statsLayoutGeometry.summaryContent.bottom <= 10, JSON.stringify(statsLayoutGeometry));
-    assert.ok(statsLayoutGeometry.summary.height <= 245, JSON.stringify(statsLayoutGeometry));
-    assert.ok(statsLayoutGeometry.icon.width >= 70 && statsLayoutGeometry.icon.height >= 70, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.summary.height <= 170, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.icon.width >= 60 && statsLayoutGeometry.icon.height >= 60, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.main.bottom <= statsLayoutGeometry.viewportHeight + 1, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.bottomCards.length === 3, JSON.stringify(statsLayoutGeometry));
+    statsLayoutGeometry.bottomCards.forEach(card => {
+      assert.ok(card.bottom <= statsLayoutGeometry.viewportHeight + 1, JSON.stringify(statsLayoutGeometry));
+      assert.ok(card.height >= 325, JSON.stringify(statsLayoutGeometry));
+    });
     const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
     if (await mapStatCard.count()) {
       await mapStatCard.hover();
@@ -209,7 +216,7 @@ async function run() {
       assert.ok(item.top >= item.parentTop - 1 && item.bottom <= item.parentBottom + 1 && item.left >= item.parentLeft - 1 && item.right <= item.parentRight + 1, JSON.stringify(item));
     });
     assert.ok(proofContainment[0].bottom <= proofContainment[1].top, JSON.stringify(proofContainment));
-    assert.ok(proofContainment[1].bottom <= proofContainment[3].top, JSON.stringify(proofContainment));
+    assert.ok(proofContainment[1].bottom <= proofContainment[3].top + 1, JSON.stringify(proofContainment));
     assert.ok(proofContainment[2].right <= proofContainment[4].left + 1 || proofContainment[2].bottom <= proofContainment[4].top + 1, JSON.stringify(proofContainment));
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-stats-proof-card.png") });
     const trigger = page.locator("#statsActMobileTrigger");
@@ -228,6 +235,18 @@ async function run() {
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-season-menu.png"), fullPage: true });
 
     await page.locator(".stats-act-mobile-menu-close").click();
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.waitForTimeout(150);
+    const compactStatsGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => ({
+      viewportHeight: innerHeight,
+      summaryHeight: layout.querySelector(".stats-summary-card").getBoundingClientRect().height,
+      bottomCards: [...layout.querySelectorAll(".stats-maps-card,.stats-agents-card,.stats-weapons-card")].map(card => card.getBoundingClientRect().toJSON())
+    }));
+    assert.ok(compactStatsGeometry.summaryHeight <= 160, JSON.stringify(compactStatsGeometry));
+    compactStatsGeometry.bottomCards.forEach(card => assert.ok(card.bottom <= compactStatsGeometry.viewportHeight + 1, JSON.stringify(compactStatsGeometry)));
+    await page.screenshot({ path: path.join(__dirname, "tmp", "qol-compact-desktop-stats.png"), fullPage: true });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(150);
     await page.locator('[data-page="insights"]').click();
     await page.waitForTimeout(250);
     const insightVisuals = await page.locator("#insightsList").evaluate(container => ({

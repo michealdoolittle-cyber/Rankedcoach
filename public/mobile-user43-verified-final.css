@@ -16361,26 +16361,61 @@ html.is-mobile-layout body.is-mobile-layout :is(
   animation:rcMobileSvgFrameReverseSweep 1.65s linear infinite !important;
 }
 
-/* Desktop Stats is loaded before this compatibility sheet. Match the summary
-   row to its 220px content plus balanced padding so it cannot leave a blank band. */
+/* Keep the late-loaded compatibility sheet aligned with the viewport-fit
+   desktop Stats rules in app.css. */
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
-  grid-template-rows:minmax(234px,auto) minmax(640px,auto) !important;
-  overflow:auto !important;
+  grid-template-rows:168px minmax(0,1fr) !important;
+  overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
-  min-height:234px !important;
-  height:234px !important;
-  max-height:234px !important;
-  overflow:visible !important;
+  min-height:168px !important;
+  height:168px !important;
+  max-height:168px !important;
+  overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
-  min-height:220px !important;
-  height:220px !important;
-  overflow:visible !important;
+  min-height:154px !important;
+  height:154px !important;
+  overflow:hidden !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-proof-card{
-  min-height:220px !important;
-  height:220px !important;
-  max-height:220px !important;
-  overflow:visible !important;
+  min-height:0 !important;
+  height:100% !important;
+  max-height:none !important;
+  overflow:hidden !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
+  grid-template-rows:270px minmax(0,1fr) !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-performance-card,.stats-breakdown-card){
+  min-height:270px !important;
+}
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  grid-template-rows:repeat(2,minmax(104px,1fr)) !important;
+  grid-auto-rows:minmax(104px,1fr) !important;
+}
+
+@media (min-width:768px) and (max-height:820px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-layout{
+    grid-template-rows:156px minmax(0,1fr) !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summary-card{
+    min-height:156px !important;
+    height:156px !important;
+    max-height:156px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
+    min-height:144px !important;
+    height:144px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-main-grid{
+    grid-template-rows:225px minmax(0,1fr) !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats :is(.stats-performance-card,.stats-breakdown-card){
+    min-height:225px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+    grid-template-rows:repeat(2,minmax(82px,1fr)) !important;
+    grid-auto-rows:minmax(82px,1fr) !important;
+  }
 }
