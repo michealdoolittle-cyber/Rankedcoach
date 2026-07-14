@@ -16,6 +16,7 @@
     {
       id: "bind",
       label: "Bind",
+      inCompetitivePool: false,
       cardImage: "/assets/library/maps/bind-card.png",
       layoutImage: "/assets/library/maps/bind-layout.png",
       callouts: [
@@ -98,6 +99,7 @@
     {
       id: "breeze",
       label: "Breeze",
+      inCompetitivePool: true,
       cardImage: "/assets/library/maps/breeze-card.png",
       layoutImage: "/assets/library/maps/breeze-layout.png",
       callouts: [
@@ -186,6 +188,7 @@
     {
       id: "split",
       label: "Split",
+      inCompetitivePool: true,
       cardImage: "/assets/library/maps/split-card.png",
       layoutImage: "/assets/library/maps/split-layout-trn.png",
       callouts: [

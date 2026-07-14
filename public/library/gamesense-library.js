@@ -25,6 +25,12 @@
     sova: "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
     viper: "707eab51-4836-f488-046a-cda6bf494859"
   });
+  const compAgentRoles = Object.freeze({
+    chamber: "sentinel", clove: "controller", cypher: "sentinel", fade: "initiator",
+    gekko: "initiator", iso: "duelist", jett: "duelist", killjoy: "sentinel",
+    neon: "duelist", raze: "duelist", reyna: "duelist", sage: "sentinel",
+    skye: "initiator", sova: "initiator", viper: "controller"
+  });
   const mapUuids = Object.freeze({
     ascent: "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
     breeze: "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
@@ -127,7 +133,7 @@
     return `
       <button class="gamesense-entry-card gamesense-map-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(item.cardImage)}')">
         <span class="gamesense-map-card-shade"></span>
-        <strong>${escapeHtml(item.label)}</strong>
+        <span class="gamesense-map-card-copy"><strong>${escapeHtml(item.label)}</strong>${item.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</span>
       </button>`;
   }
 
@@ -270,9 +276,9 @@
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
             <summary>
-              <span class="gamesense-weapon-suggestion-head"><strong>${escapeHtml(item.weapon)}</strong><span class="gamesense-weapon-suggestion-action">${item.side ? `<b>${escapeHtml(item.side)}</b>` : ""}<i aria-hidden="true"></i></span></span>
-              <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}">
-              <span class="gamesense-weapon-fit">${escapeHtml(item.fit)}</span>
+              <span class="gamesense-weapon-suggestion-top"><span aria-hidden="true"></span><span class="gamesense-weapon-fit">${escapeHtml(item.fit)}</span>${item.side ? `<b class="gamesense-weapon-side">${escapeHtml(item.side)}</b>` : `<span aria-hidden="true"></span>`}</span>
+              <span class="gamesense-weapon-suggestion-art"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><i aria-hidden="true"></i></span>
+              <strong class="gamesense-weapon-suggestion-name">${escapeHtml(item.weapon)}</strong>
             </summary>
             <div>
               <strong>${escapeHtml(item.evidence)}</strong>
@@ -309,7 +315,7 @@
           <article class="gamesense-comp-option">
             <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-winrate">${Number(comp.winRate).toFixed(1)}% win rate</b><small>${Number(comp.sample || 0).toLocaleString()} games</small></strong></div>
             <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
-              <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
+              <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" data-role-tone="${escapeHtml(compAgentRoles[assetSlug(agent)] || "")}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
                 <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
               </button>
             `).join("")}</div>
@@ -320,10 +326,29 @@
       </section>`;
   }
 
+  function getLineupBrand(link = {}) {
+    const hostname = (() => {
+      try { return new URL(link.url, window.location.href).hostname.toLowerCase(); }
+      catch (_error) { return ""; }
+    })();
+    if (hostname.includes("lineupsvalorant.com")) {
+      return { name: "LineupsValorant", logo: "https://lineupsvalorant.com/static/general%20images/icon.png" };
+    }
+    if (hostname.includes("upforge.gg")) {
+      return { name: "UpForge", logo: "https://upforge.gg/images/logo-icon.webp" };
+    }
+    return { name: link.label || "Lineup site", logo: "" };
+  }
+
+  function renderLineupLink(link) {
+    const brand = getLineupBrand(link);
+    return `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${brand.logo ? `<img src="${escapeHtml(brand.logo)}" alt="">` : ""}<span>${escapeHtml(link.label || brand.name)}</span></a>`;
+  }
+
   function renderMapDetail(map) {
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head">
-        <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
+        <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
         <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
       <div class="gamesense-detail-grid">
@@ -332,7 +357,7 @@
         ${renderWeaponSuggestions(map)}
         <section class="gamesense-lineups">
           <div><span>Find Lineups</span></div>
-          <div>${(map.lineupLinks || []).map(link => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a>`).join("")}</div>
+          <div>${(map.lineupLinks || []).map(renderLineupLink).join("")}</div>
         </section>
       </div>
       ${renderMarkedMap(map)}`;
@@ -353,17 +378,17 @@
       </article>`;
   }
 
-  function renderAgentFacts(agent) {
+  function renderAgentLoreHistory(agent) {
     const history = sortPatchHistoryNewestFirst(Array.isArray(agent.patchHistory) ? agent.patchHistory : []);
-    const facts = Array.isArray(agent.facts) ? agent.facts : [];
+    const lore = Array.isArray(agent.lore) ? agent.lore : [];
     return `
-      <section class="gamesense-note-block gamesense-agent-facts">
-        <h3>Agent Facts and Stats</h3>
+      <section class="gamesense-note-block gamesense-agent-facts gamesense-agent-lore-history">
+        <h3>Lore and History</h3>
         <div class="gamesense-agent-fact-list">
-          ${facts.map(item => `<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><p>${escapeHtml(item.note || "")}</p></article>`).join("")}
+          ${lore.map(item => `<article><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong><p>${escapeHtml(item.note || "")}</p></article>`).join("")}
         </div>
         <details class="gamesense-patch-history">
-          <summary>Buff and nerf history</summary>
+          <summary>Gameplay history</summary>
           <ol>${history.map(item => `<li><span>Patch ${escapeHtml(item.patch)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot patch notes</a>` : ""}</li>`).join("")}</ol>
         </details>
       </section>`;
@@ -382,7 +407,7 @@
           <div class="gamesense-agent-rate"><span>Global pick rate ${safePercent(agent.pickRate)}</span><strong>${escapeHtml(agent.sampleLabel || "Tracker Network | Past two weeks")}</strong></div>
           <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
         </div>
-        <div>${renderList("Agent Fundamentals", agent.fundamentals)}${renderAgentFacts(agent)}</div>
+        <div>${renderList("Agent Fundamentals", agent.fundamentals)}${renderAgentLoreHistory(agent)}</div>
       </section>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Ability Analysis</span><strong>Select an ability</strong></div>
@@ -422,7 +447,7 @@
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
         <div class="gamesense-weapon-panel-art"><img src="${escapeHtml(weapon.image)}" alt="${escapeHtml(weapon.label)}"></div>
-        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><strong class="gamesense-global-rate">Global usage ${safePercent(weapon.pickRate)}</strong><p>${escapeHtml(weapon.focus)}</p></div>
+        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Global round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div><p>${escapeHtml(weapon.focus)}</p></div>
         ${renderStatChips({ Cost: `${weapon.cost} credits`, Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
         <div class="gamesense-weapon-guidance">
@@ -556,6 +581,35 @@
     viewport.addEventListener("dragstart", event => event.preventDefault());
   }
 
+  function selectCompAgent(compAgentButton) {
+    const selectedAgent = String(compAgentButton?.dataset?.gamesenseCompAgent || "").trim();
+    if (!selectedAgent) return;
+    state.compAgent = selectedAgent;
+
+    const compCard = compAgentButton.closest(".gamesense-comp-card");
+    compCard?.querySelectorAll("[data-gamesense-comp-agent]").forEach(button => {
+      const isSelected = button.dataset.gamesenseCompAgent === selectedAgent;
+      button.classList.toggle("active", isSelected);
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+
+    const map = getMaps().find(item => item.id === state.itemId);
+    const insight = map?.agentInsights?.[selectedAgent] || "No current composition note is available for this agent.";
+    let read = compCard?.querySelector(".gamesense-comp-agent-read");
+    if (!read) {
+      read = document.createElement("div");
+      read.className = "gamesense-comp-agent-read is-revealing";
+      compCard?.querySelector(".gamesense-comp-prompt")?.replaceWith(read);
+    }
+    if (read) {
+      read.innerHTML = `<strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(insight)}</p>`;
+    }
+
+    if (document.documentElement.classList.contains("is-mobile-layout")) {
+      requestAnimationFrame(() => window.setTimeout(() => read?.scrollIntoView({ behavior: "smooth", block: "center" }), 60));
+    }
+  }
+
   function commitRender(root) {
     root.innerHTML = state.topic === "overview" ? renderOverview() : state.itemId ? renderDetail(state.topic, state.itemId) : renderGallery(state.topic);
     root.querySelectorAll("img[data-agent-fallback]").forEach(img => {
@@ -583,8 +637,11 @@
     root.style.viewTransitionName = "gamesense-library-content";
     if (typeof document.startViewTransition === "function") {
       const transition = document.startViewTransition(() => commitRender(root));
+      transition.ready?.catch(() => {});
+      transition.updateCallbackDone?.catch(() => {});
+      transition.finished?.catch(() => {});
       activeLibraryTransition = transition;
-      transition.finished.finally(() => {
+      transition.finished.catch(() => {}).finally(() => {
         if (activeLibraryTransition === transition) activeLibraryTransition = null;
         delete document.documentElement.dataset.gamesenseTransition;
       });
@@ -598,7 +655,7 @@
       { opacity: 1, transform: "translate3d(0,0,0)" }
     ], { duration: 260, easing: "cubic-bezier(.2,.82,.24,1)" });
     activeLibraryTransition = animation;
-    animation.finished.finally(() => {
+    animation.finished.catch(() => {}).finally(() => {
       if (activeLibraryTransition === animation) activeLibraryTransition = null;
       delete document.documentElement.dataset.gamesenseTransition;
     });
@@ -736,16 +793,7 @@
     }
     const compAgent = event.target.closest?.("[data-gamesense-comp-agent]");
     if (compAgent) {
-      state.compAgent = state.compAgent === compAgent.dataset.gamesenseCompAgent ? "" : compAgent.dataset.gamesenseCompAgent;
-      const selectedAgent = state.compAgent;
-      const transition = render({ direction: "replace" });
-      if (selectedAgent && document.documentElement.classList.contains("is-mobile-layout")) {
-        const revealSelectedAgent = () => document.querySelector(".gamesense-comp-agent-read")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        requestAnimationFrame(() => window.setTimeout(revealSelectedAgent, 60));
-        Promise.resolve(transition?.finished).catch(() => {}).finally(() => {
-          window.setTimeout(revealSelectedAgent, 40);
-        });
-      }
+      selectCompAgent(compAgent);
       return;
     }
     const role = event.target.closest?.("[data-gamesense-role]");

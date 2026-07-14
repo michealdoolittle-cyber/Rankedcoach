@@ -122,12 +122,14 @@ async function run() {
 
     await page.click('.nav-btn[data-page="home"]');
     await page.click('.graph-btn[data-size="all"]');
-    await page.locator(".chart-season-boundary").waitFor({ state: "attached" });
-    assert.match(await page.locator(".chart-season-boundary text").textContent(), /New Season - Placements/);
+    await page.locator(".chart-season-boundary").first().waitFor({ state: "attached" });
+    assert.equal(await page.locator(".chart-season-boundary").count(), 2);
+    assert.match(await page.locator('.chart-season-boundary[data-season="Season 2026 Act 3"] text').textContent(), /V26\s*A3/is);
+    assert.match(await page.locator('.chart-season-boundary[data-season="Season 2026 Act 4"] text').textContent(), /V26\s*A4/is);
     assert.equal(await page.locator('.chart-season-boundary[data-season="Season 2026 Act 4"]').count(), 1);
     assert.match(await page.locator("#rrChartDataStatus").innerText(), /rank snapshots/i);
     assert.deepEqual(consoleErrors, []);
-    console.log("Placement UI passed: the feed distinguishes placements and Lifetime marks the new-season boundary without plotting Unrated as rank zero.");
+    console.log("Placement UI passed: the feed distinguishes placements and Lifetime labels each season boundary without plotting Unrated as rank zero.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

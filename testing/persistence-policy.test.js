@@ -48,4 +48,21 @@ assert.deepEqual(consolidated.profiles[0].matches.map(match => match.id), ["matc
 assert.deepEqual(consolidated.profiles[0].warmupLog.map(entry => entry.date), ["2026-07-12", "2026-07-13"]);
 assert.equal(consolidated.idMap["device-a"], "cloud-active");
 
-console.log("Persistence policy checks passed: scoped IDs, row deduplication, bounded batches, and cross-device profile consolidation.");
+const compacted = policy.compactProfilesForLocalCache([{
+  id: "profile-with-history",
+  matches: [{
+    id: "match-1",
+    roundMetrics: [{ round: 1, won: true }],
+    matchRecord: {
+      rank: { rank: "Diamond 2", rr: 64 },
+      roundByRound: [{ round: 1, kills: [{ weapon: "Vandal" }] }]
+    }
+  }]
+}], 1);
+assert.deepEqual(compacted[0].matches[0].roundMetrics, [{ round: 1, won: true }]);
+assert.deepEqual(compacted[0].matches[0].matchRecord.rank, { rank: "Diamond 2", rr: 64 });
+assert.equal("roundByRound" in compacted[0].matches[0].matchRecord, false);
+assert.equal(compacted[0].matches.length, 1);
+assert.equal(policy.compactProfilesForLocalCache(compacted, 3)[0].matches.length, 0);
+
+console.log("Persistence policy checks passed: scoped IDs, row deduplication, bounded batches, profile consolidation, and compact local caches.");

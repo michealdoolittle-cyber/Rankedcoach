@@ -50,27 +50,33 @@ globalThis.fetch = async (url, options = {}) => {
   const requestsAtStart = matchRequests.filter(request => request.start === body.start).length;
   if (scenario === "retry-success") {
     if (body.start === 0 && requestsAtStart < 3) {
-      return response(429, {
+      return response(200, {
         ok: false,
-        error: "Rate limit exceeded, please try again later. For further information check the headers of the response.",
-        code: "henrik_429"
+        error: "Riot's data provider is busy right now. Try again shortly.",
+        code: "henrik_429",
+        status: 429,
+        retryable: true
       });
     }
     return response(200, { data: makeMatches(body.start, body.start === 0 ? 10 : 3) });
   }
   if (scenario === "first-page-failure") {
-    return response(429, {
+    return response(200, {
       ok: false,
-      error: "Rate limit exceeded, please try again later. For further information check the headers of the response.",
-      code: "henrik_429"
+      error: "Riot's data provider is busy right now. Try again shortly.",
+      code: "henrik_429",
+      status: 429,
+      retryable: true
     });
   }
   if (scenario === "partial-history") {
     if (body.start === 0) return response(200, { data: makeMatches(0, 10) });
-    return response(503, {
+    return response(200, {
       ok: false,
-      error: "Henrik could not complete the request.",
-      code: "henrik_503"
+      error: "Riot match data is temporarily unavailable. Try again shortly.",
+      code: "henrik_503",
+      status: 503,
+      retryable: true
     });
   }
   throw new Error(`Unknown scenario: ${scenario}`);

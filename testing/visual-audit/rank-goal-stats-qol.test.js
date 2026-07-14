@@ -123,6 +123,9 @@ async function run() {
     })));
     assert.ok(lifetimeRankIcons.length >= 3, JSON.stringify(lifetimeRankIcons));
     assert.ok(lifetimeRankIcons.some(icon => /Diamond/i.test(icon.label) && icon.href), JSON.stringify(lifetimeRankIcons));
+    const lifetimeRankIconBoxes = await page.locator("#chartRow .chart-rank-axis-icon image").evaluateAll(images => images.map(image => image.getBoundingClientRect()).sort((left, right) => left.top - right.top).map(rect => ({ top: rect.top, bottom: rect.bottom, height: rect.height })));
+    assert.ok(lifetimeRankIconBoxes.every((box, index) => index === 0 || box.top >= lifetimeRankIconBoxes[index - 1].bottom - 1), JSON.stringify(lifetimeRankIconBoxes));
+    assert.match(await page.locator("#chartRow .chart-season-boundary").first().textContent(), /V26\s*A2/is);
 
     const chartGeometry = await page.locator(".rr-chart-card").evaluate(card => {
       const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
@@ -174,6 +177,15 @@ async function run() {
     assert.equal(summaryGrid.columns, 3, JSON.stringify(summaryGrid));
     assert.equal(summaryGrid.rows, 2, JSON.stringify(summaryGrid));
     assert.equal(summaryGrid.items, 6, JSON.stringify(summaryGrid));
+    assert.equal(await page.locator("#statsActMobileValue").innerText(), "Season 2026 Act 3");
+    const statsLayoutGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => {
+      const summary = layout.querySelector(".stats-summary-card").getBoundingClientRect();
+      const main = layout.querySelector(".stats-main-grid").getBoundingClientRect();
+      const icon = layout.querySelector(".stats-proof-rank-icon").getBoundingClientRect();
+      return { summary: summary.toJSON(), main: main.toJSON(), icon: icon.toJSON(), scrollHeight: layout.scrollHeight, clientHeight: layout.clientHeight };
+    });
+    assert.ok(statsLayoutGeometry.main.top - statsLayoutGeometry.summary.bottom <= 40, JSON.stringify(statsLayoutGeometry));
+    assert.ok(statsLayoutGeometry.icon.width >= 70 && statsLayoutGeometry.icon.height >= 70, JSON.stringify(statsLayoutGeometry));
     const mapStatCard = page.locator("#page-stats .stats-map-card:not(.is-empty):not(.is-locked)").first();
     if (await mapStatCard.count()) {
       await mapStatCard.hover();
@@ -286,6 +298,13 @@ async function run() {
     assert.ok(mobilePeakGeometry.visual.left < mobilePeakGeometry.details.left && mobilePeakGeometry.visual.right <= mobilePeakGeometry.details.left + 1, JSON.stringify(mobilePeakGeometry));
     assert.ok(Math.abs(mobilePeakGeometry.visual.width - mobilePeakGeometry.details.width) <= 12, JSON.stringify(mobilePeakGeometry));
     assert.ok(mobilePeakGeometry.selector.top >= Math.max(mobilePeakGeometry.visual.bottom, mobilePeakGeometry.details.bottom) - 1 && mobilePeakGeometry.selector.bottom <= mobilePeakGeometry.parent.bottom + 1, JSON.stringify(mobilePeakGeometry));
+    const mobileActWidth = await page.locator("#page-stats .stats-act-select-wrap").evaluate(wrap => {
+      const parent = wrap.getBoundingClientRect();
+      const trigger = wrap.querySelector(".stats-act-mobile-trigger").getBoundingClientRect();
+      const value = wrap.querySelector("#statsActMobileValue").getBoundingClientRect();
+      return { parent: parent.toJSON(), trigger: trigger.toJSON(), value: value.toJSON() };
+    });
+    assert.ok(mobileActWidth.trigger.width >= mobileActWidth.parent.width * .94 && mobileActWidth.value.width >= mobileActWidth.trigger.width * .70, JSON.stringify(mobileActWidth));
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-stats-proof-card.png") });
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));

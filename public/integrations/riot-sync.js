@@ -102,11 +102,12 @@
         signal: controller.signal
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
+      if (!response.ok || payload?.ok === false) {
+        const status = Number(payload?.status) || response.status;
         throw createSyncRequestError(payload?.error || `Match sync failed (${response.status}).`, {
-          code: payload?.code || `henrik_${response.status}`,
-          status: response.status,
-          retryable: [408, 429].includes(response.status) || response.status >= 500
+          code: payload?.code || `henrik_${status}`,
+          status,
+          retryable: Boolean(payload?.retryable) || [408, 429].includes(status) || status >= 500
         });
       }
       return payload;

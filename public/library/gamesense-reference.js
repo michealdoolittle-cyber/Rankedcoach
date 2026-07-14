@@ -175,6 +175,36 @@
       mapWinRates: { Lotus: 50.6, Split: 50.7, Sunset: 50.3 }
     }
   };
+  const officialAgentLore = {
+    jett: [
+      { label: "Origin", value: "South Korea", note: "Jett represents her home country with an agile, evasive fighting style built around speed and calculated risk." },
+      { label: "Lore", value: "Wind-driven duelist", note: "Her supernatural command of wind lets her move through fights in ways few opponents can track, favoring precision over brute force." }
+    ],
+    sova: [
+      { label: "Origin", value: "Russia", note: "Raised through the severity of the Russian tundra, Sova is a patient scout and relentless tracker." },
+      { label: "Lore", value: "Hunter of hidden threats", note: "Specialized equipment and a custom bow help him reveal, pursue, and eliminate enemies who believe they are concealed." }
+    ],
+    omen: [
+      { label: "Origin", value: "Unknown", note: "Omen is a phantom of memory whose fragmented identity remains one of the Protocol's deepest mysteries." },
+      { label: "Lore", value: "Shadow-born hunter", note: "He moves through darkness, blinds the opposition, and lets uncertainty spread before striking from an unexpected angle." }
+    ],
+    viper: [
+      { label: "Origin", value: "United States", note: "Viper is an American chemist who applies a formidable scientific mind directly to the battlefield." },
+      { label: "Lore", value: "Toxic field commander", note: "Her chemical devices control space and impair enemies, and she is willing to use every advantage to secure the mission." }
+    ],
+    cypher: [
+      { label: "Origin", value: "Morocco", note: "Cypher is a Moroccan information broker who watches the battlefield through an extensive surveillance network." },
+      { label: "Lore", value: "Keeper of secrets", note: "He tracks movement, protects hidden information, and treats every enemy habit as another secret waiting to be uncovered." }
+    ],
+    sage: [
+      { label: "Origin", value: "China", note: "Sage creates safety for her team wherever the mission takes them and serves as a calm center in chaotic fights." },
+      { label: "Lore", value: "Radiant stronghold", note: "Her Radiant power heals allies, denies ground, and can return a fallen teammate to the fight." }
+    ],
+    raze: [
+      { label: "Origin", value: "Brazil", note: "Raze brings a bold personality and a large collection of explosives from Brazil into every operation." },
+      { label: "Lore", value: "Explosive space maker", note: "Her aggressive tools excel at clearing tight positions and dislodging opponents who rely on entrenched cover." }
+    ]
+  };
   const currentAgents = agents.map(agent => {
     const rates = currentAgentRates[agent.id] || {};
     const strongestMap = rates.maps?.[0];
@@ -183,6 +213,7 @@
     return {
       ...agent,
       ...rates,
+      lore: officialAgentLore[agent.id] || [],
       facts: [
         {
           label: "Global pick rate",
@@ -310,6 +341,18 @@
   };
   Object.entries(currentWeaponUsage).forEach(([id, pickRate]) => {
     if (weaponCatalog[id]) weaponCatalog[id].pickRate = pickRate;
+  });
+  const currentWeaponKillConversion = {
+    vandal: 1.01, phantom: 1.03, operator: 1.32, outlaw: 0.91, marshal: 0.68,
+    guardian: 0.86, bulldog: 0.80, spectre: 0.78, stinger: 0.69, judge: 0.84,
+    bucky: 0.65, shorty: 0.57, classic: 0.72, frenzy: 0.53, ghost: 0.60, sheriff: 0.66
+  };
+  Object.entries(currentWeaponKillConversion).forEach(([id, killConversion]) => {
+    if (!weaponCatalog[id]) return;
+    weaponCatalog[id].killConversion = killConversion;
+    // vstats publishes round win conversion through economy filters. It does
+    // not expose a defensible single unfiltered round-win percentage.
+    weaponCatalog[id].roundConversion = "Economy-filtered";
   });
 
   const weapons = [

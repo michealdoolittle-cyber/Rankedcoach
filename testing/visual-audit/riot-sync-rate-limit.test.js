@@ -9,7 +9,6 @@ const { chromium } = require("playwright");
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41789;
 const puuid = "62a85dd7-1b17-4f45-9941-9fab4e32f820";
-const rawRateLimitMessage = "Rate limit exceeded, please try again later. For further information check the headers of the response.";
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp" };
 
 function startServer() {
@@ -89,6 +88,7 @@ async function run() {
     page.on("console", message => {
       if (message.type() === "error") consoleErrors.push(message.text());
     });
+    page.on("pageerror", error => consoleErrors.push(error.message));
     await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await page.route("**/api/henrik/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, configured: true }) }));
     await page.route("**/api/henrik/account", route => {
@@ -96,23 +96,23 @@ async function run() {
       return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, data: { puuid, name: "Subroza", tag: "RULT" } }) });
     });
     await page.route("**/api/henrik/mmr-history-live", route => route.fulfill({
-      status: failureMode ? 429 : 200,
+      status: 200,
       contentType: "application/json",
-      body: JSON.stringify(failureMode ? { ok: false, error: rawRateLimitMessage, code: "henrik_429" } : { ok: true, data: [{ account: { puuid }, history: [] }] })
+      body: JSON.stringify(failureMode ? { ok: false, error: "Riot's data provider is busy right now. Try again shortly.", code: "henrik_429", status: 429, retryable: true } : { ok: true, data: [{ account: { puuid }, history: [] }] })
     }));
     await page.route("**/api/henrik/mmr-history", route => route.fulfill({
-      status: failureMode ? 429 : 200,
+      status: 200,
       contentType: "application/json",
-      body: JSON.stringify(failureMode ? { ok: false, error: rawRateLimitMessage, code: "henrik_429" } : { ok: true, data: [] })
+      body: JSON.stringify(failureMode ? { ok: false, error: "Riot's data provider is busy right now. Try again shortly.", code: "henrik_429", status: 429, retryable: true } : { ok: true, data: [] })
     }));
     await page.route("**/api/henrik/matches", async route => {
       const body = JSON.parse(route.request().postData() || "{}");
       if (!body.mode || body.mode === "competitive") competitiveMatchRequests += 1;
       return route.fulfill({
-        status: failureMode ? 429 : 200,
+        status: 200,
         contentType: "application/json",
         body: JSON.stringify(failureMode
-          ? { ok: false, error: rawRateLimitMessage, code: "henrik_429" }
+          ? { ok: false, error: "Riot's data provider is busy right now. Try again shortly.", code: "henrik_429", status: 429, retryable: true }
           : { ok: true, data: [] })
       });
     });
@@ -160,7 +160,7 @@ async function run() {
     assert.deepEqual(dialogs, []);
     assert.equal(accountRequests, 1);
     assert.equal(competitiveMatchRequests, 3);
-    assert.ok(consoleErrors.some(message => message.includes("MATCH SYNC ERROR")), JSON.stringify(consoleErrors));
+    assert.deepEqual(consoleErrors, []);
 
     const storedAfterFailure = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]);
     assert.equal(storedAfterFailure.puuid, puuid);
@@ -178,7 +178,7 @@ async function run() {
     assert.equal(competitiveMatchRequests, 4);
     assert.ok(dialogs.some(message => /already up to date/i.test(message)), JSON.stringify(dialogs));
 
-    console.log("Riot sync browser check passed: friendly toast, no raw alert, persisted PUUID, and no repeated account lookup.");
+    console.log("Riot sync browser check passed: friendly toast, no raw alert, persisted PUUID, no repeated account lookup, and zero console errors.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

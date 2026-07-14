@@ -8015,15 +8015,18 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
       ? profile.matches
       : (matches || []);
   const derivedActs = getMatchSeasonLabels(sourceMatches);
-  const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : []).map(normalizeValorantSeasonLabel);
+  const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [])
+    .map(normalizeValorantSeasonLabel)
+    .filter(label => !isPlaceholderStatsActLabel(label));
   const importedCurrentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct);
-  const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
+  const currentImportedAct = !isPlaceholderStatsActLabel(importedCurrentAct) ? importedCurrentAct : "";
+  const actOptions = [...new Set([CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
   const selectedAct = String(
     Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
-      ? options.actLabel || ""
+      ? options.actLabel || CURRENT_VALORANT_SEASON_LABEL
       : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
         ? activeStatsActLabel
-        : importedCurrentAct || derivedActs[0] || ""
+        : currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL
   ).trim();
   const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
   const sourceLogs = Array.isArray(options?.logs)
@@ -8036,7 +8039,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     ? sourceLogs.filter((entry) => normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedAct)
     : sourceLogs;
   const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
-  const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || derivedActs[0] || "Current Window", actOptions);
+  const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || CURRENT_VALORANT_SEASON_LABEL, actOptions);
   const scopedAnalytics = {
     ...(importedAnalytics || {}),
     ...derivedRoundAnalytics,
@@ -15258,8 +15261,7 @@ function applyPersistentAccountState(state = {}) {
       ) || { profiles: state.profiles, activeProfileId: state.activeProfileId, idMap: {} };
       profiles = consolidated.profiles.map(normalizeProfileRecord);
       activeProfileId = consolidated.activeProfileId || profiles[0]?.id || activeProfileId;
-      localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
-      localStorage.setItem(STORAGE_KEY_ACTIVE_ID, activeProfileId || "");
+      persistProfilesToLocalCache();
       if (Array.isArray(state.logEntries)) {
         state = {
           ...state,
@@ -16511,10 +16513,11 @@ function getLifetimeSeasonTransitions(entries = []) {
   (entries || []).forEach((entry) => {
     const season = getMatchSeasonLabel(entry?.match || {});
     if (!season) return;
-    if (previousSeason && season !== previousSeason) {
+    if (!previousSeason || season !== previousSeason) {
       transitions.push({
         index: Number(entry?.index),
         season,
+        isFirst: !previousSeason,
         isPlacementMatch: isPlacementRankedMatch(entry?.match)
       });
     }
@@ -16523,18 +16526,34 @@ function getLifetimeSeasonTransitions(entries = []) {
   return transitions;
 }
 
+function formatLifetimeSeasonMarker(season = "") {
+  const label = String(season || "").trim();
+  const act = label.match(/(?:act|a)\s*(\d+)/i)?.[1] || "";
+  const valorantYear = label.match(/(?:season|v)\s*(20)?(\d{2})/i)?.[2] || "";
+  const episode = label.match(/episode\s*(\d+)/i)?.[1] || "";
+  return {
+    title: valorantYear ? `V${valorantYear}` : episode ? `E${episode}` : label,
+    act: act ? `A${act}` : ""
+  };
+}
+
 function buildLifetimeSeasonBoundaryMarkup(transitions = [], points = []) {
   return (transitions || []).map((transition) => {
     const nextPointIndex = points.findIndex(point => point?.matchIndex >= transition.index);
     if (nextPointIndex < 1) return "";
     const nextPoint = points[nextPointIndex];
     const previousPoint = points[nextPointIndex - 1] || nextPoint;
-    const x = (safeNumber(previousPoint.x) + safeNumber(nextPoint.x)) / 2;
-    const label = transition.isPlacementMatch ? "New Season - Placements" : "New Season";
+    const x = transition.isFirst
+      ? safeNumber(nextPoint.x)
+      : (safeNumber(previousPoint.x) + safeNumber(nextPoint.x)) / 2;
+    const marker = formatLifetimeSeasonMarker(transition.season);
     return `
       <g class="chart-season-boundary" data-season="${escapeHtml(transition.season)}">
         <line x1="${x}" y1="${PAD_TOP}" x2="${x}" y2="${PAD_BOTTOM}" />
-        <text x="${x + 6}" y="${PAD_TOP + 14}">${escapeHtml(label)}</text>
+        <text x="${x}" y="${PAD_TOP + 13}" text-anchor="middle">
+          <tspan class="chart-season-title" x="${x}">${escapeHtml(marker.title)}</tspan>
+          ${marker.act ? `<tspan class="chart-season-act" x="${x}" dy="14">${escapeHtml(marker.act)}</tspan>` : ""}
+        </text>
       </g>`;
   }).join("");
 }
@@ -16564,11 +16583,16 @@ function buildLifetimeRankYTicks(bounds, y) {
   const indexes = [];
   for (let index = start; index <= end; index += step) indexes.push(index);
   if (indexes[indexes.length - 1] !== end) indexes.push(end);
+  const tickPositions = indexes.map(index => y(safeNumber(RANK_THRESHOLDS[index]?.min)));
+  const minimumGap = tickPositions.length > 1
+    ? Math.min(...tickPositions.slice(1).map((position, index) => Math.abs(position - tickPositions[index])))
+    : 40;
+  const preferredIconSize = isMobileLayoutViewport() ? 26 : 30;
+  const iconSize = Math.max(14, Math.min(preferredIconSize, Math.floor(minimumGap * 0.72)));
   return indexes.map(index => {
     const rank = RANK_THRESHOLDS[index];
     const value = safeNumber(rank?.min);
     const yy = y(value);
-    const iconSize = isMobileLayoutViewport() ? 26 : 30;
     const iconUrl = getRankIconUrl(rank?.tierLabel || "");
     return `
 <line x1="${PAD_LEFT}" y1="${yy}" x2="${CHART_W - PAD_RIGHT}" y2="${yy}" stroke="rgba(148,163,184,0.25)"/>
@@ -42252,18 +42276,38 @@ function renderLogFeed(options = {}){
 // LOAD / SAVE
 // ========================
 
+function persistProfilesToLocalCache() {
+  const compactProfiles = globalThis.RankedCoachPersistencePolicy?.compactProfilesForLocalCache;
+  const candidates = [
+    profiles,
+    compactProfiles?.(profiles, 1),
+    compactProfiles?.(profiles, 2),
+    compactProfiles?.(profiles, 3)
+  ].filter(Boolean);
+  let profilesSaved = false;
+
+  for (const candidate of candidates) {
+    try {
+      localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(candidate));
+      profilesSaved = true;
+      break;
+    } catch (_error) {
+      // Continue toward the smallest local cache. The complete account state is
+      // still retained in memory and saved to the signed-in cloud account.
+    }
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEY_ACTIVE_ID, activeProfileId || "");
+  } catch (_error) {
+    // A full origin must not interrupt profile changes or cloud persistence.
+  }
+
+  return profilesSaved;
+}
+
 function saveProfiles(){
-
-  localStorage.setItem(
-    STORAGE_KEY_PROFILES,
-    JSON.stringify(profiles)
-  );
-
-  localStorage.setItem(
-    STORAGE_KEY_ACTIVE_ID,
-    activeProfileId
-  );
-
+  persistProfilesToLocalCache();
   queuePersistentAccountSave("profiles");
 }
 
@@ -42917,6 +42961,7 @@ function setActiveProfile(id){
   }
 
   activeProfileId = id;
+  activeStatsActLabel = "";
 
   const next = getActiveProfile();
 
@@ -43215,12 +43260,21 @@ function closeProfileDropdown(){
 function getStatsSelectedActLabel(profile = getActiveProfile()) {
   const analytics = profile?.trackerAnalytics || null;
   const derivedActs = getMatchSeasonLabels(profile?.matches || []);
-  const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : []).map(normalizeValorantSeasonLabel);
-  const actOptions = [...new Set([...derivedActs, ...importedActs].filter(Boolean))];
+  const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : [])
+    .map(normalizeValorantSeasonLabel)
+    .filter(label => !isPlaceholderStatsActLabel(label));
+  const importedCurrentAct = normalizeValorantSeasonLabel(analytics?.currentAct);
+  const currentImportedAct = !isPlaceholderStatsActLabel(importedCurrentAct) ? importedCurrentAct : "";
+  const actOptions = [...new Set([CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
   const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
     ? activeStatsActLabel
-    : normalizeValorantSeasonLabel(analytics?.currentAct) || derivedActs[0] || "";
+    : currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL;
   return selectedAct && actOptions.includes(selectedAct) ? selectedAct : "";
+}
+
+function isPlaceholderStatsActLabel(value = "") {
+  return ["", "current window", "current season", "select season"]
+    .includes(String(value || "").trim().toLowerCase());
 }
 
 function normalizeValorantSeasonLabel(value = "") {
@@ -48962,14 +49016,6 @@ async function performRiotSync(options = {}) {
     return result;
   } catch (err) {
     const playerError = getPlayerFacingRiotSyncError(err);
-    console.error("MATCH SYNC ERROR", {
-      code: err?.code || "",
-      status: safeNumber(err?.status),
-      retryable: Boolean(err?.retryable),
-      attempts: safeNumber(err?.attempts),
-      technicalMessage: err?.message || "Unknown Riot sync error.",
-      error: err
-    });
     setProfileSyncStatus("", "needs-setup", playerError.message, false);
     if (!silent) {
       showToast(playerError.message, {
@@ -50144,10 +50190,10 @@ function renderStatsSummaryMetaModel() {
   if (label) label.textContent = "Season Stats For";
 
   const model = getPlayerModel();
-  const fallbackSeasonLabel = isMobileLayoutViewport() ? CURRENT_VALORANT_SEASON_LABEL : "Current Window";
+  const fallbackSeasonLabel = CURRENT_VALORANT_SEASON_LABEL;
   const normalizeSeasonLabel = (label = "") => {
     const value = String(label || "").trim();
-    if (!value || value.toLowerCase() === "current window" || value.toLowerCase() === "select season") {
+    if (isPlaceholderStatsActLabel(value)) {
       return fallbackSeasonLabel;
     }
     return value;

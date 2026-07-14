@@ -87,10 +87,51 @@
     };
   }
 
+  function compactMatchForLocalCache(match = {}, level = 1) {
+    if (!match || typeof match !== "object") return match;
+    const compact = { ...match };
+    const canonical = match.matchRecord && typeof match.matchRecord === "object"
+      ? { ...match.matchRecord }
+      : null;
+
+    // The legacy match shape already carries the projected round metrics used by
+    // the UI. Keeping the canonical round list here stores the same rounds twice.
+    if (canonical) {
+      delete canonical.roundByRound;
+      compact.matchRecord = canonical;
+    }
+
+    if (level >= 2) {
+      delete compact.matchRecord;
+      delete compact.segments;
+      delete compact.raw;
+      delete compact.rawMatch;
+      delete compact.sourcePayload;
+    }
+
+    return compact;
+  }
+
+  function compactProfilesForLocalCache(source = [], level = 1) {
+    return (Array.isArray(source) ? source : []).map(profile => {
+      if (!profile || typeof profile !== "object") return profile;
+      const compact = { ...profile };
+      if (level >= 3) {
+        compact.matches = [];
+      } else {
+        compact.matches = (Array.isArray(profile.matches) ? profile.matches : [])
+          .map(match => compactMatchForLocalCache(match, level));
+      }
+      return compact;
+    });
+  }
+
   globalThis.RankedCoachPersistencePolicy = Object.freeze({
     buildScopedMatchRowId,
     dedupeRowsById,
     chunkRows,
-    consolidateProfiles
+    consolidateProfiles,
+    compactMatchForLocalCache,
+    compactProfilesForLocalCache
   });
 })();

@@ -36,7 +36,17 @@ function supabaseStub() {
     riotId: "",
     themeKey: "radiant-focus",
     profileBorder: "hex",
-    matches: []
+    matches: [{
+      id: "cloud-match-with-rounds",
+      matchId: "cloud-match-with-rounds",
+      rank: "Diamond 2",
+      rrTotal: 64,
+      roundMetrics: [{ round: 1, won: true }],
+      matchRecord: {
+        rank: { rank: "Diamond 2", rr: 64 },
+        roundByRound: Array.from({ length: 28 }, (_item, round) => ({ round, payload: `ROUND_PAYLOAD_MARKER-${round}-${"x".repeat(180)}` }))
+      }
+    }]
   };
   const cloudLog = {
     id: "cloud-log-1",
@@ -103,31 +113,41 @@ function supabaseStub() {
   `;
 }
 
-async function openDevice(browser, { staleLocal = false } = {}) {
+async function openDevice(browser, { staleLocal = false, quotaLimited = false } = {}) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const consoleErrors = [];
   page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("pageerror", error => consoleErrors.push(error.message));
   await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
-  await page.addInitScript(hasStaleLocal => {
+  await page.addInitScript(({ hasStaleLocal, quotaLimited }) => {
     localStorage.clear();
     localStorage.setItem("valtracker_entry_choice_v1", "account");
-    if (!hasStaleLocal) return;
-    localStorage.setItem("valtracker_active_profile_id", "device-profile");
-    localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
-      id: "device-profile",
-      name: "Device Local",
-      accountName: "Old Device",
-      region: "NA",
-      matches: []
-    }]));
-    localStorage.setItem("valtracker_log_entries_v2:cross-device-user", JSON.stringify([{
-      id: "device-log",
-      profileId: "device-profile",
-      createdAt: "2026-07-12T12:00:00.000Z",
-      notes: "Device-only stale log"
-    }]));
-  }, staleLocal);
+    if (hasStaleLocal) {
+      localStorage.setItem("valtracker_active_profile_id", "device-profile");
+      localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
+        id: "device-profile",
+        name: "Device Local",
+        accountName: "Old Device",
+        region: "NA",
+        matches: []
+      }]));
+      localStorage.setItem("valtracker_log_entries_v2:cross-device-user", JSON.stringify([{
+        id: "device-log",
+        profileId: "device-profile",
+        createdAt: "2026-07-12T12:00:00.000Z",
+        notes: "Device-only stale log"
+      }]));
+    }
+    if (quotaLimited) {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function setQuotaLimitedItem(key, value) {
+        if (key === "valtracker_profiles_v1" && String(value || "").length > 4200) {
+          throw new DOMException("Setting the value exceeded the quota.", "QuotaExceededError");
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    }
+  }, { hasStaleLocal: staleLocal, quotaLimited });
   await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
   await page.waitForFunction(() => {
     const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
@@ -138,7 +158,8 @@ async function openDevice(browser, { staleLocal = false } = {}) {
     profiles: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]").map(profile => ({ id: profile.id, name: profile.name, themeKey: profile.themeKey, profileBorder: profile.profileBorder })),
     logs: JSON.parse(localStorage.getItem("valtracker_log_entries_v2:cross-device-user") || "[]").map(entry => ({ id: entry.id, profileId: entry.profileId, notes: entry.notes })),
     writes: globalThis.__cloudWrites,
-    activeId: localStorage.getItem("valtracker_active_profile_id")
+    activeId: localStorage.getItem("valtracker_active_profile_id"),
+    localCacheHasDuplicateRounds: Boolean(JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.matches?.[0]?.matchRecord?.roundByRound)
   }));
   return { page, state, consoleErrors };
 }
@@ -162,7 +183,13 @@ async function run() {
     assert.equal(second.state.activeId, "cloud-profile");
     assert.deepEqual(second.consoleErrors, []);
     await second.page.close();
-    console.log("Cross-device persistence passed: delayed cloud hydration wins over stale local state on both devices without an early overwrite.");
+
+    const quota = await openDevice(browser, { quotaLimited: true });
+    assert.equal(quota.state.localCacheHasDuplicateRounds, false);
+    assert.equal(quota.state.writes.some(write => write.table === "vip_app_state" && JSON.stringify(write.rows).includes("ROUND_PAYLOAD_MARKER")), true);
+    assert.deepEqual(quota.consoleErrors, []);
+    await quota.page.close();
+    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, quota-limited local caches compact safely, and complete cloud writes continue without console errors.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

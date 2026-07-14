@@ -164,13 +164,26 @@ async function getHenrikRawMatch(env, options = {}) {
 
 function henrikErrorResponse(error) {
   const status = Number(error?.status) || 500;
+  const code = error?.code || "henrik_request_failed";
+  const retryable = error instanceof HenrikApiError && (status === 408 || status === 429 || status >= 500);
+  const publicMessage = status === 429
+    ? "Riot's data provider is busy right now. Try again shortly."
+    : status === 408 || status === 504
+      ? "Riot match data took too long to respond. Try again shortly."
+      : status >= 500
+        ? "Riot match data is temporarily unavailable. Try again shortly."
+        : error?.message || "Henrik match sync failed.";
   return jsonResponse(
     {
       ok: false,
-      error: error?.message || "Henrik match sync failed.",
-      code: error?.code || "henrik_request_failed"
+      error: publicMessage,
+      code,
+      status,
+      retryable
     },
-    { status }
+    // Expected upstream outages are application states, not failed browser
+    // resources. Preserve the real status in the envelope for retry logic.
+    { status: retryable ? 200 : status }
   );
 }
 
