@@ -176,7 +176,6 @@
 .gamesense-topic-card:hover::before,
 .gamesense-entry-card:hover::before{transform:translateX(110%);}
 
-.gamesense-topic-number,
 .gamesense-entry-index{
   position:absolute;
   top:18px;
@@ -858,7 +857,8 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   html.is-mobile-layout .gamesense-library-view > *{animation:none !important;}
   html.is-mobile-layout .gamesense-season-scope{margin-bottom:10px;}
   html.is-mobile-layout .gamesense-topic-card{align-content:center;justify-items:center;min-height:178px;text-align:center;}
-  html.is-mobile-layout .gamesense-topic-number{position:static;z-index:3;display:block;width:100%;margin:0 0 8px;color:rgba(255,255,255,.52);font-size:34px;text-align:center;}
+  html.is-mobile-layout .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0 0 132px;}
+  html.is-mobile-layout .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{inset:0 0 -132px;}
   html.is-mobile-layout .gamesense-topic-card strong{margin:0 0 7px;text-align:center !important;}
   html.is-mobile-layout .gamesense-topic-card small{text-align:center;}
   html.is-mobile-layout .gamesense-topic-action{text-align:center;}

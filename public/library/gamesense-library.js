@@ -114,7 +114,6 @@
           ${Object.entries(topicMeta).map(([key, meta], index) => `
             <button class="gamesense-topic-card" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
               <span class="gamesense-topic-collage" aria-hidden="true">${getTopicCollageImages(key).map(src => `<img src="${escapeHtml(src)}" alt="" loading="lazy">`).join("")}</span>
-              <span class="gamesense-topic-number">0${index + 1}</span>
               <strong>${escapeHtml(meta.label)}</strong>
               <small>${escapeHtml(meta.copy)}</small>
               <span class="gamesense-topic-action">Open dossier</span>

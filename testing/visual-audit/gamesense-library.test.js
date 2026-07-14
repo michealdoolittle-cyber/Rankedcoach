@@ -113,6 +113,7 @@ async function run() {
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-topic-number").count(), 0);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
     assert.deepEqual(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => image.src.includes("media.valorant-api.com/weapons/"))), [true, true, true]);
@@ -415,12 +416,7 @@ async function run() {
     });
     assert.ok(mobileWeaponTopicArt.imageBottom <= mobileWeaponTopicArt.titleTop, JSON.stringify(mobileWeaponTopicArt));
     await mobile.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-mobile.png") });
-    const topicNumberLayout = await mobile.locator(".gamesense-topic-card").first().evaluate(card => {
-      const number = card.querySelector(".gamesense-topic-number").getBoundingClientRect();
-      const title = card.querySelector("strong").getBoundingClientRect();
-      return { numberCenter: number.left + number.width / 2, titleCenter: title.left + title.width / 2, numberBottom: number.bottom, titleTop: title.top };
-    });
-    assert.ok(Math.abs(topicNumberLayout.numberCenter - topicNumberLayout.titleCenter) <= 2 && topicNumberLayout.numberBottom <= topicNumberLayout.titleTop, JSON.stringify(topicNumberLayout));
+    assert.equal(await mobile.locator(".gamesense-topic-number").count(), 0);
     await mobile.click('[data-gamesense-topic="maps"]');
     await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
     await mobile.click('[data-gamesense-item="bind"]');
