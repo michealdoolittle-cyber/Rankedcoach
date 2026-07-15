@@ -212,6 +212,28 @@ async function run() {
     assert.ok(chartGeometry.cardBottom < chartGeometry.footerTop, JSON.stringify(chartGeometry));
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-chart-spacing.png"), fullPage: true });
+    const homeHudRules = await page.evaluate(() => {
+      const card = getComputedStyle(document.querySelector(".weekly-focus-card"));
+      const tag = getComputedStyle(document.querySelector(".weekly-focus-card .card-pill"));
+      const label = getComputedStyle(document.querySelector(".weekly-focus-card .card-sub"), "::before");
+      const chart = getComputedStyle(document.querySelector("#chartRow"));
+      const nav = getComputedStyle(document.querySelector('.nav-btn[data-page="home"]'));
+      return {
+        cardBorder: card.borderTopColor,
+        cardGradients: (card.backgroundImage.match(/linear-gradient/g) || []).length,
+        tagClip: tag.clipPath,
+        tagRadius: tag.borderTopLeftRadius,
+        labelTick: label.backgroundImage,
+        chartClip: chart.clipPath,
+        navClip: nav.clipPath
+      };
+    });
+    assert.equal(homeHudRules.cardBorder, "rgba(0, 0, 0, 0)", JSON.stringify(homeHudRules));
+    assert.ok(homeHudRules.cardGradients >= 2 && homeHudRules.tagClip.includes("polygon") && parseFloat(homeHudRules.tagRadius) === 0, JSON.stringify(homeHudRules));
+    assert.match(homeHudRules.labelTick, /linear-gradient/);
+    assert.equal(homeHudRules.chartClip, "none");
+    assert.equal(homeHudRules.navClip, "none");
+    await page.locator(".weekly-focus-card").screenshot({ path: path.join(__dirname, "tmp", "hud-home-weekly-focus.png") });
 
     await page.locator('[data-page="stats"]').click();
     const desktopPageMotion = await page.evaluate(() => ({
@@ -237,6 +259,25 @@ async function run() {
     assert.equal(summaryGrid.columns, 3, JSON.stringify(summaryGrid));
     assert.equal(summaryGrid.rows, 2, JSON.stringify(summaryGrid));
     assert.equal(summaryGrid.items, 6, JSON.stringify(summaryGrid));
+    const statsHudRules = await page.evaluate(() => {
+      const contentCard = getComputedStyle(document.querySelector(".stats-performance-card"));
+      const trend = getComputedStyle(document.querySelector(".stats-trend-card"));
+      const tag = getComputedStyle(document.querySelector(".stats-trend-tone"));
+      const peak = getComputedStyle(document.querySelector(".stats-proof-card"));
+      return {
+        contentBorder: contentCard.borderTopColor,
+        contentGradients: (contentCard.backgroundImage.match(/linear-gradient/g) || []).length,
+        trendBorder: trend.borderTopColor,
+        tagClip: tag.clipPath,
+        peakBorder: peak.borderTopColor,
+        peakClip: peak.clipPath
+      };
+    });
+    assert.equal(statsHudRules.contentBorder, "rgba(0, 0, 0, 0)", JSON.stringify(statsHudRules));
+    assert.equal(statsHudRules.trendBorder, "rgba(0, 0, 0, 0)", JSON.stringify(statsHudRules));
+    assert.ok(statsHudRules.contentGradients >= 2 && statsHudRules.tagClip.includes("polygon"), JSON.stringify(statsHudRules));
+    assert.notEqual(statsHudRules.peakBorder, "rgba(0, 0, 0, 0)", JSON.stringify(statsHudRules));
+    assert.equal(statsHudRules.peakClip, "none");
     assert.equal(await page.locator("#statsActMobileValue").innerText(), "Season 2026 Act 3");
     const statsLayoutGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => {
       const summary = layout.querySelector(".stats-summary-card").getBoundingClientRect();
@@ -541,6 +582,22 @@ async function run() {
     const filterState = await page.locator(".insight-filter-btn").evaluateAll(buttons => buttons.map(button => ({ filter: button.dataset.filter, disabled: button.disabled })));
     assert.equal(filterState.find(item => item.filter === "all")?.disabled, false);
     assert.deepEqual(filterState.map(item => item.filter), ["all", "bad", "warn", "good"]);
+    const insightHudRules = await page.evaluate(() => {
+      const card = getComputedStyle(document.querySelector("#insightsList .insight-card"));
+      const filter = getComputedStyle(document.querySelector(".insight-filter-btn"));
+      const meta = getComputedStyle(document.querySelector("#insightsList .insight-meta-pill"));
+      const label = getComputedStyle(document.querySelector("#insightsList .insight-label"), "::before");
+      return {
+        cardBorder: card.borderTopColor,
+        cardGradients: (card.backgroundImage.match(/linear-gradient/g) || []).length,
+        filterClip: filter.clipPath,
+        metaClip: meta.clipPath,
+        labelTick: label.backgroundImage
+      };
+    });
+    assert.notEqual(insightHudRules.cardBorder, "rgba(0, 0, 0, 0)", JSON.stringify(insightHudRules));
+    assert.ok(insightHudRules.cardGradients >= 1 && insightHudRules.filterClip.includes("polygon") && insightHudRules.metaClip.includes("polygon"), JSON.stringify(insightHudRules));
+    assert.match(insightHudRules.labelTick, /linear-gradient/);
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-insight-filters.png"), fullPage: true });
 
     await page.locator("#profileDropdownToggle").click();
@@ -564,6 +621,24 @@ async function run() {
     const closingBlur = Number.parseFloat(closingBackdrop.match(/blur\(([\d.]+)px\)/)?.[1] || "0");
     assert.ok(closingBlur < 12, closingBackdrop);
     await page.waitForFunction(() => document.getElementById("accountSupportModal")?.getAttribute("aria-hidden") === "true");
+
+    await page.locator('[data-page="logging"]').click();
+    await page.waitForTimeout(650);
+    const loggingHudRules = await page.evaluate(() => {
+      const hero = getComputedStyle(document.querySelector(".logging-hero"));
+      const liveTag = getComputedStyle(document.querySelector(".logging-live-pill"));
+      const input = getComputedStyle(document.querySelector("#logFocusSelect"));
+      return {
+        heroBorder: hero.borderTopColor,
+        heroGradients: (hero.backgroundImage.match(/linear-gradient/g) || []).length,
+        tagClip: liveTag.clipPath,
+        inputClip: input.clipPath
+      };
+    });
+    assert.equal(loggingHudRules.heroBorder, "rgba(0, 0, 0, 0)", JSON.stringify(loggingHudRules));
+    assert.ok(loggingHudRules.heroGradients >= 2 && loggingHudRules.tagClip.includes("polygon"), JSON.stringify(loggingHudRules));
+    assert.equal(loggingHudRules.inputClip, "none");
+    await page.locator(".logging-hero").screenshot({ path: path.join(__dirname, "tmp", "hud-logging-session-debrief.png") });
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded" });

@@ -10610,7 +10610,7 @@ function renderTrendBreakdownCard(item = {}) {
     <article class="trend-signal-card tone-${toneMeta.tone}" title="${escapeHtml(item?.detail || item?.value || "")}">
       <div class="trend-signal-top">
         ${getTrendSignalMediaMarkup(item)}
-        <span class="trend-signal-tone">${toneMeta.label}</span>
+        <span class="trend-signal-tone hud-content-tag">${toneMeta.label}</span>
       </div>
       <div class="trend-signal-kicker">${escapeHtml(item?.kicker || "Insight")}</div>
       <div class="trend-signal-title">${escapeHtml(item?.title || "Waiting for insight")}</div>
@@ -42346,7 +42346,7 @@ function renderLogFeed(options = {}){
               ? `<img src="${getAgentIconUrl(entry.agent)}" alt="${entry.agent}">`
               : "?"
           }</span>
-          ${rrLabel ? `<span class="log-result-rr ${rrClasses}">${escapeHtml(rrLabel)}</span>` : ""}
+          ${rrLabel ? `<span class="log-result-rr hud-content-tag ${rrClasses}">${escapeHtml(rrLabel)}</span>` : ""}
           ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit warm-up for this session" title="Edit"><span class="log-training-fire-glyph" aria-hidden="true">&#128293;</span></button>` : ""}
           ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit post-game aim training for this session" title="Edit">${getTrainingCrosshairMarkup()}</button>` : ""}
           <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>
@@ -49924,7 +49924,7 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
         <button class="weekly-focus-pill" type="button" data-weekly-key="${escapeHtml(candidate?.key || "")}" title="${escapeHtml(candidate?.sourceLabel || confidenceConfig.detail)}">
           <div class="weekly-focus-pill-head">
             <span class="weekly-focus-key">${escapeHtml(meta.title)}</span>
-            <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
+            <span class="weekly-focus-confidence hud-content-tag ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
           </div>
           <span class="weekly-focus-text">${escapeHtml(pillBody)}</span>
         </button>
@@ -50764,9 +50764,9 @@ function renderInsightCardsModel() {
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
       <div class="insight-meta-row">
-        ${showPriorityMeta ? `<span class="insight-meta-pill ${priorityTone}">${escapeHtml(priority)} Priority</span>` : ""}
-        <span class="insight-meta-pill ${confidenceTone}">${escapeHtml(confidence)}</span>
-        <span class="insight-meta-pill ${focusTone}">Focus Category: ${escapeHtml(insight.focus || model?.focus || "Build Sample")}</span>
+        ${showPriorityMeta ? `<span class="insight-meta-pill hud-content-tag ${priorityTone}">${escapeHtml(priority)} Priority</span>` : ""}
+        <span class="insight-meta-pill hud-content-tag ${confidenceTone}">${escapeHtml(confidence)}</span>
+        <span class="insight-meta-pill hud-content-tag ${focusTone}">Focus Category: ${escapeHtml(insight.focus || model?.focus || "Build Sample")}</span>
       </div>
       <div class="insight-expand">
         <div class="insight-block">
@@ -50812,7 +50812,7 @@ function renderStatsPerformanceClean() {
     return `
       <button type="button" class="stats-trend-row stats-trend-card stats-trend-${toneMeta.tone} stats-select-card" data-trend-id="${escapeHtml(trend?.id || "")}">
         <div class="stats-trend-head">
-          <span class="stats-trend-tone">${escapeHtml(toneMeta.label)}</span>
+          <span class="stats-trend-tone hud-content-tag">${escapeHtml(toneMeta.label)}</span>
           <span class="stats-trend-kicker">${escapeHtml(trend?.kicker || "Current Window")}</span>
         </div>
         <div class="stats-trend-copy">

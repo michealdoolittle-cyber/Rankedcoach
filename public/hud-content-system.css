@@ -1,0 +1,406 @@
+/* RankedCoach HUD treatment for coaching and reference content only. */
+:root{
+  --hud-hot:#ff5a47;
+  --hud-hot-2:#ffb23d;
+  --hud-cool:#35c6f2;
+  --hud-cool-2:#6e7cff;
+  --hud-good:#3ddc84;
+  --hud-good-2:#22b8a3;
+  --hud-faint:rgba(148,163,184,.34);
+  --hud-line:rgba(148,163,184,.2);
+  --hud-tag-clip:polygon(7px 0,100% 0,100% 100%,7px 100%,0 50%);
+}
+
+/* Content cards. Charts, stat grids, navigation, and form controls are omitted. */
+:is(
+  .hud-content-card,
+  #page-insights .insights-action-card,
+  #page-insights .insight-action-hero,
+  #page-insights .insight-focus-detail,
+  #page-insights .insights-top-card,
+  #page-insights .insight-card,
+  #page-insights .insights-trends-card,
+  #page-insights .insight-trend-row,
+  #page-insights .trend-signal-card,
+  #page-home .weekly-focus-card,
+  #page-home .weekly-focus-pill,
+  #page-home .improvement-card,
+  #page-home .timeline-pill,
+  #page-stats .stats-performance-card,
+  #page-stats .stats-trend-card,
+  #page-stats .stats-breakdown-card,
+  #page-stats .stats-breakdown-cardlet,
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-logging .log-entry,
+  #page-library .gamesense-hero,
+  #page-library .gamesense-season-scope,
+  #page-library .gamesense-topic-card,
+  #page-library .gamesense-gallery-head,
+  #page-library .gamesense-entry-card,
+  #page-library .gamesense-detail-head,
+  #page-library .gamesense-tips-hub,
+  #page-library .gamesense-tips-panel,
+  #page-library .gamesense-tip,
+  #page-library .gamesense-comp-card,
+  #page-library .gamesense-comp-option,
+  #page-library .gamesense-comp-agent-read,
+  #page-library .gamesense-comp-pick-explorer,
+  #page-library .gamesense-comp-pick-row,
+  #page-library .gamesense-weapon-suggestions,
+  #page-library .gamesense-weapon-suggestion,
+  #page-library .gamesense-note-block,
+  #page-library .gamesense-agent-fact-list article,
+  #page-library .gamesense-fact-panel,
+  #page-library .gamesense-fact-read section,
+  #page-library .gamesense-weapon-guidance section,
+  #page-library .gamesense-map-fit,
+  #page-library .gamesense-map-fit-item,
+  #page-library .gamesense-lineups,
+  #page-library .gamesense-collection-archive,
+  #page-library .gamesense-collection-card
+){
+  --hud-edge-a:var(--hud-cool);
+  --hud-edge-b:var(--hud-cool-2);
+  --hud-panel-a:color-mix(in srgb,var(--surface-card,#0b1220) 94%,white 6%);
+  --hud-panel-b:var(--surface-card-2,#0f172a);
+  background-image:
+    linear-gradient(160deg,var(--hud-panel-a),var(--hud-panel-b)),
+    linear-gradient(135deg,var(--hud-edge-a),var(--hud-edge-b)) !important;
+  background-origin:padding-box,border-box !important;
+  background-clip:padding-box,border-box !important;
+  background-color:var(--surface-card,#0b1220) !important;
+  border:1.5px solid transparent !important;
+}
+
+/* The theme standout layer uses an equally important hero background. Keep the
+   debrief inside this content-only system without changing nearby controls. */
+html body[data-theme] :is(
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-insights .insights-action-card .insight-action-hero,
+  #page-insights .insights-action-card .insight-focus-detail
+){
+  background-image:
+    linear-gradient(160deg,var(--hud-panel-a),var(--hud-panel-b)),
+    linear-gradient(135deg,var(--hud-edge-a),var(--hud-edge-b)) !important;
+  background-origin:padding-box,border-box !important;
+  background-clip:padding-box,border-box !important;
+  background-color:var(--surface-card,#0b1220) !important;
+  border-color:transparent !important;
+}
+
+/* Alert and confirmed-strength tones stay tied to the card's meaning. */
+:is(
+  #page-insights .insight-card.insight-bad,
+  #page-insights .insight-card:has(.tone-bad),
+  #page-insights .insights-action-card:has(.tone-bad),
+  #page-insights .trend-signal-card.tone-down,
+  #page-stats .stats-trend-card.stats-trend-down,
+  #page-logging .log-entry.log-entry-loss,
+  #page-library .gamesense-comp-unavailable,
+  #page-library .gamesense-collection-status.is-error
+){
+  --hud-edge-a:var(--hud-hot);
+  --hud-edge-b:var(--hud-hot-2);
+}
+
+:is(
+  #page-insights .insight-card.insight-good,
+  #page-insights .insight-card:has(.tone-good),
+  #page-insights .insights-action-card:has(.tone-good),
+  #page-insights .trend-signal-card.tone-up,
+  #page-stats .stats-trend-card.stats-trend-up,
+  #page-logging .log-entry.log-entry-win
+){
+  --hud-edge-a:var(--hud-good);
+  --hud-edge-b:var(--hud-good-2);
+}
+
+/* One flag-cut tag language for status labels and text-label tabs. */
+:is(
+  .hud-content-tag,
+  #page-insights .insight-meta-pill,
+  #page-insights .insight-source,
+  #page-insights .insight-filter-btn,
+  #page-insights .trend-signal-tone,
+  #page-home .card-pill,
+  #page-home .weekly-focus-confidence,
+  #page-home .timeline-pill-delta,
+  #page-stats .stats-trend-tone,
+  #page-logging .logging-live-pill,
+  #page-logging .log-result-rr,
+  #page-logging .log-tier-row:first-child .log-tier-value,
+  #page-library .gamesense-patch,
+  #page-library .gamesense-season-scope > span,
+  #page-library .gamesense-detail-head .gamesense-map-season-status,
+  #page-library .gamesense-tips-tabs button,
+  #page-library .gamesense-role-options button,
+  #page-library .gamesense-tip > span,
+  #page-library .gamesense-comp-patch,
+  #page-library .gamesense-comp-scope > b,
+  #page-library .gamesense-comp-agent-rate small,
+  #page-library .gamesense-comp-role-tabs button,
+  #page-library .gamesense-weapon-fit,
+  #page-library .gamesense-weapon-side,
+  #page-library .gamesense-map-fit-item > div strong,
+  #page-library .gamesense-collection-meta b
+){
+  --hud-tag-a:var(--hud-cool);
+  --hud-tag-b:var(--hud-cool-2);
+  clip-path:var(--hud-tag-clip) !important;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1.4px solid transparent !important;
+  border-radius:0 !important;
+  background-image:
+    linear-gradient(var(--surface-card-2,#0f172a),var(--surface-card-2,#0f172a)),
+    linear-gradient(90deg,var(--hud-tag-a),var(--hud-tag-b)) !important;
+  background-origin:padding-box,border-box !important;
+  background-clip:padding-box,border-box !important;
+  background-color:var(--surface-card-2,#0f172a) !important;
+  padding:4px 11px 4px 13px;
+  font-family:"Consolas","SF Mono",ui-monospace,monospace !important;
+  font-size:10.5px;
+  line-height:1.15;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+:is(
+  #page-insights .tone-bad,
+  #page-insights .insight-filter-btn[data-filter="bad"],
+  #page-insights .trend-signal-card.tone-down .trend-signal-tone,
+  #page-home .confidence-low,
+  #page-home .timeline-pill.is-negative .timeline-pill-delta,
+  #page-stats .stats-trend-down .stats-trend-tone,
+  #page-logging .log-result-rr-loss,
+  #page-library .gamesense-detail-head .gamesense-map-season-status,
+  #page-library .gamesense-selected-tag
+){
+  --hud-tag-a:var(--hud-hot);
+  --hud-tag-b:var(--hud-hot-2);
+}
+
+:is(
+  #page-insights .tone-good,
+  #page-insights .insight-filter-btn[data-filter="good"],
+  #page-insights .trend-signal-card.tone-up .trend-signal-tone,
+  #page-home .confidence-high,
+  #page-home .timeline-pill.is-positive .timeline-pill-delta,
+  #page-stats .stats-trend-up .stats-trend-tone,
+  #page-logging .log-result-rr-win
+){
+  --hud-tag-a:var(--hud-good);
+  --hud-tag-b:var(--hud-good-2);
+}
+
+:is(
+  #page-insights .insight-filter-btn:disabled,
+  #page-insights .insight-filter-btn.is-empty,
+  #page-home .timeline-pill.is-disabled .timeline-pill-delta,
+  #page-logging .log-result-rr-unverified,
+  #page-logging .log-result-rr-placement
+){
+  --hud-tag-a:var(--hud-faint);
+  --hud-tag-b:var(--hud-line);
+}
+
+/* Library role tabs keep their established role identity inside the new shape. */
+#page-library :is(.gamesense-comp-role-tabs button,.gamesense-role-options button)[data-role-tone="duelist"]{
+  --hud-tag-a:#ff4655;
+  --hud-tag-b:#ff8a66;
+  --hud-role-color:#ff4655;
+}
+#page-library :is(.gamesense-comp-role-tabs button,.gamesense-role-options button)[data-role-tone="controller"]{
+  --hud-tag-a:#a78bfa;
+  --hud-tag-b:#7c3aed;
+  --hud-role-color:#a78bfa;
+}
+#page-library :is(.gamesense-comp-role-tabs button,.gamesense-role-options button)[data-role-tone="initiator"]{
+  --hud-tag-a:#38bdf8;
+  --hud-tag-b:#2563eb;
+  --hud-role-color:#38bdf8;
+}
+#page-library :is(.gamesense-comp-role-tabs button,.gamesense-role-options button)[data-role-tone="sentinel"]{
+  --hud-tag-a:#34d399;
+  --hud-tag-b:#059669;
+  --hud-role-color:#34d399;
+}
+
+#page-library :is(.gamesense-comp-role-tabs button,.gamesense-role-options button).active[data-role-tone]{
+  background-color:color-mix(in srgb,var(--hud-role-color) 24%,var(--surface-card-2,#0f172a)) !important;
+  color:color-mix(in srgb,var(--hud-role-color) 74%,white 26%) !important;
+}
+
+/* Selector grids remain unchanged; only their selected-state label adopts the tag. */
+#page-library :is(.gamesense-ability-grid button.active,.gamesense-weapon-grid button.active)::after{
+  --hud-tag-a:var(--hud-hot);
+  --hud-tag-b:var(--hud-hot-2);
+  content:"Selected";
+  position:absolute;
+  top:7px;
+  right:7px;
+  clip-path:var(--hud-tag-clip) !important;
+  border:1.4px solid transparent !important;
+  border-radius:0 !important;
+  background-image:
+    linear-gradient(var(--surface-card-2,#0f172a),var(--surface-card-2,#0f172a)),
+    linear-gradient(90deg,var(--hud-tag-a),var(--hud-tag-b)) !important;
+  background-origin:padding-box,border-box !important;
+  background-clip:padding-box,border-box !important;
+  padding:4px 7px 4px 9px;
+  color:var(--text-main,#f8fafc);
+  font:700 8px/1 "Consolas","SF Mono",ui-monospace,monospace;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+/* Gradient ticks identify coaching-copy eyebrow labels. */
+:is(
+  .hud-content-label,
+  #page-insights .insight-action-kicker,
+  #page-insights .insights-top-header .card-sub,
+  #page-insights .insights-trends-card > .card-sub,
+  #page-insights .insight-label,
+  #page-insights .trend-signal-kicker,
+  #page-home .weekly-focus-card .card-sub,
+  #page-home .improvement-card .card-sub,
+  #page-home .weekly-focus-key,
+  #page-stats .stats-performance-card > .card-sub,
+  #page-stats .stats-breakdown-card > .card-sub,
+  #page-stats .stats-trend-kicker,
+  #page-stats .stats-breakdown-label,
+  #page-logging .logging-hero-kicker,
+  #page-logging .log-tier-label,
+  #page-library .gamesense-hero-kicker,
+  #page-library .gamesense-detail-head > div:first-child > span,
+  #page-library .gamesense-section-heading > span,
+  #page-library .gamesense-comp-card > div:first-child > span:first-child,
+  #page-library .gamesense-weapon-suggestions > div:first-child > span,
+  #page-library .gamesense-fact-panel-head span,
+  #page-library .gamesense-fact-read section > span,
+  #page-library .gamesense-weapon-guidance section > span,
+  #page-library .gamesense-collection-head > div > span
+){
+  --hud-label-a:var(--hud-cool);
+  --hud-label-b:var(--hud-cool-2);
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-family:"Consolas",ui-monospace,monospace;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+:is(
+  .hud-content-label,
+  #page-insights .insight-action-kicker,
+  #page-insights .insights-top-header .card-sub,
+  #page-insights .insights-trends-card > .card-sub,
+  #page-insights .insight-label,
+  #page-insights .trend-signal-kicker,
+  #page-home .weekly-focus-card .card-sub,
+  #page-home .improvement-card .card-sub,
+  #page-home .weekly-focus-key,
+  #page-stats .stats-performance-card > .card-sub,
+  #page-stats .stats-breakdown-card > .card-sub,
+  #page-stats .stats-trend-kicker,
+  #page-stats .stats-breakdown-label,
+  #page-logging .logging-hero-kicker,
+  #page-logging .log-tier-label,
+  #page-library .gamesense-hero-kicker,
+  #page-library .gamesense-detail-head > div:first-child > span,
+  #page-library .gamesense-section-heading > span,
+  #page-library .gamesense-comp-card > div:first-child > span:first-child,
+  #page-library .gamesense-weapon-suggestions > div:first-child > span,
+  #page-library .gamesense-fact-panel-head span,
+  #page-library .gamesense-fact-read section > span,
+  #page-library .gamesense-weapon-guidance section > span,
+  #page-library .gamesense-collection-head > div > span
+)::before{
+  content:"";
+  flex:0 0 11px;
+  width:11px;
+  height:2px;
+  background:linear-gradient(90deg,var(--hud-label-a),var(--hud-label-b));
+}
+
+/* Internal separators fade into the panel instead of cutting across it. */
+:is(
+  #page-insights .insight-expand,
+  #page-insights .trend-content,
+  #page-logging .log-tier-row + .log-tier-row,
+  #page-library .gamesense-comp-pick-explorer-body,
+  #page-library .gamesense-agent-fact-list article + article,
+  #page-library .gamesense-patch-history li + li,
+  #page-library .gamesense-weapon-guidance section + section
+){
+  position:relative;
+  border-top:0 !important;
+}
+
+:is(
+  #page-insights .insight-expand,
+  #page-insights .trend-content,
+  #page-logging .log-tier-row + .log-tier-row,
+  #page-library .gamesense-comp-pick-explorer-body,
+  #page-library .gamesense-agent-fact-list article + article,
+  #page-library .gamesense-patch-history li + li,
+  #page-library .gamesense-weapon-guidance section + section
+)::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:1px;
+  background:linear-gradient(90deg,var(--hud-cool) 0%,transparent 60%);
+  pointer-events:none;
+}
+
+/* Preserve the directive's explicit exclusions. */
+:is(
+  .app-header,
+  .nav-left,
+  .nav-right,
+  .nav-btn,
+  .mobile-bottom-nav,
+  .nav-rr-widget,
+  #page-home .chart-row,
+  #page-home .stats-summary,
+  #page-stats .stats-summary-card,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-stats .stats-maps-card,
+  #page-stats .stats-agents-card,
+  #page-stats .stats-weapons-card,
+  #page-logging .logging-pill,
+  #page-logging .rating-row,
+  #page-library .gamesense-tactical-card,
+  #page-library .gamesense-map-view-tabs,
+  #page-library .gamesense-map-tools,
+  #page-library .gamesense-ability-grid button,
+  #page-library .gamesense-weapon-grid button
+){
+  --hud-edge-a:initial;
+  --hud-edge-b:initial;
+}
+
+@media (max-width:767px){
+  :is(
+    #page-insights .insight-meta-pill,
+    #page-home .weekly-focus-confidence,
+    #page-home .timeline-pill-delta,
+    #page-stats .stats-trend-tone,
+    #page-logging .logging-live-pill,
+    #page-logging .log-result-rr,
+    #page-library .gamesense-patch,
+    #page-library .gamesense-tip > span,
+    #page-library .gamesense-weapon-fit,
+    #page-library .gamesense-weapon-side
+  ){
+    font-size:clamp(8px,2.35vw,10.5px);
+  }
+}

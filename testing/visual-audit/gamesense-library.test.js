@@ -164,6 +164,23 @@ async function run() {
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
+    const libraryHudRules = await desktop.evaluate(() => {
+      const hero = getComputedStyle(document.querySelector(".gamesense-hero"));
+      const topic = getComputedStyle(document.querySelector(".gamesense-topic-card"));
+      const seasonTag = getComputedStyle(document.querySelector(".gamesense-season-scope > span"));
+      const nav = getComputedStyle(document.querySelector('.nav-btn[data-page="library"]'));
+      return {
+        heroBorder: hero.borderTopColor,
+        heroGradients: (hero.backgroundImage.match(/linear-gradient/g) || []).length,
+        topicBorder: topic.borderTopColor,
+        seasonTagClip: seasonTag.clipPath,
+        navClip: nav.clipPath
+      };
+    });
+    assert.equal(libraryHudRules.heroBorder, "rgba(0, 0, 0, 0)", JSON.stringify(libraryHudRules));
+    assert.equal(libraryHudRules.topicBorder, "rgba(0, 0, 0, 0)", JSON.stringify(libraryHudRules));
+    assert.ok(libraryHudRules.heroGradients >= 2 && libraryHudRules.seasonTagClip.includes("polygon"), JSON.stringify(libraryHudRules));
+    assert.equal(libraryHudRules.navClip, "none");
     const topicCardHeights = await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.map(card => card.getBoundingClientRect().height));
     assert.ok(topicCardHeights.every(height => height >= 250), JSON.stringify(topicCardHeights));
     const topicAnimations = await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.map(card => getComputedStyle(card).animationName));
@@ -241,6 +258,24 @@ async function run() {
     assert.equal(await desktop.locator("[data-gamesense-role]").count(), 5);
     assert.equal(await desktop.locator('.gamesense-tip-grid .gamesense-tip').count(), 2);
     assert.equal(await desktop.locator(".gamesense-tactical-stage img").count(), 1);
+    const mapHudRules = await desktop.evaluate(() => {
+      const tip = getComputedStyle(document.querySelector(".gamesense-tip"));
+      const tab = getComputedStyle(document.querySelector(".gamesense-tips-tabs button"));
+      const tactical = getComputedStyle(document.querySelector(".gamesense-tactical-card"));
+      const mapTool = getComputedStyle(document.querySelector(".gamesense-map-tools button"));
+      return {
+        tipBorder: tip.borderTopColor,
+        tabClip: tab.clipPath,
+        tacticalBorder: tactical.borderTopColor,
+        tacticalClip: tactical.clipPath,
+        mapToolClip: mapTool.clipPath
+      };
+    });
+    assert.equal(mapHudRules.tipBorder, "rgba(0, 0, 0, 0)", JSON.stringify(mapHudRules));
+    assert.match(mapHudRules.tabClip, /polygon/);
+    assert.notEqual(mapHudRules.tacticalBorder, "rgba(0, 0, 0, 0)", JSON.stringify(mapHudRules));
+    assert.equal(mapHudRules.tacticalClip, "none");
+    assert.equal(mapHudRules.mapToolClip, "none");
     assert.equal(await desktop.locator(".gamesense-callout").count(), 10);
     const bindSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
     assert.ok(bindSitePositions["A Site"] > 65 && bindSitePositions["B Site"] < 40, JSON.stringify(bindSitePositions));
@@ -619,6 +654,12 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
     assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
     assert.match(await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
+    const abilitySelectionHud = await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => ({
+      buttonClip: getComputedStyle(button).clipPath,
+      selectedClip: getComputedStyle(button, "::after").clipPath
+    }));
+    assert.equal(abilitySelectionHud.buttonClip, "none", JSON.stringify(abilitySelectionHud));
+    assert.match(abilitySelectionHud.selectedClip, /polygon/);
     await desktop.waitForTimeout(2200);
     assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /Global Pick Rate.*10\.3%.*Rank #1.*Tracker Network.*Past two weeks/is);
     assert.equal(await desktop.locator(".gamesense-map-fit-item").count(), 3);

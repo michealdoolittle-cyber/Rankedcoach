@@ -117,7 +117,9 @@ async function run() {
     await page.click('.nav-btn[data-page="logging"]');
     await page.locator("#page-logging.active").waitFor({ state: "visible" });
     await page.locator(".log-result-rr-placement").waitFor({ state: "visible" });
-    assert.equal(await page.locator(".log-result-rr-placement").innerText(), "Placements");
+    assert.equal((await page.locator(".log-result-rr-placement").textContent()).trim(), "Placements");
+    assert.ok(await page.locator(".log-result-rr-placement").evaluate(element => element.classList.contains("hud-content-tag")));
+    assert.match(await page.locator(".log-result-rr-placement").evaluate(element => getComputedStyle(element).clipPath), /polygon/);
     assert.equal(await page.locator(".log-result-rr-unverified").count(), 0);
 
     await page.click('.nav-btn[data-page="home"]');

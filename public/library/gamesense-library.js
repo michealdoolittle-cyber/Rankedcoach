@@ -195,7 +195,7 @@
     const season = getReference().season || {};
     return `
       <div class="gamesense-overview">
-        <div class="gamesense-season-scope"><span>Active Season</span><strong>${escapeHtml(season.label || "Active Season")} | Patch ${escapeHtml(season.patch || "Current")}</strong><p>Agent, map, and weapon rates on this page use the active competitive season, not historical profile data.</p></div>
+        <div class="gamesense-season-scope"><span class="hud-content-tag">Active Season</span><strong>${escapeHtml(season.label || "Active Season")} | Patch ${escapeHtml(season.patch || "Current")}</strong><p>Agent, map, and weapon rates on this page use the active competitive season, not historical profile data.</p></div>
         <div class="gamesense-topic-grid">
           ${Object.entries(topicMeta).map(([key, meta], index) => `
             <button class="gamesense-topic-card" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
@@ -381,7 +381,7 @@
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
             <summary>
-              <span class="gamesense-weapon-suggestion-top"><span aria-hidden="true"></span><span class="gamesense-weapon-fit">${escapeHtml(item.fit)}</span>${item.side ? `<b class="gamesense-weapon-side">${escapeHtml(item.side)}</b>` : `<span aria-hidden="true"></span>`}</span>
+              <span class="gamesense-weapon-suggestion-top"><span aria-hidden="true"></span><span class="gamesense-weapon-fit hud-content-tag">${escapeHtml(item.fit)}</span>${item.side ? `<b class="gamesense-weapon-side hud-content-tag">${escapeHtml(item.side)}</b>` : `<span aria-hidden="true"></span>`}</span>
               <span class="gamesense-weapon-suggestion-art"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.weapon)}"><i aria-hidden="true"></i></span>
               <strong class="gamesense-weapon-suggestion-name">${escapeHtml(item.weapon)}</strong>
             </summary>
@@ -448,13 +448,13 @@
     if (!hasCurrentSample) {
       return `
         <section class="gamesense-comp-card gamesense-comp-unavailable">
-          <div><span>Current-Season Comps</span><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></div>
+          <div><span>Current-Season Comps</span><strong class="gamesense-comp-patch hud-content-tag">Patch ${escapeHtml(patchLabel)}</strong></div>
           <p>${escapeHtml(map.compStatus || "No verified current-season composition sample is available for this map.")}</p>
         </section>`;
     }
     return `
       <section class="gamesense-comp-card">
-        <div><span>Current Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
+        <div><span>Current Competitive Comps</span><span class="gamesense-comp-scope"><b class="hud-content-tag">${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch hud-content-tag">Patch ${escapeHtml(patchLabel)}</strong></span></div>
         <p class="gamesense-comp-source">${escapeHtml(sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed.")}</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
           const referenceLabels = ["Primary role layout", "Secondary role layout", "Alternate role layout"];
@@ -508,7 +508,7 @@
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
-        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
+        <div class="gamesense-map-detail-actions"><span class="gamesense-patch hud-content-tag">As of Patch ${escapeHtml(map.metaComp?.patch)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
       <div class="gamesense-detail-grid">
         ${renderMapTips(map)}
@@ -559,7 +559,7 @@
     return `
       <div class="gamesense-detail-head gamesense-agent-detail-head">
         <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
-        <div class="gamesense-agent-detail-actions"><span class="gamesense-patch">Active season</span><button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button></div>
+        <div class="gamesense-agent-detail-actions"><span class="gamesense-patch hud-content-tag">Active season</span><button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button></div>
       </div>
       <section class="gamesense-agent-hero">
         <div class="gamesense-agent-portrait-wrap">
@@ -661,7 +661,7 @@
     return `
       <div class="gamesense-detail-head gamesense-weapon-detail-head">
         <div><span>Weapon Dossier</span><h2>${escapeHtml(group.label)}</h2></div>
-        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(getReference().season?.patch || "Current")}</span><button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
+        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch hud-content-tag">As of Patch ${escapeHtml(getReference().season?.patch || "Current")}</span><button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
       </div>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Arsenal</span><strong>Select a weapon</strong></div>
