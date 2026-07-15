@@ -1364,6 +1364,222 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   }
 }
 
+/* 2026-07-15 selector stability, comp role layouts, and hotspot focus. */
+.gamesense-topic-card{
+  grid-template-areas:"action" "title" "copy";
+  grid-template-rows:auto auto auto;
+  align-content:end;
+  justify-items:center;
+  text-align:center;
+}
+.gamesense-topic-card .gamesense-topic-action{
+  grid-area:action;
+  align-self:end;
+  width:100%;
+  margin:0 0 7px;
+  color:var(--gamesense-cool);
+  text-align:center;
+}
+.gamesense-topic-card > strong{
+  grid-area:title;
+  width:100%;
+  margin:0 0 22px;
+  text-align:center !important;
+}
+.gamesense-topic-card > small{
+  grid-area:copy;
+  width:100%;
+  text-align:center;
+}
+.gamesense-topic-collage{
+  align-items:center;
+  justify-items:center;
+}
+
+@media (min-width:821px){
+  html:not(.is-mobile-layout) .gamesense-topic-card .gamesense-topic-action{
+    margin:0 0 7px;
+  }
+}
+
+.gamesense-comp-line{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+}
+.gamesense-comp-line .gamesense-comp-agents{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  margin:10px 0 0;
+}
+.gamesense-comp-agents button[data-role-tone]{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  grid-template-rows:minmax(58px,auto);
+  align-items:center;
+  justify-items:stretch;
+  gap:8px;
+  min-height:74px;
+  padding:7px 9px;
+}
+.gamesense-comp-agent-identity{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:7px;
+  min-width:0;
+  overflow:visible !important;
+}
+.gamesense-comp-agent-identity img{
+  flex:0 0 50px;
+  width:50px !important;
+  height:58px !important;
+  object-fit:contain;
+}
+.gamesense-comp-agent-identity strong{
+  min-width:0;
+  overflow:hidden;
+  color:#fff;
+  font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  text-overflow:ellipsis;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.gamesense-comp-agent-rate{
+  position:relative;
+  z-index:1;
+  display:grid;
+  align-content:center;
+  justify-items:end;
+  gap:3px;
+  min-width:62px;
+  min-height:44px;
+  padding-left:9px;
+  border-left:1px solid color-mix(in srgb,var(--comp-role-color,#94a3b8) 56%,rgba(255,255,255,.18));
+  overflow:visible !important;
+  text-align:right;
+}
+.gamesense-comp-agent-rate b{
+  color:var(--gamesense-warm,#facc15);
+  font:900 12px/1 var(--font-display,"Rajdhani",sans-serif);
+}
+.gamesense-comp-agent-rate small{
+  color:rgba(248,250,252,.72);
+  font:800 8px/1 var(--font-body,"Rajdhani",sans-serif);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.gamesense-comp-role-summary{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) auto;
+  align-items:center;
+  gap:14px;
+  padding:11px 2px 0;
+  border-top:1px solid color-mix(in srgb,var(--gamesense-cool) 28%,rgba(148,163,184,.18));
+}
+.gamesense-comp-role-summary-label{
+  display:grid;
+  gap:3px;
+}
+.gamesense-comp-role-summary-label span{
+  color:var(--text-main,#f8fafc);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.gamesense-comp-role-summary-label small{
+  color:var(--text-muted,#a8b3c7);
+  font:700 9px/1 var(--font-body,"Rajdhani",sans-serif);
+}
+.gamesense-comp-role-summary .gamesense-comp-makeup{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  min-width:0;
+  padding:0;
+}
+.gamesense-comp-role-summary .gamesense-comp-role-stat{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:6px;
+  min-width:92px;
+}
+.gamesense-comp-role-summary .gamesense-comp-role-stat > span{
+  display:grid;
+  gap:3px;
+  min-width:0;
+}
+.gamesense-comp-role-summary .gamesense-comp-role-stat b{
+  color:var(--gamesense-warm,#facc15);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  white-space:nowrap;
+}
+.gamesense-comp-role-summary .gamesense-comp-role-stat small{
+  color:var(--text-muted,#a8b3c7);
+  font:800 8px/1 var(--font-body,"Rajdhani",sans-serif);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.gamesense-plant-marker{
+  appearance:none;
+  cursor:pointer;
+}
+@media (min-width:821px){
+  html:not(.is-mobile-layout) .gamesense-plant-marker:hover{
+    z-index:5;
+    animation:none;
+  }
+  html:not(.is-mobile-layout) .gamesense-plant-marker:is(:hover,.active) i{
+    animation:gamesense-plant-icon-pulse .88s ease-in-out infinite;
+  }
+}
+@keyframes gamesense-plant-icon-pulse{
+  0%,100%{transform:scale(1);filter:brightness(1);box-shadow:0 0 0 rgba(255,48,68,0);}
+  50%{transform:scale(1.75);filter:brightness(1.3);box-shadow:0 0 9px var(--theme-accent,var(--accent,#ff4655));}
+}
+.gamesense-plant-legend{
+  transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease;
+}
+.gamesense-plant-legend.has-hotspot-focus{
+  border-color:var(--theme-accent,var(--accent,#ff4655)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 42%,transparent),0 0 24px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 34%,transparent) !important;
+}
+.gamesense-plant-legend > div:is(.active,.is-hotspot-preview){
+  border-color:var(--theme-accent,var(--accent,#ff4655));
+  background:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,rgba(15,23,42,.9));
+  box-shadow:inset 3px 0 0 var(--theme-accent,var(--accent,#ff4655));
+}
+
+/* The View Transition owns navigation motion; nested entrance transforms caused diagonal travel. */
+.gamesense-topic-card,
+.gamesense-entry-card,
+.gamesense-library-view > *{
+  animation:none !important;
+}
+
+@media (max-width:820px){
+  html.is-mobile-layout .gamesense-comp-line .gamesense-comp-agents{
+    grid-template-columns:minmax(0,1fr);
+  }
+  html.is-mobile-layout .gamesense-comp-agents button[data-role-tone]{
+    grid-template-rows:minmax(54px,auto);
+  }
+  html.is-mobile-layout .gamesense-comp-role-summary{
+    grid-template-columns:minmax(0,1fr);
+  }
+  html.is-mobile-layout .gamesense-comp-role-summary .gamesense-comp-makeup{
+    justify-content:flex-start;
+    flex-wrap:wrap;
+    margin:0;
+  }
+}
+
 .gamesense-weapon-suggestion-detail{
   display:grid !important;
   gap:8px;
@@ -1702,4 +1918,35 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
     grid-row:auto;
     text-align:left;
   }
+}
+
+/* Final cascade lock for the overview hierarchy and side-to-side-only Library motion. */
+.gamesense-topic-card,
+.gamesense-entry-card,
+.gamesense-library-view > *{
+  animation:none !important;
+}
+.gamesense-topic-card{
+  grid-template-areas:"action" "title" "copy" !important;
+  grid-template-rows:auto auto auto !important;
+  align-content:end !important;
+  justify-items:center !important;
+  text-align:center !important;
+}
+.gamesense-topic-card .gamesense-topic-action{
+  grid-area:action !important;
+  width:100% !important;
+  margin:0 0 7px !important;
+  text-align:center !important;
+}
+.gamesense-topic-card > strong{
+  grid-area:title !important;
+  width:100% !important;
+  margin:0 0 22px !important;
+  text-align:center !important;
+}
+.gamesense-topic-card > small{
+  grid-area:copy !important;
+  width:100% !important;
+  text-align:center !important;
 }

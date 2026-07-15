@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+  <defs>
+    <filter id="fog" x="-30%" y="-30%" width="160%" height="160%">
+      <feTurbulence type="fractalNoise" baseFrequency=".007 .018" numOctaves="4" seed="19" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="72"/>
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <radialGradient id="violet"><stop stop-color="#ddd6fe" stop-opacity=".36"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ash"><stop stop-color="#cbd5e1" stop-opacity=".24"/><stop offset="1" stop-color="#64748b" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g filter="url(#fog)"><ellipse cx="240" cy="320" rx="310" ry="170" fill="url(#violet)"/><ellipse cx="650" cy="510" rx="360" ry="205" fill="url(#ash)"/><ellipse cx="350" cy="760" rx="330" ry="130" fill="url(#violet)"/></g>
+</svg>

@@ -351,11 +351,15 @@ async function run() {
     assert.equal(await clutchInsight.count(), 1);
     await clutchInsight.evaluate(card => card.scrollIntoView({ block: "start" }));
     const clutchGeometry = await clutchInsight.evaluate(card => {
+      const host = card.closest(".insights-top-card");
+      const layout = card.closest(".insights-layout");
       const list = card.closest(".insights-list");
       const title = card.querySelector(".insight-title");
       const visual = card.querySelector(".coaching-category-visual");
       const tag = card.querySelector(".insight-tag");
       const cardRect = card.getBoundingClientRect();
+      const hostRect = host.getBoundingClientRect();
+      const layoutRect = layout.getBoundingClientRect();
       const listRect = list.getBoundingClientRect();
       const titleRect = title.getBoundingClientRect();
       const visualRect = visual.getBoundingClientRect();
@@ -367,6 +371,16 @@ async function run() {
       mutedProbe.remove();
       return {
         cardBottom: cardRect.bottom,
+        cardRect: cardRect.toJSON(),
+        cardDisplay: getComputedStyle(card).display,
+        cardColumns: getComputedStyle(card).gridTemplateColumns,
+        headerDisplay: getComputedStyle(card.querySelector(".insight-header")).display,
+        hostTop: hostRect.top,
+        hostBottom: hostRect.bottom,
+        layoutBottom: layoutRect.bottom,
+        followingCardTops: [...document.querySelectorAll("#page-insights .insights-action-card,#page-insights .insights-trends-card")]
+          .map(item => item.getBoundingClientRect().top)
+          .filter(top => top > cardRect.top),
         listBottom: listRect.bottom,
         listScrollTop: list.scrollTop,
         listScrollHeight: list.scrollHeight,
@@ -389,6 +403,7 @@ async function run() {
     assert.ok(clutchGeometry.visualRight <= clutchGeometry.tagLeft + 1, JSON.stringify(clutchGeometry));
     assert.ok(Math.abs(clutchGeometry.visualBottom - clutchGeometry.tagBottom) <= 1, JSON.stringify(clutchGeometry));
     assert.equal(clutchGeometry.transform, "none");
+    assert.equal(await clutchInsight.locator(".insight-feedback-row").count(), 0);
     await clutchInsight.screenshot({ path: path.join(__dirname, "tmp", "qol-clutch-closing-card.png") });
     await clutchInsight.hover();
     await page.waitForTimeout(250);
@@ -450,10 +465,13 @@ async function run() {
         expandBottom: expandRect.bottom,
         previewRight: previewRect.right,
         visualLeft: visualRect.left,
+        visualRight: visualRect.right,
+        visualTop: visualRect.top,
         visualBottom: visualRect.bottom,
         titleLeft: titleRect.left,
         titleBottom: titleRect.bottom,
         tagTop: tagRect.top,
+        tagLeft: tagRect.left,
         tagBottom: tagRect.bottom,
         metaTop: metaRect.top,
         metaBottom: metaRect.bottom,
@@ -466,13 +484,15 @@ async function run() {
     assert.ok(expandedInsight.open && expandedInsight.cardBottom + 6 <= expandedInsight.hostBottom, JSON.stringify(expandedInsight));
     assert.ok(expandedInsight.cardBottom + 6 <= expandedInsight.listBottom, JSON.stringify(expandedInsight));
     assert.ok(expandedInsight.followingCardTops.every(top => expandedInsight.cardBottom + 6 <= top), JSON.stringify(expandedInsight));
+    assert.ok(Math.abs(expandedInsight.hostRect.top - clutchGeometry.hostTop) <= 1 && Math.abs(expandedInsight.hostRect.bottom - clutchGeometry.hostBottom) <= 1, JSON.stringify({ clutchGeometry, expandedInsight }));
+    assert.ok(expandedInsight.followingCardTops.length === clutchGeometry.followingCardTops.length && expandedInsight.followingCardTops.every((top, index) => Math.abs(top - clutchGeometry.followingCardTops[index]) <= 4), JSON.stringify({ clutchGeometry, expandedInsight }));
     assert.ok(expandedInsight.borderBottomWidth >= 1 && expandedInsight.borderBottomColor !== "rgba(0, 0, 0, 0)", JSON.stringify(expandedInsight));
     assert.ok(expandedInsight.visualLeft > expandedInsight.cardMidpoint && expandedInsight.previewRight <= expandedInsight.visualLeft, JSON.stringify(expandedInsight));
-    assert.ok(expandedInsight.titleLeft > expandedInsight.visualLeft, JSON.stringify(expandedInsight));
-    assert.ok(expandedInsight.visualBottom <= expandedInsight.tagTop + 1 && expandedInsight.titleBottom <= expandedInsight.metaTop + 1, JSON.stringify(expandedInsight));
-    assert.ok(Math.abs(expandedInsight.tagBottom - expandedInsight.metaBottom) <= 3, JSON.stringify(expandedInsight));
+    assert.ok(expandedInsight.titleLeft < expandedInsight.visualLeft && expandedInsight.visualRight <= expandedInsight.tagLeft + 1, JSON.stringify(expandedInsight));
+    assert.ok(Math.abs(expandedInsight.visualBottom - expandedInsight.tagBottom) <= 3 && expandedInsight.metaTop >= Math.max(expandedInsight.visualBottom, expandedInsight.tagBottom) - 1, JSON.stringify(expandedInsight));
     assert.ok(expandedInsight.expandBottom <= expandedInsight.cardBottom - 10, JSON.stringify(expandedInsight));
     assert.ok(expandedInsight.expandScrollHeight <= expandedInsight.expandClientHeight + 1, JSON.stringify(expandedInsight));
+    assert.equal(await clutchInsight.locator(".insight-feedback-row").count(), 0);
     await clutchInsight.screenshot({ path: path.join(__dirname, "tmp", "qol-clutch-closing-expanded.png") });
     const trendMedia = await page.locator("#page-insights .trend-signal-media").evaluateAll(items => items.map(item => ({
       visible: item.getBoundingClientRect().width > 0 && item.getBoundingClientRect().height > 0,

@@ -23029,30 +23029,51 @@ body.theme-tide .app-root::before{
 }
 
 body.theme-grid-drift .app-root::before{
-  background-size:44px 44px;
-  opacity:.72;
-  animation:themeGridDrift calc(var(--theme-motion-duration) * 1.15) linear infinite;
+  background-size:320px 320px;
+  opacity:.86;
+  will-change:transform,background-position;
+  animation:themeGridDrift calc(var(--theme-motion-duration) * .72) linear infinite;
 }
 
 body.theme-star-drift .app-root::before{
-  background-size:260px 220px;
-  opacity:.72;
-  animation:themeStarDrift calc(var(--theme-motion-duration) * 1.5) linear infinite;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:max(108vw,108vh) max(108vw,108vh);
+  opacity:.9;
+  transform-origin:center;
+  will-change:transform;
+  animation:themeMilkyWaySpin calc(var(--theme-motion-duration) * 2.35) linear infinite;
 }
 
 body.theme-star-drift .app-root::after{
-  animation:themeNebulaBreathe calc(var(--theme-motion-duration) * 1.1) ease-in-out infinite alternate;
+  opacity:.82;
+  animation:themeNebulaBreathe calc(var(--theme-motion-duration) * .82) ease-in-out infinite alternate;
 }
 
 body.theme-water-flow .app-root::before{
-  background-size:130% 130%;
-  animation:themeWaterFlow calc(var(--theme-motion-duration) * 1.2) ease-in-out infinite alternate;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:max(112vw,112vh) max(112vw,112vh);
+  opacity:.88;
+  transform-origin:center;
+  will-change:transform;
+  animation:themeWaterWhirlpool calc(var(--theme-motion-duration) * .9) cubic-bezier(.45,.05,.55,.95) infinite alternate;
+}
+
+body.theme-water-flow .app-root::after{
+  background-size:140% 140%;
+  opacity:.76;
+  animation:themeWaterCaustics calc(var(--theme-motion-duration) * .48) ease-in-out infinite alternate;
 }
 
 body.theme-fog-drift .app-root::before,
 body.theme-fog-drift .app-root::after{
-  filter:blur(16px);
-  animation:themeFogField calc(var(--theme-motion-duration) * 1.35) ease-in-out infinite alternate;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:112% 112%;
+  filter:blur(9px);
+  will-change:transform,opacity;
+  animation:themeFogField calc(var(--theme-motion-duration) * .82) ease-in-out infinite alternate;
 }
 
 body.theme-fog-drift .app-root::after{
@@ -23060,21 +23081,39 @@ body.theme-fog-drift .app-root::after{
 }
 
 body.theme-fractal-shift .app-root::before{
-  background-size:170% 170%;
-  animation:themeFractalShift calc(var(--theme-motion-duration) * 1.45) linear infinite;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:max(108vw,108vh) max(108vw,108vh);
+  opacity:.84;
+  transform-origin:center;
+  will-change:transform;
+  animation:themeCryoFracture calc(var(--theme-motion-duration) * 1.3) ease-in-out infinite alternate;
 }
 
 body.theme-solar-flow .app-root::before{
-  background-size:150% 150%;
-  animation:themeSolarFlow calc(var(--theme-motion-duration) * 1.25) ease-in-out infinite alternate;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:118% 118%;
+  opacity:.92;
+  will-change:transform;
+  animation:themeSolarFlow calc(var(--theme-motion-duration) * .72) ease-in-out infinite alternate;
 }
 
 body.theme-solar-flow .app-root::after{
-  animation:themeSolarFlare calc(var(--theme-motion-duration) * .8) ease-in-out infinite alternate;
+  background-size:132% 132%;
+  opacity:.88;
+  will-change:transform,opacity;
+  animation:themeMagmaBubble calc(var(--theme-motion-duration) * .45) ease-in-out infinite alternate;
 }
 
 body.theme-prism-turn .app-root::before{
-  animation:themePrismTurn calc(var(--theme-motion-duration) * 1.6) linear infinite;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:max(112vw,112vh) max(112vw,112vh);
+  opacity:.86;
+  transform-origin:center;
+  will-change:transform;
+  animation:themePrismKaleidoscope calc(var(--theme-motion-duration) * 1.35) linear infinite;
 }
 
 body.theme-prism-turn .app-root::after{
@@ -23182,8 +23221,8 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themeGridDrift{
-  from{ background-position:0 0; transform:translate3d(0,0,0); }
-  to{ background-position:44px 44px; transform:translate3d(-1%,1%,0); }
+  from{ background-position:0 0; transform:translate3d(0,0,0) scale(1.01); }
+  to{ background-position:320px 160px; transform:translate3d(-1.5%,1.5%,0) scale(1.04); }
 }
 
 @keyframes themeStarDrift{
@@ -23196,9 +23235,25 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
   to{ opacity:.82; transform:translate3d(2%,-1.5%,0) scale(1.08); }
 }
 
+@keyframes themeMilkyWaySpin{
+  from{ transform:rotate(0deg) scale(1.04); }
+  to{ transform:rotate(360deg) scale(1.08); }
+}
+
 @keyframes themeWaterFlow{
   from{ background-position:0 0; transform:translate3d(-2%,1%,0) skewX(-1deg) scale(1.03); }
   to{ background-position:80px 34px; transform:translate3d(2%,-1%,0) skewX(1deg) scale(1.07); }
+}
+
+@keyframes themeWaterWhirlpool{
+  0%{ transform:translate3d(-3%,1%,0) rotate(-4deg) scale(1.08); }
+  55%{ transform:translate3d(2%,-2%,0) rotate(5deg) scale(1.14); }
+  100%{ transform:translate3d(4%,1%,0) rotate(12deg) scale(1.1); }
+}
+
+@keyframes themeWaterCaustics{
+  from{ background-position:0 0; transform:translate3d(-2%,2%,0) scale(1.04); opacity:.56; }
+  to{ background-position:90px -58px; transform:translate3d(2%,-2%,0) scale(1.1); opacity:.9; }
 }
 
 @keyframes themeFogField{
@@ -23211,6 +23266,11 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
   to{ background-position:110px -76px; transform:rotate(2deg) scale(1.08); }
 }
 
+@keyframes themeCryoFracture{
+  from{ transform:translate3d(-2%,1%,0) rotate(-2deg) scale(1.06); opacity:.68; }
+  to{ transform:translate3d(2%,-1%,0) rotate(5deg) scale(1.13); opacity:.94; }
+}
+
 @keyframes themeSolarFlow{
   from{ background-position:0 0; transform:translate3d(-2%,2%,0) scale(1.04) rotate(-1deg); }
   to{ background-position:90px -60px; transform:translate3d(2%,-2%,0) scale(1.1) rotate(2deg); }
@@ -23221,9 +23281,21 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
   to{ opacity:.86; transform:translate3d(2%,-1%,0) scale(1.09); }
 }
 
+@keyframes themeMagmaBubble{
+  0%{ background-position:0 0; transform:translate3d(-2%,3%,0) scale(1.03); opacity:.62; }
+  55%{ background-position:70px -84px; transform:translate3d(1%,-2%,0) scale(1.1); opacity:.96; }
+  100%{ background-position:126px -132px; transform:translate3d(3%,-4%,0) scale(1.07); opacity:.78; }
+}
+
 @keyframes themePrismTurn{
   from{ transform:rotate(0deg) scale(1.1); filter:hue-rotate(0deg); }
   to{ transform:rotate(360deg) scale(1.16); filter:hue-rotate(32deg); }
+}
+
+@keyframes themePrismKaleidoscope{
+  0%{ transform:rotate(0deg) scale(1.08); filter:hue-rotate(0deg) saturate(1.05); }
+  50%{ transform:rotate(180deg) scale(1.16); filter:hue-rotate(36deg) saturate(1.28); }
+  100%{ transform:rotate(360deg) scale(1.08); filter:hue-rotate(0deg) saturate(1.05); }
 }
 
 @keyframes themePrismSweep{
@@ -52945,7 +53017,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
     right:auto !important;
     bottom:auto !important;
     left:auto !important;
-    align-self:center !important;
+    align-self:end !important;
     margin-left:auto !important;
     width:36px !important;
     min-width:36px !important;
@@ -54594,87 +54666,157 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
   }
 }
 
-/* Expanded Priority Trend: keep the full border visible and stack its right-side read. */
+/* Stable desktop Priority Trends rail: status top-right, evidence below, no open-state reflow. */
 @media (min-width:821px){
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-layout:has(.insights-list.has-open-card){
+  body[data-page-slide-direction="forward"] .page.entering{transform:translate3d(72px,0,0) !important;}
+  body[data-page-slide-direction="forward"] .page.exiting{transform:translate3d(-52px,0,0) !important;}
+  body[data-page-slide-direction="backward"] .page.entering{transform:translate3d(-72px,0,0) !important;}
+  body[data-page-slide-direction="backward"] .page.exiting{transform:translate3d(52px,0,0) !important;}
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-layout{
     height:auto !important;
     min-height:0 !important;
-    grid-template-rows:auto minmax(366px,auto) minmax(320px,auto) !important;
+    grid-template-rows:auto 330px minmax(320px,auto) !important;
     overflow:visible !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card{
     height:100% !important;
     min-height:0 !important;
-    padding-bottom:14px !important;
+    padding-bottom:12px !important;
     overflow:hidden !important;
   }
-
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card{
-    padding-bottom:12px !important;
+    min-height:0 !important;
+    padding-bottom:10px !important;
     overflow-x:hidden !important;
     overflow-y:auto !important;
   }
-
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
-    grid-template-columns:minmax(260px,1fr) 46px minmax(420px,max-content) !important;
-    grid-template-rows:auto auto minmax(118px,auto) !important;
-    grid-template-areas:
-      "preview visual title"
-      "preview tag meta"
-      "expand expand expand" !important;
-    column-gap:10px !important;
-    row-gap:5px !important;
-    padding:10px 12px 16px !important;
-    margin:0 0 6px !important;
+    display:grid !important;
+    grid-template-columns:minmax(260px,1fr) 42px auto !important;
+    grid-template-rows:auto auto !important;
+    grid-template-areas:none !important;
+    align-items:center !important;
+    column-gap:9px !important;
+    row-gap:6px !important;
+    height:auto !important;
+    min-height:92px !important;
+    max-height:none !important;
+    padding:10px 12px !important;
+    margin:0 0 7px !important;
     overflow:hidden !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-header,
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-header-main{
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
+    grid-template-rows:auto auto minmax(96px,auto) !important;
+    grid-template-areas:none !important;
+    min-height:208px !important;
+    padding-bottom:12px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-header,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-header-main{
     display:contents !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .coaching-category-visual{
-    grid-area:visual !important;
-    position:static !important;
-    align-self:end !important;
-    justify-self:end !important;
-    width:46px !important;
-    height:46px !important;
-  }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-title{
-    grid-area:title !important;
-    align-self:end !important;
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-title{
+    grid-area:auto !important;
+    grid-column:1 !important;
+    grid-row:1 !important;
+    align-self:center !important;
     justify-self:start !important;
     color:var(--text-muted,#a8b3c7) !important;
     text-align:left !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-tag{
-    grid-area:tag !important;
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .coaching-category-visual{
+    grid-area:auto !important;
+    grid-column:2 !important;
+    grid-row:1 !important;
     position:static !important;
-    align-self:start !important;
-    justify-self:center !important;
+    align-self:end !important;
+    justify-self:end !important;
+    width:42px !important;
+    height:42px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-tag{
+    grid-area:auto !important;
+    grid-column:3 !important;
+    grid-row:1 !important;
+    position:static !important;
+    align-self:end !important;
+    justify-self:start !important;
     margin:0 !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-meta-row{
-    grid-area:meta !important;
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-preview{
+    grid-area:auto !important;
+    grid-column:1 !important;
+    grid-row:2 !important;
+    align-self:center !important;
+    max-width:none !important;
+    padding:0 !important;
+    text-align:left !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-meta-row{
+    grid-area:auto !important;
+    grid-column:auto !important;
+    grid-row:auto !important;
+    position:absolute !important;
+    top:58px !important;
+    right:12px !important;
+    width:max-content !important;
+    max-width:calc(100% - 24px) !important;
     align-self:start !important;
     justify-content:flex-end !important;
     padding-top:0 !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-preview{
-    grid-area:preview !important;
-    align-self:center !important;
-    padding:0 !important;
-    text-align:left !important;
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-expand{
+    grid-area:auto !important;
+    grid-column:1 / 4 !important;
+    grid-row:3 !important;
   }
-
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand{
-    grid-area:expand !important;
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card.open .insight-expand{
+    min-height:96px !important;
+    margin-top:24px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-header,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-header-main{
+    display:contents !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-title{
+    grid-area:auto !important;
+    grid-column:1 !important;
+    grid-row:1 !important;
+    align-self:center !important;
+    justify-self:start !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .coaching-category-visual{
+    grid-area:auto !important;
+    grid-column:2 !important;
+    grid-row:1 !important;
+    align-self:end !important;
+    justify-self:end !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-tag{
+    grid-area:auto !important;
+    grid-column:3 !important;
+    grid-row:1 !important;
+    align-self:end !important;
+    justify-self:start !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-preview{
+    grid-column:1 !important;
+    grid-row:2 !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-meta-row{
+    grid-column:auto !important;
+    grid-row:auto !important;
+    position:absolute !important;
+    top:58px !important;
+    right:12px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing.open .insight-expand{
+    grid-column:1 / 4 !important;
+    grid-row:3 !important;
   }
 }
+
+#page-insights .insight-feedback-row{display:none !important;}

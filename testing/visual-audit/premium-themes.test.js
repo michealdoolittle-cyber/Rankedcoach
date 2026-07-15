@@ -6,13 +6,13 @@ const { chromium } = require("playwright");
 const { PREMIUM_THEMES, getPremiumThemesForProfile } = require("../../themes/premiumThemes");
 
 const expected = [
-  ["tactical-matrix", "grid-drift"],
-  ["astral-galaxy", "star-drift"],
-  ["abyssal-tide", "water-flow"],
-  ["spectral-fog", "fog-drift"],
-  ["cryo-fractal", "fractal-shift"],
-  ["solar-magma", "solar-flow"],
-  ["prism-refraction", "prism-turn"]
+  ["tactical-matrix", "grid-drift", "themeGridDrift"],
+  ["astral-galaxy", "star-drift", "themeMilkyWaySpin"],
+  ["abyssal-tide", "water-flow", "themeWaterWhirlpool"],
+  ["spectral-fog", "fog-drift", "themeFogField"],
+  ["cryo-fractal", "fractal-shift", "themeCryoFracture"],
+  ["solar-magma", "solar-flow", "themeSolarFlow"],
+  ["prism-refraction", "prism-turn", "themePrismKaleidoscope"]
 ];
 
 assert.equal(PREMIUM_THEMES.length, 9);
@@ -24,7 +24,7 @@ const publicApp = fs.readFileSync(path.resolve(__dirname, "../../public/app.js")
 const publicCss = fs.readFileSync(path.resolve(__dirname, "../../public/app.css"), "utf8");
 const browserCatalog = fs.readFileSync(path.resolve(__dirname, "../../public/themes/premium-themes.js"), "utf8");
 
-for (const [id, motion] of expected) {
+for (const [id, motion, animation] of expected) {
   const theme = PREMIUM_THEMES.find(item => item.id === id);
   assert.ok(theme, `missing ${id}`);
   assert.equal(theme.signatureMotion.name, motion);
@@ -34,6 +34,11 @@ for (const [id, motion] of expected) {
   assert.ok(publicApp.includes(`createProfileTheme("${id}"`), `${id} is not wired into the profile theme gallery`);
   assert.ok(browserCatalog.includes(`id: "${id}"`), `${id} is missing from the browser premium catalog`);
   assert.ok(publicCss.includes(`body.theme-${motion}`), `${motion} has no visual motion rule`);
+  assert.ok(publicCss.includes(`animation:${animation}`), `${id} is missing its distinct motion keyframe`);
+  assert.ok(publicApp.includes(`pattern: "url('/assets/themes/${id}.svg')"`), `${id} is not wired to its SVG texture`);
+  const svgPath = path.resolve(__dirname, `../../public/assets/themes/${id}.svg`);
+  assert.equal(fs.existsSync(svgPath), true, `${id} SVG texture is missing`);
+  assert.match(fs.readFileSync(svgPath, "utf8"), /<svg[\s>]/i, `${id} texture is not SVG`);
 }
 
 assert.match(publicCss, /prefers-reduced-motion:reduce[\s\S]*theme-grid-drift[\s\S]*animation:none !important/);
@@ -94,27 +99,52 @@ async function runBrowserCheck() {
   const browser = await chromium.launch();
   try {
     const errors = [];
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    page.on("console", message => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
-    page.on("pageerror", error => errors.push(`page: ${error.message}`));
-    await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: qaSupabaseStub() }));
-    await page.addInitScript(() => {
-      const profile = { id: "premium-theme-profile", name: "Theme QA", accountName: "Theme QA", region: "NA", matches: [], themeKey: "tactical-matrix" };
-      localStorage.setItem("valtracker_entry_choice_v1", "guest");
-      localStorage.setItem("valtracker_active_profile_id", profile.id);
-      localStorage.setItem("valtracker_profiles_v1", JSON.stringify([profile]));
-    });
-    await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
-    await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
-    await page.waitForFunction(() => document.body.dataset.theme === "tactical-matrix" && document.body.classList.contains("theme-grid-drift"), null, { timeout: 15000 });
-    const state = await page.evaluate(() => ({
-      theme: document.body.dataset.theme,
-      animation: getComputedStyle(document.querySelector(".app-root"), "::before").animationName,
-      pattern: getComputedStyle(document.documentElement).getPropertyValue("--theme-bg-pattern")
-    }));
-    assert.equal(state.theme, "tactical-matrix");
-    assert.match(state.animation, /themeGridDrift/);
-    assert.match(state.pattern, /repeating-linear-gradient/);
+    const screenshotDir = path.resolve(__dirname, "tmp");
+    fs.mkdirSync(screenshotDir, { recursive: true });
+    for (const [index, [id, motion, animation]] of expected.entries()) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("console", message => { if (message.type() === "error") errors.push(`${id} console: ${message.text()}`); });
+      page.on("pageerror", error => errors.push(`${id} page: ${error.message}`));
+      await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: qaSupabaseStub() }));
+      await page.addInitScript(themeId => {
+        const profile = { id: `premium-theme-${themeId}`, name: "Theme QA", accountName: "Theme QA", region: "NA", matches: [], themeKey: themeId };
+        localStorage.setItem("valtracker_entry_choice_v1", "guest");
+        localStorage.setItem("valtracker_active_profile_id", profile.id);
+        localStorage.setItem("valtracker_profiles_v1", JSON.stringify([profile]));
+      }, id);
+      await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
+      await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
+      await page.waitForFunction(({ themeId, motionClass }) => document.body.dataset.theme === themeId && document.body.classList.contains(`theme-${motionClass}`), { themeId: id, motionClass: motion }, { timeout: 15000 });
+      const state = await page.evaluate(() => {
+        const root = document.querySelector(".app-root");
+        const before = getComputedStyle(root, "::before");
+        return {
+          theme: document.body.dataset.theme,
+          animation: before.animationName,
+          duration: Number.parseFloat(before.animationDuration),
+          playState: before.animationPlayState,
+          pattern: getComputedStyle(document.documentElement).getPropertyValue("--theme-bg-pattern"),
+          backgroundImage: before.backgroundImage
+        };
+      });
+      assert.equal(state.theme, id);
+      assert.match(state.animation, new RegExp(animation));
+      assert.ok(state.duration > 0 && state.playState === "running", JSON.stringify(state));
+      assert.match(`${state.pattern} ${state.backgroundImage}`, new RegExp(`/assets/themes/${id}\\.svg`));
+      await page.locator("#accountLoadingOverlay").waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(350);
+      await page.screenshot({ path: path.join(screenshotDir, `premium-theme-${id}.png`) });
+      if (index === expected.length - 1) {
+        await page.evaluate(() => document.body.classList.add("access-reduced-motion"));
+        const reducedMotion = await page.locator(".app-root").evaluate(root => {
+          const before = getComputedStyle(root, "::before");
+          return { duration: before.animationDuration, iterations: before.animationIterationCount };
+        });
+        assert.ok(Number.parseFloat(reducedMotion.duration) <= 0.00001, JSON.stringify(reducedMotion));
+        assert.equal(reducedMotion.iterations, "1");
+      }
+      await page.close();
+    }
     assert.deepEqual(errors, []);
     console.log("Premium theme checks passed: seven textured presets, distinct palettes, entitlement states, reduced-motion fallback, live QA theme application, and zero browser errors.");
   } finally {

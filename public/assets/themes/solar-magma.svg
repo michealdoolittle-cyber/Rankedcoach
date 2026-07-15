@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+  <defs>
+    <filter id="lava" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="turbulence" baseFrequency=".009" numOctaves="3" seed="31" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="48"/><feGaussianBlur stdDeviation="3"/></filter>
+    <linearGradient id="vein" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7f1d1d" stop-opacity="0"/><stop offset=".34" stop-color="#fb923c" stop-opacity=".62"/><stop offset=".52" stop-color="#fef08a" stop-opacity=".82"/><stop offset=".7" stop-color="#ef4444" stop-opacity=".56"/><stop offset="1" stop-color="#7f1d1d" stop-opacity="0"/></linearGradient>
+    <radialGradient id="bubble"><stop stop-color="#fef08a" stop-opacity=".8"/><stop offset=".45" stop-color="#fb923c" stop-opacity=".5"/><stop offset="1" stop-color="#7f1d1d" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g filter="url(#lava)" fill="none" stroke="url(#vein)" stroke-linecap="round"><path d="M-40 159c151 18 195 142 327 128 157-16 155-191 319-171 145 18 161 174 334 146" stroke-width="38"/><path d="M-46 576c158-91 277 83 428 27 132-49 150-185 297-140 94 29 130 128 258 109" stroke-width="51"/><path d="M72 905c12-143 126-197 221-259 112-73 165-162 148-306" stroke-width="29"/></g>
+  <g fill="url(#bubble)"><circle cx="165" cy="430" r="52"/><circle cx="719" cy="340" r="68"/><circle cx="548" cy="741" r="43"/><circle cx="318" cy="101" r="35"/></g>
+</svg>

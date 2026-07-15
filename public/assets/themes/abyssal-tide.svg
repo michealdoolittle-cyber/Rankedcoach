@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+  <defs>
+    <radialGradient id="whirlpool"><stop stop-color="#a5f3fc" stop-opacity=".2"/><stop offset=".35" stop-color="#2dd4bf" stop-opacity=".18"/><stop offset=".72" stop-color="#0e7490" stop-opacity=".1"/><stop offset="1" stop-color="#020617" stop-opacity="0"/></radialGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#38bdf8" stop-opacity="0"/><stop offset=".5" stop-color="#67e8f9" stop-opacity=".48"/><stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <circle cx="450" cy="450" r="390" fill="url(#whirlpool)"/>
+  <g fill="none" stroke="url(#wave)" stroke-linecap="round" filter="url(#soft)">
+    <path d="M91 488c102-171 306-244 502-166 109 43 177 139 204 238" stroke-width="14"/>
+    <path d="M151 585c122 117 331 134 468 30 83-62 119-158 93-243" stroke-width="10"/>
+    <path d="M243 670c96 54 240 42 321-33 66-61 76-146 30-207" stroke-width="7"/>
+    <path d="M-40 220c164 69 234 65 386-8s250-82 594 45" stroke-width="6"/>
+    <path d="M-50 743c178-91 322-77 470 8s281 70 530-65" stroke-width="5"/>
+  </g>
+</svg>

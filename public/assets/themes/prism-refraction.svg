@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+  <defs>
+    <linearGradient id="p1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f472b6" stop-opacity=".32"/><stop offset=".5" stop-color="#a78bfa" stop-opacity=".12"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".3"/></linearGradient>
+    <linearGradient id="p2" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".2"/><stop offset=".5" stop-color="#22d3ee" stop-opacity=".12"/><stop offset="1" stop-color="#f472b6" stop-opacity=".24"/></linearGradient>
+    <filter id="shine"><feGaussianBlur stdDeviation="5"/></filter>
+  </defs>
+  <g stroke="#e9d5ff" stroke-opacity=".18" stroke-width="2"><path fill="url(#p1)" d="M450 18l176 256-38 275-138 333-138-333-38-275z"/><path fill="url(#p2)" d="M18 450l256-176 176 176-176 176z"/><path fill="url(#p1)" d="M882 450L626 274 450 450l176 176z"/><path fill="url(#p2)" d="M274 274L450 18l176 256-176 176z"/><path fill="url(#p1)" d="M274 626l176 256 176-256-176-176z"/></g>
+  <g fill="none" stroke="#fff" stroke-opacity=".3" filter="url(#shine)"><path d="M72 735L735 72M166 828L828 166" stroke-width="9"/><circle cx="450" cy="450" r="257"/><circle cx="450" cy="450" r="128"/></g>
+</svg>

@@ -31,6 +31,8 @@
     neon: "duelist", raze: "duelist", reyna: "duelist", sage: "sentinel",
     skye: "initiator", sova: "initiator", viper: "controller"
   });
+  const compRoleOrder = Object.freeze(["controller", "duelist", "initiator", "sentinel"]);
+  const CLOSE_ROLE_SWAP_DELTA = 1.5;
   const mapUuids = Object.freeze({
     ascent: "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
     breeze: "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
@@ -95,6 +97,67 @@
       .flatMap(group => Array.isArray(group?.weapons) ? group.weapons : [])
       .map(weapon => weapon?.image)
       .filter(Boolean);
+  }
+
+  function getCompAgentPickRate(map, agent = "") {
+    const rate = Number(map?.highRankPickRates?.[agent]);
+    return Number.isFinite(rate) ? rate : null;
+  }
+
+  function getCompRoleSignature(comp = {}) {
+    const counts = new Map(compRoleOrder.map(role => [role, 0]));
+    (comp.agents || []).forEach(agent => {
+      const role = compAgentRoles[assetSlug(agent)];
+      if (counts.has(role)) counts.set(role, counts.get(role) + 1);
+    });
+    return compRoleOrder.map(role => `${role}:${counts.get(role)}`).join("|");
+  }
+
+  function areCompRoleSwapsClose(map, reference = {}, candidate = {}) {
+    let hasSwap = false;
+    for (const role of compRoleOrder) {
+      const referenceAgents = (reference.agents || []).filter(agent => compAgentRoles[assetSlug(agent)] === role);
+      const candidateAgents = (candidate.agents || []).filter(agent => compAgentRoles[assetSlug(agent)] === role);
+      if (referenceAgents.length !== candidateAgents.length) return false;
+      const removed = referenceAgents.filter(agent => !candidateAgents.includes(agent));
+      const added = candidateAgents.filter(agent => !referenceAgents.includes(agent));
+      if (!removed.length && !added.length) continue;
+      if (removed.length !== added.length) return false;
+      hasSwap = true;
+      const removedRates = removed.map(agent => getCompAgentPickRate(map, agent)).sort((left, right) => right - left);
+      const addedRates = added.map(agent => getCompAgentPickRate(map, agent)).sort((left, right) => right - left);
+      if (removedRates.some(rate => rate === null) || addedRates.some(rate => rate === null)) return false;
+      if (removedRates.some((rate, index) => Math.abs(rate - addedRates[index]) > CLOSE_ROLE_SWAP_DELTA)) return false;
+    }
+    return hasSwap;
+  }
+
+  function getCompRoleLayoutReferences(map, comps = []) {
+    const references = [];
+    const bySignature = new Map();
+    comps.filter(comp => Array.isArray(comp?.agents) && comp.agents.length === 5).forEach(comp => {
+      const signature = getCompRoleSignature(comp);
+      const matching = bySignature.get(signature) || [];
+      if (!matching.length || matching.some(reference => areCompRoleSwapsClose(map, reference, comp))) {
+        references.push(comp);
+        matching.push(comp);
+        bySignature.set(signature, matching);
+      }
+    });
+    return references.slice(0, 3);
+  }
+
+  function getCompRoleTotals(map, comp = {}) {
+    return compRoleOrder.map(role => {
+      const agents = (comp.agents || []).filter(agent => compAgentRoles[assetSlug(agent)] === role);
+      const rates = agents.map(agent => getCompAgentPickRate(map, agent));
+      const hasCompleteRate = rates.length > 0 && rates.every(rate => rate !== null);
+      return {
+        role,
+        count: agents.length,
+        total: hasCompleteRate ? rates.reduce((sum, rate) => sum + rate, 0) : null
+      };
+    }).filter(item => item.count > 0);
   }
 
   function getMaps() {
@@ -203,20 +266,24 @@
                 const siteIndex = markers.slice(0, index).filter(item => item.site === callout.site).length;
                 const offset = markerOffsets[siteIndex % markerOffsets.length];
                 const direction = callout.site === "B" ? -1 : 1;
-                return `<span class="gamesense-callout gamesense-plant-marker" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%;--marker-label-x:${offset[0] * direction}px;--marker-label-y:${offset[1]}px"><i></i><b>${escapeHtml(`${callout.site}${callout.number}`)}</b></span>`;
+                const plantKey = `${callout.site}${callout.number}`;
+                return `<button type="button" class="gamesense-callout gamesense-plant-marker" data-gamesense-plant-key="${escapeHtml(plantKey)}" aria-label="Highlight ${escapeHtml(plantKey)} ${escapeHtml(callout.label)}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%;--marker-label-x:${offset[0] * direction}px;--marker-label-y:${offset[1]}px"><i></i><b>${escapeHtml(plantKey)}</b></button>`;
               }).join("")}
             </div>
           </div>
           ${isPlants ? `<aside class="gamesense-plant-legend" aria-label="${escapeHtml(map.label)} plant location rates">
             <strong>Active-season plant share</strong>
-            ${(map.plantSpots || []).map(spot => `<div><i></i><b>${escapeHtml(`${spot.site}${spot.number}`)}</b><em>${spot.rate != null && Number.isFinite(Number(spot.rate)) ? `${Number(spot.rate).toFixed(2)}%` : "N/A"}</em><span>${escapeHtml(spot.label)}</span></div>`).join("")}
+            ${(map.plantSpots || []).map(spot => {
+              const plantKey = `${spot.site}${spot.number}`;
+              return `<div data-gamesense-plant-key="${escapeHtml(plantKey)}"><i></i><b>${escapeHtml(plantKey)}</b><em>${spot.rate != null && Number.isFinite(Number(spot.rate)) ? `${Number(spot.rate).toFixed(2)}%` : "N/A"}</em><span>${escapeHtml(spot.label)}</span></div>`;
+            }).join("")}
             <p>${escapeHtml(map.plantRateNote || "Plant share is unavailable for this map.")}</p>
           </aside>` : ""}
         </div>
       </section>`;
   }
 
-  function renderMapTips(map) {
+  function getMapTipsViewModel(map) {
     const roles = ["Duelist", "Initiator", "Controller", "Sentinel"];
     const activeRole = roles.includes(state.role) ? state.role : "";
     const categories = [
@@ -240,8 +307,30 @@
       const tipRoles = Array.isArray(item?.roles) ? item.roles : [];
       return !activeRole || !tipRoles.length || tipRoles.includes(activeRole);
     });
+    return { roles, activeRole, categories, activeCategory, roleTips, tips };
+  }
+
+  function renderMapTipsPanel(model) {
+    const { activeRole, activeCategory, categories, roleTips, tips } = model;
     return `
-      <section class="gamesense-tips-hub${activeRole ? ` has-role-filter" data-role-tone="${activeRole.toLowerCase()}` : ""}">
+      <div class="gamesense-tips-panel" role="tabpanel">
+        <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
+        <div class="gamesense-tip-grid">
+          ${tips.map(item => {
+            const text = typeof item === "string" ? item : item.text;
+            const label = typeof item === "string" ? "Round read" : item.label || "Round read";
+            const isRoleTip = Boolean(activeRole && roleTips.includes(item));
+            return `<article class="gamesense-tip${isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(isRoleTip ? activeRole : label)}</span><p>${escapeHtml(text)}</p></article>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }
+
+  function renderMapTips(map) {
+    const model = getMapTipsViewModel(map);
+    const { roles, activeRole, categories, activeCategory } = model;
+    return `
+      <section class="gamesense-tips-hub${activeRole ? " has-role-filter" : ""}"${activeRole ? ` data-role-tone="${activeRole.toLowerCase()}"` : ""}>
         <div class="gamesense-section-heading gamesense-tips-heading"><span>Tips</span><strong>${escapeHtml(map.label)} round plans</strong></div>
         <div class="gamesense-tips-tabs" role="tablist" aria-label="${escapeHtml(map.label)} tip categories">
           ${categories.map(category => `<button type="button" role="tab" data-gamesense-tip-view="${category.id}" class="${category.id === activeCategory ? "active" : ""}" aria-selected="${category.id === activeCategory}">${category.label}</button>`).join("")}
@@ -253,17 +342,7 @@
             ${roles.map(role => `<button type="button" data-gamesense-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}" aria-pressed="${role === activeRole}">${role}</button>`).join("")}
           </div>
         </details>
-        <div class="gamesense-tips-panel" role="tabpanel">
-          <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
-          <div class="gamesense-tip-grid">
-            ${tips.map(item => {
-              const text = typeof item === "string" ? item : item.text;
-              const label = typeof item === "string" ? "Round read" : item.label || "Round read";
-              const isRoleTip = Boolean(activeRole && roleTips.includes(item));
-              return `<article class="gamesense-tip${isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(isRoleTip ? activeRole : label)}</span><p>${escapeHtml(text)}</p></article>`;
-            }).join("")}
-          </div>
-        </div>
+        ${renderMapTipsPanel(model)}
       </section>`;
   }
 
@@ -293,10 +372,9 @@
   }
 
   function renderComp(map) {
-    const comps = (Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps : [map.metaComp])
-      .slice()
-      .slice(0, 3);
-    const hasCurrentSample = comps.some(comp => Array.isArray(comp?.agents) && comp.agents.length === 5);
+    const rawComps = (Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps : [map.metaComp]).slice();
+    const comps = getCompRoleLayoutReferences(map, rawComps);
+    const hasCurrentSample = comps.length > 0;
     const selectedAgent = state.compAgent;
     const selectedInsight = selectedAgent ? map.agentInsights?.[selectedAgent] : "";
     const sample = map.compSample || {};
@@ -314,12 +392,8 @@
         <div><span>Current Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
         <p class="gamesense-comp-source">${escapeHtml(sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed.")}</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
-          const referenceLabels = ["Primary reference", "Strong alternative", "Alternate look"];
-          const roleOrder = ["controller", "duelist", "initiator", "sentinel"];
-          const makeupRoles = (comp.agents || [])
-            .map(agent => ({ agent, role: compAgentRoles[assetSlug(agent)] || "", pickRate: Number(map.highRankPickRates?.[agent]) }))
-            .filter(item => item.role)
-            .sort((left, right) => roleOrder.indexOf(left.role) - roleOrder.indexOf(right.role) || right.pickRate - left.pickRate);
+          const referenceLabels = ["Primary role layout", "Close-rate swap", "Alternate role layout"];
+          const roleTotals = getCompRoleTotals(map, comp);
           return `
             <article class="gamesense-comp-option">
               <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b></strong></div>
@@ -330,10 +404,14 @@
               <div class="gamesense-comp-line">
               <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
                 <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" data-role-tone="${escapeHtml(compAgentRoles[assetSlug(agent)] || "")}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
-                  <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
+                  <span class="gamesense-comp-agent-identity"><img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="" loading="eager"><strong>${escapeHtml(agent)}</strong></span>
+                  <span class="gamesense-comp-agent-rate"><b>${getCompAgentPickRate(map, agent) === null ? "N/A" : `${getCompAgentPickRate(map, agent).toFixed(2)}%`}</b><small>${escapeHtml(map.label)} pick</small></span>
                 </button>
               `).join("")}</div>
-              <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(`${comp.composition}. Ascendant-to-Radiant pick shares shown above each role icon.`)}">${makeupRoles.map(item => `<span class="gamesense-comp-role-stat" title="${escapeHtml(`${item.agent}: ${Number.isFinite(item.pickRate) ? `${item.pickRate.toFixed(2)}% pick rate` : "pick rate unavailable"}`)}"><b>${Number.isFinite(item.pickRate) ? `${item.pickRate.toFixed(2)}%` : "N/A"}</b><i data-role-tone="${escapeHtml(item.role)}" aria-hidden="true"></i></span>`).join("")}</div>
+              <div class="gamesense-comp-role-summary">
+                <div class="gamesense-comp-role-summary-label"><span>Total map pick share by role</span><small>Selected agents combined</small></div>
+                <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(`${comp.composition}. Selected agent pick shares are totaled within each role.`)}">${roleTotals.map(item => `<span class="gamesense-comp-role-stat"><i data-role-tone="${escapeHtml(item.role)}" aria-hidden="true"></i><span><b>${item.total === null ? "N/A" : `${item.total.toFixed(2)}%`}</b><small>${escapeHtml(item.role)}${item.count > 1 ? ` x${item.count}` : ""}</small></span></span>`).join("")}</div>
+              </div>
             </div>
           </article>`;
         }).join("")}</div>
@@ -551,6 +629,7 @@
       viewport.classList.toggle("is-grabbing", dragging);
     };
     viewport.addEventListener("pointerdown", event => {
+      if (event.target?.closest?.("button,a,summary")) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       pointers.set(event.pointerId, { id: event.pointerId, x: event.clientX, y: event.clientY });
       try {
@@ -629,6 +708,100 @@
     }
   }
 
+  function replaceTargetedElement(element, markup) {
+    if (!element || !markup) return null;
+    const template = document.createElement("template");
+    template.innerHTML = markup.trim();
+    const replacement = template.content.firstElementChild;
+    if (!replacement) return null;
+    element.replaceWith(replacement);
+    return replacement;
+  }
+
+  function selectAbility(abilityButton) {
+    const selectedAbility = String(abilityButton?.dataset?.gamesenseAbility || "").trim();
+    const agent = getReference().agents?.find(item => item.id === state.itemId);
+    const ability = agent?.abilities?.find(item => item.id === selectedAbility);
+    const section = abilityButton?.closest(".gamesense-selector-section");
+    if (!ability || !section) return;
+    state.detailId = selectedAbility;
+    section.querySelectorAll("[data-gamesense-ability]").forEach(button => {
+      const isSelected = button.dataset.gamesenseAbility === selectedAbility;
+      button.classList.toggle("active", isSelected);
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+    replaceTargetedElement(section.querySelector(".gamesense-ability-panel"), renderAbilityDetail(agent, ability));
+  }
+
+  function selectWeapon(weaponButton) {
+    const selectedWeapon = String(weaponButton?.dataset?.gamesenseWeapon || "").trim();
+    const group = getReference().weapons?.find(item => item.id === state.itemId);
+    const weapon = group?.weapons?.find(item => item.id === selectedWeapon);
+    const section = weaponButton?.closest(".gamesense-selector-section");
+    if (!weapon || !section) return;
+    state.detailId = selectedWeapon;
+    section.querySelectorAll("[data-gamesense-weapon]").forEach(button => {
+      const isSelected = button.dataset.gamesenseWeapon === selectedWeapon;
+      button.classList.toggle("active", isSelected);
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+    replaceTargetedElement(section.querySelector(".gamesense-weapon-panel"), renderWeaponFact(weapon));
+  }
+
+  function selectRole(roleButton) {
+    const hub = roleButton?.closest(".gamesense-tips-hub");
+    const map = getMaps().find(item => item.id === state.itemId);
+    if (!hub || !map) return;
+    state.role = roleButton.dataset.gamesenseRole === "all" ? "" : roleButton.dataset.gamesenseRole;
+    hub.querySelectorAll("[data-gamesense-role]").forEach(button => {
+      const buttonRole = button.dataset.gamesenseRole === "all" ? "" : button.dataset.gamesenseRole;
+      const isSelected = buttonRole === state.role;
+      button.classList.toggle("active", isSelected);
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+    hub.classList.toggle("has-role-filter", Boolean(state.role));
+    if (state.role) hub.dataset.roleTone = state.role.toLowerCase();
+    else delete hub.dataset.roleTone;
+    const summary = hub.querySelector(".gamesense-role-lens-menu summary strong");
+    if (summary) {
+      summary.textContent = state.role || "All roles";
+      if (state.role) summary.dataset.roleTone = state.role.toLowerCase();
+      else delete summary.dataset.roleTone;
+    }
+    const menu = hub.querySelector(".gamesense-role-lens-menu");
+    if (menu) menu.open = false;
+    replaceTargetedElement(hub.querySelector(".gamesense-tips-panel"), renderMapTipsPanel(getMapTipsViewModel(map)));
+  }
+
+  function setPlantHotspotHighlight(marker, highlighted, persistent = false) {
+    const mapRow = marker?.closest(".gamesense-map-canvas-row");
+    const key = marker?.dataset?.gamesensePlantKey;
+    if (!mapRow || !key) return;
+    const legendRow = [...mapRow.querySelectorAll(".gamesense-plant-legend [data-gamesense-plant-key]")]
+      .find(item => item.dataset.gamesensePlantKey === key);
+    marker.classList.toggle(persistent ? "active" : "is-hotspot-preview", highlighted);
+    legendRow?.classList.toggle(persistent ? "active" : "is-hotspot-preview", highlighted);
+    const legend = mapRow.querySelector(".gamesense-plant-legend");
+    legend?.classList.toggle("has-hotspot-focus", Boolean(mapRow.querySelector(".gamesense-plant-marker:is(.active,.is-hotspot-preview)")));
+  }
+
+  function bindPlantHotspots() {
+    const markers = [...document.querySelectorAll(".gamesense-plant-marker[data-gamesense-plant-key]")];
+    markers.forEach(marker => {
+      if (marker.dataset.hotspotBound === "true") return;
+      marker.dataset.hotspotBound = "true";
+      marker.addEventListener("pointerenter", () => setPlantHotspotHighlight(marker, true));
+      marker.addEventListener("pointerleave", () => setPlantHotspotHighlight(marker, false));
+      marker.addEventListener("click", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const shouldActivate = !marker.classList.contains("active");
+        markers.forEach(item => setPlantHotspotHighlight(item, false, true));
+        if (shouldActivate) setPlantHotspotHighlight(marker, true, true);
+      });
+    });
+  }
+
   function commitRender(root) {
     root.innerHTML = state.topic === "overview" ? renderOverview() : state.itemId ? renderDetail(state.topic, state.itemId) : renderGallery(state.topic);
     root.querySelectorAll("img[data-agent-fallback]").forEach(img => {
@@ -638,6 +811,7 @@
       }, { once: true });
     });
     bindMapPanZoom();
+    bindPlantHotspots();
   }
 
   function render(options = {}) {
@@ -817,20 +991,17 @@
     }
     const role = event.target.closest?.("[data-gamesense-role]");
     if (role) {
-      state.role = role.dataset.gamesenseRole === "all" ? "" : role.dataset.gamesenseRole;
-      render({ direction: "replace" });
+      selectRole(role);
       return;
     }
     const ability = event.target.closest?.("[data-gamesense-ability]");
     if (ability) {
-      state.detailId = ability.dataset.gamesenseAbility;
-      render({ direction: "replace" });
+      selectAbility(ability);
       return;
     }
     const weapon = event.target.closest?.("[data-gamesense-weapon]");
     if (weapon) {
-      state.detailId = weapon.dataset.gamesenseWeapon;
-      render({ direction: "replace" });
+      selectWeapon(weapon);
       return;
     }
     const back = event.target.closest?.("[data-gamesense-back]");

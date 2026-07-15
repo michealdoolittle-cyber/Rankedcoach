@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#38bdf8" stroke-opacity=".22" stroke-width="1"/>
+      <path d="M20 0V40M0 20H40" fill="none" stroke="#38bdf8" stroke-opacity=".07" stroke-width=".6"/>
+    </pattern>
+    <radialGradient id="ping"><stop stop-color="#facc15" stop-opacity=".75"/><stop offset="1" stop-color="#facc15" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="320" height="320" fill="url(#grid)"/>
+  <g fill="none" stroke="#38bdf8" stroke-opacity=".28"><path d="M38 282L122 198 188 224 286 88"/><path d="M62 52h76l34 34h86"/></g>
+  <g fill="url(#ping)"><circle cx="62" cy="52" r="14"/><circle cx="188" cy="224" r="18"/><circle cx="286" cy="88" r="12"/></g>
+</svg>
