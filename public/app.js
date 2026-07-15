@@ -50726,7 +50726,6 @@ function renderInsightCardsModel() {
       <div class="insight-header">
         <div class="insight-header-main">
           <div class="insight-title">${hasAnyInsights ? `No ${escapeHtml(filterLabel)} Insights Yet` : "RankedCoach Needs More Games"}</div>
-          <div class="insight-tag">INFO</div>
         </div>
       </div>
       <div class="insight-preview">${hasAnyInsights ? "This filter is empty for the current profile window." : "This panel fills with ranked coaching reads after you import a few matches or save a few reflections."}</div>
@@ -50758,11 +50757,10 @@ function renderInsightCardsModel() {
     const showPriorityMeta = displayType !== "good";
     el.innerHTML = `
       <div class="insight-header">
-        ${getCoachingCategoryVisualMarkup(insight.focus || model?.focus || insight.title)}
         <div class="insight-header-main">
           <div class="insight-title">${escapeHtml(insight.title)}</div>
-          <div class="insight-tag">${escapeHtml(getInsightFilterLabel(displayType))}</div>
         </div>
+        ${getCoachingCategoryVisualMarkup(insight.focus || model?.focus || insight.title)}
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
       <div class="insight-meta-row">

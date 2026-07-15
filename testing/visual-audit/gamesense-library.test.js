@@ -55,6 +55,53 @@ function supabaseStub() {
   `;
 }
 
+const weaponNamesByUuid = Object.freeze({
+  "910be174-449b-c412-ab22-d0873436b21b": "Bucky",
+  "ae3de142-4d85-2547-dd26-4e90bed35cf7": "Bulldog",
+  "29a0cfab-485b-f5d5-779a-b59f85e204a8": "Classic",
+  "44d4e95c-4157-0037-81b2-17841bf2e8e3": "Frenzy",
+  "1baa85b4-4c70-1284-64bb-6481dfc3bb4e": "Ghost",
+  "4ade7faa-4cf1-8376-95ef-39884480959b": "Guardian",
+  "ec845bf4-4f79-ddda-a3da-0db3774b2794": "Judge",
+  "c4883e50-4494-202c-3ec3-6b8a9284f00b": "Marshal",
+  "a03b24d3-4319-996d-0f8c-94bbfba1dfc7": "Operator",
+  "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c": "Outlaw",
+  "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a": "Phantom",
+  "e336c6b8-418d-9340-d77f-7a9e4cfe0702": "Sheriff",
+  "42da8ccc-40d5-affc-beec-15aa47b42eda": "Shorty",
+  "462080d1-4035-2937-7c09-27aa2a5c27a7": "Spectre",
+  "f7e1b454-4ad4-1063-ec0a-159e56b58941": "Stinger",
+  "9c82e19d-4575-0200-1a81-3eacf00cf872": "Vandal"
+});
+
+function weaponSkinApiStub(url) {
+  const uuid = Object.keys(weaponNamesByUuid).find(value => url.includes(value));
+  const weaponName = weaponNamesByUuid[uuid] || "Vandal";
+  const slug = weaponName.toLowerCase();
+  const tiers = [
+    "12683d76-48d7-84a3-4e09-6985794f0445",
+    "0cebb8be-46d7-c12a-d306-e9907bfc5a25",
+    "60bca009-4182-7998-dee7-b8a2558dc369",
+    "e046854e-406c-37f4-6607-19a9ba8426fc",
+    "411e4a55-4e59-7757-41f0-86a53f101bb5"
+  ];
+  const collectionNames = ["Aemondir", "Araxys", "BlastX", "Champions", "Chronovoid", "Evori Dreamwings", "Glitchpop", "Ion", "Kuronami", "Magepunk", "Neptune", "Oni", "Prelude to Chaos", "Prime", "Protocol 781-A", "Radiant Entertainment System", "Reaver", "Recon", "RGX 11z Pro", "Singularity"];
+  return JSON.stringify({
+    status: 200,
+    data: {
+      displayName: weaponName,
+      skins: collectionNames.map((name, index) => ({
+        uuid: `${slug}-skin-${index}`,
+        displayName: `${name} ${weaponName}`,
+        contentTierUuid: tiers[index % tiers.length],
+        displayIcon: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?skin=${index}`,
+        chromas: [{ fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}` }],
+        levels: []
+      }))
+    }
+  });
+}
+
 async function seed(page, profileId) {
   await page.addInitScript(id => {
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
@@ -79,6 +126,7 @@ async function run() {
     desktop.on("console", message => { if (message.type() === "error") browserErrors.push(`desktop console: ${message.text()}`); });
     desktop.on("pageerror", error => browserErrors.push(`desktop page: ${error.message}`));
     await desktop.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
+    await desktop.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await seed(desktop, "gamesense-desktop");
     await desktop.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(desktop);
@@ -357,10 +405,11 @@ async function run() {
     assert.ok(compPresentation.buttons.every(button => button.background.includes("linear-gradient") && button.role), JSON.stringify(compPresentation));
     assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
     const roleExplorer = desktop.locator(".gamesense-comp-pick-explorer");
-    assert.match(await roleExplorer.locator("summary").innerText(), /Want to see all Breeze pick rates/i);
+    assert.equal(await roleExplorer.locator("summary").innerText(), "WANT TO SEEALL BREEZE AGENT PICKRATES?");
     await roleExplorer.locator("summary").click();
     assert.equal(await roleExplorer.locator("[data-gamesense-comp-role]").count(), 4);
     assert.equal(await roleExplorer.locator('[data-gamesense-comp-role="Controller"]').getAttribute("aria-pressed"), "true");
+    const controllerRoleColor = await roleExplorer.locator('[data-gamesense-comp-role="Controller"]').evaluate(button => getComputedStyle(button).backgroundColor);
     const controllerRates = await roleExplorer.locator(".gamesense-comp-pick-row").evaluateAll(rows => rows.map(row => {
       const rates = [...row.querySelectorAll(":scope > span:not(.gamesense-comp-pick-rank) b")].map(item => Number.parseFloat(item.textContent));
       return {
@@ -376,7 +425,22 @@ async function run() {
     await roleExplorer.locator('[data-gamesense-comp-role="Duelist"]').click();
     assert.equal(await roleExplorer.evaluate(node => window.__rankedCoachRoleExplorerNode === node && node.isConnected), true);
     assert.equal(await roleExplorer.locator('[data-gamesense-comp-role="Duelist"]').getAttribute("aria-pressed"), "true");
+    const roleExplorerPresentation = await roleExplorer.evaluate(explorer => {
+      const active = explorer.querySelector('[data-gamesense-comp-role="Duelist"]');
+      const row = explorer.querySelector(".gamesense-comp-pick-row");
+      const rate = row.querySelector(":scope > span:not(.gamesense-comp-pick-rank)");
+      const number = rate.querySelector("b");
+      return {
+        activeColor: getComputedStyle(active).backgroundColor,
+        agentFontSize: Number.parseFloat(getComputedStyle(row.querySelector(":scope > strong")).fontSize),
+        numberWeight: Number(getComputedStyle(number).fontWeight),
+        separator: Number.parseFloat(getComputedStyle(rate).borderLeftWidth)
+      };
+    });
+    assert.notEqual(roleExplorerPresentation.activeColor, controllerRoleColor, JSON.stringify(roleExplorerPresentation));
+    assert.ok(roleExplorerPresentation.agentFontSize >= 16 && roleExplorerPresentation.numberWeight <= 700 && roleExplorerPresentation.separator >= 1, JSON.stringify(roleExplorerPresentation));
     assert.equal(await roleExplorer.locator(".gamesense-comp-pick-row > strong").first().innerText(), "JETT");
+    await roleExplorer.screenshot({ path: path.join(__dirname, "tmp", "gamesense-role-pick-explorer-desktop.png") });
     await desktop.click('[data-gamesense-map-view="plants"]');
     const desktopPlantMarker = desktop.locator(".gamesense-plant-marker").first();
     const markerBefore = await desktopPlantMarker.evaluate(marker => {
@@ -627,15 +691,23 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-global-rate").innerText(), /Global usage.*Global kill conversion 1\.03 K\/D.*Global round conversion Economy-filtered/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /When to use it.*How to use it.*Patch history/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel-art").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
-    assert.equal(await desktop.locator(".gamesense-collection-card").count(), 14);
-    assert.match(await desktop.locator(".gamesense-collection-head").innerText(), /Weapon Skin and Bundle Archive.*official content tier.*not a community review score/is);
-    assert.equal(await desktop.locator(".gamesense-collection-card[data-gamesense-collection-type=battlepass]").count(), 2);
-    assert.equal(await desktop.locator(".gamesense-collection-card .gamesense-collection-links a").count(), 28);
-    await desktop.locator('[data-gamesense-collection-filter="battlepass"]').click();
-    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 2);
-    assert.equal(await desktop.locator('[data-gamesense-collection-filter="battlepass"]').getAttribute("aria-pressed"), "true");
+    await desktop.waitForFunction(() => document.querySelectorAll(".gamesense-collection-card").length > 14);
+    assert.equal(await desktop.locator(".gamesense-collection-card").count(), 20);
+    assert.match(await desktop.locator(".gamesense-collection-head").innerText(), /Phantom Skin Collection Archive.*20 exact Phantom weapon previews.*official content tier.*not a community review score/is);
+    assert.equal(await desktop.locator('.gamesense-collection-card img[alt$="Phantom skin"]').count(), 20);
+    assert.equal(await desktop.locator('.gamesense-collection-card[data-gamesense-collection-tier="premium"]').count(), 4);
+    await desktop.locator('[data-gamesense-collection-filter="premium"]').click();
+    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 4);
+    assert.equal(await desktop.locator('[data-gamesense-collection-filter="premium"]').getAttribute("aria-pressed"), "true");
     await desktop.locator('[data-gamesense-collection-filter="all"]').click();
-    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 14);
+    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 20);
+    await desktop.locator("[data-gamesense-collection-preview]").first().click();
+    await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    assert.match(await desktop.locator(".gamesense-skin-preview-card").innerText(), /Phantom collection.*Aemondir.*Click outside the preview to close/is);
+    assert.match(await desktop.locator(".gamesense-skin-preview-card img").getAttribute("src"), /phantom\.png\?preview=0/i);
+    await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-desktop.png") });
+    await desktop.locator(".gamesense-skin-preview-overlay").click({ position: { x: 2, y: 2 } });
+    await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"].active').count(), 1);
     assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"]').getAttribute("aria-pressed"), "true");
     assert.equal(await desktop.locator(".gamesense-weapon-grid").evaluate(node => window.__rankedCoachWeaponGridNode === node && node.isConnected), true);
@@ -693,6 +765,7 @@ async function run() {
     mobile.on("console", message => { if (message.type() === "error") browserErrors.push(`mobile console: ${message.text()}`); });
     mobile.on("pageerror", error => browserErrors.push(`mobile page: ${error.message}`));
     await mobile.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
+    await mobile.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await seed(mobile, "gamesense-mobile");
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(mobile);

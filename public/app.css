@@ -54753,11 +54753,11 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-layout{
     height:auto !important;
     min-height:0 !important;
-    grid-template-rows:auto 330px minmax(320px,auto) !important;
+    grid-template-rows:auto 270px minmax(320px,auto) !important;
     overflow:visible !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card{
-    height:100% !important;
+    height:auto !important;
     min-height:0 !important;
     padding-bottom:12px !important;
     overflow:hidden !important;
@@ -54905,7 +54905,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
 @media (min-width:821px){
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){
-    height:100% !important;
+    height:auto !important;
     min-height:0 !important;
     overflow:hidden !important;
   }
@@ -54924,7 +54924,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
     display:grid !important;
-    grid-template-columns:minmax(0,1fr) 42px auto !important;
+    grid-template-columns:minmax(0,1fr) 42px !important;
     grid-template-rows:auto auto minmax(0,1fr) !important;
     align-items:start !important;
     column-gap:9px !important;
@@ -54962,17 +54962,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     width:42px !important;
     height:42px !important;
   }
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-tag{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    position:static !important;
-    align-self:end !important;
-    justify-self:start !important;
-    margin:0 !important;
-    white-space:nowrap !important;
-  }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-meta-row{
-    grid-column:1 / 4 !important;
+    grid-column:1 / 3 !important;
     grid-row:2 !important;
     position:static !important;
     width:100% !important;
@@ -54982,7 +54973,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     padding:0 !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-preview{
-    grid-column:1 / 4 !important;
+    grid-column:1 / 3 !important;
     grid-row:3 !important;
     align-self:start !important;
     max-width:100% !important;
@@ -55030,15 +55021,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     align-self:start !important;
     justify-self:end !important;
   }
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-tag{
-    grid-column:3 !important;
-    grid-row:1 !important;
-    position:static !important;
-    align-self:end !important;
-    justify-self:start !important;
-  }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-meta-row{
-    grid-column:1 / 4 !important;
+    grid-column:1 / 3 !important;
     grid-row:2 !important;
     position:static !important;
     width:100% !important;
@@ -55048,7 +55032,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     padding:0 !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-preview{
-    grid-column:1 / 4 !important;
+    grid-column:1 / 3 !important;
     grid-row:3 !important;
     align-self:start !important;
     max-width:100% !important;
@@ -55140,7 +55124,7 @@ body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing.open .insight-expand{
     display:grid !important;
-    grid-column:1 / 4 !important;
+    grid-column:1 / 3 !important;
     grid-row:3 !important;
     grid-template-columns:repeat(3,minmax(0,1fr)) !important;
     grid-template-rows:minmax(0,1fr) auto !important;

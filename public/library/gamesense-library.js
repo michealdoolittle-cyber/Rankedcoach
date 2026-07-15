@@ -2,6 +2,8 @@
   "use strict";
 
   const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller" };
+  const collectionLoadErrors = new Map();
+  let activeSkinPreview = null;
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -179,8 +181,9 @@
     return globalThis.RankedCoachGamesenseReference || { agents: [], weapons: [], warmupDetails: {} };
   }
 
-  function getWeaponCollections() {
-    return Array.isArray(globalThis.RankedCoachWeaponCollections) ? globalThis.RankedCoachWeaponCollections : [];
+  function getWeaponCollectionProvider() {
+    const provider = globalThis.RankedCoachWeaponCollections;
+    return provider && typeof provider.getCached === "function" && typeof provider.loadForWeapon === "function" ? provider : null;
   }
 
   function getTopicItems(topic) {
@@ -422,7 +425,7 @@
     const activeRole = roles.includes(state.compRole) ? state.compRole : "Controller";
     return `
       <details class="gamesense-comp-pick-explorer">
-        <summary>Want to see all ${escapeHtml(map.label)} pick rates?</summary>
+        <summary>WANT TO SEEALL ${escapeHtml(map.label.toUpperCase())} AGENT PICKRATES?</summary>
         <div class="gamesense-comp-pick-explorer-body">
           <p>Ascendant-to-Radiant Competitive picks from Patch ${escapeHtml(map.compSample?.patchLabel || "current")}. Map share and global share use the same combined patch window.</p>
           <div class="gamesense-comp-role-tabs" role="tablist" aria-label="${escapeHtml(map.label)} agent pick rates by role">
@@ -621,34 +624,34 @@
       </article>`;
   }
 
-  function renderWeaponCollectionArchive() {
-    const collections = getWeaponCollections();
-    if (!collections.length) return "";
+  function renderWeaponCollectionArchive(weapon, collections = null, loadError = "") {
+    if (!weapon) return "";
+    const tiers = [...new Set((collections || []).map(item => item.editionKey).filter(Boolean))];
+    const count = Array.isArray(collections) ? collections.length : 0;
     return `
-      <section class="gamesense-collection-archive">
+      <section class="gamesense-collection-archive" data-gamesense-collection-weapon="${escapeHtml(weapon.id)}">
         <div class="gamesense-collection-head">
-          <div><span>Historical Reference</span><h3>Weapon Skin and Bundle Archive</h3></div>
-          <p>Riot edition is the collection's official content tier, not a community review score. Release labels use the original Episode and Act.</p>
+          <div><span>Historical Reference</span><h3>${escapeHtml(weapon.label)} Skin Collection Archive</h3></div>
+          <p>${count ? `${count} exact ${escapeHtml(weapon.label)} weapon previews.` : `Loading every available ${escapeHtml(weapon.label)} collection.`} Riot edition is the official content tier, not a community review score.</p>
         </div>
-        <div class="gamesense-collection-filters" role="group" aria-label="Filter weapon collections">
-          <button type="button" class="active" data-gamesense-collection-filter="all" aria-pressed="true">All</button>
-          <button type="button" data-gamesense-collection-filter="store" aria-pressed="false">Store / Limited</button>
-          <button type="button" data-gamesense-collection-filter="battlepass" aria-pressed="false">Battlepass</button>
-        </div>
-        <div class="gamesense-collection-grid">
-          ${collections.map(item => {
-            const collectionType = item.sourceType === "Battlepass" ? "battlepass" : "store";
-            return `<article class="gamesense-collection-card" data-gamesense-collection-type="${collectionType}">
-              <div class="gamesense-collection-art"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} collection art" loading="lazy"></div>
+        ${loadError ? `<div class="gamesense-collection-status is-error"><strong>Skin archive unavailable.</strong><span>${escapeHtml(loadError)}</span><button type="button" data-gamesense-collection-retry="${escapeHtml(weapon.id)}">Try again</button></div>` : !collections ? `<div class="gamesense-collection-status" aria-live="polite"><span class="gamesense-collection-loader" aria-hidden="true"></span><strong>Loading ${escapeHtml(weapon.label)} collections...</strong></div>` : `
+          <div class="gamesense-collection-filters" role="group" aria-label="Filter ${escapeHtml(weapon.label)} collections by Riot edition">
+            <button type="button" class="active" data-gamesense-collection-filter="all" aria-pressed="true">All ${count}</button>
+            ${tiers.map(tier => `<button type="button" data-gamesense-collection-filter="${escapeHtml(tier)}" aria-pressed="false">${escapeHtml(tier)}</button>`).join("")}
+          </div>
+          <div class="gamesense-collection-grid">
+            ${collections.map(item => `<article class="gamesense-collection-card" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}">
+              <button class="gamesense-collection-art" type="button" data-gamesense-collection-preview data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Enlarge ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} preview">
+                <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
+                <span>Enlarge preview</span>
+              </button>
               <div class="gamesense-collection-copy">
-                <span>${escapeHtml(item.sourceType)}</span>
+                <span>${escapeHtml(item.weaponName)} skin</span>
                 <h4>${escapeHtml(item.name)}</h4>
-                <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${escapeHtml(item.era)}</b><b>${escapeHtml(String(item.year))} | Patch ${escapeHtml(item.patch)}</b></div>
-                <div class="gamesense-collection-links"><a href="${escapeHtml(item.videoUrl)}" target="_blank" rel="noopener noreferrer">Watch videos</a><a href="${escapeHtml(item.referenceUrl)}" target="_blank" rel="noopener noreferrer">Collection record</a></div>
+                <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>Exact ${escapeHtml(item.weaponName)} preview</b></div>
               </div>
-            </article>`;
-          }).join("")}
-        </div>
+            </article>`).join("")}
+          </div>`}
       </section>`;
   }
 
@@ -667,7 +670,75 @@
         `).join("")}</div>
         ${renderWeaponFact(selected)}
       </section>
-      ${renderWeaponCollectionArchive()}`;
+      ${renderWeaponCollectionArchive(selected, getWeaponCollectionProvider()?.getCached(selected?.label), collectionLoadErrors.get(selected?.label) || "")}`;
+  }
+
+  function getSelectedWeapon() {
+    if (state.topic !== "weapons" || !state.itemId) return null;
+    const group = getReference().weapons?.find(item => item.id === state.itemId);
+    return group?.weapons?.find(item => item.id === state.detailId) || group?.weapons?.[0] || null;
+  }
+
+  function replaceWeaponCollectionArchive(weapon, collections = null, loadError = "") {
+    const archive = document.querySelector("#gamesenseLibraryView .gamesense-collection-archive");
+    if (!archive || !weapon || getSelectedWeapon()?.id !== weapon.id) return null;
+    return replaceTargetedElement(archive, renderWeaponCollectionArchive(weapon, collections, loadError));
+  }
+
+  function hydrateWeaponCollectionArchive(weapon = getSelectedWeapon(), options = {}) {
+    const provider = getWeaponCollectionProvider();
+    if (!weapon || !provider) return;
+    const cached = provider.getCached(weapon.label);
+    if (cached) {
+      collectionLoadErrors.delete(weapon.label);
+      replaceWeaponCollectionArchive(weapon, cached);
+      return;
+    }
+    if (options.retry) {
+      collectionLoadErrors.delete(weapon.label);
+      replaceWeaponCollectionArchive(weapon);
+    }
+    provider.loadForWeapon(weapon.label).then(collections => {
+      if (getSelectedWeapon()?.id !== weapon.id) return;
+      collectionLoadErrors.delete(weapon.label);
+      replaceWeaponCollectionArchive(weapon, collections);
+    }).catch(error => {
+      if (getSelectedWeapon()?.id !== weapon.id) return;
+      const message = String(error?.message || "The live collection catalog could not be reached.");
+      collectionLoadErrors.set(weapon.label, message);
+      replaceWeaponCollectionArchive(weapon, null, message);
+    });
+  }
+
+  function closeSkinPreview() {
+    const overlay = activeSkinPreview;
+    if (!overlay) return;
+    activeSkinPreview = null;
+    overlay.classList.remove("is-open");
+    overlay.classList.add("is-closing");
+    window.setTimeout(() => overlay.remove(), 220);
+  }
+
+  function openSkinPreview(trigger) {
+    const source = String(trigger?.dataset?.previewSrc || "").trim();
+    const name = String(trigger?.dataset?.previewName || "Weapon skin").trim();
+    const weapon = String(trigger?.dataset?.previewWeapon || "Weapon").trim();
+    if (!source) return;
+    closeSkinPreview();
+    const overlay = document.createElement("div");
+    overlay.className = "gamesense-skin-preview-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", `${name} ${weapon} enlarged preview`);
+    overlay.tabIndex = -1;
+    overlay.innerHTML = `<figure class="gamesense-skin-preview-card"><img src="${escapeHtml(source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} enlarged preview"><figcaption><span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small>Click outside the preview to close.</small></figcaption></figure>`;
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) closeSkinPreview();
+    });
+    document.body.appendChild(overlay);
+    activeSkinPreview = overlay;
+    requestAnimationFrame(() => overlay.classList.add("is-open"));
+    overlay.focus({ preventScroll: true });
   }
 
   function renderDetail(topic, itemId) {
@@ -877,6 +948,8 @@
       button.setAttribute("aria-pressed", isSelected ? "true" : "false");
     });
     replaceTargetedElement(section.querySelector(".gamesense-weapon-panel"), renderWeaponFact(weapon));
+    replaceWeaponCollectionArchive(weapon, getWeaponCollectionProvider()?.getCached(weapon.label), collectionLoadErrors.get(weapon.label) || "");
+    hydrateWeaponCollectionArchive(weapon);
   }
 
   function selectRole(roleButton) {
@@ -943,6 +1016,7 @@
     });
     bindMapPanZoom();
     bindPlantHotspots();
+    hydrateWeaponCollectionArchive();
   }
 
   function render(options = {}) {
@@ -1146,6 +1220,19 @@
       selectAbility(ability);
       return;
     }
+    const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
+    if (collectionPreview) {
+      event.preventDefault();
+      event.stopPropagation();
+      openSkinPreview(collectionPreview);
+      return;
+    }
+    const collectionRetry = event.target.closest?.("[data-gamesense-collection-retry]");
+    if (collectionRetry) {
+      event.preventDefault();
+      hydrateWeaponCollectionArchive(getSelectedWeapon(), { retry: true });
+      return;
+    }
     const collectionFilter = event.target.closest?.("[data-gamesense-collection-filter]");
     if (collectionFilter) {
       const archive = collectionFilter.closest(".gamesense-collection-archive");
@@ -1155,8 +1242,8 @@
         button.classList.toggle("active", active);
         button.setAttribute("aria-pressed", active ? "true" : "false");
       });
-      archive?.querySelectorAll("[data-gamesense-collection-type]").forEach(card => {
-        card.hidden = filter !== "all" && card.dataset.gamesenseCollectionType !== filter;
+      archive?.querySelectorAll("[data-gamesense-collection-tier]").forEach(card => {
+        card.hidden = filter !== "all" && card.dataset.gamesenseCollectionTier !== filter;
       });
       return;
     }
@@ -1181,6 +1268,11 @@
   }, true);
 
   document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && activeSkinPreview) {
+      event.preventDefault();
+      closeSkinPreview();
+      return;
+    }
     const toggle = event.target.closest?.("[data-warmup-info]");
     if (toggle && ["Enter", " "].includes(event.key)) {
       event.preventDefault();

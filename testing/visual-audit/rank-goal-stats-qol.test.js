@@ -382,7 +382,6 @@ async function run() {
       const list = card.closest(".insights-list");
       const title = card.querySelector(".insight-title");
       const visual = card.querySelector(".coaching-category-visual");
-      const tag = card.querySelector(".insight-tag");
       const meta = card.querySelector(".insight-meta-row");
       const cardRect = card.getBoundingClientRect();
       const hostRect = host.getBoundingClientRect();
@@ -390,7 +389,6 @@ async function run() {
       const listRect = list.getBoundingClientRect();
       const titleRect = title.getBoundingClientRect();
       const visualRect = visual.getBoundingClientRect();
-      const tagRect = tag.getBoundingClientRect();
       const metaRect = meta.getBoundingClientRect();
       const visibleCardCount = [...list.querySelectorAll(".insight-card:not(.insight-empty)")]
         .map(item => item.getBoundingClientRect())
@@ -409,6 +407,7 @@ async function run() {
         headerDisplay: getComputedStyle(card.querySelector(".insight-header")).display,
         hostTop: hostRect.top,
         hostBottom: hostRect.bottom,
+        hostHeight: hostRect.height,
         layoutBottom: layoutRect.bottom,
         followingCardTops: [...document.querySelectorAll("#page-insights .insights-action-card,#page-insights .insights-trends-card")]
           .map(item => item.getBoundingClientRect().top)
@@ -426,10 +425,7 @@ async function run() {
         visualBottom: visualRect.bottom,
         visualTop: visualRect.top,
         visualGridRow: getComputedStyle(visual).gridRow,
-        tagLeft: tagRect.left,
-        tagTop: tagRect.top,
-        tagGridRow: getComputedStyle(tag).gridRow,
-        tagBottom: tagRect.bottom,
+        tagCount: card.querySelectorAll(".insight-tag").length,
         metaTop: metaRect.top,
         metaBottom: metaRect.bottom,
         metaGridRow: getComputedStyle(meta).gridRow,
@@ -440,9 +436,10 @@ async function run() {
     assert.ok(clutchGeometry.cardBottom <= clutchGeometry.listBottom + 1, JSON.stringify(clutchGeometry));
     assert.ok(Math.abs(clutchGeometry.titleLeft - clutchGeometry.expectedTextLeft) <= 1, JSON.stringify(clutchGeometry));
     assert.equal(clutchGeometry.titleColor, clutchGeometry.mutedColor);
-    assert.ok(clutchGeometry.visualRight <= clutchGeometry.tagLeft + 1, JSON.stringify(clutchGeometry));
-    assert.ok(Math.abs(clutchGeometry.visualBottom - clutchGeometry.tagBottom) <= 1, JSON.stringify(clutchGeometry));
-    assert.ok(clutchGeometry.metaTop >= Math.max(clutchGeometry.visualBottom, clutchGeometry.tagBottom) - 1, JSON.stringify(clutchGeometry));
+    assert.equal(clutchGeometry.tagCount, 0, JSON.stringify(clutchGeometry));
+    assert.ok(clutchGeometry.visualRight <= clutchGeometry.cardRect.right && clutchGeometry.visualTop <= clutchGeometry.metaTop, JSON.stringify(clutchGeometry));
+    assert.ok(clutchGeometry.metaTop >= clutchGeometry.visualBottom - 1, JSON.stringify(clutchGeometry));
+    assert.ok(clutchGeometry.hostHeight <= 272, JSON.stringify(clutchGeometry));
     assert.equal(clutchGeometry.visibleCardCount, 1, JSON.stringify(clutchGeometry));
     assert.equal(clutchGeometry.transform, "none");
     assert.equal(await clutchInsight.locator(".insight-feedback-row").count(), 0);
@@ -459,7 +456,6 @@ async function run() {
       const preview = card.querySelector(".insight-preview");
       const visual = card.querySelector(".coaching-category-visual");
       const title = card.querySelector(".insight-title");
-      const tag = card.querySelector(".insight-tag");
       const meta = card.querySelector(".insight-meta-row");
       const followingCards = [...document.querySelectorAll("#page-insights .insights-action-card,#page-insights .insights-trends-card")];
       const layout = card.closest(".insights-layout");
@@ -470,7 +466,6 @@ async function run() {
       const previewRect = preview.getBoundingClientRect();
       const visualRect = visual.getBoundingClientRect();
       const titleRect = title.getBoundingClientRect();
-      const tagRect = tag.getBoundingClientRect();
       const metaRect = meta.getBoundingClientRect();
       return {
         open: card.classList.contains("open"),
@@ -512,9 +507,7 @@ async function run() {
         visualBottom: visualRect.bottom,
         titleLeft: titleRect.left,
         titleBottom: titleRect.bottom,
-        tagTop: tagRect.top,
-        tagLeft: tagRect.left,
-        tagBottom: tagRect.bottom,
+        tagCount: card.querySelectorAll(".insight-tag").length,
         metaTop: metaRect.top,
         metaBottom: metaRect.bottom,
         cardMidpoint: cardRect.left + cardRect.width / 2,
@@ -530,8 +523,9 @@ async function run() {
     assert.ok(Math.abs(expandedInsight.hostRect.top - clutchGeometry.hostTop) <= 1 && Math.abs(expandedInsight.hostRect.bottom - clutchGeometry.hostBottom) <= 1, JSON.stringify({ clutchGeometry, expandedInsight }));
     assert.ok(expandedInsight.followingCardTops.length === clutchGeometry.followingCardTops.length && expandedInsight.followingCardTops.every((top, index) => Math.abs(top - clutchGeometry.followingCardTops[index]) <= 4), JSON.stringify({ clutchGeometry, expandedInsight }));
     assert.ok(expandedInsight.borderBottomWidth >= 1 && expandedInsight.borderBottomColor !== "rgba(0, 0, 0, 0)", JSON.stringify(expandedInsight));
-    assert.ok(expandedInsight.titleLeft < expandedInsight.visualLeft && expandedInsight.visualRight <= expandedInsight.tagLeft + 1, JSON.stringify(expandedInsight));
-    assert.ok(Math.abs(expandedInsight.visualBottom - expandedInsight.tagBottom) <= 3 && expandedInsight.metaTop >= Math.max(expandedInsight.visualBottom, expandedInsight.tagBottom) - 1, JSON.stringify(expandedInsight));
+    assert.equal(expandedInsight.tagCount, 0, JSON.stringify(expandedInsight));
+    assert.ok(expandedInsight.titleLeft < expandedInsight.visualLeft && expandedInsight.visualRight <= expandedInsight.cardRect.right, JSON.stringify(expandedInsight));
+    assert.ok(expandedInsight.metaTop >= expandedInsight.visualBottom - 1, JSON.stringify(expandedInsight));
     assert.equal(expandedInsight.expandDisplay, "grid");
     assert.equal(expandedInsight.previewDisplay, "none");
     assert.equal(expandedInsight.expandBlocks.length, 3);
