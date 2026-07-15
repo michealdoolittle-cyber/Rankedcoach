@@ -139,10 +139,13 @@ async function run() {
         titleTop: title.top,
         titleBottom: title.bottom,
         titleCenterDelta: Math.abs((title.left + title.right) / 2 - cardCenter),
+        titleVerticalDelta: Math.abs((title.top + title.bottom) / 2 - (cardRect.top + cardRect.bottom) / 2),
         actionCenterDelta: Math.abs((action.left + action.right) / 2 - cardCenter),
         copyCenterDelta: Math.abs((copy.left + copy.right) / 2 - cardCenter),
         titleColor: getComputedStyle(card.querySelector(":scope > strong")).color,
         actionBottom: action.bottom,
+        actionTop: action.top,
+        copyBottom: copy.bottom,
         copyTop: copy.top,
         imageRects,
         filters: images.map(image => getComputedStyle(image).filter)
@@ -152,6 +155,7 @@ async function run() {
     assert.equal(weaponTopicArt.titleColor, "rgb(246, 196, 83)");
     assert.ok(weaponTopicArt.filters.every(filter => filter.includes("grayscale")), JSON.stringify(weaponTopicArt));
     assert.ok(weaponTopicArt.actionBottom <= weaponTopicArt.titleTop + 1 && weaponTopicArt.titleBottom <= weaponTopicArt.copyTop + 1, JSON.stringify(weaponTopicArt));
+    assert.ok(weaponTopicArt.actionTop <= weaponTopicArt.card.top + 32 && weaponTopicArt.titleVerticalDelta <= 12 && weaponTopicArt.card.bottom - weaponTopicArt.copyBottom <= 32, JSON.stringify(weaponTopicArt));
     assert.ok(weaponTopicArt.titleCenterDelta <= 1 && weaponTopicArt.actionCenterDelta <= 1 && weaponTopicArt.copyCenterDelta <= 1, JSON.stringify(weaponTopicArt));
     await desktop.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-desktop.png") });
     assert.equal(await desktop.getByText("Reference Room", { exact: true }).count(), 0);
@@ -294,21 +298,29 @@ async function run() {
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-item="breeze"]');
     await desktop.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator(".gamesense-comp-option").count(), 1);
-    assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 5);
-    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /Ascendant to Radiant.*Patch 13\.01 \+ 13\.00.*Primary role layout/is);
+    assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
+    assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
+    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /Ascendant to Radiant.*Patch 13\.01 \+ 13\.00.*Double-duelist layout.*Double-controller layout.*Double-controller \+ double-initiator/is);
     assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /All ranks|Individual agent strength/i);
     assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /Ascendant\+.*Patch 13\.01.*Patch 13\.00.*small.*individual agent pick share.*no five-agent lineup win rate/is);
     assert.equal(await desktop.locator(".gamesense-comp-patch").innerText(), "PATCH 13.01 + 13.00");
     assert.notEqual(await desktop.locator(".gamesense-comp-patch").evaluate(pill => getComputedStyle(pill).backgroundColor), "rgba(0, 0, 0, 0)");
     assert.equal(await desktop.locator(".gamesense-comp-winrate").count(), 0);
     assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /\d+\.\d+% win rate|\d{1,3}(?:,\d{3})+ games|strongest measured compositions/i);
-    assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["PRIMARY ROLE LAYOUT"]);
+    assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["DOUBLE-DUELIST LAYOUT", "DOUBLE-CONTROLLER LAYOUT", "DOUBLE-CONTROLLER + DOUBLE-INITIATOR"]);
     assert.equal(await desktop.locator(".gamesense-comp-composition").count(), 0);
-    assert.equal(await desktop.locator(".gamesense-comp-makeup i").count(), 4);
-    assert.equal(await desktop.locator(".gamesense-comp-role-stat span > b").count(), 4);
-    assert.equal(await desktop.locator(".gamesense-comp-role-stat span > b").evaluateAll(labels => labels.every(label => /^\d+\.\d{2}%$/.test(label.textContent.trim()) && getComputedStyle(label).color === "rgb(246, 196, 83)")), true);
-    assert.deepEqual(await desktop.locator(".gamesense-comp-agent-rate b").allInnerTexts(), ["16.09%", "8.55%", "18.47%", "11.16%", "17.13%"]);
+    const compRoleLayouts = await desktop.locator(".gamesense-comp-option").evaluateAll(options => options.map(option => {
+      const makeup = option.querySelector(".gamesense-comp-makeup");
+      const counts = [...makeup.querySelectorAll(".gamesense-comp-role-stat")].map(stat => ({
+        role: stat.querySelector("i").dataset.roleTone,
+        count: Number(stat.querySelector("b").textContent.trim()),
+        color: getComputedStyle(stat.querySelector("b")).color
+      }));
+      return { label: makeup.getAttribute("aria-label"), signature: counts.map(item => `${item.role}:${item.count}`).join("|"), total: counts.reduce((sum, item) => sum + item.count, 0), counts };
+    }));
+    assert.equal(new Set(compRoleLayouts.map(layout => layout.signature)).size, 3, JSON.stringify(compRoleLayouts));
+    assert.ok(compRoleLayouts.every(layout => layout.total === 5 && layout.counts.every(item => Number.isInteger(item.count) && item.color === "rgb(246, 196, 83)")), JSON.stringify(compRoleLayouts));
+    assert.deepEqual(await desktop.locator(".gamesense-comp-option").first().locator(".gamesense-comp-agent-rate b").allInnerTexts(), ["16.09%", "8.55%", "18.47%", "11.15%", "17.13%"]);
     const compPresentation = await desktop.locator(".gamesense-comp-option").first().evaluate(option => {
       const line = option.querySelector(".gamesense-comp-line").getBoundingClientRect();
       const agents = option.querySelector(".gamesense-comp-agents").getBoundingClientRect();
@@ -334,6 +346,12 @@ async function run() {
     assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
     await desktop.click('[data-gamesense-map-view="plants"]');
     const desktopPlantMarker = desktop.locator(".gamesense-plant-marker").first();
+    const markerBefore = await desktopPlantMarker.evaluate(marker => {
+      const markerRect = marker.getBoundingClientRect();
+      const labelRect = marker.querySelector("b").getBoundingClientRect();
+      const stageRect = marker.closest("[data-gamesense-map-stage]").getBoundingClientRect();
+      return { marker: markerRect.toJSON(), label: labelRect.toJSON(), stageOffset: { left: markerRect.left - stageRect.left, top: markerRect.top - stageRect.top }, labelOffset: { left: labelRect.left - markerRect.left, top: labelRect.top - markerRect.top }, transform: getComputedStyle(marker).transform };
+    });
     await desktopPlantMarker.hover();
     await desktop.waitForTimeout(480);
     const plantPulse = await desktopPlantMarker.evaluate(marker => ({
@@ -347,7 +365,19 @@ async function run() {
     assert.match(plantPulse.iconAnimation, /gamesense-plant-icon-pulse/);
     assert.equal(plantPulse.labelAnimation, "none", JSON.stringify(plantPulse));
     assert.equal(plantPulse.legendFocused && plantPulse.rowPreview, true, JSON.stringify(plantPulse));
-    await desktopPlantMarker.click();
+    const markerBox = await desktopPlantMarker.boundingBox();
+    await desktop.mouse.move(markerBox.x + markerBox.width / 2, markerBox.y + markerBox.height / 2);
+    await desktop.mouse.down();
+    const markerPressed = await desktopPlantMarker.evaluate(marker => {
+      const markerRect = marker.getBoundingClientRect();
+      const labelRect = marker.querySelector("b").getBoundingClientRect();
+      const stageRect = marker.closest("[data-gamesense-map-stage]").getBoundingClientRect();
+      return { marker: markerRect.toJSON(), label: labelRect.toJSON(), stageOffset: { left: markerRect.left - stageRect.left, top: markerRect.top - stageRect.top }, labelOffset: { left: labelRect.left - markerRect.left, top: labelRect.top - markerRect.top }, transform: getComputedStyle(marker).transform };
+    });
+    await desktop.mouse.up();
+    assert.ok(Math.abs(markerPressed.stageOffset.left - markerBefore.stageOffset.left) <= .5 && Math.abs(markerPressed.stageOffset.top - markerBefore.stageOffset.top) <= .5, JSON.stringify({ markerBefore, markerPressed }));
+    assert.ok(Math.abs(markerPressed.labelOffset.left - markerBefore.labelOffset.left) <= .5 && Math.abs(markerPressed.labelOffset.top - markerBefore.labelOffset.top) <= .5, JSON.stringify({ markerBefore, markerPressed }));
+    assert.equal(markerPressed.transform, markerBefore.transform);
     const activePlant = await desktopPlantMarker.evaluate(marker => ({
       active: marker.classList.contains("active"),
       className: marker.className,
@@ -366,6 +396,13 @@ async function run() {
     });
     assert.notEqual(plantLegendTheme.border, "rgba(0, 0, 0, 0)", JSON.stringify(plantLegendTheme));
     assert.equal(plantLegendTheme.heading, plantLegendTheme.themeColor, JSON.stringify(plantLegendTheme));
+    const libraryPremiumBackground = await desktop.locator("#page-library").evaluate(page => {
+      document.body.classList.add("theme-star-drift");
+      const result = { image: getComputedStyle(page).backgroundImage, color: getComputedStyle(page).backgroundColor };
+      document.body.classList.remove("theme-star-drift");
+      return result;
+    });
+    assert.equal(libraryPremiumBackground.image, "none", JSON.stringify(libraryPremiumBackground));
     await desktop.click('[data-gamesense-map-view="locations"]');
     await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
     await desktop.waitForTimeout(120);
@@ -416,8 +453,8 @@ async function run() {
     await desktop.click('[data-gamesense-item="split"]');
     await desktop.locator(".gamesense-tactical-stage img").waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /split-layout-trn\.png/);
-    assert.equal(await desktop.locator(".gamesense-comp-option").count(), 2);
-    assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["PRIMARY ROLE LAYOUT", "CLOSE-RATE SWAP"]);
+    assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
+    assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["DOUBLE-DUELIST LAYOUT", "DOUBLE-INITIATOR LAYOUT", "DOUBLE-SENTINEL LAYOUT"]);
     const splitSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
     assert.ok(splitSitePositions["A Site"] > 75 && splitSitePositions["B Site"] < 20, JSON.stringify(splitSitePositions));
 
@@ -783,7 +820,7 @@ async function run() {
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "breeze"));
     await mobile.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.doesNotMatch(await mobile.locator(".gamesense-comp-list").innerText(), /Individual agent strength/i);
-    assert.equal(await mobile.locator(".gamesense-comp-mobile-evidence").count(), 1);
+    assert.equal(await mobile.locator(".gamesense-comp-mobile-evidence").count(), 3);
     assert.match(await mobile.locator(".gamesense-comp-mobile-evidence").first().innerText(), /Lineup win rate\s+Not published.*Round conversion\s+Not published/is);
     assert.doesNotMatch(await mobile.locator(".gamesense-comp-mobile-evidence").first().innerText(), /\d+(?:\.\d+)?%/);
     await mobile.locator(".gamesense-comp-list").screenshot({ path: path.join(__dirname, "tmp", "gamesense-current-comps-mobile.png") });

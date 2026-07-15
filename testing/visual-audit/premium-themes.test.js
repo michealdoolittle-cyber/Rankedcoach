@@ -133,6 +133,20 @@ async function runBrowserCheck() {
       assert.match(`${state.pattern} ${state.backgroundImage}`, new RegExp(`/assets/themes/${id}\\.svg`));
       await page.locator("#accountLoadingOverlay").waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(350);
+      if (index === 0) {
+        for (const pageName of ["home", "logging", "insights"]) {
+          await page.locator(`[data-page="${pageName}"]`).click();
+          await page.locator(`#page-${pageName}.active`).waitFor({ state: "visible" });
+          const surface = page.locator(`#page-${pageName} .card`).first();
+          await surface.waitFor({ state: "visible" });
+          assert.match(await surface.evaluate(card => getComputedStyle(card).backdropFilter || getComputedStyle(card).webkitBackdropFilter), /blur\(5px\)/, `${pageName} does not reveal the premium scene texture`);
+        }
+        await page.locator('[data-page="library"]').click();
+        await page.locator("#page-library.active").waitFor({ state: "visible" });
+        await page.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
+        await page.waitForTimeout(400);
+        assert.equal(await page.locator("#page-library").evaluate(library => getComputedStyle(library).backgroundImage), "none");
+      }
       await page.screenshot({ path: path.join(screenshotDir, `premium-theme-${id}.png`) });
       if (index === expected.length - 1) {
         await page.evaluate(() => document.body.classList.add("access-reduced-motion"));

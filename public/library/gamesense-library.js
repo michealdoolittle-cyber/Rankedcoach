@@ -16,6 +16,7 @@
     gekko: "e370fa57-4757-3604-3648-499e1f642d3f",
     iso: "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
     jett: "add6443a-41bd-e414-f6ad-e58d267f4e95",
+    "kay-o": "601dbbe7-43ce-be57-2a40-4abd24953621",
     killjoy: "1e58de9c-4950-5125-93e9-a0aee9f98746",
     neon: "bb2a4828-46eb-8cd1-e765-15848195d751",
     raze: "f94c3b30-42be-e959-889c-5aa313dba261",
@@ -27,7 +28,7 @@
   });
   const compAgentRoles = Object.freeze({
     chamber: "sentinel", clove: "controller", cypher: "sentinel", fade: "initiator",
-    gekko: "initiator", iso: "duelist", jett: "duelist", killjoy: "sentinel",
+    gekko: "initiator", iso: "duelist", jett: "duelist", "kay-o": "initiator", killjoy: "sentinel",
     neon: "duelist", raze: "duelist", reyna: "duelist", sage: "sentinel",
     skye: "initiator", sova: "initiator", viper: "controller"
   });
@@ -147,15 +148,12 @@
     return references.slice(0, 3);
   }
 
-  function getCompRoleTotals(map, comp = {}) {
+  function getCompRoleTotals(comp = {}) {
     return compRoleOrder.map(role => {
       const agents = (comp.agents || []).filter(agent => compAgentRoles[assetSlug(agent)] === role);
-      const rates = agents.map(agent => getCompAgentPickRate(map, agent));
-      const hasCompleteRate = rates.length > 0 && rates.every(rate => rate !== null);
       return {
         role,
-        count: agents.length,
-        total: hasCompleteRate ? rates.reduce((sum, rate) => sum + rate, 0) : null
+        count: agents.length
       };
     }).filter(item => item.count > 0);
   }
@@ -392,11 +390,11 @@
         <div><span>Current Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
         <p class="gamesense-comp-source">${escapeHtml(sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed.")}</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
-          const referenceLabels = ["Primary role layout", "Close-rate swap", "Alternate role layout"];
-          const roleTotals = getCompRoleTotals(map, comp);
+          const referenceLabels = ["Primary role layout", "Secondary role layout", "Alternate role layout"];
+          const roleTotals = getCompRoleTotals(comp);
           return `
             <article class="gamesense-comp-option">
-              <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b></strong></div>
+              <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${escapeHtml(comp.label || referenceLabels[index] || "Tactical reference")}</b></strong></div>
               <div class="gamesense-comp-mobile-evidence" aria-label="Composition evidence availability">
                 <span><b>Lineup win rate</b><strong>Not published</strong></span>
                 <span><b>Round conversion</b><strong>Not published</strong></span>
@@ -409,8 +407,8 @@
                 </button>
               `).join("")}</div>
               <div class="gamesense-comp-role-summary">
-                <div class="gamesense-comp-role-summary-label"><span>Total map pick share by role</span><small>Selected agents combined</small></div>
-                <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(`${comp.composition}. Selected agent pick shares are totaled within each role.`)}">${roleTotals.map(item => `<span class="gamesense-comp-role-stat"><i data-role-tone="${escapeHtml(item.role)}" aria-hidden="true"></i><span><b>${item.total === null ? "N/A" : `${item.total.toFixed(2)}%`}</b><small>${escapeHtml(item.role)}${item.count > 1 ? ` x${item.count}` : ""}</small></span></span>`).join("")}</div>
+                <div class="gamesense-comp-role-summary-label"><span>Role layout</span><small>Most common high-rank structure</small></div>
+                <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(comp.composition)}">${roleTotals.map(item => `<span class="gamesense-comp-role-stat"><i data-role-tone="${escapeHtml(item.role)}" aria-hidden="true"></i><span><b>${item.count}</b><small>${escapeHtml(item.role)}${item.count === 1 ? "" : "s"}</small></span></span>`).join("")}</div>
               </div>
             </div>
           </article>`;

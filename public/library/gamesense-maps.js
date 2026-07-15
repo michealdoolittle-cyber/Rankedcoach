@@ -163,19 +163,19 @@
         patch: "13.01 + 13.00"
       },
       metaComps: [
-        { agents: ["Chamber", "Clove", "Jett", "Reyna", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" },
-        { agents: ["Chamber", "Clove", "Jett", "Neon", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" },
-        { agents: ["Chamber", "Clove", "Iso", "Jett", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" }
+        { label: "Double-duelist layout", agents: ["Chamber", "Clove", "Jett", "Reyna", "Sova"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" },
+        { label: "Double-controller layout", agents: ["Chamber", "Clove", "Jett", "Sova", "Viper"], composition: "2 Controllers, 1 Duelist, 1 Initiator, 1 Sentinel" },
+        { label: "Double-controller + double-initiator", agents: ["Clove", "Jett", "KAY/O", "Sova", "Viper"], composition: "2 Controllers, 1 Duelist, 2 Initiators" }
       ],
       compSample: {
         rankLabel: "Ascendant to Radiant",
         patchLabel: "13.01 + 13.00",
-        currentPatchAgentSelections: 1836,
-        combinedAgentSelections: 628658,
+        currentPatchAgentSelections: 4324,
+        combinedAgentSelections: 631146,
         source: "OP.GG Competitive",
         note: "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
       },
-      highRankPickRates: { Chamber: 16.09, Clove: 8.55, Iso: 1.32, Jett: 18.47, Neon: 3.74, Reyna: 11.16, Sova: 17.13 },
+      highRankPickRates: { Chamber: 16.09, Clove: 8.55, Iso: 1.32, Jett: 18.47, "KAY/O": 0.52, Neon: 3.74, Reyna: 11.15, Sova: 17.13, Viper: 6.92 },
       agentInsights: {
         Chamber: "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
         Clove: "Long-range smoke placement stays useful through Breeze rotations, and post-death utility protects late hits.",
@@ -183,6 +183,7 @@
         Neon: "High Gear closes Breeze's long gaps quickly enough to punish defenders before cross-map help arrives.",
         Reyna: "Dismiss gives a self-sufficient escape after winning one of Breeze's exposed long-range duels.",
         Iso: "Double Tap and Contingency help isolate one long sightline instead of fighting the full open site.",
+        "KAY/O": "ZERO/point and suppression give the second-initiator layout a direct way to disable defensive utility before crossing Breeze's long lanes.",
         Sova: "Recon and Drone clear wide sightlines where close-range flashes cannot cover every defender.",
         Sage: "Barrier and Slow Orbs compress open entrances; A is the stronger current anchor site for her stall package.",
         Viper: "Toxic Screen divides the open sites into playable halves and preserves fuel for post-plant denial."
@@ -259,19 +260,19 @@
         patch: "13.01 + 13.00"
       },
       metaComps: [
-        { agents: ["Clove", "Cypher", "Jett", "Reyna", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" },
-        { agents: ["Clove", "Jett", "Raze", "Sage", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" },
-        { agents: ["Clove", "Cypher", "Neon", "Raze", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" }
+        { label: "Double-duelist layout", agents: ["Clove", "Cypher", "Jett", "Reyna", "Skye"], composition: "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel" },
+        { label: "Double-initiator layout", agents: ["Clove", "Cypher", "Fade", "Jett", "Skye"], composition: "1 Controller, 1 Duelist, 2 Initiators, 1 Sentinel" },
+        { label: "Double-sentinel layout", agents: ["Clove", "Cypher", "Jett", "Sage", "Skye"], composition: "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels" }
       ],
       compSample: {
         rankLabel: "Ascendant to Radiant",
         patchLabel: "13.01 + 13.00",
-        currentPatchAgentSelections: 1836,
-        combinedAgentSelections: 635382,
+        currentPatchAgentSelections: 4170,
+        combinedAgentSelections: 637716,
         source: "OP.GG Competitive",
         note: "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
       },
-      highRankPickRates: { Clove: 16.17, Cypher: 6.88, Jett: 14.04, Neon: 2.45, Raze: 7.85, Reyna: 8.70, Sage: 5.54, Skye: 11.06 },
+      highRankPickRates: { Clove: 16.18, Cypher: 6.88, Fade: 4.49, Jett: 14.04, Neon: 2.45, Raze: 7.84, Reyna: 8.70, Sage: 5.54, Skye: 11.07 },
       agentInsights: {
         Clove: "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",
         Jett: "Dash breaks the first compact choke and Updraft contests Split's stacked Heaven positions.",

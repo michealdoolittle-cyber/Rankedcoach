@@ -54265,6 +54265,8 @@ html body :is(.lens-modal-overlay,.agent-modal,.profile-edit-overlay,.auth-modal
 /* Keep the desktop Clutch Closing read compact and still inside Priority Trends. */
 @media (min-width:821px){
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing:not(.open){
+    display:grid !important;
+    grid-template-rows:42px auto minmax(0,1fr) !important;
     height:118px !important;
     min-height:118px !important;
     flex-basis:118px !important;
@@ -54693,7 +54695,9 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     overflow-y:auto !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card,
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.insight-card-clutch-closing.open{
     display:grid !important;
     grid-template-columns:minmax(260px,1fr) 42px auto !important;
     grid-template-rows:auto auto !important;
@@ -54742,9 +54746,9 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     grid-column:3 !important;
     grid-row:1 !important;
     position:static !important;
-    align-self:end !important;
+    align-self:start !important;
     justify-self:start !important;
-    margin:0 !important;
+    margin:26px 0 0 !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-preview{
     grid-area:auto !important;
@@ -54799,8 +54803,9 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     grid-area:auto !important;
     grid-column:3 !important;
     grid-row:1 !important;
-    align-self:end !important;
+    align-self:start !important;
     justify-self:start !important;
+    margin:26px 0 0 !important;
   }
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-preview{
     grid-column:1 !important;
@@ -54820,3 +54825,171 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
 }
 
 #page-insights .insight-feedback-row{display:none !important;}
+
+/* Priority Trends is a one-card rail: no half-card previews, overlap, or open-state reflow. */
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){
+    height:100% !important;
+    min-height:0 !important;
+    overflow:hidden !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card{
+    display:block !important;
+    flex:1 1 auto !important;
+    min-height:0 !important;
+    padding:0 6px 0 0 !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    scroll-snap-type:y mandatory;
+    overscroll-behavior-y:contain;
+    scrollbar-gutter:stable;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 42px auto !important;
+    grid-template-rows:auto auto minmax(0,1fr) !important;
+    align-items:start !important;
+    column-gap:9px !important;
+    row-gap:10px !important;
+    box-sizing:border-box !important;
+    width:100% !important;
+    height:100% !important;
+    min-height:100% !important;
+    max-height:100% !important;
+    margin:0 0 10px !important;
+    padding:12px !important;
+    overflow:hidden !important;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+    transform:none !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-header,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-header-main{
+    display:contents !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-title{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    align-self:center !important;
+    min-width:0 !important;
+    color:var(--text-muted,#a8b3c7) !important;
+    text-align:left !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .coaching-category-visual{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    position:static !important;
+    align-self:start !important;
+    justify-self:end !important;
+    width:42px !important;
+    height:42px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-tag{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    position:static !important;
+    align-self:end !important;
+    justify-self:start !important;
+    margin:0 !important;
+    white-space:nowrap !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-meta-row{
+    grid-column:1 / 4 !important;
+    grid-row:2 !important;
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    justify-content:flex-end !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-preview{
+    grid-column:1 / 4 !important;
+    grid-row:3 !important;
+    align-self:start !important;
+    max-width:100% !important;
+    padding:0 !important;
+    text-align:left !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card .insight-expand{
+    display:none !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing.open .insight-expand{
+    display:none !important;
+    min-height:0 !important;
+    height:0 !important;
+    margin:0 !important;
+    overflow:hidden !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card:hover,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insight-card.open{
+    transform:none !important;
+    filter:brightness(1.05);
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing:not(.open){
+    height:100% !important;
+    min-height:100% !important;
+    max-height:100% !important;
+    flex-basis:100% !important;
+    margin:0 0 10px !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.insight-card-clutch-closing.open{
+    display:grid !important;
+    grid-template-rows:42px auto minmax(0,1fr) !important;
+    height:100% !important;
+    min-height:100% !important;
+    max-height:100% !important;
+    flex-basis:100% !important;
+    margin:0 0 10px !important;
+    padding:12px !important;
+    overflow:hidden !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .coaching-category-visual{
+    grid-column:2 !important;
+    grid-row:1 !important;
+    position:static !important;
+    align-self:start !important;
+    justify-self:end !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-tag{
+    grid-column:3 !important;
+    grid-row:1 !important;
+    position:static !important;
+    align-self:end !important;
+    justify-self:start !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-meta-row{
+    grid-column:1 / 4 !important;
+    grid-row:2 !important;
+    position:static !important;
+    width:100% !important;
+    max-width:100% !important;
+    justify-content:flex-end !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card .insight-card.insight-card-clutch-closing .insight-preview{
+    grid-column:1 / 4 !important;
+    grid-row:3 !important;
+    align-self:start !important;
+    max-width:100% !important;
+    padding:0 !important;
+  }
+}
+
+/* Premium scene themes stay visible through the dense app pages and replace Library's fixed grid. */
+body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn) :is(#page-home,#page-logging,#page-insights) :is(.card,.logging-live-card,.home-loadout-card,.loadout-card,.impact-card,.chart-card,.compass-card,.weekly-focus-card,.timeline-card,.insight-card,.trend-signal-card){
+  background:
+    radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 34%),
+    linear-gradient(145deg,color-mix(in srgb,var(--surface-card) 78%,transparent),color-mix(in srgb,var(--surface-card-2) 84%,transparent)) !important;
+  backdrop-filter:blur(5px) saturate(1.08);
+  -webkit-backdrop-filter:blur(5px) saturate(1.08);
+}
+body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn) #page-library.gamesense-page{
+  background:none !important;
+  background-image:none !important;
+}
