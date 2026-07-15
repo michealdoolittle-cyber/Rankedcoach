@@ -672,10 +672,11 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-topic-collage{position:absolute;inset:0;z-index:0;display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;opacity:.52;pointer-events:none;}
 .gamesense-topic-collage::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.05),rgba(2,6,23,.32) 38%,rgba(2,6,23,.96));}
 .gamesense-topic-collage img{width:100%;height:100%;min-width:0;object-fit:cover;filter:saturate(.86) contrast(1.06);}
-.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0 0 112px;align-items:center;opacity:.62;background:linear-gradient(135deg,#26364b,#101827);}
-.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{inset:0 0 -112px;background:linear-gradient(180deg,rgba(2,6,23,.06),rgba(2,6,23,.3) 48%,rgba(2,6,23,.97));}
-.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage img{height:58%;object-fit:contain;filter:grayscale(.28) saturate(.8) contrast(1.05) drop-shadow(0 12px 12px rgba(0,0,0,.65));}
+.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;gap:9px;padding:12px 16px 112px;opacity:.62;background:linear-gradient(135deg,#17253a,#070d18);}
+.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{background:linear-gradient(180deg,rgba(2,6,23,.04),rgba(2,6,23,.26) 48%,rgba(2,6,23,.98));}
+.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage img{width:100%;height:100%;min-height:0;object-fit:contain;filter:grayscale(.2) saturate(.86) contrast(1.06) drop-shadow(0 7px 7px rgba(0,0,0,.68));}
 .gamesense-topic-card:hover .gamesense-topic-collage{opacity:.66;}
+.gamesense-topic-card > strong{color:var(--gamesense-warm,#facc15);}
 
 .gamesense-gallery-head{grid-template-columns:minmax(0,1fr) auto;}
 .gamesense-gallery-head > div{grid-column:1;justify-self:center;width:100%;padding-left:110px;}
@@ -711,6 +712,9 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-plant-legend em{color:var(--accent,#ff4655);font:900 10px/1 var(--font-body,"Rajdhani",sans-serif);font-style:normal;}
 .gamesense-plant-legend span{color:var(--text-muted,#a8b3c7);font-size:11px;line-height:1.15;}
 .gamesense-plant-legend p{margin:3px 0 0;color:var(--text-muted,#a8b3c7);font-size:10px;line-height:1.3;}
+.gamesense-map-canvas-row.has-plant-legend .gamesense-plant-legend{border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 66%,transparent);background:linear-gradient(155deg,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 10%,rgba(7,16,24,.94)),rgba(7,16,24,.9));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent-2,var(--accent-2,#facc15)) 12%,transparent),0 0 20px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 14%,transparent);}
+.gamesense-map-canvas-row.has-plant-legend .gamesense-plant-legend > strong,
+.gamesense-map-canvas-row.has-plant-legend .gamesense-plant-legend em{color:var(--theme-accent,var(--accent,#ff4655));}
 
 .gamesense-map-view-tabs button.active{color:#fff;box-shadow:0 0 18px color-mix(in srgb,var(--accent,#ff4655) 28%,transparent);}
 .gamesense-role-menu summary [data-role-tone="duelist"]{color:#ff4655;}
@@ -833,6 +837,13 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-plant-marker{width:9px !important;height:9px !important;padding:0 !important;border:0 !important;border-radius:50% !important;background:#ff3044 !important;box-shadow:0 0 0 3px rgba(255,48,68,.22),0 0 10px rgba(255,48,68,.72) !important;}
 .gamesense-plant-marker i{position:absolute;inset:0;border:1px solid #fff;border-radius:50%;}
 .gamesense-plant-marker b{position:absolute;left:50%;top:50%;min-width:22px;padding:4px 5px;translate:calc(-50% + var(--marker-label-x,12px)) calc(-50% + var(--marker-label-y,-16px));border:1px solid rgba(255,255,255,.78);border-radius:999px;background:rgba(2,6,23,.94);color:#fff;font:900 8px/1 var(--font-display,"Rajdhani",sans-serif);white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);}
+@media (min-width:821px){
+  html:not(.is-mobile-layout) .gamesense-plant-marker:hover{z-index:5;animation:gamesense-plant-hover-pulse .88s ease-in-out infinite;}
+}
+@keyframes gamesense-plant-hover-pulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1);filter:brightness(1);}
+  50%{transform:translate(-50%,-50%) scale(1.28);filter:brightness(1.24) drop-shadow(0 0 7px var(--theme-accent,var(--accent,#ff4655)));}
+}
 .gamesense-selector-section .gamesense-section-heading strong{text-align:left !important;}
 @keyframes gamesense-view-old-forward{to{opacity:.12;transform:translate3d(-24%,0,0);}}
 @keyframes gamesense-view-new-forward{from{opacity:.12;transform:translate3d(24%,0,0);}to{opacity:1;transform:translate3d(0,0,0);}}
@@ -852,12 +863,12 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
 @media (max-width:820px){
   html.is-mobile-layout .gamesense-library-view > *{animation:none !important;}
   html.is-mobile-layout .gamesense-season-scope{margin-bottom:10px;}
-  html.is-mobile-layout .gamesense-topic-card{align-content:center;justify-items:center;min-height:178px;text-align:center;}
-  html.is-mobile-layout .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0 0 132px;}
-  html.is-mobile-layout .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{inset:0 0 -132px;}
-  html.is-mobile-layout .gamesense-topic-card strong{margin:0 0 7px;text-align:center !important;}
+  html.is-mobile-layout .gamesense-topic-card{grid-template-areas:"action" "title" "copy";align-content:center;justify-items:center;min-height:178px;text-align:center;}
+  html.is-mobile-layout .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0;gap:5px;padding:10px 10px 96px;}
+  html.is-mobile-layout .gamesense-topic-card strong{grid-area:title;margin:0 0 7px;text-align:center !important;}
   html.is-mobile-layout .gamesense-topic-card small{text-align:center;}
-  html.is-mobile-layout .gamesense-topic-action{text-align:center;}
+  html.is-mobile-layout .gamesense-topic-card small{grid-area:copy;}
+  html.is-mobile-layout .gamesense-topic-action{grid-area:action;margin:0 0 9px;text-align:center;}
 
   html.is-mobile-layout .gamesense-map-entry-card{align-content:end;justify-items:start;min-height:170px;padding:16px;}
   html.is-mobile-layout .gamesense-map-entry-card > strong{font-size:31px;text-align:left !important;}
@@ -918,7 +929,7 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
 }
 
 @media (prefers-reduced-motion:reduce){
-  ::view-transition-group(gamesense-library-content),::view-transition-old(gamesense-library-content),::view-transition-new(gamesense-library-content){animation:none !important;}
+  ::view-transition-group(gamesense-library-content),::view-transition-old(gamesense-library-content),::view-transition-new(gamesense-library-content),.gamesense-plant-marker{animation:none !important;}
 }
 
 /* Dossier interaction pass: disclosures stay in place; selections read as filled controls. */
@@ -1246,13 +1257,51 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   align-items:center;
   gap:10px;
 }
-.gamesense-comp-line .gamesense-comp-agents{margin:14px 0 10px;}
-.gamesense-comp-makeup{
+.gamesense-comp-scope{
   display:flex;
   align-items:center;
   justify-content:flex-end;
-  min-width:58px;
+  gap:8px;
+}
+.gamesense-comp-scope > b{
+  color:var(--text-muted,#a8b3c7);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.gamesense-comp-card .gamesense-comp-patch{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  padding:5px 9px;
+  border:1px solid color-mix(in srgb,var(--gamesense-cool) 50%,transparent);
+  border-radius:999px;
+  background:color-mix(in srgb,var(--gamesense-cool) 17%,rgba(15,23,42,.94));
+  color:#dffcff;
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.06em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 16px color-mix(in srgb,var(--gamesense-cool) 12%,transparent);
+}
+.gamesense-comp-line .gamesense-comp-agents{margin:14px 0 10px;}
+.gamesense-comp-makeup{
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-end;
+  gap:5px;
+  min-width:164px;
   padding-left:4px;
+}
+.gamesense-comp-role-stat{
+  display:grid;
+  justify-items:center;
+  gap:4px;
+  min-width:28px;
+}
+.gamesense-comp-role-stat > b{
+  color:var(--gamesense-warm,#facc15);
+  font:900 8px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.02em;
+  white-space:nowrap;
 }
 .gamesense-comp-makeup i{
   --comp-makeup-color:#cbd5e1;
@@ -1261,7 +1310,7 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   place-items:center;
   width:24px;
   height:24px;
-  margin-left:-7px;
+  margin-left:0;
   border:1px solid color-mix(in srgb,var(--comp-makeup-color) 58%,rgba(2,6,23,.92));
   border-radius:50%;
   background:rgba(2,6,23,.94);

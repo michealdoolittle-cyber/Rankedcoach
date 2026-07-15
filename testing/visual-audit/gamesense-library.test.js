@@ -120,16 +120,21 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-number").count(), 0);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
-    assert.deepEqual(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => image.src.includes("media.valorant-api.com/weapons/"))), [true, true, true]);
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/"))), true);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] img[src*="weapons-dossier-v2"]').count(), 0);
     const weaponTopicArt = await desktop.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();
       const action = card.querySelector(".gamesense-topic-action").getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
       const images = [...card.querySelectorAll(".gamesense-topic-collage img")];
-      return { titleTop: title.top, actionBottom: action.bottom, titleMarginTop: parseFloat(getComputedStyle(card.querySelector(":scope > strong")).marginTop), imageBottom: Math.max(...images.map(image => image.getBoundingClientRect().bottom)), filters: images.map(image => getComputedStyle(image).filter) };
+      const imageRects = images.map(image => image.getBoundingClientRect().toJSON());
+      return { card: cardRect.toJSON(), titleTop: title.top, titleColor: getComputedStyle(card.querySelector(":scope > strong")).color, actionBottom: action.bottom, titleMarginTop: parseFloat(getComputedStyle(card.querySelector(":scope > strong")).marginTop), imageRects, filters: images.map(image => getComputedStyle(image).filter) };
     });
-    assert.ok(weaponTopicArt.imageBottom <= weaponTopicArt.titleTop && weaponTopicArt.filters.every(filter => filter.includes("grayscale")), JSON.stringify(weaponTopicArt));
+    assert.ok(weaponTopicArt.imageRects.every(image => image.left >= weaponTopicArt.card.left && image.right <= weaponTopicArt.card.right && image.top >= weaponTopicArt.card.top && image.bottom <= weaponTopicArt.card.bottom), JSON.stringify(weaponTopicArt));
+    assert.equal(weaponTopicArt.titleColor, "rgb(246, 196, 83)");
+    assert.ok(weaponTopicArt.filters.every(filter => filter.includes("grayscale")), JSON.stringify(weaponTopicArt));
     assert.ok(weaponTopicArt.actionBottom <= weaponTopicArt.titleTop && Math.abs(weaponTopicArt.titleMarginTop - 31) <= 1, JSON.stringify(weaponTopicArt));
     await desktop.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-desktop.png") });
     assert.equal(await desktop.getByText("Reference Room", { exact: true }).count(), 0);
@@ -237,7 +242,7 @@ async function run() {
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     await desktop.locator(".gamesense-tips-hub").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-tips-desktop.png") });
     await desktop.locator(".gamesense-tactical-card").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-marked.png") });
-    assert.match(await desktop.locator(".gamesense-patch").innerText(), /Patch 13\.00/i);
+    assert.match(await desktop.locator(".gamesense-patch").innerText(), /Patch 13\.01/i);
     assert.equal(await desktop.locator(".gamesense-lineups a").count(), 2);
     assert.equal(await desktop.locator(".gamesense-lineups a img").count(), 2);
     await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-desktop.png"), fullPage: true });
@@ -267,13 +272,18 @@ async function run() {
     await desktop.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.equal(await desktop.locator(".gamesense-comp-agents img").count(), 15);
-    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /All ranks.*Primary reference.*Strong alternative.*Alternate look/is);
-    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /individual-agent strength.*blended all-rank Competitive sample.*not measured five-agent lineup win rates.*not Ascendant\+ specific/is);
+    assert.match(await desktop.locator(".gamesense-comp-card").innerText(), /Ascendant to Radiant.*Patch 13\.01 \+ 13\.00.*Primary reference.*Strong alternative.*Alternate look/is);
+    assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /All ranks|Individual agent strength/i);
+    assert.match(await desktop.locator(".gamesense-comp-source").innerText(), /Ascendant\+.*Patch 13\.01.*Patch 13\.00.*small.*individual agent pick share.*no five-agent lineup win rate/is);
+    assert.equal(await desktop.locator(".gamesense-comp-patch").innerText(), "PATCH 13.01 + 13.00");
+    assert.notEqual(await desktop.locator(".gamesense-comp-patch").evaluate(pill => getComputedStyle(pill).backgroundColor), "rgba(0, 0, 0, 0)");
     assert.equal(await desktop.locator(".gamesense-comp-winrate").count(), 0);
     assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /\d+\.\d+% win rate|\d{1,3}(?:,\d{3})+ games|strongest measured compositions/i);
     assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["PRIMARY REFERENCE", "STRONG ALTERNATIVE", "ALTERNATE LOOK"]);
     assert.equal(await desktop.locator(".gamesense-comp-composition").count(), 0);
     assert.equal(await desktop.locator(".gamesense-comp-makeup i").count(), 15);
+    assert.equal(await desktop.locator(".gamesense-comp-role-stat > b").count(), 15);
+    assert.equal(await desktop.locator(".gamesense-comp-role-stat > b").evaluateAll(labels => labels.every(label => /^\d+\.\d{2}%$/.test(label.textContent.trim()) && getComputedStyle(label).color === "rgb(246, 196, 83)")), true);
     const compPresentation = await desktop.locator(".gamesense-comp-option").first().evaluate(option => {
       const line = option.querySelector(".gamesense-comp-line").getBoundingClientRect();
       const agents = option.querySelector(".gamesense-comp-agents").getBoundingClientRect();
@@ -293,6 +303,22 @@ async function run() {
     assert.ok(compPresentation.agents.right <= compPresentation.makeup.left + 1 && compPresentation.makeup.right <= compPresentation.line.right + 1, JSON.stringify(compPresentation));
     assert.ok(compPresentation.buttons.every(button => button.background.includes("linear-gradient") && button.role), JSON.stringify(compPresentation));
     assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
+    await desktop.click('[data-gamesense-map-view="plants"]');
+    const desktopPlantMarker = desktop.locator(".gamesense-plant-marker").first();
+    await desktopPlantMarker.hover();
+    await desktop.waitForTimeout(480);
+    assert.match(await desktopPlantMarker.evaluate(marker => getComputedStyle(marker).animationName), /gamesense-plant-hover-pulse/);
+    const plantLegendTheme = await desktop.locator(".gamesense-plant-legend").evaluate(legend => {
+      const probe = document.createElement("span");
+      probe.style.color = getComputedStyle(document.documentElement).getPropertyValue("--theme-accent");
+      document.body.appendChild(probe);
+      const themeColor = getComputedStyle(probe).color;
+      probe.remove();
+      return { border: getComputedStyle(legend).borderColor, heading: getComputedStyle(legend.querySelector(":scope > strong")).color, themeColor };
+    });
+    assert.notEqual(plantLegendTheme.border, "rgba(0, 0, 0, 0)", JSON.stringify(plantLegendTheme));
+    assert.equal(plantLegendTheme.heading, plantLegendTheme.themeColor, JSON.stringify(plantLegendTheme));
+    await desktop.click('[data-gamesense-map-view="locations"]');
     await desktop.waitForFunction(() => [...document.querySelectorAll(".gamesense-comp-agents img")].every(image => image.complete && image.naturalWidth > 0), null, { timeout: 15000 });
     await desktop.waitForTimeout(120);
     await desktop.locator(".gamesense-comp-list").screenshot({ path: path.join(__dirname, "tmp", "gamesense-current-comps-desktop.png") });
@@ -512,12 +538,17 @@ async function run() {
     await mobile.waitForTimeout(700);
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
     await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
     const mobileWeaponTopicArt = await mobile.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();
+      const action = card.querySelector(".gamesense-topic-action").getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
       const images = [...card.querySelectorAll(".gamesense-topic-collage img")].map(image => image.getBoundingClientRect());
-      return { titleTop: title.top, imageBottom: Math.max(...images.map(image => image.bottom)) };
+      return { card: cardRect.toJSON(), titleTop: title.top, titleColor: getComputedStyle(card.querySelector(":scope > strong")).color, action: action.toJSON(), images: images.map(image => image.toJSON()) };
     });
-    assert.ok(mobileWeaponTopicArt.imageBottom <= mobileWeaponTopicArt.titleTop, JSON.stringify(mobileWeaponTopicArt));
+    assert.ok(mobileWeaponTopicArt.images.every(image => image.left >= mobileWeaponTopicArt.card.left && image.right <= mobileWeaponTopicArt.card.right && image.top >= mobileWeaponTopicArt.card.top && image.bottom <= mobileWeaponTopicArt.card.bottom), JSON.stringify(mobileWeaponTopicArt));
+    assert.equal(mobileWeaponTopicArt.titleColor, "rgb(246, 196, 83)");
+    assert.ok(mobileWeaponTopicArt.action.bottom <= mobileWeaponTopicArt.titleTop, JSON.stringify(mobileWeaponTopicArt));
     await mobile.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-mobile.png") });
     assert.equal(await mobile.locator(".gamesense-topic-number").count(), 0);
     await mobile.click('[data-gamesense-topic="maps"]');

@@ -91,11 +91,10 @@
   function getTopicCollageImages(topic = "") {
     if (topic === "maps") return ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
     if (topic === "agents") return ["/assets/library/agents/jett/portrait.png", "/assets/library/agents/omen/portrait.png", "/assets/library/agents/sova/portrait.png"];
-    return [
-      "https://media.valorant-api.com/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872/displayicon.png",
-      "https://media.valorant-api.com/weapons/ec845bf4-4f79-ddda-a3da-0db3774b2794/displayicon.png",
-      "https://media.valorant-api.com/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7/displayicon.png"
-    ];
+    return getReference().weapons
+      .flatMap(group => Array.isArray(group?.weapons) ? group.weapons : [])
+      .map(weapon => weapon?.image)
+      .filter(Boolean);
   }
 
   function getMaps() {
@@ -300,27 +299,30 @@
     const hasCurrentSample = comps.some(comp => Array.isArray(comp?.agents) && comp.agents.length === 5);
     const selectedAgent = state.compAgent;
     const selectedInsight = selectedAgent ? map.agentInsights?.[selectedAgent] : "";
+    const sample = map.compSample || {};
+    const rankLabel = sample.rankLabel || "Ascendant to Radiant";
+    const patchLabel = sample.patchLabel || map.metaComp?.patch || getReference().season?.patch || "Current";
     if (!hasCurrentSample) {
       return `
         <section class="gamesense-comp-card gamesense-comp-unavailable">
-          <div><span>Current-Season Comps</span><strong>Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
+          <div><span>Current-Season Comps</span><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></div>
           <p>${escapeHtml(map.compStatus || "No verified current-season composition sample is available for this map.")}</p>
         </section>`;
     }
     return `
       <section class="gamesense-comp-card">
-        <div><span>Current Competitive Comps</span><strong>All ranks | Patch ${escapeHtml(map.metaComp?.patch || getReference().season?.patch || "Current")}</strong></div>
-        <p class="gamesense-comp-source">Built from current individual-agent strength across Tracker Network's blended all-rank Competitive sample. These are tactical references, not measured five-agent lineup win rates, and are not Ascendant+ specific.</p>
+        <div><span>Current Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
+        <p class="gamesense-comp-source">${escapeHtml(sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed.")}</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
           const referenceLabels = ["Primary reference", "Strong alternative", "Alternate look"];
           const roleOrder = ["controller", "duelist", "initiator", "sentinel"];
           const makeupRoles = (comp.agents || [])
-            .map(agent => compAgentRoles[assetSlug(agent)] || "")
-            .filter(Boolean)
-            .sort((left, right) => roleOrder.indexOf(left) - roleOrder.indexOf(right));
+            .map(agent => ({ agent, role: compAgentRoles[assetSlug(agent)] || "", pickRate: Number(map.highRankPickRates?.[agent]) }))
+            .filter(item => item.role)
+            .sort((left, right) => roleOrder.indexOf(left.role) - roleOrder.indexOf(right.role) || right.pickRate - left.pickRate);
           return `
             <article class="gamesense-comp-option">
-              <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b><small>Individual agent strength</small></strong></div>
+              <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b></strong></div>
               <div class="gamesense-comp-mobile-evidence" aria-label="Composition evidence availability">
                 <span><b>Lineup win rate</b><strong>Not published</strong></span>
                 <span><b>Round conversion</b><strong>Not published</strong></span>
@@ -331,7 +333,7 @@
                   <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
                 </button>
               `).join("")}</div>
-              <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(comp.composition)}">${makeupRoles.map(role => `<i data-role-tone="${role}" title="${role}" aria-hidden="true"></i>`).join("")}</div>
+              <div class="gamesense-comp-makeup" role="img" aria-label="${escapeHtml(`${comp.composition}. Ascendant-to-Radiant pick shares shown above each role icon.`)}">${makeupRoles.map(item => `<span class="gamesense-comp-role-stat" title="${escapeHtml(`${item.agent}: ${Number.isFinite(item.pickRate) ? `${item.pickRate.toFixed(2)}% pick rate` : "pick rate unavailable"}`)}"><b>${Number.isFinite(item.pickRate) ? `${item.pickRate.toFixed(2)}%` : "N/A"}</b><i data-role-tone="${escapeHtml(item.role)}" aria-hidden="true"></i></span>`).join("")}</div>
             </div>
           </article>`;
         }).join("")}</div>

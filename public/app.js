@@ -42535,6 +42535,83 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     text: "#f5f3ff",
     muted: "#c4b5fd",
     motion: "shadow-drift"
+  }),
+  createProfileTheme("tactical-matrix", "Tactical Matrix", "dark", {
+    base: "#020b18",
+    base2: "#071b2b",
+    card: "#071522",
+    card2: "#0d2530",
+    accent: "#38bdf8",
+    accent2: "#facc15",
+    pattern: "repeating-linear-gradient(0deg, rgba(56,189,248,.11) 0 1px, transparent 1px 44px), repeating-linear-gradient(90deg, rgba(56,189,248,.11) 0 1px, transparent 1px 44px)",
+    pattern2: "radial-gradient(circle at 22% 28%, rgba(250,204,21,.16), transparent 18%), radial-gradient(circle at 78% 68%, rgba(56,189,248,.18), transparent 24%)",
+    motion: "grid-drift"
+  }),
+  createProfileTheme("astral-galaxy", "Astral Galaxy", "dark", {
+    base: "#030512",
+    base2: "#120b2b",
+    card: "#090d20",
+    card2: "#19103a",
+    accent: "#a78bfa",
+    accent2: "#22d3ee",
+    pattern: "radial-gradient(circle at 8% 16%, rgba(255,255,255,.78) 0 1px, transparent 2px), radial-gradient(circle at 30% 74%, rgba(34,211,238,.72) 0 1px, transparent 2px), radial-gradient(circle at 66% 24%, rgba(255,255,255,.64) 0 1px, transparent 2px), radial-gradient(circle at 86% 62%, rgba(167,139,250,.76) 0 1px, transparent 2px)",
+    pattern2: "radial-gradient(ellipse at 34% 42%, rgba(167,139,250,.22), transparent 36%), radial-gradient(ellipse at 72% 56%, rgba(34,211,238,.14), transparent 32%)",
+    motion: "star-drift"
+  }),
+  createProfileTheme("abyssal-tide", "Abyssal Tide", "dark", {
+    base: "#01131d",
+    base2: "#043444",
+    card: "#052530",
+    card2: "#0a4650",
+    accent: "#2dd4bf",
+    accent2: "#38bdf8",
+    pattern: "repeating-radial-gradient(ellipse at 10% 0%, rgba(45,212,191,.16) 0 2px, transparent 3px 34px)",
+    pattern2: "radial-gradient(ellipse at 18% 18%, rgba(56,189,248,.2), transparent 32%), radial-gradient(ellipse at 82% 72%, rgba(45,212,191,.18), transparent 34%)",
+    motion: "water-flow"
+  }),
+  createProfileTheme("spectral-fog", "Spectral Fog", "dark", {
+    base: "#080b13",
+    base2: "#171526",
+    card: "#111522",
+    card2: "#252036",
+    accent: "#c4b5fd",
+    accent2: "#64748b",
+    pattern: "radial-gradient(ellipse at 18% 34%, rgba(196,181,253,.18), transparent 38%), radial-gradient(ellipse at 74% 62%, rgba(148,163,184,.15), transparent 42%)",
+    pattern2: "radial-gradient(ellipse at 52% 8%, rgba(255,255,255,.08), transparent 30%), radial-gradient(ellipse at 42% 90%, rgba(100,116,139,.18), transparent 38%)",
+    motion: "fog-drift"
+  }),
+  createProfileTheme("cryo-fractal", "Cryo Fractal", "dark", {
+    base: "#03101a",
+    base2: "#0b2638",
+    card: "#081a27",
+    card2: "#12364a",
+    accent: "#a5f3fc",
+    accent2: "#60a5fa",
+    pattern: "repeating-conic-gradient(from 18deg at 30% 42%, rgba(165,243,252,.11) 0 2deg, transparent 2deg 19deg)",
+    pattern2: "repeating-linear-gradient(132deg, transparent 0 38px, rgba(96,165,250,.12) 39px 40px, transparent 41px 76px)",
+    motion: "fractal-shift"
+  }),
+  createProfileTheme("solar-magma", "Solar Magma", "dark", {
+    base: "#150502",
+    base2: "#3a0b03",
+    card: "#240b06",
+    card2: "#4a1608",
+    accent: "#fb923c",
+    accent2: "#facc15",
+    pattern: "repeating-conic-gradient(from 24deg at 18% 84%, rgba(251,146,60,.16) 0 4deg, transparent 5deg 24deg)",
+    pattern2: "radial-gradient(circle at 78% 24%, rgba(250,204,21,.26), transparent 22%), radial-gradient(circle at 24% 76%, rgba(239,68,68,.22), transparent 30%)",
+    motion: "solar-flow"
+  }),
+  createProfileTheme("prism-refraction", "Prism Refraction", "dark", {
+    base: "#070814",
+    base2: "#1c1030",
+    card: "#111127",
+    card2: "#28204a",
+    accent: "#f472b6",
+    accent2: "#22d3ee",
+    pattern: "repeating-conic-gradient(from 0deg at 50% 50%, rgba(244,114,182,.12) 0 8deg, rgba(34,211,238,.1) 9deg 17deg, rgba(167,139,250,.1) 18deg 26deg, transparent 27deg 42deg)",
+    pattern2: "linear-gradient(122deg, transparent 18%, rgba(255,255,255,.1) 38%, rgba(34,211,238,.12) 48%, rgba(244,114,182,.12) 58%, transparent 78%)",
+    motion: "prism-turn"
   })
 ];
 
@@ -44006,7 +44083,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (body) {
-    body.classList.remove("theme-static", "theme-ambient-lite", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "theme-glint-sweep", "theme-shadow-drift", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
+    body.classList.remove("theme-static", "theme-ambient-lite", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "theme-glint-sweep", "theme-shadow-drift", "theme-grid-drift", "theme-star-drift", "theme-water-flow", "theme-fog-drift", "theme-fractal-shift", "theme-solar-flow", "theme-prism-turn", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
     body.dataset.theme = themeKey;
     body.dataset.themeMode = themeVisualMode;
     body.classList.add(`theme-${resolvedThemeMotion}`);
@@ -50548,6 +50625,9 @@ function renderInsightCardsModel() {
     const displayType = normalizeInsightFilterType(insight);
     const el = document.createElement("div");
     el.className = `insight-card insight-${displayType}`;
+    if (String(insight?.title || "").trim().toLowerCase() === "clutch closing") {
+      el.classList.add("insight-card-clutch-closing");
+    }
     if (insight?.coachingRuleId) el.dataset.coachingRule = insight.coachingRuleId;
     el.style.position = "relative";
     el.dataset.insightIndex = String(index);

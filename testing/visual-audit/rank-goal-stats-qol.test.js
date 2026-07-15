@@ -65,6 +65,24 @@ async function run() {
             side: roundIndex % 2 === 0 ? "attack" : "defense"
           }))
         },
+        ...(index < 3 ? {
+          matchRecord: {
+            id: `retained-${index}`,
+            trackedPlayer: { puuid: "qol-test-puuid", teammatePuuids: [] },
+            roundByRound: [{
+              roundNum: 1,
+              side: "attack",
+              won: index < 1,
+              roundCeremony: "CeremonyCloser",
+              damageDealt: 120,
+              kills: [{
+                killer: index < 1 ? "qol-test-puuid" : "enemy-puuid",
+                victim: index < 1 ? "enemy-puuid" : "qol-test-puuid",
+                roundTime: 1000
+              }]
+            }]
+          }
+        } : {}),
         createdAt: `2026-06-${String((index % 25) + 1).padStart(2, "0")}T12:00:00Z`,
         metadata: {
           source: "henrik_sync",
@@ -329,6 +347,52 @@ async function run() {
     }));
     assert.ok(insightVisuals.cards > 0, JSON.stringify(insightVisuals));
     assert.equal(insightVisuals.visuals, insightVisuals.cards, JSON.stringify(insightVisuals));
+    const clutchInsight = page.locator("#insightsList .insight-card-clutch-closing");
+    assert.equal(await clutchInsight.count(), 1);
+    await clutchInsight.evaluate(card => card.scrollIntoView({ block: "start" }));
+    const clutchGeometry = await clutchInsight.evaluate(card => {
+      const list = card.closest(".insights-list");
+      const title = card.querySelector(".insight-title");
+      const visual = card.querySelector(".coaching-category-visual");
+      const tag = card.querySelector(".insight-tag");
+      const cardRect = card.getBoundingClientRect();
+      const listRect = list.getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
+      const visualRect = visual.getBoundingClientRect();
+      const tagRect = tag.getBoundingClientRect();
+      const mutedProbe = document.createElement("span");
+      mutedProbe.style.color = "var(--text-muted, #a8b3c7)";
+      document.body.appendChild(mutedProbe);
+      const mutedColor = getComputedStyle(mutedProbe).color;
+      mutedProbe.remove();
+      return {
+        cardBottom: cardRect.bottom,
+        listBottom: listRect.bottom,
+        listScrollTop: list.scrollTop,
+        listScrollHeight: list.scrollHeight,
+        listClientHeight: list.clientHeight,
+        listPaddingBottom: getComputedStyle(list).paddingBottom,
+        titleLeft: titleRect.left,
+        expectedTextLeft: cardRect.left + parseFloat(getComputedStyle(card).paddingLeft),
+        titleColor: getComputedStyle(title).color,
+        mutedColor,
+        visualRight: visualRect.right,
+        visualBottom: visualRect.bottom,
+        tagLeft: tagRect.left,
+        tagBottom: tagRect.bottom,
+        transform: getComputedStyle(card).transform
+      };
+    });
+    assert.ok(clutchGeometry.cardBottom <= clutchGeometry.listBottom + 1, JSON.stringify(clutchGeometry));
+    assert.ok(Math.abs(clutchGeometry.titleLeft - clutchGeometry.expectedTextLeft) <= 1, JSON.stringify(clutchGeometry));
+    assert.equal(clutchGeometry.titleColor, clutchGeometry.mutedColor);
+    assert.ok(clutchGeometry.visualRight <= clutchGeometry.tagLeft + 1, JSON.stringify(clutchGeometry));
+    assert.ok(Math.abs(clutchGeometry.visualBottom - clutchGeometry.tagBottom) <= 1, JSON.stringify(clutchGeometry));
+    assert.equal(clutchGeometry.transform, "none");
+    await clutchInsight.screenshot({ path: path.join(__dirname, "tmp", "qol-clutch-closing-card.png") });
+    await clutchInsight.hover();
+    await page.waitForTimeout(250);
+    assert.equal(await clutchInsight.evaluate(card => getComputedStyle(card).transform), "none");
     const firstInsight = page.locator("#insightsList .insight-card:not(.insight-empty)").first();
     await firstInsight.click();
     await page.waitForTimeout(350);
