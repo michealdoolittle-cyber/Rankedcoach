@@ -1354,6 +1354,16 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   filter:brightness(1.14) saturate(1.08);
 }
 
+/* Keep desktop agent sequence numbers inside the card instead of above it. */
+@media (min-width:821px){
+  html:not(.is-mobile-layout) .gamesense-agent-entry-card .gamesense-entry-index{
+    top:14px !important;
+    right:16px !important;
+    z-index:4 !important;
+    color:color-mix(in srgb,var(--gamesense-warm,#f6c453) 38%,transparent) !important;
+  }
+}
+
 .gamesense-weapon-suggestion-detail{
   display:grid !important;
   gap:8px;

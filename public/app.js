@@ -18929,6 +18929,16 @@ function bindInsightCards(){
       card.classList.add("open");
       container.classList.add("has-open-card");
       scheduleInsightListOverflowSync(container);
+      const alignOpenedCard = () => {
+        syncInsightListOverflow(container);
+        const listRect = container.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        container.scrollTop += cardRect.top - listRect.top;
+      };
+      requestAnimationFrame(() => {
+        alignOpenedCard();
+        window.setTimeout(alignOpenedCard, 90);
+      });
     };
   });
 }

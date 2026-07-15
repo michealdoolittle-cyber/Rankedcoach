@@ -54593,3 +54593,88 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
     letter-spacing:.015em !important;
   }
 }
+
+/* Expanded Priority Trend: keep the full border visible and stack its right-side read. */
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-layout:has(.insights-list.has-open-card){
+    height:auto !important;
+    min-height:0 !important;
+    grid-template-rows:auto minmax(366px,auto) minmax(320px,auto) !important;
+    overflow:visible !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-top-card:has(.insights-list.has-open-card){
+    height:100% !important;
+    min-height:0 !important;
+    padding-bottom:14px !important;
+    overflow:hidden !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card{
+    padding-bottom:12px !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open{
+    grid-template-columns:minmax(260px,1fr) 46px minmax(420px,max-content) !important;
+    grid-template-rows:auto auto minmax(118px,auto) !important;
+    grid-template-areas:
+      "preview visual title"
+      "preview tag meta"
+      "expand expand expand" !important;
+    column-gap:10px !important;
+    row-gap:5px !important;
+    padding:10px 12px 16px !important;
+    margin:0 0 6px !important;
+    overflow:hidden !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-header,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-header-main{
+    display:contents !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .coaching-category-visual{
+    grid-area:visual !important;
+    position:static !important;
+    align-self:end !important;
+    justify-self:end !important;
+    width:46px !important;
+    height:46px !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-title{
+    grid-area:title !important;
+    align-self:end !important;
+    justify-self:start !important;
+    color:var(--text-muted,#a8b3c7) !important;
+    text-align:left !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-tag{
+    grid-area:tag !important;
+    position:static !important;
+    align-self:start !important;
+    justify-self:center !important;
+    margin:0 !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-meta-row{
+    grid-area:meta !important;
+    align-self:start !important;
+    justify-content:flex-end !important;
+    padding-top:0 !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-preview{
+    grid-area:preview !important;
+    align-self:center !important;
+    padding:0 !important;
+    text-align:left !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-insights .insights-list.has-open-card .insight-card.open .insight-expand{
+    grid-area:expand !important;
+  }
+}
