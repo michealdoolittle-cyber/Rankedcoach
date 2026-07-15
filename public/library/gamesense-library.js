@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller" };
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -9,22 +9,35 @@
     weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." }
   };
   const agentUuids = Object.freeze({
+    astra: "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
+    breach: "5f8d3a7f-467b-97f3-062c-13acf203c006",
+    brimstone: "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
     chamber: "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
     clove: "1dbf2edd-4729-0984-3115-daa5eed44993",
     cypher: "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
+    deadlock: "cc8b64c8-4b25-4ff9-6e7f-37b4da43d235",
     fade: "dade69b4-4f5a-8528-247b-219e5a1facd6",
     gekko: "e370fa57-4757-3604-3648-499e1f642d3f",
+    harbor: "95b78ed7-4637-86d9-7e41-71ba8c293152",
     iso: "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
     jett: "add6443a-41bd-e414-f6ad-e58d267f4e95",
     "kay-o": "601dbbe7-43ce-be57-2a40-4abd24953621",
     killjoy: "1e58de9c-4950-5125-93e9-a0aee9f98746",
+    miks: "7c8a4701-4de6-9355-b254-e09bc2a34b72",
     neon: "bb2a4828-46eb-8cd1-e765-15848195d751",
+    omen: "8e253930-4c05-31dd-1b6c-968525494517",
+    phoenix: "eb93336a-449b-9c1b-0a54-a891f7921d69",
     raze: "f94c3b30-42be-e959-889c-5aa313dba261",
     reyna: "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
     sage: "569fdd95-4d10-43ab-ca70-79becc718b46",
     skye: "6f2a04ca-43e0-be17-7f36-b3908627744d",
     sova: "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
-    viper: "707eab51-4836-f488-046a-cda6bf494859"
+    tejo: "b444168c-4e35-8076-db47-ef9bf368f384",
+    veto: "92eeef5d-43b5-1d4a-8d03-b3927a09034b",
+    viper: "707eab51-4836-f488-046a-cda6bf494859",
+    vyse: "efba5359-4016-a1e5-7626-b1ae76895940",
+    waylay: "df1cb487-4902-002e-5c17-d28e83e78588",
+    yoru: "7f94d92c-4234-0a36-9646-3a87eb8b5c89"
   });
   const compAgentRoles = Object.freeze({
     chamber: "sentinel", clove: "controller", cypher: "sentinel", fade: "initiator",
@@ -166,6 +179,10 @@
     return globalThis.RankedCoachGamesenseReference || { agents: [], weapons: [], warmupDetails: {} };
   }
 
+  function getWeaponCollections() {
+    return Array.isArray(globalThis.RankedCoachWeaponCollections) ? globalThis.RankedCoachWeaponCollections : [];
+  }
+
   function getTopicItems(topic) {
     if (topic === "maps") return getMaps();
     return Array.isArray(getReference()[topic]) ? getReference()[topic] : [];
@@ -273,7 +290,14 @@
             <strong>Active-season plant share</strong>
             ${(map.plantSpots || []).map(spot => {
               const plantKey = `${spot.site}${spot.number}`;
-              return `<div data-gamesense-plant-key="${escapeHtml(plantKey)}"><i></i><b>${escapeHtml(plantKey)}</b><em>${spot.rate != null && Number.isFinite(Number(spot.rate)) ? `${Number(spot.rate).toFixed(2)}%` : "N/A"}</em><span>${escapeHtml(spot.label)}</span></div>`;
+              return `<div class="gamesense-plant-row" data-gamesense-plant-key="${escapeHtml(plantKey)}">
+                <i></i><b>${escapeHtml(plantKey)}</b><em>${spot.rate != null && Number.isFinite(Number(spot.rate)) ? `${Number(spot.rate).toFixed(2)}%` : "N/A"}</em><span>${escapeHtml(spot.label)}</span>
+                <button type="button" class="gamesense-plant-preview-toggle" data-gamesense-plant-preview="${escapeHtml(plantKey)}" aria-expanded="false" aria-label="Show ${escapeHtml(plantKey)} in-game plant reference">+</button>
+                <section class="gamesense-plant-preview" hidden>
+                  ${spot.previewImage ? `<img src="${escapeHtml(spot.previewImage)}" alt="${escapeHtml(spot.previewLabel || spot.label)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="gamesense-plant-preview-unavailable">No verified in-game image is available for this spot.</div>`}
+                  <div><strong>${escapeHtml(spot.previewLabel || spot.label)}</strong>${spot.previewSource ? `<a href="${escapeHtml(spot.previewSource)}" target="_blank" rel="noopener noreferrer">Image source</a>` : ""}</div>
+                </section>
+              </div>`;
             }).join("")}
             <p>${escapeHtml(map.plantRateNote || "Plant share is unavailable for this map.")}</p>
           </aside>` : ""}
@@ -369,6 +393,46 @@
       </section>`;
   }
 
+  function renderCompRolePickList(map, role = state.compRole) {
+    const normalizedRole = ["Controller", "Duelist", "Initiator", "Sentinel"].includes(role) ? role : "Controller";
+    const rows = (Array.isArray(map.rolePickRates) ? map.rolePickRates : [])
+      .filter(item => item.role === normalizedRole)
+      .sort((left, right) => Number(right.mapRate) - Number(left.mapRate));
+    return `
+      <div class="gamesense-comp-pick-list" data-role-tone="${normalizedRole.toLowerCase()}" role="tabpanel">
+        ${rows.map((item, index) => {
+          const difference = Number(item.mapRate) - Number(item.globalRate);
+          const differenceClass = difference > .005 ? "is-above" : difference < -.005 ? "is-below" : "is-even";
+          const differenceLabel = `${difference > 0 ? "+" : ""}${difference.toFixed(2)} pts vs global`;
+          return `<article class="gamesense-comp-pick-row">
+            <span class="gamesense-comp-pick-rank">${String(index + 1).padStart(2, "0")}</span>
+            <img src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
+            <strong>${escapeHtml(item.agent)}</strong>
+            <span><b>${Number(item.mapRate).toFixed(2)}%</b><small>${escapeHtml(map.label)} pick</small></span>
+            <span><b>${Number(item.globalRate).toFixed(2)}%</b><small>Global pick</small></span>
+            <em class="${differenceClass}">${escapeHtml(differenceLabel)}</em>
+          </article>`;
+        }).join("")}
+      </div>`;
+  }
+
+  function renderCompRolePickExplorer(map) {
+    if (!Array.isArray(map.rolePickRates) || !map.rolePickRates.length) return "";
+    const roles = ["Controller", "Duelist", "Initiator", "Sentinel"];
+    const activeRole = roles.includes(state.compRole) ? state.compRole : "Controller";
+    return `
+      <details class="gamesense-comp-pick-explorer">
+        <summary>Want to see all ${escapeHtml(map.label)} pick rates?</summary>
+        <div class="gamesense-comp-pick-explorer-body">
+          <p>Ascendant-to-Radiant Competitive picks from Patch ${escapeHtml(map.compSample?.patchLabel || "current")}. Map share and global share use the same combined patch window.</p>
+          <div class="gamesense-comp-role-tabs" role="tablist" aria-label="${escapeHtml(map.label)} agent pick rates by role">
+            ${roles.map(role => `<button type="button" data-gamesense-comp-role="${role}" data-role-tone="${role.toLowerCase()}" class="${role === activeRole ? "active" : ""}" aria-pressed="${role === activeRole}">${role}</button>`).join("")}
+          </div>
+          ${renderCompRolePickList(map, activeRole)}
+        </div>
+      </details>`;
+  }
+
   function renderComp(map) {
     const rawComps = (Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps : [map.metaComp]).slice();
     const comps = getCompRoleLayoutReferences(map, rawComps);
@@ -414,6 +478,7 @@
           </article>`;
         }).join("")}</div>
         ${selectedInsight ? `<div class="gamesense-comp-agent-read"><strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(selectedInsight)}</p></div>` : `<p class="gamesense-comp-prompt">Select an agent to see why the pick succeeds on ${escapeHtml(map.label)}.</p>`}
+        ${renderCompRolePickExplorer(map)}
       </section>`;
   }
 
@@ -556,6 +621,37 @@
       </article>`;
   }
 
+  function renderWeaponCollectionArchive() {
+    const collections = getWeaponCollections();
+    if (!collections.length) return "";
+    return `
+      <section class="gamesense-collection-archive">
+        <div class="gamesense-collection-head">
+          <div><span>Historical Reference</span><h3>Weapon Skin and Bundle Archive</h3></div>
+          <p>Riot edition is the collection's official content tier, not a community review score. Release labels use the original Episode and Act.</p>
+        </div>
+        <div class="gamesense-collection-filters" role="group" aria-label="Filter weapon collections">
+          <button type="button" class="active" data-gamesense-collection-filter="all" aria-pressed="true">All</button>
+          <button type="button" data-gamesense-collection-filter="store" aria-pressed="false">Store / Limited</button>
+          <button type="button" data-gamesense-collection-filter="battlepass" aria-pressed="false">Battlepass</button>
+        </div>
+        <div class="gamesense-collection-grid">
+          ${collections.map(item => {
+            const collectionType = item.sourceType === "Battlepass" ? "battlepass" : "store";
+            return `<article class="gamesense-collection-card" data-gamesense-collection-type="${collectionType}">
+              <div class="gamesense-collection-art"><img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} collection art" loading="lazy"></div>
+              <div class="gamesense-collection-copy">
+                <span>${escapeHtml(item.sourceType)}</span>
+                <h4>${escapeHtml(item.name)}</h4>
+                <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${escapeHtml(item.era)}</b><b>${escapeHtml(String(item.year))} | Patch ${escapeHtml(item.patch)}</b></div>
+                <div class="gamesense-collection-links"><a href="${escapeHtml(item.videoUrl)}" target="_blank" rel="noopener noreferrer">Watch videos</a><a href="${escapeHtml(item.referenceUrl)}" target="_blank" rel="noopener noreferrer">Collection record</a></div>
+              </div>
+            </article>`;
+          }).join("")}
+        </div>
+      </section>`;
+  }
+
   function renderWeaponDetail(group) {
     const weapons = group.weapons || [];
     const selected = weapons.find(weapon => weapon.id === state.detailId) || weapons[0];
@@ -570,7 +666,8 @@
           <button type="button" data-gamesense-weapon="${escapeHtml(weapon.id)}" class="${weapon.id === selected?.id ? "active" : ""}" aria-pressed="${weapon.id === selected?.id}"><img src="${escapeHtml(weapon.image)}" alt=""><span>${escapeHtml(weapon.label)}</span><small>${weapon.cost} credits</small></button>
         `).join("")}</div>
         ${renderWeaponFact(selected)}
-      </section>`;
+      </section>
+      ${renderWeaponCollectionArchive()}`;
   }
 
   function renderDetail(topic, itemId) {
@@ -703,6 +800,42 @@
 
     if (document.documentElement.classList.contains("is-mobile-layout")) {
       requestAnimationFrame(() => window.setTimeout(() => read?.scrollIntoView({ behavior: "smooth", block: "center" }), 60));
+    }
+  }
+
+  function selectCompRole(roleButton) {
+    const map = getMaps().find(item => item.id === state.itemId);
+    const explorer = roleButton?.closest(".gamesense-comp-pick-explorer");
+    const selectedRole = String(roleButton?.dataset?.gamesenseCompRole || "");
+    if (!map || !explorer || !["Controller", "Duelist", "Initiator", "Sentinel"].includes(selectedRole)) return;
+    state.compRole = selectedRole;
+    explorer.querySelectorAll("[data-gamesense-comp-role]").forEach(button => {
+      const isSelected = button.dataset.gamesenseCompRole === selectedRole;
+      button.classList.toggle("active", isSelected);
+      button.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    });
+    replaceTargetedElement(explorer.querySelector(".gamesense-comp-pick-list"), renderCompRolePickList(map, selectedRole));
+  }
+
+  function togglePlantPreview(toggle) {
+    const row = toggle?.closest(".gamesense-plant-row");
+    const legend = row?.closest(".gamesense-plant-legend");
+    const preview = row?.querySelector(".gamesense-plant-preview");
+    if (!row || !legend || !preview) return;
+    const shouldOpen = preview.hidden;
+    legend.querySelectorAll(".gamesense-plant-row").forEach(item => {
+      const itemPreview = item.querySelector(".gamesense-plant-preview");
+      const itemToggle = item.querySelector(".gamesense-plant-preview-toggle");
+      if (itemPreview) itemPreview.hidden = true;
+      item.classList.remove("has-preview-open");
+      itemToggle?.setAttribute("aria-expanded", "false");
+      if (itemToggle) itemToggle.textContent = "+";
+    });
+    if (shouldOpen) {
+      preview.hidden = false;
+      row.classList.add("has-preview-open");
+      toggle.setAttribute("aria-expanded", "true");
+      toggle.textContent = "-";
     }
   }
 
@@ -862,6 +995,7 @@
     state.tipView = "attack";
     state.mapZoom = 1;
     state.compAgent = "";
+    state.compRole = "Controller";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
     const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
     const selectedNav = document.documentElement.classList.contains("is-mobile-layout") ? mobileNav : desktopNav;
@@ -880,6 +1014,7 @@
     state.tipView = "attack";
     state.mapZoom = 1;
     state.compAgent = "";
+    state.compRole = "Controller";
     render({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
     const owner = document.documentElement.classList.contains("is-mobile-layout")
@@ -949,6 +1084,7 @@
       state.tipView = "attack";
       state.mapZoom = 1;
       state.compAgent = "";
+      state.compRole = "Controller";
       render({ direction: "forward" });
       return;
     }
@@ -961,6 +1097,7 @@
       state.tipView = "attack";
       state.mapZoom = 1;
       state.compAgent = "";
+      state.compRole = "Controller";
       render({ direction: "forward" });
       return;
     }
@@ -987,6 +1124,18 @@
       selectCompAgent(compAgent);
       return;
     }
+    const compRole = event.target.closest?.("[data-gamesense-comp-role]");
+    if (compRole) {
+      selectCompRole(compRole);
+      return;
+    }
+    const plantPreview = event.target.closest?.("[data-gamesense-plant-preview]");
+    if (plantPreview) {
+      event.preventDefault();
+      event.stopPropagation();
+      togglePlantPreview(plantPreview);
+      return;
+    }
     const role = event.target.closest?.("[data-gamesense-role]");
     if (role) {
       selectRole(role);
@@ -995,6 +1144,20 @@
     const ability = event.target.closest?.("[data-gamesense-ability]");
     if (ability) {
       selectAbility(ability);
+      return;
+    }
+    const collectionFilter = event.target.closest?.("[data-gamesense-collection-filter]");
+    if (collectionFilter) {
+      const archive = collectionFilter.closest(".gamesense-collection-archive");
+      const filter = collectionFilter.dataset.gamesenseCollectionFilter || "all";
+      archive?.querySelectorAll("[data-gamesense-collection-filter]").forEach(button => {
+        const active = button.dataset.gamesenseCollectionFilter === filter;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      archive?.querySelectorAll("[data-gamesense-collection-type]").forEach(card => {
+        card.hidden = filter !== "all" && card.dataset.gamesenseCollectionType !== filter;
+      });
       return;
     }
     const weapon = event.target.closest?.("[data-gamesense-weapon]");
@@ -1012,6 +1175,7 @@
       state.tipView = "attack";
       state.mapZoom = 1;
       state.compAgent = "";
+      state.compRole = "Controller";
       render({ direction: "backward" });
     }
   }, true);

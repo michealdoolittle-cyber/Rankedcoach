@@ -147,7 +147,7 @@ async function run() {
       fillWidth: progress.querySelector("#appLoadingProgressBar")?.getBoundingClientRect().width || 0,
       trackWidth: progress.getBoundingClientRect().width
     }));
-    assert.ok(loadingProgress.value >= 18 && loadingProgress.fillWidth > 0 && loadingProgress.fillWidth < loadingProgress.trackWidth, JSON.stringify(loadingProgress));
+    assert.ok(loadingProgress.value >= 18 && loadingProgress.value <= 100 && loadingProgress.fillWidth > 0 && loadingProgress.fillWidth <= loadingProgress.trackWidth, JSON.stringify(loadingProgress));
     assert.ok(Math.abs(loadingProgress.fillWidth - (loadingProgress.trackWidth * loadingProgress.value / 100)) <= 2, JSON.stringify(loadingProgress));
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "tmp", "profile-first-sync-progress.png"), fullPage: true });

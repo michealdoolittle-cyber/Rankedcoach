@@ -19414,6 +19414,61 @@ function closeRiotModal() {
   hideModalById("riotModal");
 }
 
+function getImpactOpportunityAction(componentKey = "", roleKey = "unknown") {
+  const roleLabel = roleKey === "unknown" ? "your role" : roleKey;
+  const actions = {
+    acs: `Raise combat output through traded damage and cleaner multi-kill conversion; avoid chasing low-value damage after the round is already decided.`,
+    kd: `Take more tradeable or escapeable fights and slow the next duel after the first kill so fight value rises without adding deaths.`,
+    opening: `Use setup utility and a planned exit for first contact. One fewer untraded first death improves this component more reliably than forcing extra openings.`,
+    hs: `Keep crosshair placement at head level through common clears, while preserving the body-shot damage that still converts the round.`,
+    deaths: `Preserve your life after utility or site value is delivered; for ${roleLabel}, surviving to the next decision protects this weighted component.`,
+    assists: `Layer utility immediately before a teammate's contact and stay close enough to trade so setup value becomes a recorded assist or KAST event.`,
+    kast: `Increase rounds with a kill, assist, survival, or trade by staying connected to the team through the first and last fight.`,
+    econ: `Convert full-buy credits into repeatable rifle-and-utility rounds and avoid low-probability rebuy patterns that suppress economy value.`
+  };
+  return actions[componentKey] || `Improve the lowest weighted component while keeping the stronger parts of the role report stable.`;
+}
+
+function renderImpactOpportunityPullout({ roleWeightEntries = [], componentMap = {}, roleKey = "unknown" } = {}) {
+  const list = document.getElementById("impactOpportunityList");
+  const pullout = document.getElementById("impactOpportunityPullout");
+  const tab = document.getElementById("impactOpportunityTab");
+  if (!list) return;
+
+  const opportunities = roleWeightEntries
+    .filter(entry => entry.key !== "result" && componentMap?.[entry.key])
+    .map(entry => {
+      const component = componentMap[entry.key];
+      const score = Math.round(clampScore(component.score));
+      const weight = safeNumber(entry.weight);
+      const componentGain = Math.min(10, Math.max(0, 100 - score));
+      return {
+        ...entry,
+        score,
+        weightedGap: (100 - score) * weight,
+        projectedGain: componentGain * weight,
+        action: getImpactOpportunityAction(entry.key, roleKey)
+      };
+    })
+    .sort((left, right) => right.weightedGap - left.weightedGap || left.score - right.score)
+    .slice(0, 3);
+
+  list.innerHTML = opportunities.length ? opportunities.map((item, index) => `
+    <article class="impact-opportunity-item${index === 0 ? " is-primary" : ""}">
+      <div><span>${index === 0 ? "Best weighted target" : `Next target ${index + 1}`}</span><strong>${escapeHtml(item.label)}</strong></div>
+      <dl>
+        <div><dt>Current</dt><dd>${item.score}/100</dd></div>
+        <div><dt>Weight</dt><dd>${Math.round(item.weight * 100)}%</dd></div>
+        <div><dt>If +10</dt><dd>+${item.projectedGain.toFixed(1)} impact</dd></div>
+      </dl>
+      <p>${escapeHtml(item.action)}</p>
+    </article>
+  `).join("") : `<p class="impact-opportunity-empty">This match does not contain enough component data to calculate a score opportunity yet.</p>`;
+
+  pullout?.classList.remove("is-open");
+  tab?.setAttribute("aria-expanded", "false");
+}
+
 function openImpactModal() {
   const modal = document.getElementById("lensModalOverlay");
   const list = document.getElementById("lensStatsList");
@@ -19518,6 +19573,8 @@ function openImpactModal() {
     `;
     list.appendChild(row);
   });
+
+  renderImpactOpportunityPullout({ roleWeightEntries, componentMap, roleKey });
 
   showModalById("lensModalOverlay");
 
@@ -39238,6 +39295,16 @@ function bindEvents(){
     openImpactModal();
   });
 
+  document.getElementById("impactOpportunityTab")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const pullout = document.getElementById("impactOpportunityPullout");
+    const tab = document.getElementById("impactOpportunityTab");
+    const shouldOpen = !pullout?.classList.contains("is-open");
+    pullout?.classList.toggle("is-open", shouldOpen);
+    tab?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  });
+
   document.getElementById("logSaveBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -42622,6 +42689,48 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     pattern: "url('/assets/themes/prism-refraction.svg')",
     pattern2: "linear-gradient(122deg, transparent 18%, rgba(255,255,255,.1) 38%, rgba(34,211,238,.12) 48%, rgba(244,114,182,.12) 58%, transparent 78%)",
     motion: "prism-turn"
+  }),
+  createProfileTheme("storm-voltage", "Storm Voltage", "dark", {
+    base: "#020713", base2: "#0b1d3a", card: "#071426", card2: "#10294a",
+    accent: "#60a5fa", accent2: "#f8fafc",
+    pattern: "url('/assets/themes/storm-voltage.svg')",
+    pattern2: "radial-gradient(circle at 74% 18%, rgba(255,255,255,.22), transparent 18%), radial-gradient(circle at 22% 76%, rgba(59,130,246,.2), transparent 28%)",
+    motion: "lightning-strike"
+  }),
+  createProfileTheme("jetstream-wind", "Jetstream Wind", "dark", {
+    base: "#03131c", base2: "#0b3240", card: "#08222c", card2: "#124451",
+    accent: "#67e8f9", accent2: "#d9f99d",
+    pattern: "url('/assets/themes/jetstream-wind.svg')",
+    pattern2: "linear-gradient(110deg, transparent 12%, rgba(103,232,249,.12) 42%, transparent 68%)",
+    motion: "wind-flow"
+  }),
+  createProfileTheme("void-ink", "Void Ink", "dark", {
+    base: "#03050b", base2: "#171026", card: "#090d17", card2: "#24153a",
+    accent: "#818cf8", accent2: "#c084fc",
+    pattern: "url('/assets/themes/void-ink.svg')",
+    pattern2: "radial-gradient(ellipse at 20% 34%, rgba(76,29,149,.24), transparent 34%), radial-gradient(ellipse at 78% 68%, rgba(15,23,42,.7), transparent 40%)",
+    motion: "ink-bloom"
+  }),
+  createProfileTheme("echo-sonar", "Echo Sonar", "dark", {
+    base: "#01140f", base2: "#052f2b", card: "#06221d", card2: "#0b403b",
+    accent: "#2dd4bf", accent2: "#a7f3d0",
+    pattern: "url('/assets/themes/echo-sonar.svg')",
+    pattern2: "radial-gradient(circle at 50% 50%, rgba(45,212,191,.13), transparent 44%)",
+    motion: "sonar-pulse"
+  }),
+  createProfileTheme("neon-eq", "Neon EQ", "dark", {
+    base: "#090312", base2: "#280b38", card: "#16071f", card2: "#3a0d43",
+    accent: "#f472b6", accent2: "#22d3ee",
+    pattern: "url('/assets/themes/neon-eq.svg')",
+    pattern2: "linear-gradient(180deg, transparent 36%, rgba(244,114,182,.12) 66%, rgba(34,211,238,.1))",
+    motion: "sound-wave"
+  }),
+  createProfileTheme("victory-confetti", "Victory Confetti", "dark", {
+    base: "#0c0818", base2: "#24113b", card: "#171029", card2: "#38204b",
+    accent: "#facc15", accent2: "#fb7185",
+    pattern: "url('/assets/themes/victory-confetti.svg')",
+    pattern2: "radial-gradient(circle at 24% 18%, rgba(250,204,21,.15), transparent 18%), radial-gradient(circle at 78% 24%, rgba(251,113,133,.16), transparent 20%)",
+    motion: "confetti-pop"
   })
 ];
 

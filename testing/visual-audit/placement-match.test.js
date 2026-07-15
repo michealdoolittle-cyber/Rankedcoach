@@ -121,6 +121,7 @@ async function run() {
     assert.equal(await page.locator(".log-result-rr-unverified").count(), 0);
 
     await page.click('.nav-btn[data-page="home"]');
+    if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click('.graph-btn[data-size="all"]');
     await page.locator(".chart-season-boundary").first().waitFor({ state: "attached" });
     assert.equal(await page.locator(".chart-season-boundary").count(), 2);

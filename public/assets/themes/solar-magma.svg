@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
   <defs>
-    <filter id="lava" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="turbulence" baseFrequency=".009" numOctaves="3" seed="31" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="48"/><feGaussianBlur stdDeviation="3"/></filter>
-    <linearGradient id="vein" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7f1d1d" stop-opacity="0"/><stop offset=".34" stop-color="#fb923c" stop-opacity=".62"/><stop offset=".52" stop-color="#fef08a" stop-opacity=".82"/><stop offset=".7" stop-color="#ef4444" stop-opacity=".56"/><stop offset="1" stop-color="#7f1d1d" stop-opacity="0"/></linearGradient>
-    <radialGradient id="bubble"><stop stop-color="#fef08a" stop-opacity=".8"/><stop offset=".45" stop-color="#fb923c" stop-opacity=".5"/><stop offset="1" stop-color="#7f1d1d" stop-opacity="0"/></radialGradient>
+    <filter id="lava" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="fractalNoise" baseFrequency=".008" numOctaves="3" seed="31" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="58"/><feGaussianBlur stdDeviation="2.5"/></filter>
+    <radialGradient id="pool"><stop stop-color="#fef08a" stop-opacity=".96"/><stop offset=".26" stop-color="#fb923c" stop-opacity=".9"/><stop offset=".62" stop-color="#dc2626" stop-opacity=".66"/><stop offset="1" stop-color="#3f0a05" stop-opacity="0"/></radialGradient>
+    <linearGradient id="crust" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#120503"/><stop offset=".55" stop-color="#3f1208"/><stop offset="1" stop-color="#090302"/></linearGradient>
   </defs>
-  <g filter="url(#lava)" fill="none" stroke="url(#vein)" stroke-linecap="round"><path d="M-40 159c151 18 195 142 327 128 157-16 155-191 319-171 145 18 161 174 334 146" stroke-width="38"/><path d="M-46 576c158-91 277 83 428 27 132-49 150-185 297-140 94 29 130 128 258 109" stroke-width="51"/><path d="M72 905c12-143 126-197 221-259 112-73 165-162 148-306" stroke-width="29"/></g>
-  <g fill="url(#bubble)"><circle cx="165" cy="430" r="52"/><circle cx="719" cy="340" r="68"/><circle cx="548" cy="741" r="43"/><circle cx="318" cy="101" r="35"/></g>
+  <rect width="900" height="900" fill="#160502"/>
+  <g filter="url(#lava)" fill="url(#pool)"><ellipse cx="128" cy="155" rx="190" ry="122"/><ellipse cx="455" cy="92" rx="184" ry="108"/><ellipse cx="784" cy="178" rx="210" ry="146"/><ellipse cx="238" cy="430" rx="250" ry="165"/><ellipse cx="670" cy="455" rx="275" ry="182"/><ellipse cx="105" cy="760" rx="212" ry="152"/><ellipse cx="478" cy="752" rx="240" ry="168"/><ellipse cx="860" cy="770" rx="220" ry="158"/></g>
+  <g fill="url(#crust)" stroke="#7c2d12" stroke-opacity=".72" stroke-width="6"><path d="M-30 300 110 240 228 272 328 230 410 305 352 378 206 346 102 392Z"/><path d="m426 252 142-68 146 48 126-14 95 84-110 94-148-43-118 45-111-62Z"/><path d="m-38 592 135-64 130 42 126-54 96 82-82 92-144-34-118 64-143-46Z"/><path d="m470 604 126-70 148 36 138-56 76 104-93 90-145-26-128 67-132-58Z"/></g>
+  <g fill="none" stroke="#fef08a" stroke-opacity=".72"><circle cx="170" cy="112" r="28" stroke-width="10"/><circle cx="529" cy="438" r="45" stroke-width="13"/><circle cx="782" cy="706" r="34" stroke-width="11"/><circle cx="310" cy="792" r="21" stroke-width="8"/></g>
 </svg>

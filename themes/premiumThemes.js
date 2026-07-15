@@ -107,6 +107,42 @@ const PREMIUM_THEMES = [
     colors: { accent: "#f472b6", accent2: "#22d3ee", card: "#111127", card2: "#28204a", text: "#fafafa", muted: "#ddd6fe" },
     signatureMotion: { name: "prism-turn", durationMs: 32000, easing: "linear" },
     emphasis: { strong: "refracting kaleidoscope rotation", subtle: "pink, cyan, and violet facets" }
+  },
+  {
+    id: "storm-voltage", label: "Storm Voltage", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#60a5fa", accent2: "#f8fafc", card: "#071426", card2: "#10294a", text: "#f8fafc", muted: "#bfdbfe" },
+    signatureMotion: { name: "lightning-strike", durationMs: 12000, easing: "steps(1,end)" },
+    emphasis: { strong: "branching lightning strikes", subtle: "electric blue storm depth" }
+  },
+  {
+    id: "jetstream-wind", label: "Jetstream Wind", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#67e8f9", accent2: "#d9f99d", card: "#08222c", card2: "#124451", text: "#f0fdfa", muted: "#a5f3fc" },
+    signatureMotion: { name: "wind-flow", durationMs: 18000, easing: "ease-in-out" },
+    emphasis: { strong: "sweeping wind ribbons", subtle: "cyan air currents with lime light" }
+  },
+  {
+    id: "void-ink", label: "Void Ink", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#818cf8", accent2: "#c084fc", card: "#090d17", card2: "#24153a", text: "#f8fafc", muted: "#c4b5fd" },
+    signatureMotion: { name: "ink-bloom", durationMs: 24000, easing: "ease-in-out" },
+    emphasis: { strong: "dark ink blooms", subtle: "indigo and violet diffusion" }
+  },
+  {
+    id: "echo-sonar", label: "Echo Sonar", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#2dd4bf", accent2: "#a7f3d0", card: "#06221d", card2: "#0b403b", text: "#f0fdfa", muted: "#99f6e4" },
+    signatureMotion: { name: "sonar-pulse", durationMs: 9000, easing: "ease-out" },
+    emphasis: { strong: "expanding sonar pings", subtle: "deep green radar glow" }
+  },
+  {
+    id: "neon-eq", label: "Neon EQ", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#f472b6", accent2: "#22d3ee", card: "#16071f", card2: "#3a0d43", text: "#fdf4ff", muted: "#f5d0fe" },
+    signatureMotion: { name: "sound-wave", durationMs: 8000, easing: "ease-in-out" },
+    emphasis: { strong: "animated EDM equalizer waves", subtle: "neon pink and cyan rhythm" }
+  },
+  {
+    id: "victory-confetti", label: "Victory Confetti", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#facc15", accent2: "#fb7185", card: "#171029", card2: "#38204b", text: "#fff7ed", muted: "#fde68a" },
+    signatureMotion: { name: "confetti-pop", durationMs: 14000, easing: "linear" },
+    emphasis: { strong: "confetti popper bursts", subtle: "gold, coral, and violet celebration" }
   }
 ];
 

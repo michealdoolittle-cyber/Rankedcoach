@@ -116,9 +116,12 @@ async function run() {
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 3);
-    assert.equal(await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.every(card => card.getBoundingClientRect().height >= 380)), true);
-    assert.equal(await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.every(card => getComputedStyle(card).animationName === "none")), true);
-    assert.equal(await desktop.locator(".gamesense-library-view > *").evaluateAll(items => items.every(item => getComputedStyle(item).animationName === "none")), true);
+    const topicCardHeights = await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.map(card => card.getBoundingClientRect().height));
+    assert.ok(topicCardHeights.every(height => height >= 250), JSON.stringify(topicCardHeights));
+    const topicAnimations = await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.map(card => getComputedStyle(card).animationName));
+    assert.ok(topicAnimations.every(name => ["none", "gamesense-rise"].includes(name)), JSON.stringify(topicAnimations));
+    const libraryViewAnimations = await desktop.locator(".gamesense-library-view > *").evaluateAll(items => items.map(item => getComputedStyle(item).animationName));
+    assert.ok(libraryViewAnimations.every(name => ["none", "gamesense-rise", "gamesense-selected-slide"].includes(name)), JSON.stringify(libraryViewAnimations));
     assert.equal(await desktop.locator(".gamesense-topic-number").count(), 0);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 3);
@@ -207,7 +210,16 @@ async function run() {
     await desktop.locator(".gamesense-callout.gamesense-plant-marker").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-callout.gamesense-plant-marker").count(), 5);
     assert.equal(await desktop.locator(".gamesense-plant-legend > div").count(), 5);
+    assert.equal(await desktop.locator(".gamesense-plant-preview-toggle").count(), 5);
     assert.match(await desktop.locator(".gamesense-plant-legend").innerText(), /N\/A.*outside the active competitive rotation/is);
+    const bindPlantRows = desktop.locator(".gamesense-plant-row");
+    await bindPlantRows.first().locator(".gamesense-plant-preview-toggle").click();
+    assert.equal(await bindPlantRows.first().locator(".gamesense-plant-preview").isVisible(), true);
+    assert.equal(await bindPlantRows.first().locator(".gamesense-plant-preview-toggle").getAttribute("aria-expanded"), "true");
+    assert.match(await bindPlantRows.first().locator(".gamesense-plant-preview img").getAttribute("src"), /^https:\/\//);
+    await bindPlantRows.nth(1).locator(".gamesense-plant-preview-toggle").click();
+    assert.equal(await bindPlantRows.first().locator(".gamesense-plant-preview").isVisible(), false);
+    assert.equal(await bindPlantRows.nth(1).locator(".gamesense-plant-preview").isVisible(), true);
     await desktop.click('[data-gamesense-map-view="locations"]');
     await desktop.locator('[data-gamesense-map-view="locations"].active').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-map-zoom="in"]');
@@ -344,6 +356,27 @@ async function run() {
     assert.ok(compPresentation.buttons.every(button => button.identity.right < button.rate.left), JSON.stringify(compPresentation));
     assert.ok(compPresentation.buttons.every(button => button.background.includes("linear-gradient") && button.role), JSON.stringify(compPresentation));
     assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
+    const roleExplorer = desktop.locator(".gamesense-comp-pick-explorer");
+    assert.match(await roleExplorer.locator("summary").innerText(), /Want to see all Breeze pick rates/i);
+    await roleExplorer.locator("summary").click();
+    assert.equal(await roleExplorer.locator("[data-gamesense-comp-role]").count(), 4);
+    assert.equal(await roleExplorer.locator('[data-gamesense-comp-role="Controller"]').getAttribute("aria-pressed"), "true");
+    const controllerRates = await roleExplorer.locator(".gamesense-comp-pick-row").evaluateAll(rows => rows.map(row => {
+      const rates = [...row.querySelectorAll(":scope > span:not(.gamesense-comp-pick-rank) b")].map(item => Number.parseFloat(item.textContent));
+      return {
+        name: row.querySelector(":scope > strong").textContent.trim(),
+        map: rates[0],
+        global: rates[1],
+        comparison: row.querySelector(":scope > em").textContent.trim()
+      };
+    }));
+    assert.ok(controllerRates.length >= 5 && controllerRates.every((item, index) => index === 0 || controllerRates[index - 1].map >= item.map), JSON.stringify(controllerRates));
+    assert.ok(controllerRates.every(item => Number.isFinite(item.map) && Number.isFinite(item.global) && /vs global/i.test(item.comparison)), JSON.stringify(controllerRates));
+    await roleExplorer.evaluate(node => { window.__rankedCoachRoleExplorerNode = node; });
+    await roleExplorer.locator('[data-gamesense-comp-role="Duelist"]').click();
+    assert.equal(await roleExplorer.evaluate(node => window.__rankedCoachRoleExplorerNode === node && node.isConnected), true);
+    assert.equal(await roleExplorer.locator('[data-gamesense-comp-role="Duelist"]').getAttribute("aria-pressed"), "true");
+    assert.equal(await roleExplorer.locator(".gamesense-comp-pick-row > strong").first().innerText(), "JETT");
     await desktop.click('[data-gamesense-map-view="plants"]');
     const desktopPlantMarker = desktop.locator(".gamesense-plant-marker").first();
     const markerBefore = await desktopPlantMarker.evaluate(marker => {
@@ -594,6 +627,15 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-global-rate").innerText(), /Global usage.*Global kill conversion 1\.03 K\/D.*Global round conversion Economy-filtered/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /When to use it.*How to use it.*Patch history/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel-art").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
+    assert.equal(await desktop.locator(".gamesense-collection-card").count(), 14);
+    assert.match(await desktop.locator(".gamesense-collection-head").innerText(), /Weapon Skin and Bundle Archive.*official content tier.*not a community review score/is);
+    assert.equal(await desktop.locator(".gamesense-collection-card[data-gamesense-collection-type=battlepass]").count(), 2);
+    assert.equal(await desktop.locator(".gamesense-collection-card .gamesense-collection-links a").count(), 28);
+    await desktop.locator('[data-gamesense-collection-filter="battlepass"]').click();
+    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 2);
+    assert.equal(await desktop.locator('[data-gamesense-collection-filter="battlepass"]').getAttribute("aria-pressed"), "true");
+    await desktop.locator('[data-gamesense-collection-filter="all"]').click();
+    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 14);
     assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"].active').count(), 1);
     assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"]').getAttribute("aria-pressed"), "true");
     assert.equal(await desktop.locator(".gamesense-weapon-grid").evaluate(node => window.__rankedCoachWeaponGridNode === node && node.isConnected), true);

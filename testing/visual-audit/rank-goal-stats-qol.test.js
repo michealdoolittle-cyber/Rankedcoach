@@ -91,7 +91,7 @@ async function run() {
           agent: "Killjoy",
           map: "Haven",
           mapName: "Haven",
-          demoAct: "Season 2026 Act 2",
+          demoAct: index === 24 ? "Season 2026 Act 3" : "Season 2026 Act 2",
           playedAt: `2026-06-${String((index % 25) + 1).padStart(2, "0")}T12:00:00Z`
         }
       }));
@@ -137,12 +137,38 @@ async function run() {
       text: item.innerText
     })));
     assert.deepEqual(unlockState.map(item => item.complete), [true, false, false, false]);
-    assert.match(unlockState[1].text, /0\/5 season/);
-    assert.match(unlockState[2].text, /0\/10 season/);
-    assert.match(unlockState[3].text, /0\/10 season.*0\/5 logs/s);
+    assert.match(unlockState[1].text, /1\/5 season/);
+    assert.match(unlockState[2].text, /1\/10 season/);
+    assert.match(unlockState[3].text, /1\/10 season.*0\/5 logs/s);
     assert.doesNotMatch(await page.locator("#profileRatingCopy").innerText(), /undefined/i);
     assert.equal(await page.locator("#profileRatingUnlocks .profile-activity-day").count(), 30);
     await page.locator("#profileRatingWidget").click();
+
+    await page.locator("#impactRolePill").click();
+    await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
+    assert.equal(await page.locator(".impact-opportunity-panel").isVisible(), false);
+    assert.equal(await page.locator("#impactOpportunityList .impact-opportunity-item").count(), 3);
+    const impactOpportunities = await page.locator("#impactOpportunityList .impact-opportunity-item").evaluateAll(items => items.map(item => ({
+      primary: item.classList.contains("is-primary"),
+      text: item.textContent,
+      current: Number.parseFloat(item.querySelector("dd")?.textContent || "NaN"),
+      weight: Number.parseFloat(item.querySelectorAll("dd")[1]?.textContent || "NaN"),
+      projected: Number.parseFloat(item.querySelectorAll("dd")[2]?.textContent || "NaN")
+    })));
+    assert.equal(impactOpportunities[0].primary, true);
+    assert.ok(impactOpportunities.every(item => Number.isFinite(item.current) && Number.isFinite(item.weight) && Number.isFinite(item.projected) && /Current.*Weight.*If \+10/is.test(item.text)), JSON.stringify(impactOpportunities));
+    assert.ok(impactOpportunities.every(item => Math.abs(item.projected - Math.min(10, 100 - item.current) * item.weight / 100) <= .11), JSON.stringify(impactOpportunities));
+    await page.locator("#impactOpportunityTab").click();
+    assert.equal(await page.locator("#impactOpportunityTab").getAttribute("aria-expanded"), "true");
+    await page.waitForTimeout(350);
+    const opportunityGeometry = await page.locator("#impactOpportunityPullout").evaluate(pullout => {
+      const panel = pullout.querySelector(".impact-opportunity-panel").getBoundingClientRect();
+      const modal = pullout.closest(".impact-report-modal").getBoundingClientRect();
+      return { panel: panel.toJSON(), modal: modal.toJSON(), viewport: { width: innerWidth, height: innerHeight } };
+    });
+    assert.ok(opportunityGeometry.panel.left >= 0 && opportunityGeometry.panel.right <= opportunityGeometry.viewport.width && opportunityGeometry.panel.top >= 0 && opportunityGeometry.panel.bottom <= opportunityGeometry.viewport.height, JSON.stringify(opportunityGeometry));
+    await page.locator("#lensModalOverlay").click({ position: { x: 2, y: 2 } });
+    await page.locator("#lensModalOverlay").waitFor({ state: "hidden" });
 
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
@@ -476,6 +502,9 @@ async function run() {
         hostRect: hostRect.toJSON(),
         listRect: listRect.toJSON(),
         expandDisplay: getComputedStyle(expand).display,
+        expandRect: expand.getBoundingClientRect().toJSON(),
+        expandBlocks: [...expand.querySelectorAll(".insight-block")].map(block => block.getBoundingClientRect().toJSON()),
+        previewDisplay: getComputedStyle(preview).display,
         previewRight: previewRect.right,
         visualLeft: visualRect.left,
         visualRight: visualRect.right,
@@ -503,7 +532,10 @@ async function run() {
     assert.ok(expandedInsight.borderBottomWidth >= 1 && expandedInsight.borderBottomColor !== "rgba(0, 0, 0, 0)", JSON.stringify(expandedInsight));
     assert.ok(expandedInsight.titleLeft < expandedInsight.visualLeft && expandedInsight.visualRight <= expandedInsight.tagLeft + 1, JSON.stringify(expandedInsight));
     assert.ok(Math.abs(expandedInsight.visualBottom - expandedInsight.tagBottom) <= 3 && expandedInsight.metaTop >= Math.max(expandedInsight.visualBottom, expandedInsight.tagBottom) - 1, JSON.stringify(expandedInsight));
-    assert.equal(expandedInsight.expandDisplay, "none");
+    assert.equal(expandedInsight.expandDisplay, "grid");
+    assert.equal(expandedInsight.previewDisplay, "none");
+    assert.equal(expandedInsight.expandBlocks.length, 3);
+    assert.ok(expandedInsight.expandBlocks.every(block => block.left >= expandedInsight.cardRect.left && block.right <= expandedInsight.cardRect.right && block.top >= expandedInsight.cardRect.top && block.bottom <= expandedInsight.cardRect.bottom), JSON.stringify(expandedInsight));
     assert.equal(await clutchInsight.locator(".insight-feedback-row").count(), 0);
     await clutchInsight.screenshot({ path: path.join(__dirname, "tmp", "qol-clutch-closing-expanded.png") });
     const trendMedia = await page.locator("#page-insights .trend-signal-media").evaluateAll(items => items.map(item => ({
@@ -514,7 +546,7 @@ async function run() {
     assert.ok(trendMedia.some(item => item.visible), JSON.stringify(trendMedia));
     const filterState = await page.locator(".insight-filter-btn").evaluateAll(buttons => buttons.map(button => ({ filter: button.dataset.filter, disabled: button.disabled })));
     assert.equal(filterState.find(item => item.filter === "all")?.disabled, false);
-    assert.ok(filterState.some(item => item.filter !== "all" && item.disabled), JSON.stringify(filterState));
+    assert.deepEqual(filterState.map(item => item.filter), ["all", "bad", "warn", "good"]);
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-insight-filters.png"), fullPage: true });
 
     await page.locator("#profileDropdownToggle").click();
@@ -585,6 +617,18 @@ async function run() {
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-stats-proof-card.png") });
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
+    await page.locator("#impactRolePill").click();
+    await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
+    assert.equal(await page.locator(".impact-opportunity-panel").isVisible(), false);
+    await page.locator("#impactOpportunityTab").click();
+    await page.locator(".impact-opportunity-panel").waitFor({ state: "visible" });
+    const mobileOpportunityGeometry = await page.locator(".impact-opportunity-panel").evaluate(panel => {
+      const rect = panel.getBoundingClientRect();
+      return { rect: rect.toJSON(), viewport: { width: innerWidth, height: innerHeight }, cards: panel.querySelectorAll(".impact-opportunity-item").length };
+    });
+    assert.ok(mobileOpportunityGeometry.cards === 3 && mobileOpportunityGeometry.rect.left >= 0 && mobileOpportunityGeometry.rect.right <= mobileOpportunityGeometry.viewport.width && mobileOpportunityGeometry.rect.bottom <= mobileOpportunityGeometry.viewport.height, JSON.stringify(mobileOpportunityGeometry));
+    await page.locator("#lensModalOverlay").click({ position: { x: 2, y: 2 } });
+    await page.locator("#lensModalOverlay").waitFor({ state: "hidden" });
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
     const mobileLifetimeGeometry = await page.locator(".rr-chart-card").evaluate(card => {

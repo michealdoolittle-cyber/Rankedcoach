@@ -12,6 +12,35 @@
 (function () {
   "use strict";
 
+  const ASCENDANT_PLUS_GLOBAL_PICK_RATES = Object.freeze({
+    Astra: { role: "Controller", rate: 0.84 }, Breach: { role: "Initiator", rate: 0.68 },
+    Brimstone: { role: "Controller", rate: 0.25 }, Chamber: { role: "Sentinel", rate: 8.72 },
+    Clove: { role: "Controller", rate: 14.46 }, Cypher: { role: "Sentinel", rate: 4.50 },
+    Deadlock: { role: "Sentinel", rate: 0.58 }, Fade: { role: "Initiator", rate: 4.60 },
+    Gekko: { role: "Initiator", rate: 0.42 }, Harbor: { role: "Controller", rate: 0.40 },
+    Iso: { role: "Duelist", rate: 0.95 }, Jett: { role: "Duelist", rate: 15.62 },
+    "KAY/O": { role: "Initiator", rate: 0.43 }, Killjoy: { role: "Sentinel", rate: 2.61 },
+    Miks: { role: "Controller", rate: 0.91 }, Neon: { role: "Duelist", rate: 3.35 },
+    Omen: { role: "Controller", rate: 3.08 }, Phoenix: { role: "Duelist", rate: 5.17 },
+    Raze: { role: "Duelist", rate: 3.50 }, Reyna: { role: "Duelist", rate: 9.11 },
+    Sage: { role: "Sentinel", rate: 1.74 }, Skye: { role: "Initiator", rate: 2.52 },
+    Sova: { role: "Initiator", rate: 9.49 }, Tejo: { role: "Initiator", rate: 0.47 },
+    Veto: { role: "Sentinel", rate: 0.61 }, Viper: { role: "Controller", rate: 1.22 },
+    Vyse: { role: "Sentinel", rate: 1.34 }, Waylay: { role: "Duelist", rate: 1.87 },
+    Yoru: { role: "Duelist", rate: 0.56 }
+  });
+
+  function buildRolePickRates(mapRates = {}) {
+    return Object.entries(ASCENDANT_PLUS_GLOBAL_PICK_RATES).map(([agent, global]) => ({
+      agent,
+      role: global.role,
+      mapRate: Number(mapRates[agent] || 0),
+      globalRate: global.rate
+    }));
+  }
+
+  const PLANT_IMAGE_SOURCE = "https://dignitas.gg/articles/the-best-plant-spots-for-every-map";
+
   const GAMESENSE_MAPS = [
     {
       id: "bind",
@@ -32,11 +61,11 @@
         { label: "B Garden", x: 24.7, y: 42.8 }
       ],
       plantSpots: [
-        { number: 1, site: "A", label: "A Truck Default", rate: null, x: 75.6, y: 34.5 },
-        { number: 2, site: "A", label: "A Open Plant", rate: null, x: 68.5, y: 35.7 },
-        { number: 1, site: "B", label: "B Default", rate: null, x: 31.4, y: 31.3 },
-        { number: 2, site: "B", label: "B Long Plant", rate: null, x: 26.7, y: 31.3 },
-        { number: 3, site: "B", label: "B Window Plant", rate: null, x: 29.1, y: 32.4 }
+        { number: 1, site: "A", label: "A Truck Default", rate: null, x: 75.6, y: 34.5, previewLabel: "A Truck in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/4d5161107bb15614535dae6dfc7f86bea500d003-763x663.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 2, site: "A", label: "A Open Plant", rate: null, x: 68.5, y: 35.7, previewLabel: "A Open in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/b996cd4c248b1766a76f753742b3b3bd5a4760e8-763x663.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 1, site: "B", label: "B Default", rate: null, x: 31.4, y: 31.3, previewLabel: "B Default in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/ae001b00624f314098333175e48aa9d7a317c2c2-857x661.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 2, site: "B", label: "B Long Plant", rate: null, x: 26.7, y: 31.3, previewLabel: "B open-site in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/52e28edead38b5b1ec0dcbfaf074fb2894cd7725-857x661.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 3, site: "B", label: "B Window Plant", rate: null, x: 29.1, y: 32.4, previewLabel: "B open-site in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/52e28edead38b5b1ec0dcbfaf074fb2894cd7725-857x661.png?auto=format", previewSource: PLANT_IMAGE_SOURCE }
       ],
       plantRateNote: "Bind is outside the active competitive rotation, so no active-season PC plant-rate sample is available.",
       weaponSuggestions: [
@@ -113,13 +142,13 @@
         { label: "B Back", x: 6.8, y: 30.5 }
       ],
       plantSpots: [
-        { number: 1, site: "A", label: "A Pyramid Default", rate: 44.15, x: 91.4, y: 47.8 },
-        { number: 2, site: "A", label: "A Open Pyramid", rate: 13.00, x: 81.7, y: 47.8 },
-        { number: 3, site: "A", label: "A Deep Pyramid", rate: 20.30, x: 93.7, y: 47.8 },
-        { number: 4, site: "A", label: "A Safe Pyramid", rate: 7.44, x: 84.7, y: 47.8 },
-        { number: 1, site: "B", label: "B Pillar Default", rate: 83.61, x: 14.0, y: 31.6 },
-        { number: 2, site: "B", label: "B Open Plant", rate: 0.71, x: 17.1, y: 30.5 },
-        { number: 3, site: "B", label: "B Back Plant", rate: 1.51, x: 10.6, y: 31.9 }
+        { number: 1, site: "A", label: "A Pyramid Default", rate: 44.15, x: 91.4, y: 47.8, previewLabel: "A Pyramid in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 2, site: "A", label: "A Open Pyramid", rate: 13.00, x: 81.7, y: 47.8, previewLabel: "A Pyramid in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 3, site: "A", label: "A Deep Pyramid", rate: 20.30, x: 93.7, y: 47.8, previewLabel: "A Pyramid in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 4, site: "A", label: "A Safe Pyramid", rate: 7.44, x: 84.7, y: 47.8, previewLabel: "A Pyramid in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 1, site: "B", label: "B Pillar Default", rate: 83.61, x: 14.0, y: 31.6, previewLabel: "B Pillar in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/2c999bc13e7f9ae68fb4fd749a5b2684b82a483f-531x652.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 2, site: "B", label: "B Open Plant", rate: 0.71, x: 17.1, y: 30.5, previewLabel: "B open plant in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/2ec53a4e3cead720efc4ab4f107576e37a851174-531x652.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 3, site: "B", label: "B Back Plant", rate: 1.51, x: 10.6, y: 31.9, previewLabel: "B open plant in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/2ec53a4e3cead720efc4ab4f107576e37a851174-531x652.png?auto=format", previewSource: PLANT_IMAGE_SOURCE }
       ],
       plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
       weaponSuggestions: [
@@ -176,6 +205,7 @@
         note: "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
       },
       highRankPickRates: { Chamber: 16.09, Clove: 8.55, Iso: 1.32, Jett: 18.47, "KAY/O": 0.52, Neon: 3.74, Reyna: 11.15, Sova: 17.13, Viper: 6.92 },
+      rolePickRates: buildRolePickRates({ Astra: 3.89, Breach: 0.07, Brimstone: 0.21, Chamber: 16.09, Clove: 8.55, Cypher: 1.27, Deadlock: 0.15, Fade: 0.14, Gekko: 0.17, Harbor: 2.06, Iso: 1.32, Jett: 18.47, "KAY/O": 0.52, Killjoy: 0.06, Miks: 0.91, Neon: 3.74, Omen: 1.39, Phoenix: 1.88, Raze: 0.23, Reyna: 11.15, Sage: 0.53, Skye: 0.47, Sova: 17.13, Tejo: 0.11, Veto: 0.38, Viper: 6.92, Vyse: 0.17, Waylay: 1.24, Yoru: 0.77 }),
       agentInsights: {
         Chamber: "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
         Clove: "Long-range smoke placement stays useful through Breeze rotations, and post-death utility protects late hits.",
@@ -212,11 +242,11 @@
         { label: "B Garage", x: 13.2, y: 54.2 }
       ],
       plantSpots: [
-        { number: 1, site: "A", label: "A Default", rate: 15.39, x: 84.3, y: 29.6 },
-        { number: 2, site: "A", label: "A Screens Plant", rate: 4.83, x: 93.6, y: 25.4 },
-        { number: 3, site: "A", label: "A Open Plant", rate: 18.58, x: 92.6, y: 33.8 },
-        { number: 1, site: "B", label: "B Open Plant", rate: 26.94, x: 11.1, y: 29.6 },
-        { number: 2, site: "B", label: "B Default", rate: 53.76, x: 12.3, y: 34.4 }
+        { number: 1, site: "A", label: "A Default", rate: 15.39, x: 84.3, y: 29.6, previewLabel: "A Default in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/b99bab902f64289dcade6a53f141639c33ac3a1e-1466x646.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 2, site: "A", label: "A Screens Plant", rate: 4.83, x: 93.6, y: 25.4, previewLabel: "A lower-site in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/ab0936e9b7742f98920efa81852740809650bad4-733x646.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 3, site: "A", label: "A Open Plant", rate: 18.58, x: 92.6, y: 33.8, previewLabel: "A open corner in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/3d2a7e4491b82d82be503ab28141c932658a3ff1-733x646.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 1, site: "B", label: "B Open Plant", rate: 26.94, x: 11.1, y: 29.6, previewLabel: "B Main plant in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/ded16cdf2c51e60bfbaa8e80dd40740610dee46f-663x653.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
+        { number: 2, site: "B", label: "B Default", rate: 53.76, x: 12.3, y: 34.4, previewLabel: "B Default in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/73c66772d5104035c44ce207d3b7ad4a827d6a15-663x653.png?auto=format", previewSource: PLANT_IMAGE_SOURCE }
       ],
       plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
       weaponSuggestions: [
@@ -273,6 +303,7 @@
         note: "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
       },
       highRankPickRates: { Clove: 16.18, Cypher: 6.88, Fade: 4.49, Jett: 14.04, Neon: 2.45, Raze: 7.84, Reyna: 8.70, Sage: 5.54, Skye: 11.07 },
+      rolePickRates: buildRolePickRates({ Astra: 0.30, Breach: 1.12, Brimstone: 0.24, Chamber: 5.64, Clove: 16.18, Cypher: 6.88, Deadlock: 0.63, Fade: 4.49, Gekko: 0.14, Harbor: 0.05, Iso: 0.65, Jett: 14.04, "KAY/O": 0.29, Killjoy: 0.69, Miks: 0.97, Neon: 2.45, Omen: 2.75, Phoenix: 3.35, Raze: 7.84, Reyna: 8.70, Sage: 5.54, Skye: 11.07, Sova: 0.48, Tejo: 0.62, Veto: 0.74, Viper: 0.70, Vyse: 0.81, Waylay: 2.11, Yoru: 0.55 }),
       agentInsights: {
         Clove: "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",
         Jett: "Dash breaks the first compact choke and Updraft contests Split's stacked Heaven positions.",

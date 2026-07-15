@@ -12,10 +12,16 @@ const expected = [
   ["spectral-fog", "fog-drift", "themeFogField"],
   ["cryo-fractal", "fractal-shift", "themeCryoFracture"],
   ["solar-magma", "solar-flow", "themeSolarFlow"],
-  ["prism-refraction", "prism-turn", "themePrismKaleidoscope"]
+  ["prism-refraction", "prism-turn", "themePrismKaleidoscope"],
+  ["storm-voltage", "lightning-strike", "themeLightningStrike"],
+  ["jetstream-wind", "wind-flow", "themeWindFlow"],
+  ["void-ink", "ink-bloom", "themeInkBloom"],
+  ["echo-sonar", "sonar-pulse", "themeSonarPulse"],
+  ["neon-eq", "sound-wave", "themeSoundWave"],
+  ["victory-confetti", "confetti-pop", "themeConfettiPop"]
 ];
 
-assert.equal(PREMIUM_THEMES.length, 9);
+assert.equal(PREMIUM_THEMES.length, 15);
 assert.equal(new Set(PREMIUM_THEMES.map(theme => theme.id)).size, PREMIUM_THEMES.length);
 assert.equal(getPremiumThemesForProfile().every(theme => theme.locked && theme.accessState === "locked"), true);
 assert.equal(getPremiumThemesForProfile({ subscription: { tier: "premium" } }).every(theme => !theme.locked && theme.accessState === "available"), true);
@@ -124,16 +130,53 @@ async function runBrowserCheck() {
           duration: Number.parseFloat(before.animationDuration),
           playState: before.animationPlayState,
           pattern: getComputedStyle(document.documentElement).getPropertyValue("--theme-bg-pattern"),
-          backgroundImage: before.backgroundImage
+          backgroundImage: before.backgroundImage,
+          nav: (() => {
+            const header = document.querySelector(".app-header");
+            const headerBefore = getComputedStyle(header, "::before");
+            return {
+              backgroundImage: getComputedStyle(header).backgroundImage,
+              animation: getComputedStyle(header).animationName,
+              beforeImage: headerBefore.backgroundImage,
+              beforeAnimation: headerBefore.animationName,
+              beforeOpacity: headerBefore.opacity
+            };
+          })()
         };
       });
       assert.equal(state.theme, id);
       assert.match(state.animation, new RegExp(animation));
       assert.ok(state.duration > 0 && state.playState === "running", JSON.stringify(state));
       assert.match(`${state.pattern} ${state.backgroundImage}`, new RegExp(`/assets/themes/${id}\\.svg`));
+      assert.equal(state.nav.backgroundImage, "none", JSON.stringify(state.nav));
+      assert.equal(state.nav.animation, "none", JSON.stringify(state.nav));
+      assert.equal(state.nav.beforeImage, "none", JSON.stringify(state.nav));
+      assert.equal(state.nav.beforeAnimation, "none", JSON.stringify(state.nav));
+      assert.equal(Number.parseFloat(state.nav.beforeOpacity), 0, JSON.stringify(state.nav));
       await page.locator("#accountLoadingOverlay").waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(350);
+      if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.locator("#dailyWarmupSkip").click();
       if (index === 0) {
+        const legacyNavIsolation = await page.evaluate(activeTheme => {
+          const header = document.querySelector(".app-header");
+          document.body.style.setProperty("--reaver-modal-art", "none", "important");
+          document.body.style.setProperty("--reaver-shell-large", "none", "important");
+          const states = ["ion", "reaver"].map(theme => {
+            document.body.dataset.theme = theme;
+            return {
+              theme,
+              backgroundImage: getComputedStyle(header).backgroundImage,
+              animation: getComputedStyle(header).animationName,
+              beforeImage: getComputedStyle(header, "::before").backgroundImage,
+              beforeOpacity: getComputedStyle(header, "::before").opacity
+            };
+          });
+          document.body.dataset.theme = activeTheme;
+          document.body.style.removeProperty("--reaver-modal-art");
+          document.body.style.removeProperty("--reaver-shell-large");
+          return states;
+        }, id);
+        assert.ok(legacyNavIsolation.every(nav => nav.backgroundImage === "none" && nav.animation === "none" && nav.beforeImage === "none" && Number.parseFloat(nav.beforeOpacity) === 0), JSON.stringify(legacyNavIsolation));
         for (const pageName of ["home", "logging", "insights"]) {
           await page.locator(`[data-page="${pageName}"]`).click();
           await page.locator(`#page-${pageName}.active`).waitFor({ state: "visible" });
@@ -160,7 +203,7 @@ async function runBrowserCheck() {
       await page.close();
     }
     assert.deepEqual(errors, []);
-    console.log("Premium theme checks passed: seven textured presets, distinct palettes, entitlement states, reduced-motion fallback, live QA theme application, and zero browser errors.");
+    console.log("Premium theme checks passed: thirteen textured presets, neutral navigation isolation, distinct motion, entitlement states, reduced-motion fallback, live QA theme application, and zero browser errors.");
   } finally {
     await browser.close();
     server.close();
