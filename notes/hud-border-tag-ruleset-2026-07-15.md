@@ -72,18 +72,27 @@ This distinction is the actual design decision, confirmed explicitly by Michael 
 - **Home — "This Week's Focus" card** (weekly-read rows + Confidence tags) and **"Recent Improvement" card** (KPI tiles + delta tags).
 - **Stats page — "Recent Match Trends" cards** (`app.js:13478`, the 6-card grid with Needs Work/Strength tags — Damage Pressure, Recent Mechanical Form, Weapon Pattern, Fight Value, Win Rate, Team Utility) and the **"Match Patterns" carousel card** (`app.js:13484`).
 - **Logging page — the Session Debrief card** (the "Lock in what this match actually taught you" card, including its "Waiting for Reflection" tag) and **every log feed entry** (`renderLogFeed`, `app.js:41873` — agent icon, RR badge already at `app.js:41937-41957`, Focus Category/Map/Self Rating/Mood/Team Comms/Self Comms rows). The RR badge specifically becomes a `.tag` — this was the exact element Michael called out as the strongest single win, so get this one right first and use it as the reference implementation for the rest.
+- **Gamesense Library — in full, this is actually where the approved tag shape originated** (the Active Season / Patch pill Michael called out first was a Library dossier header element, not a Home one — treat Library as a confirmed, not speculative, part of this scope):
+  - The Library home header (`RANKED FIELD GUIDE / GAMESENSE LIBRARY`) and its Active Season/Patch strip.
+  - Every dossier header — Map (`renderMapDetail`), Agent (`renderAgentDetail`, `gamesense-library.js:313`), and Weapon detail heads, including the `.gamesense-patch` pill (`gamesense-library.css:665`) → becomes a `.tag`.
+  - Tips content: the category tabs (Attack Side / Defense Side / Site-Specific / Teamplay Strats, `renderMapTips`, `gamesense-library.js:197-235`, `.gamesense-tips-hub`) get the same tab treatment as Insights' Priority Trends tabs — text-label tabs, not icon controls, so they're in scope by the same precedent. The Round Read callout cards underneath get the card border treatment.
+  - Current-Season Comps / roster cards (`renderComp`, `gamesense-library.js:295-333`, `.gamesense-comp-card`) — card border on the outer panel, pick-share labels become `.tag`. Leave the individual colored agent-portrait tiles' own fill colors untouched, same principle as not touching Home's stat-bar colors.
+  - Weapon Suggestions cards (`renderWeaponSuggestions`, `gamesense-library.js:221-235`, `.gamesense-weapon-suggestion`) — the "Highest Rifle Conversion" style labels become `.tag`, card gets the border.
+  - Agent Fundamentals, Agent Facts and Stats, and Lore/History cards (`gamesense-library.js:357`) — pure content cards, in scope.
+  - Map Fit pick%/win% pills (`gamesense-library.js:332-339`, `.gamesense-map-fit-item`, `gamesense-library.css:728-729`) → become `.tag`. The ability detail panel's Round Purpose / Setup and Difficulty text blocks are in scope as content cards.
 
 ### Confirmed OUT of scope (leave exactly as current styling)
 - **Nav bar**, globally — active tab stays solid-fill, RR-to-next-rank/RR-to-goal-rank pills stay flat-bordered. Explicitly rejected in review, don't reintroduce it.
 - **Home** — Filter panel (the All button, icon grid, Agent/Focus Category dropdowns), the Aim/Game Sense stat panel (radar chart + colored stat bars — keep their original orange/blue/green/yellow), the Synced rank movement summary panel (Wins/Losses/Draws/Games tiles, the Carry/Solid/Poor impact meter), and the RR chart + window-size buttons (5/10/20/50).
 - **Stats page** — the top KPI tile row (KD/Win%/ADR/HS%/First Bloods/Damage-per-Round), the Peak Progress panel, Role Win Rate Progress tiles, and the Map Stats / Agent Stats / Weapon Stats grids (these are dense data-tile grids, same category as Home's rejected panels).
 - **Logging page** — the Performance/Mood/Team Comms/Self Comms rating-button grids and the Choose Agent/Focus Category/Map dropdown rows (input controls, not content cards).
+- **Library** — the Map Locations / Spike Plant Hot Spots interactive map view (pan/zoom controls, callout markers — a tool, not a content card) and the ability/weapon selector grids (icon+name button clusters, same category as Home's rejected filter icon grid). The `SELECTED` state tag on the active ability button still becomes a `.tag` even though the grid itself is out of scope, same as the RR badge inside an otherwise-untouched log entry.
 
 ---
 
 ## Testing checklist — don't report this batch done until:
 
-1. Fresh screenshots of Insights, Home, Stats, and Logging (desktop) confirm: every card listed as in-scope shows the gradient border + tag treatment; every card/panel listed as out-of-scope is pixel-identical to its current production styling (diff against a pre-change screenshot if unsure).
+1. Fresh screenshots of Insights, Home, Stats, Logging, and the Library (home + at least one Map/Agent/Weapon dossier) confirm: every card listed as in-scope shows the gradient border + tag treatment; every card/panel listed as out-of-scope is pixel-identical to its current production styling (diff against a pre-change screenshot if unsure).
 2. The RR badge in the log feed renders as a `.tag` and still correctly reflects verified/unverified/placement state (per the two earlier Henrik directives — don't regress that logic while restyling it).
 3. Nav bar is unchanged from current production styling on every page.
 4. Color mapping is semantic, not arbitrary: needs-work/priority-immediate content uses `--hot`, strength/confirmed-win content uses `--good`, neutral/informational content uses the default cool gradient — spot-check a few cards against this rule rather than assuming it's consistent everywhere.
