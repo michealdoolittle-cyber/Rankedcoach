@@ -45968,7 +45968,7 @@ if(chartHeight){
     chartTooltipSuppressed = false;
   }
 	 
-  PAD_LEFT = CHART_W * (isLifetimeRankTimeline ? (isMobileLayoutViewport() ? 0.22 : 0.12) : 0.055);
+  PAD_LEFT = CHART_W * (isLifetimeRankTimeline ? (isMobileLayoutViewport() ? 0.15 : 0.12) : 0.055);
   PAD_RIGHT = CHART_W * 0.055;
   PAD_TOP = CHART_H * 0.08;
   PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.64);

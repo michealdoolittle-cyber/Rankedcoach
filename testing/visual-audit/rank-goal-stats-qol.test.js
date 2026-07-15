@@ -408,11 +408,15 @@ async function run() {
       const visual = card.querySelector(".stats-peak-visual").getBoundingClientRect();
       const details = card.querySelector(".stats-peak-details").getBoundingClientRect();
       const selector = card.querySelector(".stats-summary-selector-bottom").getBoundingClientRect();
-      return { parent: parent.toJSON(), visual: visual.toJSON(), details: details.toJSON(), selector: selector.toJSON() };
+      const rankRow = card.querySelector(".stats-proof-rank-row").getBoundingClientRect();
+      const rankIcon = card.querySelector(".stats-proof-rank-icon").getBoundingClientRect();
+      return { parent: parent.toJSON(), visual: visual.toJSON(), details: details.toJSON(), selector: selector.toJSON(), rankRow: rankRow.toJSON(), rankIcon: rankIcon.toJSON() };
     });
     assert.ok(mobilePeakGeometry.visual.left < mobilePeakGeometry.details.left && mobilePeakGeometry.visual.right <= mobilePeakGeometry.details.left + 1, JSON.stringify(mobilePeakGeometry));
     assert.ok(Math.abs(mobilePeakGeometry.visual.width - mobilePeakGeometry.details.width) <= 12, JSON.stringify(mobilePeakGeometry));
     assert.ok(mobilePeakGeometry.selector.top >= Math.max(mobilePeakGeometry.visual.bottom, mobilePeakGeometry.details.bottom) - 1 && mobilePeakGeometry.selector.bottom <= mobilePeakGeometry.parent.bottom + 1, JSON.stringify(mobilePeakGeometry));
+    assert.ok(mobilePeakGeometry.selector.width >= mobilePeakGeometry.parent.width - 24, JSON.stringify(mobilePeakGeometry));
+    assert.ok(mobilePeakGeometry.rankIcon.width >= mobilePeakGeometry.visual.width * .62 && mobilePeakGeometry.rankRow.height >= mobilePeakGeometry.visual.height * .66, JSON.stringify(mobilePeakGeometry));
     const mobileActWidth = await page.locator("#page-stats .stats-act-select-wrap").evaluate(wrap => {
       const parent = wrap.getBoundingClientRect();
       const trigger = wrap.querySelector(".stats-act-mobile-trigger").getBoundingClientRect();
@@ -427,6 +431,10 @@ async function run() {
     await page.waitForTimeout(350);
     const mobileLifetimeGeometry = await page.locator(".rr-chart-card").evaluate(card => {
       const cardRect = card.getBoundingClientRect();
+      const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
+      const svg = card.querySelector("#chartRow svg");
+      const svgRect = svg.getBoundingClientRect();
+      const xAxis = [...svg.querySelectorAll('line[stroke="#94a3b8"]')].find(line => line.getAttribute("y1") === line.getAttribute("y2"));
       const title = card.querySelector(".chart-axis-title").getBoundingClientRect();
       const legend = card.querySelector(".chart-axis-legend").getBoundingClientRect();
       const controls = card.querySelector(".graph-controls, .graph-buttons, .rr-graph-controls") || card.querySelector('.graph-btn[data-size="5"]')?.parentElement;
@@ -435,6 +443,9 @@ async function run() {
       return {
         cardLeft: cardRect.left,
         cardRight: cardRect.right,
+        chartWidth: chartWrap.width,
+        svgWidth: svgRect.width,
+        plotWidth: xAxis ? Number(xAxis.getAttribute("x2")) - Number(xAxis.getAttribute("x1")) : 0,
         titleBottom: title.bottom,
         legendTop: legend.top,
         legendBottom: legend.bottom,
@@ -446,6 +457,8 @@ async function run() {
     assert.ok(mobileLifetimeGeometry.legendBottom < mobileLifetimeGeometry.controlsTop, JSON.stringify(mobileLifetimeGeometry));
     assert.ok(mobileLifetimeGeometry.rankLabels.length >= 3, JSON.stringify(mobileLifetimeGeometry));
     assert.ok(mobileLifetimeGeometry.rankLabels.every(rect => rect.left >= mobileLifetimeGeometry.cardLeft - 1 && rect.right <= mobileLifetimeGeometry.cardRight + 1), JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.chartWidth >= mobileLifetimeGeometry.cardRight - mobileLifetimeGeometry.cardLeft - 36, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.plotWidth >= mobileLifetimeGeometry.svgWidth * .78, JSON.stringify(mobileLifetimeGeometry));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-lifetime-rank-chart.png"), fullPage: true });
 
     assert.deepEqual(consoleIssues, []);

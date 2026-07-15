@@ -319,9 +319,13 @@
             .filter(Boolean)
             .sort((left, right) => roleOrder.indexOf(left) - roleOrder.indexOf(right));
           return `
-          <article class="gamesense-comp-option">
-            <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b><small>Individual agent strength</small></strong></div>
-            <div class="gamesense-comp-line">
+            <article class="gamesense-comp-option">
+              <div class="gamesense-comp-rank"><span>#${index + 1}</span><strong><b class="gamesense-comp-reference-label">${referenceLabels[index] || "Tactical reference"}</b><small>Individual agent strength</small></strong></div>
+              <div class="gamesense-comp-mobile-evidence" aria-label="Composition evidence availability">
+                <span><b>Lineup win rate</b><strong>Not published</strong></span>
+                <span><b>Round conversion</b><strong>Not published</strong></span>
+              </div>
+              <div class="gamesense-comp-line">
               <div class="gamesense-comp-agents">${(comp.agents || []).map(agent => `
                 <button type="button" data-gamesense-comp-agent="${escapeHtml(agent)}" data-role-tone="${escapeHtml(compAgentRoles[assetSlug(agent)] || "")}" class="${selectedAgent === agent ? "active" : ""}" aria-pressed="${selectedAgent === agent ? "true" : "false"}">
                   <img src="${escapeHtml(getAgentIcon(agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(agent))}" alt="${escapeHtml(agent)}" loading="eager"><span>${escapeHtml(agent)}</span>
