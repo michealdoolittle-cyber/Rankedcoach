@@ -21,12 +21,25 @@
     Stinger: "f7e1b454-4ad4-1063-ec0a-159e56b58941",
     Vandal: "9c82e19d-4575-0200-1a81-3eacf00cf872"
   });
+  const contentTierIconRoot = "https://media.valorant-api.com/contenttiers";
   const contentTiers = Object.freeze({
-    "12683d76-48d7-84a3-4e09-6985794f0445": "Select",
-    "0cebb8be-46d7-c12a-d306-e9907bfc5a25": "Deluxe",
-    "60bca009-4182-7998-dee7-b8a2558dc369": "Premium",
-    "e046854e-406c-37f4-6607-19a9ba8426fc": "Exclusive",
-    "411e4a55-4e59-7757-41f0-86a53f101bb5": "Ultra"
+    "12683d76-48d7-84a3-4e09-6985794f0445": Object.freeze({ label: "Select", icon: `${contentTierIconRoot}/12683d76-48d7-84a3-4e09-6985794f0445/displayicon.png` }),
+    "0cebb8be-46d7-c12a-d306-e9907bfc5a25": Object.freeze({ label: "Deluxe", icon: `${contentTierIconRoot}/0cebb8be-46d7-c12a-d306-e9907bfc5a25/displayicon.png` }),
+    "60bca009-4182-7998-dee7-b8a2558dc369": Object.freeze({ label: "Premium", icon: `${contentTierIconRoot}/60bca009-4182-7998-dee7-b8a2558dc369/displayicon.png` }),
+    "e046854e-406c-37f4-6607-19a9ba8426fc": Object.freeze({ label: "Exclusive", icon: `${contentTierIconRoot}/e046854e-406c-37f4-6607-19a9ba8426fc/displayicon.png` }),
+    "411e4a55-4e59-7757-41f0-86a53f101bb5": Object.freeze({ label: "Ultra", icon: `${contentTierIconRoot}/411e4a55-4e59-7757-41f0-86a53f101bb5/displayicon.png` })
+  });
+  const collectionVideos = Object.freeze({
+    aemondir: Object.freeze({ id: "P3fUih8vWhY", title: "Aemondir bundle showcase", channel: "Kanga" }),
+    chronovoid: Object.freeze({ id: "CT8iu21QemU", title: "ChronoVoid bundle showcase", channel: "Valorant ASMR" }),
+    "evori-dreamwings": Object.freeze({ id: "oW0qmFWHnlw", title: "Evori Dreamwings bundle showcase", channel: "Kanga" }),
+    glitchpop: Object.freeze({ id: "cQvYigbe-f4", title: "Glitchpop bundle showcase", channel: "Valorant SkinSpotlight" }),
+    neptune: Object.freeze({ id: "YWPokR196IU", title: "Neptune bundle showcase", channel: "Valorant SkinSpotlight" }),
+    "prelude-to-chaos": Object.freeze({ id: "XOwgSAWD1ZA", title: "Prelude to Chaos bundle showcase", channel: "Valorant SkinSpotlight" }),
+    "protocol-781-a": Object.freeze({ id: "kFVmNy4AGWo", title: "Protocol 781-A bundle showcase", channel: "Valorant SkinSpotlight" }),
+    "radiant-entertainment-system": Object.freeze({ id: "Wj53-KugZJI", title: "Radiant Entertainment System bundle showcase", channel: "Kanga" }),
+    recon: Object.freeze({ id: "BWmYepJkpBY", title: "Recon bundle showcase", channel: "Valorant SkinSpotlight" }),
+    "rgx-11z-pro": Object.freeze({ id: "pcHmsSqik_U", title: "RGX 11z Pro bundle showcase", channel: "Valorant SkinSpotlight" })
   });
   const cache = new Map();
   const pending = new Map();
@@ -36,13 +49,34 @@
     return displayName.replace(new RegExp(`\\s+${escapedWeapon}$`, "i"), "").trim();
   }
 
-  function getSkinArt(skin = {}) {
-    const chroma = (skin.chromas || []).find(item => item.fullRender || item.displayIcon);
-    const level = (skin.levels || []).find(item => item.displayIcon);
-    return {
-      card: skin.displayIcon || chroma?.displayIcon || chroma?.fullRender || level?.displayIcon || "",
-      preview: chroma?.fullRender || skin.displayIcon || chroma?.displayIcon || level?.displayIcon || ""
+  function normalizeCollectionKey(value = "") {
+    return String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function getSkinViews(skin = {}) {
+    const seen = new Set();
+    const views = [];
+    const addView = (source, label) => {
+      const url = String(source || "").trim();
+      if (!url || seen.has(url)) return;
+      seen.add(url);
+      views.push(Object.freeze({ source: url, label: String(label || `Riot render ${views.length + 1}`).trim() }));
     };
+
+    (skin.chromas || []).forEach((chroma, index) => {
+      addView(chroma?.fullRender || chroma?.displayIcon, chroma?.displayName || `Riot render ${index + 1}`);
+    });
+    if (!views.length) {
+      (skin.levels || []).forEach((level, index) => addView(level?.displayIcon, level?.displayName || `Riot render ${index + 1}`));
+    }
+    if (!views.length) addView(skin.displayIcon, skin.displayName || "Riot weapon render");
+    return Object.freeze(views);
+  }
+
+  function getSkinArt(skin = {}) {
+    const views = getSkinViews(skin);
+    const source = views[0]?.source || "";
+    return { card: source, preview: source, views };
   }
 
   function normalizeSkins(weaponName, skins = []) {
@@ -52,15 +86,18 @@
       const displayName = String(skin?.displayName || "").trim();
       const art = getSkinArt(skin);
       const name = getCollectionName(displayName, weaponName);
-      const edition = contentTiers[String(skin?.contentTierUuid || "").toLowerCase()] || "Unrated";
+      const tier = contentTiers[String(skin?.contentTierUuid || "").toLowerCase()] || Object.freeze({ label: "Unrated", icon: "" });
       return {
         id: String(skin?.uuid || `${weaponName}-${name}`),
         name,
         weaponName,
-        edition,
-        editionKey: edition.toLowerCase(),
+        edition: tier.label,
+        editionKey: tier.label.toLowerCase(),
+        editionIcon: tier.icon,
         image: art.card,
-        previewImage: art.preview
+        previewImage: art.preview,
+        views: art.views,
+        bundleVideo: collectionVideos[normalizeCollectionKey(name)] || null
       };
     }).filter(item => {
       const key = `${item.weaponName}|${item.name}`.toLowerCase();

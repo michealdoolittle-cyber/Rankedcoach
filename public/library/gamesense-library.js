@@ -4,6 +4,7 @@
   const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
+  let activeSkinViewIndex = 0;
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -626,7 +627,9 @@
 
   function renderWeaponCollectionArchive(weapon, collections = null, loadError = "") {
     if (!weapon) return "";
-    const tiers = [...new Set((collections || []).map(item => item.editionKey).filter(Boolean))];
+    const tierOrder = new Map(["select", "deluxe", "premium", "exclusive", "ultra"].map((tier, index) => [tier, index]));
+    const tierFilters = [...new Map((collections || []).filter(item => item.editionKey).map(item => [item.editionKey, item])).values()]
+      .sort((left, right) => (tierOrder.get(left.editionKey) ?? 99) - (tierOrder.get(right.editionKey) ?? 99));
     const count = Array.isArray(collections) ? collections.length : 0;
     return `
       <section class="gamesense-collection-archive" data-gamesense-collection-weapon="${escapeHtml(weapon.id)}">
@@ -636,14 +639,14 @@
         </div>
         ${loadError ? `<div class="gamesense-collection-status is-error"><strong>Skin archive unavailable.</strong><span>${escapeHtml(loadError)}</span><button type="button" data-gamesense-collection-retry="${escapeHtml(weapon.id)}">Try again</button></div>` : !collections ? `<div class="gamesense-collection-status" aria-live="polite"><span class="gamesense-collection-loader" aria-hidden="true"></span><strong>Loading ${escapeHtml(weapon.label)} collections...</strong></div>` : `
           <div class="gamesense-collection-filters" role="group" aria-label="Filter ${escapeHtml(weapon.label)} collections by Riot edition">
-            <button type="button" class="active" data-gamesense-collection-filter="all" aria-pressed="true">All ${count}</button>
-            ${tiers.map(tier => `<button type="button" data-gamesense-collection-filter="${escapeHtml(tier)}" aria-pressed="false">${escapeHtml(tier)}</button>`).join("")}
+            <button type="button" class="active" data-gamesense-collection-filter="all" aria-pressed="true"><span class="gamesense-tier-icon-stack" aria-hidden="true">${tierFilters.map(item => item.editionIcon ? `<img src="${escapeHtml(item.editionIcon)}" alt="">` : "").join("")}</span><span>All ${count}</span></button>
+            ${tierFilters.map(item => `<button type="button" data-gamesense-collection-filter="${escapeHtml(item.editionKey)}" aria-pressed="false">${item.editionIcon ? `<img class="gamesense-tier-icon" src="${escapeHtml(item.editionIcon)}" alt="" aria-hidden="true">` : ""}<span>${escapeHtml(item.edition)}</span></button>`).join("")}
           </div>
           <div class="gamesense-collection-grid">
             ${collections.map(item => `<article class="gamesense-collection-card" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}">
-              <button class="gamesense-collection-art" type="button" data-gamesense-collection-preview data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Enlarge ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} preview">
+              <button class="gamesense-collection-art" type="button" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} render viewer">
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
-                <span>Enlarge preview</span>
+                <span>Open render viewer</span>
               </button>
               <div class="gamesense-collection-copy">
                 <span>${escapeHtml(item.weaponName)} skin</span>
@@ -714,26 +717,101 @@
     const overlay = activeSkinPreview;
     if (!overlay) return;
     activeSkinPreview = null;
+    activeSkinViewIndex = 0;
+    overlay.querySelectorAll("iframe").forEach(frame => frame.removeAttribute("src"));
     overlay.classList.remove("is-open");
     overlay.classList.add("is-closing");
     window.setTimeout(() => overlay.remove(), 220);
   }
 
-  function openSkinPreview(trigger) {
-    const source = String(trigger?.dataset?.previewSrc || "").trim();
-    const name = String(trigger?.dataset?.previewName || "Weapon skin").trim();
+  function getSkinPreviewItem(trigger) {
     const weapon = String(trigger?.dataset?.previewWeapon || "Weapon").trim();
-    if (!source) return;
+    const id = String(trigger?.dataset?.previewId || "").trim();
+    const cached = getWeaponCollectionProvider()?.getCached(weapon) || [];
+    const item = cached.find(collection => collection.id === id);
+    if (item) return item;
+    const source = String(trigger?.dataset?.previewSrc || "").trim();
+    return {
+      id,
+      name: String(trigger?.dataset?.previewName || "Weapon skin").trim(),
+      weaponName: weapon,
+      previewImage: source,
+      views: source ? [{ source, label: "Riot weapon render" }] : [],
+      bundleVideo: null
+    };
+  }
+
+  function setActiveSkinView(nextIndex) {
+    const overlay = activeSkinPreview;
+    if (!overlay) return;
+    const selectors = [...overlay.querySelectorAll("[data-skin-preview-view]")];
+    const count = selectors.length;
+    if (!count) return;
+    activeSkinViewIndex = ((Number(nextIndex) % count) + count) % count;
+    const active = selectors[activeSkinViewIndex];
+    const image = overlay.querySelector("[data-skin-preview-image]");
+    const label = overlay.querySelector("[data-skin-preview-label]");
+    if (image) {
+      image.src = active.dataset.skinPreviewSource || image.src;
+      image.alt = active.dataset.skinPreviewAlt || image.alt;
+    }
+    if (label) label.textContent = `${active.dataset.skinViewLabel || `Riot render ${activeSkinViewIndex + 1}`} - ${activeSkinViewIndex + 1} of ${count}`;
+    selectors.forEach((selector, index) => {
+      const isActive = index === activeSkinViewIndex;
+      selector.classList.toggle("active", isActive);
+      selector.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+  }
+
+  function openSkinPreview(trigger) {
+    const item = getSkinPreviewItem(trigger);
+    const name = String(item?.name || "Weapon skin").trim();
+    const weapon = String(item?.weaponName || "Weapon").trim();
+    const views = (item?.views || []).filter(view => view?.source);
+    const videoId = /^[a-zA-Z0-9_-]{11}$/.test(String(item?.bundleVideo?.id || "")) ? item.bundleVideo.id : "";
+    if (!views.length) return;
     closeSkinPreview();
+    activeSkinViewIndex = 0;
     const overlay = document.createElement("div");
     overlay.className = "gamesense-skin-preview-overlay";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", `${name} ${weapon} enlarged preview`);
+    overlay.setAttribute("aria-label", `${name} ${weapon} render viewer`);
     overlay.tabIndex = -1;
-    overlay.innerHTML = `<figure class="gamesense-skin-preview-card"><img src="${escapeHtml(source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} enlarged preview"><figcaption><span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small>Click outside the preview to close.</small></figcaption></figure>`;
+    overlay.innerHTML = `
+      <div class="gamesense-skin-preview-card${videoId ? " has-video" : ""}">
+        <section class="gamesense-skin-viewer-pane">
+          <header><span>Riot Render Viewer</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong></header>
+          <div class="gamesense-skin-viewer-stage">
+            <button type="button" class="gamesense-skin-view-arrow is-previous" data-skin-preview-step="-1" aria-label="Previous ${escapeHtml(name)} render" ${views.length < 2 ? "disabled" : ""}>&#8592;</button>
+            <img data-skin-preview-image src="${escapeHtml(views[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} Riot render 1">
+            <button type="button" class="gamesense-skin-view-arrow is-next" data-skin-preview-step="1" aria-label="Next ${escapeHtml(name)} render" ${views.length < 2 ? "disabled" : ""}>&#8594;</button>
+          </div>
+          <div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} Riot render">
+            ${views.map((view, index) => `<button type="button" class="${index === 0 ? "active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(view.source)}" data-skin-view-label="${escapeHtml(view.label)}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} Riot render ${index + 1}" aria-label="Show ${escapeHtml(view.label)}" aria-pressed="${index === 0 ? "true" : "false"}"><img src="${escapeHtml(view.source)}" alt=""></button>`).join("")}
+          </div>
+          <footer><span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>${escapeHtml(views[0].label)} - 1 of ${views.length}</small></footer>
+        </section>
+        ${videoId ? `
+          <div class="gamesense-skin-preview-divider" aria-hidden="true"></div>
+          <section class="gamesense-skin-video-pane">
+            <header><span>Bundle Video</span><strong>${escapeHtml(item.bundleVideo.title)}</strong><small>YouTube showcase by ${escapeHtml(item.bundleVideo.channel)}</small></header>
+            <div class="gamesense-skin-video-frame"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?rel=0&amp;playsinline=1" title="${escapeHtml(item.bundleVideo.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+          </section>` : ""}
+        <p class="gamesense-skin-preview-dismiss">Click outside the preview to close.</p>
+      </div>`;
     overlay.addEventListener("click", event => {
-      if (event.target === overlay) closeSkinPreview();
+      if (event.target === overlay) {
+        closeSkinPreview();
+        return;
+      }
+      const step = event.target.closest?.("[data-skin-preview-step]");
+      if (step && !step.disabled) {
+        setActiveSkinView(activeSkinViewIndex + Number(step.dataset.skinPreviewStep || 0));
+        return;
+      }
+      const selector = event.target.closest?.("[data-skin-preview-view]");
+      if (selector) setActiveSkinView(Number(selector.dataset.skinPreviewView || 0));
     });
     document.body.appendChild(overlay);
     activeSkinPreview = overlay;
@@ -1273,12 +1351,22 @@
       closeSkinPreview();
       return;
     }
+    if (activeSkinPreview && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      event.preventDefault();
+      setActiveSkinView(activeSkinViewIndex + (event.key === "ArrowLeft" ? -1 : 1));
+      return;
+    }
     const toggle = event.target.closest?.("[data-warmup-info]");
     if (toggle && ["Enter", " "].includes(event.key)) {
       event.preventDefault();
       toggleWarmupInfo(toggle);
     }
   });
+
+  document.addEventListener("pointerdown", event => {
+    if (!activeSkinPreview || event.target.closest?.(".gamesense-skin-preview-card")) return;
+    closeSkinPreview();
+  }, true);
 
   decorateWarmupDrills();
   render();

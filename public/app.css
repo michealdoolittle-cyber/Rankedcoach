@@ -6714,6 +6714,12 @@ html, body{
   z-index:1;
 }
 
+/* The custom Logging trigger has a later high-specificity pointer rule. */
+html body .app-root .page#page-logging:is(:not(.active),.exiting),
+html body .app-root .page#page-logging:is(:not(.active),.exiting) #logFocusCustomTrigger{
+  pointer-events:none !important;
+}
+
 @supports not (content-visibility: auto){
   .page{
     content-visibility:visible;

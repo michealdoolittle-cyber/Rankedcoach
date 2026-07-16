@@ -18401,10 +18401,19 @@ function closeLogFocusCustomDropdown() {
   trigger?.setAttribute("aria-expanded", "false");
 }
 
+function isLogFocusPageInteractive() {
+  const page = document.getElementById("page-logging");
+  return page?.classList.contains("active") === true && !page.classList.contains("exiting");
+}
+
 function positionLogFocusCustomDropdown() {
   const trigger = document.getElementById("logFocusCustomTrigger");
   const menu = document.getElementById("logFocusCustomMenu");
   if (!trigger || !menu || menu.hidden) return;
+  if (!isLogFocusPageInteractive()) {
+    closeLogFocusCustomDropdown();
+    return;
+  }
   const rect = trigger.getBoundingClientRect();
   const viewportPadding = 12;
   const requestedWidth = Math.min(280, Math.max(190, rect.width));
@@ -18477,6 +18486,19 @@ function setupLogFocusCustomDropdown() {
   select.tabIndex = -1;
   shell.classList.add("has-custom-focus-select");
 
+  const loggingPage = document.getElementById("page-logging");
+  if (loggingPage && loggingPage.dataset.logFocusVisibilityObserved !== "1") {
+    const syncLoggingPageInteractivity = () => {
+      const isActive = isLogFocusPageInteractive();
+      loggingPage.inert = !isActive;
+      if (!isActive) closeLogFocusCustomDropdown();
+    };
+    const activePageObserver = new MutationObserver(syncLoggingPageInteractivity);
+    activePageObserver.observe(loggingPage, { attributes: true, attributeFilter: ["class"] });
+    loggingPage.dataset.logFocusVisibilityObserved = "1";
+    syncLoggingPageInteractivity();
+  }
+
   if (select.dataset.logFocusCustomBound === "1") {
     syncLogFocusCustomDropdown();
     return;
@@ -18523,6 +18545,10 @@ function setupLogFocusCustomDropdown() {
   trigger.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isLogFocusPageInteractive()) {
+      closeLogFocusCustomDropdown();
+      return;
+    }
     const willOpen = menu.hidden;
     closeLogFocusCustomDropdown();
     if (willOpen) {
