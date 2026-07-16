@@ -36905,11 +36905,21 @@ function applyThemeBuilderRuntimeStyles() {
 }
 
 const THEME_BUILDER_AUTO_FIT_EXCLUDED_TAGS = new Set(["BUTTON", "INPUT", "TEXTAREA", "SELECT", "OPTION"]);
-const THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS = Array.from(new Set(
-  THEME_BUILDER_GROUP_CONFIGS
+const LAYOUT_STYLE_AUTO_FIT_PAGE_IDS = new Set(["page-home", "page-stats", "page-insights", "page-logging", "page-library"]);
+const LAYOUT_STYLE_AUTO_FIT_TEXT_SELECTORS = [
+  "#page-home :is(.loadout-card,.compass-panel,.compass-main,.compass-header,.compass-score-card,.rr-card,.impact-card,.rr-chart-card,.weekly-focus-card,.improvement-card) :is(.card-title,.card-sub,.compass-title,.compass-profile-title,.compass-profile-kicker,.timeline-title,.timeline-sub,strong,p,small,span)",
+  "#page-stats :is(.stats-summary-card,.stats-proof-card,.stats-role-progress-card,.stats-performance-card,.stats-breakdown-card,.stats-breakdown-cardlet,.stats-trend-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card) :is(.stats-season-title,strong,p,small,span)",
+  "#page-insights :is(.insights-action-card,.insights-top-card,.insights-trends-card,.insight-action-hero,.insight-focus-detail,.insight-card,.insight-trend-row,.trend-signal-card) :is(.insight-action-kicker,.insight-title,.insight-preview,.trend-signal-title,.trend-signal-detail,strong,p,small,span)",
+  "#page-logging :is(.logging-card,.logging-feed-card,.manual-match-panel,.logging-hero,.logging-live-card,.log-entry) :is(.logging-hero-title,.logging-hero-text,.logging-live-focus,.logging-live-meta,strong,p,small,span)",
+  "#page-library :is(.gamesense-hero,.gamesense-topic-card,.gamesense-entry-card,.gamesense-map-entry-card,.gamesense-agent-entry-card,.gamesense-weapon-entry-card,.gamesense-tactical-card,.gamesense-agent-hero,.gamesense-weapon-panel,.gamesense-collection-card,.gamesense-detail-head,.gamesense-tip,.gamesense-comp-card,.gamesense-comp-option,.gamesense-comp-agent-read,.gamesense-comp-pick-explorer,.gamesense-comp-pick-row,.gamesense-weapon-suggestion,.gamesense-note-block,.gamesense-fact-panel,.gamesense-map-fit,.gamesense-map-fit-item,.gamesense-lineups) :is(h1,h2,h3,h4,strong,p,small,span)",
+  ".gamesense-skin-preview-card :is(h1,h2,h3,h4,strong,p,small,span)"
+];
+const THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS = Array.from(new Set([
+  ...THEME_BUILDER_GROUP_CONFIGS
     .map(group => getThemeBuilderGroupTextSelector(group))
-    .filter(Boolean)
-));
+    .filter(Boolean),
+  ...LAYOUT_STYLE_AUTO_FIT_TEXT_SELECTORS
+]));
 const themeBuilderAutoFitState = {
   raf: 0,
   resetBase: false,
@@ -36919,8 +36929,16 @@ const themeBuilderAutoFitState = {
   fontsReadyHooked: false
 };
 
+function isLayoutStyleAutoFitActive() {
+  return Boolean(document.body?.dataset?.layoutStyle);
+}
+
+function shouldRunThemeBuilderAutoFitText() {
+  return !THEME_BUILDER_LAUNCH_LOCKED || isLayoutStyleAutoFitActive();
+}
+
 function installThemeBuilderAutoFitObservers() {
-  if (THEME_BUILDER_LAUNCH_LOCKED) return;
+  if (!shouldRunThemeBuilderAutoFitText()) return;
   if (themeBuilderAutoFitState.listenersAttached) return;
   themeBuilderAutoFitState.listenersAttached = true;
   window.addEventListener("resize", () => {
@@ -36948,7 +36966,7 @@ function installThemeBuilderAutoFitObservers() {
 }
 
 function scheduleThemeBuilderAutoFitText(options = {}) {
-  if (THEME_BUILDER_LAUNCH_LOCKED) return;
+  if (!shouldRunThemeBuilderAutoFitText()) return;
   if (options?.resetBase) {
     themeBuilderAutoFitState.resetBase = true;
   }
@@ -37012,7 +37030,11 @@ function isThemeBuilderAutoFitCandidate(element) {
   const owningPage = element.closest(".page");
   if (owningPage instanceof HTMLElement) {
     if (!owningPage.classList.contains("active")) return false;
-    if (owningPage.id !== "page-home") return false;
+    if (isLayoutStyleAutoFitActive()) {
+      if (!LAYOUT_STYLE_AUTO_FIT_PAGE_IDS.has(owningPage.id)) return false;
+    } else if (owningPage.id !== "page-home") {
+      return false;
+    }
   }
   if (
     element.id === "compassProfileCopy" ||
@@ -37068,7 +37090,9 @@ function fitThemeBuilderAutoFitElement(element) {
   const widthLimit = Math.max(12, metrics.width);
   const heightLimit = Math.max(8, metrics.height);
   let minFontSize = Math.max(10, baseFontSize * 0.6);
-  let maxFontSize = Math.max(minFontSize, baseFontSize * 1.28);
+  let maxFontSize = isLayoutStyleAutoFitActive()
+    ? Math.max(minFontSize, baseFontSize)
+    : Math.max(minFontSize, baseFontSize * 1.28);
 
   // Keep the home compass summary copy aligned with the 1440 baseline when the
   // app is rendered on a 1080-height viewport. The generic auto-fit logic
@@ -37142,6 +37166,21 @@ function runThemeBuilderAutoFitText() {
     fitThemeBuilderAutoFitElement(element);
     themeBuilderAutoFitState.fitted.add(element);
   });
+}
+
+function syncLayoutStyleAutoFitText(layoutStyle = "default") {
+  if (normalizeProfileLayoutStyle(layoutStyle) === "default") {
+    if (themeBuilderAutoFitState.raf) {
+      cancelAnimationFrame(themeBuilderAutoFitState.raf);
+      themeBuilderAutoFitState.raf = 0;
+    }
+    themeBuilderAutoFitState.fitted.forEach((element) => resetThemeBuilderAutoFitElement(element, true));
+    themeBuilderAutoFitState.fitted.clear();
+    themeBuilderAutoFitState.resetBase = false;
+    return;
+  }
+  installThemeBuilderAutoFitObservers();
+  scheduleThemeBuilderAutoFitText({ resetBase: true });
 }
 
 const themeBuilderFxEngine = {
@@ -44438,6 +44477,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   applyThemeBuilderRuntimeStyles();
   syncThemeBuilderUI();
   applyThemeReadabilityRuntimeStyles(theme, themeVisualMode);
+  syncLayoutStyleAutoFitText(layoutStyle);
   syncMobileBottomAvatarVisuals(profile);
 }
 

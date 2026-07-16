@@ -6,16 +6,181 @@ const { chromium } = require("playwright");
 
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41791;
+const missingRequests = [];
+const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "scopevignette", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog"];
+const requestedLayoutStyles = String(process.env.LAYOUT_STYLE_FILTER || "")
+  .split(",")
+  .map(value => value.trim())
+  .filter(Boolean);
+const layoutStyles = requestedLayoutStyles.length
+  ? allLayoutStyles.filter(style => requestedLayoutStyles.includes(style))
+  : allLayoutStyles;
+const phaseTwoSurfaces = Object.freeze({
+  home: [
+    ".loadout-card", ".compass-panel", ".compass-main", ".compass-header", ".compass-score-card", ".rr-card", ".impact-card", ".rr-chart-card", ".role-filter-btn", "#spinAgentBtn.small-btn", "#compassDescriptionToggle.compass-description-toggle", ".graph-btn", "#timelineCycleBtn.timeline-cycle-btn", ".compass-profile-title", ".compass-profile-kicker"
+  ],
+  stats: [
+    ".stats-summary-card", ".stats-proof-card", ".stats-role-progress-card", ".stats-performance-card", ".stats-breakdown-card", ".stats-maps-card", ".stats-agents-card", ".stats-weapons-card", "button[data-gamesense-open]", "#statsActMobileTrigger", ".stats-season-title"
+  ],
+  insights: [
+    ".insights-action-card", ".insights-top-card", ".insights-trends-card", ".insight-filter-btn", ".insight-action-kicker"
+  ],
+  logging: [
+    ".logging-card", ".logging-feed-card", ".manual-match-panel", "#loggingTrainingMenuBtn.logging-training-menu-btn", ".logging-chip", ".logging-quick-chip", ".logging-quick-toggle", ".logging-quick-close", "#logCalendarTrigger.logging-calendar-trigger", "#logAgentBrowseBtn.agent-select-symbol", "#logSaveBtn.small-btn"
+  ]
+});
+const phaseTwoLibraryStates = Object.freeze([
+  { id: "gallery", selectors: [".gamesense-hero", ".gamesense-topic-card"] },
+  { id: "maps", open: ["maps"], selectors: [".gamesense-entry-card", ".gamesense-map-entry-card"] },
+  { id: "map-detail", open: ["maps", "breeze"], plants: true, selectors: [".gamesense-detail-head", ".gamesense-tactical-card", ".gamesense-back", ".gamesense-map-view-tabs button", ".gamesense-tips-tabs button", ".gamesense-comp-role-tabs button", ".gamesense-plant-preview-toggle", ".gamesense-section-heading"] },
+  { id: "agents", open: ["agents"], selectors: [".gamesense-agent-entry-card"] },
+  { id: "agent-detail", open: ["agents", "omen"], selectors: [".gamesense-agent-hero"] },
+  { id: "weapons", open: ["weapons"], selectors: [".gamesense-weapon-entry-card"] },
+  { id: "weapon-detail", open: ["weapons", "rifles"], weapon: "phantom", selectors: [".gamesense-weapon-panel", ".gamesense-collection-card", ".gamesense-collection-filters button"] },
+  { id: "skin-preview", skinPreview: true, selectors: [".gamesense-skin-preview-card"] }
+]);
+const realContentExtremes = Object.freeze({
+  home: {
+    ".impact-card": { short: "Latest Duelist Report", long: "Latest Controller Report" },
+    shortLabel: "Aim",
+    longLabel: "Focus Category",
+    shortTitle: "Aim",
+    longTitle: "Discipline Compass Category",
+    shortBody: "Aim is strongest.",
+    longBody: "Discipline compass category is currently the lowest pillar in your profile."
+  },
+  stats: {
+    shortLabel: "ADR",
+    longLabel: "Damage / Round",
+    shortTitle: "No data",
+    longTitle: "Season 2026 Act 3 Competitive Performance",
+    shortBody: "No match sample yet.",
+    longBody: "Ranked match history is available from May 28, 2024. Earlier matches are not retained by the current data source."
+  },
+  insights: {
+    shortLabel: "Watch",
+    longLabel: "Medium Confidence",
+    shortTitle: "Clutch Closing",
+    longTitle: "Map Preparation Gap and Clutch Closing",
+    shortBody: "Close the final duel.",
+    longBody: "These are rounds where your timing and last-fight choice decided whether the advantage actually closed."
+  },
+  logging: {
+    ".manual-match-panel": { short: "RR", long: "Rounds Lost" },
+    shortLabel: "Saved",
+    longLabel: "Crosshair Discipline",
+    shortTitle: "Match Reflection",
+    longTitle: "Post-Game Competitive Reflection",
+    shortBody: "Review the opening duel.",
+    longBody: "Review the opening duel, utility timing, and final-round decision before the next competitive queue."
+  },
+  library: {
+    shortLabel: "Aim",
+    longLabel: "Active Season Plant Share",
+    shortTitle: "Maps",
+    longTitle: "Current Competitive Compositions",
+    shortBody: "Attack and defense notes.",
+    longBody: "Attack, defense, role notes, current compositions, and marked tactical layouts."
+  }
+});
+const surfaceContentExtremes = Object.freeze({
+  home: {
+    ".role-filter-btn": { short: "All", long: "Controller" },
+    "#spinAgentBtn.small-btn": { short: "Spin", long: "Reroll Loadout" },
+    "#compassDescriptionToggle.compass-description-toggle": { short: "Details", long: "Hide Coach Description" },
+    ".graph-btn": { short: "Act", long: "Lifetime" },
+    "#timelineCycleBtn.timeline-cycle-btn": { short: "Act", long: "All Seasons" }
+  },
+  stats: {
+    ".stats-summary-card": { short: "Iron 1", long: "Ascendant 3" },
+    ".stats-proof-card": { short: "Iron 1", long: "Ascendant 3" },
+    ".stats-role-progress-card": { short: "Duelist", long: "Controller" },
+    ".stats-performance-card": { short: "Trends", long: "Recent Match Trends" },
+    ".stats-breakdown-card": { short: "Patterns", long: "Match Patterns" },
+    ".stats-maps-card": { short: "Maps", long: "Map Stats" },
+    ".stats-agents-card": { short: "Agents", long: "Agent Stats" },
+    ".stats-weapons-card": { short: "Weapons", long: "Weapon Stats" },
+    "button[data-gamesense-open]": { short: "Learn Maps", long: "Learn Weapons" },
+    "#statsActMobileTrigger": { short: "V26 A1", long: "Season 2026 Act 3" },
+    ".stats-season-title": { short: "V26 A1", long: "Season 2026 Act 3" }
+  },
+  insights: {
+    ".insight-filter-btn": { short: "All", long: "Needs Work" }
+  },
+  logging: {
+    "#loggingTrainingMenuBtn.logging-training-menu-btn": { short: "Training", long: "Aim Training" },
+    ".logging-chip": { short: "0", long: "5" },
+    ".logging-quick-chip": { short: "AFK(s)", long: "Good defense half performance" },
+    ".logging-quick-toggle": { short: "Add", long: "Quick Add" },
+    ".logging-quick-close": { short: "Done", long: "Done" },
+    "#logCalendarTrigger.logging-calendar-trigger": { short: "Today", long: "Wednesday, July 16" },
+    "#logAgentBrowseBtn.agent-select-symbol": { short: "Agent", long: "Browse Agents" },
+    "#logSaveBtn.small-btn": { short: "Save", long: "Save Reflection" }
+  },
+  library: {
+    ".gamesense-back": { short: "Back", long: "Back To Library" },
+    ".gamesense-map-view-tabs button": { short: "Map", long: "Plant Spots" },
+    ".gamesense-tips-tabs button": { short: "Tips", long: "Defense Tips" },
+    ".gamesense-comp-role-tabs button": { short: "All", long: "Controller" },
+    ".gamesense-collection-filters button": { short: "All", long: "Exclusive Edition" },
+    ".gamesense-plant-preview-toggle": { short: "+", long: "−" }
+  }
+});
+
+function weaponSkinApiStub() {
+  const tiers = [
+    "12683d76-48d7-84a3-4e09-6985794f0445",
+    "0cebb8be-46d7-c12a-d306-e9907bfc5a25",
+    "60bca009-4182-7998-dee7-b8a2558dc369"
+  ];
+  return JSON.stringify({
+    status: 200,
+    data: {
+      displayName: "Phantom",
+      skins: ["Aemondir", "Reaver", "Bound"].map((name, index) => ({
+        uuid: `phase-two-skin-${index}`,
+        displayName: `${name} Phantom`,
+        contentTierUuid: tiers[index],
+        displayIcon: `http://127.0.0.1:${port}/assets/weapons/phantom.png?skin=${index}`,
+        chromas: [0, 1, 2, 3].map(view => ({
+          uuid: `phase-two-skin-${index}-variant-${view}`,
+          displayName: `${name} Phantom Variant ${view + 1}`,
+          fullRender: `http://127.0.0.1:${port}/assets/weapons/phantom.png?preview=${index}&view=${view}`,
+          swatch: `http://127.0.0.1:${port}/assets/weapons/phantom.png?swatch=${index}&view=${view}`,
+          streamedVideo: `https://media.valorant-api.com/videos/phantom-${index}-${view}.mp4`
+        })),
+        levels: [1, 2, 3, 4].map(level => ({
+          uuid: `phase-two-skin-${index}-level-${level}`,
+          displayName: `${name} Level ${level}`,
+          streamedVideo: `https://media.valorant-api.com/videos/phantom-${index}-level-${level}.mp4`
+        }))
+      }))
+    }
+  });
+}
+
+function escapeMarkup(value = "") {
+  return String(value).replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]));
+}
 
 function startServer() {
   return new Promise(resolve => {
     const server = http.createServer((request, response) => {
       let url = decodeURIComponent((request.url || "/").split("?")[0]);
+      if (url === "/api/henrik/health") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ ok: true, status: "healthy" }));
+        return;
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(root, url);
       if (!file.startsWith(root)) { response.writeHead(403); return response.end("Forbidden"); }
       fs.readFile(file, (error, data) => {
-        if (error) { response.writeHead(404); return response.end("Not found"); }
+        if (error) {
+          missingRequests.push(url);
+          response.writeHead(404);
+          return response.end("Not found");
+        }
         const type = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp" }[path.extname(file).toLowerCase()] || "application/octet-stream";
         response.writeHead(200, { "Content-Type": type });
         response.end(data);
@@ -41,17 +206,316 @@ async function boot(page) {
   await dismissWarmup(page);
 }
 
+async function activateCoveragePage(page, pageKey) {
+  const button = page.locator(`.nav-btn[data-page="${pageKey}"]`);
+  await button.waitFor({ state: "visible", timeout: 10000 });
+  await button.click();
+  await page.locator(`#page-${pageKey}.active`).waitFor({ state: "visible", timeout: 10000 });
+  await page.waitForTimeout(80);
+}
+
+async function setCoverageLayoutStyle(page, style) {
+  await page.evaluate(nextStyle => {
+    document.body.dataset.layoutStyle = nextStyle;
+  }, style);
+  await page.waitForTimeout(80);
+}
+
+async function setCoverageTheme(page, mode = "default") {
+  await page.evaluate(nextMode => {
+    const palettes = {
+      default: { card: "#0b1220", card2: "#0f172a", text: "#e6eef8", muted: "#94a3b8", accent: "#ff4655", accent2: "#f97316" },
+      omen: { card: "#090a1a", card2: "#151129", text: "#f5f3ff", muted: "#c4b5fd", accent: "#8b5cf6", accent2: "#06b6d4" }
+    };
+    const palette = palettes[nextMode];
+    const root = document.documentElement;
+    root.style.setProperty("--card", palette.card);
+    root.style.setProperty("--card-2", palette.card2);
+    root.style.setProperty("--text", palette.text);
+    root.style.setProperty("--muted", palette.muted);
+    root.style.setProperty("--accent", palette.accent);
+    root.style.setProperty("--accent-2", palette.accent2);
+  }, mode);
+  await page.waitForTimeout(30);
+}
+
+async function makeSurfaceVisible(page, selector) {
+  const count = await page.locator(selector).count();
+  assert.ok(count > 0, `Missing Phase 2 surface: ${selector}`);
+  await page.locator(selector).first().evaluate(target => {
+    const changes = [];
+    let current = target;
+    while (current instanceof HTMLElement && !current.classList.contains("page")) {
+      if (current instanceof HTMLDetailsElement && !current.open) {
+        changes.push({ element: current, detailsOpen: false });
+        current.open = true;
+      }
+      const computed = getComputedStyle(current);
+      if (current.hidden || computed.display === "none" || computed.visibility === "hidden") {
+        changes.push({ element: current, hidden: current.hidden, display: current.style.display, visibility: current.style.visibility });
+        current.hidden = false;
+        if (computed.display === "none") current.style.display = current.tagName === "BUTTON" ? "inline-flex" : "block";
+        if (computed.visibility === "hidden") current.style.visibility = "visible";
+      }
+      current = current.parentElement;
+    }
+    globalThis.__layoutPhaseTwoVisibilityRestore = changes;
+  });
+}
+
+async function restoreSurfaceVisibility(page) {
+  await page.evaluate(() => {
+    (globalThis.__layoutPhaseTwoVisibilityRestore || []).reverse().forEach(change => {
+      if (Object.prototype.hasOwnProperty.call(change, "detailsOpen")) {
+        change.element.open = change.detailsOpen;
+        return;
+      }
+      change.element.hidden = change.hidden;
+      change.element.style.display = change.display;
+      change.element.style.visibility = change.visibility;
+    });
+    globalThis.__layoutPhaseTwoVisibilityRestore = [];
+  });
+}
+
+async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
+  await makeSurfaceVisible(page, selector);
+  const locator = page.locator(selector).first();
+  await locator.scrollIntoViewIfNeeded();
+  const extremes = realContentExtremes[pageKey];
+  await locator.evaluate((target, options) => {
+    const selectors = [
+      ".card-sub", ".insight-preview", ".trend-signal-detail", ".logging-hero-text", ".logging-live-meta",
+      ".stats-sub-text", ".stats-breakdown-detail", ".gamesense-entry-copy small", ".gamesense-note-block p",
+      "p", "small", "h4", "h3", "h2", "strong", "span"
+    ];
+    const candidates = selectors.flatMap(selectorValue => [...target.querySelectorAll(selectorValue)]);
+    const uniqueCandidates = [...new Set(candidates)];
+    const targetRect = target.getBoundingClientRect();
+    let leaf = uniqueCandidates.find(candidate => {
+      const text = String(candidate.textContent || "").replace(/\s+/g, " ").trim();
+      const rect = candidate.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      return /[A-Za-z0-9]/.test(text)
+        && !candidate.closest(".chart-row,.impact-bar-outer,.impact-bar-fill,.impact-bar-shell,#compassSvg,.compass-bar-track,.compass-bar-fill,.coach-readiness-mini-bar,.coach-readiness-locked-bar,.profile-rating-meter,.profile-cleanup-meter,.stats-data-visual,.stats-confidence-visual")
+        && rect.width > 2
+        && rect.height > 2
+        && centerX >= targetRect.left
+        && centerX <= targetRect.right
+        && centerY >= targetRect.top
+        && centerY <= targetRect.bottom;
+    });
+    if (!leaf) leaf = target;
+    const className = String(leaf.className || "");
+    const originalText = String(leaf.textContent || "").replace(/\s+/g, " ").trim();
+    const bodyCopy = leaf.matches("p,small") || /(sub|text|detail|preview|notes|meta|copy)/i.test(className);
+    const compactLabel = /(label|kicker|pill|tag|badge|value)/i.test(className);
+    const numericValue = /^[+\-]?\d[\d\s.,%/+\-]*$/.test(originalText);
+    const contentKind = bodyCopy ? "Body" : compactLabel ? "Label" : "Title";
+    const numericExtreme = originalText.includes("%")
+      ? (options.mode === "short" ? "0%" : "100%")
+      : originalText.includes("/")
+        ? (options.mode === "short" ? "0/100" : "100/100")
+        : (options.mode === "short" ? "0" : "100");
+    const nextContent = options.surfaceExtremes?.[options.mode] || (numericValue
+      ? numericExtreme
+      : options.extremes[`${options.mode}${contentKind}`]);
+    globalThis.__layoutPhaseTwoTextRestore = {
+      leaf,
+      text: leaf.textContent,
+      fitSize: leaf.style.getPropertyValue("--tb-auto-fit-font-size"),
+      fitAttribute: leaf.getAttribute("data-tb-auto-fit"),
+      fitBase: leaf.dataset.tbAutoFitBaseFontSize
+    };
+    leaf.textContent = nextContent;
+  }, { extremes, mode, surfaceExtremes: surfaceContentExtremes[pageKey]?.[selector] || null });
+  await page.waitForTimeout(80);
+  const metrics = await locator.evaluate(target => {
+    const restore = globalThis.__layoutPhaseTwoTextRestore;
+    const leaf = restore?.leaf || target;
+    const targetRect = target.getBoundingClientRect();
+    const leafRect = leaf.getBoundingClientRect();
+    const computed = getComputedStyle(target);
+    const leafComputed = getComputedStyle(leaf);
+    const ancestors = [];
+    let ancestor = target.parentElement;
+    while (ancestor instanceof HTMLElement && ancestors.length < 8) {
+      const ancestorRect = ancestor.getBoundingClientRect();
+      const ancestorStyle = getComputedStyle(ancestor);
+      ancestors.push({
+        tag: ancestor.tagName,
+        id: ancestor.id,
+        className: ancestor.className,
+        rect: ancestorRect.toJSON(),
+        display: ancestorStyle.display,
+        gridRows: ancestorStyle.gridTemplateRows,
+        padding: ancestorStyle.padding,
+        overflow: ancestorStyle.overflow
+      });
+      ancestor = ancestor.parentElement;
+    }
+    return {
+      target: targetRect.toJSON(),
+      leaf: leafRect.toJSON(),
+      textOverflowX: leaf.scrollWidth > leaf.clientWidth + 2,
+      textOverflowY: leaf.scrollHeight > leaf.clientHeight + 2,
+      leafScrollWidth: leaf.scrollWidth,
+      leafClientWidth: leaf.clientWidth,
+      leafScrollHeight: leaf.scrollHeight,
+      leafClientHeight: leaf.clientHeight,
+      outsideTarget: leafRect.left < targetRect.left - 1 || leafRect.right > targetRect.right + 1 || leafRect.top < targetRect.top - 1 || leafRect.bottom > targetRect.bottom + 1,
+      clip: computed.clipPath,
+      borderWidth: computed.borderTopWidth,
+      background: computed.backgroundImage || computed.backgroundColor,
+      fontSize: leafComputed.fontSize,
+      fitted: leaf.getAttribute("data-tb-auto-fit") === "1",
+      leafTag: leaf.tagName,
+      leafClass: leaf.className,
+      originalText: String(restore?.text || "").replace(/\s+/g, " ").trim(),
+      ancestors
+    };
+  });
+  assert.equal(metrics.textOverflowX, false, `${style}/${pageKey}/${selector}/${mode} text overflow X: ${JSON.stringify(metrics)}`);
+  assert.equal(metrics.textOverflowY, false, `${style}/${pageKey}/${selector}/${mode} text overflow Y: ${JSON.stringify(metrics)}`);
+  assert.equal(metrics.outsideTarget, false, `${style}/${pageKey}/${selector}/${mode} content outside frame: ${JSON.stringify(metrics)}`);
+  assert.notEqual(metrics.borderWidth, "0px", `${style}/${pageKey}/${selector}/${mode} missing frame treatment`);
+  let image;
+  try {
+    image = await locator.screenshot({ type: "jpeg", quality: 58 });
+  } catch (error) {
+    throw new Error(`${style}/${pageKey}/${selector}/${mode} screenshot failed: ${error.message}`);
+  }
+  await locator.evaluate(() => {
+    const restore = globalThis.__layoutPhaseTwoTextRestore;
+    if (!restore?.leaf) return;
+    restore.leaf.textContent = restore.text;
+    if (restore.fitSize) restore.leaf.style.setProperty("--tb-auto-fit-font-size", restore.fitSize);
+    else restore.leaf.style.removeProperty("--tb-auto-fit-font-size");
+    if (restore.fitAttribute == null) restore.leaf.removeAttribute("data-tb-auto-fit");
+    else restore.leaf.setAttribute("data-tb-auto-fit", restore.fitAttribute);
+    if (restore.fitBase == null) delete restore.leaf.dataset.tbAutoFitBaseFontSize;
+    else restore.leaf.dataset.tbAutoFitBaseFontSize = restore.fitBase;
+    globalThis.__layoutPhaseTwoTextRestore = null;
+  });
+  await restoreSurfaceVisibility(page);
+  return { label: `${pageKey} · ${selector} · ${mode}`, image: image.toString("base64"), metrics };
+}
+
+async function captureSurfaceSet(page, pageKey, selectors, style, tiles) {
+  for (const selector of selectors) {
+    for (const mode of ["short", "long"]) {
+      tiles.push(await captureSurfaceExtreme(page, pageKey, selector, mode, style));
+    }
+  }
+}
+
+async function writeCoverageContactSheet(browser, style, tiles) {
+  const review = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
+  await review.setContent(`<!doctype html><meta charset="utf-8"><style>
+    body{margin:0;padding:20px;background:#060b14;color:#eef5ff;font:13px/1.35 system-ui,sans-serif}
+    h1{margin:0 0 16px;font:800 24px/1 system-ui,sans-serif;text-transform:uppercase}
+    main{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+    article{display:grid;gap:7px;min-width:0;padding:9px;border:1px solid #334155;border-radius:8px;background:#0f172a}
+    strong{min-height:34px;overflow-wrap:anywhere;color:#cbd5e1;font-size:11px}
+    img{display:block;width:100%;height:210px;object-fit:contain;object-position:top center;background:#020617}
+  </style><h1>${escapeMarkup(style)} · Phase 2 short/long surface review</h1><main>${tiles.map(tile => `<article><strong>${escapeMarkup(tile.label)}</strong><img src="data:image/jpeg;base64,${tile.image}" alt=""></article>`).join("")}</main>`);
+  await review.screenshot({ path: path.join(__dirname, "tmp", `layout-style-phase2-${style}.png`), fullPage: true });
+  await review.close();
+}
+
+async function runPhaseTwoCoverage(page, browser) {
+  const themeColorSignatures = [];
+  for (const style of layoutStyles) {
+    const tiles = [];
+    await setCoverageLayoutStyle(page, style);
+    await setCoverageTheme(page, "default");
+    await activateCoveragePage(page, "home");
+    const defaultSignature = await page.locator(".weekly-focus-card").evaluate(card => {
+      const computed = getComputedStyle(card);
+      return `${computed.backgroundImage}|${computed.backgroundColor}|${computed.borderTopColor}`;
+    });
+    await setCoverageTheme(page, "omen");
+    const omenSignature = await page.locator(".weekly-focus-card").evaluate(card => {
+      const computed = getComputedStyle(card);
+      return `${computed.backgroundImage}|${computed.backgroundColor}|${computed.borderTopColor}`;
+    });
+    assert.notEqual(omenSignature, defaultSignature, `${style} did not follow the active theme variables`);
+    themeColorSignatures.push({ style, defaultSignature, omenSignature });
+    await setCoverageTheme(page, "default");
+
+    await captureSurfaceSet(page, "home", phaseTwoSurfaces.home, style, tiles);
+    await activateCoveragePage(page, "stats");
+    await captureSurfaceSet(page, "stats", phaseTwoSurfaces.stats, style, tiles);
+    await activateCoveragePage(page, "insights");
+    await captureSurfaceSet(page, "insights", phaseTwoSurfaces.insights, style, tiles);
+    await activateCoveragePage(page, "logging");
+    await captureSurfaceSet(page, "logging", phaseTwoSurfaces.logging, style, tiles);
+    await activateCoveragePage(page, "library");
+    await page.evaluate(() => globalThis.RankedCoachGamesenseLibrary.reset());
+    await page.waitForTimeout(50);
+    for (const state of phaseTwoLibraryStates) {
+      if (state.open) {
+        await page.evaluate(args => globalThis.RankedCoachGamesenseLibrary.open(...args), state.open);
+        await page.locator(state.selectors[0]).first().waitFor({ state: "attached", timeout: 10000 });
+        await page.waitForTimeout(80);
+      }
+      if (state.weapon) {
+        await page.locator(`[data-gamesense-weapon="${state.weapon}"]`).click();
+        await page.locator(".gamesense-collection-card").first().waitFor({ state: "visible", timeout: 10000 });
+      }
+      if (state.plants) {
+        await page.locator('[data-gamesense-map-view="plants"]').click();
+        await page.locator(".gamesense-plant-preview-toggle").first().waitFor({ state: "visible", timeout: 10000 });
+      }
+      if (state.skinPreview) {
+        const preview = page.locator('[data-gamesense-collection-preview][data-preview-name="Aemondir"]').first();
+        await preview.waitFor({ state: "visible", timeout: 10000 });
+        await preview.click();
+        await page.locator(".gamesense-skin-preview-card").waitFor({ state: "visible", timeout: 10000 });
+      }
+      await captureSurfaceSet(page, "library", state.selectors, style, tiles);
+      if (state.skinPreview) {
+        await page.keyboard.press("Escape");
+        await page.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached", timeout: 5000 });
+      }
+    }
+    await writeCoverageContactSheet(browser, style, tiles);
+  }
+  assert.equal(themeColorSignatures.length, layoutStyles.length);
+  await page.evaluate(() => {
+    document.body.dataset.layoutStyle = "honeycomb";
+  });
+  await setCoverageTheme(page, "default");
+}
+
 async function run() {
   const server = await startServer();
   const browser = await chromium.launch();
   try {
     const errors = [];
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    page.on("console", message => { if (message.type() === "error") errors.push(`console: ${message.text()}`); });
+    page.on("console", message => {
+      if (message.type() !== "error") return;
+      const location = message.location();
+      errors.push(`console: ${message.text()}${location?.url ? ` @ ${location.url}` : ""}`);
+    });
     page.on("pageerror", error => errors.push(`page: ${error.message}`));
     await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
+    const layoutPuuid = "layout-style-test-puuid";
+    await page.route("**/api/henrik/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, configured: true }) }));
+    await page.route("**/api/henrik/account", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, data: { puuid: layoutPuuid, name: "LayoutOne", tag: "NA1" } }) }));
+    await page.route("**/api/henrik/mmr-history-live", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, data: [{ account: { puuid: layoutPuuid }, history: [] }] }) }));
+    await page.route("**/api/henrik/mmr-history", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, data: [] }) }));
+    await page.route("**/api/henrik/matches", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, data: [] }) }));
     await page.route("https://fonts.googleapis.com/**", route => route.fulfill({ contentType: "text/css", body: "" }));
     await page.route("https://fonts.gstatic.com/**", route => route.abort());
+    await page.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub() }));
+    await page.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
+    await page.route("https://media.valorant-api.com/videos/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await page.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await page.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title>" }));
+    await page.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
     await page.addInitScript(() => {
       if (sessionStorage.getItem("layout-test-seeded") === "true") return;
       const profiles = [
@@ -83,10 +547,20 @@ async function run() {
     const excludedBefore = await page.evaluate(() => ({
       navClip: getComputedStyle(document.querySelector(".app-header")).clipPath,
       navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
-      chartClip: getComputedStyle(document.querySelector(".rr-chart-card")).clipPath,
-      chartBackground: getComputedStyle(document.querySelector(".rr-chart-card")).backgroundImage
+      chartClip: getComputedStyle(document.querySelector(".chart-row")).clipPath,
+      chartBackground: getComputedStyle(document.querySelector(".chart-row")).backgroundImage,
+      impactClip: getComputedStyle(document.querySelector(".impact-bar-outer")).clipPath,
+      impactBackground: getComputedStyle(document.querySelector(".impact-bar-outer")).backgroundImage,
+      radarClip: getComputedStyle(document.querySelector("#compassSvg")).clipPath,
+      radarBackground: getComputedStyle(document.querySelector("#compassSvg")).backgroundImage,
+      meterClip: getComputedStyle(document.querySelector(".compass-bar-track")).clipPath,
+      meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage
     }));
-    for (const style of ["honeycomb", "chevronscan", "aperturecut", "scopevignette", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog"]) {
+    const chartCardBefore = await page.locator(".rr-chart-card").evaluate(card => {
+      const style = getComputedStyle(card);
+      return { clip: style.clipPath, backgroundImage: style.backgroundImage, backgroundColor: style.backgroundColor, border: style.border, radius: style.borderRadius, shadow: style.boxShadow };
+    });
+    for (const style of layoutStyles) {
       await page.click(`[data-layout-style-card="${style}"]`);
       assert.equal(await page.locator("body").getAttribute("data-layout-style"), style);
       const bounds = await page.locator(".weekly-focus-card").evaluate(card => {
@@ -106,10 +580,21 @@ async function run() {
       const excludedAfter = await page.evaluate(() => ({
         navClip: getComputedStyle(document.querySelector(".app-header")).clipPath,
         navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
-        chartClip: getComputedStyle(document.querySelector(".rr-chart-card")).clipPath,
-        chartBackground: getComputedStyle(document.querySelector(".rr-chart-card")).backgroundImage
+        chartClip: getComputedStyle(document.querySelector(".chart-row")).clipPath,
+        chartBackground: getComputedStyle(document.querySelector(".chart-row")).backgroundImage,
+        impactClip: getComputedStyle(document.querySelector(".impact-bar-outer")).clipPath,
+        impactBackground: getComputedStyle(document.querySelector(".impact-bar-outer")).backgroundImage,
+        radarClip: getComputedStyle(document.querySelector("#compassSvg")).clipPath,
+        radarBackground: getComputedStyle(document.querySelector("#compassSvg")).backgroundImage,
+        meterClip: getComputedStyle(document.querySelector(".compass-bar-track")).clipPath,
+        meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage
       }));
       assert.deepEqual(excludedAfter, excludedBefore, `${style} changed an excluded surface`);
+      const chartCardAfter = await page.locator(".rr-chart-card").evaluate(card => {
+        const computed = getComputedStyle(card);
+        return { clip: computed.clipPath, backgroundImage: computed.backgroundImage, backgroundColor: computed.backgroundColor, border: computed.border, radius: computed.borderRadius, shadow: computed.boxShadow };
+      });
+      assert.notDeepEqual(chartCardAfter, chartCardBefore, `${style} did not theme the chart card shell`);
     }
     await page.click('[data-layout-style-card="honeycomb"]');
     assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");
@@ -142,6 +627,8 @@ async function run() {
     assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");
     assert.equal(await page.locator("body").getAttribute("data-layout-font"), "ibmplexmono");
 
+    await runPhaseTwoCoverage(page, browser);
+
     await page.goto(`http://127.0.0.1:${port}/?profile=layout-two`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
@@ -171,7 +658,8 @@ async function run() {
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
     assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");
     assert.equal(await page.locator(".app-header").getAttribute("data-profile-banner"), "rc-redline");
-    assert.deepEqual(errors, []);
+    assert.deepEqual(errors, [], `missing local requests: ${JSON.stringify(missingRequests)}`);
+    assert.deepEqual(missingRequests, []);
     console.log("layout style persistence and scope checks passed");
   } finally {
     await browser.close();
