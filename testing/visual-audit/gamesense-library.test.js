@@ -755,6 +755,7 @@ async function run() {
     assert.equal(inactiveFocusGuard.pageInert, true, JSON.stringify(inactiveFocusGuard));
     await desktop.locator(".gamesense-collection-art[data-gamesense-collection-preview]").first().click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    await desktop.waitForTimeout(250);
     assert.match(await desktop.locator(".gamesense-skin-preview-card").textContent(), /Official Weapon Render.*Aemondir Phantom.*Skin Animation.*used by val-skins.*Dittozkul approved fallback/is);
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-secondary-video").count(), 1);
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
@@ -771,10 +772,39 @@ async function run() {
     const desktopOptionLayout = await desktop.locator(".gamesense-skin-option-groups > section").evaluateAll(sections => sections.map(section => section.getBoundingClientRect().toJSON()));
     assert.equal(desktopOptionLayout.length, 2);
     assert.ok(Math.abs(desktopOptionLayout[0].top - desktopOptionLayout[1].top) <= 2 && desktopOptionLayout[1].left > desktopOptionLayout[0].left, JSON.stringify(desktopOptionLayout));
+    const desktopVariantLayout = await desktop.locator(".gamesense-skin-view-selectors").evaluate(rail => ({
+      display: getComputedStyle(rail).display,
+      overflowX: getComputedStyle(rail).overflowX,
+      clientWidth: rail.clientWidth,
+      scrollWidth: rail.scrollWidth,
+      alignments: [...rail.querySelectorAll("button")].map(button => {
+        const preview = button.querySelector(".gamesense-skin-variant-thumb").getBoundingClientRect();
+        const numeral = button.querySelector(".gamesense-skin-variant-index").getBoundingClientRect();
+        return Math.abs((preview.left + preview.width / 2) - (numeral.left + numeral.width / 2));
+      })
+    }));
+    assert.equal(desktopVariantLayout.display, "grid", JSON.stringify(desktopVariantLayout));
+    assert.equal(desktopVariantLayout.overflowX, "visible", JSON.stringify(desktopVariantLayout));
+    assert.ok(desktopVariantLayout.scrollWidth <= desktopVariantLayout.clientWidth + 1, JSON.stringify(desktopVariantLayout));
+    assert.ok(desktopVariantLayout.alignments.every(delta => delta <= 1), JSON.stringify(desktopVariantLayout));
     assert.equal(await desktop.locator("[data-skin-media-page-button]").count(), 2);
     assert.equal(await desktop.locator('[data-skin-media-page-button="0"]').getAttribute("aria-pressed"), "true");
     assert.equal(await desktop.locator('[data-skin-media-page="1"]').isHidden(), true);
     assert.match(await desktop.locator(".gamesense-skin-video-pane iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/PT3EC2dgqzs/i);
+    const nativeVideoRect = await desktop.locator("[data-skin-preview-video]").evaluate(video => video.getBoundingClientRect().toJSON());
+    const desktopPagerAtVideoTop = await desktop.locator(".gamesense-skin-media-pagination").evaluate(pager => {
+      const pagerRect = pager.getBoundingClientRect();
+      const frameRect = document.querySelector(".gamesense-skin-animation-frame").getBoundingClientRect();
+      const videoRect = document.querySelector("[data-skin-preview-video]").getBoundingClientRect();
+      return {
+        pager: pagerRect.toJSON(),
+        frame: frameRect.toJSON(),
+        video: videoRect.toJSON(),
+        centerDelta: Math.abs((pagerRect.left + pagerRect.width / 2) - (videoRect.left + videoRect.width / 2))
+      };
+    });
+    assert.ok(desktopPagerAtVideoTop.pager.top >= desktopPagerAtVideoTop.frame.top && desktopPagerAtVideoTop.pager.top <= desktopPagerAtVideoTop.video.top + 2, JSON.stringify(desktopPagerAtVideoTop));
+    assert.ok(desktopPagerAtVideoTop.centerDelta <= 2, JSON.stringify(desktopPagerAtVideoTop));
     assert.equal(await desktop.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
     assert.equal(await desktop.locator('.gamesense-skin-model-stage iframe[src*="sketchfab.com"]').count(), 0);
     await desktop.locator('[data-skin-preview-view="1"]').click();
@@ -786,6 +816,9 @@ async function run() {
     assert.equal(await desktop.locator('[data-skin-media-page="0"]').isHidden(), true);
     assert.equal(await desktop.locator('[data-skin-media-page="1"]').isVisible(), true);
     assert.equal(await desktop.locator('[data-skin-media-page-button="1"]').getAttribute("aria-pressed"), "true");
+    const bundleVideoRect = await desktop.locator(".gamesense-skin-video-pane iframe").evaluate(frame => frame.getBoundingClientRect().toJSON());
+    assert.ok(Math.abs(bundleVideoRect.width - nativeVideoRect.width) <= 2 && Math.abs(bundleVideoRect.height - nativeVideoRect.height) <= 2, JSON.stringify({ nativeVideoRect, bundleVideoRect }));
+    await desktop.locator(".gamesense-skin-media-pane").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-bundle-desktop.png") });
     await desktop.locator('[data-skin-media-page-button="0"]').click();
     await desktop.locator(".gamesense-skin-preview-card").evaluate(card => { card.scrollTop = 0; });
     await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-desktop.png") });
@@ -1175,6 +1208,7 @@ async function run() {
     assert.ok(mobileAllFilterSpacing.gap >= 8, JSON.stringify(mobileAllFilterSpacing));
     await mobile.locator(".gamesense-collection-copy[data-gamesense-collection-preview]").first().click();
     await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    await mobile.waitForTimeout(250);
     const mobileSkinViewer = await mobile.locator(".gamesense-skin-preview-card").evaluate(card => ({
       width: card.getBoundingClientRect().width,
       viewport: document.documentElement.clientWidth,
@@ -1190,8 +1224,25 @@ async function run() {
     assert.equal(await mobile.locator(".gamesense-skin-model-stage.is-static").count(), 1);
     assert.equal(await mobile.locator("[data-skin-preview-video]").count(), 1);
     assert.equal(await mobile.locator("[data-skin-media-page-button]").count(), 2);
+    const mobileNativeVideoRect = await mobile.locator("[data-skin-preview-video]").evaluate(video => video.getBoundingClientRect().toJSON());
+    const mobilePagerAtVideoTop = await mobile.locator(".gamesense-skin-media-pagination").evaluate(pager => {
+      const pagerRect = pager.getBoundingClientRect();
+      const frameRect = document.querySelector(".gamesense-skin-animation-frame").getBoundingClientRect();
+      const videoRect = document.querySelector("[data-skin-preview-video]").getBoundingClientRect();
+      return {
+        pager: pagerRect.toJSON(),
+        frame: frameRect.toJSON(),
+        video: videoRect.toJSON(),
+        centerDelta: Math.abs((pagerRect.left + pagerRect.width / 2) - (videoRect.left + videoRect.width / 2))
+      };
+    });
+    assert.ok(mobilePagerAtVideoTop.pager.top >= mobilePagerAtVideoTop.frame.top && mobilePagerAtVideoTop.pager.top <= mobilePagerAtVideoTop.video.top + 2, JSON.stringify(mobilePagerAtVideoTop));
+    assert.ok(mobilePagerAtVideoTop.centerDelta <= 2, JSON.stringify(mobilePagerAtVideoTop));
     await mobile.locator('[data-skin-media-page-button="1"]').click();
     assert.equal(await mobile.locator('[data-skin-media-page="1"]').isVisible(), true);
+    const mobileBundleVideoRect = await mobile.locator(".gamesense-skin-video-pane iframe").evaluate(frame => frame.getBoundingClientRect().toJSON());
+    assert.ok(Math.abs(mobileBundleVideoRect.width - mobileNativeVideoRect.width) <= 2 && Math.abs(mobileBundleVideoRect.height - mobileNativeVideoRect.height) <= 2, JSON.stringify({ mobileNativeVideoRect, mobileBundleVideoRect }));
+    await mobile.locator(".gamesense-skin-media-pane").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-bundle-mobile.png") });
     await mobile.locator('[data-skin-media-page-button="0"]').click();
     await mobile.locator('[data-skin-preview-view="1"]').click();
     assert.match(await mobile.locator("[data-skin-preview-image]").getAttribute("src"), /vandal\.png\?preview=0&view=1/i);
