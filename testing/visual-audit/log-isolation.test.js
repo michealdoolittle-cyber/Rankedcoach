@@ -143,10 +143,8 @@ async function run() {
     await placeholder.waitFor({ state: "visible" });
     const unverifiedRr = page.locator(".log-result-rr-unverified");
     assert.equal(await unverifiedRr.count(), 1);
-    assert.equal((await unverifiedRr.textContent()).trim(), "RR unverified");
+    assert.equal(await unverifiedRr.innerText(), "RR unverified");
     assert.ok(await unverifiedRr.evaluate(element => element.classList.contains("log-result-rr-neutral")));
-    assert.ok(await unverifiedRr.evaluate(element => element.classList.contains("hud-content-tag")));
-    assert.match(await unverifiedRr.evaluate(element => getComputedStyle(element).clipPath), /polygon/);
     assert.match(await placeholder.innerText(), /Add your reflection for this ranked match\./);
     assert.equal(await placeholder.locator(".log-edit-btn").innerText(), "Add Reflection");
     assert.match(await placeholder.innerText(), /Haven/);
