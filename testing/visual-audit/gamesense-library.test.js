@@ -97,10 +97,13 @@ function weaponSkinApiStub(url) {
         contentTierUuid: name === "Aemondir" ? tiers[2] : tiers[index % tiers.length],
         displayIcon: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?skin=${index}`,
         chromas: (name === "Aemondir" ? [0, 1, 2] : [0]).map(view => ({
+          uuid: `${slug}-skin-${index}-variant-${view}`,
           displayName: `${name} ${weaponName} ${view === 0 ? "Default" : `Variant ${view + 1}`}`,
-          fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}&view=${view}`
+          fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}&view=${view}`,
+          swatch: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?swatch=${index}&view=${view}`,
+          streamedVideo: `https://media.valorant-api.com/videos/${slug}-${index}-${view}.mp4`
         })),
-        levels: []
+        levels: [{ uuid: `${slug}-skin-${index}-level-1`, displayName: `${name} Level 1`, streamedVideo: `https://media.valorant-api.com/videos/${slug}-${index}-level-1.mp4` }]
       }))
     }
   });
@@ -132,6 +135,7 @@ async function run() {
     await desktop.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await desktop.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await desktop.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
+    await desktop.route("https://www.val-skins.com/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>val-skins full preview</title><main>Verified chromas and upgrades</main>" }));
     await desktop.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
     await seed(desktop, "gamesense-desktop");
     await desktop.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
@@ -715,13 +719,15 @@ async function run() {
       vct24: globalThis.RankedCoachWeaponCollections.getCollectionVideo("VCT x SEN", "Exclusive"),
       vct25: globalThis.RankedCoachWeaponCollections.getCollectionVideo("VCT25 x SEN", "Exclusive"),
       vct26: globalThis.RankedCoachWeaponCollections.getCollectionVideo("VCT26 x SEN", "Exclusive"),
-      deluxe: globalThis.RankedCoachWeaponCollections.getCollectionVideo("Aemondir", "Deluxe")
+      noApprovedSource: globalThis.RankedCoachWeaponCollections.getCollectionVideo("Bound", "Deluxe")
     }));
     assert.match(collectionVideoCoverage.premium?.id || "", /^[a-zA-Z0-9_-]{11}$/);
+    assert.equal(collectionVideoCoverage.premium?.channel, "Dittozkul");
     assert.match(collectionVideoCoverage.vct24?.id || "", /^[a-zA-Z0-9_-]{11}$/);
     assert.match(collectionVideoCoverage.vct25?.id || "", /^[a-zA-Z0-9_-]{11}$/);
     assert.match(collectionVideoCoverage.vct26?.id || "", /^[a-zA-Z0-9_-]{11}$/);
-    assert.equal(collectionVideoCoverage.deluxe, null);
+    assert.ok([collectionVideoCoverage.vct24?.channel, collectionVideoCoverage.vct25?.channel, collectionVideoCoverage.vct26?.channel].every(channel => channel === "VALORANT"));
+    assert.equal(collectionVideoCoverage.noApprovedSource, null);
     await desktop.locator(".gamesense-collection-filters").screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-filters-desktop.png") });
     await desktop.locator('[data-gamesense-collection-filter="premium"]').click();
     assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 5);
@@ -740,12 +746,23 @@ async function run() {
     assert.equal(inactiveFocusGuard.pageInert, true, JSON.stringify(inactiveFocusGuard));
     await desktop.locator("[data-gamesense-collection-preview]").first().click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
-    assert.match(await desktop.locator(".gamesense-skin-preview-card").innerText(), /Phantom collection.*Aemondir.*Click outside the preview to close/is);
-    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-video").count(), 1);
+    assert.match(await desktop.locator(".gamesense-skin-preview-card").innerText(), /Interactive Render Space.*Aemondir Phantom.*Full Skin Preview.*val-skins\.com.*Dittozkul approved fallback/is);
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-secondary-video").count(), 1);
     assert.equal(await desktop.locator("[data-skin-preview-view]").count(), 3);
+    assert.equal(await desktop.locator("[data-skin-preview-step]").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-skin-variant-swatch").count(), 3);
     assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=0&view=0/i);
-    assert.match(await desktop.locator(".gamesense-skin-video-pane iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/P3fUih8vWhY/i);
-    await desktop.locator('[data-skin-preview-step="1"]').click();
+    assert.match(await desktop.locator(".gamesense-skin-source-preview iframe").getAttribute("src"), /^https:\/\/www\.val-skins\.com\/\?view=skins&filter=Phantom&query=Aemondir&skin=phantom-skin-0/i);
+    assert.match(await desktop.locator(".gamesense-skin-video-pane iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/PT3EC2dgqzs/i);
+    const desktopOrbitBefore = await desktop.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
+    const desktopStageBox = await desktop.locator("[data-skin-orbit-stage]").boundingBox();
+    await desktop.mouse.move(desktopStageBox.x + (desktopStageBox.width * .45), desktopStageBox.y + (desktopStageBox.height * .5));
+    await desktop.mouse.down();
+    await desktop.mouse.move(desktopStageBox.x + (desktopStageBox.width * .68), desktopStageBox.y + (desktopStageBox.height * .4), { steps: 4 });
+    await desktop.mouse.up();
+    const desktopOrbitAfter = await desktop.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
+    assert.notEqual(desktopOrbitAfter, desktopOrbitBefore);
+    await desktop.locator('[data-skin-preview-view="1"]').click();
     assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=0&view=1/i);
     assert.equal(await desktop.locator('[data-skin-preview-view="1"]').getAttribute("aria-pressed"), "true");
     await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-desktop.png") });
@@ -801,9 +818,11 @@ async function run() {
     const boundJudge = desktop.locator('[data-gamesense-collection-preview][data-preview-name="Bound"]');
     await boundJudge.click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
-    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-video").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.is-primary-only").count(), 1);
     assert.equal(await desktop.locator("[data-skin-preview-view]").count(), 1);
-    assert.equal(await desktop.locator("[data-skin-preview-step]").evaluateAll(buttons => buttons.every(button => button.disabled)), true);
+    assert.equal(await desktop.locator("[data-skin-preview-step]").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-skin-source-preview iframe").count(), 1);
+    assert.equal(await desktop.locator(".gamesense-skin-video-pane iframe").count(), 0);
     assert.equal(await desktop.locator("#logFocusCustomMenu").isVisible(), false);
     await desktop.mouse.click(2, 2);
     await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
@@ -832,6 +851,7 @@ async function run() {
     await mobile.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await mobile.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await mobile.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
+    await mobile.route("https://www.val-skins.com/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>val-skins full preview</title><main>Verified chromas and upgrades</main>" }));
     await mobile.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
     await seed(mobile, "gamesense-mobile");
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
@@ -1110,7 +1130,16 @@ async function run() {
     assert.ok(mobileSkinViewer.width <= mobileSkinViewer.viewport && !mobileSkinViewer.overflow, JSON.stringify(mobileSkinViewer));
     assert.equal(mobileSkinViewer.columns.split(" ").length, 1, JSON.stringify(mobileSkinViewer));
     assert.equal(await mobile.locator("[data-skin-preview-view]").count(), 3);
-    await mobile.locator('[data-skin-preview-step="1"]').click();
+    assert.equal(await mobile.locator("[data-skin-preview-step]").count(), 0);
+    const mobileStage = mobile.locator("[data-skin-orbit-stage]");
+    const mobileOrbitBefore = await mobile.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
+    await mobileStage.dispatchEvent("pointerdown", { pointerId: 7, pointerType: "touch", clientX: 140, clientY: 180, isPrimary: true });
+    await mobile.waitForTimeout(220);
+    await mobileStage.dispatchEvent("pointermove", { pointerId: 7, pointerType: "touch", clientX: 210, clientY: 160, isPrimary: true });
+    await mobileStage.dispatchEvent("pointerup", { pointerId: 7, pointerType: "touch", clientX: 210, clientY: 160, isPrimary: true });
+    const mobileOrbitAfter = await mobile.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
+    assert.notEqual(mobileOrbitAfter, mobileOrbitBefore);
+    await mobile.locator('[data-skin-preview-view="1"]').click();
     assert.match(await mobile.locator("[data-skin-preview-image]").getAttribute("src"), /vandal\.png\?preview=0&view=1/i);
     await mobile.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-mobile.png") });
     await mobile.mouse.click(2, 2);

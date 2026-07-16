@@ -644,14 +644,14 @@
           </div>
           <div class="gamesense-collection-grid">
             ${collections.map(item => `<article class="gamesense-collection-card" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}">
-              <button class="gamesense-collection-art" type="button" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} render viewer">
+              <button class="gamesense-collection-art" type="button" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
-                <span>Open render viewer</span>
+                <span>Open interactive preview</span>
               </button>
               <div class="gamesense-collection-copy">
                 <span>${escapeHtml(item.weaponName)} skin</span>
                 <h4>${escapeHtml(item.name)}</h4>
-                <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>Exact ${escapeHtml(item.weaponName)} preview</b></div>
+                <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${item.variants?.length || item.views?.length || 1} verified color ${(item.variants?.length || item.views?.length || 1) === 1 ? "variant" : "variants"}</b></div>
               </div>
             </article>`).join("")}
           </div>`}
@@ -736,7 +736,9 @@
       name: String(trigger?.dataset?.previewName || "Weapon skin").trim(),
       weaponName: weapon,
       previewImage: source,
-      views: source ? [{ source, label: "Riot weapon render" }] : [],
+      variants: source ? [{ id: `${id}-variant-1`, source, label: "Default variant" }] : [],
+      views: source ? [{ id: `${id}-variant-1`, source, label: "Default variant" }] : [],
+      valSkinsUrl: id ? `https://www.val-skins.com/?view=skins&filter=${encodeURIComponent(weapon)}&query=${encodeURIComponent(String(trigger?.dataset?.previewName || "Weapon skin").trim())}&skin=${encodeURIComponent(id)}` : "https://www.val-skins.com/?view=skins",
       bundleVideo: null
     };
   }
@@ -755,7 +757,7 @@
       image.src = active.dataset.skinPreviewSource || image.src;
       image.alt = active.dataset.skinPreviewAlt || image.alt;
     }
-    if (label) label.textContent = `${active.dataset.skinViewLabel || `Riot render ${activeSkinViewIndex + 1}`} - ${activeSkinViewIndex + 1} of ${count}`;
+    if (label) label.textContent = `${active.dataset.skinViewLabel || `Variant ${activeSkinViewIndex + 1}`} - ${activeSkinViewIndex + 1} of ${count}`;
     selectors.forEach((selector, index) => {
       const isActive = index === activeSkinViewIndex;
       selector.classList.toggle("active", isActive);
@@ -763,41 +765,157 @@
     });
   }
 
+  function bindSkinPreviewOrbit(overlay) {
+    const stage = overlay?.querySelector("[data-skin-orbit-stage]");
+    const scene = stage?.querySelector("[data-skin-orbit-scene]");
+    if (!stage || !scene) return;
+    let pointerId = null;
+    let pointerType = "";
+    let pointerDown = false;
+    let dragging = false;
+    let holdTimer = 0;
+    let startX = 0;
+    let startY = 0;
+    let startRotateX = -5;
+    let startRotateY = 0;
+    let rotateX = -5;
+    let rotateY = 0;
+
+    const applyOrbit = () => {
+      scene.style.setProperty("--skin-orbit-x", `${rotateX.toFixed(2)}deg`);
+      scene.style.setProperty("--skin-orbit-y", `${rotateY.toFixed(2)}deg`);
+      stage.setAttribute("aria-valuenow", String(Math.round(rotateY)));
+      stage.setAttribute("aria-valuetext", `Horizontal angle ${Math.round(rotateY)} degrees, vertical angle ${Math.round(rotateX)} degrees`);
+    };
+    const resetOrbit = () => {
+      rotateX = -5;
+      rotateY = 0;
+      startRotateX = rotateX;
+      startRotateY = rotateY;
+      applyOrbit();
+    };
+    const beginDrag = () => {
+      if (!pointerDown || pointerId === null) return;
+      dragging = true;
+      stage.classList.remove("is-hold-pending");
+      stage.classList.add("is-dragging");
+      try { stage.setPointerCapture(pointerId); } catch (_error) { /* Pointer may have ended during the mobile hold delay. */ }
+    };
+    const finishDrag = () => {
+      window.clearTimeout(holdTimer);
+      holdTimer = 0;
+      pointerDown = false;
+      dragging = false;
+      stage.classList.remove("is-hold-pending", "is-dragging");
+      if (pointerId !== null) {
+        try { stage.releasePointerCapture(pointerId); } catch (_error) { /* Capture may already be released. */ }
+      }
+      pointerId = null;
+      pointerType = "";
+    };
+
+    stage.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      pointerId = event.pointerId;
+      pointerType = event.pointerType;
+      pointerDown = true;
+      startX = event.clientX;
+      startY = event.clientY;
+      startRotateX = rotateX;
+      startRotateY = rotateY;
+      if (pointerType === "touch") {
+        stage.classList.add("is-hold-pending");
+        holdTimer = window.setTimeout(beginDrag, 180);
+      } else {
+        beginDrag();
+      }
+    });
+    stage.addEventListener("pointermove", event => {
+      if (!pointerDown || event.pointerId !== pointerId) return;
+      const deltaX = event.clientX - startX;
+      const deltaY = event.clientY - startY;
+      if (pointerType === "touch" && !dragging && Math.hypot(deltaX, deltaY) > 12) {
+        finishDrag();
+        return;
+      }
+      if (!dragging) return;
+      event.preventDefault();
+      rotateY = Math.max(-68, Math.min(68, startRotateY + (deltaX * 0.34)));
+      rotateX = Math.max(-34, Math.min(34, startRotateX - (deltaY * 0.25)));
+      applyOrbit();
+    });
+    stage.addEventListener("pointerup", finishDrag);
+    stage.addEventListener("pointercancel", finishDrag);
+    stage.addEventListener("lostpointercapture", () => {
+      if (pointerDown) finishDrag();
+    });
+    stage.addEventListener("keydown", event => {
+      const change = event.shiftKey ? 12 : 6;
+      if (event.key === "ArrowLeft") rotateY = Math.max(-68, rotateY - change);
+      else if (event.key === "ArrowRight") rotateY = Math.min(68, rotateY + change);
+      else if (event.key === "ArrowUp") rotateX = Math.min(34, rotateX + change);
+      else if (event.key === "ArrowDown") rotateX = Math.max(-34, rotateX - change);
+      else if (event.key === "0" || event.key === "Home") resetOrbit();
+      else return;
+      event.preventDefault();
+      applyOrbit();
+    });
+    overlay.querySelector("[data-skin-preview-reset]")?.addEventListener("click", resetOrbit);
+    applyOrbit();
+  }
+
   function openSkinPreview(trigger) {
     const item = getSkinPreviewItem(trigger);
     const name = String(item?.name || "Weapon skin").trim();
     const weapon = String(item?.weaponName || "Weapon").trim();
-    const views = (item?.views || []).filter(view => view?.source);
-    const videoId = /^[a-zA-Z0-9_-]{11}$/.test(String(item?.bundleVideo?.id || "")) ? item.bundleVideo.id : "";
-    if (!views.length) return;
+    const variants = (item?.variants || item?.views || []).filter(variant => variant?.source);
+    const approvedChannels = new Set(["VALORANT", "Dittozkul"]);
+    const requestedVideoId = String(item?.bundleVideo?.id || "");
+    const videoId = approvedChannels.has(item?.bundleVideo?.channel) && /^[a-zA-Z0-9_-]{11}$/.test(requestedVideoId) ? requestedVideoId : "";
+    const playlistId = item?.bundleVideo?.channel === "VALORANT" && /^[a-zA-Z0-9_-]{34}$/.test(String(item?.bundleVideo?.playlistId || ""))
+      ? String(item.bundleVideo.playlistId)
+      : "";
+    let valSkinsUrl = "https://www.val-skins.com/?view=skins";
+    try {
+      const requestedUrl = new URL(String(item?.valSkinsUrl || valSkinsUrl));
+      if (requestedUrl.protocol === "https:" && requestedUrl.hostname === "www.val-skins.com") valSkinsUrl = requestedUrl.href;
+    } catch (_error) { /* Keep the approved val-skins fallback URL. */ }
+    if (!variants.length) return;
     closeSkinPreview();
     activeSkinViewIndex = 0;
     const overlay = document.createElement("div");
     overlay.className = "gamesense-skin-preview-overlay";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", `${name} ${weapon} render viewer`);
+    overlay.setAttribute("aria-label", `${name} ${weapon} interactive preview`);
     overlay.tabIndex = -1;
     overlay.innerHTML = `
-      <div class="gamesense-skin-preview-card${videoId ? " has-video" : ""}">
+      <div class="gamesense-skin-preview-card${videoId ? " has-secondary-video" : " is-primary-only"}">
         <section class="gamesense-skin-viewer-pane">
-          <header><span>Riot Render Viewer</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong></header>
-          <div class="gamesense-skin-viewer-stage">
-            <button type="button" class="gamesense-skin-view-arrow is-previous" data-skin-preview-step="-1" aria-label="Previous ${escapeHtml(name)} render" ${views.length < 2 ? "disabled" : ""}>&#8592;</button>
-            <img data-skin-preview-image src="${escapeHtml(views[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} Riot render 1">
-            <button type="button" class="gamesense-skin-view-arrow is-next" data-skin-preview-step="1" aria-label="Next ${escapeHtml(name)} render" ${views.length < 2 ? "disabled" : ""}>&#8594;</button>
+          <header><div><span>Interactive Render Space</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong></div><button type="button" data-skin-preview-reset>Reset view</button></header>
+          <div class="gamesense-skin-viewer-stage" data-skin-orbit-stage role="slider" tabindex="0" aria-label="Rotate ${escapeHtml(name)} ${escapeHtml(weapon)} render" aria-valuemin="-68" aria-valuemax="68" aria-valuenow="0">
+            <div class="gamesense-skin-orbit-scene" data-skin-orbit-scene>
+              <img data-skin-preview-image src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}">
+            </div>
+            <div class="gamesense-skin-orbit-hint" aria-hidden="true"><span class="is-desktop-hint">Hold and drag to inspect</span><span class="is-touch-hint">Tap and hold, then drag to inspect</span></div>
           </div>
-          <div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} Riot render">
-            ${views.map((view, index) => `<button type="button" class="${index === 0 ? "active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(view.source)}" data-skin-view-label="${escapeHtml(view.label)}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} Riot render ${index + 1}" aria-label="Show ${escapeHtml(view.label)}" aria-pressed="${index === 0 ? "true" : "false"}"><img src="${escapeHtml(view.source)}" alt=""></button>`).join("")}
+          <div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} color variant">
+            ${variants.map((variant, index) => `<button type="button" class="${index === 0 ? "active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="${escapeHtml(variant.label || `Variant ${index + 1}`)}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}" aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span><span>${escapeHtml(variant.label || `Variant ${index + 1}`)}</span></button>`).join("")}
           </div>
-          <footer><span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>${escapeHtml(views[0].label)} - 1 of ${views.length}</small></footer>
+          <footer><span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>${escapeHtml(variants[0].label || "Default variant")} - 1 of ${variants.length}</small></footer>
         </section>
-        ${videoId ? `
-          <div class="gamesense-skin-preview-divider" aria-hidden="true"></div>
-          <section class="gamesense-skin-video-pane">
-            <header><span>Bundle Video</span><strong>${escapeHtml(item.bundleVideo.title)}</strong><small>YouTube showcase by ${escapeHtml(item.bundleVideo.channel)}</small></header>
-            <div class="gamesense-skin-video-frame"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?rel=0&amp;playsinline=1" title="${escapeHtml(item.bundleVideo.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-          </section>` : ""}
+        <div class="gamesense-skin-preview-divider" aria-hidden="true"></div>
+        <section class="gamesense-skin-media-pane${videoId ? " has-secondary-video" : ""}">
+          <article class="gamesense-skin-source-preview">
+            <header><span>Full Skin Preview</span><strong>val-skins.com</strong><small>Verified chromas, upgrades, and available Riot preview videos</small></header>
+            <div class="gamesense-skin-source-frame"><iframe src="${escapeHtml(valSkinsUrl)}" title="${escapeHtml(name)} ${escapeHtml(weapon)} full preview on val-skins.com" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>
+            <a href="${escapeHtml(valSkinsUrl)}" target="_blank" rel="noopener noreferrer">Open full preview on val-skins.com</a>
+          </article>
+          ${videoId ? `<article class="gamesense-skin-video-pane">
+            <header><span>Collection Video</span><strong>${escapeHtml(item.bundleVideo.title)}</strong><small>${escapeHtml(item.bundleVideo.channel)}${item.bundleVideo.channel === "VALORANT" ? " official SKINS playlist" : " approved fallback"}</small></header>
+            <div class="gamesense-skin-video-frame"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?rel=0&amp;playsinline=1${playlistId ? `&amp;list=${escapeHtml(playlistId)}` : ""}" title="${escapeHtml(item.bundleVideo.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+          </article>` : ""}
+        </section>
         <p class="gamesense-skin-preview-dismiss">Click outside the preview to close.</p>
       </div>`;
     overlay.addEventListener("click", event => {
@@ -805,16 +923,12 @@
         closeSkinPreview();
         return;
       }
-      const step = event.target.closest?.("[data-skin-preview-step]");
-      if (step && !step.disabled) {
-        setActiveSkinView(activeSkinViewIndex + Number(step.dataset.skinPreviewStep || 0));
-        return;
-      }
       const selector = event.target.closest?.("[data-skin-preview-view]");
       if (selector) setActiveSkinView(Number(selector.dataset.skinPreviewView || 0));
     });
     document.body.appendChild(overlay);
     activeSkinPreview = overlay;
+    bindSkinPreviewOrbit(overlay);
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     overlay.focus({ preventScroll: true });
   }
@@ -1349,11 +1463,6 @@
     if (event.key === "Escape" && activeSkinPreview) {
       event.preventDefault();
       closeSkinPreview();
-      return;
-    }
-    if (activeSkinPreview && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
-      event.preventDefault();
-      setActiveSkinView(activeSkinViewIndex + (event.key === "ArrowLeft" ? -1 : 1));
       return;
     }
     const toggle = event.target.closest?.("[data-warmup-info]");
