@@ -550,6 +550,62 @@ body[data-layout-style="pixeldialog"] :is(
   --layout-surface-border-left-width:2px;
 }
 
+/* Dense trend cards need compact safe areas so their value line cannot be
+   flex-shrunk behind the title/detail copy at desktop card heights. */
+body[data-layout-style] #page-stats .stats-performance-card .stats-trend-card{
+  --layout-surface-safe-top:5px;
+  --layout-surface-safe-right:10px;
+  --layout-surface-safe-bottom:5px;
+  --layout-surface-safe-left:10px;
+  gap:2px !important;
+  justify-content:flex-start !important;
+}
+
+body[data-layout-style] #page-stats .stats-performance-card .stats-trend-card > *{
+  flex:0 0 auto !important;
+  min-height:0;
+}
+
+body[data-layout-style] #page-stats .stats-performance-card .stats-trend-card .stats-trend-tone{
+  min-height:18px !important;
+  padding:2px 6px !important;
+  font-size:8.5px !important;
+}
+
+body[data-layout-style] #page-stats .stats-performance-card .stats-trend-card .stats-main-text{
+  font-size:12px !important;
+  line-height:1.05 !important;
+}
+
+body[data-layout-style] #page-stats .stats-performance-card .stats-trend-card .stats-sub-text{
+  font-size:14px !important;
+  line-height:1 !important;
+}
+
+body[data-layout-style] #page-stats .stats-performance-card .stats-trend-card .stats-trend-detail{
+  font-size:9.5px !important;
+  line-height:1.12 !important;
+}
+
+body[data-layout-style="honeycomb"] #page-stats .stats-performance-card .stats-trend-card,
+body[data-layout-style="aperturecut"] #page-stats .stats-performance-card .stats-trend-card,
+body[data-layout-style="scopevignette"] #page-stats .stats-performance-card .stats-trend-card,
+body[data-layout-style="diamondfacet"] #page-stats .stats-performance-card .stats-trend-card,
+body[data-layout-style="bladewedge"] #page-stats .stats-performance-card .stats-trend-card{
+  --layout-surface-safe-right:15px;
+  --layout-surface-safe-left:15px;
+}
+
+body[data-layout-style="chevronscan"] #page-stats .stats-performance-card .stats-trend-card,
+body[data-layout-style="hazardedge"] #page-stats .stats-performance-card .stats-trend-card{
+  --layout-surface-safe-left:18px;
+}
+
+body[data-layout-style="ribbonbanner"] #page-stats .stats-performance-card .stats-trend-card{
+  --layout-surface-safe-top:7px;
+  --layout-surface-safe-right:13px;
+}
+
 [data-layout-preview="honeycomb"] .layout-style-preview-card{
   clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);
   border-color:var(--accent) !important;

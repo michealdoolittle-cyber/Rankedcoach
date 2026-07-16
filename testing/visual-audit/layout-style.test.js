@@ -410,6 +410,43 @@ async function captureSurfaceSet(page, pageKey, selectors, style, tiles) {
   }
 }
 
+async function assertStatsTrendTextVisible(page, style) {
+  const cards = await page.locator("#page-stats .stats-trend-card").evaluateAll(elements => elements.map(card => {
+    const cardRect = card.getBoundingClientRect();
+    const measure = selector => {
+      const element = card.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      const computed = getComputedStyle(element);
+      return {
+        selector,
+        text: String(element.textContent || "").replace(/\s+/g, " ").trim(),
+        rect: rect.toJSON(),
+        lineHeight: Number.parseFloat(computed.lineHeight || "0"),
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight
+      };
+    };
+    return {
+      card: cardRect.toJSON(),
+      parts: [
+        measure(".stats-trend-head"),
+        measure(".stats-main-text"),
+        measure(".stats-sub-text"),
+        measure(".stats-trend-detail")
+      ].filter(Boolean)
+    };
+  }));
+  assert.ok(cards.length >= 6, `${style} did not render the complete Stats trend grid`);
+  cards.forEach((entry, cardIndex) => {
+    entry.parts.forEach(part => {
+      const minimumVisibleHeight = Math.max(8, Math.min(12, (part.lineHeight || 10) * 0.78));
+      assert.ok(part.rect.height >= minimumVisibleHeight, `${style} Stats trend ${cardIndex + 1} collapsed ${part.selector}: ${JSON.stringify(entry)}`);
+      assert.ok(part.rect.top >= entry.card.top - 1 && part.rect.bottom <= entry.card.bottom + 1, `${style} Stats trend ${cardIndex + 1} clipped ${part.selector}: ${JSON.stringify(entry)}`);
+    });
+  });
+}
+
 async function writeCoverageContactSheet(browser, style, tiles) {
   const review = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
   await review.setContent(`<!doctype html><meta charset="utf-8"><style>
@@ -446,6 +483,7 @@ async function runPhaseTwoCoverage(page, browser) {
 
     await captureSurfaceSet(page, "home", phaseTwoSurfaces.home, style, tiles);
     await activateCoveragePage(page, "stats");
+    await assertStatsTrendTextVisible(page, style);
     await captureSurfaceSet(page, "stats", phaseTwoSurfaces.stats, style, tiles);
     await activateCoveragePage(page, "insights");
     await captureSurfaceSet(page, "insights", phaseTwoSurfaces.insights, style, tiles);
