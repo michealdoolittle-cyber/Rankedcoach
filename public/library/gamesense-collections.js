@@ -29,7 +29,6 @@
     "e046854e-406c-37f4-6607-19a9ba8426fc": Object.freeze({ label: "Exclusive", icon: `${contentTierIconRoot}/e046854e-406c-37f4-6607-19a9ba8426fc/displayicon.png` }),
     "411e4a55-4e59-7757-41f0-86a53f101bb5": Object.freeze({ label: "Ultra", icon: `${contentTierIconRoot}/411e4a55-4e59-7757-41f0-86a53f101bb5/displayicon.png` })
   });
-  const valSkinsBaseUrl = "https://www.val-skins.com/";
   const officialSkinPlaylistId = "PLTFsoy_DWCOMWzK4f6ICbroM1FzHW4S7j";
   const approvedCollectionVideos = Object.freeze(Object.fromEntries(Object.entries({
     araxys: ["vdfexNscpPo", "VALORANT"],
@@ -79,6 +78,28 @@
     solarstride: ["QO6ZoZGMn2M", "Dittozkul"]
   }).map(([key, value]) => [key, Object.freeze(value)])));
   const officialVctVideo = Object.freeze(["z3AOg7mUP_Y", "VALORANT"]);
+  const sketchfabLicenseUrl = "https://creativecommons.org/licenses/by/4.0/";
+  const approvedSketchfabModels = Object.freeze(Object.fromEntries(Object.entries({
+    "blastx|phantom": ["e3135ecb9ba34c478e28a0fac9053d50", "Valorant Phantom BlastX", "Huseyin Dogan", "valorant-phantom-blastx"],
+    "ion|phantom": ["c1011ae384f04b5b8b4f0cd3bc047ed2", "Ion Phantom VALORANT", "keytogotyou", "ion-phantom-valorant"],
+    "kuronami|marshal": ["df20cb436eb24f229e82aca15d731ba5", "Marshal Kuronami - Valorant", "kairos", "marshal-kuronami-valorant"],
+    "kuronami|operator": ["637801735b3e4d6f8d98d52f64450b4c", "KURONAMI Operator - Valorant Skin", "neumann", "kuronami-operator-valorant-skin"],
+    "prime|classic": ["ba82312c24cf4b89a6b34030b764947f", "Prime Classic | Valorant", "ILilMitch", "prime-classic-valorant"],
+    "prime|vandal": ["5c93b4c3858a44ba9fd6994508eaf3c8", "Prime Vandal", "ILilMitch", "prime-vandal"],
+    "reaver|phantom": ["399ea10e99b5459cbf892498c7c258fc", "Phantom - Reaver (White Variant) Valorant", "MisterM4n", "phantom-reaver-white-variant-valorant"],
+    "reaver|sheriff": ["94c17a4f625d44e3817d8e603e6a14d1", "Reaver Sheriff", "reaperslayz", "reaver-sheriff"],
+    "reaver|vandal": ["04f9851ace5c424492c327608b895e2c", "Reaver Vandal (White)", "ILilMitch", "reaver-vandal-white"],
+    "recon|phantom": ["85af07c2d05c4298a3a497ed091805b0", "Valorant Recon Phantom Rifle", "Jordan Stasak", "valorant-recon-phantom-rifle"],
+    "rgx-11z-pro|vandal": ["b1da0d2feb70448fae76769dc7ee01fd", "RGX Vandal Valorant", "KiLLSHOT", "rgx-vandal-valorant"]
+  }).map(([key, value]) => [key, Object.freeze({
+    id: value[0],
+    title: value[1],
+    creator: value[2],
+    modelUrl: `https://sketchfab.com/3d-models/${value[3]}-${value[0]}`,
+    embedUrl: `https://sketchfab.com/models/${value[0]}/embed?autostart=1&preload=1&ui_theme=dark&ui_hint=0`,
+    license: "CC BY 4.0",
+    licenseUrl: sketchfabLicenseUrl
+  })])));
   const cache = new Map();
   const pending = new Map();
 
@@ -101,6 +122,10 @@
       channel: video[1],
       playlistId: video[1] === "VALORANT" ? officialSkinPlaylistId : ""
     }) : null;
+  }
+
+  function getSketchfabModel(name = "", weaponName = "") {
+    return approvedSketchfabModels[`${normalizeCollectionKey(name)}|${String(weaponName).trim().toLowerCase()}`] || null;
   }
 
   function getSkinVariants(skin = {}) {
@@ -157,7 +182,7 @@
         variants: art.variants,
         views: art.variants,
         upgradeVideos: getUpgradeVideos(skin),
-        valSkinsUrl: `${valSkinsBaseUrl}?view=skins&filter=${encodeURIComponent(weaponName)}&query=${encodeURIComponent(name)}&skin=${encodeURIComponent(String(skin?.uuid || ""))}`,
+        sketchfabModel: getSketchfabModel(name, weaponName),
         bundleVideo: getCollectionVideo(name)
       };
     }).filter(item => {
@@ -202,5 +227,5 @@
     return request;
   }
 
-  globalThis.RankedCoachWeaponCollections = Object.freeze({ getCached, loadForWeapon, getCollectionVideo });
+  globalThis.RankedCoachWeaponCollections = Object.freeze({ getCached, loadForWeapon, getCollectionVideo, getSketchfabModel });
 })();

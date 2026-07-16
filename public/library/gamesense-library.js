@@ -5,6 +5,7 @@
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
+  let activeSkinVideoIndex = 0;
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -718,7 +719,13 @@
     if (!overlay) return;
     activeSkinPreview = null;
     activeSkinViewIndex = 0;
+    activeSkinVideoIndex = 0;
     overlay.querySelectorAll("iframe").forEach(frame => frame.removeAttribute("src"));
+    overlay.querySelectorAll("video").forEach(video => {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    });
     overlay.classList.remove("is-open");
     overlay.classList.add("is-closing");
     window.setTimeout(() => overlay.remove(), 220);
@@ -736,11 +743,45 @@
       name: String(trigger?.dataset?.previewName || "Weapon skin").trim(),
       weaponName: weapon,
       previewImage: source,
-      variants: source ? [{ id: `${id}-variant-1`, source, label: "Default variant" }] : [],
-      views: source ? [{ id: `${id}-variant-1`, source, label: "Default variant" }] : [],
-      valSkinsUrl: id ? `https://www.val-skins.com/?view=skins&filter=${encodeURIComponent(weapon)}&query=${encodeURIComponent(String(trigger?.dataset?.previewName || "Weapon skin").trim())}&skin=${encodeURIComponent(id)}` : "https://www.val-skins.com/?view=skins",
+      variants: source ? [{ id: `${id}-variant-1`, source, label: "Default variant", video: "" }] : [],
+      views: source ? [{ id: `${id}-variant-1`, source, label: "Default variant", video: "" }] : [],
+      upgradeVideos: [],
+      sketchfabModel: getWeaponCollectionProvider()?.getSketchfabModel?.(String(trigger?.dataset?.previewName || "Weapon skin").trim(), weapon) || null,
       bundleVideo: null
     };
+  }
+
+  function getApprovedSkinVideoUrl(value = "") {
+    try {
+      const url = new URL(String(value));
+      const approvedHosts = new Set(["media.valorant-api.com", "valorant.dyn.riotcdn.net"]);
+      return url.protocol === "https:" && approvedHosts.has(url.hostname) && /\.mp4$/i.test(url.pathname) ? url.href : "";
+    } catch (_error) {
+      return "";
+    }
+  }
+
+  function getSkinPreviewVideos(item, variants) {
+    const videos = [];
+    const seen = new Map();
+    const addVideo = (entry, kind, poster = "") => {
+      const video = getApprovedSkinVideoUrl(entry?.video);
+      if (!video) return -1;
+      if (seen.has(video)) return seen.get(video);
+      const index = videos.length;
+      videos.push({
+        id: String(entry?.id || `${kind}-${index + 1}`),
+        kind,
+        label: String(entry?.label || `${kind === "level" ? "Upgrade" : "Variant"} ${index + 1}`).trim(),
+        poster: String(poster || item?.previewImage || variants[0]?.source || "").trim(),
+        video
+      });
+      seen.set(video, index);
+      return index;
+    };
+    (item?.upgradeVideos || []).forEach(level => addVideo(level, "level"));
+    const variantIndexes = variants.map(variant => addVideo(variant, "variant", variant.source));
+    return { videos, variantIndexes };
   }
 
   function setActiveSkinView(nextIndex) {
@@ -765,103 +806,28 @@
     });
   }
 
-  function bindSkinPreviewOrbit(overlay) {
-    const stage = overlay?.querySelector("[data-skin-orbit-stage]");
-    const scene = stage?.querySelector("[data-skin-orbit-scene]");
-    if (!stage || !scene) return;
-    let pointerId = null;
-    let pointerType = "";
-    let pointerDown = false;
-    let dragging = false;
-    let holdTimer = 0;
-    let startX = 0;
-    let startY = 0;
-    let startRotateX = -5;
-    let startRotateY = 0;
-    let rotateX = -5;
-    let rotateY = 0;
-
-    const applyOrbit = () => {
-      scene.style.setProperty("--skin-orbit-x", `${rotateX.toFixed(2)}deg`);
-      scene.style.setProperty("--skin-orbit-y", `${rotateY.toFixed(2)}deg`);
-      stage.setAttribute("aria-valuenow", String(Math.round(rotateY)));
-      stage.setAttribute("aria-valuetext", `Horizontal angle ${Math.round(rotateY)} degrees, vertical angle ${Math.round(rotateX)} degrees`);
-    };
-    const resetOrbit = () => {
-      rotateX = -5;
-      rotateY = 0;
-      startRotateX = rotateX;
-      startRotateY = rotateY;
-      applyOrbit();
-    };
-    const beginDrag = () => {
-      if (!pointerDown || pointerId === null) return;
-      dragging = true;
-      stage.classList.remove("is-hold-pending");
-      stage.classList.add("is-dragging");
-      try { stage.setPointerCapture(pointerId); } catch (_error) { /* Pointer may have ended during the mobile hold delay. */ }
-    };
-    const finishDrag = () => {
-      window.clearTimeout(holdTimer);
-      holdTimer = 0;
-      pointerDown = false;
-      dragging = false;
-      stage.classList.remove("is-hold-pending", "is-dragging");
-      if (pointerId !== null) {
-        try { stage.releasePointerCapture(pointerId); } catch (_error) { /* Capture may already be released. */ }
-      }
-      pointerId = null;
-      pointerType = "";
-    };
-
-    stage.addEventListener("pointerdown", event => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      pointerId = event.pointerId;
-      pointerType = event.pointerType;
-      pointerDown = true;
-      startX = event.clientX;
-      startY = event.clientY;
-      startRotateX = rotateX;
-      startRotateY = rotateY;
-      if (pointerType === "touch") {
-        stage.classList.add("is-hold-pending");
-        holdTimer = window.setTimeout(beginDrag, 180);
-      } else {
-        beginDrag();
-      }
+  function setActiveSkinVideo(nextIndex) {
+    const overlay = activeSkinPreview;
+    if (!overlay) return;
+    const selectors = [...overlay.querySelectorAll("[data-skin-preview-video-option]")];
+    const selected = selectors.find(selector => Number(selector.dataset.skinPreviewVideoOption) === Number(nextIndex));
+    const video = overlay.querySelector("[data-skin-preview-video]");
+    if (!selected || !video) return;
+    activeSkinVideoIndex = Number(nextIndex);
+    const nextSource = selected.dataset.skinPreviewVideoSource || "";
+    if (nextSource && video.src !== nextSource) {
+      video.src = nextSource;
+      video.poster = selected.dataset.skinPreviewVideoPoster || video.poster;
+      video.load();
+      video.play().catch(() => { /* Player controls remain available when autoplay is blocked. */ });
+    }
+    const label = overlay.querySelector("[data-skin-preview-video-label]");
+    if (label) label.textContent = selected.dataset.skinPreviewVideoLabel || "Skin animation";
+    selectors.forEach(selector => {
+      const isActive = Number(selector.dataset.skinPreviewVideoOption) === activeSkinVideoIndex;
+      selector.classList.toggle("is-video-active", isActive);
+      if (!selector.hasAttribute("data-skin-preview-view")) selector.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
-    stage.addEventListener("pointermove", event => {
-      if (!pointerDown || event.pointerId !== pointerId) return;
-      const deltaX = event.clientX - startX;
-      const deltaY = event.clientY - startY;
-      if (pointerType === "touch" && !dragging && Math.hypot(deltaX, deltaY) > 12) {
-        finishDrag();
-        return;
-      }
-      if (!dragging) return;
-      event.preventDefault();
-      rotateY = Math.max(-68, Math.min(68, startRotateY + (deltaX * 0.34)));
-      rotateX = Math.max(-34, Math.min(34, startRotateX - (deltaY * 0.25)));
-      applyOrbit();
-    });
-    stage.addEventListener("pointerup", finishDrag);
-    stage.addEventListener("pointercancel", finishDrag);
-    stage.addEventListener("lostpointercapture", () => {
-      if (pointerDown) finishDrag();
-    });
-    stage.addEventListener("keydown", event => {
-      const change = event.shiftKey ? 12 : 6;
-      if (event.key === "ArrowLeft") rotateY = Math.max(-68, rotateY - change);
-      else if (event.key === "ArrowRight") rotateY = Math.min(68, rotateY + change);
-      else if (event.key === "ArrowUp") rotateX = Math.min(34, rotateX + change);
-      else if (event.key === "ArrowDown") rotateX = Math.max(-34, rotateX - change);
-      else if (event.key === "0" || event.key === "Home") resetOrbit();
-      else return;
-      event.preventDefault();
-      applyOrbit();
-    });
-    overlay.querySelector("[data-skin-preview-reset]")?.addEventListener("click", resetOrbit);
-    applyOrbit();
   }
 
   function openSkinPreview(trigger) {
@@ -869,20 +835,18 @@
     const name = String(item?.name || "Weapon skin").trim();
     const weapon = String(item?.weaponName || "Weapon").trim();
     const variants = (item?.variants || item?.views || []).filter(variant => variant?.source);
+    const { videos: previewVideos, variantIndexes: variantVideoIndexes } = getSkinPreviewVideos(item, variants);
+    const model = /^[a-f0-9]{32}$/i.test(String(item?.sketchfabModel?.id || "")) ? item.sketchfabModel : null;
     const approvedChannels = new Set(["VALORANT", "Dittozkul"]);
     const requestedVideoId = String(item?.bundleVideo?.id || "");
     const videoId = approvedChannels.has(item?.bundleVideo?.channel) && /^[a-zA-Z0-9_-]{11}$/.test(requestedVideoId) ? requestedVideoId : "";
     const playlistId = item?.bundleVideo?.channel === "VALORANT" && /^[a-zA-Z0-9_-]{34}$/.test(String(item?.bundleVideo?.playlistId || ""))
       ? String(item.bundleVideo.playlistId)
       : "";
-    let valSkinsUrl = "https://www.val-skins.com/?view=skins";
-    try {
-      const requestedUrl = new URL(String(item?.valSkinsUrl || valSkinsUrl));
-      if (requestedUrl.protocol === "https:" && requestedUrl.hostname === "www.val-skins.com") valSkinsUrl = requestedUrl.href;
-    } catch (_error) { /* Keep the approved val-skins fallback URL. */ }
     if (!variants.length) return;
     closeSkinPreview();
     activeSkinViewIndex = 0;
+    activeSkinVideoIndex = 0;
     const overlay = document.createElement("div");
     overlay.className = "gamesense-skin-preview-overlay";
     overlay.setAttribute("role", "dialog");
@@ -890,26 +854,28 @@
     overlay.setAttribute("aria-label", `${name} ${weapon} interactive preview`);
     overlay.tabIndex = -1;
     overlay.innerHTML = `
-      <div class="gamesense-skin-preview-card${videoId ? " has-secondary-video" : " is-primary-only"}">
+      <div class="gamesense-skin-preview-card${videoId ? " has-secondary-video" : " is-primary-only"}${model ? " has-true-model" : " has-static-render"}">
         <section class="gamesense-skin-viewer-pane">
-          <header><div><span>Interactive Render Space</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong></div><button type="button" data-skin-preview-reset>Reset view</button></header>
-          <div class="gamesense-skin-viewer-stage" data-skin-orbit-stage role="slider" tabindex="0" aria-label="Rotate ${escapeHtml(name)} ${escapeHtml(weapon)} render" aria-valuemin="-68" aria-valuemax="68" aria-valuenow="0">
-            <div class="gamesense-skin-orbit-scene" data-skin-orbit-scene>
-              <img data-skin-preview-image src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}">
-            </div>
-            <div class="gamesense-skin-orbit-hint" aria-hidden="true"><span class="is-desktop-hint">Hold and drag to inspect</span><span class="is-touch-hint">Tap and hold, then drag to inspect</span></div>
+          <header><div><span>${model ? "True 3D Model" : "Official Weapon Render"}</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong><small>${model ? "Drag to rotate. Scroll or pinch to zoom." : "No approved exact 3D model is available for this weapon skin yet."}</small></div></header>
+          <div class="gamesense-skin-model-stage${model ? " has-model" : " is-static"}">
+            ${model ? `<iframe src="${escapeHtml(model.embedUrl)}" title="Interactive 3D model of ${escapeHtml(model.title)} by ${escapeHtml(model.creator)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>` : `<img data-skin-preview-image src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}"><span class="gamesense-skin-model-unavailable">Static render — 3D unavailable</span>`}
           </div>
-          <div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} color variant">
-            ${variants.map((variant, index) => `<button type="button" class="${index === 0 ? "active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="${escapeHtml(variant.label || `Variant ${index + 1}`)}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}" aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span><span>${escapeHtml(variant.label || `Variant ${index + 1}`)}</span></button>`).join("")}
-          </div>
-          <footer><span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>${escapeHtml(variants[0].label || "Default variant")} - 1 of ${variants.length}</small></footer>
+          <footer>${model ? `<span>Community model attribution</span><strong>${escapeHtml(model.title)}</strong><small>Created by ${escapeHtml(model.creator)} · <a href="${escapeHtml(model.modelUrl)}" target="_blank" rel="noopener noreferrer">View on Sketchfab</a> · <a href="${escapeHtml(model.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.license)}</a></small>` : `<span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>${escapeHtml(variants[0].label || "Default variant")} - 1 of ${variants.length}</small>`}</footer>
         </section>
         <div class="gamesense-skin-preview-divider" aria-hidden="true"></div>
         <section class="gamesense-skin-media-pane${videoId ? " has-secondary-video" : ""}">
-          <article class="gamesense-skin-source-preview">
-            <header><span>Full Skin Preview</span><strong>val-skins.com</strong><small>Verified chromas, upgrades, and available Riot preview videos</small></header>
-            <div class="gamesense-skin-source-frame"><iframe src="${escapeHtml(valSkinsUrl)}" title="${escapeHtml(name)} ${escapeHtml(weapon)} full preview on val-skins.com" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>
-            <a href="${escapeHtml(valSkinsUrl)}" target="_blank" rel="noopener noreferrer">Open full preview on val-skins.com</a>
+          <article class="gamesense-skin-animation-preview">
+            <header><span>Skin Animation</span><strong data-skin-preview-video-label>${escapeHtml(previewVideos[0]?.label || `${name} preview`)}</strong><small>Direct level and variant animation used by val-skins</small></header>
+            <div class="gamesense-skin-animation-frame">${previewVideos.length ? `<video data-skin-preview-video src="${escapeHtml(previewVideos[0].video)}" poster="${escapeHtml(previewVideos[0].poster)}" controls autoplay muted playsinline preload="metadata"></video>` : `<div class="gamesense-skin-video-unavailable"><strong>No animation published</strong><span>This skin does not include a streamed level or variant preview.</span></div>`}</div>
+            <div class="gamesense-skin-option-groups">
+              ${(item?.upgradeVideos || []).some(level => getApprovedSkinVideoUrl(level.video)) ? `<section><span>Upgrade levels</span><div role="group" aria-label="Choose a ${escapeHtml(name)} upgrade animation">${(item.upgradeVideos || []).map(level => {
+                const index = previewVideos.findIndex(video => video.video === getApprovedSkinVideoUrl(level.video));
+                return index < 0 ? "" : `<button type="button" class="${index === 0 ? "is-video-active" : ""}" data-skin-preview-video-option="${index}" data-skin-preview-video-source="${escapeHtml(previewVideos[index].video)}" data-skin-preview-video-poster="${escapeHtml(previewVideos[index].poster)}" data-skin-preview-video-label="${escapeHtml(level.label)}" aria-pressed="${index === 0 ? "true" : "false"}">${escapeHtml(level.label)}</button>`;
+              }).join("")}</div></section>` : ""}
+              <section><span>Color variants</span><div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} color variant">
+                ${variants.map((variant, index) => `<button type="button" class="${index === 0 ? "active" : ""}${variantVideoIndexes[index] === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="${escapeHtml(variant.label || `Variant ${index + 1}`)}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}"${variantVideoIndexes[index] >= 0 ? ` data-skin-preview-video-option="${variantVideoIndexes[index]}" data-skin-preview-video-source="${escapeHtml(previewVideos[variantVideoIndexes[index]].video)}" data-skin-preview-video-poster="${escapeHtml(previewVideos[variantVideoIndexes[index]].poster)}" data-skin-preview-video-label="${escapeHtml(variant.label || `Variant ${index + 1}`)}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span><span>${escapeHtml(variant.label || `Variant ${index + 1}`)}</span></button>`).join("")}
+              </div></section>
+            </div>
           </article>
           ${videoId ? `<article class="gamesense-skin-video-pane">
             <header><span>Collection Video</span><strong>${escapeHtml(item.bundleVideo.title)}</strong><small>${escapeHtml(item.bundleVideo.channel)}${item.bundleVideo.channel === "VALORANT" ? " official SKINS playlist" : " approved fallback"}</small></header>
@@ -925,10 +891,11 @@
       }
       const selector = event.target.closest?.("[data-skin-preview-view]");
       if (selector) setActiveSkinView(Number(selector.dataset.skinPreviewView || 0));
+      const videoSelector = event.target.closest?.("[data-skin-preview-video-option]");
+      if (videoSelector) setActiveSkinVideo(Number(videoSelector.dataset.skinPreviewVideoOption || 0));
     });
     document.body.appendChild(overlay);
     activeSkinPreview = overlay;
-    bindSkinPreviewOrbit(overlay);
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     overlay.focus({ preventScroll: true });
   }

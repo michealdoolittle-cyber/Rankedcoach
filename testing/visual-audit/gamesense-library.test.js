@@ -101,9 +101,9 @@ function weaponSkinApiStub(url) {
           displayName: `${name} ${weaponName} ${view === 0 ? "Default" : `Variant ${view + 1}`}`,
           fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}&view=${view}`,
           swatch: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?swatch=${index}&view=${view}`,
-          streamedVideo: `https://media.valorant-api.com/videos/${slug}-${index}-${view}.mp4`
+          streamedVideo: name === "Reaver" ? `https://valorant.dyn.riotcdn.net/x/videos/release-13.00/${slug}-${index}-${view}.mp4` : `https://media.valorant-api.com/videos/${slug}-${index}-${view}.mp4`
         })),
-        levels: [{ uuid: `${slug}-skin-${index}-level-1`, displayName: `${name} Level 1`, streamedVideo: `https://media.valorant-api.com/videos/${slug}-${index}-level-1.mp4` }]
+        levels: [{ uuid: `${slug}-skin-${index}-level-1`, displayName: `${name} Level 1`, streamedVideo: name === "Reaver" ? `https://valorant.dyn.riotcdn.net/x/videos/release-13.00/${slug}-${index}-level-1.mp4` : `https://media.valorant-api.com/videos/${slug}-${index}-level-1.mp4` }]
       }))
     }
   });
@@ -135,7 +135,9 @@ async function run() {
     await desktop.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await desktop.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await desktop.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
-    await desktop.route("https://www.val-skins.com/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>val-skins full preview</title><main>Verified chromas and upgrades</main>" }));
+    await desktop.route("https://media.valorant-api.com/videos/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await desktop.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await desktop.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title><main>Sketchfab model viewer</main>" }));
     await desktop.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
     await seed(desktop, "gamesense-desktop");
     await desktop.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
@@ -746,26 +748,36 @@ async function run() {
     assert.equal(inactiveFocusGuard.pageInert, true, JSON.stringify(inactiveFocusGuard));
     await desktop.locator("[data-gamesense-collection-preview]").first().click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
-    assert.match(await desktop.locator(".gamesense-skin-preview-card").innerText(), /Interactive Render Space.*Aemondir Phantom.*Full Skin Preview.*val-skins\.com.*Dittozkul approved fallback/is);
+    assert.match(await desktop.locator(".gamesense-skin-preview-card").innerText(), /Official Weapon Render.*Aemondir Phantom.*Skin Animation.*used by val-skins.*Dittozkul approved fallback/is);
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-secondary-video").count(), 1);
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
     assert.equal(await desktop.locator("[data-skin-preview-view]").count(), 3);
     assert.equal(await desktop.locator("[data-skin-preview-step]").count(), 0);
     assert.equal(await desktop.locator(".gamesense-skin-variant-swatch").count(), 3);
     assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=0&view=0/i);
-    assert.match(await desktop.locator(".gamesense-skin-source-preview iframe").getAttribute("src"), /^https:\/\/www\.val-skins\.com\/\?view=skins&filter=Phantom&query=Aemondir&skin=phantom-skin-0/i);
+    assert.equal(await desktop.locator(".gamesense-skin-source-preview").count(), 0);
+    assert.equal(await desktop.locator('iframe[src*="val-skins.com"]').count(), 0);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /phantom-0-level-1\.mp4/i);
+    assert.equal(await desktop.locator("[data-skin-preview-video-option]").count(), 4);
     assert.match(await desktop.locator(".gamesense-skin-video-pane iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/PT3EC2dgqzs/i);
-    const desktopOrbitBefore = await desktop.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
-    const desktopStageBox = await desktop.locator("[data-skin-orbit-stage]").boundingBox();
-    await desktop.mouse.move(desktopStageBox.x + (desktopStageBox.width * .45), desktopStageBox.y + (desktopStageBox.height * .5));
-    await desktop.mouse.down();
-    await desktop.mouse.move(desktopStageBox.x + (desktopStageBox.width * .68), desktopStageBox.y + (desktopStageBox.height * .4), { steps: 4 });
-    await desktop.mouse.up();
-    const desktopOrbitAfter = await desktop.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
-    assert.notEqual(desktopOrbitAfter, desktopOrbitBefore);
+    assert.equal(await desktop.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
+    assert.equal(await desktop.locator('.gamesense-skin-model-stage iframe[src*="sketchfab.com"]').count(), 0);
     await desktop.locator('[data-skin-preview-view="1"]').click();
     assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=0&view=1/i);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /phantom-0-1\.mp4/i);
     assert.equal(await desktop.locator('[data-skin-preview-view="1"]').getAttribute("aria-pressed"), "true");
+    await desktop.locator(".gamesense-skin-preview-card").evaluate(card => { card.scrollTop = 0; });
     await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-desktop.png") });
+    await desktop.mouse.click(2, 2);
+    await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
+    await desktop.locator('[data-gamesense-collection-preview][data-preview-name="Reaver"]').click();
+    await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-true-model").count(), 1);
+    assert.match(await desktop.locator(".gamesense-skin-viewer-pane").innerText(), /True 3D Model.*Reaver Phantom.*Drag to rotate.*MisterM4n.*CC BY 4\.0/is);
+    assert.match(await desktop.locator('.gamesense-skin-model-stage iframe').getAttribute("src"), /sketchfab\.com\/models\/399ea10e99b5459cbf892498c7c258fc\/embed/i);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-1\.mp4/i);
+    assert.equal(await desktop.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
+    await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-3d-desktop.png") });
     await desktop.mouse.click(2, 2);
     await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     assert.equal(await desktop.locator('[data-gamesense-weapon="phantom"].active').count(), 1);
@@ -819,9 +831,11 @@ async function run() {
     await boundJudge.click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.is-primary-only").count(), 1);
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
     assert.equal(await desktop.locator("[data-skin-preview-view]").count(), 1);
     assert.equal(await desktop.locator("[data-skin-preview-step]").count(), 0);
-    assert.equal(await desktop.locator(".gamesense-skin-source-preview iframe").count(), 1);
+    assert.equal(await desktop.locator(".gamesense-skin-source-preview iframe").count(), 0);
+    assert.equal(await desktop.locator("[data-skin-preview-video]").count(), 1);
     assert.equal(await desktop.locator(".gamesense-skin-video-pane iframe").count(), 0);
     assert.equal(await desktop.locator("#logFocusCustomMenu").isVisible(), false);
     await desktop.mouse.click(2, 2);
@@ -851,7 +865,9 @@ async function run() {
     await mobile.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await mobile.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await mobile.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
-    await mobile.route("https://www.val-skins.com/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>val-skins full preview</title><main>Verified chromas and upgrades</main>" }));
+    await mobile.route("https://media.valorant-api.com/videos/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await mobile.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await mobile.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title><main>Sketchfab model viewer</main>" }));
     await mobile.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
     await seed(mobile, "gamesense-mobile");
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
@@ -1038,7 +1054,11 @@ async function run() {
     assert.ok(Math.abs((mobileWeaponSuggestion.toggle.top + mobileWeaponSuggestion.toggle.height / 2) - (mobileWeaponSuggestion.image.top + mobileWeaponSuggestion.image.height / 2)) <= 3, JSON.stringify(mobileWeaponSuggestion));
     await mobile.locator(".gamesense-weapon-suggestions").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-weapons-mobile.png") });
     await mobile.locator("[data-gamesense-comp-agent]").first().click();
-    await mobile.waitForTimeout(500);
+    await mobile.waitForFunction(() => {
+      const read = document.querySelector(".gamesense-comp-agent-read");
+      const rect = read?.getBoundingClientRect();
+      return Boolean(rect && rect.top >= 0 && rect.bottom <= innerHeight);
+    }, null, { timeout: 3000 });
     const compReadPosition = await mobile.locator(".gamesense-comp-agent-read").evaluate(read => {
       const rect = read.getBoundingClientRect();
       return { top: rect.top, bottom: rect.bottom, viewport: innerHeight };
@@ -1131,16 +1151,13 @@ async function run() {
     assert.equal(mobileSkinViewer.columns.split(" ").length, 1, JSON.stringify(mobileSkinViewer));
     assert.equal(await mobile.locator("[data-skin-preview-view]").count(), 3);
     assert.equal(await mobile.locator("[data-skin-preview-step]").count(), 0);
-    const mobileStage = mobile.locator("[data-skin-orbit-stage]");
-    const mobileOrbitBefore = await mobile.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
-    await mobileStage.dispatchEvent("pointerdown", { pointerId: 7, pointerType: "touch", clientX: 140, clientY: 180, isPrimary: true });
-    await mobile.waitForTimeout(220);
-    await mobileStage.dispatchEvent("pointermove", { pointerId: 7, pointerType: "touch", clientX: 210, clientY: 160, isPrimary: true });
-    await mobileStage.dispatchEvent("pointerup", { pointerId: 7, pointerType: "touch", clientX: 210, clientY: 160, isPrimary: true });
-    const mobileOrbitAfter = await mobile.locator("[data-skin-orbit-scene]").evaluate(scene => getComputedStyle(scene).getPropertyValue("--skin-orbit-y").trim());
-    assert.notEqual(mobileOrbitAfter, mobileOrbitBefore);
+    assert.equal(await mobile.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
+    assert.equal(await mobile.locator(".gamesense-skin-model-stage.is-static").count(), 1);
+    assert.equal(await mobile.locator("[data-skin-preview-video]").count(), 1);
     await mobile.locator('[data-skin-preview-view="1"]').click();
     assert.match(await mobile.locator("[data-skin-preview-image]").getAttribute("src"), /vandal\.png\?preview=0&view=1/i);
+    assert.match(await mobile.locator("[data-skin-preview-video]").getAttribute("src"), /vandal-0-1\.mp4/i);
+    await mobile.locator(".gamesense-skin-preview-card").evaluate(card => { card.scrollTop = 0; });
     await mobile.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-mobile.png") });
     await mobile.mouse.click(2, 2);
     await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
@@ -1152,7 +1169,7 @@ async function run() {
     await mobile.close();
 
     assert.deepEqual(browserErrors, []);
-    console.log("Gamesense Library checks passed: page scrolling, bottom tactical maps, centered headings, real weapon art, role-colored comps, lore/history, weapon guidance, stable selected-state transitions, attribution guard, and 360x740 containment.");
+    console.log("Gamesense Library checks passed: page scrolling, bottom tactical maps, centered headings, real weapon art, native skin videos, attributed 3D model embeds, role-colored comps, lore/history, stable selected-state transitions, and 360x740 containment.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
