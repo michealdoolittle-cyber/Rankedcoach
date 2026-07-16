@@ -1,0 +1,374 @@
+<title>RankedCoach — 20 Layout Style Concepts v2</title>
+<style>
+  :root{
+    --accent:#ff4655; --accent-2:#f97316;
+    --card:#121924; --card-2:#1a222e;
+    --text:#e7ecf2; --muted:#8b96a5; --line:#2b3644;
+    --ink:#0a0e13;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--ink); color:var(--text); font-family:"Segoe UI",system-ui,sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .sheet{ max-width:1120px; margin:0 auto; padding:56px 28px 140px; }
+  h1,h2,h3{ font-family:"Bahnschrift","Oswald",sans-serif; font-weight:700; text-wrap:balance; margin:0; }
+  code{ font-family:"Consolas",ui-monospace,monospace; }
+
+  .masthead{ display:flex; flex-direction:column; gap:14px; padding-bottom:32px; margin-bottom:36px; border-bottom:1px solid var(--line); }
+  .eyebrow{ font-family:"Consolas",monospace; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent-2); display:flex; align-items:center; gap:10px; }
+  .eyebrow::before{ content:""; width:18px; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); }
+  .masthead h1{ font-size:32px; }
+  .masthead h1 em{ font-style:normal; background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .masthead p{ max-width:74ch; color:var(--muted); font-size:15px; margin:0; }
+
+  .theme-switch{ display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+  .theme-switch span{ font-family:"Consolas",monospace; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-right:4px; }
+  .theme-btn{ display:flex; align-items:center; gap:7px; padding:7px 12px; border-radius:7px; border:1px solid var(--line); background:var(--card-2); color:var(--text); font-size:12.5px; cursor:pointer; }
+  .theme-btn.active{ border-color:var(--accent); }
+  .swatch-dot{ width:14px; height:14px; border-radius:50%; background:linear-gradient(135deg,var(--dot-a),var(--dot-b)); flex:none; }
+
+  .style-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:28px 0 8px; }
+  @media (max-width:900px){ .style-grid{ grid-template-columns:repeat(2,1fr); } }
+  .style-grid a{ display:block; padding:8px 10px; background:var(--card-2); border:1px solid var(--line); border-radius:6px; font-size:11.5px; color:var(--muted); text-decoration:none; }
+  .style-grid a b{ color:var(--text); display:block; font-size:12.5px; }
+
+  .concept{ padding:48px 0; border-bottom:1px solid var(--line); scroll-margin-top:20px; }
+  .concept:last-of-type{ border-bottom:none; }
+  .concept-head{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:8px; flex-wrap:wrap; }
+  .concept-num{ font-family:"Consolas",monospace; font-size:11px; color:var(--muted); letter-spacing:.1em; }
+  .concept-head h2{ font-size:21px; }
+  .concept p.desc{ margin:0 0 24px; color:var(--muted); font-size:13.5px; max-width:80ch; }
+  .concept p.desc b{ color:var(--text); font-weight:600; }
+
+  .demo-shell{ background:#000; border:1px solid var(--line); padding:44px 40px; display:flex; flex-direction:column; gap:20px; align-items:flex-start; min-height:220px; justify-content:center; position:relative; }
+
+  .demo-header{ display:flex; align-items:center; gap:12px; }
+  .demo-header .kicker{ font-family:"Consolas",monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; }
+  .demo-card{ width:100%; max-width:640px; padding:20px 22px; position:relative; }
+  .demo-card h3{ font-size:16px; margin-bottom:5px; }
+  .demo-card p{ margin:0; font-size:13px; color:var(--muted); }
+  .demo-tags{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .demo-tag{ display:inline-flex; align-items:center; font-family:"Consolas",monospace; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; }
+
+  footer{ margin-top:48px; padding-top:24px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted); font-family:"Consolas",monospace; }
+
+  /* =====================================================================
+     01 FLOATING BRACKETS — no connected border at all, four free corner marks
+     ===================================================================== */
+  [data-style="brackets"] .demo-card{ background:transparent; padding:26px 34px; }
+  [data-style="brackets"] .demo-card::before,[data-style="brackets"] .demo-card::after,
+  [data-style="brackets"] .demo-card .bl,[data-style="brackets"] .demo-card .br{ content:""; position:absolute; width:22px; height:22px; border:2px solid var(--accent); }
+  [data-style="brackets"] .demo-card::before{ top:0; left:0; border-right:none; border-bottom:none; }
+  [data-style="brackets"] .demo-card::after{ top:0; right:0; border-left:none; border-bottom:none; }
+  [data-style="brackets"] .demo-tag{ background:transparent; border:1px solid var(--accent-2); color:var(--accent-2); padding:4px 10px; border-radius:2px; }
+
+  /* =====================================================================
+     02 CIRCUIT TRACE — near-invisible edge, traces break out to solder pads
+     ===================================================================== */
+  [data-style="circuit"] .demo-card{ background:var(--card); border:1px solid color-mix(in srgb, var(--line) 70%, transparent); position:relative; }
+  [data-style="circuit"] .demo-card::before{ content:""; position:absolute; top:-1px; left:40px; width:38px; height:2px; background:var(--accent); }
+  [data-style="circuit"] .demo-card::after{ content:""; position:absolute; bottom:-1px; right:60px; width:50px; height:2px; background:var(--accent-2); }
+  [data-style="circuit"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="circuit"] .demo-tag{ background:var(--card-2); border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:2px; position:relative; }
+  [data-style="circuit"] .demo-tag::before{ content:""; position:absolute; left:-7px; top:50%; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; background:var(--accent); }
+
+  /* =====================================================================
+     03 HONEYCOMB PANEL — true hexagonal card shape
+     ===================================================================== */
+  [data-style="honeycomb"] .demo-card{ clip-path:polygon(4% 0,96% 0,100% 50%,96% 100%,4% 100%,0 50%); background:var(--card); border:1px solid var(--accent); padding:22px 44px; }
+  [data-style="honeycomb"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="honeycomb"] .demo-tag{ clip-path:polygon(8% 0,92% 0,100% 50%,92% 100%,8% 100%,0 50%); background:var(--accent-2); color:#050708; padding:4px 14px; }
+
+  /* =====================================================================
+     04 HOLOGRAM STACK — nested offset frames, decreasing opacity
+     ===================================================================== */
+  [data-style="hologram"] .demo-card{ background:color-mix(in srgb, var(--card) 70%, transparent); border:1px solid color-mix(in srgb, var(--accent) 70%, transparent); position:relative; }
+  [data-style="hologram"] .demo-card::before{ content:""; position:absolute; inset:-8px -8px auto auto; top:-8px; left:8px; right:-8px; bottom:-8px; border:1px solid color-mix(in srgb, var(--accent) 35%, transparent); pointer-events:none; }
+  [data-style="hologram"] .demo-card::after{ content:""; position:absolute; top:-16px; left:16px; right:-16px; bottom:-16px; border:1px solid color-mix(in srgb, var(--accent) 15%, transparent); pointer-events:none; }
+  [data-style="hologram"] .demo-header .kicker{ color:color-mix(in srgb, var(--accent-2) 85%, white); }
+  [data-style="hologram"] .demo-tag{ background:transparent; border:1px solid color-mix(in srgb, var(--accent-2) 60%, transparent); color:var(--accent-2); padding:4px 10px; border-radius:2px; }
+
+  /* =====================================================================
+     05 PORTAL RING — fully circular card, concentric ring accents
+     ===================================================================== */
+  [data-style="portal"] .demo-shell{ align-items:center; }
+  [data-style="portal"] .demo-card{ border-radius:50%; width:420px; height:420px; max-width:420px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--card); border:1px solid color-mix(in srgb, var(--accent) 50%, transparent); position:relative; padding:40px; }
+  [data-style="portal"] .demo-card::before{ content:""; position:absolute; inset:-16px; border-radius:50%; border:1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
+  [data-style="portal"] .demo-card::after{ content:""; position:absolute; inset:-32px; border-radius:50%; border:1px solid color-mix(in srgb, var(--accent) 12%, transparent); }
+  [data-style="portal"] .demo-tags{ justify-content:center; }
+  [data-style="portal"] .demo-tag{ background:var(--card-2); border:1px solid var(--accent-2); color:var(--accent-2); border-radius:20px; padding:4px 10px; }
+
+  /* =====================================================================
+     06 CHEVRON SCAN — stacked chevron accents at the edge
+     ===================================================================== */
+  [data-style="chevron"] .demo-card{ background:var(--card); border:1px solid var(--line); border-radius:3px; padding-left:34px; }
+  [data-style="chevron"] .demo-card::before{ content:"› › ›"; position:absolute; left:10px; top:22px; color:var(--accent); font-weight:700; letter-spacing:-2px; font-size:14px; }
+  [data-style="chevron"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="chevron"] .demo-tag{ background:var(--accent); color:#050708; font-weight:700; clip-path:polygon(0 0,85% 0,100% 50%,85% 100%,0 100%); padding:4px 14px 4px 10px; }
+
+  /* =====================================================================
+     07 PERSPECTIVE MONITOR — subtle 3D skew, screen-viewed-at-an-angle
+     ===================================================================== */
+  [data-style="perspective"] .demo-shell{ perspective:900px; }
+  [data-style="perspective"] .demo-card{ background:var(--card); border:1px solid var(--accent); transform:rotateY(-8deg) rotateX(2deg); box-shadow:24px 8px 40px rgba(0,0,0,.5); }
+  [data-style="perspective"] .demo-header{ transform:rotateY(-8deg) rotateX(2deg); }
+  [data-style="perspective"] .demo-header .kicker{ color:var(--accent-2); }
+  [data-style="perspective"] .demo-tag{ background:var(--accent-2); color:#050708; padding:4px 10px; border-radius:2px; }
+
+  /* =====================================================================
+     08 OSCILLOSCOPE TICKER — tick-mark ruler strip instead of a border
+     ===================================================================== */
+  [data-style="oscillo"] .demo-card{ background:var(--card); border:1px solid var(--line); border-top:none; padding-top:26px; }
+  [data-style="oscillo"] .demo-card::before{ content:""; position:absolute; top:0; left:0; right:0; height:10px; background:repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 9px); }
+  [data-style="oscillo"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="oscillo"] .demo-tag{ background:transparent; border-bottom:2px solid var(--accent-2); color:var(--accent-2); padding:2px 4px; border-radius:0; }
+
+  /* =====================================================================
+     09 APERTURE CUT — overlapping angled iris-blade corner cuts
+     ===================================================================== */
+  [data-style="aperture"] .demo-card{ clip-path:polygon(0 18px,18px 0,calc(100% - 34px) 0,100% 34px,100% 100%,34px 100%,0 calc(100% - 18px)); background:var(--card); border:1px solid var(--accent); }
+  [data-style="aperture"] .demo-card::before{ content:""; position:absolute; top:0; right:0; width:34px; height:34px; background:linear-gradient(135deg, transparent 49%, var(--accent-2) 50%, transparent 51%); opacity:.5; }
+  [data-style="aperture"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="aperture"] .demo-tag{ clip-path:polygon(0 6px,6px 0,100% 0,100% 100%,6px 100%,0 calc(100% - 6px)); background:var(--accent); color:#050708; padding:4px 10px; }
+
+  /* =====================================================================
+     10 ENERGY FRACTURE — jagged zigzag edge on one side
+     ===================================================================== */
+  [data-style="fracture"] .demo-card{ background:var(--card); border:1px solid var(--line); border-left:none; padding-left:26px; }
+  [data-style="fracture"] .demo-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px;
+    background:linear-gradient(135deg, var(--accent) 25%, transparent 25%) 0 0/6px 14px,
+                linear-gradient(-135deg, var(--accent) 25%, transparent 25%) 0 0/6px 14px; }
+  [data-style="fracture"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="fracture"] .demo-tag{ background:transparent; border:1px solid var(--accent-2); color:var(--accent-2); padding:3px 9px; border-radius:0; }
+
+  /* =====================================================================
+     11 LOADING BAR FRAME — segmented tick-strip top edge like a progress bar
+     ===================================================================== */
+  [data-style="loadbar"] .demo-card{ background:var(--card); border:1px solid var(--line); }
+  [data-style="loadbar"] .demo-card::before{ content:""; position:absolute; top:-4px; left:0; width:70%; height:4px; background:repeating-linear-gradient(90deg, var(--accent) 0 8px, var(--card-2) 8px 10px); }
+  [data-style="loadbar"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="loadbar"] .demo-tag{ background:var(--card-2); border:1px solid var(--line); color:var(--accent-2); padding:4px 10px; border-radius:3px; }
+
+  /* =====================================================================
+     12 GRID MOUNT — card sits inside bleeding graph-paper grid lines
+     ===================================================================== */
+  [data-style="gridmount"] .demo-shell{ background-image:linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size:22px 22px; }
+  [data-style="gridmount"] .demo-card{ background:var(--ink); border:1px solid var(--accent); }
+  [data-style="gridmount"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="gridmount"] .demo-tag{ background:transparent; border:1px solid var(--accent-2); color:var(--accent-2); padding:3px 9px; border-radius:0; }
+
+  /* =====================================================================
+     13 RADAR WEDGE — a single pie-slice gradient wedge in one corner
+     ===================================================================== */
+  [data-style="radar"] .demo-card{ background:var(--card); border:1px solid var(--line); overflow:hidden; }
+  [data-style="radar"] .demo-card::before{ content:""; position:absolute; top:0; right:0; width:90px; height:90px; background:conic-gradient(from 180deg at 100% 0%, color-mix(in srgb, var(--accent) 45%, transparent), transparent 70deg); }
+  [data-style="radar"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="radar"] .demo-tag{ background:var(--card-2); border:1px solid var(--accent-2); color:var(--accent-2); padding:4px 10px; border-radius:20px; }
+
+  /* =====================================================================
+     14 SCOPE VIGNETTE — circular vignette mask, dark corners lit center
+     ===================================================================== */
+  [data-style="scope"] .demo-card{ background:radial-gradient(circle at 50% 40%, var(--card-2) 0%, var(--card) 70%, #050708 100%); border:1px solid var(--line); }
+  [data-style="scope"] .demo-card::before{ content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:color-mix(in srgb, var(--accent) 30%, transparent); }
+  [data-style="scope"] .demo-header .kicker{ color:var(--accent-2); }
+  [data-style="scope"] .demo-tag{ background:transparent; border:1px solid var(--accent); color:var(--accent); border-radius:50px; padding:4px 12px; }
+
+  /* =====================================================================
+     15 LEADER-LINE CALLOUT — tag detaches, connected by a thin diagonal line
+     ===================================================================== */
+  [data-style="leader"] .demo-card{ background:var(--card); border:1px solid var(--line); margin-right:70px; }
+  [data-style="leader"] .demo-tags{ position:relative; }
+  [data-style="leader"] .demo-tag{ background:transparent; border:1px solid var(--accent); color:var(--accent); padding:4px 10px; border-radius:0; position:relative; margin-left:40px; }
+  [data-style="leader"] .demo-tag::before{ content:""; position:absolute; right:100%; top:50%; width:32px; height:1px; background:var(--accent); transform:rotate(12deg); transform-origin:right center; }
+
+  /* =====================================================================
+     16 INTERLOCK NOTCH — puzzle-piece notch cut into one edge
+     ===================================================================== */
+  [data-style="interlock"] .demo-card{ background:var(--card); border:1px solid var(--accent);
+    clip-path:polygon(0 0,44% 0,48% 14px,52% 14px,56% 0,100% 0,100% 100%,0 100%); }
+  [data-style="interlock"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="interlock"] .demo-tag{ background:var(--accent); color:#050708; padding:4px 10px; border-radius:2px; }
+
+  /* =====================================================================
+     17 SOLDER NODE CORNERS — filled dot pads at corners, partial traces
+     ===================================================================== */
+  [data-style="solder"] .demo-card{ background:var(--card); border:1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+  [data-style="solder"] .demo-card::before,[data-style="solder"] .demo-card::after{ content:""; position:absolute; width:7px; height:7px; border-radius:50%; background:var(--accent); box-shadow:0 0 6px var(--accent); }
+  [data-style="solder"] .demo-card::before{ top:-3.5px; left:-3.5px; }
+  [data-style="solder"] .demo-card::after{ bottom:-3.5px; right:-3.5px; background:var(--accent-2); box-shadow:0 0 6px var(--accent-2); }
+  [data-style="solder"] .demo-tag{ background:var(--card-2); border:1px solid var(--line); color:var(--text); padding:4px 10px; border-radius:2px; }
+
+  /* =====================================================================
+     18 HAZARD EDGE — one edge as a diagonal repeating hazard-stripe
+     ===================================================================== */
+  [data-style="hazard"] .demo-card{ background:var(--card); border:1px solid var(--line); border-left:none; padding-left:28px; }
+  [data-style="hazard"] .demo-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:10px; background:repeating-linear-gradient(45deg, var(--accent) 0 6px, var(--ink) 6px 12px); }
+  [data-style="hazard"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="hazard"] .demo-tag{ background:var(--accent-2); color:#050708; font-weight:700; padding:4px 10px; border-radius:0; }
+
+  /* =====================================================================
+     19 SIGNAL UPLINK — quarter-arc signal bars in one corner
+     ===================================================================== */
+  [data-style="uplink"] .demo-card{ background:var(--card); border:1px solid var(--line); }
+  [data-style="uplink"] .demo-card::before{ content:""; position:absolute; top:10px; right:10px; width:20px; height:20px;
+    background:
+      radial-gradient(circle at 0 100%, transparent 4px, transparent 5px, var(--accent) 5px, var(--accent) 6px, transparent 6px) 0 0/20px 20px no-repeat,
+      radial-gradient(circle at 0 100%, transparent 11px, transparent 12px, var(--accent-2) 12px, var(--accent-2) 13px, transparent 13px) 0 0/20px 20px no-repeat; }
+  [data-style="uplink"] .demo-header .kicker{ color:var(--accent); }
+  [data-style="uplink"] .demo-tag{ background:transparent; border:1px solid var(--accent); color:var(--accent); border-radius:20px; padding:4px 10px; }
+
+  /* =====================================================================
+     20 EXPLODED DIAGRAM — fine leader lines to annotation dots outside the card
+     ===================================================================== */
+  [data-style="exploded"] .demo-shell{ padding-right:120px; }
+  [data-style="exploded"] .demo-card{ background:var(--card); border:1px solid var(--line); }
+  [data-style="exploded"] .demo-card::after{ content:""; position:absolute; top:20%; left:100%; width:60px; height:1px; background:var(--accent); }
+  [data-style="exploded"] .demo-tags{ position:relative; }
+  [data-style="exploded"] .demo-tag{ background:transparent; border:none; color:var(--accent-2); padding:0; }
+  [data-style="exploded"] .demo-tag::before{ content:"— "; color:var(--accent-2); }
+</style>
+
+<div class="sheet">
+  <div class="masthead">
+    <span class="eyebrow">RankedCoach · Layout Style v2 — real HUD framing motifs, not border variants</span>
+    <h1>Different <em>shapes</em>, not different corners.</h1>
+    <p>The first 20 were mostly one idea repeated — a rectangle, restyled. This round pulls from actual sci-fi/HUD design vocabulary (corner brackets, circuit traces, portal rings, exploded-diagram leader lines) so each concept is a genuinely different framing device, not a border-radius variant. Same hard rule as before: every color below comes only from <code>--accent</code> / <code>--accent-2</code> / <code>--card</code> — swap the buttons below to confirm nothing is hardcoded.</p>
+    <div class="theme-switch">
+      <span>Swap active theme colors:</span>
+      <div class="theme-btn active" onclick="setThemeColors('#ff4655','#f97316',this)"><span class="swatch-dot" style="--dot-a:#ff4655;--dot-b:#f97316;"></span>Default (Valorant Red)</div>
+      <div class="theme-btn" onclick="setThemeColors('#facc15','#38bdf8',this)"><span class="swatch-dot" style="--dot-a:#facc15;--dot-b:#38bdf8;"></span>Radiant Focus</div>
+      <div class="theme-btn" onclick="setThemeColors('#8b5cf6','#06b6d4',this)"><span class="swatch-dot" style="--dot-a:#8b5cf6;--dot-b:#06b6d4;"></span>Omen Night</div>
+    </div>
+  </div>
+
+  <div class="style-grid" id="jumpGrid"></div>
+
+  <section class="concept" id="brackets">
+    <div class="concept-head"><span class="concept-num">01 / 20</span><h2>Floating Brackets</h2></div>
+    <p class="desc"><b>No connected border at all.</b> Two independent corner marks float near the content with a visible gap — a viewfinder/scope reticle reading, not a box.</p>
+    <div class="demo-shell" data-style="brackets"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="circuit">
+    <div class="concept-head"><span class="concept-num">02 / 20</span><h2>Circuit Trace</h2></div>
+    <p class="desc">The border itself is almost invisible; instead, short trace lines break out at asymmetric points to small solder-pad dots on the tags. PCB-board reading.</p>
+    <div class="demo-shell" data-style="circuit"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="honeycomb">
+    <div class="concept-head"><span class="concept-num">03 / 20</span><h2>Honeycomb Panel</h2></div>
+    <p class="desc">A true hexagonal card, not a rectangle with cut corners — the whole silhouette is a hex, tessellation implied by the shape itself.</p>
+    <div class="demo-shell" data-style="honeycomb"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="hologram">
+    <div class="concept-head"><span class="concept-num">04 / 20</span><h2>Hologram Stack</h2></div>
+    <p class="desc">Two or three offset outline frames nested behind the card at decreasing opacity — a stack of projected screens, not one panel.</p>
+    <div class="demo-shell" data-style="hologram"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="portal">
+    <div class="concept-head"><span class="concept-num">05 / 20</span><h2>Portal Ring</h2></div>
+    <p class="desc">Not a rectangle at all — a fully circular panel with concentric rings expanding outward, teleport/portal reading. The boldest departure on this list.</p>
+    <div class="demo-shell" data-style="portal"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div>
+  </section>
+
+  <section class="concept" id="chevron">
+    <div class="concept-head"><span class="concept-num">06 / 20</span><h2>Chevron Scan</h2></div>
+    <p class="desc">Stacked chevron arrows mark the edge instead of a line — a scanning-in-progress reading, borrowed from loading/radar-sweep graphics.</p>
+    <div class="demo-shell" data-style="chevron"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="perspective">
+    <div class="concept-head"><span class="concept-num">07 / 20</span><h2>Perspective Monitor</h2></div>
+    <p class="desc">A subtle 3D tilt on the card itself — reads like a screen viewed at an angle in a cockpit or command console, not a flat panel.</p>
+    <div class="demo-shell" data-style="perspective"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="oscillo">
+    <div class="concept-head"><span class="concept-num">08 / 20</span><h2>Oscilloscope Ticker</h2></div>
+    <p class="desc">The top edge is a strip of tick marks like a waveform ruler, replacing a plain border line entirely.</p>
+    <div class="demo-shell" data-style="oscillo"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="aperture">
+    <div class="concept-head"><span class="concept-num">09 / 20</span><h2>Aperture Cut</h2></div>
+    <p class="desc">Corners cut with overlapping angled blade shapes, like a camera iris closing — more complex than a single diagonal cut.</p>
+    <div class="demo-shell" data-style="aperture"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="fracture">
+    <div class="concept-head"><span class="concept-num">10 / 20</span><h2>Energy Fracture</h2></div>
+    <p class="desc">A jagged zigzag edge stands in for the left border — a static lightning-crack line instead of a straight rule.</p>
+    <div class="demo-shell" data-style="fracture"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="loadbar">
+    <div class="concept-head"><span class="concept-num">11 / 20</span><h2>Loading Bar Frame</h2></div>
+    <p class="desc">A segmented tick-strip floats above the top-left of the card like a progress bar frozen mid-load.</p>
+    <div class="demo-shell" data-style="loadbar"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="gridmount">
+    <div class="concept-head"><span class="concept-num">12 / 20</span><h2>Grid Mount</h2></div>
+    <p class="desc">The card sits inside a visible graph-paper grid that bleeds past its own edges — mounted on a schematic sheet, not floating alone.</p>
+    <div class="demo-shell" data-style="gridmount"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="radar">
+    <div class="concept-head"><span class="concept-num">13 / 20</span><h2>Radar Wedge</h2></div>
+    <p class="desc">A single pie-slice gradient wedge sits in the corner, like a radar sweep frozen mid-rotation — not a border at all.</p>
+    <div class="demo-shell" data-style="radar"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="scope">
+    <div class="concept-head"><span class="concept-num">14 / 20</span><h2>Scope Vignette</h2></div>
+    <p class="desc">A radial vignette darkens the corners toward a lit center, plus a faint vertical scope line — reads like looking through an optic.</p>
+    <div class="demo-shell" data-style="scope"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="leader">
+    <div class="concept-head"><span class="concept-num">15 / 20</span><h2>Leader-Line Callout</h2></div>
+    <p class="desc">Tags detach entirely from the card, connected only by a thin angled leader line — technical-diagram annotation, not an attached pill.</p>
+    <div class="demo-shell" data-style="leader"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="interlock">
+    <div class="concept-head"><span class="concept-num">16 / 20</span><h2>Interlock Notch</h2></div>
+    <p class="desc">A puzzle-piece notch is cut into the top edge — an interlocking-connector reading, like the card plugs into something above it.</p>
+    <div class="demo-shell" data-style="interlock"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card" style="padding-top:26px;"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="solder">
+    <div class="concept-head"><span class="concept-num">17 / 20</span><h2>Solder Node Corners</h2></div>
+    <p class="desc">Small glowing dot "pads" mark just two opposite corners — the border between them stays plain, so the dots read as connection points, not decoration.</p>
+    <div class="demo-shell" data-style="solder"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="hazard">
+    <div class="concept-head"><span class="concept-num">18 / 20</span><h2>Hazard Edge</h2></div>
+    <p class="desc">The left edge is a diagonal repeating hazard stripe instead of a line — a caution-tape reading for anything genuinely flagged.</p>
+    <div class="demo-shell" data-style="hazard"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="uplink">
+    <div class="concept-head"><span class="concept-num">19 / 20</span><h2>Signal Uplink</h2></div>
+    <p class="desc">Quarter-arc signal bars sit in one corner like a wifi/uplink indicator — a status glyph, not a frame element at all.</p>
+    <div class="demo-shell" data-style="uplink"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div><div class="demo-tag">High Confidence</div></div></div></div>
+  </section>
+
+  <section class="concept" id="exploded">
+    <div class="concept-head"><span class="concept-num">20 / 20</span><h2>Exploded Diagram</h2></div>
+    <p class="desc">A fine line extends off the card's edge to a floating annotation outside it — an exploded-view blueprint callout, tag fully detached from the box.</p>
+    <div class="demo-shell" data-style="exploded"><div class="demo-header"><span class="kicker">Priority Trends</span></div><div class="demo-card"><h3>Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div>
+  </section>
+
+  <footer>// same real Insights copy across all 20 so only the framing device changes — vocabulary sourced from sci-fi HUD vector-design references (corner brackets, circuit traces, portal rings, exploded-diagram callouts), not reused border-radius variants</footer>
+</div>
+
+<script>
+  const names=["Floating Brackets","Circuit Trace","Honeycomb Panel","Hologram Stack","Portal Ring","Chevron Scan","Perspective Monitor","Oscilloscope Ticker","Aperture Cut","Energy Fracture","Loading Bar Frame","Grid Mount","Radar Wedge","Scope Vignette","Leader-Line Callout","Interlock Notch","Solder Node Corners","Hazard Edge","Signal Uplink","Exploded Diagram"];
+  const ids=["brackets","circuit","honeycomb","hologram","portal","chevron","perspective","oscillo","aperture","fracture","loadbar","gridmount","radar","scope","leader","interlock","solder","hazard","uplink","exploded"];
+  const grid=document.getElementById("jumpGrid");
+  ids.forEach((id,i)=>{ const a=document.createElement("a"); a.href="#"+id; a.innerHTML="<b>"+String(i+1).padStart(2,"0")+"</b>"+names[i]; grid.appendChild(a); });
+  function setThemeColors(a,b,el){ document.documentElement.style.setProperty("--accent",a); document.documentElement.style.setProperty("--accent-2",b); document.querySelectorAll(".theme-btn").forEach(btn=>btn.classList.remove("active")); el.classList.add("active"); }
+</script>
