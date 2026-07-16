@@ -46,6 +46,45 @@ Don't re-derive which cards get styled — that classification (content/coaching
 
 ---
 
+## 5. Typography — a paired font per style, fully optional two ways
+
+Michael's ask: each Layout Style should get its own display font, but nobody should be stuck with a font they don't like. Two independent controls, both required, neither a substitute for the other:
+
+**Visual/CSS reference, committed into the repo:** `docs/design/layout-styles-fonts-2026-07-16.html` — same self-contained, open-directly-after-`git pull` pattern as the shapes file. It loads all 20 fonts live via a Google Fonts `<link>` (real internet access, not the Artifact CSP sandbox, so the actual typefaces render when opened normally) and demonstrates both controls below plus the full per-style font pairing table.
+
+**Setting A — per-style "Custom Font" toggle.** Lives directly under the Layout Style picker. Defaults to **on** the moment a style is selected. Switching it off keeps every shape/border/tag rule from that style exactly as-is and only reverts header/title typography to the app's current default font (`Bahnschrift`/`Oswald`/system stack, matching the existing display-font usage already established elsewhere in this design work) — body copy is never affected either way, it always stays on the app's normal readable font.
+
+**Setting B — standalone global "Font" dropdown.** A second, fully independent setting, not nested under Layout Style at all. Lets a player pick any of the 20 display fonts (or Default) directly, and it applies regardless of which Layout Style is active or what Setting A is set to — e.g. a player could run the Default layout shape-wise but with the Circuit Trace style's font, or run Circuit Trace's shapes with a font from a completely different style. Each option in the dropdown must render its own name in its own actual typeface (implemented in the reference file) so the choice is self-explanatory without a separate preview step.
+
+**The 20 pairings** (display font for headers/titles only; reference file has live examples of each):
+
+| Style | Font | Why |
+|---|---|---|
+| Floating Brackets | Rajdhani | geometric technical sans, HUD readout weight |
+| Circuit Trace | Share Tech Mono | PCB-silkscreen monospace |
+| Honeycomb Panel | Orbitron | geometric hex-friendly display face |
+| Hologram Stack | Audiowide | rounded projected-glow display face |
+| Portal Ring | Michroma | wide geometric sci-fi face |
+| Chevron Scan | Aldrich | scanning-console technical face |
+| Perspective Monitor | Exo 2 | modern cockpit-display geometric sans |
+| Oscilloscope Ticker | JetBrains Mono | clean waveform-readout monospace |
+| Aperture Cut | Iceland | condensed mechanical-iris face |
+| Energy Fracture | Turret Road | angular jagged energy face |
+| Loading Bar Frame | VT323 | retro loading-screen pixel face |
+| Grid Mount | Space Mono | graph-paper technical monospace |
+| Radar Wedge | Electrolize | clean sci-fi radar-readout face |
+| Scope Vignette | Saira Condensed | tactical condensed military face |
+| Leader-Line Callout | Special Elite | technical-diagram typewriter face |
+| Interlock Notch | Silkscreen | blocky interlocking pixel face |
+| Solder Node Corners | Chakra Petch | circuit-board geometric tech face |
+| Hazard Edge | Bebas Neue | bold condensed caution-sign face |
+| Signal Uplink | Syncopate | futuristic uppercase signal face |
+| Exploded Diagram | IBM Plex Mono | clean blueprint-annotation monospace |
+
+All 20 are free Google Fonts — confirm licensing/self-hosting approach with however the rest of the app currently loads any web fonts (check if RankedCoach already self-hosts fonts vs. links Google Fonts directly; match that existing pattern rather than introducing a new one) before wiring these into production, and load only the weights actually used per style rather than every weight, for performance.
+
+---
+
 ## Testing checklist — don't report this batch done until:
 
 1. With Layout Style left at Default, every page (Home, Insights, Stats, Logging, Library) is pixel-identical to current production — confirm via screenshot diff, not assumption.
@@ -56,3 +95,6 @@ Don't re-derive which cards get styled — that classification (content/coaching
 6. `node --check` passes on every touched file; run the existing visual-audit test suite plus the full passthrough before deploying, per the standing project rule.
 7. Bump the cache key in `public/index.html` for every changed asset.
 8. Given the scale (20 full style implementations), it's reasonable to ship this incrementally — confirm with Michael whether he wants all 20 built before the first release or wants to greenlight a subset first, rather than assuming the full set ships at once.
+9. The per-style Custom Font toggle, switched off, reverts header/title typography to the app default while every shape/border/tag rule from that style stays active — confirm these are genuinely decoupled (toggling font never resets or disables the shape styling).
+10. The standalone Font dropdown applies its chosen font regardless of Layout Style or the per-style toggle's state — test at least one deliberately mismatched combination (e.g. Default shapes with a non-Default font) to confirm the two settings don't silently override each other.
+11. Body copy is confirmed untouched by any font choice, in every style, at every toggle state — only headers/titles change.

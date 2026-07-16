@@ -1,0 +1,173 @@
+<title>RankedCoach — Layout Style Fonts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Orbitron:wght@700;800&family=Audiowide&family=Michroma&family=Aldrich&family=Exo+2:wght@600;700&family=JetBrains+Mono:wght@600&family=Iceland&family=Turret+Road:wght@700&family=VT323&family=Space+Mono:wght@700&family=Electrolize&family=Saira+Condensed:wght@700&family=Special+Elite&family=Silkscreen&family=Chakra+Petch:wght@600;700&family=Bebas+Neue&family=Syncopate:wght@700&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#ff4655; --accent-2:#f97316;
+    --card:#121924; --card-2:#1a222e;
+    --text:#e7ecf2; --muted:#8b96a5; --line:#2b3644;
+    --ink:#0a0e13;
+    --body-font:"Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--ink); color:var(--text); font-family:var(--body-font); line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .sheet{ max-width:1120px; margin:0 auto; padding:56px 28px 140px; }
+  h1,h2,h3{ font-family:"Bahnschrift","Oswald",sans-serif; font-weight:700; text-wrap:balance; margin:0; }
+  code{ font-family:"Consolas",ui-monospace,monospace; }
+
+  .masthead{ display:flex; flex-direction:column; gap:14px; padding-bottom:32px; margin-bottom:36px; border-bottom:1px solid var(--line); }
+  .eyebrow{ font-family:"Consolas",monospace; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent-2); display:flex; align-items:center; gap:10px; }
+  .eyebrow::before{ content:""; width:18px; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); }
+  .masthead h1{ font-size:32px; }
+  .masthead h1 em{ font-style:normal; background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .masthead p{ max-width:76ch; color:var(--muted); font-size:15px; margin:0; }
+
+  /* ============ SETTINGS MOCKUP ============ */
+  .settings-block{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:24px 26px; margin-bottom:20px; }
+  .settings-block h3{ font-size:15px; margin-bottom:4px; }
+  .settings-block .sub{ color:var(--muted); font-size:13px; margin:0 0 18px; }
+
+  .toggle-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0; }
+  .toggle-row + .toggle-row{ border-top:1px solid var(--line); }
+  .toggle-row .label-col b{ display:block; font-size:14px; color:var(--text); }
+  .toggle-row .label-col span{ font-size:12px; color:var(--muted); }
+  .switch{ width:42px; height:24px; border-radius:20px; background:var(--line); position:relative; flex:none; }
+  .switch::after{ content:""; position:absolute; width:18px; height:18px; border-radius:50%; background:var(--muted); top:3px; left:3px; }
+  .switch.on{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); }
+  .switch.on::after{ background:#fff; left:21px; }
+
+  .compare-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; }
+  @media (max-width:700px){ .compare-row{ grid-template-columns:1fr; } }
+  .compare-card{ background:var(--card-2); border:1px solid var(--line); border-radius:8px; padding:18px 20px; }
+  .compare-card .tag-state{ font-family:"Consolas",monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; display:block; }
+  .compare-card h4{ font-size:19px; margin:0 0 4px; }
+  .compare-card p{ margin:0; font-size:13px; color:var(--muted); }
+
+  .font-dropdown{ background:var(--card-2); border:1px solid var(--line); border-radius:8px; margin-top:14px; max-height:340px; overflow-y:auto; }
+  .font-option{ display:flex; align-items:center; justify-content:space-between; padding:11px 16px; font-size:16px; color:var(--text); }
+  .font-option + .font-option{ border-top:1px solid var(--line); }
+  .font-option.selected{ background:color-mix(in srgb, var(--accent) 12%, transparent); }
+  .font-option small{ font-family:"Segoe UI",sans-serif; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+
+  /* ============ STYLE GALLERY (reuses v2 shapes, now with fonts) ============ */
+  .style-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:28px 0 8px; }
+  @media (max-width:900px){ .style-grid{ grid-template-columns:repeat(2,1fr); } }
+  .style-grid a{ display:block; padding:8px 10px; background:var(--card-2); border:1px solid var(--line); border-radius:6px; font-size:11.5px; color:var(--muted); text-decoration:none; }
+  .style-grid a b{ color:var(--text); display:block; font-size:12.5px; }
+
+  .concept{ padding:44px 0; border-bottom:1px solid var(--line); scroll-margin-top:20px; }
+  .concept:last-of-type{ border-bottom:none; }
+  .concept-head{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:4px; flex-wrap:wrap; }
+  .concept-num{ font-family:"Consolas",monospace; font-size:11px; color:var(--muted); letter-spacing:.1em; }
+  .concept-head h2{ font-size:20px; }
+  .font-line{ font-family:"Consolas",monospace; font-size:11.5px; color:var(--accent-2); margin:0 0 18px; }
+  .font-line b{ color:var(--text); }
+
+  .demo-shell{ background:#000; border:1px solid var(--line); padding:34px 36px; display:flex; flex-direction:column; gap:16px; position:relative; }
+  .demo-card{ width:100%; max-width:640px; padding:18px 22px; background:var(--card); border:1px solid var(--line); border-radius:6px; position:relative; }
+  .demo-card h3{ font-size:19px; margin:0 0 6px; font-weight:700; }
+  .demo-card p{ margin:0; font-size:13px; color:var(--muted); font-family:var(--body-font); }
+  .demo-tags{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .demo-tag{ font-family:"Consolas",monospace; font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--accent-2); border:1px solid var(--line); padding:3px 9px; border-radius:2px; }
+
+  footer{ margin-top:48px; padding-top:24px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted); font-family:"Consolas",monospace; }
+</style>
+
+<div class="sheet">
+  <div class="masthead">
+    <span class="eyebrow">RankedCoach · Layout Style Fonts — typography per style, fully optional</span>
+    <h1>Every style gets a <em>voice</em>, not just a shape.</h1>
+    <p>Each of the 20 Layout Styles gets a paired display font for headers and titles (body copy always stays on the app's normal readable font — never the display face). Two independent controls, so nobody's stuck with a look they don't want: a per-style <b>Custom Font</b> toggle that reverts to the app's default type when off, and a separate, standalone <b>Font</b> dropdown that works no matter what Layout Style — or none at all — is active.</p>
+  </div>
+
+  <div class="settings-block">
+    <h3>Setting 1 — Custom Font toggle (per Layout Style)</h3>
+    <p class="sub">Lives right under the Layout Style picker. Defaults to <b>On</b> when a style is first selected; flipping it off keeps every shape/border/tag rule from that style but swaps headers back to the app's normal font.</p>
+    <div class="toggle-row">
+      <div class="label-col"><b>Use this style's font</b><span>Circuit Trace pairs with Share Tech Mono</span></div>
+      <div class="switch on"></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-card">
+        <span class="tag-state">Custom Font: On</span>
+        <h4 style="font-family:'Share Tech Mono',monospace;">Map Preparation Gap</h4>
+        <p>Ascent is not converting yet: 38% WR in 21 games.</p>
+      </div>
+      <div class="compare-card">
+        <span class="tag-state">Custom Font: Off</span>
+        <h4 style="font-family:'Bahnschrift','Oswald',sans-serif;">Map Preparation Gap</h4>
+        <p>Ascent is not converting yet: 38% WR in 21 games.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-block">
+    <h3>Setting 2 — standalone Font dropdown (independent of Layout Style)</h3>
+    <p class="sub">Lives in Settings on its own, separate from Layout Style entirely. Picks a header font directly — works with Default layout, works with any of the 20 styles regardless of that style's own paired font or toggle state above. Every option previews in its own actual typeface.</p>
+    <div class="font-dropdown">
+      <div class="font-option selected" style="font-family:'Bahnschrift','Oswald',sans-serif;">Default <small>App standard</small></div>
+      <div class="font-option" style="font-family:'Rajdhani',sans-serif;">Rajdhani <small>Floating Brackets</small></div>
+      <div class="font-option" style="font-family:'Share Tech Mono',monospace;">Share Tech Mono <small>Circuit Trace</small></div>
+      <div class="font-option" style="font-family:'Orbitron',sans-serif;">Orbitron <small>Honeycomb Panel</small></div>
+      <div class="font-option" style="font-family:'Audiowide',sans-serif;">Audiowide <small>Hologram Stack</small></div>
+      <div class="font-option" style="font-family:'Michroma',sans-serif;">Michroma <small>Portal Ring</small></div>
+      <div class="font-option" style="font-family:'Bebas Neue',sans-serif;">Bebas Neue <small>Hazard Edge</small></div>
+      <div class="font-option" style="font-family:'VT323',monospace;">VT323 <small>Loading Bar Frame</small></div>
+      <div class="font-option" style="font-family:'Syncopate',sans-serif;">Syncopate <small>Signal Uplink</small></div>
+      <div class="font-option" style="color:var(--muted);">— 12 more, one per remaining style —</div>
+    </div>
+  </div>
+
+  <div class="style-grid" id="jumpGrid"></div>
+
+  <section class="concept" id="brackets"><div class="concept-head"><span class="concept-num">01</span><h2>Floating Brackets</h2></div><p class="font-line">Font: <b>Rajdhani</b> — geometric technical sans, HUD readout weight</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Rajdhani',sans-serif;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="circuit"><div class="concept-head"><span class="concept-num">02</span><h2>Circuit Trace</h2></div><p class="font-line">Font: <b>Share Tech Mono</b> — PCB-silkscreen monospace</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Share Tech Mono',monospace;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="honeycomb"><div class="concept-head"><span class="concept-num">03</span><h2>Honeycomb Panel</h2></div><p class="font-line">Font: <b>Orbitron</b> — geometric hex-friendly display face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Orbitron',sans-serif;font-weight:800;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="hologram"><div class="concept-head"><span class="concept-num">04</span><h2>Hologram Stack</h2></div><p class="font-line">Font: <b>Audiowide</b> — rounded projected-glow display face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Audiowide',sans-serif;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="portal"><div class="concept-head"><span class="concept-num">05</span><h2>Portal Ring</h2></div><p class="font-line">Font: <b>Michroma</b> — wide geometric sci-fi face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Michroma',sans-serif;font-size:16px;">Map Preparation Gap</h3><p>Ascent: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="chevron"><div class="concept-head"><span class="concept-num">06</span><h2>Chevron Scan</h2></div><p class="font-line">Font: <b>Aldrich</b> — scanning-console technical face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Aldrich',sans-serif;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="perspective"><div class="concept-head"><span class="concept-num">07</span><h2>Perspective Monitor</h2></div><p class="font-line">Font: <b>Exo 2</b> — modern cockpit-display geometric sans</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Exo 2',sans-serif;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="oscillo"><div class="concept-head"><span class="concept-num">08</span><h2>Oscilloscope Ticker</h2></div><p class="font-line">Font: <b>JetBrains Mono</b> — clean waveform-readout monospace</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'JetBrains Mono',monospace;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="aperture"><div class="concept-head"><span class="concept-num">09</span><h2>Aperture Cut</h2></div><p class="font-line">Font: <b>Iceland</b> — condensed mechanical-iris face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Iceland',sans-serif;font-size:22px;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="fracture"><div class="concept-head"><span class="concept-num">10</span><h2>Energy Fracture</h2></div><p class="font-line">Font: <b>Turret Road</b> — angular jagged energy face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Turret Road',sans-serif;font-weight:700;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="loadbar"><div class="concept-head"><span class="concept-num">11</span><h2>Loading Bar Frame</h2></div><p class="font-line">Font: <b>VT323</b> — retro loading-screen pixel face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'VT323',monospace;font-size:24px;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="gridmount"><div class="concept-head"><span class="concept-num">12</span><h2>Grid Mount</h2></div><p class="font-line">Font: <b>Space Mono</b> — graph-paper technical monospace</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Space Mono',monospace;font-weight:700;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="radar"><div class="concept-head"><span class="concept-num">13</span><h2>Radar Wedge</h2></div><p class="font-line">Font: <b>Electrolize</b> — clean sci-fi radar-readout face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Electrolize',sans-serif;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="scope"><div class="concept-head"><span class="concept-num">14</span><h2>Scope Vignette</h2></div><p class="font-line">Font: <b>Saira Condensed</b> — tactical condensed military face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Saira Condensed',sans-serif;font-weight:700;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="leader"><div class="concept-head"><span class="concept-num">15</span><h2>Leader-Line Callout</h2></div><p class="font-line">Font: <b>Special Elite</b> — technical-diagram typewriter face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Special Elite',monospace;font-size:17px;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="interlock"><div class="concept-head"><span class="concept-num">16</span><h2>Interlock Notch</h2></div><p class="font-line">Font: <b>Silkscreen</b> — blocky interlocking pixel face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Silkscreen',monospace;font-size:15px;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="solder"><div class="concept-head"><span class="concept-num">17</span><h2>Solder Node Corners</h2></div><p class="font-line">Font: <b>Chakra Petch</b> — circuit-board geometric tech face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Chakra Petch',sans-serif;font-weight:700;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="hazard"><div class="concept-head"><span class="concept-num">18</span><h2>Hazard Edge</h2></div><p class="font-line">Font: <b>Bebas Neue</b> — bold condensed caution-sign face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.02em;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="uplink"><div class="concept-head"><span class="concept-num">19</span><h2>Signal Uplink</h2></div><p class="font-line">Font: <b>Syncopate</b> — futuristic uppercase signal face</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'Syncopate',sans-serif;font-weight:700;font-size:16px;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <section class="concept" id="exploded"><div class="concept-head"><span class="concept-num">20</span><h2>Exploded Diagram</h2></div><p class="font-line">Font: <b>IBM Plex Mono</b> — clean blueprint-annotation monospace</p><div class="demo-shell"><div class="demo-card"><h3 style="font-family:'IBM Plex Mono',monospace;font-weight:600;">Map Preparation Gap</h3><p>Ascent is not converting yet: 38% WR in 21 games.</p><div class="demo-tags"><div class="demo-tag">Needs Work</div></div></div></div></section>
+
+  <footer>// all 20 fonts are free Google Fonts, loaded via the link tag at the top of this file — opening it locally (not through a locked-down preview) shows the real typefaces; body copy always stays on the app's normal font regardless of style</footer>
+</div>
+
+<script>
+  const names=["Floating Brackets","Circuit Trace","Honeycomb Panel","Hologram Stack","Portal Ring","Chevron Scan","Perspective Monitor","Oscilloscope Ticker","Aperture Cut","Energy Fracture","Loading Bar Frame","Grid Mount","Radar Wedge","Scope Vignette","Leader-Line Callout","Interlock Notch","Solder Node Corners","Hazard Edge","Signal Uplink","Exploded Diagram"];
+  const ids=["brackets","circuit","honeycomb","hologram","portal","chevron","perspective","oscillo","aperture","fracture","loadbar","gridmount","radar","scope","leader","interlock","solder","hazard","uplink","exploded"];
+  const grid=document.getElementById("jumpGrid");
+  ids.forEach((id,i)=>{ const a=document.createElement("a"); a.href="#"+id; a.innerHTML="<b>"+String(i+1).padStart(2,"0")+"</b>"+names[i]; grid.appendChild(a); });
+</script>
