@@ -55,12 +55,16 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260715-skin-viewer-focus-17">
+<link rel="stylesheet" href="app.css?v=20260716-layout-styles-19">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260716-skin-video-chart-18">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260716-skin-variant-sync-21">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260716-layout-styles-22">
+  <link rel="stylesheet" href="layout-styles.css?v=20260716-layout-styles-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -422,6 +426,7 @@ RIOT PROFILE MODAL
       <div class="profile-edit-shell">
         <aside class="profile-edit-nav">
           <button class="profile-edit-tab is-active" type="button" data-profile-tab="theme">Theme Selector</button>
+          <button class="profile-edit-tab" type="button" data-profile-tab="layoutStyle">Layout Style</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="icon">Agent Profile Icon</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="borderColor">Profile Border Color</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="border">Profile Border</button>
@@ -460,6 +465,45 @@ RIOT PROFILE MODAL
                 </select>
                 <small class="profile-edit-field-note">Adds one lighter shared motion option for free themes on mobile.</small>
               </div>
+            </div>
+          </section>
+
+          <section class="profile-edit-panel" data-profile-panel="layoutStyle">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Layout Style</div>
+              <div class="profile-edit-panel-copy">Shape coaching cards without changing charts, controls, dense stat grids, or the navigation bar.</div>
+            </div>
+
+            <div class="profile-edit-grid layout-style-settings">
+              <select id="editProfileLayoutStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
+
+              <div class="profile-edit-field profile-edit-field-full">
+                <span>Card Style Preview</span>
+                <div id="editProfileLayoutStyleGallery" class="layout-style-gallery"></div>
+              </div>
+
+              <div class="layout-style-control-row profile-edit-field-full">
+                <div>
+                  <div class="layout-style-control-title">Use This Style's Font</div>
+                  <div class="layout-style-control-copy">Apply the selected layout's paired font to card titles only.</div>
+                </div>
+                <label class="auth-switch-control layout-style-font-switch" aria-label="Use the selected layout style font">
+                  <input id="editProfileLayoutStyleFontToggle" type="checkbox" role="switch" checked>
+                  <span class="auth-switch-track"></span>
+                </label>
+              </div>
+
+              <label class="profile-edit-field profile-edit-field-full">
+                <span>Font</span>
+                <select id="editProfileLayoutFont" class="profile-edit-select" aria-label="Choose a global coaching card title font">
+                  <option value="default">App Default</option>
+                  <option value="orbitron">Orbitron</option>
+                  <option value="silkscreen">Silkscreen</option>
+                  <option value="ibmplexmono">IBM Plex Mono</option>
+                  <option value="pressstart2p">Press Start 2P</option>
+                </select>
+                <small class="profile-edit-field-note">This global choice overrides the style font and also works with the default layout.</small>
+              </label>
             </div>
           </section>
 
@@ -2311,8 +2355,8 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-maps.js?v=20260715-library-archive-theme-impact-15"></script>
   <script src="library/gamesense-reference.js?v=20260714-stats-library-readability-09"></script>
   <script src="library/gamesense-collections.js?v=20260716-skin-variant-sync-21"></script>
-  <script src="library/gamesense-library.js?v=20260716-skin-variant-sync-21"></script>
+  <script src="library/gamesense-library.js?v=20260716-layout-styles-22"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
-  <script type="module" src="app.js?v=20260716-skin-video-chart-18"></script>
+  <script type="module" src="app.js?v=20260716-layout-styles-19"></script>
 </body>
 </html>

@@ -649,11 +649,11 @@
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
                 <span>Open interactive preview</span>
               </button>
-              <div class="gamesense-collection-copy">
+              <button class="gamesense-collection-copy" type="button" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview details">
                 <span>${escapeHtml(item.weaponName)} skin</span>
                 <h4>${escapeHtml(item.name)}</h4>
                 <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${item.variants?.length || item.views?.length || 1} verified color ${(item.variants?.length || item.views?.length || 1) === 1 ? "variant" : "variants"}</b></div>
-              </div>
+              </button>
             </article>`).join("")}
           </div>`}
       </section>`;
@@ -923,7 +923,8 @@
         </section>
         <div class="gamesense-skin-preview-divider" aria-hidden="true"></div>
         <section class="gamesense-skin-media-pane${videoId ? " has-secondary-video" : ""}">
-          <article class="gamesense-skin-animation-preview">
+          <div class="gamesense-skin-media-pages">
+          <article class="gamesense-skin-animation-preview is-active" data-skin-media-page="0">
             <header><span>Skin Animation</span><strong data-skin-preview-video-label>${escapeHtml(previewVideos[0]?.displayLabel || `${name} preview`)}</strong><small data-skin-preview-video-detail>Animation supplied by Riot data used by val-skins.</small></header>
             <div class="gamesense-skin-animation-frame">${previewVideos.length ? `<video data-skin-preview-video src="${escapeHtml(previewVideos[0].video)}" poster="${escapeHtml(previewVideos[0].poster)}" controls autoplay muted playsinline preload="metadata"></video>` : `<div class="gamesense-skin-video-unavailable"><strong>No animation published</strong><span>This skin does not include a streamed level or variant preview.</span></div>`}</div>
             <div class="gamesense-skin-option-groups">
@@ -946,10 +947,15 @@
               </div></section>
             </div>
           </article>
-          ${videoId ? `<article class="gamesense-skin-video-pane">
+          ${videoId ? `<article class="gamesense-skin-video-pane" data-skin-media-page="1" hidden>
             <header><span>Collection Video</span><strong>${escapeHtml(item.bundleVideo.title)}</strong><small>${escapeHtml(item.bundleVideo.channel)}${item.bundleVideo.channel === "VALORANT" ? " official SKINS playlist" : " approved fallback"}</small></header>
             <div class="gamesense-skin-video-frame"><iframe src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?rel=0&amp;playsinline=1${playlistId ? `&amp;list=${escapeHtml(playlistId)}` : ""}" title="${escapeHtml(item.bundleVideo.title)}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
           </article>` : ""}
+          </div>
+          ${videoId ? `<nav class="gamesense-skin-media-pagination" aria-label="Choose weapon skin video">
+            <button type="button" class="is-active" data-skin-media-page-button="0" aria-label="Show skin animation" aria-pressed="true"></button>
+            <button type="button" data-skin-media-page-button="1" aria-label="Show collection video" aria-pressed="false"></button>
+          </nav>` : ""}
         </section>
         <p class="gamesense-skin-preview-dismiss">Click outside the preview to close.</p>
       </div>`;
@@ -966,6 +972,22 @@
       }
       const videoSelector = event.target.closest?.("[data-skin-preview-video-option]");
       if (videoSelector) setActiveSkinVideo(Number(videoSelector.dataset.skinPreviewVideoOption || 0), videoSelector);
+      const mediaPageButton = event.target.closest?.("[data-skin-media-page-button]");
+      if (mediaPageButton) {
+        const nextPage = Number(mediaPageButton.dataset.skinMediaPageButton || 0);
+        overlay.querySelectorAll("[data-skin-media-page]").forEach((page) => {
+          const isActive = Number(page.dataset.skinMediaPage || 0) === nextPage;
+          page.hidden = !isActive;
+          page.classList.toggle("is-active", isActive);
+        });
+        overlay.querySelectorAll("[data-skin-media-page-button]").forEach((button) => {
+          const isActive = Number(button.dataset.skinMediaPageButton || 0) === nextPage;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+        const nativeVideo = overlay.querySelector("[data-skin-preview-video]");
+        if (nativeVideo && nextPage !== 0) nativeVideo.pause?.();
+      }
     });
     document.body.appendChild(overlay);
     activeSkinPreview = overlay;
