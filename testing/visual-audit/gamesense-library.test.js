@@ -96,14 +96,14 @@ function weaponSkinApiStub(url) {
         displayName: `${name} ${weaponName}`,
         contentTierUuid: name === "Aemondir" ? tiers[2] : tiers[index % tiers.length],
         displayIcon: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?skin=${index}`,
-        chromas: (name === "Aemondir" ? [0, 1, 2] : [0]).map(view => ({
+        chromas: (name === "Aemondir" ? [0, 1, 2] : name === "Reaver" ? [0, 1, 2, 3] : [0]).map(view => ({
           uuid: `${slug}-skin-${index}-variant-${view}`,
           displayName: `${name} ${weaponName} ${view === 0 ? "Default" : `Variant ${view + 1}`}`,
           fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}&view=${view}`,
           swatch: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?swatch=${index}&view=${view}`,
-          streamedVideo: name === "Reaver" ? `https://valorant.dyn.riotcdn.net/x/videos/release-13.00/${slug}-${index}-${view}.mp4` : `https://media.valorant-api.com/videos/${slug}-${index}-${view}.mp4`
+          streamedVideo: name === "Reaver" ? "" : `https://media.valorant-api.com/videos/${slug}-${index}-${view}.mp4`
         })),
-        levels: [{ uuid: `${slug}-skin-${index}-level-1`, displayName: `${name} Level 1`, streamedVideo: name === "Reaver" ? `https://valorant.dyn.riotcdn.net/x/videos/release-13.00/${slug}-${index}-level-1.mp4` : `https://media.valorant-api.com/videos/${slug}-${index}-level-1.mp4` }]
+        levels: (name === "Reaver" ? [1, 2, 3, 4] : [1]).map(level => ({ uuid: `${slug}-skin-${index}-level-${level}`, displayName: `${name} Level ${level}`, streamedVideo: name === "Reaver" ? `https://valorant.dyn.riotcdn.net/x/videos/release-13.00/${slug}-${index}-level-${level}.mp4` : `https://media.valorant-api.com/videos/${slug}-${index}-level-${level}.mp4` }))
       }))
     }
   });
@@ -730,6 +730,13 @@ async function run() {
     assert.match(collectionVideoCoverage.vct26?.id || "", /^[a-zA-Z0-9_-]{11}$/);
     assert.ok([collectionVideoCoverage.vct24?.channel, collectionVideoCoverage.vct25?.channel, collectionVideoCoverage.vct26?.channel].every(channel => channel === "VALORANT"));
     assert.equal(collectionVideoCoverage.noApprovedSource, null);
+    const reaverVandalVariantModels = await desktop.evaluate(() => [0, 1, 2, 3].map(index => globalThis.RankedCoachWeaponCollections.getSketchfabModel("Reaver", "Vandal", index)?.id || ""));
+    assert.deepEqual(reaverVandalVariantModels, [
+      "44283975faff461cb97fd7d74cbffc99",
+      "7384e642d2944bef8117cf05545a4b33",
+      "4a2b2d3a24bc4928b1a20efca88fee19",
+      "04f9851ace5c424492c327608b895e2c"
+    ]);
     await desktop.locator(".gamesense-collection-filters").screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-filters-desktop.png") });
     await desktop.locator('[data-gamesense-collection-filter="premium"]').click();
     assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 5);
@@ -759,12 +766,15 @@ async function run() {
     assert.equal(await desktop.locator('iframe[src*="val-skins.com"]').count(), 0);
     assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /phantom-0-level-1\.mp4/i);
     assert.equal(await desktop.locator("[data-skin-preview-video-option]").count(), 4);
+    assert.deepEqual(await desktop.locator(".gamesense-skin-variant-index").allInnerTexts(), ["I", "II", "III"]);
+    assert.deepEqual(await desktop.locator('.gamesense-skin-option-groups > section:first-child [data-skin-preview-video-option]').allInnerTexts(), ["I"]);
     assert.match(await desktop.locator(".gamesense-skin-video-pane iframe").getAttribute("src"), /youtube-nocookie\.com\/embed\/PT3EC2dgqzs/i);
     assert.equal(await desktop.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
     assert.equal(await desktop.locator('.gamesense-skin-model-stage iframe[src*="sketchfab.com"]').count(), 0);
     await desktop.locator('[data-skin-preview-view="1"]').click();
     assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=0&view=1/i);
     assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /phantom-0-1\.mp4/i);
+    assert.equal(await desktop.locator(".gamesense-skin-animation-preview > header [data-skin-preview-video-label]").innerText(), "VARIANT II");
     assert.equal(await desktop.locator('[data-skin-preview-view="1"]').getAttribute("aria-pressed"), "true");
     await desktop.locator(".gamesense-skin-preview-card").evaluate(card => { card.scrollTop = 0; });
     await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-desktop.png") });
@@ -772,10 +782,23 @@ async function run() {
     await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     await desktop.locator('[data-gamesense-collection-preview][data-preview-name="Reaver"]').click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-1\.mp4/i);
+    assert.deepEqual(await desktop.locator(".gamesense-skin-variant-index").allInnerTexts(), ["I", "II", "III", "IV"]);
+    await desktop.locator('[data-skin-preview-view="3"]').click();
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-true-model").count(), 1);
     assert.match(await desktop.locator(".gamesense-skin-viewer-pane").innerText(), /True 3D Model.*Reaver Phantom.*Drag to rotate.*MisterM4n.*CC BY 4\.0/is);
     assert.match(await desktop.locator('.gamesense-skin-model-stage iframe').getAttribute("src"), /sketchfab\.com\/models\/399ea10e99b5459cbf892498c7c258fc\/embed/i);
-    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-1\.mp4/i);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-4\.mp4/i);
+    assert.equal(await desktop.locator(".gamesense-skin-animation-preview > header [data-skin-preview-video-label]").innerText(), "SHARED LEVEL IV");
+    assert.match(await desktop.locator(".gamesense-skin-animation-preview > header [data-skin-preview-video-detail]").innerText(), /no separate val-skins\/Riot clip/i);
+    await desktop.locator('[data-skin-preview-view="1"]').click();
+    assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
+    assert.equal(await desktop.locator(".gamesense-skin-model-stage iframe").count(), 0);
+    assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=16&view=1/i);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-4\.mp4/i);
+    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("poster"), /phantom\.png\?preview=16&view=1/i);
+    await desktop.locator('[data-skin-preview-view="3"]').click();
     assert.equal(await desktop.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
     await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-3d-desktop.png") });
     await desktop.mouse.click(2, 2);
@@ -1151,6 +1174,7 @@ async function run() {
     assert.equal(mobileSkinViewer.columns.split(" ").length, 1, JSON.stringify(mobileSkinViewer));
     assert.equal(await mobile.locator("[data-skin-preview-view]").count(), 3);
     assert.equal(await mobile.locator("[data-skin-preview-step]").count(), 0);
+    assert.deepEqual(await mobile.locator(".gamesense-skin-variant-index").allInnerTexts(), ["I", "II", "III"]);
     assert.equal(await mobile.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
     assert.equal(await mobile.locator(".gamesense-skin-model-stage.is-static").count(), 1);
     assert.equal(await mobile.locator("[data-skin-preview-video]").count(), 1);

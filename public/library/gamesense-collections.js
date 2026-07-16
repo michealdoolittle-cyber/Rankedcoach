@@ -80,17 +80,20 @@
   const officialVctVideo = Object.freeze(["z3AOg7mUP_Y", "VALORANT"]);
   const sketchfabLicenseUrl = "https://creativecommons.org/licenses/by/4.0/";
   const approvedSketchfabModels = Object.freeze(Object.fromEntries(Object.entries({
-    "blastx|phantom": ["e3135ecb9ba34c478e28a0fac9053d50", "Valorant Phantom BlastX", "Huseyin Dogan", "valorant-phantom-blastx"],
-    "ion|phantom": ["c1011ae384f04b5b8b4f0cd3bc047ed2", "Ion Phantom VALORANT", "keytogotyou", "ion-phantom-valorant"],
-    "kuronami|marshal": ["df20cb436eb24f229e82aca15d731ba5", "Marshal Kuronami - Valorant", "kairos", "marshal-kuronami-valorant"],
-    "kuronami|operator": ["637801735b3e4d6f8d98d52f64450b4c", "KURONAMI Operator - Valorant Skin", "neumann", "kuronami-operator-valorant-skin"],
-    "prime|classic": ["ba82312c24cf4b89a6b34030b764947f", "Prime Classic | Valorant", "ILilMitch", "prime-classic-valorant"],
-    "prime|vandal": ["5c93b4c3858a44ba9fd6994508eaf3c8", "Prime Vandal", "ILilMitch", "prime-vandal"],
-    "reaver|phantom": ["399ea10e99b5459cbf892498c7c258fc", "Phantom - Reaver (White Variant) Valorant", "MisterM4n", "phantom-reaver-white-variant-valorant"],
-    "reaver|sheriff": ["94c17a4f625d44e3817d8e603e6a14d1", "Reaver Sheriff", "reaperslayz", "reaver-sheriff"],
-    "reaver|vandal": ["04f9851ace5c424492c327608b895e2c", "Reaver Vandal (White)", "ILilMitch", "reaver-vandal-white"],
-    "recon|phantom": ["85af07c2d05c4298a3a497ed091805b0", "Valorant Recon Phantom Rifle", "Jordan Stasak", "valorant-recon-phantom-rifle"],
-    "rgx-11z-pro|vandal": ["b1da0d2feb70448fae76769dc7ee01fd", "RGX Vandal Valorant", "KiLLSHOT", "rgx-vandal-valorant"]
+    "blastx|phantom|0": ["e3135ecb9ba34c478e28a0fac9053d50", "Valorant Phantom BlastX", "Huseyin Dogan", "valorant-phantom-blastx"],
+    "ion|phantom|0": ["c1011ae384f04b5b8b4f0cd3bc047ed2", "Ion Phantom VALORANT", "keytogotyou", "ion-phantom-valorant"],
+    "kuronami|marshal|0": ["df20cb436eb24f229e82aca15d731ba5", "Marshal Kuronami - Valorant", "kairos", "marshal-kuronami-valorant"],
+    "kuronami|operator|0": ["637801735b3e4d6f8d98d52f64450b4c", "KURONAMI Operator - Valorant Skin", "neumann", "kuronami-operator-valorant-skin"],
+    "prime|classic|0": ["ba82312c24cf4b89a6b34030b764947f", "Prime Classic | Valorant", "ILilMitch", "prime-classic-valorant"],
+    "prime|vandal|0": ["5c93b4c3858a44ba9fd6994508eaf3c8", "Prime Vandal", "ILilMitch", "prime-vandal"],
+    "reaver|phantom|3": ["399ea10e99b5459cbf892498c7c258fc", "Phantom - Reaver (White Variant) Valorant", "MisterM4n", "phantom-reaver-white-variant-valorant"],
+    "reaver|sheriff|0": ["94c17a4f625d44e3817d8e603e6a14d1", "Reaver Sheriff", "reaperslayz", "reaver-sheriff"],
+    "reaver|vandal|0": ["44283975faff461cb97fd7d74cbffc99", "Reaver Vandal (Purple)", "ILilMitch", "reaver-vandal-purple"],
+    "reaver|vandal|1": ["7384e642d2944bef8117cf05545a4b33", "Reaver Vandal (Red)", "ILilMitch", "reaver-vandal-red"],
+    "reaver|vandal|2": ["4a2b2d3a24bc4928b1a20efca88fee19", "Reaver Vandal (Black)", "ILilMitch", "reaver-vandal-black"],
+    "reaver|vandal|3": ["04f9851ace5c424492c327608b895e2c", "Reaver Vandal (White)", "ILilMitch", "reaver-vandal-white"],
+    "recon|phantom|0": ["85af07c2d05c4298a3a497ed091805b0", "Valorant Recon Phantom Rifle", "Jordan Stasak", "valorant-recon-phantom-rifle"],
+    "rgx-11z-pro|vandal|0": ["b1da0d2feb70448fae76769dc7ee01fd", "RGX Vandal Valorant", "KiLLSHOT", "rgx-vandal-valorant"]
   }).map(([key, value]) => [key, Object.freeze({
     id: value[0],
     title: value[1],
@@ -124,8 +127,8 @@
     }) : null;
   }
 
-  function getSketchfabModel(name = "", weaponName = "") {
-    return approvedSketchfabModels[`${normalizeCollectionKey(name)}|${String(weaponName).trim().toLowerCase()}`] || null;
+  function getSketchfabModel(name = "", weaponName = "", variantIndex = 0) {
+    return approvedSketchfabModels[`${normalizeCollectionKey(name)}|${String(weaponName).trim().toLowerCase()}|${Math.max(0, Number(variantIndex) || 0)}`] || null;
   }
 
   function getSkinVariants(skin = {}) {
@@ -169,6 +172,10 @@
       const displayName = String(skin?.displayName || "").trim();
       const art = getSkinArt(skin);
       const name = getCollectionName(displayName, weaponName);
+      const variants = Object.freeze(art.variants.map((variant, index) => Object.freeze({
+        ...variant,
+        sketchfabModel: getSketchfabModel(name, weaponName, index)
+      })));
       const tier = contentTiers[String(skin?.contentTierUuid || "").toLowerCase()] || Object.freeze({ label: "Unrated", icon: "" });
       return {
         id: String(skin?.uuid || `${weaponName}-${name}`),
@@ -179,10 +186,10 @@
         editionIcon: tier.icon,
         image: art.card,
         previewImage: art.preview,
-        variants: art.variants,
-        views: art.variants,
+        variants,
+        views: variants,
         upgradeVideos: getUpgradeVideos(skin),
-        sketchfabModel: getSketchfabModel(name, weaponName),
+        sketchfabModel: variants[0]?.sketchfabModel || null,
         bundleVideo: getCollectionVideo(name)
       };
     }).filter(item => {

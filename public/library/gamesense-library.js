@@ -738,17 +738,31 @@
     const item = cached.find(collection => collection.id === id);
     if (item) return item;
     const source = String(trigger?.dataset?.previewSrc || "").trim();
+    const name = String(trigger?.dataset?.previewName || "Weapon skin").trim();
+    const model = getWeaponCollectionProvider()?.getSketchfabModel?.(name, weapon, 0) || null;
     return {
       id,
-      name: String(trigger?.dataset?.previewName || "Weapon skin").trim(),
+      name,
       weaponName: weapon,
       previewImage: source,
-      variants: source ? [{ id: `${id}-variant-1`, source, label: "Default variant", video: "" }] : [],
-      views: source ? [{ id: `${id}-variant-1`, source, label: "Default variant", video: "" }] : [],
+      variants: source ? [{ id: `${id}-variant-1`, source, label: "Default variant", video: "", sketchfabModel: model }] : [],
+      views: source ? [{ id: `${id}-variant-1`, source, label: "Default variant", video: "", sketchfabModel: model }] : [],
       upgradeVideos: [],
-      sketchfabModel: getWeaponCollectionProvider()?.getSketchfabModel?.(String(trigger?.dataset?.previewName || "Weapon skin").trim(), weapon) || null,
+      sketchfabModel: model,
       bundleVideo: null
     };
+  }
+
+  function toRomanNumeral(value = 1) {
+    let remaining = Math.max(1, Math.min(99, Math.floor(Number(value) || 1)));
+    const numerals = [[50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+    return numerals.reduce((result, [amount, symbol]) => {
+      while (remaining >= amount) {
+        result += symbol;
+        remaining -= amount;
+      }
+      return result;
+    }, "");
   }
 
   function getApprovedSkinVideoUrl(value = "") {
@@ -764,7 +778,7 @@
   function getSkinPreviewVideos(item, variants) {
     const videos = [];
     const seen = new Map();
-    const addVideo = (entry, kind, poster = "") => {
+    const addVideo = (entry, kind, ordinal, poster = "") => {
       const video = getApprovedSkinVideoUrl(entry?.video);
       if (!video) return -1;
       if (seen.has(video)) return seen.get(video);
@@ -773,15 +787,21 @@
         id: String(entry?.id || `${kind}-${index + 1}`),
         kind,
         label: String(entry?.label || `${kind === "level" ? "Upgrade" : "Variant"} ${index + 1}`).trim(),
+        displayLabel: `${kind === "level" ? "Level" : "Variant"} ${toRomanNumeral(ordinal + 1)}`,
         poster: String(poster || item?.previewImage || variants[0]?.source || "").trim(),
         video
       });
       seen.set(video, index);
       return index;
     };
-    (item?.upgradeVideos || []).forEach(level => addVideo(level, "level"));
-    const variantIndexes = variants.map(variant => addVideo(variant, "variant", variant.source));
-    return { videos, variantIndexes };
+    (item?.upgradeVideos || []).forEach((level, index) => addVideo(level, "level", index));
+    const directVariantIndexes = variants.map((variant, index) => addVideo(variant, "variant", index, variant.source));
+    const fallbackIndex = [...(item?.upgradeVideos || []).keys()]
+      .map(index => seen.get(getApprovedSkinVideoUrl(item.upgradeVideos[index]?.video)))
+      .filter(index => Number.isInteger(index))
+      .at(-1) ?? (videos.length ? 0 : -1);
+    const variantIndexes = directVariantIndexes.map(index => index >= 0 ? index : fallbackIndex);
+    return { videos, variantIndexes, directVariantIndexes };
   }
 
   function setActiveSkinView(nextIndex) {
@@ -798,7 +818,7 @@
       image.src = active.dataset.skinPreviewSource || image.src;
       image.alt = active.dataset.skinPreviewAlt || image.alt;
     }
-    if (label) label.textContent = `${active.dataset.skinViewLabel || `Variant ${activeSkinViewIndex + 1}`} - ${activeSkinViewIndex + 1} of ${count}`;
+    if (label) label.textContent = `Variant ${toRomanNumeral(activeSkinViewIndex + 1)} of ${toRomanNumeral(count)}`;
     selectors.forEach((selector, index) => {
       const isActive = index === activeSkinViewIndex;
       selector.classList.toggle("active", isActive);
@@ -806,25 +826,61 @@
     });
   }
 
-  function setActiveSkinVideo(nextIndex) {
+  function setActiveSkinModel(overlay, variant, name, weapon) {
+    const model = /^[a-f0-9]{32}$/i.test(String(variant?.sketchfabModel?.id || "")) ? variant.sketchfabModel : null;
+    const stage = overlay?.querySelector(".gamesense-skin-model-stage");
+    const kicker = overlay?.querySelector("[data-skin-model-kicker]");
+    const guidance = overlay?.querySelector("[data-skin-model-guidance]");
+    const footer = overlay?.querySelector("[data-skin-model-footer]");
+    const card = overlay?.querySelector(".gamesense-skin-preview-card");
+    if (!stage || !footer || !card) return;
+    card.classList.toggle("has-true-model", Boolean(model));
+    card.classList.toggle("has-static-render", !model);
+    stage.classList.toggle("has-model", Boolean(model));
+    stage.classList.toggle("is-static", !model);
+    if (kicker) kicker.textContent = model ? "True 3D Model" : "Official Weapon Render";
+    if (guidance) guidance.textContent = model
+      ? "Drag to rotate. Scroll or pinch to zoom."
+      : "No approved exact 3D model is available for this color variant yet.";
+    if (model) {
+      stage.innerHTML = `<iframe src="${escapeHtml(model.embedUrl)}" title="Interactive 3D model of ${escapeHtml(model.title)} by ${escapeHtml(model.creator)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; xr-spatial-tracking"></iframe>`;
+      footer.innerHTML = `<span>Community model attribution</span><strong>${escapeHtml(model.title)}</strong><small>Created by ${escapeHtml(model.creator)} · <a href="${escapeHtml(model.modelUrl)}" target="_blank" rel="noopener noreferrer">View on Sketchfab</a> · <a href="${escapeHtml(model.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.license)}</a></small>`;
+      return;
+    }
+    const count = overlay.querySelectorAll("[data-skin-preview-view]").length || 1;
+    const index = Math.max(0, activeSkinViewIndex);
+    const searchUrl = `https://sketchfab.com/search?type=models&q=${encodeURIComponent(`${name} ${weapon} Valorant`)}`;
+    stage.innerHTML = `<img data-skin-preview-image src="${escapeHtml(variant?.source || "")}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant?.label || `variant ${index + 1}`)}"><span class="gamesense-skin-model-unavailable">Static render — exact 3D unavailable</span>`;
+    footer.innerHTML = `<span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>Variant ${toRomanNumeral(index + 1)} of ${toRomanNumeral(count)} · <a href="${escapeHtml(searchUrl)}" target="_blank" rel="noopener noreferrer">Search Sketchfab references</a></small>`;
+  }
+
+  function setActiveSkinVideo(nextIndex, sourceSelector = null) {
     const overlay = activeSkinPreview;
     if (!overlay) return;
     const selectors = [...overlay.querySelectorAll("[data-skin-preview-video-option]")];
-    const selected = selectors.find(selector => Number(selector.dataset.skinPreviewVideoOption) === Number(nextIndex));
+    const selected = sourceSelector?.matches?.("[data-skin-preview-video-option]")
+      ? sourceSelector
+      : selectors.find(selector => Number(selector.dataset.skinPreviewVideoOption) === Number(nextIndex));
     const video = overlay.querySelector("[data-skin-preview-video]");
     if (!selected || !video) return;
     activeSkinVideoIndex = Number(nextIndex);
     const nextSource = selected.dataset.skinPreviewVideoSource || "";
-    if (nextSource && video.src !== nextSource) {
-      video.src = nextSource;
-      video.poster = selected.dataset.skinPreviewVideoPoster || video.poster;
+    const nextPoster = selected.dataset.skinPreviewVideoPoster || "";
+    const sourceChanged = Boolean(nextSource && video.src !== nextSource);
+    const posterChanged = Boolean(nextPoster && video.poster !== nextPoster);
+    if (sourceChanged) video.src = nextSource;
+    if (posterChanged) video.poster = nextPoster;
+    if (sourceChanged || posterChanged) {
       video.load();
       video.play().catch(() => { /* Player controls remain available when autoplay is blocked. */ });
     }
     const label = overlay.querySelector("[data-skin-preview-video-label]");
     if (label) label.textContent = selected.dataset.skinPreviewVideoLabel || "Skin animation";
+    const detail = overlay.querySelector("[data-skin-preview-video-detail]");
+    if (detail) detail.textContent = selected.dataset.skinPreviewVideoDetail || "Animation supplied by Riot data used by val-skins.";
     selectors.forEach(selector => {
-      const isActive = Number(selector.dataset.skinPreviewVideoOption) === activeSkinVideoIndex;
+      const isActive = Number(selector.dataset.skinPreviewVideoOption) === activeSkinVideoIndex
+        && (!selector.hasAttribute("data-skin-preview-view") || selector === selected);
       selector.classList.toggle("is-video-active", isActive);
       if (!selector.hasAttribute("data-skin-preview-view")) selector.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
@@ -835,14 +891,17 @@
     const name = String(item?.name || "Weapon skin").trim();
     const weapon = String(item?.weaponName || "Weapon").trim();
     const variants = (item?.variants || item?.views || []).filter(variant => variant?.source);
-    const { videos: previewVideos, variantIndexes: variantVideoIndexes } = getSkinPreviewVideos(item, variants);
-    const model = /^[a-f0-9]{32}$/i.test(String(item?.sketchfabModel?.id || "")) ? item.sketchfabModel : null;
+    const { videos: previewVideos, variantIndexes: variantVideoIndexes, directVariantIndexes } = getSkinPreviewVideos(item, variants);
+    const model = /^[a-f0-9]{32}$/i.test(String(variants[0]?.sketchfabModel?.id || item?.sketchfabModel?.id || ""))
+      ? (variants[0]?.sketchfabModel || item.sketchfabModel)
+      : null;
     const approvedChannels = new Set(["VALORANT", "Dittozkul"]);
     const requestedVideoId = String(item?.bundleVideo?.id || "");
     const videoId = approvedChannels.has(item?.bundleVideo?.channel) && /^[a-zA-Z0-9_-]{11}$/.test(requestedVideoId) ? requestedVideoId : "";
     const playlistId = item?.bundleVideo?.channel === "VALORANT" && /^[a-zA-Z0-9_-]{34}$/.test(String(item?.bundleVideo?.playlistId || ""))
       ? String(item.bundleVideo.playlistId)
       : "";
+    const sketchfabSearchUrl = `https://sketchfab.com/search?type=models&q=${encodeURIComponent(`${name} ${weapon} Valorant`)}`;
     if (!variants.length) return;
     closeSkinPreview();
     activeSkinViewIndex = 0;
@@ -856,24 +915,34 @@
     overlay.innerHTML = `
       <div class="gamesense-skin-preview-card${videoId ? " has-secondary-video" : " is-primary-only"}${model ? " has-true-model" : " has-static-render"}">
         <section class="gamesense-skin-viewer-pane">
-          <header><div><span>${model ? "True 3D Model" : "Official Weapon Render"}</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong><small>${model ? "Drag to rotate. Scroll or pinch to zoom." : "No approved exact 3D model is available for this weapon skin yet."}</small></div></header>
+          <header><div><span data-skin-model-kicker>${model ? "True 3D Model" : "Official Weapon Render"}</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong><small data-skin-model-guidance>${model ? "Drag to rotate. Scroll or pinch to zoom." : "No approved exact 3D model is available for this color variant yet."}</small></div></header>
           <div class="gamesense-skin-model-stage${model ? " has-model" : " is-static"}">
             ${model ? `<iframe src="${escapeHtml(model.embedUrl)}" title="Interactive 3D model of ${escapeHtml(model.title)} by ${escapeHtml(model.creator)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>` : `<img data-skin-preview-image src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}"><span class="gamesense-skin-model-unavailable">Static render — 3D unavailable</span>`}
           </div>
-          <footer>${model ? `<span>Community model attribution</span><strong>${escapeHtml(model.title)}</strong><small>Created by ${escapeHtml(model.creator)} · <a href="${escapeHtml(model.modelUrl)}" target="_blank" rel="noopener noreferrer">View on Sketchfab</a> · <a href="${escapeHtml(model.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.license)}</a></small>` : `<span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>${escapeHtml(variants[0].label || "Default variant")} - 1 of ${variants.length}</small>`}</footer>
+          <footer data-skin-model-footer>${model ? `<span>Community model attribution</span><strong>${escapeHtml(model.title)}</strong><small>Created by ${escapeHtml(model.creator)} · <a href="${escapeHtml(model.modelUrl)}" target="_blank" rel="noopener noreferrer">View on Sketchfab</a> · <a href="${escapeHtml(model.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.license)}</a></small>` : `<span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>Variant I of ${toRomanNumeral(variants.length)} · <a href="${escapeHtml(sketchfabSearchUrl)}" target="_blank" rel="noopener noreferrer">Search Sketchfab references</a></small>`}</footer>
         </section>
         <div class="gamesense-skin-preview-divider" aria-hidden="true"></div>
         <section class="gamesense-skin-media-pane${videoId ? " has-secondary-video" : ""}">
           <article class="gamesense-skin-animation-preview">
-            <header><span>Skin Animation</span><strong data-skin-preview-video-label>${escapeHtml(previewVideos[0]?.label || `${name} preview`)}</strong><small>Direct level and variant animation used by val-skins</small></header>
+            <header><span>Skin Animation</span><strong data-skin-preview-video-label>${escapeHtml(previewVideos[0]?.displayLabel || `${name} preview`)}</strong><small data-skin-preview-video-detail>Animation supplied by Riot data used by val-skins.</small></header>
             <div class="gamesense-skin-animation-frame">${previewVideos.length ? `<video data-skin-preview-video src="${escapeHtml(previewVideos[0].video)}" poster="${escapeHtml(previewVideos[0].poster)}" controls autoplay muted playsinline preload="metadata"></video>` : `<div class="gamesense-skin-video-unavailable"><strong>No animation published</strong><span>This skin does not include a streamed level or variant preview.</span></div>`}</div>
             <div class="gamesense-skin-option-groups">
-              ${(item?.upgradeVideos || []).some(level => getApprovedSkinVideoUrl(level.video)) ? `<section><span>Upgrade levels</span><div role="group" aria-label="Choose a ${escapeHtml(name)} upgrade animation">${(item.upgradeVideos || []).map(level => {
+              ${(item?.upgradeVideos || []).some(level => getApprovedSkinVideoUrl(level.video)) ? `<section><span>Upgrade levels</span><div role="group" aria-label="Choose a ${escapeHtml(name)} upgrade animation">${(item.upgradeVideos || []).map((level, levelIndex) => {
                 const index = previewVideos.findIndex(video => video.video === getApprovedSkinVideoUrl(level.video));
-                return index < 0 ? "" : `<button type="button" class="${index === 0 ? "is-video-active" : ""}" data-skin-preview-video-option="${index}" data-skin-preview-video-source="${escapeHtml(previewVideos[index].video)}" data-skin-preview-video-poster="${escapeHtml(previewVideos[index].poster)}" data-skin-preview-video-label="${escapeHtml(level.label)}" aria-pressed="${index === 0 ? "true" : "false"}">${escapeHtml(level.label)}</button>`;
+                const roman = toRomanNumeral(levelIndex + 1);
+                return index < 0 ? "" : `<button type="button" class="${index === 0 ? "is-video-active" : ""}" data-skin-preview-video-option="${index}" data-skin-preview-video-source="${escapeHtml(previewVideos[index].video)}" data-skin-preview-video-poster="${escapeHtml(previewVideos[index].poster)}" data-skin-preview-video-label="Level ${roman}" data-skin-preview-video-detail="Level-specific animation supplied by Riot data used by val-skins." aria-label="Play ${escapeHtml(level.label)}" title="${escapeHtml(level.label)}" aria-pressed="${index === 0 ? "true" : "false"}">${roman}</button>`;
               }).join("")}</div></section>` : ""}
               <section><span>Color variants</span><div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} color variant">
-                ${variants.map((variant, index) => `<button type="button" class="${index === 0 ? "active" : ""}${variantVideoIndexes[index] === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="${escapeHtml(variant.label || `Variant ${index + 1}`)}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}"${variantVideoIndexes[index] >= 0 ? ` data-skin-preview-video-option="${variantVideoIndexes[index]}" data-skin-preview-video-source="${escapeHtml(previewVideos[variantVideoIndexes[index]].video)}" data-skin-preview-video-poster="${escapeHtml(previewVideos[variantVideoIndexes[index]].poster)}" data-skin-preview-video-label="${escapeHtml(variant.label || `Variant ${index + 1}`)}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span><span>${escapeHtml(variant.label || `Variant ${index + 1}`)}</span></button>`).join("")}
+                ${variants.map((variant, index) => {
+                  const roman = toRomanNumeral(index + 1);
+                  const videoIndex = variantVideoIndexes[index];
+                  const hasDirectVideo = directVariantIndexes[index] >= 0;
+                  const videoLabel = hasDirectVideo ? `Variant ${roman}` : `Shared ${previewVideos[videoIndex]?.displayLabel || "animation"}`;
+                  const videoDetail = hasDirectVideo
+                    ? "Color-specific animation supplied by Riot data used by val-skins."
+                    : "Shared level animation; this color has no separate val-skins/Riot clip.";
+                  return `<button type="button" class="${index === 0 ? "active" : ""}${videoIndex === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="Variant ${roman}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}"${videoIndex >= 0 ? ` data-skin-preview-video-option="${videoIndex}" data-skin-preview-video-source="${escapeHtml(previewVideos[videoIndex].video)}" data-skin-preview-video-poster="${escapeHtml(variant.source || previewVideos[videoIndex].poster)}" data-skin-preview-video-label="${escapeHtml(videoLabel)}" data-skin-preview-video-detail="${escapeHtml(videoDetail)}" data-skin-preview-video-direct="${hasDirectVideo ? "true" : "false"}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" title="${escapeHtml(variant.label || `Variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span><span class="gamesense-skin-variant-index">${roman}</span></button>`;
+                }).join("")}
               </div></section>
             </div>
           </article>
@@ -890,9 +959,13 @@
         return;
       }
       const selector = event.target.closest?.("[data-skin-preview-view]");
-      if (selector) setActiveSkinView(Number(selector.dataset.skinPreviewView || 0));
+      if (selector) {
+        const index = Number(selector.dataset.skinPreviewView || 0);
+        setActiveSkinView(index);
+        setActiveSkinModel(overlay, variants[index], name, weapon);
+      }
       const videoSelector = event.target.closest?.("[data-skin-preview-video-option]");
-      if (videoSelector) setActiveSkinVideo(Number(videoSelector.dataset.skinPreviewVideoOption || 0));
+      if (videoSelector) setActiveSkinVideo(Number(videoSelector.dataset.skinPreviewVideoOption || 0), videoSelector);
     });
     document.body.appendChild(overlay);
     activeSkinPreview = overlay;
