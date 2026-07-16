@@ -16596,19 +16596,32 @@ function formatLifetimeSeasonMarker(season = "") {
 }
 
 function buildLifetimeSeasonBoundaryMarkup(transitions = [], points = []) {
-  return (transitions || []).map((transition) => {
+  const markers = (transitions || []).map((transition) => {
     const nextPointIndex = points.findIndex(point => point?.matchIndex >= transition.index);
-    if (nextPointIndex < 1) return "";
+    if (nextPointIndex < 1) return null;
     const nextPoint = points[nextPointIndex];
     const previousPoint = points[nextPointIndex - 1] || nextPoint;
     const x = transition.isFirst
       ? safeNumber(nextPoint.x)
       : (safeNumber(previousPoint.x) + safeNumber(nextPoint.x)) / 2;
-    const marker = formatLifetimeSeasonMarker(transition.season);
+    return { transition, marker: formatLifetimeSeasonMarker(transition.season), x };
+  }).filter(Boolean);
+
+  const laneCount = isMobileLayoutViewport() ? 3 : 2;
+  const minimumLaneGap = isMobileLayoutViewport() ? 30 : 42;
+  const lastXByLane = Array.from({ length: laneCount }, () => Number.NEGATIVE_INFINITY);
+
+  return markers.map(({ transition, marker, x }) => {
+    let lane = lastXByLane.findIndex(lastX => x - lastX >= minimumLaneGap);
+    if (lane < 0) {
+      lane = lastXByLane.indexOf(Math.min(...lastXByLane));
+    }
+    lastXByLane[lane] = x;
+    const labelY = PAD_TOP + 13 + (lane * 32);
     return `
-      <g class="chart-season-boundary" data-season="${escapeHtml(transition.season)}">
+      <g class="chart-season-boundary chart-season-boundary-lane-${lane}" data-season="${escapeHtml(transition.season)}" data-label-lane="${lane}">
         <line x1="${x}" y1="${PAD_TOP}" x2="${x}" y2="${PAD_BOTTOM}" />
-        <text x="${x}" y="${PAD_TOP + 13}" text-anchor="middle">
+        <text x="${x}" y="${labelY}" text-anchor="middle">
           <tspan class="chart-season-title" x="${x}">${escapeHtml(marker.title)}</tspan>
           ${marker.act ? `<tspan class="chart-season-act" x="${x}" dy="14">${escapeHtml(marker.act)}</tspan>` : ""}
         </text>
@@ -46143,6 +46156,7 @@ if(chartHeight){
     : getChartSourceEntries(resolvedSize);
   updateRRChartDataStatus(chartSource);
   const isLifetimeRankTimeline = String(resolvedSize).toLowerCase() === "all";
+  chartRow.classList.toggle("is-lifetime-rank-chart", isLifetimeRankTimeline);
   const lifetimeRankSeries = isLifetimeRankTimeline ? buildLifetimeRankSeries(chartSource.entries) : null;
   const chartEntries = isLifetimeRankTimeline ? lifetimeRankSeries.entries : chartSource.entries;
   const chartMatchCount = chartEntries.length;
@@ -46190,8 +46204,13 @@ if(chartHeight){
     chartTooltipSuppressed = false;
   }
 	 
-  PAD_LEFT = CHART_W * (isLifetimeRankTimeline ? (isMobileLayoutViewport() ? 0.15 : 0.12) : 0.055);
-  PAD_RIGHT = CHART_W * 0.055;
+  const isMobileLifetimeTimeline = isLifetimeRankTimeline && isMobileLayoutViewport();
+  PAD_LEFT = isMobileLifetimeTimeline
+    ? Math.max(38, Math.min(44, CHART_W * 0.12))
+    : CHART_W * (isLifetimeRankTimeline ? 0.12 : 0.055);
+  PAD_RIGHT = isMobileLifetimeTimeline
+    ? Math.max(8, CHART_W * 0.025)
+    : CHART_W * 0.055;
   PAD_TOP = CHART_H * 0.08;
   PAD_BOTTOM = CHART_H * (isMobileLayoutViewport() ? 0.78 : 0.64);
 

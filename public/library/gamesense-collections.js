@@ -29,18 +29,90 @@
     "e046854e-406c-37f4-6607-19a9ba8426fc": Object.freeze({ label: "Exclusive", icon: `${contentTierIconRoot}/e046854e-406c-37f4-6607-19a9ba8426fc/displayicon.png` }),
     "411e4a55-4e59-7757-41f0-86a53f101bb5": Object.freeze({ label: "Ultra", icon: `${contentTierIconRoot}/411e4a55-4e59-7757-41f0-86a53f101bb5/displayicon.png` })
   });
-  const collectionVideos = Object.freeze({
-    aemondir: Object.freeze({ id: "P3fUih8vWhY", title: "Aemondir bundle showcase", channel: "Kanga" }),
-    chronovoid: Object.freeze({ id: "CT8iu21QemU", title: "ChronoVoid bundle showcase", channel: "Valorant ASMR" }),
-    "evori-dreamwings": Object.freeze({ id: "oW0qmFWHnlw", title: "Evori Dreamwings bundle showcase", channel: "Kanga" }),
-    glitchpop: Object.freeze({ id: "cQvYigbe-f4", title: "Glitchpop bundle showcase", channel: "Valorant SkinSpotlight" }),
-    neptune: Object.freeze({ id: "YWPokR196IU", title: "Neptune bundle showcase", channel: "Valorant SkinSpotlight" }),
-    "prelude-to-chaos": Object.freeze({ id: "XOwgSAWD1ZA", title: "Prelude to Chaos bundle showcase", channel: "Valorant SkinSpotlight" }),
-    "protocol-781-a": Object.freeze({ id: "kFVmNy4AGWo", title: "Protocol 781-A bundle showcase", channel: "Valorant SkinSpotlight" }),
-    "radiant-entertainment-system": Object.freeze({ id: "Wj53-KugZJI", title: "Radiant Entertainment System bundle showcase", channel: "Kanga" }),
-    recon: Object.freeze({ id: "BWmYepJkpBY", title: "Recon bundle showcase", channel: "Valorant SkinSpotlight" }),
-    "rgx-11z-pro": Object.freeze({ id: "pcHmsSqik_U", title: "RGX 11z Pro bundle showcase", channel: "Valorant SkinSpotlight" })
-  });
+  const premiumVideoTiers = new Set(["premium", "exclusive", "ultra"]);
+  const collectionVideos = Object.freeze(Object.fromEntries(Object.entries({
+    aemondir: ["P3fUih8vWhY", "Kanga"],
+    araxys: ["gVQpP7djcDc", "Kanga"],
+    arcane: ["oibDoXyQDac", "Kanga"],
+    ayakashi: ["1zrdgM1G6hY", "Meox"],
+    "black-market": ["m8mfREoopSg", "Valorant SkinSpotlight"],
+    blackspyre: ["CRqNCfjseQ0", "DoctorPhysicist"],
+    blackthorn: ["GvpiPBD6tgI", "Meox"],
+    blastx: ["2FrfcPRn0XI", "TalkEsport"],
+    bolt: ["mufIbt9t3ok", "Kanga"],
+    "bubblegum-deathwish": ["3Y1u98jmFV0", "Kanga"],
+    celestial: ["NAe-po13XTA", "The Forge: VALORANT Skins"],
+    "champions-2021": ["89qMIUw67GU", "Valorant SkinSpotlight"],
+    "champions-2022": ["QXE5h476aBA", "Kanga"],
+    "champions-2023": ["C1I23KRtZWo", "Kanga"],
+    "champions-2024": ["xHMYB5AV_5s", "Kanga"],
+    "champions-2025": ["ojShvR9PZC4", "Kanga"],
+    chronovoid: ["2sE8Jr8AZy8", "Kanga"],
+    crimsonbeast: ["tnP1COM08Do", "Esports Driven"],
+    cryostasis: ["4sczRLQC_Ro", "Kanga"],
+    cyrax: ["6kiqJQPYzO8", "Kanga"],
+    divergence: ["wQWV_1244VY", "Kanga"],
+    "dolmir-s-revenge": ["fOQyQua1QaM", "TJR Gaming"],
+    "doodle-buds": ["oCINEFzQoRc", "Valorant SkinSpotlight"],
+    doombringer: ["8KlFkWIhFSg", "Kanga"],
+    ego: ["7L9g0s01orE", "The Forge: VALORANT Skins"],
+    elderflame: ["u_cDp9XkOas", "rechyyy"],
+    "evori-dreamwings": ["oW0qmFWHnlw", "Kanga"],
+    "ex-o": ["ocPCS3hghGU", "Kanga"],
+    forsaken: ["MAf9rTahJ1c", "Valorant SkinSpotlight"],
+    "gaia-s-vengeance": ["kHBk-2il0x8", "MaybeCrabbzy"],
+    glitchpop: ["f39y5ghRbrQ", "The Forge: VALORANT Skins"],
+    "gravitational-uranium-neuroblaster": ["wpLgTGn0cvc", "AntsGaming"],
+    helix: ["_99kOwQ8Gts", "Kanga"],
+    "holo-meridian": ["42S0EBU_HHA", "VALORANT Lab"],
+    imperium: ["hQBqK-w2EIc", "Kanga"],
+    ion: ["uBZm56vdGKY", "Valorant SkinSpotlight"],
+    kuronami: ["xk5owLRuPEY", "Kanga"],
+    magepunk: ["iNNu9AmzWdg", "DKisLive"],
+    mystbloom: ["M4-1l49CF6E", "Kanga"],
+    nebula: ["kpZbl0t5kQw", "The Forge: VALORANT Skins"],
+    "neo-frontier": ["WjAeLhgL5KY", "Game Poduvom"],
+    neptune: ["o9Dfkip6cBM", "Kanga"],
+    nocturnum: ["tj4FwaVG9ik", "Kanga"],
+    "ora-by-onetap": ["f_rQf5dGvLs", "Red"],
+    oni: ["qoICo17c9T8", "Valorant SkinSpotlight"],
+    origin: ["ItnfxlBgq7U", "The Forge: VALORANT Skins"],
+    overdrive: ["_M_yPgFU40Q", "Kanga"],
+    phaseguard: ["t_6Hf_NLeok", "Kanga"],
+    "prelude-to-chaos": ["tFy8C1axKJk", "Kanga"],
+    prime: ["kB7RlywW4SQ", "Valorant SkinSpotlight"],
+    "prime-2-0": ["qo0ohDBYQAk", "Valorant SkinSpotlight"],
+    primordium: ["8Rna93ul_VA", "Kanga"],
+    "protocol-781-a": ["kFVmNy4AGWo", "Valorant SkinSpotlight"],
+    "radiant-crisis-001": ["iRJ-79LqSrc", "The Forge: VALORANT Skins"],
+    "radiant-entertainment-system": ["Wj53-KugZJI", "Kanga"],
+    reaver: ["TV-XRoSisMs", "Valorant SkinSpotlight"],
+    recon: ["BWmYepJkpBY", "Valorant SkinSpotlight"],
+    "rgx-11z-pro": ["drlG24xN2tw", "Valorant SkinSpotlight"],
+    rogue: ["Ilk93Q8dXHE", "Kanga"],
+    ruination: ["Pb6a1v-9HEY", "The Forge: VALORANT Skins"],
+    "sentinels-of-light": ["7sSQTHlWtpk", "Valorant SkinSpotlight"],
+    singularity: ["6g6V4ApThqY", "Valorant SkinSpotlight"],
+    solarstride: ["SC6PBhOTHjQ", "Meox"],
+    soulstrife: ["C6JGsR5ag7c", "Kanga"],
+    sovereign: ["oVp-1NnLmU8", "Kanga"],
+    spectrum: ["c-t3Lw6tJ5Y", "Valorant SkinSpotlight"],
+    splashx: ["VJJMfN3sDBs", "Kanga"],
+    spline: ["6eLesXOnORA", "The Forge: VALORANT Skins"],
+    "tethered-realms": ["bif2NRrjCns", "Valorant SkinSpotlight"],
+    undercity: ["HgFSgxzRMhM", "Valorant SkinSpotlight"],
+    "valiant-hero": ["dSRvvUolVJY", "Kanga"],
+    "valorant-go-vol-1": ["7rKIL2SeEOg", "FerGoPlay"],
+    "valorant-go-vol-2": ["wUz9GtZ0fk8", "Valorant SkinSpotlight"],
+    xenohunter: ["QVtQ4604w9Q", "Classic Architect"],
+    xerofang: ["-WBtYNv_X3Q", "Bharath"],
+    "xerofang-vandal": ["-WBtYNv_X3Q", "Bharath"]
+  }).map(([key, value]) => [key, Object.freeze(value)])));
+  const vctCollectionVideos = Object.freeze(Object.fromEntries(Object.entries({
+    vct24: ["MIPjeD7keZM", "Avenger Gaming 71"],
+    vct25: ["YGk8rLME534", "WhyAlwaysSam"],
+    vct26: ["pS86jCM2pRc", "MetaSCREAM"]
+  }).map(([key, value]) => [key, Object.freeze(value)])));
   const cache = new Map();
   const pending = new Map();
 
@@ -50,7 +122,25 @@
   }
 
   function normalizeCollectionKey(value = "") {
-    return String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return String(value).normalize("NFKD").replace(/[Øø]/g, "o").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function getCollectionVideo(name = "", editionKey = "") {
+    if (!premiumVideoTiers.has(String(editionKey).toLowerCase())) return null;
+    const key = normalizeCollectionKey(name);
+    const vctFamily = key.startsWith("vct26-x-")
+      ? "vct26"
+      : key.startsWith("vct25-x-")
+        ? "vct25"
+        : key.startsWith("vct-x-")
+          ? "vct24"
+          : "";
+    const video = collectionVideos[key] || vctCollectionVideos[vctFamily];
+    return video ? Object.freeze({
+      id: video[0],
+      title: `${name} community showcase`,
+      channel: video[1]
+    }) : null;
   }
 
   function getSkinViews(skin = {}) {
@@ -97,7 +187,7 @@
         image: art.card,
         previewImage: art.preview,
         views: art.views,
-        bundleVideo: collectionVideos[normalizeCollectionKey(name)] || null
+        bundleVideo: getCollectionVideo(name, tier.label)
       };
     }).filter(item => {
       const key = `${item.weaponName}|${item.name}`.toLowerCase();
@@ -141,5 +231,5 @@
     return request;
   }
 
-  globalThis.RankedCoachWeaponCollections = Object.freeze({ getCached, loadForWeapon });
+  globalThis.RankedCoachWeaponCollections = Object.freeze({ getCached, loadForWeapon, getCollectionVideo });
 })();

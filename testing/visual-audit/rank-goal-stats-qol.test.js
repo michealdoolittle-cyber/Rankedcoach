@@ -636,6 +636,10 @@ async function run() {
       const controls = card.querySelector(".graph-controls, .graph-buttons, .rr-graph-controls") || card.querySelector('.graph-btn[data-size="5"]')?.parentElement;
       const controlsRect = controls.getBoundingClientRect();
       const rankLabels = [...card.querySelectorAll(".chart-rank-axis-icon image")].map(label => label.getBoundingClientRect());
+      const seasonLabels = [...card.querySelectorAll(".chart-season-boundary text")].map(label => {
+        const rect = label.getBoundingClientRect();
+        return { ...rect.toJSON(), lane: label.closest(".chart-season-boundary")?.dataset?.labelLane || "" };
+      });
       return {
         cardLeft: cardRect.left,
         cardRight: cardRect.right,
@@ -646,15 +650,19 @@ async function run() {
         legendTop: legend.top,
         legendBottom: legend.bottom,
         controlsTop: controlsRect.top,
-        rankLabels: rankLabels.map(rect => ({ left: rect.left, right: rect.right }))
+        rankLabels: rankLabels.map(rect => ({ left: rect.left, right: rect.right })),
+        seasonLabels
       };
     });
     assert.ok(mobileLifetimeGeometry.titleBottom < mobileLifetimeGeometry.legendTop, JSON.stringify(mobileLifetimeGeometry));
     assert.ok(mobileLifetimeGeometry.legendBottom < mobileLifetimeGeometry.controlsTop, JSON.stringify(mobileLifetimeGeometry));
     assert.ok(mobileLifetimeGeometry.rankLabels.length >= 3, JSON.stringify(mobileLifetimeGeometry));
     assert.ok(mobileLifetimeGeometry.rankLabels.every(rect => rect.left >= mobileLifetimeGeometry.cardLeft - 1 && rect.right <= mobileLifetimeGeometry.cardRight + 1), JSON.stringify(mobileLifetimeGeometry));
-    assert.ok(mobileLifetimeGeometry.chartWidth >= mobileLifetimeGeometry.cardRight - mobileLifetimeGeometry.cardLeft - 36, JSON.stringify(mobileLifetimeGeometry));
-    assert.ok(mobileLifetimeGeometry.plotWidth >= mobileLifetimeGeometry.svgWidth * .78, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.chartWidth >= mobileLifetimeGeometry.cardRight - mobileLifetimeGeometry.cardLeft - 12, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.plotWidth >= mobileLifetimeGeometry.svgWidth * .82, JSON.stringify(mobileLifetimeGeometry));
+    assert.ok(mobileLifetimeGeometry.seasonLabels.every((label, index, labels) => labels.slice(index + 1).every(other => (
+      label.right <= other.left || other.right <= label.left || label.bottom <= other.top || other.bottom <= label.top
+    ))), JSON.stringify(mobileLifetimeGeometry.seasonLabels));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-lifetime-rank-chart.png"), fullPage: true });
 
     assert.deepEqual(consoleIssues, []);

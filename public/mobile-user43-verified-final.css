@@ -16556,6 +16556,22 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
     max-width:none !important;
   }
 
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card .home-chart-wrap{
+    width:calc(100% + 34px) !important;
+    max-width:calc(100% + 34px) !important;
+    margin-inline:-17px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card #chartRow.is-lifetime-rank-chart .chart-season-boundary .chart-season-title{
+    font-size:9px !important;
+    letter-spacing:.02em !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-home#page-home.page.active .rr-chart-card #chartRow.is-lifetime-rank-chart .chart-season-boundary .chart-season-act{
+    font-size:8px !important;
+    letter-spacing:0 !important;
+  }
+
   html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-summary-selector-bottom,
   html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats#page-stats.page.active .stats-act-select-wrap{
     grid-column:1 / -1 !important;

@@ -94,7 +94,7 @@ function weaponSkinApiStub(url) {
       skins: collectionNames.map((name, index) => ({
         uuid: `${slug}-skin-${index}`,
         displayName: `${name} ${weaponName}`,
-        contentTierUuid: tiers[index % tiers.length],
+        contentTierUuid: name === "Aemondir" ? tiers[2] : tiers[index % tiers.length],
         displayIcon: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?skin=${index}`,
         chromas: (name === "Aemondir" ? [0, 1, 2] : [0]).map(view => ({
           displayName: `${name} ${weaponName} ${view === 0 ? "Default" : `Variant ${view + 1}`}`,
@@ -701,12 +701,30 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-collection-card").count(), 20);
     assert.match(await desktop.locator(".gamesense-collection-head").innerText(), /Phantom Skin Collection Archive.*20 exact Phantom weapon previews.*official content tier.*not a community review score/is);
     assert.equal(await desktop.locator('.gamesense-collection-card img[alt$="Phantom skin"]').count(), 20);
-    assert.equal(await desktop.locator('.gamesense-collection-card[data-gamesense-collection-tier="premium"]').count(), 4);
+    assert.equal(await desktop.locator('.gamesense-collection-card[data-gamesense-collection-tier="premium"]').count(), 5);
     assert.equal(await desktop.locator('.gamesense-collection-filters button:not([data-gamesense-collection-filter="all"]) .gamesense-tier-icon').count(), 5);
     assert.equal(await desktop.locator('.gamesense-tier-icon-stack img').count(), 5);
+    const desktopAllFilterSpacing = await desktop.locator('[data-gamesense-collection-filter="all"]').evaluate(button => {
+      const icon = button.querySelector(".gamesense-tier-icon-stack").getBoundingClientRect();
+      const label = button.querySelector(":scope > span:last-child").getBoundingClientRect();
+      return { gap: label.left - icon.right };
+    });
+    assert.ok(desktopAllFilterSpacing.gap >= 8, JSON.stringify(desktopAllFilterSpacing));
+    const collectionVideoCoverage = await desktop.evaluate(() => ({
+      premium: globalThis.RankedCoachWeaponCollections.getCollectionVideo("Aemondir", "Premium"),
+      vct24: globalThis.RankedCoachWeaponCollections.getCollectionVideo("VCT x SEN", "Exclusive"),
+      vct25: globalThis.RankedCoachWeaponCollections.getCollectionVideo("VCT25 x SEN", "Exclusive"),
+      vct26: globalThis.RankedCoachWeaponCollections.getCollectionVideo("VCT26 x SEN", "Exclusive"),
+      deluxe: globalThis.RankedCoachWeaponCollections.getCollectionVideo("Aemondir", "Deluxe")
+    }));
+    assert.match(collectionVideoCoverage.premium?.id || "", /^[a-zA-Z0-9_-]{11}$/);
+    assert.match(collectionVideoCoverage.vct24?.id || "", /^[a-zA-Z0-9_-]{11}$/);
+    assert.match(collectionVideoCoverage.vct25?.id || "", /^[a-zA-Z0-9_-]{11}$/);
+    assert.match(collectionVideoCoverage.vct26?.id || "", /^[a-zA-Z0-9_-]{11}$/);
+    assert.equal(collectionVideoCoverage.deluxe, null);
     await desktop.locator(".gamesense-collection-filters").screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-filters-desktop.png") });
     await desktop.locator('[data-gamesense-collection-filter="premium"]').click();
-    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 4);
+    assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 5);
     assert.equal(await desktop.locator('[data-gamesense-collection-filter="premium"]').getAttribute("aria-pressed"), "true");
     assert.notEqual(await desktop.locator('[data-gamesense-collection-filter="premium"]').evaluate(button => getComputedStyle(button).boxShadow), "none");
     await desktop.locator('[data-gamesense-collection-filter="all"]').click();
@@ -1075,6 +1093,12 @@ async function run() {
     await mobile.locator(".gamesense-weapon-detail-head").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-header-mobile.png") });
     await mobile.waitForFunction(() => document.querySelectorAll(".gamesense-collection-card").length > 14);
     assert.equal(await mobile.locator('.gamesense-collection-filters button:not([data-gamesense-collection-filter="all"]) .gamesense-tier-icon').count(), 5);
+    const mobileAllFilterSpacing = await mobile.locator('[data-gamesense-collection-filter="all"]').evaluate(button => {
+      const icon = button.querySelector(".gamesense-tier-icon-stack").getBoundingClientRect();
+      const label = button.querySelector(":scope > span:last-child").getBoundingClientRect();
+      return { gap: label.left - icon.right };
+    });
+    assert.ok(mobileAllFilterSpacing.gap >= 8, JSON.stringify(mobileAllFilterSpacing));
     await mobile.locator("[data-gamesense-collection-preview]").first().click();
     await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     const mobileSkinViewer = await mobile.locator(".gamesense-skin-preview-card").evaluate(card => ({
