@@ -45,7 +45,12 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 - *Textures:* Carbon Weave, Circuit Plate, Topo Contour, Frost Fracture, Blueprint Grid, Brushed Plate, Hex Armor, Chain Mesh, Thermal Vision, Woven Cable (10 total).
 - *Shapes:* Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate (12 total).
 
-**Still wants more of both** — round 8 to follow, covering additional textures and additional card shapes.
+**Round 8 (2026-07-17) — 8 new textures + 8 new shapes, `docs/design/layout-styles-v8-2026-07-17.html`, https://claude.ai/code/artifact/f8174cd4-ccd2-48e4-aaed-aea43d22cefe. Approved textures: Rust Patina (#3), Frosted Glass (#6). All 8 shapes rejected.**
+
+**Michael's read on the shapes, verbatim: "focus on shapes now. I want to see something interesting... Real designs, not just clipping a rectangle in different shapes, actual designs."** All 12 approved shapes plus rounds 5/7/8's rejected shapes have been geometric `clip-path: polygon(...)` formulas (hexagons, pentagons, octagons, trapezoids) — symmetric math, not hand-crafted illustration. Round 9 pivots to genuinely irregular, hand-plotted silhouettes with real asymmetric character (chipped edges, torn tears, broken corners, layered welded seams) rather than clean geometric cuts — same register as the "recreations" hand-drawn pass from round 4, applied to shapes instead of textures.
+
+**Running approved textures (12 total):** Carbon Weave, Circuit Plate, Topo Contour, Frost Fracture, Blueprint Grid, Brushed Plate, Hex Armor, Chain Mesh, Thermal Vision, Woven Cable, Rust Patina, Frosted Glass.
+**Running approved shapes (12 total, unchanged this round):** Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate.
 
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
