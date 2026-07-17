@@ -258,6 +258,7 @@ async function run() {
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 2);
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 2);
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 4);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 2);
     assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season .gamesense-map-side-marks').count(), 0);
     const outOfSeasonMap = desktop.locator('.gamesense-map-entry-card.is-out-of-season');
     assert.equal(await outOfSeasonMap.count(), 1);

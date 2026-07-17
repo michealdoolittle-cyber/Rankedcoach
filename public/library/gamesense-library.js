@@ -217,7 +217,7 @@
     const activeSeasonMarks = isOutOfSeason ? "" : `
       <span class="gamesense-map-side-marks" aria-hidden="true">
         <span class="gamesense-map-side-mark is-attack" title="Attack">
-          <svg viewBox="0 0 32 32"><path d="M16 3 28 26H4L16 3Z"></path><path d="M16 10v10M11 22h10"></path></svg>
+          <svg class="gamesense-attack-swords-icon" viewBox="0 0 32 32"><path d="M16 3 28 16 16 29 4 16 16 3Z"></path><path d="M10 6 26 22M22 22l4 4M20 24l4 4M22 6 6 22M10 22l-4 4M12 24l-4 4M13 13l6 6M19 13l-6 6"></path></svg>
         </span>
         <span class="gamesense-map-side-mark is-defense" title="Defense">
           <svg viewBox="0 0 32 32"><path d="M16 3 27 7v8c0 7-4.5 11.5-11 14-6.5-2.5-11-7-11-14V7l11-4Z"></path><path d="m11 16 3 3 7-8"></path></svg>
