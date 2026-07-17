@@ -1360,6 +1360,23 @@ async function run() {
     await touchWithNaturalDrift(mobile, firstMobileCollectionOpen, { x: 2, y: 2 });
     await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     await mobile.waitForTimeout(250);
+    const mobileOverlayPlacement = await mobile.locator(".gamesense-skin-preview-overlay").evaluate(overlay => {
+      const rect = overlay.getBoundingClientRect();
+      return {
+        position: getComputedStyle(overlay).position,
+        top: rect.top,
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
+        viewportWidth: document.documentElement.clientWidth,
+        viewportHeight: document.documentElement.clientHeight,
+        ownsViewportCenter: Boolean(document.elementFromPoint(innerWidth / 2, innerHeight / 2)?.closest?.(".gamesense-skin-preview-overlay"))
+      };
+    });
+    assert.equal(mobileOverlayPlacement.position, "fixed", JSON.stringify(mobileOverlayPlacement));
+    assert.ok(Math.abs(mobileOverlayPlacement.top) <= 1 && Math.abs(mobileOverlayPlacement.left) <= 1, JSON.stringify(mobileOverlayPlacement));
+    assert.ok(Math.abs(mobileOverlayPlacement.right - mobileOverlayPlacement.viewportWidth) <= 1 && Math.abs(mobileOverlayPlacement.bottom - mobileOverlayPlacement.viewportHeight) <= 1, JSON.stringify(mobileOverlayPlacement));
+    assert.equal(mobileOverlayPlacement.ownsViewportCenter, true, JSON.stringify(mobileOverlayPlacement));
     const mobileSkinViewer = await mobile.locator(".gamesense-skin-preview-card").evaluate(card => ({
       width: card.getBoundingClientRect().width,
       viewport: document.documentElement.clientWidth,

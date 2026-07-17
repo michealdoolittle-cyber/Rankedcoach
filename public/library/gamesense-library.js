@@ -953,6 +953,7 @@
     activeSkinViewIndex = 0;
     activeSkinVideoIndex = 0;
     const overlay = document.createElement("div");
+    overlay.id = "gamesenseSkinPreviewOverlay";
     overlay.className = "gamesense-skin-preview-overlay";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
