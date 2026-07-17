@@ -23159,11 +23159,10 @@ body.theme-grid-drift .app-root::before{
 body.theme-star-drift .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:max(108vw,108vh) max(108vw,108vh);
+  background-size:cover;
   opacity:.9;
-  transform-origin:center;
-  will-change:transform;
-  animation:themeMilkyWaySpin calc(var(--theme-motion-duration) * 2.35) linear infinite;
+  will-change:opacity,filter;
+  animation:themeMilkyWaySpin calc(var(--theme-motion-duration) * .72) ease-in-out infinite;
 }
 
 body.theme-star-drift .app-root::after{
@@ -23174,11 +23173,10 @@ body.theme-star-drift .app-root::after{
 body.theme-water-flow .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:max(112vw,112vh) max(112vw,112vh);
+  background-size:cover;
   opacity:.88;
-  transform-origin:center;
-  will-change:transform;
-  animation:themeWaterWhirlpool calc(var(--theme-motion-duration) * .9) cubic-bezier(.45,.05,.55,.95) infinite alternate;
+  will-change:opacity,filter;
+  animation:themeWaterWhirlpool calc(var(--theme-motion-duration) * .62) ease-in-out infinite;
 }
 
 body.theme-water-flow .app-root::after{
@@ -23191,9 +23189,9 @@ body.theme-fog-drift .app-root::before,
 body.theme-fog-drift .app-root::after{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:112% 112%;
+  background-size:cover;
   filter:blur(9px);
-  will-change:transform,opacity;
+  will-change:opacity,filter;
   animation:themeFogField calc(var(--theme-motion-duration) * .82) ease-in-out infinite alternate;
 }
 
@@ -23204,41 +23202,39 @@ body.theme-fog-drift .app-root::after{
 body.theme-fractal-shift .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:max(108vw,108vh) max(108vw,108vh);
-  opacity:.84;
-  transform-origin:center;
-  will-change:transform;
+  background-size:cover;
+  opacity:.96;
+  will-change:opacity,filter;
   animation:themeCryoFracture calc(var(--theme-motion-duration) * 1.3) ease-in-out infinite alternate;
 }
 
 body.theme-solar-flow .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:118% 118%;
+  background-size:cover;
   opacity:.92;
-  will-change:transform;
+  will-change:opacity,filter;
   animation:themeSolarFlow calc(var(--theme-motion-duration) * .72) ease-in-out infinite alternate;
 }
 
 body.theme-solar-flow .app-root::after{
   background-size:132% 132%;
   opacity:.88;
-  will-change:transform,opacity;
+  will-change:opacity,filter;
   animation:themeMagmaBubble calc(var(--theme-motion-duration) * .45) ease-in-out infinite alternate;
 }
 
 body.theme-prism-turn .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:max(112vw,112vh) max(112vw,112vh);
+  background-size:cover;
   opacity:.86;
-  transform-origin:center;
-  will-change:transform;
-  animation:themePrismKaleidoscope calc(var(--theme-motion-duration) * 1.35) linear infinite;
+  will-change:opacity,filter;
+  animation:themePrismKaleidoscope calc(var(--theme-motion-duration) * .75) ease-in-out infinite;
 }
 
 body.theme-prism-turn .app-root::after{
-  animation:themePrismSweep calc(var(--theme-motion-duration) * .9) ease-in-out infinite alternate;
+  animation:themePrismSweep calc(var(--theme-motion-duration) * .42) ease-in-out infinite alternate;
 }
 
 body.theme-lightning-strike .app-root::before{
@@ -23259,15 +23255,17 @@ body.theme-lightning-strike .app-root::after{
   animation:themeStormVoltage calc(var(--theme-motion-duration) * .34) ease-in-out infinite;
 }
 body.theme-wind-flow .app-root::before{
-  background-size:145% 112%;
-  opacity:.82;
-  animation:themeWindFlow calc(var(--theme-motion-duration) * .72) ease-in-out infinite alternate;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  opacity:.95;
+  animation:themeWindFlow calc(var(--theme-motion-duration) * .62) ease-in-out infinite;
 }
 body.theme-wind-flow .app-root::after{animation:themeWindGust calc(var(--theme-motion-duration) * .44) ease-in-out infinite;}
 body.theme-ink-bloom .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:118% 118%;
+  background-size:cover;
   opacity:.9;
   animation:themeInkBloom calc(var(--theme-motion-duration) * .8) ease-in-out infinite alternate;
 }
@@ -23275,12 +23273,11 @@ body.theme-ink-bloom .app-root::after{filter:blur(16px);animation:themeInkDrift 
 body.theme-sonar-pulse .app-root::before{
   background-position:center;
   background-repeat:no-repeat;
-  background-size:max(104vw,104vh) max(104vw,104vh);
+  background-size:cover;
   opacity:.86;
-  transform-origin:center;
   animation:themeSonarPulse calc(var(--theme-motion-duration) * .58) cubic-bezier(.1,.55,.25,1) infinite;
 }
-body.theme-sonar-pulse .app-root::after{animation:themeSonarSweep calc(var(--theme-motion-duration) * .76) linear infinite;}
+body.theme-sonar-pulse .app-root::after{animation:themeSonarSweep calc(var(--theme-motion-duration) * .76) ease-in-out infinite;}
 body.theme-sound-wave .app-root::before{
   background-position:center bottom;
   background-repeat:repeat-x;
@@ -23291,14 +23288,14 @@ body.theme-sound-wave .app-root::before{
 body.theme-sound-wave .app-root::after{animation:themeBeatGlow calc(var(--theme-motion-duration) * .12) ease-in-out infinite;}
 body.theme-confetti-pop .app-root::before{
   background-position:center;
-  background-repeat:repeat;
-  background-size:1200px 800px;
+  background-repeat:no-repeat;
+  background-size:cover;
   opacity:.9;
   animation:themeConfettiPop calc(var(--theme-motion-duration) * .62) linear infinite;
 }
 body.theme-confetti-pop .app-root::after{animation:themeConfettiGlow calc(var(--theme-motion-duration) * .3) ease-in-out infinite alternate;}
 
-body.theme-aurora-rift .app-root::before{background-size:150% 130%;opacity:.9;animation:themeAuroraRift calc(var(--theme-motion-duration) * .78) ease-in-out infinite alternate;}
+body.theme-aurora-rift .app-root::before{background-position:center;background-repeat:no-repeat;background-size:cover;opacity:.9;animation:themeAuroraRift calc(var(--theme-motion-duration) * .78) ease-in-out infinite alternate;}
 body.theme-aurora-rift .app-root::after{animation:themeAuroraVeil calc(var(--theme-motion-duration) * .46) ease-in-out infinite alternate-reverse;}
 body.theme-neon-rain .app-root::before{
   background-size:920px 920px;
@@ -23324,7 +23321,7 @@ body.theme-toxic-sludge .app-root::before{background-size:128% 128%;opacity:.88;
 body.theme-toxic-sludge .app-root::after{animation:themeToxicBubbles calc(var(--theme-motion-duration) * .44) ease-in-out infinite alternate;}
 body.theme-eclipse-corona .app-root::before{background-position:center;background-size:max(112vw,112vh) max(112vw,112vh);opacity:.9;transform-origin:center;animation:themeEclipseCorona calc(var(--theme-motion-duration) * .9) ease-in-out infinite alternate;}
 body.theme-eclipse-corona .app-root::after{animation:themeCoronaPulse calc(var(--theme-motion-duration) * .42) ease-in-out infinite alternate;}
-body.theme-data-stream .app-root::before{background-size:720px 720px;opacity:.86;animation:themeDataStream calc(var(--theme-motion-duration) * .32) linear infinite;}
+body.theme-data-stream .app-root::before{background-position:center;background-repeat:no-repeat;background-size:cover;opacity:.96;animation:themeDataStream calc(var(--theme-motion-duration) * .32) ease-in-out infinite;}
 body.theme-data-stream .app-root::after{animation:themePacketSweep calc(var(--theme-motion-duration) * .24) linear infinite;}
 body.theme-crystal-bloom .app-root::before{background-position:center;background-size:max(110vw,110vh) max(110vw,110vh);opacity:.86;transform-origin:center;animation:themeCrystalBloom calc(var(--theme-motion-duration) * .95) ease-in-out infinite alternate;}
 body.theme-crystal-bloom .app-root::after{animation:themeCrystalGlint calc(var(--theme-motion-duration) * .36) ease-in-out infinite alternate;}
@@ -23452,13 +23449,14 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themeNebulaBreathe{
-  from{ opacity:.5; transform:translate3d(-2%,1%,0) scale(1.02); }
-  to{ opacity:.82; transform:translate3d(2%,-1.5%,0) scale(1.08); }
+  from{ opacity:.48; filter:brightness(.95) saturate(1.02); }
+  to{ opacity:.82; filter:brightness(1.18) saturate(1.14); }
 }
 
 @keyframes themeMilkyWaySpin{
-  from{ transform:rotate(0deg) scale(1.04); }
-  to{ transform:rotate(360deg) scale(1.08); }
+  0%,100%{ opacity:.72; filter:brightness(.96) saturate(1.02); }
+  42%{ opacity:.96; filter:brightness(1.22) saturate(1.18); }
+  68%{ opacity:.82; filter:brightness(1.05) saturate(1.08); }
 }
 
 @keyframes themeWaterFlow{
@@ -23467,19 +23465,18 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themeWaterWhirlpool{
-  0%{ transform:translate3d(-3%,1%,0) rotate(-4deg) scale(1.08); }
-  55%{ transform:translate3d(2%,-2%,0) rotate(5deg) scale(1.14); }
-  100%{ transform:translate3d(4%,1%,0) rotate(12deg) scale(1.1); }
+  0%,100%{ opacity:.78; filter:brightness(.92) saturate(1.05); }
+  50%{ opacity:.94; filter:brightness(1.18) saturate(1.2); }
 }
 
 @keyframes themeWaterCaustics{
-  from{ background-position:0 0; transform:translate3d(-2%,2%,0) scale(1.04); opacity:.56; }
-  to{ background-position:90px -58px; transform:translate3d(2%,-2%,0) scale(1.1); opacity:.9; }
+  from{ opacity:.44; filter:brightness(.96); }
+  to{ opacity:.84; filter:brightness(1.14); }
 }
 
 @keyframes themeFogField{
-  from{ opacity:.42; transform:translate3d(-5%,2%,0) scale(1.05); }
-  to{ opacity:.72; transform:translate3d(5%,-2%,0) scale(1.13); }
+  from{ opacity:.38; filter:blur(10px) brightness(.9); }
+  to{ opacity:.76; filter:blur(7px) brightness(1.12); }
 }
 
 @keyframes themeFractalShift{
@@ -23488,13 +23485,13 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themeCryoFracture{
-  from{ transform:translate3d(-2%,1%,0) rotate(-2deg) scale(1.06); opacity:.68; }
-  to{ transform:translate3d(2%,-1%,0) rotate(5deg) scale(1.13); opacity:.94; }
+  from{ opacity:.68; filter:brightness(.92) contrast(1.05); }
+  to{ opacity:.96; filter:brightness(1.18) contrast(1.18); }
 }
 
 @keyframes themeSolarFlow{
-  from{ background-position:0 0; transform:translate3d(-2%,2%,0) scale(1.04) rotate(-1deg); }
-  to{ background-position:90px -60px; transform:translate3d(2%,-2%,0) scale(1.1) rotate(2deg); }
+  from{ opacity:.76; filter:brightness(.9) saturate(1.1); }
+  to{ opacity:.98; filter:brightness(1.28) saturate(1.28); }
 }
 
 @keyframes themeSolarFlare{
@@ -23503,9 +23500,9 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themeMagmaBubble{
-  0%{ background-position:0 0; transform:translate3d(-2%,3%,0) scale(1.03); opacity:.62; }
-  55%{ background-position:70px -84px; transform:translate3d(1%,-2%,0) scale(1.1); opacity:.96; }
-  100%{ background-position:126px -132px; transform:translate3d(3%,-4%,0) scale(1.07); opacity:.78; }
+  0%{ opacity:.5; filter:brightness(.92) blur(0); }
+  55%{ opacity:.88; filter:brightness(1.32) blur(.3px); }
+  100%{ opacity:.66; filter:brightness(1.05) blur(.1px); }
 }
 
 @keyframes themePrismTurn{
@@ -23514,14 +23511,14 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themePrismKaleidoscope{
-  0%{ transform:rotate(0deg) scale(1.08); filter:hue-rotate(0deg) saturate(1.05); }
-  50%{ transform:rotate(180deg) scale(1.16); filter:hue-rotate(36deg) saturate(1.28); }
-  100%{ transform:rotate(360deg) scale(1.08); filter:hue-rotate(0deg) saturate(1.05); }
+  0%{ filter:hue-rotate(0deg) saturate(1.05) brightness(.96); opacity:.76; }
+  50%{ filter:hue-rotate(36deg) saturate(1.3) brightness(1.18); opacity:.96; }
+  100%{ filter:hue-rotate(0deg) saturate(1.05) brightness(.98); opacity:.8; }
 }
 
 @keyframes themePrismSweep{
-  from{ background-position:-14vw 0; opacity:.42; }
-  to{ background-position:14vw 0; opacity:.78; }
+  from{ opacity:.36; filter:brightness(.9); }
+  to{ opacity:.78; filter:brightness(1.2); }
 }
 
 @keyframes themeLightningStrike{
@@ -23539,18 +23536,18 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
   55%{opacity:.72;filter:brightness(1.52) blur(.3px);}
   66%{opacity:.28;filter:brightness(.92) blur(1px);}
 }
-@keyframes themeWindFlow{from{background-position:-180px 0;transform:skewX(-2deg) scale(1.04);}to{background-position:220px -40px;transform:skewX(2deg) scale(1.1);}}
-@keyframes themeWindGust{0%,100%{transform:translateX(-8%);opacity:.28;}50%{transform:translateX(8%);opacity:.76;}}
-@keyframes themeInkBloom{from{transform:translate3d(-3%,2%,0) scale(.98);filter:blur(1px);opacity:.68;}to{transform:translate3d(3%,-2%,0) scale(1.14);filter:blur(7px);opacity:.94;}}
-@keyframes themeInkDrift{from{background-position:10% 20%;transform:rotate(-3deg) scale(1.04);}to{background-position:90% 72%;transform:rotate(4deg) scale(1.13);}}
-@keyframes themeSonarPulse{0%{transform:scale(.74);opacity:.08;}35%{opacity:.96;}100%{transform:scale(1.3);opacity:.08;}}
-@keyframes themeSonarSweep{from{transform:rotate(0deg) scale(1.02);opacity:.36;}to{transform:rotate(360deg) scale(1.08);opacity:.78;}}
+@keyframes themeWindFlow{0%,100%{opacity:.78;filter:brightness(.98) saturate(1.02);}50%{opacity:.94;filter:brightness(1.12) saturate(1.12);}}
+@keyframes themeWindGust{0%,100%{opacity:.28;}50%{opacity:.62;}}
+@keyframes themeInkBloom{from{filter:brightness(.82) blur(1px);opacity:.72;}to{filter:brightness(1.12) blur(4px);opacity:.96;}}
+@keyframes themeInkDrift{from{opacity:.26;filter:blur(18px);}to{opacity:.58;filter:blur(10px);}}
+@keyframes themeSonarPulse{0%{opacity:.68;filter:brightness(.92);}35%{opacity:.96;filter:brightness(1.22);}100%{opacity:.74;filter:brightness(1.02);}}
+@keyframes themeSonarSweep{from{opacity:.24;filter:brightness(.92);}to{opacity:.66;filter:brightness(1.14);}}
 @keyframes themeSoundWave{0%{background-position:0 46px;transform:scaleY(.86) scaleX(1.02);}50%{background-position:-180px -24px;transform:scaleY(1.12) scaleX(1.06);}100%{background-position:-360px 30px;transform:scaleY(.94) scaleX(1.03);}}
 @keyframes themeBeatGlow{0%,100%{opacity:.34;transform:scale(1);}50%{opacity:.86;transform:scale(1.05);}}
-@keyframes themeConfettiPop{0%{background-position:0 -740px;transform:rotate(-1deg) scale(1.03);}100%{background-position:160px 820px;transform:rotate(2deg) scale(1.07);}}
+@keyframes themeConfettiPop{0%,100%{opacity:.78;filter:brightness(.96);}50%{opacity:.98;filter:brightness(1.16);}}
 @keyframes themeConfettiGlow{from{opacity:.32;transform:scale(1.01);}to{opacity:.82;transform:scale(1.08);}}
-@keyframes themeAuroraRift{0%{background-position:-18vw 0;transform:translate3d(-3%,2%,0) skewX(-4deg) scale(1.03);filter:hue-rotate(0deg);}100%{background-position:20vw -8vh;transform:translate3d(3%,-2%,0) skewX(4deg) scale(1.08);filter:hue-rotate(24deg);}}
-@keyframes themeAuroraVeil{from{opacity:.34;transform:translate3d(-4%,0,0) scale(1.02);}to{opacity:.78;transform:translate3d(4%,-2%,0) scale(1.09);}}
+@keyframes themeAuroraRift{0%{filter:hue-rotate(0deg) brightness(.92);opacity:.72;}100%{filter:hue-rotate(24deg) brightness(1.16);opacity:.96;}}
+@keyframes themeAuroraVeil{from{opacity:.3;filter:brightness(.9);}to{opacity:.72;filter:brightness(1.18);}}
 @keyframes themeNeonRain{
   0%,100%{opacity:.76;filter:brightness(.96) saturate(1.04);}
   42%{opacity:.92;filter:brightness(1.16) saturate(1.13);}
@@ -23571,8 +23568,8 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 @keyframes themeToxicBubbles{0%{opacity:.24;transform:translateY(4%) scale(.98);}55%{opacity:.88;transform:translateY(-2%) scale(1.08);}100%{opacity:.52;transform:translateY(-6%) scale(1.02);}}
 @keyframes themeEclipseCorona{0%{transform:scale(1.02);filter:brightness(.85);}50%{transform:scale(1.1);filter:brightness(1.45);}100%{transform:scale(1.04);filter:brightness(1.05);}}
 @keyframes themeCoronaPulse{from{opacity:.32;transform:rotate(-2deg) scale(1.02);}to{opacity:.9;transform:rotate(3deg) scale(1.12);}}
-@keyframes themeDataStream{from{background-position:0 -720px;filter:brightness(.92);}to{background-position:220px 720px;filter:brightness(1.18);}}
-@keyframes themePacketSweep{from{background-position:-100vw 0;opacity:.24;}to{background-position:100vw 0;opacity:.72;}}
+@keyframes themeDataStream{from{filter:brightness(.92);opacity:.78;}to{filter:brightness(1.18);opacity:.94;}}
+@keyframes themePacketSweep{from{opacity:.24;}to{opacity:.72;}}
 @keyframes themeCrystalBloom{0%{transform:rotate(-2deg) scale(1.02);filter:hue-rotate(-10deg) saturate(1);}50%{transform:rotate(2deg) scale(1.12);filter:hue-rotate(18deg) saturate(1.32);}100%{transform:rotate(7deg) scale(1.05);filter:hue-rotate(0deg) saturate(1.08);}}
 @keyframes themeCrystalGlint{from{background-position:-18vw 0;opacity:.28;}to{background-position:18vw 0;opacity:.84;}}
 @keyframes themeCometTrail{0%{background-position:-35vw 18vh;transform:translate3d(-3%,1%,0) scale(1.03);opacity:.36;}42%{opacity:.95;}100%{background-position:42vw -18vh;transform:translate3d(3%,-1%,0) scale(1.09);opacity:.58;}}

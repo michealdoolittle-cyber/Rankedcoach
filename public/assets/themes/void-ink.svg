@@ -1,1 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><defs><filter id="ink"><feTurbulence type="fractalNoise" baseFrequency=".014" numOctaves="4" seed="8" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="74"/><feGaussianBlur stdDeviation="14"/></filter><radialGradient id="i"><stop stop-color="#818cf8" stop-opacity=".58"/><stop offset=".5" stop-color="#6d28d9" stop-opacity=".34"/><stop offset="1" stop-color="#020617" stop-opacity="0"/></radialGradient></defs><rect width="1000" height="900" fill="#03050b"/><g filter="url(#ink)" fill="url(#i)"><ellipse cx="230" cy="250" rx="280" ry="220"/><ellipse cx="730" cy="220" rx="250" ry="190"/><ellipse cx="520" cy="650" rx="390" ry="260"/></g><g fill="#02030a" fill-opacity=".82"><circle cx="330" cy="360" r="94"/><circle cx="700" cy="510" r="132"/><circle cx="145" cy="690" r="80"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900">
+  <defs>
+    <radialGradient id="void" cx=".5" cy=".5" r=".65"><stop stop-color="#000"/><stop offset=".2" stop-color="#020617"/><stop offset=".52" stop-color="#312e81"/><stop offset="1" stop-color="#020617" stop-opacity="0"/></radialGradient>
+    <filter id="ink"><feTurbulence type="fractalNoise" baseFrequency=".015" numOctaves="4" seed="8" result="n"><animate attributeName="baseFrequency" values=".012;.02;.014" dur="7s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="46"/><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1000" height="900" fill="#02030a"/>
+  <g transform-origin="500 450">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 450" to="-360 500 450" dur="18s" repeatCount="indefinite"/>
+    <g filter="url(#ink)" fill="none" stroke-linecap="round">
+      <ellipse cx="500" cy="450" rx="410" ry="240" stroke="#818cf8" stroke-width="34" stroke-opacity=".22"/>
+      <ellipse cx="500" cy="450" rx="300" ry="170" stroke="#a78bfa" stroke-width="28" stroke-opacity=".26"/>
+      <ellipse cx="500" cy="450" rx="190" ry="104" stroke="#4c1d95" stroke-width="32" stroke-opacity=".5"/>
+    </g>
+  </g>
+  <g fill="none" stroke="#c4b5fd" stroke-linecap="round" stroke-opacity=".28" filter="url(#glow)">
+    <path d="M130 220 C300 340 400 260 500 450 S746 630 874 706" stroke-width="6">
+      <animate attributeName="stroke-dasharray" values="0 700;160 540;0 700" dur="5.8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M820 170 C690 310 602 298 500 450 S278 560 164 760" stroke-width="5">
+      <animate attributeName="stroke-dasharray" values="0 700;120 580;0 700" dur="6.4s" begin="-2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <circle cx="500" cy="450" r="112" fill="url(#void)">
+    <animate attributeName="r" values="96;136;104" dur="4.2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="500" cy="450" r="34" fill="#000"/>
+</svg>

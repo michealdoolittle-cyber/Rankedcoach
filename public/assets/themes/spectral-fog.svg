@@ -1,12 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900">
   <defs>
-    <filter id="fog" x="-30%" y="-30%" width="160%" height="160%">
-      <feTurbulence type="fractalNoise" baseFrequency=".007 .018" numOctaves="4" seed="19" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="72"/>
-      <feGaussianBlur stdDeviation="22"/>
+    <filter id="fog" x="-35%" y="-35%" width="170%" height="170%">
+      <feTurbulence type="fractalNoise" baseFrequency=".008 .018" numOctaves="4" seed="19" result="noise"><animate attributeName="baseFrequency" values=".006 .014;.012 .024;.007 .016" dur="10s" repeatCount="indefinite"/></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="68"/>
+      <feGaussianBlur stdDeviation="24"/>
     </filter>
-    <radialGradient id="violet"><stop stop-color="#ddd6fe" stop-opacity=".36"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
-    <radialGradient id="ash"><stop stop-color="#cbd5e1" stop-opacity=".24"/><stop offset="1" stop-color="#64748b" stop-opacity="0"/></radialGradient>
+    <radialGradient id="violet"><stop stop-color="#ddd6fe" stop-opacity=".42"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ash"><stop stop-color="#e2e8f0" stop-opacity=".28"/><stop offset="1" stop-color="#64748b" stop-opacity="0"/></radialGradient>
   </defs>
-  <g filter="url(#fog)"><ellipse cx="240" cy="320" rx="310" ry="170" fill="url(#violet)"/><ellipse cx="650" cy="510" rx="360" ry="205" fill="url(#ash)"/><ellipse cx="350" cy="760" rx="330" ry="130" fill="url(#violet)"/></g>
+  <rect width="1000" height="900" fill="#040611"/>
+  <g filter="url(#fog)">
+    <ellipse cx="230" cy="300" rx="350" ry="178" fill="url(#violet)"><animateTransform attributeName="transform" type="translate" values="-70 10;80 -20;-70 10" dur="13s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="720" cy="508" rx="410" ry="220" fill="url(#ash)"><animateTransform attributeName="transform" type="translate" values="90 -30;-90 24;90 -30" dur="15s" begin="-5s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="410" cy="760" rx="380" ry="140" fill="url(#violet)"><animateTransform attributeName="transform" type="translate" values="-50 28;72 -18;-50 28" dur="11s" begin="-3s" repeatCount="indefinite"/></ellipse>
+  </g>
 </svg>

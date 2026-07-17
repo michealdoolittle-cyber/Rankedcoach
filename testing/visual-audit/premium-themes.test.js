@@ -63,6 +63,41 @@ const stormVoltageSvg = fs.readFileSync(path.resolve(__dirname, "../../public/as
 assert.ok((stormVoltageSvg.match(/stroke-dashoffset/g) || []).length >= 9, "Storm Voltage needs drawn bolt strokes and trails");
 assert.ok((stormVoltageSvg.match(/begin="-/g) || []).length >= 6, "Storm Voltage bolts need staggered random-feeling strike timing");
 
+function themeSvg(id) {
+  return fs.readFileSync(path.resolve(__dirname, `../../public/assets/themes/${id}.svg`), "utf8");
+}
+
+const internallyAnimatedThemes = {
+  "astral-galaxy": [/animateTransform[\s\S]*rotate/, /attributeName="opacity"/],
+  "abyssal-tide": [/animateTransform[\s\S]*rotate/, /attributeName="d"/, /feTurbulence[\s\S]*<animate/],
+  "spectral-fog": [/animateTransform[\s\S]*translate/, /feTurbulence[\s\S]*<animate/],
+  "cryo-fractal": [/stroke-dashoffset/, /attributeName="opacity"/],
+  "solar-magma": [/feTurbulence[\s\S]*<animate/, /attributeName="r"/],
+  "prism-refraction": [/animateTransform[\s\S]*rotate/, /attributeName="r"/],
+  "jetstream-wind": [/animateTransform[\s\S]*translate/],
+  "void-ink": [/animateTransform[\s\S]*rotate/, /stroke-dasharray/, /attributeName="r"/],
+  "echo-sonar": [/animateTransform[\s\S]*rotate/, /attributeName="r"/, /attributeName="opacity"/],
+  "victory-confetti": [/animateTransform[\s\S]*translate/, /additive="sum"/],
+  "aurora-rift": [/attributeName="d"/, /stroke-dasharray/],
+  "data-stream": [/text[\s\S]*attributeName="opacity"/, /stroke-dashoffset/]
+};
+
+for (const [id, patterns] of Object.entries(internallyAnimatedThemes)) {
+  const svg = themeSvg(id);
+  assert.ok((svg.match(/<animate/g) || []).length >= 2 || (svg.match(/<animateTransform/g) || []).length >= 2, `${id} needs internal SVG animation, not only CSS ambience`);
+  for (const pattern of patterns) {
+    assert.match(svg, pattern, `${id} is missing expected internal animation detail ${pattern}`);
+  }
+}
+
+for (const keyframe of [
+  "themeMilkyWaySpin", "themeWaterWhirlpool", "themeFogField", "themeCryoFracture", "themeSolarFlow",
+  "themePrismKaleidoscope", "themeWindFlow", "themeInkBloom", "themeSonarPulse", "themeConfettiPop",
+  "themeAuroraRift", "themeDataStream"
+]) {
+  assert.doesNotMatch(cssBlock(keyframe), /background-position|translate3d|transform:[^;}]*rotate\(/, `${keyframe} should not fake animation by sliding or rotating a whole texture`);
+}
+
 for (const [id, motion, animation] of expected) {
   const theme = PREMIUM_THEMES.find(item => item.id === id);
   assert.ok(theme, `missing ${id}`);

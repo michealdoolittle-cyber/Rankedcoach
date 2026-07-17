@@ -1,13 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
   <defs>
-    <radialGradient id="core"><stop stop-color="#fff" stop-opacity=".85"/><stop offset=".18" stop-color="#67e8f9" stop-opacity=".52"/><stop offset=".5" stop-color="#a78bfa" stop-opacity=".3"/><stop offset="1" stop-color="#312e81" stop-opacity="0"/></radialGradient>
-    <linearGradient id="arm"><stop stop-color="#22d3ee" stop-opacity="0"/><stop offset=".5" stop-color="#c4b5fd" stop-opacity=".44"/><stop offset="1" stop-color="#a78bfa" stop-opacity="0"/></linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="7"/></filter>
+    <radialGradient id="core"><stop stop-color="#fff" stop-opacity=".9"/><stop offset=".2" stop-color="#67e8f9" stop-opacity=".5"/><stop offset=".55" stop-color="#a78bfa" stop-opacity=".28"/><stop offset="1" stop-color="#312e81" stop-opacity="0"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
-  <ellipse cx="450" cy="450" rx="330" ry="112" fill="url(#core)" transform="rotate(-22 450 450)" filter="url(#glow)"/>
-  <g fill="none" stroke="url(#arm)" stroke-width="17" stroke-linecap="round" filter="url(#glow)">
-    <path d="M145 548c126 137 414 141 591-21 107-98 74-244-43-311"/>
-    <path d="M758 353c-96-130-359-175-559-39-131 89-110 246 10 336"/>
+  <rect width="1000" height="1000" fill="#020617"/>
+  <g transform-origin="500 500" filter="url(#glow)">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 500" to="360 500 500" dur="90s" repeatCount="indefinite"/>
+    <ellipse cx="500" cy="500" rx="360" ry="120" fill="url(#core)" transform="rotate(-22 500 500)"/>
+    <path d="M160 620c170 140 480 122 650-62 98-106 54-236-72-324" fill="none" stroke="#c4b5fd" stroke-width="18" stroke-opacity=".3" stroke-linecap="round"/>
+    <path d="M820 394c-120-150-442-166-612-18-102 88-70 226 58 302" fill="none" stroke="#22d3ee" stroke-width="14" stroke-opacity=".24" stroke-linecap="round"/>
   </g>
-  <g fill="#fff"><circle cx="95" cy="182" r="2"/><circle cx="204" cy="89" r="1.4"/><circle cx="302" cy="241" r="1.8"/><circle cx="760" cy="121" r="2"/><circle cx="829" cy="382" r="1.5"/><circle cx="718" cy="706" r="2.2"/><circle cx="458" cy="784" r="1.5"/><circle cx="127" cy="719" r="1.8"/><circle cx="535" cy="134" r="1.2"/><circle cx="641" cy="559" r="1.7"/></g>
+  <g fill="#fff">
+    <circle cx="86" cy="158" r="2"><animate attributeName="opacity" values="0;.95;.2;0" dur="3.2s" repeatCount="indefinite"/></circle>
+    <circle cx="204" cy="92" r="1.5"><animate attributeName="opacity" values=".1;.8;.1" dur="2.4s" begin="-.8s" repeatCount="indefinite"/></circle>
+    <circle cx="346" cy="248" r="2.2"><animate attributeName="opacity" values="0;1;0" dur="4.1s" begin="-1.2s" repeatCount="indefinite"/></circle>
+    <circle cx="774" cy="126" r="2.5"><animate attributeName="opacity" values=".2;1;.1" dur="3.7s" begin="-2s" repeatCount="indefinite"/></circle>
+    <circle cx="910" cy="386" r="1.7"><animate attributeName="opacity" values="0;.9;0" dur="2.9s" begin="-.4s" repeatCount="indefinite"/></circle>
+    <circle cx="790" cy="780" r="2.6"><animate attributeName="opacity" values=".05;1;.05" dur="3.8s" begin="-1.7s" repeatCount="indefinite"/></circle>
+    <circle cx="462" cy="870" r="1.8"><animate attributeName="opacity" values="0;.8;0" dur="2.6s" begin="-1s" repeatCount="indefinite"/></circle>
+    <circle cx="120" cy="730" r="2.1"><animate attributeName="opacity" values=".15;1;.15" dur="4.5s" begin="-2.4s" repeatCount="indefinite"/></circle>
+    <circle cx="612" cy="188" r="1.4"><animate attributeName="opacity" values="0;.72;0" dur="2.2s" begin="-.3s" repeatCount="indefinite"/></circle>
+    <circle cx="642" cy="612" r="1.9"><animate attributeName="opacity" values=".1;1;.1" dur="3.1s" begin="-1.4s" repeatCount="indefinite"/></circle>
+  </g>
 </svg>

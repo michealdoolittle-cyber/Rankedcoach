@@ -1,11 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
-    <filter id="lava" x="-25%" y="-25%" width="150%" height="150%"><feTurbulence type="fractalNoise" baseFrequency=".008" numOctaves="3" seed="31" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale="58"/><feGaussianBlur stdDeviation="2.5"/></filter>
-    <radialGradient id="pool"><stop stop-color="#fef08a" stop-opacity=".96"/><stop offset=".26" stop-color="#fb923c" stop-opacity=".9"/><stop offset=".62" stop-color="#dc2626" stop-opacity=".66"/><stop offset="1" stop-color="#3f0a05" stop-opacity="0"/></radialGradient>
-    <linearGradient id="crust" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#120503"/><stop offset=".55" stop-color="#3f1208"/><stop offset="1" stop-color="#090302"/></linearGradient>
+    <radialGradient id="magmaCore"><stop stop-color="#fef08a"/><stop offset=".18" stop-color="#fb923c"/><stop offset=".5" stop-color="#ef4444"/><stop offset="1" stop-color="#220403" stop-opacity="0"/></radialGradient>
+    <linearGradient id="crust" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#090302"/><stop offset=".55" stop-color="#210706"/><stop offset="1" stop-color="#3b0a05"/></linearGradient>
+    <filter id="heat"><feTurbulence type="fractalNoise" baseFrequency=".014" numOctaves="2" seed="17" result="n"><animate attributeName="baseFrequency" values=".011;.019;.013" dur="5.5s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="28"/></filter>
+    <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
-  <rect width="900" height="900" fill="#160502"/>
-  <g filter="url(#lava)" fill="url(#pool)"><ellipse cx="128" cy="155" rx="190" ry="122"/><ellipse cx="455" cy="92" rx="184" ry="108"/><ellipse cx="784" cy="178" rx="210" ry="146"/><ellipse cx="238" cy="430" rx="250" ry="165"/><ellipse cx="670" cy="455" rx="275" ry="182"/><ellipse cx="105" cy="760" rx="212" ry="152"/><ellipse cx="478" cy="752" rx="240" ry="168"/><ellipse cx="860" cy="770" rx="220" ry="158"/></g>
-  <g fill="url(#crust)" stroke="#7c2d12" stroke-opacity=".72" stroke-width="6"><path d="M-30 300 110 240 228 272 328 230 410 305 352 378 206 346 102 392Z"/><path d="m426 252 142-68 146 48 126-14 95 84-110 94-148-43-118 45-111-62Z"/><path d="m-38 592 135-64 130 42 126-54 96 82-82 92-144-34-118 64-143-46Z"/><path d="m470 604 126-70 148 36 138-56 76 104-93 90-145-26-128 67-132-58Z"/></g>
-  <g fill="none" stroke="#fef08a" stroke-opacity=".72"><circle cx="170" cy="112" r="28" stroke-width="10"/><circle cx="529" cy="438" r="45" stroke-width="13"/><circle cx="782" cy="706" r="34" stroke-width="11"/><circle cx="310" cy="792" r="21" stroke-width="8"/></g>
+  <rect width="1024" height="1024" fill="#130301"/>
+  <g filter="url(#heat)">
+    <g stroke="#ff3d00" stroke-width="18" stroke-linecap="round" fill="none" filter="url(#glow)">
+      <path d="M-40 120 C120 190 160 70 302 170 S566 230 682 116 900 120 1070 70"/>
+      <path d="M-60 394 C96 316 190 466 350 378 S552 286 702 388 876 490 1080 362"/>
+      <path d="M-30 684 C172 596 270 750 426 650 S642 560 786 666 922 768 1080 710"/>
+      <path d="M166 -40 C214 140 120 250 236 386 S354 592 286 832M518 -60 C448 154 620 296 546 500 S480 692 560 1070M858 -40 C762 152 896 302 804 500 S704 744 824 1080"/>
+    </g>
+    <g fill="url(#crust)" stroke="#4a0a06" stroke-width="8">
+      <path d="M-20 0 150 144 306 174 222 334 46 364 -54 256Z"/>
+      <path d="M326 0 512 130 690 110 730 306 542 386 350 292Z"/>
+      <path d="M760 0 1080 0 1034 296 850 382 704 210Z"/>
+      <path d="M-50 430 124 366 316 468 258 654 58 716 -58 604Z"/>
+      <path d="M392 414 586 366 760 484 706 680 516 760 342 620Z"/>
+      <path d="M806 418 1080 330 1080 676 874 734 722 602Z"/>
+      <path d="M-40 790 240 688 418 828 348 1080 -50 1080Z"/>
+      <path d="M472 812 700 698 918 838 862 1080 430 1080Z"/>
+    </g>
+  </g>
+  <g fill="url(#magmaCore)" filter="url(#glow)">
+    <circle cx="236" cy="382" r="26"><animate attributeName="r" values="12;44;18" dur="2.8s" repeatCount="indefinite"/></circle>
+    <circle cx="548" cy="512" r="36"><animate attributeName="r" values="20;58;24" dur="3.4s" begin="-.9s" repeatCount="indefinite"/></circle>
+    <circle cx="812" cy="664" r="28"><animate attributeName="r" values="14;46;18" dur="2.6s" begin="-1.4s" repeatCount="indefinite"/></circle>
+  </g>
 </svg>

@@ -1,1 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="#0c0818"/><g opacity=".82"><path d="m130 730 70-170 70 170" fill="#facc15"/><path d="m930 730 70-170 70 170" fill="#fb7185"/><g fill="#facc15"><rect x="120" y="110" width="18" height="58" transform="rotate(24 129 139)"/><rect x="360" y="70" width="20" height="64" transform="rotate(-18 370 102)"/><circle cx="610" cy="120" r="16"/></g><g fill="#fb7185"><rect x="250" y="250" width="18" height="52" transform="rotate(68 259 276)"/><circle cx="825" cy="170" r="15"/><rect x="1040" y="120" width="20" height="66" transform="rotate(32 1050 153)"/></g><g fill="#22d3ee"><circle cx="465" cy="220" r="14"/><rect x="690" y="250" width="18" height="54" transform="rotate(-55 699 277)"/><rect x="1110" y="310" width="17" height="49" transform="rotate(14 1118 335)"/></g><g fill="#a78bfa"><rect x="70" y="350" width="19" height="60" transform="rotate(-40 80 380)"/><circle cx="560" cy="360" r="17"/><rect x="900" y="360" width="20" height="56" transform="rotate(48 910 388)"/></g><path d="M178 595c110-220 218-312 408-422" fill="none" stroke="#facc15" stroke-width="8" stroke-dasharray="14 20"/><path d="M1018 595C908 376 808 292 632 177" fill="none" stroke="#fb7185" stroke-width="8" stroke-dasharray="14 20"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#0c0818"/>
+  <g>
+    <path d="m130 760 70-170 70 170" fill="#facc15"/><path d="m930 760 70-170 70 170" fill="#fb7185"/>
+    <g>
+      <rect x="120" y="-80" width="18" height="58" fill="#facc15"><animateTransform attributeName="transform" type="translate" values="0 -120;40 940" dur="4.2s" repeatCount="indefinite"/><animateTransform attributeName="transform" additive="sum" type="rotate" values="0 129 0;360 129 0" dur="1.4s" repeatCount="indefinite"/></rect>
+      <circle cx="250" cy="-40" r="14" fill="#fb7185"><animateTransform attributeName="transform" type="translate" values="0 -80;-60 900" dur="3.6s" begin="-1.2s" repeatCount="indefinite"/></circle>
+      <rect x="360" y="-120" width="20" height="64" fill="#22d3ee"><animateTransform attributeName="transform" type="translate" values="0 -180;90 980" dur="5s" begin="-.8s" repeatCount="indefinite"/></rect>
+      <circle cx="520" cy="-90" r="16" fill="#a78bfa"><animateTransform attributeName="transform" type="translate" values="0 -140;-30 930" dur="4.4s" begin="-2s" repeatCount="indefinite"/></circle>
+      <rect x="690" y="-60" width="18" height="54" fill="#facc15"><animateTransform attributeName="transform" type="translate" values="0 -100;70 900" dur="3.8s" begin="-1.6s" repeatCount="indefinite"/></rect>
+      <circle cx="825" cy="-120" r="15" fill="#fb7185"><animateTransform attributeName="transform" type="translate" values="0 -140;-90 940" dur="4.7s" begin="-2.7s" repeatCount="indefinite"/></circle>
+      <rect x="1040" y="-90" width="20" height="66" fill="#22d3ee"><animateTransform attributeName="transform" type="translate" values="0 -120;50 940" dur="4.1s" begin="-.4s" repeatCount="indefinite"/></rect>
+      <rect x="70" y="-40" width="19" height="60" fill="#a78bfa"><animateTransform attributeName="transform" type="translate" values="0 -80;120 900" dur="3.4s" begin="-2.3s" repeatCount="indefinite"/></rect>
+    </g>
+    <path d="M178 620c110-220 218-312 408-422" fill="none" stroke="#facc15" stroke-width="8" stroke-dasharray="14 20"><animate attributeName="stroke-dashoffset" values="0;-120" dur="2s" repeatCount="indefinite"/></path>
+    <path d="M1018 620C908 396 808 312 632 197" fill="none" stroke="#fb7185" stroke-width="8" stroke-dasharray="14 20"><animate attributeName="stroke-dashoffset" values="0;120" dur="2.2s" repeatCount="indefinite"/></path>
+  </g>
+</svg>

@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
   <defs>
-    <linearGradient id="p1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f472b6" stop-opacity=".32"/><stop offset=".5" stop-color="#a78bfa" stop-opacity=".12"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".3"/></linearGradient>
-    <linearGradient id="p2" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".2"/><stop offset=".5" stop-color="#22d3ee" stop-opacity=".12"/><stop offset="1" stop-color="#f472b6" stop-opacity=".24"/></linearGradient>
+    <linearGradient id="p1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f472b6" stop-opacity=".36"/><stop offset=".5" stop-color="#a78bfa" stop-opacity=".14"/><stop offset="1" stop-color="#22d3ee" stop-opacity=".34"/></linearGradient>
+    <linearGradient id="ray" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".74"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></linearGradient>
     <filter id="shine"><feGaussianBlur stdDeviation="5"/></filter>
   </defs>
-  <g stroke="#e9d5ff" stroke-opacity=".18" stroke-width="2"><path fill="url(#p1)" d="M450 18l176 256-38 275-138 333-138-333-38-275z"/><path fill="url(#p2)" d="M18 450l256-176 176 176-176 176z"/><path fill="url(#p1)" d="M882 450L626 274 450 450l176 176z"/><path fill="url(#p2)" d="M274 274L450 18l176 256-176 176z"/><path fill="url(#p1)" d="M274 626l176 256 176-256-176-176z"/></g>
-  <g fill="none" stroke="#fff" stroke-opacity=".3" filter="url(#shine)"><path d="M72 735L735 72M166 828L828 166" stroke-width="9"/><circle cx="450" cy="450" r="257"/><circle cx="450" cy="450" r="128"/></g>
+  <rect width="1000" height="1000" fill="#09061b"/>
+  <g stroke="#e9d5ff" stroke-opacity=".18" stroke-width="2" transform-origin="500 500">
+    <animateTransform attributeName="transform" type="rotate" from="0 500 500" to="360 500 500" dur="54s" repeatCount="indefinite"/>
+    <path fill="url(#p1)" d="M500 20l196 284-42 306-154 370-154-370-42-306z"/>
+    <path fill="url(#p1)" d="M20 500l284-196 196 196-196 196z"/>
+    <path fill="url(#p1)" d="M980 500L696 304 500 500l196 196z"/>
+  </g>
+  <g filter="url(#shine)" stroke="url(#ray)" stroke-linecap="round">
+    <path d="M-180 810 810 -180" stroke-width="18"><animateTransform attributeName="transform" type="translate" values="-220 0;360 0;-220 0" dur="6.8s" repeatCount="indefinite"/></path>
+    <path d="M130 1080 1080 130" stroke-width="10" opacity=".6"><animateTransform attributeName="transform" type="translate" values="180 0;-260 0;180 0" dur="5.4s" begin="-2s" repeatCount="indefinite"/></path>
+    <circle cx="500" cy="500" r="296" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="4"><animate attributeName="r" values="220;340;220" dur="7s" repeatCount="indefinite"/></circle>
+  </g>
 </svg>

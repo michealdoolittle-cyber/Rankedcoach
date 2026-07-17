@@ -1,1 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="w" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#03131c"/><stop offset="1" stop-color="#0b3240"/></linearGradient></defs><rect width="1200" height="800" fill="url(#w)"/><g fill="none" stroke-linecap="round"><path d="M-110 170c240-150 380 126 620-10s416-112 780 4" stroke="#67e8f9" stroke-opacity=".72" stroke-width="13"/><path d="M-80 325c292-116 402 150 680 12s420-44 690-10" stroke="#d9f99d" stroke-opacity=".42" stroke-width="8"/><path d="M-140 518c210-118 385 74 540 22 222-74 333-238 850-78" stroke="#a5f3fc" stroke-opacity=".58" stroke-width="11"/><path d="M-90 692c260-102 412 62 622-28s438-112 774 4" stroke="#fff" stroke-opacity=".26" stroke-width="5"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#38bdf8"/><stop offset=".58" stop-color="#93c5fd"/><stop offset="1" stop-color="#0f3248"/></linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <symbol id="cloud" viewBox="0 0 320 120">
+      <path d="M20 82c28-34 62-22 80-44 28-34 82-38 112-4 34-12 78 8 88 44 18 0 34 8 42 24H22c-16 0-18-10-2-20Z" fill="#f8fafc" opacity=".9"/>
+      <path d="M62 92c38-14 64-8 96-22 46-22 78-16 112 8" fill="none" stroke="#dbeafe" stroke-width="14" stroke-linecap="round" opacity=".55"/>
+    </symbol>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <g filter="url(#soft)">
+    <g opacity=".9"><use href="#cloud" x="-120" y="64" width="420" height="160"><animateTransform attributeName="transform" type="translate" values="-260 0;1280 0" dur="26s" repeatCount="indefinite"/></use></g>
+    <g opacity=".74"><use href="#cloud" x="220" y="146" width="360" height="136"><animateTransform attributeName="transform" type="translate" values="-540 0;1040 0" dur="32s" begin="-12s" repeatCount="indefinite"/></use></g>
+    <g opacity=".82"><use href="#cloud" x="720" y="72" width="470" height="176"><animateTransform attributeName="transform" type="translate" values="-980 0;720 0" dur="29s" begin="-19s" repeatCount="indefinite"/></use></g>
+    <g opacity=".66"><use href="#cloud" x="-40" y="384" width="300" height="116"><animateTransform attributeName="transform" type="translate" values="-340 0;1300 0" dur="21s" begin="-7s" repeatCount="indefinite"/></use></g>
+    <g opacity=".8"><use href="#cloud" x="420" y="452" width="450" height="166"><animateTransform attributeName="transform" type="translate" values="-860 0;900 0" dur="34s" begin="-22s" repeatCount="indefinite"/></use></g>
+    <g opacity=".58"><use href="#cloud" x="860" y="540" width="280" height="112"><animateTransform attributeName="transform" type="translate" values="-1120 0;420 0" dur="24s" begin="-4s" repeatCount="indefinite"/></use></g>
+  </g>
+  <g fill="none" stroke="#f8fafc" stroke-linecap="round" opacity=".36">
+    <path d="M-80 310 C210 254 356 362 602 302 S944 238 1280 314" stroke-width="5"><animate attributeName="stroke-dasharray" values="24 80;80 24;24 80" dur="7s" repeatCount="indefinite"/></path>
+    <path d="M-120 666 C180 600 354 704 598 632 S936 592 1260 652" stroke-width="4"><animate attributeName="stroke-dashoffset" values="0;-240" dur="5s" repeatCount="indefinite"/></path>
+  </g>
+</svg>

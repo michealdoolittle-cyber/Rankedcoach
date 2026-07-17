@@ -1,8 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 850">
   <defs>
-    <linearGradient id="ice" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ecfeff" stop-opacity=".34"/><stop offset=".45" stop-color="#67e8f9" stop-opacity=".12"/><stop offset="1" stop-color="#2563eb" stop-opacity=".08"/></linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="4"/></filter>
+    <linearGradient id="iceBg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#030712"/><stop offset=".5" stop-color="#0f2436"/><stop offset="1" stop-color="#dffcff"/>
+    </linearGradient>
+    <linearGradient id="facet" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fafc" stop-opacity=".56"/><stop offset=".5" stop-color="#93c5fd" stop-opacity=".18"/><stop offset="1" stop-color="#0f172a" stop-opacity=".42"/>
+    </linearGradient>
+    <filter id="frostGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   </defs>
-  <g fill="url(#ice)" stroke="#a5f3fc" stroke-opacity=".26" stroke-width="2"><path d="M450 18l91 261 259-103-177 224 249 126-285 19 42 286-179-224-179 224 42-286-285-19 249-126L100 176l259 103z"/><path d="M450 176l58 166 166-66-113 143 160 81-182 12 27 183-116-143-116 143 27-183-182-12 160-81-113-143 166 66z"/></g>
-  <g fill="none" stroke="#dffcff" stroke-opacity=".34" filter="url(#glow)"><path d="M450 18v814M28 526l844-350M100 176l700 655M28 526l744 305M177 400l646 0"/></g>
+  <rect width="1100" height="850" fill="url(#iceBg)"/>
+  <g fill="url(#facet)" stroke="#e0f2fe" stroke-opacity=".22" stroke-width="2">
+    <path d="M-40 160 230 44 410 176 210 360Z"><animate attributeName="opacity" values=".42;.72;.48" dur="5.2s" repeatCount="indefinite"/></path>
+    <path d="M230 44 610 0 710 240 410 176Z"><animate attributeName="opacity" values=".5;.26;.64;.5" dur="6.4s" repeatCount="indefinite"/></path>
+    <path d="M710 240 1040 80 1180 380 760 420Z"><animate attributeName="opacity" values=".36;.68;.42" dur="4.8s" repeatCount="indefinite"/></path>
+    <path d="M210 360 410 176 560 438 268 610Z"><animate attributeName="opacity" values=".56;.3;.7" dur="5.7s" repeatCount="indefinite"/></path>
+    <path d="M560 438 760 420 1018 720 604 810Z"><animate attributeName="opacity" values=".34;.62;.38" dur="6.1s" repeatCount="indefinite"/></path>
+    <path d="M-60 760 268 610 604 810 164 930Z"><animate attributeName="opacity" values=".28;.58;.36" dur="5.5s" repeatCount="indefinite"/></path>
+  </g>
+  <g fill="none" stroke-linecap="round" filter="url(#frostGlow)">
+    <path d="M42 124 C248 206 380 260 550 426 S842 606 1070 728" stroke="#f8fafc" stroke-opacity=".62" stroke-width="5" stroke-dasharray="30 36">
+      <animate attributeName="stroke-dashoffset" values="0;-132" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values=".28;.86;.34" dur="4.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M560 426 462 232 612 22M562 426 326 530 132 766M560 426 820 286 1038 168M560 426 686 604 742 826" stroke="#dffcff" stroke-opacity=".48" stroke-width="4" stroke-dasharray="18 26">
+      <animate attributeName="stroke-dashoffset" values="0;88" dur="5.4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M120 338 C256 296 344 354 468 308M702 492 C832 452 926 508 1082 456M222 676 C346 626 456 702 626 646" stroke="#bfdbfe" stroke-opacity=".44" stroke-width="3" stroke-dasharray="10 18">
+      <animate attributeName="stroke-dashoffset" values="0;-70" dur="3.8s" repeatCount="indefinite"/>
+    </path>
+  </g>
 </svg>
