@@ -17,27 +17,23 @@ const layoutStyles = requestedLayoutStyles.length
   : allLayoutStyles;
 const phaseTwoSurfaces = Object.freeze({
   home: [
-    ".loadout-card", ".compass-panel", ".compass-main", ".compass-header", ".compass-score-card", ".rr-card", ".impact-card", ".rr-chart-card", ".role-filter-btn", "#spinAgentBtn.small-btn", "#compassDescriptionToggle.compass-description-toggle", ".graph-btn", "#timelineCycleBtn.timeline-cycle-btn", ".compass-profile-title", ".compass-profile-kicker"
+    ".weekly-focus-card", ".improvement-card"
   ],
   stats: [
-    ".stats-summary-card", ".stats-proof-card", ".stats-role-progress-card", ".stats-performance-card", ".stats-breakdown-card", ".stats-maps-card", ".stats-agents-card", ".stats-weapons-card", "button[data-gamesense-open]", "#statsActMobileTrigger", ".stats-season-title"
+    ".stats-trend-card", ".stats-breakdown-cardlet"
   ],
   insights: [
-    ".insights-action-card", ".insights-top-card", ".insights-trends-card", ".insight-filter-btn", ".insight-action-kicker"
+    ".insight-action-hero", ".insight-card", ".trend-signal-card"
   ],
   logging: [
-    ".logging-card", ".logging-feed-card", ".manual-match-panel", "#loggingTrainingMenuBtn.logging-training-menu-btn", ".logging-chip", ".logging-quick-chip", ".logging-quick-toggle", ".logging-quick-close", "#logCalendarTrigger.logging-calendar-trigger", "#logAgentBrowseBtn.agent-select-symbol", "#logSaveBtn.small-btn"
+    ".logging-hero"
   ]
 });
 const phaseTwoLibraryStates = Object.freeze([
-  { id: "gallery", selectors: [".gamesense-hero", ".gamesense-topic-card"] },
-  { id: "maps", open: ["maps"], selectors: [".gamesense-entry-card", ".gamesense-map-entry-card"] },
-  { id: "map-detail", open: ["maps", "breeze"], plants: true, selectors: [".gamesense-detail-head", ".gamesense-tactical-card", ".gamesense-back", ".gamesense-map-view-tabs button", ".gamesense-tips-tabs button", ".gamesense-comp-role-tabs button", ".gamesense-plant-preview-toggle", ".gamesense-section-heading"] },
-  { id: "agents", open: ["agents"], selectors: [".gamesense-agent-entry-card"] },
-  { id: "agent-detail", open: ["agents", "omen"], selectors: [".gamesense-agent-hero"] },
-  { id: "weapons", open: ["weapons"], selectors: [".gamesense-weapon-entry-card"] },
-  { id: "weapon-detail", open: ["weapons", "rifles"], weapon: "phantom", selectors: [".gamesense-weapon-panel", ".gamesense-collection-card", ".gamesense-collection-filters button"] },
-  { id: "skin-preview", skinPreview: true, selectors: [".gamesense-skin-preview-card"] }
+  { id: "gallery", selectors: [".gamesense-hero"] },
+  { id: "map-detail", open: ["maps", "breeze"], selectors: [".gamesense-detail-head", ".gamesense-tip", ".gamesense-comp-card", ".gamesense-weapon-suggestion"] },
+  { id: "agent-detail", open: ["agents", "omen"], selectors: [".gamesense-agent-hero", ".gamesense-agent-fact-list article"] },
+  { id: "weapon-detail", open: ["weapons", "rifles"], weapon: "phantom", selectors: [".gamesense-weapon-panel", ".gamesense-weapon-guidance section"] }
 ]);
 const realContentExtremes = Object.freeze({
   home: {
@@ -92,6 +88,8 @@ const surfaceContentExtremes = Object.freeze({
     "#timelineCycleBtn.timeline-cycle-btn": { short: "Act", long: "All Seasons" }
   },
   stats: {
+    ".stats-trend-card": { short: "Hold the angle.", long: "Your damage pressure stayed below the retained match window." },
+    ".stats-breakdown-cardlet": { short: "Rifle rounds.", long: "Rifle rounds remain the clearest repeatable strength in this match window." },
     ".stats-summary-card": { short: "Iron 1", long: "Ascendant 3" },
     ".stats-proof-card": { short: "Iron 1", long: "Ascendant 3" },
     ".stats-role-progress-card": { short: "Duelist", long: "Controller" },
@@ -105,6 +103,9 @@ const surfaceContentExtremes = Object.freeze({
     ".stats-season-title": { short: "V26 A1", long: "Season 2026 Act 3" }
   },
   insights: {
+    ".insight-action-hero": { short: "Protect this read.", long: "Protect the clearest adjustment before your next ranked block." },
+    ".insight-card": { short: "Hold the trade.", long: "Your retained rounds keep pointing back to the same late-fight choice." },
+    ".trend-signal-card": { short: "Map watch.", long: "This map remains the clearest repeated weakness in the retained window." },
     ".insight-filter-btn": { short: "All", long: "Needs Work" }
   },
   logging: {
@@ -580,6 +581,34 @@ async function run() {
 
     await page.click("#profileDropdownToggle");
     await page.click("#pdOpenSettings");
+    await page.waitForTimeout(450);
+    const assertProfileTextCentered = async viewportLabel => {
+      const profileState = await page.locator("#editProfileModal").evaluate(modal => ({
+        alignment: [...modal.querySelectorAll(
+          ".lens-modal-title,.profile-edit-tab,.profile-edit-panel-title,.profile-edit-panel-copy,.theme-card-name,.theme-card-copy"
+        )].filter(element => element.getClientRects().length).map(element => ({
+          text: element.textContent.trim().slice(0, 48),
+          align: getComputedStyle(element).textAlign
+        })),
+        themeNames: [...modal.querySelectorAll(".theme-card-name")].filter(element => element.getClientRects().length).map(element => {
+          const card = element.closest(".theme-card").getBoundingClientRect();
+          const name = element.getBoundingClientRect();
+          return { text: element.textContent.trim(), centerDelta: Math.abs((name.left + name.width / 2) - (card.left + card.width / 2)) };
+        })
+      }));
+      const { alignment, themeNames } = profileState;
+      assert.ok(alignment.length > 8, `${viewportLabel}: ${JSON.stringify(alignment)}`);
+      assert.ok(alignment.every(item => item.align === "center"), `${viewportLabel}: ${JSON.stringify(alignment.filter(item => item.align !== "center"))}`);
+      assert.ok(themeNames.length > 6 && themeNames.every(item => item.centerDelta <= 2), `${viewportLabel}: ${JSON.stringify(themeNames)}`);
+    };
+    await assertProfileTextCentered("desktop profile editor");
+    await page.locator("#editProfileModal .profile-edit-shell").screenshot({ path: path.join(__dirname, "tmp", "profile-editor-centered-desktop.png") });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(250);
+    await assertProfileTextCentered("mobile profile editor");
+    await page.locator("#editProfileModal .profile-edit-shell").screenshot({ path: path.join(__dirname, "tmp", "profile-editor-centered-mobile.png") });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(250);
     await page.click('[data-profile-tab="layoutStyle"]');
     assert.equal(await page.locator("[data-layout-style-card]").count(), 11);
     const excludedBefore = await page.evaluate(() => ({
@@ -592,12 +621,22 @@ async function run() {
       radarClip: getComputedStyle(document.querySelector("#compassSvg")).clipPath,
       radarBackground: getComputedStyle(document.querySelector("#compassSvg")).backgroundImage,
       meterClip: getComputedStyle(document.querySelector(".compass-bar-track")).clipPath,
-      meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage
+      meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage,
+      chartCardClip: getComputedStyle(document.querySelector(".rr-chart-card")).clipPath,
+      chartCardBackground: getComputedStyle(document.querySelector(".rr-chart-card")).backgroundImage,
+      chartCardBorder: getComputedStyle(document.querySelector(".rr-chart-card")).border,
+      compactControls: [
+        ".role-filter-btn",
+        "#spinAgentBtn.small-btn",
+        "#compassDescriptionToggle.compass-description-toggle",
+        ".graph-btn",
+        "#timelineCycleBtn.timeline-cycle-btn"
+      ].map(selector => {
+        const control = document.querySelector(selector);
+        const style = getComputedStyle(control);
+        return { selector, clip: style.clipPath, padding: style.padding, borderLeftWidth: style.borderLeftWidth, background: style.backgroundImage };
+      })
     }));
-    const chartCardBefore = await page.locator(".rr-chart-card").evaluate(card => {
-      const style = getComputedStyle(card);
-      return { clip: style.clipPath, backgroundImage: style.backgroundImage, backgroundColor: style.backgroundColor, border: style.border, radius: style.borderRadius, shadow: style.boxShadow };
-    });
     for (const style of layoutStyles) {
       await page.click(`[data-layout-style-card="${style}"]`);
       assert.equal(await page.locator("body").getAttribute("data-layout-style"), style);
@@ -625,14 +664,23 @@ async function run() {
         radarClip: getComputedStyle(document.querySelector("#compassSvg")).clipPath,
         radarBackground: getComputedStyle(document.querySelector("#compassSvg")).backgroundImage,
         meterClip: getComputedStyle(document.querySelector(".compass-bar-track")).clipPath,
-        meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage
+        meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage,
+        chartCardClip: getComputedStyle(document.querySelector(".rr-chart-card")).clipPath,
+        chartCardBackground: getComputedStyle(document.querySelector(".rr-chart-card")).backgroundImage,
+        chartCardBorder: getComputedStyle(document.querySelector(".rr-chart-card")).border,
+        compactControls: [
+          ".role-filter-btn",
+          "#spinAgentBtn.small-btn",
+          "#compassDescriptionToggle.compass-description-toggle",
+          ".graph-btn",
+          "#timelineCycleBtn.timeline-cycle-btn"
+        ].map(selector => {
+          const control = document.querySelector(selector);
+          const style = getComputedStyle(control);
+          return { selector, clip: style.clipPath, padding: style.padding, borderLeftWidth: style.borderLeftWidth, background: style.backgroundImage };
+        })
       }));
       assert.deepEqual(excludedAfter, excludedBefore, `${style} changed an excluded surface`);
-      const chartCardAfter = await page.locator(".rr-chart-card").evaluate(card => {
-        const computed = getComputedStyle(card);
-        return { clip: computed.clipPath, backgroundImage: computed.backgroundImage, backgroundColor: computed.backgroundColor, border: computed.border, radius: computed.borderRadius, shadow: computed.boxShadow };
-      });
-      assert.notDeepEqual(chartCardAfter, chartCardBefore, `${style} did not theme the chart card shell`);
     }
     await page.click('[data-layout-style-card="honeycomb"]');
     assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");

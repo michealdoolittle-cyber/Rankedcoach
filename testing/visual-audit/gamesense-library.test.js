@@ -124,6 +124,25 @@ async function dismissWarmup(page) {
   }
 }
 
+async function touchWithNaturalDrift(page, locator, delta = { x: 5, y: 3 }) {
+  await locator.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(80);
+  const box = await locator.boundingBox();
+  assert.ok(box, "Touch target must have a rendered bounding box");
+  const session = await page.context().newCDPSession(page);
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: .5 }]
+  });
+  await session.send("Input.dispatchTouchEvent", {
+    type: "touchMove",
+    touchPoints: [{ x: x + delta.x, y: y + delta.y, id: 1, radiusX: 4, radiusY: 4, force: .5 }]
+  });
+  await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+}
+
 async function run() {
   const server = await startServer();
   const browser = await chromium.launch();
@@ -739,6 +758,20 @@ async function run() {
       "4a2b2d3a24bc4928b1a20efca88fee19",
       "04f9851ace5c424492c327608b895e2c"
     ]);
+    const expandedModelCoverage = await desktop.evaluate(() => [
+      ["Prime", "Vandal", 1],
+      ["Prime", "Vandal", 3],
+      ["Radiant Entertainment System", "Phantom", 0],
+      ["Arcane", "Sheriff", 0],
+      ["Glitchpop", "Frenzy", 0]
+    ].map(([collection, weapon, variant]) => globalThis.RankedCoachWeaponCollections.getSketchfabModel(collection, weapon, variant)?.id || ""));
+    assert.deepEqual(expandedModelCoverage, [
+      "91e1a01291d741849acd35514cca21b0",
+      "bcca9bc0df714df185f019282c1b3cd0",
+      "bb334fb114fa4db084c6666e2e09d071",
+      "9d817055d22543b8a4a5992f68a35b33",
+      "97ed3f185548407db5e4caf18084b2a4"
+    ]);
     await desktop.locator(".gamesense-collection-filters").screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-filters-desktop.png") });
     await desktop.locator('[data-gamesense-collection-filter="premium"]').click();
     assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 5);
@@ -757,6 +790,14 @@ async function run() {
     assert.equal(inactiveFocusGuard.pageInert, true, JSON.stringify(inactiveFocusGuard));
     const firstCollectionCard = desktop.locator(".gamesense-collection-card[data-gamesense-collection-preview]").first();
     await firstCollectionCard.screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-card-desktop.png") });
+    const desktopCollectionGeometry = await firstCollectionCard.evaluate(card => {
+      const art = card.querySelector(".gamesense-collection-art").getBoundingClientRect();
+      const copy = card.querySelector(".gamesense-collection-copy").getBoundingClientRect();
+      const divider = card.querySelector(".gamesense-collection-divider").getBoundingClientRect();
+      return { card: card.getBoundingClientRect().toJSON(), art: art.toJSON(), copy: copy.toJSON(), divider: divider.toJSON() };
+    });
+    assert.ok(Math.abs(desktopCollectionGeometry.art.top - desktopCollectionGeometry.card.top) <= 2 && Math.abs(desktopCollectionGeometry.art.bottom - desktopCollectionGeometry.card.bottom) <= 2, JSON.stringify(desktopCollectionGeometry));
+    assert.ok(desktopCollectionGeometry.copy.left >= desktopCollectionGeometry.divider.left && desktopCollectionGeometry.copy.height >= desktopCollectionGeometry.card.height - 3, JSON.stringify(desktopCollectionGeometry));
     await firstCollectionCard.hover();
     await desktop.waitForTimeout(180);
     assert.ok(Number(await firstCollectionCard.locator(".gamesense-collection-art span").evaluate(node => getComputedStyle(node).opacity)) > .9);
@@ -837,20 +878,29 @@ async function run() {
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
     assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-1\.mp4/i);
+    const reaverUpgradeRail = await desktop.locator('.gamesense-skin-option-groups > section:first-child > div').evaluate(rail => ({
+      overflowX: getComputedStyle(rail).overflowX,
+      clientWidth: rail.clientWidth,
+      scrollWidth: rail.scrollWidth,
+      rows: new Set([...rail.querySelectorAll("button")].map(button => Math.round(button.getBoundingClientRect().top))).size
+    }));
+    assert.notEqual(reaverUpgradeRail.overflowX, "auto", JSON.stringify(reaverUpgradeRail));
+    assert.notEqual(reaverUpgradeRail.overflowX, "scroll", JSON.stringify(reaverUpgradeRail));
+    assert.ok(reaverUpgradeRail.scrollWidth <= reaverUpgradeRail.clientWidth + 1, JSON.stringify(reaverUpgradeRail));
     assert.equal(await desktop.locator(".gamesense-skin-variant-index").count(), 0);
     await desktop.locator('[data-skin-preview-view="3"]').click();
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-true-model").count(), 1);
     assert.match(await desktop.locator(".gamesense-skin-viewer-pane").innerText(), /True 3D Model.*Reaver Phantom.*Drag to rotate.*MisterM4n.*CC BY 4\.0/is);
     assert.match(await desktop.locator('.gamesense-skin-model-stage iframe').getAttribute("src"), /sketchfab\.com\/models\/399ea10e99b5459cbf892498c7c258fc\/embed/i);
-    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-4\.mp4/i);
-    assert.equal(await desktop.locator(".gamesense-skin-animation-preview > header [data-skin-preview-video-label]").innerText(), "SHARED LEVEL IV");
-    assert.match(await desktop.locator(".gamesense-skin-animation-preview > header [data-skin-preview-video-detail]").innerText(), /no separate val-skins\/Riot clip/i);
+    assert.equal(await desktop.locator("[data-skin-preview-video]").isHidden(), true);
+    assert.equal(await desktop.locator("[data-skin-animation-static]").isVisible(), true);
+    assert.match(await desktop.locator("[data-skin-animation-static] img").getAttribute("src"), /phantom\.png\?preview=16&view=3/i);
+    assert.match(await desktop.locator(".gamesense-skin-animation-preview > header [data-skin-preview-video-detail]").innerText(), /official static render/i);
     await desktop.locator('[data-skin-preview-view="1"]').click();
     assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-static-render").count(), 1);
     assert.equal(await desktop.locator(".gamesense-skin-model-stage iframe").count(), 0);
     assert.match(await desktop.locator("[data-skin-preview-image]").getAttribute("src"), /phantom\.png\?preview=16&view=1/i);
-    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("src"), /^https:\/\/valorant\.dyn\.riotcdn\.net\/x\/videos\/release-13\.00\/phantom-16-level-4\.mp4/i);
-    assert.match(await desktop.locator("[data-skin-preview-video]").getAttribute("poster"), /phantom\.png\?preview=16&view=1/i);
+    assert.match(await desktop.locator("[data-skin-animation-static] img").getAttribute("src"), /phantom\.png\?preview=16&view=1/i);
     await desktop.locator('[data-skin-preview-view="3"]').click();
     assert.equal(await desktop.locator("[data-skin-orbit-stage], [data-skin-orbit-scene]").count(), 0);
     await desktop.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-3d-desktop.png") });
@@ -1217,7 +1267,16 @@ async function run() {
     assert.ok(mobileAllFilterSpacing.gap >= 8, JSON.stringify(mobileAllFilterSpacing));
     const firstMobileCollectionCard = mobile.locator(".gamesense-collection-card[data-gamesense-collection-preview]").first();
     await firstMobileCollectionCard.screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-card-mobile.png") });
-    await firstMobileCollectionCard.tap();
+    const mobileCollectionGeometry = await firstMobileCollectionCard.evaluate(card => {
+      const art = card.querySelector(".gamesense-collection-art").getBoundingClientRect();
+      const copyNode = card.querySelector(".gamesense-collection-copy");
+      const copy = copyNode.getBoundingClientRect();
+      const divider = card.querySelector(".gamesense-collection-divider").getBoundingClientRect();
+      return { card: card.getBoundingClientRect().toJSON(), art: art.toJSON(), copy: copy.toJSON(), divider: divider.toJSON(), copyPaddingLeft: parseFloat(getComputedStyle(copyNode).paddingLeft) };
+    });
+    assert.ok(Math.abs(mobileCollectionGeometry.art.top - mobileCollectionGeometry.card.top) <= 2 && Math.abs(mobileCollectionGeometry.art.bottom - mobileCollectionGeometry.card.bottom) <= 2, JSON.stringify(mobileCollectionGeometry));
+    assert.ok(mobileCollectionGeometry.copyPaddingLeft >= 14, JSON.stringify(mobileCollectionGeometry));
+    await touchWithNaturalDrift(mobile, firstMobileCollectionCard);
     await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     await mobile.waitForTimeout(250);
     const mobileSkinViewer = await mobile.locator(".gamesense-skin-preview-card").evaluate(card => ({
@@ -1260,6 +1319,24 @@ async function run() {
     assert.match(await mobile.locator("[data-skin-preview-video]").getAttribute("src"), /vandal-0-1\.mp4/i);
     await mobile.locator(".gamesense-skin-preview-card").evaluate(card => { card.scrollTop = 0; });
     await mobile.locator(".gamesense-skin-preview-overlay").screenshot({ path: path.join(__dirname, "tmp", "gamesense-skin-preview-mobile.png") });
+    await mobile.mouse.click(2, 2);
+    await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
+    const mobileReaverCard = mobile.locator('.gamesense-collection-card[data-gamesense-collection-preview][data-preview-name="Reaver"]');
+    await touchWithNaturalDrift(mobile, mobileReaverCard);
+    await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    const mobileUpgradeRail = await mobile.locator('.gamesense-skin-option-groups > section:first-child > div').evaluate(rail => ({
+      overflowX: getComputedStyle(rail).overflowX,
+      clientWidth: rail.clientWidth,
+      scrollWidth: rail.scrollWidth,
+      buttonWidths: [...rail.querySelectorAll("button")].map(button => button.getBoundingClientRect().width)
+    }));
+    assert.equal(mobileUpgradeRail.overflowX, "visible", JSON.stringify(mobileUpgradeRail));
+    assert.ok(mobileUpgradeRail.scrollWidth <= mobileUpgradeRail.clientWidth + 1, JSON.stringify(mobileUpgradeRail));
+    assert.ok(mobileUpgradeRail.buttonWidths.every(width => width >= 44), JSON.stringify(mobileUpgradeRail));
+    await mobile.locator('[data-skin-preview-view="1"]').click();
+    assert.equal(await mobile.locator("[data-skin-preview-video]").isHidden(), true);
+    assert.equal(await mobile.locator("[data-skin-animation-static]").isVisible(), true);
+    assert.match(await mobile.locator("[data-skin-animation-static] img").getAttribute("src"), /vandal\.png\?preview=16&view=1/i);
     await mobile.mouse.click(2, 2);
     await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');

@@ -260,57 +260,16 @@ body[data-layout-style] :is(
   #page-insights .trend-signal-card,
   #page-home .weekly-focus-card,
   #page-home .improvement-card,
-  #page-home .loadout-card,
-  #page-home .compass-panel,
-  #page-home .compass-main,
-  #page-home .compass-header,
-  #page-home .compass-score-card,
-  #page-home .rr-card,
-  #page-home .impact-card,
-  #page-home .rr-chart-card,
-  #page-home .role-filter-btn,
-  #page-home #spinAgentBtn.small-btn,
-  #page-home #compassDescriptionToggle.compass-description-toggle,
-  #page-home .graph-btn,
-  #page-home #timelineCycleBtn.timeline-cycle-btn,
-  #page-home .compass-profile-title,
-  #page-home .compass-profile-kicker,
   #page-stats .stats-trend-card,
   #page-stats .stats-breakdown-cardlet,
-  #page-stats .stats-summary-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card,
-  #page-stats .stats-performance-card,
-  #page-stats .stats-breakdown-card,
-  #page-stats .stats-maps-card,
-  #page-stats .stats-agents-card,
-  #page-stats .stats-weapons-card,
-  #page-stats button[data-gamesense-open],
-  #page-stats #statsActMobileTrigger,
-  #page-stats .stats-season-title,
   #page-insights .insights-action-card,
   #page-insights .insights-top-card,
   #page-insights .insights-trends-card,
-  #page-insights .insight-filter-btn,
-  #page-insights .insight-action-kicker,
   #page-logging .logging-hero,
-  #page-logging .logging-live-card,
   #page-logging .log-entry,
-  #page-logging .logging-card,
-  #page-logging .logging-feed-card,
-  #page-logging .manual-match-panel,
-  #page-logging #loggingTrainingMenuBtn.logging-training-menu-btn,
-  #page-logging .logging-chip,
-  #page-logging .logging-quick-chip,
-  #page-logging .logging-quick-toggle,
-  #page-logging .logging-quick-close,
-  #page-logging #logCalendarTrigger.logging-calendar-trigger,
-  #page-logging #logAgentBrowseBtn.agent-select-symbol,
-  #page-logging #logSaveBtn.small-btn,
   #page-library .gamesense-detail-head,
   #page-library .gamesense-tip,
   #page-library .gamesense-comp-card,
-  #page-library .gamesense-comp-option,
   #page-library .gamesense-comp-agent-read,
   #page-library .gamesense-comp-pick-explorer,
   #page-library .gamesense-comp-pick-row,
@@ -329,18 +288,8 @@ body[data-layout-style] :is(
   #page-library .gamesense-map-entry-card,
   #page-library .gamesense-agent-entry-card,
   #page-library .gamesense-weapon-entry-card,
-  #page-library .gamesense-tactical-card,
   #page-library .gamesense-agent-hero,
-  #page-library .gamesense-weapon-panel,
-  #page-library .gamesense-collection-card,
-  .gamesense-skin-preview-card,
-  #page-library .gamesense-back,
-  #page-library .gamesense-map-view-tabs button,
-  #page-library .gamesense-tips-tabs button,
-  #page-library .gamesense-comp-role-tabs button,
-  #page-library .gamesense-collection-filters button,
-  #page-library .gamesense-plant-preview-toggle,
-  #page-library .gamesense-section-heading
+  #page-library .gamesense-weapon-panel
 ){
   position:relative;
   isolation:isolate;
@@ -358,33 +307,6 @@ body[data-layout-style] :is(
   padding-left:var(--layout-surface-safe-left) !important;
 }
 
-/* Collection entries own their internal image/copy split; outer safe-area
-   padding would make the two halves look like separate cards. */
-body[data-layout-style] #page-library .gamesense-collection-card{
-  --layout-surface-safe-top:0px;
-  --layout-surface-safe-right:0px;
-  --layout-surface-safe-bottom:0px;
-  --layout-surface-safe-left:0px;
-}
-
-body[data-layout-style] #page-stats :is(.stats-maps-card,.stats-agents-card,.stats-weapons-card) .stats-library-head{
-  width:auto;
-  max-width:100%;
-  min-width:0;
-  align-self:stretch;
-  box-sizing:border-box;
-}
-
-body[data-layout-style] #page-stats :is(.stats-maps-card,.stats-agents-card,.stats-weapons-card) .stats-library-head .card-sub{
-  width:auto;
-  max-width:100%;
-  min-width:0;
-}
-
-body[data-layout-style] #page-library .gamesense-section-heading strong{
-  line-height:1.2 !important;
-}
-
 body[data-layout-style] #page-library .gamesense-agent-entry-card .gamesense-entry-copy{
   right:max(24px,var(--layout-surface-safe-right,24px)) !important;
   bottom:max(18px,var(--layout-surface-safe-bottom,18px)) !important;
@@ -392,15 +314,8 @@ body[data-layout-style] #page-library .gamesense-agent-entry-card .gamesense-ent
   box-sizing:border-box;
 }
 
-body[data-layout-style] #page-home .impact-card .impact-role-pill{
-  width:100%;
-  min-width:0;
-  max-width:100%;
-  box-sizing:border-box;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-
+/* Compact controls keep their native geometry. Layout styles only add a
+   lightweight active underline instead of card borders, clipping or padding. */
 body[data-layout-style] :is(
   #page-home .compass-profile-title,
   #page-home .compass-profile-kicker,
@@ -431,75 +346,18 @@ body[data-layout-style] :is(
   #page-library .gamesense-plant-preview-toggle,
   #page-library .gamesense-section-heading
 ){
-  --layout-surface-safe-top:4px;
-  --layout-surface-safe-right:10px;
-  --layout-surface-safe-bottom:4px;
-  --layout-surface-safe-left:10px;
-}
-
-body[data-layout-style="honeycomb"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
-){
-  --layout-surface-clip:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%);
-}
-
-body[data-layout-style="aperturecut"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
-){
-  --layout-surface-clip:polygon(7px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 7px),calc(100% - 7px) 100%,10px 100%,0 calc(100% - 10px),0 7px);
-  --layout-surface-safe-right:12px;
-  --layout-surface-background:linear-gradient(225deg,color-mix(in srgb,var(--accent-2) 42%,transparent) 0 8px,transparent 8px),linear-gradient(145deg,var(--card),var(--card-2));
-}
-
-body[data-layout-style="diamondfacet"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
-){
-  --layout-surface-clip:polygon(9px 0,calc(100% - 9px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 7px),0 7px);
-}
-
-body[data-layout-style="bladewedge"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
-){
-  --layout-surface-clip:polygon(7px 0,100% 0,calc(100% - 7px) 100%,0 100%);
-}
-
-body[data-layout-style="chevronscan"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
-){
-  --layout-surface-safe-left:18px;
+  clip-path:none !important;
+  box-sizing:border-box;
 }
 
 body[data-layout-style="hazardedge"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
-){
-  --layout-surface-border-left-width:6px;
-  --layout-surface-safe-left:18px;
-}
-
-body[data-layout-style="hazardedge"] :is(
-  #page-home .compass-main,
-  #page-home .impact-card,
-  #page-stats .stats-proof-card,
-  #page-stats .stats-role-progress-card,
   #page-stats .stats-trend-card,
   #page-stats .stats-breakdown-cardlet,
   #page-insights .insight-action-hero,
   #page-insights .insight-card,
   #page-insights .insight-trend-row,
+  #page-insights .trend-signal-card,
   #page-logging .logging-hero,
-  #page-logging .logging-live-card,
   #page-logging .log-entry
 ){
   --layout-surface-border-left-width:6px;
@@ -507,56 +365,18 @@ body[data-layout-style="hazardedge"] :is(
   --layout-surface-background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 32%,transparent) 0 5px,color-mix(in srgb,var(--card) 72%,transparent) 5px 10px) left/14px 100% no-repeat,linear-gradient(145deg,var(--card),var(--card-2));
 }
 
-body[data-layout-style="ribbonbanner"] :is(
-  .compass-profile-title,.compass-profile-kicker,.compass-score-card,.role-filter-btn,#spinAgentBtn,#compassDescriptionToggle,.graph-btn,#timelineCycleBtn,
-  button[data-gamesense-open],#statsActMobileTrigger,.stats-season-title,.insight-filter-btn,.insight-action-kicker,#loggingTrainingMenuBtn,.logging-chip,.logging-quick-chip,.logging-quick-toggle,.logging-quick-close,#logCalendarTrigger,#logAgentBrowseBtn,#logSaveBtn,
-  .gamesense-back,.gamesense-map-view-tabs button,.gamesense-tips-tabs button,.gamesense-comp-role-tabs button,.gamesense-collection-filters button,.gamesense-plant-preview-toggle,.gamesense-section-heading
+body[data-layout-style] :is(
+  #page-home .role-filter-btn.active,
+  #page-home .graph-btn.active,
+  #page-stats button[data-gamesense-open].active,
+  #page-insights .insight-filter-btn.active,
+  #page-library .gamesense-map-view-tabs button.active,
+  #page-library .gamesense-tips-tabs button.active,
+  #page-library .gamesense-comp-role-tabs button.active,
+  #page-library .gamesense-collection-filters button.active,
+  #page-library .gamesense-plant-preview-toggle[aria-expanded="true"]
 ){
-  --layout-surface-safe-top:8px;
-  --layout-surface-safe-right:12px;
-  --layout-surface-background:linear-gradient(225deg,var(--accent) 0 8px,transparent 8px),linear-gradient(145deg,var(--card),var(--card-2));
-}
-
-body[data-layout-style="ribbonbanner"] #page-logging .manual-match-panel{
-  --layout-surface-safe-top:10px;
-  --layout-surface-safe-right:14px;
-  --layout-surface-safe-bottom:8px;
-  --layout-surface-safe-left:10px;
-  --layout-surface-background:linear-gradient(225deg,var(--accent) 0 8px,transparent 8px),linear-gradient(145deg,var(--card),var(--card-2));
-}
-
-body[data-layout-style="pixeldialog"] :is(
-  #page-home .compass-profile-title,
-  #page-home .compass-profile-kicker,
-  #page-home .compass-score-card,
-  #page-home .role-filter-btn,
-  #page-home #spinAgentBtn.small-btn,
-  #page-home #compassDescriptionToggle.compass-description-toggle,
-  #page-home .graph-btn,
-  #page-home #timelineCycleBtn.timeline-cycle-btn,
-  #page-stats button[data-gamesense-open],
-  #page-stats #statsActMobileTrigger,
-  #page-stats .stats-season-title,
-  #page-insights .insight-filter-btn,
-  #page-insights .insight-action-kicker,
-  #page-logging #loggingTrainingMenuBtn.logging-training-menu-btn,
-  #page-logging .logging-chip,
-  #page-logging .logging-quick-chip,
-  #page-logging .logging-quick-toggle,
-  #page-logging .logging-quick-close,
-  #page-logging #logCalendarTrigger.logging-calendar-trigger,
-  #page-logging #logAgentBrowseBtn.agent-select-symbol,
-  #page-logging #logSaveBtn.small-btn,
-  #page-library .gamesense-back,
-  #page-library .gamesense-map-view-tabs button,
-  #page-library .gamesense-tips-tabs button,
-  #page-library .gamesense-comp-role-tabs button,
-  #page-library .gamesense-collection-filters button,
-  #page-library .gamesense-plant-preview-toggle,
-  #page-library .gamesense-section-heading
-){
-  --layout-surface-border-width:2px;
-  --layout-surface-border-left-width:2px;
+  box-shadow:inset 0 -2px 0 var(--accent) !important;
 }
 
 /* Dense trend cards need compact safe areas so their value line cannot be

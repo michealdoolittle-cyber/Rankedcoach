@@ -1,6 +1,6 @@
 # Layout Style Overreach — Fix the Border Treatment Bleeding Into Every Nested Element (2026-07-16)
 
-**Status:** Ready to build. Michael tried a shipped Layout Style (`hazardedge`) live across Home, Logging, Stats, Insights, and Library, and reported it: cuts off important text, applies the decorative border to internal/nested elements instead of just parent cards, and "looks overwhelming" everywhere. He confirmed **this affects every layout style, not just this one** — screenshots attached showed the same problem repeated on every page. I checked `public/layout-styles.css` directly rather than guessing at the cause, and found the exact, precise bug — this is fixable as a targeted correction, not a redesign.
+**Status:** Shipped in the 2026-07-16 skin-preview/layout release. Heavy Layout Style treatment is now limited to approved content cards; compact controls, charts, dense data surfaces, and selectors keep their native geometry. The all-style scope test and full mobile/desktop passthrough passed with no clipping, horizontal overflow, or console issues.
 
 ---
 

@@ -52000,6 +52000,49 @@ html body #profileRankIcon.profile-rank-icon{
   }
 }
 
+/* Profile customization is a centered chooser, including its compact mobile nav. */
+#editProfileModal :is(
+  .lens-modal-title,
+  .profile-edit-tab,
+  .profile-edit-panel-head,
+  .profile-edit-panel-title,
+  .profile-edit-panel-copy,
+  .profile-edit-field,
+  .profile-edit-field-note,
+  .profile-border-motion-copy,
+  .layout-style-control-row,
+  .layout-style-card-copy,
+  .theme-card-name,
+  .theme-card-copy,
+  .border-card,
+  .banner-card,
+  label,
+  select,
+  input,
+  button
+){
+  text-align:center !important;
+}
+
+#editProfileModal :is(.profile-edit-panel-head,.profile-edit-panel-copy){
+  align-items:center !important;
+  margin-inline:auto !important;
+}
+
+#editProfileModal .profile-edit-tab{
+  justify-content:center !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-head{
+  width:100% !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+#editProfileModal #editProfileThemeGallery .theme-card-name{
+  width:100% !important;
+}
+
 /* Mobile nav redesign v1: single source of truth for the new two-row header + nav-only footer. */
 html.is-mobile-layout body.is-mobile-layout .app-header{
   position:sticky !important;

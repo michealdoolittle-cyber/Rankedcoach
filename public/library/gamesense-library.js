@@ -6,6 +6,9 @@
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
   let activeSkinVideoIndex = 0;
+  let skinPreviewTouchActivation = null;
+  let skinPreviewSuppressClickUntil = 0;
+  let skinPreviewSuppressClickTarget = null;
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -864,6 +867,9 @@
       : selectors.find(selector => Number(selector.dataset.skinPreviewVideoOption) === Number(nextIndex));
     const video = overlay.querySelector("[data-skin-preview-video]");
     if (!selected || !video) return;
+    const staticFallback = overlay.querySelector("[data-skin-animation-static]");
+    video.hidden = false;
+    if (staticFallback) staticFallback.hidden = true;
     activeSkinVideoIndex = Number(nextIndex);
     const nextSource = selected.dataset.skinPreviewVideoSource || "";
     const nextPoster = selected.dataset.skinPreviewVideoPoster || "";
@@ -885,6 +891,47 @@
       selector.classList.toggle("is-video-active", isActive);
       if (!selector.hasAttribute("data-skin-preview-view")) selector.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
+  }
+
+  function setStaticSkinAnimation(selector) {
+    const overlay = activeSkinPreview;
+    if (!overlay || !selector) return;
+    const video = overlay.querySelector("[data-skin-preview-video]");
+    const staticFallback = overlay.querySelector("[data-skin-animation-static]");
+    const unavailable = overlay.querySelector(".gamesense-skin-video-unavailable");
+    if (!staticFallback) return;
+    const source = selector.dataset.skinPreviewSource || "";
+    const alt = selector.dataset.skinPreviewAlt || "Selected weapon color variant";
+    const image = staticFallback.querySelector("img");
+    if (video) {
+      video.pause?.();
+      video.hidden = true;
+    }
+    if (unavailable) unavailable.hidden = true;
+    if (image) {
+      image.src = source;
+      image.alt = alt;
+    }
+    staticFallback.hidden = false;
+    activeSkinVideoIndex = -1;
+    const label = overlay.querySelector("[data-skin-preview-video-label]");
+    if (label) label.textContent = selector.dataset.skinViewLabel || "Static color preview";
+    const detail = overlay.querySelector("[data-skin-preview-video-detail]");
+    if (detail) detail.textContent = "No color-specific Riot animation is published for this variant, so its official static render is shown instead.";
+    overlay.querySelectorAll("[data-skin-preview-video-option]").forEach(option => {
+      option.classList.remove("is-video-active");
+      if (!option.hasAttribute("data-skin-preview-view")) option.setAttribute("aria-pressed", "false");
+    });
+  }
+
+  function setActiveSkinVariantMedia(selector) {
+    if (!selector) return;
+    const hasDirectVideo = selector.dataset.skinPreviewVideoDirect === "true";
+    if (!hasDirectVideo) {
+      setStaticSkinAnimation(selector);
+      return;
+    }
+    setActiveSkinVideo(Number(selector.dataset.skinPreviewVideoOption || 0), selector);
   }
 
   function openSkinPreview(trigger) {
@@ -927,7 +974,7 @@
           <div class="gamesense-skin-media-pages">
           <article class="gamesense-skin-animation-preview is-active" data-skin-media-page="0">
             <header><span>Skin Animation</span><strong data-skin-preview-video-label>${escapeHtml(previewVideos[0]?.displayLabel || `${name} preview`)}</strong><small data-skin-preview-video-detail>Animation supplied by Riot data used by val-skins.</small></header>
-            <div class="gamesense-skin-animation-frame">${previewVideos.length ? `<video data-skin-preview-video src="${escapeHtml(previewVideos[0].video)}" poster="${escapeHtml(previewVideos[0].poster)}" controls autoplay muted playsinline preload="metadata"></video>` : `<div class="gamesense-skin-video-unavailable"><strong>No animation published</strong><span>This skin does not include a streamed level or variant preview.</span></div>`}</div>
+            <div class="gamesense-skin-animation-frame">${previewVideos.length ? `<video data-skin-preview-video src="${escapeHtml(previewVideos[0].video)}" poster="${escapeHtml(previewVideos[0].poster)}" controls autoplay muted playsinline preload="metadata"></video>` : `<div class="gamesense-skin-video-unavailable"><strong>No animation published</strong><span>This skin does not include a streamed level or variant preview.</span></div>`}<div class="gamesense-skin-animation-static" data-skin-animation-static hidden><img src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}"><strong>Official static color render</strong></div></div>
             <div class="gamesense-skin-option-groups">
               ${(item?.upgradeVideos || []).some(level => getApprovedSkinVideoUrl(level.video)) ? `<section><span>Upgrade levels</span><div role="group" aria-label="Choose a ${escapeHtml(name)} upgrade animation">${(item.upgradeVideos || []).map((level, levelIndex) => {
                 const index = previewVideos.findIndex(video => video.video === getApprovedSkinVideoUrl(level.video));
@@ -943,7 +990,7 @@
                   const videoDetail = hasDirectVideo
                     ? "Color-specific animation supplied by Riot data used by val-skins."
                     : "Shared level animation; this color has no separate val-skins/Riot clip.";
-                  return `<button type="button" class="${index === 0 ? "active" : ""}${videoIndex === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="Variant ${roman}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}"${videoIndex >= 0 ? ` data-skin-preview-video-option="${videoIndex}" data-skin-preview-video-source="${escapeHtml(previewVideos[videoIndex].video)}" data-skin-preview-video-poster="${escapeHtml(variant.source || previewVideos[videoIndex].poster)}" data-skin-preview-video-label="${escapeHtml(videoLabel)}" data-skin-preview-video-detail="${escapeHtml(videoDetail)}" data-skin-preview-video-direct="${hasDirectVideo ? "true" : "false"}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" title="${escapeHtml(variant.label || `Variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span></button>`;
+                  return `<button type="button" class="${index === 0 ? "active" : ""}${hasDirectVideo && videoIndex === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="Variant ${roman}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}" data-skin-preview-video-direct="${hasDirectVideo ? "true" : "false"}"${videoIndex >= 0 ? ` data-skin-preview-video-option="${videoIndex}" data-skin-preview-video-source="${escapeHtml(previewVideos[videoIndex].video)}" data-skin-preview-video-poster="${escapeHtml(variant.source || previewVideos[videoIndex].poster)}" data-skin-preview-video-label="${escapeHtml(videoLabel)}" data-skin-preview-video-detail="${escapeHtml(videoDetail)}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" title="${escapeHtml(variant.label || `Variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span></button>`;
                 }).join("")}
               </div></section>
             </div>
@@ -970,9 +1017,11 @@
         const index = Number(selector.dataset.skinPreviewView || 0);
         setActiveSkinView(index);
         setActiveSkinModel(overlay, variants[index], name, weapon);
+        setActiveSkinVariantMedia(selector);
+      } else {
+        const videoSelector = event.target.closest?.("[data-skin-preview-video-option]");
+        if (videoSelector) setActiveSkinVideo(Number(videoSelector.dataset.skinPreviewVideoOption || 0), videoSelector);
       }
-      const videoSelector = event.target.closest?.("[data-skin-preview-video-option]");
-      if (videoSelector) setActiveSkinVideo(Number(videoSelector.dataset.skinPreviewVideoOption || 0), videoSelector);
       const mediaPageButton = event.target.closest?.("[data-skin-media-page-button]");
       if (mediaPageButton) {
         const nextPage = Number(mediaPageButton.dataset.skinMediaPageButton || 0);
@@ -1384,6 +1433,37 @@
     card.classList.toggle("has-info-open", open);
   }
 
+  document.addEventListener("touchstart", event => {
+    const trigger = event.target.closest?.("[data-gamesense-collection-preview]");
+    const touch = event.touches?.[0];
+    skinPreviewTouchActivation = trigger && event.touches?.length === 1 && touch
+      ? { trigger, identifier: touch.identifier, x: touch.clientX, y: touch.clientY, startedAt: Date.now() }
+      : null;
+  }, { capture: true, passive: true });
+
+  document.addEventListener("touchend", event => {
+    const activation = skinPreviewTouchActivation;
+    skinPreviewTouchActivation = null;
+    if (!activation?.trigger?.isConnected) return;
+    const touch = Array.from(event.changedTouches || []).find(item => item.identifier === activation.identifier);
+    if (!touch) return;
+    const distance = Math.hypot(touch.clientX - activation.x, touch.clientY - activation.y);
+    const elapsed = Date.now() - activation.startedAt;
+    const rect = activation.trigger.getBoundingClientRect();
+    const endedInside = touch.clientX >= rect.left && touch.clientX <= rect.right
+      && touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+    if (distance > 16 || elapsed > 800 || !endedInside) return;
+    event.preventDefault();
+    event.stopPropagation();
+    skinPreviewSuppressClickUntil = Date.now() + 500;
+    skinPreviewSuppressClickTarget = activation.trigger;
+    openSkinPreview(activation.trigger);
+  }, { capture: true, passive: false });
+
+  document.addEventListener("touchcancel", () => {
+    skinPreviewTouchActivation = null;
+  }, { capture: true, passive: true });
+
   document.addEventListener("click", event => {
     const libraryNav = event.target.closest?.('.nav-btn[data-page="library"], .mobile-bottom-page-btn[data-mobile-page="library"]');
     if (libraryNav?.classList.contains("active") && state.topic !== "overview") {
@@ -1479,6 +1559,7 @@
     if (collectionPreview) {
       event.preventDefault();
       event.stopPropagation();
+      if (Date.now() < skinPreviewSuppressClickUntil && collectionPreview === skinPreviewSuppressClickTarget) return;
       openSkinPreview(collectionPreview);
       return;
     }
