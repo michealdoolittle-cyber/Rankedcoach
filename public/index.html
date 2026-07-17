@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-<link rel="stylesheet" href="app.css?v=20260716-skin-preview-touch-25">
+<link rel="stylesheet" href="app.css?v=20260717-coaching-language-29">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -63,8 +63,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260717-skin-modal-mobile-27">
-  <link rel="stylesheet" href="layout-styles.css?v=20260717-layout-scope-tags-26">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260717-coaching-language-29">
+  <link rel="stylesheet" href="layout-styles.css?v=20260717-coaching-language-29">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1882,25 +1882,27 @@ stroke-linejoin="round"/>
       <!-- Lens Modal Overlay -->
       <div id="lensModalOverlay" class="lens-modal-overlay" style="display:none;">
         <div class="lens-modal impact-report-modal">
-          <aside class="impact-opportunity-pullout" id="impactOpportunityPullout">
-            <button class="impact-opportunity-tab" id="impactOpportunityTab" type="button" aria-expanded="false">Score Opportunities</button>
-            <div class="impact-opportunity-panel" aria-label="How this impact score could improve">
-              <div class="impact-opportunity-head">How This Score Could Move</div>
-              <div class="impact-opportunity-copy">The largest weighted gaps appear first. Point movement is formula-based and assumes every other component stays unchanged.</div>
-              <div class="impact-opportunity-list" id="impactOpportunityList"></div>
-            </div>
-          </aside>
           <div class="lens-modal-header">
             <div class="lens-modal-title" id="lensModalTitle">Lens</div>
           </div>
           <div class="lens-modal-body">
             <div class="lens-modal-section">
-              <h3 class="lens-modal-subtitle" id="lensModalWeightingTitle">Weighting</h3>
+              <h3 class="lens-modal-subtitle" id="lensModalWeightingTitle">Why This Score Changed</h3>
               <div id="lensWeightingBlock">Loading...</div>
             </div>
             <div class="lens-modal-section">
-              <h3 class="lens-modal-subtitle" id="lensModalStatsTitle">Stats Behind This</h3>
+              <div class="lens-modal-subtitle-row">
+                <h3 class="lens-modal-subtitle" id="lensModalStatsTitle">What Moved This Score</h3>
+                <button class="impact-opportunity-tab" id="impactOpportunityTab" type="button" aria-expanded="false" aria-controls="impactOpportunityPanel">Score Opportunities <span aria-hidden="true">+</span></button>
+              </div>
               <ul id="lensStatsList"></ul>
+              <aside class="impact-opportunity-pullout" id="impactOpportunityPullout">
+                <div class="impact-opportunity-panel" id="impactOpportunityPanel" aria-label="How this impact score could improve">
+                  <div class="impact-opportunity-head">How This Score Could Move</div>
+                  <div class="impact-opportunity-copy">The largest weighted gaps appear first. Point movement is formula-based and assumes every other component stays unchanged.</div>
+                  <div class="impact-opportunity-list" id="impactOpportunityList"></div>
+                </div>
+              </aside>
             </div>
           </div>
         </div>
@@ -2344,19 +2346,19 @@ stroke-linejoin="round"/>
 
   <script src="sandbox-fx.primitives.js"></script>
   <script src="sandbox-fx.engine.js"></script>
-  <script src="schema/match-record.js?v=20260714-placement-account-ui-01"></script>
-  <script src="analytics/round-metrics.js?v=20260710-henrik-surfaces-01"></script>
+  <script src="schema/match-record.js?v=20260717-coaching-language-29"></script>
+  <script src="analytics/round-metrics.js?v=20260717-coaching-language-29"></script>
   <script src="analytics/warmup-correlation.js?v=20260711-training-feed-02"></script>
-  <script src="analytics/coaching-rules.js?v=20260711-coaching-rules-01"></script>
-  <script src="language/valorant-vocabulary.js?v=20260711-training-feed-02"></script>
+  <script src="analytics/coaching-rules.js?v=20260717-coaching-language-29"></script>
+  <script src="language/valorant-vocabulary.js?v=20260717-coaching-language-29"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260714-placement-account-ui-01"></script>
   <script src="data/persistence-policy.js?v=20260714-stats-library-console-02"></script>
   <script src="library/gamesense-maps.js?v=20260715-library-archive-theme-impact-15"></script>
   <script src="library/gamesense-reference.js?v=20260714-stats-library-readability-09"></script>
   <script src="library/gamesense-collections.js?v=20260717-skin-modal-mobile-27"></script>
-  <script src="library/gamesense-library.js?v=20260717-card-body-two-tap-28"></script>
+  <script src="library/gamesense-library.js?v=20260717-coaching-language-29"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
-  <script type="module" src="app.js?v=20260717-layout-scope-autofit-22"></script>
+  <script type="module" src="app.js?v=20260717-coaching-language-29"></script>
 </body>
 </html>

@@ -68,7 +68,7 @@ async function run() {
         ...(index < 3 ? {
           matchRecord: {
             id: `retained-${index}`,
-            trackedPlayer: { puuid: "qol-test-puuid", teammatePuuids: [] },
+            trackedPlayer: { puuid: "qol-test-puuid", teammatePuuids: ["ally-puuid"], opponentPuuids: ["enemy-puuid", "enemy-puuid-2", "enemy-puuid-3"] },
             roundByRound: [{
               roundNum: 1,
               side: "attack",
@@ -76,10 +76,30 @@ async function run() {
               roundCeremony: "CeremonyCloser",
               damageDealt: 120,
               kills: [{
-                killer: index < 1 ? "qol-test-puuid" : "enemy-puuid",
-                victim: index < 1 ? "enemy-puuid" : "qol-test-puuid",
+                killer: "enemy-puuid",
+                victim: "ally-puuid",
+                roundTime: 500
+              }, {
+                killer: "qol-test-puuid",
+                victim: "enemy-puuid",
                 roundTime: 1000
-              }]
+              }, ...(index < 1 ? [{
+                killer: "qol-test-puuid",
+                victim: "enemy-puuid-2",
+                roundTime: 1500
+              }, {
+                killer: "qol-test-puuid",
+                victim: "enemy-puuid-3",
+                roundTime: 2000
+              }] : [{
+                killer: "qol-test-puuid",
+                victim: "enemy-puuid-2",
+                roundTime: 1500
+              }, {
+                killer: "enemy-puuid-3",
+                victim: "qol-test-puuid",
+                roundTime: 2000
+              }])]
             }]
           }
         } : {}),
@@ -117,6 +137,24 @@ async function run() {
     await page.waitForTimeout(1400);
     await page.click("#dailyWarmupSkip").catch(() => {});
 
+    const focusOptions = await page.locator("#logFocusSelect option").evaluateAll(options => options.map(option => option.value));
+    assert.equal(focusOptions.length, 39, JSON.stringify(focusOptions));
+    assert.equal(new Set(focusOptions).size, focusOptions.length, JSON.stringify(focusOptions));
+    [
+      "Aim",
+      "Trade Conversion",
+      "Information Gathering",
+      "Map Preparation",
+      "Post-Plant Control",
+      "Multi-Kill Conversion",
+      "Comms Discipline",
+      "Self Comms",
+      "Game Sense",
+      "General",
+      "Other"
+    ].forEach(category => assert.ok(focusOptions.includes(category), `${category}: ${JSON.stringify(focusOptions)}`));
+    assert.equal(focusOptions.includes("Weapon Category Use"), false, JSON.stringify(focusOptions));
+
     assert.equal(await page.locator("#navGoalTargetIcon").getAttribute("alt"), "Diamond 3");
     const storedGoal = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.goalRank);
     assert.equal(storedGoal, "Diamond 3");
@@ -146,6 +184,9 @@ async function run() {
 
     await page.locator("#impactRolePill").click();
     await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
+    assert.equal((await page.locator("#lensModalWeightingTitle").textContent()).trim(), "Why This Score Changed");
+    assert.equal((await page.locator("#lensModalStatsTitle").textContent()).trim(), "What Moved This Score");
+    assert.equal(await page.locator("#impactOpportunityTab").evaluate(button => button.parentElement?.classList.contains("lens-modal-subtitle-row")), true);
     assert.equal(await page.locator(".impact-opportunity-panel").isVisible(), false);
     assert.equal(await page.locator("#impactOpportunityList .impact-opportunity-item").count(), 3);
     const impactOpportunities = await page.locator("#impactOpportunityList .impact-opportunity-item").evaluateAll(items => items.map(item => ({
@@ -160,13 +201,15 @@ async function run() {
     assert.ok(impactOpportunities.every(item => Math.abs(item.projected - Math.min(10, 100 - item.current) * item.weight / 100) <= .11), JSON.stringify(impactOpportunities));
     await page.locator("#impactOpportunityTab").click();
     assert.equal(await page.locator("#impactOpportunityTab").getAttribute("aria-expanded"), "true");
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(450);
     const opportunityGeometry = await page.locator("#impactOpportunityPullout").evaluate(pullout => {
       const panel = pullout.querySelector(".impact-opportunity-panel").getBoundingClientRect();
       const modal = pullout.closest(".impact-report-modal").getBoundingClientRect();
       return { panel: panel.toJSON(), modal: modal.toJSON(), viewport: { width: innerWidth, height: innerHeight } };
     });
     assert.ok(opportunityGeometry.panel.left >= 0 && opportunityGeometry.panel.right <= opportunityGeometry.viewport.width && opportunityGeometry.panel.top >= 0 && opportunityGeometry.panel.bottom <= opportunityGeometry.viewport.height, JSON.stringify(opportunityGeometry));
+    fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
+    await page.locator("#lensModalOverlay .impact-report-modal").screenshot({ path: path.join(__dirname, "tmp", "qol-impact-score-opportunities.png") });
     await page.locator("#lensModalOverlay").click({ position: { x: 2, y: 2 } });
     await page.locator("#lensModalOverlay").waitFor({ state: "hidden" });
 
@@ -229,6 +272,14 @@ async function run() {
       visuals: container.querySelectorAll(".stats-data-visual,.stats-confidence-visual,.coaching-category-visual").length
     }));
     assert.ok(breakdownVisuals.cards > 0 && breakdownVisuals.visuals === breakdownVisuals.cards, JSON.stringify(breakdownVisuals));
+    const roleStatContext = await page.locator("#page-stats .stats-role-pill:not(.is-empty)").first().evaluate(pill => ({
+      divider: Boolean(pill.querySelector(".stats-role-pill-divider")),
+      games: pill.querySelector(".stats-role-pill-games")?.textContent || ""
+    }));
+    assert.equal(roleStatContext.divider, true, JSON.stringify(roleStatContext));
+    assert.match(roleStatContext.games, /\d+\s*games?/i);
+    assert.ok(await page.locator("#page-stats .stats-map-games").count() > 0);
+    assert.ok(await page.locator("#page-stats .stats-trend-context .trend-signal-media").count() > 0);
     const summaryGrid = await page.locator("#page-stats .stats-summary-grid").evaluate(grid => ({
       columns: getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length,
       rows: new Set([...grid.children].map(child => Math.round(child.getBoundingClientRect().top))).size,
@@ -367,6 +418,10 @@ async function run() {
     await page.waitForTimeout(150);
     await page.locator('[data-page="insights"]').click();
     await page.waitForTimeout(250);
+    const unavailableLossRead = page.locator('.weekly-focus-pill[data-weekly-key="losses"]');
+    await unavailableLossRead.waitFor({ state: "attached", timeout: 10000 });
+    assert.equal(await unavailableLossRead.isDisabled(), true);
+    assert.equal(await page.locator('.weekly-focus-pill[data-weekly-key="tilt"]').count(), 0);
     const insightVisuals = await page.locator("#insightsList").evaluate(container => ({
       cards: container.querySelectorAll(".insight-card:not(.insight-empty)").length,
       visuals: container.querySelectorAll(".insight-card:not(.insight-empty) .coaching-category-visual").length
@@ -374,7 +429,14 @@ async function run() {
     assert.ok(insightVisuals.cards > 0, JSON.stringify(insightVisuals));
     assert.equal(insightVisuals.visuals, insightVisuals.cards, JSON.stringify(insightVisuals));
     const clutchInsight = page.locator("#insightsList .insight-card-clutch-closing");
-    assert.equal(await clutchInsight.count(), 1);
+    const clutchDiagnostics = await page.evaluate(() => {
+      const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
+      return {
+        rounds: globalThis.RankedCoachRoundMetrics?.aggregateMatchRoundMetrics?.(profiles[0]?.matches || []),
+        titles: [...document.querySelectorAll("#insightsList .insight-title")].map(element => element.textContent)
+      };
+    });
+    assert.equal(await clutchInsight.count(), 1, JSON.stringify(clutchDiagnostics));
     await clutchInsight.evaluate(card => card.scrollIntoView({ block: "start" }));
     const clutchGeometry = await clutchInsight.evaluate(card => {
       const host = card.closest(".insights-top-card");
@@ -616,6 +678,7 @@ async function run() {
     assert.equal(await page.locator(".impact-opportunity-panel").isVisible(), false);
     await page.locator("#impactOpportunityTab").click();
     await page.locator(".impact-opportunity-panel").waitFor({ state: "visible" });
+    await page.waitForTimeout(450);
     const mobileOpportunityGeometry = await page.locator(".impact-opportunity-panel").evaluate(panel => {
       const rect = panel.getBoundingClientRect();
       return { rect: rect.toJSON(), viewport: { width: innerWidth, height: innerHeight }, cards: panel.querySelectorAll(".impact-opportunity-item").length };

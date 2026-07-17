@@ -165,6 +165,7 @@
         agentId: cleanString(overrides.trackedPlayer?.agentId),
         competitiveTier: readNumber(overrides.trackedPlayer?.competitiveTier),
         teammatePuuids: cleanStringArray(overrides.trackedPlayer?.teammatePuuids),
+        opponentPuuids: cleanStringArray(overrides.trackedPlayer?.opponentPuuids),
         behaviorFactors: copyPlainObject(overrides.trackedPlayer?.behaviorFactors)
       },
       roundByRound: (Array.isArray(overrides.roundByRound) ? overrides.roundByRound : []).map(normalizeRoundEntry),
@@ -451,6 +452,9 @@
     const teammatePuuids = players
       .filter(entry => cleanString(entry?.teamId) === trackedTeam && cleanString(entry?.subject) !== puuid)
       .map(entry => entry.subject);
+    const opponentPuuids = players
+      .filter(entry => cleanString(entry?.teamId) && cleanString(entry?.teamId) !== trackedTeam)
+      .map(entry => entry.subject);
     const rawRounds = Array.isArray(raw.roundResults) ? raw.roundResults : [];
     const initialAttackingTeam = inferInitialAttackingTeam(rawRounds, teamBySubject, teamIds);
 
@@ -525,6 +529,7 @@
         agentId: player.characterId,
         competitiveTier: player.competitiveTier,
         teammatePuuids,
+        opponentPuuids,
         behaviorFactors: player.behaviorFactors
       },
       roundByRound
@@ -584,6 +589,10 @@
     const teamIds = cleanStringArray((Array.isArray(match.teams) ? match.teams : []).map(team => team?.team_id));
     const teammatePuuids = players
       .filter(entry => cleanString(entry?.team_id) === trackedTeam && getV4PlayerId(entry) !== puuid)
+      .map(getV4PlayerId)
+      .filter(Boolean);
+    const opponentPuuids = players
+      .filter(entry => cleanString(entry?.team_id) && cleanString(entry?.team_id) !== trackedTeam)
       .map(getV4PlayerId)
       .filter(Boolean);
     const rounds = Array.isArray(match.rounds) ? match.rounds : [];
@@ -679,6 +688,7 @@
         agentId: player.agent?.id,
         competitiveTier: player.tier?.id,
         teammatePuuids,
+        opponentPuuids,
         behaviorFactors: player.behavior
       },
       roundByRound

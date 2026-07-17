@@ -328,12 +328,31 @@ Not every rule below is currently checkable against available data (some need ut
 
 ---
 
+## Player-facing evidence and causality guardrails (2026-07-17)
+
+These guardrails apply across Home, Stats, Insights, Logging, and Library. They govern how the numbered heuristics become visible language.
+
+- Address the player as `you`; never expose `the player`, `the profile`, `the sample`, or internal model terminology in a coaching card.
+- Show the exact date window and evidence count. When a card can expand, list each game or reflection used.
+- Keep facts and interpretation separate. Do not turn correlation into a causal claim.
+- Self Comms may only appear beside a combat stat when the sentence explains the link to personal awareness, teammate timing, or usable information.
+- An unfavorable mood becomes a pattern only with at least five logs and a rate of at least 20% in the stated window. Otherwise use another eligible performance or communication read.
+- A weekly loss card requires two consecutive losses in the named map context. If no context qualifies, the card is disabled and says why.
+- Clutch evidence requires a real 1vX state with at least two opponents alive and at least two kills after that state begins. CeremonyCloser and the final kill are not substitutes.
+- First-death coaching must allow for effective pressure. If a first-death round also contains a multi-kill, describe it as a possible effective life trade rather than automatically calling it bad.
+- Economy reads name the weapons responsible for wins. Light-buy evidence shows weapon win rate and share of all winning light-buy rounds.
+- Role reads use the actual role name and first-person language: `your recent Sentinel matches`, not `this role` or `role sample`.
+- Compass Gap always names its four pillars, states the match/log counts, and explains what a 100-point pillar represents.
+- Recent Match Trends cannot borrow a generic action from another focus category. ACS receives damage advice, headshot percentage receives fight/precision advice, and assists receive teammate-support advice.
+- Agent advice names a concrete role job: take space with a trade plan, set up contact, preserve smoke refresh, or hold information and reposition.
+- Unavailable evidence never becomes a low-confidence claim. Disable the control or state that the data is unavailable.
+
 ## Notes for implementation
 
 - These are reference heuristics, not automatically-triggered insights. Every match against a player's stats still needs to pass through the existing sample-size and coaching-language governance (`app.js:3283`, `app.js:3373`) before reaching a player.
 - Several rules (utility timing, exact positional death-clustering, voice-comms content) reference data the app doesn't currently have — mark these clearly as aspirational/future when building the matching layer, don't fake a match against unavailable data.
 - Rules should be revisited and expanded as the game's meta evolves — this list reflects mid-2026 Valorant coaching consensus, not a permanent, unchanging reference.
 
-### Current app coverage (2026-07-11)
+### Current app coverage (2026-07-17)
 
-The first structured slice lives in `public/analytics/coaching-rules.js`: 30 source-linked entries, five per category, with 20 executable matchers. Rules that require cast timestamps, positional events, or voice-chat content are marked `blocked` or `policy`; they cannot emit an insight. Executable candidates still pass through `buildCoachingEvidenceLayer()`, sample minimums, priority/deduplication, and `polishCoachingInsight()` before display. `testing/henrik/coaching-rules.test.js` verifies every structured entry still points to a numbered rule in this document so the machine-readable slice cannot silently drift away from this source of truth.
+The structured slice lives in `public/analytics/coaching-rules.js`: 30 source-linked entries, five per category, with 20 executable matchers. Rules that require cast timestamps, positional events, or voice-chat content are marked `blocked` or `policy`; they cannot emit an insight. Executable candidates still pass through `buildCoachingEvidenceLayer()`, sample minimums, priority/deduplication, the evidence and causality guardrails above, and `polishCoachingInsight()` before display. `testing/henrik/coaching-rules.test.js` verifies every structured entry still points to a numbered rule in this document so the machine-readable slice cannot silently drift away from this source of truth.

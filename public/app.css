@@ -55194,57 +55194,15 @@ body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.
   }
 }
 
-/* Weighted score opportunities pull out from the Impact Report. */
-.impact-report-modal{overflow:visible !important;}
-.impact-opportunity-pullout{
-  position:absolute;
-  top:18px;
-  right:0;
-  z-index:1;
-  width:448px;
-  height:calc(100% - 36px);
-  pointer-events:none;
-}
-.impact-opportunity-panel{
-  position:absolute;
-  inset:0 0 0 auto;
-  width:404px;
-  padding:0 14px 14px;
-  overflow:auto;
-  border:1px solid rgba(148,163,184,.22);
-  border-radius:18px;
-  background:linear-gradient(180deg,rgba(15,23,42,.99),rgba(2,6,23,.99));
-  box-shadow:0 22px 48px rgba(0,0,0,.34);
-  opacity:0;
-  visibility:hidden;
-  transform:translateX(100%);
-  transition:transform .3s cubic-bezier(.22,1,.36,1),opacity .18s ease,visibility 0s linear .3s;
-  pointer-events:none;
-}
-.impact-opportunity-pullout.is-open .impact-opportunity-panel{opacity:1;visibility:visible;transform:translateX(0);transition-delay:0s;pointer-events:auto;}
-.impact-opportunity-tab{
-  position:absolute;
-  top:26px;
-  left:auto;
-  right:0;
-  z-index:4;
-  min-height:188px;
-  width:44px;
-  padding:14px 9px;
-  border:1px solid rgba(56,189,248,.36);
-  border-left:0;
-  border-radius:0 14px 14px 0;
-  background:linear-gradient(180deg,rgba(56,189,248,.2),rgba(15,23,42,.98));
-  color:#dffcff;
-  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
-  letter-spacing:.14em;
-  text-transform:uppercase;
-  writing-mode:vertical-rl;
-  cursor:pointer;
-  pointer-events:auto;
-  transition:transform .3s cubic-bezier(.22,1,.36,1),background-color .18s ease;
-}
-.impact-opportunity-pullout.is-open .impact-opportunity-tab{transform:translateX(-404px);}
+/* Optional weighted score opportunities inside the Impact Report. */
+.impact-report-modal{overflow:hidden !important;isolation:isolate;}
+.impact-report-modal .lens-modal-body{flex:1 1 auto;min-height:0;overflow-x:hidden !important;overflow-y:auto !important;overscroll-behavior:contain;}
+.lens-modal-subtitle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.impact-opportunity-pullout{position:absolute;top:61px;right:0;bottom:0;z-index:8;width:min(420px,100%);max-height:none;overflow:visible;opacity:0;visibility:hidden;transform:translate3d(100%,0,0);transition:transform .32s cubic-bezier(.22,1,.36,1),opacity .18s ease,visibility 0s linear .32s;pointer-events:none;}
+.impact-opportunity-pullout.is-open{max-height:none;margin:0;opacity:1;visibility:visible;transform:translate3d(0,0,0);transition-delay:0s;pointer-events:auto;}
+.impact-opportunity-panel{width:100%;height:100%;max-height:none;padding:0 14px 14px;overflow:auto;border:1px solid rgba(148,163,184,.22);border-radius:16px 0 0 16px;background:linear-gradient(180deg,rgba(15,23,42,.98),rgba(2,6,23,.99));box-shadow:-24px 0 48px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.04);visibility:inherit;pointer-events:inherit;}
+.impact-opportunity-tab{position:relative;z-index:9;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:7px 11px;border:1px solid rgba(56,189,248,.36);border-radius:9px;background:linear-gradient(180deg,rgba(56,189,248,.16),rgba(15,23,42,.9));color:#dffcff;font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;}
+.impact-opportunity-tab span{color:#facc15;font-size:16px;line-height:.8;}
 .impact-opportunity-head{
   position:sticky;
   top:0;
@@ -55287,9 +55245,40 @@ body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.
 .impact-opportunity-item p,.impact-opportunity-empty{margin:0;color:#dbe5f4;font-size:11px;line-height:1.35;}
 
 @media (max-width:820px){
-  .impact-opportunity-pullout{position:relative;inset:auto;width:100%;height:auto;pointer-events:auto;}
-  .impact-opportunity-tab{position:relative;inset:auto;width:100%;min-height:42px;writing-mode:horizontal-tb;border:0;border-bottom:1px solid rgba(56,189,248,.3);border-radius:0;}
-  .impact-opportunity-pullout.is-open .impact-opportunity-tab{transform:none;}
-  .impact-opportunity-panel{position:relative;inset:auto;display:none;width:100%;max-height:50dvh;border:0;border-radius:0;transform:none;}
-  .impact-opportunity-pullout.is-open .impact-opportunity-panel{display:block;transform:none;}
+  .lens-modal-subtitle-row{align-items:flex-start;flex-direction:column;}
+  .impact-opportunity-tab{width:100%;min-height:42px;}
+  .impact-opportunity-pullout{top:62px;width:100%;}
+  .impact-opportunity-panel{border-radius:0;}
+}
+.impact-report-modal:has(.impact-opportunity-pullout.is-open) .impact-opportunity-tab{position:absolute;top:72px;right:12px;width:auto;min-height:32px;padding:6px 9px;}
+.impact-report-modal:has(.impact-opportunity-pullout.is-open) .impact-opportunity-head{padding-right:96px;}
+
+/* Evidence-forward coaching reads and compact stats context. */
+.weekly-focus-pill,
+.timeline-pill{position:relative;}
+.weekly-focus-pill.is-disabled{filter:grayscale(1);opacity:.5;cursor:not-allowed;box-shadow:none !important;}
+.coaching-role-badge{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:28px;height:28px;border:1px solid color-mix(in srgb,var(--role-color,#94a3b8) 64%,transparent);border-radius:8px;background:color-mix(in srgb,var(--role-color,#94a3b8) 16%,rgba(2,6,23,.9));}
+.coaching-role-badge img{width:18px;height:18px;object-fit:contain;}
+.coaching-role-badge.role-duelist{--role-color:#ff4655;}.coaching-role-badge.role-controller{--role-color:#a855f7;}.coaching-role-badge.role-initiator{--role-color:#3b82f6;}.coaching-role-badge.role-sentinel{--role-color:#22c55e;}
+.weekly-focus-pill:has(.coaching-role-badge),.timeline-pill:has(.coaching-role-badge){padding-right:44px !important;}
+.coaching-games-used-list{display:grid;gap:6px;max-height:178px;margin-top:9px;overflow:auto;padding-right:4px;}
+.coaching-games-used-item{display:grid;grid-template-columns:auto auto;gap:3px 9px;padding:8px 9px;border:1px solid rgba(148,163,184,.16);border-radius:8px;background:rgba(2,6,23,.45);}
+.coaching-games-used-item strong{color:#f8fafc;font-size:11px;}.coaching-games-used-item span{justify-self:end;color:#94a3b8;font-size:10px;}.coaching-games-used-item small{grid-column:1/-1;color:#cbd5e1;font-size:10px;}
+.coaching-games-used-empty{margin-top:8px;color:#94a3b8;font-size:10px;}
+.coaching-weapon-evidence{display:grid;gap:5px;margin-top:9px;}.coaching-weapon-evidence span{padding:7px 8px;border-left:2px solid #facc15;background:rgba(2,6,23,.42);color:#cbd5e1;font-size:10px;}.coaching-weapon-evidence strong{color:#f8fafc;}
+#page-stats .stats-role-pill-value{display:grid !important;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);align-items:center;gap:10px;width:100%;}
+#page-stats .stats-role-pill-result,#page-stats .stats-role-pill-games{display:grid;justify-items:center;gap:3px;min-width:0;}
+#page-stats .stats-role-pill-divider{display:block;width:1px;height:38px;background:rgba(148,163,184,.32);}
+#page-stats .stats-role-pill-games strong{color:#f8fafc;font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);}
+#page-stats .stats-role-pill-games small{color:#94a3b8;font:800 9px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
+#page-stats .stats-map-result-line{display:flex;align-items:center;justify-content:center;gap:8px;}
+#page-stats .stats-map-games{padding-left:8px;border-left:1px solid rgba(148,163,184,.38);color:#cbd5e1;font:800 10px/1 var(--font-display,"Rajdhani",sans-serif);white-space:nowrap;}
+#page-stats .stats-trend-context{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;}
+#page-stats .stats-trend-context .trend-signal-media{flex:0 0 22px;width:22px;height:22px;min-height:0;border-radius:6px;overflow:hidden;}
+#page-stats .stats-trend-context .trend-signal-media img{width:100%;height:100%;object-fit:contain;}
+#page-stats .stats-trend-context .trend-signal-svg{width:15px;height:15px;}
+@media (max-width:820px){
+  #page-stats .stats-role-pill-value{gap:7px;}
+  #page-stats .stats-role-pill-divider{height:32px;}
+  .coaching-games-used-list{max-height:132px;}
 }

@@ -7,7 +7,7 @@ const { chromium } = require("playwright");
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41791;
 const missingRequests = [];
-const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "scopevignette", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog"];
+const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog"];
 const requestedLayoutStyles = String(process.env.LAYOUT_STYLE_FILTER || "")
   .split(",")
   .map(value => value.trim())
@@ -801,7 +801,8 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(250);
     await page.click('[data-profile-tab="layoutStyle"]');
-    assert.equal(await page.locator("[data-layout-style-card]").count(), 11);
+    assert.equal(await page.locator("[data-layout-style-card]").count(), allLayoutStyles.length + 1);
+    assert.equal(await page.locator('[data-layout-style-card="scopevignette"]').count(), 0);
     await page.click('[data-layout-style-card="default"]');
     assert.equal(await page.locator("body").getAttribute("data-layout-style"), null);
     await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = "hidden"; });

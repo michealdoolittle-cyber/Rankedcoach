@@ -142,6 +142,28 @@ Avoid:
 - Do not blame teammates as the final answer.
 - Bring the focus back to what the player can control.
 
+## Evidence And Causality Rules
+
+- Write to the player as `you`. Do not call them `the player`, `the profile`, or `the sample` in visible copy.
+- Name the real time window and the number of matches or reflection logs used.
+- A shared timing does not prove a cause. Say two facts line up unless the app has direct evidence for the connection.
+- Do not attach Self Comms to K/D, ACS, or headshot percentage without explaining the specific awareness or teammate-information link.
+- Only call an unfavorable mood pattern when at least five logs exist and at least 20% are unfavorable.
+- Only call a weekly loss streak when the named context contains at least two consecutive losses. Disable the card when the rule is not met.
+- A clutch requires a verified 1vX state and multiple kills after the player becomes the last teammate alive. A final kill or ceremony label is not a clutch.
+- First deaths need context. A Sentinel or entry player can create useful pressure if the death produces a multi-kill or immediate trade advantage.
+- For light-buy reads, name the weapons, each weapon's win rate, and its share of winning light-buy rounds.
+- Use the actual role name: `your recent Sentinel matches`, not `the role sample`.
+
+## Surface Rules
+
+- Stats tiles state the fact first: value, games, and date window.
+- Recent Match Trends add one consequence and one related action; they do not borrow a generic focus action from another metric.
+- Weekly cards show their eligibility rule and remain visibly disabled when the rule is not met.
+- Compass Gap says that it aggregates Aim, Game Sense, Teamwork, and Discipline. It also explains that 100 means every input reached the top of its coaching scale.
+- Improvement cards list the exact games used, including game number, date, map, agent, and role when available.
+- Agent recommendations give a role-specific job. Avoid empty instructions such as `give this agent one job`.
+
 ## Words To Prefer
 
 - round

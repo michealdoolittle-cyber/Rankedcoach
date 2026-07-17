@@ -131,6 +131,7 @@
         spent: Number.isFinite(Number(round?.playerEconomy?.spent)) ? Number(round.playerEconomy.spent) : null,
         weapon: round?.playerEconomy?.weapon || null,
         roundWon: round?.won === true,
+        killCount: Number(evaluation?.killCount) || 0,
         utilityCasts: { ...(round?.utilityCasts || {}) },
         utilityCastCount,
         utilityPattern: utilityCastCount ? "timing-unavailable" : "no-utility-recorded",
@@ -172,6 +173,7 @@
     if (!record?.trackedPlayer?.puuid || !Array.isArray(record?.roundByRound) || !record.roundByRound.length) return null;
     const puuid = String(record.trackedPlayer.puuid);
     const teammatePuuids = new Set((record.trackedPlayer.teammatePuuids || []).map(String));
+    const opponentPuuids = new Set((record.trackedPlayer.opponentPuuids || []).map(String));
     const evaluations = getRoundEvaluations(record);
     const ceremonyCounts = {};
     const multiKills = { kills2K: 0, kills3K: 0, kills4K: 0, kills5K: 0 };
@@ -191,13 +193,33 @@
       else if (count === 4) multiKills.kills4K += 1;
       else if (count >= 5) multiKills.kills5K += 1;
 
-      if (ceremony.toLowerCase().includes("closer")) {
-        clutchRounds += 1;
-        const finalKill = kills
+      // A clutch opportunity is a real 1vX state with at least two opponents alive.
+      // CeremonyCloser and a final kill are not enough evidence: both can occur in
+      // ordinary late rounds where teammates are still alive.
+      if (teammatePuuids.size && opponentPuuids.size >= 2) {
+        const aliveAllies = new Set([puuid, ...teammatePuuids]);
+        const aliveOpponents = new Set(opponentPuuids);
+        let clutchStarted = false;
+        let clutchKills = 0;
+        kills
           .filter(kill => Number.isFinite(Number(kill?.roundTime)))
           .slice()
-          .sort((a, b) => Number(b.roundTime) - Number(a.roundTime))[0];
-        if (round?.won === true && String(finalKill?.killer || "") === puuid) clutchWins += 1;
+          .sort((a, b) => Number(a.roundTime) - Number(b.roundTime))
+          .forEach((kill) => {
+            const victim = String(kill?.victim || "");
+            if (aliveAllies.has(victim)) aliveAllies.delete(victim);
+            if (aliveOpponents.has(victim)) aliveOpponents.delete(victim);
+            if (!clutchStarted && aliveAllies.size === 1 && aliveAllies.has(puuid) && aliveOpponents.size >= 2) {
+              clutchStarted = true;
+            }
+            if (clutchStarted && String(kill?.killer || "") === puuid && opponentPuuids.has(victim)) {
+              clutchKills += 1;
+            }
+          });
+        if (clutchStarted && clutchKills >= 2) {
+          clutchRounds += 1;
+          if (round?.won === true && aliveAllies.has(puuid)) clutchWins += 1;
+        }
       }
 
       const teammateDeaths = kills.filter(kill => teammatePuuids.has(String(kill?.victim || "")));
@@ -238,6 +260,7 @@
       ceremonyCounts,
       clutchRounds,
       clutchWins,
+      clutchDefinition: "1vX multi-kill",
       clutchConversionRate: clutchRounds ? (clutchWins / clutchRounds) * 100 : null,
       multiKills,
       trade: {
@@ -307,6 +330,7 @@
       ...totals,
       ceremonyCounts,
       clutchConversionRate: totals.clutchRounds ? (totals.clutchWins / totals.clutchRounds) * 100 : null,
+      clutchDefinition: "1vX multi-kill",
       multiKillRounds: totals.kills2K + totals.kills3K + totals.kills4K + totals.kills5K,
       tradeReceivedRate: totals.tradeReceivedOpportunities ? (totals.tradeReceivedRounds / totals.tradeReceivedOpportunities) * 100 : null,
       tradeGivenRate: totals.tradeGivenOpportunities ? (totals.tradeGivenRounds / totals.tradeGivenOpportunities) * 100 : null,

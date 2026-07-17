@@ -2096,6 +2096,40 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   color:#cbd5e1 !important;
 }
 
+/* Active-pool map cards use tactical side marks and a dossier frame. */
+.gamesense-map-card-frame{
+  position:absolute !important;
+  inset:10px;
+  z-index:3 !important;
+  border:1px solid color-mix(in srgb,var(--gamesense-warm) 45%,transparent);
+  clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px));
+  background:linear-gradient(90deg,var(--gamesense-warm),var(--gamesense-warm)) 0 0/42px 2px no-repeat,linear-gradient(180deg,var(--gamesense-cool),var(--gamesense-cool)) 100% 100%/2px 42px no-repeat;
+  opacity:.72;
+  pointer-events:none;
+}
+.gamesense-map-side-marks{
+  position:absolute !important;
+  inset:50% 20px auto;
+  z-index:4 !important;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  transform:translateY(-50%);
+  pointer-events:none;
+}
+.gamesense-map-side-mark{display:grid;place-items:center;gap:4px;width:42px;color:var(--gamesense-cool);filter:drop-shadow(0 4px 8px rgba(0,0,0,.72));}
+.gamesense-map-side-mark.is-attack{color:var(--accent,#ff4655);}
+.gamesense-map-side-mark svg{width:30px;height:30px;overflow:visible;}
+.gamesense-map-side-mark svg path:first-child{fill:rgba(2,6,23,.76);stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;}
+.gamesense-map-side-mark svg path:last-child{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.gamesense-map-entry-card:not(.is-out-of-season):hover .gamesense-map-card-frame,
+.gamesense-map-entry-card:not(.is-out-of-season):focus-visible .gamesense-map-card-frame{opacity:1;box-shadow:inset 0 0 28px color-mix(in srgb,var(--gamesense-cool) 12%,transparent);}
+@media (max-width:820px){
+  html.is-mobile-layout .gamesense-map-side-marks{inset-inline:14px;}
+  html.is-mobile-layout .gamesense-map-side-mark{width:32px;}
+  html.is-mobile-layout .gamesense-map-side-mark svg{width:24px;height:24px;}
+}
+
 .gamesense-agent-hero .gamesense-note-block:not(.gamesense-agent-facts){
   display:grid;
   grid-template-rows:auto minmax(0,1fr);

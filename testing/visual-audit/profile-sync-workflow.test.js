@@ -152,7 +152,7 @@ async function run() {
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await page.screenshot({ path: path.join(__dirname, "tmp", "profile-first-sync-progress.png"), fullPage: true });
     await page.waitForFunction(() => document.getElementById("appLoadingVeil")?.getAttribute("aria-hidden") === "true", null, { timeout: 30000 });
-    assert.equal(await page.locator("#appLoadingPercent").innerText(), "100%");
+    assert.equal((await page.locator("#appLoadingPercent").textContent()).trim(), "100%");
     assert.equal(await page.locator("#appLoadingProgress").getAttribute("aria-valuenow"), "100");
 
     const state = await page.evaluate(() => {

@@ -14,20 +14,20 @@
     agentStrength: [
       {
         preview: "{{agent}} is converting at {{winrate}}% WR across {{games}} games.",
-        what: "{{agent}} is the comfort pick giving you the cleanest rounds right now.",
-        why: "Your utility timing, fight selection, and role decisions are holding together more often on this pick.",
-        action: "Keep {{agent}} in the ranked pool and repeat the same map plans before adding another setup."
+        what: "Your match record is best on {{agent}} right now.",
+        why: "{{games}} games is enough to keep testing the pick, but the record alone does not prove which habit caused the wins.",
+        action: "Keep {{agent}} in the ranked pool and repeat the same map plans so you can see what keeps working."
       },
       {
         preview: "{{agent}} is the pick currently holding up best: {{winrate}}% WR in {{games}} games.",
-        what: "Your most repeatable agent rounds are coming on {{agent}}.",
-        why: "The pick is giving you a stable role job instead of forcing you to solve every round from scratch.",
+        what: "You are winning most often on {{agent}} in the current match history.",
+        why: "The result is repeatable enough to test one stable role job instead of changing several things at once.",
         action: "Lock the same role plan on {{agent}}, then review whether the wins come from utility, trades, or opening space."
       },
       {
-        preview: "{{agent}} keeps giving this profile playable rounds at {{winrate}}% WR.",
-        what: "{{agent}} is the agent you can currently trust most in queue.",
-        why: "Comfort is showing up as cleaner timings and fewer forced decisions across {{games}} games.",
+        preview: "{{agent}} is your best current agent result at {{winrate}}% WR across {{games}} games.",
+        what: "{{agent}} is the pick you can trust most from the results available right now.",
+        why: "The match record supports keeping the pick; it does not guess whether comfort, timing, or fight choice caused the result.",
         action: "Use {{agent}} as the default pick when the map fits, and keep one clear job for attack and defense."
       }
     ],
@@ -58,7 +58,7 @@
         action: "Make the next game simple: one agent, one focus, and one reset rule after a bad round."
       },
       {
-        what: "Recent games are slipping before the profile has time to stabilize.",
+        what: "Your recent games are slipping before the results have time to stabilize.",
         why: "The issue may be a repeated opening death or weak round conversion, not a need to rebuild everything.",
         action: "Review the first two lost gun rounds, then carry one correction into the next queue."
       },
@@ -99,7 +99,7 @@
         action: "Queue the same agent plan, but reset after each match so momentum does not become autopilot."
       },
       {
-        preview: "{{streak}} consecutive wins are giving this profile real momentum.",
+        preview: "{{streak}} consecutive wins are giving you real momentum.",
         what: "The current approach is winning without needing a new fix every round.",
         why: "Stable utility timing and fewer forced peeks are helping advantages survive the mid-round.",
         action: "Keep one clear attack default and defense setup, then stop if focus starts slipping."

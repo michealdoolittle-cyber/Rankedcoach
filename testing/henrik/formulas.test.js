@@ -70,6 +70,7 @@ const signalRecord = {
   trackedPlayer: {
     puuid: me,
     teammatePuuids: [teammate],
+    opponentPuuids: ["enemy-a", "enemy-b", "enemy-c", "enemy-d", "enemy-e"],
     behaviorFactors: { afkRounds: 1, stayedInSpawnRounds: 1 }
   },
   roundByRound: [
@@ -103,6 +104,7 @@ const signalRecord = {
 const signals = globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(signalRecord);
 assert.equal(signals.clutchRounds, 1);
 assert.equal(signals.clutchWins, 1);
+assert.equal(signals.clutchDefinition, "1vX multi-kill");
 assert.equal(signals.multiKills.kills5K, 1);
 assert.equal(signals.trade.givenOpportunities, 1);
 assert.equal(signals.trade.givenRounds, 1);
@@ -111,6 +113,27 @@ assert.equal(signals.damage.standardDeviation, 100);
 assert.equal(signals.discipline.afkRounds, 1);
 assert.equal(signals.discipline.stayedInSpawnRounds, 1);
 assert.equal(signals.discipline.affected, true);
+
+const falseCloser = globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics({
+  id: "false-closer-fixture",
+  trackedPlayer: {
+    puuid: me,
+    teammatePuuids: [teammate],
+    opponentPuuids: ["enemy-a", "enemy-b"]
+  },
+  roundByRound: [{
+    roundNum: 1,
+    side: "attack",
+    won: true,
+    roundCeremony: "CeremonyCloser",
+    kills: [
+      { killer: teammate, victim: "enemy-a", assistants: [], roundTime: 1000 },
+      { killer: me, victim: "enemy-b", assistants: [], roundTime: 3000 }
+    ]
+  }]
+});
+assert.equal(falseCloser.clutchRounds, 0);
+assert.equal(falseCloser.clutchWins, 0);
 
 const gold = globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Gold 2", {
   hsPercent: 22.7,

@@ -214,9 +214,20 @@
 
   function renderMapCard(item, index) {
     const isOutOfSeason = item.inCompetitivePool === false;
+    const activeSeasonMarks = isOutOfSeason ? "" : `
+      <span class="gamesense-map-side-marks" aria-hidden="true">
+        <span class="gamesense-map-side-mark is-attack" title="Attack">
+          <svg viewBox="0 0 32 32"><path d="M16 3 28 26H4L16 3Z"></path><path d="M16 10v10M11 22h10"></path></svg>
+        </span>
+        <span class="gamesense-map-side-mark is-defense" title="Defense">
+          <svg viewBox="0 0 32 32"><path d="M16 3 27 7v8c0 7-4.5 11.5-11 14-6.5-2.5-11-7-11-14V7l11-4Z"></path><path d="m11 16 3 3 7-8"></path></svg>
+        </span>
+      </span>`;
     return `
       <button class="gamesense-entry-card gamesense-map-entry-card${isOutOfSeason ? " is-out-of-season" : ""}" type="button" data-gamesense-item="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)}${isOutOfSeason ? ", out of season" : ""}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(item.cardImage)}')">
         <span class="gamesense-map-card-shade"></span>
+        <span class="gamesense-map-card-frame" aria-hidden="true"></span>
+        ${activeSeasonMarks}
         <span class="gamesense-map-card-copy"><strong>${escapeHtml(item.label)}</strong>${isOutOfSeason ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</span>
       </button>`;
   }

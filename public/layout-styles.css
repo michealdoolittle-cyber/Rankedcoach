@@ -192,16 +192,6 @@ body[data-layout-style="aperturecut"]{
   --layout-surface-safe-left:max(20px,1.2em);
 }
 
-body[data-layout-style="scopevignette"]{
-  --layout-surface-border-color:color-mix(in srgb,var(--muted) 42%,transparent);
-  --layout-surface-radius:999px;
-  --layout-surface-background:linear-gradient(90deg,transparent calc(50% - 1px),color-mix(in srgb,var(--accent) 34%,transparent) 50%,transparent calc(50% + 1px)),radial-gradient(circle at center,var(--card-2) 0 42%,var(--card) 76%);
-  --layout-surface-safe-top:max(12px,.75em);
-  --layout-surface-safe-right:max(24px,1.5em);
-  --layout-surface-safe-bottom:max(12px,.75em);
-  --layout-surface-safe-left:max(24px,1.5em);
-}
-
 body[data-layout-style="hazardedge"]{
   --layout-surface-border-left-width:10px;
   --layout-surface-border-left-color:var(--accent);
@@ -278,12 +268,6 @@ body[data-layout-style="aperturecut"]{
   --layout-tag-clip:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px);
   --layout-tag-radius:0;
   --layout-tag-pad-x:9px;
-}
-
-body[data-layout-style="scopevignette"]{
-  --layout-tag-radius:999px;
-  --layout-tag-background:linear-gradient(90deg,transparent calc(50% - .5px),color-mix(in srgb,currentColor 24%,transparent) 50%,transparent calc(50% + .5px)),color-mix(in srgb,currentColor 9%,var(--card));
-  --layout-tag-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 14%,transparent);
 }
 
 body[data-layout-style="hazardedge"]{
@@ -431,6 +415,13 @@ body[data-layout-style] #page-logging #logNotes{
   padding:8px 14px !important;
 }
 
+/* The Stats performance chart keeps its native, unstyled grid. Preserve that
+   grid's full vertical text area while the parent card carries the shape. */
+body[data-layout-style] #page-stats .stats-performance-card{
+  padding-top:6px !important;
+  padding-bottom:6px !important;
+}
+
 /* Compact controls keep their native geometry. Layout styles only add a
    lightweight active underline instead of card borders, clipping or padding. */
 body[data-layout-style] :is(
@@ -512,12 +503,6 @@ body[data-layout-style] :is(
   border-color:var(--accent) !important;
   border-radius:0 !important;
   background:linear-gradient(225deg,color-mix(in srgb,var(--accent-2) 42%,transparent) 0 18px,transparent 18px),linear-gradient(145deg,var(--card),var(--card-2)) !important;
-}
-
-[data-layout-preview="scopevignette"] .layout-style-preview-card{
-  border-color:color-mix(in srgb,var(--muted) 42%,transparent) !important;
-  border-radius:999px !important;
-  background:linear-gradient(90deg,transparent calc(50% - 1px),color-mix(in srgb,var(--accent) 34%,transparent) 50%,transparent calc(50% + 1px)),radial-gradient(circle at center,var(--card-2) 0 42%,var(--card) 76%) !important;
 }
 
 [data-layout-preview="hazardedge"] .layout-style-preview-card{
@@ -607,7 +592,6 @@ body[data-layout-font-active="true"] :is(
 }
 
 [data-layout-preview="chevronscan"] .layout-style-preview-card strong,
-[data-layout-preview="scopevignette"] .layout-style-preview-card strong,
 [data-layout-preview="monolithslab"] .layout-style-preview-card strong{
   font-family:"IBM Plex Mono",monospace;
 }

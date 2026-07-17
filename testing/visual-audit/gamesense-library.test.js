@@ -255,6 +255,10 @@ async function run() {
     assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
     assert.deepEqual(await desktop.locator('.gamesense-map-entry-card').allInnerTexts(), ["BIND\nOUT OF SEASON", "BREEZE", "SPLIT"]);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 2);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 2);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 4);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season .gamesense-map-side-marks').count(), 0);
     const outOfSeasonMap = desktop.locator('.gamesense-map-entry-card.is-out-of-season');
     assert.equal(await outOfSeasonMap.count(), 1);
     assert.equal(await outOfSeasonMap.isEnabled(), true);
