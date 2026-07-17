@@ -87,6 +87,13 @@ function weaponSkinApiStub(url) {
   ];
   const defaultCollectionNames = ["Aemondir", "Araxys", "BlastX", "Champions", "Chronovoid", "Evori Dreamwings", "Glitchpop", "Ion", "Kuronami", "Magepunk", "Neptune", "Oni", "Prelude to Chaos", "Prime", "Protocol 781-A", "Radiant Entertainment System", "Reaver", "Recon", "RGX 11z Pro", "Singularity"];
   const collectionNames = weaponName === "Judge" ? ["Bound", ...defaultCollectionNames.slice(1)] : defaultCollectionNames;
+  const variantIndexes = {
+    Aemondir: [0, 1, 2],
+    Neptune: [0, 1],
+    "Prelude to Chaos": [0, 1, 2, 3],
+    Reaver: [0, 1, 2, 3],
+    "RGX 11z Pro": [0, 1, 2, 3]
+  };
   return JSON.stringify({
     status: 200,
     data: {
@@ -96,7 +103,7 @@ function weaponSkinApiStub(url) {
         displayName: `${name} ${weaponName}`,
         contentTierUuid: name === "Aemondir" ? tiers[2] : tiers[index % tiers.length],
         displayIcon: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?skin=${index}`,
-        chromas: (name === "Aemondir" ? [0, 1, 2] : name === "Reaver" ? [0, 1, 2, 3] : [0]).map(view => ({
+        chromas: (variantIndexes[name] || [0]).map(view => ({
           uuid: `${slug}-skin-${index}-variant-${view}`,
           displayName: `${name} ${weaponName} ${view === 0 ? "Default" : `Variant ${view + 1}`}`,
           fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}&view=${view}`,
@@ -724,7 +731,8 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-weapon-panel-art").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
     await desktop.waitForFunction(() => document.querySelectorAll(".gamesense-collection-card").length > 14);
     assert.equal(await desktop.locator(".gamesense-collection-card").count(), 20);
-    assert.equal(await desktop.locator(".gamesense-collection-card button").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-collection-card button").count(), 20);
+    assert.equal(await desktop.locator("[data-gamesense-collection-open]").count(), 20);
     assert.equal(await desktop.locator(".gamesense-collection-divider").count(), 20);
     assert.match(await desktop.locator(".gamesense-collection-head").innerText(), /Phantom Skin Collection Archive.*20 exact Phantom weapon previews.*official content tier.*not a community review score/is);
     assert.equal(await desktop.locator('.gamesense-collection-card img[alt$="Phantom skin"]').count(), 20);
@@ -772,6 +780,48 @@ async function run() {
       "9d817055d22543b8a4a5992f68a35b33",
       "97ed3f185548407db5e4caf18084b2a4"
     ]);
+    const roundTwoModelCoverage = await desktop.evaluate(() => [
+      ["Rogue", "Vandal", 0],
+      ["Neptune", "Vandal", 0],
+      ["Neptune", "Vandal", 1],
+      ["Sentinels of Light", "Vandal", 0],
+      ["Sentinels of Light", "Vandal", 1],
+      ["Sentinels of Light", "Vandal", 2],
+      ["Sentinels of Light", "Vandal", 3],
+      ["Forsaken", "Vandal", 0],
+      ["Forsaken", "Vandal", 1],
+      ["Gaia's Vengeance", "Vandal", 0],
+      ["Gaia's Vengeance", "Vandal", 3],
+      ["Prelude to Chaos", "Vandal", 0],
+      ["Prelude to Chaos", "Vandal", 2],
+      ["Prelude to Chaos", "Vandal", 3],
+      ["RGX 11z Pro", "Vandal", 2],
+      ["RGX 11z Pro", "Vandal", 3]
+    ].map(([collection, weapon, variant]) => globalThis.RankedCoachWeaponCollections.getSketchfabModel(collection, weapon, variant)?.id || ""));
+    assert.deepEqual(roundTwoModelCoverage, [
+      "44b2d633ea1b44378b200d044788e223",
+      "bd272b95723942dbaf1004d2626ec128",
+      "b61e3f7bf9c749878beba1d6e01d6a84",
+      "7cfb779913a9489f95f7b884dcf0ff05",
+      "4cc8e7c1ff4e45a09dcbf7956225352c",
+      "198d96cfc1ea48d7a84b038b14c37576",
+      "8b4c8ae3fa374b8fb638457184263ef4",
+      "d905175d72604c1fad68d90ca44f6324",
+      "99f07632e3b243f3bfef2e67b08653e7",
+      "dfeddd540e7641bfb0b7128155117a1d",
+      "46e6e410115441c182efab311d557532",
+      "0dec73e342a54b1bacc9a242fe64d325",
+      "bd0f274b21034e039f788bbe6c461757",
+      "49fcf7c9b36e4ac2b877fc4f32048071",
+      "65d8384673f241938de5c39dff07d200",
+      "53259a078e6e4521b1e116e6723f0011"
+    ]);
+    const roundTwoExcludedModels = await desktop.evaluate(() => [
+      globalThis.RankedCoachWeaponCollections.getSketchfabModel("Oni", "Vandal", 0)?.id || "",
+      globalThis.RankedCoachWeaponCollections.getSketchfabModel("RGX 11z Pro", "Vandal", 1)?.id || "",
+      globalThis.RankedCoachWeaponCollections.getSketchfabModel("RGX 11z Pro", "Vandal", 0)?.id || ""
+    ]);
+    assert.deepEqual(roundTwoExcludedModels, ["", "", "b1da0d2feb70448fae76769dc7ee01fd"]);
     await desktop.locator(".gamesense-collection-filters").screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-filters-desktop.png") });
     await desktop.locator('[data-gamesense-collection-filter="premium"]').click();
     assert.equal(await desktop.locator(".gamesense-collection-card:not([hidden])").count(), 5);
@@ -800,7 +850,7 @@ async function run() {
     assert.ok(desktopCollectionGeometry.copy.left >= desktopCollectionGeometry.divider.left && desktopCollectionGeometry.copy.height >= desktopCollectionGeometry.card.height - 3, JSON.stringify(desktopCollectionGeometry));
     await firstCollectionCard.hover();
     await desktop.waitForTimeout(180);
-    assert.ok(Number(await firstCollectionCard.locator(".gamesense-collection-art span").evaluate(node => getComputedStyle(node).opacity)) > .9);
+    assert.ok(Number(await firstCollectionCard.locator(".gamesense-collection-open").evaluate(node => getComputedStyle(node).opacity)) > .9);
     await firstCollectionCard.click();
     await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     await desktop.waitForTimeout(250);
@@ -912,6 +962,24 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-section-heading").evaluate(node => window.__rankedCoachWeaponHeadingNode === node && node.isConnected), true);
     assert.equal(await desktop.locator(".gamesense-weapon-panel").evaluate(node => window.__rankedCoachWeaponPanelNode !== node && !window.__rankedCoachWeaponPanelNode.isConnected), true);
     assert.match(await desktop.locator('[data-gamesense-weapon="phantom"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
+    await desktop.locator('[data-gamesense-weapon="vandal"]').click();
+    await desktop.waitForFunction(() => document.querySelectorAll('.gamesense-collection-card[data-preview-weapon="Vandal"]').length > 14);
+    const assertVandalModel = async (collection, variant, modelId) => {
+      await desktop.locator(`.gamesense-collection-card[data-preview-weapon="Vandal"][data-preview-name="${collection}"]`).click();
+      await desktop.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+      if (variant > 0) await desktop.locator(`[data-skin-preview-view="${variant}"]`).click();
+      assert.equal(await desktop.locator(".gamesense-skin-preview-card.has-true-model").count(), 1);
+      assert.match(await desktop.locator(".gamesense-skin-model-stage iframe").getAttribute("src"), new RegExp(`${modelId}/embed`, "i"));
+      await desktop.mouse.click(2, 2);
+      await desktop.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
+    };
+    await assertVandalModel("Neptune", 0, "bd272b95723942dbaf1004d2626ec128");
+    await assertVandalModel("Neptune", 1, "b61e3f7bf9c749878beba1d6e01d6a84");
+    await assertVandalModel("Prelude to Chaos", 3, "49fcf7c9b36e4ac2b877fc4f32048071");
+    await assertVandalModel("RGX 11z Pro", 2, "65d8384673f241938de5c39dff07d200");
+    await assertVandalModel("RGX 11z Pro", 3, "53259a078e6e4521b1e116e6723f0011");
+    await desktop.locator('[data-gamesense-weapon="phantom"]').click();
+    await desktop.locator('[data-gamesense-weapon="phantom"].active').waitFor({ state: "visible" });
     await desktop.locator(".gamesense-weapon-history summary").click();
     assert.ok(await desktop.locator(".gamesense-weapon-history li").count() >= 2);
     const weaponPatchOrder = await desktop.locator(".gamesense-weapon-history li > span").allInnerTexts();
@@ -1276,7 +1344,20 @@ async function run() {
     });
     assert.ok(Math.abs(mobileCollectionGeometry.art.top - mobileCollectionGeometry.card.top) <= 2 && Math.abs(mobileCollectionGeometry.art.bottom - mobileCollectionGeometry.card.bottom) <= 2, JSON.stringify(mobileCollectionGeometry));
     assert.ok(mobileCollectionGeometry.copyPaddingLeft >= 14, JSON.stringify(mobileCollectionGeometry));
+    assert.equal(await mobile.locator(".gamesense-skin-preview-overlay").count(), 0);
     await touchWithNaturalDrift(mobile, firstMobileCollectionCard);
+    assert.equal(await firstMobileCollectionCard.evaluate(card => card.classList.contains("is-selected")), true);
+    assert.equal(await mobile.locator(".gamesense-skin-preview-overlay").count(), 0);
+    await mobile.waitForTimeout(180);
+    const firstMobileCollectionOpen = firstMobileCollectionCard.locator("[data-gamesense-collection-open]");
+    const mobileOpenControl = await firstMobileCollectionOpen.evaluate(button => ({
+      height: button.getBoundingClientRect().height,
+      opacity: Number(getComputedStyle(button).opacity),
+      pointerEvents: getComputedStyle(button).pointerEvents
+    }));
+    assert.ok(mobileOpenControl.height >= 44 && mobileOpenControl.opacity > .9 && mobileOpenControl.pointerEvents === "auto", JSON.stringify(mobileOpenControl));
+    await firstMobileCollectionCard.screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-card-mobile-selected.png") });
+    await touchWithNaturalDrift(mobile, firstMobileCollectionOpen, { x: 2, y: 2 });
     await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     await mobile.waitForTimeout(250);
     const mobileSkinViewer = await mobile.locator(".gamesense-skin-preview-card").evaluate(card => ({
@@ -1323,6 +1404,9 @@ async function run() {
     await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     const mobileReaverCard = mobile.locator('.gamesense-collection-card[data-gamesense-collection-preview][data-preview-name="Reaver"]');
     await touchWithNaturalDrift(mobile, mobileReaverCard);
+    assert.equal(await mobileReaverCard.evaluate(card => card.classList.contains("is-selected")), true);
+    assert.equal(await mobile.locator(".gamesense-skin-preview-overlay").count(), 0);
+    await touchWithNaturalDrift(mobile, mobileReaverCard.locator("[data-gamesense-collection-open]"), { x: 2, y: 2 });
     await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
     const mobileUpgradeRail = await mobile.locator('.gamesense-skin-option-groups > section:first-child > div').evaluate(rail => ({
       overflowX: getComputedStyle(rail).overflowX,

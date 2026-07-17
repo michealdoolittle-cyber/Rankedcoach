@@ -7,8 +7,6 @@
   let activeSkinViewIndex = 0;
   let activeSkinVideoIndex = 0;
   let skinPreviewTouchActivation = null;
-  let skinPreviewSuppressClickUntil = 0;
-  let skinPreviewSuppressClickTarget = null;
   let activeLibraryTransition = null;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -647,10 +645,10 @@
             ${tierFilters.map(item => `<button type="button" data-gamesense-collection-filter="${escapeHtml(item.editionKey)}" aria-pressed="false">${item.editionIcon ? `<img class="gamesense-tier-icon" src="${escapeHtml(item.editionIcon)}" alt="" aria-hidden="true">` : ""}<span>${escapeHtml(item.edition)}</span></button>`).join("")}
           </div>
           <div class="gamesense-collection-grid">
-            ${collections.map(item => `<button class="gamesense-collection-card" type="button" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">
+            ${collections.map(item => `<article class="gamesense-collection-card" tabindex="0" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin collection">
               <div class="gamesense-collection-art">
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
-                <span>Open interactive preview</span>
+                <button class="gamesense-collection-open" type="button" data-gamesense-collection-open aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">Open Preview</button>
               </div>
               <span class="gamesense-collection-divider" aria-hidden="true"></span>
               <div class="gamesense-collection-copy">
@@ -658,7 +656,7 @@
                 <h4>${escapeHtml(item.name)}</h4>
                 <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${item.variants?.length || item.views?.length || 1} verified color ${(item.variants?.length || item.views?.length || 1) === 1 ? "variant" : "variants"}</b></div>
               </div>
-            </button>`).join("")}
+            </article>`).join("")}
           </div>`}
       </section>`;
   }
@@ -1433,11 +1431,31 @@
     card.classList.toggle("has-info-open", open);
   }
 
+  function selectCollectionPreview(card) {
+    const archive = card?.closest?.(".gamesense-collection-archive");
+    (archive || document).querySelectorAll(".gamesense-collection-card.is-selected").forEach(candidate => {
+      candidate.classList.remove("is-selected");
+    });
+    if (card) card.classList.add("is-selected");
+  }
+
+  function usesTwoStepCollectionPreview() {
+    return document.documentElement.classList.contains("is-mobile-layout")
+      || document.body.classList.contains("is-touch-layout");
+  }
+
   document.addEventListener("touchstart", event => {
     const trigger = event.target.closest?.("[data-gamesense-collection-preview]");
     const touch = event.touches?.[0];
     skinPreviewTouchActivation = trigger && event.touches?.length === 1 && touch
-      ? { trigger, identifier: touch.identifier, x: touch.clientX, y: touch.clientY, startedAt: Date.now() }
+      ? {
+          trigger,
+          openRequested: Boolean(event.target.closest?.("[data-gamesense-collection-open]")),
+          identifier: touch.identifier,
+          x: touch.clientX,
+          y: touch.clientY,
+          startedAt: Date.now()
+        }
       : null;
   }, { capture: true, passive: true });
 
@@ -1455,9 +1473,11 @@
     if (distance > 16 || elapsed > 800 || !endedInside) return;
     event.preventDefault();
     event.stopPropagation();
-    skinPreviewSuppressClickUntil = Date.now() + 500;
-    skinPreviewSuppressClickTarget = activation.trigger;
-    openSkinPreview(activation.trigger);
+    if (activation.openRequested && activation.trigger.classList.contains("is-selected")) {
+      openSkinPreview(activation.trigger);
+      return;
+    }
+    selectCollectionPreview(activation.trigger);
   }, { capture: true, passive: false });
 
   document.addEventListener("touchcancel", () => {
@@ -1555,11 +1575,15 @@
       selectAbility(ability);
       return;
     }
+    const collectionOpen = event.target.closest?.("[data-gamesense-collection-open]");
     const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
     if (collectionPreview) {
       event.preventDefault();
       event.stopPropagation();
-      if (Date.now() < skinPreviewSuppressClickUntil && collectionPreview === skinPreviewSuppressClickTarget) return;
+      if (!collectionOpen && usesTwoStepCollectionPreview()) {
+        selectCollectionPreview(collectionPreview);
+        return;
+      }
       openSkinPreview(collectionPreview);
       return;
     }
@@ -1607,6 +1631,17 @@
     if (event.key === "Escape" && activeSkinPreview) {
       event.preventDefault();
       closeSkinPreview();
+      return;
+    }
+    const collectionOpen = event.target.closest?.("[data-gamesense-collection-open]");
+    const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
+    if (!collectionOpen && collectionPreview && ["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      if (usesTwoStepCollectionPreview()) {
+        selectCollectionPreview(collectionPreview);
+      } else {
+        openSkinPreview(collectionPreview);
+      }
       return;
     }
     const toggle = event.target.closest?.("[data-warmup-info]");

@@ -1,6 +1,6 @@
 # Sketchfab 3D Coverage — Round 2, Ambiguity Resolved (2026-07-17)
 
-**Status:** Ready to build. Follow-up to `notes/sketchfab-3d-coverage-expansion-2026-07-16.md`, which shipped with only 5 of the ~19 candidate models added — the rest were correctly left out because they required visiting individual Sketchfab pages I hadn't fetched yet (the ILilMitch 25-model collection) or had genuine open questions (Rogue's ambiguity, Araxys's weapon identity). That verification work is now done. Every ID below is pulled from the model's own page, not guessed from a collection thumbnail.
+**Status:** Implemented 2026-07-17 with 16 newly verified model mappings. The live license and official Riot chroma-order pass found that Oni and RGX Red currently have no published Sketchfab license, while the proposed RGX Green entry duplicates the already-covered default color. Those three remain excluded; all retained entries use the official color indexes rather than the provisional order below.
 
 ---
 
