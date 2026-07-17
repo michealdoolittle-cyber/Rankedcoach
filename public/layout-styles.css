@@ -135,7 +135,7 @@
   flex:0 0 auto;
 }
 
-body[data-layout-style]{
+body:is([data-layout-style],[data-layout-shape]){
   --layout-surface-clip:none;
   --layout-surface-border-width:1px;
   --layout-surface-border-color:color-mix(in srgb,var(--muted) 34%,transparent);
@@ -155,11 +155,11 @@ body[data-layout-style]{
   --layout-tag-pad-y:3px;
 }
 
-body[data-layout-style] [data-tb-auto-fit="1"]{
+body:is([data-layout-style],[data-layout-shape]) [data-tb-auto-fit="1"]{
   font-size:var(--tb-auto-fit-font-size,inherit) !important;
 }
 
-body[data-layout-style="honeycomb"]{
+body:is([data-layout-style="honeycomb"],[data-layout-shape="honeycomb"]){
   --layout-surface-clip:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);
   --layout-surface-border-color:var(--accent);
   --layout-surface-radius:0;
@@ -170,7 +170,7 @@ body[data-layout-style="honeycomb"]{
   --layout-surface-safe-left:max(22px,1.35em);
 }
 
-body[data-layout-style="chevronscan"]{
+body:is([data-layout-style="chevronscan"],[data-layout-shape="chevronscan"]){
   --layout-surface-border-left-width:5px;
   --layout-surface-border-left-color:var(--accent);
   --layout-surface-radius:3px;
@@ -181,7 +181,7 @@ body[data-layout-style="chevronscan"]{
   --layout-surface-safe-left:max(28px,1.75em);
 }
 
-body[data-layout-style="aperturecut"]{
+body:is([data-layout-style="aperturecut"],[data-layout-shape="aperturecut"]){
   --layout-surface-clip:polygon(12px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 12px),calc(100% - 12px) 100%,18px 100%,0 calc(100% - 18px),0 12px);
   --layout-surface-border-color:var(--accent);
   --layout-surface-radius:0;
@@ -192,7 +192,7 @@ body[data-layout-style="aperturecut"]{
   --layout-surface-safe-left:max(20px,1.2em);
 }
 
-body[data-layout-style="hazardedge"]{
+body:is([data-layout-style="hazardedge"],[data-layout-shape="hazardedge"]){
   --layout-surface-border-left-width:10px;
   --layout-surface-border-left-color:var(--accent);
   --layout-surface-radius:2px;
@@ -203,7 +203,7 @@ body[data-layout-style="hazardedge"]{
   --layout-surface-safe-left:max(32px,2em);
 }
 
-body[data-layout-style="diamondfacet"]{
+body:is([data-layout-style="diamondfacet"],[data-layout-shape="diamondfacet"]){
   --layout-surface-clip:polygon(14px 0,calc(100% - 14px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 12px),0 12px);
   --layout-surface-border-color:var(--accent);
   --layout-surface-radius:0;
@@ -214,7 +214,7 @@ body[data-layout-style="diamondfacet"]{
   --layout-surface-safe-left:max(20px,1.2em);
 }
 
-body[data-layout-style="bladewedge"]{
+body:is([data-layout-style="bladewedge"],[data-layout-shape="bladewedge"]){
   --layout-surface-clip:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);
   --layout-surface-border-color:var(--accent);
   --layout-surface-radius:0;
@@ -225,7 +225,7 @@ body[data-layout-style="bladewedge"]{
   --layout-surface-safe-left:max(20px,1.25em);
 }
 
-body[data-layout-style="ribbonbanner"]{
+body:is([data-layout-style="ribbonbanner"],[data-layout-shape="ribbonbanner"]){
   --layout-surface-border-color:var(--accent-2);
   --layout-surface-radius:1px;
   --layout-surface-background:linear-gradient(225deg,var(--accent) 0 18px,transparent 18px),linear-gradient(145deg,var(--card),var(--card-2));
@@ -235,7 +235,7 @@ body[data-layout-style="ribbonbanner"]{
   --layout-surface-safe-left:max(12px,.75em);
 }
 
-body[data-layout-style="monolithslab"]{
+body:is([data-layout-style="monolithslab"],[data-layout-shape="monolithslab"]){
   --layout-surface-border-width:2px;
   --layout-surface-border-color:var(--text);
   --layout-surface-radius:0;
@@ -243,7 +243,7 @@ body[data-layout-style="monolithslab"]{
   --layout-surface-shadow:6px 6px 0 var(--accent);
 }
 
-body[data-layout-style="pixeldialog"]{
+body:is([data-layout-style="pixeldialog"],[data-layout-shape="pixeldialog"]){
   --layout-surface-border-width:4px;
   --layout-surface-border-color:var(--text);
   --layout-surface-radius:0;
@@ -251,66 +251,203 @@ body[data-layout-style="pixeldialog"]{
   --layout-surface-shadow:6px 6px 0 var(--accent);
 }
 
-body[data-layout-style="honeycomb"]{
+body:is([data-layout-style="scopevignette"],[data-layout-shape="scopevignette"]){
+  --layout-surface-border-color:color-mix(in srgb,var(--accent) 70%,transparent);
+  --layout-surface-radius:18px;
+  --layout-surface-background:
+    radial-gradient(circle at 50% 50%,transparent 0 52%,color-mix(in srgb,var(--accent) 18%,transparent) 53% 54%,transparent 55%),
+    radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--card) 92%,transparent),color-mix(in srgb,var(--card-2) 72%,transparent) 58%,rgba(0,0,0,.46) 100%),
+    linear-gradient(145deg,var(--card),var(--card-2));
+  --layout-surface-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 26%,transparent),0 18px 42px rgba(0,0,0,.28);
+  --layout-surface-safe-top:max(14px,.9em);
+  --layout-surface-safe-right:max(18px,1.1em);
+  --layout-surface-safe-bottom:max(14px,.9em);
+  --layout-surface-safe-left:max(18px,1.1em);
+}
+
+body:is([data-layout-style="spearhead"],[data-layout-shape="spearhead"]){
+  --layout-surface-clip:polygon(0 0,calc(100% - 28px) 0,100% 50%,calc(100% - 28px) 100%,0 100%,16px 50%);
+  --layout-surface-border-color:var(--accent);
+  --layout-surface-radius:0;
+  --layout-surface-background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 14%,var(--card)),var(--card-2));
+  --layout-surface-safe-top:max(14px,.9em);
+  --layout-surface-safe-right:max(34px,2.1em);
+  --layout-surface-safe-bottom:max(14px,.9em);
+  --layout-surface-safe-left:max(26px,1.65em);
+}
+
+body:is([data-layout-style="cargocrate"],[data-layout-shape="cargocrate"]){
+  --layout-surface-clip:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+  --layout-surface-border-width:2px;
+  --layout-surface-border-color:color-mix(in srgb,var(--accent-2) 60%,var(--muted));
+  --layout-surface-radius:0;
+  --layout-surface-background:
+    radial-gradient(circle at 18px 18px,color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at calc(100% - 18px) 18px,color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at 18px calc(100% - 18px),color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at calc(100% - 18px) calc(100% - 18px),color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),
+    linear-gradient(135deg,color-mix(in srgb,var(--accent-2) 16%,var(--card)),var(--card-2));
+  --layout-surface-shadow:inset 0 1px 0 color-mix(in srgb,white 14%,transparent),0 14px 32px rgba(0,0,0,.28);
+  --layout-surface-safe-top:max(18px,1.1em);
+  --layout-surface-safe-right:max(18px,1.1em);
+  --layout-surface-safe-bottom:max(18px,1.1em);
+  --layout-surface-safe-left:max(18px,1.1em);
+}
+
+body:is([data-layout-style="battleplate"],[data-layout-shape="battleplate"]){
+  --layout-surface-clip:polygon(24px 0,calc(100% - 18px) 0,100% 20px,100% calc(100% - 30px),calc(100% - 18px) 100%,34px 100%,22px calc(100% - 12px),0 calc(100% - 18px),0 18px,14px 10px);
+  --layout-surface-border-width:2px;
+  --layout-surface-border-color:color-mix(in srgb,var(--accent) 58%,var(--muted));
+  --layout-surface-radius:0;
+  --layout-surface-background:
+    linear-gradient(120deg,transparent 0 68%,color-mix(in srgb,var(--accent) 18%,transparent) 69% 70%,transparent 72%),
+    linear-gradient(145deg,color-mix(in srgb,var(--card) 78%,#1f2937 22%),var(--card-2));
+  --layout-surface-shadow:inset 0 1px 0 color-mix(in srgb,white 12%,transparent),0 16px 34px rgba(0,0,0,.3);
+  --layout-surface-safe-top:max(18px,1.1em);
+  --layout-surface-safe-right:max(22px,1.35em);
+  --layout-surface-safe-bottom:max(22px,1.35em);
+  --layout-surface-safe-left:max(20px,1.25em);
+}
+
+body:is([data-layout-style="steelrivetframe"],[data-layout-shape="steelrivetframe"]){
+  --layout-surface-clip:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+  --layout-surface-border-width:2px;
+  --layout-surface-border-color:color-mix(in srgb,var(--muted) 70%,var(--accent));
+  --layout-surface-radius:0;
+  --layout-surface-background:linear-gradient(145deg,color-mix(in srgb,var(--card) 88%,#64748b 12%),var(--card-2));
+  --layout-rim-background:
+    radial-gradient(circle at 18px 18px,color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at calc(100% - 18px) 18px,color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at 18px calc(100% - 18px),color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at calc(100% - 18px) calc(100% - 18px),color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),
+    linear-gradient(135deg,color-mix(in srgb,var(--text) 18%,var(--accent)),color-mix(in srgb,var(--card) 58%,var(--muted)));
+  --layout-surface-safe-top:max(20px,1.25em);
+  --layout-surface-safe-right:max(20px,1.25em);
+  --layout-surface-safe-bottom:max(20px,1.25em);
+  --layout-surface-safe-left:max(20px,1.25em);
+}
+
+body:is([data-layout-style="prismrim"],[data-layout-shape="prismrim"]){
+  --layout-surface-clip:polygon(24px 0,calc(100% - 24px) 0,100% 24px,100% calc(100% - 24px),calc(100% - 24px) 100%,24px 100%,0 calc(100% - 24px),0 24px);
+  --layout-surface-border-width:2px;
+  --layout-surface-border-color:color-mix(in srgb,var(--accent-2) 72%,var(--accent));
+  --layout-surface-radius:0;
+  --layout-surface-background:linear-gradient(145deg,color-mix(in srgb,var(--card) 88%,var(--accent) 12%),color-mix(in srgb,var(--card-2) 88%,var(--accent-2) 12%));
+  --layout-rim-background:conic-gradient(from 18deg,var(--accent),var(--accent-2),color-mix(in srgb,var(--text) 55%,var(--accent)),var(--accent),var(--accent-2));
+  --layout-surface-safe-top:max(22px,1.35em);
+  --layout-surface-safe-right:max(22px,1.35em);
+  --layout-surface-safe-bottom:max(22px,1.35em);
+  --layout-surface-safe-left:max(22px,1.35em);
+}
+
+body:is([data-layout-style="hazardrim"],[data-layout-shape="hazardrim"]){
+  --layout-surface-clip:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
+  --layout-surface-border-width:2px;
+  --layout-surface-border-color:var(--accent);
+  --layout-surface-radius:0;
+  --layout-surface-background:linear-gradient(145deg,var(--card),var(--card-2));
+  --layout-rim-background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 84%,transparent) 0 8px,color-mix(in srgb,var(--card) 78%,black) 8px 16px);
+  --layout-surface-safe-top:max(18px,1.1em);
+  --layout-surface-safe-right:max(22px,1.35em);
+  --layout-surface-safe-bottom:max(18px,1.1em);
+  --layout-surface-safe-left:max(22px,1.35em);
+}
+
+body:is([data-layout-style="honeycomb"],[data-layout-shape="honeycomb"]){
   --layout-tag-clip:polygon(4px 0,calc(100% - 4px) 0,100% 50%,calc(100% - 4px) 100%,4px 100%,0 50%);
   --layout-tag-radius:0;
   --layout-tag-pad-x:10px;
 }
 
-body[data-layout-style="chevronscan"]{
+body:is([data-layout-style="chevronscan"],[data-layout-shape="chevronscan"]){
   --layout-tag-border-left-width:2px;
   --layout-tag-radius:3px;
   --layout-tag-background:linear-gradient(135deg,color-mix(in srgb,currentColor 18%,transparent) 0 3px,transparent 3px 7px),color-mix(in srgb,currentColor 10%,var(--card));
   --layout-tag-pad-x:8px;
 }
 
-body[data-layout-style="aperturecut"]{
+body:is([data-layout-style="aperturecut"],[data-layout-shape="aperturecut"]){
   --layout-tag-clip:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px);
   --layout-tag-radius:0;
   --layout-tag-pad-x:9px;
 }
 
-body[data-layout-style="hazardedge"]{
+body:is([data-layout-style="hazardedge"],[data-layout-shape="hazardedge"]){
   --layout-tag-border-left-width:3px;
   --layout-tag-radius:2px;
   --layout-tag-background:repeating-linear-gradient(135deg,color-mix(in srgb,currentColor 12%,transparent) 0 2px,transparent 2px 5px),color-mix(in srgb,currentColor 9%,var(--card));
   --layout-tag-pad-x:8px;
 }
 
-body[data-layout-style="diamondfacet"]{
+body:is([data-layout-style="diamondfacet"],[data-layout-shape="diamondfacet"]){
   --layout-tag-clip:polygon(5px 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,5px 100%,0 50%);
   --layout-tag-radius:0;
   --layout-tag-pad-x:11px;
 }
 
-body[data-layout-style="bladewedge"]{
+body:is([data-layout-style="bladewedge"],[data-layout-shape="bladewedge"]){
   --layout-tag-clip:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);
   --layout-tag-radius:0;
   --layout-tag-pad-x:9px;
 }
 
-body[data-layout-style="ribbonbanner"]{
+body:is([data-layout-style="ribbonbanner"],[data-layout-shape="ribbonbanner"]){
   --layout-tag-clip:polygon(0 0,calc(100% - 4px) 0,100% 4px,100% 100%,0 100%);
   --layout-tag-radius:1px;
   --layout-tag-background:linear-gradient(225deg,color-mix(in srgb,currentColor 44%,transparent) 0 4px,transparent 4px),color-mix(in srgb,currentColor 10%,var(--card));
   --layout-tag-pad-x:9px;
 }
 
-body[data-layout-style="monolithslab"]{
+body:is([data-layout-style="monolithslab"],[data-layout-shape="monolithslab"]){
   --layout-tag-border-width:1px;
   --layout-tag-radius:0;
   --layout-tag-background:color-mix(in srgb,currentColor 14%,var(--card));
   --layout-tag-shadow:2px 2px 0 color-mix(in srgb,currentColor 58%,var(--accent));
 }
 
-body[data-layout-style="pixeldialog"]{
+body:is([data-layout-style="pixeldialog"],[data-layout-shape="pixeldialog"]){
   --layout-tag-border-width:2px;
   --layout-tag-radius:0;
   --layout-tag-background:color-mix(in srgb,currentColor 12%,var(--card-2));
   --layout-tag-shadow:2px 2px 0 color-mix(in srgb,currentColor 56%,var(--accent));
 }
 
-body[data-layout-style] :is(
+body:is([data-layout-style="scopevignette"],[data-layout-shape="scopevignette"]){
+  --layout-tag-border-color:color-mix(in srgb,currentColor 70%,transparent);
+  --layout-tag-radius:999px;
+  --layout-tag-background:radial-gradient(circle,color-mix(in srgb,currentColor 16%,var(--card)) 0 58%,color-mix(in srgb,currentColor 7%,var(--card-2)) 100%);
+  --layout-tag-pad-x:10px;
+}
+
+body:is([data-layout-style="spearhead"],[data-layout-shape="spearhead"]){
+  --layout-tag-clip:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%,5px 50%);
+  --layout-tag-radius:0;
+  --layout-tag-pad-x:12px;
+}
+
+body:is([data-layout-style="cargocrate"],[data-layout-shape="cargocrate"]),
+body:is([data-layout-style="battleplate"],[data-layout-shape="battleplate"]),
+body:is([data-layout-style="steelrivetframe"],[data-layout-shape="steelrivetframe"]){
+  --layout-tag-clip:polygon(5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px),0 5px);
+  --layout-tag-radius:0;
+  --layout-tag-pad-x:10px;
+}
+
+body:is([data-layout-style="prismrim"],[data-layout-shape="prismrim"]){
+  --layout-tag-clip:polygon(6px 0,calc(100% - 6px) 0,100% 50%,calc(100% - 6px) 100%,6px 100%,0 50%);
+  --layout-tag-radius:0;
+  --layout-tag-background:linear-gradient(120deg,color-mix(in srgb,currentColor 18%,var(--card)),color-mix(in srgb,var(--accent-2) 16%,var(--card-2)));
+  --layout-tag-pad-x:11px;
+}
+
+body:is([data-layout-style="hazardrim"],[data-layout-shape="hazardrim"]){
+  --layout-tag-clip:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px);
+  --layout-tag-radius:0;
+  --layout-tag-background:repeating-linear-gradient(135deg,color-mix(in srgb,currentColor 12%,transparent) 0 3px,transparent 3px 7px),color-mix(in srgb,currentColor 9%,var(--card));
+  --layout-tag-pad-x:10px;
+}
+
+body:is([data-layout-style],[data-layout-shape]) :is(
   #page-insights .insight-action-hero,
   #page-insights .insight-card,
   #page-insights .trend-content.open,
@@ -376,9 +513,132 @@ body[data-layout-style] :is(
   padding-left:var(--layout-surface-safe-left) !important;
 }
 
+body:is([data-layout-style],[data-layout-shape]) :is(
+  #page-insights .insight-action-hero,
+  #page-insights .insight-card,
+  #page-insights .trend-content.open,
+  #page-home .weekly-focus-card,
+  #page-home .improvement-card,
+  #page-home .loadout-card,
+  #page-home .compass-panel,
+  #page-home .rr-card,
+  #page-home .rr-chart-card,
+  #page-stats .stats-summary-card,
+  #page-stats .stats-performance-card,
+  #page-stats .stats-breakdown-card,
+  #page-stats .stats-maps-card,
+  #page-stats .stats-agents-card,
+  #page-stats .stats-weapons-card,
+  #page-insights .insights-action-card,
+  #page-insights .insights-top-card,
+  #page-insights .insights-trends-card,
+  #page-logging .logging-card,
+  #page-logging .logging-feed-card,
+  #page-logging .logging-hero,
+  #page-logging .log-entry,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .log-feed-footnote,
+  #page-library .gamesense-season-scope,
+  #page-library .gamesense-gallery-head,
+  #page-library .gamesense-tips-hub,
+  #page-library .gamesense-weapon-suggestions,
+  #page-library #gamesenseLibraryView > section,
+  #page-library .gamesense-collection-archive,
+  #page-library .gamesense-detail-head,
+  #page-library .gamesense-tip,
+  #page-library .gamesense-comp-card,
+  #page-library .gamesense-comp-agent-read,
+  #page-library .gamesense-comp-pick-explorer,
+  #page-library .gamesense-comp-pick-row,
+  #page-library .gamesense-weapon-suggestion,
+  #page-library .gamesense-map-fit,
+  #page-library .gamesense-lineups,
+  #page-library .gamesense-hero,
+  #page-library .gamesense-topic-card,
+  #page-library .gamesense-entry-card,
+  #page-library .gamesense-map-entry-card,
+  #page-library .gamesense-agent-entry-card,
+  #page-library .gamesense-weapon-entry-card,
+  #page-library .gamesense-agent-hero
+) > *{
+  position:relative;
+  z-index:1;
+}
+
+body:is(
+  [data-layout-style="steelrivetframe"],
+  [data-layout-shape="steelrivetframe"],
+  [data-layout-style="prismrim"],
+  [data-layout-shape="prismrim"],
+  [data-layout-style="hazardrim"],
+  [data-layout-shape="hazardrim"]
+) :is(
+  #page-insights .insight-action-hero,
+  #page-insights .insight-card,
+  #page-insights .trend-content.open,
+  #page-home .weekly-focus-card,
+  #page-home .improvement-card,
+  #page-home .loadout-card,
+  #page-home .compass-panel,
+  #page-home .rr-card,
+  #page-home .rr-chart-card,
+  #page-stats .stats-summary-card,
+  #page-stats .stats-performance-card,
+  #page-stats .stats-breakdown-card,
+  #page-stats .stats-maps-card,
+  #page-stats .stats-agents-card,
+  #page-stats .stats-weapons-card,
+  #page-insights .insights-action-card,
+  #page-insights .insights-top-card,
+  #page-insights .insights-trends-card,
+  #page-logging .logging-card,
+  #page-logging .logging-feed-card,
+  #page-logging .logging-hero,
+  #page-logging .log-entry,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .log-feed-footnote,
+  #page-library .gamesense-season-scope,
+  #page-library .gamesense-gallery-head,
+  #page-library .gamesense-tips-hub,
+  #page-library .gamesense-weapon-suggestions,
+  #page-library #gamesenseLibraryView > section,
+  #page-library .gamesense-collection-archive,
+  #page-library .gamesense-detail-head,
+  #page-library .gamesense-tip,
+  #page-library .gamesense-comp-card,
+  #page-library .gamesense-comp-agent-read,
+  #page-library .gamesense-comp-pick-explorer,
+  #page-library .gamesense-comp-pick-row,
+  #page-library .gamesense-weapon-suggestion,
+  #page-library .gamesense-map-fit,
+  #page-library .gamesense-lineups,
+  #page-library .gamesense-hero,
+  #page-library .gamesense-topic-card,
+  #page-library .gamesense-entry-card,
+  #page-library .gamesense-map-entry-card,
+  #page-library .gamesense-agent-entry-card,
+  #page-library .gamesense-weapon-entry-card,
+  #page-library .gamesense-agent-hero
+)::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  clip-path:var(--layout-surface-clip);
+  border:4px solid transparent;
+  background:var(--layout-rim-background) border-box;
+  opacity:.42;
+  mix-blend-mode:screen;
+}
+
 /* Read-only status/category tags get a scaled-down echo of the selected
    layout family. currentColor preserves each badge's semantic tone. */
-body[data-layout-style] :is(
+body:is([data-layout-style],[data-layout-shape]) :is(
   #page-insights .insight-tag,
   #page-insights .insight-meta-pill,
   #page-insights .insight-source,
@@ -402,7 +662,7 @@ body[data-layout-style] :is(
   line-height:1.15 !important;
 }
 
-body[data-layout-style] #page-library .gamesense-agent-entry-card .gamesense-entry-copy{
+body:is([data-layout-style],[data-layout-shape]) #page-library .gamesense-agent-entry-card .gamesense-entry-copy{
   right:max(24px,var(--layout-surface-safe-right,24px)) !important;
   bottom:max(18px,var(--layout-surface-safe-bottom,18px)) !important;
   max-width:calc(100% - 48px);
@@ -411,20 +671,20 @@ body[data-layout-style] #page-library .gamesense-agent-entry-card .gamesense-ent
 
 /* The notes field is a requested styled surface, but it lives in a fixed
    form row. Card-scale safe areas would consume its usable text height. */
-body[data-layout-style] #page-logging #logNotes{
+body:is([data-layout-style],[data-layout-shape]) #page-logging #logNotes{
   padding:8px 14px !important;
 }
 
 /* The Stats performance chart keeps its native, unstyled grid. Preserve that
    grid's full vertical text area while the parent card carries the shape. */
-body[data-layout-style] #page-stats .stats-performance-card{
+body:is([data-layout-style],[data-layout-shape]) #page-stats .stats-performance-card{
   padding-top:6px !important;
   padding-bottom:6px !important;
 }
 
 /* Compact controls keep their native geometry. Layout styles only add a
    lightweight active underline instead of card borders, clipping or padding. */
-body[data-layout-style] :is(
+body:is([data-layout-style],[data-layout-shape]) :is(
   #page-home .compass-profile-title,
   #page-home .compass-profile-kicker,
   #page-home .compass-score-card,
@@ -458,7 +718,7 @@ body[data-layout-style] :is(
   box-sizing:border-box;
 }
 
-body[data-layout-style="hazardedge"] :is(
+body:is([data-layout-style="hazardedge"],[data-layout-shape="hazardedge"]) :is(
   #page-insights .insight-action-hero,
   #page-insights .insight-card,
   #page-logging .logging-hero,
@@ -469,7 +729,7 @@ body[data-layout-style="hazardedge"] :is(
   --layout-surface-background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 32%,transparent) 0 5px,color-mix(in srgb,var(--card) 72%,transparent) 5px 10px) left/14px 100% no-repeat,linear-gradient(145deg,var(--card),var(--card-2));
 }
 
-body[data-layout-style] :is(
+body:is([data-layout-style],[data-layout-shape]) :is(
   #page-home .role-filter-btn.active,
   #page-home .graph-btn.active,
   #page-stats button[data-gamesense-open].active,
@@ -481,6 +741,221 @@ body[data-layout-style] :is(
   #page-library .gamesense-plant-preview-toggle[aria-expanded="true"]
 ){
   box-shadow:inset 0 -2px 0 var(--accent) !important;
+}
+
+body[data-layout-texture]{
+  --layout-texture-background:none;
+  --layout-texture-opacity:.22;
+  --layout-texture-blend-mode:screen;
+}
+
+body[data-layout-texture="carbonweave"]{
+  --layout-texture-background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 1px,transparent 1px 7px),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.08) 0 1px,transparent 1px 7px);
+  --layout-texture-opacity:.18;
+}
+
+body[data-layout-texture="circuitplate"]{
+  --layout-texture-background:
+    linear-gradient(90deg,color-mix(in srgb,var(--accent) 44%,transparent) 1px,transparent 1px),
+    linear-gradient(0deg,color-mix(in srgb,var(--accent-2) 30%,transparent) 1px,transparent 1px),
+    radial-gradient(circle at 18% 28%,color-mix(in srgb,var(--accent) 64%,transparent) 0 2px,transparent 3px),
+    radial-gradient(circle at 74% 62%,color-mix(in srgb,var(--accent-2) 58%,transparent) 0 2px,transparent 3px);
+  --layout-texture-opacity:.2;
+}
+
+body[data-layout-texture="topocontour"]{
+  --layout-texture-background:
+    radial-gradient(ellipse at 22% 22%,transparent 0 19px,color-mix(in srgb,var(--accent) 44%,transparent) 20px 21px,transparent 22px 36px,color-mix(in srgb,var(--accent) 32%,transparent) 37px 38px,transparent 39px),
+    radial-gradient(ellipse at 78% 72%,transparent 0 22px,color-mix(in srgb,var(--accent-2) 36%,transparent) 23px 24px,transparent 25px 43px,color-mix(in srgb,var(--accent-2) 28%,transparent) 44px 45px,transparent 46px);
+  --layout-texture-opacity:.22;
+}
+
+body[data-layout-texture="frostfracture"]{
+  --layout-texture-background:
+    linear-gradient(126deg,transparent 0 48%,rgba(210,245,255,.34) 49% 50%,transparent 51%),
+    linear-gradient(32deg,transparent 0 57%,rgba(210,245,255,.22) 58% 59%,transparent 60%),
+    linear-gradient(164deg,transparent 0 38%,rgba(210,245,255,.26) 39% 40%,transparent 41%);
+  --layout-texture-opacity:.26;
+}
+
+body[data-layout-texture="blueprintgrid"]{
+  --layout-texture-background:
+    linear-gradient(rgba(96,165,250,.18) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(96,165,250,.18) 1px,transparent 1px),
+    linear-gradient(rgba(96,165,250,.08) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(96,165,250,.08) 1px,transparent 1px);
+  --layout-texture-opacity:.28;
+}
+
+body[data-layout-texture="brushedplate"]{
+  --layout-texture-background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.13) 0 1px,transparent 1px 5px),
+    linear-gradient(180deg,rgba(255,255,255,.12),transparent 45%,rgba(0,0,0,.18));
+  --layout-texture-opacity:.18;
+  --layout-texture-blend-mode:overlay;
+}
+
+body[data-layout-texture="hexarmor"]{
+  --layout-texture-background:
+    radial-gradient(circle at 50% 50%,transparent 0 12px,color-mix(in srgb,var(--accent) 35%,transparent) 13px 14px,transparent 15px) 0 0/44px 38px,
+    radial-gradient(circle at 50% 50%,transparent 0 12px,color-mix(in srgb,var(--accent-2) 24%,transparent) 13px 14px,transparent 15px) 22px 19px/44px 38px;
+  --layout-texture-opacity:.22;
+}
+
+body[data-layout-texture="chainmesh"]{
+  --layout-texture-background:
+    radial-gradient(ellipse at 50% 50%,transparent 0 7px,rgba(255,255,255,.22) 8px 9px,transparent 10px) 0 0/24px 14px,
+    radial-gradient(ellipse at 50% 50%,transparent 0 7px,rgba(255,255,255,.14) 8px 9px,transparent 10px) 12px 7px/24px 14px;
+  --layout-texture-opacity:.2;
+}
+
+body[data-layout-texture="thermalvision"]{
+  --layout-texture-background:
+    radial-gradient(circle at 28% 38%,rgba(34,211,238,.42),transparent 28%),
+    radial-gradient(circle at 72% 58%,rgba(249,115,22,.34),transparent 32%),
+    linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);
+  --layout-texture-opacity:.22;
+}
+
+body[data-layout-texture="wovencable"]{
+  --layout-texture-background:
+    repeating-linear-gradient(28deg,rgba(255,255,255,.1) 0 4px,transparent 4px 18px),
+    repeating-linear-gradient(152deg,rgba(255,255,255,.08) 0 4px,transparent 4px 18px);
+  --layout-texture-opacity:.19;
+}
+
+body[data-layout-texture="rustpatina"]{
+  --layout-texture-background:
+    radial-gradient(circle at 20% 28%,rgba(249,115,22,.34),transparent 26%),
+    radial-gradient(circle at 72% 68%,rgba(20,184,166,.22),transparent 30%),
+    radial-gradient(circle at 44% 72%,rgba(180,83,9,.28),transparent 24%),
+    repeating-linear-gradient(7deg,rgba(255,255,255,.06) 0 1px,transparent 1px 8px);
+  --layout-texture-opacity:.28;
+  --layout-texture-blend-mode:overlay;
+}
+
+body[data-layout-texture="frostedglass"]{
+  --layout-texture-background:
+    linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.05) 42%,rgba(255,255,255,.18)),
+    radial-gradient(circle at 22% 18%,rgba(255,255,255,.22),transparent 34%);
+  --layout-texture-opacity:.24;
+}
+
+body[data-layout-texture] :is(
+  #page-insights .insight-action-hero,
+  #page-insights .insight-card,
+  #page-insights .trend-content.open,
+  #page-home .weekly-focus-card,
+  #page-home .improvement-card,
+  #page-home .loadout-card,
+  #page-home .compass-panel,
+  #page-home .rr-card,
+  #page-home .rr-chart-card,
+  #page-stats .stats-summary-card,
+  #page-stats .stats-performance-card,
+  #page-stats .stats-breakdown-card,
+  #page-stats .stats-maps-card,
+  #page-stats .stats-agents-card,
+  #page-stats .stats-weapons-card,
+  #page-insights .insights-action-card,
+  #page-insights .insights-top-card,
+  #page-insights .insights-trends-card,
+  #page-logging .logging-card,
+  #page-logging .logging-feed-card,
+  #page-logging .logging-hero,
+  #page-logging .log-entry,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .log-feed-footnote,
+  #page-library .gamesense-season-scope,
+  #page-library .gamesense-gallery-head,
+  #page-library .gamesense-tips-hub,
+  #page-library .gamesense-weapon-suggestions,
+  #page-library #gamesenseLibraryView > section,
+  #page-library .gamesense-collection-archive,
+  #page-library .gamesense-detail-head,
+  #page-library .gamesense-tip,
+  #page-library .gamesense-comp-card,
+  #page-library .gamesense-comp-agent-read,
+  #page-library .gamesense-comp-pick-explorer,
+  #page-library .gamesense-comp-pick-row,
+  #page-library .gamesense-weapon-suggestion,
+  #page-library .gamesense-map-fit,
+  #page-library .gamesense-lineups,
+  #page-library .gamesense-hero,
+  #page-library .gamesense-topic-card,
+  #page-library .gamesense-entry-card,
+  #page-library .gamesense-map-entry-card,
+  #page-library .gamesense-agent-entry-card,
+  #page-library .gamesense-weapon-entry-card,
+  #page-library .gamesense-agent-hero
+)::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:var(--layout-texture-background);
+  background-size:42px 42px,42px 42px,100% 100%,100% 100%;
+  opacity:var(--layout-texture-opacity);
+  mix-blend-mode:var(--layout-texture-blend-mode);
+}
+
+body[data-layout-texture] :is(
+  #page-insights .insight-action-hero,
+  #page-insights .insight-card,
+  #page-insights .trend-content.open,
+  #page-home .weekly-focus-card,
+  #page-home .improvement-card,
+  #page-home .loadout-card,
+  #page-home .compass-panel,
+  #page-home .rr-card,
+  #page-home .rr-chart-card,
+  #page-stats .stats-summary-card,
+  #page-stats .stats-performance-card,
+  #page-stats .stats-breakdown-card,
+  #page-stats .stats-maps-card,
+  #page-stats .stats-agents-card,
+  #page-stats .stats-weapons-card,
+  #page-insights .insights-action-card,
+  #page-insights .insights-top-card,
+  #page-insights .insights-trends-card,
+  #page-logging .logging-card,
+  #page-logging .logging-feed-card,
+  #page-logging .logging-hero,
+  #page-logging .log-entry,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .log-feed-footnote,
+  #page-library .gamesense-season-scope,
+  #page-library .gamesense-gallery-head,
+  #page-library .gamesense-tips-hub,
+  #page-library .gamesense-weapon-suggestions,
+  #page-library #gamesenseLibraryView > section,
+  #page-library .gamesense-collection-archive,
+  #page-library .gamesense-detail-head,
+  #page-library .gamesense-tip,
+  #page-library .gamesense-comp-card,
+  #page-library .gamesense-comp-agent-read,
+  #page-library .gamesense-comp-pick-explorer,
+  #page-library .gamesense-comp-pick-row,
+  #page-library .gamesense-weapon-suggestion,
+  #page-library .gamesense-map-fit,
+  #page-library .gamesense-lineups,
+  #page-library .gamesense-hero,
+  #page-library .gamesense-topic-card,
+  #page-library .gamesense-entry-card,
+  #page-library .gamesense-map-entry-card,
+  #page-library .gamesense-agent-entry-card,
+  #page-library .gamesense-weapon-entry-card,
+  #page-library .gamesense-agent-hero
+) > *{
+  position:relative;
+  z-index:1;
 }
 
 [data-layout-preview="honeycomb"] .layout-style-preview-card{
@@ -543,6 +1018,128 @@ body[data-layout-style] :is(
   border-radius:0 !important;
   background:var(--card-2) !important;
   box-shadow:6px 6px 0 var(--accent) !important;
+}
+
+[data-layout-preview="scopevignette"] .layout-style-preview-card{
+  border-color:color-mix(in srgb,var(--accent) 70%,transparent) !important;
+  border-radius:18px !important;
+  background:radial-gradient(circle at 50% 50%,transparent 0 52%,color-mix(in srgb,var(--accent) 18%,transparent) 53% 54%,transparent 55%),radial-gradient(circle at 50% 50%,var(--card),var(--card-2) 58%,rgba(0,0,0,.46) 100%) !important;
+}
+
+[data-layout-preview="spearhead"] .layout-style-preview-card{
+  clip-path:polygon(0 0,calc(100% - 28px) 0,100% 50%,calc(100% - 28px) 100%,0 100%,16px 50%);
+  border-color:var(--accent) !important;
+  border-radius:0 !important;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 14%,var(--card)),var(--card-2)) !important;
+}
+
+[data-layout-preview="cargocrate"] .layout-style-preview-card{
+  clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+  border:2px solid color-mix(in srgb,var(--accent-2) 60%,var(--muted)) !important;
+  border-radius:0 !important;
+  background:radial-gradient(circle at 18px 18px,color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),radial-gradient(circle at calc(100% - 18px) 18px,color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),radial-gradient(circle at 18px calc(100% - 18px),color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),radial-gradient(circle at calc(100% - 18px) calc(100% - 18px),color-mix(in srgb,var(--text) 36%,transparent) 0 2px,transparent 3px),linear-gradient(135deg,color-mix(in srgb,var(--accent-2) 16%,var(--card)),var(--card-2)) !important;
+}
+
+[data-layout-preview="battleplate"] .layout-style-preview-card{
+  clip-path:polygon(24px 0,calc(100% - 18px) 0,100% 20px,100% calc(100% - 30px),calc(100% - 18px) 100%,34px 100%,22px calc(100% - 12px),0 calc(100% - 18px),0 18px,14px 10px);
+  border:2px solid color-mix(in srgb,var(--accent) 58%,var(--muted)) !important;
+  border-radius:0 !important;
+  background:linear-gradient(120deg,transparent 0 68%,color-mix(in srgb,var(--accent) 18%,transparent) 69% 70%,transparent 72%),linear-gradient(145deg,color-mix(in srgb,var(--card) 78%,#1f2937 22%),var(--card-2)) !important;
+}
+
+[data-layout-preview="steelrivetframe"] .layout-style-preview-card{
+  clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px);
+  border:3px solid color-mix(in srgb,var(--muted) 70%,var(--accent)) !important;
+  border-radius:0 !important;
+  background:radial-gradient(circle at 18px 18px,color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),radial-gradient(circle at calc(100% - 18px) 18px,color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),radial-gradient(circle at 18px calc(100% - 18px),color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),radial-gradient(circle at calc(100% - 18px) calc(100% - 18px),color-mix(in srgb,var(--text) 58%,transparent) 0 2px,transparent 3px),linear-gradient(145deg,color-mix(in srgb,var(--card) 88%,#64748b 12%),var(--card-2)) !important;
+}
+
+[data-layout-preview="prismrim"] .layout-style-preview-card{
+  clip-path:polygon(24px 0,calc(100% - 24px) 0,100% 24px,100% calc(100% - 24px),calc(100% - 24px) 100%,24px 100%,0 calc(100% - 24px),0 24px);
+  border:3px solid color-mix(in srgb,var(--accent-2) 72%,var(--accent)) !important;
+  border-radius:0 !important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--card) 88%,var(--accent) 12%),color-mix(in srgb,var(--card-2) 88%,var(--accent-2) 12%)) !important;
+}
+
+[data-layout-preview="hazardrim"] .layout-style-preview-card{
+  clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
+  border:3px solid var(--accent) !important;
+  border-radius:0 !important;
+  background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--accent) 84%,transparent) 0 8px,color-mix(in srgb,var(--card) 78%,black) 8px 16px),linear-gradient(145deg,var(--card),var(--card-2)) !important;
+}
+
+[data-layout-texture-preview] .layout-style-preview-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:var(--layout-texture-preview-background,none);
+  background-size:42px 42px,42px 42px,100% 100%,100% 100%;
+  opacity:var(--layout-texture-preview-opacity,.24);
+  mix-blend-mode:var(--layout-texture-preview-blend,screen);
+}
+
+[data-layout-texture-preview="carbonweave"] .layout-style-preview-card{
+  --layout-texture-preview-background:repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 1px,transparent 1px 7px),repeating-linear-gradient(135deg,rgba(255,255,255,.08) 0 1px,transparent 1px 7px);
+  --layout-texture-preview-opacity:.18;
+}
+
+[data-layout-texture-preview="circuitplate"] .layout-style-preview-card{
+  --layout-texture-preview-background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 44%,transparent) 1px,transparent 1px),linear-gradient(0deg,color-mix(in srgb,var(--accent-2) 30%,transparent) 1px,transparent 1px),radial-gradient(circle at 18% 28%,color-mix(in srgb,var(--accent) 64%,transparent) 0 2px,transparent 3px),radial-gradient(circle at 74% 62%,color-mix(in srgb,var(--accent-2) 58%,transparent) 0 2px,transparent 3px);
+  --layout-texture-preview-opacity:.2;
+}
+
+[data-layout-texture-preview="topocontour"] .layout-style-preview-card{
+  --layout-texture-preview-background:radial-gradient(ellipse at 22% 22%,transparent 0 19px,color-mix(in srgb,var(--accent) 44%,transparent) 20px 21px,transparent 22px 36px,color-mix(in srgb,var(--accent) 32%,transparent) 37px 38px,transparent 39px),radial-gradient(ellipse at 78% 72%,transparent 0 22px,color-mix(in srgb,var(--accent-2) 36%,transparent) 23px 24px,transparent 25px 43px,color-mix(in srgb,var(--accent-2) 28%,transparent) 44px 45px,transparent 46px);
+  --layout-texture-preview-opacity:.22;
+}
+
+[data-layout-texture-preview="frostfracture"] .layout-style-preview-card{
+  --layout-texture-preview-background:linear-gradient(126deg,transparent 0 48%,rgba(210,245,255,.34) 49% 50%,transparent 51%),linear-gradient(32deg,transparent 0 57%,rgba(210,245,255,.22) 58% 59%,transparent 60%),linear-gradient(164deg,transparent 0 38%,rgba(210,245,255,.26) 39% 40%,transparent 41%);
+  --layout-texture-preview-opacity:.26;
+}
+
+[data-layout-texture-preview="blueprintgrid"] .layout-style-preview-card{
+  --layout-texture-preview-background:linear-gradient(rgba(96,165,250,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,.18) 1px,transparent 1px),linear-gradient(rgba(96,165,250,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,.08) 1px,transparent 1px);
+  --layout-texture-preview-opacity:.28;
+}
+
+[data-layout-texture-preview="brushedplate"] .layout-style-preview-card{
+  --layout-texture-preview-background:repeating-linear-gradient(90deg,rgba(255,255,255,.13) 0 1px,transparent 1px 5px),linear-gradient(180deg,rgba(255,255,255,.12),transparent 45%,rgba(0,0,0,.18));
+  --layout-texture-preview-blend:overlay;
+  --layout-texture-preview-opacity:.18;
+}
+
+[data-layout-texture-preview="hexarmor"] .layout-style-preview-card{
+  --layout-texture-preview-background:radial-gradient(circle at 50% 50%,transparent 0 12px,color-mix(in srgb,var(--accent) 35%,transparent) 13px 14px,transparent 15px) 0 0/44px 38px,radial-gradient(circle at 50% 50%,transparent 0 12px,color-mix(in srgb,var(--accent-2) 24%,transparent) 13px 14px,transparent 15px) 22px 19px/44px 38px;
+  --layout-texture-preview-opacity:.22;
+}
+
+[data-layout-texture-preview="chainmesh"] .layout-style-preview-card{
+  --layout-texture-preview-background:radial-gradient(ellipse at 50% 50%,transparent 0 7px,rgba(255,255,255,.22) 8px 9px,transparent 10px) 0 0/24px 14px,radial-gradient(ellipse at 50% 50%,transparent 0 7px,rgba(255,255,255,.14) 8px 9px,transparent 10px) 12px 7px/24px 14px;
+  --layout-texture-preview-opacity:.2;
+}
+
+[data-layout-texture-preview="thermalvision"] .layout-style-preview-card{
+  --layout-texture-preview-background:radial-gradient(circle at 28% 38%,rgba(34,211,238,.42),transparent 28%),radial-gradient(circle at 72% 58%,rgba(249,115,22,.34),transparent 32%),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);
+  --layout-texture-preview-opacity:.22;
+}
+
+[data-layout-texture-preview="wovencable"] .layout-style-preview-card{
+  --layout-texture-preview-background:repeating-linear-gradient(28deg,rgba(255,255,255,.1) 0 4px,transparent 4px 18px),repeating-linear-gradient(152deg,rgba(255,255,255,.08) 0 4px,transparent 4px 18px);
+  --layout-texture-preview-opacity:.19;
+}
+
+[data-layout-texture-preview="rustpatina"] .layout-style-preview-card{
+  --layout-texture-preview-background:radial-gradient(circle at 20% 28%,rgba(249,115,22,.34),transparent 26%),radial-gradient(circle at 72% 68%,rgba(20,184,166,.22),transparent 30%),radial-gradient(circle at 44% 72%,rgba(180,83,9,.28),transparent 24%),repeating-linear-gradient(7deg,rgba(255,255,255,.06) 0 1px,transparent 1px 8px);
+  --layout-texture-preview-blend:overlay;
+  --layout-texture-preview-opacity:.28;
+}
+
+[data-layout-texture-preview="frostedglass"] .layout-style-preview-card{
+  --layout-texture-preview-background:linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.05) 42%,rgba(255,255,255,.18)),radial-gradient(circle at 22% 18%,rgba(255,255,255,.22),transparent 34%);
+  --layout-texture-preview-opacity:.24;
 }
 
 body[data-layout-font-active="true"] :is(
@@ -621,3 +1218,4 @@ body[data-layout-font-active="true"] :is(
     transition:none !important;
   }
 }
+

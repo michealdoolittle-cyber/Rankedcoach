@@ -31,8 +31,8 @@ assert.match(html, /id="lensModalStatsTitle">What Moved This Score<\/h3>[\s\S]*i
 assert.match(app, /weightingTitle\.textContent = "Why This Score Changed"/);
 assert.match(app, /statsTitle\.textContent = "What Moved This Score"/);
 
-assert.doesNotMatch(app, /value: "scopevignette"/);
-assert.doesNotMatch(layoutCss, /scopevignette/);
+assert.match(app, /value: "scopevignette"/);
+assert.match(layoutCss, /scopevignette/);
 assert.match(app, /available: Boolean\(weeklyMapLossStreak\)/);
 assert.match(app, /gamesUsed: weeklyMapLossStreak/);
 assert.match(app, /COACHING_COPY_STRUCTURAL_KEYS/);

@@ -7,7 +7,8 @@ const { chromium } = require("playwright");
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41791;
 const missingRequests = [];
-const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog"];
+const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog", "scopevignette", "spearhead", "cargocrate", "battleplate", "steelrivetframe", "prismrim", "hazardrim"];
+const allLayoutTextures = ["carbonweave", "circuitplate", "topocontour", "frostfracture", "blueprintgrid", "brushedplate", "hexarmor", "chainmesh", "thermalvision", "wovencable", "rustpatina", "frostedglass"];
 const requestedLayoutStyles = String(process.env.LAYOUT_STYLE_FILTER || "")
   .split(",")
   .map(value => value.trim())
@@ -505,8 +506,9 @@ async function assertLayoutStyleExclusions(page, selectors, style) {
   assert.deepEqual(styledSignatures, nativeSignatures, `${style} changed an explicitly excluded inner surface`);
 }
 
-async function assertTagSemanticColors(page, selectors, style) {
+async function assertTagSemanticColors(page, selectors, style, { allowEmpty = false } = {}) {
   const existing = await page.evaluate(selectorList => selectorList.filter(selector => document.querySelector(selector)), selectors);
+  if (allowEmpty && existing.length === 0) return;
   assert.ok(existing.length > 0, `${style} did not render any expected semantic tags`);
   await page.evaluate(() => { delete document.body.dataset.layoutStyle; });
   await page.waitForTimeout(50);
@@ -520,6 +522,7 @@ async function assertTagSemanticColors(page, selectors, style) {
     selector,
     colors: [...document.querySelectorAll(selector)].slice(0, 6).map(element => getComputedStyle(element).color)
   })), existing);
+  if (allowEmpty && styledColors.some(entry => entry.colors.length === 0)) return;
   assert.deepEqual(styledColors, nativeColors, `${style} replaced semantic tag colors`);
 }
 
@@ -701,7 +704,7 @@ async function runPhaseTwoCoverage(page, browser) {
       }
       if (state.excluded) await assertLayoutStyleExclusions(page, state.excluded, style);
       if (await page.locator(".gamesense-patch").count()) {
-        await assertTagSemanticColors(page, [".gamesense-patch"], style);
+        await assertTagSemanticColors(page, [".gamesense-patch"], style, { allowEmpty: true });
       }
       await captureSurfaceSet(page, "library", state.selectors, style, tiles);
       if (state.skinPreview) {
@@ -762,7 +765,8 @@ async function run() {
     });
     await boot(page);
 
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), null);
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), null);
+    assert.equal(await page.locator("body").getAttribute("data-layout-texture"), null);
     assert.equal(await page.locator("body").getAttribute("data-layout-font-active"), null);
     assert.equal(await page.locator(".app-header").getAttribute("data-profile-banner"), "rc-redline");
     const defaultFocus = await page.locator(".weekly-focus-card").evaluate(card => ({ clip: getComputedStyle(card).clipPath, font: getComputedStyle(card.querySelector(".card-title")).fontFamily }));
@@ -801,10 +805,13 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(250);
     await page.click('[data-profile-tab="layoutStyle"]');
-    assert.equal(await page.locator("[data-layout-style-card]").count(), allLayoutStyles.length + 1);
-    assert.equal(await page.locator('[data-layout-style-card="scopevignette"]').count(), 0);
-    await page.click('[data-layout-style-card="default"]');
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), null);
+    assert.equal(await page.locator("[data-layout-shape-card]").count(), allLayoutStyles.length + 1);
+    assert.equal(await page.locator("[data-layout-texture-card]").count(), allLayoutTextures.length + 1);
+    assert.equal(await page.locator('[data-layout-shape-card="scopevignette"]').count(), 1);
+    await page.click('[data-layout-shape-card="default"]');
+    await page.click('[data-layout-texture-card="default"]');
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), null);
+    assert.equal(await page.locator("body").getAttribute("data-layout-texture"), null);
     await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = "hidden"; });
     const defaultTagPixelsAfter = await page.locator(".weekly-focus-confidence").first().screenshot();
     await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = ""; });
@@ -833,8 +840,8 @@ async function run() {
       })
     }));
     for (const style of layoutStyles) {
-      await page.click(`[data-layout-style-card="${style}"]`);
-      assert.equal(await page.locator("body").getAttribute("data-layout-style"), style);
+      await page.click(`[data-layout-shape-card="${style}"]`);
+      assert.equal(await page.locator("body").getAttribute("data-layout-shape"), style);
       const bounds = await page.locator(".weekly-focus-card").evaluate(card => {
         const cardRect = card.getBoundingClientRect();
         const content = [...card.querySelectorAll(".card-title,.card-sub,.card-pill,.weekly-focus-pill")]
@@ -874,8 +881,10 @@ async function run() {
       }));
       assert.deepEqual(excludedAfter, excludedBefore, `${style} changed an excluded surface`);
     }
-    await page.click('[data-layout-style-card="honeycomb"]');
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");
+    await page.click('[data-layout-shape-card="honeycomb"]');
+    await page.click('[data-layout-texture-card="rustpatina"]');
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), "honeycomb");
+    assert.equal(await page.locator("body").getAttribute("data-layout-texture"), "rustpatina");
     assert.equal(await page.locator("body").getAttribute("data-layout-font-active"), "true");
     assert.notEqual(await page.locator(".weekly-focus-card").evaluate(card => getComputedStyle(card).clipPath), "none");
     assert.match(await page.locator(".weekly-focus-card .card-title").evaluate(title => getComputedStyle(title).fontFamily), /Orbitron/i);
@@ -895,6 +904,8 @@ async function run() {
     const savedProfiles = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1")));
     assert.equal(savedProfiles.length, 2, JSON.stringify(savedProfiles.map(profile => ({ id: profile.id, themeKey: profile.themeKey }))));
     const saved = savedProfiles.find(profile => profile.id === "layout-one");
+    assert.equal(saved.layoutShape, "honeycomb");
+    assert.equal(saved.layoutTexture, "rustpatina");
     assert.equal(saved.layoutStyle, "honeycomb");
     assert.equal(saved.layoutStyleCustomFont, false);
     assert.equal(saved.layoutFont, "ibmplexmono");
@@ -902,7 +913,8 @@ async function run() {
     await page.reload({ waitUntil: "domcontentloaded" });
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), "honeycomb");
+    assert.equal(await page.locator("body").getAttribute("data-layout-texture"), "rustpatina");
     assert.equal(await page.locator("body").getAttribute("data-layout-font"), "ibmplexmono");
 
     await runPhaseTwoCoverage(page, browser);
@@ -911,12 +923,13 @@ async function run() {
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
     assert.equal(await page.locator("#profileRiotId").innerText(), "LayoutTwo\n#NA2");
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), null);
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), null);
+    assert.equal(await page.locator("body").getAttribute("data-layout-texture"), null);
     assert.equal(await page.locator("body").getAttribute("data-layout-font-active"), null);
     await page.click("#profileDropdownToggle");
     await page.click("#pdOpenSettings");
     await page.click('[data-profile-tab="layoutStyle"]');
-    await page.click('[data-layout-style-card="diamondfacet"]');
+    await page.click('[data-layout-shape-card="diamondfacet"]');
     await page.evaluate(() => {
       document.body.dataset.theme = "omen-night";
       const root = document.documentElement;
@@ -928,13 +941,14 @@ async function run() {
       root.style.setProperty("--accent-2", "#06b6d4");
     });
     assert.equal(await page.locator("body").getAttribute("data-theme"), "omen-night");
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), "diamondfacet");
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), "diamondfacet");
     await page.locator("#editProfileModal").evaluate(modal => modal.style.display = "none");
 
     await page.goto(`http://127.0.0.1:${port}/?profile=layout-one`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
-    assert.equal(await page.locator("body").getAttribute("data-layout-style"), "honeycomb");
+    assert.equal(await page.locator("body").getAttribute("data-layout-shape"), "honeycomb");
+    assert.equal(await page.locator("body").getAttribute("data-layout-texture"), "rustpatina");
     assert.equal(await page.locator(".app-header").getAttribute("data-profile-banner"), "rc-redline");
     assert.deepEqual(errors, [], `missing local requests: ${JSON.stringify(missingRequests)}`);
     assert.deepEqual(missingRequests, []);

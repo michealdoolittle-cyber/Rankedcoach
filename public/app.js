@@ -13318,7 +13318,9 @@ function createGuestProfileRecord() {
     manualEntryMode: false,
     themeKey: getActiveProfile?.()?.themeKey || "default",
     frameTheme: getActiveProfile?.()?.frameTheme || "default",
-    layoutStyle: normalizeProfileLayoutStyle(getActiveProfile?.()?.layoutStyle),
+    layoutShape: normalizeProfileLayoutShape(getActiveProfile?.()?.layoutShape ?? getActiveProfile?.()?.layoutStyle),
+    layoutTexture: normalizeProfileLayoutTexture(getActiveProfile?.()?.layoutTexture),
+    layoutStyle: normalizeProfileLayoutShape(getActiveProfile?.()?.layoutShape ?? getActiveProfile?.()?.layoutStyle),
     layoutStyleCustomFont: getActiveProfile?.()?.layoutStyleCustomFont !== false,
     layoutFont: normalizeProfileLayoutFont(getActiveProfile?.()?.layoutFont),
     avatarAgent: getDefaultProfileAvatarAgent?.() || "jett",
@@ -37119,7 +37121,7 @@ const themeBuilderAutoFitState = {
 };
 
 function isLayoutStyleAutoFitActive() {
-  return Boolean(document.body?.dataset?.layoutStyle);
+  return Boolean(document.body?.dataset?.layoutShape || document.body?.dataset?.layoutStyle);
 }
 
 function shouldRunThemeBuilderAutoFitText() {
@@ -37358,8 +37360,8 @@ function runThemeBuilderAutoFitText() {
   });
 }
 
-function syncLayoutStyleAutoFitText(layoutStyle = "default") {
-  if (normalizeProfileLayoutStyle(layoutStyle) === "default") {
+function syncLayoutStyleAutoFitText(layoutShape = "default") {
+  if (normalizeProfileLayoutShape(layoutShape) === "default") {
     if (themeBuilderAutoFitState.raf) {
       cancelAnimationFrame(themeBuilderAutoFitState.raf);
       themeBuilderAutoFitState.raf = 0;
@@ -40092,7 +40094,8 @@ function bindEvents(){
 
   [
     "editProfileTheme",
-    "editProfileLayoutStyle",
+    "editProfileLayoutShape",
+    "editProfileLayoutTexture",
     "editProfileLayoutFont",
     "editProfileAvatarAgent",
     "editProfileBorderColor",
@@ -43166,7 +43169,7 @@ const PROFILE_BORDER_STYLES = [
   { value: "vanguard", label: "Vanguard", note: "Heavy launch frame" }
 ];
 
-const PROFILE_LAYOUT_STYLES = [
+const PROFILE_LAYOUT_SHAPES = [
   { value: "default", label: "Default", note: "RankedCoach standard cards", font: "default" },
   { value: "honeycomb", label: "Honeycomb Panel", note: "Wide tactical hex cuts", font: "orbitron" },
   { value: "chevronscan", label: "Chevron Scan", note: "Directional scan markers", font: "ibmplexmono" },
@@ -43176,8 +43179,33 @@ const PROFILE_LAYOUT_STYLES = [
   { value: "bladewedge", label: "Blade Wedge", note: "Fast angled silhouette", font: "orbitron" },
   { value: "ribbonbanner", label: "Ribbon Banner", note: "Priority corner ribbon", font: "silkscreen" },
   { value: "monolithslab", label: "Monolith Slab", note: "Heavy offset block", font: "ibmplexmono" },
-  { value: "pixeldialog", label: "Pixel Dialogue", note: "Retro dialogue frame", font: "pressstart2p" }
+  { value: "pixeldialog", label: "Pixel Dialogue", note: "Retro dialogue frame", font: "pressstart2p" },
+  { value: "scopevignette", label: "Scope Vignette", note: "Focused lens edge", font: "ibmplexmono" },
+  { value: "spearhead", label: "Spearhead", note: "Single-point arrow silhouette", font: "orbitron" },
+  { value: "cargocrate", label: "Cargo Crate", note: "Octagonal riveted frame", font: "ibmplexmono" },
+  { value: "battleplate", label: "Battle-Worn Plate", note: "Chipped tactical armor", font: "silkscreen" },
+  { value: "steelrivetframe", label: "Steel Rivet Frame", note: "Metal rim with rivets", font: "ibmplexmono" },
+  { value: "prismrim", label: "Prism Rim", note: "Crystalline light rim", font: "orbitron" },
+  { value: "hazardrim", label: "Hazard Rim", note: "Striped warning frame", font: "silkscreen" }
 ];
+
+const PROFILE_LAYOUT_TEXTURES = [
+  { value: "default", label: "Default", note: "Flat card surface" },
+  { value: "carbonweave", label: "Carbon Weave", note: "Fine composite weave" },
+  { value: "circuitplate", label: "Circuit Plate", note: "Low-profile traces" },
+  { value: "topocontour", label: "Topo Contour", note: "Map-like elevation lines" },
+  { value: "frostfracture", label: "Frost Fracture", note: "Cold cracked glass" },
+  { value: "blueprintgrid", label: "Blueprint Grid", note: "Technical plan grid" },
+  { value: "brushedplate", label: "Brushed Plate", note: "Subtle metal grain" },
+  { value: "hexarmor", label: "Hex Armor", note: "Armor cell pattern" },
+  { value: "chainmesh", label: "Chain Mesh", note: "Interlocked wire mesh" },
+  { value: "thermalvision", label: "Thermal Vision", note: "Heat-map scan surface" },
+  { value: "wovencable", label: "Woven Cable", note: "Braided cable strands" },
+  { value: "rustpatina", label: "Rust Patina", note: "Weathered oxidized plate" },
+  { value: "frostedglass", label: "Frosted Glass", note: "Soft translucent grain" }
+];
+
+const PROFILE_LAYOUT_STYLES = PROFILE_LAYOUT_SHAPES;
 
 const PROFILE_LAYOUT_FONTS = [
   { value: "default", label: "App Default", family: "" },
@@ -43344,7 +43372,9 @@ function normalizeProfileRecord(profile = {}) {
     frameTheme: profile.frameTheme || profile.themeKey || "default",
     customAccent: normalizeThemeAccentColor(profile.customAccent || ""),
     freeThemeMotion: normalizeFreeThemeMotionMode(profile.freeThemeMotion),
-    layoutStyle: normalizeProfileLayoutStyle(profile.layoutStyle),
+    layoutShape: normalizeProfileLayoutShape(profile.layoutShape ?? profile.layoutStyle),
+    layoutTexture: normalizeProfileLayoutTexture(profile.layoutTexture),
+    layoutStyle: normalizeProfileLayoutShape(profile.layoutShape ?? profile.layoutStyle),
     layoutStyleCustomFont: profile.layoutStyleCustomFont !== false,
     layoutFont: normalizeProfileLayoutFont(profile.layoutFont),
     avatarAgent,
@@ -43395,6 +43425,8 @@ function loadProfiles(){
       frameTheme: "default",
       customAccent: "",
       freeThemeMotion: "static",
+      layoutShape: "default",
+      layoutTexture: "default",
       layoutStyle: "default",
       layoutStyleCustomFont: true,
       layoutFont: "default",
@@ -43460,7 +43492,9 @@ function createFallbackProfileAfterDelete() {
     frameTheme: getActiveProfile()?.frameTheme || getActiveProfile()?.themeKey || "default",
     customAccent: getActiveProfile()?.customAccent || "",
     freeThemeMotion: normalizeFreeThemeMotionMode(getActiveProfile()?.freeThemeMotion),
-    layoutStyle: normalizeProfileLayoutStyle(getActiveProfile()?.layoutStyle),
+    layoutShape: normalizeProfileLayoutShape(getActiveProfile()?.layoutShape ?? getActiveProfile()?.layoutStyle),
+    layoutTexture: normalizeProfileLayoutTexture(getActiveProfile()?.layoutTexture),
+    layoutStyle: normalizeProfileLayoutShape(getActiveProfile()?.layoutShape ?? getActiveProfile()?.layoutStyle),
     layoutStyleCustomFont: getActiveProfile()?.layoutStyleCustomFont !== false,
     layoutFont: normalizeProfileLayoutFont(getActiveProfile()?.layoutFont),
     avatarAgent: getDefaultProfileAvatarAgent(),
@@ -43626,8 +43660,14 @@ function updateProfile(id, data){
     profile.freeThemeMotion = normalizeFreeThemeMotionMode(data.freeThemeMotion);
   }
 
-  if (data.layoutStyle != null) {
-    profile.layoutStyle = normalizeProfileLayoutStyle(data.layoutStyle);
+  if (data.layoutShape != null || data.layoutStyle != null) {
+    const nextLayoutShape = normalizeProfileLayoutShape(data.layoutShape ?? data.layoutStyle);
+    profile.layoutShape = nextLayoutShape;
+    profile.layoutStyle = nextLayoutShape;
+  }
+
+  if (data.layoutTexture != null) {
+    profile.layoutTexture = normalizeProfileLayoutTexture(data.layoutTexture);
   }
 
   if (data.layoutStyleCustomFont != null) {
@@ -43833,6 +43873,8 @@ async function submitProfileAddForm(event) {
     frameTheme: "default",
     customAccent: "",
     freeThemeMotion: "static",
+    layoutShape: "default",
+    layoutTexture: "default",
     layoutStyle: "default",
     layoutStyleCustomFont: true,
     layoutFont: "default",
@@ -44148,12 +44190,28 @@ function normalizeProfileBorderStyle(borderStyle = "standard") {
   return getProfileBorderStyle(borderStyle).value;
 }
 
+function getProfileLayoutShape(layoutShape = "default") {
+  return PROFILE_LAYOUT_SHAPES.find(shape => shape.value === String(layoutShape || "default")) || PROFILE_LAYOUT_SHAPES[0];
+}
+
+function normalizeProfileLayoutShape(layoutShape = "default") {
+  return getProfileLayoutShape(layoutShape).value;
+}
+
+function getProfileLayoutTexture(layoutTexture = "default") {
+  return PROFILE_LAYOUT_TEXTURES.find(texture => texture.value === String(layoutTexture || "default")) || PROFILE_LAYOUT_TEXTURES[0];
+}
+
+function normalizeProfileLayoutTexture(layoutTexture = "default") {
+  return getProfileLayoutTexture(layoutTexture).value;
+}
+
 function getProfileLayoutStyle(layoutStyle = "default") {
-  return PROFILE_LAYOUT_STYLES.find(style => style.value === String(layoutStyle || "default")) || PROFILE_LAYOUT_STYLES[0];
+  return getProfileLayoutShape(layoutStyle);
 }
 
 function normalizeProfileLayoutStyle(layoutStyle = "default") {
-  return getProfileLayoutStyle(layoutStyle).value;
+  return normalizeProfileLayoutShape(layoutStyle);
 }
 
 function getProfileLayoutFont(layoutFont = "default") {
@@ -44167,9 +44225,9 @@ function normalizeProfileLayoutFont(layoutFont = "default") {
 function getResolvedProfileLayoutFont(profile = getActiveProfile()) {
   const globalFont = getProfileLayoutFont(profile?.layoutFont);
   if (globalFont.value !== "default") return globalFont;
-  const layoutStyle = getProfileLayoutStyle(profile?.layoutStyle);
-  if (layoutStyle.value !== "default" && profile?.layoutStyleCustomFont !== false) {
-    return getProfileLayoutFont(layoutStyle.font);
+  const layoutShape = getProfileLayoutShape(profile?.layoutShape ?? profile?.layoutStyle);
+  if (layoutShape.value !== "default" && profile?.layoutStyleCustomFont !== false) {
+    return getProfileLayoutFont(layoutShape.font);
   }
   return PROFILE_LAYOUT_FONTS[0];
 }
@@ -44598,20 +44656,29 @@ function getProfileLayoutStyleFontValue(profile = getActiveProfile()) {
   return profile?.layoutStyleCustomFont !== false;
 }
 
-function renderLayoutStyleGallery(selectedLayoutStyle = "default") {
-  const gallery = document.getElementById("editProfileLayoutStyleGallery");
-  const layoutSelect = document.getElementById("editProfileLayoutStyle");
+function renderLayoutOptionGallery({
+  galleryId = "",
+  selectId = "",
+  items = [],
+  selectedValue = "default",
+  normalize = (value) => value || "default",
+  previewAttribute = "data-layout-preview",
+  cardAttribute = "data-layout-style-card",
+  cardClass = ""
+} = {}) {
+  const gallery = document.getElementById(galleryId);
+  const layoutSelect = document.getElementById(selectId);
   if (!gallery) return;
 
   const profile = getActiveProfile();
   const themeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
   const colors = getThemePreset(themeKey)?.colors || {};
-  const activeLayoutStyle = normalizeProfileLayoutStyle(selectedLayoutStyle);
-  gallery.innerHTML = PROFILE_LAYOUT_STYLES.map((style) => {
-    const isActive = style.value === activeLayoutStyle;
+  const activeValue = normalize(selectedValue);
+  gallery.innerHTML = items.map((style) => {
+    const isActive = style.value === activeValue;
     return `
-      <button type="button" class="layout-style-card ${isActive ? "is-active" : ""}" data-layout-style-card="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
-        <span class="layout-style-preview" data-layout-preview="${escapeHtml(style.value)}" style="--card:${colors.card || "#0b1220"};--card-2:${colors.card2 || "#0f172a"};--text:${colors.text || "#f8fafc"};--muted:${colors.muted || "#94a3b8"};--accent:${colors.accent || "#ff4655"};--accent-2:${colors.accent2 || "#f97316"};">
+      <button type="button" class="layout-style-card ${cardClass} ${isActive ? "is-active" : ""}" ${cardAttribute}="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
+        <span class="layout-style-preview" ${previewAttribute}="${escapeHtml(style.value)}" style="--card:${colors.card || "#0b1220"};--card-2:${colors.card2 || "#0f172a"};--text:${colors.text || "#f8fafc"};--muted:${colors.muted || "#94a3b8"};--accent:${colors.accent || "#ff4655"};--accent-2:${colors.accent2 || "#f97316"};">
           <span class="layout-style-preview-card">
             <span class="layout-style-preview-kicker">Coaching read</span>
             <strong>Round Impact</strong>
@@ -44624,15 +44691,45 @@ function renderLayoutStyleGallery(selectedLayoutStyle = "default") {
     `;
   }).join("");
 
-  gallery.querySelectorAll("[data-layout-style-card]").forEach((button) => {
+  gallery.querySelectorAll(`[${cardAttribute}]`).forEach((button) => {
     button.addEventListener("click", () => {
-      const nextLayoutStyle = normalizeProfileLayoutStyle(button.dataset.layoutStyleCard);
-      if (layoutSelect) layoutSelect.value = nextLayoutStyle;
-      if (nextLayoutStyle !== activeLayoutStyle) setProfileLayoutStyleFontToggle(true);
-      renderLayoutStyleGallery(nextLayoutStyle);
+      const nextValue = normalize(button.getAttribute(cardAttribute) || "default");
+      if (layoutSelect) layoutSelect.value = nextValue;
+      if (cardAttribute === "data-layout-shape-card" && nextValue !== activeValue) setProfileLayoutStyleFontToggle(true);
+      renderLayoutStyleGalleries();
       previewEditProfileVisuals();
     });
   });
+}
+
+function renderLayoutStyleGalleries(
+  selectedLayoutShape = document.getElementById("editProfileLayoutShape")?.value || getActiveProfile()?.layoutShape || getActiveProfile()?.layoutStyle || "default",
+  selectedLayoutTexture = document.getElementById("editProfileLayoutTexture")?.value || getActiveProfile()?.layoutTexture || "default"
+) {
+  renderLayoutOptionGallery({
+    galleryId: "editProfileLayoutShapeGallery",
+    selectId: "editProfileLayoutShape",
+    items: PROFILE_LAYOUT_SHAPES,
+    selectedValue: selectedLayoutShape,
+    normalize: normalizeProfileLayoutShape,
+    previewAttribute: "data-layout-preview",
+    cardAttribute: "data-layout-shape-card",
+    cardClass: "layout-shape-card"
+  });
+  renderLayoutOptionGallery({
+    galleryId: "editProfileLayoutTextureGallery",
+    selectId: "editProfileLayoutTexture",
+    items: PROFILE_LAYOUT_TEXTURES,
+    selectedValue: selectedLayoutTexture,
+    normalize: normalizeProfileLayoutTexture,
+    previewAttribute: "data-layout-texture-preview",
+    cardAttribute: "data-layout-texture-card",
+    cardClass: "layout-texture-card"
+  });
+}
+
+function renderLayoutStyleGallery(selectedLayoutStyle = "default") {
+  renderLayoutStyleGalleries(selectedLayoutStyle, document.getElementById("editProfileLayoutTexture")?.value || getActiveProfile()?.layoutTexture || "default");
 }
 
 function getProfileBorderRotateValue(profile = getActiveProfile()) {
@@ -44716,11 +44813,14 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const colors = theme?.colors || {};
   const customAccent = normalizeThemeAccentColor(profile?.customAccent || "");
   const freeThemeMotion = normalizeFreeThemeMotionMode(profile?.freeThemeMotion);
-  const layoutStyle = normalizeProfileLayoutStyle(profile?.layoutStyle);
+  const layoutShape = normalizeProfileLayoutShape(profile?.layoutShape ?? profile?.layoutStyle);
+  const layoutTexture = normalizeProfileLayoutTexture(profile?.layoutTexture);
+  const layoutStyle = layoutShape;
   const layoutFont = normalizeProfileLayoutFont(profile?.layoutFont);
   const resolvedLayoutFont = getResolvedProfileLayoutFont({
     ...profile,
-    layoutStyle,
+    layoutShape,
+    layoutStyle: layoutShape,
     layoutFont
   });
   const themeVisualMode = getThemeVisualMode(theme);
@@ -44841,8 +44941,11 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     body.classList.remove("theme-static", "theme-ambient-lite", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "theme-glint-sweep", "theme-shadow-drift", "theme-grid-drift", "theme-star-drift", "theme-water-flow", "theme-fog-drift", "theme-fractal-shift", "theme-solar-flow", "theme-prism-turn", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
     body.dataset.theme = themeKey;
     body.dataset.themeMode = themeVisualMode;
-    if (layoutStyle === "default") delete body.dataset.layoutStyle;
-    else body.dataset.layoutStyle = layoutStyle;
+    delete body.dataset.layoutStyle;
+    if (layoutShape === "default") delete body.dataset.layoutShape;
+    else body.dataset.layoutShape = layoutShape;
+    if (layoutTexture === "default") delete body.dataset.layoutTexture;
+    else body.dataset.layoutTexture = layoutTexture;
     if (layoutFont === "default") delete body.dataset.layoutFont;
     else body.dataset.layoutFont = layoutFont;
     if (resolvedLayoutFont.value === "default") {
@@ -45696,7 +45799,8 @@ body[data-theme-mode="light"] :is(
 
 function populateEditProfileModal(profile = getActiveProfile()) {
   const themeSelect = document.getElementById("editProfileTheme");
-  const layoutStyleSelect = document.getElementById("editProfileLayoutStyle");
+  const layoutShapeSelect = document.getElementById("editProfileLayoutShape");
+  const layoutTextureSelect = document.getElementById("editProfileLayoutTexture");
   const layoutFontSelect = document.getElementById("editProfileLayoutFont");
   const avatarSelect = document.getElementById("editProfileAvatarAgent");
   const borderColorSelect = document.getElementById("editProfileBorderColor");
@@ -45712,9 +45816,15 @@ function populateEditProfileModal(profile = getActiveProfile()) {
       .join("");
   }
 
-  if (layoutStyleSelect) {
-    layoutStyleSelect.innerHTML = PROFILE_LAYOUT_STYLES
+  if (layoutShapeSelect) {
+    layoutShapeSelect.innerHTML = PROFILE_LAYOUT_SHAPES
       .map(style => `<option value="${style.value}">${style.label}</option>`)
+      .join("");
+  }
+
+  if (layoutTextureSelect) {
+    layoutTextureSelect.innerHTML = PROFILE_LAYOUT_TEXTURES
+      .map(texture => `<option value="${texture.value}">${texture.label}</option>`)
       .join("");
   }
 
@@ -45768,16 +45878,18 @@ function populateEditProfileModal(profile = getActiveProfile()) {
       : "Captured automatically on the first Riot sync of the day. This value is locked.";
   }
   const selectedThemeKey = getThemePreset(profile?.themeKey || profile?.frameTheme || "default").value;
-  const selectedLayoutStyle = normalizeProfileLayoutStyle(profile?.layoutStyle);
+  const selectedLayoutShape = normalizeProfileLayoutShape(profile?.layoutShape ?? profile?.layoutStyle);
+  const selectedLayoutTexture = normalizeProfileLayoutTexture(profile?.layoutTexture);
   const selectedLayoutFont = normalizeProfileLayoutFont(profile?.layoutFont);
   const selectedBorderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const selectedBorder = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const selectedBanner = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   if (themeSelect) themeSelect.value = selectedThemeKey;
-  if (layoutStyleSelect) layoutStyleSelect.value = selectedLayoutStyle;
+  if (layoutShapeSelect) layoutShapeSelect.value = selectedLayoutShape;
+  if (layoutTextureSelect) layoutTextureSelect.value = selectedLayoutTexture;
   if (layoutFontSelect) layoutFontSelect.value = selectedLayoutFont;
   setProfileLayoutStyleFontToggle(profile?.layoutStyleCustomFont !== false);
-  renderLayoutStyleGallery(selectedLayoutStyle);
+  renderLayoutStyleGalleries(selectedLayoutShape, selectedLayoutTexture);
   syncEditProfileCustomAccentInput(selectedThemeKey, profile?.customAccent || "");
   const freeThemeMotionEl = document.getElementById("editProfileFreeThemeMotion");
   if (freeThemeMotionEl) freeThemeMotionEl.value = normalizeFreeThemeMotionMode(profile?.freeThemeMotion);
@@ -45812,7 +45924,8 @@ let profileEditPanelRefreshTimer = 0;
 function refreshProfileEditTabPanel(tabKey = "theme") {
   const profile = getActiveProfile();
   const themeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
-  const layoutStyle = normalizeProfileLayoutStyle(document.getElementById("editProfileLayoutStyle")?.value || profile?.layoutStyle);
+  const layoutShape = normalizeProfileLayoutShape(document.getElementById("editProfileLayoutShape")?.value || profile?.layoutShape || profile?.layoutStyle);
+  const layoutTexture = normalizeProfileLayoutTexture(document.getElementById("editProfileLayoutTexture")?.value || profile?.layoutTexture);
   const avatarAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
   const borderColor = normalizeProfileBorderColor(document.getElementById("editProfileBorderColor")?.value || profile?.profileBorderColor || "theme");
   const borderStyle = normalizeProfileBorderStyle(document.getElementById("editProfileBorderStyle")?.value || profile?.profileBorder || "standard");
@@ -45823,7 +45936,7 @@ function refreshProfileEditTabPanel(tabKey = "theme") {
       renderThemeGallery(themeKey);
       break;
     case "layoutStyle":
-      renderLayoutStyleGallery(layoutStyle);
+      renderLayoutStyleGalleries(layoutShape, layoutTexture);
       break;
     case "icon":
       renderAvatarGallery(avatarAgent);
@@ -45902,7 +46015,8 @@ function saveEditProfileModal() {
   const editRiotIdEl = document.getElementById("editProfileRiotId");
   const editRegionEl = document.getElementById("editProfileRegion");
   const selectedTheme = getProfileEditSelection("#editProfileThemeGallery [data-theme-card].is-active", "data-theme-card", document.getElementById("editProfileTheme")?.value || profile.themeKey || "default");
-  const selectedLayoutStyle = getProfileEditSelection("#editProfileLayoutStyleGallery [data-layout-style-card].is-active", "data-layout-style-card", document.getElementById("editProfileLayoutStyle")?.value || profile.layoutStyle || "default");
+  const selectedLayoutShape = getProfileEditSelection("#editProfileLayoutShapeGallery [data-layout-shape-card].is-active", "data-layout-shape-card", document.getElementById("editProfileLayoutShape")?.value || profile.layoutShape || profile.layoutStyle || "default");
+  const selectedLayoutTexture = getProfileEditSelection("#editProfileLayoutTextureGallery [data-layout-texture-card].is-active", "data-layout-texture-card", document.getElementById("editProfileLayoutTexture")?.value || profile.layoutTexture || "default");
   const selectedLayoutFont = normalizeProfileLayoutFont(document.getElementById("editProfileLayoutFont")?.value || profile.layoutFont);
   const selectedAvatar = getProfileEditSelection("#editProfileAvatarGallery [data-avatar-card].is-active", "data-avatar-card", document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent);
   const selectedBorderColor = getProfileEditSelection("#editProfileBorderColorGallery [data-border-color-card].is-active", "data-border-color-card", document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
@@ -45918,7 +46032,8 @@ function saveEditProfileModal() {
     themeKey: selectedTheme,
     customAccent: selectedCustomAccent,
     freeThemeMotion: selectedFreeThemeMotion,
-    layoutStyle: normalizeProfileLayoutStyle(selectedLayoutStyle),
+    layoutShape: normalizeProfileLayoutShape(selectedLayoutShape),
+    layoutTexture: normalizeProfileLayoutTexture(selectedLayoutTexture),
     layoutStyleCustomFont: getProfileLayoutStyleFontValue(profile),
     layoutFont: selectedLayoutFont,
     avatarAgent: selectedAvatar,
@@ -45937,7 +46052,8 @@ function previewEditProfileVisuals() {
   const profile = getActiveProfile();
   if (!profile) return;
   const activeThemeKey = document.getElementById("editProfileTheme")?.value || profile.themeKey || "default";
-  const activeLayoutStyle = normalizeProfileLayoutStyle(document.getElementById("editProfileLayoutStyle")?.value || profile.layoutStyle);
+  const activeLayoutShape = normalizeProfileLayoutShape(document.getElementById("editProfileLayoutShape")?.value || profile.layoutShape || profile.layoutStyle);
+  const activeLayoutTexture = normalizeProfileLayoutTexture(document.getElementById("editProfileLayoutTexture")?.value || profile.layoutTexture);
   const activeLayoutFont = normalizeProfileLayoutFont(document.getElementById("editProfileLayoutFont")?.value || profile.layoutFont);
   if (document.getElementById("editProfileCustomAccent")?.dataset?.usesThemeAccent === "true") {
     syncEditProfileCustomAccentInput(activeThemeKey, "");
@@ -45950,7 +46066,7 @@ function previewEditProfileVisuals() {
   const activeCustomAccent = getEditProfileCustomAccentValue(profile);
   const activeFreeThemeMotion = normalizeFreeThemeMotionMode(document.getElementById("editProfileFreeThemeMotion")?.value || profile.freeThemeMotion);
   renderThemeGallery(activeThemeKey);
-  renderLayoutStyleGallery(activeLayoutStyle);
+  renderLayoutStyleGalleries(activeLayoutShape, activeLayoutTexture);
   renderAvatarGallery(activeAvatar);
   renderBorderColorGallery(activeBorderColor);
   renderBorderGallery(activeBorder);
@@ -45963,7 +46079,9 @@ function previewEditProfileVisuals() {
     avatarUrl: getDefaultProfileAvatarUrl(activeAvatar || profile.avatarAgent),
     customAccent: activeCustomAccent,
     freeThemeMotion: activeFreeThemeMotion,
-    layoutStyle: activeLayoutStyle,
+    layoutShape: activeLayoutShape,
+    layoutTexture: activeLayoutTexture,
+    layoutStyle: activeLayoutShape,
     layoutStyleCustomFont: getProfileLayoutStyleFontValue(profile),
     layoutFont: activeLayoutFont,
     profileBorderColor: activeBorderColor,

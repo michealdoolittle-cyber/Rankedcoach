@@ -64,7 +64,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
   <link rel="stylesheet" href="library/gamesense-library.css?v=20260717-coaching-language-29">
-  <link rel="stylesheet" href="layout-styles.css?v=20260717-coaching-language-29">
+  <link rel="stylesheet" href="layout-styles.css?v=20260717-layout-shape-texture-36">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -471,21 +471,27 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="layoutStyle">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Layout Style</div>
-              <div class="profile-edit-panel-copy">Shape coaching cards without changing charts, controls, dense stat grids, or the navigation bar.</div>
+              <div class="profile-edit-panel-copy">Combine one card shape with one surface texture. Fonts stay independent.</div>
             </div>
 
             <div class="profile-edit-grid layout-style-settings">
-              <select id="editProfileLayoutStyle" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
+              <select id="editProfileLayoutShape" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
+              <select id="editProfileLayoutTexture" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
 
               <div class="profile-edit-field profile-edit-field-full">
-                <span>Card Style Preview</span>
-                <div id="editProfileLayoutStyleGallery" class="layout-style-gallery"></div>
+                <span>Shapes</span>
+                <div id="editProfileLayoutShapeGallery" class="layout-style-gallery layout-shape-gallery"></div>
+              </div>
+
+              <div class="profile-edit-field profile-edit-field-full">
+                <span>Textures</span>
+                <div id="editProfileLayoutTextureGallery" class="layout-style-gallery layout-texture-gallery"></div>
               </div>
 
               <div class="layout-style-control-row profile-edit-field-full">
                 <div>
-                  <div class="layout-style-control-title">Use This Style's Font</div>
-                  <div class="layout-style-control-copy">Apply the selected layout's paired font to card titles only.</div>
+                  <div class="layout-style-control-title">Use This Shape's Font</div>
+                  <div class="layout-style-control-copy">Apply the selected shape's paired font to card titles only.</div>
                 </div>
                 <label class="auth-switch-control layout-style-font-switch" aria-label="Use the selected layout style font">
                   <input id="editProfileLayoutStyleFontToggle" type="checkbox" role="switch" checked>
@@ -2359,6 +2365,6 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-collections.js?v=20260717-skin-modal-mobile-27"></script>
   <script src="library/gamesense-library.js?v=20260717-map-attack-swords-30"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
-  <script type="module" src="app.js?v=20260717-theme-scenes-35"></script>
+  <script type="module" src="app.js?v=20260717-layout-shape-texture-36"></script>
 </body>
 </html>
