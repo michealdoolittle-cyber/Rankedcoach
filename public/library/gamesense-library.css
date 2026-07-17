@@ -672,6 +672,12 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-topic-collage{position:absolute;inset:0;z-index:0;display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;opacity:.52;pointer-events:none;}
 .gamesense-topic-collage::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.05),rgba(2,6,23,.32) 38%,rgba(2,6,23,.96));}
 .gamesense-topic-collage img{width:100%;height:100%;min-width:0;object-fit:cover;filter:saturate(.86) contrast(1.06);}
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;}
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img{height:100%;object-fit:cover;}
+.gamesense-topic-card[data-gamesense-topic="agents"] .gamesense-topic-collage{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:0;opacity:.64;background:linear-gradient(135deg,#17253a,#070d18);}
+.gamesense-topic-role-agent{position:relative;display:grid;grid-template-rows:36px minmax(0,1fr);align-items:end;justify-items:center;min-width:0;height:100%;padding:14px 4px 0;}
+.gamesense-topic-role-icon{width:30px !important;height:30px !important;object-fit:contain !important;filter:drop-shadow(0 4px 8px rgba(0,0,0,.55)) !important;}
+.gamesense-topic-agent-art{width:100% !important;height:100% !important;min-height:0;object-fit:contain !important;object-position:center bottom;filter:saturate(.9) contrast(1.08) drop-shadow(0 12px 16px rgba(0,0,0,.72)) !important;}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;gap:9px;padding:12px 16px 112px;opacity:.62;background:linear-gradient(135deg,#17253a,#070d18);}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{background:linear-gradient(180deg,rgba(2,6,23,.04),rgba(2,6,23,.26) 48%,rgba(2,6,23,.98));}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage img{width:100%;height:100%;min-height:0;object-fit:contain;filter:grayscale(.2) saturate(.86) contrast(1.06) drop-shadow(0 7px 7px rgba(0,0,0,.68));}
@@ -2269,9 +2275,10 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   position:relative;
   display:grid !important;
   grid-template-areas:"action" "title" "copy" !important;
-  grid-template-rows:auto minmax(0,1fr) auto !important;
+  grid-template-rows:minmax(26px,auto) minmax(84px,1fr) minmax(52px,auto) !important;
   align-items:center !important;
   justify-items:center !important;
+  gap:8px !important;
   min-height:clamp(220px,32vw,360px);
   overflow:hidden;
 }
@@ -2296,8 +2303,53 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 }
 
 .gamesense-topic-card .gamesense-topic-action{grid-area:action !important;align-self:start !important;}
-.gamesense-topic-card > strong{grid-area:title !important;align-self:center !important;}
-.gamesense-topic-card > small{grid-area:copy !important;align-self:end !important;}
+.gamesense-topic-card > strong{grid-area:title !important;align-self:center !important;display:flex !important;align-items:center !important;justify-content:center !important;}
+.gamesense-topic-card > small{grid-area:copy !important;align-self:end !important;display:flex !important;align-items:flex-end !important;justify-content:center !important;}
+
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:1fr;
+}
+
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.gamesense-topic-card[data-gamesense-topic="agents"] .gamesense-topic-collage{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-auto-rows:1fr;
+  align-items:stretch;
+  gap:0;
+  padding:0;
+}
+
+.gamesense-topic-role-agent{
+  display:grid;
+  grid-template-rows:34px minmax(0,1fr);
+  align-items:end;
+  justify-items:center;
+  min-width:0;
+  height:100%;
+  padding:12px 4px 0;
+}
+
+.gamesense-topic-role-icon{
+  width:28px !important;
+  height:28px !important;
+  object-fit:contain !important;
+  filter:drop-shadow(0 5px 8px rgba(0,0,0,.62)) !important;
+}
+
+.gamesense-topic-agent-art{
+  width:100% !important;
+  height:100% !important;
+  min-height:0;
+  object-fit:contain !important;
+  object-position:center bottom !important;
+  filter:saturate(.9) contrast(1.08) drop-shadow(0 12px 16px rgba(0,0,0,.72)) !important;
+}
 
 .gamesense-agent-entry-card{
   position:relative;
@@ -2368,6 +2420,40 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 
   html.is-mobile-layout .gamesense-agent-entry-card .gamesense-entry-copy strong{
     font-size:clamp(28px,9vw,42px) !important;
+  }
+
+  html.is-mobile-layout .gamesense-topic-card{
+    min-height:236px !important;
+    grid-template-rows:minmax(24px,auto) minmax(74px,1fr) minmax(58px,auto) !important;
+    gap:9px !important;
+  }
+
+  html.is-mobile-layout .gamesense-topic-card .gamesense-topic-collage{
+    inset:0 !important;
+    width:100% !important;
+    height:100% !important;
+  }
+
+  html.is-mobile-layout .gamesense-topic-card > strong{
+    font-size:clamp(18px,5.4vw,30px) !important;
+    line-height:.95 !important;
+  }
+
+  html.is-mobile-layout .gamesense-topic-card > small{
+    max-width:min(92%,380px);
+    min-height:0 !important;
+    font-size:clamp(11px,3.35vw,14px) !important;
+    line-height:1.16 !important;
+  }
+
+  html.is-mobile-layout .gamesense-topic-role-agent{
+    grid-template-rows:30px minmax(0,1fr);
+    padding:10px 2px 0;
+  }
+
+  html.is-mobile-layout .gamesense-topic-role-icon{
+    width:24px !important;
+    height:24px !important;
   }
 
   html.is-mobile-layout .gamesense-map-side-mark{

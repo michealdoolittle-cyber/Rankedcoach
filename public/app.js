@@ -51540,7 +51540,7 @@ function renderStatsRoleProgress() {
       </div>
       <div class="stats-role-pill-value">
         <span class="stats-role-pill-result">
-          <span class="stats-role-pill-percent">${role.matchesPlayed ? `${Math.round(role.currentWinRate)}%` : "No Data"}</span>
+          <span class="stats-role-pill-percent">${role.matchesPlayed ? `${Math.round(role.currentWinRate)}%` : "--"}</span>
           <span class="stats-role-pill-delta ${deltaClass}">${deltaText}</span>
         </span>
         <span class="stats-role-pill-divider" aria-hidden="true"></span>

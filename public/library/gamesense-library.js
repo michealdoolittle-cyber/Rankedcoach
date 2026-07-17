@@ -13,6 +13,12 @@
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
     weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." }
   };
+  const roleIconMap = Object.freeze({
+    controller: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/role_controller.png",
+    duelist: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/duelist_role.png",
+    initiator: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/initiator_role.png",
+    sentinel: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/sentinel_role.png"
+  });
   const agentUuids = Object.freeze({
     astra: "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
     breach: "5f8d3a7f-467b-97f3-062c-13acf203c006",
@@ -110,12 +116,35 @@
   }
 
   function getTopicCollageImages(topic = "") {
-    if (topic === "maps") return ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
-    if (topic === "agents") return ["/assets/library/agents/jett/portrait.png", "/assets/library/agents/omen/portrait.png", "/assets/library/agents/sova/portrait.png"];
+    if (topic === "maps") {
+      const mapImages = getMaps().map(map => map?.cardImage).filter(Boolean);
+      return mapImages.length ? mapImages : ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
+    }
     return getReference().weapons
       .flatMap(group => Array.isArray(group?.weapons) ? group.weapons : [])
       .map(weapon => weapon?.image)
       .filter(Boolean);
+  }
+
+  function getTopicCollageMarkup(topic = "") {
+    if (topic === "agents") {
+      const agents = getReference().agents || [];
+      const rolePicks = [
+        { role: "duelist", fallback: "jett" },
+        { role: "controller", fallback: "omen" },
+        { role: "initiator", fallback: "sova" },
+        { role: "sentinel", fallback: "chamber" }
+      ].map(({ role, fallback }) => {
+        const agent = agents.find(item => assetSlug(item?.role) === role) || agents.find(item => item?.id === fallback) || { id: fallback, label: fallback, portrait: `/assets/library/agents/${fallback}/portrait.png` };
+        return `
+          <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
+            <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="lazy">
+            <img class="gamesense-topic-agent-art" src="${escapeHtml(agent.portrait || getAgentFallbackIcon(agent.label || fallback))}" alt="" loading="lazy">
+          </span>`;
+      });
+      return rolePicks.join("");
+    }
+    return getTopicCollageImages(topic).map(src => `<img src="${escapeHtml(src)}" alt="" loading="lazy">`).join("");
   }
 
   function getCompAgentPickRate(map, agent = "") {
@@ -202,7 +231,7 @@
         <div class="gamesense-topic-grid">
           ${Object.entries(topicMeta).map(([key, meta], index) => `
             <button class="gamesense-topic-card" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
-              <span class="gamesense-topic-collage" aria-hidden="true">${getTopicCollageImages(key).map(src => `<img src="${escapeHtml(src)}" alt="" loading="lazy">`).join("")}</span>
+              <span class="gamesense-topic-collage" aria-hidden="true">${getTopicCollageMarkup(key)}</span>
               <strong>${escapeHtml(meta.label)}</strong>
               <small>${escapeHtml(meta.copy)}</small>
               <span class="gamesense-topic-action">Open dossier</span>
