@@ -644,17 +644,18 @@
             ${tierFilters.map(item => `<button type="button" data-gamesense-collection-filter="${escapeHtml(item.editionKey)}" aria-pressed="false">${item.editionIcon ? `<img class="gamesense-tier-icon" src="${escapeHtml(item.editionIcon)}" alt="" aria-hidden="true">` : ""}<span>${escapeHtml(item.edition)}</span></button>`).join("")}
           </div>
           <div class="gamesense-collection-grid">
-            ${collections.map(item => `<article class="gamesense-collection-card" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}">
-              <button class="gamesense-collection-art" type="button" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">
+            ${collections.map(item => `<button class="gamesense-collection-card" type="button" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">
+              <div class="gamesense-collection-art">
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
                 <span>Open interactive preview</span>
-              </button>
-              <button class="gamesense-collection-copy" type="button" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview details">
+              </div>
+              <span class="gamesense-collection-divider" aria-hidden="true"></span>
+              <div class="gamesense-collection-copy">
                 <span>${escapeHtml(item.weaponName)} skin</span>
                 <h4>${escapeHtml(item.name)}</h4>
                 <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${item.variants?.length || item.views?.length || 1} verified color ${(item.variants?.length || item.views?.length || 1) === 1 ? "variant" : "variants"}</b></div>
-              </button>
-            </article>`).join("")}
+              </div>
+            </button>`).join("")}
           </div>`}
       </section>`;
   }
@@ -942,7 +943,7 @@
                   const videoDetail = hasDirectVideo
                     ? "Color-specific animation supplied by Riot data used by val-skins."
                     : "Shared level animation; this color has no separate val-skins/Riot clip.";
-                  return `<button type="button" class="${index === 0 ? "active" : ""}${videoIndex === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="Variant ${roman}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}"${videoIndex >= 0 ? ` data-skin-preview-video-option="${videoIndex}" data-skin-preview-video-source="${escapeHtml(previewVideos[videoIndex].video)}" data-skin-preview-video-poster="${escapeHtml(variant.source || previewVideos[videoIndex].poster)}" data-skin-preview-video-label="${escapeHtml(videoLabel)}" data-skin-preview-video-detail="${escapeHtml(videoDetail)}" data-skin-preview-video-direct="${hasDirectVideo ? "true" : "false"}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" title="${escapeHtml(variant.label || `Variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span><span class="gamesense-skin-variant-index">${roman}</span></button>`;
+                  return `<button type="button" class="${index === 0 ? "active" : ""}${videoIndex === 0 ? " is-video-active" : ""}" data-skin-preview-view="${index}" data-skin-preview-source="${escapeHtml(variant.source)}" data-skin-view-label="Variant ${roman}" data-skin-preview-alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant.label || `variant ${index + 1}`)}"${videoIndex >= 0 ? ` data-skin-preview-video-option="${videoIndex}" data-skin-preview-video-source="${escapeHtml(previewVideos[videoIndex].video)}" data-skin-preview-video-poster="${escapeHtml(variant.source || previewVideos[videoIndex].poster)}" data-skin-preview-video-label="${escapeHtml(videoLabel)}" data-skin-preview-video-detail="${escapeHtml(videoDetail)}" data-skin-preview-video-direct="${hasDirectVideo ? "true" : "false"}"` : ""} aria-label="Show ${escapeHtml(variant.label || `variant ${index + 1}`)}" title="${escapeHtml(variant.label || `Variant ${index + 1}`)}" aria-pressed="${index === 0 ? "true" : "false"}"><span class="gamesense-skin-variant-thumb">${variant.swatch ? `<img class="gamesense-skin-variant-swatch" src="${escapeHtml(variant.swatch)}" alt="">` : ""}<img src="${escapeHtml(variant.source)}" alt=""></span></button>`;
                 }).join("")}
               </div></section>
             </div>

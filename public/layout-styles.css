@@ -358,6 +358,15 @@ body[data-layout-style] :is(
   padding-left:var(--layout-surface-safe-left) !important;
 }
 
+/* Collection entries own their internal image/copy split; outer safe-area
+   padding would make the two halves look like separate cards. */
+body[data-layout-style] #page-library .gamesense-collection-card{
+  --layout-surface-safe-top:0px;
+  --layout-surface-safe-right:0px;
+  --layout-surface-safe-bottom:0px;
+  --layout-surface-safe-left:0px;
+}
+
 body[data-layout-style] #page-stats :is(.stats-maps-card,.stats-agents-card,.stats-weapons-card) .stats-library-head{
   width:auto;
   max-width:100%;
