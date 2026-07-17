@@ -40092,6 +40092,13 @@ function bindEvents(){
     });
   });
 
+  document.querySelectorAll("#editProfileModal [data-layout-style-mobile-tab]").forEach((tab) => {
+    tab.addEventListener("click", (e) => {
+      e.preventDefault();
+      setLayoutStyleMobileSection(tab.dataset.layoutStyleMobileTab || "shapes");
+    });
+  });
+
   [
     "editProfileTheme",
     "editProfileLayoutShape",
@@ -44656,6 +44663,18 @@ function getProfileLayoutStyleFontValue(profile = getActiveProfile()) {
   return profile?.layoutStyleCustomFont !== false;
 }
 
+function setLayoutStyleMobileSection(section = "shapes") {
+  const nextSection = section === "textures" ? "textures" : "shapes";
+  document.querySelectorAll("[data-layout-style-mobile-tab]").forEach((tab) => {
+    const isActive = tab.dataset.layoutStyleMobileTab === nextSection;
+    tab.classList.toggle("is-active", isActive);
+    tab.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+  document.querySelectorAll("[data-layout-style-section]").forEach((panel) => {
+    panel.classList.toggle("is-mobile-hidden", panel.dataset.layoutStyleSection !== nextSection);
+  });
+}
+
 function renderLayoutOptionGallery({
   galleryId = "",
   selectId = "",
@@ -44673,12 +44692,17 @@ function renderLayoutOptionGallery({
   const profile = getActiveProfile();
   const themeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
   const colors = getThemePreset(themeKey)?.colors || {};
+  const customAccent = getEditProfileCustomAccentValue(profile);
+  const previewAccent = customAccent || colors.accent || "#ff4655";
+  const previewAccent2 = customAccent
+    ? blendHexColors(previewAccent, colors.accent2 || "#f97316", 0.42)
+    : (colors.accent2 || "#f97316");
   const activeValue = normalize(selectedValue);
   gallery.innerHTML = items.map((style) => {
     const isActive = style.value === activeValue;
     return `
       <button type="button" class="layout-style-card ${cardClass} ${isActive ? "is-active" : ""}" ${cardAttribute}="${escapeHtml(style.value)}" aria-pressed="${isActive ? "true" : "false"}">
-        <span class="layout-style-preview" ${previewAttribute}="${escapeHtml(style.value)}" style="--card:${colors.card || "#0b1220"};--card-2:${colors.card2 || "#0f172a"};--text:${colors.text || "#f8fafc"};--muted:${colors.muted || "#94a3b8"};--accent:${colors.accent || "#ff4655"};--accent-2:${colors.accent2 || "#f97316"};">
+        <span class="layout-style-preview" ${previewAttribute}="${escapeHtml(style.value)}" style="--card:${colors.card || "#0b1220"};--card-2:${colors.card2 || "#0f172a"};--text:${colors.text || "#f8fafc"};--muted:${colors.muted || "#94a3b8"};--accent:${previewAccent};--accent-2:${previewAccent2};">
           <span class="layout-style-preview-card">
             <span class="layout-style-preview-kicker">Coaching read</span>
             <strong>Round Impact</strong>
@@ -44706,6 +44730,10 @@ function renderLayoutStyleGalleries(
   selectedLayoutShape = document.getElementById("editProfileLayoutShape")?.value || getActiveProfile()?.layoutShape || getActiveProfile()?.layoutStyle || "default",
   selectedLayoutTexture = document.getElementById("editProfileLayoutTexture")?.value || getActiveProfile()?.layoutTexture || "default"
 ) {
+  const layoutShapeSelect = document.getElementById("editProfileLayoutShape");
+  const layoutTextureSelect = document.getElementById("editProfileLayoutTexture");
+  if (layoutShapeSelect) layoutShapeSelect.value = normalizeProfileLayoutShape(selectedLayoutShape);
+  if (layoutTextureSelect) layoutTextureSelect.value = normalizeProfileLayoutTexture(selectedLayoutTexture);
   renderLayoutOptionGallery({
     galleryId: "editProfileLayoutShapeGallery",
     selectId: "editProfileLayoutShape",
@@ -45889,6 +45917,7 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   if (layoutTextureSelect) layoutTextureSelect.value = selectedLayoutTexture;
   if (layoutFontSelect) layoutFontSelect.value = selectedLayoutFont;
   setProfileLayoutStyleFontToggle(profile?.layoutStyleCustomFont !== false);
+  setLayoutStyleMobileSection("shapes");
   renderLayoutStyleGalleries(selectedLayoutShape, selectedLayoutTexture);
   syncEditProfileCustomAccentInput(selectedThemeKey, profile?.customAccent || "");
   const freeThemeMotionEl = document.getElementById("editProfileFreeThemeMotion");

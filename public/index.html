@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260717-theme-scenes-35">
+  <link rel="stylesheet" href="app.css?v=20260717-mobile-polish-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -63,8 +63,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260717-coaching-language-29">
-  <link rel="stylesheet" href="layout-styles.css?v=20260717-layout-shape-texture-36">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260717-mobile-polish-01">
+  <link rel="stylesheet" href="layout-styles.css?v=20260717-mobile-polish-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -478,12 +478,23 @@ RIOT PROFILE MODAL
               <select id="editProfileLayoutShape" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
               <select id="editProfileLayoutTexture" class="theme-select-hidden" aria-hidden="true" tabindex="-1"></select>
 
-              <div class="profile-edit-field profile-edit-field-full">
+              <div class="layout-style-mobile-tabs profile-edit-field-full" role="tablist" aria-label="Layout style options">
+                <button type="button" class="layout-style-mobile-tab is-active" data-layout-style-mobile-tab="shapes" aria-selected="true">
+                  <span aria-hidden="true"></span>
+                  Shapes
+                </button>
+                <button type="button" class="layout-style-mobile-tab" data-layout-style-mobile-tab="textures" aria-selected="false">
+                  <span aria-hidden="true"></span>
+                  Textures
+                </button>
+              </div>
+
+              <div class="profile-edit-field profile-edit-field-full" data-layout-style-section="shapes">
                 <span>Shapes</span>
                 <div id="editProfileLayoutShapeGallery" class="layout-style-gallery layout-shape-gallery"></div>
               </div>
 
-              <div class="profile-edit-field profile-edit-field-full">
+              <div class="profile-edit-field profile-edit-field-full" data-layout-style-section="textures">
                 <span>Textures</span>
                 <div id="editProfileLayoutTextureGallery" class="layout-style-gallery layout-texture-gallery"></div>
               </div>
@@ -2365,6 +2376,6 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-collections.js?v=20260717-skin-modal-mobile-27"></script>
   <script src="library/gamesense-library.js?v=20260717-map-attack-swords-30"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
-  <script type="module" src="app.js?v=20260717-layout-shape-texture-36"></script>
+  <script type="module" src="app.js?v=20260717-mobile-polish-01"></script>
 </body>
 </html>
