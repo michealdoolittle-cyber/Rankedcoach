@@ -29,6 +29,10 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 
 **Round 4 designs approved:** Pixel Dialogue (#1), from `docs/design/layout-styles-v4-2026-07-16.html`.
 
+**Round 5 (2026-07-17) — 12 new thematic concepts drawn from Valorant's own iconography (Radianite, spike timer, rank crest, agent dossier, cooldown ring, laser engraving, smoke wall, sentinel node, flash burst, recon ping, plus 2 shape-bevel concepts), `docs/design/layout-styles-v5-2026-07-17.html`, https://claude.ai/code/artifact/fbd5edcf-1c4d-452a-b1c8-f69f547b14b7. Michael's read: 11 of 12 rejected as "boring and uninspired for text boxes." Only Laser Engraving (#6) is even marginally okay ("not great, but I think we can add it") — approved to add, not a strong approval.**
+
+**Likely root cause, worth confirming before round 6:** every rejected concept (including the 2 that used the shape-bevel technique) kept the card as a plain-ish rectangle and added a single small decorative accent (a corner icon, badge, ring, or edge marking) rather than transforming the whole tile. Laser Engraving was the one exception that treated the *entire card surface* with a texture instead of adding a corner accent — that may be the actual signal, not the Valorant-iconography theme itself. Don't re-run another "corner icon on a plain box" batch without checking this read with Michael first.
+
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
 | # | Description | Verdict | Why |
