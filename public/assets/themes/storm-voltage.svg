@@ -1,1 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><filter id="g"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#172554"/><stop offset="1" stop-color="#020617"/></linearGradient></defs><rect width="1200" height="800" fill="url(#s)"/><g filter="url(#g)" fill="none" stroke-linecap="round"><path d="M708-40 595 190 704 182 546 420 621 407 470 760" stroke="#f8fafc" stroke-width="8"/><path d="m596 190-116 94-84 170M548 419l-128 32-110 148M704 182l128 67 121 157" stroke="#60a5fa" stroke-width="5"/><path d="M1030-20 948 126l64-5-96 181M176 70l82 92-48 8 105 137" stroke="#93c5fd" stroke-width="4"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="stormSky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#172554"/>
+      <stop offset=".48" stop-color="#06142c"/>
+      <stop offset="1" stop-color="#020617"/>
+    </linearGradient>
+    <radialGradient id="cloudGlow" cx=".5" cy=".12" r=".82">
+      <stop stop-color="#60a5fa" stop-opacity=".24"/>
+      <stop offset=".45" stop-color="#1d4ed8" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="boltGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <style>
+      .bolt{fill:none;stroke-linecap:round;stroke-linejoin:round;filter:url(#boltGlow);stroke-dasharray:980;stroke-dashoffset:980;opacity:0}
+      .main{stroke:#f8fafc;stroke-width:8}
+      .branch{stroke:#93c5fd;stroke-width:4.5}
+      .ghost{stroke:#60a5fa;stroke-width:12;opacity:0;stroke-dasharray:980;stroke-dashoffset:980;filter:url(#boltGlow)}
+    </style>
+  </defs>
+  <rect width="1200" height="800" fill="url(#stormSky)"/>
+  <rect width="1200" height="800" fill="url(#cloudGlow)">
+    <animate attributeName="opacity" values=".55;.82;.48;.7;.55" dur="5.8s" repeatCount="indefinite"/>
+  </rect>
+  <g>
+    <path class="ghost" d="M724-80 654 84 704 78 610 238 672 226 548 430 604 420 472 760">
+      <animate attributeName="stroke-dashoffset" values="980;0;0;980" keyTimes="0;.18;.72;1" dur="2.7s" begin="-.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;.46;.16;0" keyTimes="0;.16;.62;1" dur="2.7s" begin="-.4s" repeatCount="indefinite"/>
+    </path>
+    <path class="bolt main" d="M724-80 654 84 704 78 610 238 672 226 548 430 604 420 472 760">
+      <animate attributeName="stroke-dashoffset" values="980;0;0;980" keyTimes="0;.2;.66;1" dur="2.7s" begin="-.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;.52;0" keyTimes="0;.13;.58;1" dur="2.7s" begin="-.4s" repeatCount="indefinite"/>
+    </path>
+    <path class="bolt branch" d="M611 238 520 282 438 396M549 430 454 454 332 590M704 78 818 132 942 292">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.14;.32;.62;1" dur="2.7s" begin="-.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.78;.32;0" keyTimes="0;.13;.3;.62;1" dur="2.7s" begin="-.4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g>
+    <path class="ghost" d="M284-60 342 108 296 104 398 270 346 260 460 468 418 462 526 820">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.34;.48;.78;1" dur="3.3s" begin="-1.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.36;.12;0" keyTimes="0;.34;.48;.74;1" dur="3.3s" begin="-1.2s" repeatCount="indefinite"/>
+    </path>
+    <path class="bolt main" d="M284-60 342 108 296 104 398 270 346 260 460 468 418 462 526 820">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.36;.52;.76;1" dur="3.3s" begin="-1.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.92;.44;0" keyTimes="0;.34;.48;.72;1" dur="3.3s" begin="-1.2s" repeatCount="indefinite"/>
+    </path>
+    <path class="bolt branch" d="M397 270 488 320 574 430M459 468 372 512 302 650M342 108 250 168 178 292">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.43;.6;.78;1" dur="3.3s" begin="-1.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.68;.26;0" keyTimes="0;.42;.58;.76;1" dur="3.3s" begin="-1.2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <g>
+    <path class="ghost" d="M1010-70 930 74 984 70 904 218 958 210 858 390 912 382 806 648">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.52;.66;.88;1" dur="2.95s" begin="-2.08s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.32;.1;0" keyTimes="0;.5;.64;.86;1" dur="2.95s" begin="-2.08s" repeatCount="indefinite"/>
+    </path>
+    <path class="bolt main" d="M1010-70 930 74 984 70 904 218 958 210 858 390 912 382 806 648">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.54;.7;.86;1" dur="2.95s" begin="-2.08s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.86;.34;0" keyTimes="0;.52;.68;.84;1" dur="2.95s" begin="-2.08s" repeatCount="indefinite"/>
+    </path>
+    <path class="bolt branch" d="M904 218 808 260 732 360M858 390 754 428 680 540M984 70 1084 126 1154 236">
+      <animate attributeName="stroke-dashoffset" values="980;980;0;0;980" keyTimes="0;.6;.74;.9;1" dur="2.95s" begin="-2.08s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;.58;.2;0" keyTimes="0;.58;.72;.88;1" dur="2.95s" begin="-2.08s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

@@ -49,18 +49,19 @@ function cssBlock(name) {
 }
 
 const neonRainMotion = cssBlock("themeNeonRain");
-assert.match(neonRainMotion, /background-position:0 -920px/);
-assert.match(neonRainMotion, /background-position:0 0/);
-assert.doesNotMatch(neonRainMotion, /120px 900px|translate3d\([^0]/, "Neon Rain should fall vertically and reset, not drift sideways");
+assert.doesNotMatch(neonRainMotion, /background-position|translate3d|120px 900px/, "Neon Rain should animate individual SVG particles, not slide a whole sheet");
 
 const stormStrikeMotion = cssBlock("themeLightningStrike");
 const stormTrailMotion = cssBlock("themeStormVoltage");
-assert.match(stormStrikeMotion, /center -38vh/);
-assert.match(stormStrikeMotion, /center 48vh/);
-assert.match(stormStrikeMotion, /opacity:0/);
-assert.match(stormTrailMotion, /50% -72%/);
-assert.match(stormTrailMotion, /50% 104%/);
-assert.doesNotMatch(stormTrailMotion, /120% 52%|140% -40%/, "Storm Voltage should strike downward with a fading trail, not sweep sideways");
+assert.doesNotMatch(`${stormStrikeMotion}\n${stormTrailMotion}`, /background-position|translate3d|120% 52%|140% -40%/, "Storm Voltage should draw individual bolt strokes, not slide a whole sheet");
+
+const neonRainSvg = fs.readFileSync(path.resolve(__dirname, "../../public/assets/themes/neon-rain.svg"), "utf8");
+assert.ok((neonRainSvg.match(/animateTransform/g) || []).length >= 18, "Neon Rain needs many independently animated rain particles");
+assert.ok((neonRainSvg.match(/begin="-?\./g) || []).length >= 10, "Neon Rain particles need staggered timing, not one synced sheet");
+
+const stormVoltageSvg = fs.readFileSync(path.resolve(__dirname, "../../public/assets/themes/storm-voltage.svg"), "utf8");
+assert.ok((stormVoltageSvg.match(/stroke-dashoffset/g) || []).length >= 9, "Storm Voltage needs drawn bolt strokes and trails");
+assert.ok((stormVoltageSvg.match(/begin="-/g) || []).length >= 6, "Storm Voltage bolts need staggered random-feeling strike timing");
 
 for (const [id, motion, animation] of expected) {
   const theme = PREMIUM_THEMES.find(item => item.id === id);
