@@ -143,6 +143,66 @@ const PREMIUM_THEMES = [
     colors: { accent: "#facc15", accent2: "#fb7185", card: "#171029", card2: "#38204b", text: "#fff7ed", muted: "#fde68a" },
     signatureMotion: { name: "confetti-pop", durationMs: 14000, easing: "linear" },
     emphasis: { strong: "confetti popper bursts", subtle: "gold, coral, and violet celebration" }
+  },
+  {
+    id: "aurora-rift", label: "Aurora Rift", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#5eead4", accent2: "#c084fc", card: "#07131f", card2: "#1d1638", text: "#f8fafc", muted: "#c4b5fd" },
+    signatureMotion: { name: "aurora-rift", durationMs: 24000, easing: "ease-in-out" },
+    emphasis: { strong: "shifting aurora ribbons", subtle: "teal light folding through violet space" }
+  },
+  {
+    id: "neon-rain", label: "Neon Rain", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#22d3ee", accent2: "#fb7185", card: "#06111b", card2: "#1a1630", text: "#ecfeff", muted: "#a5f3fc" },
+    signatureMotion: { name: "neon-rain", durationMs: 15000, easing: "linear" },
+    emphasis: { strong: "falling neon streaks", subtle: "cyan rainfall with coral flashes" }
+  },
+  {
+    id: "ember-dragon", label: "Ember Dragon", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#f97316", accent2: "#ef4444", card: "#170805", card2: "#3a120a", text: "#fff7ed", muted: "#fed7aa" },
+    signatureMotion: { name: "ember-dragon", durationMs: 21000, easing: "ease-in-out" },
+    emphasis: { strong: "curling ember breath", subtle: "orange heat with red flare paths" }
+  },
+  {
+    id: "gravity-well", label: "Gravity Well", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#a78bfa", accent2: "#60a5fa", card: "#070716", card2: "#151538", text: "#f5f3ff", muted: "#c4b5fd" },
+    signatureMotion: { name: "gravity-well", durationMs: 30000, easing: "linear" },
+    emphasis: { strong: "orbiting gravity rings", subtle: "violet mass with blue star pull" }
+  },
+  {
+    id: "holo-grid", label: "Holo Grid", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#38bdf8", accent2: "#34d399", card: "#041520", card2: "#082735", text: "#f0fdfa", muted: "#bae6fd" },
+    signatureMotion: { name: "holo-grid", durationMs: 18000, easing: "linear" },
+    emphasis: { strong: "holographic grid scan", subtle: "blue-green tactical projection" }
+  },
+  {
+    id: "toxic-sludge", label: "Toxic Sludge", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#a3e635", accent2: "#22c55e", card: "#071006", card2: "#17260b", text: "#f7fee7", muted: "#d9f99d" },
+    signatureMotion: { name: "toxic-sludge", durationMs: 23000, easing: "ease-in-out" },
+    emphasis: { strong: "slow toxic bubbles", subtle: "acid green pools over dark resin" }
+  },
+  {
+    id: "eclipse-corona", label: "Eclipse Corona", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#f59e0b", accent2: "#7dd3fc", card: "#090908", card2: "#1f1a12", text: "#fff7ed", muted: "#fde68a" },
+    signatureMotion: { name: "eclipse-corona", durationMs: 26000, easing: "ease-in-out" },
+    emphasis: { strong: "solar corona breathing", subtle: "gold ring light behind cool shadow" }
+  },
+  {
+    id: "data-stream", label: "Data Stream", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#10b981", accent2: "#38bdf8", card: "#04110e", card2: "#09251f", text: "#ecfdf5", muted: "#a7f3d0" },
+    signatureMotion: { name: "data-stream", durationMs: 12000, easing: "linear" },
+    emphasis: { strong: "streaming data columns", subtle: "green code over blue packet light" }
+  },
+  {
+    id: "crystal-bloom", label: "Crystal Bloom", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#f0abfc", accent2: "#67e8f9", card: "#0c0a18", card2: "#211832", text: "#fdf4ff", muted: "#f5d0fe" },
+    signatureMotion: { name: "crystal-bloom", durationMs: 28000, easing: "ease-in-out" },
+    emphasis: { strong: "faceted crystal bloom", subtle: "pink prisms with cyan edges" }
+  },
+  {
+    id: "comet-trail", label: "Comet Trail", locked: true, subscriptionRequired: "premiumThemes",
+    colors: { accent: "#93c5fd", accent2: "#facc15", card: "#050b19", card2: "#111d33", text: "#eff6ff", muted: "#bfdbfe" },
+    signatureMotion: { name: "comet-trail", durationMs: 17000, easing: "ease-in-out" },
+    emphasis: { strong: "sweeping comet trails", subtle: "blue arcs with golden sparks" }
   }
 ];
 

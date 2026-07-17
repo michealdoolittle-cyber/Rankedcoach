@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#020b08"/>
+  <g font-family="monospace" font-size="34" fill="#10b981" opacity=".22">
+    <text x="80" y="80">01 11 00 10 01</text><text x="80" y="170">10 00 11 01 10</text><text x="80" y="260">11 01 10 00 11</text>
+    <text x="470" y="120">RC 43 DATA</text><text x="470" y="220">SYNC FLOW</text><text x="470" y="320">0101 1100</text>
+    <text x="850" y="90">11 10 01 00</text><text x="850" y="190">00 01 11 10</text><text x="850" y="290">10 11 00 01</text>
+  </g>
+  <path d="M0 620 H1200" stroke="#38bdf8" stroke-width="18" opacity=".12"/>
+</svg>

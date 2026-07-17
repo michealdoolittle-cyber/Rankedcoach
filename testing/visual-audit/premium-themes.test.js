@@ -18,10 +18,20 @@ const expected = [
   ["void-ink", "ink-bloom", "themeInkBloom"],
   ["echo-sonar", "sonar-pulse", "themeSonarPulse"],
   ["neon-eq", "sound-wave", "themeSoundWave"],
-  ["victory-confetti", "confetti-pop", "themeConfettiPop"]
+  ["victory-confetti", "confetti-pop", "themeConfettiPop"],
+  ["aurora-rift", "aurora-rift", "themeAuroraRift"],
+  ["neon-rain", "neon-rain", "themeNeonRain"],
+  ["ember-dragon", "ember-dragon", "themeEmberDragon"],
+  ["gravity-well", "gravity-well", "themeGravityWell"],
+  ["holo-grid", "holo-grid", "themeHoloGrid"],
+  ["toxic-sludge", "toxic-sludge", "themeToxicSludge"],
+  ["eclipse-corona", "eclipse-corona", "themeEclipseCorona"],
+  ["data-stream", "data-stream", "themeDataStream"],
+  ["crystal-bloom", "crystal-bloom", "themeCrystalBloom"],
+  ["comet-trail", "comet-trail", "themeCometTrail"]
 ];
 
-assert.equal(PREMIUM_THEMES.length, 15);
+assert.equal(PREMIUM_THEMES.length, 25);
 assert.equal(new Set(PREMIUM_THEMES.map(theme => theme.id)).size, PREMIUM_THEMES.length);
 assert.equal(getPremiumThemesForProfile().every(theme => theme.locked && theme.accessState === "locked"), true);
 assert.equal(getPremiumThemesForProfile({ subscription: { tier: "premium" } }).every(theme => !theme.locked && theme.accessState === "available"), true);
@@ -177,6 +187,7 @@ async function runBrowserCheck() {
           return states;
         }, id);
         assert.ok(legacyNavIsolation.every(nav => nav.backgroundImage === "none" && nav.animation === "none" && nav.beforeImage === "none" && Number.parseFloat(nav.beforeOpacity) === 0), JSON.stringify(legacyNavIsolation));
+        if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.locator("#dailyWarmupSkip").click();
         for (const pageName of ["home", "logging", "insights"]) {
           await page.locator(`[data-page="${pageName}"]`).click();
           await page.locator(`#page-${pageName}.active`).waitFor({ state: "visible" });
@@ -189,6 +200,47 @@ async function runBrowserCheck() {
         await page.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
         await page.waitForTimeout(400);
         assert.equal(await page.locator("#page-library").evaluate(library => getComputedStyle(library).backgroundImage), "none");
+        await page.click("#profileDropdownToggle");
+        await page.click("#pdOpenSettings");
+        await page.locator("#editProfileModal.active").waitFor({ state: "visible" });
+        await page.locator('[data-profile-panel="theme"].is-active').waitFor({ state: "visible" });
+        const desktopPager = await page.locator("#editProfileThemeGallery").evaluate(gallery => ({
+          dots: [...gallery.querySelectorAll("[data-theme-gallery-page]")].map(button => ({
+            page: button.dataset.themeGalleryPage,
+            selected: button.getAttribute("aria-selected"),
+            text: button.textContent.trim()
+          })),
+          visibleCards: [...gallery.querySelectorAll("[data-theme-card]")].map(card => card.dataset.themeCard)
+        }));
+        assert.deepEqual(desktopPager.dots.map(dot => dot.page), ["dark", "light", "animated"], JSON.stringify(desktopPager));
+        assert.equal(desktopPager.dots.find(dot => dot.page === "animated")?.selected, "true", JSON.stringify(desktopPager));
+        assert.ok(desktopPager.visibleCards.includes("tactical-matrix") && desktopPager.visibleCards.includes("comet-trail"), JSON.stringify(desktopPager));
+        await page.click('[data-theme-gallery-page="light"]');
+        const lightPager = await page.locator("#editProfileThemeGallery").evaluate(gallery => ({
+          selected: gallery.querySelector('[data-theme-gallery-page="light"]')?.getAttribute("aria-selected"),
+          cards: [...gallery.querySelectorAll("[data-theme-card]")].map(card => card.dataset.themeCard)
+        }));
+        assert.equal(lightPager.selected, "true", JSON.stringify(lightPager));
+        assert.ok(lightPager.cards.includes("fluorescent-white") && lightPager.cards.every(id => !id.includes("tactical-matrix")), JSON.stringify(lightPager));
+        await page.setViewportSize({ width: 390, height: 844 });
+        await page.waitForTimeout(250);
+        const viewport = page.locator("[data-theme-gallery-viewport]");
+        const box = await viewport.boundingBox();
+        assert.ok(box, "Theme gallery viewport needs a touch target");
+        await viewport.evaluate((element, metrics) => {
+          element.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: metrics.startX, clientY: metrics.startY }));
+          element.dispatchEvent(new MouseEvent("mouseup", { bubbles: true, clientX: metrics.endX, clientY: metrics.endY }));
+        }, {
+          startX: box.x + box.width * .76,
+          startY: box.y + box.height / 2,
+          endX: box.x + box.width * .22,
+          endY: box.y + box.height / 2 + 4
+        });
+        await page.waitForTimeout(150);
+        assert.equal(await page.locator('[data-theme-gallery-page="animated"]').getAttribute("aria-selected"), "true");
+        await page.screenshot({ path: path.join(screenshotDir, "theme-gallery-dot-pages-mobile.png") });
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.locator("#editProfileModal").evaluate(modal => modal.classList.remove("active"));
       }
       await page.screenshot({ path: path.join(screenshotDir, `premium-theme-${id}.png`) });
       if (index === expected.length - 1) {
@@ -203,7 +255,7 @@ async function runBrowserCheck() {
       await page.close();
     }
     assert.deepEqual(errors, []);
-    console.log("Premium theme checks passed: thirteen textured presets, neutral navigation isolation, distinct motion, entitlement states, reduced-motion fallback, live QA theme application, and zero browser errors.");
+    console.log("Premium theme checks passed: twenty-three textured animated presets, grouped theme selector pages, mobile swipe, neutral navigation isolation, distinct motion, entitlement states, reduced-motion fallback, live QA theme application, and zero browser errors.");
   } finally {
     await browser.close();
     server.close();

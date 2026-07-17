@@ -43050,6 +43050,76 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     pattern: "url('/assets/themes/victory-confetti.svg')",
     pattern2: "radial-gradient(circle at 24% 18%, rgba(250,204,21,.15), transparent 18%), radial-gradient(circle at 78% 24%, rgba(251,113,133,.16), transparent 20%)",
     motion: "confetti-pop"
+  }),
+  createProfileTheme("aurora-rift", "Aurora Rift", "dark", {
+    base: "#020812", base2: "#160f2b", card: "#07131f", card2: "#1d1638",
+    accent: "#5eead4", accent2: "#c084fc",
+    pattern: "url('/assets/themes/aurora-rift.svg')",
+    pattern2: "linear-gradient(118deg, transparent 14%, rgba(94,234,212,.16) 34%, rgba(192,132,252,.14) 55%, transparent 78%)",
+    motion: "aurora-rift"
+  }),
+  createProfileTheme("neon-rain", "Neon Rain", "dark", {
+    base: "#020914", base2: "#111126", card: "#06111b", card2: "#1a1630",
+    accent: "#22d3ee", accent2: "#fb7185",
+    pattern: "url('/assets/themes/neon-rain.svg')",
+    pattern2: "linear-gradient(180deg, rgba(34,211,238,.12), transparent 32%, rgba(251,113,133,.1))",
+    motion: "neon-rain"
+  }),
+  createProfileTheme("ember-dragon", "Ember Dragon", "dark", {
+    base: "#100301", base2: "#2b0804", card: "#170805", card2: "#3a120a",
+    accent: "#f97316", accent2: "#ef4444",
+    pattern: "url('/assets/themes/ember-dragon.svg')",
+    pattern2: "radial-gradient(circle at 68% 18%, rgba(249,115,22,.22), transparent 24%), radial-gradient(circle at 28% 78%, rgba(239,68,68,.18), transparent 32%)",
+    motion: "ember-dragon"
+  }),
+  createProfileTheme("gravity-well", "Gravity Well", "dark", {
+    base: "#03030c", base2: "#0d1030", card: "#070716", card2: "#151538",
+    accent: "#a78bfa", accent2: "#60a5fa",
+    pattern: "url('/assets/themes/gravity-well.svg')",
+    pattern2: "radial-gradient(circle at 50% 50%, rgba(167,139,250,.24), transparent 34%), radial-gradient(circle at 50% 50%, rgba(96,165,250,.12), transparent 56%)",
+    motion: "gravity-well"
+  }),
+  createProfileTheme("holo-grid", "Holo Grid", "dark", {
+    base: "#021018", base2: "#042b35", card: "#041520", card2: "#082735",
+    accent: "#38bdf8", accent2: "#34d399",
+    pattern: "url('/assets/themes/holo-grid.svg')",
+    pattern2: "linear-gradient(125deg, transparent 16%, rgba(52,211,153,.12) 44%, rgba(56,189,248,.12) 62%, transparent 82%)",
+    motion: "holo-grid"
+  }),
+  createProfileTheme("toxic-sludge", "Toxic Sludge", "dark", {
+    base: "#030b02", base2: "#102007", card: "#071006", card2: "#17260b",
+    accent: "#a3e635", accent2: "#22c55e",
+    pattern: "url('/assets/themes/toxic-sludge.svg')",
+    pattern2: "radial-gradient(circle at 18% 74%, rgba(163,230,53,.18), transparent 24%), radial-gradient(circle at 78% 20%, rgba(34,197,94,.16), transparent 32%)",
+    motion: "toxic-sludge"
+  }),
+  createProfileTheme("eclipse-corona", "Eclipse Corona", "dark", {
+    base: "#030304", base2: "#17130c", card: "#090908", card2: "#1f1a12",
+    accent: "#f59e0b", accent2: "#7dd3fc",
+    pattern: "url('/assets/themes/eclipse-corona.svg')",
+    pattern2: "radial-gradient(circle at 50% 50%, rgba(245,158,11,.22), transparent 36%), radial-gradient(circle at 50% 50%, rgba(125,211,252,.1), transparent 58%)",
+    motion: "eclipse-corona"
+  }),
+  createProfileTheme("data-stream", "Data Stream", "dark", {
+    base: "#020b08", base2: "#071f19", card: "#04110e", card2: "#09251f",
+    accent: "#10b981", accent2: "#38bdf8",
+    pattern: "url('/assets/themes/data-stream.svg')",
+    pattern2: "linear-gradient(90deg, transparent 12%, rgba(16,185,129,.14) 48%, rgba(56,189,248,.1) 72%, transparent 94%)",
+    motion: "data-stream"
+  }),
+  createProfileTheme("crystal-bloom", "Crystal Bloom", "dark", {
+    base: "#080714", base2: "#181226", card: "#0c0a18", card2: "#211832",
+    accent: "#f0abfc", accent2: "#67e8f9",
+    pattern: "url('/assets/themes/crystal-bloom.svg')",
+    pattern2: "conic-gradient(from 18deg at 50% 52%, rgba(240,171,252,.18), transparent 18%, rgba(103,232,249,.13), transparent 42%)",
+    motion: "crystal-bloom"
+  }),
+  createProfileTheme("comet-trail", "Comet Trail", "dark", {
+    base: "#020816", base2: "#0d1930", card: "#050b19", card2: "#111d33",
+    accent: "#93c5fd", accent2: "#facc15",
+    pattern: "url('/assets/themes/comet-trail.svg')",
+    pattern2: "linear-gradient(112deg, transparent 22%, rgba(147,197,253,.14) 46%, rgba(250,204,21,.12) 54%, transparent 78%)",
+    motion: "comet-trail"
   })
 ];
 
@@ -44171,13 +44241,42 @@ function getBannerPattern(bannerStyle = "theme", theme = getThemePreset()) {
   return banner?.pattern || presets[bannerStyle] || presets.theme;
 }
 
-function renderThemeGallery(selectedThemeKey = "default") {
+let activeThemeGalleryPage = "dark";
+
+const THEME_GALLERY_PAGES = [
+  { key: "dark", label: "Dark" },
+  { key: "light", label: "Light" },
+  { key: "animated", label: "Animated" }
+];
+
+function getThemeGalleryPageKey(theme = getThemePreset("default")) {
+  if (theme?.motion && theme.motion !== "static") return "animated";
+  return getThemeVisualMode(theme) === "light" ? "light" : "dark";
+}
+
+function getThemeGalleryPageIndex(pageKey = activeThemeGalleryPage) {
+  return Math.max(0, THEME_GALLERY_PAGES.findIndex(page => page.key === pageKey));
+}
+
+function setThemeGalleryPage(pageKey = "dark") {
+  activeThemeGalleryPage = THEME_GALLERY_PAGES.some(page => page.key === pageKey) ? pageKey : "dark";
+}
+
+function getThemesForGalleryPage(themes = [], pageKey = activeThemeGalleryPage) {
+  return themes.filter(theme => getThemeGalleryPageKey(theme) === pageKey);
+}
+
+function renderThemeGallery(selectedThemeKey = "default", requestedPageKey = "") {
   const gallery = document.getElementById("editProfileThemeGallery");
   const themeSelect = document.getElementById("editProfileTheme");
   if (!gallery) return;
   const renderableThemes = getAvailableProfileThemePresets();
+  const selectedTheme = renderableThemes.find(theme => String(theme.value) === String(selectedThemeKey)) || getThemePreset(selectedThemeKey);
+  setThemeGalleryPage(requestedPageKey || getThemeGalleryPageKey(selectedTheme));
+  const visibleThemes = getThemesForGalleryPage(renderableThemes, activeThemeGalleryPage);
+  const activeIndex = getThemeGalleryPageIndex(activeThemeGalleryPage);
 
-  gallery.innerHTML = renderableThemes.map((theme) => {
+  const themeCards = visibleThemes.map((theme) => {
     const colors = theme?.colors || {};
     const isActive = String(theme.value) === String(selectedThemeKey);
     return `
@@ -44210,6 +44309,92 @@ function renderThemeGallery(selectedThemeKey = "default") {
       </button>
     `;
   }).join("");
+
+  gallery.innerHTML = `
+    <div class="theme-gallery-page-dots" role="tablist" aria-label="Theme groups">
+      ${THEME_GALLERY_PAGES.map((page, index) => {
+        const isActive = page.key === activeThemeGalleryPage;
+        const count = getThemesForGalleryPage(renderableThemes, page.key).length;
+        return `
+          <button
+            type="button"
+            class="theme-gallery-dot ${isActive ? "is-active" : ""}"
+            data-theme-gallery-page="${escapeHtml(page.key)}"
+            role="tab"
+            aria-selected="${isActive ? "true" : "false"}"
+            aria-label="${escapeHtml(page.label)} themes"
+            title="${escapeHtml(page.label)} themes">
+            <span aria-hidden="true"></span>
+            <strong>${escapeHtml(page.label)}</strong>
+            <small>${count}</small>
+          </button>
+        `;
+      }).join("")}
+    </div>
+    <div class="theme-gallery-viewport" data-theme-gallery-viewport style="--theme-gallery-page-index:${activeIndex}">
+      <div class="theme-gallery-grid" data-theme-gallery-grid>
+        ${themeCards || `<div class="theme-gallery-empty">No themes in this group yet.</div>`}
+      </div>
+    </div>
+  `;
+
+  gallery.querySelectorAll("[data-theme-gallery-page]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextPage = button.getAttribute("data-theme-gallery-page") || "dark";
+      setThemeGalleryPage(nextPage);
+      const currentTheme = themeSelect?.value || selectedThemeKey;
+      renderThemeGallery(currentTheme, nextPage);
+    });
+  });
+
+  const viewport = gallery.querySelector("[data-theme-gallery-viewport]");
+  if (viewport) {
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let pointerSwipeStartX = 0;
+    let pointerSwipeStartY = 0;
+    let mouseSwipeStartX = 0;
+    let mouseSwipeStartY = 0;
+    let lastThemeGallerySwipeAt = 0;
+    const applyThemeGallerySwipe = (deltaX, deltaY) => {
+      if (Date.now() - lastThemeGallerySwipeAt < 260) return;
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+      const currentIndex = getThemeGalleryPageIndex(activeThemeGalleryPage);
+      const nextIndex = Math.max(0, Math.min(THEME_GALLERY_PAGES.length - 1, currentIndex + (deltaX < 0 ? 1 : -1)));
+      if (nextIndex === currentIndex) return;
+      lastThemeGallerySwipeAt = Date.now();
+      const nextPage = THEME_GALLERY_PAGES[nextIndex].key;
+      setThemeGalleryPage(nextPage);
+      renderThemeGallery(themeSelect?.value || selectedThemeKey, nextPage);
+    };
+    viewport.addEventListener("touchstart", (event) => {
+      const touch = event.touches?.[0];
+      if (!touch) return;
+      swipeStartX = touch.clientX;
+      swipeStartY = touch.clientY;
+    }, { passive: true });
+    viewport.addEventListener("touchend", (event) => {
+      const touch = event.changedTouches?.[0];
+      if (!touch) return;
+      const deltaX = touch.clientX - swipeStartX;
+      const deltaY = touch.clientY - swipeStartY;
+      applyThemeGallerySwipe(deltaX, deltaY);
+    }, { passive: true });
+    viewport.addEventListener("pointerdown", (event) => {
+      pointerSwipeStartX = event.clientX;
+      pointerSwipeStartY = event.clientY;
+    });
+    viewport.addEventListener("pointerup", (event) => {
+      applyThemeGallerySwipe(event.clientX - pointerSwipeStartX, event.clientY - pointerSwipeStartY);
+    });
+    viewport.addEventListener("mousedown", (event) => {
+      mouseSwipeStartX = event.clientX;
+      mouseSwipeStartY = event.clientY;
+    });
+    viewport.addEventListener("mouseup", (event) => {
+      applyThemeGallerySwipe(event.clientX - mouseSwipeStartX, event.clientY - mouseSwipeStartY);
+    });
+  }
 
   gallery.querySelectorAll("[data-theme-card]").forEach((button) => {
     button.addEventListener("click", () => {
