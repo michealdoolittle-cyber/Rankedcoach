@@ -35,11 +35,24 @@ Systematic search across every weapon found **zero** usable community 3D coverag
 
 ---
 
+## 3. New: frame-sampled pseudo-3D for skins with a val-skins video but no true 3D model
+
+Michael's ask: for skins with neither a Sketchfab model nor real 3D, can we still deliver something better than one flat static image in the "Drag to rotate" stage? Sourcing genuine multi-angle photography per skin isn't realistic at scale — that asset just doesn't exist standalone for most skins. But the app already has a better source sitting unused for this specific purpose: the **"Skin Animation" pane** (same overlay, `gamesense-library.js:928-930`, `previewVideos`/`data-skin-preview-video`, sourced from val-skins/Riot data) already plays a rotating preview clip for most released skins.
+
+**The idea:** when `renderSkinPreviewOverlay()` has no `model` (no Sketchfab entry) but does have a `previewVideos[0]` available, sample 3-4 frames out of that existing video at different points in its rotation (e.g., roughly 0°/90°/180°/270° through the clip — check the actual clip length/rotation speed first rather than assuming even spacing) instead of falling back to a single flat splash image. Use those sampled frames to drive the same drag-interaction pattern the true-3D stage already has (swap frame based on horizontal drag position), so the "3D space" stage delivers a real (if coarse) multi-angle experience instead of one static image, for any skin where a val-skins video exists.
+
+**How to sample frames, technically:** this can be done server-side/at-build-time (not live in the browser) using `ffmpeg` against the same video URL already referenced in `previewVideos[].video` — extract frames at computed timestamps, save as static images, reference them from a new field (e.g., `variant.rotationFrames: [url0, url90, url180, url270]`) alongside the existing `variant.source`. Don't do this as a live client-side video-scrubbing interaction — sampled static frames are simpler, cacheable, and match the existing static-image code path already in place for the no-model case.
+
+**Scope this after section 1-2 land** — it's a bigger, more experimental build than adding curated model entries, and depends on confirming val-skins clip quality/rotation-speed is actually consistent enough across skins to make evenly-spaced frame sampling look coherent (check a handful of clips first before building the full pipeline).
+
+---
+
 ## Testing checklist — don't report this batch done until:
 
 1. Every new entry's license re-verified live on its Sketchfab page immediately before merging (pages can change) — confirm CC BY 4.0 or equivalent permissive reuse, not "Free Standard" (Sketchfab's default, more restrictive) or a paid store listing.
 2. For the ILilMitch collection pull, confirm each model's actual weapon+color against its page — don't assume from the collection-overview title alone.
 3. Spot-check at least 3 of the newly-added combos live in the app: confirm the skin preview overlay now shows `has-true-model`/"True 3D Model" (real Sketchfab iframe, rotatable) instead of the static-image fallback for those specific weapon+skin+color combos.
 4. Confirm the two upgraded video-only collections (`rogue`, `radiant-entertainment-system`, `arcane`, and any others added) still show their existing video correctly alongside the new 3D option in the media pager.
-5. `node --check` passes on every touched file; run the existing visual-audit test suite plus the full passthrough before deploying, per the standing project rule.
-6. Bump the cache key in `public/index.html` for every changed asset.
+5. If section 3 is built this pass: confirm frame-sampled skins show a visibly different image while dragging (not the same frame repeated), and that skins with a true Sketchfab model or no val-skins video at all are unaffected by this new code path.
+6. `node --check` passes on every touched file; run the existing visual-audit test suite plus the full passthrough before deploying, per the standing project rule.
+7. Bump the cache key in `public/index.html` for every changed asset.
