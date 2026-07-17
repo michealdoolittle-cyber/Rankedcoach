@@ -39,7 +39,13 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 
 **Architecture decision, confirmed by Michael (2026-07-17):** the Layout Style picker in Customize should split into **two separate sections — Textures and Shapes** — selectable independently and combinable (e.g. a shape silhouette from the shapes list *plus* a texture from the textures list at the same time), rather than one single mutually-exclusive "Layout Style" choice. This changes the data model from a single `layoutStyle` key to two independent keys (e.g. `layoutTexture` + `layoutShape`), each with its own gallery/tab in the Customize UI. Flag this to whoever writes the next implementation directive — this is a real change to the section 1 data model in `notes/layout-style-implementation-2026-07-16.md`, not just a visual add.
 
-**Still wants more of both** — round 7 in progress, covering additional textures and additional card shapes (a category not revisited since round 3/4).
+**Round 7 (2026-07-17) — 8 new textures + 8 new shapes, `docs/design/layout-styles-v7-2026-07-17.html`, https://claude.ai/code/artifact/ef4e3a9f-151d-4ea5-bf99-3480e9fb6030. Approved textures: Chain Mesh (#2), Thermal Vision (#3), Woven Cable (#7). Approved shapes: Spearhead (#2), Cargo Crate — beveled (#6). Rejected: Static Noise Grain, Data Stream Rain, Cracked Concrete, Radar Sweep, Ember and Ash (textures); Shield Bulwark, Vault Plate, Data Shard, Portal Arch, Twin Spire (shapes).**
+
+**Running approved list so far:**
+- *Textures:* Carbon Weave, Circuit Plate, Topo Contour, Frost Fracture, Blueprint Grid, Brushed Plate, Hex Armor, Chain Mesh, Thermal Vision, Woven Cable (10 total).
+- *Shapes:* Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate (12 total).
+
+**Still wants more of both** — round 8 to follow, covering additional textures and additional card shapes.
 
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
