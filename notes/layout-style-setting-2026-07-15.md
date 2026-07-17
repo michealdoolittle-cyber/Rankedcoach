@@ -62,6 +62,12 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 
 **New direction, per Michael:** stop inventing new shapes from scratch — he says he built border overlays for text boxes in the past, and there may be existing Ion and Reaver-themed examples already in the app's files, possibly gated/unused ("locked away"). Round 11 starts with a codebase search for these existing assets before designing anything new, using whatever is found as the actual reference/inspiration rather than reinventing.
 
+**Found it.** A real, fully-built card frame system under `body[data-theme="reaver"]` in `public/app.css:23941-24152`, currently inert because `THEME_BUILDER_LAUNCH_LOCKED = true` (`app.js:19981`) disables the internal Theme Builder tool that exposes/tunes it. Real hand-drawn SVG assets exist too: `public/reaver-modal-hands.svg` (gothic claw silhouettes) and `public/reaver-runic-strip.svg` (glowing rune-glyph border band). Ion (`body[data-theme="ion"]`, `app.css:23732-23815`) has no equivalent art — CSS color palette only, never got the same treatment.
+
+**The actual technique, worth remembering for any future Layout Style work:** it's not one clipped shape with a border — it's a **two-layer rim+face pairing**. `.card::before` is an inner irregular polygon (the card's dark "face," layered gradients for depth). `.card::after` is a separate, larger/offset irregular polygon behind/around it (`inset:-4px -8px`, lighter metallic gradient, `filter:drop-shadow`, pulsing glow animation) acting as a beveled rim. The rim peeking out around the face is what reads as a real frame instead of a flat cutout.
+
+**Round 11 (2026-07-17) — 5 concepts built directly on this rim+face technique, recolored to the live theme tokens (no hardcoded Reaver purple/gold carried over): Gothic Rim, Steel Rivet Frame, Prism Rim, Runic Band Frame (uses the real runic-strip SVG, recolored), Hazard Rim.** `docs/design/layout-styles-v11-2026-07-17.html`, https://claude.ai/code/artifact/9360616a-77d6-4870-a3e6-77b8ef826ce2. Awaiting Michael's verdict.
+
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
 | # | Description | Verdict | Why |
