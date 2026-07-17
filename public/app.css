@@ -8177,11 +8177,23 @@ z-index:5;
 .theme-gallery-dot{
   min-height:34px;
   padding:7px 11px;
+  border:1px solid color-mix(in srgb, var(--border-soft, rgba(148,163,184,.3)) 80%, transparent);
   border-radius:999px;
+  background:linear-gradient(180deg, color-mix(in srgb, var(--surface-card, #0b1220) 88%, transparent), color-mix(in srgb, var(--surface-card-2, #111827) 90%, transparent));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+  color:var(--text-main,#f8fafc);
   display:inline-flex;
   align-items:center;
   justify-content:center;
   gap:7px;
+  transition:background .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease, transform .18s ease;
+}
+
+.theme-gallery-dot:hover{
+  border-color:color-mix(in srgb, var(--accent) 44%, var(--border-soft, rgba(148,163,184,.3)));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.07),
+    0 0 14px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .theme-gallery-dot > span{
@@ -8205,12 +8217,32 @@ z-index:5;
 }
 
 .theme-gallery-dot.is-active > span{
-  background:linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow:0 0 12px color-mix(in srgb, var(--accent) 58%, transparent);
+  background:var(--button-text,#ffffff);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--button-text,#ffffff) 20%, transparent),
+    0 0 12px color-mix(in srgb, var(--accent) 58%, transparent);
+}
+
+.theme-gallery-dot.is-active,
+.theme-gallery-dot[aria-selected="true"]{
+  border-color:color-mix(in srgb, var(--accent) 78%, white 10%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 86%, white 4%), color-mix(in srgb, var(--accent-2) 78%, var(--accent) 22%));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent),
+    0 12px 24px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 0 20px color-mix(in srgb, var(--theme-glow, var(--accent)) 32%, transparent);
+  color:var(--button-text,#ffffff);
+  transform:translateY(-1px);
 }
 
 .theme-gallery-dot.is-active strong{
   color:var(--button-text);
+}
+
+.theme-gallery-dot.is-active small{
+  color:color-mix(in srgb, var(--button-text,#ffffff) 86%, transparent);
 }
 
 .theme-gallery-viewport{
@@ -8307,9 +8339,28 @@ body.theme-readable :is(
 .theme-card.is-active{
   box-shadow:
     0 18px 36px rgba(0,0,0,.24),
-    0 0 0 2px color-mix(in srgb, var(--accent) 42%, white 8%),
-    0 0 24px color-mix(in srgb, var(--theme-glow) 45%, transparent);
+    0 0 0 2px color-mix(in srgb, var(--accent) 78%, white 10%),
+    0 0 0 5px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 0 26px color-mix(in srgb, var(--theme-glow) 48%, transparent);
   transform:translateY(-2px) scale(1.01);
+}
+
+.theme-card.is-active::after{
+  content:"SELECTED";
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:4;
+  padding:5px 8px;
+  border:1px solid color-mix(in srgb, var(--accent) 68%, white 16%);
+  border-radius:999px;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 82%, black 8%), color-mix(in srgb, var(--accent-2) 70%, var(--accent) 30%));
+  color:var(--button-text,#fff);
+  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  box-shadow:0 0 18px color-mix(in srgb, var(--accent) 34%, transparent);
+  pointer-events:none;
 }
 
 .theme-card.is-active .theme-card-preview{
@@ -23191,21 +23242,21 @@ body.theme-prism-turn .app-root::after{
 }
 
 body.theme-lightning-strike .app-root::before{
-  background-position:center;
+  background-position:center -22vh;
   background-repeat:no-repeat;
   background-size:122% 122%;
-  opacity:.88;
+  opacity:0;
   will-change:transform,filter,opacity;
-  animation:themeLightningStrike calc(var(--theme-motion-duration) * .34) linear infinite;
+  animation:themeLightningStrike calc(var(--theme-motion-duration) * .26) cubic-bezier(.12,.72,.18,1) infinite;
 }
 body.theme-lightning-strike .app-root::after{
   background-image:
-    linear-gradient(118deg, transparent 0 43%, rgba(255,255,255,.72) 44%, rgba(96,165,250,.38) 45%, transparent 47%),
-    linear-gradient(64deg, transparent 0 52%, rgba(147,197,253,.38) 53%, transparent 55%),
+    linear-gradient(176deg, transparent 0 42%, rgba(255,255,255,.82) 43%, rgba(96,165,250,.42) 44%, transparent 46%),
+    linear-gradient(184deg, transparent 0 52%, rgba(147,197,253,.46) 53%, transparent 55%),
     var(--theme-bg-pattern-2) !important;
-  background-size:160% 160%,140% 140%,120% 120%;
+  background-size:120% 180%,110% 160%,120% 120%;
   will-change:background-position,opacity,filter;
-  animation:themeStormVoltage calc(var(--theme-motion-duration) * .36) linear infinite;
+  animation:themeStormVoltage calc(var(--theme-motion-duration) * .26) cubic-bezier(.12,.72,.18,1) infinite;
 }
 body.theme-wind-flow .app-root::before{
   background-size:145% 112%;
@@ -23249,8 +23300,20 @@ body.theme-confetti-pop .app-root::after{animation:themeConfettiGlow calc(var(--
 
 body.theme-aurora-rift .app-root::before{background-size:150% 130%;opacity:.9;animation:themeAuroraRift calc(var(--theme-motion-duration) * .78) ease-in-out infinite alternate;}
 body.theme-aurora-rift .app-root::after{animation:themeAuroraVeil calc(var(--theme-motion-duration) * .46) ease-in-out infinite alternate-reverse;}
-body.theme-neon-rain .app-root::before{background-size:920px 920px;opacity:.86;animation:themeNeonRain calc(var(--theme-motion-duration) * .42) linear infinite;}
-body.theme-neon-rain .app-root::after{animation:themeRainGlow calc(var(--theme-motion-duration) * .24) ease-in-out infinite alternate;}
+body.theme-neon-rain .app-root::before{
+  background-size:920px 920px;
+  background-position:0 -920px;
+  opacity:.86;
+  will-change:background-position,opacity,filter;
+  animation:themeNeonRain calc(var(--theme-motion-duration) * .24) linear infinite;
+}
+body.theme-neon-rain .app-root::after{
+  background-image:
+    linear-gradient(180deg, rgba(34,211,238,.12), transparent 28%),
+    var(--theme-bg-pattern-2) !important;
+  background-size:100% 160%,120% 120%;
+  animation:themeRainGlow calc(var(--theme-motion-duration) * .2) ease-in-out infinite;
+}
 body.theme-ember-dragon .app-root::before{background-size:138% 120%;opacity:.9;animation:themeEmberDragon calc(var(--theme-motion-duration) * .62) ease-in-out infinite alternate;}
 body.theme-ember-dragon .app-root::after{animation:themeEmberSparks calc(var(--theme-motion-duration) * .34) linear infinite;}
 body.theme-gravity-well .app-root::before{background-position:center;background-size:max(115vw,115vh) max(115vw,115vh);opacity:.88;transform-origin:center;animation:themeGravityWell calc(var(--theme-motion-duration) * 1.15) linear infinite;}
@@ -23462,15 +23525,24 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 }
 
 @keyframes themeLightningStrike{
-  0%{background-position:0 0;opacity:.46;filter:brightness(.9) saturate(1);transform:translate3d(-1%,0,0) scale(1.04);}
-  18%{opacity:.95;filter:brightness(1.75) saturate(1.28);transform:translate3d(1%,-1%,0) scale(1.08);}
-  22%{opacity:.58;filter:brightness(1.1) saturate(1.05);}
-  54%{opacity:.82;filter:brightness(1.45) saturate(1.2);transform:translate3d(-2%,1%,0) scale(1.1);}
-  58%{opacity:.5;filter:brightness(1);}
-  100%{background-position:180px -120px;opacity:.62;filter:brightness(1.2) saturate(1.12);transform:translate3d(2%,0,0) scale(1.07);}
+  0%{background-position:center -38vh;opacity:0;filter:brightness(.75) saturate(.95) blur(0);transform:translate3d(0,-20%,0) scale(1.02);}
+  9%{opacity:.18;filter:brightness(1.1) saturate(1.08) blur(0);transform:translate3d(0,-12%,0) scale(1.03);}
+  18%{background-position:center -8vh;opacity:1;filter:brightness(2.05) saturate(1.35) blur(0);transform:translate3d(0,-4%,0) scale(1.05);}
+  28%{background-position:center 12vh;opacity:.78;filter:brightness(1.55) saturate(1.18) blur(.2px);transform:translate3d(0,4%,0) scale(1.06);}
+  42%{background-position:center 32vh;opacity:.36;filter:brightness(1.12) saturate(1.06) blur(1px);transform:translate3d(0,14%,0) scale(1.07);}
+  56%{background-position:center 48vh;opacity:.08;filter:brightness(.92) saturate(.98) blur(2px);transform:translate3d(0,24%,0) scale(1.08);}
+  57%,100%{background-position:center -38vh;opacity:0;filter:brightness(.75) saturate(.95) blur(0);transform:translate3d(0,-20%,0) scale(1.02);}
 }
 @keyframes themeStormCloud{from{transform:translate3d(-3%,1%,0) scale(1.04);opacity:.38;}to{transform:translate3d(3%,-1%,0) scale(1.1);opacity:.72;}}
-@keyframes themeStormVoltage{0%{background-position:-28% 0,14% 20%,0 0;opacity:.28;filter:brightness(.9);}18%{opacity:.96;filter:brightness(1.8);}22%{opacity:.42;}54%{background-position:48% 26%,78% -18%,20px -40px;opacity:.88;filter:brightness(1.65);}58%{opacity:.36;}100%{background-position:120% 52%,140% -40%,80px -110px;opacity:.62;filter:brightness(1.15);}}
+@keyframes themeStormVoltage{
+  0%{background-position:50% -72%,50% -58%,center -22vh;opacity:0;filter:brightness(.8) blur(0);}
+  12%{background-position:50% -28%,50% -18%,center -12vh;opacity:.34;filter:brightness(1.15) blur(0);}
+  20%{background-position:50% 8%,50% 14%,center 0;opacity:1;filter:brightness(2.2) blur(0);}
+  31%{background-position:50% 42%,50% 48%,center 12vh;opacity:.66;filter:brightness(1.62) blur(.4px);}
+  46%{background-position:50% 76%,50% 84%,center 28vh;opacity:.26;filter:brightness(1.08) blur(1.4px);}
+  58%{background-position:50% 104%,50% 116%,center 40vh;opacity:.04;filter:brightness(.88) blur(2.6px);}
+  59%,100%{background-position:50% -72%,50% -58%,center -22vh;opacity:0;filter:brightness(.8) blur(0);}
+}
 @keyframes themeWindFlow{from{background-position:-180px 0;transform:skewX(-2deg) scale(1.04);}to{background-position:220px -40px;transform:skewX(2deg) scale(1.1);}}
 @keyframes themeWindGust{0%,100%{transform:translateX(-8%);opacity:.28;}50%{transform:translateX(8%);opacity:.76;}}
 @keyframes themeInkBloom{from{transform:translate3d(-3%,2%,0) scale(.98);filter:blur(1px);opacity:.68;}to{transform:translate3d(3%,-2%,0) scale(1.14);filter:blur(7px);opacity:.94;}}
@@ -23483,8 +23555,18 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 @keyframes themeConfettiGlow{from{opacity:.32;transform:scale(1.01);}to{opacity:.82;transform:scale(1.08);}}
 @keyframes themeAuroraRift{0%{background-position:-18vw 0;transform:translate3d(-3%,2%,0) skewX(-4deg) scale(1.03);filter:hue-rotate(0deg);}100%{background-position:20vw -8vh;transform:translate3d(3%,-2%,0) skewX(4deg) scale(1.08);filter:hue-rotate(24deg);}}
 @keyframes themeAuroraVeil{from{opacity:.34;transform:translate3d(-4%,0,0) scale(1.02);}to{opacity:.78;transform:translate3d(4%,-2%,0) scale(1.09);}}
-@keyframes themeNeonRain{from{background-position:0 -900px;transform:skewX(-5deg) scale(1.04);}to{background-position:120px 900px;transform:skewX(-1deg) scale(1.08);}}
-@keyframes themeRainGlow{from{opacity:.26;transform:scale(1);}to{opacity:.74;transform:scale(1.06);}}
+@keyframes themeNeonRain{
+  0%{background-position:0 -920px;opacity:.48;filter:brightness(.92) saturate(1.02);transform:translate3d(0,0,0) scale(1.04);}
+  12%{opacity:.88;filter:brightness(1.18) saturate(1.1);}
+  88%{opacity:.88;filter:brightness(1.16) saturate(1.12);}
+  99.5%{background-position:0 0;opacity:.5;filter:brightness(.94) saturate(1.04);transform:translate3d(0,0,0) scale(1.04);}
+  100%{background-position:0 -920px;opacity:.48;filter:brightness(.92) saturate(1.02);transform:translate3d(0,0,0) scale(1.04);}
+}
+@keyframes themeRainGlow{
+  0%,100%{background-position:center -24%,center;opacity:.28;transform:scale(1);}
+  45%{opacity:.68;transform:scale(1.03);}
+  99%{background-position:center 112%,center;opacity:.34;transform:scale(1.01);}
+}
 @keyframes themeEmberDragon{0%{background-position:-10vw 8vh;transform:rotate(-2deg) scale(1.03);filter:brightness(.9);}50%{filter:brightness(1.35) saturate(1.22);}100%{background-position:18vw -8vh;transform:rotate(3deg) scale(1.1);filter:brightness(1.05);}}
 @keyframes themeEmberSparks{from{background-position:0 120%;opacity:.28;}50%{opacity:.88;}to{background-position:160px -120%;opacity:.38;}}
 @keyframes themeGravityWell{from{transform:rotate(0deg) scale(1.08);filter:hue-rotate(0deg);}to{transform:rotate(360deg) scale(1.13);filter:hue-rotate(18deg);}}

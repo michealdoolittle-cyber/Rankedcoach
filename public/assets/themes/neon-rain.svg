@@ -1,13 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
-  <rect width="1200" height="800" fill="#020914"/>
-  <g stroke-linecap="round">
-    <path d="M90 -40 20 210" stroke="#22d3ee" stroke-width="8" opacity=".34"/>
-    <path d="M230 -80 130 310" stroke="#fb7185" stroke-width="6" opacity=".28"/>
-    <path d="M420 -30 320 350" stroke="#67e8f9" stroke-width="10" opacity=".24"/>
-    <path d="M640 -120 500 430" stroke="#22d3ee" stroke-width="7" opacity=".34"/>
-    <path d="M830 -70 690 390" stroke="#fb7185" stroke-width="9" opacity=".24"/>
-    <path d="M1040 -60 900 420" stroke="#a5f3fc" stroke-width="6" opacity=".3"/>
-    <path d="M1180 40 1050 560" stroke="#22d3ee" stroke-width="8" opacity=".24"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 920">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#020914"/>
+      <stop offset=".58" stop-color="#061323"/>
+      <stop offset="1" stop-color="#031827"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="920" height="920" fill="url(#sky)"/>
+  <g filter="url(#glow)" stroke-linecap="round">
+    <g stroke="#22d3ee" opacity=".42" stroke-width="4">
+      <path d="M42-96 24 78"/><path d="M132-42 114 146"/><path d="M228-126 210 72"/><path d="M348-64 330 118"/>
+      <path d="M462-116 444 90"/><path d="M574-34 556 154"/><path d="M698-136 680 70"/><path d="M820-58 802 136"/>
+      <path d="M74 204 56 390"/><path d="M194 162 176 340"/><path d="M318 238 300 440"/><path d="M438 178 420 364"/>
+      <path d="M548 228 530 426"/><path d="M672 152 654 332"/><path d="M790 214 772 402"/><path d="M884 174 866 360"/>
+      <path d="M118 520 100 704"/><path d="M254 462 236 652"/><path d="M382 548 364 746"/><path d="M508 494 490 680"/>
+      <path d="M626 542 608 732"/><path d="M742 482 724 668"/><path d="M862 552 844 744"/>
+    </g>
+    <g stroke="#fb7185" opacity=".28" stroke-width="3">
+      <path d="M88-16 74 110"/><path d="M284-84 270 54"/><path d="M512-58 498 88"/><path d="M754-24 740 112"/>
+      <path d="M156 300 142 440"/><path d="M392 286 378 428"/><path d="M618 314 604 454"/><path d="M842 284 828 422"/>
+      <path d="M36 684 22 828"/><path d="M318 706 304 858"/><path d="M574 662 560 812"/><path d="M804 708 790 852"/>
+    </g>
+    <g stroke="#a5f3fc" opacity=".24" stroke-width="2">
+      <path d="M18 90 6 202"/><path d="M178 28 166 146"/><path d="M410 48 398 172"/><path d="M644 20 632 140"/>
+      <path d="M902 54 890 176"/><path d="M248 382 236 512"/><path d="M486 374 474 496"/><path d="M716 390 704 520"/>
+      <path d="M166 760 154 902"/><path d="M446 746 434 902"/><path d="M694 768 682 902"/>
+    </g>
   </g>
-  <rect x="0" y="610" width="1200" height="190" fill="#22d3ee" opacity=".04"/>
+  <rect x="0" y="735" width="920" height="185" fill="#22d3ee" opacity=".035"/>
 </svg>

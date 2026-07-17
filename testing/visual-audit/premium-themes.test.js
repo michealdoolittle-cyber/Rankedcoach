@@ -40,6 +40,28 @@ const publicApp = fs.readFileSync(path.resolve(__dirname, "../../public/app.js")
 const publicCss = fs.readFileSync(path.resolve(__dirname, "../../public/app.css"), "utf8");
 const browserCatalog = fs.readFileSync(path.resolve(__dirname, "../../public/themes/premium-themes.js"), "utf8");
 
+function cssBlock(name) {
+  const marker = `@keyframes ${name}`;
+  const start = publicCss.indexOf(marker);
+  assert.notEqual(start, -1, `${name} keyframes are missing`);
+  const next = publicCss.indexOf("@keyframes ", start + marker.length);
+  return publicCss.slice(start, next === -1 ? publicCss.length : next);
+}
+
+const neonRainMotion = cssBlock("themeNeonRain");
+assert.match(neonRainMotion, /background-position:0 -920px/);
+assert.match(neonRainMotion, /background-position:0 0/);
+assert.doesNotMatch(neonRainMotion, /120px 900px|translate3d\([^0]/, "Neon Rain should fall vertically and reset, not drift sideways");
+
+const stormStrikeMotion = cssBlock("themeLightningStrike");
+const stormTrailMotion = cssBlock("themeStormVoltage");
+assert.match(stormStrikeMotion, /center -38vh/);
+assert.match(stormStrikeMotion, /center 48vh/);
+assert.match(stormStrikeMotion, /opacity:0/);
+assert.match(stormTrailMotion, /50% -72%/);
+assert.match(stormTrailMotion, /50% 104%/);
+assert.doesNotMatch(stormTrailMotion, /120% 52%|140% -40%/, "Storm Voltage should strike downward with a fading trail, not sweep sideways");
+
 for (const [id, motion, animation] of expected) {
   const theme = PREMIUM_THEMES.find(item => item.id === id);
   assert.ok(theme, `missing ${id}`);
@@ -165,7 +187,17 @@ async function runBrowserCheck() {
       assert.equal(Number.parseFloat(state.nav.beforeOpacity), 0, JSON.stringify(state.nav));
       await page.locator("#accountLoadingOverlay").waitFor({ state: "hidden", timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(350);
-      if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.locator("#dailyWarmupSkip").click();
+      if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) {
+        await page.locator("#dailyWarmupSkip").click({ force: true }).catch(() => {});
+        await page.locator("#dailyWarmupModal.active").waitFor({ state: "hidden", timeout: 1200 }).catch(async () => {
+          await page.locator("#dailyWarmupModal").evaluate(modal => {
+            modal.classList.remove("active", "is-opening", "is-closing");
+            modal.style.display = "none";
+            modal.hidden = true;
+            modal.setAttribute("aria-hidden", "true");
+          });
+        });
+      }
       if (index === 0) {
         const legacyNavIsolation = await page.evaluate(activeTheme => {
           const header = document.querySelector(".app-header");
@@ -208,12 +240,26 @@ async function runBrowserCheck() {
           dots: [...gallery.querySelectorAll("[data-theme-gallery-page]")].map(button => ({
             page: button.dataset.themeGalleryPage,
             selected: button.getAttribute("aria-selected"),
-            text: button.textContent.trim()
+            text: button.textContent.trim(),
+            background: getComputedStyle(button).backgroundImage,
+            boxShadow: getComputedStyle(button).boxShadow
           })),
-          visibleCards: [...gallery.querySelectorAll("[data-theme-card]")].map(card => card.dataset.themeCard)
+          visibleCards: [...gallery.querySelectorAll("[data-theme-card]")].map(card => card.dataset.themeCard),
+          activeCard: (() => {
+            const card = gallery.querySelector("[data-theme-card].is-active");
+            return card ? {
+              id: card.dataset.themeCard,
+              boxShadow: getComputedStyle(card).boxShadow,
+              badge: getComputedStyle(card, "::after").content
+            } : null;
+          })()
         }));
         assert.deepEqual(desktopPager.dots.map(dot => dot.page), ["dark", "light", "animated"], JSON.stringify(desktopPager));
         assert.equal(desktopPager.dots.find(dot => dot.page === "animated")?.selected, "true", JSON.stringify(desktopPager));
+        assert.match(desktopPager.dots.find(dot => dot.page === "animated")?.background || "", /linear-gradient/, JSON.stringify(desktopPager));
+        assert.match(desktopPager.dots.find(dot => dot.page === "animated")?.boxShadow || "", /rgb|color/, JSON.stringify(desktopPager));
+        assert.match(desktopPager.activeCard?.boxShadow || "", /rgb|color/, JSON.stringify(desktopPager));
+        assert.match(desktopPager.activeCard?.badge || "", /SELECTED/, JSON.stringify(desktopPager));
         assert.ok(desktopPager.visibleCards.includes("tactical-matrix") && desktopPager.visibleCards.includes("comet-trail"), JSON.stringify(desktopPager));
         await page.click('[data-theme-gallery-page="light"]');
         const lightPager = await page.locator("#editProfileThemeGallery").evaluate(gallery => ({

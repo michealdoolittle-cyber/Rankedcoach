@@ -112,7 +112,7 @@
     {
       id: "storm-voltage", label: "Storm Voltage", locked: true, subscriptionRequired: "premiumThemes",
       colors: { accent: "#60a5fa", accent2: "#f8fafc", card: "#071426", card2: "#10294a", text: "#f8fafc", muted: "#bfdbfe" },
-      signatureMotion: { name: "lightning-strike", durationMs: 12000, easing: "steps(1,end)" },
+      signatureMotion: { name: "lightning-strike", durationMs: 12000, easing: "downward-strike-trail" },
       emphasis: { strong: "branching lightning strikes", subtle: "electric blue storm depth" }
     },
     {
