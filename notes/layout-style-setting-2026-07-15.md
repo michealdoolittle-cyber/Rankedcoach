@@ -33,6 +33,14 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 
 **Likely root cause, worth confirming before round 6:** every rejected concept (including the 2 that used the shape-bevel technique) kept the card as a plain-ish rectangle and added a single small decorative accent (a corner icon, badge, ring, or edge marking) rather than transforming the whole tile. Laser Engraving was the one exception that treated the *entire card surface* with a texture instead of adding a corner accent — that may be the actual signal, not the Valorant-iconography theme itself. Don't re-run another "corner icon on a plain box" batch without checking this read with Michael first.
 
+**Confirmed via AskUserQuestion:** yes, whole-surface material/texture treatments are the right direction, not corner accents.
+
+**Round 6 (2026-07-17) — 10 whole-surface material concepts, `docs/design/layout-styles-v6-2026-07-17.html`, https://claude.ai/code/artifact/b0971eb6-699f-4b4f-b1ae-f67e8d44dba4. Approved: Carbon Weave (#1), Circuit Plate (#2), Topo Contour (#3), Frost Fracture (#6), Blueprint Grid (#8), Brushed Plate (#9), Hex Armor (#10) — 7 of 10. Rejected: Kevlar Weave (#4), Scanline Static (#5), Stitched Leather (#7).**
+
+**Architecture decision, confirmed by Michael (2026-07-17):** the Layout Style picker in Customize should split into **two separate sections — Textures and Shapes** — selectable independently and combinable (e.g. a shape silhouette from the shapes list *plus* a texture from the textures list at the same time), rather than one single mutually-exclusive "Layout Style" choice. This changes the data model from a single `layoutStyle` key to two independent keys (e.g. `layoutTexture` + `layoutShape`), each with its own gallery/tab in the Customize UI. Flag this to whoever writes the next implementation directive — this is a real change to the section 1 data model in `notes/layout-style-implementation-2026-07-16.md`, not just a visual add.
+
+**Still wants more of both** — round 7 in progress, covering additional textures and additional card shapes (a category not revisited since round 3/4).
+
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
 | # | Description | Verdict | Why |
