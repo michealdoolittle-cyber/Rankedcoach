@@ -17,23 +17,57 @@ const layoutStyles = requestedLayoutStyles.length
   : allLayoutStyles;
 const phaseTwoSurfaces = Object.freeze({
   home: [
-    ".weekly-focus-card", ".improvement-card"
+    ".loadout-card", ".compass-panel", ".rr-card", ".rr-chart-card",
+    ".weekly-focus-card", ".improvement-card", ".weekly-focus-confidence"
   ],
   stats: [
-    ".stats-trend-card", ".stats-breakdown-cardlet"
+    ".stats-summary-card", ".stats-performance-card", ".stats-breakdown-card",
+    ".stats-maps-card", ".stats-agents-card", ".stats-weapons-card",
+    ".stats-trend-tone", ".stats-map-out-badge"
   ],
   insights: [
-    ".insight-action-hero", ".insight-card", ".trend-signal-card"
+    ".insight-action-hero", ".insight-card", ".trend-content.open",
+    ".insight-tag", ".insight-meta-pill", ".insight-source", ".trend-signal-tone"
   ],
   logging: [
-    ".logging-hero"
+    ".logging-card", ".logging-feed-card", ".logging-hero",
+    ".logging-form > .logging-row > .logging-pill", "#logQuickMenu", "#logNotes", ".log-feed-footnote"
   ]
 });
 const phaseTwoLibraryStates = Object.freeze([
-  { id: "gallery", selectors: [".gamesense-hero"] },
-  { id: "map-detail", open: ["maps", "breeze"], selectors: [".gamesense-detail-head", ".gamesense-tip", ".gamesense-comp-card", ".gamesense-weapon-suggestion"] },
-  { id: "agent-detail", open: ["agents", "omen"], selectors: [".gamesense-agent-hero", ".gamesense-agent-fact-list article"] },
-  { id: "weapon-detail", open: ["weapons", "rifles"], weapon: "phantom", selectors: [".gamesense-weapon-panel", ".gamesense-weapon-guidance section"] }
+  { id: "gallery", selectors: [".gamesense-hero", ".gamesense-season-scope"] },
+  { id: "maps-gallery", open: ["maps", ""], selectors: [".gamesense-gallery-head"] },
+  {
+    id: "map-detail",
+    open: ["maps", "breeze"],
+    selectors: [".gamesense-detail-head", ".gamesense-patch", ".gamesense-tips-hub", ".gamesense-weapon-suggestions", ".gamesense-comp-card"],
+    excluded: [".gamesense-weapon-suggestion-grid"]
+  },
+  {
+    id: "agent-detail",
+    open: ["agents", "omen"],
+    selectors: [".gamesense-agent-hero", ".gamesense-patch", ".gamesense-selector-section", ".gamesense-map-fit"],
+    excluded: [
+      ".gamesense-agent-hero > div:nth-child(2) > section",
+      ".gamesense-agent-lore-history > div",
+      ".gamesense-selector-section > article",
+      ".gamesense-selector-section > article > dl",
+      ".gamesense-selector-section > article > .gamesense-fact-read",
+      ".gamesense-map-fit-grid",
+      ".gamesense-map-fit-item"
+    ]
+  },
+  {
+    id: "weapon-detail",
+    open: ["weapons", "rifles"],
+    weapon: "phantom",
+    selectors: [".gamesense-weapon-panel", ".gamesense-patch", ".gamesense-selector-section", ".gamesense-collection-archive"],
+    excluded: [
+      ".gamesense-selector-section > article",
+      ".gamesense-selector-section > article > dl",
+      ".gamesense-selector-section > article .gamesense-weapon-guidance section"
+    ]
+  }
 ]);
 const realContentExtremes = Object.freeze({
   home: {
@@ -85,11 +119,10 @@ const surfaceContentExtremes = Object.freeze({
     "#spinAgentBtn.small-btn": { short: "Spin", long: "Reroll Loadout" },
     "#compassDescriptionToggle.compass-description-toggle": { short: "Details", long: "Hide Coach Description" },
     ".graph-btn": { short: "Act", long: "Lifetime" },
-    "#timelineCycleBtn.timeline-cycle-btn": { short: "Act", long: "All Seasons" }
+    "#timelineCycleBtn.timeline-cycle-btn": { short: "Act", long: "All Seasons" },
+    ".weekly-focus-confidence": { short: "High", long: "Confidence: Medium" }
   },
   stats: {
-    ".stats-trend-card": { short: "Hold the angle.", long: "Your damage pressure stayed below the retained match window." },
-    ".stats-breakdown-cardlet": { short: "Rifle rounds.", long: "Rifle rounds remain the clearest repeatable strength in this match window." },
     ".stats-summary-card": { short: "Iron 1", long: "Ascendant 3" },
     ".stats-proof-card": { short: "Iron 1", long: "Ascendant 3" },
     ".stats-role-progress-card": { short: "Duelist", long: "Controller" },
@@ -100,13 +133,18 @@ const surfaceContentExtremes = Object.freeze({
     ".stats-weapons-card": { short: "Weapons", long: "Weapon Stats" },
     "button[data-gamesense-open]": { short: "Learn Maps", long: "Learn Weapons" },
     "#statsActMobileTrigger": { short: "V26 A1", long: "Season 2026 Act 3" },
-    ".stats-season-title": { short: "V26 A1", long: "Season 2026 Act 3" }
+    ".stats-season-title": { short: "V26 A1", long: "Season 2026 Act 3" },
+    ".stats-trend-tone": { short: "Watch", long: "Needs Work" },
+    ".stats-map-out-badge": { short: "Out", long: "Out-of-Season" }
   },
   insights: {
     ".insight-action-hero": { short: "Protect this read.", long: "Protect the clearest adjustment before your next ranked block." },
     ".insight-card": { short: "Hold the trade.", long: "Your retained rounds keep pointing back to the same late-fight choice." },
-    ".trend-signal-card": { short: "Map watch.", long: "This map remains the clearest repeated weakness in the retained window." },
-    ".insight-filter-btn": { short: "All", long: "Needs Work" }
+    ".insight-filter-btn": { short: "All", long: "Needs Work" },
+    ".insight-tag": { short: "Good", long: "Needs Work" },
+    ".insight-meta-pill": { short: "High", long: "Focus Category: Crosshair Discipline" },
+    ".insight-source": { short: "Riot", long: "Henrik Round History" },
+    ".trend-signal-tone": { short: "Watch", long: "Strength" }
   },
   logging: {
     "#loggingTrainingMenuBtn.logging-training-menu-btn": { short: "Training", long: "Aim Training" },
@@ -124,6 +162,7 @@ const surfaceContentExtremes = Object.freeze({
     ".gamesense-tips-tabs button": { short: "Tips", long: "Defense Tips" },
     ".gamesense-comp-role-tabs button": { short: "All", long: "Controller" },
     ".gamesense-collection-filters button": { short: "All", long: "Exclusive Edition" },
+    ".gamesense-patch": { short: "Patch 13.0", long: "Active Season | Patch 13.00" },
     ".gamesense-plant-preview-toggle": { short: "+", long: "−" }
   }
 });
@@ -281,10 +320,14 @@ async function restoreSurfaceVisibility(page) {
 
 async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
   await makeSurfaceVisible(page, selector);
-  const locator = page.locator(selector).first();
-  await locator.scrollIntoViewIfNeeded();
+  const locator = page.locator(`${selector}:visible`).first();
+  await locator.scrollIntoViewIfNeeded({ timeout: 5000 });
   const extremes = realContentExtremes[pageKey];
   await locator.evaluate((target, options) => {
+    if (options.frameOnly) {
+      globalThis.__layoutPhaseTwoTextRestore = { leaf: null, frameOnly: true };
+      return;
+    }
     const selectors = [
       ".card-sub", ".insight-preview", ".trend-signal-detail", ".logging-hero-text", ".logging-live-meta",
       ".stats-sub-text", ".stats-breakdown-detail", ".gamesense-entry-copy small", ".gamesense-note-block p",
@@ -325,20 +368,31 @@ async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
     globalThis.__layoutPhaseTwoTextRestore = {
       leaf,
       text: leaf.textContent,
+      value: leaf instanceof HTMLInputElement || leaf instanceof HTMLTextAreaElement ? leaf.value : null,
       fitSize: leaf.style.getPropertyValue("--tb-auto-fit-font-size"),
       fitAttribute: leaf.getAttribute("data-tb-auto-fit"),
       fitBase: leaf.dataset.tbAutoFitBaseFontSize
     };
-    leaf.textContent = nextContent;
-  }, { extremes, mode, surfaceExtremes: surfaceContentExtremes[pageKey]?.[selector] || null });
+    if (leaf instanceof HTMLInputElement || leaf instanceof HTMLTextAreaElement) leaf.value = nextContent;
+    else leaf.textContent = nextContent;
+  }, {
+    extremes,
+    mode,
+    frameOnly: selector === ".trend-content.open",
+    surfaceExtremes: surfaceContentExtremes[pageKey]?.[selector] || null
+  });
   await page.waitForTimeout(80);
   const metrics = await locator.evaluate(target => {
     const restore = globalThis.__layoutPhaseTwoTextRestore;
     const leaf = restore?.leaf || target;
+    const frameOnly = Boolean(restore?.frameOnly);
     const targetRect = target.getBoundingClientRect();
     const leafRect = leaf.getBoundingClientRect();
     const computed = getComputedStyle(target);
     const leafComputed = getComputedStyle(leaf);
+    const formControl = leaf instanceof HTMLInputElement || leaf instanceof HTMLTextAreaElement || leaf instanceof HTMLSelectElement;
+    const clipsLeafX = ["hidden", "clip", "scroll", "auto"].includes(leafComputed.overflowX);
+    const clipsLeafY = ["hidden", "clip", "scroll", "auto"].includes(leafComputed.overflowY);
     const ancestors = [];
     let ancestor = target.parentElement;
     while (ancestor instanceof HTMLElement && ancestors.length < 8) {
@@ -359,13 +413,13 @@ async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
     return {
       target: targetRect.toJSON(),
       leaf: leafRect.toJSON(),
-      textOverflowX: leaf.scrollWidth > leaf.clientWidth + 2,
-      textOverflowY: leaf.scrollHeight > leaf.clientHeight + 2,
+      textOverflowX: !frameOnly && !formControl && clipsLeafX && leaf.scrollWidth > leaf.clientWidth + 2,
+      textOverflowY: !frameOnly && !formControl && clipsLeafY && leaf.scrollHeight > leaf.clientHeight + 2,
       leafScrollWidth: leaf.scrollWidth,
       leafClientWidth: leaf.clientWidth,
       leafScrollHeight: leaf.scrollHeight,
       leafClientHeight: leaf.clientHeight,
-      outsideTarget: leafRect.left < targetRect.left - 1 || leafRect.right > targetRect.right + 1 || leafRect.top < targetRect.top - 1 || leafRect.bottom > targetRect.bottom + 1,
+      outsideTarget: !frameOnly && (leafRect.left < targetRect.left - 1 || leafRect.right > targetRect.right + 1 || leafRect.top < targetRect.top - 1 || leafRect.bottom > targetRect.bottom + 1),
       clip: computed.clipPath,
       borderWidth: computed.borderTopWidth,
       background: computed.backgroundImage || computed.backgroundColor,
@@ -389,8 +443,14 @@ async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
   }
   await locator.evaluate(() => {
     const restore = globalThis.__layoutPhaseTwoTextRestore;
-    if (!restore?.leaf) return;
+    if (!restore?.leaf) {
+      globalThis.__layoutPhaseTwoTextRestore = null;
+      return;
+    }
     restore.leaf.textContent = restore.text;
+    if (restore.value != null && (restore.leaf instanceof HTMLInputElement || restore.leaf instanceof HTMLTextAreaElement)) {
+      restore.leaf.value = restore.value;
+    }
     if (restore.fitSize) restore.leaf.style.setProperty("--tb-auto-fit-font-size", restore.fitSize);
     else restore.leaf.style.removeProperty("--tb-auto-fit-font-size");
     if (restore.fitAttribute == null) restore.leaf.removeAttribute("data-tb-auto-fit");
@@ -406,9 +466,109 @@ async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
 async function captureSurfaceSet(page, pageKey, selectors, style, tiles) {
   for (const selector of selectors) {
     for (const mode of ["short", "long"]) {
-      tiles.push(await captureSurfaceExtreme(page, pageKey, selector, mode, style));
+      try {
+        tiles.push(await captureSurfaceExtreme(page, pageKey, selector, mode, style));
+      } catch (error) {
+        throw new Error(`${style}/${pageKey}/${selector}/${mode}: ${error.message}`);
+      }
     }
   }
+}
+
+async function getLayoutStyleSignatures(page, selectors) {
+  return page.evaluate(selectorList => selectorList.map(selector => {
+    const element = document.querySelector(selector);
+    if (!(element instanceof HTMLElement)) return { selector, missing: true };
+    const computed = getComputedStyle(element);
+    return {
+      selector,
+      clipPath: computed.clipPath,
+      borderTop: `${computed.borderTopWidth}|${computed.borderTopStyle}|${computed.borderTopColor}`,
+      borderLeft: `${computed.borderLeftWidth}|${computed.borderLeftStyle}|${computed.borderLeftColor}`,
+      background: `${computed.backgroundImage}|${computed.backgroundColor}`,
+      boxShadow: computed.boxShadow,
+      padding: computed.padding
+    };
+  }), selectors);
+}
+
+async function assertLayoutStyleExclusions(page, selectors, style) {
+  if (!selectors.length) return;
+  const missing = await page.evaluate(selectorList => selectorList.filter(selector => !document.querySelector(selector)), selectors);
+  assert.deepEqual(missing, [], `${style} missing exclusion fixtures: ${missing.join(", ")}`);
+  await page.evaluate(() => { delete document.body.dataset.layoutStyle; });
+  await page.waitForTimeout(80);
+  const nativeSignatures = await getLayoutStyleSignatures(page, selectors);
+  await page.evaluate(nextStyle => { document.body.dataset.layoutStyle = nextStyle; }, style);
+  await page.waitForTimeout(80);
+  const styledSignatures = await getLayoutStyleSignatures(page, selectors);
+  assert.deepEqual(styledSignatures, nativeSignatures, `${style} changed an explicitly excluded inner surface`);
+}
+
+async function assertTagSemanticColors(page, selectors, style) {
+  const existing = await page.evaluate(selectorList => selectorList.filter(selector => document.querySelector(selector)), selectors);
+  assert.ok(existing.length > 0, `${style} did not render any expected semantic tags`);
+  await page.evaluate(() => { delete document.body.dataset.layoutStyle; });
+  await page.waitForTimeout(50);
+  const nativeColors = await page.evaluate(selectorList => selectorList.map(selector => ({
+    selector,
+    colors: [...document.querySelectorAll(selector)].slice(0, 6).map(element => getComputedStyle(element).color)
+  })), existing);
+  await page.evaluate(nextStyle => { document.body.dataset.layoutStyle = nextStyle; }, style);
+  await page.waitForTimeout(50);
+  const styledColors = await page.evaluate(selectorList => selectorList.map(selector => ({
+    selector,
+    colors: [...document.querySelectorAll(selector)].slice(0, 6).map(element => getComputedStyle(element).color)
+  })), existing);
+  assert.deepEqual(styledColors, nativeColors, `${style} replaced semantic tag colors`);
+}
+
+async function ensureLayoutTagFixtures(page, pageKey) {
+  await page.evaluate(key => {
+    const definitions = {
+      home: [
+        { selector: ".weekly-focus-confidence", className: "weekly-focus-confidence confidence-high", text: "Confidence: High" }
+      ],
+      stats: [
+        { selector: ".stats-trend-tone", className: "stats-trend-tone", text: "Watch", parentClass: "stats-trend-card stats-trend-warn" },
+        { selector: ".stats-map-out-badge", className: "stats-map-out-badge", text: "Out-of-Season" }
+      ],
+      insights: [
+        { selector: ".insight-tag", className: "insight-tag", text: "GOOD", parentClass: "insight-card insight-good" },
+        { selector: ".insight-meta-pill", className: "insight-meta-pill tone-warn", text: "Confidence: High" },
+        { selector: ".insight-source", className: "insight-source", text: "Henrik Round History" },
+        { selector: ".trend-signal-tone", className: "trend-signal-tone", text: "Watch", parentClass: "trend-signal-card tone-warn" }
+      ]
+    };
+    const missing = (definitions[key] || []).filter(definition => ![...document.querySelectorAll(definition.selector)].some(element => {
+      const rect = element.getBoundingClientRect();
+      const computed = getComputedStyle(element);
+      return rect.width > 2 && rect.height > 2 && computed.display !== "none" && computed.visibility !== "hidden" && Number.parseFloat(computed.opacity || "1") > 0;
+    }));
+    if (!missing.length) return;
+    const pageElement = document.getElementById(`page-${key}`);
+    if (!pageElement) return;
+    let host = pageElement.querySelector(`[data-layout-tag-fixtures="${key}"]`);
+    if (!host) {
+      host = document.createElement("div");
+      host.dataset.layoutTagFixtures = key;
+      host.style.cssText = "position:fixed;left:24px;top:110px;z-index:9998;display:flex;align-items:center;gap:10px;padding:8px;background:var(--card);";
+      pageElement.appendChild(host);
+    }
+    missing.forEach(definition => {
+      const tag = document.createElement("span");
+      tag.className = definition.className;
+      tag.textContent = definition.text;
+      if (definition.parentClass) {
+        const parent = document.createElement("div");
+        parent.className = definition.parentClass;
+        parent.appendChild(tag);
+        host.appendChild(parent);
+      } else {
+        host.appendChild(tag);
+      }
+    });
+  }, pageKey);
 }
 
 async function assertStatsTrendTextVisible(page, style) {
@@ -469,24 +629,50 @@ async function runPhaseTwoCoverage(page, browser) {
     await setCoverageLayoutStyle(page, style);
     await setCoverageTheme(page, "default");
     await activateCoveragePage(page, "home");
-    const defaultSignature = await page.locator(".weekly-focus-card").evaluate(card => {
-      const computed = getComputedStyle(card);
+    await ensureLayoutTagFixtures(page, "home");
+    const defaultSignature = await page.evaluate(() => [".weekly-focus-card", ".weekly-focus-confidence"].map(selector => {
+      const computed = getComputedStyle(document.querySelector(selector));
       return `${computed.backgroundImage}|${computed.backgroundColor}|${computed.borderTopColor}`;
-    });
+    }).join("||"));
     await setCoverageTheme(page, "omen");
-    const omenSignature = await page.locator(".weekly-focus-card").evaluate(card => {
-      const computed = getComputedStyle(card);
+    const omenSignature = await page.evaluate(() => [".weekly-focus-card", ".weekly-focus-confidence"].map(selector => {
+      const computed = getComputedStyle(document.querySelector(selector));
       return `${computed.backgroundImage}|${computed.backgroundColor}|${computed.borderTopColor}`;
-    });
+    }).join("||"));
     assert.notEqual(omenSignature, defaultSignature, `${style} did not follow the active theme variables`);
     themeColorSignatures.push({ style, defaultSignature, omenSignature });
     await setCoverageTheme(page, "default");
 
+    await assertTagSemanticColors(page, [".weekly-focus-confidence"], style);
     await captureSurfaceSet(page, "home", phaseTwoSurfaces.home, style, tiles);
     await activateCoveragePage(page, "stats");
+    await ensureLayoutTagFixtures(page, "stats");
+    await assertLayoutStyleExclusions(page, [
+      "#statsPerformanceChart",
+      "#statsPerformanceChart .stats-trend-card",
+      "#statsBreakdown",
+      "#statsBreakdown .stats-breakdown-cardlet"
+    ], style);
+    await assertTagSemanticColors(page, [".stats-trend-tone", ".stats-map-out-badge"], style);
     await assertStatsTrendTextVisible(page, style);
     await captureSurfaceSet(page, "stats", phaseTwoSurfaces.stats, style, tiles);
     await activateCoveragePage(page, "insights");
+    await ensureLayoutTagFixtures(page, "insights");
+    if (!await page.locator(".insight-source").count()) {
+      await page.locator(".insight-card").first().click();
+      await page.waitForTimeout(100);
+    }
+    if (!await page.locator(".trend-content.open").count()) {
+      await page.locator(".insight-trend-row").first().click();
+      await page.locator(".trend-content.open").first().waitFor({ state: "attached", timeout: 5000 });
+    }
+    await assertLayoutStyleExclusions(page, [
+      ".insight-focus-detail",
+      "#insightsList",
+      ".insight-trend-row",
+      ".trend-signal-card"
+    ], style);
+    await assertTagSemanticColors(page, [".insight-tag", ".insight-meta-pill", ".insight-source", ".trend-signal-tone"], style);
     await captureSurfaceSet(page, "insights", phaseTwoSurfaces.insights, style, tiles);
     await activateCoveragePage(page, "logging");
     await captureSurfaceSet(page, "logging", phaseTwoSurfaces.logging, style, tiles);
@@ -512,6 +698,10 @@ async function runPhaseTwoCoverage(page, browser) {
         await preview.waitFor({ state: "visible", timeout: 10000 });
         await preview.click();
         await page.locator(".gamesense-skin-preview-card").waitFor({ state: "visible", timeout: 10000 });
+      }
+      if (state.excluded) await assertLayoutStyleExclusions(page, state.excluded, style);
+      if (await page.locator(".gamesense-patch").count()) {
+        await assertTagSemanticColors(page, [".gamesense-patch"], style);
       }
       await captureSurfaceSet(page, "library", state.selectors, style, tiles);
       if (state.skinPreview) {
@@ -577,6 +767,7 @@ async function run() {
     assert.equal(await page.locator(".app-header").getAttribute("data-profile-banner"), "rc-redline");
     const defaultFocus = await page.locator(".weekly-focus-card").evaluate(card => ({ clip: getComputedStyle(card).clipPath, font: getComputedStyle(card.querySelector(".card-title")).fontFamily }));
     const defaultCopyFont = await page.locator(".weekly-focus-card .card-sub").evaluate(copy => getComputedStyle(copy).fontFamily);
+    const defaultTagPixels = await page.locator(".weekly-focus-confidence").first().screenshot();
     assert.equal(defaultFocus.clip, "none");
 
     await page.click("#profileDropdownToggle");
@@ -611,6 +802,12 @@ async function run() {
     await page.waitForTimeout(250);
     await page.click('[data-profile-tab="layoutStyle"]');
     assert.equal(await page.locator("[data-layout-style-card]").count(), 11);
+    await page.click('[data-layout-style-card="default"]');
+    assert.equal(await page.locator("body").getAttribute("data-layout-style"), null);
+    await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = "hidden"; });
+    const defaultTagPixelsAfter = await page.locator(".weekly-focus-confidence").first().screenshot();
+    await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = ""; });
+    assert.equal(defaultTagPixelsAfter.equals(defaultTagPixels), true, "Default Layout changed tag pixels");
     const excludedBefore = await page.evaluate(() => ({
       navClip: getComputedStyle(document.querySelector(".app-header")).clipPath,
       navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
@@ -622,9 +819,6 @@ async function run() {
       radarBackground: getComputedStyle(document.querySelector("#compassSvg")).backgroundImage,
       meterClip: getComputedStyle(document.querySelector(".compass-bar-track")).clipPath,
       meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage,
-      chartCardClip: getComputedStyle(document.querySelector(".rr-chart-card")).clipPath,
-      chartCardBackground: getComputedStyle(document.querySelector(".rr-chart-card")).backgroundImage,
-      chartCardBorder: getComputedStyle(document.querySelector(".rr-chart-card")).border,
       compactControls: [
         ".role-filter-btn",
         "#spinAgentBtn.small-btn",
@@ -665,9 +859,6 @@ async function run() {
         radarBackground: getComputedStyle(document.querySelector("#compassSvg")).backgroundImage,
         meterClip: getComputedStyle(document.querySelector(".compass-bar-track")).clipPath,
         meterBackground: getComputedStyle(document.querySelector(".compass-bar-track")).backgroundImage,
-        chartCardClip: getComputedStyle(document.querySelector(".rr-chart-card")).clipPath,
-        chartCardBackground: getComputedStyle(document.querySelector(".rr-chart-card")).backgroundImage,
-        chartCardBorder: getComputedStyle(document.querySelector(".rr-chart-card")).border,
         compactControls: [
           ".role-filter-btn",
           "#spinAgentBtn.small-btn",

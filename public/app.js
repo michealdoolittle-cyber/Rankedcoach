@@ -36906,12 +36906,22 @@ function applyThemeBuilderRuntimeStyles() {
 
 const THEME_BUILDER_AUTO_FIT_EXCLUDED_TAGS = new Set(["BUTTON", "INPUT", "TEXTAREA", "SELECT", "OPTION"]);
 const LAYOUT_STYLE_AUTO_FIT_PAGE_IDS = new Set(["page-home", "page-stats", "page-insights", "page-logging", "page-library"]);
+const LAYOUT_STYLE_AUTO_FIT_EXCLUDED_SELECTOR = [
+  "#statsPerformanceChart",
+  "#statsBreakdown",
+  "#page-insights .insight-focus-detail",
+  "#page-insights .insight-trend-row",
+  "#page-insights .trend-signal-card",
+  "#page-library .gamesense-agent-hero > div:nth-child(2) > section",
+  "#page-library .gamesense-selector-section > article",
+  "#page-library .gamesense-map-fit-grid"
+].join(",");
 const LAYOUT_STYLE_AUTO_FIT_TEXT_SELECTORS = [
   "#page-home :is(.loadout-card,.compass-panel,.compass-main,.compass-header,.compass-score-card,.rr-card,.impact-card,.rr-chart-card,.weekly-focus-card,.improvement-card) :is(.card-title,.card-sub,.compass-title,.compass-profile-title,.compass-profile-kicker,.timeline-title,.timeline-sub,strong,p,small,span)",
-  "#page-stats :is(.stats-summary-card,.stats-proof-card,.stats-role-progress-card,.stats-performance-card,.stats-breakdown-card,.stats-breakdown-cardlet,.stats-trend-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card) :is(.stats-season-title,strong,p,small,span)",
-  "#page-insights :is(.insights-action-card,.insights-top-card,.insights-trends-card,.insight-action-hero,.insight-focus-detail,.insight-card,.insight-trend-row,.trend-signal-card) :is(.insight-action-kicker,.insight-title,.insight-preview,.trend-signal-title,.trend-signal-detail,strong,p,small,span)",
-  "#page-logging :is(.logging-card,.logging-feed-card,.manual-match-panel,.logging-hero,.logging-live-card,.log-entry) :is(.logging-hero-title,.logging-hero-text,.logging-live-focus,.logging-live-meta,strong,p,small,span)",
-  "#page-library :is(.gamesense-hero,.gamesense-topic-card,.gamesense-entry-card,.gamesense-map-entry-card,.gamesense-agent-entry-card,.gamesense-weapon-entry-card,.gamesense-tactical-card,.gamesense-agent-hero,.gamesense-weapon-panel,.gamesense-collection-card,.gamesense-detail-head,.gamesense-tip,.gamesense-comp-card,.gamesense-comp-option,.gamesense-comp-agent-read,.gamesense-comp-pick-explorer,.gamesense-comp-pick-row,.gamesense-weapon-suggestion,.gamesense-note-block,.gamesense-fact-panel,.gamesense-map-fit,.gamesense-map-fit-item,.gamesense-lineups) :is(h1,h2,h3,h4,strong,p,small,span)",
+  "#page-stats :is(.stats-summary-card,.stats-proof-card,.stats-role-progress-card,.stats-performance-card,.stats-breakdown-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card) :is(.stats-season-title,strong,p,small,span)",
+  "#page-insights :is(.insights-action-card,.insights-top-card,.insights-trends-card,.insight-action-hero,.insight-card,.trend-content.open) :is(.insight-action-kicker,.insight-title,.insight-preview,strong,p,small,span)",
+  "#page-logging :is(.logging-card,.logging-feed-card,.manual-match-panel,.logging-hero,.logging-live-card,.log-entry,.logging-pill,.logging-quick-menu,.logging-notes,.log-feed-footnote) :is(.logging-hero-title,.logging-hero-text,.logging-live-focus,.logging-live-meta,strong,p,small,span)",
+  "#page-library :is(.gamesense-season-scope,.gamesense-gallery-head,.gamesense-tips-hub,.gamesense-weapon-suggestions,.gamesense-selector-section,.gamesense-collection-archive,.gamesense-hero,.gamesense-topic-card,.gamesense-entry-card,.gamesense-map-entry-card,.gamesense-agent-entry-card,.gamesense-weapon-entry-card,.gamesense-tactical-card,.gamesense-agent-hero,.gamesense-weapon-panel,.gamesense-collection-card,.gamesense-detail-head,.gamesense-tip,.gamesense-comp-card,.gamesense-comp-option,.gamesense-comp-agent-read,.gamesense-comp-pick-explorer,.gamesense-comp-pick-row,.gamesense-weapon-suggestion,.gamesense-map-fit,.gamesense-lineups) :is(h1,h2,h3,h4,strong,p,small,span)",
   ".gamesense-skin-preview-card :is(h1,h2,h3,h4,strong,p,small,span)"
 ];
 const THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS = Array.from(new Set([
@@ -37032,6 +37042,7 @@ function isThemeBuilderAutoFitCandidate(element) {
     if (!owningPage.classList.contains("active")) return false;
     if (isLayoutStyleAutoFitActive()) {
       if (!LAYOUT_STYLE_AUTO_FIT_PAGE_IDS.has(owningPage.id)) return false;
+      if (element.closest(LAYOUT_STYLE_AUTO_FIT_EXCLUDED_SELECTOR)) return false;
     } else if (owningPage.id !== "page-home") {
       return false;
     }

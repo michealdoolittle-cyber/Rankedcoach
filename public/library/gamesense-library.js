@@ -1451,7 +1451,6 @@
     skinPreviewTouchActivation = trigger && event.touches?.length === 1 && touch
       ? {
           trigger,
-          openRequested: Boolean(event.target.closest?.("[data-gamesense-collection-open]")),
           identifier: touch.identifier,
           x: touch.clientX,
           y: touch.clientY,
@@ -1474,7 +1473,7 @@
     if (distance > 16 || elapsed > 800 || !endedInside) return;
     event.preventDefault();
     event.stopPropagation();
-    if (activation.openRequested && activation.trigger.classList.contains("is-selected")) {
+    if (activation.trigger.classList.contains("is-selected")) {
       openSkinPreview(activation.trigger);
       return;
     }
@@ -1576,12 +1575,11 @@
       selectAbility(ability);
       return;
     }
-    const collectionOpen = event.target.closest?.("[data-gamesense-collection-open]");
     const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
     if (collectionPreview) {
       event.preventDefault();
       event.stopPropagation();
-      if (!collectionOpen && usesTwoStepCollectionPreview()) {
+      if (usesTwoStepCollectionPreview() && !collectionPreview.classList.contains("is-selected")) {
         selectCollectionPreview(collectionPreview);
         return;
       }
@@ -1634,11 +1632,10 @@
       closeSkinPreview();
       return;
     }
-    const collectionOpen = event.target.closest?.("[data-gamesense-collection-open]");
     const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
-    if (!collectionOpen && collectionPreview && ["Enter", " "].includes(event.key)) {
+    if (collectionPreview && ["Enter", " "].includes(event.key)) {
       event.preventDefault();
-      if (usesTwoStepCollectionPreview()) {
+      if (usesTwoStepCollectionPreview() && !collectionPreview.classList.contains("is-selected")) {
         selectCollectionPreview(collectionPreview);
       } else {
         openSkinPreview(collectionPreview);

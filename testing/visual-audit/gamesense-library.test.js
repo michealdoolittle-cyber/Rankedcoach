@@ -1333,6 +1333,23 @@ async function run() {
       return { gap: label.left - icon.right };
     });
     assert.ok(mobileAllFilterSpacing.gap >= 8, JSON.stringify(mobileAllFilterSpacing));
+    const mobileBodyTapCard = mobile.locator(".gamesense-collection-card[data-gamesense-collection-preview]").nth(1);
+    await touchWithNaturalDrift(mobile, mobileBodyTapCard);
+    assert.equal(await mobileBodyTapCard.evaluate(card => card.classList.contains("is-selected")), true);
+    assert.equal(await mobile.locator(".gamesense-skin-preview-overlay").count(), 0);
+    await touchWithNaturalDrift(mobile, mobileBodyTapCard);
+    await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    await mobile.mouse.click(2, 2);
+    await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
+    const mobileKeyboardCard = mobile.locator(".gamesense-collection-card[data-gamesense-collection-preview]").nth(2);
+    await mobileKeyboardCard.focus();
+    await mobileKeyboardCard.press("Enter");
+    assert.equal(await mobileKeyboardCard.evaluate(card => card.classList.contains("is-selected")), true);
+    assert.equal(await mobile.locator(".gamesense-skin-preview-overlay").count(), 0);
+    await mobileKeyboardCard.press("Enter");
+    await mobile.locator(".gamesense-skin-preview-overlay.is-open").waitFor({ state: "visible" });
+    await mobile.mouse.click(2, 2);
+    await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     const firstMobileCollectionCard = mobile.locator(".gamesense-collection-card[data-gamesense-collection-preview]").first();
     await firstMobileCollectionCard.screenshot({ path: path.join(__dirname, "tmp", "gamesense-collection-card-mobile.png") });
     const mobileCollectionGeometry = await firstMobileCollectionCard.evaluate(card => {
