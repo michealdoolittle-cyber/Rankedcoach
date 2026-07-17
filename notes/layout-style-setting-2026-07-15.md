@@ -52,6 +52,12 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 **Running approved textures (12 total):** Carbon Weave, Circuit Plate, Topo Contour, Frost Fracture, Blueprint Grid, Brushed Plate, Hex Armor, Chain Mesh, Thermal Vision, Woven Cable, Rust Patina, Frosted Glass.
 **Running approved shapes (12 total, unchanged this round):** Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate.
 
+**Round 9 (2026-07-17) — 6 hand-plotted irregular shapes, `docs/design/layout-styles-v9-2026-07-17.html`, https://claude.ai/code/artifact/0a793c86-3523-4f4d-b09a-6e164a8bc755. Only Battle-Worn Plate (#1) approved — Torn Banner, Cracked Tablet, Riveted Seam Plate, Shattering Edge Panel, Frayed Patch all rejected.**
+
+**Direction for round 10, per Michael: "no real thematics like we spoke before... I am looking for valorant character, or weapon skin bundle inspired."** Keep the hand-plotted/irregular technique that got Battle-Worn Plate approved, but theme each shape around a specific, recognizable Valorant skin bundle or agent identity (Prime, Reaver, Elderflame, Glitchpop, Oni, Singularity, or an agent's signature motif) rather than a generic material-damage concept.
+
+**Running approved shapes (13 total):** Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate, Battle-Worn Plate.
+
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
 | # | Description | Verdict | Why |
