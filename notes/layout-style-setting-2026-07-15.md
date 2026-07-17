@@ -66,7 +66,13 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 
 **The actual technique, worth remembering for any future Layout Style work:** it's not one clipped shape with a border — it's a **two-layer rim+face pairing**. `.card::before` is an inner irregular polygon (the card's dark "face," layered gradients for depth). `.card::after` is a separate, larger/offset irregular polygon behind/around it (`inset:-4px -8px`, lighter metallic gradient, `filter:drop-shadow`, pulsing glow animation) acting as a beveled rim. The rim peeking out around the face is what reads as a real frame instead of a flat cutout.
 
-**Round 11 (2026-07-17) — 5 concepts built directly on this rim+face technique, recolored to the live theme tokens (no hardcoded Reaver purple/gold carried over): Gothic Rim, Steel Rivet Frame, Prism Rim, Runic Band Frame (uses the real runic-strip SVG, recolored), Hazard Rim.** `docs/design/layout-styles-v11-2026-07-17.html`, https://claude.ai/code/artifact/9360616a-77d6-4870-a3e6-77b8ef826ce2. Awaiting Michael's verdict.
+**Round 11 (2026-07-17) — 5 concepts built directly on this rim+face technique, recolored to the live theme tokens (no hardcoded Reaver purple/gold carried over): Gothic Rim, Steel Rivet Frame, Prism Rim, Runic Band Frame (uses the real runic-strip SVG, recolored), Hazard Rim.** `docs/design/layout-styles-v11-2026-07-17.html`, https://claude.ai/code/artifact/9360616a-77d6-4870-a3e6-77b8ef826ce2. **Approved: Steel Rivet Frame (#2), Prism Rim (#3), Hazard Rim (#5).** Rejected: Gothic Rim, Runic Band Frame.
+
+**FINAL approved shapes (16 total):** Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate, Battle-Worn Plate, Steel Rivet Frame, Prism Rim, Hazard Rim.
+**FINAL approved textures (12 total):** Carbon Weave, Circuit Plate, Topo Contour, Frost Fracture, Blueprint Grid, Brushed Plate, Hex Armor, Chain Mesh, Thermal Vision, Woven Cable, Rust Patina, Frosted Glass.
+**FINAL approved fonts (4 total):** Orbitron, Silkscreen, IBM Plex Mono, Press Start 2P.
+
+**Consolidated implementation directive written:** `notes/layout-style-textures-shapes-final-directive-2026-07-17.md` — covers the Textures/Shapes data-model split and the 6 new shapes (2 simple, 1 hand-crafted, 3 rim+face) plus 12 textures not yet built.
 
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
