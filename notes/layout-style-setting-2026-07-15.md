@@ -58,6 +58,10 @@ Michael's feedback on both round-2 sets: **too safe, go bolder.** Constraint giv
 
 **Running approved shapes (13 total):** Honeycomb, Chevron Scan, Aperture Cut, Scope Vignette, Hazard Edge, Diamond Facet, Blade Wedge, Ribbon Banner, Monolith Slab, Pixel Dialogue, Spearhead, Cargo Crate, Battle-Worn Plate.
 
+**Round 10 (2026-07-17) — 6 Valorant bundle-themed shapes (Prime, Reaver, Elderflame, Glitchpop, Oni, Sovereign), `docs/design/layout-styles-v10-2026-07-17.html`, https://claude.ai/code/artifact/1859e383-fec5-4c18-a102-665b78759f10. Michael's verdict: "worst renditions yet." All 6 rejected.**
+
+**New direction, per Michael:** stop inventing new shapes from scratch — he says he built border overlays for text boxes in the past, and there may be existing Ion and Reaver-themed examples already in the app's files, possibly gated/unused ("locked away"). Round 11 starts with a codebase search for these existing assets before designing anything new, using whatever is found as the actual reference/inspiration rather than reinventing.
+
 **AI-generated frame asset review log (2026-07-16) — Michael is now generating finished frame art via OpenAI image generation, separate from the hand-coded CSS/SVG track above. Tracking verdicts here as they come in, for the eventual directive.**
 
 | # | Description | Verdict | Why |
