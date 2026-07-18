@@ -69,6 +69,10 @@ export function getPatchDescriptor(payload = {}) {
   return Object.freeze({ branch, version: String(payload.version || ""), label, slug, notesUrl: `${RIOT_NEWS_ROOT}/valorant-patch-notes-${slug}/` });
 }
 
+function unwrapValorantApiData(payload = {}) {
+  return payload?.data && typeof payload.data === "object" ? payload.data : payload;
+}
+
 function stripHtml(value = "") {
   return decodeHtml(String(value).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "))
     .replace(/\s+/g, " ")
@@ -244,7 +248,7 @@ async function readSuppressedVideoIds(kv) {
 async function getCurrentPatch(env) {
   const cached = await env.CONTENT_AUTOMATION?.get?.("patch:last", "json");
   if (cached?.label) return cached;
-  return getPatchDescriptor(await fetchJson(VERSION_URL));
+  return getPatchDescriptor(unwrapValorantApiData(await fetchJson(VERSION_URL)));
 }
 
 async function notifyReview(env, message) {
@@ -260,7 +264,7 @@ async function notifyReview(env, message) {
 export async function runPatchContentAutomation(env = {}) {
   const kv = env.CONTENT_AUTOMATION;
   if (!kv) throw new Error("CONTENT_AUTOMATION KV is not configured.");
-  const current = getPatchDescriptor(await fetchJson(VERSION_URL));
+  const current = getPatchDescriptor(unwrapValorantApiData(await fetchJson(VERSION_URL)));
   const previous = await kv.get("patch:last", "json");
   if (previous?.branch === current.branch && previous?.version === current.version) {
     return Object.freeze({ changed: false, patch: current, affected: [] });
