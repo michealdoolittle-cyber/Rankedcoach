@@ -8,6 +8,8 @@
   let activeSkinVideoIndex = 0;
   let skinPreviewTouchActivation = null;
   let activeLibraryTransition = null;
+  let collectionArchiveRenderToken = 0;
+  const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
@@ -264,7 +266,7 @@
   function renderAgentCard(item, index) {
     const mapSummary = Array.isArray(item.maps) && item.maps.length ? ` | ${item.maps.join(" / ")}` : "";
     const nameLength = String(item.label || "").length;
-    const nameClass = nameLength >= 10 ? " is-very-long-name" : nameLength >= 8 ? " is-long-name" : "";
+    const nameClass = nameLength >= 9 ? " is-very-long-name" : nameLength >= 7 ? " is-long-name" : "";
     return `
       <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
@@ -476,11 +478,15 @@
           const differenceClass = difference > .005 ? "is-above" : difference < -.005 ? "is-below" : "is-even";
           const differenceLabel = `${difference > 0 ? "+" : ""}${difference.toFixed(2)} pts vs global`;
           return `<article class="gamesense-comp-pick-row">
+            <div class="gamesense-comp-pick-identity">
+              <img class="gamesense-comp-pick-art" src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
+              <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}<img src="${escapeHtml(roleIconMap[normalizedRole.toLowerCase()])}" alt="" loading="lazy"></strong>
+            </div>
             <span class="gamesense-comp-pick-rank">${String(index + 1).padStart(2, "0")}</span>
-            <img src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
-            <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}<img src="${escapeHtml(roleIconMap[normalizedRole.toLowerCase()])}" alt="" loading="lazy"></strong>
-            <span><b>${Number(item.mapRate).toFixed(2)}%</b><small>${escapeHtml(map.label)} pick</small></span>
-            <span><b>${Number(item.globalRate).toFixed(2)}%</b><small>Global pick</small></span>
+            <div class="gamesense-comp-pick-rates">
+              <span><b>${Number(item.mapRate).toFixed(2)}%</b><small>${escapeHtml(map.label)} pick</small></span>
+              <span><b>${Number(item.globalRate).toFixed(2)}%</b><small>Global pick</small></span>
+            </div>
             <em class="${differenceClass}">${escapeHtml(differenceLabel)}</em>
           </article>`;
         }).join("")}
@@ -681,7 +687,7 @@
         ${(weapon.damageRanges || []).map(range => `<article class="gamesense-damage-target-row" role="row" aria-label="${escapeHtml(range.range)}: ${range.head} head, ${range.body} body, ${range.legs} legs">
           <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
           <div class="gamesense-damage-target" aria-hidden="true">
-            <svg viewBox="0 0 120 184"><circle cx="60" cy="22" r="17"></circle><path d="M39 47c5-7 12-10 21-10s16 3 21 10l8 52-17 6-4 65H52l-4-65-17-6 8-52Z"></path><path d="m39 57-18 53M81 57l18 53"></path></svg>
+            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg" alt="">
             <span class="is-head"><b>Head</b><em>${range.head}</em></span>
             <span class="is-body"><b>Body</b><em>${range.body}</em></span>
             <span class="is-legs"><b>Legs</b><em>${range.legs}</em></span>
@@ -715,6 +721,7 @@
     const tierFilters = [...new Map((collections || []).filter(item => item.editionKey).map(item => [item.editionKey, item])).values()]
       .sort((left, right) => (tierOrder.get(left.editionKey) ?? 99) - (tierOrder.get(right.editionKey) ?? 99));
     const count = Array.isArray(collections) ? collections.length : 0;
+    const visibleCollections = Array.isArray(collections) ? collections.slice(0, COLLECTION_ARCHIVE_BATCH_SIZE) : [];
     return `
       <section class="gamesense-collection-archive" data-gamesense-collection-weapon="${escapeHtml(weapon.id)}">
         <div class="gamesense-collection-head">
@@ -726,21 +733,54 @@
             <button type="button" class="active" data-gamesense-collection-filter="all" aria-pressed="true"><span class="gamesense-tier-icon-stack" aria-hidden="true">${tierFilters.map(item => item.editionIcon ? `<img src="${escapeHtml(item.editionIcon)}" alt="">` : "").join("")}</span><span>All ${count}</span></button>
             ${tierFilters.map(item => `<button type="button" data-gamesense-collection-filter="${escapeHtml(item.editionKey)}" aria-pressed="false">${item.editionIcon ? `<img class="gamesense-tier-icon" src="${escapeHtml(item.editionIcon)}" alt="" aria-hidden="true">` : ""}<span>${escapeHtml(item.edition)}</span></button>`).join("")}
           </div>
-          <div class="gamesense-collection-grid">
-            ${collections.map(item => `<article class="gamesense-collection-card" tabindex="0" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin collection">
-              <div class="gamesense-collection-art">
-                <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
-                <button class="gamesense-collection-open" type="button" data-gamesense-collection-open aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">Open Preview</button>
-              </div>
-              <span class="gamesense-collection-divider" aria-hidden="true"></span>
-              <div class="gamesense-collection-copy">
-                <span>${escapeHtml(item.weaponName)} skin</span>
-                <h4>${escapeHtml(item.name)}</h4>
-                <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${item.variants?.length || item.views?.length || 1} verified color ${(item.variants?.length || item.views?.length || 1) === 1 ? "variant" : "variants"}</b></div>
-              </div>
-            </article>`).join("")}
+          <div class="gamesense-collection-grid" data-gamesense-collection-rendered="${visibleCollections.length}" data-gamesense-collection-total="${count}">
+            ${renderWeaponCollectionCards(visibleCollections)}
           </div>`}
       </section>`;
+  }
+
+  function renderWeaponCollectionCards(collections = []) {
+    return collections.map(item => `<article class="gamesense-collection-card" tabindex="0" data-gamesense-collection-tier="${escapeHtml(item.editionKey)}" data-gamesense-collection-preview data-preview-id="${escapeHtml(item.id)}" data-preview-src="${escapeHtml(item.previewImage || item.image)}" data-preview-name="${escapeHtml(item.name)}" data-preview-weapon="${escapeHtml(item.weaponName)}" aria-label="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin collection">
+      <div class="gamesense-collection-art">
+        <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} skin" loading="lazy">
+        <button class="gamesense-collection-open" type="button" data-gamesense-collection-open aria-label="Open ${escapeHtml(item.name)} ${escapeHtml(item.weaponName)} interactive preview">Open Preview</button>
+      </div>
+      <span class="gamesense-collection-divider" aria-hidden="true"></span>
+      <div class="gamesense-collection-copy">
+        <span>${escapeHtml(item.weaponName)} skin</span>
+        <h4>${escapeHtml(item.name)}</h4>
+        <div class="gamesense-collection-meta"><b>${escapeHtml(item.edition)} Riot edition</b><b>${item.variants?.length || item.views?.length || 1} verified color ${(item.variants?.length || item.views?.length || 1) === 1 ? "variant" : "variants"}</b></div>
+      </div>
+    </article>`).join("");
+  }
+
+  function scheduleWeaponCollectionBatches(archive, weapon, collections = []) {
+    const grid = archive?.querySelector?.(".gamesense-collection-grid");
+    if (!grid || collections.length <= COLLECTION_ARCHIVE_BATCH_SIZE) return;
+    const token = ++collectionArchiveRenderToken;
+    let offset = COLLECTION_ARCHIVE_BATCH_SIZE;
+    const schedule = callback => {
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(callback, { timeout: 180 });
+      } else {
+        window.setTimeout(() => callback({ timeRemaining: () => 8 }), 16);
+      }
+    };
+    const appendBatch = () => {
+      if (token !== collectionArchiveRenderToken || !grid.isConnected || getSelectedWeapon()?.id !== weapon.id) return;
+      const batch = collections.slice(offset, offset + COLLECTION_ARCHIVE_BATCH_SIZE);
+      const template = document.createElement("template");
+      template.innerHTML = renderWeaponCollectionCards(batch);
+      const activeFilter = archive.querySelector("[data-gamesense-collection-filter].active")?.dataset?.gamesenseCollectionFilter || "all";
+      template.content.querySelectorAll("[data-gamesense-collection-tier]").forEach(card => {
+        card.hidden = activeFilter !== "all" && card.dataset.gamesenseCollectionTier !== activeFilter;
+      });
+      grid.append(template.content);
+      offset += batch.length;
+      grid.dataset.gamesenseCollectionRendered = String(offset);
+      if (offset < collections.length) schedule(appendBatch);
+    };
+    schedule(appendBatch);
   }
 
   function renderWeaponDetail(group) {
@@ -770,7 +810,10 @@
   function replaceWeaponCollectionArchive(weapon, collections = null, loadError = "") {
     const archive = document.querySelector("#gamesenseLibraryView .gamesense-collection-archive");
     if (!archive || !weapon || getSelectedWeapon()?.id !== weapon.id) return null;
-    return replaceTargetedElement(archive, renderWeaponCollectionArchive(weapon, collections, loadError));
+    collectionArchiveRenderToken += 1;
+    const replacement = replaceTargetedElement(archive, renderWeaponCollectionArchive(weapon, collections, loadError));
+    if (replacement && Array.isArray(collections)) scheduleWeaponCollectionBatches(replacement, weapon, collections);
+    return replacement;
   }
 
   function hydrateWeaponCollectionArchive(weapon = getSelectedWeapon(), options = {}) {

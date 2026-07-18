@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150" role="img" aria-label="Target dummy silhouette">
+  <rect width="120" height="150" rx="12" fill="#28224b"/>
+  <g fill="#c9c7f3">
+    <circle cx="60" cy="24" r="14"/>
+    <path d="M47 43h26l10 45-15 4-2 45H54l-2-45-15-4 10-45Z"/>
+    <path d="m45 50-10 5-17 48 13 5 21-49-7-9Z"/>
+    <path d="m75 50 10 5 17 48-13 5-21-49 7-9Z"/>
+  </g>
+</svg>
