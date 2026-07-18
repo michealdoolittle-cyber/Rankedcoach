@@ -36,11 +36,20 @@ This is not "detect and categorize a video" — it's a link-out to Riot's own of
 
 ---
 
-## 4. Trusted creator allowlist — verify every channel before building, don't hardcode guessed IDs
+## 4. Trusted creator allowlist — 7 of 8 confirmed with real handles, 1 still open
 
 Michael's starting list: **Dopai, Woohoojin, Maxiedome/Maxie, Konpeki, SlayerKey, SenaVL, Rem, Rooney.**
 
-Independently confirmed real and active during this session's research: **Woohoojin** (`youtube.com/channel/UCqCLRG4_zynXOEPU6N5POkw`) and **Konpeki** (both corroborated via a separate VLR.gg community post ranking coaching content creators, not just Michael's own list). The other six were not found in the two searches run this session — that is *not* evidence they're wrong, just that they weren't independently corroborated yet. **Resolve every one of these eight (plus Woohoojin/Konpeki, to get their exact channel IDs, not just the confirmed name) via the YouTube Data API's channel search at build time** — search by name, confirm it's a real, currently-active, Valorant-focused channel, and capture the actual channel ID before adding anything to the allowlist. Do not hardcode a guessed channel ID for any of these eight.
+**Confirmed real, active, and Valorant-focused this session — handles verified by actually rendering each channel page (not just a search hit):**
+- **rooney** — `youtube.com/@rooneyVAL` — 34K subscribers, 157 videos. Self-described "Becoming the #1 Coach In Valorant." Recent titles are direct rank-improvement/coaching content (e.g. "If I Wanted To Reach Immortal in 2026, This Is What I'd Do," "How to CARRY Bad Teammates In Solo Queue").
+- **Dopai** — `youtube.com/@Dopai` — 46.6K subscribers, 580 videos (high output). Broad coverage: positioning, mindset ("The Importance of Self Belief," "Your Slump Is Trying to Tell You Something"), map strategy, agent-specific tips.
+- **Maxiedome** — `youtube.com/@Maxiedome` — 108K subscribers, 190 videos. Self-described 13x-Radiant-peak player. Strong agent/role-specific guides ("How to be USEFUL on OMEN," "How to be useful on KJ," aim guides).
+- **Slayerkey** — `youtube.com/@Slayerkey` — 26.1K subscribers, 636 videos. "#1 Valorant Coach & Reyna Hater." Role guides ("3 TIPS to DOMINATE on EVERY ROLE in Valorant | Duelist, Initiator, Controller and Sentinel"), full per-map guides ("Summit... Complete Map Guide [2026]," "Ascent Sucks, Here's a Complete Map Guide [2026]"), mechanics.
+- **SenaVL** — `youtube.com/@SenaVL` — 205K subscribers (largest of the group), 336 videos. "Best VALORANT Guides & News!" — the "& News" framing means this channel likely also covers patch/meta content directly, worth checking first for `riot-official`/`patch-breakdown`-adjacent crossover content, not just `creator-guide`.
+- **Woohoojin** — `youtube.com/channel/UCqCLRG4_zynXOEPU6N5POkw` — confirmed via web search, independently corroborated by a separate VLR.gg community post ranking coaching creators.
+- **Konpeki** — confirmed real via the same VLR.gg post, exact channel URL not yet captured — resolve the handle at build time (should be quick given the name is already independently corroborated, unlike a cold search).
+
+**Still unresolved: Rem.** No handle provided and not independently found this session. Don't guess it — either get the handle from Michael or resolve it at build time via the YouTube Data API, same as any other name that isn't yet confirmed.
 
 ---
 
