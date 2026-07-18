@@ -280,6 +280,17 @@ async function run() {
     assert.match(roleStatContext.games, /\d+\s*games?/i);
     assert.ok(await page.locator("#page-stats .stats-map-games").count() > 0);
     assert.ok(await page.locator("#page-stats .stats-trend-context .trend-signal-media").count() > 0);
+    const trendImages = page.locator("#page-stats .stats-trend-context .trend-signal-media.has-image img");
+    assert.ok(await trendImages.count() > 0);
+    await page.waitForFunction(() => [...document.querySelectorAll("#page-stats .stats-trend-context .trend-signal-media.has-image img")]
+      .every(image => image.complete && image.naturalWidth > 0));
+    const trendImageState = await trendImages.evaluateAll(images => images.map(image => ({
+      src: image.currentSrc || image.src,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      visible: image.getBoundingClientRect().width > 0 && image.getBoundingClientRect().height > 0
+    })));
+    assert.ok(trendImageState.every(image => image.src && image.width > 0 && image.height > 0 && image.visible), JSON.stringify(trendImageState));
     const summaryGrid = await page.locator("#page-stats .stats-summary-grid").evaluate(grid => ({
       columns: getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length,
       rows: new Set([...grid.children].map(child => Math.round(child.getBoundingClientRect().top))).size,
@@ -621,7 +632,11 @@ async function run() {
     assert.ok(openBlur >= 11.9, openBackdrop);
     await page.locator("#accountSupportModal").click({ position: { x: 2, y: 2 } });
     assert.equal(await page.locator("#accountSupportModal").evaluate(modal => modal.classList.contains("is-closing")), true);
-    await page.waitForTimeout(180);
+    await page.waitForFunction(() => {
+      const modal = document.getElementById("accountSupportModal");
+      const backdrop = getComputedStyle(modal).backdropFilter || getComputedStyle(modal).webkitBackdropFilter;
+      return Number.parseFloat(backdrop.match(/blur\(([\d.]+)px\)/)?.[1] || "0") < 12;
+    });
     const closingBackdrop = await page.locator("#accountSupportModal").evaluate(modal => getComputedStyle(modal).backdropFilter || getComputedStyle(modal).webkitBackdropFilter);
     const closingBlur = Number.parseFloat(closingBackdrop.match(/blur\(([\d.]+)px\)/)?.[1] || "0");
     assert.ok(closingBlur < 12, closingBackdrop);
@@ -673,6 +688,34 @@ async function run() {
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-stats-proof-card.png") });
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
+    const mobileRrType = await page.evaluate(() => ({
+      next: getComputedStyle(document.querySelector("#nextRRWidget #navNextTierText")).fontSize,
+      goal: getComputedStyle(document.querySelector("#goalRRWidget #navGoalTierText")).fontSize
+    }));
+    assert.equal(mobileRrType.goal, mobileRrType.next, JSON.stringify(mobileRrType));
+    assert.match(await page.locator(".weekly-focus-card > .card-header .card-pill").innerText(), /Week of\s+\S/i);
+    const mobileTimelineGeometry = await page.locator("#timelineGrid .timeline-pill").evaluateAll(pills => pills.map(pill => {
+      const card = pill.getBoundingClientRect();
+      const label = pill.querySelector(".timeline-pill-label").getBoundingClientRect();
+      const metric = pill.querySelector(".timeline-pill-metric").getBoundingClientRect();
+      const value = pill.querySelector(".timeline-pill-value").getBoundingClientRect();
+      const delta = pill.querySelector(".timeline-pill-delta").getBoundingClientRect();
+      const role = pill.querySelector(".coaching-role-badge")?.getBoundingClientRect() || null;
+      return {
+        card: card.toJSON(),
+        label: label.toJSON(),
+        metric: metric.toJSON(),
+        value: value.toJSON(),
+        delta: delta.toJSON(),
+        role: role?.toJSON() || null
+      };
+    }));
+    assert.ok(mobileTimelineGeometry.length === 4, JSON.stringify(mobileTimelineGeometry));
+    mobileTimelineGeometry.forEach(item => {
+      assert.ok(item.label.left >= item.card.left && item.label.right <= item.metric.left + 1, JSON.stringify(item));
+      assert.ok(item.value.right <= item.delta.left + 1, JSON.stringify(item));
+      assert.ok(!item.role || (item.metric.right <= item.role.left + 1 && item.role.right <= item.card.right + 1), JSON.stringify(item));
+    });
     await page.locator("#impactRolePill").click();
     await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
     assert.equal(await page.locator(".impact-opportunity-panel").isVisible(), false);
@@ -727,6 +770,16 @@ async function run() {
       label.right <= other.left || other.right <= label.left || label.bottom <= other.top || other.bottom <= label.top
     ))), JSON.stringify(mobileLifetimeGeometry.seasonLabels));
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-lifetime-rank-chart.png"), fullPage: true });
+
+    await page.locator('.graph-btn[data-size="5"]').click();
+    await page.waitForTimeout(350);
+    const mobileYAxisGeometry = await page.locator(".rr-chart-card").evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const labels = [...card.querySelectorAll('#chartRow svg text[text-anchor="end"]')].map(label => label.getBoundingClientRect().toJSON());
+      return { card: cardRect.toJSON(), labels };
+    });
+    assert.ok(mobileYAxisGeometry.labels.length >= 5, JSON.stringify(mobileYAxisGeometry));
+    assert.ok(mobileYAxisGeometry.labels.every(label => label.left >= mobileYAxisGeometry.card.left - 1), JSON.stringify(mobileYAxisGeometry));
 
     assert.deepEqual(consoleIssues, []);
     console.log("Goal, readiness gates, chart spacing, Stats containment, rounded season selector, long Riot ID, and empty insight-filter checks passed.");

@@ -2195,7 +2195,11 @@ function repairTrendSignalMedia() {
       img.remove();
     };
     img.addEventListener("error", markBroken, { once: true });
-    if (img.complete && !img.naturalWidth) markBroken();
+    if (img.complete && !img.naturalWidth) {
+      window.setTimeout(() => {
+        if (img.isConnected && !img.naturalWidth) markBroken();
+      }, 250);
+    }
   });
 }
 
@@ -10767,7 +10771,7 @@ function getTrendSignalMediaMarkup(item = {}) {
   if (mediaUrl) {
     return `
       <div class="trend-signal-media has-image">
-        <img src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(mediaAlt)}" loading="lazy">
+        <img src="${escapeHtml(mediaUrl)}" alt="${escapeHtml(mediaAlt)}" loading="eager" decoding="async">
       </div>
     `;
   }
@@ -46996,8 +47000,9 @@ if(chartHeight){
   }
 	 
   const isMobileLifetimeTimeline = isLifetimeRankTimeline && isMobileLayoutViewport();
-  PAD_LEFT = isMobileLifetimeTimeline
-    ? Math.max(38, Math.min(44, CHART_W * 0.12))
+  const isMobileChart = isMobileLayoutViewport();
+  PAD_LEFT = isMobileChart
+    ? Math.max(42, Math.min(48, CHART_W * 0.135))
     : CHART_W * (isLifetimeRankTimeline ? 0.12 : 0.055);
   PAD_RIGHT = isMobileLifetimeTimeline
     ? Math.max(8, CHART_W * 0.025)
@@ -51544,7 +51549,10 @@ function renderStatsRoleProgress() {
           <span class="stats-role-pill-delta ${deltaClass}">${deltaText}</span>
         </span>
         <span class="stats-role-pill-divider" aria-hidden="true"></span>
-        <span class="stats-role-pill-games"><strong>${role.matchesPlayed || 0}</strong><small>${role.matchesPlayed === 1 ? "game" : "games"}</small></span>
+        <span class="stats-role-pill-games">
+          <strong>${role.matchesPlayed ? role.matchesPlayed : "--"}</strong>
+          ${role.matchesPlayed ? `<small>${role.matchesPlayed === 1 ? "game" : "games"}</small>` : ""}
+        </span>
       </div>
     `;
     container.appendChild(pill);
@@ -51683,6 +51691,7 @@ function renderStatsPerformanceClean() {
       openStatsDetailModal("trend", button.dataset.trendId || "");
     });
   });
+  repairTrendSignalMedia();
   ensureMobileTrendCarousel();
   ensureMobileStatsBreakdownCarousel();
 }

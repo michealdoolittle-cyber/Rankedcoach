@@ -252,18 +252,19 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-card strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage.includes("/assets/library/maps"))), true);
-    assert.deepEqual(await desktop.locator('.gamesense-map-entry-card').allInnerTexts(), ["BIND\nOUT OF SEASON", "BREEZE", "SPLIT"]);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 2);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 2);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 4);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 2);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage !== "none")), true);
+    const mapLabels = await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts();
+    assert.deepEqual([...mapLabels].sort(), ["ABYSS", "ASCENT", "BIND", "BREEZE", "CORRODE", "FRACTURE", "HAVEN", "LOTUS", "PEARL", "SPLIT"]);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 14);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season .gamesense-map-side-marks').count(), 0);
     const outOfSeasonMap = desktop.locator('.gamesense-map-entry-card.is-out-of-season');
-    assert.equal(await outOfSeasonMap.count(), 1);
-    assert.equal(await outOfSeasonMap.isEnabled(), true);
-    assert.match(await outOfSeasonMap.evaluate(card => getComputedStyle(card).filter), /grayscale/);
+    assert.equal(await outOfSeasonMap.count(), 3);
+    assert.equal(await outOfSeasonMap.evaluateAll(cards => cards.every(card => !card.disabled)), true);
+    assert.equal(await outOfSeasonMap.evaluateAll(cards => cards.every(card => /grayscale/.test(getComputedStyle(card).filter))), true);
     const mapGalleryAlignment = await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.map(card => {
       const cardRect = card.getBoundingClientRect();
       const title = card.querySelector(".gamesense-map-card-copy strong").getBoundingClientRect();
@@ -598,13 +599,21 @@ async function run() {
     const splitSitePositions = await desktop.locator(".gamesense-callout").evaluateAll(markers => Object.fromEntries(markers.map(marker => [marker.textContent.trim(), Number.parseFloat(marker.style.getPropertyValue("--callout-x"))])));
     assert.ok(splitSitePositions["A Site"] > 75 && splitSitePositions["B Site"] < 20, JSON.stringify(splitSitePositions));
 
+    await desktop.click('[data-gamesense-back="maps"]');
+    await desktop.click('[data-gamesense-item="ascent"]');
+    await desktop.locator(".gamesense-tactical-stage img").waitFor({ state: "visible" });
+    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /media\.valorant-api\.com\/maps\//i);
+    assert.ok(await desktop.locator(".gamesense-callout").count() >= 20);
+    assert.match(await desktop.locator(".gamesense-comp-unavailable").innerText(), /no lineup percentage is claimed/i);
+    assert.match(await desktop.locator(".gamesense-weapon-suggestions-unavailable").innerText(), /sample unavailable/i);
+
     await desktop.click('.nav-btn[data-page="stats"]');
     await desktop.click('[data-gamesense-open="agents"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
-    assert.equal(await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').count(), 6);
-    assert.equal(await desktop.locator('.gamesense-agent-entry-card img').count(), 6);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').count(), 29);
+    assert.equal(await desktop.locator('.gamesense-agent-entry-card img').count(), 29);
     const desktopAgentTile = await desktop.locator(".gamesense-agent-entry-card").first().evaluate(card => {
       const cardRect = card.getBoundingClientRect();
       const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
@@ -691,6 +700,14 @@ async function run() {
       assert.equal(await desktop.locator(`[data-gamesense-ability="${abilityId}"]`).getAttribute("aria-pressed"), "true");
       assert.equal(await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(node => window.__rankedCoachOmenPortraitNode === node && node.isConnected), true);
     }
+
+    await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "reyna"));
+    await desktop.locator('.gamesense-agent-detail-head h2').getByText("Reyna", { exact: true }).waitFor({ state: "visible" });
+    assert.equal(await desktop.locator("[data-gamesense-ability]").count(), 4);
+    assert.match(await desktop.locator(".gamesense-agent-hero").innerText(), /Dismiss.*Empress/is);
+    assert.match(await desktop.locator(".gamesense-ability-grid").innerText(), /Devour.*Dismiss.*Leer.*Empress/is);
+    assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /Global Pick Rate.*--.*No verified current Competitive usage sample/is);
+    assert.ok(await desktop.locator(".gamesense-agent-facts .gamesense-patch-history li").count() >= 2);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
     await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').first().waitFor({ state: "visible" });
@@ -995,11 +1012,15 @@ async function run() {
     const contentCoverage = await desktop.evaluate(() => {
       const reference = globalThis.RankedCoachGamesenseReference;
       return {
+        agentCount: reference.agents.length,
         agents: reference.agents.every(agent => agent.fundamentals.length >= 3 && agent.lore.length >= 2 && agent.patchHistory.length >= 2),
+        abilityCoverage: reference.agents.every(agent => agent.abilities.length >= 4 && agent.abilities.every(ability => ability.name && ability.summary && ability.stats?.Cost && Object.keys(ability.stats).length >= 2 && ability.purpose && ability.setup)),
+        mapCount: globalThis.RankedCoachGamesenseMaps.length,
+        mapCoverage: globalThis.RankedCoachGamesenseMaps.every(map => map.layoutImage && map.cardImage && map.callouts.length && map.macro?.attack?.length && map.macro?.defense?.length && map.roleNotes),
         weapons: reference.weapons.flatMap(group => group.weapons).every(weapon => weapon.whenToUse.length >= 2 && weapon.howToUse.length >= 2 && weapon.patchHistory.length >= 1)
       };
     });
-    assert.deepEqual(contentCoverage, { agents: true, weapons: true });
+    assert.deepEqual(contentCoverage, { agentCount: 29, agents: true, abilityCoverage: true, mapCount: 10, mapCoverage: true, weapons: true });
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-detail.png") });
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "sidearms"));
     await desktop.locator('[data-gamesense-weapon="sheriff"]').waitFor({ state: "visible" });

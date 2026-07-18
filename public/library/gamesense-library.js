@@ -262,11 +262,12 @@
   }
 
   function renderAgentCard(item, index) {
+    const mapSummary = Array.isArray(item.maps) && item.maps.length ? ` | ${item.maps.join(" / ")}` : "";
     return `
       <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
         <img src="${escapeHtml(item.portrait)}" alt="" loading="lazy">
-        <span class="gamesense-entry-copy"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)} | ${escapeHtml(item.maps.join(" / "))}</small><span>Inspect abilities</span></span>
+        <span class="gamesense-entry-copy"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)}${escapeHtml(mapSummary)}</small><span>Inspect abilities</span></span>
       </button>`;
   }
 
@@ -416,7 +417,13 @@
 
   function renderWeaponSuggestions(map) {
     const suggestions = Array.isArray(map.weaponSuggestions) ? map.weaponSuggestions : [];
-    if (!suggestions.length) return "";
+    if (!suggestions.length) {
+      return `
+        <section class="gamesense-weapon-suggestions gamesense-weapon-suggestions-unavailable">
+          <div><span>Weapon Suggestions</span><strong>Verified active-season sample unavailable</strong></div>
+          <p class="gamesense-weapon-source">${escapeHtml(map.weaponSuggestionNote || "No verified active-season weapon conversion sample is attached to this map dossier.")}</p>
+        </section>`;
+    }
     return `
       <section class="gamesense-weapon-suggestions">
         <div><span>Weapon Suggestions</span><strong>Highest-value choices by buy type</strong></div>
@@ -599,6 +606,8 @@
   function renderAgentDetail(agent) {
     const abilities = agent.abilities || [];
     const selected = abilities.find(ability => ability.id === state.detailId) || abilities[0];
+    const hasPublishedPickRate = Number.isFinite(Number(agent.pickRate));
+    const usageSource = agent.sampleLabel || "No verified current Competitive usage sample";
     return `
       <div class="gamesense-detail-head gamesense-agent-detail-head">
         <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
@@ -608,8 +617,8 @@
         <div class="gamesense-agent-portrait-wrap">
           <div class="gamesense-agent-rate">
             <span class="gamesense-agent-rate-label">Global Pick Rate</span>
-            <span class="gamesense-agent-rate-value"><strong>${safePercent(agent.pickRate)}</strong><b>Rank #${Number.isFinite(Number(agent.pickRateRank)) ? Number(agent.pickRateRank) : "Unavailable"}</b></span>
-            <small>${escapeHtml(agent.sampleLabel || "Tracker Network | Past two weeks")}</small>
+            <span class="gamesense-agent-rate-value"><strong>${hasPublishedPickRate ? safePercent(agent.pickRate) : "--"}</strong>${hasPublishedPickRate && Number.isFinite(Number(agent.pickRateRank)) ? `<b>Rank #${Number(agent.pickRateRank)}</b>` : ""}</span>
+            <small>${escapeHtml(usageSource)}</small>
           </div>
           <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
         </div>
@@ -623,8 +632,8 @@
         ${renderAbilityDetail(agent, selected)}
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
-        <div><span>Map Fit</span><strong>Tracker Network | Past two weeks</strong></div>
-        <div class="gamesense-map-fit-grid">${agent.maps.slice(0, 3).map(mapName => {
+        <div><span>Map Fit</span><strong>${escapeHtml(usageSource)}</strong></div>
+        <div class="gamesense-map-fit-grid">${agent.maps.length ? agent.maps.slice(0, 3).map(mapName => {
           const normalizedMapName = assetSlug(mapName);
           const map = getMaps().find(item => item.id === normalizedMapName || assetSlug(item.label) === normalizedMapName);
            const winRate = agent.mapWinRates?.[mapName];
@@ -632,7 +641,7 @@
           const tagName = map ? "button" : "article";
           const action = map ? ` type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(map.id)}"` : "";
           return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(getMapArtwork(mapName))}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
-        }).join("")}</div>
+        }).join("") : `<p class="gamesense-map-fit-unavailable">No verified current-season map-fit sample is attached to this agent dossier.</p>`}</div>
       </section>`;
   }
 

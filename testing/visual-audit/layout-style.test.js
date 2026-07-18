@@ -805,6 +805,25 @@ async function run() {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(250);
     await page.click('[data-profile-tab="layoutStyle"]');
+    const assertPreviewCoverage = async (selector, viewportLabel) => {
+      const coverage = await page.locator(selector).first().evaluate(card => {
+        const preview = card.querySelector(".layout-style-preview").getBoundingClientRect();
+        const previewCard = card.querySelector(".layout-style-preview-card").getBoundingClientRect();
+        return { preview: preview.toJSON(), previewCard: previewCard.toJSON() };
+      });
+      assert.ok(Math.abs(coverage.preview.width - coverage.previewCard.width) <= 2, `${viewportLabel}: ${JSON.stringify(coverage)}`);
+      assert.ok(Math.abs(coverage.preview.height - coverage.previewCard.height) <= 2, `${viewportLabel}: ${JSON.stringify(coverage)}`);
+    };
+    await assertPreviewCoverage("[data-layout-shape-card]", "desktop shape preview");
+    await assertPreviewCoverage("[data-layout-texture-card]", "desktop texture preview");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(250);
+    await assertPreviewCoverage("[data-layout-shape-card]", "mobile shape preview");
+    await page.click('[data-layout-style-mobile-tab="textures"]');
+    await assertPreviewCoverage("[data-layout-texture-card]", "mobile texture preview");
+    await page.click('[data-layout-style-mobile-tab="shapes"]');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(250);
     assert.equal(await page.locator("[data-layout-shape-card]").count(), allLayoutStyles.length + 1);
     assert.equal(await page.locator("[data-layout-texture-card]").count(), allLayoutTextures.length + 1);
     assert.equal(await page.locator('[data-layout-shape-card="scopevignette"]').count(), 1);
