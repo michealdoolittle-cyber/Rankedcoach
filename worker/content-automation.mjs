@@ -19,14 +19,14 @@ export const WEAPON_NAMES = Object.freeze([
 export const TRUSTED_YOUTUBE_CHANNELS = Object.freeze([
   Object.freeze({ id: "UC8CX0LD98EDXl4UYX1MDCXg", name: "VALORANT", kind: "riot", playlist: true, skin: true }),
   Object.freeze({ id: "UC93uuDyuin2YXOY2ZVn8nkw", name: "Dittozkul", kind: "showcase", playlist: false, skin: true }),
-  Object.freeze({ id: "UCBjL1GzlTwyaXoqa1Ka6wzQ", name: "Dopai", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCqCLRG4_zynXOEPU6N5POkw", name: "Woohoojin", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCoAdB1kEFR1KDGw0gXPMV1w", name: "Maxie", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCv1zbx03PIvqG8cHNpWWWUw", name: "Konpeki", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCW15YpAc8hjPhDX9be7YdRg", name: "Slayerkey", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCH__y98F7DyZaw_C3LdGu-A", name: "Sena", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCcCTL6IEX64sXTOba-Iz6gA", name: "Rem", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UCHNd-wW9s1d7VGvd3qJgp5g", name: "Rooney", kind: "creator", playlist: true, skin: false })
+  Object.freeze({ id: "UCBjL1GzlTwyaXoqa1Ka6wzQ", handle: "@Dopai", name: "Dopai", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCqCLRG4_zynXOEPU6N5POkw", handle: "@Woohoojin", name: "Woohoojin", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCoAdB1kEFR1KDGw0gXPMV1w", handle: "@Maxiedome", name: "Maxie", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCv1zbx03PIvqG8cHNpWWWUw", handle: "@CoachKonpeki", name: "Konpeki", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCW15YpAc8hjPhDX9be7YdRg", handle: "@Slayerkey", name: "Slayerkey", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCH__y98F7DyZaw_C3LdGu-A", handle: "@SenaVL", name: "Sena", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCcCTL6IEX64sXTOba-Iz6gA", handle: "@RemValorant", name: "Rem", kind: "creator", playlist: true, skin: true }),
+  Object.freeze({ id: "UCHNd-wW9s1d7VGvd3qJgp5g", handle: "@rooneyVAL", name: "Rooney", kind: "creator", playlist: true, skin: false })
 ]);
 
 const TOPIC_KEYWORDS = Object.freeze({
@@ -223,7 +223,10 @@ export function findConfidentCollectionVideo(collectionName = "", videos = []) {
   if (collection.length < 4) return null;
   const match = videos.find(video => {
     const title = normalizeSearchText(video.title);
-    return (` ${title} `).includes(` ${collection} `) && /(skin|bundle|collection|showcase|reveal|worth buying)/.test(title);
+    const hasCollectionName = (` ${title} `).includes(` ${collection} `);
+    const hasMediaCue = /(skin|bundle|collection|showcase|reveal|worth buying)/.test(title)
+      || (title.includes("new") && title.includes("valorant"));
+    return hasCollectionName && hasMediaCue;
   });
   return match ? Object.freeze({
     id: match.id,

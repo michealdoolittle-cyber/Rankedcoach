@@ -37,6 +37,20 @@ const liveVideos = await fetchTrustedChannelVideos({});
 const playlistChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.playlist).map(channel => channel.name);
 playlistChannels.forEach(channel => assert(liveVideos.some(video => video.channel === channel), `${channel} must have a live trusted-channel feed.`));
 
+const creatorChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.kind === "creator");
+assert.equal(creatorChannels.length, 8, "The trusted creator allowlist must contain all eight approved creators.");
+for (const channel of creatorChannels) {
+  const sample = liveVideos.find(video => video.channelId === channel.id);
+  assert.ok(sample, `${channel.name} must expose a current sample video.`);
+  const metadataResponse = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(sample.url)}&format=json`);
+  assert.equal(metadataResponse.ok, true, `${channel.name}'s sample must resolve through YouTube oEmbed.`);
+  const metadata = await metadataResponse.json();
+  assert.equal(new URL(metadata.author_url).pathname.toLowerCase(), `/${channel.handle.toLowerCase()}`, `${channel.name}'s channel ID must resolve to ${channel.handle}.`);
+}
+
+const liveSkinVideos = await fetchTrustedChannelVideos({}, { kind: "skin" });
+assert.ok(liveSkinVideos.some(video => video.channel === "Rem"), "Rem must feed the fail-closed skin-media curation path.");
+
 const creatorSamples = new Map([
   ["Dopai", "Steal this Summit Strat"],
   ["Woohoojin", "Why Eggsters Entries are so good."],
@@ -60,6 +74,16 @@ assert.equal(blackspyreMetadata.author_name, "VALORANT");
 const blackspyre = findConfidentCollectionVideo("Blackspyre", [{ id: blackspyreId, title: blackspyreMetadata.title, channel: blackspyreMetadata.author_name }]);
 assert(blackspyre?.id, "The real Blackspyre release must confidently match trusted showcase media.");
 assert.equal(findConfidentCollectionVideo("Imaginary Collection", liveVideos), null, "A missing collection must not receive a forced match.");
+assert.equal(findConfidentCollectionVideo("Evori Dreamwings", [{
+  id: "abcdefghijk",
+  title: "NEW EVORI DREAMWINGS in VALORANT!",
+  channel: "Rem"
+}])?.id, "abcdefghijk", "An exact Rem collection release title must be eligible for skin-media curation.");
+assert.equal(findConfidentCollectionVideo("Evori Dreamwings", [{
+  id: "lmnopqrstuv",
+  title: "My Evori Dreamwings ranked coaching session",
+  channel: "Rem"
+}]), null, "A collection-name mention without a skin or release cue must remain unmatched.");
 
 const suppressed = buildFeaturedPlaylist(liveVideos, "13.01", new Set([liveVideos[0].id]));
 assert(!suppressed.items.some(item => item.id === liveVideos[0].id), "A suppressed real video must disappear from the rotation immediately.");

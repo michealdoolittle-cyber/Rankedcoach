@@ -1,6 +1,6 @@
 # Featured Playlist — Curated Video Section (2026-07-16)
 
-**Status:** Shipped 2026-07-18. The Gamesense Library now has a fourth Playlist dossier fed by the verified Riot plus eight-creator allowlist, fail-closed title categorization, real thumbnail collage, patch/new badges, topic filters, privacy-enhanced click-to-load embeds, creator attribution, related dossier videos, and a static official esports fallback with no fabricated live state. The one-command KV suppression/restore escape hatch was exercised against production storage. Default and Hazard Edge Layout Styles, desktop/mobile Library flows, focused automation tests, and the full passthrough all passed. Browser cache key: `20260718-content-automation-01`.
+**Status:** Shipped 2026-07-18. The Gamesense Library now has a fourth Playlist dossier fed by the verified Riot plus eight-creator allowlist, fail-closed title categorization, real thumbnail collage, patch/new badges, topic filters, privacy-enhanced click-to-load embeds, creator attribution, related dossier videos, and a static official esports fallback with no fabricated live state. All eight creator IDs and handles were verified against live YouTube metadata; Konpeki resolved to `@CoachKonpeki`, and Rem also feeds the exact-match skin-media curation path. The one-command KV suppression/restore escape hatch was exercised against production storage. Default and Hazard Edge Layout Styles, desktop/mobile Library flows, focused automation tests, and the full passthrough all passed. Browser cache key: `20260718-content-automation-01`.
 
 ---
 
@@ -48,9 +48,9 @@ Michael's starting list: **Dopai, Woohoojin, Maxiedome/Maxie, Konpeki, SlayerKey
 - **SenaVL** — `youtube.com/@SenaVL` — 205K subscribers, 336 videos. "Best VALORANT Guides & News!" — the "& News" framing means this channel likely also covers patch/meta content directly, worth checking first for `riot-official`/`patch-breakdown`-adjacent crossover content, not just `creator-guide`.
 - **Rem** — `youtube.com/@RemValorant` — 263K subscribers (largest of all 8), 594 videos. Distinct content profile from the other seven: leans toward skin/cosmetic content ("Ranking Every VALORANT KNIFE From Worst to Best," "My Viewers Ranked Every Phantom Skin From Worst to Best," "NEW EVORI DREAMWINGS in VALORANT!") alongside genuine agent guides ("The ULTIMATE VYSE Guide for VALORANT!"). **This channel is a strong first source for the `bundle-showcase` source type** (tie it into the companion patch-content-automation directive's skin-media curation, not just this directive's `creator-guide` bucket), in addition to being a normal creator-guide source.
 - **Woohoojin** — `youtube.com/channel/UCqCLRG4_zynXOEPU6N5POkw` — confirmed via web search, independently corroborated by a separate VLR.gg community post ranking coaching creators.
-- **Konpeki** — confirmed real via the same VLR.gg post, exact channel URL not yet captured — resolve the handle at build time (should be quick given the name is already independently corroborated, unlike a cold search).
+- **Konpeki** — `youtube.com/@CoachKonpeki` — exact handle and channel ID verified against live YouTube feed and oEmbed metadata during implementation.
 
-All 8 names are now accounted for — 7 with verified handles/subscriber counts/sample content, 1 (Konpeki) independently confirmed real with the exact handle still to resolve at build time.
+All 8 names are now accounted for with verified handles, channel IDs, and live sample content.
 
 ---
 
