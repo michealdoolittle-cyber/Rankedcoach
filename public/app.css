@@ -55777,3 +55777,17 @@ html body #editProfileModal #editProfileThemeGallery .theme-gallery-grid{
 }
 
 .chart-tooltip-floating{z-index:70 !important;}
+
+/* Keep the themed parent-card treatment behind the interactive Feed calendar. */
+#page-logging .logging-feed-card.is-calendar-open::before,
+#page-logging .logging-feed-card.is-calendar-open::after{
+  z-index:0 !important;
+  pointer-events:none !important;
+}
+#page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
+  z-index:2147483646 !important;
+}
+
+#page-insights .insights-action-card .insight-priority-title{
+  color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 72%,white 28%) !important;
+}

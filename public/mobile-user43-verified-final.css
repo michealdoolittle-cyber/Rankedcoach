@@ -16692,3 +16692,14 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-deskt
     font-weight:650 !important;
   }
 }
+
+/* 2026-07-18 mobile summary and priority-title alignment lock. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #page-stats#page-stats.page.active .stats-season-title.stats-season-title{
+    text-align:center !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #page-insights#page-insights.page.active .insight-priority-title.insight-priority-title{
+    color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 72%,white 28%) !important;
+  }
+}

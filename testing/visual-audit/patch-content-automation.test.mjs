@@ -91,6 +91,17 @@ assert.equal(findConfidentCollectionVideo("Evori Dreamwings", [{
 const suppressed = buildFeaturedPlaylist(liveVideos, "13.01", new Set([liveVideos[0].id]));
 assert(!suppressed.items.some(item => item.id === liveVideos[0].id), "A suppressed real video must disappear from the rotation immediately.");
 
+const classifiedPlaylist = buildFeaturedPlaylist([
+  { id: "news-short", title: "Iso and Yoru buffs in Patch 13.01", channelKind: "official", isShort: true, publishedAt: "2026-07-18T12:00:00Z" },
+  { id: "past-live", title: "Ranked Block Coaching !livecoach", channelKind: "creator", isShort: false, isVod: true, durationSeconds: 7200, publishedAt: "2026-07-17T12:00:00Z" },
+  { id: "regular-short", title: "Three clean movement tips", channelKind: "creator", isShort: true, publishedAt: "2026-07-16T12:00:00Z" }
+], "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
+assert.deepEqual(
+  classifiedPlaylist.items.map(item => item.topicType),
+  ["News", "VODs", "YT Shorts"],
+  "Past broadcasts and news shorts must leave General and remain exclusive from YT Shorts."
+);
+
 class MemoryKv {
   constructor() { this.values = new Map(); }
   async get(key, type) {

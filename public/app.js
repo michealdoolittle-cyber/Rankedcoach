@@ -1509,6 +1509,7 @@ function getMobileNavPageLabel(page = "") {
 
 function closeAllMobileOverlays() {
   closeMobileProfilePopover();
+  setLogCalendarOpen?.(false);
   setProfileRatingDropdownOpen?.(false);
   [profileSwitcher, profileDropdown].forEach((menu) => {
     if (!menu) return;
@@ -2376,7 +2377,7 @@ function shouldAllowMobilePageSwipeStart(target, startX, startY) {
   if (!isMobileLayoutViewport()) return false;
   if (document.body?.classList.contains("mobile-modal-open")) return false;
   if (!target?.closest?.(".page.active")) return false;
-  if (target?.closest?.("[data-gamesense-map-viewport], .gamesense-map-tools, .gamesense-map-view-tabs, [data-gamesense-collection-preview]")) return false;
+  if (target?.closest?.("[data-gamesense-map-viewport], .gamesense-map-tools, .gamesense-map-view-tabs, [data-gamesense-collection-preview], .gamesense-playlist-filters, .gamesense-video-card, .gamesense-video-embed")) return false;
   if (!isMobileSwipeInsideCenterZone(startX, startY)) return false;
   return !target?.closest?.("input, textarea, select, option, [contenteditable='true']");
 }
@@ -39766,12 +39767,10 @@ function bindEvents(){
     e.preventDefault();
     e.stopPropagation();
     const popover = document.getElementById("logCalendarPopover");
-    const trigger = document.getElementById("logCalendarTrigger");
     if (!popover) return;
-    const nextHidden = !popover.hidden ? true : false;
-    popover.hidden = nextHidden;
-    trigger?.setAttribute("aria-expanded", String(!nextHidden));
-    if (!nextHidden) {
+    const shouldOpen = popover.hidden;
+    setLogCalendarOpen(shouldOpen);
+    if (shouldOpen) {
       activeLogCalendarMonth = activeLogSessionFilter === "all"
         ? new Date()
         : new Date(`${activeLogSessionFilter}T12:00:00`);
@@ -39792,10 +39791,7 @@ function bindEvents(){
     if (!day) return;
     activeLogSessionFilter = day.dataset.logDate || formatLocalDateKey(new Date());
     activeLogCalendarMonth = new Date(`${activeLogSessionFilter}T12:00:00`);
-    const popover = document.getElementById("logCalendarPopover");
-    const trigger = document.getElementById("logCalendarTrigger");
-    if (popover) popover.hidden = true;
-    trigger?.setAttribute("aria-expanded", "false");
+    setLogCalendarOpen(false);
     renderLogFeed({ force: true });
   });
   document.getElementById("logCalendarPopover")?.addEventListener("mouseover", (e) => {
@@ -39811,8 +39807,7 @@ function bindEvents(){
     const trigger = document.getElementById("logCalendarTrigger");
     if (!popover || popover.hidden) return;
     if (popover.contains(e.target) || trigger?.contains(e.target)) return;
-    popover.hidden = true;
-    trigger?.setAttribute("aria-expanded", "false");
+    setLogCalendarOpen(false);
     setLogCountBadge(activeLogSessionFilter);
   });
   document.getElementById("logQuickToggleBtn")?.addEventListener("click", (e) => {
@@ -42422,6 +42417,15 @@ function formatCurrentSessionLabel(dateKey = activeLogSessionFilter) {
   const todayKey = formatLocalDateKey(new Date());
   const label = formatDateLabel(dateKey);
   return dateKey === todayKey ? `Today / ${label}` : label;
+}
+
+function setLogCalendarOpen(isOpen = false) {
+  const popover = document.getElementById("logCalendarPopover");
+  const trigger = document.getElementById("logCalendarTrigger");
+  const feedCard = popover?.closest?.(".logging-feed-card");
+  if (popover) popover.hidden = !isOpen;
+  trigger?.setAttribute("aria-expanded", String(Boolean(isOpen)));
+  feedCard?.classList.toggle("is-calendar-open", Boolean(isOpen));
 }
 
 function renderLogCalendarPopover(countMap = getLogCountByDate()) {
@@ -47611,6 +47615,10 @@ chartRow.onclick = e => {
 }
 
 function scheduleSelectedChartTooltipPosition() {
+  if (isMobileLayoutViewport()) {
+    hideChartTooltip();
+    return;
+  }
   if (selectedChartTooltipRaf) return;
   selectedChartTooltipRaf = window.requestAnimationFrame(() => {
     selectedChartTooltipRaf = 0;

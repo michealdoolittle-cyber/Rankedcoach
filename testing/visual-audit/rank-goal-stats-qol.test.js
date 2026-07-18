@@ -446,6 +446,11 @@ async function run() {
     await page.waitForTimeout(150);
     await page.locator('[data-page="insights"]').click();
     await page.waitForTimeout(250);
+    const priorityTitleColor = await page.locator("#insightFocusTitle").evaluate(title => ({
+      title: getComputedStyle(title).color,
+      copy: getComputedStyle(document.getElementById("insightFocusWhy")).color
+    }));
+    assert.notEqual(priorityTitleColor.title, priorityTitleColor.copy, JSON.stringify(priorityTitleColor));
     const unavailableLossRead = page.locator('.weekly-focus-pill[data-weekly-key="losses"]');
     await unavailableLossRead.waitFor({ state: "attached", timeout: 10000 });
     assert.equal(await unavailableLossRead.isDisabled(), true);
@@ -666,6 +671,7 @@ async function run() {
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="stats"]').click();
     await page.waitForFunction(() => document.getElementById("page-stats")?.getAnimations().some(animation => animation.id === "rankedcoach-page-button-slide"));
     await page.waitForTimeout(400);
+    assert.equal(await page.locator("#page-stats .stats-season-title").evaluate(title => getComputedStyle(title).textAlign), "center");
     await page.locator('#mobileStatsTabs [data-mobile-stats-view="maps"]').click();
     await page.waitForTimeout(150);
     const mobileMapCoverage = await page.locator("#page-stats .stats-map-card").evaluateAll(cards => cards.map(card => {
@@ -723,14 +729,48 @@ async function run() {
       goal: getComputedStyle(document.querySelector("#goalRRWidget #navGoalTierText")).fontSize
     }));
     assert.equal(mobileRrType.goal, mobileRrType.next, JSON.stringify(mobileRrType));
-    const tooltipScrollState = await page.evaluate(() => {
+    const tooltipScrollState = await page.evaluate(async () => {
       const tooltip = document.getElementById("chartTooltip");
       tooltip.style.visibility = "visible";
       tooltip.style.opacity = "1";
       window.dispatchEvent(new Event("scroll"));
+      document.querySelector(".app-root")?.dispatchEvent(new Event("scroll"));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       return { visibility: tooltip.style.visibility, opacity: tooltip.style.opacity };
     });
     assert.deepEqual(tooltipScrollState, { visibility: "hidden", opacity: "0" });
+    await page.locator('.mobile-bottom-page-btn[data-mobile-page="logging"]').click();
+    await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
+    await page.locator('[data-mobile-logging-view="feed"]').click();
+    await page.waitForTimeout(150);
+    await page.evaluate(() => document.body.classList.add("theme-readable"));
+    await page.locator("#logCalendarTrigger").click();
+    const calendarState = await page.locator("#logCalendarPopover").evaluate(popover => {
+      const card = popover.closest(".logging-feed-card");
+      const rect = popover.getBoundingClientRect();
+      const style = getComputedStyle(popover);
+      const cardAfter = getComputedStyle(card, "::after");
+      return {
+        hidden: popover.hidden,
+        cardOpen: card.classList.contains("is-calendar-open"),
+        width: rect.width,
+        height: rect.height,
+        display: style.display,
+        visibility: style.visibility,
+        popoverZ: Number(style.zIndex),
+        cardAfterZ: Number(cardAfter.zIndex),
+        cardAfterPointerEvents: cardAfter.pointerEvents
+      };
+    });
+    assert.equal(calendarState.hidden, false, JSON.stringify(calendarState));
+    assert.equal(calendarState.cardOpen, true, JSON.stringify(calendarState));
+    assert.ok(calendarState.width > 0 && calendarState.height > 0 && calendarState.display !== "none" && calendarState.visibility !== "hidden", JSON.stringify(calendarState));
+    assert.ok(calendarState.popoverZ > calendarState.cardAfterZ && calendarState.cardAfterPointerEvents === "none", JSON.stringify(calendarState));
+    await page.locator("#logCalendarPopover").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-calendar-popover.png") });
+    await page.locator("#logCalendarTrigger").click();
+    await page.evaluate(() => document.body.classList.remove("theme-readable"));
+    await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
+    await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
     assert.match(await page.locator(".weekly-focus-card > .card-header .card-pill").innerText(), /Week of\s+\S/i);
     const weeklyConfidenceGeometry = await page.locator(".weekly-focus-pill:not(.is-disabled)").evaluateAll(pills => pills.map(pill => {
       const heading = pill.querySelector(".weekly-focus-key")?.getBoundingClientRect();

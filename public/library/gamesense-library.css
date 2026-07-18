@@ -3028,22 +3028,22 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   transform:translate(-40%,-50%);
 }
 
-.gamesense-playlist-new,
-.gamesense-playlist-status{
-  position:absolute;
-  z-index:4;
-  top:52px;
-  padding:5px 8px;
-  border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 56%,transparent);
-  border-radius:999px;
-  background:color-mix(in srgb,var(--card-bg,#07111f) 82%,transparent);
-  color:var(--gamesense-warm,#f6c453);
-  font:800 9px/1 var(--font-display,"Rajdhani",sans-serif);
-  letter-spacing:.06em;
-  text-transform:uppercase;
+.gamesense-playlist-topic-card > .gamesense-playlist-title{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
 }
 
-.gamesense-playlist-new,.gamesense-playlist-status{right:12px;}
+.gamesense-playlist-topic-card > .gamesense-playlist-title .gamesense-playlist-play{
+  position:relative;
+  inset:auto;
+  flex:0 0 auto;
+  width:42px;
+  height:42px;
+  transform:none;
+}
+
 .gamesense-playlist-gallery-head small{display:block;margin-top:5px;color:var(--text-muted,#a8b3c7);}
 
 .gamesense-esports-link,
@@ -3092,7 +3092,12 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   color:var(--text-muted,#a8b3c7);
   font:800 11px/1 var(--font-display,"Rajdhani",sans-serif);
 }
-.gamesense-playlist-filters button.active{background:var(--gamesense-cool,#58d4c8);color:var(--card-bg,#07111f);}
+#page-library .gamesense-playlist-filters button.active{
+  border-color:var(--theme-accent,var(--accent,#ff4655)) !important;
+  background:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 82%,var(--panel-bg,#111b2d)) !important;
+  color:#fff !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 60%,white 12%),0 0 16px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 28%,transparent) !important;
+}
 .gamesense-playlist-home-icon{width:15px;height:15px;fill:currentColor;}
 
 .gamesense-playlist-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
@@ -3106,7 +3111,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-video-card span{color:var(--gamesense-warm,#f6c453);font:800 9px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;}
 .gamesense-video-card h3{margin:0;color:var(--text-main,#f8fafc);font:900 16px/1.15 var(--font-display,"Rajdhani",sans-serif);}
 .gamesense-video-card p{margin:0;color:var(--text-muted,#a8b3c7);font-size:11px;}
-.gamesense-video-embed{display:block;width:100%;aspect-ratio:16/9;border:0;background:#020617;}
+.gamesense-video-embed{position:relative;z-index:5;display:block;width:100%;aspect-ratio:16/9;border:0;background:#020617;pointer-events:auto;touch-action:manipulation;}
 .gamesense-playlist-empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--text-muted,#a8b3c7);}
 .gamesense-playlist-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:8px 0 12px;color:var(--text-main,#f8fafc);font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
 .gamesense-playlist-section-head strong{display:grid;place-items:center;min-width:32px;height:26px;padding:0 8px;border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 55%,transparent);border-radius:999px;color:var(--gamesense-warm,#f6c453);font-size:12px;}
@@ -3123,9 +3128,19 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-related-video > a i::after{border-top-width:5px;border-bottom-width:5px;border-left-width:8px;}
 
 @media (max-width:820px){
-  html.is-mobile-layout .gamesense-playlist-new,
-  html.is-mobile-layout .gamesense-playlist-status{top:48px;max-width:44%;font-size:7px;white-space:normal;}
-  html.is-mobile-layout .gamesense-playlist-play{width:46px;height:46px;}
+  html.is-mobile-layout .gamesense-playlist-topic-card > .gamesense-playlist-title .gamesense-playlist-play{width:38px;height:38px;}
+  html.is-mobile-layout .gamesense-playlist-filters{
+    overflow-x:scroll;
+    overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;
+    scrollbar-width:thin;
+    scrollbar-color:var(--theme-accent,var(--accent,#ff4655)) color-mix(in srgb,var(--panel-bg,#111b2d) 84%,transparent);
+    -webkit-overflow-scrolling:touch;
+  }
+  html.is-mobile-layout .gamesense-playlist-filters::-webkit-scrollbar{display:block;height:6px;}
+  html.is-mobile-layout .gamesense-playlist-filters::-webkit-scrollbar-track{background:color-mix(in srgb,var(--panel-bg,#111b2d) 84%,transparent);border-radius:999px;}
+  html.is-mobile-layout .gamesense-playlist-filters::-webkit-scrollbar-thumb{background:var(--theme-accent,var(--accent,#ff4655));border-radius:999px;}
+  html.is-mobile-layout .gamesense-playlist-filters button{scroll-snap-align:start;}
   html.is-mobile-layout .gamesense-playlist-grid{grid-template-columns:minmax(0,1fr);}
   html.is-mobile-layout .gamesense-esports-link,
   html.is-mobile-layout .gamesense-related-video{align-items:stretch;flex-direction:column;}

@@ -13,14 +13,14 @@ function startServer() {
     const server = http.createServer((request, response) => {
       let url = decodeURIComponent((request.url || "/").split("?")[0]);
       if (url === "/api/content/playlist") {
-        const images = ["breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png"];
-        const channels = ["Dopai", "Woohoojin", "Konpeki", "Rooney"];
+        const images = ["breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png", "split-card.png", "bind-card.png"];
+        const channels = ["Dopai", "Woohoojin", "Konpeki", "Rooney", "Rem", "Charla7an"];
         response.writeHead(200, { "Content-Type": "application/json" });
         return response.end(JSON.stringify({
           patchLabel: "13.01",
           patchTag: "Patch 13.01 Breakdown Inside",
-          newThisWeek: 4,
-          newIn24Hours: 4,
+          newThisWeek: 6,
+          newIn24Hours: 6,
           source: "trusted-channel-feeds",
           liveAvailability: { youtube: true, twitch: true },
           liveStreams: [{
@@ -34,15 +34,16 @@ function startServer() {
           }],
           items: images.map((image, index) => ({
             id: `video${String(index + 1).padStart(6, "0")}`,
-            title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked"][index],
+            title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked", "Yoru buffs in Patch 13.01", "Ranked coaching VOD"][index],
             channel: channels[index],
             sourceType: "creator-guide",
-            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts"][index],
+            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "VODs"][index],
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/${image}`,
             url: `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
             isNewThisWeek: true,
             isNewIn24Hours: true,
-            isShort: index === 3
+            isShort: index === 3 || index === 4,
+            isVod: index === 5
           }))
         }));
       }
@@ -295,7 +296,13 @@ async function run() {
     await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-topic-collage img').first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-topic-collage img').count(), 4);
     assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-playlist-play').count(), 1);
-    assert.match(await desktop.locator('[data-gamesense-topic="playlist"]').innerText(), /\+4 New Today/is);
+    assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-playlist-new, [data-gamesense-topic="playlist"] .gamesense-playlist-status').count(), 0);
+    const playlistTitleLayout = await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-playlist-title').evaluate(title => {
+      const label = title.getBoundingClientRect();
+      const play = title.querySelector(".gamesense-playlist-play").getBoundingClientRect();
+      return { label: label.toJSON(), play: play.toJSON() };
+    });
+    assert.ok(playlistTitleLayout.play.left > playlistTitleLayout.label.left + playlistTitleLayout.label.width / 2 && Math.abs((playlistTitleLayout.play.top + playlistTitleLayout.play.height / 2) - (playlistTitleLayout.label.top + playlistTitleLayout.label.height / 2)) <= 2, JSON.stringify(playlistTitleLayout));
     assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-playlist-patch').count(), 0);
     await desktop.locator('[data-gamesense-topic="playlist"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-topic-default.png") });
     await desktop.evaluate(() => {
@@ -310,17 +317,29 @@ async function run() {
     await desktop.click('[data-gamesense-topic="playlist"]');
     await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").first().waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
-    assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 4);
-    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 8);
+    assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 6);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 10);
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
+    const playlistFilterThemeState = await desktop.locator(".gamesense-playlist-filters").evaluate(filters => {
+      const active = getComputedStyle(filters.querySelector("button.active"));
+      const inactive = getComputedStyle(filters.querySelector("button:not(.active)"));
+      return { activeBackground: active.backgroundColor, activeBorder: active.borderColor, inactiveBackground: inactive.backgroundColor, inactiveBorder: inactive.borderColor };
+    });
+    assert.notEqual(playlistFilterThemeState.activeBackground, playlistFilterThemeState.inactiveBackground, JSON.stringify(playlistFilterThemeState));
+    assert.notEqual(playlistFilterThemeState.activeBorder, playlistFilterThemeState.inactiveBorder, JSON.stringify(playlistFilterThemeState));
     assert.match(await desktop.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
-    assert.equal(await desktop.locator('.gamesense-video-card a[href*="youtube.com/watch"]').count(), 4);
+    assert.equal(await desktop.locator('.gamesense-video-card a[href*="youtube.com/watch"]').count(), 6);
     await desktop.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-desktop.png") });
     await desktop.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
-    assert.match(await desktop.locator(".gamesense-video-card .gamesense-video-embed").first().getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?autoplay=1&rel=0/);
+    assert.match(await desktop.locator(".gamesense-video-card .gamesense-video-embed").first().getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?autoplay=1&controls=1&playsinline=1&rel=0/);
+    assert.equal(await desktop.locator(".gamesense-video-card .gamesense-video-embed").first().evaluate(frame => getComputedStyle(frame).pointerEvents), "auto");
     await desktop.locator('[data-gamesense-playlist-filter="YT Shorts"]').click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 1);
+    await desktop.locator('[data-gamesense-playlist-filter="News"]').click();
+    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Yoru buffs in Patch 13\.01/i);
+    await desktop.locator('[data-gamesense-playlist-filter="VODs"]').click();
+    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
     await desktop.locator(".gamesense-back").click();
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-topic="maps"]');
@@ -1268,11 +1287,22 @@ async function run() {
     await mobile.click('[data-gamesense-topic="playlist"]');
     await mobile.locator(".gamesense-playlist-home").waitFor({ state: "visible" });
     await mobile.waitForTimeout(700);
-    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 8);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 10);
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
+    const mobilePlaylistFilterScroll = await mobile.locator(".gamesense-playlist-filters").evaluate(filters => {
+      const style = getComputedStyle(filters);
+      filters.scrollLeft = filters.scrollWidth;
+      return { clientWidth: filters.clientWidth, scrollWidth: filters.scrollWidth, scrollLeft: filters.scrollLeft, overflowX: style.overflowX };
+    });
+    assert.ok(mobilePlaylistFilterScroll.scrollWidth > mobilePlaylistFilterScroll.clientWidth && mobilePlaylistFilterScroll.scrollLeft > 0 && ["auto", "scroll"].includes(mobilePlaylistFilterScroll.overflowX), JSON.stringify(mobilePlaylistFilterScroll));
+    await mobile.locator('[data-gamesense-playlist-filter="Home"]').click();
     await mobile.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-mobile.png") });
+    await mobile.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
+    const mobileEmbed = mobile.locator(".gamesense-video-card .gamesense-video-embed").first();
+    assert.match(await mobileEmbed.getAttribute("src"), /controls=1&playsinline=1/);
+    assert.equal(await mobileEmbed.evaluate(frame => getComputedStyle(frame).pointerEvents), "auto");
     await mobile.locator(".gamesense-back").click();
     await mobile.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await mobile.click('[data-gamesense-topic="maps"]');

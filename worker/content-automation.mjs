@@ -150,8 +150,20 @@ function hasValorantMetadata(video = {}) {
   return /\bvalorant\b/i.test(`${video.title || ""} ${video.description || ""} ${tags}`);
 }
 
+function hasNewsCue(video = {}, sourceType = "") {
+  if (sourceType === "patch-breakdown") return true;
+  const text = normalizeSearchText(`${video.title || ""} ${video.description || ""}`);
+  return /\b(?:patch|update|buff|buffs|buffed|buffing|nerf|nerfs|nerfed|nerfing|ban|bans|banned|banning|anti cheat|smurfing|win trading|queue sniping|night market|new agent|new map|ranked changes|competitive changes)\b/.test(text);
+}
+
+function hasVodCue(video = {}) {
+  if (video.isVod === true || video.wasLive === true) return true;
+  if (Number(video.durationSeconds || 0) < 1800) return false;
+  return /(?:\bvod\s*reviews?\b|!vodreviews?\b|!livecoach\b|\branked block coaching\b|\bfree valorant tracker reviews\b)/i.test(String(video.title || ""));
+}
+
 async function enrichYouTubeVideos(videos = [], apiKey = "") {
-  if (!apiKey || !videos.length) return videos.map(video => Object.freeze({ ...video, isShort: hasYouTubeShortCue(video), isLive: false }));
+  if (!apiKey || !videos.length) return videos.map(video => Object.freeze({ ...video, isShort: hasYouTubeShortCue(video), isLive: false, isVod: hasVodCue(video) }));
   const metadata = new Map();
   for (let index = 0; index < videos.length; index += 50) {
     const ids = videos.slice(index, index + 50).map(video => video.id).filter(Boolean);
@@ -165,6 +177,8 @@ async function enrichYouTubeVideos(videos = [], apiKey = "") {
   return videos.map(video => {
     const item = metadata.get(video.id);
     const snippet = item?.snippet || {};
+    const liveDetails = item?.liveStreamingDetails || {};
+    const wasLive = Boolean(liveDetails.actualStartTime && liveDetails.actualEndTime);
     const enriched = {
       ...video,
       title: decodeHtml(snippet.title || video.title),
@@ -173,10 +187,11 @@ async function enrichYouTubeVideos(videos = [], apiKey = "") {
       thumbnail: String(snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || video.thumbnail),
       tags: Array.isArray(snippet.tags) ? snippet.tags : [],
       durationSeconds: parseIsoDurationSeconds(item?.contentDetails?.duration),
-      isLive: snippet.liveBroadcastContent === "live" && !item?.liveStreamingDetails?.actualEndTime,
-      viewerCount: Number(item?.liveStreamingDetails?.concurrentViewers)
+      isLive: snippet.liveBroadcastContent === "live" && !liveDetails.actualEndTime,
+      wasLive,
+      viewerCount: Number(liveDetails.concurrentViewers)
     };
-    return Object.freeze({ ...enriched, isShort: hasYouTubeShortCue(enriched), isValorant: hasValorantMetadata(enriched) });
+    return Object.freeze({ ...enriched, isShort: hasYouTubeShortCue(enriched), isVod: hasVodCue(enriched), isValorant: hasValorantMetadata(enriched) });
   });
 }
 
@@ -233,10 +248,19 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const items = videos.filter(video => !suppressedIds.has(video.id)).map(video => {
     const sourceType = getVideoSourceType(video, patchLabel);
+    const topicType = hasVodCue(video)
+      ? "VODs"
+      : hasNewsCue(video, sourceType)
+        ? "News"
+        : video.isShort
+          ? "YT Shorts"
+          : sourceType === "creator-guide"
+            ? categorizeCreatorTitle(video.title)
+            : "General";
     return Object.freeze({
       ...video,
       sourceType,
-      topicType: video.isShort ? "YT Shorts" : sourceType === "creator-guide" ? categorizeCreatorTitle(video.title) : "General",
+      topicType,
       isNewThisWeek: Date.parse(video.publishedAt || 0) >= oneWeekAgo,
       isNewIn24Hours: Date.parse(video.publishedAt || 0) >= oneDayAgo
     });

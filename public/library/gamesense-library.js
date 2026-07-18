@@ -231,11 +231,6 @@
     return Array.isArray(getReference()[topic]) ? getReference()[topic] : [];
   }
 
-  function renderPlaylistBadge() {
-    if (!featuredPlaylist) return `<span class="gamesense-playlist-status">Loading current rotation</span>`;
-    return `<span class="gamesense-playlist-new">+${Number(featuredPlaylist.newIn24Hours || 0)} New Today</span>`;
-  }
-
   function renderOverview() {
     const season = getReference().season || {};
     return `
@@ -245,8 +240,7 @@
           ${Object.entries(topicMeta).map(([key, meta], index) => `
             <button class="gamesense-topic-card${key === "playlist" ? " gamesense-playlist-topic-card" : ""}" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
               <span class="gamesense-topic-collage" aria-hidden="true">${getTopicCollageMarkup(key)}</span>
-              ${key === "playlist" ? `<span class="gamesense-playlist-play" aria-hidden="true"></span>${renderPlaylistBadge()}` : ""}
-              <strong>${escapeHtml(meta.label)}</strong>
+              <strong${key === "playlist" ? ` class="gamesense-playlist-title"` : ""}>${escapeHtml(meta.label)}${key === "playlist" ? `<span class="gamesense-playlist-play" aria-hidden="true"></span>` : ""}</strong>
               <small>${escapeHtml(meta.copy)}</small>
               <span class="gamesense-topic-action">Open dossier</span>
             </button>
@@ -297,7 +291,7 @@
   }
 
   function getPlaylistFilters() {
-    return ["Home", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "YT Shorts"];
+    return ["Home", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "News", "YT Shorts", "VODs"];
   }
 
   function renderPlaylistHomeIcon() {
@@ -347,7 +341,7 @@
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
     const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
-    const visible = activeFilter === "Home" ? [] : items.filter(item => activeFilter === "YT Shorts" ? item.isShort : !item.isShort && item.topicType === activeFilter);
+    const visible = activeFilter === "Home" ? [] : items.filter(item => item.topicType === activeFilter);
     return `
       <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
         <div><strong>Featured Playlist</strong><small>Trusted videos stay credited to their original creators.</small></div>
@@ -1809,7 +1803,7 @@
     if (playlistVideo) {
       const videoId = String(playlistVideo.dataset.gamesensePlayVideo || "");
       if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return;
-      playlistVideo.outerHTML = `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?autoplay=1&rel=0" title="Featured VALORANT video" loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+      playlistVideo.outerHTML = `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?autoplay=1&controls=1&playsinline=1&rel=0" title="Featured VALORANT video" loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>`;
       return;
     }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");
