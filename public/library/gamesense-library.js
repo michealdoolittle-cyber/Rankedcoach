@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "this-week" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -9,11 +9,14 @@
   let skinPreviewTouchActivation = null;
   let activeLibraryTransition = null;
   let collectionArchiveRenderToken = 0;
+  let featuredPlaylist = null;
+  let featuredPlaylistRequest = null;
   const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
-    weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." }
+    weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." },
+    playlist: { label: "Playlist", copy: "Current patch reads and trusted coaching videos, credited to their creators." }
   };
   const roleIconMap = Object.freeze({
     controller: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/role_controller.png",
@@ -129,6 +132,9 @@
   }
 
   function getTopicCollageMarkup(topic = "") {
+    if (topic === "playlist") {
+      return (featuredPlaylist?.items || []).slice(0, 4).map(video => `<img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy">`).join("");
+    }
     if (topic === "agents") {
       const agents = getReference().agents || [];
       const rolePicks = [
@@ -225,6 +231,11 @@
     return Array.isArray(getReference()[topic]) ? getReference()[topic] : [];
   }
 
+  function renderPlaylistBadge() {
+    if (!featuredPlaylist) return `<span class="gamesense-playlist-status">Loading current rotation</span>`;
+    return `${featuredPlaylist.patchTag ? `<span class="gamesense-playlist-patch">${escapeHtml(featuredPlaylist.patchTag)}</span>` : ""}<span class="gamesense-playlist-new">+${Number(featuredPlaylist.newThisWeek || 0)} New This Week</span>`;
+  }
+
   function renderOverview() {
     const season = getReference().season || {};
     return `
@@ -232,8 +243,9 @@
         <div class="gamesense-season-scope"><span>Active Season</span><strong>${escapeHtml(season.label || "Active Season")} | Patch ${escapeHtml(season.patch || "Current")}</strong><p>Agent, map, and weapon rates on this page use the active competitive season, not historical profile data.</p></div>
         <div class="gamesense-topic-grid">
           ${Object.entries(topicMeta).map(([key, meta], index) => `
-            <button class="gamesense-topic-card" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
+            <button class="gamesense-topic-card${key === "playlist" ? " gamesense-playlist-topic-card" : ""}" type="button" data-gamesense-topic="${key}" style="--topic-index:${index}">
               <span class="gamesense-topic-collage" aria-hidden="true">${getTopicCollageMarkup(key)}</span>
+              ${key === "playlist" ? `<span class="gamesense-playlist-play" aria-hidden="true"></span>${renderPlaylistBadge()}` : ""}
               <strong>${escapeHtml(meta.label)}</strong>
               <small>${escapeHtml(meta.copy)}</small>
               <span class="gamesense-topic-action">Open dossier</span>
@@ -284,7 +296,33 @@
       </button>`;
   }
 
+  function getPlaylistFilters() {
+    return ["this-week", "Role", "Playstyle", "Mechanics", "Map Knowledge", "Movement", "Mood/Behavior", "Communication", "Uncategorized"];
+  }
+
+  function renderPlaylist() {
+    const items = featuredPlaylist?.items || [];
+    const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "this-week";
+    const filtered = activeFilter === "this-week"
+      ? items.filter(item => item.isNewThisWeek)
+      : items.filter(item => item.topicType === activeFilter || (activeFilter === "Uncategorized" && item.topicType === "Uncategorized"));
+    const visible = activeFilter === "this-week" && !filtered.length ? items.slice(0, 12) : filtered;
+    return `
+      <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
+        <div><strong>Featured Playlist</strong><small>Trusted videos stay credited to their original creators.</small></div>
+        <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
+      </div>
+      <section class="gamesense-esports-link"><div><span>Official VALORANT Esports</span><strong>Matches and VODs</strong><small>Live status is not inferred. Open Riot's official channel for the current schedule.</small></div><a href="https://www.youtube.com/@valorantesports" target="_blank" rel="noopener noreferrer">Open official channel</a></section>
+      <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
+        ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}">${escapeHtml(filter === "this-week" ? "This Week" : filter)}</button>`).join("")}
+      </div>
+      <div class="gamesense-playlist-grid">
+        ${visible.length ? visible.map(video => `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}"><button class="gamesense-video-thumb" type="button" data-gamesense-play-video="${escapeHtml(video.id)}" aria-label="Play ${escapeHtml(video.title)}"><img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i></button><div><span>${escapeHtml(String(video.sourceType || "creator-guide").replace(/-/g, " "))}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${video.topicType ? ` | ${escapeHtml(video.topicType)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">Watch on YouTube</a></div></article>`).join("") : `<p class="gamesense-playlist-empty">The trusted rotation is being refreshed. No video is force-fit into this category.</p>`}
+      </div>`;
+  }
+
   function renderGallery(topic) {
+    if (topic === "playlist") return renderPlaylist();
     const meta = topicMeta[topic];
     let items = getTopicItems(topic);
     let controls = "";
@@ -593,7 +631,8 @@
           <div>${(map.lineupLinks || []).map(renderLineupLink).join("")}</div>
         </section>
       </div>
-      ${renderMarkedMap(map)}`;
+      ${renderMarkedMap(map)}
+      ${renderRelatedVideo(map)}`;
   }
 
   function renderStatChips(stats = {}) {
@@ -674,7 +713,8 @@
           const action = map ? ` type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(map.id)}"` : "";
           return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(getMapArtwork(mapName))}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
         }).join("") : `<p class="gamesense-map-fit-unavailable">No verified current-season map-fit sample is attached to this agent dossier.</p>`}</div>
-      </section>`;
+      </section>
+      ${renderRelatedVideo(agent)}`;
   }
 
   function safePercent(value) {
@@ -682,18 +722,36 @@
   }
 
   function renderDamageTable(weapon) {
+    const ranges = Array.isArray(weapon.damageRanges) ? weapon.damageRanges : [];
     return `
       <div class="gamesense-damage-table" role="table" aria-label="${escapeHtml(weapon.label)} damage by range">
-        ${(weapon.damageRanges || []).map(range => `<article class="gamesense-damage-target-row" role="row" aria-label="${escapeHtml(range.range)}: ${range.head} head, ${range.body} body, ${range.legs} legs">
+        ${ranges.length > 1 ? `<div class="gamesense-damage-range-pager" role="tablist" aria-label="Select damage range">
+          ${ranges.map((range, index) => `<button type="button" role="tab" data-gamesense-damage-range="${index}" aria-label="Show ${escapeHtml(range.range)} damage" aria-selected="${index === 0}" class="${index === 0 ? "active" : ""}"><i aria-hidden="true"></i></button>`).join("")}
+        </div>` : ""}
+        ${ranges.map((range, index) => `<article class="gamesense-damage-target-row${index === 0 ? " is-mobile-range-active" : ""}" data-gamesense-damage-range-panel="${index}" role="tabpanel" aria-label="${escapeHtml(range.range)}: ${range.head} head, ${range.body} body, ${range.legs} legs">
           <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
-          <div class="gamesense-damage-target" aria-hidden="true">
-            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg" alt="">
+          <div class="gamesense-damage-target">
+            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg" alt="Front-facing target showing head, body, and leg hit zones">
             <span class="is-head"><b>Head</b><em>${range.head}</em></span>
             <span class="is-body"><b>Body</b><em>${range.body}</em></span>
             <span class="is-legs"><b>Legs</b><em>${range.legs}</em></span>
           </div>
         </article>`).join("")}
       </div>`;
+  }
+
+  function findRelatedVideo(item = {}) {
+    const terms = [item.label, item.id].map(normalize => assetSlug(normalize)).filter(Boolean);
+    return (featuredPlaylist?.items || []).find(video => {
+      const title = assetSlug(video.title);
+      return terms.some(term => term.length >= 3 && title.includes(term));
+    }) || null;
+  }
+
+  function renderRelatedVideo(item) {
+    const video = findRelatedVideo(item);
+    if (!video) return "";
+    return `<section class="gamesense-related-video"><div><span>Related Video</span><strong>${escapeHtml(video.title)}</strong><small>${escapeHtml(video.channel)}</small></div><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i><b>Watch on YouTube</b></a></section>`;
   }
 
   function renderWeaponFact(weapon) {
@@ -798,7 +856,8 @@
         `).join("")}</div>
         ${renderWeaponFact(selected)}
       </section>
-      ${renderWeaponCollectionArchive(selected, getWeaponCollectionProvider()?.getCached(selected?.label), collectionLoadErrors.get(selected?.label) || "")}`;
+      ${renderWeaponCollectionArchive(selected, getWeaponCollectionProvider()?.getCached(selected?.label), collectionLoadErrors.get(selected?.label) || "")}
+      ${renderRelatedVideo(selected)}`;
   }
 
   function getSelectedWeapon() {
@@ -1434,6 +1493,24 @@
     });
   }
 
+  function hydrateFeaturedPlaylist() {
+    if (featuredPlaylist || featuredPlaylistRequest) return;
+    featuredPlaylistRequest = fetch("/api/content/playlist", { headers: { Accept: "application/json" } })
+      .then(response => {
+        if (!response.ok) throw new Error(`Featured Playlist returned HTTP ${response.status}.`);
+        return response.json();
+      })
+      .then(payload => {
+        featuredPlaylist = payload && Array.isArray(payload.items) ? payload : { items: [], newThisWeek: 0, patchTag: "" };
+        if (["overview", "playlist"].includes(state.topic)) render({ direction: "replace" });
+      })
+      .catch(error => {
+        console.warn("Featured Playlist refresh skipped", error?.message || error);
+        featuredPlaylist = { items: [], newThisWeek: 0, patchTag: "" };
+      })
+      .finally(() => { featuredPlaylistRequest = null; });
+  }
+
   function commitRender(root) {
     root.innerHTML = state.topic === "overview" ? renderOverview() : state.itemId ? renderDetail(state.topic, state.itemId) : renderGallery(state.topic);
     root.querySelectorAll("img[data-agent-fallback]").forEach(img => {
@@ -1445,6 +1522,7 @@
     bindMapPanZoom();
     bindPlantHotspots();
     hydrateWeaponCollectionArchive();
+    hydrateFeaturedPlaylist();
   }
 
   function render(options = {}) {
@@ -1500,6 +1578,7 @@
     state.compRole = "Controller";
     state.agentRole = "all";
     state.mapSeason = "in";
+    state.playlistFilter = "this-week";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
     const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
     const selectedNav = document.documentElement.classList.contains("is-mobile-layout") ? mobileNav : desktopNav;
@@ -1521,6 +1600,7 @@
     state.compRole = "Controller";
     state.agentRole = "all";
     state.mapSeason = "in";
+    state.playlistFilter = "this-week";
     render({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
     const owner = document.documentElement.classList.contains("is-mobile-layout")
@@ -1673,6 +1753,21 @@
       render({ direction: "replace" });
       return;
     }
+    const playlistFilter = event.target.closest?.("[data-gamesense-playlist-filter]");
+    if (playlistFilter) {
+      state.playlistFilter = getPlaylistFilters().includes(playlistFilter.dataset.gamesensePlaylistFilter)
+        ? playlistFilter.dataset.gamesensePlaylistFilter
+        : "this-week";
+      render({ direction: "replace" });
+      return;
+    }
+    const playlistVideo = event.target.closest?.("[data-gamesense-play-video]");
+    if (playlistVideo) {
+      const videoId = String(playlistVideo.dataset.gamesensePlayVideo || "");
+      if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return;
+      playlistVideo.outerHTML = `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?autoplay=1&rel=0" title="Featured VALORANT video" loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+      return;
+    }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");
     if (mapView) {
       state.mapView = mapView.dataset.gamesenseMapView === "plants" ? "plants" : "locations";
@@ -1716,6 +1811,20 @@
     const ability = event.target.closest?.("[data-gamesense-ability]");
     if (ability) {
       selectAbility(ability);
+      return;
+    }
+    const damageRange = event.target.closest?.("[data-gamesense-damage-range]");
+    if (damageRange) {
+      const table = damageRange.closest(".gamesense-damage-table");
+      const activeIndex = damageRange.dataset.gamesenseDamageRange;
+      table?.querySelectorAll("[data-gamesense-damage-range]").forEach(button => {
+        const active = button.dataset.gamesenseDamageRange === activeIndex;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", active ? "true" : "false");
+      });
+      table?.querySelectorAll("[data-gamesense-damage-range-panel]").forEach(panel => {
+        panel.classList.toggle("is-mobile-range-active", panel.dataset.gamesenseDamageRangePanel === activeIndex);
+      });
       return;
     }
     const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
@@ -1796,6 +1905,12 @@
     if (!activeSkinPreview || event.target.closest?.(".gamesense-skin-preview-card")) return;
     closeSkinPreview();
   }, true);
+
+  window.addEventListener("rankedcoach:skin-media-updated", event => {
+    const weapon = getSelectedWeapon();
+    if (!weapon || weapon.label !== event.detail?.weaponName) return;
+    replaceWeaponCollectionArchive(weapon, getWeaponCollectionProvider()?.getCached(weapon.label));
+  });
 
   decorateWarmupDrills();
   render();

@@ -126,6 +126,7 @@
   })])));
   const cache = new Map();
   const pending = new Map();
+  const mediaPending = new Set();
 
   function getCollectionName(displayName = "", weaponName = "") {
     const escapedWeapon = weaponName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -226,6 +227,42 @@
     return cache.get(String(weaponName)) || null;
   }
 
+  function scheduleMediaCuration(weaponName, collections = []) {
+    const missing = collections.filter(item => !item.bundleVideo || !item.sketchfabModel).map(item => ({
+      key: normalizeCollectionKey(item.name),
+      name: item.name,
+      weaponName: item.weaponName,
+      needsVideo: !item.bundleVideo,
+      needsModel: !item.sketchfabModel
+    }));
+    if (!missing.length || mediaPending.has(weaponName)) return;
+    mediaPending.add(weaponName);
+    fetch("/api/content/skin-media", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ collections: missing })
+    }).then(response => {
+      if (!response.ok) throw new Error(`Content curation returned HTTP ${response.status}.`);
+      return response.json();
+    }).then(payload => {
+      const current = cache.get(weaponName);
+      if (!Array.isArray(current)) return;
+      let changed = false;
+      const updated = current.map(item => {
+        if (item.bundleVideo) return item;
+        const video = payload?.matches?.[normalizeCollectionKey(item.name)]?.video;
+        if (!video?.id) return item;
+        changed = true;
+        return Object.freeze({ ...item, bundleVideo: Object.freeze(video) });
+      });
+      if (!changed) return;
+      cache.set(weaponName, Object.freeze(updated));
+      window.dispatchEvent(new CustomEvent("rankedcoach:skin-media-updated", { detail: { weaponName } }));
+    }).catch(error => {
+      console.warn("Skin media curation skipped", error?.message || error);
+    }).finally(() => mediaPending.delete(weaponName));
+  }
+
   async function loadForWeapon(weaponName = "") {
     const normalizedName = String(weaponName).trim();
     const uuid = weaponUuids[normalizedName];
@@ -244,6 +281,7 @@
         const collections = normalizeSkins(normalizedName, payload?.data?.skins || []);
         if (!collections.length) throw new Error(`No weapon skins were returned for ${normalizedName}.`);
         cache.set(normalizedName, Object.freeze(collections.map(item => Object.freeze(item))));
+        scheduleMediaCuration(normalizedName, cache.get(normalizedName));
         return cache.get(normalizedName);
       })
       .finally(() => {

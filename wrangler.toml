@@ -1,6 +1,19 @@
 name = "rankedcoach"
-compatibility_date = "2026-05-08"
+compatibility_date = "2026-07-18"
 main = "./worker/index.js"
+
+[observability]
+enabled = true
+
+[triggers]
+crons = ["17 */6 * * *"]
+
+[vars]
+NTFY_TOPIC = "rankedcoach-deploys-mk7x2q"
+
+[[kv_namespaces]]
+binding = "CONTENT_AUTOMATION"
+id = "ae66a938fffc4177a899337ba55165eb"
 
 [assets]
 directory = "./public"

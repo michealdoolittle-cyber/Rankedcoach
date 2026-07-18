@@ -14,6 +14,16 @@ function startServer() {
   return new Promise(resolve => {
     const server = http.createServer((request, response) => {
       let relativePath = decodeURIComponent((request.url || "/").split("?")[0]);
+      if (relativePath === "/api/content/playlist") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ patchLabel: "13.01", patchTag: "", newThisWeek: 0, items: [] }));
+        return;
+      }
+      if (relativePath === "/api/content/skin-media") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ matches: {} }));
+        return;
+      }
       if (relativePath === "/") relativePath = "/index.html";
       const filePath = path.join(root, relativePath);
       if (!filePath.startsWith(root)) {
@@ -713,6 +723,14 @@ async function run() {
       goal: getComputedStyle(document.querySelector("#goalRRWidget #navGoalTierText")).fontSize
     }));
     assert.equal(mobileRrType.goal, mobileRrType.next, JSON.stringify(mobileRrType));
+    const tooltipScrollState = await page.evaluate(() => {
+      const tooltip = document.getElementById("chartTooltip");
+      tooltip.style.visibility = "visible";
+      tooltip.style.opacity = "1";
+      window.dispatchEvent(new Event("scroll"));
+      return { visibility: tooltip.style.visibility, opacity: tooltip.style.opacity };
+    });
+    assert.deepEqual(tooltipScrollState, { visibility: "hidden", opacity: "0" });
     assert.match(await page.locator(".weekly-focus-card > .card-header .card-pill").innerText(), /Week of\s+\S/i);
     const weeklyConfidenceGeometry = await page.locator(".weekly-focus-pill:not(.is-disabled)").evaluateAll(pills => pills.map(pill => {
       const heading = pill.querySelector(".weekly-focus-key")?.getBoundingClientRect();

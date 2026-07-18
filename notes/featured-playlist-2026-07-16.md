@@ -1,6 +1,6 @@
 # Featured Playlist — Curated Video Section (2026-07-16)
 
-**Status:** Ready to build. Third and final consumer of the trusted-channel/auto-curation infrastructure speced in `notes/patch-content-automation-2026-07-16.md` section 2 (skin showcase videos) — build that infrastructure once, this directive and that one both plug into it. This is the "external content, credited and embedded" counterpart to the Gamesense Library's in-house dossier content, and directly answers the earlier competitive research on theguide.gg: instead of RankedCoach producing paywalled video courses, it becomes the discovery/distribution layer for creators who already make good content, driving them real traffic instead of gating their audience behind a subscription.
+**Status:** Shipped 2026-07-18. The Gamesense Library now has a fourth Playlist dossier fed by the verified Riot plus eight-creator allowlist, fail-closed title categorization, real thumbnail collage, patch/new badges, topic filters, privacy-enhanced click-to-load embeds, creator attribution, related dossier videos, and a static official esports fallback with no fabricated live state. The one-command KV suppression/restore escape hatch was exercised against production storage. Default and Hazard Edge Layout Styles, desktop/mobile Library flows, focused automation tests, and the full passthrough all passed. Browser cache key: `20260718-content-automation-01`.
 
 ---
 

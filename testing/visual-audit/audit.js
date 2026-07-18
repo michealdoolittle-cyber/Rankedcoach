@@ -22,6 +22,14 @@ function startServer() {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       let u = decodeURIComponent((req.url || "/").split("?")[0]);
+      if (u === "/api/content/playlist") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ patchLabel: "13.01", patchTag: "", newThisWeek: 0, items: [] }));
+      }
+      if (u === "/api/content/skin-media") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ matches: {} }));
+      }
       if (u === "/") u = "/index.html";
       const f = path.join(ROOT, u);
       if (!f.startsWith(ROOT)) { res.writeHead(403); return res.end("Forbidden"); }

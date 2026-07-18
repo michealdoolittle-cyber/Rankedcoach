@@ -1,9 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 150" role="img" aria-label="Target dummy silhouette">
-  <rect width="120" height="150" rx="12" fill="#28224b"/>
-  <g fill="#c9c7f3">
-    <circle cx="60" cy="24" r="14"/>
-    <path d="M47 43h26l10 45-15 4-2 45H54l-2-45-15-4 10-45Z"/>
-    <path d="m45 50-10 5-17 48 13 5 21-49-7-9Z"/>
-    <path d="m75 50 10 5 17 48-13 5-21-49 7-9Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 170" role="img" aria-label="Front-facing human target silhouette">
+  <g fill="#cbc9f4" stroke="#f3f2ff" stroke-width="1.35" stroke-linejoin="round">
+    <circle cx="60" cy="17" r="12"/>
+    <path d="M54 30h12l2 9H52l2-9Z"/>
+    <path d="M43 39c5-3 11-4 17-4s12 1 17 4l7 39c1 8-4 15-12 17l-2 7H50l-2-7c-8-2-13-9-12-17l7-39Z"/>
+    <path d="M42 43 29 49 16 93l11 4 17-36 4-16-6-2Z"/>
+    <path d="m78 43 13 6 13 44-11 4-17-36-4-16 6-2Z"/>
+    <path d="M50 99h10l-2 66H39l5-39 6-27Z"/>
+    <path d="M60 99h10l6 27 5 39H62l-2-66Z"/>
   </g>
 </svg>

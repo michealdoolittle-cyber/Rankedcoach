@@ -44,6 +44,11 @@ import {
   onRequestOptions as optionsHenrikRaw,
   onRequestPost as postHenrikRaw
 } from "../functions/api/henrik/raw.js";
+import {
+  handlePlaylistRequest,
+  handleSkinMediaRequest,
+  runPatchContentAutomation
+} from "./content-automation.mjs";
 
 const API_ROUTES = new Map([
   ["GET /api/riot/health", getRiotHealth],
@@ -107,6 +112,28 @@ async function handleApiRequest(request, env, executionContext) {
     }
   }
 
+  if (url.pathname === "/api/content/playlist") {
+    if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, { status: 405 });
+    try {
+      return jsonResponse(await handlePlaylistRequest(env));
+    } catch (error) {
+      console.error("Playlist content request failed", error);
+      return jsonResponse({ error: "Featured playlist is temporarily unavailable." }, { status: 502 });
+    }
+  }
+
+  if (url.pathname === "/api/content/skin-media") {
+    if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, { status: 405 });
+    const origin = request.headers.get("Origin");
+    if (origin && origin !== url.origin) return jsonResponse({ error: "Cross-origin content requests are not allowed." }, { status: 403 });
+    try {
+      return jsonResponse(await handleSkinMediaRequest(request, env));
+    } catch (error) {
+      console.error("Skin media request failed", error);
+      return jsonResponse({ error: "Skin media lookup is temporarily unavailable." }, { status: 502 });
+    }
+  }
+
   const handler = API_ROUTES.get(`${request.method} ${url.pathname}`);
   if (!handler) {
     return jsonResponse({ error: "API route not found" }, { status: 404 });
@@ -127,5 +154,9 @@ export default {
       return handleApiRequest(request, env, executionContext);
     }
     return env.ASSETS.fetch(request);
+  },
+
+  scheduled(_controller, env, executionContext) {
+    executionContext.waitUntil(runPatchContentAutomation(env));
   }
 };

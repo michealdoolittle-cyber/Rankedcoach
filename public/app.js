@@ -44715,6 +44715,13 @@ function setLayoutStyleMobileSection(section = "shapes") {
   });
 }
 
+if (!window.__rankedCoachChartScrollHideBound) {
+  window.__rankedCoachChartScrollHideBound = true;
+  window.addEventListener("scroll", hideChartTooltip, { capture: true, passive: true });
+  document.addEventListener("scroll", hideChartTooltip, { capture: true, passive: true });
+  window.visualViewport?.addEventListener("scroll", hideChartTooltip, { passive: true });
+}
+
 function renderLayoutOptionGallery({
   galleryId = "",
   selectId = "",
