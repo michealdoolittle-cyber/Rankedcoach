@@ -743,7 +743,7 @@ async function run() {
         overlaps: Boolean(heading && confidence && heading.left < confidence.right && heading.right > confidence.left && heading.top < confidence.bottom && heading.bottom > confidence.top)
       };
     }));
-    assert.ok(weeklyConfidenceGeometry.length > 0 && weeklyConfidenceGeometry.every(item => item.heading && item.confidence && !item.overlaps && item.confidence.right <= item.card.right + 1), JSON.stringify(weeklyConfidenceGeometry));
+    assert.ok(weeklyConfidenceGeometry.length > 0 && weeklyConfidenceGeometry.every(item => item.heading && item.confidence && !item.overlaps && item.confidence.left >= item.card.left - 1 && item.confidence.right <= item.card.right + 1), JSON.stringify(weeklyConfidenceGeometry));
     await page.locator(".weekly-focus-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-weekly-confidence.png") });
     const mobileTimelineGeometry = await page.locator("#timelineGrid .timeline-pill").evaluateAll(pills => pills.map(pill => {
       const card = pill.getBoundingClientRect();

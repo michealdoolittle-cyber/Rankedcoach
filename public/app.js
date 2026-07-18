@@ -50816,8 +50816,8 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
           ${roleBadge}
           <div class="weekly-focus-pill-head">
             <span class="weekly-focus-key">${escapeHtml(meta.title)}</span>
-            <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
           </div>
+          <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
           <span class="weekly-focus-text">${escapeHtml(pillBody)}</span>
         </button>
       `;

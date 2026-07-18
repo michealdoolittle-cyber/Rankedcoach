@@ -1,6 +1,6 @@
 # Featured Playlist — Curated Video Section (2026-07-16)
 
-**Status:** Shipped 2026-07-18. The Gamesense Library now has a fourth Playlist dossier fed by the verified Riot plus eight-creator allowlist, fail-closed title categorization, real thumbnail collage, patch/new badges, topic filters, privacy-enhanced click-to-load embeds, creator attribution, related dossier videos, and a static official esports fallback with no fabricated live state. All eight creator IDs and handles were verified against live YouTube metadata; Konpeki resolved to `@CoachKonpeki`, and Rem also feeds the exact-match skin-media curation path. The one-command KV suppression/restore escape hatch was exercised against production storage. Default and Hazard Edge Layout Styles, desktop/mobile Library flows, focused automation tests, and the full passthrough all passed. Browser cache key: `20260718-content-automation-01`.
+**Status:** Expanded and shipped 2026-07-18. The Playlist now includes the verified `@Charla7an` channel, the exact Home/General/Role/Agent/Map Knowledge/Mechanics/Mentality/YT Shorts filter set, a Home feed limited to trusted releases from the prior 24 hours, and a separate current-live section. Patch pills were removed from the Playlist dossier. Server-side YouTube and Twitch live checks fail closed to verified VALORANT metadata and the requested 29-channel Twitch allowlist; production activation still requires `YOUTUBE_DATA_API_KEY`, `TWITCH_CLIENT_ID`, and `TWITCH_CLIENT_SECRET` secrets, so the UI shows an honest unavailable state instead of fabricated streams until those credentials are connected. The weekly-focus overlap regression, public-domain target reference, focused automation suites, Cloudflare dry run, and full desktop/mobile passthrough all passed. Browser cache key: `20260718-playlist-live-02`.
 
 ---
 
@@ -82,7 +82,7 @@ Title-based keyword matching against the 7-item topic taxonomy above ("skimming 
 
 ## Testing checklist — don't report this batch done until:
 
-1. All eight trusted creators (plus Riot's official channel) have real, verified channel IDs — confirm this was actually checked via the API, not assumed from the name list in this note.
+1. All nine trusted creators (plus Riot's official channel) have real, verified channel IDs — confirm this was actually checked via the API, not assumed from the name list in this note.
 2. A sample pull from each trusted channel is manually spot-checked against the 7-topic keyword taxonomy before the taxonomy is considered final — real titles, not synthetic test cases.
 3. The Playlist tile renders correctly under at least two different Layout Styles (same compatibility bar as every other Layout Style-aware component) with zero new hardcoded colors.
 4. The esports live-stream element gracefully degrades to a plain channel link if no schedule/live-status data source is actually confirmed available — don't ship a fake "live now" indicator.

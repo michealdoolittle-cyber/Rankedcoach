@@ -1621,12 +1621,21 @@ body:is(
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-pill{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-rows:auto auto auto !important;
+    align-items:start !important;
+    gap:5px !important;
     min-height:92px !important;
     padding:10px 11px !important;
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-pill-head{
-    gap:7px !important;
+    display:block !important;
+    grid-column:1 !important;
+    grid-row:1 !important;
+    width:100% !important;
+    min-width:0 !important;
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-key{
@@ -1636,15 +1645,24 @@ body:is(
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-confidence{
-    max-width:42% !important;
+    position:static !important;
+    inset:auto !important;
+    grid-column:1 !important;
+    grid-row:2 !important;
+    justify-self:end !important;
+    width:auto !important;
+    max-width:min(46vw,132px) !important;
     min-height:21px !important;
     padding:3px 7px !important;
     font-size:clamp(9px,2.6vw,11px) !important;
     line-height:1 !important;
     white-space:nowrap !important;
+    transform:none !important;
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-text{
+    grid-column:1 !important;
+    grid-row:3 !important;
     font-size:clamp(17px,4.3vw,21px) !important;
     line-height:1.12 !important;
   }

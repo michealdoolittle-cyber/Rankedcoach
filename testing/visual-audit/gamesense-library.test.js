@@ -20,16 +20,29 @@ function startServer() {
           patchLabel: "13.01",
           patchTag: "Patch 13.01 Breakdown Inside",
           newThisWeek: 4,
+          newIn24Hours: 4,
           source: "trusted-channel-feeds",
+          liveAvailability: { youtube: true, twitch: true },
+          liveStreams: [{
+            id: "live-stream-1",
+            platform: "twitch",
+            channel: "Charla7an",
+            title: "Radiant ranked coaching",
+            viewerCount: 412,
+            thumbnail: `http://127.0.0.1:${port}/assets/library/maps/bind-card.png`,
+            url: "https://www.twitch.tv/charla7an"
+          }],
           items: images.map((image, index) => ({
             id: `video${String(index + 1).padStart(6, "0")}`,
             title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked"][index],
             channel: channels[index],
             sourceType: "creator-guide",
-            topicType: ["Role", "Mechanics", "Map Knowledge", "Mood/Behavior"][index],
+            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts"][index],
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/${image}`,
             url: `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
-            isNewThisWeek: true
+            isNewThisWeek: true,
+            isNewIn24Hours: true,
+            isShort: index === 3
           }))
         }));
       }
@@ -282,7 +295,8 @@ async function run() {
     await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-topic-collage img').first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-topic-collage img').count(), 4);
     assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-playlist-play').count(), 1);
-    assert.match(await desktop.locator('[data-gamesense-topic="playlist"]').innerText(), /Patch 13\.01 Breakdown Inside.*\+4 New This Week/is);
+    assert.match(await desktop.locator('[data-gamesense-topic="playlist"]').innerText(), /\+4 New Today/is);
+    assert.equal(await desktop.locator('[data-gamesense-topic="playlist"] .gamesense-playlist-patch').count(), 0);
     await desktop.locator('[data-gamesense-topic="playlist"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-topic-default.png") });
     await desktop.evaluate(() => {
       document.body.dataset.layoutShape = "hazardedge";
@@ -295,12 +309,18 @@ async function run() {
     });
     await desktop.click('[data-gamesense-topic="playlist"]');
     await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 4);
-    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 9);
+    await desktop.waitForTimeout(700);
+    assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 4);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 8);
+    assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
+    assert.match(await desktop.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
     assert.equal(await desktop.locator('.gamesense-video-card a[href*="youtube.com/watch"]').count(), 4);
-    await desktop.locator(".gamesense-video-card [data-gamesense-play-video]").first().click();
+    await desktop.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
+    await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-desktop.png") });
+    await desktop.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
     assert.match(await desktop.locator(".gamesense-video-card .gamesense-video-embed").first().getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?autoplay=1&rel=0/);
-    assert.match(await desktop.locator(".gamesense-esports-link").innerText(), /Live status is not inferred.*Open official channel/is);
+    await desktop.locator('[data-gamesense-playlist-filter="YT Shorts"]').click();
+    assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 1);
     await desktop.locator(".gamesense-back").click();
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-topic="maps"]');
@@ -1137,7 +1157,7 @@ async function run() {
     await desktop.locator(".gamesense-weapon-guidance").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-guidance-desktop.png") });
     await desktop.locator(".gamesense-weapon-history").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-history-desktop.png") });
     assert.ok(await desktop.locator(".gamesense-damage-target-row").count() >= 2);
-    assert.equal(await desktop.locator('.gamesense-damage-target-row img.gamesense-target-dummy[src="assets/library/target-dummy.svg"]').count(), await desktop.locator(".gamesense-damage-target-row").count());
+    assert.equal(await desktop.locator('.gamesense-damage-target-row img.gamesense-target-dummy[src^="assets/library/target-dummy.svg?"]').count(), await desktop.locator(".gamesense-damage-target-row").count());
     await desktop.locator(".gamesense-damage-table").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-damage-targets-desktop.png") });
     const contentCoverage = await desktop.evaluate(() => {
       const reference = globalThis.RankedCoachGamesenseReference;
@@ -1245,6 +1265,16 @@ async function run() {
     assert.ok(mobileWeaponTopicArt.action.bottom <= mobileWeaponTopicArt.titleTop, JSON.stringify(mobileWeaponTopicArt));
     await mobile.locator('[data-gamesense-topic="weapons"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapons-topic-mobile.png") });
     assert.equal(await mobile.locator(".gamesense-topic-number").count(), 0);
+    await mobile.click('[data-gamesense-topic="playlist"]');
+    await mobile.locator(".gamesense-playlist-home").waitFor({ state: "visible" });
+    await mobile.waitForTimeout(700);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 8);
+    assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
+    assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
+    await mobile.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
+    await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-mobile.png") });
+    await mobile.locator(".gamesense-back").click();
+    await mobile.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await mobile.click('[data-gamesense-topic="maps"]');
     await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
     await mobile.locator('.gamesense-map-entry-card').first().waitFor({ state: "visible" });

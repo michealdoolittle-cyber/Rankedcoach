@@ -2840,6 +2840,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   height:calc(100% - 16px);
   object-fit:contain;
   object-position:center;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gamesense-cool,#58d4c8) 24%,transparent));
 }
 
 @media (max-width:820px){
@@ -3027,7 +3028,6 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   transform:translate(-40%,-50%);
 }
 
-.gamesense-playlist-patch,
 .gamesense-playlist-new,
 .gamesense-playlist-status{
   position:absolute;
@@ -3043,7 +3043,6 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   text-transform:uppercase;
 }
 
-.gamesense-playlist-patch{left:12px;}
 .gamesense-playlist-new,.gamesense-playlist-status{right:12px;}
 .gamesense-playlist-gallery-head small{display:block;margin-top:5px;color:var(--text-muted,#a8b3c7);}
 
@@ -3082,6 +3081,10 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-playlist-filters::-webkit-scrollbar{display:none;}
 .gamesense-playlist-filters button{
   flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
   padding:9px 12px;
   border:1px solid color-mix(in srgb,var(--gamesense-cool,#58d4c8) 34%,transparent);
   border-radius:10px;
@@ -3090,6 +3093,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   font:800 11px/1 var(--font-display,"Rajdhani",sans-serif);
 }
 .gamesense-playlist-filters button.active{background:var(--gamesense-cool,#58d4c8);color:var(--card-bg,#07111f);}
+.gamesense-playlist-home-icon{width:15px;height:15px;fill:currentColor;}
 
 .gamesense-playlist-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
 .gamesense-video-card{overflow:hidden;border:1px solid color-mix(in srgb,var(--gamesense-cool,#58d4c8) 28%,transparent);border-radius:14px;background:var(--panel-bg,#111b2d);}
@@ -3104,6 +3108,13 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-video-card p{margin:0;color:var(--text-muted,#a8b3c7);font-size:11px;}
 .gamesense-video-embed{display:block;width:100%;aspect-ratio:16/9;border:0;background:#020617;}
 .gamesense-playlist-empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--text-muted,#a8b3c7);}
+.gamesense-playlist-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:8px 0 12px;color:var(--text-main,#f8fafc);font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
+.gamesense-playlist-section-head strong{display:grid;place-items:center;min-width:32px;height:26px;padding:0 8px;border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 55%,transparent);border-radius:999px;color:var(--gamesense-warm,#f6c453);font-size:12px;}
+.gamesense-playlist-live-break{display:flex;align-items:center;gap:12px;margin:22px 0 14px;color:#ff4655;font:900 17px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.08em;text-transform:uppercase;}
+.gamesense-playlist-live-break::before,.gamesense-playlist-live-break::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,color-mix(in srgb,#ff4655 64%,transparent));}
+.gamesense-playlist-live-break::after{background:linear-gradient(90deg,color-mix(in srgb,#ff4655 64%,transparent),transparent);}
+.gamesense-live-card{border-color:color-mix(in srgb,#ff4655 55%,transparent);}
+.gamesense-live-card .gamesense-video-thumb > b{position:absolute;z-index:4;top:9px;left:9px;padding:5px 8px;border-radius:999px;background:#ff4655;color:#fff;font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;box-shadow:0 0 18px color-mix(in srgb,#ff4655 52%,transparent);}
 
 .gamesense-related-video{margin-top:18px;}
 .gamesense-related-video > a{position:relative;display:grid;grid-template-columns:140px auto;align-items:center;gap:10px;min-width:230px;}
@@ -3112,7 +3123,6 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-related-video > a i::after{border-top-width:5px;border-bottom-width:5px;border-left-width:8px;}
 
 @media (max-width:820px){
-  html.is-mobile-layout .gamesense-playlist-patch,
   html.is-mobile-layout .gamesense-playlist-new,
   html.is-mobile-layout .gamesense-playlist-status{top:48px;max-width:44%;font-size:7px;white-space:normal;}
   html.is-mobile-layout .gamesense-playlist-play{width:46px;height:46px;}
@@ -3123,4 +3133,5 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   html.is-mobile-layout .gamesense-related-video > a{grid-template-columns:minmax(0,1fr);min-width:0;}
   html.is-mobile-layout .gamesense-related-video > a img{width:100%;}
   html.is-mobile-layout .gamesense-related-video > a i{left:50%;}
+  html.is-mobile-layout .gamesense-playlist-section-head{font-size:clamp(14px,4.4vw,18px);}
 }

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "this-week" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -233,7 +233,7 @@
 
   function renderPlaylistBadge() {
     if (!featuredPlaylist) return `<span class="gamesense-playlist-status">Loading current rotation</span>`;
-    return `${featuredPlaylist.patchTag ? `<span class="gamesense-playlist-patch">${escapeHtml(featuredPlaylist.patchTag)}</span>` : ""}<span class="gamesense-playlist-new">+${Number(featuredPlaylist.newThisWeek || 0)} New This Week</span>`;
+    return `<span class="gamesense-playlist-new">+${Number(featuredPlaylist.newIn24Hours || 0)} New Today</span>`;
   }
 
   function renderOverview() {
@@ -297,28 +297,66 @@
   }
 
   function getPlaylistFilters() {
-    return ["this-week", "Role", "Playstyle", "Mechanics", "Map Knowledge", "Movement", "Mood/Behavior", "Communication", "Uncategorized"];
+    return ["Home", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "YT Shorts"];
+  }
+
+  function renderPlaylistHomeIcon() {
+    return `<svg class="gamesense-playlist-home-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.2 12 3l9 8.2v9.3h-6.2v-6h-5.6v6H3v-9.3Z"></path></svg>`;
+  }
+
+  function renderPlaylistVideoCard(video) {
+    const isYouTube = String(video.platform || "youtube").toLowerCase() === "youtube";
+    const sourceLabel = video.isShort ? "YouTube Short" : String(video.sourceType || "creator-guide").replace(/-/g, " ");
+    const thumbAction = isYouTube && /^[A-Za-z0-9_-]{11}$/.test(String(video.id || ""))
+      ? `data-gamesense-play-video="${escapeHtml(video.id)}"`
+      : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
+    return `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}">
+      <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}"><img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i></button>
+      <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${video.topicType ? ` | ${escapeHtml(video.topicType)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch on YouTube" : "Watch on Twitch"}</a></div>
+    </article>`;
+  }
+
+  function renderPlaylistLiveCard(stream) {
+    const platform = String(stream.platform || "").toLowerCase();
+    const isYouTube = platform === "youtube" && /^[A-Za-z0-9_-]{11}$/.test(String(stream.id || ""));
+    const action = isYouTube
+      ? `data-gamesense-play-video="${escapeHtml(stream.id)}"`
+      : `data-gamesense-open-live="${escapeHtml(stream.url)}"`;
+    const viewers = Number(stream.viewerCount);
+    return `<article class="gamesense-video-card gamesense-live-card" data-live-platform="${escapeHtml(platform)}">
+      <button class="gamesense-video-thumb" type="button" ${action} aria-label="Open ${escapeHtml(stream.channel)} live stream"><img src="${escapeHtml(stream.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i><b>Live</b></button>
+      <div><span>${escapeHtml(platform || "live")}</span><h3>${escapeHtml(stream.title)}</h3><p>${escapeHtml(stream.channel)}${Number.isFinite(viewers) ? ` | ${viewers.toLocaleString()} watching` : ""}</p><a href="${escapeHtml(stream.url)}" target="_blank" rel="noopener noreferrer">Watch live</a></div>
+    </article>`;
+  }
+
+  function renderPlaylistHome(items) {
+    const newVideos = items.filter(item => item.isNewIn24Hours && !item.isLive);
+    const liveStreams = featuredPlaylist?.liveStreams || [];
+    const liveAvailability = featuredPlaylist?.liveAvailability || {};
+    const liveCopy = liveStreams.length
+      ? liveStreams.map(renderPlaylistLiveCard).join("")
+      : `<p class="gamesense-playlist-empty">${liveAvailability.youtube || liveAvailability.twitch ? "No verified VALORANT streams are live right now." : "Live checks will appear here once the server credentials are connected."}</p>`;
+    return `<section class="gamesense-playlist-home">
+      <div class="gamesense-playlist-section-head"><span>Released in the last 24 hours</span><strong>${newVideos.length}</strong></div>
+      <div class="gamesense-playlist-grid">${newVideos.length ? newVideos.map(renderPlaylistVideoCard).join("") : `<p class="gamesense-playlist-empty">No trusted creator released a new video in the last 24 hours.</p>`}</div>
+      <div class="gamesense-playlist-live-break"><span>Live now</span></div>
+      <div class="gamesense-playlist-grid gamesense-live-grid">${liveCopy}</div>
+    </section>`;
   }
 
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
-    const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "this-week";
-    const filtered = activeFilter === "this-week"
-      ? items.filter(item => item.isNewThisWeek)
-      : items.filter(item => item.topicType === activeFilter || (activeFilter === "Uncategorized" && item.topicType === "Uncategorized"));
-    const visible = activeFilter === "this-week" && !filtered.length ? items.slice(0, 12) : filtered;
+    const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
+    const visible = activeFilter === "Home" ? [] : items.filter(item => activeFilter === "YT Shorts" ? item.isShort : !item.isShort && item.topicType === activeFilter);
     return `
       <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
         <div><strong>Featured Playlist</strong><small>Trusted videos stay credited to their original creators.</small></div>
         <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
       </div>
-      <section class="gamesense-esports-link"><div><span>Official VALORANT Esports</span><strong>Matches and VODs</strong><small>Live status is not inferred. Open Riot's official channel for the current schedule.</small></div><a href="https://www.youtube.com/@valorantesports" target="_blank" rel="noopener noreferrer">Open official channel</a></section>
       <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
-        ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}">${escapeHtml(filter === "this-week" ? "This Week" : filter)}</button>`).join("")}
+        ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}">${filter === "Home" ? renderPlaylistHomeIcon() : ""}<span>${escapeHtml(filter)}</span></button>`).join("")}
       </div>
-      <div class="gamesense-playlist-grid">
-        ${visible.length ? visible.map(video => `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}"><button class="gamesense-video-thumb" type="button" data-gamesense-play-video="${escapeHtml(video.id)}" aria-label="Play ${escapeHtml(video.title)}"><img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i></button><div><span>${escapeHtml(String(video.sourceType || "creator-guide").replace(/-/g, " "))}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${video.topicType ? ` | ${escapeHtml(video.topicType)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">Watch on YouTube</a></div></article>`).join("") : `<p class="gamesense-playlist-empty">The trusted rotation is being refreshed. No video is force-fit into this category.</p>`}
-      </div>`;
+      ${activeFilter === "Home" ? renderPlaylistHome(items) : `<div class="gamesense-playlist-grid">${visible.length ? visible.map(renderPlaylistVideoCard).join("") : `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>`}</div>`}`;
   }
 
   function renderGallery(topic) {
@@ -731,7 +769,7 @@
         ${ranges.map((range, index) => `<article class="gamesense-damage-target-row${index === 0 ? " is-mobile-range-active" : ""}" data-gamesense-damage-range-panel="${index}" role="tabpanel" aria-label="${escapeHtml(range.range)}: ${range.head} head, ${range.body} body, ${range.legs} legs">
           <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
           <div class="gamesense-damage-target">
-            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg" alt="Front-facing target showing head, body, and leg hit zones">
+            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260718-playlist-live-02" alt="Front-facing human silhouette showing head, body, and leg hit zones">
             <span class="is-head"><b>Head</b><em>${range.head}</em></span>
             <span class="is-body"><b>Body</b><em>${range.body}</em></span>
             <span class="is-legs"><b>Legs</b><em>${range.legs}</em></span>
@@ -1501,12 +1539,12 @@
         return response.json();
       })
       .then(payload => {
-        featuredPlaylist = payload && Array.isArray(payload.items) ? payload : { items: [], newThisWeek: 0, patchTag: "" };
+        featuredPlaylist = payload && Array.isArray(payload.items) ? payload : { items: [], liveStreams: [], newIn24Hours: 0 };
         if (["overview", "playlist"].includes(state.topic)) render({ direction: "replace" });
       })
       .catch(error => {
         console.warn("Featured Playlist refresh skipped", error?.message || error);
-        featuredPlaylist = { items: [], newThisWeek: 0, patchTag: "" };
+        featuredPlaylist = { items: [], liveStreams: [], newIn24Hours: 0 };
       })
       .finally(() => { featuredPlaylistRequest = null; });
   }
@@ -1578,7 +1616,7 @@
     state.compRole = "Controller";
     state.agentRole = "all";
     state.mapSeason = "in";
-    state.playlistFilter = "this-week";
+    state.playlistFilter = "Home";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
     const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
     const selectedNav = document.documentElement.classList.contains("is-mobile-layout") ? mobileNav : desktopNav;
@@ -1600,7 +1638,7 @@
     state.compRole = "Controller";
     state.agentRole = "all";
     state.mapSeason = "in";
-    state.playlistFilter = "this-week";
+    state.playlistFilter = "Home";
     render({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
     const owner = document.documentElement.classList.contains("is-mobile-layout")
@@ -1757,8 +1795,14 @@
     if (playlistFilter) {
       state.playlistFilter = getPlaylistFilters().includes(playlistFilter.dataset.gamesensePlaylistFilter)
         ? playlistFilter.dataset.gamesensePlaylistFilter
-        : "this-week";
+        : "Home";
       render({ direction: "replace" });
+      return;
+    }
+    const externalLive = event.target.closest?.("[data-gamesense-open-live]");
+    if (externalLive) {
+      const url = String(externalLive.dataset.gamesenseOpenLive || "");
+      if (/^https:\/\/(?:www\.)?(?:twitch\.tv|youtube\.com)\//i.test(url)) window.open(url, "_blank", "noopener,noreferrer");
       return;
     }
     const playlistVideo = event.target.closest?.("[data-gamesense-play-video]");

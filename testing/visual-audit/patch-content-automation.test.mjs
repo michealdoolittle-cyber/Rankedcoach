@@ -3,10 +3,12 @@ import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
   TRUSTED_YOUTUBE_CHANNELS,
+  TRUSTED_TWITCH_CHANNELS,
   buildFeaturedPlaylist,
   categorizeCreatorTitle,
   extractBalanceUpdateText,
   fetchTrustedChannelVideos,
+  fetchTrustedTwitchStreams,
   findAffectedDossiers,
   findConfidentCollectionVideo,
   getPatchDescriptor,
@@ -38,7 +40,7 @@ const playlistChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.play
 playlistChannels.forEach(channel => assert(liveVideos.some(video => video.channel === channel), `${channel} must have a live trusted-channel feed.`));
 
 const creatorChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.kind === "creator");
-assert.equal(creatorChannels.length, 8, "The trusted creator allowlist must contain all eight approved creators.");
+assert.equal(creatorChannels.length, 9, "The trusted creator allowlist must contain the original eight creators plus Charla7an.");
 for (const channel of creatorChannels) {
   const sample = liveVideos.find(video => video.channelId === channel.id);
   assert.ok(sample, `${channel.name} must expose a current sample video.`);
@@ -59,12 +61,13 @@ const creatorSamples = new Map([
   ["Slayerkey", "Your Aim Isn't Inconsistent. Here's What's Actually Happening."],
   ["Sena", "You Don't Suck, You're Just Playing the Wrong Agent"],
   ["Rem", "Valorant Is BUFFING Yoru"],
-  ["Rooney", "the hidden mistake keeping you hardstuck"]
+  ["Rooney", "the hidden mistake keeping you hardstuck"],
+  ["Charla7an", "Controller Role Guide for Ranked"]
 ]);
 for (const [channel, title] of creatorSamples) {
-  assert.notEqual(categorizeCreatorTitle(title), "Uncategorized", `${channel}'s real-title sample must map confidently.`);
+  assert.notEqual(categorizeCreatorTitle(title), "General", `${channel}'s focused sample must map beyond General.`);
 }
-assert.equal(categorizeCreatorTitle("A quiet afternoon update"), "Uncategorized", "An unrelated title must fail closed.");
+assert.equal(categorizeCreatorTitle("A quiet afternoon update"), "General", "An unrelated title must fail closed into General.");
 
 const blackspyreId = "aSFtc5Y-ORQ";
 const blackspyreMetadataResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${blackspyreId}&format=json`);
@@ -100,6 +103,34 @@ class MemoryKv {
     void cursor;
     return { keys: [...this.values.keys()].filter(key => key.startsWith(prefix)).map(name => ({ name })), list_complete: true };
   }
+}
+
+assert.equal(TRUSTED_TWITCH_CHANNELS.length, 29, "Every requested Twitch channel must stay on the trusted live allowlist.");
+const twitchKv = new MemoryKv();
+const fetchBeforeTwitchCheck = globalThis.fetch;
+globalThis.fetch = async (input, init = {}) => {
+  const url = String(input);
+  if (url === "https://id.twitch.tv/oauth2/token") {
+    assert.equal(init.method, "POST");
+    return new Response(JSON.stringify({ access_token: "test-token", expires_in: 3600 }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+  if (url.startsWith("https://api.twitch.tv/helix/streams?")) {
+    assert.match(url, /user_login=Subroza/);
+    assert.match(url, /user_login=VALORANT_Americas/);
+    assert.equal(init.headers["Client-Id"], "test-client");
+    return new Response(JSON.stringify({ data: [
+      { id: "stream-1", user_login: "subroza", user_name: "Subroza", game_name: "VALORANT", type: "live", title: "Ranked", viewer_count: 900, thumbnail_url: "https://example.com/{width}x{height}.jpg", started_at: "2026-07-18T12:00:00Z" },
+      { id: "stream-2", user_login: "hiko", user_name: "Hiko", game_name: "Other Game", type: "live", title: "Variety", viewer_count: 100, thumbnail_url: "https://example.com/{width}x{height}.jpg", started_at: "2026-07-18T12:00:00Z" }
+    ] }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+  return fetchBeforeTwitchCheck(input, init);
+};
+try {
+  const twitchStreams = await fetchTrustedTwitchStreams({ CONTENT_AUTOMATION: twitchKv, TWITCH_CLIENT_ID: "test-client", TWITCH_CLIENT_SECRET: "test-secret" });
+  assert.deepEqual(twitchStreams.map(stream => stream.channel), ["Subroza"], "Only live VALORANT-tagged Twitch streams may surface.");
+  assert.equal(twitchStreams[0].thumbnail, "https://example.com/640x360.jpg");
+} finally {
+  globalThis.fetch = fetchBeforeTwitchCheck;
 }
 
 const sourceHashBefore = await hashFiles();

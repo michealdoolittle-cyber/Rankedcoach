@@ -4,6 +4,8 @@ const RIOT_NEWS_ROOT = "https://playvalorant.com/en-us/news/game-updates";
 const YOUTUBE_API_ROOT = "https://www.googleapis.com/youtube/v3";
 const YOUTUBE_FEED_ROOT = "https://www.youtube.com/feeds/videos.xml";
 const MAX_CHANNEL_VIDEOS = 15;
+const PLAYLIST_CACHE_WINDOW_MS = 5 * 60 * 1000;
+const TWITCH_TOKEN_CACHE_KEY = "playlist:twitch-token";
 
 export const AGENT_NAMES = Object.freeze([
   "Astra", "Breach", "Brimstone", "Chamber", "Clove", "Cypher", "Deadlock", "Fade", "Gekko",
@@ -26,17 +28,23 @@ export const TRUSTED_YOUTUBE_CHANNELS = Object.freeze([
   Object.freeze({ id: "UCW15YpAc8hjPhDX9be7YdRg", handle: "@Slayerkey", name: "Slayerkey", kind: "creator", playlist: true, skin: false }),
   Object.freeze({ id: "UCH__y98F7DyZaw_C3LdGu-A", handle: "@SenaVL", name: "Sena", kind: "creator", playlist: true, skin: false }),
   Object.freeze({ id: "UCcCTL6IEX64sXTOba-Iz6gA", handle: "@RemValorant", name: "Rem", kind: "creator", playlist: true, skin: true }),
-  Object.freeze({ id: "UCHNd-wW9s1d7VGvd3qJgp5g", handle: "@rooneyVAL", name: "Rooney", kind: "creator", playlist: true, skin: false })
+  Object.freeze({ id: "UCHNd-wW9s1d7VGvd3qJgp5g", handle: "@rooneyVAL", name: "Rooney", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UC7BbRccnD432c3AADwFq1VQ", handle: "@Charla7an", name: "Charla7an", kind: "creator", playlist: true, skin: false })
+]);
+
+export const TRUSTED_TWITCH_CHANNELS = Object.freeze([
+  "Subroza", "Dasnerth", "Charla7an", "curry", "inspire", "eggster", "s0mcs", "ShahZaM",
+  "Grimm", "Hiko", "sinatraa", "zekken", "Xeppaa", "temet", "LFToxy_val", "TenZ", "Keeoh",
+  "AunaWEEB", "ethos", "florescent", "shanks_ttv", "VALORANT_EMEA", "VALORANT_Americas",
+  "VALORANT_NorthAmerica", "VALORANT", "VALORANT_Pacific", "crunchVAL", "madaa", "canezerraa"
 ]);
 
 const TOPIC_KEYWORDS = Object.freeze({
-  Role: Object.freeze(["agent", "controller", "duelist", "initiator", "sentinel", "omen", "jett", "sova", "viper", "yoru", "iso", "miks"]),
-  Playstyle: Object.freeze(["entry", "entries", "lurk", "anchor", "rotate", "clutch", "decision", "ranked", "smurfing"]),
-  Mechanics: Object.freeze(["aim", "crosshair", "flick", "spray", "recoil", "gunfight", "peeking", "one tapped", "sensitivity"]),
+  Role: Object.freeze(["role", "controller", "duelist", "initiator", "sentinel", "entry", "entries", "lurk", "anchor"]),
+  Agent: Object.freeze(["agent", "agents", ...AGENT_NAMES.map(name => normalizeSearchText(name))]),
   "Map Knowledge": Object.freeze(["ascent", "bind", "breeze", "fracture", "haven", "icebox", "lotus", "pearl", "split", "sunset", "summit"]),
-  Movement: Object.freeze(["movement", "strafe", "deadzon", "counter-straf", "jump peek", "jiggle"]),
-  "Mood/Behavior": Object.freeze(["mindset", "tilt", "toxic", "confidence", "mental", "improving", "hardstuck"]),
-  Communication: Object.freeze(["comms", "communication", "callout", "teammate", "teamplay", "igl"])
+  Mechanics: Object.freeze(["aim", "crosshair", "flick", "spray", "recoil", "gunfight", "peeking", "one tapped", "sensitivity", "movement", "strafe", "deadzon", "counter straf", "jump peek", "jiggle"]),
+  Mentality: Object.freeze(["mindset", "tilt", "toxic", "confidence", "mental", "improving", "hardstuck", "comms", "communication", "callout", "teammate", "teamplay", "igl"])
 });
 
 function decodeHtml(value = "") {
@@ -111,34 +119,65 @@ export function parseYouTubeFeed(xml = "", channel = {}) {
     const entry = match[1];
     const id = xmlTag(entry, "yt:videoId");
     if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return null;
+    const description = stripHtml(xmlTag(entry, "media:description"));
     return Object.freeze({
       id,
       title: stripHtml(xmlTag(entry, "title")),
+      description,
       channelId: channel.id,
       channel: channel.name,
       channelKind: channel.kind,
       publishedAt: xmlTag(entry, "published"),
       thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
-      url: `https://www.youtube.com/watch?v=${id}`
+      url: `https://www.youtube.com/watch?v=${id}`,
+      platform: "youtube"
     });
   }).filter(Boolean);
 }
 
-function parseYouTubeApi(payload = {}, channel = {}) {
-  return (payload.items || []).map(item => {
-    const id = String(item?.id?.videoId || "");
-    if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return null;
-    return Object.freeze({
-      id,
-      title: decodeHtml(item?.snippet?.title || ""),
-      channelId: channel.id,
-      channel: channel.name,
-      channelKind: channel.kind,
-      publishedAt: String(item?.snippet?.publishedAt || ""),
-      thumbnail: String(item?.snippet?.thumbnails?.high?.url || item?.snippet?.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`),
-      url: `https://www.youtube.com/watch?v=${id}`
-    });
-  }).filter(Boolean);
+function parseIsoDurationSeconds(value = "") {
+  const match = String(value).match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i);
+  return match ? Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0) : 0;
+}
+
+function hasYouTubeShortCue(video = {}) {
+  const text = `${video.title || ""} ${video.description || ""}`;
+  return /(?:^|\s)#shorts?\b/i.test(text) || (Number(video.durationSeconds) > 0 && Number(video.durationSeconds) <= 60);
+}
+
+function hasValorantMetadata(video = {}) {
+  const tags = Array.isArray(video.tags) ? video.tags.join(" ") : "";
+  return /\bvalorant\b/i.test(`${video.title || ""} ${video.description || ""} ${tags}`);
+}
+
+async function enrichYouTubeVideos(videos = [], apiKey = "") {
+  if (!apiKey || !videos.length) return videos.map(video => Object.freeze({ ...video, isShort: hasYouTubeShortCue(video), isLive: false }));
+  const metadata = new Map();
+  for (let index = 0; index < videos.length; index += 50) {
+    const ids = videos.slice(index, index + 50).map(video => video.id).filter(Boolean);
+    const url = new URL(`${YOUTUBE_API_ROOT}/videos`);
+    url.searchParams.set("part", "snippet,contentDetails,liveStreamingDetails");
+    url.searchParams.set("id", ids.join(","));
+    url.searchParams.set("key", apiKey);
+    const payload = await fetchJson(url);
+    (payload.items || []).forEach(item => metadata.set(String(item.id), item));
+  }
+  return videos.map(video => {
+    const item = metadata.get(video.id);
+    const snippet = item?.snippet || {};
+    const enriched = {
+      ...video,
+      title: decodeHtml(snippet.title || video.title),
+      description: decodeHtml(snippet.description || video.description || ""),
+      publishedAt: String(snippet.publishedAt || video.publishedAt || ""),
+      thumbnail: String(snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || video.thumbnail),
+      tags: Array.isArray(snippet.tags) ? snippet.tags : [],
+      durationSeconds: parseIsoDurationSeconds(item?.contentDetails?.duration),
+      isLive: snippet.liveBroadcastContent === "live" && !item?.liveStreamingDetails?.actualEndTime,
+      viewerCount: Number(item?.liveStreamingDetails?.concurrentViewers)
+    };
+    return Object.freeze({ ...enriched, isShort: hasYouTubeShortCue(enriched), isValorant: hasValorantMetadata(enriched) });
+  });
 }
 
 async function fetchJson(url, init = {}) {
@@ -161,23 +200,14 @@ export async function fetchTrustedChannelVideos(env = {}, options = {}) {
   const channels = (options.channels || TRUSTED_YOUTUBE_CHANNELS).filter(channel => options.kind ? channel[options.kind] : true);
   const apiKey = String(env.YOUTUBE_DATA_API_KEY || "").trim();
   const results = await Promise.allSettled(channels.map(async channel => {
-    if (apiKey) {
-      const url = new URL(`${YOUTUBE_API_ROOT}/search`);
-      url.searchParams.set("part", "snippet");
-      url.searchParams.set("channelId", channel.id);
-      url.searchParams.set("maxResults", String(MAX_CHANNEL_VIDEOS));
-      url.searchParams.set("order", "date");
-      url.searchParams.set("type", "video");
-      url.searchParams.set("key", apiKey);
-      return parseYouTubeApi(await fetchJson(url), channel);
-    }
     const url = new URL(YOUTUBE_FEED_ROOT);
     url.searchParams.set("channel_id", channel.id);
     return parseYouTubeFeed(await fetchText(url), channel);
   }));
   const batches = results.filter(result => result.status === "fulfilled").map(result => result.value);
   if (!batches.length) throw new Error("No trusted YouTube channel could be refreshed.");
-  return batches.flat().sort((left, right) => Date.parse(right.publishedAt || 0) - Date.parse(left.publishedAt || 0));
+  const videos = batches.flat().sort((left, right) => Date.parse(right.publishedAt || 0) - Date.parse(left.publishedAt || 0));
+  return enrichYouTubeVideos(videos, apiKey);
 }
 
 export function categorizeCreatorTitle(title = "") {
@@ -187,7 +217,7 @@ export function categorizeCreatorTitle(title = "") {
     const score = keywords.reduce((total, keyword) => total + (normalized.includes(normalizeSearchText(keyword)) ? 1 : 0), 0);
     if (score > (best?.score || 0)) best = { topic, score };
   }
-  return best?.score ? best.topic : "Uncategorized";
+  return best?.score ? best.topic : "General";
 }
 
 function getVideoSourceType(video, patchLabel = "") {
@@ -200,13 +230,15 @@ function getVideoSourceType(video, patchLabel = "") {
 
 export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedIds = new Set(), now = Date.now()) {
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+  const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const items = videos.filter(video => !suppressedIds.has(video.id)).map(video => {
     const sourceType = getVideoSourceType(video, patchLabel);
     return Object.freeze({
       ...video,
       sourceType,
-      topicType: sourceType === "creator-guide" ? categorizeCreatorTitle(video.title) : "",
-      isNewThisWeek: Date.parse(video.publishedAt || 0) >= oneWeekAgo
+      topicType: video.isShort ? "YT Shorts" : sourceType === "creator-guide" ? categorizeCreatorTitle(video.title) : "General",
+      isNewThisWeek: Date.parse(video.publishedAt || 0) >= oneWeekAgo,
+      isNewIn24Hours: Date.parse(video.publishedAt || 0) >= oneDayAgo
     });
   }).slice(0, 40);
   const currentPatchVideo = items.find(item => item.sourceType === "patch-breakdown") || null;
@@ -214,8 +246,63 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
     patchLabel,
     patchTag: currentPatchVideo ? `Patch ${patchLabel} Breakdown Inside` : "",
     newThisWeek: items.filter(item => item.isNewThisWeek).length,
+    newIn24Hours: items.filter(item => item.isNewIn24Hours).length,
     items: Object.freeze(items)
   });
+}
+
+function buildYouTubeLiveStreams(videos = []) {
+  return videos.filter(video => video.isLive && video.isValorant).map(video => Object.freeze({
+    id: video.id,
+    platform: "youtube",
+    channel: video.channel,
+    title: video.title,
+    viewerCount: Number.isFinite(video.viewerCount) ? video.viewerCount : null,
+    thumbnail: video.thumbnail,
+    url: video.url,
+    startedAt: video.publishedAt
+  }));
+}
+
+async function getTwitchAppAccessToken(env = {}) {
+  const clientId = String(env.TWITCH_CLIENT_ID || "").trim();
+  const clientSecret = String(env.TWITCH_CLIENT_SECRET || "").trim();
+  if (!clientId || !clientSecret) return "";
+  const cached = await env.CONTENT_AUTOMATION?.get?.(TWITCH_TOKEN_CACHE_KEY, "json");
+  if (cached?.accessToken && Date.parse(cached.expiresAt || 0) > Date.now() + 60_000) return cached.accessToken;
+  const body = new URLSearchParams({ client_id: clientId, client_secret: clientSecret, grant_type: "client_credentials" });
+  const token = await fetchJson("https://id.twitch.tv/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body
+  });
+  const accessToken = String(token.access_token || "");
+  if (!accessToken) throw new Error("Twitch did not return an app access token.");
+  const expiresIn = Math.max(120, Number(token.expires_in || 3600));
+  await env.CONTENT_AUTOMATION?.put?.(TWITCH_TOKEN_CACHE_KEY, JSON.stringify({
+    accessToken,
+    expiresAt: new Date(Date.now() + expiresIn * 1000).toISOString()
+  }), { expirationTtl: expiresIn });
+  return accessToken;
+}
+
+export async function fetchTrustedTwitchStreams(env = {}, channels = TRUSTED_TWITCH_CHANNELS) {
+  const clientId = String(env.TWITCH_CLIENT_ID || "").trim();
+  const accessToken = await getTwitchAppAccessToken(env);
+  if (!clientId || !accessToken) return [];
+  const url = new URL("https://api.twitch.tv/helix/streams");
+  channels.slice(0, 100).forEach(channel => url.searchParams.append("user_login", channel));
+  const payload = await fetchJson(url, { headers: { "Client-Id": clientId, Authorization: `Bearer ${accessToken}` } });
+  return (payload.data || []).filter(stream => stream.type === "live" && String(stream.game_name || "").toLowerCase() === "valorant").map(stream => Object.freeze({
+    id: String(stream.id || stream.user_login),
+    platform: "twitch",
+    channel: String(stream.user_name || stream.user_login),
+    title: String(stream.title || `${stream.user_name || stream.user_login} is live`),
+    viewerCount: Number(stream.viewer_count),
+    thumbnail: String(stream.thumbnail_url || "").replace("{width}", "640").replace("{height}", "360"),
+    url: `https://www.twitch.tv/${encodeURIComponent(stream.user_login)}`,
+    startedAt: String(stream.started_at || "")
+  }));
 }
 
 export function findConfidentCollectionVideo(collectionName = "", videos = []) {
@@ -284,12 +371,30 @@ export async function runPatchContentAutomation(env = {}) {
 
 export async function handlePlaylistRequest(env = {}) {
   const cached = await env.CONTENT_AUTOMATION?.get?.("playlist:featured", "json");
-  if (cached?.cachedAt && Date.now() - Date.parse(cached.cachedAt) < 30 * 60 * 1000) return cached;
+  if (cached?.cachedAt && Date.now() - Date.parse(cached.cachedAt) < PLAYLIST_CACHE_WINDOW_MS) return cached;
   const patch = await getCurrentPatch(env);
-  const videos = await fetchTrustedChannelVideos(env, { kind: "playlist" });
+  const [videoResult, twitchResult] = await Promise.allSettled([
+    fetchTrustedChannelVideos(env, { kind: "playlist" }),
+    fetchTrustedTwitchStreams(env)
+  ]);
+  if (videoResult.status !== "fulfilled") throw videoResult.reason;
+  const videos = videoResult.value;
+  const twitchStreams = twitchResult.status === "fulfilled" ? twitchResult.value : [];
+  if (twitchResult.status === "rejected") console.warn("Twitch live refresh skipped", twitchResult.reason?.message || twitchResult.reason);
   const suppressed = await readSuppressedVideoIds(env.CONTENT_AUTOMATION);
-  const playlist = buildFeaturedPlaylist(videos, patch.label, suppressed);
-  const payload = { ...playlist, cachedAt: new Date().toISOString(), source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api" : "trusted-channel-feeds" };
+  const youtubeStreams = buildYouTubeLiveStreams(videos);
+  const playlist = buildFeaturedPlaylist(videos.filter(video => !video.isLive), patch.label, suppressed);
+  const liveStreams = [...youtubeStreams, ...twitchStreams].sort((left, right) => Number(right.viewerCount || 0) - Number(left.viewerCount || 0));
+  const payload = {
+    ...playlist,
+    liveStreams,
+    liveAvailability: {
+      youtube: Boolean(String(env.YOUTUBE_DATA_API_KEY || "").trim()),
+      twitch: Boolean(String(env.TWITCH_CLIENT_ID || "").trim() && String(env.TWITCH_CLIENT_SECRET || "").trim())
+    },
+    cachedAt: new Date().toISOString(),
+    source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api" : "trusted-channel-feeds"
+  };
   await env.CONTENT_AUTOMATION?.put?.("playlist:featured", JSON.stringify(payload), { expirationTtl: 3600 });
   return payload;
 }

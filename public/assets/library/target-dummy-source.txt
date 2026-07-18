@@ -1,0 +1,4 @@
+Asset: Human body silhouette.svg
+Source: https://commons.wikimedia.org/wiki/File:Human_body_silhouette.svg
+License: Public domain
+Retrieved: 2026-07-18
