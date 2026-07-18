@@ -582,6 +582,35 @@ function setDailyTrainingModalMode(mode = "warmup", options = {}) {
   if (close) close.setAttribute("aria-label", resolvedMode === "postgame" ? "Close post-game aim training" : "Close warm-up menu");
 }
 
+function clearDailyWarmupSuggestions() {
+  document.querySelectorAll("[data-warmup-drill].is-randomized").forEach(button => {
+    button.classList.remove("is-randomized");
+  });
+  const status = document.getElementById("dailyWarmupRandomStatus");
+  if (status) status.textContent = "";
+}
+
+function randomizeDailyWarmupSuggestions() {
+  const candidates = [...document.querySelectorAll("[data-warmup-drill]")]
+    .filter(button => !button.classList.contains("is-selected"));
+  clearDailyWarmupSuggestions();
+  for (let index = candidates.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
+  }
+  const suggestions = candidates.slice(0, DAILY_WARMUP_DRILL_LIMIT);
+  suggestions.forEach(button => {
+    button.classList.add("is-randomized");
+  });
+  const names = suggestions
+    .map(button => button.querySelector(".daily-warmup-drill-copy strong")?.textContent?.trim())
+    .filter(Boolean);
+  const status = document.getElementById("dailyWarmupRandomStatus");
+  if (status) status.textContent = names.length
+    ? `Highlighted: ${names.join(", ")}. Tap any drill to select it.`
+    : "No unchecked drills are available to highlight.";
+}
+
 function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey()) {
   const record = getDailyWarmupRecord(profile, date);
   const warmupMode = document.getElementById("dailyWarmupModal")?.dataset.trainingMode !== "postgame";
@@ -591,6 +620,7 @@ function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.g
     button.classList.toggle("is-selected", isSelected);
     button.setAttribute("aria-pressed", isSelected ? "true" : "false");
   });
+  clearDailyWarmupSuggestions();
   const count = document.getElementById("dailyWarmupCount");
   if (count) count.textContent = `${selected.size} / ${DAILY_WARMUP_DRILL_LIMIT}`;
   const weaponField = document.getElementById("dailyWarmupWeaponField");
@@ -822,6 +852,10 @@ function bindDailyWarmupEvents() {
   window.__rankedCoachDailyWarmupBound = true;
   document.addEventListener("click", event => {
     if (event.target?.closest?.("[data-warmup-info]")) return;
+    if (event.target?.closest?.("#dailyWarmupRandomize")) {
+      randomizeDailyWarmupSuggestions();
+      return;
+    }
     const drill = event.target?.closest?.("[data-warmup-drill]");
     if (drill) {
       const selected = [...document.querySelectorAll("[data-warmup-drill].is-selected")];

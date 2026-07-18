@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260717-library-controls-04">
+  <link rel="stylesheet" href="app.css?v=20260718-warmup-randomizer-06">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -281,6 +281,14 @@ AUTH MODAL
         Warm-up helps your mechanics, but the real test is carrying the same discipline into live rounds.
       </div>
       <div class="daily-warmup-count" data-daily-training-section="warmup"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
+      <div class="daily-warmup-randomizer" data-daily-training-section="warmup">
+        <button id="dailyWarmupRandomize" class="daily-warmup-randomize" type="button" aria-controls="dailyWarmupGrid">
+          <span class="daily-warmup-randomize-icon" aria-hidden="true">4</span>
+          <span class="daily-warmup-randomize-copy"><strong>Randomize 4 drills</strong><small>Highlights only. Nothing is checked until you choose it.</small></span>
+          <span class="daily-warmup-randomize-arrow" aria-hidden="true">&#8635;</span>
+        </button>
+        <div id="dailyWarmupRandomStatus" class="daily-warmup-random-status" aria-live="polite"></div>
+      </div>
       <div class="daily-warmup-section-heading" data-daily-training-section="warmup">
         <strong>Before Ranked Playlist</strong>
         <span>Choose the four mechanics you want ready before queueing.</span>
@@ -2377,6 +2385,6 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-collections.js?v=20260717-skin-modal-mobile-27"></script>
   <script src="library/gamesense-library.js?v=20260718-library-dossiers-05"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
-  <script type="module" src="app.js?v=20260717-library-controls-04"></script>
+  <script type="module" src="app.js?v=20260718-warmup-randomizer-06"></script>
 </body>
 </html>

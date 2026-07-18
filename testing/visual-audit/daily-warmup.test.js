@@ -227,6 +227,7 @@ async function run() {
     assert.equal(await page.locator("[data-warmup-drill] .daily-warmup-select-indicator").count(), expectedDrills.length);
     assert.equal(await page.locator(".daily-warmup-postgame").isVisible(), false);
     assert.equal(await page.locator(".daily-warmup-postgame-links a").count(), 2);
+    assert.equal(await page.locator("#dailyWarmupRandomize").isVisible(), true);
     const rankedMatchCountBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.matches?.length || 0);
 
     const weaponChoice = page.locator('[data-warmup-drill="weapon-choice"]');
@@ -248,6 +249,24 @@ async function run() {
     assert.notEqual(selectedStyle.background, unselectedStyle.background);
     assert.ok(Number(selectedStyle.checkOpacity) >= 0.85, selectedStyle.checkOpacity);
     assert.match(selectedStyle.checkColor, /52, 211, 153|34, 197, 94|22, 163, 74/);
+
+    const selectedBeforeRandomize = await page.locator("[data-warmup-drill].is-selected").evaluateAll(drills => drills.map(drill => drill.dataset.warmupDrill));
+    await page.click("#dailyWarmupRandomize");
+    const randomized = await page.locator("[data-warmup-drill].is-randomized").evaluateAll(drills => drills.map(drill => ({
+      id: drill.dataset.warmupDrill,
+      pressed: drill.getAttribute("aria-pressed"),
+      selected: drill.classList.contains("is-selected"),
+      outlineWidth: Number.parseFloat(getComputedStyle(drill).outlineWidth),
+      outlineColor: getComputedStyle(drill).outlineColor,
+      checkOpacity: getComputedStyle(drill.querySelector(".daily-warmup-select-indicator"), "::after").opacity
+    })));
+    assert.equal(randomized.length, 4);
+    assert.equal(new Set(randomized.map(drill => drill.id)).size, 4);
+    assert.ok(randomized.every(drill => drill.pressed === "false" && drill.selected === false && drill.outlineWidth >= 2 && drill.outlineColor !== "rgba(0, 0, 0, 0)" && drill.checkOpacity === "0"), JSON.stringify(randomized));
+    assert.deepEqual(await page.locator("[data-warmup-drill].is-selected").evaluateAll(drills => drills.map(drill => drill.dataset.warmupDrill)), selectedBeforeRandomize);
+    assert.equal(await page.locator("#dailyWarmupCount").innerText(), "1 / 4");
+    assert.match(await page.locator("#dailyWarmupRandomStatus").innerText(), /^Highlighted: .+Tap any drill to select it\.$/);
+    await page.locator("#dailyWarmupModal .daily-warmup-card").screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-randomizer-desktop.png") });
 
     for (const drill of ["burst-peeking", "head-tracking", "drone-target-switching"]) {
       await page.click(`[data-warmup-drill="${drill}"]`);
@@ -396,6 +415,11 @@ async function run() {
     });
     assert.ok(mobileWarmupHeader.headerTop >= 0 && mobileWarmupHeader.modalTop >= 0 && mobileWarmupHeader.modalRight <= mobileWarmupHeader.viewportWidth, JSON.stringify(mobileWarmupHeader));
     assert.equal(await mobile.locator("#dailyWarmupModal .lens-modal-close").count(), 0);
+    await mobile.click("#dailyWarmupRandomize");
+    assert.equal(await mobile.locator("[data-warmup-drill].is-randomized").count(), 4);
+    assert.equal(await mobile.locator("[data-warmup-drill].is-selected").count(), 0);
+    assert.equal(await mobile.locator("#dailyWarmupCount").innerText(), "0 / 4");
+    await mobile.screenshot({ path: path.join(__dirname, "tmp", "daily-warmup-randomizer-mobile.png"), fullPage: false });
     await mobile.click('[data-warmup-drill="burst-peeking-strafe"]');
     await mobile.click('[data-warmup-drill="tap-fire-rhythm"]');
     await mobile.waitForTimeout(220);
@@ -412,6 +436,7 @@ async function run() {
     await mobile.locator("#loggingTrainingMenuBtn").screenshot({ path: path.join(__dirname, "tmp", "daily-training-form-button-mobile.png") });
     await mobile.click("#loggingTrainingMenuBtn");
     await mobile.locator('#dailyWarmupModal.active[data-training-mode="warmup"]').waitFor({ state: "visible" });
+    assert.equal(await mobile.locator("[data-warmup-drill].is-randomized").count(), 0);
     await mobile.click('[data-warmup-drill="head-tracking"]');
     await mobile.click("#dailyWarmupSave");
     const mobileTrainingGameId = await submitManualReflection(mobile, {

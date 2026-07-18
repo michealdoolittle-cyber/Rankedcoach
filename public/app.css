@@ -20242,6 +20242,74 @@ SUMMARY BAR
   font-size:17px;
 }
 
+.daily-warmup-randomizer{
+  display:grid;
+  gap:6px;
+}
+
+.daily-warmup-randomize{
+  width:100%;
+  min-height:58px;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 24px;
+  align-items:center;
+  gap:11px;
+  padding:9px 12px;
+  border:1px solid color-mix(in srgb,var(--accent-2,#38bdf8) 52%,var(--border-soft,rgba(148,163,184,.24)));
+  border-radius:13px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent-2,#38bdf8) 12%,var(--surface-card-2,#111827)),var(--surface-card,#0b1220));
+  color:var(--text-main,#f8fafc);
+  text-align:left;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent-2,#38bdf8) 10%,transparent);
+}
+
+.daily-warmup-randomize:hover,
+.daily-warmup-randomize:focus-visible{
+  border-color:var(--accent-2,#38bdf8);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent-2,#38bdf8) 24%,transparent),0 0 18px color-mix(in srgb,var(--accent-2,#38bdf8) 18%,transparent);
+}
+
+.daily-warmup-randomize-icon{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb,var(--accent-2,#38bdf8) 72%,white 8%);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--accent-2,#38bdf8) 18%,var(--surface-card,#0b1220));
+  color:var(--accent-2,#38bdf8);
+  font:900 17px/1 var(--font-display,"Rajdhani",sans-serif);
+}
+
+.daily-warmup-randomize-copy{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.daily-warmup-randomize-copy strong{
+  font:900 13px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.07em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-randomize-copy small{
+  color:var(--text-muted,#a8b3c7);
+  font:700 11px/1.25 var(--font-body,"Rajdhani",sans-serif);
+}
+
+.daily-warmup-randomize-arrow{
+  color:var(--accent-2,#38bdf8);
+  font:900 22px/1 var(--font-display,"Rajdhani",sans-serif);
+  text-align:center;
+}
+
+.daily-warmup-random-status:not(:empty){
+  padding-inline:4px;
+  color:var(--text-muted,#a8b3c7);
+  font:700 11px/1.3 var(--font-body,"Rajdhani",sans-serif);
+}
+
 .daily-warmup-section-heading{
   display:grid;
   gap:3px;
@@ -51125,6 +51193,23 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
   padding:6px 8px !important;
   gap:2px !important;
   overflow:hidden !important;
+}
+
+.daily-warmup-drill.is-randomized:not(.is-selected){
+  border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 80%,white 8%) !important;
+  outline:2px solid color-mix(in srgb,var(--accent-2,#38bdf8) 82%,white 8%);
+  outline-offset:-3px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent-2,#38bdf8) 19%,var(--surface-card-2,#111827)),var(--surface-card,#0b1220)) !important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent-2,#38bdf8) 34%,transparent),0 8px 22px color-mix(in srgb,var(--accent-2,#38bdf8) 22%,transparent) !important;
+}
+
+.daily-warmup-drill.is-randomized:not(.is-selected) .daily-warmup-select-indicator{
+  border-color:color-mix(in srgb,var(--accent-2,#38bdf8) 78%,white 8%);
+  background:color-mix(in srgb,var(--accent-2,#38bdf8) 10%,var(--surface-card,#0b1220));
+}
+
+.daily-warmup-drill.is-randomized:not(.is-selected) .daily-warmup-drill-copy strong{
+  color:color-mix(in srgb,var(--accent-2,#38bdf8) 66%,var(--text-main,#f8fafc)) !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card :is(.stats-trend-head,.stats-trend-copy,.stats-trend-detail){
   flex-shrink:0 !important;
