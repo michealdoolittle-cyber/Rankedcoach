@@ -36,7 +36,7 @@ This is not "detect and categorize a video" — it's a link-out to Riot's own of
 
 ---
 
-## 4. Trusted creator allowlist — 7 of 8 confirmed with real handles, 1 still open
+## 4. Trusted creator allowlist — all 8 accounted for, 7 with verified handles
 
 Michael's starting list: **Dopai, Woohoojin, Maxiedome/Maxie, Konpeki, SlayerKey, SenaVL, Rem, Rooney.**
 
@@ -45,11 +45,12 @@ Michael's starting list: **Dopai, Woohoojin, Maxiedome/Maxie, Konpeki, SlayerKey
 - **Dopai** — `youtube.com/@Dopai` — 46.6K subscribers, 580 videos (high output). Broad coverage: positioning, mindset ("The Importance of Self Belief," "Your Slump Is Trying to Tell You Something"), map strategy, agent-specific tips.
 - **Maxiedome** — `youtube.com/@Maxiedome` — 108K subscribers, 190 videos. Self-described 13x-Radiant-peak player. Strong agent/role-specific guides ("How to be USEFUL on OMEN," "How to be useful on KJ," aim guides).
 - **Slayerkey** — `youtube.com/@Slayerkey` — 26.1K subscribers, 636 videos. "#1 Valorant Coach & Reyna Hater." Role guides ("3 TIPS to DOMINATE on EVERY ROLE in Valorant | Duelist, Initiator, Controller and Sentinel"), full per-map guides ("Summit... Complete Map Guide [2026]," "Ascent Sucks, Here's a Complete Map Guide [2026]"), mechanics.
-- **SenaVL** — `youtube.com/@SenaVL` — 205K subscribers (largest of the group), 336 videos. "Best VALORANT Guides & News!" — the "& News" framing means this channel likely also covers patch/meta content directly, worth checking first for `riot-official`/`patch-breakdown`-adjacent crossover content, not just `creator-guide`.
+- **SenaVL** — `youtube.com/@SenaVL` — 205K subscribers, 336 videos. "Best VALORANT Guides & News!" — the "& News" framing means this channel likely also covers patch/meta content directly, worth checking first for `riot-official`/`patch-breakdown`-adjacent crossover content, not just `creator-guide`.
+- **Rem** — `youtube.com/@RemValorant` — 263K subscribers (largest of all 8), 594 videos. Distinct content profile from the other seven: leans toward skin/cosmetic content ("Ranking Every VALORANT KNIFE From Worst to Best," "My Viewers Ranked Every Phantom Skin From Worst to Best," "NEW EVORI DREAMWINGS in VALORANT!") alongside genuine agent guides ("The ULTIMATE VYSE Guide for VALORANT!"). **This channel is a strong first source for the `bundle-showcase` source type** (tie it into the companion patch-content-automation directive's skin-media curation, not just this directive's `creator-guide` bucket), in addition to being a normal creator-guide source.
 - **Woohoojin** — `youtube.com/channel/UCqCLRG4_zynXOEPU6N5POkw` — confirmed via web search, independently corroborated by a separate VLR.gg community post ranking coaching creators.
 - **Konpeki** — confirmed real via the same VLR.gg post, exact channel URL not yet captured — resolve the handle at build time (should be quick given the name is already independently corroborated, unlike a cold search).
 
-**Still unresolved: Rem.** No handle provided and not independently found this session. Don't guess it — either get the handle from Michael or resolve it at build time via the YouTube Data API, same as any other name that isn't yet confirmed.
+All 8 names are now accounted for — 7 with verified handles/subscriber counts/sample content, 1 (Konpeki) independently confirmed real with the exact handle still to resolve at build time.
 
 ---
 
