@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -249,7 +249,7 @@
           <svg class="gamesense-attack-swords-icon" viewBox="0 0 32 32"><path d="M16 3 28 16 16 29 4 16 16 3Z"></path><path d="M10 6 26 22M22 22l4 4M20 24l4 4M22 6 6 22M10 22l-4 4M12 24l-4 4M13 13l6 6M19 13l-6 6"></path></svg>
         </span>
         <span class="gamesense-map-side-mark is-defense" title="Defense">
-          <svg viewBox="0 0 32 32"><path d="M16 3 27 7v8c0 7-4.5 11.5-11 14-6.5-2.5-11-7-11-14V7l11-4Z"></path><path d="m11 16 3 3 7-8"></path></svg>
+          <svg class="gamesense-defense-shield-icon" viewBox="0 0 32 32"><path d="M16 3 27 7v8c0 7-4.5 11.5-11 14-6.5-2.5-11-7-11-14V7l11-4Z"></path><path class="gamesense-defense-shield-half" d="M16 5.2v21.5C10.5 24.3 7 20.5 7 15V8.5l9-3.3Z"></path><path class="gamesense-defense-shield-split" d="M16 5.2v21.5"></path></svg>
         </span>
       </span>`;
     return `
@@ -263,18 +263,19 @@
 
   function renderAgentCard(item, index) {
     const mapSummary = Array.isArray(item.maps) && item.maps.length ? ` | ${item.maps.join(" / ")}` : "";
+    const nameLength = String(item.label || "").length;
+    const nameClass = nameLength >= 10 ? " is-very-long-name" : nameLength >= 8 ? " is-long-name" : "";
     return `
       <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
         <img src="${escapeHtml(item.portrait)}" alt="" loading="lazy">
-        <span class="gamesense-entry-copy"><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)}${escapeHtml(mapSummary)}</small><span>Inspect abilities</span></span>
+        <span class="gamesense-entry-copy"><strong class="${nameClass.trim()}">${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)}${escapeHtml(mapSummary)}</small><span>Inspect abilities</span></span>
       </button>`;
   }
 
   function renderWeaponCard(item, index) {
     return `
       <button class="gamesense-entry-card gamesense-weapon-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
-        <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
         <strong class="gamesense-weapon-entry-title">${escapeHtml(item.label)}</strong>
         <span class="gamesense-weapon-card-art">${(item.weapons || []).slice(0, 3).map(weapon => `<img src="${escapeHtml(weapon.image)}" alt="" loading="lazy">`).join("")}</span>
         <span class="gamesense-entry-copy"><small>${escapeHtml(item.examples)} | ${escapeHtml(item.range)}</small><span>Inspect weapons</span></span>
@@ -283,12 +284,29 @@
 
   function renderGallery(topic) {
     const meta = topicMeta[topic];
-    const items = getTopicItems(topic);
+    let items = getTopicItems(topic);
+    let controls = "";
+    if (topic === "maps") {
+      const activeSeason = state.mapSeason === "out" ? "out" : "in";
+      items = items.filter(item => activeSeason === "in" ? item.inCompetitivePool !== false : item.inCompetitivePool === false);
+      controls = `<div class="gamesense-gallery-switcher gamesense-map-season-switcher" role="tablist" aria-label="Map rotation">
+        <button type="button" data-gamesense-map-season="in" class="${activeSeason === "in" ? "active" : ""}" aria-selected="${activeSeason === "in"}"><i aria-hidden="true"></i><span>In-Season</span></button>
+        <button type="button" data-gamesense-map-season="out" class="${activeSeason === "out" ? "active" : ""}" aria-selected="${activeSeason === "out"}"><i aria-hidden="true"></i><span>Off-Season</span></button>
+      </div>`;
+    } else if (topic === "agents") {
+      const roles = ["all", "duelist", "controller", "initiator", "sentinel"];
+      const activeRole = roles.includes(state.agentRole) ? state.agentRole : "all";
+      items = activeRole === "all" ? items : items.filter(item => assetSlug(item.role) === activeRole);
+      controls = `<div class="gamesense-agent-role-filter" role="tablist" aria-label="Filter agents by role">
+        ${roles.map(role => `<button type="button" data-gamesense-agent-role-filter="${role}"${role === "all" ? "" : ` data-role-tone="${role}"`} class="${role === activeRole ? "active" : ""}" aria-selected="${role === activeRole}">${role === "all" ? `<span class="gamesense-agent-role-all-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : `<img src="${escapeHtml(roleIconMap[role])}" alt="">`}<span>${role === "all" ? "All Agents" : role}</span></button>`).join("")}
+      </div>`;
+    }
     return `
       <div class="gamesense-gallery-head gamesense-${escapeHtml(topic)}-gallery-head">
         <div><strong>${escapeHtml(meta.label)} Library</strong></div>
         <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
       </div>
+      ${controls}
       <div class="gamesense-entry-grid gamesense-entry-grid-${topic}">
         ${items.map((item, index) => topic === "maps" ? renderMapCard(item, index) : topic === "agents" ? renderAgentCard(item, index) : renderWeaponCard(item, index)).join("")}
       </div>`;
@@ -460,7 +478,7 @@
           return `<article class="gamesense-comp-pick-row">
             <span class="gamesense-comp-pick-rank">${String(index + 1).padStart(2, "0")}</span>
             <img src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
-            <strong>${escapeHtml(item.agent)}</strong>
+            <strong class="gamesense-comp-pick-agent">${escapeHtml(item.agent)}<img src="${escapeHtml(roleIconMap[normalizedRole.toLowerCase()])}" alt="" loading="lazy"></strong>
             <span><b>${Number(item.mapRate).toFixed(2)}%</b><small>${escapeHtml(map.label)} pick</small></span>
             <span><b>${Number(item.globalRate).toFixed(2)}%</b><small>Global pick</small></span>
             <em class="${differenceClass}">${escapeHtml(differenceLabel)}</em>
@@ -475,7 +493,7 @@
     const activeRole = roles.includes(state.compRole) ? state.compRole : "Controller";
     return `
       <details class="gamesense-comp-pick-explorer">
-        <summary>WANT TO SEEALL ${escapeHtml(map.label.toUpperCase())} AGENT PICKRATES?</summary>
+        <summary>WANT TO SEE ALL ${escapeHtml(map.label.toUpperCase())} AGENT PICKRATES?</summary>
         <div class="gamesense-comp-pick-explorer-body">
           <p>Ascendant-to-Radiant Competitive picks from Patch ${escapeHtml(map.compSample?.patchLabel || "current")}. Map share and global share use the same combined patch window.</p>
           <div class="gamesense-comp-role-tabs" role="tablist" aria-label="${escapeHtml(map.label)} agent pick rates by role">
@@ -504,7 +522,7 @@
     }
     return `
       <section class="gamesense-comp-card">
-        <div><span>Current Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
+        <div><span>Competitive Comps</span><span class="gamesense-comp-scope"><b>${escapeHtml(rankLabel)}</b><strong class="gamesense-comp-patch">Patch ${escapeHtml(patchLabel)}</strong></span></div>
         <p class="gamesense-comp-source">${escapeHtml(sample.note || "High-rank Competitive pick shares are used as tactical composition references; no five-agent lineup win rate is claimed.")}</p>
         <div class="gamesense-comp-list">${comps.map((comp, index) => {
           const referenceLabels = ["Primary role layout", "Secondary role layout", "Alternate role layout"];
@@ -556,7 +574,7 @@
 
   function renderMapDetail(map) {
     return `
-      <div class="gamesense-detail-head gamesense-map-detail-head">
+      <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
         <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
@@ -633,7 +651,15 @@
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
         <div><span>Map Fit</span><strong>${escapeHtml(usageSource)}</strong></div>
-        <div class="gamesense-map-fit-grid">${agent.maps.length ? agent.maps.slice(0, 3).map(mapName => {
+        <div class="gamesense-map-fit-grid">${agent.maps.length ? agent.maps.slice().sort((leftName, rightName) => {
+          const leftWin = Number(agent.mapWinRates?.[leftName]);
+          const rightWin = Number(agent.mapWinRates?.[rightName]);
+          const leftHasWin = Number.isFinite(leftWin);
+          const rightHasWin = Number.isFinite(rightWin);
+          if (leftHasWin !== rightHasWin) return leftHasWin ? -1 : 1;
+          if (leftHasWin && rightWin !== leftWin) return rightWin - leftWin;
+          return Number(agent.mapPickRates?.[rightName] || -1) - Number(agent.mapPickRates?.[leftName] || -1);
+        }).slice(0, 3).map(mapName => {
           const normalizedMapName = assetSlug(mapName);
           const map = getMaps().find(item => item.id === normalizedMapName || assetSlug(item.label) === normalizedMapName);
            const winRate = agent.mapWinRates?.[mapName];
@@ -652,8 +678,15 @@
   function renderDamageTable(weapon) {
     return `
       <div class="gamesense-damage-table" role="table" aria-label="${escapeHtml(weapon.label)} damage by range">
-        <div role="row"><strong>Range</strong><strong>Head</strong><strong>Body</strong><strong>Legs</strong></div>
-        ${(weapon.damageRanges || []).map(range => `<div role="row"><span>${escapeHtml(range.range)}</span><span>${range.head}</span><span>${range.body}</span><span>${range.legs}</span></div>`).join("")}
+        ${(weapon.damageRanges || []).map(range => `<article class="gamesense-damage-target-row" role="row" aria-label="${escapeHtml(range.range)}: ${range.head} head, ${range.body} body, ${range.legs} legs">
+          <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
+          <div class="gamesense-damage-target" aria-hidden="true">
+            <svg viewBox="0 0 120 184"><circle cx="60" cy="22" r="17"></circle><path d="M39 47c5-7 12-10 21-10s16 3 21 10l8 52-17 6-4 65H52l-4-65-17-6 8-52Z"></path><path d="m39 57-18 53M81 57l18 53"></path></svg>
+            <span class="is-head"><b>Head</b><em>${range.head}</em></span>
+            <span class="is-body"><b>Body</b><em>${range.body}</em></span>
+            <span class="is-legs"><b>Legs</b><em>${range.legs}</em></span>
+          </div>
+        </article>`).join("")}
       </div>`;
   }
 
@@ -1024,12 +1057,12 @@
             <header><span>Skin Animation</span><strong data-skin-preview-video-label>${escapeHtml(previewVideos[0]?.displayLabel || `${name} preview`)}</strong><small data-skin-preview-video-detail>Animation supplied by Riot data used by val-skins.</small></header>
             <div class="gamesense-skin-animation-frame">${previewVideos.length ? `<video data-skin-preview-video src="${escapeHtml(previewVideos[0].video)}" poster="${escapeHtml(previewVideos[0].poster)}" controls autoplay muted playsinline preload="metadata"></video>` : `<div class="gamesense-skin-video-unavailable"><strong>No animation published</strong><span>This skin does not include a streamed level or variant preview.</span></div>`}<div class="gamesense-skin-animation-static" data-skin-animation-static hidden><img src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}"><strong>Official static color render</strong></div></div>
             <div class="gamesense-skin-option-groups">
-              ${(item?.upgradeVideos || []).some(level => getApprovedSkinVideoUrl(level.video)) ? `<section><span>Upgrade levels</span><div role="group" aria-label="Choose a ${escapeHtml(name)} upgrade animation">${(item.upgradeVideos || []).map((level, levelIndex) => {
+              ${(item?.upgradeVideos || []).some(level => getApprovedSkinVideoUrl(level.video)) ? `<section><span>Upgrade levels</span><div style="--skin-option-count:${Math.max(1, (item.upgradeVideos || []).filter(level => getApprovedSkinVideoUrl(level.video)).length)}" role="group" aria-label="Choose a ${escapeHtml(name)} upgrade animation">${(item.upgradeVideos || []).map((level, levelIndex) => {
                 const index = previewVideos.findIndex(video => video.video === getApprovedSkinVideoUrl(level.video));
                 const roman = toRomanNumeral(levelIndex + 1);
                 return index < 0 ? "" : `<button type="button" class="${index === 0 ? "is-video-active" : ""}" data-skin-preview-video-option="${index}" data-skin-preview-video-source="${escapeHtml(previewVideos[index].video)}" data-skin-preview-video-poster="${escapeHtml(previewVideos[index].poster)}" data-skin-preview-video-label="Level ${roman}" data-skin-preview-video-detail="Level-specific animation supplied by Riot data used by val-skins." aria-label="Play ${escapeHtml(level.label)}" title="${escapeHtml(level.label)}" aria-pressed="${index === 0 ? "true" : "false"}">${roman}</button>`;
               }).join("")}</div></section>` : ""}
-              <section><span>Color variants</span><div class="gamesense-skin-view-selectors" role="group" aria-label="Choose a ${escapeHtml(name)} color variant">
+              <section><span>Color variants</span><div class="gamesense-skin-view-selectors" style="--skin-option-count:${Math.max(1, variants.length)}" role="group" aria-label="Choose a ${escapeHtml(name)} color variant">
                 ${variants.map((variant, index) => {
                   const roman = toRomanNumeral(index + 1);
                   const videoIndex = variantVideoIndexes[index];
@@ -1422,6 +1455,8 @@
     state.mapZoom = 1;
     state.compAgent = "";
     state.compRole = "Controller";
+    state.agentRole = "all";
+    state.mapSeason = "in";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
     const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
     const selectedNav = document.documentElement.classList.contains("is-mobile-layout") ? mobileNav : desktopNav;
@@ -1441,6 +1476,8 @@
     state.mapZoom = 1;
     state.compAgent = "";
     state.compRole = "Controller";
+    state.agentRole = "all";
+    state.mapSeason = "in";
     render({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
     const owner = document.documentElement.classList.contains("is-mobile-layout")
@@ -1577,6 +1614,20 @@
       state.compAgent = "";
       state.compRole = "Controller";
       render({ direction: "forward" });
+      return;
+    }
+    const agentRoleFilter = event.target.closest?.("[data-gamesense-agent-role-filter]");
+    if (agentRoleFilter) {
+      state.agentRole = ["all", "duelist", "controller", "initiator", "sentinel"].includes(agentRoleFilter.dataset.gamesenseAgentRoleFilter)
+        ? agentRoleFilter.dataset.gamesenseAgentRoleFilter
+        : "all";
+      render({ direction: "replace" });
+      return;
+    }
+    const mapSeason = event.target.closest?.("[data-gamesense-map-season]");
+    if (mapSeason) {
+      state.mapSeason = mapSeason.dataset.gamesenseMapSeason === "out" ? "out" : "in";
+      render({ direction: "replace" });
       return;
     }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");

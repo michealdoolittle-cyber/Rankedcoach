@@ -55575,3 +55575,76 @@ html body #editProfileModal #editProfileThemeGallery .theme-gallery-grid{
   #page-stats .stats-role-pill-divider{height:32px;}
   .coaching-games-used-list{max-height:132px;}
 }
+
+/* 2026-07-17 dense mobile labels and Stats trend media visibility. */
+#page-stats .stats-trend-context .trend-signal-media{
+  display:grid !important;
+  place-items:center !important;
+  flex:0 0 22px !important;
+  width:22px !important;
+  min-width:22px !important;
+  max-width:22px !important;
+  height:22px !important;
+  min-height:22px !important;
+  max-height:22px !important;
+  padding:0 !important;
+  border-radius:7px !important;
+  overflow:hidden !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  box-sizing:border-box !important;
+  position:relative !important;
+  isolation:isolate !important;
+}
+#page-stats .stats-trend-context .trend-signal-media img{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  max-height:100% !important;
+  padding:0 !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  object-fit:contain !important;
+  object-position:center !important;
+  transform:none !important;
+  scale:1 !important;
+  clip-path:none !important;
+  -webkit-clip-path:none !important;
+  -webkit-mask:none !important;
+  mask:none !important;
+  filter:none !important;
+  mix-blend-mode:normal !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  position:relative !important;
+  z-index:1 !important;
+}
+
+@media (max-width:820px){
+  html.is-mobile-layout body.is-mobile-layout #page-home .weekly-focus-pill-head{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    align-items:start !important;
+    gap:6px !important;
+    min-width:0 !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home .weekly-focus-key{
+    min-width:0 !important;
+    overflow-wrap:anywhere !important;
+  }
+  html.is-mobile-layout body.is-mobile-layout #page-home .weekly-focus-confidence{
+    align-self:start !important;
+    justify-self:end !important;
+    width:auto !important;
+    max-width:min(42vw,132px) !important;
+    min-height:18px !important;
+    padding:3px 5px !important;
+    font-size:clamp(7px,2.15vw,9px) !important;
+    line-height:1 !important;
+    letter-spacing:.02em !important;
+    white-space:nowrap !important;
+  }
+}

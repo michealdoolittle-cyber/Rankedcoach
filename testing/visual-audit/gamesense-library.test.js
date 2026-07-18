@@ -252,14 +252,25 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-card strong").evaluateAll(headings => headings.every(heading => getComputedStyle(heading).textAlign === "center")), true);
     await desktop.click('[data-gamesense-topic="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 10);
+    assert.equal(await desktop.locator('[data-gamesense-map-season="in"]').getAttribute("aria-selected"), "true");
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage !== "none")), true);
     const mapLabels = await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts();
-    assert.deepEqual([...mapLabels].sort(), ["ABYSS", "ASCENT", "BIND", "BREEZE", "CORRODE", "FRACTURE", "HAVEN", "LOTUS", "PEARL", "SPLIT"]);
+    assert.deepEqual([...mapLabels].sort(), ["ASCENT", "BREEZE", "FRACTURE", "HAVEN", "LOTUS", "PEARL", "SPLIT"]);
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 14);
     assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-side-mark.is-attack').first().evaluate(icon => getComputedStyle(icon).color), "rgb(255, 70, 85)");
+    assert.equal(await desktop.locator('.gamesense-defense-shield-icon').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-half').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-split').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season').count(), 0);
+    await desktop.click('[data-gamesense-map-season="out"]');
+    await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
+    assert.equal(await desktop.locator('[data-gamesense-map-season="out"]').getAttribute("aria-selected"), "true");
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
+    assert.deepEqual([...await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts()].sort(), ["ABYSS", "BIND", "CORRODE"]);
     assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season .gamesense-map-side-marks').count(), 0);
     const outOfSeasonMap = desktop.locator('.gamesense-map-entry-card.is-out-of-season');
     assert.equal(await outOfSeasonMap.count(), 3);
@@ -280,6 +291,7 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-map-card-copy strong").first().evaluate(title => getComputedStyle(title).color), "rgb(88, 212, 200)");
     await desktop.click('[data-gamesense-item="bind"]');
     await desktop.locator(".gamesense-tips-hub").waitFor({ state: "visible" });
+    assert.match(await desktop.locator(".gamesense-map-detail-head").evaluate(header => getComputedStyle(header).backgroundImage), /bind/i);
     assert.equal(await desktop.locator(".gamesense-tips-hub").count(), 1);
     assert.equal(await desktop.locator("[data-gamesense-tip-view]").count(), 4);
     assert.equal(await desktop.locator("[data-gamesense-role]").count(), 5);
@@ -400,6 +412,8 @@ async function run() {
 
     await desktop.click('[data-gamesense-back="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
+    await desktop.click('[data-gamesense-map-season="in"]');
+    await desktop.locator('[data-gamesense-item="breeze"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-item="breeze"]');
     await desktop.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
@@ -449,7 +463,7 @@ async function run() {
     assert.ok(compPresentation.buttons.every(button => button.background.includes("linear-gradient") && button.role), JSON.stringify(compPresentation));
     assert.ok(compPresentation.icons.every(icon => icon.mask !== "none" && icon.color !== "rgba(0, 0, 0, 0)"), JSON.stringify(compPresentation));
     const roleExplorer = desktop.locator(".gamesense-comp-pick-explorer");
-    assert.equal(await roleExplorer.locator("summary").innerText(), "WANT TO SEEALL BREEZE AGENT PICKRATES?");
+    assert.equal(await roleExplorer.locator("summary").innerText(), "WANT TO SEE ALL BREEZE AGENT PICKRATES?");
     await roleExplorer.locator("summary").click();
     assert.equal(await roleExplorer.locator("[data-gamesense-comp-role]").count(), 4);
     assert.equal(await roleExplorer.locator('[data-gamesense-comp-role="Controller"]').getAttribute("aria-pressed"), "true");
@@ -484,6 +498,17 @@ async function run() {
     assert.notEqual(roleExplorerPresentation.activeColor, controllerRoleColor, JSON.stringify(roleExplorerPresentation));
     assert.ok(roleExplorerPresentation.agentFontSize >= 16 && roleExplorerPresentation.numberWeight <= 700 && roleExplorerPresentation.separator >= 1, JSON.stringify(roleExplorerPresentation));
     assert.equal(await roleExplorer.locator(".gamesense-comp-pick-row > strong").first().innerText(), "JETT");
+    assert.ok(await roleExplorer.locator(".gamesense-comp-pick-agent img").count() >= 5);
+    await roleExplorer.locator(".gamesense-comp-pick-agent img").first().scrollIntoViewIfNeeded();
+    await desktop.waitForFunction(() => {
+      const image = document.querySelector(".gamesense-comp-pick-agent img");
+      return Boolean(image?.complete && image.naturalWidth > 0);
+    });
+    assert.equal(await roleExplorer.locator(".gamesense-comp-pick-agent img").first().evaluate(image => {
+      const style = getComputedStyle(image);
+      const rect = image.getBoundingClientRect();
+      return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) > 0 && rect.width >= 18 && rect.height >= 18;
+    }), true);
     await roleExplorer.screenshot({ path: path.join(__dirname, "tmp", "gamesense-role-pick-explorer-desktop.png") });
     await desktop.click('[data-gamesense-map-view="plants"]');
     const desktopPlantMarker = desktop.locator(".gamesense-plant-marker").first();
@@ -612,8 +637,21 @@ async function run() {
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    assert.equal(await desktop.locator("[data-gamesense-agent-role-filter]").count(), 5);
+    await desktop.click('[data-gamesense-agent-role-filter="sentinel"]');
+    assert.equal(await desktop.locator('[data-gamesense-agent-role-filter="sentinel"]').getAttribute("aria-selected"), "true");
+    assert.match(await desktop.locator('[data-gamesense-agent-role-filter="sentinel"]').evaluate(button => getComputedStyle(button).backgroundImage), /linear-gradient/i);
+    assert.equal(await desktop.locator('.gamesense-agent-entry-card').evaluateAll(cards => cards.every(card => ["chamber", "cypher", "deadlock", "killjoy", "sage", "vyse", "veto"].includes(card.dataset.gamesenseItem))), true);
+    await desktop.click('[data-gamesense-agent-role-filter="all"]');
     assert.equal(await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').count(), 29);
     assert.equal(await desktop.locator('.gamesense-agent-entry-card img').count(), 29);
+    const deadlockNameBounds = await desktop.locator('[data-gamesense-item="deadlock"]').evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const name = card.querySelector(".gamesense-entry-copy strong");
+      const nameRect = name.getBoundingClientRect();
+      return { cardRight: cardRect.right, nameRight: nameRect.right, fontSize: Number.parseFloat(getComputedStyle(name).fontSize) };
+    });
+    assert.ok(deadlockNameBounds.nameRight <= deadlockNameBounds.cardRight + 1, JSON.stringify(deadlockNameBounds));
     const desktopAgentTile = await desktop.locator(".gamesense-agent-entry-card").first().evaluate(card => {
       const cardRect = card.getBoundingClientRect();
       const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
@@ -625,7 +663,7 @@ async function run() {
     assert.ok(desktopAgentTile.index.left > desktopAgentTile.card.left + desktopAgentTile.card.width / 2, JSON.stringify(desktopAgentTile));
     assert.ok(desktopAgentTile.index.top >= desktopAgentTile.card.top && desktopAgentTile.index.right <= desktopAgentTile.card.right, JSON.stringify(desktopAgentTile));
     assert.ok(desktopAgentTile.image.left <= desktopAgentTile.card.left + 2 && desktopAgentTile.image.bottom >= desktopAgentTile.card.bottom - 2, JSON.stringify(desktopAgentTile));
-    assert.ok(desktopAgentTile.name.left > desktopAgentTile.card.left + desktopAgentTile.card.width / 2 && desktopAgentTile.hidden, JSON.stringify(desktopAgentTile));
+    assert.ok(desktopAgentTile.name.left >= desktopAgentTile.card.left + desktopAgentTile.card.width / 2 - 1 && desktopAgentTile.hidden, JSON.stringify(desktopAgentTile));
     await desktop.locator(".gamesense-entry-grid-agents").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-gallery-desktop.png") });
     await desktop.click('[data-gamesense-item="jett"]');
     await desktop.waitForTimeout(400);
@@ -675,6 +713,8 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-agent-rate").innerText(), /Global Pick Rate.*10\.3%.*Rank #1.*Tracker Network.*Past two weeks/is);
     assert.equal(await desktop.locator(".gamesense-map-fit-item").count(), 3);
     assert.match(await desktop.locator(".gamesense-map-fit-item").first().innerText(), /pick.*win/is);
+    const mapFitWinRates = await desktop.locator(".gamesense-map-fit-item").evaluateAll(cards => cards.map(card => Number.parseFloat(card.querySelector(":scope > div > strong:last-child").textContent)));
+    assert.ok(mapFitWinRates.every((rate, index) => index === 0 || mapFitWinRates[index - 1] >= rate), JSON.stringify(mapFitWinRates));
     const mapFitGeometry = await desktop.locator(".gamesense-map-fit-item").evaluateAll(cards => cards.map(card => {
       const cardWidth = card.getBoundingClientRect().width;
       const pillGrid = card.querySelector(":scope > div");
@@ -713,6 +753,7 @@ async function run() {
     await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 6);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-weapons .gamesense-entry-index').count(), 0);
     assert.ok(await desktop.locator('.gamesense-weapon-entry-card img').count() >= 15);
     assert.match(await desktop.locator('[data-gamesense-item="precision"]').innerText(), /Light Rifles/i);
     const centeredWeaponArt = await desktop.locator('[data-gamesense-item="precision"],[data-gamesense-item="snipers"]').evaluateAll(cards => cards.map(card => {
@@ -729,10 +770,9 @@ async function run() {
       const title = card.querySelector(".gamesense-weapon-entry-title").getBoundingClientRect();
       const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
       const listing = card.querySelector(".gamesense-entry-copy small").getBoundingClientRect();
-      const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
-      return { cardTop: cardRect.top, titleBottom: title.bottom, artTop: art.top, artBottom: art.bottom, listingTop: listing.top, indexTop: index.top };
+      return { cardTop: cardRect.top, titleBottom: title.bottom, artTop: art.top, artBottom: art.bottom, listingTop: listing.top };
     }));
-    assert.ok(weaponTileOrder.every(card => card.titleBottom <= card.artTop + 1 && card.artBottom <= card.listingTop + 1 && card.indexTop < card.cardTop), JSON.stringify(weaponTileOrder));
+    assert.ok(weaponTileOrder.every(card => card.titleBottom <= card.artTop + 1 && card.artBottom <= card.listingTop + 1), JSON.stringify(weaponTileOrder));
     assert.equal(await desktop.locator(".gamesense-weapon-entry-title").first().evaluate(title => getComputedStyle(title).color), "rgb(88, 212, 200)");
     await desktop.locator(".gamesense-entry-grid-weapons").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-gallery-desktop.png") });
     await desktop.click('[data-gamesense-item="rifles"]');
@@ -906,7 +946,7 @@ async function run() {
       previewWidths: [...rail.querySelectorAll("button")].map(button => button.querySelector(".gamesense-skin-variant-thumb").getBoundingClientRect().width)
     }));
     assert.equal(desktopVariantLayout.display, "grid", JSON.stringify(desktopVariantLayout));
-    assert.equal(desktopVariantLayout.overflowX, "visible", JSON.stringify(desktopVariantLayout));
+    assert.equal(desktopVariantLayout.overflowX, "hidden", JSON.stringify(desktopVariantLayout));
     assert.ok(desktopVariantLayout.scrollWidth <= desktopVariantLayout.clientWidth + 1, JSON.stringify(desktopVariantLayout));
     assert.ok(desktopVariantLayout.previewWidths.every(width => width >= 68), JSON.stringify(desktopVariantLayout));
     assert.equal(await desktop.locator("[data-skin-media-page-button]").count(), 2);
@@ -1008,7 +1048,9 @@ async function run() {
     assert.deepEqual(weaponPatchOrder, [...weaponPatchOrder].sort((left, right) => Number.parseFloat(right.replace(/[^\d.]/g, "")) - Number.parseFloat(left.replace(/[^\d.]/g, ""))));
     await desktop.locator(".gamesense-weapon-guidance").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-guidance-desktop.png") });
     await desktop.locator(".gamesense-weapon-history").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-history-desktop.png") });
-    assert.ok(await desktop.locator(".gamesense-damage-table [role=row]").count() >= 3);
+    assert.ok(await desktop.locator(".gamesense-damage-target-row").count() >= 2);
+    assert.equal(await desktop.locator(".gamesense-damage-target-row svg").count(), await desktop.locator(".gamesense-damage-target-row").count());
+    await desktop.locator(".gamesense-damage-table").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-damage-targets-desktop.png") });
     const contentCoverage = await desktop.evaluate(() => {
       const reference = globalThis.RankedCoachGamesenseReference;
       return {
@@ -1101,6 +1143,7 @@ async function run() {
     await mobile.waitForTimeout(700);
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 3);
     await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    await mobile.locator('[data-gamesense-topic="agents"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-agents-topic-mobile.png") });
     assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
     const mobileWeaponTopicArt = await mobile.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();
@@ -1116,6 +1159,8 @@ async function run() {
     assert.equal(await mobile.locator(".gamesense-topic-number").count(), 0);
     await mobile.click('[data-gamesense-topic="maps"]');
     await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
+    await mobile.locator('.gamesense-map-entry-card').first().waitFor({ state: "visible" });
+    assert.equal(await mobile.locator('.gamesense-map-entry-card').count(), 7);
     const mobileMapGallery = await mobile.locator(".gamesense-map-entry-card").evaluateAll(cards => cards.map(card => {
       const cardRect = card.getBoundingClientRect();
       const title = card.querySelector(".gamesense-map-card-copy strong").getBoundingClientRect();
@@ -1126,6 +1171,8 @@ async function run() {
     }));
     assert.ok(mobileMapGallery.every(card => card.centerDelta <= 24 && card.color === "rgb(88, 212, 200)"), JSON.stringify(mobileMapGallery));
     await mobile.locator(".gamesense-entry-grid-maps").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-gallery-mobile.png") });
+    await mobile.click('[data-gamesense-map-season="out"]');
+    await mobile.locator('[data-gamesense-item="bind"]').waitFor({ state: "visible" });
     await mobile.click('[data-gamesense-item="bind"]');
     await mobile.waitForTimeout(360);
     assert.equal(await mobile.locator(".gamesense-tactical-stage img").isVisible(), true);
@@ -1262,6 +1309,15 @@ async function run() {
     assert.match(await mobile.locator(".gamesense-comp-mobile-evidence").first().innerText(), /Lineup win rate\s+Not published.*Round conversion\s+Not published/is);
     assert.doesNotMatch(await mobile.locator(".gamesense-comp-mobile-evidence").first().innerText(), /\d+(?:\.\d+)?%/);
     await mobile.locator(".gamesense-comp-list").screenshot({ path: path.join(__dirname, "tmp", "gamesense-current-comps-mobile.png") });
+    const mobilePickExplorer = mobile.locator(".gamesense-comp-pick-explorer");
+    await mobilePickExplorer.locator("summary").click();
+    await mobilePickExplorer.locator('[data-gamesense-comp-role="Duelist"]').click();
+    const mobilePickRows = await mobilePickExplorer.locator(".gamesense-comp-pick-row").evaluateAll(rows => rows.map(row => {
+      const card = row.getBoundingClientRect();
+      return { card: card.toJSON(), children: [...row.children].map(child => child.getBoundingClientRect().toJSON()) };
+    }));
+    assert.ok(mobilePickRows.length > 0 && mobilePickRows.every(row => row.children.every(child => child.left >= row.card.left - 1 && child.right <= row.card.right + 1)), JSON.stringify(mobilePickRows));
+    await mobilePickExplorer.screenshot({ path: path.join(__dirname, "tmp", "gamesense-role-pick-explorer-mobile.png") });
     const mobileWeaponSuggestion = await mobile.locator(".gamesense-weapon-suggestion").first().locator("summary").evaluate(summary => {
       const top = summary.querySelector(".gamesense-weapon-suggestion-top").getBoundingClientRect();
       const fit = summary.querySelector(".gamesense-weapon-fit").getBoundingClientRect();
@@ -1288,6 +1344,11 @@ async function run() {
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents"));
     await mobile.locator(".gamesense-agent-entry-card").first().waitFor({ state: "visible" });
     await mobile.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    assert.equal(await mobile.locator("[data-gamesense-agent-role-filter]").count(), 5);
+    await mobile.locator('[data-gamesense-agent-role-filter="duelist"]').click();
+    assert.equal(await mobile.locator('[data-gamesense-agent-role-filter="duelist"]').getAttribute("aria-selected"), "true");
+    assert.match(await mobile.locator('[data-gamesense-agent-role-filter="duelist"]').evaluate(button => getComputedStyle(button).backgroundImage), /linear-gradient/i);
+    await mobile.locator('[data-gamesense-agent-role-filter="all"]').click();
     const mobileAgentTile = await mobile.locator(".gamesense-agent-entry-card").first().evaluate(card => {
       const cardRect = card.getBoundingClientRect();
       const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
@@ -1298,7 +1359,28 @@ async function run() {
     });
     assert.ok(mobileAgentTile.index.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2, JSON.stringify(mobileAgentTile));
     assert.ok(mobileAgentTile.image.left <= mobileAgentTile.card.left + 2 && mobileAgentTile.image.bottom >= mobileAgentTile.card.bottom - 2, JSON.stringify(mobileAgentTile));
-    assert.ok(mobileAgentTile.name.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2 && mobileAgentTile.hidden, JSON.stringify(mobileAgentTile));
+    assert.ok(mobileAgentTile.name.right <= mobileAgentTile.card.right - 10 && mobileAgentTile.hidden, JSON.stringify(mobileAgentTile));
+    const mobileDeadlockCard = mobile.locator('[data-gamesense-item="deadlock"]');
+    await mobileDeadlockCard.scrollIntoViewIfNeeded();
+    await mobile.waitForFunction(() => {
+      const image = document.querySelector('[data-gamesense-item="deadlock"] img');
+      return Boolean(image?.complete && image.naturalWidth > 0 && image.naturalHeight > 0);
+    });
+    const mobileDeadlockName = await mobileDeadlockCard.evaluate(card => {
+      const cardRect = card.getBoundingClientRect();
+      const name = card.querySelector(".gamesense-entry-copy strong");
+      const rect = name.getBoundingClientRect();
+      const image = card.querySelector("img");
+      return {
+        card: cardRect.toJSON(),
+        name: rect.toJSON(),
+        fontSize: Number.parseFloat(getComputedStyle(name).fontSize),
+        whiteSpace: getComputedStyle(name).whiteSpace,
+        imageLoaded: image.complete && image.naturalWidth > 0 && image.naturalHeight > 0
+      };
+    });
+    assert.ok(mobileDeadlockName.imageLoaded && mobileDeadlockName.name.left >= mobileDeadlockName.card.left && mobileDeadlockName.name.right <= mobileDeadlockName.card.right - 10 && mobileDeadlockName.fontSize <= 29, JSON.stringify(mobileDeadlockName));
+    await mobileDeadlockCard.screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-deadlock-mobile.png") });
     await mobile.locator(".gamesense-entry-grid-agents").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-gallery-mobile.png") });
     await mobile.locator(".gamesense-agent-entry-card").first().click();
     await mobile.locator(".gamesense-agent-rate").waitFor({ state: "visible" });
@@ -1321,16 +1403,15 @@ async function run() {
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
     await mobile.locator(".gamesense-weapon-entry-card").first().waitFor({ state: "visible" });
     await mobile.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
+    assert.equal(await mobile.locator(".gamesense-entry-grid-weapons .gamesense-entry-index").count(), 0);
     const mobileWeaponTile = await mobile.locator(".gamesense-weapon-entry-card").first().evaluate(card => {
       const cardRect = card.getBoundingClientRect();
-      const index = card.querySelector(".gamesense-entry-index").getBoundingClientRect();
       const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
       const images = [...card.querySelectorAll(".gamesense-weapon-card-art img")].map(image => image.getBoundingClientRect());
       const groupLeft = Math.min(...images.map(image => image.left));
       const groupRight = Math.max(...images.map(image => image.right));
-      return { card: cardRect.toJSON(), index: index.toJSON(), art: art.toJSON(), count: images.length, groupCenter: (groupLeft + groupRight) / 2 };
+      return { card: cardRect.toJSON(), art: art.toJSON(), count: images.length, groupCenter: (groupLeft + groupRight) / 2 };
     });
-    assert.ok(mobileWeaponTile.index.left > mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2, JSON.stringify(mobileWeaponTile));
     assert.ok(mobileWeaponTile.count === 2 && Math.abs(mobileWeaponTile.groupCenter - (mobileWeaponTile.card.left + mobileWeaponTile.card.width / 2)) <= 3, JSON.stringify(mobileWeaponTile));
     assert.equal(await mobile.locator(".gamesense-weapon-entry-title").first().evaluate(title => getComputedStyle(title).color), "rgb(88, 212, 200)");
     await mobile.locator(".gamesense-entry-grid-weapons").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-gallery-mobile.png") });
@@ -1474,7 +1555,7 @@ async function run() {
       scrollWidth: rail.scrollWidth,
       buttonWidths: [...rail.querySelectorAll("button")].map(button => button.getBoundingClientRect().width)
     }));
-    assert.equal(mobileUpgradeRail.overflowX, "visible", JSON.stringify(mobileUpgradeRail));
+    assert.equal(mobileUpgradeRail.overflowX, "hidden", JSON.stringify(mobileUpgradeRail));
     assert.ok(mobileUpgradeRail.scrollWidth <= mobileUpgradeRail.clientWidth + 1, JSON.stringify(mobileUpgradeRail));
     assert.ok(mobileUpgradeRail.buttonWidths.every(width => width >= 44), JSON.stringify(mobileUpgradeRail));
     await mobile.locator('[data-skin-preview-view="1"]').click();

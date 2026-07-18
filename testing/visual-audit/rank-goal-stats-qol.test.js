@@ -288,9 +288,16 @@ async function run() {
       src: image.currentSrc || image.src,
       width: image.naturalWidth,
       height: image.naturalHeight,
-      visible: image.getBoundingClientRect().width > 0 && image.getBoundingClientRect().height > 0
+      visible: image.getBoundingClientRect().width > 0 && image.getBoundingClientRect().height > 0,
+      display: getComputedStyle(image).display,
+      visibility: getComputedStyle(image).visibility,
+      opacity: Number(getComputedStyle(image).opacity),
+      transform: getComputedStyle(image).transform,
+      clipPath: getComputedStyle(image).clipPath,
+      renderedWidth: image.getBoundingClientRect().width,
+      renderedHeight: image.getBoundingClientRect().height
     })));
-    assert.ok(trendImageState.every(image => image.src && image.width > 0 && image.height > 0 && image.visible), JSON.stringify(trendImageState));
+    assert.ok(trendImageState.every(image => image.src && image.width > 0 && image.height > 0 && image.visible && image.display !== "none" && image.visibility !== "hidden" && image.opacity > 0 && image.transform === "none" && image.clipPath === "none" && image.renderedWidth >= 20 && image.renderedHeight >= 20), JSON.stringify(trendImageState));
     const summaryGrid = await page.locator("#page-stats .stats-summary-grid").evaluate(grid => ({
       columns: getComputedStyle(grid).gridTemplateColumns.split(" ").filter(Boolean).length,
       rows: new Set([...grid.children].map(child => Math.round(child.getBoundingClientRect().top))).size,
@@ -686,6 +693,19 @@ async function run() {
     });
     assert.ok(mobileActWidth.trigger.width >= mobileActWidth.parent.width * .94 && mobileActWidth.value.width >= mobileActWidth.trigger.width * .70, JSON.stringify(mobileActWidth));
     await page.locator("#page-stats .stats-proof-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-stats-proof-card.png") });
+    const mobileTrendImages = page.locator("#page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active .stats-trend-context .trend-signal-media.has-image img");
+    for (let index = 0; index < 6 && await mobileTrendImages.count() === 0; index += 1) {
+      await page.locator('[data-mobile-trend-step="1"]').click();
+      await page.waitForTimeout(80);
+    }
+    await mobileTrendImages.first().waitFor({ state: "visible" });
+    const mobileTrendImageState = await mobileTrendImages.evaluateAll(images => images.map(image => {
+      const rect = image.getBoundingClientRect();
+      const style = getComputedStyle(image);
+      return { loaded: image.complete && image.naturalWidth > 0, rect: rect.toJSON(), display: style.display, visibility: style.visibility, opacity: Number(style.opacity), transform: style.transform, clipPath: style.clipPath };
+    }));
+    assert.ok(mobileTrendImageState.length > 0 && mobileTrendImageState.every(image => image.loaded && image.rect.width >= 20 && image.rect.height >= 20 && image.display !== "none" && image.visibility !== "hidden" && image.opacity > 0 && image.transform === "none" && image.clipPath === "none"), JSON.stringify(mobileTrendImageState));
+    await page.locator("#page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-recent-trend-icon.png") });
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
     const mobileRrType = await page.evaluate(() => ({
@@ -694,6 +714,19 @@ async function run() {
     }));
     assert.equal(mobileRrType.goal, mobileRrType.next, JSON.stringify(mobileRrType));
     assert.match(await page.locator(".weekly-focus-card > .card-header .card-pill").innerText(), /Week of\s+\S/i);
+    const weeklyConfidenceGeometry = await page.locator(".weekly-focus-pill:not(.is-disabled)").evaluateAll(pills => pills.map(pill => {
+      const heading = pill.querySelector(".weekly-focus-key")?.getBoundingClientRect();
+      const confidence = pill.querySelector(".weekly-focus-confidence")?.getBoundingClientRect();
+      const card = pill.getBoundingClientRect();
+      return {
+        card: card.toJSON(),
+        heading: heading?.toJSON() || null,
+        confidence: confidence?.toJSON() || null,
+        overlaps: Boolean(heading && confidence && heading.left < confidence.right && heading.right > confidence.left && heading.top < confidence.bottom && heading.bottom > confidence.top)
+      };
+    }));
+    assert.ok(weeklyConfidenceGeometry.length > 0 && weeklyConfidenceGeometry.every(item => item.heading && item.confidence && !item.overlaps && item.confidence.right <= item.card.right + 1), JSON.stringify(weeklyConfidenceGeometry));
+    await page.locator(".weekly-focus-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-weekly-confidence.png") });
     const mobileTimelineGeometry = await page.locator("#timelineGrid .timeline-pill").evaluateAll(pills => pills.map(pill => {
       const card = pill.getBoundingClientRect();
       const label = pill.querySelector(".timeline-pill-label").getBoundingClientRect();

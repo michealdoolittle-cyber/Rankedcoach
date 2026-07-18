@@ -37099,7 +37099,8 @@ const LAYOUT_STYLE_AUTO_FIT_EXCLUDED_SELECTOR = [
   "#page-insights .trend-signal-card",
   "#page-library .gamesense-agent-hero > div:nth-child(2) > section",
   "#page-library .gamesense-selector-section > article",
-  "#page-library .gamesense-map-fit-grid"
+  "#page-library .gamesense-map-fit-grid",
+  "#page-library .gamesense-comp-pick-list"
 ].join(",");
 const LAYOUT_STYLE_AUTO_FIT_TEXT_SELECTORS = [
   "#page-home :is(.loadout-card,.compass-panel,.compass-main,.compass-header,.compass-score-card,.rr-card,.impact-card,.rr-chart-card,.weekly-focus-card,.improvement-card) :is(.card-title,.card-sub,.compass-title,.compass-profile-title,.compass-profile-kicker,.timeline-title,.timeline-sub,strong,p,small,span)",
@@ -37220,6 +37221,7 @@ function getThemeBuilderAutoFitContainerMetrics(element) {
 function isThemeBuilderAutoFitCandidate(element) {
   if (!(element instanceof HTMLElement) || !element.isConnected) return false;
   if (THEME_BUILDER_AUTO_FIT_EXCLUDED_TAGS.has(element.tagName)) return false;
+  if (element.closest("button")) return false;
   if (element.closest("#themeBuilderDock")) return false;
   if (element.isContentEditable) return false;
   const owningPage = element.closest(".page");
