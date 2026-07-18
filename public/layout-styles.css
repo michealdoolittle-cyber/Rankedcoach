@@ -1623,7 +1623,7 @@ body:is(
   html body.is-mobile-layout #page-home .weekly-focus-pill{
     display:grid !important;
     grid-template-columns:minmax(0,1fr) !important;
-    grid-template-rows:auto auto auto !important;
+    grid-template-rows:auto auto !important;
     align-items:start !important;
     gap:5px !important;
     min-height:92px !important;
@@ -1631,7 +1631,10 @@ body:is(
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-pill-head{
-    display:block !important;
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    align-items:start !important;
+    gap:5px !important;
     grid-column:1 !important;
     grid-row:1 !important;
     width:100% !important;
@@ -1639,22 +1642,24 @@ body:is(
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-key{
-    font-size:clamp(14px,3.8vw,18px) !important;
+    min-width:0 !important;
+    font-size:clamp(10px,2.8vw,13px) !important;
     line-height:1.02 !important;
     letter-spacing:.05em !important;
+    overflow-wrap:anywhere !important;
   }
 
   html body.is-mobile-layout #page-home .weekly-focus-confidence{
     position:static !important;
     inset:auto !important;
-    grid-column:1 !important;
-    grid-row:2 !important;
+    grid-column:auto !important;
+    grid-row:auto !important;
     justify-self:end !important;
     width:auto !important;
-    max-width:min(46vw,132px) !important;
-    min-height:21px !important;
-    padding:3px 7px !important;
-    font-size:clamp(9px,2.6vw,11px) !important;
+    max-width:min(38vw,118px) !important;
+    min-height:18px !important;
+    padding:3px 5px !important;
+    font-size:clamp(7px,2vw,9px) !important;
     line-height:1 !important;
     white-space:nowrap !important;
     transform:none !important;
@@ -1662,7 +1667,7 @@ body:is(
 
   html body.is-mobile-layout #page-home .weekly-focus-text{
     grid-column:1 !important;
-    grid-row:3 !important;
+    grid-row:2 !important;
     font-size:clamp(17px,4.3vw,21px) !important;
     line-height:1.12 !important;
   }
@@ -1738,6 +1743,20 @@ body:is(
   html body.is-mobile-layout #page-stats .stats-map-meta .stats-main-text{
     font-size:clamp(20px,5.8vw,28px) !important;
     line-height:1 !important;
+  }
+
+  html body.is-mobile-layout #page-stats#page-stats #statsRoleProgressRow .stats-role-pill-label.stats-role-pill-label{
+    font-family:"IBM Plex Mono","Roboto Condensed",sans-serif !important;
+    font-size:clamp(6px,1.8vw,8px) !important;
+    font-weight:700 !important;
+    line-height:1.05 !important;
+    letter-spacing:-.04em !important;
+    text-transform:none !important;
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    overflow-wrap:normal !important;
+    word-break:normal !important;
   }
 }
 

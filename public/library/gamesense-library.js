@@ -310,16 +310,49 @@
     </article>`;
   }
 
+  function renderYouTubePlayer(videoId, title = "Featured VALORANT video") {
+    const origin = window.location.origin;
+    const params = new URLSearchParams({
+      autoplay: "1",
+      controls: "1",
+      fs: "1",
+      playsinline: "1",
+      rel: "0",
+      origin
+    });
+    return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" loading="lazy" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen></iframe>`;
+  }
+
+  function getTwitchChannel(stream = {}) {
+    const direct = String(stream.channel || "").trim();
+    if (/^[A-Za-z0-9_]{1,25}$/.test(direct)) return direct;
+    const match = String(stream.url || "").match(/^https:\/\/(?:www\.)?twitch\.tv\/([A-Za-z0-9_]{1,25})(?:[/?#]|$)/i);
+    return match?.[1] || "";
+  }
+
+  function renderTwitchPlayer(channel) {
+    const params = new URLSearchParams({
+      channel,
+      parent: window.location.hostname,
+      autoplay: "false",
+      muted: "false"
+    });
+    return `<iframe class="gamesense-video-embed gamesense-twitch-embed" src="https://player.twitch.tv/?${escapeHtml(params.toString())}" title="${escapeHtml(channel)} live on Twitch" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+  }
+
   function renderPlaylistLiveCard(stream) {
     const platform = String(stream.platform || "").toLowerCase();
     const isYouTube = platform === "youtube" && /^[A-Za-z0-9_-]{11}$/.test(String(stream.id || ""));
+    const twitchChannel = platform === "twitch" ? getTwitchChannel(stream) : "";
     const action = isYouTube
       ? `data-gamesense-play-video="${escapeHtml(stream.id)}"`
-      : `data-gamesense-open-live="${escapeHtml(stream.url)}"`;
+      : twitchChannel
+        ? `data-gamesense-play-twitch="${escapeHtml(twitchChannel)}"`
+        : `data-gamesense-open-live="${escapeHtml(stream.url)}"`;
     const viewers = Number(stream.viewerCount);
     return `<article class="gamesense-video-card gamesense-live-card" data-live-platform="${escapeHtml(platform)}">
-      <button class="gamesense-video-thumb" type="button" ${action} aria-label="Open ${escapeHtml(stream.channel)} live stream"><img src="${escapeHtml(stream.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i><b>Live</b></button>
-      <div><span>${escapeHtml(platform || "live")}</span><h3>${escapeHtml(stream.title)}</h3><p>${escapeHtml(stream.channel)}${Number.isFinite(viewers) ? ` | ${viewers.toLocaleString()} watching` : ""}</p><a href="${escapeHtml(stream.url)}" target="_blank" rel="noopener noreferrer">Watch live</a></div>
+      <button class="gamesense-video-thumb" type="button" ${action} aria-label="Play ${escapeHtml(stream.channel)} live stream"><img src="${escapeHtml(stream.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i><b>Live</b></button>
+      <div><span>${escapeHtml(platform || "live")}</span><h3>${escapeHtml(stream.title)}</h3><p>${escapeHtml(stream.channel)}${Number.isFinite(viewers) ? ` | ${viewers.toLocaleString()} watching` : ""}</p><a href="${escapeHtml(stream.url)}" target="_blank" rel="noopener noreferrer">Open on ${platform === "twitch" ? "Twitch" : "YouTube"}</a></div>
     </article>`;
   }
 
@@ -1553,8 +1586,68 @@
     });
     bindMapPanZoom();
     bindPlantHotspots();
+    bindPlaylistFilterScroller();
     hydrateWeaponCollectionArchive();
     hydrateFeaturedPlaylist();
+  }
+
+  function bindPlaylistFilterScroller() {
+    const filters = document.querySelector(".gamesense-playlist-filters");
+    if (!filters || filters.dataset.dragBound === "true") return;
+    filters.dataset.dragBound = "true";
+    let pointerId = null;
+    let startX = 0;
+    let startY = 0;
+    let startScrollLeft = 0;
+    let dragging = false;
+    let suppressClickUntil = 0;
+
+    filters.addEventListener("pointerdown", (event) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      pointerId = event.pointerId;
+      startX = event.clientX;
+      startY = event.clientY;
+      startScrollLeft = filters.scrollLeft;
+      dragging = false;
+    });
+    filters.addEventListener("pointermove", (event) => {
+      if (pointerId !== event.pointerId) return;
+      const deltaX = event.clientX - startX;
+      const deltaY = event.clientY - startY;
+      if (!dragging && Math.abs(deltaX) < 5) return;
+      if (!dragging && Math.abs(deltaX) <= Math.abs(deltaY)) return;
+      if (!dragging) {
+        dragging = true;
+        filters.classList.add("is-dragging");
+      }
+      filters.scrollLeft = startScrollLeft - deltaX;
+      try {
+        filters.setPointerCapture?.(pointerId);
+      } catch (_error) {
+        // Synthetic test gestures and older WebViews may not expose an active pointer capture.
+      }
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    const finishDrag = (event) => {
+      if (pointerId !== event.pointerId) return;
+      if (dragging) suppressClickUntil = Date.now() + 260;
+      filters.classList.remove("is-dragging");
+      try {
+        if (filters.hasPointerCapture?.(pointerId)) filters.releasePointerCapture(pointerId);
+      } catch (_error) {
+        // The browser may have already released capture while handing vertical motion to the page.
+      }
+      pointerId = null;
+      dragging = false;
+    };
+    filters.addEventListener("pointerup", finishDrag);
+    filters.addEventListener("pointercancel", finishDrag);
+    filters.addEventListener("click", (event) => {
+      if (Date.now() >= suppressClickUntil) return;
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
   }
 
   function render(options = {}) {
@@ -1803,7 +1896,16 @@
     if (playlistVideo) {
       const videoId = String(playlistVideo.dataset.gamesensePlayVideo || "");
       if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return;
-      playlistVideo.outerHTML = `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?autoplay=1&controls=1&playsinline=1&rel=0" title="Featured VALORANT video" loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen></iframe>`;
+      playlistVideo.closest(".gamesense-video-card")?.classList.add("is-playing");
+      playlistVideo.outerHTML = renderYouTubePlayer(videoId);
+      return;
+    }
+    const twitchLive = event.target.closest?.("[data-gamesense-play-twitch]");
+    if (twitchLive) {
+      const channel = String(twitchLive.dataset.gamesensePlayTwitch || "");
+      if (!/^[A-Za-z0-9_]{1,25}$/.test(channel)) return;
+      twitchLive.closest(".gamesense-video-card")?.classList.add("is-playing");
+      twitchLive.outerHTML = renderTwitchPlayer(channel);
       return;
     }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");

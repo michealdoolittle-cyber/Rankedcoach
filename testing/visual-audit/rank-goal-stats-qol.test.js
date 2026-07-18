@@ -722,6 +722,17 @@ async function run() {
     }));
     assert.ok(mobileTrendImageState.length > 0 && mobileTrendImageState.every(image => image.loaded && image.rect.width >= 20 && image.rect.height >= 20 && image.display !== "none" && image.visibility !== "hidden" && image.opacity > 0 && image.transform === "none" && image.clipPath === "none"), JSON.stringify(mobileTrendImageState));
     await page.locator("#page-stats #statsPerformanceChart .stats-trend-card.is-mobile-trend-active").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-recent-trend-icon.png") });
+    const roleProgressLabels = await page.locator("#statsRoleProgressRow .stats-role-pill-label").allInnerTexts();
+    assert.deepEqual([...roleProgressLabels].sort(), ["Controller", "Duelist", "Initiator", "Sentinel"].sort());
+    const roleProgressLabelFit = await page.locator("#statsRoleProgressRow .stats-role-pill-label").evaluateAll(labels => labels.map(label => ({
+      text: label.textContent.trim(),
+      width: label.getBoundingClientRect().width,
+      scrollWidth: label.scrollWidth,
+      overflow: getComputedStyle(label).overflow,
+      fontFamily: getComputedStyle(label).fontFamily
+    })));
+    assert.ok(roleProgressLabelFit.every(label => label.text.length >= 7 && label.scrollWidth <= Math.ceil(label.width) + 1 && /IBM Plex Mono|Roboto Condensed/i.test(label.fontFamily)), JSON.stringify(roleProgressLabelFit));
+    await page.locator("#statsRoleProgressRow").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-role-progress-labels.png") });
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="home"]').click();
     await page.waitForFunction(() => document.getElementById("page-home")?.classList.contains("is-current-page"));
     const mobileRrType = await page.evaluate(() => ({
@@ -729,16 +740,29 @@ async function run() {
       goal: getComputedStyle(document.querySelector("#goalRRWidget #navGoalTierText")).fontSize
     }));
     assert.equal(mobileRrType.goal, mobileRrType.next, JSON.stringify(mobileRrType));
+    await page.locator("#chartRow").scrollIntoViewIfNeeded();
+    await page.locator('.graph-btn[data-size="5"]').click();
     const tooltipScrollState = await page.evaluate(async () => {
       const tooltip = document.getElementById("chartTooltip");
+      const header = document.querySelector(".app-header").getBoundingClientRect();
+      tooltip.style.position = "fixed";
+      tooltip.style.top = `${header.bottom + 18}px`;
+      tooltip.style.left = "50%";
       tooltip.style.visibility = "visible";
       tooltip.style.opacity = "1";
       window.dispatchEvent(new Event("scroll"));
-      document.querySelector(".app-root")?.dispatchEvent(new Event("scroll"));
+      document.getElementById("chartRow")?.dispatchEvent(new Event("scroll", { bubbles: true }));
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      return { visibility: tooltip.style.visibility, opacity: tooltip.style.opacity };
+      const rect = tooltip.getBoundingClientRect();
+      return {
+        visibility: tooltip.style.visibility,
+        opacity: tooltip.style.opacity,
+        overlapsHeader: rect.bottom > header.top && rect.top < header.bottom
+      };
     });
-    assert.deepEqual(tooltipScrollState, { visibility: "hidden", opacity: "0" });
+    assert.equal(tooltipScrollState.visibility, "visible", JSON.stringify(tooltipScrollState));
+    assert.equal(tooltipScrollState.opacity, "1", JSON.stringify(tooltipScrollState));
+    assert.equal(tooltipScrollState.overlapsHeader, false, JSON.stringify(tooltipScrollState));
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="logging"]').click();
     await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
     await page.locator('[data-mobile-logging-view="feed"]').click();
@@ -775,15 +799,17 @@ async function run() {
     const weeklyConfidenceGeometry = await page.locator(".weekly-focus-pill:not(.is-disabled)").evaluateAll(pills => pills.map(pill => {
       const heading = pill.querySelector(".weekly-focus-key")?.getBoundingClientRect();
       const confidence = pill.querySelector(".weekly-focus-confidence")?.getBoundingClientRect();
+      const headingRow = pill.querySelector(".weekly-focus-pill-head");
       const card = pill.getBoundingClientRect();
       return {
         card: card.toJSON(),
         heading: heading?.toJSON() || null,
         confidence: confidence?.toJSON() || null,
+        sameHeadingRow: Boolean(headingRow && heading?.width && headingRow.contains(pill.querySelector(".weekly-focus-confidence"))),
         overlaps: Boolean(heading && confidence && heading.left < confidence.right && heading.right > confidence.left && heading.top < confidence.bottom && heading.bottom > confidence.top)
       };
     }));
-    assert.ok(weeklyConfidenceGeometry.length > 0 && weeklyConfidenceGeometry.every(item => item.heading && item.confidence && !item.overlaps && item.confidence.left >= item.card.left - 1 && item.confidence.right <= item.card.right + 1), JSON.stringify(weeklyConfidenceGeometry));
+    assert.ok(weeklyConfidenceGeometry.length > 0 && weeklyConfidenceGeometry.every(item => item.heading && item.confidence && item.sameHeadingRow && !item.overlaps && item.confidence.left >= item.card.left - 1 && item.confidence.right <= item.card.right + 1), JSON.stringify(weeklyConfidenceGeometry));
     await page.locator(".weekly-focus-card").screenshot({ path: path.join(__dirname, "tmp", "qol-mobile-weekly-confidence.png") });
     const mobileTimelineGeometry = await page.locator("#timelineGrid .timeline-pill").evaluateAll(pills => pills.map(pill => {
       const card = pill.getBoundingClientRect();

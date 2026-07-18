@@ -331,9 +331,27 @@ async function run() {
     assert.equal(await desktop.locator('.gamesense-video-card a[href*="youtube.com/watch"]').count(), 6);
     await desktop.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-desktop.png") });
+    await desktop.locator(".gamesense-live-card [data-gamesense-play-twitch]").click();
+    const desktopTwitchEmbed = desktop.locator(".gamesense-live-card .gamesense-twitch-embed");
+    assert.match(await desktopTwitchEmbed.getAttribute("src"), /player\.twitch\.tv\/\?.*channel=Charla7an.*parent=127\.0\.0\.1.*autoplay=false/i);
+    assert.equal(await desktopTwitchEmbed.getAttribute("allowfullscreen"), "");
     await desktop.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
-    assert.match(await desktop.locator(".gamesense-video-card .gamesense-video-embed").first().getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?autoplay=1&controls=1&playsinline=1&rel=0/);
-    assert.equal(await desktop.locator(".gamesense-video-card .gamesense-video-embed").first().evaluate(frame => getComputedStyle(frame).pointerEvents), "auto");
+    const desktopYouTubeEmbed = desktop.locator(".gamesense-video-card .gamesense-video-embed:not(.gamesense-twitch-embed)").first();
+    assert.match(await desktopYouTubeEmbed.getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?.*autoplay=1.*controls=1.*fs=1.*playsinline=1.*rel=0/i);
+    const desktopYouTubeHitState = await desktopYouTubeEmbed.evaluate(frame => {
+      const rect = frame.getBoundingClientRect();
+      return {
+        pointerEvents: getComputedStyle(frame).pointerEvents,
+        allow: frame.getAttribute("allow"),
+        allowFullscreen: frame.hasAttribute("allowfullscreen"),
+        hitAtControls: document.elementFromPoint(rect.left + rect.width / 2, rect.bottom - 12) === frame
+      };
+    });
+    assert.equal(desktopYouTubeHitState.pointerEvents, "auto", JSON.stringify(desktopYouTubeHitState));
+    assert.equal(desktopYouTubeHitState.allowFullscreen, true, JSON.stringify(desktopYouTubeHitState));
+    assert.match(desktopYouTubeHitState.allow, /fullscreen/);
+    assert.equal(desktopYouTubeHitState.hitAtControls, true, JSON.stringify(desktopYouTubeHitState));
+    await desktop.locator(".gamesense-playlist-home").screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-embeds-desktop.png") });
     await desktop.locator('[data-gamesense-playlist-filter="YT Shorts"]').click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 1);
     await desktop.locator('[data-gamesense-playlist-filter="News"]').click();
@@ -1290,19 +1308,40 @@ async function run() {
     assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 10);
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
-    const mobilePlaylistFilterScroll = await mobile.locator(".gamesense-playlist-filters").evaluate(filters => {
+    const mobileFilterStrip = mobile.locator(".gamesense-playlist-filters");
+    const mobileFilterBox = await mobileFilterStrip.boundingBox();
+    await mobileFilterStrip.dispatchEvent("pointerdown", { pointerId: 17, pointerType: "touch", button: 0, buttons: 1, clientX: mobileFilterBox.x + mobileFilterBox.width - 18, clientY: mobileFilterBox.y + mobileFilterBox.height / 2 });
+    await mobileFilterStrip.dispatchEvent("pointermove", { pointerId: 17, pointerType: "touch", button: 0, buttons: 1, clientX: mobileFilterBox.x + 38, clientY: mobileFilterBox.y + mobileFilterBox.height / 2 });
+    await mobileFilterStrip.dispatchEvent("pointerup", { pointerId: 17, pointerType: "touch", button: 0, buttons: 0, clientX: mobileFilterBox.x + 38, clientY: mobileFilterBox.y + mobileFilterBox.height / 2 });
+    const mobilePlaylistFilterScroll = await mobileFilterStrip.evaluate(filters => {
       const style = getComputedStyle(filters);
-      filters.scrollLeft = filters.scrollWidth;
       return { clientWidth: filters.clientWidth, scrollWidth: filters.scrollWidth, scrollLeft: filters.scrollLeft, overflowX: style.overflowX };
     });
     assert.ok(mobilePlaylistFilterScroll.scrollWidth > mobilePlaylistFilterScroll.clientWidth && mobilePlaylistFilterScroll.scrollLeft > 0 && ["auto", "scroll"].includes(mobilePlaylistFilterScroll.overflowX), JSON.stringify(mobilePlaylistFilterScroll));
+    await mobile.waitForTimeout(300);
     await mobile.locator('[data-gamesense-playlist-filter="Home"]').click();
     await mobile.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-mobile.png") });
     await mobile.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
-    const mobileEmbed = mobile.locator(".gamesense-video-card .gamesense-video-embed").first();
-    assert.match(await mobileEmbed.getAttribute("src"), /controls=1&playsinline=1/);
-    assert.equal(await mobileEmbed.evaluate(frame => getComputedStyle(frame).pointerEvents), "auto");
+    const mobileEmbed = mobile.locator(".gamesense-video-card .gamesense-video-embed:not(.gamesense-twitch-embed)").first();
+    assert.match(await mobileEmbed.getAttribute("src"), /controls=1.*fs=1.*playsinline=1/);
+    const mobileEmbedHitState = await mobileEmbed.evaluate(frame => {
+      const rect = frame.getBoundingClientRect();
+      return {
+        width: rect.width,
+        height: rect.height,
+        pointerEvents: getComputedStyle(frame).pointerEvents,
+        hitAtControls: document.elementFromPoint(rect.left + rect.width / 2, rect.bottom - 12) === frame
+      };
+    });
+    assert.ok(mobileEmbedHitState.width >= 200 && mobileEmbedHitState.height >= 200, JSON.stringify(mobileEmbedHitState));
+    assert.equal(mobileEmbedHitState.pointerEvents, "auto", JSON.stringify(mobileEmbedHitState));
+    assert.equal(mobileEmbedHitState.hitAtControls, true, JSON.stringify(mobileEmbedHitState));
+    await mobile.locator(".gamesense-live-card [data-gamesense-play-twitch]").click();
+    const mobileTwitchEmbed = mobile.locator(".gamesense-live-card .gamesense-twitch-embed");
+    assert.match(await mobileTwitchEmbed.getAttribute("src"), /player\.twitch\.tv\/\?.*channel=Charla7an.*parent=127\.0\.0\.1.*autoplay=false/i);
+    assert.ok(await mobileTwitchEmbed.evaluate(frame => frame.getBoundingClientRect().height >= 300));
+    await mobile.locator(".gamesense-playlist-home").screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-embeds-mobile.png") });
     await mobile.locator(".gamesense-back").click();
     await mobile.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await mobile.click('[data-gamesense-topic="maps"]');

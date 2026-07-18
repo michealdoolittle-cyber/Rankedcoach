@@ -44719,13 +44719,6 @@ function setLayoutStyleMobileSection(section = "shapes") {
   });
 }
 
-if (!window.__rankedCoachChartScrollHideBound) {
-  window.__rankedCoachChartScrollHideBound = true;
-  window.addEventListener("scroll", hideChartTooltip, { capture: true, passive: true });
-  document.addEventListener("scroll", hideChartTooltip, { capture: true, passive: true });
-  window.visualViewport?.addEventListener("scroll", hideChartTooltip, { passive: true });
-}
-
 function renderLayoutOptionGallery({
   galleryId = "",
   selectId = "",
@@ -47615,25 +47608,40 @@ chartRow.onclick = e => {
 }
 
 function scheduleSelectedChartTooltipPosition() {
-  if (isMobileLayoutViewport()) {
-    hideChartTooltip();
-    return;
-  }
   if (selectedChartTooltipRaf) return;
   selectedChartTooltipRaf = window.requestAnimationFrame(() => {
     selectedChartTooltipRaf = 0;
+    if(!selectedDot) return;
     if (!canRenderChartTooltip()) {
       hideChartTooltip();
       return;
     }
-    if(!selectedDot) return;
     const hit = getChartHitFromDot(selectedDot);
-    if(hit) positionTooltipToHit(hit);
+    if(!hit) return;
+    positionTooltipToHit(hit);
+    if (!isMobileLayoutViewport()) return;
+
+    const tip = ensureChartTooltipLayer();
+    const tipRect = tip?.getBoundingClientRect?.();
+    const headerRect = document.querySelector(".app-header")?.getBoundingClientRect?.();
+    const bottomShellRect = document.getElementById("mobileBottomShell")?.getBoundingClientRect?.();
+    const viewportTop = window.visualViewport?.offsetTop || 0;
+    const viewportBottom = viewportTop + (window.visualViewport?.height || window.innerHeight || 0);
+    const overlapsHeader = Boolean(tipRect && headerRect
+      && tipRect.bottom > headerRect.top
+      && tipRect.top < headerRect.bottom);
+    const overlapsBottomShell = Boolean(tipRect && bottomShellRect
+      && tipRect.bottom > bottomShellRect.top
+      && tipRect.top < bottomShellRect.bottom);
+    const outsideViewport = Boolean(tipRect
+      && (tipRect.bottom <= viewportTop || tipRect.top >= viewportBottom));
+    if (overlapsHeader || overlapsBottomShell || outsideViewport) hideChartTooltip();
   });
 }
 
 window.addEventListener("scroll", scheduleSelectedChartTooltipPosition, { passive: true });
 document.addEventListener("scroll", scheduleSelectedChartTooltipPosition, { capture: true, passive: true });
+window.visualViewport?.addEventListener("scroll", scheduleSelectedChartTooltipPosition, { passive: true });
 window.addEventListener("resize", scheduleSelectedChartTooltipPosition, { passive: true });
 
 // ==============================
@@ -50824,8 +50832,8 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
           ${roleBadge}
           <div class="weekly-focus-pill-head">
             <span class="weekly-focus-key">${escapeHtml(meta.title)}</span>
+            <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
           </div>
-          <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
           <span class="weekly-focus-text">${escapeHtml(pillBody)}</span>
         </button>
       `;
