@@ -41308,8 +41308,6 @@ function renderCoachingEvidenceList(items = []) {
     return `<div class="coaching-games-used-empty">No individual games or reflections are available for this read.</div>`;
   }
 
-  const iconMarkup = getTrendSignalIconMarkup(item);
-  if (iconMarkup) return iconMarkup;
   return `
     <div class="coaching-games-used-list" role="list">
       ${items.map(item => `
