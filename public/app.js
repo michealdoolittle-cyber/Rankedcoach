@@ -12889,6 +12889,41 @@ function showLoginInitializationOverlay(copy = "", detail = "") {
   showModalById?.("loginInitOverlay");
 }
 
+function getDailyEntranceMotionContext() {
+  const entryChoice = localStorage.getItem(APP_ENTRY_CHOICE_KEY);
+  const userId = currentAuthUser?.id || (entryChoice === "guest" ? "guest" : "");
+  return {
+    userId,
+    profileId: activeProfileId || getActiveProfile?.()?.id || ""
+  };
+}
+
+let dailyEntranceMotionReadyTimer = 0;
+
+function notifyDailyEntranceMotionReady() {
+  const controller = window.RankedCoachDailyEntrance;
+  const context = getDailyEntranceMotionContext();
+  if (!controller || !context.userId) return;
+  const appVeil = document.getElementById("appLoadingVeil");
+  const loginOverlay = document.getElementById("loginInitOverlay");
+  const hasBlockingVeil = Boolean(
+    document.body?.classList.contains("profile-cleanup-active")
+    || appVeil?.classList.contains("is-visible")
+    || appVeil?.getAttribute("aria-hidden") === "false"
+    || loginOverlay?.classList.contains("active")
+  );
+  if (hasBlockingVeil) {
+    window.clearTimeout(dailyEntranceMotionReadyTimer);
+    dailyEntranceMotionReadyTimer = window.setTimeout(notifyDailyEntranceMotionReady, 120);
+    return;
+  }
+  window.clearTimeout(dailyEntranceMotionReadyTimer);
+  dailyEntranceMotionReadyTimer = 0;
+  controller.setSessionReady(context);
+  const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "home";
+  controller.activatePage(pageId, context);
+}
+
 function releaseInitialAppBootGuard() {
   document.documentElement?.classList.remove("app-booting");
   document.getElementById("loginInitOverlay")?.classList.remove("app-boot-overlay");
@@ -12900,6 +12935,7 @@ function hideLoginInitializationOverlay() {
     releaseInitialAppBootGuard();
     hideModalById?.("loginInitOverlay");
     clearLoginInitializationTheme();
+    notifyDailyEntranceMotionReady();
   }, 420);
 }
 
@@ -14163,6 +14199,7 @@ async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true
       }
       closeAuthModal(true);
     });
+    notifyDailyEntranceMotionReady();
     if (withTutorial) {
       window.setTimeout(() => startGuestTutorial(), 420);
     }
@@ -46536,6 +46573,7 @@ function activatePage(pageId, options = {}){
   };
 
   runPageActivationWork();
+  window.RankedCoachDailyEntrance?.activatePage(pageId, getDailyEntranceMotionContext());
   if (["home", "logging"].includes(pageId)) scheduleDailyWarmupCheck(700);
 }
 
