@@ -217,6 +217,42 @@ Gallery header: **"Weapons Library"**, back button **"Back to topics"** (`gamese
 - How to use it: "Let recoil fully settle between long shots and protect the 0-30-meter one-tap range." / "Do not spam after a miss; move back to cover, reset, and take the next deliberate shot."
 - Patch history: 3.00 — "Walking inaccuracy rose from 0.25 to 1.2 and running inaccuracy from 2.0 to 3.0." · 6.11 — "Minimum spread on ropes rose from 0.35 to 0.78 as rope combat was made less reliable."
 
+---
+
+## Sidearms — Proposed Rewrite (2026-07-19)
+
+You stopped your own pass before reaching Sidearms, so this section wasn't touched by hand. Written against the voice standard your Rifles-through-Shotguns edits confirmed (`docs/GAMESENSE-LIBRARY-CONTENT-STANDARD.md`, Part C): a named technique per entry, community voice where it's the real term, and researched beyond just official Riot sources. This is a proposal for you to mark up the same way as everything above — not yet applied to `gamesense-reference.js`.
+
+**Note on `gamesense-reference.js:242` (Classic's focus text):** the "pellets" copy-paste bug flagged in Part 1.3 and quoted in the original Sidearms section above is already fixed in the live source — it now reads "the three-round alternate-fire burst for close fights where the full burst can land." The line numbers in the original section headers above have also shifted slightly since this doc was written (Codex's fix pass touched this file); citations below match the current file.
+
+### Classic
+- Focus: *"Use controlled taps at range — and don't sleep on the alt-fire. Its three-round burst stays just as accurate jumping or running as it does standing still, which no other primary fire in the game can say."*
+- When to use it: "Keep it when utility matters more than a pistol upgrade, or when the round plan sets up a close, sudden right-click fight." / "Its free cost preserves the full 800-credit pistol-round budget."
+- How to use it: "Tap with primary fire at range and let recoil settle before the next shot." / "Jump-peek tight corners with the alt-fire — it holds its spread in the air, so landing two of three pellets is often enough to drop an unarmored target on eco."
+- Patch history: unchanged from above.
+
+### Frenzy
+- Focus: *"Treat it like a compact SMG: close the distance, control the short magazine, and avoid long-range tap races."* (unchanged — already solid)
+- When to use it: unchanged from above.
+- How to use it: "Crouch the moment you commit to a close fight — it tightens the spread noticeably, and the first three bullets are already close to perfectly accurate." / "Pre-fire the corner you're about to peek; the fire rate is high enough that starting your spray a beat early costs almost nothing and means your bullets are already tracking when the enemy appears."
+- Patch history: unchanged from above.
+
+### Ghost
+- Focus: unchanged from above — already solid.
+- When to use it: unchanged from above.
+- How to use it: "Hold head height and commit to a tap or two — the spray stays close to a straight line through the first two or three bullets before it kicks, so you don't need a full reset between them." / "Use the silenced profile to take a first pick without broadcasting the exact lane through tracers."
+- Patch history: unchanged from above.
+
+### Sheriff
+- Focus: *"Protect the 0-30m one-shot headshot range and let recoil settle — this is a stop-and-shoot weapon, not a flick gun."*
+- When to use it: unchanged from above.
+- How to use it: "Stop moving before every shot and hold your crosshair at head height on likely angles before the enemy appears — the Sheriff punishes a late flick far more than it rewards one." / "If the target is moving or at range, two body shots beat forcing a low-percentage headshot. Don't spam after a miss — reset to cover and take the next deliberate shot."
+- Patch history: unchanged from above.
+
+Sources consulted for the technique-level additions above (Classic alt-fire air accuracy, Frenzy crouch/pre-fire, Sheriff stop-and-shoot discipline): [Classic — Valorant Wiki](https://valorant.fandom.com/wiki/Classic), [A Tip for Each Weapon in Valorant — Dignitas](https://dignitas.gg/articles/a-tip-for-each-weapon-in-valorant), [Valorant Spray Patterns and Recoil Control Guide — bo3.gg](https://bo3.gg/valorant/articles/valorant-spray-patterns-and-recoil-control-guide), [How to Improve Sheriff Accuracy — Aimlabs](https://aimlabs.com/articles/aimlabs-academy/how-to-improve-sheriff-accuracy-in-valorant/), [How to use the Ghost — Dexerto](https://www.dexerto.com/valorant/how-to-use-the-ghost-valorant-weapon-guide-1547411/).
+
+---
+
 ## Weapon Dossier UI Chrome (`gamesense-library.js`)
 
 - Detail header kicker "Weapon Dossier", patch chip "As of Patch ${patch}", back button "Back to weapons" (`:914-915`); section "Arsenal" / "Select a weapon" (`:918`)

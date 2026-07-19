@@ -48,6 +48,20 @@ A missing category of information is a bigger problem than a badly worded senten
 
 ---
 
+## Part C — Voice standard, confirmed against Michael's own edits (2026-07-19)
+
+Part B was written before there was a real before/after to check it against. Michael hand-rewrote the Rifles-through-Shotguns Weapons entries in the content review doc, and the pattern across those edits is specific enough to promote to a real rule set. This is confirmed, not a guess — Michael reviewed this exact list and confirmed the voice direction is intentional.
+
+1. **A named, real technique beats a general principle.** The consistent difference between the original drafts and the edited ones: originals leaned on general coaching principles ("plan the escape," "reset instead of panic-spamming"); the edits replaced or supplemented these with a specific, named, executable technique — Guardian's ADS zoom, Bulldog's ADS-burst one-burst-kill threshold, Judge's crouch-for-accuracy, Bucky's jump-cornering, Shorty's post-nerf jump-accuracy caveat, Marshal's hip-fire strength. **Every entry should have at least one technique like this** — something a player can point to and say "I didn't know that," not just restated fundamentals.
+2. **Community voice and humor are intentional, not a lapse.** Confirmed directly: slang and real player-facing phrasing ("He's dinked!", "mag dump," "1-burst," "1-pump range," "flush you out with utility") is the target voice for Weapons/Library dossier content, distinct from the more neutral register the Voice Guide sets for personalized insight cards. Use real community terminology where it's genuinely the term players use — don't invent slang, and don't force a joke where a plain sentence is clearer.
+3. **Research the same way Michael did: broadly, not just official sources.** Official Riot patch notes and `valorant-api.com` remain the source of truth for hard stats (damage, cost, penetration, fire rate), but technique-level content — the actual "how do good players use this gun" material — comes from wikis, weapon guides, and community writeups just as much as from Riot. A plain web search per weapon/agent/map is expected, not optional, before writing or rewriting technique content.
+4. **State the tradeoff, not just the upside.** Several edits reframed a tip from "do X" to "X is strong, but Y is the cost" (Bucky: strong close-range, but a real recovery penalty; Outlaw: fast bullet reset, but only relevant against sub-140 armor). Prefer that shape over a bare instruction.
+5. **Verify any stat change against the live source before accepting it.** One edit changed Vandal's penetration from High to Medium — confirmed correct against `gamesense-reference.js:230` and against Riot's own data (Vandal and Phantom are both Medium penetration; Odin and Ares are the actual High-penetration weapons). The instinct to double-check a stat edit against the source file was right; it just happened to already be correct here.
+
+**What NOT to carry forward from the edit pass, even though it came from the same source:** a few edits were visibly mid-draft — dangling punctuation, a broken clause, a couple of typos, and a handful of cases where a genuinely useful specific detail (an exact damage-band threshold, an economy tip) was dropped rather than replaced with something better. Rule 1 above is the standard; an unfinished sentence isn't evidence against it, it's just unfinished. Any rewrite pass should still read as one clean, grammatical voice on the way out.
+
+---
+
 ## How this gets used
 
-Every dossier content audit or rewrite (starting with the current full Weapons/Maps/Agents sweep) gets checked against Part A first — is anything missing — before Part B is applied to whatever text exists. A rewrite that only touches wording without checking coverage is treating a symptom.
+Every dossier content audit or rewrite (starting with the current full Weapons/Maps/Agents sweep) gets checked against Part A first — is anything missing — before Part B and Part C are applied to whatever text exists. A rewrite that only touches wording without checking coverage is treating a symptom.
