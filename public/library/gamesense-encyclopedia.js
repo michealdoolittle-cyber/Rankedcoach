@@ -1293,7 +1293,7 @@
       {
         "id": "alarmbot",
         "name": "ALARMBOT",
-        "slot": "C - Basic",
+        "slot": "Q - Basic",
         "icon": "https://media.valorant-api.com/agents/1e58de9c-4950-5125-93e9-a0aee9f98746/abilities/ability1/displayicon.png",
         "summary": "EQUIP a covert Alarmbot. FIRE to deploy a bot that hunts down enemies that get in range.  After reaching its target, the bot explodes and applies Vulnerable to enemies in the area. HOLD EQUIP to recall a deployed bot.",
         "stats": {
@@ -1308,7 +1308,7 @@
       {
         "id": "turret",
         "name": "TURRET",
-        "slot": "Q - Basic",
+        "slot": "E - Signature",
         "icon": "https://media.valorant-api.com/agents/1e58de9c-4950-5125-93e9-a0aee9f98746/abilities/ability2/displayicon.png",
         "summary": "EQUIP a Turret. FIRE to deploy a turret that fires at enemies in a 100 degree cone. While targeting, EQUIP again to swap turret direction, HOLD ALT FIRE to rotate. HOLD EQUIP to recall the deployed turret.",
         "stats": {
@@ -1853,7 +1853,7 @@
       {
         "id": "devour",
         "name": "Devour",
-        "slot": "Q - Signature",
+        "slot": "Q - Basic",
         "icon": "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/abilities/ability1/displayicon.png",
         "summary": "Soul Harvest: Enemies that die within 3 seconds of taking damage from Reyna leave behind Soul Orbs that last 3 seconds.\r\nDevour: INSTANTLY consume a soul orb, rapidly gaining Temporary Health. If EMPRESS is active then Devour automatically casts, does not consume the Soul Orb, and Healing is permanent.",
         "stats": {
@@ -2066,11 +2066,6 @@
         "patch": "12.09",
         "note": "Guided Salvo Bugfix: Fixed issue where the equip idle sound kept playing long after cast.",
         "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
-      },
-      {
-        "patch": "12.08",
-        "note": "Bugfix: Fixed a bug where his agent select animation would sometimes cut off the smoke from the explosion. (fixed in",
-        "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-08/"
       }
     ],
     "abilities": [
@@ -2107,7 +2102,7 @@
       {
         "id": "armageddon",
         "name": "Armageddon",
-        "slot": "E - Ultimate",
+        "slot": "X - Ultimate",
         "icon": "https://media.valorant-api.com/agents/b444168c-4e35-8076-db47-ef9bf368f384/abilities/ultimate/displayicon.png",
         "summary": "EQUIP a tactical strike targeting map. FIRE to select the origin point of the strike. FIRE again to set the end point and launch the attack, unleashing a wave of lethal damaging explosions along the strike path. ALT FIRE during map targeting to cancel the origin point.",
         "stats": {
@@ -2290,11 +2285,6 @@
         "patch": "12.09",
         "note": "Shear Bugfix Buff: Fixed a bug where possessable drones (Sova's Owl Drone, Skye's Trailblazer, Tejo's Stealth Drone) would trigger the arming audio",
         "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
-      },
-      {
-        "patch": "12.03",
-        "note": "Razorvine All Random One Site only:",
-        "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-03/"
       }
     ],
     "abilities": [
@@ -4122,7 +4112,24 @@
 ];
   const baseReference = globalThis.RankedCoachGamesenseReference || { agents: [], weapons: [], warmupDetails: {} };
   const baseMaps = globalThis.RankedCoachGamesenseMaps || [];
-  const agentsById = new Map([...baseReference.agents, ...GENERATED_AGENTS].map(agent => [agent.id, agent]));
+  const generatedAgentsById = new Map(GENERATED_AGENTS.map(agent => [agent.id, agent]));
+  const reviewedAgentsById = new Map(baseReference.agents.map(agent => [agent.id, agent]));
+  const agentIds = new Set([...generatedAgentsById.keys(), ...reviewedAgentsById.keys()]);
+  const agentsById = new Map([...agentIds].map(id => {
+    const generated = generatedAgentsById.get(id) || {};
+    const reviewed = reviewedAgentsById.get(id) || {};
+    const { facts: _generatedFacts, ...generatedAgent } = generated;
+    const { facts: _reviewedFacts, ...reviewedAgent } = reviewed;
+    const agent = {
+      ...generatedAgent,
+      ...reviewedAgent,
+      icon: reviewedAgent.icon || generatedAgent.icon,
+      portrait: reviewedAgent.portrait || generatedAgent.portrait,
+      abilities: reviewedAgent.abilities?.length ? reviewedAgent.abilities : (generatedAgent.abilities || []),
+      lore: reviewedAgent.lore?.length ? reviewedAgent.lore : (generatedAgent.lore || [])
+    };
+    return [id, agent];
+  }));
   const mapsById = new Map([...baseMaps, ...GENERATED_MAPS].map(map => [map.id, map]));
   globalThis.RankedCoachGamesenseReference = Object.freeze({ ...baseReference, agents: Object.freeze([...agentsById.values()]) });
   globalThis.RankedCoachGamesenseMaps = Object.freeze([...mapsById.values()]);

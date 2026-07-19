@@ -1,6 +1,6 @@
 # Gamesense Content Audit — Concrete Fixes (2026-07-18)
 
-**Status:** Ready to build. Companion to the full manual review at `docs/GAMESENSE-LIBRARY-CONTENT-REVIEW-2026-07-18.md` and the standard at `docs/GAMESENSE-LIBRARY-CONTENT-STANDARD.md`. Everything in this note is a concrete code/data fix that doesn't require new content research — the big authoring task (23 agents, 7 maps currently running on template filler instead of real content) is intentionally **not** in this directive; see the review doc Part 1.5 for why, and treat it as separate, larger future work using the Content Standard as the target.
+**Status:** Implemented and verified locally on 2026-07-18. Personalized coaching copy now passes through the shared language guard, Compass labels use player-facing coaching language, the concrete weapon/agent data defects are fixed, and the live/API checks in the testing checklist pass. The larger researched-authoring task remains separate. Companion to the full manual review at `docs/GAMESENSE-LIBRARY-CONTENT-REVIEW-2026-07-18.md` and the standard at `docs/GAMESENSE-LIBRARY-CONTENT-STANDARD.md`.
 
 ---
 

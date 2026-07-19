@@ -131,6 +131,18 @@
         ability("healing-orb", "Healing Orb", "E - Signature", "sage", "A heal-over-time for an ally or a weaker self-heal for Sage.", { Cost: "Free", Charges: "1", Recharge: "Cooldown", Damage: "None" }, "Restore a teammate who can take another meaningful fight and preserve armor value.", "Do not cross an exposed lane just to heal. Ask whether the healed player can actually rejoin the round."),
         ability("resurrection", "Resurrection", "X - Ultimate", "sage", "Revive a dead ally after a vulnerable channel and return them at full health.", { Cost: "7 ultimate points", Charges: "1", Health: "Full health", Damage: "None" }, "Recover a key weapon, restore numbers, or force defenders to contest the body.", "Clear the body and name the revived player's escape route first. A resurrection that immediately dies spends the ultimate without restoring pressure.")
       ]
+    },
+    {
+      id: "raze", label: "Raze", role: "Duelist", maps: ["Lotus", "Split", "Sunset"],
+      fundamentals: [
+        "Boom Bot and Paint Shells clear the close positions that stop your entry. Send the clear first, then move while the defender is displaced.",
+        "Blast Pack creates fast space, but the landing still needs cover or teammate pressure. Use the second pack to finish the route or escape the trade.",
+        "Showstopper is strongest after utility or contact narrows the defender's exits. Fire at the space they must cross instead of guessing at a hidden player."
+      ],
+      patchHistory: [
+        patchNote("12.02", "Boom Bot can now be concussed."),
+        patchNote("11.08", "Slows now reduce Blast Pack movement while Raze is airborne.")
+      ]
     }
   ];
 
@@ -207,25 +219,10 @@
   };
   const currentAgents = agents.map(agent => {
     const rates = currentAgentRates[agent.id] || {};
-    const strongestMap = rates.maps?.[0];
-    const mapPickRate = strongestMap ? rates.mapPickRates?.[strongestMap] : null;
-    const mapWinRate = strongestMap ? rates.mapWinRates?.[strongestMap] : null;
     return {
       ...agent,
       ...rates,
-      lore: officialAgentLore[agent.id] || [],
-      facts: [
-        {
-          label: "Global pick rate",
-          value: Number.isFinite(rates.pickRate) ? `${rates.pickRate.toFixed(1)}%` : "Pending",
-          note: rates.sampleLabel || "Tracker Network rolling Competitive sample."
-        },
-        {
-          label: strongestMap ? `${strongestMap} map fit` : "Map fit",
-          value: Number.isFinite(mapPickRate) && Number.isFinite(mapWinRate) ? `${mapPickRate.toFixed(1)}% pick | ${mapWinRate.toFixed(1)}% win` : "Pending",
-          note: "Current rolling Competitive sample; this is not lifetime profile data."
-        }
-      ]
+      lore: officialAgentLore[agent.id] || []
     };
   });
 
@@ -242,7 +239,7 @@
     judge: weapon("judge", "Judge", 1850, 5, "3.5 rounds/sec", "Low", [{ range: "0-10m", head: 34, body: 17, legs: 14 }, { range: "10-15m", head: 20, body: 10, legs: 9 }, { range: "15-50m", head: 14, body: 7, legs: 6 }], "Damage is per pellet. Own a tight choke and have a route to recover a rifle after the first conversion."),
     bucky: weapon("bucky", "Bucky", 850, 5, "1.1 rounds/sec", "Low", [{ range: "0-8m", head: 34, body: 17, legs: 14 }, { range: "8-12m", head: 26, body: 13, legs: 11 }, { range: "12-50m", head: 18, body: 9, legs: 8 }], "Damage is per pellet. Protect the close-range fight and do not expose the long recovery to a second enemy."),
     shorty: weapon("shorty", "Shorty", 300, 2, "3 rounds/sec", "Low", [{ range: "0-7m", head: 22, body: 11, legs: 9 }, { range: "7-15m", head: 12, body: 6, legs: 5 }, { range: "15-50m", head: 6, body: 3, legs: 3 }], "Damage is per pellet. Use it as a concealed close-corner answer, then immediately upgrade from the dropped weapon."),
-    classic: weapon("classic", "Classic", 0, 12, "6.75 rounds/sec", "Low", [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], "Use controlled taps at range and reserve alternate fire for close movement fights where all pellets can connect."),
+    classic: weapon("classic", "Classic", 0, 12, "6.75 rounds/sec", "Low", [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], "Use controlled taps at range and reserve the three-round alternate-fire burst for close fights where the full burst can land."),
     frenzy: weapon("frenzy", "Frenzy", 450, 15, "10 rounds/sec", "Low", [{ range: "0-20m", head: 78, body: 26, legs: 22 }, { range: "20-50m", head: 63, body: 21, legs: 18 }], "Treat it like a compact SMG: close distance, control the short magazine, and avoid long-range tap races."),
     ghost: weapon("ghost", "Ghost", 500, 13, "6.75 rounds/sec", "Medium", [{ range: "0-30m", head: 105, body: 30, legs: 26 }, { range: "30-50m", head: 88, body: 25, legs: 21 }], "Use the clean first shot and quiet profile for disciplined pistol-round picks; reset instead of panic-spamming."),
     sheriff: weapon("sheriff", "Sheriff", 800, 6, "4 rounds/sec", "High", [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], "Protect the 0-30m one-shot headshot range and let recoil settle. Long-range headshots no longer kill full armor." )
@@ -311,7 +308,7 @@
     },
     classic: {
       whenToUse: ["Keep it when utility matters more than a pistol upgrade or when the round plan creates a very close right-click fight.", "Its free cost preserves the full 800-credit pistol-round budget."],
-      howToUse: ["Tap with primary fire at range and wait for recoil to settle.", "Use alternate fire only at close distance, preferably after stopping or while dropping into a target that already fills the pellet spread."],
+      howToUse: ["Tap with primary fire at range and wait for recoil to settle.", "Use the three-round alternate-fire burst only at close distance, preferably after stopping or while dropping into a target that already fills your crosshair."],
       patchHistory: [patchNote("2.00", "Jumping error for alternate fire rose from 0.4 to 1.0 and repeated right-click bursts gained a stronger recovery curve."), patchNote("3.00", "Walking and running inaccuracy increased as Riot tightened moving sidearm fire.")]
     },
     frenzy: {
@@ -352,7 +349,7 @@
     weaponCatalog[id].killConversion = killConversion;
     // vstats publishes round win conversion through economy filters. It does
     // not expose a defensible single unfiltered round-win percentage.
-    weaponCatalog[id].roundConversion = "Economy-filtered";
+    weaponCatalog[id].roundConversion = "Available by buy type";
   });
 
   const weapons = [

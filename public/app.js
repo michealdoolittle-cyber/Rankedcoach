@@ -60,10 +60,27 @@ const RANKEDCOACH_LANGUAGE_REPLACEMENTS = [
   [/Weapon reliance is context, not a penalty\. It helps RankedCoach avoid grading every profile like rifle-only play\./g, "Weapon use changes how headshot percentage and fight conversion should be read; it is not a penalty."],
   [/Your combat impact is showing up at a healthy level in the current sample\./g, "Your combat impact is strong in these matches."],
   [/Your recent matches are below your season average, so RankedCoach is reading this as a short-term dip\./g, "Your recent matches are below your average level of play, so RankedCoach is reading this as a short-term dip in performance."],
-  [/Your accuracy is stable enough that RankedCoach can look beyond aim alone\./g, "Your precision is stable enough that RankedCoach can look beyond aim alone."]
+  [/Your accuracy is stable enough that RankedCoach can look beyond aim alone\./g, "Your precision is stable enough that RankedCoach can look beyond aim alone."],
+  [/\bthis selected window\b/gi, "your recent matches"],
+  [/\bselected window\b/gi, "recent matches"],
+  [/\bthis sample\b/gi, "your recent matches"],
+  [/\bsample size\b/gi, "number of matches"],
+  [/\bsample\b/gi, "match history"],
+  [/\bprofile model\b/gi, "coaching read"],
+  [/\bmodel output\b/gi, "coaching score"],
+  [/\bmodel confidence\b/gi, "read confidence"],
+  [/\bsignal\b/gi, "read"],
+  [/\bbaseline\b/gi, "earlier matches"],
+  [/\bscoped\b/gi, "focused"],
+  [/\bderived from\b/gi, "built from"],
+  [/\bderived\b/gi, "built"],
+  [/\bentity\b/gi, "item"],
+  [/\bcumulative\b/gi, "total"],
+  [/\brole-impact conversion\b/gi, "role impact"],
+  [/\bunstable environment\b/gi, "inconsistent stretch"]
 ];
 
-function normalizeRankedCoachCopy(value = "") {
+function enforceRankedCoachLanguage(value = "") {
   if (value == null) return value;
   if (typeof value !== "string") return value;
 
@@ -72,7 +89,14 @@ function normalizeRankedCoachCopy(value = "") {
     text = text.replace(pattern, replacement);
   });
 
-  return text.replace(/(^|[.!?]\s+)([a-z])/g, (_match, prefix, firstLetter) => `${prefix}${firstLetter.toUpperCase()}`);
+  return text;
+}
+
+function normalizeRankedCoachCopy(value = "") {
+  if (value == null) return value;
+  if (typeof value !== "string") return value;
+
+  return enforceRankedCoachLanguage(value).replace(/(^|[.!?]\s+)([a-z])/g, (_match, prefix, firstLetter) => `${prefix}${firstLetter.toUpperCase()}`);
 }
 
 function logCountLabel(count = 0) {
@@ -900,7 +924,7 @@ function buildWarmupCorrelationInsight(profile = getActiveProfile?.()) {
     return {
       type: "good",
       title: "Warm-Up Days Are Holding Up Better",
-      preview: `Ranked win rate is ${Math.abs(winDelta)} points higher on logged warm-up days in this sample.`,
+      preview: `Ranked win rate is ${Math.abs(winDelta)} points higher on the logged warm-up days being compared.`,
       what: `The coach sees better ranked results on warm-up days across ${sampleCopy}.`,
       why: `This is correlation, not proof that warm-up caused the change${kastDelta !== null ? `; KAST is ${kastDelta >= 0 ? "+" : ""}${kastDelta} points different` : ""}${acsDelta !== null ? ` and ACS is ${acsDelta >= 0 ? "+" : ""}${acsDelta}` : ""}.`,
       action: "Keep the routine short and repeatable, then carry the same crosshair and fight discipline into the first ranked rounds.",
@@ -913,7 +937,7 @@ function buildWarmupCorrelationInsight(profile = getActiveProfile?.()) {
   return {
     type: correlation.direction === "negative" ? "warn" : "good",
     title: correlation.direction === "negative" ? "Warm-Up Has Not Transferred Yet" : "Warm-Up Results Are Still Even",
-    preview: `The current warm-up and comparison samples are within ${Math.abs(winDelta)} win-rate points.`,
+    preview: `The warm-up days and comparison days are within ${Math.abs(winDelta)} win-rate points.`,
     what: `The coach sees no reliable ranked lift from warm-up yet across ${sampleCopy}.`,
     why: "Range and DM mechanics do not automatically transfer into live-round decisions, utility timing, or trade spacing.",
     action: "Keep one drill, then name the exact match habit it should change before queueing.",
@@ -4225,7 +4249,7 @@ function buildCoachingCopyContext(context = {}) {
     bestRoleText: bestRole
       ? getWinrateCoachingSentence(formatReadableLabel(bestRole.role || "Your best role"), bestRole.winrate, bestRole.matchesPlayed)
       : "No repeated role has enough matches yet.",
-    winrateText: getWinrateCoachingSentence("This selected window", overview.winrate, overview.matchesPlayed)
+    winrateText: getWinrateCoachingSentence("Your recent matches", overview.winrate, overview.matchesPlayed)
   };
 }
 
@@ -4457,7 +4481,7 @@ function getStatsTrendQuickTakeaway(trend = {}, context = {}) {
   if (id === "precision_signal") {
     const hsWeight = context.evidenceLayer?.metricWeights?.headshot;
     const hs = Number.isFinite(valueNumber) && valueNumber > 0 ? valueNumber : safeNumber(overview.hs);
-    const subject = trend.kicker || signalAgent || "This sample";
+    const subject = trend.kicker || signalAgent || "Your recent matches";
     if (hsWeight?.label === "Down-weighted") return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so headshots are not the main issue`, "Spend more review time on positioning, fight choice, and surviving after first contact");
     if (hs >= 28) return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so your aim is excellent already`, "Keep your composure after your first fight so the mechanics stay reliable");
     if (hs >= 22) return formatTrendCoachAction(`${subject} is at ${Math.round(hs)}% HS, so your aim is in a good place`, "Keep choosing the next fight with patience instead of forcing the follow-up peek");
@@ -6638,7 +6662,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       type: "bad",
       title: "No Map Is Winning Enough Yet",
       preview: `${bestMap.map} is the best repeated map available at ${Math.round(safeNumber(bestMap.winrate))}% WR, but every repeated map is still below 50%.`,
-      what: "The map pool is losing more than it wins in this selected window.",
+      what: "Your map pool is losing more than it wins in these recent matches.",
       why: "When the best repeated map is still below 50%, the answer is not to praise that map. You need cleaner round plans, side discipline, and role fit across the pool.",
       action: "Pick one repeated map first. Build one attack plan, one defense default, and one fallback call before queueing it again.",
       sources: ["Henrik Match History", "Map Context"],
@@ -6757,7 +6781,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     insights.push({
       type: expectationMet ? "good" : "warn",
       title: "Damage Delta Is Being Judged In Agent Context",
-      preview: `${activeAgentNameForUtility || "Current agent"} is sitting at ${Math.round(observedDamageDelta)} DDÎ”/Round against a utility-damage expectation near ${Math.round(utilityDamageExpectation)}.`,
+      preview: `${activeAgentNameForUtility || "Current agent"} is at ${Math.round(observedDamageDelta)} damage delta per round against a utility-damage expectation near ${Math.round(utilityDamageExpectation)}.`,
       what: "The app reads damage differently depending on the agent you are playing.",
       why: "Agents with damaging utility are expected to create more pressure, so the app judges their damage with that in mind.",
       action: expectationMet
@@ -6802,7 +6826,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     insights.push({
       type: "good",
       title: "Reliable Dueling",
-      preview: `Your current K/D is ${overview.kd.toFixed(2)}, which is a real strength in this sample.`,
+      preview: `Your current K/D is ${overview.kd.toFixed(2)}, which is a real strength in these matches.`,
       what: "Winning direct duels is currently one of your biggest strengths.",
       why: "You are consistently finding more value in your fights than you are giving away.",
       action: "Take initiative on your strongest agents and maps, but maintain awareness and general discipline.",
@@ -7742,16 +7766,15 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       aim: {
         title: "Aim",
         weighting: [
-          statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Weighted from imported combat accuracy."),
-          statItem("K/D", overview.kd ? overview.kd.toFixed(2) : "--", "Mechanical conversion proxy from imported matches."),
-          statItem("Average ADR", `${Math.round(safeNumber(overview.adr))}`, "Average damage per round pulled from imported combat output.")
+          statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Headshot percentage from your imported matches."),
+          statItem("K/D", overview.kd ? overview.kd.toFixed(2) : "--", "How often your fights end in a kill instead of a death."),
+          statItem("Average ADR", `${Math.round(safeNumber(overview.adr))}`, "Your average damage per round in the imported matches.")
         ],
         stats: [
-          statItem("Category Score", `${aimScore}/100`, "Absolute category score on a 0-100 scale."),
-          statItem("Profile Share", `${Math.round(safeNumber(compassShares.aim))}%`, "Relative share of the current player profile after the four categories are compared."),
-          statItem("Raw Weight", `${Math.round(aimRaw)}`, "Unrounded model output before the display score is clamped to the 0-100 coaching scale."),
-          statItem("Source Window", compassSourceLabel, "Uses the most recent imported act/window available in the current profile."),
-          statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Imported match accuracy baseline."),
+          statItem("Coaching Score", `${aimScore}/100`, "Your aim read on the same 0-100 scale as the other categories."),
+          statItem("Category Balance", `${Math.round(safeNumber(compassShares.aim))}%`, "How much Aim contributes when the four coaching categories are compared."),
+          statItem("Matches Used", compassSourceLabel, "Uses the newest imported act available for this profile."),
+          statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Headshot percentage from your imported matches."),
           statItem("Fight Value", overview.kd ? overview.kd.toFixed(2) : "--", "Better fights raise the aim score.")
         ]
       },
@@ -7763,28 +7786,26 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           statItem("Win Rate", `${Math.round(safeNumber(overview.winrate))}%`, "Winning more rounds and matches raises the game sense score.")
         ],
         stats: [
-          statItem("Category Score", `${senseScore}/100`, "Absolute category score on a 0-100 scale."),
-          statItem("Profile Share", `${Math.round(safeNumber(compassShares.gamesense))}%`, "Relative share of the current player profile after the four categories are compared."),
-          statItem("Raw Weight", `${Math.round(senseRaw)}`, "Unrounded model output before the display score is clamped to the 0-100 coaching scale."),
-          statItem("Source Window", compassSourceLabel, "Uses the most recent imported act/window available in the current profile."),
-          statItem("Avg. KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average of attack and defense KAST from the current imported sample."),
-          statItem("Match Win Rate", `${Math.round(safeNumber(overview.winrate))}%`, "Imported match win rate used as a stable context stat for this lens.")
+          statItem("Coaching Score", `${senseScore}/100`, "Your game sense read on the same 0-100 scale as the other categories."),
+          statItem("Category Balance", `${Math.round(safeNumber(compassShares.gamesense))}%`, "How much Game Sense contributes when the four coaching categories are compared."),
+          statItem("Matches Used", compassSourceLabel, "Uses the newest imported act available for this profile."),
+          statItem("Avg. KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Your average attack and defense KAST in these matches."),
+          statItem("Match Win Rate", `${Math.round(safeNumber(overview.winrate))}%`, "Your match win rate keeps this read tied to round results.")
         ]
       },
       teamplay: {
         title: "Teamwork",
         weighting: [
           statItem("Assists / Match", assistsPerMatch ? assistsPerMatch.toFixed(1) : "--", "Assist output is the cleanest retained-match teamwork proxy."),
-          statItem("Avg. KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average of attack and defense KAST from the current imported sample."),
+          statItem("Avg. KAST", avgKast ? `${Math.round(avgKast)}%` : "--", "Average of attack and defense KAST from your imported matches."),
           statItem("Win Rate", `${Math.round(safeNumber(overview.winrate))}%`, "Team-based conversion helps validate cooperative value.")
         ],
         stats: [
-          statItem("Category Score", `${teamplayScore}/100`, "Absolute category score on a 0-100 scale."),
-          statItem("Profile Share", `${Math.round(safeNumber(compassShares.teamplay))}%`, "Relative share of the current player profile after the four categories are compared."),
-          statItem("Raw Weight", `${Math.round(teamplayRaw)}`, "Unrounded model output before the display score is clamped to the 0-100 coaching scale."),
-          statItem("Source Window", compassSourceLabel, "Uses the most recent imported act/window available in the current profile."),
+          statItem("Coaching Score", `${teamplayScore}/100`, "Your teamwork read on the same 0-100 scale as the other categories."),
+          statItem("Category Balance", `${Math.round(safeNumber(compassShares.teamplay))}%`, "How much Teamwork contributes when the four coaching categories are compared."),
+          statItem("Matches Used", compassSourceLabel, "Uses the newest imported act available for this profile."),
           statItem("Recent Focus Category", topFocusEntry ? topFocusEntry[0] : "--", "Reflection focus categories can reinforce support-oriented play."),
-          statItem("Reflection Logs", `${logs.length}`, "More logs improve interpretation confidence for this lens.")
+          statItem("Reflection Logs", `${logs.length}`, "More reflections help the coach separate one rough game from a repeated habit.")
         ]
       },
       discipline: {
@@ -7795,11 +7816,10 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           statItem("Emotional Regulation", `${positiveMoodCount} positive / ${negativeMoodCount} negative`, "Positive versus negative mood entries from saved logs support the discipline read.")
         ],
         stats: [
-          statItem("Category Score", `${disciplineScore}/100`, "Absolute category score on a 0-100 scale."),
-          statItem("Profile Share", `${Math.round(safeNumber(compassShares.discipline))}%`, "Relative share of the current player profile after the four categories are compared."),
-          statItem("Raw Weight", `${Math.round(disciplineRaw)}`, "Unrounded model output before the display score is clamped to the 0-100 coaching scale."),
-          statItem("Source Window", compassSourceLabel, "Uses the most recent imported act/window available in the current profile."),
-          statItem("Weakest Theme", lowRatedLogs.length ? (lowRatedLogs[0]?.focus || "--") : "--", "Low-rated logs are checked for discipline leaks."),
+          statItem("Coaching Score", `${disciplineScore}/100`, "Your discipline read on the same 0-100 scale as the other categories."),
+          statItem("Category Balance", `${Math.round(safeNumber(compassShares.discipline))}%`, "How much Discipline contributes when the four coaching categories are compared."),
+          statItem("Matches Used", compassSourceLabel, "Uses the newest imported act available for this profile."),
+          statItem("Weakest Theme", lowRatedLogs.length ? (lowRatedLogs[0]?.focus || "--") : "--", "Low-rated reflections are checked for a repeated discipline issue."),
           statItem("Coaching Focus Category", focus || "--", "Current coaching focus category can reinforce discipline.")
         ]
       }
@@ -8113,9 +8133,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     const detailTab = compass.detailTabs?.[lens];
     if (!detailTab?.stats?.length) return;
     detailTab.stats = [
-      statItem("Category Score", `${score}/100`, "Benchmarked against high-rank stat bands first, then adjusted slightly by your own recent trend."),
-      statItem("Profile Share", `${Math.round(safeNumber(contextCompassShares[lens]))}%`, "Relative share after the four current compass categories are compared."),
-      ...detailTab.stats.filter(item => !["Category Score", "Profile Share", "Raw Weight"].includes(item?.label))
+      statItem("Coaching Score", `${score}/100`, "Compared with high-rank reference points, then checked against your own recent matches."),
+      statItem("Category Balance", `${Math.round(safeNumber(contextCompassShares[lens]))}%`, "How much this category contributes when the four coaching categories are compared."),
+      ...detailTab.stats.filter(item => !["Category Score", "Coaching Score", "Profile Share", "Category Balance", "Raw Weight"].includes(item?.label))
     ];
   });
   compass.strongestLens = hasMatchData
@@ -10109,9 +10129,9 @@ function buildSpecificWeaponDetailTabs(weaponKey = "", matchEntries = getScopedS
         statItem("Round Win Rate", hasSample ? formatPercent(weapon.winrate) : "--", hasSample ? `round wins / rounds reported = ${Math.round(weapon.wins)} / ${Math.round(weapon.rounds)}` : "No imported rounds are tagged with this weapon yet."),
         statItem("Rounds Reported", hasSample ? `${Math.round(weapon.rounds)}` : "0", "Imported round-by-round weapon usage for this exact weapon."),
         statItem("Matches Reported", hasSample ? `${Math.round(weapon.matches)}` : "0", "Imported matches where this exact weapon was reported at least once."),
-        statItem("Estimated Kills", hasSample ? `${Math.round(weapon.kills)}` : "--", "Kills are proportionally derived from match combat totals based on this weapon's share of rounds reported."),
-        statItem("Estimated Deaths", hasSample ? `${Math.round(weapon.deaths)}` : "--", "Deaths are proportionally derived from match combat totals based on this weapon's share of rounds reported."),
-        statItem("Estimated ADR", hasSample ? `${Math.round(weapon.adr)}` : "--", "ADR is weighted from imported match damage-per-round across rounds using this exact weapon.")
+        statItem("Estimated Kills", hasSample ? `${Math.round(weapon.kills)}` : "--", "Match combat totals are allocated according to this weapon's share of reported rounds."),
+        statItem("Estimated Deaths", hasSample ? `${Math.round(weapon.deaths)}` : "--", "Match death totals are allocated according to this weapon's share of reported rounds."),
+        statItem("Estimated ADR", hasSample ? `${Math.round(weapon.adr)}` : "--", "Calculated from imported match damage per round across rounds using this exact weapon.")
       ]
     },
     {
@@ -10280,9 +10300,9 @@ function buildWeaponDetailTabs(weaponTypeKey = "", matchEntries = getScopedStats
         statItem("Weapon Category", weapon?.label || "Weapon", "Grouped from imported round-by-round weapon usage."),
         statItem("Primary Weapon", weapon?.primaryWeapon || "--", "Most-used weapon inside this weapon category."),
         statItem("Round Win Rate", formatPercent(weapon?.winrate), `rounds won with ${weapon?.label || "this weapon category"} / total rounds on that weapon category = ${Math.round(safeNumber(weapon?.winrate) * safeNumber(weapon?.rounds) / 100)} / ${Math.round(safeNumber(weapon?.rounds))}`),
-        statItem("Estimated Kills", weapon ? `${Math.round(weapon.kills)}` : "--", "Kills are proportionally derived from match combat totals based on this weapon category's share of rounds reported."),
-        statItem("Estimated Deaths", weapon ? `${Math.round(weapon.deaths)}` : "--", "Deaths are proportionally derived from match combat totals based on this weapon category's share of rounds reported."),
-        statItem("Estimated ADR", weapon ? `${Math.round(weapon.adr)}` : "--", "ADR is weighted from imported match damage-per-round across rounds using this weapon category."),
+        statItem("Estimated Kills", weapon ? `${Math.round(weapon.kills)}` : "--", "Match combat totals are allocated according to this weapon category's share of reported rounds."),
+        statItem("Estimated Deaths", weapon ? `${Math.round(weapon.deaths)}` : "--", "Match death totals are allocated according to this weapon category's share of reported rounds."),
+        statItem("Estimated ADR", weapon ? `${Math.round(weapon.adr)}` : "--", "Calculated from imported match damage per round across rounds using this weapon category."),
         statItem("Kills / Round", weapon ? Number(weapon.killsPerRound || 0).toFixed(2) : "--", "Estimated kills divided by rounds reported on this weapon category."),
         statItem("Rounds Reported", weapon ? `${Math.round(weapon.rounds)}` : "--", "Imported rounds tagged with a weapon inside this weapon category."),
         statItem("Most Used Guns", topUsage || "--", "Top specific weapons inside this weapon category by rounds reported.")
@@ -10414,7 +10434,7 @@ function buildCalculatedAgentDetailTabs(agentName, analytics) {
         statItem("Diagnosis", coach.diagnosis, "Coaching-layer diagnosis built from current agent stability and role fit."),
         statItem("Emphasis", coach.emphasis, "What should matter most when you queue this agent next."),
         statItem("Recommendation", coach.recommendation, "Next-step plan translated from the current agent sample."),
-        statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Shared model confidence based on imported sample size and reflection support."),
+        statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Confidence reflects how many imported matches and reflections support this read."),
         statItem("Priority", analytics?.priorityLabel || "Watch", "Current coaching priority tier.")
       ]
     },
@@ -10481,7 +10501,7 @@ function buildCalculatedRoleDetailTabs(roleName, analytics) {
         statItem("Diagnosis", coach.diagnosis, "Coaching-layer diagnosis built from current role performance and fit."),
         statItem("Emphasis", coach.emphasis, "What should matter most when you queue this role family next."),
         statItem("Recommendation", coach.recommendation, "Next-step plan for your current role and match history."),
-        statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Shared model confidence based on imported sample size and reflection support."),
+        statItem("Confidence", analytics?.confidenceLabel || "Low Confidence", "Confidence reflects how many imported matches and reflections support this read."),
         statItem("Priority", analytics?.priorityLabel || "Watch", "Current coaching priority tier.")
       ]
     },
@@ -16672,7 +16692,7 @@ function applyCompassVisual(values = {}) {
 
     if (scoreEl) scoreEl.textContent = `${score}`;
     if (tierEl) tierEl.textContent = noData ? "No Data" : getCompassTierLabel(score);
-    if (metaEl) metaEl.textContent = `Profile share ${share}% Â· ${COMPASS_LENS_META[key]?.summary || ""}`;
+    if (metaEl) metaEl.textContent = `Category balance ${share}% | ${COMPASS_LENS_META[key]?.summary || ""}`;
     if (metaEl && noData) metaEl.textContent = "No match data yet.";
     if (barEl) barEl.style.width = `${score}%`;
     if (cardEl) cardEl.classList.toggle("is-strongest", !noData && key === strongestLens);
@@ -51614,6 +51634,16 @@ function renderStatsRoleProgress() {
         </span>
       </div>
     `;
+    if (isMobileLayoutViewport()) {
+      const icon = pill.querySelector(".stats-role-pill-icon");
+      const label = pill.querySelector(".stats-role-pill-label");
+      ["width", "height", "max-width", "max-height"].forEach((property) => {
+        icon?.style.setProperty(property, "27px", "important");
+      });
+      label?.style.setProperty("--tb-auto-fit-font-size", "clamp(9.5px, 2.75vw, 12px)", "important");
+      label?.style.setProperty("font-size", "clamp(9.5px, 2.75vw, 12px)", "important");
+      label?.style.setProperty("font-weight", "500", "important");
+    }
     container.appendChild(pill);
   });
 }

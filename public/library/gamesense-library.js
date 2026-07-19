@@ -11,6 +11,7 @@
   let collectionArchiveRenderToken = 0;
   let featuredPlaylist = null;
   let featuredPlaylistRequest = null;
+  let activeMediaPlayer = null;
   const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -291,7 +292,7 @@
   }
 
   function getPlaylistFilters() {
-    return ["Home", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "News", "YT Shorts", "VODs"];
+    return ["Home", "News", "VODs", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality"];
   }
 
   function renderPlaylistHomeIcon() {
@@ -313,14 +314,14 @@
   function renderYouTubePlayer(videoId, title = "Featured VALORANT video") {
     const origin = window.location.origin;
     const params = new URLSearchParams({
-      autoplay: "1",
+      autoplay: "0",
       controls: "1",
       fs: "1",
       playsinline: "1",
       rel: "0",
       origin
     });
-    return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" loading="lazy" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture; web-share" allowfullscreen></iframe>`;
+    return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
 
   function getTwitchChannel(stream = {}) {
@@ -337,7 +338,48 @@
       autoplay: "false",
       muted: "false"
     });
-    return `<iframe class="gamesense-video-embed gamesense-twitch-embed" src="https://player.twitch.tv/?${escapeHtml(params.toString())}" title="${escapeHtml(channel)} live on Twitch" loading="lazy" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+    return `<iframe class="gamesense-video-embed gamesense-twitch-embed" src="https://player.twitch.tv/?${escapeHtml(params.toString())}" title="${escapeHtml(channel)} live on Twitch" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  }
+
+  function closeMediaPlayer() {
+    if (!activeMediaPlayer) return;
+    const overlay = activeMediaPlayer;
+    activeMediaPlayer = null;
+    overlay.classList.remove("is-open");
+    document.body.classList.remove("gamesense-media-open");
+    window.setTimeout(() => overlay.remove(), 180);
+  }
+
+  function openMediaPlayer({ platform = "youtube", id = "", channel = "", title = "VALORANT video", url = "" } = {}) {
+    closeMediaPlayer();
+    const isTwitch = platform === "twitch";
+    const player = isTwitch
+      ? renderTwitchPlayer(channel)
+      : renderYouTubePlayer(id, title);
+    const externalLabel = isTwitch ? "Open on Twitch" : "Open on YouTube";
+    const overlay = document.createElement("div");
+    overlay.id = "gamesenseMediaOverlay";
+    overlay.className = "gamesense-media-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", title);
+    overlay.innerHTML = `
+      <section class="gamesense-media-dialog">
+        <header>
+          <div><span>${isTwitch ? "Live Stream" : "Featured Video"}</span><strong>${escapeHtml(title)}</strong></div>
+          <button type="button" data-gamesense-close-media aria-label="Close video player">Close</button>
+        </header>
+        <div class="gamesense-media-stage${isTwitch ? " is-twitch" : ""}">${player}</div>
+        ${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${externalLabel}</a>` : ""}
+      </section>`;
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay || event.target.closest?.("[data-gamesense-close-media]")) closeMediaPlayer();
+    });
+    document.body.appendChild(overlay);
+    document.body.classList.add("gamesense-media-open");
+    activeMediaPlayer = overlay;
+    window.requestAnimationFrame(() => overlay.classList.add("is-open"));
+    overlay.querySelector("[data-gamesense-close-media]")?.focus({ preventScroll: true });
   }
 
   function renderPlaylistLiveCard(stream) {
@@ -561,6 +603,7 @@
             <div class="gamesense-weapon-suggestion-detail">
               ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong>${escapeHtml(item.roundConversion.scope)} round conversion percent: ${Number(item.roundConversion.value).toFixed(2)}%</strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
               ${item.conversion ? `<em class="gamesense-conversion-read">${escapeHtml(item.conversion)}</em>` : ""}
+              ${item.locations ? `<p class="gamesense-weapon-locations"><strong>Best locations</strong><span>${escapeHtml(item.locations)}</span></p>` : ""}
               <p class="gamesense-weapon-evidence">${escapeHtml(item.evidence)}</p>
               <p class="gamesense-weapon-context">${escapeHtml(item.note)}</p>
             </div>
@@ -824,7 +867,7 @@
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
         <div class="gamesense-weapon-panel-art"><img src="${escapeHtml(weapon.image)}" alt="${escapeHtml(weapon.label)}"></div>
-        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Global round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div><p>${escapeHtml(weapon.focus)}</p></div>
+        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div><p class="gamesense-round-conversion-note">A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately.</p><p>${escapeHtml(weapon.focus)}</p></div>
         ${renderStatChips({ Cost: `${weapon.cost} credits`, Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
         <div class="gamesense-weapon-guidance">
@@ -1820,6 +1863,8 @@
 
   document.addEventListener("click", event => {
     const libraryNav = event.target.closest?.('.nav-btn[data-page="library"], .mobile-bottom-page-btn[data-mobile-page="library"]');
+    const anyPageNav = event.target.closest?.(".nav-btn[data-page], .mobile-bottom-page-btn[data-mobile-page]");
+    if (anyPageNav && activeMediaPlayer) closeMediaPlayer();
     if (libraryNav?.classList.contains("active") && state.topic !== "overview") {
       resetLibrary();
       return;
@@ -1894,18 +1939,35 @@
     }
     const playlistVideo = event.target.closest?.("[data-gamesense-play-video]");
     if (playlistVideo) {
+      event.preventDefault();
+      event.stopPropagation();
       const videoId = String(playlistVideo.dataset.gamesensePlayVideo || "");
       if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return;
-      playlistVideo.closest(".gamesense-video-card")?.classList.add("is-playing");
-      playlistVideo.outerHTML = renderYouTubePlayer(videoId);
+      const video = [
+        ...(featuredPlaylist?.items || []),
+        ...(featuredPlaylist?.liveStreams || [])
+      ].find(item => String(item?.id || "") === videoId) || {};
+      openMediaPlayer({
+        platform: "youtube",
+        id: videoId,
+        title: video.title || "Featured VALORANT video",
+        url: video.url || `https://www.youtube.com/watch?v=${videoId}`
+      });
       return;
     }
     const twitchLive = event.target.closest?.("[data-gamesense-play-twitch]");
     if (twitchLive) {
+      event.preventDefault();
+      event.stopPropagation();
       const channel = String(twitchLive.dataset.gamesensePlayTwitch || "");
       if (!/^[A-Za-z0-9_]{1,25}$/.test(channel)) return;
-      twitchLive.closest(".gamesense-video-card")?.classList.add("is-playing");
-      twitchLive.outerHTML = renderTwitchPlayer(channel);
+      const stream = (featuredPlaylist?.liveStreams || []).find(item => getTwitchChannel(item).toLowerCase() === channel.toLowerCase()) || {};
+      openMediaPlayer({
+        platform: "twitch",
+        channel,
+        title: stream.title || `${channel} live on Twitch`,
+        url: stream.url || `https://www.twitch.tv/${channel}`
+      });
       return;
     }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");
@@ -2019,6 +2081,11 @@
   }, true);
 
   document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && activeMediaPlayer) {
+      event.preventDefault();
+      closeMediaPlayer();
+      return;
+    }
     if (event.key === "Escape" && activeSkinPreview) {
       event.preventDefault();
       closeSkinPreview();

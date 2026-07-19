@@ -222,10 +222,6 @@ async function buildAgent(agent) {
       { label: "Official role", value: agent.role?.displayName || "Agent", note: agent.role?.description || agent.description },
       { label: "Official profile", value: agent.displayName, note: agent.description }
     ],
-    facts: [
-      { label: "Global pick rate", value: "Not published", note: "Riot's public game-content feed does not publish a current Competitive pick-rate sample." },
-      { label: "Map fit", value: "Not published", note: "No verified current-season map sample is attached to this dossier." }
-    ],
     source: `${API_ROOT}/agents/${agent.uuid}?language=en-US`
   };
 }
