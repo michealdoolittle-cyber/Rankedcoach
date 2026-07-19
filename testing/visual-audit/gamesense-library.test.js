@@ -1196,6 +1196,13 @@ async function run() {
     assert.ok(await desktop.locator(".gamesense-damage-target-row").count() >= 2);
     assert.equal(await desktop.locator('.gamesense-damage-target-row img.gamesense-target-dummy[src^="assets/library/target-dummy.svg?"]').count(), await desktop.locator(".gamesense-damage-target-row").count());
     await desktop.locator(".gamesense-damage-table").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-damage-targets-desktop.png") });
+    await desktop.click('[data-gamesense-back="weapons"]');
+    await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item="sidearms"]').click();
+    await desktop.locator('[data-gamesense-weapon="classic"]').click();
+    await desktop.locator('[data-gamesense-weapon="classic"].active').waitFor({ state: "visible" });
+    assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /do not sleep on the alt-fire.*close, sudden right-click fight.*full three-shot burst.*headshot plus one body shot/is);
+    assert.doesNotMatch(await desktop.locator(".gamesense-weapon-panel").innerText(), /pellet/i);
+    await desktop.locator(".gamesense-weapon-guidance").screenshot({ path: path.join(__dirname, "tmp", "gamesense-sidearms-classic-desktop.png") });
     const contentCoverage = await desktop.evaluate(() => {
       const reference = globalThis.RankedCoachGamesenseReference;
       return {
@@ -1814,7 +1821,11 @@ async function run() {
   }
 }
 
-run().catch(error => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  run().catch(error => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { port, startServer, supabaseStub, weaponSkinApiStub, seed, dismissWarmup };

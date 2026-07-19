@@ -239,10 +239,10 @@
     judge: weapon("judge", "Judge", 1850, 5, "3.5 rounds/sec", "Low", [{ range: "0-10m", head: 34, body: 17, legs: 14 }, { range: "10-15m", head: 20, body: 10, legs: 9 }, { range: "15-50m", head: 14, body: 7, legs: 6 }], "Damage is per pellet. Own a tight choke and have a route to recover a rifle after the first conversion."),
     bucky: weapon("bucky", "Bucky", 850, 5, "1.1 rounds/sec", "Low", [{ range: "0-8m", head: 34, body: 17, legs: 14 }, { range: "8-12m", head: 26, body: 13, legs: 11 }, { range: "12-50m", head: 18, body: 9, legs: 8 }], "Damage is per pellet. Protect the close-range fight and do not expose the long recovery to a second enemy."),
     shorty: weapon("shorty", "Shorty", 300, 2, "3 rounds/sec", "Low", [{ range: "0-7m", head: 22, body: 11, legs: 9 }, { range: "7-15m", head: 12, body: 6, legs: 5 }, { range: "15-50m", head: 6, body: 3, legs: 3 }], "Damage is per pellet. Use it as a concealed close-corner answer, then immediately upgrade from the dropped weapon."),
-    classic: weapon("classic", "Classic", 0, 12, "6.75 rounds/sec", "Low", [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], "Use controlled taps at range and reserve the three-round alternate-fire burst for close fights where the full burst can land."),
+    classic: weapon("classic", "Classic", 0, 12, "6.75 rounds/sec", "Low", [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], "Use controlled taps at range, and do not sleep on the alt-fire. Its three-round burst stays accurate while jumping or running, which makes it a real close-range movement option."),
     frenzy: weapon("frenzy", "Frenzy", 450, 15, "10 rounds/sec", "Low", [{ range: "0-20m", head: 78, body: 26, legs: 22 }, { range: "20-50m", head: 63, body: 21, legs: 18 }], "Treat it like a compact SMG: close distance, control the short magazine, and avoid long-range tap races."),
     ghost: weapon("ghost", "Ghost", 500, 13, "6.75 rounds/sec", "Medium", [{ range: "0-30m", head: 105, body: 30, legs: 26 }, { range: "30-50m", head: 88, body: 25, legs: 21 }], "Use the clean first shot and quiet profile for disciplined pistol-round picks; reset instead of panic-spamming."),
-    sheriff: weapon("sheriff", "Sheriff", 800, 6, "4 rounds/sec", "High", [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], "Protect the 0-30m one-shot headshot range and let recoil settle. Long-range headshots no longer kill full armor." )
+    sheriff: weapon("sheriff", "Sheriff", 800, 6, "4 rounds/sec", "High", [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], "Protect the 0-30m one-shot headshot range and let recoil settle. This is a stop-and-shoot weapon, not a flick gun." )
   };
 
   const weaponGuides = {
@@ -307,23 +307,23 @@
       patchHistory: [patchNote("6.11", "Price rose from 150 to 300, reserve ammo fell from ten to six, and damage at the first two ranges was reduced."), patchNote("12.09", "Fire rate fell from 3.33 to 3.0 and movement spread increased across walking, running, crouch-walking, jumping, and ropes.")]
     },
     classic: {
-      whenToUse: ["Keep it when utility matters more than a pistol upgrade or when the round plan creates a very close right-click fight.", "Its free cost preserves the full 800-credit pistol-round budget."],
-      howToUse: ["Tap with primary fire at range and wait for recoil to settle.", "Use the three-round alternate-fire burst only at close distance, preferably after stopping or while dropping into a target that already fills your crosshair."],
+      whenToUse: ["Keep it when utility matters more than a pistol upgrade, or when the round plan sets up a close, sudden right-click fight.", "Its free cost preserves the full 800-credit pistol-round budget."],
+      howToUse: ["Tap with primary fire at range and let recoil settle before the next shot.", "Jump-peek tight corners with the alt-fire. Commit only when the full three-shot burst can land, or when a headshot plus one body shot can finish an unarmored target inside 30 meters."],
       patchHistory: [patchNote("2.00", "Jumping error for alternate fire rose from 0.4 to 1.0 and repeated right-click bursts gained a stronger recovery curve."), patchNote("3.00", "Walking and running inaccuracy increased as Riot tightened moving sidearm fire.")]
     },
     frenzy: {
       whenToUse: ["Buy it for close pistol-round pressure or a save-round path that reaches SMG distance quickly.", "It pairs with agents who can cross open space before the 15-round magazine is committed."],
-      howToUse: ["Use short close-range sprays and reset before the magazine empties; long tap races favor Ghost or Sheriff.", "Move to close the gap, then settle before the decisive burst."],
+      howToUse: ["Crouch the moment you commit to a close fight; it tightens the spread noticeably, and the first three bullets stay close to perfectly accurate.", "Pre-fire the corner you are about to peek. The fire rate is high enough that starting your spray a beat early costs almost nothing and means your bullets are already tracking when the enemy appears."],
       patchHistory: [patchNote("2.03", "Price rose from 400 to 500 credits after the Frenzy crowded other pistol-round options."), patchNote("3.00", "Price fell to 450 while walking and running inaccuracy increased."), patchNote("6.11", "Minimum spread increased, maximum spread arrived in five bullets, and running recoil rose from 1.25x to 1.5x.")]
     },
     ghost: {
       whenToUse: ["Choose it for quiet pistol-round taps, medium sightlines, and a utility-light 500-credit buy.", "It rewards first-shot accuracy against unarmored targets through 30 meters."],
-      howToUse: ["Hold head height, tap once or twice, then let the weapon settle instead of chasing with a full magazine.", "Use the silenced profile to take a first pick without broadcasting the exact lane through tracers."],
+      howToUse: ["Hold head height and commit to a tap or two. The spray stays close to a straight line through the first two or three bullets before it kicks, so you do not need a full reset between them.", "Use the silenced profile to take a first pick without broadcasting the exact lane through tracers."],
       patchHistory: [patchNote("3.00", "Walking inaccuracy rose from 0.25 to 0.92 and running inaccuracy from 1.85 to 2.3."), patchNote("6.11", "Minimum spread on ropes rose from 0.35 to 0.6 as rope combat was made less reliable.")]
     },
     sheriff: {
       whenToUse: ["Buy it when an eco round needs one-shot headshot threat inside 30 meters.", "Its high penetration can punish a confirmed common wall position, but six rounds demand a planned exit."],
-      howToUse: ["Let recoil fully settle between long shots and protect the 0-30-meter one-tap range.", "Do not spam after a miss; move back to cover, reset, and take the next deliberate shot."],
+      howToUse: ["Stop moving before every shot and hold your crosshair at head height on likely angles before the enemy appears. The Sheriff punishes a late flick far more than it rewards one.", "If the target is moving or at range, two body shots beat forcing a low-percentage headshot. Do not spam after a miss; reset to cover and take the next deliberate shot."],
       patchHistory: [patchNote("3.00", "Walking inaccuracy rose from 0.25 to 1.2 and running inaccuracy from 2.0 to 3.0."), patchNote("6.11", "Minimum spread on ropes rose from 0.35 to 0.78 as rope combat was made less reliable.")]
     }
   };
