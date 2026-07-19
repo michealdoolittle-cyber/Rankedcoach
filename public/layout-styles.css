@@ -1654,7 +1654,7 @@ body:is(
     inset:auto !important;
     grid-column:auto !important;
     grid-row:auto !important;
-    justify-self:end !important;
+    justify-self:start !important;
     width:auto !important;
     max-width:min(38vw,118px) !important;
     min-height:18px !important;
@@ -1785,7 +1785,7 @@ body:is(
     inset:auto !important;
     grid-column:1 !important;
     grid-row:1 !important;
-    justify-self:end !important;
+    justify-self:start !important;
     max-width:min(44vw,124px) !important;
     margin:0 !important;
     transform:none !important;
