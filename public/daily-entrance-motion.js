@@ -509,6 +509,7 @@
     const centerY = panelRect.top + (panelRect.height / 2);
     const cardAnimations = cards.map(async (card, index) => {
       await pause(index * 46, run);
+      if (run.cancelled) return;
       releaseElement(card, run);
       const rect = card.getBoundingClientRect();
       const offsetX = (centerX - (rect.left + rect.width / 2)) * 0.42;
