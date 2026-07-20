@@ -56008,9 +56008,14 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .imp
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home #impactRolePill{
   align-self:start !important;
   justify-self:start !important;
+  justify-content:center !important;
+  align-items:center !important;
   min-height:34px !important;
   padding:7px 10px !important;
   margin:0 0 2px !important;
+  text-align:center !important;
+  text-align-last:center !important;
+  text-wrap:balance !important;
 }
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-meter{
@@ -56085,9 +56090,14 @@ html.is-mobile-layout body.is-mobile-layout #page-home .rr-card .impact-card{
 html.is-mobile-layout body.is-mobile-layout #page-home #impactRolePill{
   align-self:start !important;
   justify-self:start !important;
+  justify-content:center !important;
+  align-items:center !important;
   min-height:34px !important;
   padding:7px 10px !important;
   margin:0 0 2px !important;
+  text-align:center !important;
+  text-align-last:center !important;
+  text-wrap:balance !important;
 }
 
 html.is-mobile-layout body.is-mobile-layout #page-home .impact-meter-caption{
