@@ -874,6 +874,8 @@ async function run() {
     assert.equal(await desktop.locator("html").getAttribute("data-gamesense-transition"), null);
     await desktop.locator('[data-gamesense-ability="cloudburst"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
+    assert.equal(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").count(), 1);
+    assert.match(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").getAttribute("src"), /youtube-nocookie\.com\/embed\/XYotYu1u9jY\?.*autoplay=0.*controls=1.*rel=0/i);
     assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
     assert.match(await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
     await desktop.waitForTimeout(2200);
@@ -907,6 +909,19 @@ async function run() {
       assert.equal(await desktop.locator(`[data-gamesense-ability="${abilityId}"]`).getAttribute("aria-pressed"), "true");
       assert.equal(await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(node => window.__rankedCoachOmenPortraitNode === node && node.isConnected), true);
     }
+    assert.match(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").getAttribute("src"), /youtube-nocookie\.com\/embed\/NQnVPvXGQE0\?/i);
+
+    await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "sova"));
+    await desktop.locator('.gamesense-agent-detail-head h2').getByText("Sova", { exact: true }).waitFor({ state: "visible" });
+    await desktop.click('[data-gamesense-ability="recon-bolt"]');
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
+
+    await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "cypher"));
+    await desktop.locator('.gamesense-agent-detail-head h2').getByText("Cypher", { exact: true }).waitFor({ state: "visible" });
+    await desktop.click('[data-gamesense-ability="trapwire"]');
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
+    await desktop.click('[data-gamesense-ability="spycam"]');
+    assert.match(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").getAttribute("src"), /youtube-nocookie\.com\/embed\/ZqA1jVWFwOU\?/i);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "reyna"));
     await desktop.locator('.gamesense-agent-detail-head h2').getByText("Reyna", { exact: true }).waitFor({ state: "visible" });

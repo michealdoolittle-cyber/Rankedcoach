@@ -558,7 +558,7 @@
     </article>`;
   }
 
-  function renderYouTubePlayer(videoId, title = "Featured VALORANT video") {
+  function renderYouTubePlayer(videoId, title = "Featured VALORANT video", options = {}) {
     const origin = window.location.origin;
     const params = new URLSearchParams({
       autoplay: "0",
@@ -568,6 +568,8 @@
       rel: "0",
       origin
     });
+    const startSeconds = Math.max(0, Math.floor(Number(options.startSeconds || 0)));
+    if (startSeconds) params.set("start", String(startSeconds));
     return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
 
@@ -1033,6 +1035,12 @@
     return `<dl class="gamesense-stat-chips">${Object.entries(stats).map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>`;
   }
 
+  function renderAbilityVideo(video = null) {
+    const videoId = String(video?.videoId || "").trim();
+    if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return "";
+    return `<div class="gamesense-ability-video"><span>Ability demo</span>${renderYouTubePlayer(videoId, video.title || "VALORANT ability demo", { startSeconds: video.startSeconds })}</div>`;
+  }
+
   function renderAbilityDetail(agent, ability) {
     if (!ability) return "";
     return `
@@ -1040,6 +1048,7 @@
         <div class="gamesense-fact-panel-head"><img src="${escapeHtml(ability.icon)}" alt=""><div><span>${escapeHtml(ability.slot)}</span><h3>${escapeHtml(ability.name)}</h3></div></div>
         <p>${escapeHtml(ability.summary)}</p>
         ${renderStatChips(ability.stats)}
+        ${renderAbilityVideo(ability.video)}
         <div class="gamesense-fact-read"><section><span>Round purpose</span><p>${escapeHtml(ability.purpose)}</p></section><section><span>Setup and difficulty</span><p>${escapeHtml(ability.setup)}</p></section></div>
       </article>`;
   }
