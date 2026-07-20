@@ -1038,7 +1038,8 @@
   function renderAbilityVideo(video = null) {
     const videoId = String(video?.videoId || "").trim();
     if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return "";
-    return `<div class="gamesense-ability-video"><span>Ability demo</span>${renderYouTubePlayer(videoId, video.title || "VALORANT ability demo", { startSeconds: video.startSeconds })}</div>`;
+    const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}${Number(video.startSeconds) > 0 ? `&t=${Math.floor(Number(video.startSeconds))}s` : ""}`;
+    return `<div class="gamesense-ability-video"><span>Ability demo</span>${renderYouTubePlayer(videoId, video.title || "VALORANT ability demo", { startSeconds: video.startSeconds })}<a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">Open demo on YouTube</a></div>`;
   }
 
   function renderAbilityDetail(agent, ability) {
@@ -1093,7 +1094,7 @@
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Ability Analysis</span><strong>Select an ability</strong></div>
         <div class="gamesense-ability-grid">${abilities.map(ability => `
-          <button type="button" data-gamesense-ability="${escapeHtml(ability.id)}" class="${ability.id === selected?.id ? "active" : ""}" aria-pressed="${ability.id === selected?.id}"><img src="${escapeHtml(ability.icon)}" alt=""><span>${escapeHtml(ability.name)}</span><small>${escapeHtml(ability.slot)}</small></button>
+          <button type="button" data-gamesense-ability="${escapeHtml(ability.id)}" class="${ability.id === selected?.id ? "active" : ""}${ability.video ? " has-video" : ""}" aria-pressed="${ability.id === selected?.id}"><img src="${escapeHtml(ability.icon)}" alt=""><span>${escapeHtml(ability.name)}</span><small>${escapeHtml(ability.slot)}</small>${ability.video ? `<em>Demo</em>` : ""}</button>
         `).join("")}</div>
         ${renderAbilityDetail(agent, selected)}
       </section>
