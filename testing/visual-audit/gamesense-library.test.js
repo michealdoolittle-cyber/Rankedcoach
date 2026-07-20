@@ -264,8 +264,8 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 4);
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
-    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/"))), true);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/"))), true);
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] img[src*="weapons-dossier-v2"]').count(), 0);
     const weaponTopicArt = await desktop.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();

@@ -12,6 +12,8 @@
   let featuredPlaylist = null;
   let featuredPlaylistRequest = null;
   let activeMediaPlayer = null;
+  let libraryPageActive = false;
+  let collageHydrationToken = 0;
   const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -132,9 +134,98 @@
       .filter(Boolean);
   }
 
+  function getDeferredCollageImageMarkup(src = "", className = "") {
+    if (!src) return "";
+    return `<img${className ? ` class="${escapeHtml(className)}"` : ""} data-gamesense-collage-src="${escapeHtml(src)}" alt="" decoding="async" fetchpriority="low">`;
+  }
+
+  function waitForCollageIdle(token) {
+    return new Promise(resolve => {
+      const done = () => resolve(token === collageHydrationToken);
+      if (typeof window.requestIdleCallback === "function") {
+        window.requestIdleCallback(done, { timeout: 160 });
+      } else {
+        window.setTimeout(done, 24);
+      }
+    });
+  }
+
+  function getPendingCollageImages() {
+    const groups = [...document.querySelectorAll("#gamesenseLibraryView .gamesense-topic-card")]
+      .map(card => [...card.querySelectorAll("img[data-gamesense-collage-src]")]);
+    const queue = [];
+    while (groups.some(group => group.length)) {
+      groups.forEach(group => {
+        const image = group.shift();
+        if (image) queue.push(image);
+      });
+    }
+    return queue;
+  }
+
+  async function decodeCollageImage(target, token) {
+    const source = target?.dataset?.gamesenseCollageSrc;
+    if (!source) return;
+    const preload = new Image();
+    preload.decoding = "async";
+    preload.fetchPriority = "low";
+    preload.src = source;
+    try {
+      await preload.decode();
+    } catch (_error) {
+      if (!preload.complete) {
+        await new Promise(resolve => {
+          preload.addEventListener("load", resolve, { once: true });
+          preload.addEventListener("error", resolve, { once: true });
+        });
+      }
+    }
+    if (
+      token !== collageHydrationToken
+      || !libraryPageActive
+      || !target.isConnected
+      || !preload.naturalWidth
+    ) return;
+    target.src = source;
+    target.removeAttribute("data-gamesense-collage-src");
+    window.requestAnimationFrame(() => target.classList.add("is-collage-loaded"));
+  }
+
+  async function hydrateTopicCollages(token) {
+    const queue = getPendingCollageImages();
+    for (const target of queue) {
+      if (token !== collageHydrationToken || !libraryPageActive) return;
+      if (!await waitForCollageIdle(token)) return;
+      await decodeCollageImage(target, token);
+    }
+  }
+
+  function scheduleTopicCollageHydration() {
+    const token = ++collageHydrationToken;
+    if (!libraryPageActive) return;
+    void hydrateTopicCollages(token);
+  }
+
+  function setLibraryPageActive(active = false) {
+    const nextActive = Boolean(active);
+    if (libraryPageActive === nextActive) {
+      if (nextActive) {
+        hydrateFeaturedPlaylist();
+        scheduleTopicCollageHydration();
+      }
+      return;
+    }
+    libraryPageActive = nextActive;
+    collageHydrationToken += 1;
+    if (libraryPageActive) {
+      hydrateFeaturedPlaylist();
+      scheduleTopicCollageHydration();
+    }
+  }
+
   function getTopicCollageMarkup(topic = "") {
     if (topic === "playlist") {
-      return (featuredPlaylist?.items || []).slice(0, 4).map(video => `<img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy">`).join("");
+      return (featuredPlaylist?.items || []).slice(0, 4).map(video => getDeferredCollageImageMarkup(video.thumbnail)).join("");
     }
     if (topic === "agents") {
       const agents = getReference().agents || [];
@@ -148,12 +239,12 @@
         return `
           <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
             <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="lazy">
-            <img class="gamesense-topic-agent-art" src="${escapeHtml(agent.portrait || getAgentFallbackIcon(agent.label || fallback))}" alt="" loading="lazy">
+            ${getDeferredCollageImageMarkup(agent.portrait || getAgentFallbackIcon(agent.label || fallback), "gamesense-topic-agent-art")}
           </span>`;
       });
       return rolePicks.join("");
     }
-    return getTopicCollageImages(topic).map(src => `<img src="${escapeHtml(src)}" alt="" loading="lazy">`).join("");
+    return getTopicCollageImages(topic).map(src => getDeferredCollageImageMarkup(src)).join("");
   }
 
   function getCompAgentPickRate(map, agent = "") {
@@ -1616,7 +1707,17 @@
       })
       .then(payload => {
         featuredPlaylist = payload && Array.isArray(payload.items) ? payload : { items: [], liveStreams: [], newIn24Hours: 0 };
-        if (["overview", "playlist"].includes(state.topic)) render({ direction: "replace" });
+        if (state.topic === "overview") {
+          const collage = document.querySelector("#gamesenseLibraryView .gamesense-playlist-topic-card .gamesense-topic-collage");
+          if (collage) {
+            const template = document.createElement("template");
+            template.innerHTML = getTopicCollageMarkup("playlist");
+            collage.replaceChildren(template.content);
+            scheduleTopicCollageHydration();
+          }
+        } else if (state.topic === "playlist") {
+          render({ direction: "replace" });
+        }
       })
       .catch(error => {
         console.warn("Featured Playlist refresh skipped", error?.message || error);
@@ -1637,7 +1738,8 @@
     bindPlantHotspots();
     bindPlaylistFilterScroller();
     hydrateWeaponCollectionArchive();
-    hydrateFeaturedPlaylist();
+    if (libraryPageActive) hydrateFeaturedPlaylist();
+    scheduleTopicCollageHydration();
   }
 
   function bindPlaylistFilterScroller() {
@@ -2142,5 +2244,10 @@
 
   decorateWarmupDrills();
   render();
-  globalThis.RankedCoachGamesenseLibrary = Object.freeze({ open: openLibrary, render, reset: resetLibrary });
+  globalThis.RankedCoachGamesenseLibrary = Object.freeze({
+    open: openLibrary,
+    render,
+    reset: resetLibrary,
+    setPageActive: setLibraryPageActive
+  });
 })();

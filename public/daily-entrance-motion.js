@@ -1,7 +1,9 @@
 (() => {
   "use strict";
 
-  const STORAGE_PREFIX = "rankedcoach_daily_entrance_v1";
+  // v2 deliberately replays the corrected entrance once for users whose v1
+  // state may have been marked seen while the launch flow was still hidden.
+  const STORAGE_PREFIX = "rankedcoach_daily_entrance_v2";
   const PAGE_IDS = new Set(["home", "logging", "stats", "insights", "library"]);
   const RANK_LABELS = [
     "Iron 1", "Iron 2", "Iron 3",
@@ -17,6 +19,7 @@
   const RANK_ICON_ROOT = "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/";
 
   const runtime = {
+    prepared: false,
     ready: false,
     identity: "",
     daily: null,
@@ -98,14 +101,32 @@
     return `${RANK_ICON_ROOT}${label.toLowerCase().replace(/\s+/g, "_")}_rank.png`;
   }
 
+  function scheduleIdleTask(callback) {
+    if (typeof window.requestIdleCallback === "function") {
+      return window.requestIdleCallback(callback, { timeout: 1200 });
+    }
+    return window.setTimeout(() => callback({ didTimeout: true, timeRemaining: () => 0 }), 180);
+  }
+
   function warmRankIcons() {
     if (runtime.rankIconsWarmed) return;
     runtime.rankIconsWarmed = true;
-    RANK_LABELS.forEach((label) => {
-      const image = new Image();
-      image.decoding = "async";
-      image.src = getRankIconUrl(label);
-    });
+    const pendingLabels = RANK_LABELS.slice();
+    const warmBatch = (deadline) => {
+      let loaded = 0;
+      while (
+        pendingLabels.length
+        && loaded < 4
+        && (deadline.didTimeout || deadline.timeRemaining() > 4)
+      ) {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = getRankIconUrl(pendingLabels.shift());
+        loaded += 1;
+      }
+      if (pendingLabels.length) scheduleIdleTask(warmBatch);
+    };
+    scheduleIdleTask(warmBatch);
   }
 
   function isMobileLayout() {
@@ -134,9 +155,18 @@
     if (!root || runtime.pendingPages.has(root)) return;
     runtime.pendingPages.set(root, {
       value: root.style.getPropertyValue("opacity"),
-      priority: root.style.getPropertyPriority("opacity")
+      priority: root.style.getPropertyPriority("opacity"),
+      transitionValue: root.style.getPropertyValue("transition"),
+      transitionPriority: root.style.getPropertyPriority("transition"),
+      pointerEventsValue: root.style.getPropertyValue("pointer-events"),
+      pointerEventsPriority: root.style.getPropertyPriority("pointer-events")
     });
+    root.classList.add("daily-entrance-page-pending");
+    root.style.setProperty("transition", "none", "important");
     root.style.setProperty("opacity", "0", "important");
+    root.style.setProperty("pointer-events", "none", "important");
+    // Commit the hidden state while a veil or modal still covers the page.
+    void root.offsetWidth;
   }
 
   function releasePendingPage(root) {
@@ -144,6 +174,20 @@
     if (!held) return;
     if (held.value) root.style.setProperty("opacity", held.value, held.priority);
     else root.style.removeProperty("opacity");
+    // Restore the normal page transition only after opacity is visibly settled,
+    // otherwise the page itself fades in over the child-card sequence.
+    void root.offsetWidth;
+    if (held.transitionValue) {
+      root.style.setProperty("transition", held.transitionValue, held.transitionPriority);
+    } else {
+      root.style.removeProperty("transition");
+    }
+    if (held.pointerEventsValue) {
+      root.style.setProperty("pointer-events", held.pointerEventsValue, held.pointerEventsPriority);
+    } else {
+      root.style.removeProperty("pointer-events");
+    }
+    root.classList.remove("daily-entrance-page-pending");
     runtime.pendingPages.delete(root);
   }
 
@@ -843,6 +887,14 @@
       && !prefersReducedMotion();
   }
 
+  function canPreparePage(pageId) {
+    const daily = ensureCurrentDay();
+    return PAGE_IDS.has(pageId)
+      && !daily.skipped
+      && !daily.seenPages.includes(pageId)
+      && !prefersReducedMotion();
+  }
+
   function isCurrentPage(pageId, page) {
     if (!page) return false;
     if (!isMobileLayout()) return page.classList.contains("active");
@@ -864,7 +916,9 @@
     if (runtime.activeRun?.pageId === pageId && !runtime.activeRun.sectionKey) return;
     if (runtime.activeRun) finishRun(runtime.activeRun);
     if (runtime.scheduleTimer) clearTimeout(runtime.scheduleTimer);
-    releaseAllPendingPages();
+    [...runtime.pendingPages.keys()]
+      .filter((page) => page !== root)
+      .forEach(releasePendingPage);
     holdPendingPage(root);
     const generation = ++runtime.generation;
     const delay = isMobileLayout() ? 330 : 255;
@@ -885,6 +939,48 @@
     }, delay);
   }
 
+  function preparePage(pageId) {
+    if (!runtime.prepared || runtime.ready) return;
+    if (!canPreparePage(pageId)) {
+      releaseAllPendingPages();
+      return;
+    }
+    const root = document.getElementById(`page-${pageId}`);
+    if (!root) return;
+    [...runtime.pendingPages.keys()]
+      .filter((page) => page !== root)
+      .forEach(releasePendingPage);
+    holdPendingPage(root);
+  }
+
+  function prepareSession(context = {}) {
+    const identity = normalizeIdentity(context.userId || context.email || "guest");
+    if (runtime.identity && runtime.identity !== identity) {
+      if (runtime.activeRun) finishRun(runtime.activeRun, { markSeen: false });
+      if (runtime.scheduleTimer) clearTimeout(runtime.scheduleTimer);
+      runtime.scheduleTimer = 0;
+      runtime.generation += 1;
+      releaseAllPendingPages();
+      runtime.ready = false;
+    }
+
+    if (!runtime.prepared || runtime.identity !== identity) {
+      runtime.identity = identity;
+      runtime.daily = readDailyState(identity);
+      runtime.prepared = true;
+    } else {
+      ensureCurrentDay();
+    }
+
+    if (prefersReducedMotion()) {
+      runtime.daily.skipped = true;
+      releaseAllPendingPages();
+      persistDailyState();
+      return;
+    }
+    preparePage(runtime.queuedPage || "home");
+  }
+
   function scheduleSection(pageId, sectionKey, sequence) {
     const daily = ensureCurrentDay();
     if (!runtime.ready || daily.skipped || daily.seenSections.includes(sectionKey) || prefersReducedMotion()) return;
@@ -898,8 +994,11 @@
   function activatePage(pageId, context = {}) {
     if (!PAGE_IDS.has(pageId)) return;
     runtime.queuedPage = pageId;
-    if (context.userId && !runtime.ready) runtime.identity = normalizeIdentity(context.userId);
-    if (!runtime.ready) return;
+    if (context.userId && !runtime.prepared) prepareSession(context);
+    if (!runtime.ready) {
+      preparePage(pageId);
+      return;
+    }
     schedulePage(pageId);
   }
 
@@ -911,13 +1010,7 @@
       if (!runtime.activeRun) schedulePage(runtime.queuedPage || "home");
       return;
     }
-    if (runtime.activeRun) finishRun(runtime.activeRun, { markSeen: false });
-    if (runtime.scheduleTimer) {
-      clearTimeout(runtime.scheduleTimer);
-      runtime.scheduleTimer = 0;
-    }
-    runtime.identity = identity;
-    runtime.daily = readDailyState(identity);
+    prepareSession({ ...context, userId: identity });
     runtime.ready = true;
     if (prefersReducedMotion()) {
       runtime.daily.skipped = true;
@@ -955,7 +1048,7 @@
   }
 
   document.addEventListener("pointerdown", (event) => {
-    if (!event.isTrusted || (!runtime.activeRun && !runtime.scheduleTimer && !runtime.pendingPages.size)) return;
+    if (!runtime.ready || !event.isTrusted || (!runtime.activeRun && !runtime.scheduleTimer && !runtime.pendingPages.size)) return;
     skipAll();
   }, true);
 
@@ -979,10 +1072,12 @@
 
   window.RankedCoachDailyEntrance = Object.freeze({
     activatePage,
+    prepareSession,
     setSessionReady,
     skipAll,
     resetToday,
     getState: () => ({
+      prepared: runtime.prepared,
       ready: runtime.ready,
       identity: runtime.identity,
       queuedPage: runtime.queuedPage,

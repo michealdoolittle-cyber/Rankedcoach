@@ -125,6 +125,10 @@ function startServer() {
   return new Promise(resolve => {
     const server = http.createServer((request, response) => {
       let url = decodeURIComponent((request.url || "/").split("?")[0]);
+      if (url === "/api/content/playlist") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({ items: [], liveStreams: [], newIn24Hours: 0 }));
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(publicRoot, url);
       fs.readFile(file, (error, data) => {

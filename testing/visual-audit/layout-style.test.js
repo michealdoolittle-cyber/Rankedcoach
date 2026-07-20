@@ -213,6 +213,16 @@ function startServer() {
         response.end(JSON.stringify({ ok: true, status: "healthy" }));
         return;
       }
+      if (url === "/api/content/playlist") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ items: [], liveStreams: [], newIn24Hours: 0 }));
+        return;
+      }
+      if (url === "/api/content/skin-media") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ matches: {} }));
+        return;
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(root, url);
       if (!file.startsWith(root)) { response.writeHead(403); return response.end("Forbidden"); }
@@ -235,9 +245,15 @@ function supabaseStub() {
   return `globalThis.supabase={createClient(){const query={select(){return this},eq(){return this},order(){return this},limit(){return this},maybeSingle:async()=>({data:null,error:null}),single:async()=>({data:null,error:null}),then(resolve){return Promise.resolve({data:[],error:null}).then(resolve)},upsert:async()=>({data:null,error:null}),insert:async()=>({data:null,error:null}),update(){return this},delete(){return this}};return{auth:{getSession:async()=>({data:{session:null},error:null}),getUser:async()=>({data:{user:null},error:null}),onAuthStateChange(callback){setTimeout(()=>callback("INITIAL_SESSION",null),0);return{data:{subscription:{unsubscribe(){}}}}},signOut:async()=>({error:null})},from(){return Object.create(query)},functions:{invoke:async()=>({data:null,error:null})}}}};`;
 }
 
+async function dismissVisibleWarmup(page) {
+  if (!await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) return;
+  await page.click("#dailyWarmupSkip");
+  await page.locator("#dailyWarmupModal").waitFor({ state: "hidden", timeout: 5000 });
+}
+
 async function dismissWarmup(page) {
   await page.waitForTimeout(700);
-  if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
+  await dismissVisibleWarmup(page);
 }
 
 async function boot(page) {
@@ -245,9 +261,12 @@ async function boot(page) {
   await dismissWarmup(page);
   await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
   await dismissWarmup(page);
+  await page.evaluate(() => window.RankedCoachDailyEntrance?.skipAll?.());
+  await page.waitForFunction(() => !document.body.classList.contains("daily-entrance-motion-active"), null, { timeout: 5000 });
 }
 
 async function activateCoveragePage(page, pageKey) {
+  await dismissVisibleWarmup(page);
   const button = page.locator(`.nav-btn[data-page="${pageKey}"]`);
   await button.waitFor({ state: "visible", timeout: 10000 });
   await button.click();

@@ -3226,3 +3226,13 @@ body.gamesense-media-open{overflow:hidden !important;}
   html.is-mobile-layout .gamesense-related-video > a i{left:50%;}
   html.is-mobile-layout .gamesense-playlist-section-head{font-size:clamp(14px,4.4vw,18px);}
 }
+
+/* Decode full-resolution dossier collages off-layout, then reveal one image at a time. */
+.gamesense-topic-collage img[data-gamesense-collage-src]{opacity:0;}
+.gamesense-topic-collage img.is-collage-loaded{
+  opacity:1;
+  transition:opacity .18s cubic-bezier(.2,.82,.24,1);
+}
+@media (prefers-reduced-motion:reduce){
+  .gamesense-topic-collage img.is-collage-loaded{transition:none;}
+}

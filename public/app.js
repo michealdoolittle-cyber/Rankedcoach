@@ -1,4 +1,4 @@
-﻿import { AGENT_FX_LIBRARY } from "./agent-effects-data.js";
+﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
 
@@ -692,16 +692,10 @@ function openDailyWarmupCheck() {
 
 function canOpenDailyWarmupCheck() {
   if (document.documentElement?.classList.contains("app-booting")) return false;
-  const entranceState = window.RankedCoachDailyEntrance?.getState?.();
-  if (
-    document.body?.classList.contains("daily-entrance-motion-active")
-    || entranceState?.activePage
-    || Number(entranceState?.pendingPages || 0) > 0
-  ) return false;
   if (!hasCompletedAppEntryChoice?.()) return false;
   const activePage = getActivePageElement?.()?.id || "";
   if (!["page-home", "page-logging"].includes(activePage)) return false;
-  const blockingModal = [...document.querySelectorAll(".lens-modal-overlay.active, .lens-modal-overlay.is-opening")]
+  const blockingModal = [...document.querySelectorAll(".lens-modal-overlay.active, .lens-modal-overlay.is-opening, .lens-modal-overlay.is-closing")]
     .some(modal => modal.id !== "dailyWarmupModal" && modal.getAttribute("aria-hidden") !== "true");
   return !blockingModal;
 }
@@ -1173,7 +1167,6 @@ let mobileNavScrollRaf = 0;
 let mobileNavListenersInstalled = false;
 let mobileTouchScrollGuardInstalled = false;
 let mobileBottomShell = null;
-let mobileBottomShellTimer = 0;
 let mobileAskCoachButton = null;
 let mobileBugReportButton = null;
 let mobileHeaderSyncButton = null;
@@ -1627,12 +1620,6 @@ function ensureMobileBottomShell() {
   });
 
   document.body.appendChild(mobileBottomShell);
-
-  if (!mobileBottomShellTimer) {
-    mobileBottomShellTimer = window.setInterval(() => {
-      syncMobileBottomShellState({ deferExtent: true });
-    }, 1200);
-  }
 
   return mobileBottomShell;
 }
@@ -12905,49 +12892,70 @@ function getDailyEntranceMotionContext() {
 }
 
 let dailyEntranceMotionReadyTimer = 0;
-let dailyEntranceMotionFirstAttemptAt = 0;
+let dailyEntranceMotionTutorialPending = false;
+
+function prepareDailyEntranceMotion() {
+  const controller = window.RankedCoachDailyEntrance;
+  const context = getDailyEntranceMotionContext();
+  if (!controller || !context.userId) return false;
+  const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "home";
+  controller.prepareSession?.(context);
+  controller.activatePage(pageId, context);
+  return true;
+}
+
+function hasDailyEntranceBlockingSurface({ includeWarmup = true } = {}) {
+  const appVeil = document.getElementById("appLoadingVeil");
+  if (
+    document.body?.classList.contains("profile-cleanup-active")
+    || document.body?.classList.contains("app-tutorial-running")
+    || dailyEntranceMotionTutorialPending
+    || appVeil?.classList.contains("is-visible")
+    || appVeil?.getAttribute("aria-hidden") === "false"
+  ) return true;
+
+  return [...document.querySelectorAll(
+    ".lens-modal-overlay.active, .lens-modal-overlay.is-opening, .lens-modal-overlay.is-closing, .agent-modal.active, .agent-modal.is-opening, .agent-modal.is-closing"
+  )].some(modal => {
+    if (!includeWarmup && modal.id === "dailyWarmupModal") return false;
+    return modal.getAttribute("aria-hidden") !== "true";
+  });
+}
+
+function queueDailyEntranceMotionReadiness(delay = 80) {
+  window.clearTimeout(dailyEntranceMotionReadyTimer);
+  dailyEntranceMotionReadyTimer = window.setTimeout(notifyDailyEntranceMotionReady, delay);
+}
 
 function notifyDailyEntranceMotionReady() {
   const controller = window.RankedCoachDailyEntrance;
   const context = getDailyEntranceMotionContext();
   if (!controller || !context.userId) return;
-  if (!dailyEntranceMotionFirstAttemptAt) dailyEntranceMotionFirstAttemptAt = Date.now();
-  const appVeil = document.getElementById("appLoadingVeil");
-  const loginOverlay = document.getElementById("loginInitOverlay");
-  const warmupOverlay = document.getElementById("dailyWarmupModal");
-  const hasBlockingVeil = Boolean(
-    document.body?.classList.contains("profile-cleanup-active")
-    || appVeil?.classList.contains("is-visible")
-    || appVeil?.getAttribute("aria-hidden") === "false"
-    || loginOverlay?.classList.contains("active")
-    || loginOverlay?.classList.contains("is-opening")
-    || loginOverlay?.classList.contains("is-closing")
-    || loginOverlay?.getAttribute("aria-hidden") === "false"
-    || warmupOverlay?.classList.contains("active")
-    || warmupOverlay?.classList.contains("is-opening")
-    || warmupOverlay?.classList.contains("is-closing")
-    || warmupOverlay?.getAttribute("aria-hidden") === "false"
-  );
-  // The daily warm-up check schedules itself independently (scheduleDailyWarmupCheck,
-  // 700ms) and only becomes visible to hasBlockingVeil above once it actually opens.
-  // Without a head start, entrance's own trigger (which usually resolves faster) wins
-  // the race purely by chance and the warm-up message shows up after the animation
-  // instead of before it - confirmed live 2026-07-19. Give warm-up a guaranteed window
-  // to open first whenever it's still eligible to show today.
+  prepareDailyEntranceMotion();
+
+  const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "home";
   const warmupProfile = getActiveProfile?.();
-  const warmupAlreadyResolvedToday = !warmupProfile || getDailyWarmupPromptDate(warmupProfile) === formatLocalDateKey();
-  const stillWithinWarmupHeadStart = !warmupAlreadyResolvedToday
-    && (Date.now() - dailyEntranceMotionFirstAttemptAt) < 900;
-  if (hasBlockingVeil || stillWithinWarmupHeadStart) {
-    window.clearTimeout(dailyEntranceMotionReadyTimer);
-    dailyEntranceMotionReadyTimer = window.setTimeout(notifyDailyEntranceMotionReady, 120);
+  const warmupRequired = Boolean(
+    warmupProfile?.id
+    && ["home", "logging"].includes(pageId)
+    && hasCompletedAppEntryChoice?.()
+    && getDailyWarmupPromptDate(warmupProfile) !== formatLocalDateKey()
+  );
+
+  if (warmupRequired && !hasDailyEntranceBlockingSurface({ includeWarmup: false })) {
+    openDailyWarmupCheck();
+  }
+
+  // Readiness is state-driven: no deadline can let entrance overtake a prompt.
+  // The page was already staged invisibly by prepareSession, so the final modal
+  // closes onto a blank canvas rather than a dashboard that then fades away.
+  if (warmupRequired || hasDailyEntranceBlockingSurface()) {
+    queueDailyEntranceMotionReadiness();
     return;
   }
   window.clearTimeout(dailyEntranceMotionReadyTimer);
   dailyEntranceMotionReadyTimer = 0;
-  dailyEntranceMotionFirstAttemptAt = 0;
   controller.setSessionReady(context);
-  const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "home";
   controller.activatePage(pageId, context);
 }
 
@@ -12959,6 +12967,7 @@ function releaseInitialAppBootGuard() {
 function hideLoginInitializationOverlay() {
   setLoginInitializationProgress(100, "Everything is ready.", "Ready", "Your saved profile, settings, and coaching pages are ready.");
   window.setTimeout(() => {
+    prepareDailyEntranceMotion();
     releaseInitialAppBootGuard();
     hideModalById?.("loginInitOverlay");
     clearLoginInitializationTheme();
@@ -14226,9 +14235,15 @@ async function enterGuestFromAuth({ withTutorial = false, withDemoMatches = true
       }
       closeAuthModal(true);
     });
-    notifyDailyEntranceMotionReady();
     if (withTutorial) {
-      window.setTimeout(() => startGuestTutorial(), 420);
+      dailyEntranceMotionTutorialPending = true;
+      window.setTimeout(() => {
+        startGuestTutorial();
+        dailyEntranceMotionTutorialPending = false;
+        notifyDailyEntranceMotionReady();
+      }, 420);
+    } else {
+      notifyDailyEntranceMotionReady();
     }
   } catch (error) {
     localStorage.removeItem(APP_ENTRY_CHOICE_KEY);
@@ -14411,7 +14426,11 @@ function stopGuestTutorial({ completed = false } = {}) {
   window.removeEventListener("resize", positionGuestTutorialOverlay);
   window.removeEventListener("scroll", positionGuestTutorialOverlay, true);
   if (completed) {
-    window.setTimeout(openGuestTutorialComplete, 120);
+    dailyEntranceMotionTutorialPending = true;
+    window.setTimeout(() => {
+      openGuestTutorialComplete();
+      dailyEntranceMotionTutorialPending = false;
+    }, 120);
   }
 }
 
@@ -14499,8 +14518,7 @@ let rrKillsEl, rrDeathsEl, rrAssistsEl, rrACSEl;
 let rrMatchTitleEl, rrMatchMetaEl;
 let crestCycleBtn, crestCycleLabelEl;
 
-let agentFrameArt, agentFxBehind, agentFxFront, agentRevealArt;
-let agentCustomFxCleanup = null;
+let agentFrameArt, agentRevealArt;
 let agentFrameResizeObserver = null;
 let agentFrameResizeAnimationFrame = 0;
 let loadoutValueTextMutationObserver = null;
@@ -16310,102 +16328,37 @@ const AGENT_SIL_MAP = {
   yoru:"https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/yoru.png"
 };
 
-const AGENT_FX_COLOR_FALLBACKS = {
-  astra: ["#8b5cf6", "#f0abfc", "#312e81"],
-  breach: ["#f97316", "#facc15", "#7c2d12"],
-  brimstone: ["#fb923c", "#f97316", "#7c2d12"],
-  chamber: ["#f8fafc", "#fbbf24", "#334155"],
-  clove: ["#f472b6", "#c084fc", "#4c1d95"],
-  cypher: ["#67e8f9", "#e2e8f0", "#0f172a"],
-  deadlock: ["#e5e7eb", "#93c5fd", "#1e293b"],
-  fade: ["#6366f1", "#a78bfa", "#111827"],
-  gekko: ["#4ade80", "#facc15", "#14532d"],
-  harbor: ["#38bdf8", "#67e8f9", "#0c4a6e"],
-  iso: ["#60a5fa", "#a78bfa", "#172554"],
-  jett: ["#7dd3fc", "#e0f2fe", "#0f172a"],
-  kayo: ["#60a5fa", "#c084fc", "#0f172a"],
-  killjoy: ["#facc15", "#f472b6", "#3f3f46"],
-  miks: ["#22c55e", "#bbf7d0", "#052e16"],
-  neon: ["#22d3ee", "#f8fafc", "#1d4ed8"],
-  omen: ["#7c3aed", "#c4b5fd", "#020617"],
-  phoenix: ["#fb923c", "#facc15", "#7f1d1d"],
-  raze: ["#fb923c", "#f472b6", "#854d0e"],
-  reyna: ["#a855f7", "#f472b6", "#3b0764"],
-  sage: ["#86efac", "#e2e8f0", "#14532d"],
-  skye: ["#4ade80", "#bef264", "#365314"],
-  sova: ["#60a5fa", "#7dd3fc", "#1e3a8a"],
-  tejo: ["#38bdf8", "#22d3ee", "#0f172a"],
-  veto: ["#a78bfa", "#f472b6", "#1f1130"],
-  viper: ["#22c55e", "#bef264", "#052e16"],
-  vyse: ["#d8b4fe", "#f5d0fe", "#581c87"],
-  waylay: ["#f59e0b", "#fde68a", "#78350f"],
-  yoru: ["#2563eb", "#60a5fa", "#172554"]
-};
-
-const AGENT_FX_PRESETS = {
-  astra: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  breach: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  brimstone: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  chamber: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  clove: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  cypher: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  deadlock: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  fade: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  gekko: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  harbor: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  iso: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  jett: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  kayo: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  killjoy: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  miks: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  neon: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  omen: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  phoenix: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  raze: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  reyna: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  sage: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  skye: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  sova: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  tejo: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  veto: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  viper: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  vyse: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  waylay: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  yoru: { recipe: ["frame"], intensity: 1.02, tempo: 1 },
-  default: { recipe: ["frame"], intensity: 1, tempo: 1 }
-};
-
-const AGENT_FX_MODE_OVERRIDES = {
-  astra: "custom",
-  breach: "custom",
-  brimstone: "custom",
-  chamber: "custom",
-  clove: "custom",
-  cypher: "custom",
-  deadlock: "custom",
-  fade: "custom",
-  gekko: "custom",
-  harbor: "custom",
-  iso: "custom",
-  jett: "custom",
-  kayo: "custom",
-  killjoy: "custom",
-  miks: "custom",
-  neon: "custom",
-  omen: "custom",
-  phoenix: "custom",
-  raze: "custom",
-  reyna: "custom",
-  sage: "custom",
-  skye: "custom",
-  sova: "custom",
-  waylay: "custom",
-  tejo: "custom",
-  veto: "custom",
-  viper: "custom",
-  vyse: "custom",
-  yoru: "custom"
-};
+// The retired frame-FX dataset was over 2 MB and only supplied these static
+// crop values after animated agent FX was disabled. Preserve the framing
+// without loading or parsing that obsolete effect library in production.
+const AGENT_FRAME_ART = Object.freeze({
+  astra: { x: -4, y: 0, s: 0.96 },
+  breach: { x: 0, y: 0, s: 0.91 },
+  brimstone: { x: 4, y: 0, s: 0.91 },
+  chamber: { x: 14, y: 11, s: 1.02 },
+  clove: { x: 8, y: 0, s: 0.96 },
+  cypher: { x: 0, y: 20, s: 0.9 },
+  fade: { x: 0, y: 11, s: 0.93 },
+  gekko: { x: 14, y: 11, s: 1.02 },
+  harbor: { x: 0, y: 11, s: 0.93 },
+  iso: { x: 2, y: 0, s: 0.91 },
+  jett: { x: 13, y: 16, s: 0.91 },
+  kayo: { x: 0, y: 0, s: 0.91 },
+  killjoy: { x: 10, y: 0, s: 0.91 },
+  neon: { x: 4, y: 0, s: 0.91 },
+  omen: { x: 0, y: 0, s: 0.91 },
+  phoenix: { x: 1, y: 0, s: 0.91 },
+  raze: { x: 0, y: 0, s: 1 },
+  reyna: { x: 1, y: 0, s: 0.91 },
+  sage: { x: 7, y: 20, s: 0.96 },
+  skye: { x: 0, y: 20, s: 0.9 },
+  sova: { x: 0, y: 0, s: 1 },
+  tejo: { x: 1, y: 0, s: 0.91 },
+  veto: { x: 1, y: 0, s: 0.91 },
+  viper: { x: 0, y: 20, s: 0.9 },
+  vyse: { x: 1, y: 0, s: 0.91 },
+  yoru: { x: 14, y: 0, s: 1 }
+});
 
 // ========================
 // IMPROVEMENT STAT POOL
@@ -18071,139 +18024,15 @@ function applyAgentRoleFrame(role) {
   }
 }
 
-function getAgentFxConfig(agentNameStr = "") {
-  const agentKey = toAgentFxKey(agentNameStr);
-  return AGENT_FX_LIBRARY[agentKey] || null;
-}
-
-function cloneAgentFxConfig(config = null) {
-  if (!config) return null;
-  return {
-    ...config,
-    frame: {
-      ...(config.frame || {}),
-      art: { ...(config.frame?.art || {}) }
-    },
-    fx: Array.isArray(config.fx)
-      ? config.fx.map((fx) => ({
-          ...fx,
-          p: Array.isArray(fx?.p) ? fx.p.slice() : []
-        }))
-      : []
-  };
-}
-
-function getSandboxFxKeywords(agentNameStr = "") {
-  const key = String(agentNameStr || "").trim().toLowerCase();
-  const keywords = [key];
-
-  if (key === "gekko") keywords.push("gecko");
-  if (key === "kayo") keywords.push("kay/o");
-
-  return keywords.filter(Boolean);
-}
-
-function buildSandboxPreviewConfig(agentNameStr = "") {
-  const config = cloneAgentFxConfig(getAgentFxConfig(agentNameStr));
-  if (!config) return null;
-
-  const keywords = getSandboxFxKeywords(agentNameStr);
-  const introIds = new Set(["intro.runin", "intro.flash"]);
-
-  config.fx = (config.fx || []).map((fx) => {
-    const id = String(fx?.id || "").toLowerCase();
-    const shouldEnable =
-      introIds.has(id) ||
-      keywords.some((keyword) => id.includes(keyword));
-
-    return {
-      ...fx,
-      on: shouldEnable ? 1 : 0
-    };
-  });
-
-  return config;
-}
-
 function getAgentFrameArtState(agentNameStr = "") {
-  const agentConfig = getAgentFxConfig(agentNameStr);
-  const art = agentConfig?.frame?.art || {};
-  const image = art.src || getAgentIconUrl(agentNameStr);
+  const key = String(agentNameStr || "").trim().toLowerCase();
+  const art = AGENT_FRAME_ART[key] || {};
   return {
-    image,
-    x: 0,
-    y: 0,
-    s: 1
+    image: getAgentIconUrl(agentNameStr),
+    x: Number(art.x || 0),
+    y: Number(art.y || 0),
+    s: Number(art.s || 1)
   };
-}
-
-function toAgentFxKey(agentNameStr = "") {
-  const raw = String(agentNameStr || "").trim();
-  if (!raw) return "";
-  const upper = raw.toUpperCase();
-  if (AGENT_FX_LIBRARY[upper]) return upper;
-  const title = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-  if (AGENT_FX_LIBRARY[title]) return title;
-  return upper;
-}
-
-function getAgentFxColors(agentNameStr = "", fxDef = {}) {
-  const key = String(agentNameStr || "").toLowerCase();
-  const params = Array.isArray(fxDef?.p) ? fxDef.p : [];
-  const colorParams = params.filter(value => typeof value === "string" && value.startsWith("#"));
-  const fallback = AGENT_FX_COLOR_FALLBACKS[key] || ["#7dd3fc", "#f8fafc", "#1e293b"];
-  return [
-    colorParams[0] || fallback[0],
-    colorParams[1] || fallback[1] || fallback[0],
-    colorParams[2] || fallback[2] || fallback[0]
-  ];
-}
-
-function getAgentFxPreset(agentNameStr = "") {
-  const key = String(agentNameStr || "").toLowerCase();
-  return AGENT_FX_PRESETS[key] || AGENT_FX_PRESETS.default;
-}
-
-function getAgentFxMode(agentNameStr = "") {
-  return "none";
-}
-
-function getAgentFxDurationMs(fxDef = {}, fallback = 2600) {
-  const params = Array.isArray(fxDef?.p) ? fxDef.p : [];
-  const numeric = params.find(value => Number.isFinite(Number(value)) && Number(value) > 0);
-  return Math.round(Math.max(1400, Math.min(7000, (Number(numeric || 1) * fallback))));
-}
-
-function createPresetFxNode(agentNameStr, type, index, preset, sourceFx = null) {
-  const fxDef = sourceFx
-    ? { ...sourceFx, id: `preset_${type}_${sourceFx.id || index}` }
-    : { id: `preset_${type}`, p: [] };
-
-  const node = buildFxPrimitive(agentNameStr, fxDef, index);
-  node.dataset.fxPreset = type;
-  node.style.setProperty("--fx-intensity", `${preset?.intensity || 1}`);
-  node.style.setProperty("--fx-tempo", `${preset?.tempo || 1}`);
-  node.style.setProperty("--fx-rotate", `${preset?.angle || 0}deg`);
-  node.classList.add(`fx-variant-${type}`);
-  return node;
-}
-
-function getAgentFxHost(effectId = "", fxDef = {}) {
-  const id = String(effectId || "").toLowerCase();
-  if (id === "intro.flash") return agentFxFront;
-  if (id.includes("border") || id.includes("frame") || id.includes("glow")) {
-    return Number(fxDef?.p?.[4]) === 1 ? agentFxFront : agentFxBehind;
-  }
-  if (
-    id.includes("scan") ||
-    id.includes("focus") ||
-    id.includes("contract") ||
-    id.includes("flash") ||
-    id.includes("reveal")
-  ) {
-    return agentFxFront;
-  }
-  return agentFxBehind;
 }
 
 function getAgentFrameUnitSize(frame = document.getElementById("agentFrame")) {
@@ -18336,115 +18165,14 @@ function renderAgentFrameArt(agentNameStr = "") {
   frame.style.setProperty("--agent-prism-art", art.image ? `url(${art.image})` : "none");
   frame.dataset.agent = key;
   agentFrameArt.dataset.agent = key;
-  if (agentFxBehind) agentFxBehind.dataset.agent = key;
-  if (agentFxFront) agentFxFront.dataset.agent = key;
   if (agentRevealArt) agentRevealArt.dataset.agent = key;
   frame.classList.add("agent-selected");
 
   return art;
 }
 
-function getSandboxFxEngine() {
-  return window.SandboxFxEngine || null;
-}
-
-function buildFxPrimitive(agentNameStr, fxDef = {}, index = 0) {
-  const layer = document.createElement("div");
-  const effectId = String(fxDef?.id || "").toLowerCase();
-  const [primary, secondary, tertiary] = getAgentFxColors(agentNameStr, fxDef);
-  const durationMs = getAgentFxDurationMs(fxDef, effectId.includes("frame") ? 2400 : 1800);
-  const params = Array.isArray(fxDef?.p) ? fxDef.p : [];
-  const art = getAgentFrameArtState(agentNameStr);
-
-  layer.className = "agent-fx-node";
-  layer.dataset.fxId = effectId;
-  layer.style.setProperty("--fx-primary", primary);
-  layer.style.setProperty("--fx-secondary", secondary);
-  layer.style.setProperty("--fx-tertiary", tertiary);
-  layer.style.setProperty("--fx-duration", `${durationMs}ms`);
-  layer.style.setProperty("--fx-delay", `${index * 120}ms`);
-  layer.style.setProperty("--fx-art-image", art.image ? `url(${art.image})` : "none");
-  layer.style.setProperty(
-    "--fx-art-transform",
-    `translate(var(--agent-art-x-scaled, 0px), var(--agent-art-y-scaled, 0px)) scale(${art.s})`
-  );
-  layer.style.setProperty("--fx-spread", `${Math.max(1, Number(params[1] || 1.2))}`);
-  layer.style.setProperty("--fx-blur", `${Math.max(8, Number(params[2] || 14))}px`);
-  layer.style.setProperty("--fx-hue", `${Math.round(Number(params[3] || 0))}deg`);
-
-  if (effectId === "intro.flash") {
-    layer.classList.add("fx-intro-flash");
-    return layer;
-  }
-
-  if (effectId.includes("smoke") || effectId.includes("haze") || effectId.includes("veil") || effectId.includes("shroud")) {
-    layer.classList.add("fx-smoke");
-    layer.style.setProperty("--fx-scale", `${1 + (Number(params[0] || 1) * 0.08)}`);
-    return layer;
-  }
-
-  if (effectId.includes("pulse") || effectId.includes("ripple") || effectId.includes("cove") || effectId.includes("lockdown")) {
-    layer.classList.add("fx-rings");
-    layer.style.setProperty("--fx-scale", `${1 + (Number(params[0] || 1) * 0.12)}`);
-    return layer;
-  }
-
-  if (effectId.includes("bolt") || effectId.includes("shock") || effectId.includes("dash") || effectId.includes("rush") || effectId.includes("salvo")) {
-    layer.classList.add("fx-streaks");
-    layer.style.setProperty("--fx-rotate", `${Math.round(Number(params[2] || params[0] || 0) * 8)}deg`);
-    return layer;
-  }
-
-  if (effectId.includes("orb") || effectId.includes("star") || effectId.includes("globules") || effectId.includes("butterflies")) {
-    layer.classList.add("fx-orbs");
-    layer.style.setProperty("--fx-count", `${Math.max(4, Math.min(18, Number(params[0] || 8)))}`);
-    return layer;
-  }
-
-  if (effectId.includes("scan") || effectId.includes("cctv") || effectId.includes("focus") || effectId.includes("contract")) {
-    layer.classList.add("fx-grid");
-    return layer;
-  }
-
-  if (effectId.includes("burn") || effectId.includes("ignition") || effectId.includes("bloom") || effectId.includes("hot_hands")) {
-    layer.classList.add("fx-burst");
-    return layer;
-  }
-
-  if (effectId.includes("thread") || effectId.includes("void") || effectId.includes("barrier") || effectId.includes("gravnet")) {
-    layer.classList.add("fx-threads");
-    return layer;
-  }
-
-  if (effectId.includes("frame")) {
-    layer.classList.add("fx-frame-glow");
-    return layer;
-  }
-
-  layer.classList.add("fx-burst");
-  return layer;
-}
-
 function clearAgentFxRuntime() {
   const frame = document.getElementById("agentFrame");
-  const sandboxFx = getSandboxFxEngine();
-
-  if (typeof agentCustomFxCleanup === "function") {
-    agentCustomFxCleanup();
-    agentCustomFxCleanup = null;
-  }
-
-  if (sandboxFx?.resetEmbeddedAgentFx) {
-    sandboxFx.resetEmbeddedAgentFx();
-  }
-
-  if (agentFxBehind) {
-    agentFxBehind.innerHTML = "";
-  }
-
-  if (agentFxFront) {
-    agentFxFront.innerHTML = "";
-  }
 
   if (agentFrameArt) {
     agentFrameArt.innerHTML = "";
@@ -18464,12 +18192,6 @@ function clearAgentFxRuntime() {
   frame?.style.removeProperty("--agent-art-scale");
   frame?.style.removeProperty("--agent-prism-art");
   frame?.removeAttribute("data-fx-engine");
-  if (agentFxBehind) {
-    delete agentFxBehind.dataset.agent;
-  }
-  if (agentFxFront) {
-    delete agentFxFront.dataset.agent;
-  }
   if (frame) {
     delete frame.dataset.agent;
   }
@@ -18477,52 +18199,12 @@ function clearAgentFxRuntime() {
 }
 
 function applyAgentFx(agentNameStr) {
-  if (!agentFxBehind || !agentFxFront || !agentFrameArt) return;
+  if (!agentFrameArt) return;
 
   clearAgentFxRuntime();
-
-  const sandboxFx = getSandboxFxEngine();
-  const agentConfig = getAgentFxConfig(agentNameStr);
-  const fxMode = getAgentFxMode(agentNameStr);
-  if (fxMode === "sandbox" && sandboxFx?.mountEmbeddedAgentFx && agentConfig) {
-    const sandboxConfig = buildSandboxPreviewConfig(agentNameStr) || agentConfig;
-    const art = getAgentFrameArtState(agentNameStr);
-    renderAgentFrameArt(agentNameStr);
-    const frame = document.getElementById("agentFrame");
-    const key = String(agentNameStr || "").toLowerCase();
-    frame?.style.setProperty("--agent-art-x", `${art.x}px`);
-    frame?.style.setProperty("--agent-art-y", `${art.y}px`);
-    frame?.style.setProperty("--agent-art-scale", `${art.s}`);
-    frame?.classList.add("agent-selected");
-    if (frame) frame.dataset.fxEngine = "sandbox";
-    sandboxFx.mountEmbeddedAgentFx(agentNameStr, sandboxConfig);
-    return art;
-  }
-
   const art = renderAgentFrameArt(agentNameStr);
   const frame = document.getElementById("agentFrame");
-  if (frame) {
-    frame.dataset.fxEngine = fxMode === "none" ? "none" : "custom";
-  }
-  if (fxMode === "none" || fxMode === "custom") {
-    return art;
-  }
-  const preset = getAgentFxPreset(agentNameStr);
-  const activeFx = (agentConfig?.fx || []).filter(effect => Number(effect?.on) === 1);
-  const sourceFx = activeFx.length ? activeFx : [{ id: "intro.flash", p: [] }];
-  const recipe = Array.isArray(preset?.recipe) && preset.recipe.length
-    ? preset.recipe
-    : ["frame", "burst"];
-
-  recipe.forEach((type, index) => {
-    const fxDef = sourceFx[index % sourceFx.length];
-    const node = createPresetFxNode(agentNameStr, type, index, preset, fxDef);
-    const host = type === "frame" || type === "rings"
-      ? agentFxFront
-      : getAgentFxHost(fxDef?.id || type, fxDef);
-    host?.appendChild(node);
-  });
-
+  if (frame) frame.dataset.fxEngine = "none";
   return art;
 }
 
@@ -39545,8 +39227,6 @@ function cacheDOM(){
   goalRRWidget = document.getElementById("goalRRWidget");
   agentFrameArt = document.getElementById("agentFrameArt");
   agentRevealArt = document.getElementById("agentRevealArt");
-  agentFxBehind = document.getElementById("agentFxBehind");
-  agentFxFront = document.getElementById("agentFxFront");
   bindAgentFrameMetrics();
   bindLoadoutValueTextFitObservers();
   chartRow = document.getElementById("chartRow");
@@ -46575,10 +46255,10 @@ function activatePage(pageId, options = {}){
 
     if (pageId === "home") {
       scheduleLoadoutValueTextFit();
-      recomputeFromMatches();
-      updateDisplays();
       forceChartIntroAnimation = true;
-      requestAnimationFrame(() => renderChart(currentSize));
+      requestAnimationFrame(() => {
+        if (getActivePageElement()?.id === "page-home") renderChart(currentSize);
+      });
     }
 
     if (pageId === "insights") {
@@ -46599,6 +46279,7 @@ function activatePage(pageId, options = {}){
 
   runPageActivationWork();
   window.RankedCoachDailyEntrance?.activatePage(pageId, getDailyEntranceMotionContext());
+  globalThis.RankedCoachGamesenseLibrary?.setPageActive?.(pageId === "library");
   if (["home", "logging"].includes(pageId)) scheduleDailyWarmupCheck(700);
 }
 
@@ -48469,7 +48150,9 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
 
     const page = btn.dataset.page;
 
-    activatePage(page);
+    if (getActivePageElement()?.id !== `page-${page}`) {
+      activatePage(page);
+    }
 
     // ========================
     // TRIGGER HOME SPIN FROM LOGGING

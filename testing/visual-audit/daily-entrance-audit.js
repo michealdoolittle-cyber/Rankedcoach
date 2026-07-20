@@ -106,6 +106,115 @@ function restoredSessionSupabaseStub() {
   `;
 }
 
+function guestSupabaseStub() {
+  return `
+    globalThis.supabase = {
+      createClient() {
+        function query() {
+          return {
+            select() { return this; }, eq() { return this; }, order() { return this; }, limit() { return this; }, in() { return this; },
+            update() { return this; }, delete() { return this; }, insert() { return this; },
+            maybeSingle() { return Promise.resolve({ data: null, error: null }); },
+            single() { return Promise.resolve({ data: null, error: null }); },
+            upsert() { return Promise.resolve({ data: null, error: null }); },
+            then(resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); }
+          };
+        }
+        return {
+          auth: {
+            getSession: async () => ({ data: { session: null }, error: null }),
+            getUser: async () => ({ data: { user: null }, error: null }),
+            onAuthStateChange(callback) {
+              setTimeout(() => callback("INITIAL_SESSION", null), 20);
+              return { data: { subscription: { unsubscribe() {} } } };
+            },
+            signOut: async () => ({ error: null }),
+            mfa: {
+              getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: "aal1", nextLevel: "aal1" } }),
+              listFactors: async () => ({ data: { all: [] } })
+            }
+          },
+          from: query,
+          functions: { invoke: async () => ({ data: null, error: null }) }
+        };
+      }
+    };
+  `;
+}
+
+async function runNaturalGuestSession(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const issues = [];
+  page.on("pageerror", error => issues.push(`[pageerror] ${error.message}`));
+  page.on("console", message => {
+    if (["error", "warning"].includes(message.type())) issues.push(`[${message.type()}] ${message.text()}`);
+  });
+  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({
+    contentType: "text/javascript",
+    body: guestSupabaseStub()
+  }));
+  await page.addInitScript(() => localStorage.clear());
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: "domcontentloaded" });
+  await page.locator("#authGuestBtn").waitFor({ state: "visible", timeout: 15000 });
+  await page.locator("#authGuestBtn").click();
+  await page.locator("#guestTutorialSkipBtn").waitFor({ state: "visible", timeout: 3000 });
+  await page.locator("#guestTutorialSkipBtn").click();
+
+  await page.waitForFunction(() => {
+    const warmup = document.getElementById("dailyWarmupModal");
+    const state = window.RankedCoachDailyEntrance?.getState?.();
+    return state?.prepared
+      && state.identity === "guest"
+      && warmup?.classList.contains("active")
+      && warmup.getAttribute("aria-hidden") === "false";
+  }, null, { timeout: 15000 });
+  const gate = await page.evaluate(() => ({
+    controller: window.RankedCoachDailyEntrance?.getState?.() || null,
+    pageOpacity: getComputedStyle(document.getElementById("page-home")).opacity,
+    pagePointerEvents: getComputedStyle(document.getElementById("page-home")).pointerEvents
+  }));
+  assert.equal(gate.controller?.ready, false, `Guest motion became ready before warm-up: ${JSON.stringify(gate)}`);
+  assert.equal(gate.pageOpacity, "0", `Guest Home was visible behind warm-up: ${JSON.stringify(gate)}`);
+  assert.equal(gate.pagePointerEvents, "none", `Guest Home remained interactive behind warm-up: ${JSON.stringify(gate)}`);
+
+  await page.locator("#dailyWarmupSkip").click();
+  await page.waitForFunction(() => {
+    const warmup = document.getElementById("dailyWarmupModal");
+    return warmup?.getAttribute("aria-hidden") === "true"
+      && !warmup.classList.contains("active")
+      && !warmup.classList.contains("is-closing");
+  }, null, { timeout: 4000 });
+  const blankStage = await page.evaluate(() => ({
+    controller: window.RankedCoachDailyEntrance?.getState?.() || null,
+    pageOpacity: getComputedStyle(document.getElementById("page-home")).opacity,
+    tooltipOpacity: getComputedStyle(document.getElementById("chartTooltip")).opacity
+  }));
+  assert.equal(blankStage.controller?.daily?.skipped, false, `Guest warm-up tap skipped entrance: ${JSON.stringify(blankStage)}`);
+  assert.equal(blankStage.pageOpacity, "0", `Guest Home flashed before entrance: ${JSON.stringify(blankStage)}`);
+  assert.equal(blankStage.tooltipOpacity, "0", `Guest RR tooltip leaked onto the blank stage: ${JSON.stringify(blankStage)}`);
+  await page.screenshot({ path: path.join(OUT, "natural-guest-mobile-blank.png") });
+
+  await page.waitForFunction(() => document.body.classList.contains("daily-entrance-motion-active"), null, { timeout: 4000 });
+  await page.waitForTimeout(520);
+  const visibleSequence = await page.evaluate(() => ({
+    controller: window.RankedCoachDailyEntrance?.getState?.() || null,
+    pageOpacity: getComputedStyle(document.getElementById("page-home")).opacity,
+    motionIds: document.getAnimations().map(animation => String(animation.id || "")).filter(id => id.startsWith("rankedcoach-daily-"))
+  }));
+  assert.equal(visibleSequence.controller?.activePage, "home", `Guest Home entrance did not start: ${JSON.stringify(visibleSequence)}`);
+  assert.notEqual(visibleSequence.pageOpacity, "0", `Guest Home stayed blank after motion started: ${JSON.stringify(visibleSequence)}`);
+  assert.ok(visibleSequence.motionIds.length > 0, `Guest Home created no visible animation: ${JSON.stringify(visibleSequence)}`);
+  await page.screenshot({ path: path.join(OUT, "natural-guest-mobile-home.png") });
+  await page.waitForFunction(() => {
+    const state = window.RankedCoachDailyEntrance?.getState?.();
+    return !state?.activePage && state?.daily?.seenPages?.includes("home");
+  }, null, { timeout: 12000 });
+  assert.deepEqual(issues, [], `Natural guest boot emitted browser issues: ${JSON.stringify(issues)}`);
+  await context.close();
+  return { gate, blankStage, visibleSequence };
+}
+
 async function runNaturalRestoredSession(browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   const page = await context.newPage();
@@ -121,56 +230,70 @@ async function runNaturalRestoredSession(browser) {
   await page.addInitScript(() => {
     localStorage.clear();
     localStorage.setItem("valtracker_entry_choice_v1", "account");
-    window.__dailyNaturalBoot = { firstActive: null };
-    document.addEventListener("DOMContentLoaded", () => {
-      const timer = window.setInterval(() => {
-        if (window.__dailyNaturalBoot.firstActive || !document.body?.classList.contains("daily-entrance-motion-active")) return;
-        const overlay = document.getElementById("loginInitOverlay");
-        const warmup = document.getElementById("dailyWarmupModal");
-        window.__dailyNaturalBoot.firstActive = {
-          at: performance.now(),
-          overlayAriaHidden: overlay?.getAttribute("aria-hidden") || "",
-          overlayClasses: overlay?.className || "",
-          overlayDisplay: overlay ? getComputedStyle(overlay).display : "missing",
-          warmupAriaHidden: warmup?.getAttribute("aria-hidden") || "",
-          warmupClasses: warmup?.className || "",
-          controller: window.RankedCoachDailyEntrance?.getState?.() || null
-        };
-        window.clearInterval(timer);
-      }, 4);
-    }, { once: true });
   });
 
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: "domcontentloaded" });
-  await page.waitForFunction(() => window.__dailyNaturalBoot?.firstActive, null, { timeout: 15000 });
-  const trace = await page.evaluate(() => ({
-    ...window.__dailyNaturalBoot.firstActive,
+  await page.waitForFunction(() => {
+    const warmup = document.getElementById("dailyWarmupModal");
+    const state = window.RankedCoachDailyEntrance?.getState?.();
+    return state?.prepared
+      && state.identity === "daily-motion-user"
+      && warmup?.classList.contains("active")
+      && warmup.getAttribute("aria-hidden") === "false";
+  }, null, { timeout: 15000 });
+  const gate = await page.evaluate(() => ({
+    controller: window.RankedCoachDailyEntrance?.getState?.() || null,
     reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    currentOverlayAriaHidden: document.getElementById("loginInitOverlay")?.getAttribute("aria-hidden") || "",
+    pageOpacity: getComputedStyle(document.getElementById("page-home")).opacity,
+    pagePointerEvents: getComputedStyle(document.getElementById("page-home")).pointerEvents,
+    warmupAriaHidden: document.getElementById("dailyWarmupModal")?.getAttribute("aria-hidden") || "",
+    warmupClasses: document.getElementById("dailyWarmupModal")?.className || "",
     motionIds: document.getAnimations().map(animation => String(animation.id || "")).filter(id => id.startsWith("rankedcoach-daily-"))
   }));
-  assert.equal(trace.reducedMotion, false, `The natural trigger audit cannot run with reduced motion enabled: ${JSON.stringify(trace)}`);
-  assert.equal(trace.controller?.identity, "daily-motion-user", `The restored account identity did not reach the controller: ${JSON.stringify(trace)}`);
-  assert.equal(trace.controller?.activePage, "home", `The Home sequence did not start naturally: ${JSON.stringify(trace)}`);
-  assert.equal(trace.overlayAriaHidden, "true", `Daily motion started behind the restoring-session overlay: ${JSON.stringify(trace)}`);
-  assert.doesNotMatch(trace.overlayClasses, /\bis-closing\b|\bactive\b/, `Daily motion started during the overlay transition: ${JSON.stringify(trace)}`);
-  assert.equal(trace.warmupAriaHidden, "true", `Daily motion started behind the warm-up modal: ${JSON.stringify(trace)}`);
-  assert.doesNotMatch(trace.warmupClasses, /\bis-opening\b|\bis-closing\b|\bactive\b/, `Daily motion started during the warm-up transition: ${JSON.stringify(trace)}`);
-  assert.ok(trace.motionIds.length > 0, `The natural Home sequence did not create a visible animation: ${JSON.stringify(trace)}`);
-  assert.deepEqual(issues, [], `Natural restored-session boot emitted browser issues: ${JSON.stringify(issues)}`);
-  await page.waitForTimeout(320);
-  const visibleSequence = await page.evaluate(() => ({
-    activePage: window.RankedCoachDailyEntrance?.getState?.().activePage || "",
-    warmupAriaHidden: document.getElementById("dailyWarmupModal")?.getAttribute("aria-hidden") || "",
-    warmupClasses: document.getElementById("dailyWarmupModal")?.className || ""
+  assert.equal(gate.reducedMotion, false, `The natural trigger audit cannot run with reduced motion enabled: ${JSON.stringify(gate)}`);
+  assert.equal(gate.controller?.ready, false, `Daily motion became ready before warm-up was resolved: ${JSON.stringify(gate)}`);
+  assert.equal(gate.controller?.activePage, "", `Daily motion started behind warm-up: ${JSON.stringify(gate)}`);
+  assert.equal(gate.pageOpacity, "0", `Home was visible behind warm-up instead of being staged: ${JSON.stringify(gate)}`);
+  assert.equal(gate.pagePointerEvents, "none", `The staged Home page remained interactive: ${JSON.stringify(gate)}`);
+  assert.equal(gate.motionIds.length, 0, `Motion ran behind warm-up: ${JSON.stringify(gate)}`);
+  await page.screenshot({ path: path.join(OUT, "natural-restored-session-warmup.png") });
+
+  await page.locator("#dailyWarmupSkip").click();
+  await page.waitForFunction(() => {
+    const warmup = document.getElementById("dailyWarmupModal");
+    return warmup?.getAttribute("aria-hidden") === "true"
+      && !warmup.classList.contains("active")
+      && !warmup.classList.contains("is-closing");
+  }, null, { timeout: 4000 });
+  const blankStage = await page.evaluate(() => ({
+    controller: window.RankedCoachDailyEntrance?.getState?.() || null,
+    pageOpacity: getComputedStyle(document.getElementById("page-home")).opacity,
+    tooltipOpacity: getComputedStyle(document.getElementById("chartTooltip")).opacity
   }));
-  assert.equal(visibleSequence.activePage, "home", `The natural Home sequence ended before its visual checkpoint: ${JSON.stringify(visibleSequence)}`);
-  assert.equal(visibleSequence.warmupAriaHidden, "true", `The warm-up modal covered the active Home sequence: ${JSON.stringify(visibleSequence)}`);
-  assert.doesNotMatch(visibleSequence.warmupClasses, /\bis-opening\b|\bis-closing\b|\bactive\b/, `The warm-up modal transitioned over the active Home sequence: ${JSON.stringify(visibleSequence)}`);
+  assert.equal(blankStage.controller?.daily?.skipped, false, `Warm-up dismissal skipped entrance motion: ${JSON.stringify(blankStage)}`);
+  assert.equal(blankStage.pageOpacity, "0", `Home flashed before its entrance sequence: ${JSON.stringify(blankStage)}`);
+  assert.equal(blankStage.tooltipOpacity, "0", `The RR tooltip leaked onto the blank stage: ${JSON.stringify(blankStage)}`);
+  await page.screenshot({ path: path.join(OUT, "natural-restored-session-blank.png") });
+
+  await page.waitForFunction(() => document.body.classList.contains("daily-entrance-motion-active"), null, { timeout: 4000 });
+  await page.waitForFunction(() => document.getAnimations().some(animation => String(animation.id || "").startsWith("rankedcoach-daily-")), null, { timeout: 2000 });
+  await page.waitForTimeout(420);
+  const visibleSequence = await page.evaluate(() => ({
+    controller: window.RankedCoachDailyEntrance?.getState?.() || null,
+    pageOpacity: getComputedStyle(document.getElementById("page-home")).opacity,
+    motionIds: document.getAnimations().map(animation => String(animation.id || "")).filter(id => id.startsWith("rankedcoach-daily-"))
+  }));
+  assert.equal(visibleSequence.controller?.activePage, "home", `The natural Home sequence did not start: ${JSON.stringify(visibleSequence)}`);
+  assert.notEqual(visibleSequence.pageOpacity, "0", `Home stayed hidden after motion began: ${JSON.stringify(visibleSequence)}`);
+  assert.ok(visibleSequence.motionIds.length > 0, `The natural Home sequence created no visible animation: ${JSON.stringify(visibleSequence)}`);
   await page.screenshot({ path: path.join(OUT, "natural-restored-session-home.png") });
-  await page.evaluate(() => window.RankedCoachDailyEntrance?.skipAll?.());
+  await page.waitForFunction(() => {
+    const state = window.RankedCoachDailyEntrance?.getState?.();
+    return !state?.activePage && state?.daily?.seenPages?.includes("home");
+  }, null, { timeout: 12000 });
+  assert.deepEqual(issues, [], `Natural restored-session boot emitted browser issues: ${JSON.stringify(issues)}`);
   await context.close();
-  return { ...trace, visibleSequence };
+  return { gate, blankStage, visibleSequence };
 }
 
 async function hideBlockingUi(page) {
@@ -261,7 +384,7 @@ async function runViewport(browser, viewport) {
   await page.addInitScript(() => {
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     Object.keys(localStorage)
-      .filter((key) => key.startsWith("rankedcoach_daily_entrance_v1:"))
+      .filter((key) => key.startsWith("rankedcoach_daily_entrance_v1:") || key.startsWith("rankedcoach_daily_entrance_v2:"))
       .forEach((key) => localStorage.removeItem(key));
   });
   await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: "networkidle" });
@@ -394,9 +517,21 @@ async function runViewport(browser, viewport) {
     assert.ok(statsRankProof.elapsed <= 4200, `Radiant rank count-up exceeded four seconds: ${JSON.stringify(statsRankProof)}`);
     assert.equal(statsRankProof.finalIconAlt, "Radiant", `The rank icon did not finish at Radiant: ${JSON.stringify(statsRankProof)}`);
   }
-  await page.evaluate(() => window.RankedCoachDailyEntrance.skipAll());
+  await page.waitForFunction(() => {
+    const state = window.RankedCoachDailyEntrance.getState();
+    return !state.activePage && state.daily?.seenPages?.includes("stats");
+  }, null, { timeout: 12000 });
+  const statsCompleted = await page.evaluate(() => ({
+    state: window.RankedCoachDailyEntrance.getState(),
+    pageOpacity: getComputedStyle(document.getElementById("page-stats")).opacity,
+    pagePointerEvents: getComputedStyle(document.getElementById("page-stats")).pointerEvents
+  }));
+  assert.equal(statsCompleted.pageOpacity, "1", `Stats stayed hidden after its entrance: ${JSON.stringify(statsCompleted)}`);
+  assert.notEqual(statsCompleted.pagePointerEvents, "none", `Stats stayed noninteractive after its entrance: ${JSON.stringify(statsCompleted)}`);
+  await page.screenshot({ path: path.join(OUT, `${viewport.width}-stats-complete.png`) });
 
   const pageStarts = {};
+  const pageCompletions = {};
   let librarySequenceProof = null;
   for (const pageId of ["logging", "insights", "library"]) {
     await page.evaluate((nextPageId) => {
@@ -424,6 +559,11 @@ async function runViewport(browser, viewport) {
     if (pageStarts[pageId].activePage !== pageId || pageStarts[pageId].animationCount < 1 || !pageStarts[pageId].pageVisible) {
       throw new Error(`${pageId} entrance did not start cleanly: ${JSON.stringify(pageStarts[pageId])}`);
     }
+    await page.screenshot({ path: path.join(OUT, `${viewport.width}-${pageId}-mid.png`) });
+    if (pageId === "logging" || pageId === "insights") {
+      await page.waitForTimeout(1050);
+      await page.screenshot({ path: path.join(OUT, `${viewport.width}-${pageId}-stagger.png`) });
+    }
     if (pageId === "library") {
       await page.waitForFunction(() => (window.__dailyMotionEvents || []).filter(event => event.kind === "library-topic-card").length >= 3, null, { timeout: 3500 });
       librarySequenceProof = await page.evaluate(() => {
@@ -440,7 +580,22 @@ async function runViewport(browser, viewport) {
       assertOrderedIndices(librarySequenceProof.cards, "Library topic cards");
       await page.screenshot({ path: path.join(OUT, `${viewport.width}-library-grid-stagger.png`) });
     }
-    await page.evaluate(() => window.RankedCoachDailyEntrance.skipAll());
+    await page.waitForFunction((completedPageId) => {
+      const state = window.RankedCoachDailyEntrance.getState();
+      return !state.activePage && state.daily?.seenPages?.includes(completedPageId);
+    }, pageId, { timeout: 12000 });
+    pageCompletions[pageId] = await page.evaluate((completedPageId) => ({
+      state: window.RankedCoachDailyEntrance.getState(),
+      pageOpacity: getComputedStyle(document.getElementById(`page-${completedPageId}`)).opacity,
+      pagePointerEvents: getComputedStyle(document.getElementById(`page-${completedPageId}`)).pointerEvents,
+      dailyAnimations: document.getAnimations()
+        .filter((animation) => String(animation.id || "").startsWith("rankedcoach-daily-"))
+        .length
+    }), pageId);
+    assert.equal(pageCompletions[pageId].pageOpacity, "1", `${pageId} stayed hidden after its entrance.`);
+    assert.notEqual(pageCompletions[pageId].pagePointerEvents, "none", `${pageId} stayed noninteractive after its entrance.`);
+    assert.equal(pageCompletions[pageId].dailyAnimations, 0, `${pageId} left entrance animations running after completion.`);
+    await page.screenshot({ path: path.join(OUT, `${viewport.width}-${pageId}-complete.png`) });
   }
 
   await page.evaluate(() => {
@@ -488,7 +643,9 @@ async function runViewport(browser, viewport) {
     skipPersisted: skipPersisted.daily?.skipped === true && !skipPersisted.activePage,
     statsStarted: statsMid.activePage === "stats",
     statsRankProof,
+    statsCompleted,
     pageStarts,
+    pageCompletions,
     librarySequenceProof,
     pendingSkip: pendingSkip.daily?.skipped === true && !pendingSkip.activePage,
     completed: completedState.controller.daily?.seenPages?.includes("home") === true,
@@ -505,11 +662,12 @@ async function run() {
   const browser = await chromium.launch();
   try {
     const naturalRestoredSession = await runNaturalRestoredSession(browser);
+    const naturalGuestSession = await runNaturalGuestSession(browser);
     const results = [];
     results.push(await runViewport(browser, { width: 390, height: 844 }));
     results.push(await runViewport(browser, { width: 1440, height: 900 }));
-    fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify({ naturalRestoredSession, results }, null, 2));
-    console.log(JSON.stringify({ naturalRestoredSession, results }, null, 2));
+    fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify({ naturalRestoredSession, naturalGuestSession, results }, null, 2));
+    console.log(JSON.stringify({ naturalRestoredSession, naturalGuestSession, results }, null, 2));
   } finally {
     await browser.close();
     server.close();

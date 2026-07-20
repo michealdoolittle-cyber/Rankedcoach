@@ -23410,6 +23410,22 @@ body.theme-static .app-root::after{
   animation:none;
 }
 
+/* Give the one-time entrance sequence the compositor budget while sections
+   arrive. Theme motion resumes as soon as the reveal completes or is skipped. */
+body.daily-entrance-motion-active .app-root::before,
+body.daily-entrance-motion-active .app-root::after,
+body.daily-entrance-motion-active.is-mobile-layout.theme-glint-sweep :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card)::before,
+body.daily-entrance-motion-active.is-mobile-layout.theme-shadow-drift :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card)::before,
+body.daily-entrance-motion-active.is-mobile-layout.theme-shadow-drift :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card)::after,
+body.daily-entrance-motion-active.is-mobile-layout.theme-glint-sweep :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn),
+body.daily-entrance-motion-active.is-mobile-layout.theme-shadow-drift :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn),
+body.daily-entrance-motion-active.is-mobile-layout.theme-glint-sweep :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn)::before,
+body.daily-entrance-motion-active.is-mobile-layout.theme-shadow-drift :is(#profileAvatarWrap,#mobileHeaderProfileBtn.mobile-bottom-avatar-btn)::before,
+body.daily-entrance-motion-active.is-mobile-layout :is(.profile-avatar-ring,.mobile-bottom-avatar-btn)::before,
+body.daily-entrance-motion-active.is-mobile-layout :is(.profile-avatar-ring,.mobile-bottom-avatar-btn)::after{
+  animation-play-state:paused !important;
+}
+
 body.is-mobile-layout.theme-glint-sweep :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card),
 body.is-mobile-layout.theme-shadow-drift :is(.card,.nav-rr-widget,.profile-panel,.agent-frame,.insight-card,.timeline-insight-card,.rr-match-stats,.logging-live-card,.stats-proof-card,.stats-role-progress-card,.compass-score-card){
   isolation:isolate;

@@ -9845,24 +9845,6 @@ function spawnFaultPulse(host, index, total, strength = 1) {
     }
   ];
 
-
-const test = document.createElement("div");
-Object.assign(test.style, {
-  position: "absolute",
-  inset: "40%",
-  width: "40px",
-  height: "40px",
-  background: "red",
-  zIndex: 9999
-});
-document.body.appendChild(test);
-
-let t = 0;
-setInterval(() => {
-  t += 0.05;
-  test.style.left = `${50 + Math.sin(t) * 10}%`;
-}, 16);
-
  pulses.forEach(p => {
   const pulse = document.createElement("div");
   pulse.className = "fx-fault-pulse";

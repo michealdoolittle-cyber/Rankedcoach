@@ -113,7 +113,9 @@ async function run() {
 
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
-    if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
+    await page.locator("#dailyWarmupModal.active").waitFor({ state: "visible", timeout: 10000 });
+    await page.click("#dailyWarmupSkip");
+    await page.locator("#dailyWarmupModal").waitFor({ state: "hidden" });
     await page.click('.nav-btn[data-page="logging"]');
     await page.locator("#page-logging.active").waitFor({ state: "visible" });
     await page.locator(".log-result-rr-placement").waitFor({ state: "visible" });

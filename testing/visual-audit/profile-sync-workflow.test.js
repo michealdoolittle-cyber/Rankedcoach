@@ -15,6 +15,10 @@ function startServer() {
   return new Promise(resolve => {
     const server = http.createServer((request, response) => {
       let url = decodeURIComponent((request.url || "/").split("?")[0]);
+      if (url === "/api/content/playlist") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({ patchLabel: "13.01", patchTag: "", newThisWeek: 0, items: [] }));
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(root, url);
       if (!file.startsWith(root)) {
@@ -91,10 +95,14 @@ async function run() {
   let matchRequests = 0;
   const matchStarts = [];
   const consoleErrors = [];
+  const failedResponses = [];
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
     page.on("pageerror", error => consoleErrors.push(error.message));
+    page.on("response", response => {
+      if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.url()}`);
+    });
     await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await page.route("**/api/henrik/health", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, configured: true }) }));
     await page.route("**/api/henrik/account", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { puuid, name: "Workflow", tag: "TEST" } }) }));
@@ -173,7 +181,7 @@ async function run() {
     assert.match(state.formAgent || "", /Sova/i);
     assert.equal(state.formMap, "Breeze");
     assert.equal(matchRequests, 11);
-    assert.deepEqual(consoleErrors, []);
+    assert.deepEqual(consoleErrors, [], JSON.stringify(failedResponses));
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click('.nav-btn[data-page="home"]');
     await page.waitForFunction(() => document.getElementById("totalGames")?.textContent?.trim() === "100");
