@@ -488,6 +488,127 @@
     return Promise.all(uniqueRenderable(elements).map((element) => countElement(element, run, options)));
   }
 
+  function parseSvgNumber(element, attribute, fallback = 0) {
+    const value = Number(element?.getAttribute?.(attribute));
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function parseSvgTextNumber(element) {
+    const value = Number(String(element?.textContent || "").trim());
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function setCompassNode(node, state = {}) {
+    if (!node) return;
+    node.setAttribute("cx", `${state.cx}`);
+    node.setAttribute("cy", `${state.cy}`);
+    node.setAttribute("r", `${state.r}`);
+  }
+
+  function buildCompassPoints(states = []) {
+    return states.map((state) => `${state.cx},${state.cy}`).join(" ");
+  }
+
+  function animateCompassSvgBuild(svg, run) {
+    if (run.cancelled || !isRenderable(svg)) return Promise.resolve();
+    releaseElement(svg, run);
+    const polygon = svg.querySelector("#compassPolygon");
+    const nodeEntries = [
+      { node: svg.querySelector("#coreNodeAim"), text: svg.querySelector(".percent-aim") },
+      { node: svg.querySelector("#coreNodeSense"), text: svg.querySelector(".percent-sense") },
+      { node: svg.querySelector("#coreNodeTeam"), text: svg.querySelector(".percent-team") },
+      { node: svg.querySelector("#coreNodeDiscipline"), text: svg.querySelector(".percent-discipline") }
+    ].filter((entry) => entry.node);
+    if (!polygon || !nodeEntries.length) return Promise.resolve();
+
+    const center = { cx: 100, cy: 100, r: 3 };
+    const finals = nodeEntries.map(({ node, text }) => ({
+      node,
+      text,
+      cx: parseSvgNumber(node, "cx", center.cx),
+      cy: parseSvgNumber(node, "cy", center.cy),
+      r: parseSvgNumber(node, "r", 5),
+      value: parseSvgTextNumber(text)
+    }));
+    const duration = 3000;
+    const axisDelay = 180;
+    const axisDuration = duration - (axisDelay * (finals.length - 1));
+    finals.forEach(({ node, text }) => {
+      setCompassNode(node, center);
+      if (text) text.textContent = "0";
+    });
+    polygon.setAttribute("points", buildCompassPoints(finals.map(() => center)));
+
+    return new Promise((resolve) => {
+      let frame = 0;
+      let settled = false;
+      const startedAt = performance.now();
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (frame) cancelAnimationFrame(frame);
+        finals.forEach(({ node, text, cx, cy, r, value }) => {
+          setCompassNode(node, { cx, cy, r });
+          if (text) text.textContent = `${value}`;
+        });
+        polygon.setAttribute("points", buildCompassPoints(finals));
+        run.finalizers.delete(finish);
+        resolve();
+      };
+      run.finalizers.add(finish);
+      const tick = (now) => {
+        if (run.cancelled) {
+          finish();
+          return;
+        }
+        const elapsed = now - startedAt;
+        const currentStates = finals.map((final, index) => {
+          const raw = Math.min(1, Math.max(0, (elapsed - (index * axisDelay)) / axisDuration));
+          const eased = 1 - Math.pow(1 - raw, 3);
+          const state = {
+            cx: center.cx + ((final.cx - center.cx) * eased),
+            cy: center.cy + ((final.cy - center.cy) * eased),
+            r: center.r + ((final.r - center.r) * eased)
+          };
+          setCompassNode(final.node, state);
+          if (final.text) final.text.textContent = `${Math.round(final.value * eased)}`;
+          return state;
+        });
+        polygon.setAttribute("points", buildCompassPoints(currentStates));
+        if (elapsed >= duration) {
+          finish();
+        } else {
+          frame = requestAnimationFrame(tick);
+        }
+      };
+      frame = requestAnimationFrame(tick);
+    }).then(async () => {
+      if (run.cancelled) return;
+      await Promise.all(finals.map(async ({ node }, index) => {
+        await pause(index * 35, run);
+        if (run.cancelled) return;
+        const animation = node.animate([
+          { transform: "scale(1)", transformOrigin: "center", opacity: 1 },
+          { transform: "scale(1.42)", transformOrigin: "center", opacity: 1 },
+          { transform: "scale(1)", transformOrigin: "center", opacity: 1 }
+        ], {
+          duration: 260,
+          easing: "cubic-bezier(.16,.86,.24,1)",
+          fill: "both"
+        });
+        animation.id = "rankedcoach-daily-compass-node-pop";
+        run.animations.add(animation);
+        await animation.finished.catch(() => undefined);
+        run.animations.delete(animation);
+        try {
+          animation.cancel();
+        } catch (_error) {
+          // The animation may already have been finalized by the skip controller.
+        }
+      }));
+    });
+  }
+
   async function countDynamicElements(root, selector, run, options = {}) {
     const counted = new Set();
     const counters = [];
@@ -566,9 +687,9 @@
     if (!panel || !isRenderable(panel)) return;
     const svg = panel.querySelector("#compassSvg");
     const cards = queryAll(panel, ".compass-score-card");
-    const scoreCounters = queryAll(panel, "#compassScoreAim, #compassScoreSense, #compassScoreTeam, #compassScoreDiscipline, #compassSvg .axis-percent");
+    const scoreCounters = queryAll(panel, "#compassScoreAim, #compassScoreSense, #compassScoreTeam, #compassScoreDiscipline");
     holdElements([svg, ...cards], run);
-    const countPromise = countElements(scoreCounters, run, { duration: 1050 });
+    const countPromise = countElements(scoreCounters, run, { duration: 3000 });
 
     const panelRect = panel.getBoundingClientRect();
     const centerX = panelRect.left + (panelRect.width / 2);
@@ -594,7 +715,7 @@
       run.animations.delete(animation);
       animation.cancel();
     });
-    const svgAnimation = svg ? playMotion(svg, "compass", run, { duration: 520 }) : Promise.resolve();
+    const svgAnimation = svg ? animateCompassSvgBuild(svg, run) : Promise.resolve();
     await Promise.all([svgAnimation, countPromise, ...cardAnimations]);
   }
 
@@ -795,29 +916,24 @@
       if (summary) await playMotion(summary, "drop", run, { duration: 430 });
     };
     const animateTrendPair = async () => {
-      await Promise.all([
-        trendCard ? playMotion(trendCard, "slide", run, { duration: 420 }) : Promise.resolve(),
-        patternCard ? playMotion(patternCard, "slide-reverse", run, { duration: 420 }) : Promise.resolve()
-      ]);
-      const trendReveal = playStagger(sortElementsByVisualPosition(trendItems), "slide", run, {
+      if (trendCard) await playMotion(trendCard, "slide", run, { duration: 420 });
+      await playStagger(sortElementsByVisualPosition(trendItems), "slide", run, {
         stagger: 58,
         duration: 320,
         hold: false
       });
-      const patternReveal = (async () => {
-        await playStagger(sortElementsByVisualPosition(patternItems), "slide-reverse", run, {
-          stagger: 58,
-          duration: 320,
-          hold: false
+      if (patternCard) await playMotion(patternCard, "slide-reverse", run, { duration: 420 });
+      await playStagger(sortElementsByVisualPosition(patternItems), "slide-reverse", run, {
+        stagger: 58,
+        duration: 320,
+        hold: false
+      });
+      if (patternCard) {
+        await playMotion(patternCard, "settle-pop", run, {
+          duration: 260,
+          easing: "cubic-bezier(.16,.86,.24,1)"
         });
-        if (patternCard) {
-          await playMotion(patternCard, "settle-pop", run, {
-            duration: 260,
-            easing: "cubic-bezier(.16,.86,.24,1)"
-          });
-        }
-      })();
-      await Promise.all([trendReveal, patternReveal]);
+      }
     };
 
     if (isMobileLayout()) {

@@ -3272,6 +3272,7 @@ body.gamesense-media-open{overflow:hidden !important;}
   object-position:center !important;
 }
 
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage .gamesense-topic-collage-wide,
 .gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img:last-child:nth-child(odd){
   grid-column:1 / -1 !important;
 }

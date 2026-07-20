@@ -71,6 +71,7 @@
     breeze: "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
     haven: "2bee0dc9-4ffe-519b-1cbd-7fbe763a6047",
     lotus: "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
+    pearl: "fd267378-4d1d-484f-ff52-77821ed10dc2",
     split: "d960549e-485c-e861-8d71-aa9d1aed12a2",
     sunset: "92584fbe-486a-b1b2-9faa-39b0f486b498"
   });
@@ -126,7 +127,9 @@
   function getTopicCollageImages(topic = "") {
     if (topic === "maps") {
       const mapImages = getMaps().map(map => map?.cardImage).filter(Boolean);
-      return mapImages.length ? mapImages : ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
+      const topRow = mapImages.length ? mapImages.slice(0, 3) : ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
+      const pearlSplash = getMapArtwork("Pearl");
+      return [...topRow, pearlSplash].filter(Boolean);
     }
     return getReference().weapons
       .flatMap(group => Array.isArray(group?.weapons) ? group.weapons : [])
@@ -256,7 +259,9 @@
       });
       return rolePicks.join("");
     }
-    return getTopicCollageImages(topic).map(src => getDeferredCollageImageMarkup(src)).join("");
+    return getTopicCollageImages(topic)
+      .map((src, index) => getDeferredCollageImageMarkup(src, topic === "maps" && index === 3 ? "gamesense-topic-collage-wide" : ""))
+      .join("");
   }
 
   function getCompAgentPickRate(map, agent = "") {
