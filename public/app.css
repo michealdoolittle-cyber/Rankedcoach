@@ -55913,3 +55913,104 @@ html body #editProfileModal #editProfileThemeGallery .theme-gallery-grid{
 #page-insights .insights-action-card .insight-priority-title{
   color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 72%,white 28%) !important;
 }
+
+/* 2026-07-20: targeted layout fixes from post-deploy visual pass. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card{
+  align-content:start !important;
+  align-items:stretch !important;
+  gap:4px !important;
+  padding:6px 8px 12px !important;
+  overflow:visible !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home #impactRolePill{
+  align-self:start !important;
+  justify-self:start !important;
+  min-height:34px !important;
+  padding:7px 10px !important;
+  margin:0 0 2px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-meter{
+  min-height:0 !important;
+  height:auto !important;
+  flex:1 1 auto !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-bar-outer{
+  min-height:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .impact-meter-caption{
+  margin:2px auto 0 !important;
+  padding-bottom:2px !important;
+  line-height:1 !important;
+  max-width:132px !important;
+  overflow:visible !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  gap:6px !important;
+  grid-template-rows:repeat(2,minmax(118px,1fr)) !important;
+  grid-auto-rows:minmax(118px,1fr) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  min-height:118px !important;
+  padding:5px 7px !important;
+  gap:1px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-main-text{
+  font-size:clamp(15px,1.04vw,18px) !important;
+  line-height:.94 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-sub-text{
+  font-size:10px !important;
+  line-height:1.06 !important;
+}
+
+#page-stats .stats-map-result-line{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+  align-items:center !important;
+  justify-items:stretch !important;
+  gap:0 !important;
+  width:100% !important;
+}
+
+#page-stats .stats-map-result-line .stats-sub-text{
+  justify-self:end !important;
+  text-align:right !important;
+  padding-right:8px !important;
+}
+
+#page-stats .stats-map-games{
+  justify-self:start !important;
+  text-align:left !important;
+  padding-left:8px !important;
+  min-width:0 !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #page-home .rr-card .impact-card{
+  align-content:start !important;
+  gap:5px !important;
+  padding:8px 8px 14px !important;
+  overflow:visible !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #page-home #impactRolePill{
+  align-self:start !important;
+  justify-self:start !important;
+  min-height:34px !important;
+  padding:7px 10px !important;
+  margin:0 0 2px !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #page-home .impact-meter-caption{
+  margin:2px auto 0 !important;
+  padding-bottom:4px !important;
+  line-height:1 !important;
+  overflow:visible !important;
+}

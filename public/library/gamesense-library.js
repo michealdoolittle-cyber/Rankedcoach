@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "all", playlistFilter: "Home" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -67,13 +67,39 @@
   const compRoleOrder = Object.freeze(["controller", "duelist", "initiator", "sentinel"]);
   const CLOSE_ROLE_SWAP_DELTA = 1.5;
   const mapUuids = Object.freeze({
+    abyss: "224b0a95-48b9-f703-1bd8-67aca101a61f",
     ascent: "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
+    bind: "2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba",
     breeze: "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
+    corrode: "1c18ab1f-420d-0d8b-71d0-77ad3c439115",
+    fracture: "b529448b-4d60-346e-e89e-00a4c527a405",
     haven: "2bee0dc9-4ffe-519b-1cbd-7fbe763a6047",
+    icebox: "e2ad5c54-4114-a870-9641-8ea21279579a",
     lotus: "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
     pearl: "fd267378-4d1d-484f-ff52-77821ed10dc2",
     split: "d960549e-485c-e861-8d71-aa9d1aed12a2",
+    summit: "756da597-416b-c0f2-f47b-afbdf28670bc",
     sunset: "92584fbe-486a-b1b2-9faa-39b0f486b498"
+  });
+  const canonicalMapNames = Object.freeze([
+    "Abyss",
+    "Ascent",
+    "Bind",
+    "Breeze",
+    "Corrode",
+    "Fracture",
+    "Haven",
+    "Icebox",
+    "Lotus",
+    "Pearl",
+    "Split",
+    "Summit",
+    "Sunset"
+  ]);
+  const canonicalMapSeason = Object.freeze({
+    abyss: false,
+    bind: false,
+    corrode: false
   });
 
   function escapeHtml(value = "") {
@@ -117,19 +143,37 @@
       : `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/silhouettes/${assetSlug(agent)}.png`;
   }
 
+  function getAuthoredMaps() {
+    return Array.isArray(globalThis.RankedCoachGamesenseMaps) ? globalThis.RankedCoachGamesenseMaps : [];
+  }
+
+  function getMapApiArtwork(mapName = "") {
+    const uuid = mapUuids[assetSlug(mapName)];
+    return uuid ? `https://media.valorant-api.com/maps/${uuid}/splash.png` : "";
+  }
+
   function getMapArtwork(mapName = "") {
     const slug = assetSlug(mapName);
-    const local = getMaps().find(map => map.id === slug)?.cardImage;
-    const uuid = mapUuids[slug];
-    return local || (uuid ? `https://media.valorant-api.com/maps/${uuid}/splash.png` : "");
+    const local = getAuthoredMaps().find(map => map.id === slug)?.cardImage;
+    return local || getMapApiArtwork(mapName);
+  }
+
+  function buildMapShell(label = "") {
+    const id = assetSlug(label);
+    return {
+      id,
+      label,
+      cardImage: getMapApiArtwork(label),
+      inCompetitivePool: canonicalMapSeason[id] !== false,
+      isOverviewShell: true,
+      metaComp: { patch: "Current" },
+      lineupLinks: []
+    };
   }
 
   function getTopicCollageImages(topic = "") {
     if (topic === "maps") {
-      const mapImages = getMaps().map(map => map?.cardImage).filter(Boolean);
-      const topRow = mapImages.length ? mapImages.slice(0, 3) : ["/assets/library/maps/bind-card.png", "/assets/library/maps/breeze-card.png", "/assets/library/maps/split-card.png"];
-      const pearlSplash = getMapArtwork("Pearl");
-      return [...topRow, pearlSplash].filter(Boolean);
+      return getMaps().map(map => map?.cardImage || getMapArtwork(map?.label)).filter(Boolean);
     }
     return getReference().weapons
       .flatMap(group => Array.isArray(group?.weapons) ? group.weapons : [])
@@ -260,7 +304,7 @@
       return rolePicks.join("");
     }
     return getTopicCollageImages(topic)
-      .map((src, index) => getDeferredCollageImageMarkup(src, topic === "maps" && index === 3 ? "gamesense-topic-collage-wide" : ""))
+      .map((src, index) => getDeferredCollageImageMarkup(src, topic === "maps" && index === 12 ? "gamesense-topic-collage-wide" : ""))
       .join("");
   }
 
@@ -323,7 +367,12 @@
   }
 
   function getMaps() {
-    return Array.isArray(globalThis.RankedCoachGamesenseMaps) ? globalThis.RankedCoachGamesenseMaps : [];
+    const authored = getAuthoredMaps();
+    const byId = new Map(authored.map(map => [map.id || assetSlug(map.label), map]));
+    return canonicalMapNames.map(label => {
+      const id = assetSlug(label);
+      return byId.get(id) || buildMapShell(label);
+    });
   }
 
   function getReference() {
@@ -401,7 +450,16 @@
   }
 
   function getPlaylistFilters() {
-    return ["All", "Home", "News", "Live/Streaming", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality"];
+    return ["All", "Home", "News", "Live/Streaming", "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality"];
+  }
+
+  function isPlaylistVod(item = {}) {
+    const platform = String(item.platform || "youtube").toLowerCase();
+    const sourceType = String(item.sourceType || "").toLowerCase();
+    return Boolean(item.isVod)
+      || sourceType === "twitch-archive"
+      || sourceType === "youtube-vod"
+      || (platform === "twitch" && /twitch\.tv\/videos\/\d+/i.test(String(item.url || "")));
   }
 
   function renderPlaylistHomeIcon() {
@@ -520,7 +578,12 @@
   }
 
   function renderPlaylistHome(items) {
-    const newVideos = items.filter(item => item.isNewIn24Hours && !item.isLive);
+    const newVideos = items.filter(item => (
+      item.isNewIn24Hours
+      && !item.isLive
+      && String(item.platform || "youtube").toLowerCase() !== "twitch"
+      && item.sourceType !== "twitch-archive"
+    ));
     const liveStreams = featuredPlaylist?.liveStreams || [];
     const liveAvailability = featuredPlaylist?.liveAvailability || {};
     const liveCopy = liveStreams.length
@@ -537,7 +600,13 @@
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
     const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
-    const visible = activeFilter === "All" ? items : activeFilter === "Home" ? [] : items.filter(item => item.topicType === activeFilter);
+    const visible = activeFilter === "All"
+      ? items
+      : activeFilter === "Home"
+        ? []
+        : activeFilter === "VOD's"
+          ? items.filter(isPlaylistVod)
+          : items.filter(item => item.topicType === activeFilter);
     return `
       <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
         <div><strong>Featured Playlist</strong><small>Trusted videos stay credited to their original creators.</small></div>
@@ -555,9 +624,16 @@
     let items = getTopicItems(topic);
     let controls = "";
     if (topic === "maps") {
-      const activeSeason = state.mapSeason === "out" ? "out" : "in";
-      items = items.filter(item => activeSeason === "in" ? item.inCompetitivePool !== false : item.inCompetitivePool === false);
+      const activeSeason = ["all", "in", "out"].includes(state.mapSeason) ? state.mapSeason : "all";
+      items = items.filter(item => (
+        activeSeason === "all"
+          ? true
+          : activeSeason === "in"
+            ? item.inCompetitivePool !== false
+            : item.inCompetitivePool === false
+      ));
       controls = `<div class="gamesense-gallery-switcher gamesense-map-season-switcher" role="tablist" aria-label="Map rotation">
+        <button type="button" data-gamesense-map-season="all" class="${activeSeason === "all" ? "active" : ""}" aria-selected="${activeSeason === "all"}"><i aria-hidden="true"></i><span>All Maps</span></button>
         <button type="button" data-gamesense-map-season="in" class="${activeSeason === "in" ? "active" : ""}" aria-selected="${activeSeason === "in"}"><i aria-hidden="true"></i><span>In-Season</span></button>
         <button type="button" data-gamesense-map-season="out" class="${activeSeason === "out" ? "active" : ""}" aria-selected="${activeSeason === "out"}"><i aria-hidden="true"></i><span>Off-Season</span></button>
       </div>`;
@@ -846,6 +922,17 @@
   }
 
   function renderMapDetail(map) {
+    if (map.isOverviewShell) {
+      return `
+        <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
+          <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
+          <div class="gamesense-map-detail-actions"><span class="gamesense-patch">Reference map art</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
+        </div>
+        <section class="gamesense-note-block gamesense-map-shell-note">
+          <h3>${escapeHtml(map.label)} dossier pending</h3>
+          <p>This map is now listed in the Library index and overview collage. Full coaching callouts, comps, weapon suggestions, and lineup references are not authored yet, so RankedCoach is not filling that gap with guessed strategy.</p>
+        </section>`;
+    }
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
@@ -1877,7 +1964,7 @@
     state.compAgent = "";
     state.compRole = "Controller";
     state.agentRole = "all";
-    state.mapSeason = "in";
+    state.mapSeason = "all";
     state.playlistFilter = "Home";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
     const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
@@ -1899,7 +1986,7 @@
     state.compAgent = "";
     state.compRole = "Controller";
     state.agentRole = "all";
-    state.mapSeason = "in";
+    state.mapSeason = "all";
     state.playlistFilter = "Home";
     render({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
@@ -2025,6 +2112,7 @@
       state.mapZoom = 1;
       state.compAgent = "";
       state.compRole = "Controller";
+      if (state.topic === "maps") state.mapSeason = "all";
       render({ direction: "forward" });
       return;
     }
@@ -2051,7 +2139,9 @@
     }
     const mapSeason = event.target.closest?.("[data-gamesense-map-season]");
     if (mapSeason) {
-      state.mapSeason = mapSeason.dataset.gamesenseMapSeason === "out" ? "out" : "in";
+      state.mapSeason = ["all", "in", "out"].includes(mapSeason.dataset.gamesenseMapSeason)
+        ? mapSeason.dataset.gamesenseMapSeason
+        : "all";
       render({ direction: "replace" });
       return;
     }

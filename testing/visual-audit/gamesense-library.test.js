@@ -37,14 +37,16 @@ function startServer() {
             id: `video${String(index + 1).padStart(6, "0")}`,
             title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked", "Yoru buffs in Patch 13.01", "Ranked coaching VOD"][index],
             channel: channels[index],
-            sourceType: "creator-guide",
+            platform: index === 5 ? "twitch" : "youtube",
+            upstreamId: index === 5 ? "1234567890" : "",
+            sourceType: index === 2 ? "youtube-vod" : index === 5 ? "twitch-archive" : "creator-guide",
             topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "Live/Streaming"][index],
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/${image}`,
-            url: `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
+            url: index === 5 ? "https://www.twitch.tv/videos/1234567890" : `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
             isNewThisWeek: true,
             isNewIn24Hours: true,
             isShort: index === 3 || index === 4,
-            isVod: index === 5
+            isVod: index === 2 || index === 5
           }))
         }));
       }
@@ -263,6 +265,23 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-number").count(), 0);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 4);
+    assert.equal(await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').count(), 13);
+    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')].every(image => image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0));
+    const mapTopicCollageState = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage').evaluate(collage => {
+      const images = [...collage.querySelectorAll("img")];
+      const wide = images[12];
+      const wideStyle = getComputedStyle(wide);
+      return {
+        columns: getComputedStyle(collage).gridTemplateColumns.split(" ").length,
+        rows: getComputedStyle(collage).gridTemplateRows.split(" ").length,
+        wideColumn: wideStyle.gridColumn,
+        wideRow: wideStyle.gridRow
+      };
+    });
+    assert.equal(mapTopicCollageState.columns, 3, JSON.stringify(mapTopicCollageState));
+    assert.equal(mapTopicCollageState.rows, 5, JSON.stringify(mapTopicCollageState));
+    assert.equal(mapTopicCollageState.wideColumn, "1 / -1", JSON.stringify(mapTopicCollageState));
+    assert.match(mapTopicCollageState.wideRow, /^5(?: \/ auto)?$/, JSON.stringify(mapTopicCollageState));
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/"))), true);
@@ -326,8 +345,9 @@ async function run() {
     await desktop.click('[data-gamesense-topic="playlist"]');
     await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").first().waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
-    assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 6);
-    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 11);
+    assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 5);
+    assert.doesNotMatch(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 12);
     assert.equal(await desktop.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     const playlistFilterThemeState = await desktop.locator(".gamesense-playlist-filters").evaluate(filters => {
@@ -338,7 +358,7 @@ async function run() {
     assert.notEqual(playlistFilterThemeState.activeBackground, playlistFilterThemeState.inactiveBackground, JSON.stringify(playlistFilterThemeState));
     assert.notEqual(playlistFilterThemeState.activeBorder, playlistFilterThemeState.inactiveBorder, JSON.stringify(playlistFilterThemeState));
     assert.match(await desktop.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
-    assert.equal(await desktop.locator('.gamesense-video-card a[href*="youtube.com/watch"]').count(), 6);
+    assert.equal(await desktop.locator('.gamesense-video-card a[href*="youtube.com/watch"]').count(), 5);
     await desktop.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-desktop.png") });
     await desktop.locator(".gamesense-live-card [data-gamesense-play-twitch]").click();
@@ -368,6 +388,10 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 1);
     await desktop.locator('[data-gamesense-playlist-filter="News"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Yoru buffs in Patch 13\.01/i);
+    await desktop.locator("[data-gamesense-playlist-filter=\"VOD's\"]").click();
+    assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 2);
+    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Breeze map guide/i);
+    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="Live/Streaming"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="All"]').click();
@@ -376,20 +400,24 @@ async function run() {
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-topic="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator('[data-gamesense-map-season="in"]').getAttribute("aria-selected"), "true");
-    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 7);
+    assert.equal(await desktop.locator('[data-gamesense-map-season="all"]').getAttribute("aria-selected"), "true");
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 13);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage !== "none")), true);
     const mapLabels = await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts();
-    assert.deepEqual([...mapLabels].sort(), ["ASCENT", "BREEZE", "FRACTURE", "HAVEN", "LOTUS", "PEARL", "SPLIT"]);
+    assert.deepEqual([...mapLabels].sort(), ["ABYSS", "ASCENT", "BIND", "BREEZE", "CORRODE", "FRACTURE", "HAVEN", "ICEBOX", "LOTUS", "PEARL", "SPLIT", "SUMMIT", "SUNSET"]);
     assert.equal(await desktop.locator('.gamesense-map-card-copy strong').evaluateAll(labels => labels.every(label => getComputedStyle(label).color === "rgb(246, 196, 83)")), true);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 7);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 7);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 14);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 7);
+    await desktop.click('[data-gamesense-map-season="in"]');
+    await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
+    assert.equal(await desktop.locator('[data-gamesense-map-season="in"]').getAttribute("aria-selected"), "true");
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 20);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 10);
     assert.equal(await desktop.locator('.gamesense-map-side-mark.is-attack').first().evaluate(icon => getComputedStyle(icon).color), "rgb(255, 70, 85)");
-    assert.equal(await desktop.locator('.gamesense-defense-shield-icon').count(), 7);
-    assert.equal(await desktop.locator('.gamesense-defense-shield-half').count(), 7);
-    assert.equal(await desktop.locator('.gamesense-defense-shield-split').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-icon').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-half').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-split').count(), 10);
     assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season').count(), 0);
     await desktop.click('[data-gamesense-map-season="out"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
@@ -1329,7 +1357,8 @@ async function run() {
     await mobile.click('[data-gamesense-topic="playlist"]');
     await mobile.locator(".gamesense-playlist-home").waitFor({ state: "visible" });
     await mobile.waitForTimeout(700);
-    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 11);
+    assert.doesNotMatch(await mobile.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 12);
     assert.equal(await mobile.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
@@ -1386,7 +1415,7 @@ async function run() {
     await mobile.click('[data-gamesense-topic="maps"]');
     await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
     await mobile.locator('.gamesense-map-entry-card').first().waitFor({ state: "visible" });
-    assert.equal(await mobile.locator('.gamesense-map-entry-card').count(), 7);
+    assert.equal(await mobile.locator('.gamesense-map-entry-card').count(), 13);
     const mobileMapGallery = await mobile.locator(".gamesense-map-entry-card").evaluateAll(cards => cards.map(card => {
       const cardRect = card.getBoundingClientRect();
       const title = card.querySelector(".gamesense-map-card-copy strong").getBoundingClientRect();

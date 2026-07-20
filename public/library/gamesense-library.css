@@ -3276,3 +3276,16 @@ body.gamesense-media-open{overflow:hidden !important;}
 .gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img:last-child:nth-child(odd){
   grid-column:1 / -1 !important;
 }
+
+/* 2026-07-20: show the full 13-map overview collage as 3x4 plus a wide final row. */
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage{
+  display:grid !important;
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(5,minmax(0,1fr)) !important;
+  grid-auto-rows:minmax(0,1fr) !important;
+}
+
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage .gamesense-topic-collage-wide{
+  grid-column:1 / -1 !important;
+  grid-row:5 !important;
+}

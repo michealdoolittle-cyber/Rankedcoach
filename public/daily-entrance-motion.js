@@ -879,6 +879,43 @@
     markSectionSeen(sectionKey);
   }
 
+  async function animateStatsSectionsRowByRow(root, sectionCards, run) {
+    const entries = sectionCards.map(({ view }) => {
+      const sectionKey = `stats:${view}`;
+      if (ensureCurrentDay().seenSections.includes(sectionKey)) return null;
+      const config = getStatsSectionConfig(view);
+      const card = config ? root.querySelector(config.card) : null;
+      if (!card || !isRenderable(card)) return null;
+      return {
+        view,
+        sectionKey,
+        card,
+        children: firstMatchingElements(card, config.children)
+      };
+    }).filter(Boolean);
+    if (!entries.length) return;
+
+    await Promise.all(entries.map(({ card }) => playMotion(card, "drop", run, { duration: 420 })));
+
+    const grouped = entries.map((entry) => ({
+      ...entry,
+      rows: groupElementsByVisualRow(entry.children)
+    }));
+    const rowCount = Math.max(0, ...grouped.map((entry) => entry.rows.length));
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+      if (run.cancelled) break;
+      const rowElements = grouped.flatMap((entry) => entry.rows[rowIndex]?.elements || []);
+      if (rowElements.length) {
+        await Promise.all(rowElements.map((element) => playMotion(element, "drop", run, {
+          duration: 300
+        })));
+      }
+      if (rowIndex < rowCount - 1) await pause(54, run);
+    }
+
+    entries.forEach(({ sectionKey }) => markSectionSeen(sectionKey));
+  }
+
   async function sequenceStats(run, root) {
     const summary = root.querySelector(".stats-summary-card");
     const leftCounters = queryAll(root, "#statKD, #statWinrate, #statADR, #statHS, #statFirstBloods, #statDamagePerRound");
@@ -958,7 +995,7 @@
       await Promise.all([summaryCounts, rankPromise]);
       await pause(170, run);
       await animateTrendPair();
-      await Promise.all(sectionCards.map(({ view }) => animateStatsSection(root, view, run)));
+      await animateStatsSectionsRowByRow(root, sectionCards, run);
     }
 
     await Promise.all([summaryCounts, rankPromise]);
