@@ -207,8 +207,8 @@ async function runSession(browser, config) {
   assert.notEqual(skip.homePointerEvents, "none");
 
   await page.screenshot({ path: path.join(OUT, `${config.label}-skip-complete.png`) });
-  assert.deepEqual(issues, [], `${config.label} console issues: ${JSON.stringify(issues)}`);
   assert.deepEqual(failedResponses, [], `${config.label} HTTP failures: ${JSON.stringify(failedResponses)}`);
+  assert.deepEqual(issues, [], `${config.label} console issues: ${JSON.stringify(issues)}`);
   await context.close();
   return { config, gate, totalGamesBefore, pages, skip, issues, failedResponses };
 }

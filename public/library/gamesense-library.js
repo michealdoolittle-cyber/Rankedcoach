@@ -134,6 +134,12 @@
       .filter(Boolean);
   }
 
+  function getSafeMediaThumbnail(src = "") {
+    const normalized = String(src || "").trim();
+    if (!normalized || /vod-secure\.twitch\.tv\/_404\/404_processing_/i.test(normalized)) return "";
+    return normalized;
+  }
+
   function getDeferredCollageImageMarkup(src = "", className = "") {
     if (!src) return "";
     return `<img${className ? ` class="${escapeHtml(className)}"` : ""} data-gamesense-collage-src="${escapeHtml(src)}" alt="" decoding="async" fetchpriority="low">`;
@@ -225,7 +231,12 @@
 
   function getTopicCollageMarkup(topic = "") {
     if (topic === "playlist") {
-      return (featuredPlaylist?.items || []).slice(0, 4).map(video => getDeferredCollageImageMarkup(video.thumbnail)).join("");
+      return (featuredPlaylist?.items || [])
+        .map(video => getSafeMediaThumbnail(video.thumbnail))
+        .filter(Boolean)
+        .slice(0, 4)
+        .map(src => getDeferredCollageImageMarkup(src))
+        .join("");
     }
     if (topic === "agents") {
       const agents = getReference().agents || [];
@@ -390,6 +401,12 @@
     return `<svg class="gamesense-playlist-home-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.2 12 3l9 8.2v9.3h-6.2v-6h-5.6v6H3v-9.3Z"></path></svg>`;
   }
 
+  function renderMediaThumbnail(src = "") {
+    const safeSource = getSafeMediaThumbnail(src);
+    if (safeSource) return `<img src="${escapeHtml(safeSource)}" alt="" loading="lazy">`;
+    return `<span class="gamesense-video-thumb-fallback" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 13h44v38H10z"></path><path d="m27 23 16 9-16 9z"></path></svg></span>`;
+  }
+
   function renderPlaylistVideoCard(video) {
     const isYouTube = String(video.platform || "youtube").toLowerCase() === "youtube";
     const twitchVideoId = String(video.upstreamId || "").trim() || String(video.url || "").match(/twitch\.tv\/videos\/(\d+)/i)?.[1] || "";
@@ -400,7 +417,7 @@
         ? `data-gamesense-play-twitch-video="${escapeHtml(twitchVideoId)}"`
       : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
     return `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}">
-      <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}"><img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i></button>
+      <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}">${renderMediaThumbnail(video.thumbnail)}<i aria-hidden="true"></i></button>
       <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${video.topicType ? ` | ${escapeHtml(video.topicType)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch on YouTube" : "Watch on Twitch"}</a></div>
     </article>`;
   }
@@ -490,7 +507,7 @@
         : `data-gamesense-open-live="${escapeHtml(stream.url)}"`;
     const viewers = Number(stream.viewerCount);
     return `<article class="gamesense-video-card gamesense-live-card" data-live-platform="${escapeHtml(platform)}">
-      <button class="gamesense-video-thumb" type="button" ${action} aria-label="Play ${escapeHtml(stream.channel)} live stream"><img src="${escapeHtml(stream.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i><b>Live</b></button>
+      <button class="gamesense-video-thumb" type="button" ${action} aria-label="Play ${escapeHtml(stream.channel)} live stream">${renderMediaThumbnail(stream.thumbnail)}<i aria-hidden="true"></i><b>Live</b></button>
       <div><span>${escapeHtml(platform || "live")}</span><h3>${escapeHtml(stream.title)}</h3><p>${escapeHtml(stream.channel)}${Number.isFinite(viewers) ? ` | ${viewers.toLocaleString()} watching` : ""}</p><a href="${escapeHtml(stream.url)}" target="_blank" rel="noopener noreferrer">Open on ${platform === "twitch" ? "Twitch" : "YouTube"}</a></div>
     </article>`;
   }

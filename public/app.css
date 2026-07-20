@@ -7650,9 +7650,63 @@ body.compat-no-mask .agent-frame[data-fx-engine="sandbox"] .agent-frame-fx.front
 .page:not(.active):not(.exiting),
 .page:not(.active):not(.exiting)::before,
 .page:not(.active):not(.exiting)::after,
-.page:not(.active):not(.exiting) *,
-.page:not(.active):not(.exiting) *::before,
-.page:not(.active):not(.exiting) *::after{
+.page:not(.active):not(.exiting) :is(
+  .card,
+  .agent-frame,
+  .logging-live-card,
+  .insight-card,
+  .trend-signal-card,
+  .timeline-pill,
+  .placeholder-silhouette,
+  .placeholder-distort,
+  .compass-score-card,
+  .rr-match-stats,
+  .rr-total-rolling,
+  .impact-tier-mark,
+  .rr-selected,
+  .graph-btn,
+  .insight-filter-btn,
+  .trend-content,
+  .stats-tab-btn
+),
+.page:not(.active):not(.exiting) :is(
+  .card,
+  .agent-frame,
+  .logging-live-card,
+  .insight-card,
+  .trend-signal-card,
+  .timeline-pill,
+  .placeholder-silhouette,
+  .placeholder-distort,
+  .compass-score-card,
+  .rr-match-stats,
+  .rr-total-rolling,
+  .impact-tier-mark,
+  .rr-selected,
+  .graph-btn,
+  .insight-filter-btn,
+  .trend-content,
+  .stats-tab-btn
+)::before,
+.page:not(.active):not(.exiting) :is(
+  .card,
+  .agent-frame,
+  .logging-live-card,
+  .insight-card,
+  .trend-signal-card,
+  .timeline-pill,
+  .placeholder-silhouette,
+  .placeholder-distort,
+  .compass-score-card,
+  .rr-match-stats,
+  .rr-total-rolling,
+  .impact-tier-mark,
+  .rr-selected,
+  .graph-btn,
+  .insight-filter-btn,
+  .trend-content,
+  .stats-tab-btn
+)::after{
   animation-play-state:paused !important;
 }
 
@@ -23363,6 +23417,13 @@ body.theme-confetti-pop .app-root::before{
 }
 body.theme-confetti-pop .app-root::after{animation:themeConfettiGlow calc(var(--theme-motion-duration) * .3) ease-in-out infinite alternate;}
 
+body.theme-aurora-rift .app-root::before,
+body.theme-aurora-rift .app-root::after{
+  position:fixed;
+  inset:-3%;
+  will-change:opacity,transform;
+  transform:translate3d(0,0,0);
+}
 body.theme-aurora-rift .app-root::before{background-position:center;background-repeat:no-repeat;background-size:cover;opacity:.9;animation:themeAuroraRift calc(var(--theme-motion-duration) * .78) ease-in-out infinite alternate;}
 body.theme-aurora-rift .app-root::after{animation:themeAuroraVeil calc(var(--theme-motion-duration) * .46) ease-in-out infinite alternate-reverse;}
 body.theme-neon-rain .app-root::before{
@@ -23630,8 +23691,8 @@ body.is-mobile-layout.theme-shadow-drift .profile-avatar-ring::after{
 @keyframes themeBeatGlow{0%,100%{opacity:.34;transform:scale(1);}50%{opacity:.86;transform:scale(1.05);}}
 @keyframes themeConfettiPop{0%,100%{opacity:.78;filter:brightness(.96);}50%{opacity:.98;filter:brightness(1.16);}}
 @keyframes themeConfettiGlow{from{opacity:.32;transform:scale(1.01);}to{opacity:.82;transform:scale(1.08);}}
-@keyframes themeAuroraRift{0%{filter:hue-rotate(0deg) brightness(.92);opacity:.72;}100%{filter:hue-rotate(24deg) brightness(1.16);opacity:.96;}}
-@keyframes themeAuroraVeil{from{opacity:.3;filter:brightness(.9);}to{opacity:.72;filter:brightness(1.18);}}
+@keyframes themeAuroraRift{0%{opacity:.72;transform:scale(1.01);}100%{opacity:.96;transform:scale(1.035);}}
+@keyframes themeAuroraVeil{from{opacity:.3;transform:scale(1);}to{opacity:.72;transform:scale(1.025);}}
 @keyframes themeNeonRain{
   0%,100%{opacity:.76;filter:brightness(.96) saturate(1.04);}
   42%{opacity:.92;filter:brightness(1.16) saturate(1.13);}
@@ -54309,9 +54370,54 @@ body.access-reduced-motion .premium-moment-overlay{
 }
 
 @media (max-width:767px){
-  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) *,
-  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) *::before,
-  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) *::after{
+  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) :is(
+    .card,
+    .agent-frame,
+    .logging-live-card,
+    .insight-card,
+    .trend-signal-card,
+    .timeline-pill,
+    .placeholder-silhouette,
+    .placeholder-distort,
+    .compass-score-card,
+    .rr-match-stats,
+    .graph-btn,
+    .insight-filter-btn,
+    .trend-content,
+    .stats-tab-btn
+  ),
+  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) :is(
+    .card,
+    .agent-frame,
+    .logging-live-card,
+    .insight-card,
+    .trend-signal-card,
+    .timeline-pill,
+    .placeholder-silhouette,
+    .placeholder-distort,
+    .compass-score-card,
+    .rr-match-stats,
+    .graph-btn,
+    .insight-filter-btn,
+    .trend-content,
+    .stats-tab-btn
+  )::before,
+  html.is-mobile-layout body.is-mobile-layout .page.is-mobile-page-ready:not(.is-current-page):not(.is-mobile-swipe-preview) :is(
+    .card,
+    .agent-frame,
+    .logging-live-card,
+    .insight-card,
+    .trend-signal-card,
+    .timeline-pill,
+    .placeholder-silhouette,
+    .placeholder-distort,
+    .compass-score-card,
+    .rr-match-stats,
+    .graph-btn,
+    .insight-filter-btn,
+    .trend-content,
+    .stats-tab-btn
+  )::after{
     animation-play-state:paused !important;
   }
 }

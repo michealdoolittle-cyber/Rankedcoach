@@ -69,10 +69,12 @@ function supabaseStub() {
 }
 
 function makeMatch(index) {
+  const localNoon = new Date();
+  localNoon.setHours(12, 0, 0, 0);
   return {
     metadata: {
       match_id: `profile-sync-${index}`,
-      started_at: new Date(Date.now() - index * 60000).toISOString(),
+      started_at: new Date(localNoon.getTime() - index * 60000).toISOString(),
       season: { id: "season-2026-a4", short: "e26a4" },
       map: { name: index === 0 ? "Breeze" : "Ascent" }
     },
