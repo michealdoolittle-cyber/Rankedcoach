@@ -17136,6 +17136,88 @@ height:100%;
   background:rgba(255,255,255,0.06) !important;
 }
 
+@media (min-width:821px){
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card{
+    --impact-bar-left:clamp(62px,34%,76px);
+    --impact-bar-right:clamp(10px,7%,18px);
+    --impact-meter-height:clamp(132px,calc(var(--app-vh) * 16),192px);
+    display:grid;
+    grid-template-columns:var(--impact-bar-left) minmax(70px,1fr);
+    grid-template-rows:auto var(--impact-meter-height) auto;
+    align-items:stretch;
+    gap:6px 8px;
+    padding:8px 10px 8px;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card #impactRolePill{
+    grid-column:2;
+    justify-self:center;
+    align-self:start;
+    width:min(100%,150px);
+    min-width:0;
+    max-width:100%;
+    min-height:32px;
+    padding:6px 10px;
+    font-size:clamp(10px,calc(var(--app-vw) * .72),13px);
+    line-height:1.05;
+    white-space:normal;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-bar-outer{
+    grid-column:1 / -1;
+    width:100%;
+    height:var(--impact-meter-height);
+    min-height:0;
+    margin:0;
+    padding:0;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-meter{
+    position:absolute;
+    inset:0;
+    width:auto;
+    height:auto;
+    min-height:0;
+    padding:0;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-scale{
+    left:0;
+    top:4px;
+    bottom:4px;
+    width:calc(var(--impact-bar-left) - 8px);
+    align-items:flex-start;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-scale span{
+    font-size:clamp(13px,calc(var(--app-vw) * .9),17px);
+    line-height:1;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-bar-outer::after,
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card #impactBarFill{
+    left:var(--impact-bar-left);
+    right:var(--impact-bar-right);
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card #impactScoreLabel{
+    left:var(--impact-bar-left);
+    right:var(--impact-bar-right);
+    width:auto;
+  }
+
+  html:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-meter-caption{
+    grid-column:2;
+    justify-self:center;
+    align-self:start;
+    width:min(100%,150px);
+    margin:0;
+    text-align:center;
+    font-size:clamp(8px,calc(var(--app-vw) * .5),10px);
+    line-height:1;
+  }
+}
+
 @keyframes impactTierPulse{
   0%, 100%{
     opacity:.88;
