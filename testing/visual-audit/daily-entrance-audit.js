@@ -296,6 +296,52 @@ async function runNaturalRestoredSession(browser) {
   return { gate, blankStage, visibleSequence };
 }
 
+async function runForceReplayReducedMotionSession(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  const issues = [];
+  page.on("pageerror", (error) => issues.push(`[pageerror] ${error.message}`));
+  page.on("console", (message) => {
+    if (["error", "warning"].includes(message.type())) issues.push(`[${message.type()}] ${message.text()}`);
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem("valtracker_entry_choice_v1", "guest");
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("rankedcoach_daily_entrance_v1:") || key.startsWith("rankedcoach_daily_entrance_v2:"))
+      .forEach((key) => localStorage.removeItem(key));
+  });
+  await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: "networkidle" });
+  await hideBlockingUi(page);
+  await page.waitForFunction(() => Boolean(window.RankedCoachDailyEntrance?.getState?.()), null, { timeout: 10000 });
+  const result = await page.evaluate(() => {
+    const controller = window.RankedCoachDailyEntrance;
+    controller.setForceReplay(true);
+    controller.setSessionReady({ userId: "guest" });
+    controller.resetToday();
+    controller.activatePage("home");
+    return {
+      reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      forceReplay: controller.getState().forceReplay,
+      state: controller.getState(),
+      bodyActive: document.body.classList.contains("daily-entrance-motion-active"),
+      animationCount: document.getAnimations().filter((animation) => String(animation.id || "").startsWith("rankedcoach-daily-")).length
+    };
+  });
+  await page.waitForTimeout(500);
+  const afterDelay = await page.evaluate(() => ({
+    state: window.RankedCoachDailyEntrance.getState(),
+    bodyActive: document.body.classList.contains("daily-entrance-motion-active"),
+    animationCount: document.getAnimations().filter((animation) => String(animation.id || "").startsWith("rankedcoach-daily-")).length
+  }));
+  await context.close();
+  assert.equal(result.reducedMotion, true, `Reduced-motion emulation did not apply: ${JSON.stringify(result)}`);
+  assert.equal(result.forceReplay, true, `Force replay did not enable under reduced motion: ${JSON.stringify(result)}`);
+  assert.equal(afterDelay.bodyActive, false, `Force replay overrode reduced motion: ${JSON.stringify({ result, afterDelay })}`);
+  assert.equal(afterDelay.animationCount, 0, `Reduced motion still left entrance animations running: ${JSON.stringify(afterDelay)}`);
+  assert.deepEqual(issues, [], `Reduced-motion force-replay boot emitted browser issues: ${JSON.stringify(issues)}`);
+  return { result, afterDelay };
+}
+
 async function hideBlockingUi(page) {
   await page.evaluate(() => {
     const dismissBlockingUi = () => {
@@ -635,6 +681,67 @@ async function runViewport(browser, viewport) {
   const replayBlocked = await page.evaluate(() => !window.RankedCoachDailyEntrance.getState().activePage);
   if (!replayBlocked) throw new Error("A completed page replayed again on the same day.");
 
+  const forceReplay = await page.evaluate(async () => {
+    const controller = window.RankedCoachDailyEntrance;
+    const beforeSeenPages = [...(controller.getState().daily?.seenPages || [])];
+    const enabledReturn = controller.setForceReplay(true);
+    controller.activatePage("home");
+    return {
+      beforeSeenPages,
+      enabledReturn,
+      forceReplay: controller.getState().forceReplay,
+      persisted: localStorage.getItem("rankedcoach_daily_entrance_force_replay") === "1"
+    };
+  });
+  assert.equal(forceReplay.enabledReturn, true, "setForceReplay(true) should return true");
+  assert.equal(forceReplay.forceReplay, true, "force replay did not update controller state");
+  assert.equal(forceReplay.persisted, true, "force replay did not persist to localStorage");
+  await page.waitForFunction(() => window.RankedCoachDailyEntrance.getState().activePage === "home", null, { timeout: 4000 });
+  await page.waitForFunction(() => {
+    const state = window.RankedCoachDailyEntrance.getState();
+    return !state.activePage && state.forceReplay === true;
+  }, null, { timeout: 10000 });
+  const forceReplayCompleted = await page.evaluate((beforeSeenPages) => {
+    const state = window.RankedCoachDailyEntrance.getState();
+    return {
+      forceReplay: state.forceReplay,
+      seenPagesUnchanged: JSON.stringify(state.daily?.seenPages || []) === JSON.stringify(beforeSeenPages),
+      daily: state.daily
+    };
+  }, forceReplay.beforeSeenPages);
+  assert.equal(forceReplayCompleted.forceReplay, true, "force replay turned off after replay");
+  assert.equal(forceReplayCompleted.seenPagesUnchanged, true, `force replay wrote seenPages: ${JSON.stringify(forceReplayCompleted.daily)}`);
+
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => Boolean(window.RankedCoachDailyEntrance?.getState?.().ready), null, { timeout: 10000 });
+  const persistedForceReplay = await page.evaluate(() => window.RankedCoachDailyEntrance.getState().forceReplay);
+  assert.equal(persistedForceReplay, true, "force replay did not survive reload");
+  await page.waitForFunction(() => window.RankedCoachDailyEntrance.getState().activePage === "home", null, { timeout: 5000 });
+  await page.waitForFunction(() => !window.RankedCoachDailyEntrance.getState().activePage, null, { timeout: 10000 });
+  const disabledForceReplay = await page.evaluate(() => {
+    const controller = window.RankedCoachDailyEntrance;
+    const disabledReturn = controller.setForceReplay(false);
+    controller.resetToday();
+    controller.activatePage("home");
+    return {
+      disabledReturn,
+      forceReplay: controller.getState().forceReplay,
+      persisted: localStorage.getItem("rankedcoach_daily_entrance_force_replay") === "1"
+    };
+  });
+  assert.equal(disabledForceReplay.disabledReturn, false, "setForceReplay(false) should return false");
+  assert.equal(disabledForceReplay.forceReplay, false, "force replay did not update state when disabled");
+  assert.equal(disabledForceReplay.persisted, false, "force replay localStorage flag was not removed");
+  await page.waitForFunction(() => window.RankedCoachDailyEntrance.getState().activePage === "home", null, { timeout: 4000 });
+  await page.waitForFunction(() => {
+    const state = window.RankedCoachDailyEntrance.getState();
+    return !state.activePage && state.daily?.seenPages?.includes("home");
+  }, null, { timeout: 10000 });
+  await page.evaluate(() => window.RankedCoachDailyEntrance.activatePage("home"));
+  await page.waitForTimeout(500);
+  const replayBlockedAfterDisable = await page.evaluate(() => !window.RankedCoachDailyEntrance.getState().activePage);
+  if (!replayBlockedAfterDisable) throw new Error("A completed page replayed after force replay was disabled.");
+
   const result = {
     viewport,
     midState,
@@ -650,6 +757,9 @@ async function runViewport(browser, viewport) {
     pendingSkip: pendingSkip.daily?.skipped === true && !pendingSkip.activePage,
     completed: completedState.controller.daily?.seenPages?.includes("home") === true,
     replayBlocked,
+    forceReplay: forceReplayCompleted.forceReplay === true,
+    forceReplayPersisted: persistedForceReplay === true,
+    forceReplayDisabled: replayBlockedAfterDisable,
     issues
   };
   await context.close();
@@ -663,11 +773,12 @@ async function run() {
   try {
     const naturalRestoredSession = await runNaturalRestoredSession(browser);
     const naturalGuestSession = await runNaturalGuestSession(browser);
+    const forceReplayReducedMotionSession = await runForceReplayReducedMotionSession(browser);
     const results = [];
     results.push(await runViewport(browser, { width: 390, height: 844 }));
     results.push(await runViewport(browser, { width: 1440, height: 900 }));
-    fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify({ naturalRestoredSession, naturalGuestSession, results }, null, 2));
-    console.log(JSON.stringify({ naturalRestoredSession, naturalGuestSession, results }, null, 2));
+    fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify({ naturalRestoredSession, naturalGuestSession, forceReplayReducedMotionSession, results }, null, 2));
+    console.log(JSON.stringify({ naturalRestoredSession, naturalGuestSession, forceReplayReducedMotionSession, results }, null, 2));
   } finally {
     await browser.close();
     server.close();

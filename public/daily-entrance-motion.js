@@ -4,6 +4,7 @@
   // v2 deliberately replays the corrected entrance once for users whose v1
   // state may have been marked seen while the launch flow was still hidden.
   const STORAGE_PREFIX = "rankedcoach_daily_entrance_v2";
+  const FORCE_REPLAY_KEY = "rankedcoach_daily_entrance_force_replay";
   const PAGE_IDS = new Set(["home", "logging", "stats", "insights", "library"]);
   const RANK_LABELS = [
     "Iron 1", "Iron 2", "Iron 3",
@@ -28,8 +29,26 @@
     scheduleTimer: 0,
     generation: 0,
     rankIconsWarmed: false,
+    forceReplay: readForceReplayState(),
     pendingPages: new Map()
   };
+
+  function readForceReplayState() {
+    try {
+      return localStorage.getItem(FORCE_REPLAY_KEY) === "1";
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function persistForceReplayState(enabled = false) {
+    try {
+      if (enabled) localStorage.setItem(FORCE_REPLAY_KEY, "1");
+      else localStorage.removeItem(FORCE_REPLAY_KEY);
+    } catch (_error) {
+      // Debug persistence should never block the production animation flow.
+    }
+  }
 
   function getLocalDateKey(date = new Date()) {
     const year = date.getFullYear();
@@ -834,6 +853,7 @@
   };
 
   function markRunSeen(run) {
+    if (runtime.forceReplay) return;
     const daily = ensureCurrentDay();
     if (run.sectionKey) {
       if (!daily.seenSections.includes(run.sectionKey)) daily.seenSections.push(run.sectionKey);
@@ -894,16 +914,14 @@
     const daily = ensureCurrentDay();
     return runtime.ready
       && PAGE_IDS.has(pageId)
-      && !daily.skipped
-      && !daily.seenPages.includes(pageId)
+      && (runtime.forceReplay || (!daily.skipped && !daily.seenPages.includes(pageId)))
       && !prefersReducedMotion();
   }
 
   function canPreparePage(pageId) {
     const daily = ensureCurrentDay();
     return PAGE_IDS.has(pageId)
-      && !daily.skipped
-      && !daily.seenPages.includes(pageId)
+      && (runtime.forceReplay || (!daily.skipped && !daily.seenPages.includes(pageId)))
       && !prefersReducedMotion();
   }
 
@@ -995,10 +1013,11 @@
 
   function scheduleSection(pageId, sectionKey, sequence) {
     const daily = ensureCurrentDay();
-    if (!runtime.ready || daily.skipped || daily.seenSections.includes(sectionKey) || prefersReducedMotion()) return;
+    if (!runtime.ready || (!runtime.forceReplay && (daily.skipped || daily.seenSections.includes(sectionKey))) || prefersReducedMotion()) return;
     if (runtime.activeRun) return;
     window.setTimeout(() => {
-      if (runtime.activeRun || ensureCurrentDay().skipped || ensureCurrentDay().seenSections.includes(sectionKey)) return;
+      const currentDaily = ensureCurrentDay();
+      if (runtime.activeRun || (!runtime.forceReplay && (currentDaily.skipped || currentDaily.seenSections.includes(sectionKey)))) return;
       void executeRun(createRun({ pageId, sectionKey, sequence }));
     }, 70);
   }
@@ -1059,6 +1078,19 @@
     return { ...runtime.daily };
   }
 
+  function setForceReplay(enabled = false) {
+    runtime.forceReplay = Boolean(enabled);
+    persistForceReplayState(runtime.forceReplay);
+    if (runtime.forceReplay && runtime.ready) {
+      if (runtime.scheduleTimer) clearTimeout(runtime.scheduleTimer);
+      runtime.scheduleTimer = 0;
+      runtime.generation += 1;
+      if (runtime.activeRun) finishRun(runtime.activeRun, { markSeen: false });
+      schedulePage(runtime.queuedPage || "home");
+    }
+    return runtime.forceReplay;
+  }
+
   document.addEventListener("pointerdown", (event) => {
     if (!runtime.ready || !event.isTrusted || (!runtime.activeRun && !runtime.scheduleTimer && !runtime.pendingPages.size)) return;
     skipAll();
@@ -1088,6 +1120,7 @@
     setSessionReady,
     skipAll,
     resetToday,
+    setForceReplay,
     getState: () => ({
       prepared: runtime.prepared,
       ready: runtime.ready,
@@ -1095,6 +1128,7 @@
       queuedPage: runtime.queuedPage,
       activePage: runtime.activeRun?.pageId || "",
       pendingPages: runtime.pendingPages.size,
+      forceReplay: runtime.forceReplay,
       daily: runtime.daily ? { ...runtime.daily } : null
     })
   });
