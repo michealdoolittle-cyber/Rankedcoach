@@ -283,6 +283,13 @@
         { opacity: 1, transform: "translate3d(0,0,0) scale(1)" }
       ];
     }
+    if (type === "settle-pop") {
+      return [
+        { opacity: 1, transform: "translate3d(0,0,0) scale(.985)" },
+        { opacity: 1, transform: "translate3d(0,0,0) scale(1.018)" },
+        { opacity: 1, transform: "translate3d(0,0,0) scale(1)" }
+      ];
+    }
     if (type === "compass") {
       return [
         { opacity: 0, transform: "scale(.18) rotate(-9deg)", transformOrigin: "center" },
@@ -332,12 +339,16 @@
     }));
   }
 
-  function groupElementsByVisualRow(elements = []) {
-    const sorted = uniqueRenderable(elements).sort((left, right) => {
+  function sortElementsByVisualPosition(elements = []) {
+    return uniqueRenderable(elements).sort((left, right) => {
       const a = left.getBoundingClientRect();
       const b = right.getBoundingClientRect();
       return Math.abs(a.top - b.top) > 10 ? a.top - b.top : a.left - b.left;
     });
+  }
+
+  function groupElementsByVisualRow(elements = []) {
+    const sorted = sortElementsByVisualPosition(elements);
     const rows = [];
     sorted.forEach((element) => {
       const top = element.getBoundingClientRect().top;
@@ -349,6 +360,28 @@
       }
     });
     return rows;
+  }
+
+  function groupElementsByVisualColumn(elements = []) {
+    const sorted = uniqueRenderable(elements).sort((left, right) => {
+      const a = left.getBoundingClientRect();
+      const b = right.getBoundingClientRect();
+      return Math.abs(a.left - b.left) > 12 ? a.left - b.left : a.top - b.top;
+    });
+    const columns = [];
+    sorted.forEach((element) => {
+      const left = element.getBoundingClientRect().left;
+      const column = columns.find((entry) => Math.abs(entry.left - left) <= 18);
+      if (column) {
+        column.elements.push(element);
+      } else {
+        columns.push({ left, elements: [element] });
+      }
+    });
+    return columns.map((column) => ({
+      ...column,
+      elements: column.elements.sort((left, right) => left.getBoundingClientRect().top - right.getBoundingClientRect().top)
+    }));
   }
 
   function sortMotionTasksByPosition(tasks = []) {
@@ -370,6 +403,18 @@
       await pause(index * rowGap, run);
       if (run.cancelled) return;
       await Promise.all(row.elements.map((element) => playMotion(element, options.type || "drop", run, options)));
+    }));
+  }
+
+  async function playColumns(elements, run, options = {}) {
+    const columns = groupElementsByVisualColumn(elements);
+    const all = columns.flatMap((column) => column.elements);
+    holdElements(all, run);
+    const columnGap = options.columnGap ?? 72;
+    await Promise.all(columns.map(async (column, index) => {
+      await pause(index * columnGap, run);
+      if (run.cancelled) return;
+      await Promise.all(column.elements.map((element) => playMotion(element, options.type || "drop", run, options)));
     }));
   }
 
@@ -521,7 +566,9 @@
     if (!panel || !isRenderable(panel)) return;
     const svg = panel.querySelector("#compassSvg");
     const cards = queryAll(panel, ".compass-score-card");
+    const scoreCounters = queryAll(panel, "#compassScoreAim, #compassScoreSense, #compassScoreTeam, #compassScoreDiscipline, #compassSvg .axis-percent");
     holdElements([svg, ...cards], run);
+    const countPromise = countElements(scoreCounters, run, { duration: 1050 });
 
     const panelRect = panel.getBoundingClientRect();
     const centerX = panelRect.left + (panelRect.width / 2);
@@ -548,7 +595,7 @@
       animation.cancel();
     });
     const svgAnimation = svg ? playMotion(svg, "compass", run, { duration: 520 }) : Promise.resolve();
-    await Promise.all([svgAnimation, ...cardAnimations]);
+    await Promise.all([svgAnimation, countPromise, ...cardAnimations]);
   }
 
   function firstMatchingElements(root, selectors = []) {
@@ -574,6 +621,8 @@
     const rrCard = root.querySelector(".rr-card");
     const chartCard = root.querySelector(".rr-chart-card");
     const chartTooltip = document.getElementById("chartTooltip");
+    const chartButtons = queryAll(root, ".rr-chart-card .graph-btn");
+    const rrMatchStatParts = queryAll(root, "#rrMatchStats > *");
     const weeklyPills = queryAll(root, "#weeklyFocusSummary > *");
     const improvementPills = queryAll(root, "#timelineGrid > *");
     const compassPanel = root.querySelector(".compass-panel");
@@ -584,17 +633,17 @@
     holdElements(mobile
       ? [loadoutCard, rrCard, improvement, compassPanel, weekly, chartCard, chartTooltip]
       : [weekly, improvement, middleRow, chartCard, chartTooltip], run);
-    holdElements([...weeklyPills, ...improvementPills], run);
+    holdElements([...weeklyPills, ...improvementPills, ...chartButtons, ...rrMatchStatParts], run);
     holdElements(compassParts, run);
     releasePendingPage(root);
 
     const animateWeekly = async () => {
       if (weekly) await playMotion(weekly, "drop", run, { duration: 420 });
-      await playStagger(weeklyPills, "drop", run, { stagger: 72, duration: 320, hold: false });
+      await playStagger(weeklyPills, "slide", run, { stagger: 72, duration: 330, hold: false });
     };
     const animateImprovement = async () => {
       if (improvement) await playMotion(improvement, "drop", run, { duration: 420 });
-      await playStagger(improvementPills, "drop", run, { stagger: 72, duration: 320, hold: false });
+      await playStagger(improvementPills, "slide", run, { stagger: 72, duration: 330, hold: false });
     };
     const animateMiddle = async () => {
       if (middleRow) await playMotion(middleRow, "drop", run, { duration: 440 });
@@ -608,6 +657,11 @@
       const chartCounts = countElements(queryAll(root, "#rrKills, #rrDeaths, #rrAssists, #rrACS"), run, { duration: 850 });
       releaseElement(chartTooltip, run);
       if (chartCard) await playMotion(chartCard, "drop", run, { duration: 440 });
+      await playStagger(sortElementsByVisualPosition([...chartButtons, ...rrMatchStatParts]), "drop", run, {
+        stagger: 52,
+        duration: 300,
+        hold: false
+      });
       await chartCounts;
     };
 
@@ -696,7 +750,11 @@
     const children = firstMatchingElements(card, config.children);
     holdElements(children, run);
     await playMotion(card, "drop", run, { duration: 420 });
-    await playRows(children, run, { duration: 300, rowGap: 54, type: "drop" });
+    if (!isMobileLayout() && view !== "weapons") {
+      await playColumns(children, run, { duration: 315, columnGap: 66, type: "drop" });
+    } else {
+      await playRows(children, run, { duration: 300, rowGap: 54, type: "drop" });
+    }
     markSectionSeen(sectionKey);
   }
 
@@ -741,10 +799,25 @@
         trendCard ? playMotion(trendCard, "slide", run, { duration: 420 }) : Promise.resolve(),
         patternCard ? playMotion(patternCard, "slide-reverse", run, { duration: 420 }) : Promise.resolve()
       ]);
-      await Promise.all([
-        playStagger(trendItems, "slide", run, { stagger: 58, duration: 320, hold: false }),
-        playStagger(patternItems, "slide-reverse", run, { stagger: 58, duration: 320, hold: false })
-      ]);
+      const trendReveal = playStagger(sortElementsByVisualPosition(trendItems), "slide", run, {
+        stagger: 58,
+        duration: 320,
+        hold: false
+      });
+      const patternReveal = (async () => {
+        await playStagger(sortElementsByVisualPosition(patternItems), "slide-reverse", run, {
+          stagger: 58,
+          duration: 320,
+          hold: false
+        });
+        if (patternCard) {
+          await playMotion(patternCard, "settle-pop", run, {
+            duration: 260,
+            easing: "cubic-bezier(.16,.86,.24,1)"
+          });
+        }
+      })();
+      await Promise.all([trendReveal, patternReveal]);
     };
 
     if (isMobileLayout()) {
@@ -762,16 +835,14 @@
       for (const task of tasks) {
         if (run.cancelled) break;
         await task.play();
+        if (task.element === summary) await Promise.all([summaryCounts, rankPromise]);
       }
     } else {
       await animateSummary();
-      await pause(290, run);
+      await Promise.all([summaryCounts, rankPromise]);
+      await pause(170, run);
       await animateTrendPair();
-      for (const { view } of sectionCards) {
-        if (run.cancelled) break;
-        await animateStatsSection(root, view, run);
-        await pause(62, run);
-      }
+      await Promise.all(sectionCards.map(({ view }) => animateStatsSection(root, view, run)));
     }
 
     await Promise.all([summaryCounts, rankPromise]);
@@ -794,7 +865,7 @@
         element: focusCard,
         play: async () => {
           await playMotion(focusCard, "drop", run, { duration: 430 });
-          await playStagger(focusDetails, "pop", run, { stagger: 80, duration: 330, hold: false });
+          await playStagger(focusDetails, "drop", run, { stagger: 80, duration: 330, hold: false });
         }
       },
       {
@@ -808,8 +879,16 @@
         element: trendsCard,
         play: async () => {
           await playMotion(trendsCard, "drop", run, { duration: 410 });
-          await playRows(trendRows, run, { duration: 300, rowGap: 50, type: "pop" });
-          await playRows(signalCards, run, { duration: 320, rowGap: 54, type: "drop" });
+          await playStagger(sortElementsByVisualPosition(trendRows), "slide", run, {
+            stagger: 66,
+            duration: 320,
+            hold: false
+          });
+          await playStagger(sortElementsByVisualPosition(signalCards), "drop", run, {
+            stagger: 58,
+            duration: 320,
+            hold: false
+          });
         }
       }
     ];

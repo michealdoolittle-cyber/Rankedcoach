@@ -142,7 +142,8 @@
 
   function getDeferredCollageImageMarkup(src = "", className = "") {
     if (!src) return "";
-    return `<img${className ? ` class="${escapeHtml(className)}"` : ""} data-gamesense-collage-src="${escapeHtml(src)}" alt="" decoding="async" fetchpriority="low">`;
+    const classes = [className, "is-collage-loaded"].filter(Boolean).join(" ");
+    return `<img${classes ? ` class="${escapeHtml(classes)}"` : ""} src="${escapeHtml(src)}" alt="" loading="eager" decoding="async" fetchpriority="high">`;
   }
 
   function waitForCollageIdle(token) {
@@ -249,7 +250,7 @@
         const agent = agents.find(item => assetSlug(item?.role) === role) || agents.find(item => item?.id === fallback) || { id: fallback, label: fallback, portrait: `/assets/library/agents/${fallback}/portrait.png` };
         return `
           <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
-            <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="lazy">
+            <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="eager" decoding="async" fetchpriority="high">
             ${getDeferredCollageImageMarkup(agent.portrait || getAgentFallbackIcon(agent.label || fallback), "gamesense-topic-agent-art")}
           </span>`;
       });
@@ -365,6 +366,7 @@
       </span>`;
     return `
       <button class="gamesense-entry-card gamesense-map-entry-card${isOutOfSeason ? " is-out-of-season" : ""}" type="button" data-gamesense-item="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)}${isOutOfSeason ? ", out of season" : ""}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(item.cardImage)}')">
+        ${item.cardImage ? `<img class="gamesense-map-card-preload" src="${escapeHtml(item.cardImage)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}">` : ""}
         <span class="gamesense-map-card-shade"></span>
         <span class="gamesense-map-card-frame" aria-hidden="true"></span>
         ${activeSeasonMarks}
@@ -379,7 +381,7 @@
     return `
       <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
-        <img src="${escapeHtml(item.portrait)}" alt="" loading="lazy">
+        <img src="${escapeHtml(item.portrait)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}">
         <span class="gamesense-entry-copy"><strong class="${nameClass.trim()}">${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)}${escapeHtml(mapSummary)}</small><span>Inspect abilities</span></span>
       </button>`;
   }
@@ -388,7 +390,7 @@
     return `
       <button class="gamesense-entry-card gamesense-weapon-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
         <strong class="gamesense-weapon-entry-title">${escapeHtml(item.label)}</strong>
-        <span class="gamesense-weapon-card-art">${(item.weapons || []).slice(0, 3).map(weapon => `<img src="${escapeHtml(weapon.image)}" alt="" loading="lazy">`).join("")}</span>
+        <span class="gamesense-weapon-card-art">${(item.weapons || []).slice(0, 3).map(weapon => `<img src="${escapeHtml(weapon.image)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}">`).join("")}</span>
         <span class="gamesense-entry-copy"><small>${escapeHtml(item.examples)} | ${escapeHtml(item.range)}</small><span>Inspect weapons</span></span>
       </button>`;
   }

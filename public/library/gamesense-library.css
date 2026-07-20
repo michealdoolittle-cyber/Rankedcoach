@@ -3247,3 +3247,31 @@ body.gamesense-media-open{overflow:hidden !important;}
 @media (prefers-reduced-motion:reduce){
   .gamesense-topic-collage img.is-collage-loaded{transition:none;}
 }
+
+.gamesense-map-card-preload{
+  position:absolute !important;
+  inset:0 !important;
+  z-index:0 !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+}
+
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage{
+  overflow:hidden !important;
+}
+
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img{
+  display:block !important;
+  width:100% !important;
+  min-width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
+}
+
+.gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img:last-child:nth-child(odd){
+  grid-column:1 / -1 !important;
+}
