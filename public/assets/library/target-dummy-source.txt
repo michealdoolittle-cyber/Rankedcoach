@@ -1,4 +1,4 @@
-Asset: Human body silhouette.svg
-Source: https://commons.wikimedia.org/wiki/File:Human_body_silhouette.svg
-License: Public domain
-Retrieved: 2026-07-18
+Asset: target-dummy.svg
+Source: Custom RankedCoach SVG based on user-provided visual reference.
+License: Project-owned app UI asset.
+Updated: 2026-07-20
