@@ -20,6 +20,9 @@ function installMotionRecorder(context, entryMode) {
       [".weekly-focus-card", "home-weekly"],
       [".improvement-card", "home-improvement"],
       [".home-middle-row", "home-middle"],
+      [".loadout-card", "home-loadout"],
+      [".rr-card", "home-scoreboard"],
+      [".compass-panel", "home-compass"],
       [".rr-chart-card", "home-chart"],
       [".logging-card", "logging-form"],
       [".logging-feed-card", "logging-feed"],
@@ -54,8 +57,8 @@ function installMotionRecorder(context, entryMode) {
   }, { mode: entryMode });
 }
 
-function getExpectedMinimum(pageId) {
-  return ({ home: 4, logging: 1, stats: 3, insights: 3, library: 3 })[pageId] || 1;
+function getExpectedMinimum(pageId, mobile = false) {
+  return ({ home: mobile ? 6 : 4, logging: 1, stats: 3, insights: 3, library: 3 })[pageId] || 1;
 }
 
 function assertMobileDescending(events, pageId) {
@@ -121,7 +124,7 @@ async function completePageEntrance(page, pageId, label, mobile) {
   assert.equal(proof.opacity, "1", `${pageId} stayed hidden after entrance.`);
   assert.notEqual(proof.pointerEvents, "none", `${pageId} stayed noninteractive after entrance.`);
   assert.ok(
-    proof.events.length >= getExpectedMinimum(pageId),
+    proof.events.length >= getExpectedMinimum(pageId, mobile),
     `${pageId} did not animate enough parent sections: ${JSON.stringify(proof.events)}`
   );
   if (mobile) assertMobileDescending(proof.events, pageId);

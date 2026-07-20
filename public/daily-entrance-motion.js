@@ -551,6 +551,8 @@
     const weekly = root.querySelector(".weekly-focus-card");
     const improvement = root.querySelector(".improvement-card");
     const middleRow = root.querySelector(".home-middle-row");
+    const loadoutCard = root.querySelector(".loadout-card");
+    const rrCard = root.querySelector(".rr-card");
     const chartCard = root.querySelector(".rr-chart-card");
     const chartTooltip = document.getElementById("chartTooltip");
     const weeklyPills = queryAll(root, "#weeklyFocusSummary > *");
@@ -559,7 +561,10 @@
     const compassParts = compassPanel
       ? [compassPanel.querySelector("#compassSvg"), ...queryAll(compassPanel, ".compass-score-card")]
       : [];
-    holdElements([weekly, improvement, middleRow, chartCard, chartTooltip], run);
+    const mobile = isMobileLayout();
+    holdElements(mobile
+      ? [loadoutCard, rrCard, improvement, compassPanel, weekly, chartCard, chartTooltip]
+      : [weekly, improvement, middleRow, chartCard, chartTooltip], run);
     holdElements([...weeklyPills, ...improvementPills], run);
     holdElements(compassParts, run);
     releasePendingPage(root);
@@ -576,6 +581,10 @@
       if (middleRow) await playMotion(middleRow, "drop", run, { duration: 440 });
       await animateCompass(root, run);
     };
+    const animateMobileCompass = async () => {
+      if (compassPanel) await playMotion(compassPanel, "drop", run, { duration: 420 });
+      await animateCompass(root, run);
+    };
     const animateChart = async () => {
       const chartCounts = countElements(queryAll(root, "#rrKills, #rrDeaths, #rrAssists, #rrACS"), run, { duration: 850 });
       releaseElement(chartTooltip, run);
@@ -583,11 +592,13 @@
       await chartCounts;
     };
 
-    if (isMobileLayout()) {
+    if (mobile) {
       const tasks = sortMotionTasksByPosition([
-        { element: weekly, play: animateWeekly },
+        { element: loadoutCard, play: () => playMotion(loadoutCard, "drop", run, { duration: 420 }) },
+        { element: rrCard, play: () => playMotion(rrCard, "drop", run, { duration: 420 }) },
         { element: improvement, play: animateImprovement },
-        { element: middleRow, play: animateMiddle },
+        { element: compassPanel, play: animateMobileCompass },
+        { element: weekly, play: animateWeekly },
         { element: chartCard, play: animateChart }
       ]);
       for (const task of tasks) {
