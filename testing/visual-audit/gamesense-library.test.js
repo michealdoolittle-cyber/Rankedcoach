@@ -282,9 +282,9 @@ async function run() {
     assert.equal(mapTopicCollageState.rows, 5, JSON.stringify(mapTopicCollageState));
     assert.equal(mapTopicCollageState.wideColumn, "1 / -1", JSON.stringify(mapTopicCollageState));
     assert.match(mapTopicCollageState.wideRow, /^5(?: \/ auto)?$/, JSON.stringify(mapTopicCollageState));
-    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 18);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
-    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/"))), true);
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/") || image.src.includes("media.valorant-api.com/weapons/"))), true);
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] img[src*="weapons-dossier-v2"]').count(), 0);
     const weaponTopicArt = await desktop.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();
@@ -918,9 +918,9 @@ async function run() {
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
     await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
-    assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 6);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 7);
     assert.equal(await desktop.locator('.gamesense-entry-grid-weapons .gamesense-entry-index').count(), 0);
-    assert.ok(await desktop.locator('.gamesense-weapon-entry-card img').count() >= 15);
+    assert.ok(await desktop.locator('.gamesense-weapon-entry-card img').count() >= 17);
     assert.match(await desktop.locator('[data-gamesense-item="precision"]').innerText(), /Light Rifles/i);
     const centeredWeaponArt = await desktop.locator('[data-gamesense-item="precision"],[data-gamesense-item="snipers"]').evaluateAll(cards => cards.map(card => {
       const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
@@ -1237,6 +1237,21 @@ async function run() {
     await desktop.locator(".gamesense-weapon-history").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-history-desktop.png") });
     assert.ok(await desktop.locator(".gamesense-damage-target-row").count() >= 2);
     assert.equal(await desktop.locator('.gamesense-damage-target-row img.gamesense-target-dummy[src^="assets/library/target-dummy.svg?"]').count(), await desktop.locator(".gamesense-damage-target-row").count());
+    const desktopDamageLineState = await desktop.locator(".gamesense-damage-target").first().evaluate(target => {
+      const image = target.querySelector(".gamesense-target-dummy").getBoundingClientRect();
+      return ["head", "body", "legs"].map(part => {
+        const line = target.querySelector(`.gamesense-damage-line.is-${part}`).getBoundingClientRect();
+        const label = target.querySelector(`span.is-${part}`).getBoundingClientRect();
+        const lineY = line.top + line.height / 2;
+        return {
+          part,
+          lineStartsInsideDummy: line.left >= image.left - 1 && line.left <= image.right + 1 && lineY >= image.top - 1 && lineY <= image.bottom + 1,
+          lineTouchesLabel: line.right >= label.left - 1 && line.right <= label.right + 1,
+          verticalDelta: Math.abs(lineY - (label.top + label.height / 2))
+        };
+      });
+    });
+    assert.ok(desktopDamageLineState.every(item => item.lineStartsInsideDummy && item.lineTouchesLabel && item.verticalDelta <= 2), JSON.stringify(desktopDamageLineState));
     await desktop.locator(".gamesense-damage-table").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-damage-targets-desktop.png") });
     await desktop.click('[data-gamesense-back="weapons"]');
     await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item="sidearms"]').click();
@@ -1341,7 +1356,7 @@ async function run() {
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 4);
     await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     await mobile.locator('[data-gamesense-topic="agents"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-agents-topic-mobile.png") });
-    assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 16);
+    assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 18);
     const mobileWeaponTopicArt = await mobile.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();
       const action = card.querySelector(".gamesense-topic-action").getBoundingClientRect();
@@ -1727,10 +1742,10 @@ async function run() {
         dots: table.querySelectorAll("[data-gamesense-damage-range]").length,
         visiblePanels: [...table.querySelectorAll("[data-gamesense-damage-range-panel]")].filter(panel => getComputedStyle(panel).display !== "none").length,
         imageHeightShare: image.height / target.height,
-        hasLeaderLines: getComputedStyle(table.querySelector(".is-head"), "::before").content !== "none"
+        lineCount: table.querySelectorAll(".gamesense-damage-line").length
       };
     });
-    assert.ok(damagePagerState.dots >= 2 && damagePagerState.visiblePanels === 1 && damagePagerState.imageHeightShare >= .88 && damagePagerState.hasLeaderLines, JSON.stringify(damagePagerState));
+    assert.ok(damagePagerState.dots >= 2 && damagePagerState.visiblePanels === 1 && damagePagerState.imageHeightShare >= .88 && damagePagerState.lineCount >= 3, JSON.stringify(damagePagerState));
     await mobileDamagePager.locator('[data-gamesense-damage-range="1"]').click();
     assert.equal(await mobileDamagePager.locator('[data-gamesense-damage-range-panel="1"]').evaluate(panel => getComputedStyle(panel).display !== "none"), true);
     await mobileDamagePager.screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-damage-target-mobile.png") });

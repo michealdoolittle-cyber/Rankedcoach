@@ -278,7 +278,7 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
     const streaming = getLiveStreamingClassification({ ...video, sourceType });
     const topicType = streaming.matches
       ? "Live/Streaming"
-      : hasNewsCue(video, sourceType)
+      : (sourceType === "riot-official" || sourceType === "patch-breakdown") && hasNewsCue(video, sourceType)
         ? "News"
         : video.isShort
           ? "YT Shorts"

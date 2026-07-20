@@ -101,6 +101,26 @@
     bind: false,
     corrode: false
   });
+  const canonicalWeaponDetails = Object.freeze({
+    classic: { image: "/assets/weapons/classic.png", cost: 0, magazine: 12, fireRate: "6.75 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], focus: "Use controlled taps at range, and use alt-fire only as a close-range movement answer." },
+    shorty: { image: "/assets/weapons/shorty.png", cost: 300, magazine: 2, fireRate: "3 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-7m", head: 22, body: 11, legs: 9 }, { range: "7-15m", head: 12, body: 6, legs: 5 }, { range: "15-50m", head: 6, body: 3, legs: 3 }], focus: "Damage is per pellet. Use it as a concealed close-corner answer, then upgrade from the dropped weapon." },
+    frenzy: { image: "/assets/weapons/frenzy.png", cost: 450, magazine: 15, fireRate: "10 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-20m", head: 78, body: 26, legs: 22 }, { range: "20-50m", head: 63, body: 21, legs: 18 }], focus: "Treat it like a compact SMG: close distance, control the magazine, and avoid long-range tap races." },
+    ghost: { image: "/assets/weapons/ghost.png", cost: 500, magazine: 13, fireRate: "6.75 rounds/sec", penetration: "Medium", damageRanges: [{ range: "0-30m", head: 105, body: 30, legs: 26 }, { range: "30-50m", head: 88, body: 25, legs: 21 }], focus: "Use the clean first shot and quiet profile for disciplined pistol-round picks." },
+    sheriff: { image: "/assets/weapons/sheriff.png", cost: 800, magazine: 6, fireRate: "4 rounds/sec", penetration: "High", damageRanges: [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], focus: "Protect the 0-30m one-shot headshot range and let recoil settle." },
+    stinger: { image: "/assets/weapons/stinger.png", cost: 1100, magazine: 20, fireRate: "16 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-15m", head: 68, body: 27, legs: 23 }, { range: "15-50m", head: 57, body: 23, legs: 19 }], focus: "Commit to close fights or controlled alternate-fire bursts." },
+    spectre: { image: "/assets/weapons/spectre.png", cost: 1600, magazine: 30, fireRate: "13.33 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-15m", head: 78, body: 26, legs: 22 }, { range: "15-30m", head: 66, body: 22, legs: 19 }, { range: "30-50m", head: 60, body: 20, legs: 17 }], focus: "Close distance and transfer through multiple targets; long-range rifle duels waste the weapon's mobility advantage." },
+    bucky: { image: "/assets/weapons/bucky.png", cost: 850, magazine: 5, fireRate: "1.1 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-8m", head: 34, body: 17, legs: 14 }, { range: "8-12m", head: 26, body: 13, legs: 11 }, { range: "12-50m", head: 18, body: 9, legs: 8 }], focus: "Damage is per pellet. Protect the close-range fight and do not expose the long recovery to a second enemy." },
+    judge: { image: "/assets/weapons/judge.png", cost: 1850, magazine: 5, fireRate: "3.5 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-10m", head: 34, body: 17, legs: 14 }, { range: "10-15m", head: 20, body: 10, legs: 9 }, { range: "15-50m", head: 14, body: 7, legs: 6 }], focus: "Damage is per pellet. Own a tight choke and have a route to recover a rifle after the first conversion." },
+    bulldog: { image: "/assets/weapons/bulldog.png", cost: 2050, magazine: 24, fireRate: "10 rounds/sec", penetration: "Medium", damageRanges: [{ range: "0-50m", head: 116, body: 35, legs: 30 }], focus: "Use alternate-fire bursts for planned mid-range fights and avoid forcing full-auto recoil at long range." },
+    guardian: { image: "/assets/weapons/guardian.png", cost: 2250, magazine: 12, fireRate: "5.25 rounds/sec", penetration: "High", damageRanges: [{ range: "0-50m", head: 195, body: 65, legs: 49 }], focus: "Treat every shot as a resettable single-fire decision; high penetration supports disciplined wallbangs." },
+    phantom: { image: "/assets/weapons/phantom.png", cost: 2900, magazine: 30, fireRate: "11 rounds/sec", penetration: "Medium", damageRanges: [{ range: "0-20m", head: 156, body: 39, legs: 33 }, { range: "20-50m", head: 140, body: 35, legs: 30 }], focus: "Higher fire rate and a silenced profile reward close-to-mid fights; respect the long-range headshot falloff." },
+    vandal: { image: "/assets/weapons/vandal.png", cost: 2900, magazine: 25, fireRate: "9.75 rounds/sec", penetration: "Medium", damageRanges: [{ range: "0-50m", head: 160, body: 40, legs: 34 }], focus: "No damage falloff. Favor clean taps and short bursts once the first controlled shots are gone." },
+    marshal: { image: "/assets/weapons/marshal.png", cost: 950, magazine: 5, fireRate: "1.5 rounds/sec", penetration: "Medium", damageRanges: [{ range: "0-50m", head: 202, body: 101, legs: 86 }], focus: "Use mobility and fast follow-up positioning to punish unarmored buys without overstaying a scoped lane." },
+    outlaw: { image: "/assets/weapons/outlaw.png", cost: 2400, magazine: 2, fireRate: "2.75 rounds/sec", penetration: "High", damageRanges: [{ range: "0-50m", head: 238, body: 140, legs: 119 }], focus: "Punish light armor with a body shot and manage the two-round chamber as a paired burst." },
+    operator: { image: "/assets/weapons/operator.png", cost: 4700, magazine: 5, fireRate: "0.6 rounds/sec", penetration: "High", damageRanges: [{ range: "0-50m", head: 255, body: 150, legs: 120 }], focus: "Plan the escape before taking the shot. Missing without cover exposes the weapon's slow cycle." },
+    ares: { label: "Ares", image: "https://media.valorant-api.com/weapons/55d8a0f4-4274-ca67-fe2c-06ab45efdf58/displayicon.png", cost: 1600, magazine: 50, fireRate: "13 rounds/sec", penetration: "High", damageRanges: [{ range: "0-30m", head: 75, body: 30, legs: 25.5 }, { range: "30-50m", head: 70, body: 28, legs: 23.8 }], focus: "Use sustained fire for smoke spam, wall pressure, and anti-rush holds where the wind-up can work for you." },
+    odin: { label: "Odin", image: "https://media.valorant-api.com/weapons/63e6c2b6-4a8e-869c-3d4c-e38355226584/displayicon.png", cost: 3200, magazine: 100, fireRate: "12 rounds/sec", penetration: "High", damageRanges: [{ range: "0-30m", head: 95, body: 38, legs: 32.3 }, { range: "30-50m", head: 77.5, body: 31, legs: 26.35 }], focus: "Use the high penetration and deep magazine to deny predictable paths, break utility, and punish grouped pushes." }
+  });
 
   function escapeHtml(value = "") {
     return String(value).replace(/[&<>"']/g, character => ({
@@ -376,7 +396,57 @@
   }
 
   function getReference() {
-    return globalThis.RankedCoachGamesenseReference || { agents: [], weapons: [], warmupDetails: {} };
+    return getCompleteReference(globalThis.RankedCoachGamesenseReference || { agents: [], weapons: [], warmupDetails: {} });
+  }
+
+  function hasCompleteDamageRanges(ranges = []) {
+    return Array.isArray(ranges) && ranges.length && ranges.every(range => (
+      range
+      && String(range.range || "").trim()
+      && Number.isFinite(Number(range.head))
+      && Number.isFinite(Number(range.body))
+      && Number.isFinite(Number(range.legs))
+    ));
+  }
+
+  function completeWeapon(weapon = {}, fallbackId = "") {
+    const id = assetSlug(weapon.id || fallbackId || weapon.label);
+    const canonical = canonicalWeaponDetails[id] || {};
+    return {
+      ...canonical,
+      ...weapon,
+      id,
+      label: weapon.label || canonical.label || id.replace(/-/g, " "),
+      image: weapon.image || canonical.image || "",
+      damageRanges: hasCompleteDamageRanges(weapon.damageRanges) ? weapon.damageRanges : canonical.damageRanges || []
+    };
+  }
+
+  function getCompleteReference(reference = {}) {
+    const sourceGroups = Array.isArray(reference.weapons) ? reference.weapons : [];
+    const seenWeaponIds = new Set();
+    const groups = sourceGroups.map(group => {
+      const weapons = (Array.isArray(group.weapons) ? group.weapons : [])
+        .map((weapon, index) => completeWeapon(weapon, group.weaponIds?.[index]))
+        .filter(weapon => weapon.id);
+      weapons.forEach(weapon => seenWeaponIds.add(weapon.id));
+      return { ...group, weapons };
+    });
+    const machineGunWeapons = ["ares", "odin"]
+      .filter(id => !seenWeaponIds.has(id))
+      .map(id => completeWeapon({ id }, id));
+    if (machineGunWeapons.length) {
+      const insertAt = Math.max(0, groups.findIndex(group => group.id === "snipers"));
+      groups.splice(insertAt + 1, 0, {
+        id: "machine-guns",
+        label: "Machine Guns",
+        examples: "Ares, Odin",
+        range: "Sustained wall pressure",
+        weaponIds: machineGunWeapons.map(weapon => weapon.id),
+        weapons: machineGunWeapons
+      });
+    }
+    return { ...reference, weapons: groups };
   }
 
   function getWeaponCollectionProvider() {
@@ -1037,20 +1107,30 @@
     return Number.isFinite(Number(value)) ? `${Number(value).toFixed(1)}%` : "Pending";
   }
 
+  function formatDamageValue(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "--";
+    return Number.isInteger(number) ? String(number) : number.toFixed(1).replace(/\.0$/, "");
+  }
+
   function renderDamageTable(weapon) {
-    const ranges = Array.isArray(weapon.damageRanges) ? weapon.damageRanges : [];
+    const complete = completeWeapon(weapon);
+    const ranges = hasCompleteDamageRanges(complete.damageRanges) ? complete.damageRanges : [];
     return `
-      <div class="gamesense-damage-table" role="table" aria-label="${escapeHtml(weapon.label)} damage by range">
+      <div class="gamesense-damage-table" role="table" aria-label="${escapeHtml(complete.label)} damage by range">
         ${ranges.length > 1 ? `<div class="gamesense-damage-range-pager" role="tablist" aria-label="Select damage range">
           ${ranges.map((range, index) => `<button type="button" role="tab" data-gamesense-damage-range="${index}" aria-label="Show ${escapeHtml(range.range)} damage" aria-selected="${index === 0}" class="${index === 0 ? "active" : ""}"><i aria-hidden="true"></i></button>`).join("")}
         </div>` : ""}
-        ${ranges.map((range, index) => `<article class="gamesense-damage-target-row${index === 0 ? " is-mobile-range-active" : ""}" data-gamesense-damage-range-panel="${index}" role="tabpanel" aria-label="${escapeHtml(range.range)}: ${range.head} head, ${range.body} body, ${range.legs} legs">
+        ${ranges.map((range, index) => `<article class="gamesense-damage-target-row${index === 0 ? " is-mobile-range-active" : ""}" data-gamesense-damage-range-panel="${index}" role="tabpanel" aria-label="${escapeHtml(range.range)}: ${formatDamageValue(range.head)} head, ${formatDamageValue(range.body)} body, ${formatDamageValue(range.legs)} legs">
           <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
           <div class="gamesense-damage-target">
-            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260718-playlist-live-02" alt="Front-facing human silhouette showing head, body, and leg hit zones">
-            <span class="is-head"><b>Head</b><em>${range.head}</em></span>
-            <span class="is-body"><b>Body</b><em>${range.body}</em></span>
-            <span class="is-legs"><b>Legs</b><em>${range.legs}</em></span>
+            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260720-weapon-damage-01" alt="Front-facing generic target dummy with head, torso, and legs">
+            <i class="gamesense-damage-line is-head" aria-hidden="true"></i>
+            <i class="gamesense-damage-line is-body" aria-hidden="true"></i>
+            <i class="gamesense-damage-line is-legs" aria-hidden="true"></i>
+            <span class="is-head"><b>Head</b><em>${formatDamageValue(range.head)}</em></span>
+            <span class="is-body"><b>Body</b><em>${formatDamageValue(range.body)}</em></span>
+            <span class="is-legs"><b>Legs</b><em>${formatDamageValue(range.legs)}</em></span>
           </div>
         </article>`).join("")}
       </div>`;

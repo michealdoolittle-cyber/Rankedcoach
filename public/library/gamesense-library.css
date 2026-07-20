@@ -3289,3 +3289,89 @@ body.gamesense-media-open{overflow:hidden !important;}
   grid-column:1 / -1 !important;
   grid-row:5 !important;
 }
+
+/* 2026-07-20: readable weapon damage cards with target-anchored connector lines. */
+.gamesense-damage-target{
+  --dummy-center-x:30%;
+  --hit-head-y:19%;
+  --hit-body-y:50%;
+  --hit-legs-y:82%;
+  background:
+    radial-gradient(circle at var(--dummy-center-x) var(--hit-head-y),color-mix(in srgb,var(--gamesense-cool,#58d4c8) 18%,transparent) 0 4px,transparent 5px),
+    radial-gradient(circle at var(--dummy-center-x) var(--hit-body-y),color-mix(in srgb,var(--gamesense-cool,#58d4c8) 16%,transparent) 0 5px,transparent 6px),
+    radial-gradient(circle at var(--dummy-center-x) var(--hit-legs-y),color-mix(in srgb,var(--gamesense-cool,#58d4c8) 14%,transparent) 0 4px,transparent 5px),
+    linear-gradient(90deg,rgba(88,212,200,.08),transparent 58%),
+    rgba(2,6,23,.72) !important;
+}
+
+.gamesense-damage-target .gamesense-target-dummy{
+  left:8px !important;
+  bottom:8px !important;
+  width:54% !important;
+  height:calc(100% - 16px) !important;
+  object-fit:contain !important;
+  object-position:center !important;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--gamesense-cool,#58d4c8) 26%,transparent)) !important;
+}
+
+.gamesense-damage-line{
+  position:absolute;
+  left:var(--dummy-center-x);
+  right:8px;
+  height:0;
+  border-top:2px solid var(--gamesense-cool,#58d4c8);
+  pointer-events:none;
+  filter:drop-shadow(0 0 7px color-mix(in srgb,var(--gamesense-cool,#58d4c8) 42%,transparent));
+  z-index:1;
+}
+
+.gamesense-damage-line::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:7px;
+  height:7px;
+  border:2px solid #07111f;
+  border-radius:50%;
+  background:var(--gamesense-cool,#58d4c8);
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--gamesense-cool,#58d4c8) 38%,transparent);
+}
+
+.gamesense-damage-line.is-head{top:var(--hit-head-y);}
+.gamesense-damage-line.is-body{top:var(--hit-body-y);}
+.gamesense-damage-line.is-legs{top:var(--hit-legs-y);}
+
+.gamesense-damage-target span{
+  right:8px !important;
+  transform:translateY(-50%) !important;
+  z-index:2;
+}
+
+.gamesense-damage-target span.is-head{top:var(--hit-head-y) !important;}
+.gamesense-damage-target span.is-body{top:var(--hit-body-y) !important;}
+.gamesense-damage-target span.is-legs{top:var(--hit-legs-y) !important;bottom:auto !important;}
+.gamesense-damage-target span::before,
+.gamesense-damage-target span::after{display:none !important;}
+
+.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{
+  grid-template-columns:repeat(6,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(3,minmax(0,1fr)) !important;
+}
+
+@media (max-width:820px){
+  html.is-mobile-layout .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    grid-template-rows:repeat(6,minmax(0,1fr)) !important;
+  }
+
+  html.is-mobile-layout .gamesense-damage-target{
+    --dummy-center-x:34%;
+    --hit-head-y:18%;
+    --hit-body-y:50%;
+    --hit-legs-y:82%;
+  }
+
+  html.is-mobile-layout .gamesense-damage-line{right:9px;}
+}

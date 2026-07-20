@@ -94,6 +94,8 @@ assert(!suppressed.items.some(item => item.id === liveVideos[0].id), "A suppress
 
 const classifiedPlaylist = buildFeaturedPlaylist([
   { id: "news-short", title: "Iso and Yoru buffs in Patch 13.01", channelKind: "official", isShort: true, hasStructuralMediaMetadata: true, publishedAt: "2026-07-18T12:00:00Z" },
+  { id: "creator-smurfing-guide", title: "How to Get So Good At Valorant It Feels Like Smurfing", channelKind: "creator", isShort: false, durationSeconds: 1220, hasStructuralMediaMetadata: true, publishedAt: "2026-07-18T11:00:00Z" },
+  { id: "creator-buff-guide", title: "How to Abuse the Buffed Duelist Without Throwing", channelKind: "creator", isShort: false, durationSeconds: 980, hasStructuralMediaMetadata: true, publishedAt: "2026-07-18T10:30:00Z" },
   { id: "past-live", title: "Ranked Block Coaching", channelKind: "creator", isShort: false, wasLive: true, durationSeconds: 7200, hasStructuralMediaMetadata: true, publishedAt: "2026-07-17T12:00:00Z" },
   { id: "long-guide", title: "Ranked Block Coaching !livecoach", channelKind: "creator", isShort: false, wasLive: false, durationSeconds: 7200, hasStructuralMediaMetadata: true, publishedAt: "2026-07-16T18:00:00Z" },
   { id: "feed-fallback", title: "Free Valorant Tracker Reviews", channelKind: "creator", isShort: false, durationSeconds: 7200, hasStructuralMediaMetadata: false, publishedAt: "2026-07-16T15:00:00Z" },
@@ -102,9 +104,12 @@ const classifiedPlaylist = buildFeaturedPlaylist([
 ], "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
 assert.deepEqual(
   classifiedPlaylist.items.map(item => item.topicType),
-  ["News", "Live/Streaming", "General", "Live/Streaming", "Live/Streaming", "YT Shorts"],
+  ["News", "General", "Role", "Live/Streaming", "General", "Live/Streaming", "Live/Streaming", "YT Shorts"],
   "Only structural broadcasts or explicitly reviewed feed fallbacks may enter Live/Streaming."
 );
+assert.equal(classifiedPlaylist.items.find(item => item.id === "creator-smurfing-guide")?.sourceType, "creator-guide", "Creator channels must remain structurally classified as guides.");
+assert.equal(classifiedPlaylist.items.find(item => item.id === "creator-smurfing-guide")?.topicType, "General", "Creator smurfing phrasing must not be misrouted into News.");
+assert.notEqual(classifiedPlaylist.items.find(item => item.id === "creator-buff-guide")?.topicType, "News", "Creator buff wording must not be misrouted into News.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "long-guide")?.needsContentReview, false, "A metadata-confirmed long guide must not be mislabeled as a VOD from its title.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "feed-fallback")?.needsContentReview, true, "A title-only fallback must be flagged for content review.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "twitch-123456")?.classificationReason, "twitch-archive", "A Twitch archive must carry structural source provenance.");
