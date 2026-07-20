@@ -2629,6 +2629,13 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   border:0 !important;
   background:none !important;
 }
+.gamesense-damage-table > .gamesense-damage-range-pager{
+  display:none !important;
+}
+.gamesense-damage-table > .gamesense-damage-range-pager > *{
+  padding:0 !important;
+  border:0 !important;
+}
 .gamesense-damage-target-row{
   display:grid !important;
   grid-template-columns:minmax(0,1fr) !important;
