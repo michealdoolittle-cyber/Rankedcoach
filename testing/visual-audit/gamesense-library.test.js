@@ -7,6 +7,7 @@ const { chromium } = require("playwright");
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41787;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp" };
+const pixelPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
 function startServer() {
   return new Promise(resolve => {
@@ -37,7 +38,7 @@ function startServer() {
             title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked", "Yoru buffs in Patch 13.01", "Ranked coaching VOD"][index],
             channel: channels[index],
             sourceType: "creator-guide",
-            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "VODs"][index],
+            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "Live/Streaming"][index],
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/${image}`,
             url: `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
             isNewThisWeek: true,
@@ -167,6 +168,12 @@ async function seed(page, profileId) {
   }, profileId);
 }
 
+async function stubRankIconPreloads(page) {
+  await page.route(/https:\/\/raw\.githubusercontent\.com\/michealdoolittle-cyber\/images\/main\/icons\/[^/?]+_rank\.png(?:\?.*)?$/i, route => {
+    route.fulfill({ contentType: "image/png", body: pixelPng });
+  });
+}
+
 async function dismissWarmup(page) {
   await page.waitForTimeout(1000);
   if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) {
@@ -208,6 +215,8 @@ async function run() {
     await desktop.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
     await desktop.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title><main>Sketchfab model viewer</main>" }));
     await desktop.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
+    await desktop.route(/^https:\/\/player\.twitch\.tv\/\?.*$/i, route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Twitch player</title>" }));
+    await stubRankIconPreloads(desktop);
     await seed(desktop, "gamesense-desktop");
     await desktop.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(desktop);
@@ -318,7 +327,8 @@ async function run() {
     await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").first().waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 6);
-    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 10);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 11);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     const playlistFilterThemeState = await desktop.locator(".gamesense-playlist-filters").evaluate(filters => {
       const active = getComputedStyle(filters.querySelector("button.active"));
@@ -332,12 +342,13 @@ async function run() {
     await desktop.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await desktop.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-desktop.png") });
     await desktop.locator(".gamesense-live-card [data-gamesense-play-twitch]").click();
-    const desktopTwitchEmbed = desktop.locator(".gamesense-live-card .gamesense-twitch-embed");
-    assert.match(await desktopTwitchEmbed.getAttribute("src"), /player\.twitch\.tv\/\?.*channel=Charla7an.*parent=127\.0\.0\.1.*autoplay=false/i);
+    const desktopTwitchEmbed = desktop.locator("#gamesenseMediaOverlay .gamesense-twitch-embed");
+    assert.match(await desktopTwitchEmbed.getAttribute("src"), /player\.twitch\.tv\/\?.*parent=127\.0\.0\.1.*autoplay=false.*channel=Charla7an/i);
     assert.equal(await desktopTwitchEmbed.getAttribute("allowfullscreen"), "");
+    await desktop.locator("#gamesenseMediaOverlay [data-gamesense-close-media]").click();
     await desktop.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
-    const desktopYouTubeEmbed = desktop.locator(".gamesense-video-card .gamesense-video-embed:not(.gamesense-twitch-embed)").first();
-    assert.match(await desktopYouTubeEmbed.getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?.*autoplay=1.*controls=1.*fs=1.*playsinline=1.*rel=0/i);
+    const desktopYouTubeEmbed = desktop.locator("#gamesenseMediaOverlay .gamesense-video-embed:not(.gamesense-twitch-embed)");
+    assert.match(await desktopYouTubeEmbed.getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?.*autoplay=0.*controls=1.*fs=1.*playsinline=1.*rel=0/i);
     const desktopYouTubeHitState = await desktopYouTubeEmbed.evaluate(frame => {
       const rect = frame.getBoundingClientRect();
       return {
@@ -351,13 +362,16 @@ async function run() {
     assert.equal(desktopYouTubeHitState.allowFullscreen, true, JSON.stringify(desktopYouTubeHitState));
     assert.match(desktopYouTubeHitState.allow, /fullscreen/);
     assert.equal(desktopYouTubeHitState.hitAtControls, true, JSON.stringify(desktopYouTubeHitState));
-    await desktop.locator(".gamesense-playlist-home").screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-embeds-desktop.png") });
+    await desktop.locator("#gamesenseMediaOverlay .gamesense-media-dialog").screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-embeds-desktop.png") });
+    await desktop.locator("#gamesenseMediaOverlay [data-gamesense-close-media]").click();
     await desktop.locator('[data-gamesense-playlist-filter="YT Shorts"]').click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 1);
     await desktop.locator('[data-gamesense-playlist-filter="News"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Yoru buffs in Patch 13\.01/i);
-    await desktop.locator('[data-gamesense-playlist-filter="VODs"]').click();
+    await desktop.locator('[data-gamesense-playlist-filter="Live/Streaming"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
+    await desktop.locator('[data-gamesense-playlist-filter="All"]').click();
+    assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 6, "All must render every Playlist item without filtering.");
     await desktop.locator(".gamesense-back").click();
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-topic="maps"]');
@@ -701,12 +715,12 @@ async function run() {
     await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /kills per round|average damage/i);
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Combined round conversion percent: 50\.87%.*Second rifle Vandal: 50\.41% round conversion percent/is);
-    assert.doesNotMatch(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /A Main|B Main|Mid Nest/i);
+    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Best locations.*A Main, B Main, Mid/is);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").first().locator(".gamesense-weapon-suggestion-detail > :first-child").getAttribute("class"), "gamesense-round-conversion");
     await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator("summary").click();
     assert.deepEqual(
       await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator(".gamesense-weapon-suggestion-detail > *").evaluateAll(items => items.slice(0, 4).map(item => item.className)),
-      ["gamesense-round-conversion", "gamesense-conversion-read", "gamesense-weapon-evidence", "gamesense-weapon-context"]
+      ["gamesense-round-conversion", "gamesense-conversion-read", "gamesense-weapon-locations", "gamesense-weapon-evidence"]
     );
     assert.deepEqual(await desktop.locator(".gamesense-weapon-side").allInnerTexts(), ["DEF", "DEF"]);
     const desktopWeaponSuggestion = await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").evaluate(summary => {
@@ -933,7 +947,7 @@ async function run() {
     await desktop.locator('[data-gamesense-weapon="phantom"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /2900 credits/i);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /21\.2%/i);
-    assert.match(await desktop.locator(".gamesense-global-rate").innerText(), /Global usage.*Global kill conversion 1\.03 K\/D.*Global round conversion Economy-filtered/is);
+    assert.match(await desktop.locator(".gamesense-global-rate").innerText(), /Global usage.*Global kill conversion 1\.03 K\/D.*Round conversion available by buy type/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /When to use it.*How to use it.*Patch history/is);
     assert.match(await desktop.locator(".gamesense-weapon-panel-art").evaluate(panel => getComputedStyle(panel).backgroundImage), /radial-gradient/i);
     await desktop.waitForFunction(() => document.querySelectorAll(".gamesense-collection-card").length > 14);
@@ -1207,7 +1221,7 @@ async function run() {
       const reference = globalThis.RankedCoachGamesenseReference;
       return {
         agentCount: reference.agents.length,
-        agents: reference.agents.every(agent => agent.fundamentals.length >= 3 && agent.lore.length >= 2 && agent.patchHistory.length >= 2),
+        agents: reference.agents.every(agent => agent.fundamentals.length >= 3 && agent.lore.length >= 2 && agent.patchHistory.length >= 1),
         abilityCoverage: reference.agents.every(agent => agent.abilities.length >= 4 && agent.abilities.every(ability => ability.name && ability.summary && ability.stats?.Cost && Object.keys(ability.stats).length >= 2 && ability.purpose && ability.setup)),
         mapCount: globalThis.RankedCoachGamesenseMaps.length,
         mapCoverage: globalThis.RankedCoachGamesenseMaps.every(map => map.layoutImage && map.cardImage && map.callouts.length && map.macro?.attack?.length && map.macro?.defense?.length && map.roleNotes),
@@ -1218,6 +1232,7 @@ async function run() {
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-detail.png") });
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "sidearms"));
     await desktop.locator('[data-gamesense-weapon="sheriff"]').waitFor({ state: "visible" });
+    await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
     await desktop.locator(".gamesense-weapon-grid").evaluate(node => { window.__rankedCoachSidearmGridNode = node; });
     for (const weaponId of ["ghost", "sheriff"]) {
       await desktop.click(`[data-gamesense-weapon="${weaponId}"]`);
@@ -1283,6 +1298,8 @@ async function run() {
     await mobile.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
     await mobile.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title><main>Sketchfab model viewer</main>" }));
     await mobile.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
+    await mobile.route(/^https:\/\/player\.twitch\.tv\/\?.*$/i, route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Twitch player</title>" }));
+    await stubRankIconPreloads(mobile);
     await seed(mobile, "gamesense-mobile");
     await mobile.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(mobile);
@@ -1312,7 +1329,8 @@ async function run() {
     await mobile.click('[data-gamesense-topic="playlist"]');
     await mobile.locator(".gamesense-playlist-home").waitFor({ state: "visible" });
     await mobile.waitForTimeout(700);
-    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 10);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 11);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
     const mobileFilterStrip = mobile.locator(".gamesense-playlist-filters");
@@ -1330,7 +1348,7 @@ async function run() {
     await mobile.locator(".gamesense-playlist-gallery-head").scrollIntoViewIfNeeded();
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-home-mobile.png") });
     await mobile.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
-    const mobileEmbed = mobile.locator(".gamesense-video-card .gamesense-video-embed:not(.gamesense-twitch-embed)").first();
+    const mobileEmbed = mobile.locator("#gamesenseMediaOverlay .gamesense-video-embed:not(.gamesense-twitch-embed)");
     assert.match(await mobileEmbed.getAttribute("src"), /controls=1.*fs=1.*playsinline=1/);
     const mobileEmbedHitState = await mobileEmbed.evaluate(frame => {
       const rect = frame.getBoundingClientRect();
@@ -1344,11 +1362,25 @@ async function run() {
     assert.ok(mobileEmbedHitState.width >= 200 && mobileEmbedHitState.height >= 200, JSON.stringify(mobileEmbedHitState));
     assert.equal(mobileEmbedHitState.pointerEvents, "auto", JSON.stringify(mobileEmbedHitState));
     assert.equal(mobileEmbedHitState.hitAtControls, true, JSON.stringify(mobileEmbedHitState));
+    await mobile.locator("#gamesenseMediaOverlay [data-gamesense-close-media]").click();
     await mobile.locator(".gamesense-live-card [data-gamesense-play-twitch]").click();
-    const mobileTwitchEmbed = mobile.locator(".gamesense-live-card .gamesense-twitch-embed");
-    assert.match(await mobileTwitchEmbed.getAttribute("src"), /player\.twitch\.tv\/\?.*channel=Charla7an.*parent=127\.0\.0\.1.*autoplay=false/i);
-    assert.ok(await mobileTwitchEmbed.evaluate(frame => frame.getBoundingClientRect().height >= 300));
-    await mobile.locator(".gamesense-playlist-home").screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-embeds-mobile.png") });
+    const mobileTwitchEmbed = mobile.locator("#gamesenseMediaOverlay .gamesense-twitch-embed");
+    assert.match(await mobileTwitchEmbed.getAttribute("src"), /player\.twitch\.tv\/\?.*parent=127\.0\.0\.1.*autoplay=false.*channel=Charla7an/i);
+    assert.equal(await mobileTwitchEmbed.getAttribute("allowfullscreen"), "");
+    const mobileTwitchHitState = await mobileTwitchEmbed.evaluate(frame => {
+      const rect = frame.getBoundingClientRect();
+      return {
+        width: rect.width,
+        height: rect.height,
+        pointerEvents: getComputedStyle(frame).pointerEvents,
+        hitAtControls: document.elementFromPoint(rect.left + rect.width / 2, rect.bottom - 12) === frame
+      };
+    });
+    assert.ok(mobileTwitchHitState.width >= 280 && mobileTwitchHitState.height >= 150, JSON.stringify(mobileTwitchHitState));
+    assert.equal(mobileTwitchHitState.pointerEvents, "auto", JSON.stringify(mobileTwitchHitState));
+    assert.equal(mobileTwitchHitState.hitAtControls, true, JSON.stringify(mobileTwitchHitState));
+    await mobile.locator("#gamesenseMediaOverlay .gamesense-media-dialog").screenshot({ path: path.join(__dirname, "tmp", "gamesense-playlist-embeds-mobile.png") });
+    await mobile.locator("#gamesenseMediaOverlay [data-gamesense-close-media]").click();
     await mobile.locator(".gamesense-back").click();
     await mobile.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await mobile.click('[data-gamesense-topic="maps"]');

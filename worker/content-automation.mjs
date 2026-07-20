@@ -4,8 +4,11 @@ const RIOT_NEWS_ROOT = "https://playvalorant.com/en-us/news/game-updates";
 const YOUTUBE_API_ROOT = "https://www.googleapis.com/youtube/v3";
 const YOUTUBE_FEED_ROOT = "https://www.youtube.com/feeds/videos.xml";
 const MAX_CHANNEL_VIDEOS = 15;
+const MAX_TWITCH_ARCHIVES = 15;
 const PLAYLIST_CACHE_WINDOW_MS = 5 * 60 * 1000;
 const TWITCH_TOKEN_CACHE_KEY = "playlist:twitch-token";
+const TWITCH_API_ROOT = "https://api.twitch.tv/helix";
+const PLAYLIST_CLASSIFICATION_REVIEW_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 export const AGENT_NAMES = Object.freeze([
   "Astra", "Breach", "Brimstone", "Chamber", "Clove", "Cypher", "Deadlock", "Fade", "Gekko",
@@ -156,14 +159,33 @@ function hasNewsCue(video = {}, sourceType = "") {
   return /\b(?:patch|update|buff|buffs|buffed|buffing|nerf|nerfs|nerfed|nerfing|ban|bans|banned|banning|anti cheat|smurfing|win trading|queue sniping|night market|new agent|new map|ranked changes|competitive changes)\b/.test(text);
 }
 
-function hasVodCue(video = {}) {
-  if (video.isVod === true || video.wasLive === true) return true;
-  if (Number(video.durationSeconds || 0) < 1800) return false;
-  return /(?:\bvod\s*reviews?\b|!vodreviews?\b|!livecoach\b|\branked block coaching\b|\bfree valorant tracker reviews\b)/i.test(String(video.title || ""));
+function getLiveStreamingClassification(video = {}) {
+  if (video.sourceType === "twitch-archive" || (video.platform === "twitch" && video.isVod === true)) {
+    return Object.freeze({ matches: true, confidence: "verified", reason: "twitch-archive" });
+  }
+  if (video.wasLive === true) {
+    return Object.freeze({ matches: true, confidence: "verified", reason: "youtube-live-metadata" });
+  }
+  if (video.hasStructuralMediaMetadata === true || Number(video.durationSeconds || 0) < 1800) {
+    return Object.freeze({ matches: false, confidence: "verified", reason: "not-an-archive" });
+  }
+  const inferred = /(?:\bvod\s*reviews?\b|!vodreviews?\b|!livecoach\b|\branked block coaching\b|\bfree valorant tracker reviews\b)/i.test(String(video.title || ""));
+  return Object.freeze({
+    matches: inferred,
+    confidence: inferred ? "low" : "unclassified",
+    reason: inferred ? "title-fallback" : "no-archive-signal"
+  });
 }
 
 async function enrichYouTubeVideos(videos = [], apiKey = "") {
-  if (!apiKey || !videos.length) return videos.map(video => Object.freeze({ ...video, isShort: hasYouTubeShortCue(video), isLive: false, isVod: hasVodCue(video) }));
+  if (!apiKey || !videos.length) return videos.map(video => Object.freeze({
+    ...video,
+    isShort: hasYouTubeShortCue(video),
+    isLive: false,
+    wasLive: false,
+    isVod: false,
+    hasStructuralMediaMetadata: false
+  }));
   const metadata = new Map();
   for (let index = 0; index < videos.length; index += 50) {
     const ids = videos.slice(index, index + 50).map(video => video.id).filter(Boolean);
@@ -189,9 +211,10 @@ async function enrichYouTubeVideos(videos = [], apiKey = "") {
       durationSeconds: parseIsoDurationSeconds(item?.contentDetails?.duration),
       isLive: snippet.liveBroadcastContent === "live" && !liveDetails.actualEndTime,
       wasLive,
+      hasStructuralMediaMetadata: Boolean(item),
       viewerCount: Number(liveDetails.concurrentViewers)
     };
-    return Object.freeze({ ...enriched, isShort: hasYouTubeShortCue(enriched), isVod: hasVodCue(enriched), isValorant: hasValorantMetadata(enriched) });
+    return Object.freeze({ ...enriched, isShort: hasYouTubeShortCue(enriched), isVod: wasLive, isValorant: hasValorantMetadata(enriched) });
   });
 }
 
@@ -236,6 +259,7 @@ export function categorizeCreatorTitle(title = "") {
 }
 
 function getVideoSourceType(video, patchLabel = "") {
+  if (video.sourceType) return String(video.sourceType);
   const title = normalizeSearchText(video.title);
   if (video.channelKind === "creator") return "creator-guide";
   if (patchLabel && title.includes(`patch ${normalizeSearchText(patchLabel)}`)) return "patch-breakdown";
@@ -246,10 +270,14 @@ function getVideoSourceType(video, patchLabel = "") {
 export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedIds = new Set(), now = Date.now()) {
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
-  const items = videos.filter(video => !suppressedIds.has(video.id)).map(video => {
+  const items = videos
+    .filter(video => !suppressedIds.has(video.id))
+    .sort((left, right) => Date.parse(right.publishedAt || 0) - Date.parse(left.publishedAt || 0))
+    .map(video => {
     const sourceType = getVideoSourceType(video, patchLabel);
-    const topicType = hasVodCue(video)
-      ? "VODs"
+    const streaming = getLiveStreamingClassification({ ...video, sourceType });
+    const topicType = streaming.matches
+      ? "Live/Streaming"
       : hasNewsCue(video, sourceType)
         ? "News"
         : video.isShort
@@ -261,6 +289,9 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
       ...video,
       sourceType,
       topicType,
+      classificationConfidence: streaming.matches ? streaming.confidence : "verified",
+      classificationReason: streaming.reason,
+      needsContentReview: streaming.matches && streaming.confidence === "low",
       isNewThisWeek: Date.parse(video.publishedAt || 0) >= oneWeekAgo,
       isNewIn24Hours: Date.parse(video.publishedAt || 0) >= oneDayAgo
     });
@@ -310,11 +341,32 @@ async function getTwitchAppAccessToken(env = {}) {
   return accessToken;
 }
 
-export async function fetchTrustedTwitchStreams(env = {}, channels = TRUSTED_TWITCH_CHANNELS) {
+function parseTwitchDurationSeconds(value = "") {
+  const match = String(value).match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/i);
+  return match ? Number(match[1] || 0) * 3600 + Number(match[2] || 0) * 60 + Number(match[3] || 0) : 0;
+}
+
+function normalizeTwitchThumbnail(value = "") {
+  return String(value)
+    .replace(/%?\{width\}/g, "640")
+    .replace(/%?\{height\}/g, "360");
+}
+
+async function fetchTrustedTwitchUsers(env = {}, channels = TRUSTED_TWITCH_CHANNELS, accessToken = "") {
   const clientId = String(env.TWITCH_CLIENT_ID || "").trim();
-  const accessToken = await getTwitchAppAccessToken(env);
+  const token = accessToken || await getTwitchAppAccessToken(env);
+  if (!clientId || !token) return [];
+  const url = new URL(`${TWITCH_API_ROOT}/users`);
+  channels.slice(0, 100).forEach(channel => url.searchParams.append("login", channel));
+  const payload = await fetchJson(url, { headers: { "Client-Id": clientId, Authorization: `Bearer ${token}` } });
+  return payload.data || [];
+}
+
+export async function fetchTrustedTwitchStreams(env = {}, channels = TRUSTED_TWITCH_CHANNELS, options = {}) {
+  const clientId = String(env.TWITCH_CLIENT_ID || "").trim();
+  const accessToken = options.accessToken || await getTwitchAppAccessToken(env);
   if (!clientId || !accessToken) return [];
-  const url = new URL("https://api.twitch.tv/helix/streams");
+  const url = new URL(`${TWITCH_API_ROOT}/streams`);
   channels.slice(0, 100).forEach(channel => url.searchParams.append("user_login", channel));
   const payload = await fetchJson(url, { headers: { "Client-Id": clientId, Authorization: `Bearer ${accessToken}` } });
   return (payload.data || []).filter(stream => stream.type === "live" && String(stream.game_name || "").toLowerCase() === "valorant").map(stream => Object.freeze({
@@ -323,10 +375,64 @@ export async function fetchTrustedTwitchStreams(env = {}, channels = TRUSTED_TWI
     channel: String(stream.user_name || stream.user_login),
     title: String(stream.title || `${stream.user_name || stream.user_login} is live`),
     viewerCount: Number(stream.viewer_count),
-    thumbnail: String(stream.thumbnail_url || "").replace("{width}", "640").replace("{height}", "360"),
+    thumbnail: normalizeTwitchThumbnail(stream.thumbnail_url),
     url: `https://www.twitch.tv/${encodeURIComponent(stream.user_login)}`,
     startedAt: String(stream.started_at || "")
   }));
+}
+
+export async function fetchTrustedTwitchVods(env = {}, channels = TRUSTED_TWITCH_CHANNELS, options = {}) {
+  const clientId = String(env.TWITCH_CLIENT_ID || "").trim();
+  const accessToken = options.accessToken || await getTwitchAppAccessToken(env);
+  if (!clientId || !accessToken) return [];
+  const users = await fetchTrustedTwitchUsers(env, channels, accessToken);
+  const results = await Promise.allSettled(users.map(async user => {
+    const url = new URL(`${TWITCH_API_ROOT}/videos`);
+    url.searchParams.set("user_id", String(user.id || ""));
+    url.searchParams.set("type", "archive");
+    url.searchParams.set("first", "2");
+    const payload = await fetchJson(url, { headers: { "Client-Id": clientId, Authorization: `Bearer ${accessToken}` } });
+    return (payload.data || []).map(video => Object.freeze({
+      id: `twitch-${String(video.id || "")}`,
+      upstreamId: String(video.id || ""),
+      platform: "twitch",
+      channelId: String(user.id || video.user_id || ""),
+      channel: String(video.user_name || user.display_name || user.login || ""),
+      channelKind: "creator",
+      title: String(video.title || `${user.display_name || user.login} past broadcast`),
+      description: String(video.description || ""),
+      publishedAt: String(video.published_at || video.created_at || ""),
+      thumbnail: normalizeTwitchThumbnail(video.thumbnail_url),
+      url: String(video.url || `https://www.twitch.tv/videos/${video.id}`),
+      durationSeconds: parseTwitchDurationSeconds(video.duration),
+      sourceType: "twitch-archive",
+      isLive: false,
+      wasLive: true,
+      isVod: true,
+      isShort: false,
+      hasStructuralMediaMetadata: true
+    }));
+  }));
+  return results
+    .filter(result => result.status === "fulfilled")
+    .flatMap(result => result.value)
+    .sort((left, right) => Date.parse(right.publishedAt || 0) - Date.parse(left.publishedAt || 0));
+}
+
+async function fetchTrustedTwitchMedia(env = {}) {
+  const clientId = String(env.TWITCH_CLIENT_ID || "").trim();
+  const accessToken = await getTwitchAppAccessToken(env);
+  if (!clientId || !accessToken) return { streams: [], vods: [] };
+  const [streamsResult, vodsResult] = await Promise.allSettled([
+    fetchTrustedTwitchStreams(env, TRUSTED_TWITCH_CHANNELS, { accessToken }),
+    fetchTrustedTwitchVods(env, TRUSTED_TWITCH_CHANNELS, { accessToken })
+  ]);
+  if (streamsResult.status === "rejected") console.warn("Twitch live refresh skipped", streamsResult.reason?.message || streamsResult.reason);
+  if (vodsResult.status === "rejected") console.warn("Twitch archive refresh skipped", vodsResult.reason?.message || vodsResult.reason);
+  return {
+    streams: streamsResult.status === "fulfilled" ? streamsResult.value : [],
+    vods: vodsResult.status === "fulfilled" ? vodsResult.value : []
+  };
 }
 
 export function findConfidentCollectionVideo(collectionName = "", videos = []) {
@@ -375,6 +481,22 @@ async function notifyReview(env, message) {
   if (!response.ok) throw new Error(`ntfy.sh responded with HTTP ${response.status}.`);
 }
 
+async function notifyLowConfidencePlaylistReviews(env, items = []) {
+  const kv = env.CONTENT_AUTOMATION;
+  if (!kv) return;
+  const inferred = items.filter(item => item.needsContentReview && item.classificationReason === "title-fallback");
+  const pending = [];
+  for (const item of inferred) {
+    const key = `review:playlist-classification:${encodeURIComponent(`${item.platform || "youtube"}:${item.id}`)}`;
+    if (await kv.get(key)) continue;
+    pending.push({ item, key });
+  }
+  if (!pending.length) return;
+  const labels = pending.slice(0, 8).map(({ item }) => `${item.channel || "Unknown creator"}: ${item.title || item.id}`);
+  await notifyReview(env, `Playlist content review needed - low-confidence title fallback marked Live/Streaming: ${labels.join(" | ")}`);
+  await Promise.all(pending.map(({ key }) => kv.put(key, "1", { expirationTtl: PLAYLIST_CLASSIFICATION_REVIEW_TTL_SECONDS })));
+}
+
 export async function runPatchContentAutomation(env = {}) {
   const kv = env.CONTENT_AUTOMATION;
   if (!kv) throw new Error("CONTENT_AUTOMATION KV is not configured.");
@@ -399,16 +521,24 @@ export async function handlePlaylistRequest(env = {}) {
   const patch = await getCurrentPatch(env);
   const [videoResult, twitchResult] = await Promise.allSettled([
     fetchTrustedChannelVideos(env, { kind: "playlist" }),
-    fetchTrustedTwitchStreams(env)
+    fetchTrustedTwitchMedia(env)
   ]);
   if (videoResult.status !== "fulfilled") throw videoResult.reason;
   const videos = videoResult.value;
-  const twitchStreams = twitchResult.status === "fulfilled" ? twitchResult.value : [];
-  if (twitchResult.status === "rejected") console.warn("Twitch live refresh skipped", twitchResult.reason?.message || twitchResult.reason);
+  const twitchMedia = twitchResult.status === "fulfilled" ? twitchResult.value : { streams: [], vods: [] };
+  if (twitchResult.status === "rejected") console.warn("Twitch media refresh skipped", twitchResult.reason?.message || twitchResult.reason);
   const suppressed = await readSuppressedVideoIds(env.CONTENT_AUTOMATION);
   const youtubeStreams = buildYouTubeLiveStreams(videos);
-  const playlist = buildFeaturedPlaylist(videos.filter(video => !video.isLive), patch.label, suppressed);
-  const liveStreams = [...youtubeStreams, ...twitchStreams].sort((left, right) => Number(right.viewerCount || 0) - Number(left.viewerCount || 0));
+  const playlist = buildFeaturedPlaylist([
+    ...videos.filter(video => !video.isLive),
+    ...twitchMedia.vods.slice(0, MAX_TWITCH_ARCHIVES)
+  ], patch.label, suppressed);
+  try {
+    await notifyLowConfidencePlaylistReviews(env, playlist.items);
+  } catch (error) {
+    console.warn("Playlist classification review notification skipped", error?.message || error);
+  }
+  const liveStreams = [...youtubeStreams, ...twitchMedia.streams].sort((left, right) => Number(right.viewerCount || 0) - Number(left.viewerCount || 0));
   const payload = {
     ...playlist,
     liveStreams,
@@ -417,7 +547,7 @@ export async function handlePlaylistRequest(env = {}) {
       twitch: Boolean(String(env.TWITCH_CLIENT_ID || "").trim() && String(env.TWITCH_CLIENT_SECRET || "").trim())
     },
     cachedAt: new Date().toISOString(),
-    source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api" : "trusted-channel-feeds"
+    source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api+twitch-helix" : "trusted-channel-feeds+twitch-helix"
   };
   await env.CONTENT_AUTOMATION?.put?.("playlist:featured", JSON.stringify(payload), { expirationTtl: 3600 });
   return payload;

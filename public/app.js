@@ -692,6 +692,12 @@ function openDailyWarmupCheck() {
 
 function canOpenDailyWarmupCheck() {
   if (document.documentElement?.classList.contains("app-booting")) return false;
+  const entranceState = window.RankedCoachDailyEntrance?.getState?.();
+  if (
+    document.body?.classList.contains("daily-entrance-motion-active")
+    || entranceState?.activePage
+    || Number(entranceState?.pendingPages || 0) > 0
+  ) return false;
   if (!hasCompletedAppEntryChoice?.()) return false;
   const activePage = getActivePageElement?.()?.id || "";
   if (!["page-home", "page-logging"].includes(activePage)) return false;
@@ -12906,11 +12912,19 @@ function notifyDailyEntranceMotionReady() {
   if (!controller || !context.userId) return;
   const appVeil = document.getElementById("appLoadingVeil");
   const loginOverlay = document.getElementById("loginInitOverlay");
+  const warmupOverlay = document.getElementById("dailyWarmupModal");
   const hasBlockingVeil = Boolean(
     document.body?.classList.contains("profile-cleanup-active")
     || appVeil?.classList.contains("is-visible")
     || appVeil?.getAttribute("aria-hidden") === "false"
     || loginOverlay?.classList.contains("active")
+    || loginOverlay?.classList.contains("is-opening")
+    || loginOverlay?.classList.contains("is-closing")
+    || loginOverlay?.getAttribute("aria-hidden") === "false"
+    || warmupOverlay?.classList.contains("active")
+    || warmupOverlay?.classList.contains("is-opening")
+    || warmupOverlay?.classList.contains("is-closing")
+    || warmupOverlay?.getAttribute("aria-hidden") === "false"
   );
   if (hasBlockingVeil) {
     window.clearTimeout(dailyEntranceMotionReadyTimer);

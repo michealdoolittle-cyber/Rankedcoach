@@ -292,7 +292,7 @@
   }
 
   function getPlaylistFilters() {
-    return ["Home", "News", "VODs", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality"];
+    return ["All", "Home", "News", "Live/Streaming", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality"];
   }
 
   function renderPlaylistHomeIcon() {
@@ -301,9 +301,12 @@
 
   function renderPlaylistVideoCard(video) {
     const isYouTube = String(video.platform || "youtube").toLowerCase() === "youtube";
+    const twitchVideoId = String(video.upstreamId || "").trim() || String(video.url || "").match(/twitch\.tv\/videos\/(\d+)/i)?.[1] || "";
     const sourceLabel = video.isShort ? "YouTube Short" : String(video.sourceType || "creator-guide").replace(/-/g, " ");
     const thumbAction = isYouTube && /^[A-Za-z0-9_-]{11}$/.test(String(video.id || ""))
       ? `data-gamesense-play-video="${escapeHtml(video.id)}"`
+      : /^\d+$/.test(twitchVideoId)
+        ? `data-gamesense-play-twitch-video="${escapeHtml(twitchVideoId)}"`
       : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
     return `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}">
       <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}"><img src="${escapeHtml(video.thumbnail)}" alt="" loading="lazy"><i aria-hidden="true"></i></button>
@@ -321,7 +324,7 @@
       rel: "0",
       origin
     });
-    return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
 
   function getTwitchChannel(stream = {}) {
@@ -331,14 +334,16 @@
     return match?.[1] || "";
   }
 
-  function renderTwitchPlayer(channel) {
+  function renderTwitchPlayer(channel = "", videoId = "") {
     const params = new URLSearchParams({
-      channel,
       parent: window.location.hostname,
       autoplay: "false",
       muted: "false"
     });
-    return `<iframe class="gamesense-video-embed gamesense-twitch-embed" src="https://player.twitch.tv/?${escapeHtml(params.toString())}" title="${escapeHtml(channel)} live on Twitch" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    if (videoId) params.set("video", `v${videoId}`);
+    else params.set("channel", channel);
+    const title = videoId ? "Twitch past broadcast" : `${channel} live on Twitch`;
+    return `<iframe class="gamesense-video-embed gamesense-twitch-embed" src="https://player.twitch.tv/?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
 
   function closeMediaPlayer() {
@@ -350,11 +355,12 @@
     window.setTimeout(() => overlay.remove(), 180);
   }
 
-  function openMediaPlayer({ platform = "youtube", id = "", channel = "", title = "VALORANT video", url = "" } = {}) {
+  function openMediaPlayer({ platform = "youtube", id = "", channel = "", videoId = "", title = "VALORANT video", url = "" } = {}) {
     closeMediaPlayer();
+    document.querySelectorAll("#gamesenseMediaOverlay").forEach(overlay => overlay.remove());
     const isTwitch = platform === "twitch";
     const player = isTwitch
-      ? renderTwitchPlayer(channel)
+      ? renderTwitchPlayer(channel, videoId)
       : renderYouTubePlayer(id, title);
     const externalLabel = isTwitch ? "Open on Twitch" : "Open on YouTube";
     const overlay = document.createElement("div");
@@ -416,7 +422,7 @@
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
     const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
-    const visible = activeFilter === "Home" ? [] : items.filter(item => item.topicType === activeFilter);
+    const visible = activeFilter === "All" ? items : activeFilter === "Home" ? [] : items.filter(item => item.topicType === activeFilter);
     return `
       <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
         <div><strong>Featured Playlist</strong><small>Trusted videos stay credited to their original creators.</small></div>
@@ -1967,6 +1973,21 @@
         channel,
         title: stream.title || `${channel} live on Twitch`,
         url: stream.url || `https://www.twitch.tv/${channel}`
+      });
+      return;
+    }
+    const twitchArchive = event.target.closest?.("[data-gamesense-play-twitch-video]");
+    if (twitchArchive) {
+      event.preventDefault();
+      event.stopPropagation();
+      const videoId = String(twitchArchive.dataset.gamesensePlayTwitchVideo || "");
+      if (!/^\d+$/.test(videoId)) return;
+      const video = (featuredPlaylist?.items || []).find(item => String(item?.upstreamId || "") === videoId) || {};
+      openMediaPlayer({
+        platform: "twitch",
+        videoId,
+        title: video.title || "Twitch past broadcast",
+        url: video.url || `https://www.twitch.tv/videos/${videoId}`
       });
       return;
     }

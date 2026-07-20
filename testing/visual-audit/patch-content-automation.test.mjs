@@ -9,6 +9,7 @@ import {
   extractBalanceUpdateText,
   fetchTrustedChannelVideos,
   fetchTrustedTwitchStreams,
+  fetchTrustedTwitchVods,
   findAffectedDossiers,
   findConfidentCollectionVideo,
   getPatchDescriptor,
@@ -92,15 +93,21 @@ const suppressed = buildFeaturedPlaylist(liveVideos, "13.01", new Set([liveVideo
 assert(!suppressed.items.some(item => item.id === liveVideos[0].id), "A suppressed real video must disappear from the rotation immediately.");
 
 const classifiedPlaylist = buildFeaturedPlaylist([
-  { id: "news-short", title: "Iso and Yoru buffs in Patch 13.01", channelKind: "official", isShort: true, publishedAt: "2026-07-18T12:00:00Z" },
-  { id: "past-live", title: "Ranked Block Coaching !livecoach", channelKind: "creator", isShort: false, isVod: true, durationSeconds: 7200, publishedAt: "2026-07-17T12:00:00Z" },
-  { id: "regular-short", title: "Three clean movement tips", channelKind: "creator", isShort: true, publishedAt: "2026-07-16T12:00:00Z" }
+  { id: "news-short", title: "Iso and Yoru buffs in Patch 13.01", channelKind: "official", isShort: true, hasStructuralMediaMetadata: true, publishedAt: "2026-07-18T12:00:00Z" },
+  { id: "past-live", title: "Ranked Block Coaching", channelKind: "creator", isShort: false, wasLive: true, durationSeconds: 7200, hasStructuralMediaMetadata: true, publishedAt: "2026-07-17T12:00:00Z" },
+  { id: "long-guide", title: "Ranked Block Coaching !livecoach", channelKind: "creator", isShort: false, wasLive: false, durationSeconds: 7200, hasStructuralMediaMetadata: true, publishedAt: "2026-07-16T18:00:00Z" },
+  { id: "feed-fallback", title: "Free Valorant Tracker Reviews", channelKind: "creator", isShort: false, durationSeconds: 7200, hasStructuralMediaMetadata: false, publishedAt: "2026-07-16T15:00:00Z" },
+  { id: "twitch-123456", upstreamId: "123456", title: "Subroza ranked", channelKind: "creator", platform: "twitch", sourceType: "twitch-archive", isVod: true, hasStructuralMediaMetadata: true, publishedAt: "2026-07-16T13:00:00Z" },
+  { id: "regular-short", title: "Three clean movement tips", channelKind: "creator", isShort: true, hasStructuralMediaMetadata: true, publishedAt: "2026-07-16T12:00:00Z" }
 ], "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
 assert.deepEqual(
   classifiedPlaylist.items.map(item => item.topicType),
-  ["News", "VODs", "YT Shorts"],
-  "Past broadcasts and news shorts must leave General and remain exclusive from YT Shorts."
+  ["News", "Live/Streaming", "General", "Live/Streaming", "Live/Streaming", "YT Shorts"],
+  "Only structural broadcasts or explicitly reviewed feed fallbacks may enter Live/Streaming."
 );
+assert.equal(classifiedPlaylist.items.find(item => item.id === "long-guide")?.needsContentReview, false, "A metadata-confirmed long guide must not be mislabeled as a VOD from its title.");
+assert.equal(classifiedPlaylist.items.find(item => item.id === "feed-fallback")?.needsContentReview, true, "A title-only fallback must be flagged for content review.");
+assert.equal(classifiedPlaylist.items.find(item => item.id === "twitch-123456")?.classificationReason, "twitch-archive", "A Twitch archive must carry structural source provenance.");
 
 class MemoryKv {
   constructor() { this.values = new Map(); }
@@ -134,12 +141,38 @@ globalThis.fetch = async (input, init = {}) => {
       { id: "stream-2", user_login: "hiko", user_name: "Hiko", game_name: "Other Game", type: "live", title: "Variety", viewer_count: 100, thumbnail_url: "https://example.com/{width}x{height}.jpg", started_at: "2026-07-18T12:00:00Z" }
     ] }), { status: 200, headers: { "Content-Type": "application/json" } });
   }
+  if (url.startsWith("https://api.twitch.tv/helix/users?")) {
+    assert.match(url, /login=Subroza/);
+    return new Response(JSON.stringify({ data: [
+      { id: "100", login: "subroza", display_name: "Subroza" }
+    ] }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+  if (url.startsWith("https://api.twitch.tv/helix/videos?")) {
+    assert.match(url, /user_id=100/);
+    assert.match(url, /type=archive/);
+    return new Response(JSON.stringify({ data: [
+      { id: "987654321", user_id: "100", user_name: "Subroza", title: "Radiant ranked session", description: "", created_at: "2026-07-18T10:00:00Z", published_at: "2026-07-18T10:00:00Z", url: "https://www.twitch.tv/videos/987654321", thumbnail_url: "https://example.com/%{width}x%{height}.jpg", duration: "2h14m8s", type: "archive" }
+    ] }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
   return fetchBeforeTwitchCheck(input, init);
 };
 try {
   const twitchStreams = await fetchTrustedTwitchStreams({ CONTENT_AUTOMATION: twitchKv, TWITCH_CLIENT_ID: "test-client", TWITCH_CLIENT_SECRET: "test-secret" });
   assert.deepEqual(twitchStreams.map(stream => stream.channel), ["Subroza"], "Only live VALORANT-tagged Twitch streams may surface.");
   assert.equal(twitchStreams[0].thumbnail, "https://example.com/640x360.jpg");
+  const twitchVods = await fetchTrustedTwitchVods({ CONTENT_AUTOMATION: twitchKv, TWITCH_CLIENT_ID: "test-client", TWITCH_CLIENT_SECRET: "test-secret" });
+  assert.equal(twitchVods.length, 1, "A real Helix archive response must create one Playlist item.");
+  assert.deepEqual({
+    topicType: buildFeaturedPlaylist(twitchVods, "13.01").items[0]?.topicType,
+    sourceType: twitchVods[0].sourceType,
+    durationSeconds: twitchVods[0].durationSeconds,
+    thumbnail: twitchVods[0].thumbnail
+  }, {
+    topicType: "Live/Streaming",
+    sourceType: "twitch-archive",
+    durationSeconds: 8048,
+    thumbnail: "https://example.com/640x360.jpg"
+  });
 } finally {
   globalThis.fetch = fetchBeforeTwitchCheck;
 }
