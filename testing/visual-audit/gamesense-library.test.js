@@ -40,7 +40,7 @@ function startServer() {
             platform: index === 5 ? "twitch" : "youtube",
             upstreamId: index === 5 ? "1234567890" : "",
             sourceType: index === 2 ? "youtube-vod" : index === 5 ? "twitch-archive" : "creator-guide",
-            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "Live/Streaming"][index],
+            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "VOD's"][index],
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/${image}`,
             url: index === 5 ? "https://www.twitch.tv/videos/1234567890" : `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
             isNewThisWeek: true,
@@ -393,7 +393,8 @@ async function run() {
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Breeze map guide/i);
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="Live/Streaming"]').click();
-    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
+    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Charla7an.*412 watching/is);
+    assert.doesNotMatch(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="All"]').click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 6, "All must render every Playlist item without filtering.");
     await desktop.locator(".gamesense-back").click();

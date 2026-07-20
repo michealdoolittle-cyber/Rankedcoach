@@ -160,21 +160,30 @@ function hasNewsCue(video = {}, sourceType = "") {
 }
 
 function getLiveStreamingClassification(video = {}) {
+  if (video.isLive === true) {
+    return Object.freeze({ matches: true, confidence: "verified", reason: "current-live-signal" });
+  }
   if (video.sourceType === "twitch-archive" || (video.platform === "twitch" && video.isVod === true)) {
-    return Object.freeze({ matches: true, confidence: "verified", reason: "twitch-archive" });
+    return Object.freeze({ matches: false, confidence: "verified", reason: "twitch-archive-vod" });
   }
   if (video.wasLive === true) {
-    return Object.freeze({ matches: true, confidence: "verified", reason: "youtube-live-metadata" });
+    return Object.freeze({ matches: false, confidence: "verified", reason: "youtube-vod-metadata" });
   }
   if (video.hasStructuralMediaMetadata === true || Number(video.durationSeconds || 0) < 1800) {
     return Object.freeze({ matches: false, confidence: "verified", reason: "not-an-archive" });
   }
-  const inferred = /(?:\bvod\s*reviews?\b|!vodreviews?\b|!livecoach\b|\branked block coaching\b|\bfree valorant tracker reviews\b)/i.test(String(video.title || ""));
   return Object.freeze({
-    matches: inferred,
-    confidence: inferred ? "low" : "unclassified",
-    reason: inferred ? "title-fallback" : "no-archive-signal"
+    matches: false,
+    confidence: "unclassified",
+    reason: "no-current-live-signal"
   });
+}
+
+function isPlaylistVodSource(video = {}, sourceType = "") {
+  return Boolean(video.isVod || video.wasLive)
+    || sourceType === "twitch-archive"
+    || sourceType === "youtube-vod"
+    || (video.platform === "twitch" && /twitch\.tv\/videos\/\d+/i.test(String(video.url || "")));
 }
 
 async function enrichYouTubeVideos(videos = [], apiKey = "") {
@@ -278,6 +287,8 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
     const streaming = getLiveStreamingClassification({ ...video, sourceType });
     const topicType = streaming.matches
       ? "Live/Streaming"
+      : isPlaylistVodSource(video, sourceType)
+        ? "VOD's"
       : (sourceType === "riot-official" || sourceType === "patch-breakdown") && hasNewsCue(video, sourceType)
         ? "News"
         : video.isShort

@@ -546,6 +546,7 @@
     const isYouTube = String(video.platform || "youtube").toLowerCase() === "youtube";
     const twitchVideoId = String(video.upstreamId || "").trim() || String(video.url || "").match(/twitch\.tv\/videos\/(\d+)/i)?.[1] || "";
     const sourceLabel = video.isShort ? "YouTube Short" : String(video.sourceType || "creator-guide").replace(/-/g, " ");
+    const displayTopic = isPlaylistVod(video) ? "VOD's" : String(video.topicType || "");
     const thumbAction = isYouTube && /^[A-Za-z0-9_-]{11}$/.test(String(video.id || ""))
       ? `data-gamesense-play-video="${escapeHtml(video.id)}"`
       : /^\d+$/.test(twitchVideoId)
@@ -553,7 +554,7 @@
       : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
     return `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}">
       <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}">${renderMediaThumbnail(video.thumbnail)}<i aria-hidden="true"></i></button>
-      <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${video.topicType ? ` | ${escapeHtml(video.topicType)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch on YouTube" : "Watch on Twitch"}</a></div>
+      <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${displayTopic ? ` | ${escapeHtml(displayTopic)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch on YouTube" : "Watch on Twitch"}</a></div>
     </article>`;
   }
 
@@ -670,10 +671,13 @@
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
     const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
+    const liveStreams = featuredPlaylist?.liveStreams || [];
     const visible = activeFilter === "All"
       ? items
       : activeFilter === "Home"
         ? []
+        : activeFilter === "Live/Streaming"
+          ? liveStreams
         : activeFilter === "VOD's"
           ? items.filter(isPlaylistVod)
           : items.filter(item => item.topicType === activeFilter);
@@ -685,7 +689,11 @@
       <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
         ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}">${filter === "Home" ? renderPlaylistHomeIcon() : ""}<span>${escapeHtml(filter)}</span></button>`).join("")}
       </div>
-      ${activeFilter === "Home" ? renderPlaylistHome(items) : `<div class="gamesense-playlist-grid">${visible.length ? visible.map(renderPlaylistVideoCard).join("") : `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>`}</div>`}`;
+      ${activeFilter === "Home"
+        ? renderPlaylistHome(items)
+        : activeFilter === "Live/Streaming"
+          ? `<div class="gamesense-playlist-grid gamesense-live-grid">${visible.length ? visible.map(renderPlaylistLiveCard).join("") : `<p class="gamesense-playlist-empty">No verified VALORANT streams are live right now.</p>`}</div>`
+          : `<div class="gamesense-playlist-grid">${visible.length ? visible.map(renderPlaylistVideoCard).join("") : `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>`}</div>`}`;
   }
 
   function renderGallery(topic) {

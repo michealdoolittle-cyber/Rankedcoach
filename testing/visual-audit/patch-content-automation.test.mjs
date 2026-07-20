@@ -104,15 +104,15 @@ const classifiedPlaylist = buildFeaturedPlaylist([
 ], "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
 assert.deepEqual(
   classifiedPlaylist.items.map(item => item.topicType),
-  ["News", "General", "Role", "Live/Streaming", "General", "Live/Streaming", "Live/Streaming", "YT Shorts"],
-  "Only structural broadcasts or explicitly reviewed feed fallbacks may enter Live/Streaming."
+  ["News", "General", "Role", "VOD's", "General", "General", "VOD's", "YT Shorts"],
+  "Only videos with a current live signal may enter Live/Streaming; archives belong in VOD's."
 );
 assert.equal(classifiedPlaylist.items.find(item => item.id === "creator-smurfing-guide")?.sourceType, "creator-guide", "Creator channels must remain structurally classified as guides.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "creator-smurfing-guide")?.topicType, "General", "Creator smurfing phrasing must not be misrouted into News.");
 assert.notEqual(classifiedPlaylist.items.find(item => item.id === "creator-buff-guide")?.topicType, "News", "Creator buff wording must not be misrouted into News.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "long-guide")?.needsContentReview, false, "A metadata-confirmed long guide must not be mislabeled as a VOD from its title.");
-assert.equal(classifiedPlaylist.items.find(item => item.id === "feed-fallback")?.needsContentReview, true, "A title-only fallback must be flagged for content review.");
-assert.equal(classifiedPlaylist.items.find(item => item.id === "twitch-123456")?.classificationReason, "twitch-archive", "A Twitch archive must carry structural source provenance.");
+assert.equal(classifiedPlaylist.items.find(item => item.id === "feed-fallback")?.needsContentReview, false, "A title-only fallback must not be treated as live or queued for Live/Streaming review.");
+assert.equal(classifiedPlaylist.items.find(item => item.id === "twitch-123456")?.classificationReason, "twitch-archive-vod", "A Twitch archive must carry structural VOD provenance.");
 
 class MemoryKv {
   constructor() { this.values = new Map(); }
@@ -173,7 +173,7 @@ try {
     durationSeconds: twitchVods[0].durationSeconds,
     thumbnail: twitchVods[0].thumbnail
   }, {
-    topicType: "Live/Streaming",
+    topicType: "VOD's",
     sourceType: "twitch-archive",
     durationSeconds: 8048,
     thumbnail: "https://example.com/640x360.jpg"
