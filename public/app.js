@@ -207,6 +207,7 @@ const DAILY_WARMUP_DRILL_ALIASES = Object.freeze({
   "gunfight-hygiene": "burst-peeking"
 });
 let dailyWarmupPromptTimer = 0;
+let dailyWarmupPromptDeferrals = 0;
 let profileStreakAnnouncementTimer = 0;
 const warmupVerificationInFlight = new Set();
 
@@ -690,6 +691,8 @@ function openDailyWarmupCheck() {
   return openDailyTrainingMenu({ mode: "warmup", date: today, dismissBehavior: "skip" });
 }
 
+const DAILY_WARMUP_ENTRANCE_DEFERRAL_LIMIT = 8;
+
 function canOpenDailyWarmupCheck() {
   if (document.documentElement?.classList.contains("app-booting")) return false;
   const entranceState = window.RankedCoachDailyEntrance?.getState?.();
@@ -698,6 +701,17 @@ function canOpenDailyWarmupCheck() {
     || entranceState?.activePage
     || Number(entranceState?.pendingPages || 0) > 0
   ) return false;
+  // The entrance animation must get its turn on this page first. Checking only
+  // "is it active right now" let the warm-up modal win the boot-time race and
+  // open before entrance ever signalled ready, permanently blocking entrance
+  // behind a modal that only closes on manual dismissal (confirmed live 2026-07-19).
+  if (entranceState && dailyWarmupPromptDeferrals < DAILY_WARMUP_ENTRANCE_DEFERRAL_LIMIT) {
+    const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "";
+    const entranceDaily = entranceState.daily;
+    const entranceHasHadItsTurn = entranceState.ready
+      && (entranceDaily?.skipped || !pageId || entranceDaily?.seenPages?.includes(pageId));
+    if (!entranceHasHadItsTurn) return false;
+  }
   if (!hasCompletedAppEntryChoice?.()) return false;
   const activePage = getActivePageElement?.()?.id || "";
   if (!["page-home", "page-logging"].includes(activePage)) return false;
@@ -706,15 +720,25 @@ function canOpenDailyWarmupCheck() {
   return !blockingModal;
 }
 
+function queueDailyWarmupPromptAttempt(delay) {
+  dailyWarmupPromptTimer = window.setTimeout(() => {
+    dailyWarmupPromptTimer = 0;
+    if (canOpenDailyWarmupCheck()) {
+      dailyWarmupPromptDeferrals = 0;
+      openDailyWarmupCheck();
+    } else if (["page-home", "page-logging"].includes(getActivePageElement?.()?.id || "")) {
+      dailyWarmupPromptDeferrals += 1;
+      queueDailyWarmupPromptAttempt(700);
+    }
+  }, Math.max(100, delay));
+}
+
 function scheduleDailyWarmupCheck(delay = 700) {
   if (dailyWarmupPromptTimer) window.clearTimeout(dailyWarmupPromptTimer);
   const profile = getActiveProfile?.();
   if (!profile || getDailyWarmupPromptDate(profile) === formatLocalDateKey()) return;
-  dailyWarmupPromptTimer = window.setTimeout(() => {
-    dailyWarmupPromptTimer = 0;
-    if (canOpenDailyWarmupCheck()) openDailyWarmupCheck();
-    else if (["page-home", "page-logging"].includes(getActivePageElement?.()?.id || "")) scheduleDailyWarmupCheck(700);
-  }, Math.max(100, delay));
+  dailyWarmupPromptDeferrals = 0;
+  queueDailyWarmupPromptAttempt(delay);
 }
 
 function skipDailyWarmupCheck() {
@@ -50847,7 +50871,6 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
   const weeklyCards = weekly.cards || {};
   const weeklyCandidates = model?.scoring?.weeklyCandidates || [];
   const primaryCandidate = weeklyCandidates[0] || null;
-  const weeklyRoleKey = String(model?.scoring?.activeRoleName || "").toLowerCase();
   const leadInsight = topInsights[0] || cachedInsights[0] || null;
 
   const applyConfidencePillClass = (el, confidence = {}) => {
@@ -50893,13 +50916,9 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
           : "confidence-low";
       const pillBody = normalizeRankedCoachCopy(candidate?.summary || candidate?.label || meta.fallback);
       const isAvailable = candidate?.available !== false;
-      const roleBadge = ROLE_ICON_MAP[weeklyRoleKey]
-        ? `<span class="coaching-role-badge role-${escapeHtml(weeklyRoleKey)}" title="${escapeHtml(formatReadableLabel(weeklyRoleKey))} role"><img src="${escapeHtml(ROLE_ICON_MAP[weeklyRoleKey])}" alt=""></span>`
-        : "";
 
       return `
         <button class="weekly-focus-pill${isAvailable ? "" : " is-disabled"}" type="button" data-weekly-key="${escapeHtml(candidate?.key || "")}" title="${escapeHtml(candidate?.sourceLabel || confidenceConfig.detail)}" ${isAvailable ? "" : "disabled aria-disabled=\"true\""}>
-          ${roleBadge}
           <div class="weekly-focus-pill-head">
             <span class="weekly-focus-key">${escapeHtml(meta.title)}</span>
             <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>

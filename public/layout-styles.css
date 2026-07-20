@@ -1616,10 +1616,6 @@ body:is(
     height:21px !important;
   }
 
-  html body.is-mobile-layout #page-home .weekly-focus-pill .coaching-role-badge{
-    display:none !important;
-  }
-
   html body.is-mobile-layout #page-home .weekly-focus-pill{
     display:grid !important;
     grid-template-columns:minmax(0,1fr) !important;

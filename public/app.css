@@ -55608,7 +55608,7 @@ html body #editProfileModal #editProfileThemeGallery .theme-gallery-grid{
 .coaching-role-badge{position:absolute;top:8px;right:8px;display:grid;place-items:center;width:28px;height:28px;border:1px solid color-mix(in srgb,var(--role-color,#94a3b8) 64%,transparent);border-radius:8px;background:color-mix(in srgb,var(--role-color,#94a3b8) 16%,rgba(2,6,23,.9));}
 .coaching-role-badge img{width:18px;height:18px;object-fit:contain;}
 .coaching-role-badge.role-duelist{--role-color:#ff4655;}.coaching-role-badge.role-controller{--role-color:#a855f7;}.coaching-role-badge.role-initiator{--role-color:#3b82f6;}.coaching-role-badge.role-sentinel{--role-color:#22c55e;}
-.weekly-focus-pill:has(.coaching-role-badge),.timeline-pill:has(.coaching-role-badge){padding-right:44px !important;}
+.timeline-pill:has(.coaching-role-badge){padding-right:44px !important;}
 .coaching-games-used-list{display:grid;gap:6px;max-height:178px;margin-top:9px;overflow:auto;padding-right:4px;}
 .coaching-games-used-item{display:grid;grid-template-columns:auto auto;gap:3px 9px;padding:8px 9px;border:1px solid rgba(148,163,184,.16);border-radius:8px;background:rgba(2,6,23,.45);}
 .coaching-games-used-item strong{color:#f8fafc;font-size:11px;}.coaching-games-used-item span{justify-self:end;color:#94a3b8;font-size:10px;}.coaching-games-used-item small{grid-column:1/-1;color:#cbd5e1;font-size:10px;}
