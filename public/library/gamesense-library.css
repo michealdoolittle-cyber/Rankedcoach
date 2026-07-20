@@ -3300,7 +3300,10 @@ body.gamesense-media-open{overflow:hidden !important;}
 /* 2026-07-20: readable weapon damage cards with target-anchored connector lines. */
 .gamesense-damage-target{
   --dummy-center-x:36%;
-  --damage-chip-right:clamp(18px,5%,34px);
+  --dummy-width:clamp(128px,34%,190px);
+  --dummy-half-width:clamp(64px,17%,95px);
+  --dummy-visible-inset:clamp(36px,9.5%,54px);
+  --damage-chip-right:max(12px,calc(var(--dummy-center-x) - var(--dummy-half-width) + var(--dummy-visible-inset)));
   --hit-head-y:19%;
   --hit-body-y:50%;
   --hit-legs-y:82%;
@@ -3315,7 +3318,7 @@ body.gamesense-media-open{overflow:hidden !important;}
 .gamesense-damage-target .gamesense-target-dummy{
   left:var(--dummy-center-x) !important;
   bottom:8px !important;
-  width:clamp(128px,34%,190px) !important;
+  width:var(--dummy-width) !important;
   height:calc(100% - 16px) !important;
   object-fit:contain !important;
   object-position:center !important;
@@ -3380,16 +3383,19 @@ body.gamesense-media-open{overflow:hidden !important;}
 
   html.is-mobile-layout .gamesense-damage-target{
     --dummy-center-x:36%;
-    --damage-chip-right:9px;
+    --dummy-width:60%;
+    --dummy-half-width:30%;
+    --dummy-visible-inset:16.875%;
+    --damage-chip-right:max(9px,calc(var(--dummy-center-x) - var(--dummy-half-width) + var(--dummy-visible-inset)));
     --hit-head-y:18%;
     --hit-body-y:50%;
     --hit-legs-y:82%;
   }
 
-  html.is-mobile-layout .gamesense-damage-line{right:9px;}
+  html.is-mobile-layout .gamesense-damage-line{right:var(--damage-chip-right);}
   html.is-mobile-layout .gamesense-damage-target .gamesense-target-dummy{
     left:var(--dummy-center-x) !important;
-    width:60% !important;
+    width:var(--dummy-width) !important;
     transform:translateX(-50%) !important;
   }
 }
