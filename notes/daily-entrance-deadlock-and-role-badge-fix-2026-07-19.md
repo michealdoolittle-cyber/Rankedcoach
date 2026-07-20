@@ -1,6 +1,6 @@
 # Daily Entrance Deadlock + Weekly Focus Role Badge — Fixed Directly (2026-07-19)
 
-**Status:** Fixed, deployed, and verified against the real live production site (`rankedcoach.gg`) — not just local source reading. This took three passes in one session; the middle one was wrong and got reverted. The full story is below so it's clear what actually shipped and why.
+**Status:** Superseded for the entrance-animation path by the production-verified implementation in commits `7db6e9e`, `3904942`, `3a5aba9`, and `819bbd2`. The warm-up-first ordering remains correct, but the earlier delay-only fix did not prove the requested staged daily entrance by itself. The final live verification is recorded in `notes/daily-entrance-animation-fix-and-playlist-categorization-2026-07-19.md`.
 
 ---
 

@@ -1,10 +1,33 @@
 # Daily Entrance Animation Fix + Featured Playlist Source-Based Categorization (2026-07-19)
 
-**Status:** New directive. Two separate confirmed bugs — Michael verified both live. `notes/daily-entrance-animation-*` (the prior directive `daily-entrance-motion.js` was built against) reported "Shipped" but Michael confirmed zero animations play in the real app. Do not mark this done from a passing test run alone — the existing test suite for this feature has a confirmed blind spot (Section 1.3 below); fix that first, then use the fixed test to actually prove the real trigger path works.
+**Status:** Daily entrance animation and runtime-performance scope shipped and production-verified on 2026-07-20 in commits `7db6e9e`, `3904942`, `3a5aba9`, and `819bbd2`. Featured Playlist categorization remains a separate scope in Section 2; this status does not claim that work is complete.
 
 ---
 
 ## 1. Daily Entrance Animations — confirmed broken in production despite `public/daily-entrance-motion.js` existing and being wired in
+
+### 1.0 Final implementation and literal production proof (2026-07-20)
+
+The final root cause was broader than the original readiness race. Page content was not held by a durable state-driven warm-up gate, skip could race delayed child animations, and mobile Home animated `.home-middle-row` even though mobile CSS changes that wrapper to `display: contents`. That last wrapper has no render box, so its actual loadout, scoreboard, and Compass children appeared immediately even while event-only tests looked healthy.
+
+The shipped implementation now:
+
+- Keeps the active page blank and noninteractive until warm-up is saved or skipped, then releases each real parent card in the requested sequence.
+- Animates all five pages once per identity/day, with desktop row order and mobile top-to-bottom visual order.
+- Allows one pointer click anywhere to finish the sequence immediately, persist the daily skip, and cancel all delayed child work.
+- Pauses premium animated-theme effects during entrance and uses compositor-friendly theme animation afterward.
+- Defers Library collage/media work until the Library page is active.
+- Removes the obsolete 2.1 MB `public/agent-effects-data.js`, production loading of the unused sandbox FX engine/scaffold/data, a 16 ms debug interval/red-square probe, and a recurring mobile-shell polling timer. Standalone sandbox editing support remains intact.
+
+Literal production verification was run against `https://www.rankedcoach.gg/` on Worker version `8b03a449-76bf-43d0-af42-508855dea263` using `testing/visual-audit/production-daily-entrance-smoke.js`:
+
+- Desktop returning empty guest: warm-up gate held Home at `opacity: 0` and `pointer-events: none`; Home, Logging, Stats, Insights, and Library each showed staged partial screenshots and completed in order.
+- Mobile fresh demo guest at 390x844: Home parents appeared at increasing vertical positions `134, 467, 935, 1360, 1903, 2448`; the remaining pages also passed descending-order assertions.
+- The skip scenario completed with zero active animations, zero retained entrance animation states, zero pending pages, and an interactive Home page.
+- Both runs recorded zero console warnings/errors, zero failed responses, and zero HTTP responses at or above 400.
+- Human inspection of all 14 production screenshots confirmed the warm-up gate, blank/prepared parent shells, sequential partial states on every page, mobile descending order, and completed skip state.
+
+Supporting checks passed: syntax checks, `daily-entrance-audit.js`, `runtime-performance.test.js`, all scoped feature suites, the full 44-surface desktop/mobile visual audit, `git diff --check`, and the strict production smoke above.
 
 ### 1.1 What's actually there
 
