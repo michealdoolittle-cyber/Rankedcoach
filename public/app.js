@@ -12905,11 +12905,13 @@ function getDailyEntranceMotionContext() {
 }
 
 let dailyEntranceMotionReadyTimer = 0;
+let dailyEntranceMotionFirstAttemptAt = 0;
 
 function notifyDailyEntranceMotionReady() {
   const controller = window.RankedCoachDailyEntrance;
   const context = getDailyEntranceMotionContext();
   if (!controller || !context.userId) return;
+  if (!dailyEntranceMotionFirstAttemptAt) dailyEntranceMotionFirstAttemptAt = Date.now();
   const appVeil = document.getElementById("appLoadingVeil");
   const loginOverlay = document.getElementById("loginInitOverlay");
   const warmupOverlay = document.getElementById("dailyWarmupModal");
@@ -12926,13 +12928,24 @@ function notifyDailyEntranceMotionReady() {
     || warmupOverlay?.classList.contains("is-closing")
     || warmupOverlay?.getAttribute("aria-hidden") === "false"
   );
-  if (hasBlockingVeil) {
+  // The daily warm-up check schedules itself independently (scheduleDailyWarmupCheck,
+  // 700ms) and only becomes visible to hasBlockingVeil above once it actually opens.
+  // Without a head start, entrance's own trigger (which usually resolves faster) wins
+  // the race purely by chance and the warm-up message shows up after the animation
+  // instead of before it - confirmed live 2026-07-19. Give warm-up a guaranteed window
+  // to open first whenever it's still eligible to show today.
+  const warmupProfile = getActiveProfile?.();
+  const warmupAlreadyResolvedToday = !warmupProfile || getDailyWarmupPromptDate(warmupProfile) === formatLocalDateKey();
+  const stillWithinWarmupHeadStart = !warmupAlreadyResolvedToday
+    && (Date.now() - dailyEntranceMotionFirstAttemptAt) < 900;
+  if (hasBlockingVeil || stillWithinWarmupHeadStart) {
     window.clearTimeout(dailyEntranceMotionReadyTimer);
     dailyEntranceMotionReadyTimer = window.setTimeout(notifyDailyEntranceMotionReady, 120);
     return;
   }
   window.clearTimeout(dailyEntranceMotionReadyTimer);
   dailyEntranceMotionReadyTimer = 0;
+  dailyEntranceMotionFirstAttemptAt = 0;
   controller.setSessionReady(context);
   const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "home";
   controller.activatePage(pageId, context);
