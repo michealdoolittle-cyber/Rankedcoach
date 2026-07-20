@@ -3299,7 +3299,8 @@ body.gamesense-media-open{overflow:hidden !important;}
 
 /* 2026-07-20: readable weapon damage cards with target-anchored connector lines. */
 .gamesense-damage-target{
-  --dummy-center-x:30%;
+  --dummy-center-x:36%;
+  --damage-chip-right:clamp(18px,5%,34px);
   --hit-head-y:19%;
   --hit-body-y:50%;
   --hit-legs-y:82%;
@@ -3312,19 +3313,20 @@ body.gamesense-media-open{overflow:hidden !important;}
 }
 
 .gamesense-damage-target .gamesense-target-dummy{
-  left:8px !important;
+  left:var(--dummy-center-x) !important;
   bottom:8px !important;
-  width:54% !important;
+  width:clamp(128px,34%,190px) !important;
   height:calc(100% - 16px) !important;
   object-fit:contain !important;
   object-position:center !important;
+  transform:translateX(-50%) !important;
   filter:drop-shadow(0 0 12px color-mix(in srgb,var(--gamesense-cool,#58d4c8) 26%,transparent)) !important;
 }
 
 .gamesense-damage-line{
   position:absolute;
   left:var(--dummy-center-x);
-  right:8px;
+  right:var(--damage-chip-right);
   height:0;
   border-top:2px solid var(--gamesense-cool,#58d4c8);
   pointer-events:none;
@@ -3351,8 +3353,11 @@ body.gamesense-media-open{overflow:hidden !important;}
 .gamesense-damage-line.is-legs{top:var(--hit-legs-y);}
 
 .gamesense-damage-target span{
-  right:8px !important;
+  right:var(--damage-chip-right) !important;
   transform:translateY(-50%) !important;
+  justify-items:center !important;
+  text-align:center !important;
+  min-width:58px !important;
   z-index:2;
 }
 
@@ -3374,11 +3379,17 @@ body.gamesense-media-open{overflow:hidden !important;}
   }
 
   html.is-mobile-layout .gamesense-damage-target{
-    --dummy-center-x:34%;
+    --dummy-center-x:36%;
+    --damage-chip-right:9px;
     --hit-head-y:18%;
     --hit-body-y:50%;
     --hit-legs-y:82%;
   }
 
   html.is-mobile-layout .gamesense-damage-line{right:9px;}
+  html.is-mobile-layout .gamesense-damage-target .gamesense-target-dummy{
+    left:var(--dummy-center-x) !important;
+    width:60% !important;
+    transform:translateX(-50%) !important;
+  }
 }
