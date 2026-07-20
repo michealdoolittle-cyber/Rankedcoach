@@ -1124,7 +1124,7 @@
         ${ranges.map((range, index) => `<article class="gamesense-damage-target-row${index === 0 ? " is-mobile-range-active" : ""}" data-gamesense-damage-range-panel="${index}" role="tabpanel" aria-label="${escapeHtml(range.range)}: ${formatDamageValue(range.head)} head, ${formatDamageValue(range.body)} body, ${formatDamageValue(range.legs)} legs">
           <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
           <div class="gamesense-damage-target">
-            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260720-weapon-damage-03" alt="Front-facing generic target dummy with head, torso, and legs">
+            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260720-weapon-damage-04" alt="Front-facing generic target dummy with head, torso, and legs">
             <i class="gamesense-damage-line is-head" aria-hidden="true"></i>
             <i class="gamesense-damage-line is-body" aria-hidden="true"></i>
             <i class="gamesense-damage-line is-legs" aria-hidden="true"></i>
