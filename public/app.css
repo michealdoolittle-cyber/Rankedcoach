@@ -56526,16 +56526,16 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerfor
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
   grid-template-columns:minmax(0,1fr) minmax(108px,max-content) !important;
-  grid-template-rows:auto minmax(0,1fr) !important;
-  align-items:start !important;
+  grid-template-rows:auto auto minmax(0,1fr) !important;
+  align-items:stretch !important;
   column-gap:10px !important;
-  row-gap:5px !important;
+  row-gap:6px !important;
   min-height:150px !important;
 }
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-head{
   grid-column:2 !important;
-  grid-row:1 !important;
+  grid-row:1 / 4 !important;
   display:grid !important;
   grid-template-areas:"context" "tone" !important;
   grid-template-columns:max-content !important;
@@ -56566,24 +56566,30 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
 }
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-copy{
-  grid-column:1 !important;
-  grid-row:1 !important;
-  display:grid !important;
-  align-content:start !important;
-  justify-items:start !important;
-  min-height:0 !important;
-  gap:2px !important;
-  padding-top:0 !important;
+  display:contents !important;
 }
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-main-text{
+  grid-column:1 !important;
+  grid-row:1 !important;
   align-self:start !important;
+  min-width:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-sub-text{
+  grid-column:1 !important;
+  grid-row:2 !important;
+  align-self:start !important;
+  min-width:0 !important;
 }
 
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
-  grid-column:1 / -1 !important;
-  grid-row:2 !important;
-  align-self:stretch !important;
+  grid-column:1 !important;
+  grid-row:3 !important;
+  align-self:end !important;
+  min-width:0 !important;
+  margin:0 !important;
+  line-height:1.18 !important;
 }
 
 #page-stats .stats-map-image.stats-map-layout-image{

@@ -133,12 +133,34 @@ alter table public.account_security_preferences add column if not exists securit
 alter table public.account_security_preferences add column if not exists created_at timestamptz not null default now();
 alter table public.account_security_preferences add column if not exists updated_at timestamptz not null default now();
 
+create table if not exists public.crosshair_likes (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  crosshair_id text not null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, crosshair_id)
+);
+
+create index if not exists crosshair_likes_crosshair_idx
+  on public.crosshair_likes (crosshair_id);
+
+create table if not exists public.crosshair_favorites (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  crosshair_id text not null,
+  created_at timestamptz not null default now(),
+  primary key (user_id, crosshair_id)
+);
+
+create index if not exists crosshair_favorites_user_created_idx
+  on public.crosshair_favorites (user_id, created_at desc);
+
 alter table public.users_profiles enable row level security;
 alter table public.vip_app_state enable row level security;
 alter table public.reflection_logs enable row level security;
 alter table public.match_snapshots enable row level security;
 alter table public.bug_reports enable row level security;
 alter table public.account_security_preferences enable row level security;
+alter table public.crosshair_likes enable row level security;
+alter table public.crosshair_favorites enable row level security;
 
 drop policy if exists "users_profiles_select_own" on public.users_profiles;
 create policy "users_profiles_select_own"
@@ -253,4 +275,34 @@ create policy "account_security_preferences_update_own"
 drop policy if exists "account_security_preferences_delete_own" on public.account_security_preferences;
 create policy "account_security_preferences_delete_own"
   on public.account_security_preferences for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "crosshair_likes_select_public" on public.crosshair_likes;
+create policy "crosshair_likes_select_public"
+  on public.crosshair_likes for select
+  using (true);
+
+drop policy if exists "crosshair_likes_insert_own" on public.crosshair_likes;
+create policy "crosshair_likes_insert_own"
+  on public.crosshair_likes for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "crosshair_likes_delete_own" on public.crosshair_likes;
+create policy "crosshair_likes_delete_own"
+  on public.crosshair_likes for delete
+  using (auth.uid() = user_id);
+
+drop policy if exists "crosshair_favorites_select_own" on public.crosshair_favorites;
+create policy "crosshair_favorites_select_own"
+  on public.crosshair_favorites for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "crosshair_favorites_insert_own" on public.crosshair_favorites;
+create policy "crosshair_favorites_insert_own"
+  on public.crosshair_favorites for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "crosshair_favorites_delete_own" on public.crosshair_favorites;
+create policy "crosshair_favorites_delete_own"
+  on public.crosshair_favorites for delete
   using (auth.uid() = user_id);

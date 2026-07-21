@@ -256,7 +256,8 @@ async function run() {
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
-    assert.equal(await desktop.locator(".gamesense-topic-card").count(), 4);
+    assert.equal(await desktop.locator(".gamesense-topic-card").count(), 5);
+    assert.equal(await desktop.locator('[data-gamesense-topic="crosshairs"]').count(), 1);
     const topicCardHeights = await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.map(card => card.getBoundingClientRect().height));
     assert.ok(topicCardHeights.every(height => height >= 250), JSON.stringify(topicCardHeights));
     const topicAnimations = await desktop.locator(".gamesense-topic-card").evaluateAll(cards => cards.map(card => getComputedStyle(card).animationName));
@@ -265,7 +266,8 @@ async function run() {
     assert.ok(libraryViewAnimations.every(name => ["none", "gamesense-rise", "gamesense-selected-slide"].includes(name)), JSON.stringify(libraryViewAnimations));
     assert.equal(await desktop.locator(".gamesense-topic-number").count(), 0);
     assert.match(await desktop.locator(".gamesense-season-scope").innerText(), /Active Season.*Season 2026 Act 4.*Patch 13\.00/is);
-    assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 4);
+    assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 5);
+    assert.ok(await desktop.locator('[data-gamesense-topic="crosshairs"] .gamesense-crosshair-svg').count() >= 5);
     assert.equal(await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').count(), 13);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')].every(image => image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0));
     const mapTopicCollageState = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage').evaluate(collage => {
@@ -1329,7 +1331,7 @@ async function run() {
     }
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator(".gamesense-topic-card").count(), 4);
+    assert.equal(await desktop.locator(".gamesense-topic-card").count(), 5);
     assert.equal(await desktop.locator(".lens-modal-close").count(), 0);
 
     await desktop.click('.nav-btn[data-page="logging"]');
@@ -1399,7 +1401,8 @@ async function run() {
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
     await mobile.locator("#page-library.is-current-page").waitFor({ state: "visible" });
     await mobile.waitForTimeout(700);
-    assert.equal(await mobile.locator(".gamesense-topic-card").count(), 4);
+    assert.equal(await mobile.locator(".gamesense-topic-card").count(), 5);
+    assert.equal(await mobile.locator('[data-gamesense-topic="crosshairs"]').count(), 1);
     await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     await mobile.locator('[data-gamesense-topic="agents"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-agents-topic-mobile.png") });
     assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 18);
@@ -1935,7 +1938,7 @@ async function run() {
     await mobile.locator(".gamesense-skin-preview-overlay").waitFor({ state: "detached" });
     await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
     await mobile.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
-    assert.equal(await mobile.locator(".gamesense-topic-card").count(), 4);
+    assert.equal(await mobile.locator(".gamesense-topic-card").count(), 5);
     await mobile.waitForTimeout(3000);
     await mobile.screenshot({ path: path.join(__dirname, "tmp", "gamesense-mobile-360x740.png"), fullPage: true });
     await mobile.close();

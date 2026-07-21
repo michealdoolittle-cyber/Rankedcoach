@@ -1305,7 +1305,6 @@ body[data-layout-font-active="true"] :is(
    selector lists above. They intentionally reuse the same variables and keep
    nav/chart/meter exclusions untouched. */
 body:is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .compass-main,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1332,7 +1331,6 @@ body:is([data-layout-style],[data-layout-shape]) :is(
 }
 
 body:is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .compass-main,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1352,7 +1350,6 @@ body:is(
   [data-layout-style="hazardrim"],
   [data-layout-shape="hazardrim"]
 ) :is(
-  #page-home .compass-main,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1373,7 +1370,6 @@ body:is(
 }
 
 body[data-layout-texture] :is(
-  #page-home .compass-main,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1395,7 +1391,6 @@ body[data-layout-texture] :is(
 }
 
 body[data-layout-texture] :is(
-  #page-home .compass-main,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1409,7 +1404,6 @@ body[data-layout-texture] :is(
 
 body[data-layout-font-active="true"] :is(
   #page-home .compass-title,
-  #page-home .compass-main .card-title,
   #page-home .impact-card .timeline-title,
   #page-stats .stats-proof-card :is(strong,.card-title),
   #page-stats .stats-role-progress-card :is(strong,.card-title),
@@ -1450,12 +1444,14 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-lib
   grid-column:3 !important;
   grid-row:1 !important;
   align-content:center !important;
+  justify-items:center !important;
   min-width:0 !important;
+  text-align:center !important;
 }
 
-/* The compass header is informational chrome, not a shape surface. Keep it
-   out of layout styles even when an older saved theme still contains this
-   child target. */
+/* The compass internals are informational chrome, not a nested shape surface.
+   Keep saved theme-builder child targets from shrinking the playable compass. */
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main,
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-header{
   clip-path:none !important;
   -webkit-clip-path:none !important;
@@ -1468,6 +1464,8 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
   isolation:auto !important;
 }
 
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main::before,
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main::after,
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-header::before,
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-header::after{
   content:none !important;

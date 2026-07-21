@@ -14713,6 +14713,31 @@ let accountSecurityPreferencesMissingNoticeShown = false;
 let activeLogSessionFilter = "all";
 let activeLogCalendarMonth = new Date();
 
+globalThis.RankedCoachAuthBridge = Object.freeze({
+  getClient: () => supabaseClient,
+  getUser: () => currentAuthUser || null,
+  async getFreshUser() {
+    if (currentAuthUser) return currentAuthUser;
+    if (!supabaseClient?.auth?.getUser) return null;
+    try {
+      const { data: { user } = {} } = await supabaseClient.auth.getUser();
+      return user || null;
+    } catch (_error) {
+      return null;
+    }
+  },
+  promptSignIn(message = "Sign in to save this RankedCoach action.") {
+    if (currentAuthUser) return true;
+    setAuthPanel("login");
+    const title = document.getElementById("authModalTitle");
+    if (title) title.textContent = message;
+    const closeBtn = document.getElementById("authModalClose");
+    if (closeBtn) closeBtn.style.display = "";
+    showModalById("authModal");
+    return false;
+  }
+});
+
 function markAccountStateLoadComplete() {
   lastAccountStateLoadAt = Date.now();
 }

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home", crosshairTab: "All", crosshairSort: "desc" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -19,8 +19,100 @@
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
     weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." },
-    playlist: { label: "Playlist", copy: "Current patch reads and trusted coaching videos, credited to their creators." }
+    playlist: { label: "Playlist", copy: "Current patch reads and trusted coaching videos, credited to their creators." },
+    crosshairs: { label: "Crosshairs", copy: "Pro crosshair codes, rendered previews, likes, and saved favorites." }
   };
+  const crosshairTabs = Object.freeze(["All", "Top 30 Popular", "Pro's", "Favorites"]);
+  const valorantCrosshairColors = Object.freeze({
+    "0": "#ffffff",
+    "1": "#00ff00",
+    "2": "#dfff00",
+    "3": "#a6ff00",
+    "4": "#ffff00",
+    "5": "#00ffff",
+    "6": "#ff00ff",
+    "7": "#ff0000",
+    "8": "#ffffff"
+  });
+  const crosshairSeedEntries = Object.freeze([
+    {
+      id: "tenz-2026-cyan",
+      player: "TenZ",
+      team: "T1 / Creator",
+      type: "Pro",
+      code: "0;s;1;P;c;5;o;0;f;0;0l;2;0v;2;0g;1;0o;1;0a;1;0f;0;1b;0",
+      sourceName: "ProSettings",
+      sourceUrl: "https://prosettings.net/players/tenz/",
+      photo: "https://prosettings.net/wp-content/uploads/tenz-220x220-fitcontain-q99-gb283-s1.png",
+      tags: ["cyan", "compact", "inner lines"]
+    },
+    {
+      id: "zekken-2026-green-dot",
+      player: "zekken",
+      team: "Sentinels",
+      type: "Pro",
+      code: "0;s;1;P;c;1;t;2;o;1;d;1;0b;0;1b;0;S;b;1;c;8;s;0.823",
+      sourceName: "ProSettings",
+      sourceUrl: "https://prosettings.net/players/zekken/",
+      photo: "https://prosettings.net/wp-content/uploads/zekken-220x220-fitcontain-q99-gb283-s1.png",
+      tags: ["green", "dot", "outline"]
+    },
+    {
+      id: "f0rsaken-2026-white",
+      player: "f0rsakeN",
+      team: "Paper Rex",
+      type: "Pro",
+      code: "0;p;0;c;1;s;1;P;h;0;f;0;s;0;0l;3;0v;3;0g;1;0o;0;0a;1;0f;0;1b;0;A;o;1;d;1;0b;0;1b;0;S;d;0",
+      sourceName: "ProSettings",
+      sourceUrl: "https://prosettings.net/players/f0rsaken/",
+      photo: "https://prosettings.net/wp-content/uploads/f0rsaken-220x220-fitcontain-q99-gb283-s1.png",
+      tags: ["white", "tight", "inner lines"]
+    },
+    {
+      id: "jinggg-2026-green",
+      player: "Jinggg",
+      team: "Paper Rex",
+      type: "Pro",
+      code: "0;s;1;P;c;1;o;1;0t;1;0l;2;0o;2;0a;1;0f;0;1b;0;S;c;5",
+      sourceName: "PCGamesN",
+      sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
+      photo: "https://prosettings.net/wp-content/uploads/jinggg-220x220-fitcontain-q99-gb283-s1.png",
+      tags: ["green", "short lines", "entry"]
+    },
+    {
+      id: "something-2026-white",
+      player: "something",
+      team: "Paper Rex",
+      type: "Pro",
+      code: "0;P;o;0.619;d;1;f;0;s;0;0t;1;0l;0;0o;2;0a;1;0f;0;1b;0",
+      sourceName: "PCGamesN",
+      sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
+      photo: "https://prosettings.net/wp-content/uploads/something-220x220-fitcontain-q99-gb283-s1.png",
+      tags: ["white", "dot", "minimal"]
+    },
+    {
+      id: "boaster-2026-green-dot",
+      player: "Boaster",
+      team: "Fnatic",
+      type: "Pro",
+      code: "0;s;1;P;c;1;o;1;d;1;0l;0;0o;2;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;S;c;1;o;1",
+      sourceName: "PCGamesN",
+      sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
+      photo: "https://prosettings.net/wp-content/uploads/boaster-220x220-fitcontain-q99-gb283-s1.png",
+      tags: ["green", "dot", "igl"]
+    }
+  ]);
+  const crosshairBackendState = {
+    loading: false,
+    loaded: false,
+    unavailable: false,
+    status: "",
+    likes: new Map(),
+    liked: new Set(),
+    favorites: new Set(),
+    pending: new Set()
+  };
+  const CROSSHAIR_BACKEND_FLAG_KEY = "rankedcoach_crosshair_backend_enabled_v1";
   const roleIconMap = Object.freeze({
     controller: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/role_controller.png",
     duelist: "https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/duelist_role.png",
@@ -301,7 +393,371 @@
     }
   }
 
+  function getCrosshairAuthBridge() {
+    return globalThis.RankedCoachAuthBridge || null;
+  }
+
+  function getCrosshairClient() {
+    const client = getCrosshairAuthBridge()?.getClient?.();
+    return client?.from ? client : null;
+  }
+
+  async function getCrosshairUser() {
+    const bridge = getCrosshairAuthBridge();
+    return bridge?.getFreshUser ? await bridge.getFreshUser() : bridge?.getUser?.() || null;
+  }
+
+  function isCrosshairBackendEnabled() {
+    return globalThis.RankedCoachCrosshairBackendEnabled === true
+      || globalThis.VIP_SUPABASE_CONFIG?.crosshairBackendEnabled === true
+      || localStorage.getItem(CROSSHAIR_BACKEND_FLAG_KEY) === "true";
+  }
+
+  function getCrosshairEntry(id = "") {
+    return crosshairSeedEntries.find(entry => entry.id === id) || null;
+  }
+
+  function getCrosshairLikeCount(id = "") {
+    return Number(crosshairBackendState.likes.get(id) || 0);
+  }
+
+  function normalizeCrosshairTab(tab = "") {
+    return crosshairTabs.includes(tab) ? tab : "All";
+  }
+
+  function getCrosshairInitials(name = "") {
+    const cleaned = String(name || "").replace(/[^A-Za-z0-9\s]/g, " ").trim();
+    const words = cleaned.split(/\s+/).filter(Boolean);
+    if (!words.length) return "RC";
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return words.slice(0, 2).map(word => word[0]).join("").toUpperCase();
+  }
+
+  function parseCrosshairCode(code = "") {
+    const sections = { global: {}, P: {}, A: {}, S: {} };
+    let target = sections.global;
+    const tokens = String(code || "").split(";").map(part => part.trim()).filter(part => part !== "");
+    for (let index = 0; index < tokens.length; index += 1) {
+      const key = tokens[index];
+      if (key === "P" || key === "A" || key === "S") {
+        target = sections[key];
+        continue;
+      }
+      const value = tokens[index + 1];
+      if (value === undefined) continue;
+      target[key] = value;
+      index += 1;
+    }
+    return { ...sections.global, ...sections.P };
+  }
+
+  function readCrosshairNumber(settings = {}, key = "", fallback = 0) {
+    const value = Number(settings[key]);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function getCrosshairColor(settings = {}) {
+    const custom = String(settings.u || "").replace(/^#/, "").trim();
+    if (/^[0-9a-f]{6,8}$/i.test(custom)) return `#${custom.slice(0, 6)}`;
+    return valorantCrosshairColors[String(settings.c ?? "0")] || valorantCrosshairColors["0"];
+  }
+
+  function getCrosshairLineSettings(settings = {}, prefix = "0") {
+    const length = Math.max(
+      readCrosshairNumber(settings, `${prefix}l`, 0),
+      readCrosshairNumber(settings, `${prefix}v`, 0)
+    );
+    const thickness = Math.max(1, readCrosshairNumber(settings, `${prefix}t`, readCrosshairNumber(settings, `${prefix}g`, 1)));
+    const offset = Math.max(0, readCrosshairNumber(settings, `${prefix}o`, 2));
+    const opacity = Math.max(0, Math.min(1, readCrosshairNumber(settings, `${prefix}a`, 1)));
+    const hidden = settings[`${prefix}b`] === "0" && length <= 0;
+    return { length, thickness, offset, opacity, hidden };
+  }
+
+  function renderCrosshairLineSet({ length = 0, thickness = 1, offset = 2, opacity = 1, hidden = false } = {}, color = "#ffffff", scale = 5.8) {
+    if (hidden || length <= 0 || opacity <= 0) return "";
+    const center = 64;
+    const lineLength = Math.max(5, length * scale);
+    const lineThickness = Math.max(2, thickness * 2.4);
+    const gap = Math.max(3, offset * 3.2);
+    const halfThickness = lineThickness / 2;
+    const safeColor = escapeHtml(color);
+    const safeOpacity = Math.max(.08, Math.min(1, opacity));
+    return `
+      <rect x="${center - halfThickness}" y="${center - gap - lineLength}" width="${lineThickness}" height="${lineLength}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>
+      <rect x="${center - halfThickness}" y="${center + gap}" width="${lineThickness}" height="${lineLength}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>
+      <rect x="${center - gap - lineLength}" y="${center - halfThickness}" width="${lineLength}" height="${lineThickness}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>
+      <rect x="${center + gap}" y="${center - halfThickness}" width="${lineLength}" height="${lineThickness}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>`;
+  }
+
+  function renderCrosshairPreview(entry = {}) {
+    const settings = parseCrosshairCode(entry.code);
+    const color = getCrosshairColor(settings);
+    const outlineOpacity = Math.max(0, Math.min(1, readCrosshairNumber(settings, "o", 0)));
+    const dotOn = settings.d === "1";
+    const dotSize = Math.max(2.8, readCrosshairNumber(settings, "z", readCrosshairNumber(settings, "t", 2)) * 2.8);
+    const inner = getCrosshairLineSettings(settings, "0");
+    const outer = getCrosshairLineSettings(settings, "1");
+    const hasInner = !inner.hidden && inner.length > 0;
+    const hasOuter = !outer.hidden && outer.length > 0 && outer.opacity > 0;
+    const dotMarkup = dotOn || (!hasInner && !hasOuter)
+      ? `<circle cx="64" cy="64" r="${dotSize}" fill="${escapeHtml(color)}" opacity="${Math.max(.18, readCrosshairNumber(settings, "a", 1))}"></circle>`
+      : "";
+    const outlineMarkup = outlineOpacity > 0
+      ? `<circle cx="64" cy="64" r="${Math.max(dotSize + 2, 4)}" fill="none" stroke="rgba(2,6,23,.86)" stroke-width="${Math.max(2, readCrosshairNumber(settings, "t", 1) * 1.7)}" opacity="${outlineOpacity}"></circle>`
+      : "";
+    return `
+      <svg class="gamesense-crosshair-svg" viewBox="0 0 128 128" role="img" aria-label="${escapeHtml(entry.player)} crosshair preview">
+        <defs>
+          <filter id="crosshairGlow-${escapeHtml(entry.id)}" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.4" result="blur"></feGaussianBlur>
+            <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+          </filter>
+        </defs>
+        <rect x="8" y="8" width="112" height="112" rx="17" fill="rgba(2,6,23,.82)" stroke="rgba(103,232,249,.18)"></rect>
+        <g opacity=".18" stroke="rgba(148,163,184,.8)" stroke-width="1">
+          <path d="M64 17v16M64 95v16M17 64h16M95 64h16"></path>
+          <circle cx="64" cy="64" r="28" fill="none"></circle>
+        </g>
+        <g filter="url(#crosshairGlow-${escapeHtml(entry.id)})">
+          ${renderCrosshairLineSet(outer, color, 4.6)}
+          ${renderCrosshairLineSet(inner, color, 6)}
+          ${outlineMarkup}
+          ${dotMarkup}
+        </g>
+      </svg>`;
+  }
+
+  function renderCrosshairPhoto(entry = {}) {
+    const initials = getCrosshairInitials(entry.player);
+    return `
+      <span class="gamesense-crosshair-photo" data-crosshair-initials="${escapeHtml(initials)}">
+        ${entry.photo ? `<img src="${escapeHtml(entry.photo)}" alt="${escapeHtml(entry.player)}" loading="lazy" decoding="async" data-crosshair-photo-fallback>` : ""}
+        <b aria-hidden="true">${escapeHtml(initials)}</b>
+      </span>`;
+  }
+
+  function getSortedCrosshairEntries(entries = crosshairSeedEntries) {
+    const direction = state.crosshairSort === "asc" ? 1 : -1;
+    return [...entries].sort((left, right) => {
+      const byLikes = (getCrosshairLikeCount(left.id) - getCrosshairLikeCount(right.id)) * direction;
+      if (byLikes) return byLikes;
+      return left.player.localeCompare(right.player);
+    });
+  }
+
+  function getVisibleCrosshairEntries() {
+    const tab = normalizeCrosshairTab(state.crosshairTab);
+    if (tab === "Favorites") {
+      return getSortedCrosshairEntries(crosshairSeedEntries.filter(entry => crosshairBackendState.favorites.has(entry.id)));
+    }
+    if (tab === "Pro's") return getSortedCrosshairEntries(crosshairSeedEntries.filter(entry => entry.type === "Pro"));
+    if (tab === "Top 30 Popular") return getSortedCrosshairEntries().slice(0, 30);
+    return getSortedCrosshairEntries();
+  }
+
+  function renderCrosshairCard(entry = {}) {
+    const liked = crosshairBackendState.liked.has(entry.id);
+    const favorite = crosshairBackendState.favorites.has(entry.id);
+    const pendingLike = crosshairBackendState.pending.has(`crosshair_likes:${entry.id}`);
+    const pendingFavorite = crosshairBackendState.pending.has(`crosshair_favorites:${entry.id}`);
+    const likes = getCrosshairLikeCount(entry.id);
+    return `
+      <article class="gamesense-crosshair-card" data-gamesense-crosshair-card="${escapeHtml(entry.id)}">
+        <div class="gamesense-crosshair-player">
+          ${renderCrosshairPhoto(entry)}
+          <div>
+            <span>${escapeHtml(entry.team || "Pro")}</span>
+            <strong>${escapeHtml(entry.player)}</strong>
+            <small>${escapeHtml(entry.tags?.join(" | ") || "Verified code")}</small>
+          </div>
+        </div>
+        <div class="gamesense-crosshair-build">
+          ${renderCrosshairPreview(entry)}
+          <code>${escapeHtml(entry.code)}</code>
+          <div class="gamesense-crosshair-source">
+            <span>Verified via ${escapeHtml(entry.sourceName || "source")}</span>
+            <a href="${escapeHtml(entry.sourceUrl || "#")}" target="_blank" rel="noopener noreferrer">Source</a>
+          </div>
+        </div>
+        <div class="gamesense-crosshair-actions">
+          <button type="button" data-gamesense-crosshair-copy="${escapeHtml(entry.id)}">Copy code</button>
+          <button type="button" data-gamesense-crosshair-like="${escapeHtml(entry.id)}" class="${liked ? "active" : ""}" aria-pressed="${liked ? "true" : "false"}" ${pendingLike ? "disabled" : ""}>
+            <span>Like</span><b>${likes}</b>
+          </button>
+          <button type="button" data-gamesense-crosshair-favorite="${escapeHtml(entry.id)}" class="gamesense-crosshair-favorite ${favorite ? "active" : ""}" aria-pressed="${favorite ? "true" : "false"}" aria-label="${favorite ? "Remove favorite" : "Save favorite"}" ${pendingFavorite ? "disabled" : ""}>♥</button>
+        </div>
+      </article>`;
+  }
+
+  function renderCrosshairLibrary() {
+    const activeTab = normalizeCrosshairTab(state.crosshairTab);
+    const entries = getVisibleCrosshairEntries();
+    const favoriteEmpty = activeTab === "Favorites" && !entries.length;
+    const backendNote = crosshairBackendState.unavailable
+      ? "Apply the crosshair Supabase tables to turn on shared Likes and saved Favorites."
+      : "Likes and Favorites are account-gated so one player can only vote once per crosshair.";
+    return `
+      <div class="gamesense-gallery-head gamesense-crosshair-gallery-head">
+        <div><strong>Crosshair Library</strong><small>Verified pro codes with rendered previews and copy-ready imports.</small></div>
+        <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
+      </div>
+      <section class="gamesense-crosshair-panel">
+        <div class="gamesense-crosshair-toolbar">
+          <div class="gamesense-crosshair-tabs" role="tablist" aria-label="Crosshair filters">
+            ${crosshairTabs.map(tab => `<button type="button" data-gamesense-crosshair-tab="${escapeHtml(tab)}" class="${tab === activeTab ? "active" : ""}" aria-selected="${tab === activeTab}">${escapeHtml(tab)}</button>`).join("")}
+          </div>
+          <button type="button" class="gamesense-crosshair-sort" data-gamesense-crosshair-sort="${state.crosshairSort === "asc" ? "desc" : "asc"}">Likes ${state.crosshairSort === "asc" ? "↑" : "↓"}</button>
+        </div>
+        <p class="gamesense-crosshair-note">${escapeHtml(crosshairBackendState.status || backendNote)}</p>
+        <div class="gamesense-crosshair-grid">
+          ${entries.length
+            ? entries.map(renderCrosshairCard).join("")
+            : `<p class="gamesense-crosshair-empty">${favoriteEmpty ? "Log in and heart a crosshair to build your saved list." : "No crosshairs match this filter yet."}</p>`}
+        </div>
+      </section>`;
+  }
+
+  async function hydrateCrosshairState(options = {}) {
+    if (crosshairBackendState.loading || (crosshairBackendState.loaded && !options.force && !(crosshairBackendState.unavailable && isCrosshairBackendEnabled()))) return;
+    const client = getCrosshairClient();
+    if (!client) return;
+    if (!isCrosshairBackendEnabled()) {
+      crosshairBackendState.unavailable = true;
+      crosshairBackendState.loaded = true;
+      crosshairBackendState.status = "Live Likes and Favorites are waiting on the crosshair account-table migration.";
+      if (state.topic === "crosshairs" && !options.silent) render({ direction: "replace" });
+      return;
+    }
+    crosshairBackendState.loading = true;
+    try {
+      const likeCountResults = await Promise.all(crosshairSeedEntries.map(entry =>
+        client.from("crosshair_likes").select("crosshair_id", { count: "exact", head: true }).eq("crosshair_id", entry.id)
+      ));
+      const countError = likeCountResults.find(result => result.error)?.error;
+      if (countError) {
+        crosshairBackendState.unavailable = true;
+        crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
+        return;
+      }
+      const likeCounts = new Map();
+      likeCountResults.forEach((result, index) => {
+        likeCounts.set(crosshairSeedEntries[index].id, Number(result.count || 0));
+      });
+      const user = await getCrosshairUser();
+      let liked = new Set();
+      let favorites = new Set();
+      if (user?.id) {
+        const [ownLikes, ownFavorites] = await Promise.all([
+          client.from("crosshair_likes").select("crosshair_id").eq("user_id", user.id),
+          client.from("crosshair_favorites").select("crosshair_id").eq("user_id", user.id)
+        ]);
+        if (!ownLikes.error) liked = new Set((ownLikes.data || []).map(row => String(row?.crosshair_id || "")).filter(Boolean));
+        if (!ownFavorites.error) favorites = new Set((ownFavorites.data || []).map(row => String(row?.crosshair_id || "")).filter(Boolean));
+      }
+      crosshairBackendState.likes = likeCounts;
+      crosshairBackendState.liked = liked;
+      crosshairBackendState.favorites = favorites;
+      crosshairBackendState.unavailable = false;
+      crosshairBackendState.loaded = true;
+      crosshairBackendState.status = "";
+    } catch (_error) {
+      crosshairBackendState.unavailable = true;
+      crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
+    } finally {
+      crosshairBackendState.loading = false;
+      if (state.topic === "crosshairs" && !options.silent) render({ direction: "replace" });
+    }
+  }
+
+  async function promptForCrosshairAuth(action = "save crosshairs") {
+    const user = await getCrosshairUser();
+    if (user?.id) return user;
+    getCrosshairAuthBridge()?.promptSignIn?.(`Sign in to ${action}.`);
+    crosshairBackendState.status = `Sign in to ${action}.`;
+    render({ direction: "replace" });
+    return null;
+  }
+
+  async function toggleCrosshairRelation(table = "", id = "", actionLabel = "save crosshairs") {
+    const entry = getCrosshairEntry(id);
+    if (!entry || !table) return;
+    if (!isCrosshairBackendEnabled()) {
+      crosshairBackendState.unavailable = true;
+      crosshairBackendState.status = "Live Likes and Favorites are waiting on the crosshair account-table migration.";
+      render({ direction: "replace" });
+      return;
+    }
+    const user = await promptForCrosshairAuth(actionLabel);
+    if (!user?.id) return;
+    const client = getCrosshairClient();
+    if (!client) {
+      crosshairBackendState.unavailable = true;
+      crosshairBackendState.status = "RankedCoach account storage is still connecting. Try again in a moment.";
+      render({ direction: "replace" });
+      return;
+    }
+    const isLike = table === "crosshair_likes";
+    const targetSet = isLike ? crosshairBackendState.liked : crosshairBackendState.favorites;
+    const actionKey = `${table}:${id}`;
+    if (crosshairBackendState.pending.has(actionKey)) return;
+    crosshairBackendState.pending.add(actionKey);
+    try {
+      const exists = targetSet.has(id);
+      const result = exists
+        ? await client.from(table).delete().eq("user_id", user.id).eq("crosshair_id", id)
+        : await client.from(table).insert({ user_id: user.id, crosshair_id: id });
+      if (result.error && result.error.code !== "23505") {
+        crosshairBackendState.unavailable = true;
+        crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
+        return;
+      }
+      await hydrateCrosshairState({ force: true, silent: true });
+      crosshairBackendState.status = exists
+        ? `${entry.player} ${isLike ? "Like" : "Favorite"} removed.`
+        : `${entry.player} ${isLike ? "Like" : "Favorite"} saved.`;
+    } catch (_error) {
+      crosshairBackendState.unavailable = true;
+      crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
+    } finally {
+      crosshairBackendState.pending.delete(actionKey);
+      render({ direction: "replace" });
+    }
+  }
+
+  function copyCrosshairCode(id = "") {
+    const entry = getCrosshairEntry(id);
+    if (!entry) return;
+    const write = navigator.clipboard?.writeText
+      ? navigator.clipboard.writeText(entry.code)
+      : Promise.reject(new Error("Clipboard unavailable"));
+    write
+      .then(() => {
+        crosshairBackendState.status = `${entry.player} crosshair code copied.`;
+        render({ direction: "replace" });
+      })
+      .catch(() => {
+        const textarea = document.createElement("textarea");
+        textarea.value = entry.code;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.left = "-999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand?.("copy");
+        textarea.remove();
+        crosshairBackendState.status = copied ? `${entry.player} crosshair code copied.` : "Copy failed. Select the code text manually.";
+        render({ direction: "replace" });
+      });
+  }
+
   function getTopicCollageMarkup(topic = "") {
+    if (topic === "crosshairs") {
+      return crosshairSeedEntries.slice(0, 6).map(entry => `
+        <span class="gamesense-topic-crosshair-sample">
+          ${renderCrosshairPreview(entry)}
+        </span>`).join("");
+    }
     if (topic === "playlist") {
       return (featuredPlaylist?.items || [])
         .map(video => getSafeMediaThumbnail(video.thumbnail))
@@ -708,6 +1164,7 @@
 
   function renderGallery(topic) {
     if (topic === "playlist") return renderPlaylist();
+    if (topic === "crosshairs") return renderCrosshairLibrary();
     const meta = topicMeta[topic];
     let items = getTopicItems(topic);
     let controls = "";
@@ -2118,10 +2575,17 @@
         if (fallback && img.src !== fallback) img.src = fallback;
       }, { once: true });
     });
+    root.querySelectorAll("img[data-crosshair-photo-fallback]").forEach(img => {
+      img.addEventListener("error", () => {
+        img.hidden = true;
+        img.closest(".gamesense-crosshair-photo")?.classList.add("is-fallback");
+      }, { once: true });
+    });
     bindMapPanZoom();
     bindPlantHotspots();
     bindPlaylistFilterScroller();
     hydrateWeaponCollectionArchive();
+    if (state.topic === "crosshairs") hydrateCrosshairState();
     if (libraryPageActive) hydrateFeaturedPlaylist();
     scheduleTopicCollageHydration();
   }
@@ -2239,6 +2703,8 @@
     state.agentRole = "all";
     state.mapSeason = "all";
     state.playlistFilter = "Home";
+    state.crosshairTab = "All";
+    state.crosshairSort = "desc";
     const desktopNav = document.querySelector('.nav-btn[data-page="library"]');
     const mobileNav = document.querySelector('.mobile-bottom-page-btn[data-mobile-page="library"]');
     const selectedNav = document.documentElement.classList.contains("is-mobile-layout") ? mobileNav : desktopNav;
@@ -2261,6 +2727,8 @@
     state.agentRole = "all";
     state.mapSeason = "all";
     state.playlistFilter = "Home";
+    state.crosshairTab = "All";
+    state.crosshairSort = "desc";
     render({ direction: "backward" });
     const libraryPage = document.getElementById("page-library");
     const owner = document.documentElement.classList.contains("is-mobile-layout")
@@ -2385,6 +2853,8 @@
       state.mapZoom = 1;
       state.compAgent = "";
       state.compRole = "Controller";
+      state.crosshairTab = "All";
+      state.crosshairSort = "desc";
       if (state.topic === "maps") state.mapSeason = "all";
       render({ direction: "forward" });
       return;
@@ -2424,6 +2894,36 @@
         ? playlistFilter.dataset.gamesensePlaylistFilter
         : "Home";
       render({ direction: "replace" });
+      return;
+    }
+    const crosshairTab = event.target.closest?.("[data-gamesense-crosshair-tab]");
+    if (crosshairTab) {
+      state.crosshairTab = normalizeCrosshairTab(crosshairTab.dataset.gamesenseCrosshairTab);
+      render({ direction: "replace" });
+      return;
+    }
+    const crosshairSort = event.target.closest?.("[data-gamesense-crosshair-sort]");
+    if (crosshairSort) {
+      state.crosshairSort = crosshairSort.dataset.gamesenseCrosshairSort === "asc" ? "asc" : "desc";
+      render({ direction: "replace" });
+      return;
+    }
+    const crosshairCopy = event.target.closest?.("[data-gamesense-crosshair-copy]");
+    if (crosshairCopy) {
+      event.preventDefault();
+      copyCrosshairCode(crosshairCopy.dataset.gamesenseCrosshairCopy || "");
+      return;
+    }
+    const crosshairLike = event.target.closest?.("[data-gamesense-crosshair-like]");
+    if (crosshairLike) {
+      event.preventDefault();
+      void toggleCrosshairRelation("crosshair_likes", crosshairLike.dataset.gamesenseCrosshairLike || "", "like crosshairs");
+      return;
+    }
+    const crosshairFavorite = event.target.closest?.("[data-gamesense-crosshair-favorite]");
+    if (crosshairFavorite) {
+      event.preventDefault();
+      void toggleCrosshairRelation("crosshair_favorites", crosshairFavorite.dataset.gamesenseCrosshairFavorite || "", "save favorite crosshairs");
       return;
     }
     const externalLive = event.target.closest?.("[data-gamesense-open-live]");
