@@ -56515,3 +56515,87 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
   font-size:10px !important;
   line-height:1.1 !important;
 }
+
+/* 2026-07-21 match-trend and map-thumbnail cleanup:
+   keep trend media as a real icon row, then let the metric copy own the left
+   side of the pill while tone sits below the context on the right. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  grid-template-rows:repeat(2,minmax(150px,1fr)) !important;
+  grid-auto-rows:minmax(150px,1fr) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  grid-template-columns:minmax(0,1fr) minmax(108px,max-content) !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  align-items:start !important;
+  column-gap:10px !important;
+  row-gap:5px !important;
+  min-height:150px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-head{
+  grid-column:2 !important;
+  grid-row:1 !important;
+  display:grid !important;
+  grid-template-areas:"context" "tone" !important;
+  grid-template-columns:max-content !important;
+  justify-content:end !important;
+  justify-items:end !important;
+  align-content:start !important;
+  gap:4px !important;
+  min-width:108px !important;
+  min-height:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-context{
+  grid-area:context !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:6px !important;
+  min-width:0 !important;
+  max-width:150px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-tone{
+  grid-area:tone !important;
+  justify-self:end !important;
+  width:max-content !important;
+  max-width:108px !important;
+  margin:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-copy{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  display:grid !important;
+  align-content:start !important;
+  justify-items:start !important;
+  min-height:0 !important;
+  gap:2px !important;
+  padding-top:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-main-text{
+  align-self:start !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+  grid-column:1 / -1 !important;
+  grid-row:2 !important;
+  align-self:stretch !important;
+}
+
+#page-stats .stats-map-image.stats-map-layout-image{
+  object-fit:contain !important;
+  object-position:center center !important;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(20,184,166,.16),transparent 58%),
+    rgba(2,6,23,.66) !important;
+  padding:3px !important;
+  transform:rotate(180deg) !important;
+}
+
+#page-stats .stats-map-card.is-out-of-season .stats-map-image.stats-map-layout-image{
+  filter:grayscale(.88) saturate(.55) brightness(.62) !important;
+}

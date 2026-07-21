@@ -1434,6 +1434,140 @@
     return { videos, variantIndexes, directVariantIndexes };
   }
 
+  function renderStaticSkinModelMarkup(source = "", alt = "", label = "Static render — exact 3D unavailable") {
+    return `<img data-skin-preview-image src="${escapeHtml(source)}" alt="${escapeHtml(alt)}" draggable="false"><span class="gamesense-skin-model-unavailable">${escapeHtml(label)}</span><div class="gamesense-skin-static-controls" aria-label="Inspect static weapon render"><button type="button" data-skin-static-zoom="out" aria-label="Zoom out static weapon render">−</button><button type="button" data-skin-static-zoom="reset" aria-label="Reset static weapon render zoom">Reset</button><button type="button" data-skin-static-zoom="in" aria-label="Zoom in static weapon render">+</button></div>`;
+  }
+
+  function getStaticSkinInspectState(stage) {
+    return {
+      scale: Number(stage?.dataset?.skinInspectScale || 1) || 1,
+      x: Number(stage?.dataset?.skinInspectX || 0) || 0,
+      y: Number(stage?.dataset?.skinInspectY || 0) || 0
+    };
+  }
+
+  function setStaticSkinInspectState(stage, nextState = {}) {
+    if (!stage) return;
+    const previous = getStaticSkinInspectState(stage);
+    const scale = Math.max(1, Math.min(4, Math.round(Number(nextState.scale ?? previous.scale) * 100) / 100));
+    const rect = stage.getBoundingClientRect();
+    const maxX = scale <= 1 ? 0 : Math.max(18, rect.width * (scale - 1) * 0.46);
+    const maxY = scale <= 1 ? 0 : Math.max(18, rect.height * (scale - 1) * 0.46);
+    const x = scale <= 1 ? 0 : Math.max(-maxX, Math.min(maxX, Number(nextState.x ?? previous.x) || 0));
+    const y = scale <= 1 ? 0 : Math.max(-maxY, Math.min(maxY, Number(nextState.y ?? previous.y) || 0));
+    stage.dataset.skinInspectScale = String(scale);
+    stage.dataset.skinInspectX = String(Math.round(x));
+    stage.dataset.skinInspectY = String(Math.round(y));
+    stage.style.setProperty("--skin-static-scale", String(scale));
+    stage.style.setProperty("--skin-static-pan-x", `${Math.round(x)}px`);
+    stage.style.setProperty("--skin-static-pan-y", `${Math.round(y)}px`);
+    stage.classList.toggle("is-zoomed", scale > 1.01);
+  }
+
+  function resetStaticSkinInspect(stage) {
+    setStaticSkinInspectState(stage, { scale: 1, x: 0, y: 0 });
+  }
+
+  function bindStaticSkinInspect(stage) {
+    if (!stage || stage.dataset.staticSkinInspectBound === "true") return;
+    stage.dataset.staticSkinInspectBound = "true";
+    const pointers = new Map();
+    let dragPointerId = null;
+    let dragStart = null;
+    let pinchStart = null;
+    const pointerDistance = values => Math.hypot(values[0].x - values[1].x, values[0].y - values[1].y);
+    const zoomBy = (amount) => {
+      const current = getStaticSkinInspectState(stage);
+      setStaticSkinInspectState(stage, { ...current, scale: current.scale + amount });
+    };
+    stage.addEventListener("wheel", event => {
+      if (!stage.classList.contains("is-static")) return;
+      event.preventDefault();
+      const current = getStaticSkinInspectState(stage);
+      const direction = event.deltaY > 0 ? -0.18 : 0.18;
+      setStaticSkinInspectState(stage, { ...current, scale: current.scale + direction });
+    }, { passive: false });
+    stage.addEventListener("click", event => {
+      const button = event.target.closest?.("[data-skin-static-zoom]");
+      if (!button) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const action = button.dataset.skinStaticZoom;
+      if (action === "reset") {
+        resetStaticSkinInspect(stage);
+      } else {
+        zoomBy(action === "in" ? 0.35 : -0.35);
+      }
+    });
+    stage.addEventListener("dblclick", event => {
+      if (!stage.classList.contains("is-static") || event.target.closest?.("button,a")) return;
+      event.preventDefault();
+      const current = getStaticSkinInspectState(stage);
+      setStaticSkinInspectState(stage, current.scale > 1.01 ? { scale: 1, x: 0, y: 0 } : { ...current, scale: 2.15 });
+    });
+    stage.addEventListener("pointerdown", event => {
+      if (!stage.classList.contains("is-static") || event.target.closest?.("button,a")) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      try {
+        stage.setPointerCapture?.(event.pointerId);
+      } catch (_error) {
+        // Pointer capture can fail on interrupted touches; the local map still handles the active pointers.
+      }
+      const values = [...pointers.values()];
+      if (values.length === 1) {
+        dragPointerId = event.pointerId;
+        dragStart = { pointer: values[0], state: getStaticSkinInspectState(stage) };
+        stage.classList.add("is-grabbing");
+      } else if (values.length === 2) {
+        dragPointerId = null;
+        dragStart = null;
+        pinchStart = { distance: pointerDistance(values), state: getStaticSkinInspectState(stage) };
+        stage.classList.add("is-grabbing");
+      }
+    });
+    stage.addEventListener("pointermove", event => {
+      if (!pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      const values = [...pointers.values()];
+      if (values.length >= 2 && pinchStart?.distance) {
+        event.preventDefault();
+        const nextScale = pinchStart.state.scale * (pointerDistance(values) / pinchStart.distance);
+        setStaticSkinInspectState(stage, { ...pinchStart.state, scale: nextScale });
+        return;
+      }
+      if (dragPointerId !== event.pointerId || !dragStart) return;
+      const current = getStaticSkinInspectState(stage);
+      if (current.scale <= 1.01) return;
+      event.preventDefault();
+      setStaticSkinInspectState(stage, {
+        ...current,
+        x: dragStart.state.x + (event.clientX - dragStart.pointer.x),
+        y: dragStart.state.y + (event.clientY - dragStart.pointer.y)
+      });
+    });
+    const stopPointer = event => {
+      pointers.delete(event.pointerId);
+      if (!pointers.size) {
+        dragPointerId = null;
+        dragStart = null;
+        pinchStart = null;
+        stage.classList.remove("is-grabbing");
+        return;
+      }
+      const remaining = [...pointers.values()];
+      if (remaining.length === 1) {
+        const remainingPointerId = [...pointers.keys()][0];
+        dragPointerId = remainingPointerId;
+        dragStart = { pointer: remaining[0], state: getStaticSkinInspectState(stage) };
+        pinchStart = null;
+      }
+    };
+    stage.addEventListener("pointerup", stopPointer);
+    stage.addEventListener("pointercancel", stopPointer);
+    stage.addEventListener("dragstart", event => event.preventDefault());
+  }
+
   function setActiveSkinView(nextIndex) {
     const overlay = activeSkinPreview;
     if (!overlay) return;
@@ -1480,7 +1614,9 @@
     const count = overlay.querySelectorAll("[data-skin-preview-view]").length || 1;
     const index = Math.max(0, activeSkinViewIndex);
     const searchUrl = `https://sketchfab.com/search?type=models&q=${encodeURIComponent(`${name} ${weapon} Valorant`)}`;
-    stage.innerHTML = `<img data-skin-preview-image src="${escapeHtml(variant?.source || "")}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variant?.label || `variant ${index + 1}`)}"><span class="gamesense-skin-model-unavailable">Static render — exact 3D unavailable</span>`;
+    stage.innerHTML = renderStaticSkinModelMarkup(variant?.source || "", `${name} ${weapon} ${variant?.label || `variant ${index + 1}`}`, "Static render — exact 3D unavailable");
+    resetStaticSkinInspect(stage);
+    bindStaticSkinInspect(stage);
     footer.innerHTML = `<span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>Variant ${toRomanNumeral(index + 1)} of ${toRomanNumeral(count)} · <a href="${escapeHtml(searchUrl)}" target="_blank" rel="noopener noreferrer">Search Sketchfab references</a></small>`;
   }
 
@@ -1592,7 +1728,7 @@
         <section class="gamesense-skin-viewer-pane">
           <header><div><span data-skin-model-kicker>${model ? "True 3D Model" : "Official Weapon Render"}</span><strong>${escapeHtml(name)} ${escapeHtml(weapon)}</strong><small data-skin-model-guidance>${model ? "Drag to rotate. Scroll or pinch to zoom." : "No approved exact 3D model is available for this color variant yet."}</small></div></header>
           <div class="gamesense-skin-model-stage${model ? " has-model" : " is-static"}">
-            ${model ? `<iframe src="${escapeHtml(model.embedUrl)}" title="Interactive 3D model of ${escapeHtml(model.title)} by ${escapeHtml(model.creator)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>` : `<img data-skin-preview-image src="${escapeHtml(variants[0].source)}" alt="${escapeHtml(name)} ${escapeHtml(weapon)} ${escapeHtml(variants[0].label || "default variant")}"><span class="gamesense-skin-model-unavailable">Static render — 3D unavailable</span>`}
+            ${model ? `<iframe src="${escapeHtml(model.embedUrl)}" title="Interactive 3D model of ${escapeHtml(model.title)} by ${escapeHtml(model.creator)}" loading="eager" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; xr-spatial-tracking" allowfullscreen></iframe>` : renderStaticSkinModelMarkup(variants[0].source, `${name} ${weapon} ${variants[0].label || "default variant"}`, "Static render — 3D unavailable")}
           </div>
           <footer data-skin-model-footer>${model ? `<span>Community model attribution</span><strong>${escapeHtml(model.title)}</strong><small>Created by ${escapeHtml(model.creator)} · <a href="${escapeHtml(model.modelUrl)}" target="_blank" rel="noopener noreferrer">View on Sketchfab</a> · <a href="${escapeHtml(model.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.license)}</a></small>` : `<span>${escapeHtml(weapon)} collection</span><strong>${escapeHtml(name)}</strong><small data-skin-preview-label>Variant I of ${toRomanNumeral(variants.length)} · <a href="${escapeHtml(sketchfabSearchUrl)}" target="_blank" rel="noopener noreferrer">Search Sketchfab references</a></small>`}</footer>
         </section>
@@ -1668,6 +1804,11 @@
     });
     document.body.appendChild(overlay);
     activeSkinPreview = overlay;
+    const staticStage = overlay.querySelector(".gamesense-skin-model-stage.is-static");
+    if (staticStage) {
+      resetStaticSkinInspect(staticStage);
+      bindStaticSkinInspect(staticStage);
+    }
     requestAnimationFrame(() => overlay.classList.add("is-open"));
     overlay.focus({ preventScroll: true });
   }

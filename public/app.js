@@ -3851,6 +3851,13 @@ function getMapIconUrl(mapName) {
   return `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${encodeURIComponent(normalized)}.png`;
 }
 
+function getStatsMapLayoutUrl(mapName) {
+  const normalized = String(mapName || "").trim();
+  const uuid = MAP_ARTWORK_UUIDS[normalized];
+  if (uuid) return `https://media.valorant-api.com/maps/${uuid}/displayicon.png`;
+  return getMapIconUrl(normalized);
+}
+
 function average(values = []) {
   const nums = values.filter((value) => Number.isFinite(Number(value))).map(Number);
   if (!nums.length) return 0;
@@ -10927,6 +10934,10 @@ function getTrendSignalMediaMarkup(item = {}) {
   const directMediaUrl = String(item?.mediaUrl || "").trim();
   let mediaUrl = "";
   let mediaAlt = getTrendSignalMediaLabel(item);
+
+  if (mediaType === "role") {
+    return getTrendSignalIconMarkup(item);
+  }
 
   if (directMediaUrl) {
     mediaUrl = directMediaUrl;
@@ -20604,9 +20615,6 @@ const BAKED_THEME_BUILDER_STATE = {
         }
       },
       "compass-main": {
-        "compass-header": {
-          "fontSize": "17"
-        },
         "compass-summary-shell": {
           "fontSize": "23"
         },
@@ -22330,16 +22338,6 @@ const BAKED_THEME_BUILDER_STATE = {
         }
       },
       "compass-main": {
-        "compass-header-div": {
-          "layoutMode": "flow",
-          "boxX": "34",
-          "boxY": "-2"
-        },
-        "compass-header": {
-          "boxX": "-12",
-          "layoutMode": "visual",
-          "boxY": "59"
-        },
         "card-title": {
           "layoutMode": "flow",
           "scaleX": "0.98",
@@ -33041,7 +33039,6 @@ const THEME_BUILDER_GROUP_CONFIGS = [
   { parentId: "loadout-card", id: "spin-agent-button", label: "Spin Agent Button", selector: ".loadout-card #spinAgentBtn" },
   { parentId: "loadout-card", id: "agent-frame", label: "Agent Frame", selector: ".loadout-card #agentFrame" },
   { parentId: "loadout-card", id: "home-loadout-info", label: "Home Loadout Info", selector: ".loadout-card .home-loadout-info" },
-  { parentId: "compass-main", id: "compass-header", label: "Compass Header", selector: ".compass-main .compass-header" },
   { parentId: "compass-main", id: "compass-summary-shell", label: "Compass Summary Shell", selector: ".compass-main .compass-summary-shell" },
   { parentId: "compass-main", id: "compass-cards-grid", label: "Compass Cards Grid", selector: ".compass-main .compass-cards-grid" },
   { parentId: "compass-main", id: "compass-score-cards", label: "Compass Score Cards", selector: ".compass-main .compass-score-card" },
@@ -34114,6 +34111,13 @@ function stripThemeBuilderParentState(themeState = {}, parentId = "") {
 }
 
 function normalizeCompassHeaderThemeBuilderState(themeState = {}) {
+  if (themeState?.groups?.["compass-main"]?.["compass-header"]) {
+    delete themeState.groups["compass-main"]["compass-header"];
+    if (!Object.keys(themeState.groups["compass-main"]).length) {
+      delete themeState.groups["compass-main"];
+    }
+  }
+
   const compassElements = themeState?.elements?.["compass-main"];
   if (!compassElements || typeof compassElements !== "object") return;
 
@@ -36922,11 +36926,6 @@ function buildThemeBuilderRuntimeCss() {
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #spinAgentBtn svg")}{width:calc(30px * ${homeBaselineScale}) !important; height:calc(30px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame, .loadout-card #agentFrame.agent-frame")}{width:auto !important; min-width:0 !important; max-width:100% !important; height:100% !important; min-height:calc(132px * ${homeBaselineScale}) !important; aspect-ratio:1 / 1 !important; justify-self:center !important; align-self:stretch !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".loadout-card #agentFrame .agent-reveal-art img, .loadout-card #agentFrame .agent-frame-portrait, .loadout-card #agentFrame .frame-art-inner, .loadout-card #agentFrame .reel-icon")}{object-fit:contain !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header")}{display:grid !important; grid-template-columns:minmax(0, 1fr) auto !important; gap:calc(8px * ${homeBaselineScale}) !important; align-items:start !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header > div:first-child")}{display:flex !important; flex-direction:column !important; gap:calc(2px * ${homeBaselineScale}) !important; min-width:0 !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header .card-title")}{font-size:calc(9px * ${homeBaselineScale}) !important; line-height:1.02 !important; margin:0 !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header #compassProfileCopy")}{font-size:calc(8px * ${homeBaselineScale}) !important; line-height:1.02 !important; --tb-auto-fit-font-size:calc(8px * ${homeBaselineScale}) !important; max-width:none !important; width:100% !important;}`,
-          `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-header .compass-source-pill")}{font-size:calc(8px * ${homeBaselineScale}) !important; padding:calc(3px * ${homeBaselineScale}) calc(5px * ${homeBaselineScale}) !important; min-height:0 !important; white-space:nowrap !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell")}{display:flex !important; flex-direction:column !important; grid-template-columns:none !important; gap:calc(5px * ${homeBaselineScale}) !important; padding:calc(6px * ${homeBaselineScale}) !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell, .compass-main .compass-summary-shell .compass-summary-copy, .compass-main .compass-summary-shell .compass-profile-kicker, .compass-main .compass-summary-shell .compass-profile-title, .compass-main .compass-summary-shell .compass-profile-meta, .compass-main .compass-summary-shell .compass-profile-meta span, .compass-main .compass-summary-shell .compass-summary-body, .compass-main .compass-summary-shell .compass-cards-grid, .compass-main .compass-summary-shell .compass-svg-wrap, .compass-main .compass-summary-shell .compass-score-card, .compass-main .compass-summary-shell .compass-card-top, .compass-main .compass-summary-shell .compass-card-score-row, .compass-main .compass-summary-shell #compassCardAim, .compass-main .compass-summary-shell #compassCardSense, .compass-main .compass-summary-shell #compassCardTeam, .compass-main .compass-summary-shell #compassCardDiscipline")}{position:relative !important; left:auto !important; top:auto !important; width:auto !important; height:auto !important; min-width:0 !important; min-height:0 !important; margin:0 !important; translate:none !important; scale:none !important; transform:none !important; zoom:1 !important;}`,
           `${scopeThemeBuilderSelectorList(themeKey, ".compass-main .compass-summary-shell .compass-summary-top-shell")}{padding:calc(5px * ${homeBaselineScale}) calc(6px * ${homeBaselineScale}) !important; flex:0 0 auto !important;}`,
@@ -37045,7 +37044,7 @@ const LAYOUT_STYLE_AUTO_FIT_EXCLUDED_SELECTOR = [
   "#page-library .gamesense-comp-pick-list"
 ].join(",");
 const LAYOUT_STYLE_AUTO_FIT_TEXT_SELECTORS = [
-  "#page-home :is(.loadout-card,.compass-panel,.compass-main,.compass-header,.compass-score-card,.rr-card,.impact-card,.rr-chart-card,.weekly-focus-card,.improvement-card) :is(.card-title,.card-sub,.compass-title,.compass-profile-title,.compass-profile-kicker,.timeline-title,.timeline-sub,strong,p,small,span)",
+  "#page-home :is(.loadout-card,.compass-panel,.compass-main,.compass-score-card,.rr-card,.impact-card,.rr-chart-card,.weekly-focus-card,.improvement-card) :is(.card-title,.card-sub,.compass-title,.compass-profile-title,.compass-profile-kicker,.timeline-title,.timeline-sub,strong,p,small,span)",
   "#page-stats :is(.stats-summary-card,.stats-proof-card,.stats-role-progress-card,.stats-performance-card,.stats-breakdown-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card) :is(.stats-season-title,strong,p,small,span)",
   "#page-insights :is(.insights-action-card,.insights-top-card,.insights-trends-card,.insight-action-hero,.insight-card,.trend-content.open) :is(.insight-action-kicker,.insight-title,.insight-preview,strong,p,small,span)",
   "#page-logging :is(.logging-card,.logging-feed-card,.manual-match-panel,.logging-hero,.logging-live-card,.log-entry,.logging-pill,.logging-quick-menu,.logging-notes,.log-feed-footnote) :is(.logging-hero-title,.logging-hero-text,.logging-live-focus,.logging-live-meta,strong,p,small,span)",
@@ -47585,7 +47584,7 @@ function placeStaticGoldDot(){
 }
 
 function autoSelectLatest(options = {}){
-  const { popTooltip = false } = options;
+  const { popTooltip = false, updateStats = false } = options;
   const tooltipAllowed = chartScopeAllowsTooltip(currentSize);
 
   const gold = chartRow.querySelector(".final-end");
@@ -47620,8 +47619,13 @@ function autoSelectLatest(options = {}){
   } else {
     hideChartTooltip();
   }
-  updateRRMatchStatsFromHit(hit);
-  setSelectedTimelineContext(Number(hit?.dataset?.matchIndex), { animate: true });
+  if (updateStats) {
+    updateRRMatchStatsFromHit(hit);
+    setSelectedTimelineContext(Number(hit?.dataset?.matchIndex), { animate: true });
+  } else {
+    updateRRMatchStats(null);
+    setSelectedTimelineContext(null, { animate: false });
+  }
 }
 
 // ==============================
@@ -51034,7 +51038,7 @@ function renderStatsMapsModel() {
     card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded is-out-of-season" : " is-active-pool"}${isActivePool && !hasData ? " is-no-data" : ""}`;
     card.innerHTML = `
       ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true"></span>` : ""}
-      <img class="stats-map-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)}">
+      <img class="stats-map-image stats-map-layout-image" src="${getStatsMapLayoutUrl(mapName)}" alt="${escapeHtml(mapName)} tactical layout">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">

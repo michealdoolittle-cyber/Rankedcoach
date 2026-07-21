@@ -1714,16 +1714,16 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
 .gamesense-tier-icon-stack img{display:block;width:13px;height:13px;margin-left:-7px;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.58));}
 .gamesense-tier-icon-stack img:first-child{margin-left:0;}
 .gamesense-collection-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;}
-.gamesense-collection-card{position:relative;display:grid;grid-template-columns:minmax(110px,42%) minmax(0,1fr);align-items:stretch;width:100%;min-height:150px;padding:0;overflow:hidden;border:1px solid rgba(148,163,184,.17);border-radius:10px;background:rgba(15,23,42,.72);color:inherit;font:inherit;text-align:left;cursor:pointer;touch-action:manipulation;}
+.gamesense-collection-card{position:relative;display:grid;grid-template-columns:minmax(110px,42%) 1px minmax(0,1fr);grid-template-rows:minmax(0,1fr);align-items:stretch;width:100%;min-height:150px;padding:0;overflow:hidden;border:1px solid rgba(148,163,184,.17);border-radius:10px;background:rgba(15,23,42,.72);color:inherit;font:inherit;text-align:left;cursor:pointer;touch-action:manipulation;}
 .gamesense-collection-card[hidden]{display:none;}
-.gamesense-collection-art{position:relative;display:grid;place-items:center;align-self:stretch;min-width:0;height:100%;padding:8px;background:radial-gradient(circle at 50% 42%,rgba(56,189,248,.12),transparent 64%),#050b15;box-sizing:border-box;}
+.gamesense-collection-art{position:relative;grid-column:1;grid-row:1;display:grid;place-items:center;align-self:stretch;min-width:0;height:100%;padding:8px;background:radial-gradient(circle at 50% 42%,rgba(56,189,248,.12),transparent 64%),#050b15;box-sizing:border-box;}
 .gamesense-collection-art img{display:block;width:100%;height:100%;max-height:none;object-fit:contain;filter:drop-shadow(0 10px 14px rgba(0,0,0,.55));}
 .gamesense-collection-open{position:absolute;left:8px;right:8px;bottom:7px;z-index:2;min-height:32px;padding:7px 9px;border:1px solid rgba(103,232,249,.28);border-radius:6px;background:rgba(2,6,23,.88);color:#dffcff;font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.06em;text-align:center;text-transform:uppercase;cursor:zoom-in;opacity:0;pointer-events:none;transform:translateY(4px);transition:opacity 160ms ease,transform 160ms ease,background-color 160ms ease,border-color 160ms ease;}
 .gamesense-collection-card:is(:hover,:focus-within,.is-selected) .gamesense-collection-open{opacity:1;pointer-events:auto;transform:translateY(0);}
 .gamesense-collection-card:is(:hover,:focus-within,.is-selected){border-color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 68%,rgba(148,163,184,.3));box-shadow:0 0 18px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 18%,transparent);}
 .gamesense-collection-card.is-selected .gamesense-collection-open{border-color:var(--theme-accent,var(--accent,#ff4655));background:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 24%,rgba(2,6,23,.92));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 42%,transparent);}
-.gamesense-collection-divider{position:absolute;top:10px;bottom:10px;left:42%;z-index:2;width:1px;background:linear-gradient(180deg,transparent,rgba(148,163,184,.56) 18%,rgba(148,163,184,.56) 82%,transparent);pointer-events:none;}
-.gamesense-collection-copy{display:grid;align-content:center;align-self:stretch;gap:7px;min-width:0;height:100%;padding:11px;background:transparent;color:inherit;font:inherit;text-align:left;box-sizing:border-box;}
+.gamesense-collection-divider{position:relative;grid-column:2;grid-row:1;align-self:stretch;z-index:2;width:1px;min-height:100%;background:linear-gradient(180deg,transparent,rgba(148,163,184,.56) 18%,rgba(148,163,184,.56) 82%,transparent);pointer-events:none;}
+.gamesense-collection-copy{grid-column:3;grid-row:1;display:grid;align-content:center;align-self:stretch;gap:7px;min-width:0;height:100%;padding:11px;background:transparent;color:inherit;font:inherit;text-align:left;box-sizing:border-box;}
 .gamesense-collection-copy > span{color:var(--gamesense-cool,#67e8f9);font:900 8px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;}
 .gamesense-collection-copy h4{margin:0;color:#f8fafc;font:900 17px/.95 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
 .gamesense-collection-meta{display:grid;gap:3px;}
@@ -1748,10 +1748,16 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
 .gamesense-skin-viewer-pane header span,.gamesense-skin-media-pane header span,.gamesense-skin-viewer-pane footer span{color:var(--gamesense-cool,#67e8f9);font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.12em;text-transform:uppercase;}
 .gamesense-skin-viewer-pane header strong,.gamesense-skin-media-pane header strong,.gamesense-skin-viewer-pane footer strong{color:#f8fafc;font:900 21px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
 .gamesense-skin-media-pane header small,.gamesense-skin-viewer-pane header small,.gamesense-skin-viewer-pane footer small{color:var(--text-muted,#a8b3c7);font-size:10px;}
-.gamesense-skin-model-stage{position:relative;display:grid;place-items:center;min-height:clamp(320px,38dvh,430px);overflow:hidden;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,transparent),transparent 58%),linear-gradient(180deg,rgba(14,28,47,.96),rgba(3,9,18,.98));}
+.gamesense-skin-model-stage{--skin-static-scale:1;--skin-static-pan-x:0px;--skin-static-pan-y:0px;position:relative;display:grid;place-items:center;min-height:clamp(320px,38dvh,430px);overflow:hidden;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,transparent),transparent 58%),linear-gradient(180deg,rgba(14,28,47,.96),rgba(3,9,18,.98));}
+.gamesense-skin-model-stage.is-static{cursor:grab;touch-action:none;}
+.gamesense-skin-model-stage.is-static.is-grabbing{cursor:grabbing;}
 .gamesense-skin-model-stage iframe{display:block;width:100%;height:100%;min-height:clamp(320px,38dvh,430px);border:0;background:#050b15;}
-.gamesense-skin-model-stage > img{display:block;width:100%;height:100%;max-height:500px;padding:clamp(34px,5vw,72px);object-fit:contain;filter:drop-shadow(0 26px 34px rgba(0,0,0,.78));}
+.gamesense-skin-model-stage > img{display:block;width:100%;height:100%;max-height:500px;padding:clamp(34px,5vw,72px);object-fit:contain;filter:drop-shadow(0 26px 34px rgba(0,0,0,.78));transform:translate3d(var(--skin-static-pan-x),var(--skin-static-pan-y),0) scale(var(--skin-static-scale));transform-origin:center center;transition:transform 140ms ease;}
+.gamesense-skin-model-stage.is-grabbing > img{transition:none;}
 .gamesense-skin-model-unavailable{position:absolute;left:50%;bottom:16px;padding:7px 11px;border:1px solid rgba(148,163,184,.25);border-radius:999px;background:rgba(2,6,23,.82);color:#cbd5e1;font:900 8px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;transform:translateX(-50%);white-space:nowrap;}
+.gamesense-skin-static-controls{position:absolute;right:16px;bottom:14px;z-index:3;display:grid;grid-auto-flow:column;gap:6px;padding:5px;border:1px solid rgba(148,163,184,.24);border-radius:999px;background:rgba(2,6,23,.78);box-shadow:0 10px 24px rgba(0,0,0,.36);}
+.gamesense-skin-static-controls button{min-width:34px;min-height:30px;padding:6px 9px;border:1px solid rgba(103,232,249,.22);border-radius:999px;background:rgba(15,23,42,.88);color:#dffcff;font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;cursor:pointer;}
+.gamesense-skin-static-controls button:is(:hover,:focus-visible){border-color:var(--theme-accent,var(--accent,#ff4655));color:#fff;box-shadow:0 0 12px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 24%,transparent);}
 .gamesense-skin-view-selectors{display:flex;gap:8px;min-height:94px;padding:8px 0;overflow-x:auto;}
 .gamesense-skin-view-selectors button{display:grid;grid-template-rows:minmax(64px,1fr);align-content:stretch;justify-items:stretch;flex:0 0 108px;min-width:0;min-height:76px;padding:5px;border:1px solid rgba(148,163,184,.24);border-radius:7px;background:rgba(15,23,42,.88);color:#cbd5e1;text-align:center;}
 .gamesense-skin-view-selectors button.active{border-color:var(--theme-accent,var(--accent,#ff4655));box-shadow:inset 0 0 0 1px var(--theme-accent,var(--accent,#ff4655)),0 0 10px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 26%,transparent);}
@@ -1802,7 +1808,7 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   .gamesense-collection-head{grid-template-columns:1fr;}
   .gamesense-collection-head p{text-align:left;}
   .gamesense-collection-grid{grid-template-columns:1fr;}
-  .gamesense-collection-card{grid-template-columns:minmax(100px,38%) minmax(0,1fr);}
+  .gamesense-collection-card{grid-template-columns:minmax(100px,38%) 1px minmax(0,1fr);}
   .gamesense-collection-art{padding:10px 15px 10px 10px;}
   .gamesense-collection-open{left:10px;right:15px;bottom:9px;min-height:44px;padding:10px 8px;font-size:10px;}
   .gamesense-collection-copy{padding:12px 10px 12px 16px;}
@@ -1814,6 +1820,7 @@ html[data-gamesense-transition="replace"]::view-transition-new(gamesense-library
   .gamesense-skin-preview-card{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto;width:min(94vw,680px);max-height:88dvh;}
   .gamesense-skin-model-stage,.gamesense-skin-model-stage iframe{min-height:320px;}
   .gamesense-skin-model-stage > img{max-height:350px;padding:40px 32px;}
+  .gamesense-skin-static-controls{right:12px;bottom:12px;}
   .gamesense-skin-view-selectors{min-height:90px;}
   .gamesense-skin-preview-divider{width:100%;height:1px;min-height:1px;background:linear-gradient(90deg,transparent,var(--theme-accent,var(--accent,#ff4655)),transparent);}
   .gamesense-skin-animation-frame{min-height:260px;}

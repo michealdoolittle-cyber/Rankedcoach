@@ -1306,7 +1306,6 @@ body[data-layout-font-active="true"] :is(
    nav/chart/meter exclusions untouched. */
 body:is([data-layout-style],[data-layout-shape]) :is(
   #page-home .compass-main,
-  #page-home .compass-header,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1334,7 +1333,6 @@ body:is([data-layout-style],[data-layout-shape]) :is(
 
 body:is([data-layout-style],[data-layout-shape]) :is(
   #page-home .compass-main,
-  #page-home .compass-header,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1355,7 +1353,6 @@ body:is(
   [data-layout-shape="hazardrim"]
 ) :is(
   #page-home .compass-main,
-  #page-home .compass-header,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1377,7 +1374,6 @@ body:is(
 
 body[data-layout-texture] :is(
   #page-home .compass-main,
-  #page-home .compass-header,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1400,7 +1396,6 @@ body[data-layout-texture] :is(
 
 body[data-layout-texture] :is(
   #page-home .compass-main,
-  #page-home .compass-header,
   #page-home .impact-card,
   #page-stats .stats-proof-card,
   #page-stats .stats-role-progress-card,
@@ -1415,7 +1410,6 @@ body[data-layout-texture] :is(
 body[data-layout-font-active="true"] :is(
   #page-home .compass-title,
   #page-home .compass-main .card-title,
-  #page-home .compass-header .card-title,
   #page-home .impact-card .timeline-title,
   #page-stats .stats-proof-card :is(strong,.card-title),
   #page-stats .stats-role-progress-card :is(strong,.card-title),
@@ -1424,6 +1418,60 @@ body[data-layout-font-active="true"] :is(
   .gamesense-skin-preview-card strong
 ){
   font-family:var(--layout-title-font) !important;
+}
+
+/* Weapon-skin archive cards keep their own two-pane composition inside themed
+   card shells: art left, divider center, collection info right. */
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-collection-card{
+  display:grid !important;
+  grid-template-columns:minmax(110px,42%) 1px minmax(0,1fr) !important;
+  grid-template-rows:minmax(0,1fr) !important;
+  align-items:stretch !important;
+  padding:0 !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-collection-card .gamesense-collection-art{
+  grid-column:1 !important;
+  grid-row:1 !important;
+  min-height:100% !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-collection-card .gamesense-collection-divider{
+  position:relative !important;
+  grid-column:2 !important;
+  grid-row:1 !important;
+  inset:auto !important;
+  align-self:stretch !important;
+  width:1px !important;
+  min-height:100% !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-library .gamesense-collection-card .gamesense-collection-copy{
+  grid-column:3 !important;
+  grid-row:1 !important;
+  align-content:center !important;
+  min-width:0 !important;
+}
+
+/* The compass header is informational chrome, not a shape surface. Keep it
+   out of layout styles even when an older saved theme still contains this
+   child target. */
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-header{
+  clip-path:none !important;
+  -webkit-clip-path:none !important;
+  border:0 !important;
+  border-left-width:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  isolation:auto !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-header::before,
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-header::after{
+  content:none !important;
+  display:none !important;
 }
 
 .layout-style-card > :is(.layout-style-preview,.layout-style-card-copy){

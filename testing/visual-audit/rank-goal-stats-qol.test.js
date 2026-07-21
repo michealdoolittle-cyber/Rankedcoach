@@ -334,7 +334,7 @@ async function run() {
     assert.equal(statsMapPoolState.outNoDataTags, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outBadges, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outNamesCentered, true, JSON.stringify(statsMapPoolState));
-    assert.match(statsMapPoolState.summitImage, /media\.valorant-api\.com\/maps\/756da597-416b-c0f2-f47b-afbdf28670bc\/splash\.png/i);
+    assert.match(statsMapPoolState.summitImage, /media\.valorant-api\.com\/maps\/756da597-416b-c0f2-f47b-afbdf28670bc\/displayicon\.png/i);
     assert.ok(statsMapPoolState.activeNoDataTags >= 1, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.excludedCrosses, 6, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.resultLineCentered, true, JSON.stringify(statsMapPoolState));
