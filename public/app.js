@@ -4185,27 +4185,35 @@ function getCoachingSampleTone(evidenceLayer = {}) {
   const matches = safeNumber(sample.matchCount);
   if (matches <= 0) {
     return {
-      label: "No sample",
+      label: "Low Confidence",
+      stage: "none",
+      matchCount: matches,
       short: "Import a few matches to see this here.",
-      sentence: "No imported match sample exists yet, so this should stay as setup guidance."
+      sentence: "No imported match history exists yet, so this should stay as setup guidance."
     };
   }
   if (matches < 6) {
     return {
-      label: "Early sample",
+      label: "Low Confidence",
+      stage: "early",
+      matchCount: matches,
       short: `${matches} match${matches === 1 ? "" : "es"} is early.`,
       sentence: `Only ${matches} match${matches === 1 ? "" : "es"} are in this scope, so treat this as direction, not proof.`
     };
   }
   if (matches < 15) {
     return {
-      label: "Developing sample",
+      label: "Medium Confidence",
+      stage: "developing",
+      matchCount: matches,
       short: `${matches} matches is developing.`,
-      sentence: `${matches} matches is enough to point you in a direction, but not enough to call the final verdict yet.`
+      sentence: `${matches} matches can point you in a direction, but I would not call it final yet.`
     };
   }
   return {
-    label: "Stable sample",
+    label: "High Confidence",
+    stage: "stable",
+    matchCount: matches,
     short: `${matches} matches gives this read useful weight.`,
     sentence: `${matches} matches gives this read useful weight.`
   };
@@ -4584,6 +4592,12 @@ function polishCoachingInsight(insight = {}, context = {}) {
         games,
         winrate: wr
       }) || {});
+      if (games > 0 && games < 6) {
+        output.preview = `${bestAgent.agent} is ${wr}% WR in ${games} game${games === 1 ? "" : "s"}.`;
+        output.what = `${bestAgent.agent} has been good to you in a tiny sample, not proven as a main yet.`;
+        output.why = `${games} game${games === 1 ? "" : "s"} is enough to keep watching the pick, not enough to call it comfort. ${sampleSentence}`.trim();
+        output.action = `Keep testing ${bestAgent.agent} when the map fits, then check whether the same plan still works after a larger block.`;
+      }
     }
   }
 
@@ -5010,7 +5024,7 @@ function polishRecentImprovementItem(item = {}, context = {}) {
   output.comparisonLabel = output.comparisonLabel || "Recent games compared against your earlier matches.";
   output.sourceLabel = output.sourceLabel || "Built from the current match/log sample.";
   output.formula = output.formula || "Recent value minus earlier value.";
-  if (context.sampleTone?.label === "Early sample") {
+  if (context.sampleTone?.stage === "early") {
     output.sourceLabel = `${output.sourceLabel} ${context.sampleTone.sentence}`;
   }
   return normalizeCoachCopyObject(output);
@@ -6305,6 +6319,62 @@ function buildCoachingRuleContext({
   };
 }
 
+function getMatchPlayedDate(match = {}) {
+  const core = getMatchCore(match || {});
+  const rawDate = core?.createdAt
+    || match?.createdAt
+    || match?.metadata?.playedAt
+    || match?.matchRecord?.playedAt
+    || match?.playedAt
+    || match?.metadata?.createdAt
+    || "";
+  const date = new Date(rawDate);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatRecentWindowBreakDuration(days = 0) {
+  const totalDays = Math.max(0, Math.round(Number(days) || 0));
+  if (totalDays >= 365) {
+    const years = Math.max(1, Math.round(totalDays / 365));
+    return `${years}-year`;
+  }
+  if (totalDays >= 60) {
+    const months = Math.max(2, Math.round(totalDays / 30));
+    return `${months}-month`;
+  }
+  return `${totalDays}-day`;
+}
+
+function getRecentMatchContinuityNote(matchWindow = [], { minimumGapDays = 45 } = {}) {
+  const dated = (Array.isArray(matchWindow) ? matchWindow : [])
+    .map(match => ({ match, date: getMatchPlayedDate(match) }))
+    .filter(entry => entry.date)
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  if (dated.length < 3) return null;
+
+  let largestGap = null;
+  for (let index = 1; index < dated.length; index += 1) {
+    const previous = dated[index - 1];
+    const current = dated[index];
+    const days = Math.round((current.date.getTime() - previous.date.getTime()) / 86400000);
+    if (!largestGap || days > largestGap.days) {
+      largestGap = { days, previous, current };
+    }
+  }
+  if (!largestGap || largestGap.days < minimumGapDays) return null;
+
+  const duration = formatRecentWindowBreakDuration(largestGap.days);
+  const fromLabel = formatRetainedHistoryDate(largestGap.previous.date);
+  const toLabel = formatRetainedHistoryDate(largestGap.current.date);
+  return {
+    days: largestGap.days,
+    duration,
+    fromLabel,
+    toLabel,
+    sentence: `These latest matches span a ${duration} break (${fromLabel} to ${toLabel}), so read the trend as a restarted block rather than one continuous streak.`
+  };
+}
+
 function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null) {
   const orderedMatches = getSortedMatches(matchList);
   const derivedActs = getMatchSeasonLabels(orderedMatches);
@@ -6313,6 +6383,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const currentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct) || derivedActs[0] || "Current Window";
   const recentMatches = orderedMatches.slice(-8);
   const recentWindow = orderedMatches.slice(-5);
+  const recentContinuity = getRecentMatchContinuityNote(recentMatches);
   const logs = (logList || []).slice();
   const coachingContext = buildCoachingContext(orderedMatches);
 
@@ -6861,7 +6932,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       title: "Recent Mechanical Form Is Slipping",
       preview: `${recentLosses} of your last ${recentWindow.length} matches were losses.`,
       what: "Your recent matches are underperforming compared to your usual match sample.",
-      why: "This can happen when confidence drops, decisions get rushed, or the match quality gets more competitive.",
+      why: recentContinuity?.sentence || "This can happen when confidence drops, decisions get rushed, or the match quality gets more competitive.",
       action: "RankedCoach will use your recent losses to find the pattern most likely causing the dip, such as aim issues, repeated focus category tags, teammate issues, or map-specific problems.",
       sources: ["Henrik Match History", "Recent Trend"],
       focus: "Consistency",
@@ -6874,7 +6945,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       title: "Recent Mechanical Form Is Strong",
       preview: `${recentWins} of your last ${recentWindow.length} matches were wins.`,
       what: "Your recent matches are performing better than your usual match sample.",
-      why: "Your current playstyle is leading to more consistent rounds with cleaner results and match wins.",
+      why: recentContinuity?.sentence || "Your current playstyle is leading to more consistent rounds with cleaner results and match wins.",
       action: "Keep the same agent pool, ranked discipline, and focus category for the next set of matches.",
       sources: ["Henrik Match History", "Recent Trend"],
       focus: "Consistency",
@@ -7113,11 +7184,13 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       label: "Recent Mechanical Form",
       kicker: `${recentWindow.length || 0} recent matches`,
       value: recentMatches.length ? `${recentKd.toFixed(2)} Recent K/D` : "No data",
-      detail: recentMatches.length ? "Recent form compares your latest matches against your usual season results." : "No data",
+      detail: recentMatches.length
+        ? recentContinuity?.sentence || "Recent form compares your latest matches against your usual season results."
+        : "No data",
       read: recentKd >= safeNumber(overview.kd)
         ? "Your recent matches are meeting or beating your average level of play, so short-term form looks stable."
         : "Your recent matches are below your average level of play, so RankedCoach is reading this as a short-term dip in performance.",
-      sourceLabel: `Based on the latest ${recentMatches.length || 0} imported matches from ${seasonLabel}.`,
+      sourceLabel: `Based on the latest ${recentMatches.length || 0} imported matches from ${seasonLabel}${recentContinuity ? `; includes a ${recentContinuity.duration} break` : ""}.`,
       formula: `recent kills / recent deaths = ${recentKills} / ${Math.max(1, recentDeaths)} = ${recentMatches.length ? recentKd.toFixed(2) : "--"}`,
       benchmark: `Compared against overall baseline K/D of ${overview.matchesPlayed ? overview.kd.toFixed(2) : "--"}.`,
       mediaType: "agent",
@@ -7126,6 +7199,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         statItem("Recent Kills", `${recentKills}`, "Kills from your latest imported matches."),
         statItem("Recent Deaths", `${recentDeaths}`, "Deaths from your latest imported matches."),
         statItem("Recent W-L", `${recentWins}W / ${recentLosses}L`, "Win/loss record from your latest five-match sample."),
+        ...(recentContinuity ? [statItem("Break in Play", recentContinuity.duration, recentContinuity.sentence)] : []),
         statItem("Baseline", overview.matchesPlayed ? `${overview.kd.toFixed(2)} overall K/D` : "--", "Your usual imported match level used for comparison.")
       ]
     },
@@ -8771,6 +8845,8 @@ let askCoachThinkingActive = false;
 let askCoachThinkingStepIndex = 0;
 let askCoachThinkingTimer = null;
 let askCoachRequestInFlight = false;
+let askCoachMotionFrame = 0;
+let askCoachCloseTimer = 0;
 
 function getAskCoachStarterMessage() {
   return {
@@ -9098,7 +9174,18 @@ function openAskCoachModal() {
   askCoachMessages = readAskCoachMessages();
   renderAskCoachMessages();
   resetAskCoachSurvey();
-  panel.classList.add("open");
+  window.cancelAnimationFrame?.(askCoachMotionFrame);
+  window.clearTimeout(askCoachCloseTimer);
+  panel.classList.remove("is-closing");
+  panel.classList.add("is-opening");
+  void panel.offsetWidth;
+  askCoachMotionFrame = window.requestAnimationFrame?.(() => {
+    panel.classList.add("open");
+    panel.classList.remove("is-opening");
+  }) || window.setTimeout(() => {
+    panel.classList.add("open");
+    panel.classList.remove("is-opening");
+  }, 16);
   panel.setAttribute("aria-hidden", "false");
   desktopButton?.setAttribute("aria-expanded", "true");
   mobileButton?.setAttribute("aria-expanded", "true");
@@ -9119,8 +9206,21 @@ function closeAskCoachModal() {
       activeElement.blur();
     }
   }
-  panel?.classList.remove("open");
-  panel?.setAttribute("aria-hidden", "true");
+  if (panel) {
+    window.cancelAnimationFrame?.(askCoachMotionFrame);
+    window.clearTimeout(askCoachCloseTimer);
+    panel.classList.remove("is-opening");
+    if (panel.classList.contains("open")) {
+      panel.classList.add("is-closing");
+      panel.classList.remove("open");
+      askCoachCloseTimer = window.setTimeout(() => {
+        panel.classList.remove("is-closing");
+      }, prefersReducedMotion() ? 0 : 260);
+    } else {
+      panel.classList.remove("is-closing");
+    }
+    panel.setAttribute("aria-hidden", "true");
+  }
   button?.setAttribute("aria-expanded", "false");
   mobileButton?.setAttribute("aria-expanded", "false");
 }
@@ -14918,7 +15018,9 @@ function updateRRChartDataStatus(chartSource = {}) {
   const verified = safeNumber(chartSource.verifiedRrCount);
   const rankSnapshots = safeNumber(chartSource.rankSnapshotCount);
   if (chartSource.isLifetimeRankTimeline && rankSnapshots) {
-    status.textContent = `${rankSnapshots} retained matches include rank snapshots. Lifetime plots rank position without estimating missing RR gains or losses.`;
+    const oldestRetainedDate = getOldestRetainedHenrikMatchDate(getActiveProfile?.());
+    const retainedBoundary = oldestRetainedDate ? ` since ${formatRetainedHistoryDate(oldestRetainedDate)}` : "";
+    status.textContent = `${rankSnapshots} retained matches${retainedBoundary} include rank snapshots. This chart plots rank position without estimating missing RR gains or losses.`;
     return;
   }
   status.textContent = verified
@@ -14975,7 +15077,7 @@ function getChartSourceEntries(size = currentSize) {
       : scopedEntries;
   const entries = chartEntries
     .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-  const scopeLabel = normalizedSize === "all" ? "All-time profile" : selectedSeasonLabel;
+  const scopeLabel = normalizedSize === "all" ? "Retained profile history" : selectedSeasonLabel;
 
   return {
     entries,
@@ -15751,20 +15853,32 @@ function buildMatchRowsForSupabase(userId) {
   (profiles || []).forEach((profile) => {
     (profile.matches || []).forEach((match, index) => {
       const core = getMatchCore(match);
-      const matchId = String(match?.id || match?.matchId || match?.metadata?.matchId || `${profile.id}_${index}`);
+      const source = match?.source || match?.metadata?.source || profile.importSource || "app";
+      const sourceKey = String(source || "").toLowerCase();
+      const riotMatchId = String(
+        match?.metadata?.matchId ||
+        match?.matchId ||
+        (sourceKey === "henrik_sync" ? match?.id : "") ||
+        ""
+      ).trim();
+      const matchId = String(riotMatchId || match?.id || `${profile.id}_${index}`);
       const profileId = String(profile.id || "default");
-      const rowId = globalThis.RankedCoachPersistencePolicy?.buildScopedMatchRowId?.(
+      const rowId = (
+        globalThis.RankedCoachPersistencePolicy?.buildMatchArchiveRowId ||
+        globalThis.RankedCoachPersistencePolicy?.buildScopedMatchRowId
+      )?.(
         userId,
         profileId,
-        matchId
+        matchId,
+        riotMatchId
       ) || `${userId}:${profileId}:${matchId}`;
       const rawRrChange = match?.rr;
       rows.push({
         id: rowId,
         user_id: userId,
         profile_id: profileId,
-        riot_match_id: match?.metadata?.matchId || match?.matchId || null,
-        source: match?.source || match?.metadata?.source || profile.importSource || "app",
+        riot_match_id: riotMatchId || null,
+        source,
         map: core?.map || match?.map || match?.metadata?.map || null,
         agent: core?.agent || match?.agent || match?.metadata?.agent || null,
         role: match?.role || null,
@@ -15872,7 +15986,9 @@ async function performPersistentAccountStateSave(reason = "state") {
   if (!matchRowsSaved) {
     return;
   }
-  await reconcilePersistentMatchRows(user.id, matchRows);
+  // match_snapshots is the permanent archive. Do not prune older rows just
+  // because the current client profile window got compacted or Henrik's
+  // rolling retention stopped returning a match later.
 
   localStorage.setItem(STORAGE_KEY_LAST_BACKEND_SYNC, nowISO());
   backendSyncState.lastError = null;
@@ -46891,7 +47007,7 @@ text-anchor="end">${Math.round(val)}</text>`;
       PAD_LEFT +
       ((CHART_W-PAD_LEFT-PAD_RIGHT)/4)*i;
     const tickValue = i === 4 && normalizedSize === "all"
-      ? "Lifetime"
+      ? "Retained"
       : Math.round((axisWindowSize / 4) * i);
 
     xTicks += `

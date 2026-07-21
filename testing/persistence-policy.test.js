@@ -18,6 +18,9 @@ const thirdId = policy.buildScopedMatchRowId("user-a", "profile-2", "match-1");
 assert.equal(firstId, "user-a:profile-1:match-1");
 assert.notEqual(firstId, secondId);
 assert.notEqual(firstId, thirdId);
+assert.equal(policy.buildMatchArchiveRowId("user-a", "profile-1", "match-1", "RIOT-MATCH-1"), "user-a:riot:riot-match-1");
+assert.equal(policy.buildMatchArchiveRowId("user-a", "profile-2", "match-1", "RIOT-MATCH-1"), "user-a:riot:riot-match-1");
+assert.equal(policy.buildMatchArchiveRowId("user-a", "profile-2", "manual-1", ""), "user-a:profile-2:manual-1");
 
 const deduped = policy.dedupeRowsById([
   { id: firstId, value: 1 },
@@ -65,4 +68,4 @@ assert.equal("roundByRound" in compacted[0].matches[0].matchRecord, false);
 assert.equal(compacted[0].matches.length, 1);
 assert.equal(policy.compactProfilesForLocalCache(compacted, 3)[0].matches.length, 0);
 
-console.log("Persistence policy checks passed: scoped IDs, row deduplication, bounded batches, profile consolidation, and compact local caches.");
+console.log("Persistence policy checks passed: scoped IDs, archive IDs, row deduplication, bounded batches, profile consolidation, and compact local caches.");

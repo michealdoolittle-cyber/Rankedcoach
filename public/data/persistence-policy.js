@@ -13,6 +13,15 @@
     return `${user}:${profile}:${match}`;
   }
 
+  function buildMatchArchiveRowId(userId, profileId, matchId, riotMatchId = "") {
+    const user = clean(userId);
+    const riotMatch = clean(riotMatchId).toLowerCase();
+    if (user && riotMatch) {
+      return `${user}:riot:${riotMatch}`;
+    }
+    return buildScopedMatchRowId(userId, profileId, matchId);
+  }
+
   function dedupeRowsById(rows = []) {
     const unique = new Map();
     (Array.isArray(rows) ? rows : []).forEach(row => {
@@ -128,6 +137,7 @@
 
   globalThis.RankedCoachPersistencePolicy = Object.freeze({
     buildScopedMatchRowId,
+    buildMatchArchiveRowId,
     dedupeRowsById,
     chunkRows,
     consolidateProfiles,

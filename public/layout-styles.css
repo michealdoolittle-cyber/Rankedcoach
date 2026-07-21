@@ -1300,6 +1300,132 @@ body[data-layout-font-active="true"] :is(
   }
 }
 
+/* Directive completion: Phase-2 surfaces that were named in
+   layout-style-implementation-2026-07-16 but were not in the original long
+   selector lists above. They intentionally reuse the same variables and keep
+   nav/chart/meter exclusions untouched. */
+body:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .compass-main,
+  #page-home .compass-header,
+  #page-home .impact-card,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-library .gamesense-tactical-card,
+  #page-library .gamesense-collection-card,
+  .gamesense-skin-preview-card
+){
+  --accent:var(--layout-accent);
+  --accent-2:var(--layout-accent-2);
+  position:relative;
+  isolation:isolate;
+  clip-path:var(--layout-surface-clip) !important;
+  border:var(--layout-surface-border-width) solid var(--layout-surface-border-color) !important;
+  border-left-width:var(--layout-surface-border-left-width) !important;
+  border-left-color:var(--layout-surface-border-left-color) !important;
+  border-radius:var(--layout-surface-radius) !important;
+  background:var(--layout-surface-background) !important;
+  box-shadow:var(--layout-surface-shadow) !important;
+  box-sizing:border-box;
+  padding-top:var(--layout-surface-safe-top) !important;
+  padding-right:var(--layout-surface-safe-right) !important;
+  padding-bottom:var(--layout-surface-safe-bottom) !important;
+  padding-left:var(--layout-surface-safe-left) !important;
+}
+
+body:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .compass-main,
+  #page-home .compass-header,
+  #page-home .impact-card,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-library .gamesense-tactical-card,
+  #page-library .gamesense-collection-card,
+  .gamesense-skin-preview-card
+) > *{
+  position:relative;
+  z-index:1;
+}
+
+body:is(
+  [data-layout-style="steelrivetframe"],
+  [data-layout-shape="steelrivetframe"],
+  [data-layout-style="prismrim"],
+  [data-layout-shape="prismrim"],
+  [data-layout-style="hazardrim"],
+  [data-layout-shape="hazardrim"]
+) :is(
+  #page-home .compass-main,
+  #page-home .compass-header,
+  #page-home .impact-card,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-library .gamesense-tactical-card,
+  #page-library .gamesense-collection-card,
+  .gamesense-skin-preview-card
+)::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  clip-path:var(--layout-surface-clip);
+  border:4px solid transparent;
+  background:var(--layout-rim-background) border-box;
+  opacity:.42;
+  mix-blend-mode:screen;
+}
+
+body[data-layout-texture] :is(
+  #page-home .compass-main,
+  #page-home .compass-header,
+  #page-home .impact-card,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-library .gamesense-tactical-card,
+  #page-library .gamesense-collection-card,
+  .gamesense-skin-preview-card
+)::before{
+  --accent:var(--layout-accent);
+  --accent-2:var(--layout-accent-2);
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:var(--layout-texture-background);
+  background-size:42px 42px,42px 42px,100% 100%,100% 100%;
+  opacity:var(--layout-texture-opacity);
+  mix-blend-mode:var(--layout-texture-blend-mode);
+}
+
+body[data-layout-texture] :is(
+  #page-home .compass-main,
+  #page-home .compass-header,
+  #page-home .impact-card,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-library .gamesense-tactical-card,
+  #page-library .gamesense-collection-card,
+  .gamesense-skin-preview-card
+) > *{
+  position:relative;
+  z-index:1;
+}
+
+body[data-layout-font-active="true"] :is(
+  #page-home .compass-title,
+  #page-home .compass-main .card-title,
+  #page-home .compass-header .card-title,
+  #page-home .impact-card .timeline-title,
+  #page-stats .stats-proof-card :is(strong,.card-title),
+  #page-stats .stats-role-progress-card :is(strong,.card-title),
+  #page-library .gamesense-tactical-card strong,
+  #page-library .gamesense-collection-card strong,
+  .gamesense-skin-preview-card strong
+){
+  font-family:var(--layout-title-font) !important;
+}
+
 .layout-style-card > :is(.layout-style-preview,.layout-style-card-copy){
   grid-column:1 / -1 !important;
   width:100% !important;

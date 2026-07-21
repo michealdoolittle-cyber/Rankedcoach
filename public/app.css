@@ -56409,3 +56409,86 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
 #page-stats .stats-map-meta{
   grid-template-columns:minmax(0,1fr) !important;
 }
+
+/* 2026-07-21 modal-motion directive completion:
+   keep the mobile positioning overrides above, but restore real transform
+   transitions for profile menus and give Ask Coach a rendered before-frame. */
+html body :is(.profile-dropdown, .profile-switcher){
+  transition:
+    opacity var(--rc-dropdown-motion-ms, 210ms) ease,
+    transform var(--rc-dropdown-motion-ms, 210ms) cubic-bezier(.2,.84,.24,1) !important;
+  will-change:opacity, transform;
+}
+
+html body :is(.profile-dropdown:not(.open), .profile-switcher:not(.open)){
+  transform:translate3d(0, -10px, 0) scale(.982) !important;
+}
+
+html body :is(.profile-dropdown.open, .profile-switcher.open){
+  transform:translate3d(0, 0, 0) scale(1) !important;
+}
+
+html body .ask-coach-panel:is(.is-opening, .is-closing){
+  display:block !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout .ask-coach-panel:is(.open, .is-opening, .is-closing){
+  display:block !important;
+  position:fixed !important;
+  top:8px !important;
+  left:8px !important;
+  right:8px !important;
+  bottom:auto !important;
+  width:auto !important;
+  max-width:none !important;
+  max-height:calc(100dvh - 16px) !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  z-index:24500 !important;
+}
+
+@media (prefers-reduced-motion: reduce){
+  html body :is(.profile-dropdown, .profile-switcher, .ask-coach-panel-inner){
+    transition:none !important;
+    animation:none !important;
+    transform:none !important;
+  }
+}
+
+/* 2026-07-21 layout-style verification fix:
+   when a clipped layout shape adds safe-area padding to the Stats parent card,
+   keep each trend card's metric text on intrinsic rows instead of letting the
+   middle metric line collapse inside a fractional grid track. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  grid-template-rows:repeat(2,minmax(112px,1fr)) !important;
+  grid-auto-rows:minmax(112px,1fr) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  grid-template-rows:auto auto minmax(0,1fr) !important;
+  align-content:start !important;
+  min-height:112px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-copy{
+  align-content:start !important;
+  min-height:30px !important;
+  gap:2px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-main-text{
+  font-size:13px !important;
+  line-height:1.05 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-sub-text{
+  min-height:13px !important;
+  font-size:12px !important;
+  line-height:1.08 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+  font-size:10px !important;
+  line-height:1.1 !important;
+}
