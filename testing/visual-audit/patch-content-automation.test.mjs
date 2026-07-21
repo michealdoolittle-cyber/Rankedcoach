@@ -41,7 +41,7 @@ const playlistChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.play
 playlistChannels.forEach(channel => assert(liveVideos.some(video => video.channel === channel), `${channel} must have a live trusted-channel feed.`));
 
 const creatorChannels = TRUSTED_YOUTUBE_CHANNELS.filter(channel => channel.kind === "creator");
-assert.equal(creatorChannels.length, 9, "The trusted creator allowlist must contain the original eight creators plus Charla7an.");
+assert.equal(creatorChannels.length, 10, "The trusted creator allowlist must contain the original eight creators plus Charla7an and Thinking Man's Valorant.");
 for (const channel of creatorChannels) {
   const sample = liveVideos.find(video => video.channelId === channel.id);
   assert.ok(sample, `${channel.name} must expose a current sample video.`);
@@ -63,7 +63,8 @@ const creatorSamples = new Map([
   ["Sena", "You Don't Suck, You're Just Playing the Wrong Agent"],
   ["Rem", "Valorant Is BUFFING Yoru"],
   ["Rooney", "the hidden mistake keeping you hardstuck"],
-  ["Charla7an", "Controller Role Guide for Ranked"]
+  ["Charla7an", "Controller Role Guide for Ranked"],
+  ["Thinking Man's Valorant", "Why This Pro Comp Works On Sunset"]
 ]);
 for (const [channel, title] of creatorSamples) {
   assert.notEqual(categorizeCreatorTitle(title), "General", `${channel}'s focused sample must map beyond General.`);

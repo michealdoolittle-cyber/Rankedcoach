@@ -32,7 +32,8 @@ export const TRUSTED_YOUTUBE_CHANNELS = Object.freeze([
   Object.freeze({ id: "UCH__y98F7DyZaw_C3LdGu-A", handle: "@SenaVL", name: "Sena", kind: "creator", playlist: true, skin: false }),
   Object.freeze({ id: "UCcCTL6IEX64sXTOba-Iz6gA", handle: "@RemValorant", name: "Rem", kind: "creator", playlist: true, skin: true }),
   Object.freeze({ id: "UCHNd-wW9s1d7VGvd3qJgp5g", handle: "@rooneyVAL", name: "Rooney", kind: "creator", playlist: true, skin: false }),
-  Object.freeze({ id: "UC7BbRccnD432c3AADwFq1VQ", handle: "@Charla7an", name: "Charla7an", kind: "creator", playlist: true, skin: false })
+  Object.freeze({ id: "UC7BbRccnD432c3AADwFq1VQ", handle: "@Charla7an", name: "Charla7an", kind: "creator", playlist: true, skin: false }),
+  Object.freeze({ id: "UCgIriwgZBo34xOp96Xsp4Yw", handle: "@ThinkingMansValorant", name: "Thinking Man's Valorant", kind: "creator", playlist: true, skin: false })
 ]);
 
 export const TRUSTED_TWITCH_CHANNELS = Object.freeze([

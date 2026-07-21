@@ -96,10 +96,14 @@
     "Summit",
     "Sunset"
   ]);
+  // V26 Act 4 / Patch 13.00 competitive rotation: Ascent, Breeze, Haven, Lotus, Split, Summit, Sunset are active.
   const canonicalMapSeason = Object.freeze({
     abyss: false,
     bind: false,
-    corrode: false
+    corrode: false,
+    fracture: false,
+    icebox: false,
+    pearl: false
   });
   const canonicalWeaponDetails = Object.freeze({
     classic: { image: "/assets/weapons/classic.png", cost: 0, magazine: 12, fireRate: "6.75 rounds/sec", penetration: "Low", damageRanges: [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], focus: "Use controlled taps at range, and use alt-fire only as a close-range movement answer." },
@@ -391,7 +395,10 @@
     const byId = new Map(authored.map(map => [map.id || assetSlug(map.label), map]));
     return canonicalMapNames.map(label => {
       const id = assetSlug(label);
-      return byId.get(id) || buildMapShell(label);
+      const map = byId.get(id) || buildMapShell(label);
+      return canonicalMapSeason[id] === false && map.inCompetitivePool !== false
+        ? { ...map, inCompetitivePool: false }
+        : map;
     });
   }
 
@@ -933,6 +940,17 @@
       </details>`;
   }
 
+  function renderCompAgentRead(map, agent = "", insight = "") {
+    const links = Array.isArray(map?.lineupLinks) ? map.lineupLinks : [];
+    const lineupLinks = links.length
+      ? `<nav class="gamesense-comp-read-lineups" aria-label="${escapeHtml(map.label)} lineup resources">${links.map(link => {
+        const brand = getLineupBrand(link);
+        return `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${brand.logo ? `<img src="${escapeHtml(brand.logo)}" alt="">` : ""}<span>${escapeHtml(brand.name)}</span></a>`;
+      }).join("")}</nav>`
+      : "";
+    return `<div class="gamesense-comp-agent-read is-revealing"><strong>${escapeHtml(agent)}</strong><p>${escapeHtml(insight)}</p>${lineupLinks}</div>`;
+  }
+
   function renderComp(map) {
     const rawComps = (Array.isArray(map.metaComps) && map.metaComps.length ? map.metaComps : [map.metaComp]).slice();
     const comps = getCompRoleLayoutReferences(map, rawComps);
@@ -977,7 +995,7 @@
             </div>
           </article>`;
         }).join("")}</div>
-        ${selectedInsight ? `<div class="gamesense-comp-agent-read"><strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(selectedInsight)}</p></div>` : `<p class="gamesense-comp-prompt">Select an agent to see why the pick succeeds on ${escapeHtml(map.label)}.</p>`}
+        ${selectedInsight ? renderCompAgentRead(map, selectedAgent, selectedInsight) : `<p class="gamesense-comp-prompt">Select an agent to see why the pick succeeds on ${escapeHtml(map.label)}.</p>`}
         ${renderCompRolePickExplorer(map)}
       </section>`;
   }
@@ -1767,7 +1785,10 @@
       compCard?.querySelector(".gamesense-comp-prompt")?.replaceWith(read);
     }
     if (read) {
-      read.innerHTML = `<strong>${escapeHtml(selectedAgent)}</strong><p>${escapeHtml(insight)}</p>`;
+      const replacement = document.createElement("template");
+      replacement.innerHTML = renderCompAgentRead(map, selectedAgent, insight);
+      read.replaceWith(replacement.content.firstElementChild);
+      read = compCard?.querySelector(".gamesense-comp-agent-read");
     }
 
     if (document.documentElement.classList.contains("is-mobile-layout")) {

@@ -410,24 +410,24 @@ async function run() {
     await desktop.click('[data-gamesense-map-season="in"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator('[data-gamesense-map-season="in"]').getAttribute("aria-selected"), "true");
-    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 10);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 10);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 10);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 20);
-    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-card-frame').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-marks').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark').count(), 14);
+    assert.equal(await desktop.locator('.gamesense-map-entry-card:not(.is-out-of-season) .gamesense-map-side-mark.is-attack .gamesense-attack-swords-icon').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-side-mark.is-attack').first().evaluate(icon => getComputedStyle(icon).color), "rgb(255, 70, 85)");
-    assert.equal(await desktop.locator('.gamesense-defense-shield-icon').count(), 10);
-    assert.equal(await desktop.locator('.gamesense-defense-shield-half').count(), 10);
-    assert.equal(await desktop.locator('.gamesense-defense-shield-split').count(), 10);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-icon').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-half').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-defense-shield-split').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season').count(), 0);
     await desktop.click('[data-gamesense-map-season="out"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator('[data-gamesense-map-season="out"]').getAttribute("aria-selected"), "true");
-    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 3);
-    assert.deepEqual([...await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts()].sort(), ["ABYSS", "BIND", "CORRODE"]);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 6);
+    assert.deepEqual([...await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts()].sort(), ["ABYSS", "BIND", "CORRODE", "FRACTURE", "ICEBOX", "PEARL"]);
     assert.equal(await desktop.locator('.gamesense-map-entry-card.is-out-of-season .gamesense-map-side-marks').count(), 0);
     const outOfSeasonMap = desktop.locator('.gamesense-map-entry-card.is-out-of-season');
-    assert.equal(await outOfSeasonMap.count(), 3);
+    assert.equal(await outOfSeasonMap.count(), 6);
     assert.equal(await outOfSeasonMap.evaluateAll(cards => cards.every(card => !card.disabled)), true);
     assert.equal(await outOfSeasonMap.evaluateAll(cards => cards.every(card => /grayscale/.test(getComputedStyle(card).filter))), true);
     const mapGalleryAlignment = await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.map(card => {
@@ -775,12 +775,25 @@ async function run() {
     await desktop.locator("[data-gamesense-comp-agent]").first().click();
     await desktop.locator(".gamesense-comp-agent-read").waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-comp-agent-read").innerText(), /Chamber.*Trademark/is);
+    assert.equal(await desktop.locator(".gamesense-comp-agent-read.is-revealing").count(), 1);
+    assert.deepEqual(await desktop.locator(".gamesense-comp-agent-read .gamesense-comp-read-lineups a span").allInnerTexts(), ["LINEUPSVALORANT", "UPFORGE"]);
+    assert.deepEqual(
+      await desktop.locator(".gamesense-comp-agent-read .gamesense-comp-read-lineups a").evaluateAll(links => links.map(link => link.href)),
+      ["https://lineupsvalorant.com/", "https://upforge.gg/lineups"]
+    );
     await desktop.locator("[data-gamesense-comp-agent]").nth(1).click();
     assert.equal(await desktop.locator(".gamesense-comp-agents img").first().evaluate(image => window.__rankedCoachCompImageNode === image && image.isConnected), true);
     assert.equal(await desktop.locator(".gamesense-comp-agent-read").count(), 1);
 
     await desktop.click('[data-gamesense-back="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
+    await desktop.click('[data-gamesense-map-season="all"]');
+    await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
+    const mapSeasonStatuses = await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').evaluateAll(cards => Object.fromEntries(cards.map(card => [card.dataset.gamesenseItem, card.querySelector(".gamesense-map-season-status")?.textContent.trim() || ""])));
+    assert.equal(mapSeasonStatuses.fracture, "Out of Season");
+    assert.equal(mapSeasonStatuses.pearl, "Out of Season");
+    assert.equal(mapSeasonStatuses.summit, "");
+    assert.equal(mapSeasonStatuses.sunset, "");
     await desktop.click('[data-gamesense-item="split"]');
     await desktop.locator(".gamesense-tactical-stage img").waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /split-layout-trn\.png/);
@@ -874,8 +887,7 @@ async function run() {
     assert.equal(await desktop.locator("html").getAttribute("data-gamesense-transition"), null);
     await desktop.locator('[data-gamesense-ability="cloudburst"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
-    assert.equal(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").count(), 1);
-    assert.match(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").getAttribute("src"), /youtube-nocookie\.com\/embed\/XYotYu1u9jY\?.*autoplay=0.*controls=1.*rel=0/i);
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
     assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
     assert.match(await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
     await desktop.waitForTimeout(2200);
@@ -909,19 +921,12 @@ async function run() {
       assert.equal(await desktop.locator(`[data-gamesense-ability="${abilityId}"]`).getAttribute("aria-pressed"), "true");
       assert.equal(await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(node => window.__rankedCoachOmenPortraitNode === node && node.isConnected), true);
     }
-    assert.match(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").getAttribute("src"), /youtube-nocookie\.com\/embed\/NQnVPvXGQE0\?/i);
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "sova"));
     await desktop.locator('.gamesense-agent-detail-head h2').getByText("Sova", { exact: true }).waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-ability="recon-bolt"]');
     assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
-
-    await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "cypher"));
-    await desktop.locator('.gamesense-agent-detail-head h2').getByText("Cypher", { exact: true }).waitFor({ state: "visible" });
-    await desktop.click('[data-gamesense-ability="trapwire"]');
-    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
-    await desktop.click('[data-gamesense-ability="spycam"]');
-    assert.match(await desktop.locator(".gamesense-ability-video .gamesense-video-embed").getAttribute("src"), /youtube-nocookie\.com\/embed\/ZqA1jVWFwOU\?/i);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "reyna"));
     await desktop.locator('.gamesense-agent-detail-head h2').getByText("Reyna", { exact: true }).waitFor({ state: "visible" });
