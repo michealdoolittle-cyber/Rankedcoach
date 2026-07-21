@@ -20,6 +20,15 @@ function ability(id, name, slot, agent, summary, stats, purpose, setup, video = 
 ```
 `video` shape: `{ videoId: "<YouTube video ID>", title: "<real video title, for the iframe's accessible title>", startSeconds: <optional int> }`. Use `startSeconds` (appended as `&start=N` to the embed) for cases where the best available demonstration is a timestamped clip inside a longer guide/highlight video rather than a dedicated single-ability video — most ability demos will realistically be a moment inside a broader agent guide, not a standalone upload.
 
+## 3a. Source Michael found (2026-07-21) — confirm the technical shape before wiring it in
+
+Michael gave Codex a site containing Riot's official per-ability videos, described as clipped/spliced down from Riot's own official agent-release videos, presented as public videos. This is a good match for the "highest-confidence source" priority in section 3 below (Riot's own footage) — but before Codex wires anything in, confirm which of these two shapes the site actually provides, since they need different handling:
+
+- **It gives real YouTube video IDs / embed links** (even if the clips themselves were edited/spliced by a third party from Riot's release videos and re-uploaded to their own YouTube channel) → this still fits the existing plan cleanly: embed via `renderYouTubePlayer()` same as everything else in section 4, pointed at whichever YouTube video actually hosts each clip.
+- **It hosts the video files itself** (self-hosted `.mp4`/streaming, not a YouTube embed at all) → don't reuse `renderYouTubePlayer()` for those, and don't hotlink a third-party site's directly-hosted files into this app without a closer look first — a re-splicer's own hosting of edited Riot footage is a different situation than an iframe embed pointing back at the original creator's own hosted video. Flag this back before proceeding if this turns out to be the case.
+
+Once the actual site/URLs are shared, re-verify each specific clip the same way section 3 already requires (real, live, actually shows the described ability) before it ships — a site curating "all ability videos" in one place is a great starting point for finding candidates, but doesn't replace the per-clip verification step.
+
 ## 3. Sourcing — this is the actual work, and it isn't something to guess or fabricate
 
 **Do not invent video IDs.** Every `videoId` must be a real, currently-live, non-private YouTube video, individually verified before it's wired in — same discipline already established and proven out for the Sketchfab 3D skin-model sourcing work (`notes/sketchfab-3d-coverage-expansion-2026-07-16.md`, `-round2-2026-07-17.md`): confirmed IDs only, license/availability re-checked live immediately before merging since pages can change, ambiguous matches explicitly resolved rather than assumed.
