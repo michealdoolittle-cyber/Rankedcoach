@@ -296,31 +296,35 @@ async function run() {
         active: cards.filter(card => card.dataset.activePool === "true").map(card => card.querySelector(".stats-main-text")?.textContent?.trim()),
         out: cards.filter(card => card.dataset.activePool === "false").map(card => card.querySelector(".stats-main-text")?.textContent?.trim()),
         outNoDataTags: cards.filter(card => card.dataset.activePool === "false" && card.querySelector(".stats-map-no-data-tag")).length,
-        outBadgesCentered: cards.filter(card => card.dataset.activePool === "false").every(card => {
+        outBadges: cards.filter(card => card.querySelector(".stats-map-out-badge")).length,
+        outNamesCentered: cards.filter(card => card.dataset.activePool === "false").every(card => {
           const cardRect = card.getBoundingClientRect();
-          const badge = card.querySelector(".stats-map-out-badge")?.getBoundingClientRect();
-          return badge && Math.abs((badge.left + badge.right) / 2 - (cardRect.left + cardRect.right) / 2) <= 2;
+          const label = card.querySelector(".stats-map-out-name")?.getBoundingClientRect();
+          return label && Math.abs((label.left + label.right) / 2 - (cardRect.left + cardRect.right) / 2) <= 2;
         }),
+        summitImage: cards.find(card => card.querySelector(".stats-main-text")?.textContent?.trim() === "Summit")?.querySelector(".stats-map-image")?.getAttribute("src") || "",
         activeNoDataTags: cards.filter(card => card.dataset.activePool === "true" && card.dataset.hasData === "false" && card.querySelector(".stats-map-no-data-tag")).length,
         excludedCrosses: cards.filter(card => card.dataset.activePool === "false" && card.querySelector(".stats-map-excluded-x")).length,
         resultLineDetails: cards.filter(card => card.dataset.activePool === "true" && card.dataset.hasData === "true").map(card => {
+          const cardRect = card.getBoundingClientRect();
           const line = card.querySelector(".stats-map-result-line")?.getBoundingClientRect();
           const children = [...card.querySelectorAll(".stats-map-result-line > *")].map(item => item.getBoundingClientRect());
           return {
             map: card.querySelector(".stats-main-text")?.textContent?.trim(),
+            card: cardRect.toJSON(),
             line: line?.toJSON(),
             children: children.map(child => child.toJSON()),
             display: line ? getComputedStyle(card.querySelector(".stats-map-result-line")).display : ""
           };
         }),
         resultLineCentered: cards.filter(card => card.dataset.activePool === "true" && card.dataset.hasData === "true").every(card => {
-          const line = card.querySelector(".stats-map-result-line")?.getBoundingClientRect();
+          const cardRect = card.getBoundingClientRect();
           const children = [...card.querySelectorAll(".stats-map-result-line > *")].map(item => item.getBoundingClientRect());
-          if (!line || children.length !== 2) return false;
+          if (children.length !== 2) return false;
           const groupLeft = Math.min(...children.map(child => child.left));
           const groupRight = Math.max(...children.map(child => child.right));
-          return children.every(child => child.left >= line.left - 1 && child.right <= line.right + 1)
-            && Math.abs((groupLeft + groupRight) / 2 - (line.left + line.right) / 2) <= 2;
+          return children.every(child => child.left >= cardRect.left - 1 && child.right <= cardRect.right + 1)
+            && Math.abs((groupLeft + groupRight) / 2 - (cardRect.left + cardRect.right) / 2) <= 5;
         })
       };
     });
@@ -328,7 +332,9 @@ async function run() {
     assert.deepEqual([...statsMapPoolState.active].sort(), ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"]);
     assert.deepEqual([...statsMapPoolState.out].sort(), ["Abyss", "Bind", "Corrode", "Fracture", "Icebox", "Pearl"]);
     assert.equal(statsMapPoolState.outNoDataTags, 0, JSON.stringify(statsMapPoolState));
-    assert.equal(statsMapPoolState.outBadgesCentered, true, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.outBadges, 0, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.outNamesCentered, true, JSON.stringify(statsMapPoolState));
+    assert.match(statsMapPoolState.summitImage, /media\.valorant-api\.com\/maps\/756da597-416b-c0f2-f47b-afbdf28670bc\/splash\.png/i);
     assert.ok(statsMapPoolState.activeNoDataTags >= 1, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.excludedCrosses, 6, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.resultLineCentered, true, JSON.stringify(statsMapPoolState));

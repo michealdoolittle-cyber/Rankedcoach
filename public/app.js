@@ -981,6 +981,22 @@ const ALL_VALORANT_MAP_NAMES = [
   "Sunset"
 ];
 
+const MAP_ARTWORK_UUIDS = {
+  Abyss: "224b0a95-48b9-f703-1bd8-67aca101a61f",
+  Ascent: "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
+  Bind: "2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba",
+  Breeze: "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
+  Corrode: "1c18ab1f-420d-0d8b-71d0-77ad3c439115",
+  Fracture: "b529448b-4d60-346e-e89e-00a4c527a405",
+  Haven: "2bee0dc9-4ffe-519b-1cbd-7fbe763a6047",
+  Icebox: "e2ad5c54-4114-a870-9641-8ea21279579a",
+  Lotus: "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
+  Pearl: "fd267378-4d1d-484f-ff52-77821ed10dc2",
+  Split: "d960549e-485c-e861-8d71-aa9d1aed12a2",
+  Summit: "756da597-416b-c0f2-f47b-afbdf28670bc",
+  Sunset: "92584fbe-486a-b1b2-9faa-39b0f486b498"
+};
+
 const DEMO_ACT_MAP_POOLS = {
   "Season 2025 Act 5": ["Ascent", "Bind", "Breeze", "Corrode", "Haven", "Lotus", "Abyss"],
   "Season 2025 Act 6": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
@@ -3830,6 +3846,8 @@ function getActiveAnalytics() {
 
 function getMapIconUrl(mapName) {
   const normalized = String(mapName || "").trim();
+  const uuid = MAP_ARTWORK_UUIDS[normalized];
+  if (uuid) return `https://media.valorant-api.com/maps/${uuid}/splash.png`;
   return `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${encodeURIComponent(normalized)}.png`;
 }
 
@@ -50890,6 +50908,8 @@ function renderStatsMapsModel() {
     const canOpen = hasData && isActivePool;
     const winrateValue = safeNumber(map?.winrate);
     const winrateTone = hasData ? (winrateValue >= 50 ? "stats-value-positive" : "stats-value-negative") : "";
+    const matchCount = safeNumber(map?.matchesPlayed || map?.matches);
+    const matchCopy = `${matchCount} ${matchCount === 1 ? "game" : "games"}`;
     const card = document.createElement("button");
     card.type = "button";
     card.disabled = !canOpen;
@@ -50903,11 +50923,11 @@ function renderStatsMapsModel() {
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">
           ${hasData
-            ? `<span class="stats-sub-text ${winrateTone}">${Math.round(winrateValue)}% WR</span><span class="stats-map-games">${safeNumber(map?.matchesPlayed || map?.matches)} games</span>`
+            ? `<span class="stats-sub-text ${winrateTone}">${Math.round(winrateValue)}% WR</span><span class="stats-map-games">${escapeHtml(matchCopy)}</span>`
             : (isActivePool ? `<span class="stats-map-no-data-tag">No Data</span>` : "")
           }
         </span>
-        ${!isActivePool ? `<span class="stats-map-out-badge">Out-of-Season</span>` : ""}
+        ${!isActivePool ? `<span class="stats-map-out-name">${escapeHtml(mapName)}</span>` : ""}
       </div>
     `;
     if (canOpen) {

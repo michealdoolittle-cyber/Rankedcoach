@@ -402,11 +402,12 @@ async function run() {
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-topic="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
-    assert.equal(await desktop.locator('[data-gamesense-map-season="all"]').getAttribute("aria-selected"), "true");
-    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 13);
+    assert.equal(await desktop.locator('[data-gamesense-map-season="all"]').count(), 0);
+    assert.equal(await desktop.locator('[data-gamesense-map-season="in"]').getAttribute("aria-selected"), "true");
+    assert.equal(await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').count(), 7);
     assert.equal(await desktop.locator('.gamesense-map-entry-card').evaluateAll(cards => cards.every(card => getComputedStyle(card, "::after").backgroundImage !== "none")), true);
     const mapLabels = await desktop.locator('.gamesense-map-card-copy strong').allInnerTexts();
-    assert.deepEqual([...mapLabels].sort(), ["ABYSS", "ASCENT", "BIND", "BREEZE", "CORRODE", "FRACTURE", "HAVEN", "ICEBOX", "LOTUS", "PEARL", "SPLIT", "SUMMIT", "SUNSET"]);
+    assert.deepEqual([...mapLabels].sort(), ["ASCENT", "BREEZE", "HAVEN", "LOTUS", "SPLIT", "SUMMIT", "SUNSET"]);
     assert.equal(await desktop.locator('.gamesense-map-card-copy strong').evaluateAll(labels => labels.every(label => getComputedStyle(label).color === "rgb(246, 196, 83)")), true);
     await desktop.click('[data-gamesense-map-season="in"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
@@ -788,11 +789,11 @@ async function run() {
 
     await desktop.click('[data-gamesense-back="maps"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
-    await desktop.click('[data-gamesense-map-season="all"]');
+    await desktop.click('[data-gamesense-map-season="in"]');
     await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').first().waitFor({ state: "visible" });
     const mapSeasonStatuses = await desktop.locator('.gamesense-entry-grid-maps [data-gamesense-item]').evaluateAll(cards => Object.fromEntries(cards.map(card => [card.dataset.gamesenseItem, card.querySelector(".gamesense-map-season-status")?.textContent.trim() || ""])));
-    assert.equal(mapSeasonStatuses.fracture, "Out of Season");
-    assert.equal(mapSeasonStatuses.pearl, "Out of Season");
+    assert.equal(mapSeasonStatuses.fracture, undefined);
+    assert.equal(mapSeasonStatuses.pearl, undefined);
     assert.equal(mapSeasonStatuses.summit, "");
     assert.equal(mapSeasonStatuses.sunset, "");
     await desktop.click('[data-gamesense-item="split"]');
@@ -822,6 +823,11 @@ async function run() {
     assert.match(await desktop.locator('[data-gamesense-agent-role-filter="sentinel"]').evaluate(button => getComputedStyle(button).backgroundImage), /linear-gradient/i);
     assert.equal(await desktop.locator('[data-gamesense-agent-role-filter="sentinel"]').evaluate(button => getComputedStyle(button).getPropertyValue("--agent-role-color").trim()), "#34d399");
     assert.equal(await desktop.locator('.gamesense-agent-entry-card').evaluateAll(cards => cards.every(card => ["chamber", "cypher", "deadlock", "killjoy", "sage", "vyse", "veto"].includes(card.dataset.gamesenseItem))), true);
+    assert.equal(await desktop.locator('.gamesense-agent-entry-card').evaluateAll(cards => cards.every(card => {
+      const nameColor = getComputedStyle(card.querySelector(".gamesense-entry-copy strong")).color;
+      const indexColor = getComputedStyle(card.querySelector(".gamesense-entry-index")).color;
+      return nameColor === "rgb(52, 211, 153)" && indexColor === "rgb(52, 211, 153)";
+    })), true);
     await desktop.click('[data-gamesense-agent-role-filter="all"]');
     assert.equal(await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').count(), 29);
     assert.equal(await desktop.locator('.gamesense-agent-entry-card img').count(), 29);
@@ -844,7 +850,11 @@ async function run() {
     assert.ok(desktopAgentTile.index.top >= desktopAgentTile.card.top && desktopAgentTile.index.right <= desktopAgentTile.card.right, JSON.stringify(desktopAgentTile));
     assert.ok(desktopAgentTile.image.left <= desktopAgentTile.card.left + 2 && desktopAgentTile.image.bottom >= desktopAgentTile.card.bottom - 2, JSON.stringify(desktopAgentTile));
     assert.ok(desktopAgentTile.name.left >= desktopAgentTile.card.left + desktopAgentTile.card.width / 2 - 1 && desktopAgentTile.hidden, JSON.stringify(desktopAgentTile));
-    assert.equal(await desktop.locator(".gamesense-agent-entry-card .gamesense-entry-copy strong").first().evaluate(title => getComputedStyle(title).color), "rgb(246, 196, 83)");
+    assert.deepEqual(await desktop.locator(".gamesense-agent-entry-card").first().evaluate(card => ({
+      role: card.dataset.roleTone,
+      name: getComputedStyle(card.querySelector(".gamesense-entry-copy strong")).color,
+      index: getComputedStyle(card.querySelector(".gamesense-entry-index")).color
+    })), { role: "controller", name: "rgb(167, 139, 250)", index: "rgb(167, 139, 250)" });
     await desktop.locator(".gamesense-entry-grid-agents").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-gallery-desktop.png") });
     await desktop.click('[data-gamesense-item="jett"]');
     await desktop.waitForTimeout(400);
@@ -1466,7 +1476,8 @@ async function run() {
     await mobile.click('[data-gamesense-topic="maps"]');
     await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
     await mobile.locator('.gamesense-map-entry-card').first().waitFor({ state: "visible" });
-    assert.equal(await mobile.locator('.gamesense-map-entry-card').count(), 13);
+    assert.equal(await mobile.locator('[data-gamesense-map-season="all"]').count(), 0);
+    assert.equal(await mobile.locator('.gamesense-map-entry-card').count(), 7);
     const mobileMapGallery = await mobile.locator(".gamesense-map-entry-card").evaluateAll(cards => cards.map(card => {
       const cardRect = card.getBoundingClientRect();
       const title = card.querySelector(".gamesense-map-card-copy strong").getBoundingClientRect();
@@ -1680,7 +1691,11 @@ async function run() {
     assert.ok(mobileAgentTile.index.left > mobileAgentTile.card.left + mobileAgentTile.card.width / 2, JSON.stringify(mobileAgentTile));
     assert.ok(mobileAgentTile.image.left <= mobileAgentTile.card.left + 2 && mobileAgentTile.image.bottom >= mobileAgentTile.card.bottom - 2, JSON.stringify(mobileAgentTile));
     assert.ok(mobileAgentTile.name.right <= mobileAgentTile.card.right - 10 && mobileAgentTile.hidden, JSON.stringify(mobileAgentTile));
-    assert.equal(await mobile.locator(".gamesense-agent-entry-card .gamesense-entry-copy strong").first().evaluate(title => getComputedStyle(title).color), "rgb(246, 196, 83)");
+    assert.deepEqual(await mobile.locator(".gamesense-agent-entry-card").first().evaluate(card => ({
+      role: card.dataset.roleTone,
+      name: getComputedStyle(card.querySelector(".gamesense-entry-copy strong")).color,
+      index: getComputedStyle(card.querySelector(".gamesense-entry-index")).color
+    })), { role: "controller", name: "rgb(167, 139, 250)", index: "rgb(167, 139, 250)" });
     const mobileDeadlockCard = mobile.locator('[data-gamesense-item="deadlock"]');
     await mobileDeadlockCard.scrollIntoViewIfNeeded();
     await mobile.waitForFunction(() => {

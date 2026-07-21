@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "all", playlistFilter: "Home" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -509,8 +509,9 @@
     const mapSummary = Array.isArray(item.maps) && item.maps.length ? ` | ${item.maps.join(" / ")}` : "";
     const nameLength = String(item.label || "").length;
     const nameClass = nameLength >= 9 ? " is-very-long-name" : nameLength >= 7 ? " is-long-name" : "";
+    const roleTone = assetSlug(item.role);
     return `
-      <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" style="--entry-index:${index}">
+      <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" data-role-tone="${escapeHtml(roleTone)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
         <img src="${escapeHtml(item.portrait)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}">
         <span class="gamesense-entry-copy"><strong class="${nameClass.trim()}">${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)}${escapeHtml(mapSummary)}</small><span>Inspect abilities</span></span>
@@ -711,16 +712,14 @@
     let items = getTopicItems(topic);
     let controls = "";
     if (topic === "maps") {
-      const activeSeason = ["all", "in", "out"].includes(state.mapSeason) ? state.mapSeason : "all";
+      const activeSeason = ["in", "out"].includes(state.mapSeason) ? state.mapSeason : "in";
+      state.mapSeason = activeSeason;
       items = items.filter(item => (
-        activeSeason === "all"
-          ? true
-          : activeSeason === "in"
+        activeSeason === "in"
             ? item.inCompetitivePool !== false
             : item.inCompetitivePool === false
       ));
       controls = `<div class="gamesense-gallery-switcher gamesense-map-season-switcher" role="tablist" aria-label="Map rotation">
-        <button type="button" data-gamesense-map-season="all" class="${activeSeason === "all" ? "active" : ""}" aria-selected="${activeSeason === "all"}"><i aria-hidden="true"></i><span>All Maps</span></button>
         <button type="button" data-gamesense-map-season="in" class="${activeSeason === "in" ? "active" : ""}" aria-selected="${activeSeason === "in"}"><i aria-hidden="true"></i><span>In-Season</span></button>
         <button type="button" data-gamesense-map-season="out" class="${activeSeason === "out" ? "active" : ""}" aria-selected="${activeSeason === "out"}"><i aria-hidden="true"></i><span>Off-Season</span></button>
       </div>`;
@@ -1065,14 +1064,18 @@
     return `<div class="gamesense-ability-video"><span>Ability demo</span>${renderYouTubePlayer(videoId, video.title || "VALORANT ability demo", { startSeconds: video.startSeconds })}<a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">Open demo on YouTube</a></div>`;
   }
 
-  function renderAbilityDetail(agent, ability) {
+  function renderAbilityVideoSlot(ability) {
+    return `<div class="gamesense-ability-video-slot">${renderAbilityVideo(ability?.video)}</div>`;
+  }
+
+  function renderAbilityDetail(agent, ability, { includeVideo = true } = {}) {
     if (!ability) return "";
     return `
       <article class="gamesense-fact-panel gamesense-ability-panel">
         <div class="gamesense-fact-panel-head"><img src="${escapeHtml(ability.icon)}" alt=""><div><span>${escapeHtml(ability.slot)}</span><h3>${escapeHtml(ability.name)}</h3></div></div>
         <p>${escapeHtml(ability.summary)}</p>
         ${renderStatChips(ability.stats)}
-        ${renderAbilityVideo(ability.video)}
+        ${includeVideo ? renderAbilityVideo(ability.video) : ""}
         <div class="gamesense-fact-read"><section><span>Round purpose</span><p>${escapeHtml(ability.purpose)}</p></section><section><span>Setup and difficulty</span><p>${escapeHtml(ability.setup)}</p></section></div>
       </article>`;
   }
@@ -1116,10 +1119,14 @@
       </section>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Ability Analysis</span><strong>Select an ability</strong></div>
-        <div class="gamesense-ability-grid">${abilities.map(ability => `
-          <button type="button" data-gamesense-ability="${escapeHtml(ability.id)}" class="${ability.id === selected?.id ? "active" : ""}${ability.video ? " has-video" : ""}" aria-pressed="${ability.id === selected?.id}"><img src="${escapeHtml(ability.icon)}" alt=""><span>${escapeHtml(ability.name)}</span><small>${escapeHtml(ability.slot)}</small>${ability.video ? `<em>Demo</em>` : ""}</button>
-        `).join("")}</div>
-        ${renderAbilityDetail(agent, selected)}
+        <div class="gamesense-ability-stage">
+          <div class="gamesense-ability-grid">${abilities.map(ability => `
+            <button type="button" data-gamesense-ability="${escapeHtml(ability.id)}" class="${ability.id === selected?.id ? "active" : ""}${ability.video ? " has-video" : ""}" aria-pressed="${ability.id === selected?.id}"><img src="${escapeHtml(ability.icon)}" alt=""><span>${escapeHtml(ability.name)}</span><small>${escapeHtml(ability.slot)}</small>${ability.video ? `<em>Demo</em>` : ""}</button>
+          `).join("")}</div>
+          <span class="gamesense-ability-breaker" aria-hidden="true"></span>
+          ${renderAbilityVideoSlot(selected)}
+        </div>
+        ${renderAbilityDetail(agent, selected, { includeVideo: false })}
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
         <div><span>Map Fit</span><strong>${escapeHtml(usageSource)}</strong></div>
@@ -1859,7 +1866,8 @@
       button.classList.toggle("active", isSelected);
       button.setAttribute("aria-pressed", isSelected ? "true" : "false");
     });
-    replaceTargetedElement(section.querySelector(".gamesense-ability-panel"), renderAbilityDetail(agent, ability));
+    replaceTargetedElement(section.querySelector(".gamesense-ability-video-slot"), renderAbilityVideoSlot(ability));
+    replaceTargetedElement(section.querySelector(".gamesense-ability-panel"), renderAbilityDetail(agent, ability, { includeVideo: false }));
   }
 
   function selectWeapon(weaponButton) {
@@ -2263,9 +2271,9 @@
     }
     const mapSeason = event.target.closest?.("[data-gamesense-map-season]");
     if (mapSeason) {
-      state.mapSeason = ["all", "in", "out"].includes(mapSeason.dataset.gamesenseMapSeason)
+      state.mapSeason = ["in", "out"].includes(mapSeason.dataset.gamesenseMapSeason)
         ? mapSeason.dataset.gamesenseMapSeason
-        : "all";
+        : "in";
       render({ direction: "replace" });
       return;
     }

@@ -2639,6 +2639,101 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   border:0 !important;
   background:none !important;
 }
+
+/* 2026-07-21 Library selector polish: two-map tabs, role-colored agent labels, and side-by-side ability demos. */
+.gamesense-agent-entry-card[data-role-tone="duelist"]{--agent-card-role-color:#ff4655;}
+.gamesense-agent-entry-card[data-role-tone="controller"]{--agent-card-role-color:#a78bfa;}
+.gamesense-agent-entry-card[data-role-tone="initiator"]{--agent-card-role-color:#38bdf8;}
+.gamesense-agent-entry-card[data-role-tone="sentinel"]{--agent-card-role-color:#34d399;}
+
+.gamesense-agent-entry-card[data-role-tone] .gamesense-entry-index,
+.gamesense-agent-entry-card[data-role-tone] .gamesense-entry-copy strong{
+  color:var(--agent-card-role-color,var(--gamesense-cool)) !important;
+  text-shadow:0 0 16px color-mix(in srgb,var(--agent-card-role-color,var(--gamesense-cool)) 38%,transparent),0 2px 12px rgba(0,0,0,.62) !important;
+}
+
+.gamesense-map-season-switcher{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+}
+
+.gamesense-ability-stage{
+  display:grid;
+  grid-template-columns:minmax(280px,420px) 1px minmax(0,1fr);
+  gap:16px;
+  align-items:stretch;
+  margin-bottom:14px;
+}
+
+.gamesense-ability-stage .gamesense-ability-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  align-content:start;
+  gap:10px !important;
+  margin:0 !important;
+}
+
+.gamesense-ability-stage .gamesense-ability-grid button{
+  aspect-ratio:1/1;
+  min-height:0 !important;
+  padding:12px !important;
+}
+
+.gamesense-ability-breaker{
+  display:block;
+  width:1px;
+  min-height:100%;
+  border-radius:999px;
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--gamesense-cool) 72%,transparent),color-mix(in srgb,var(--gamesense-warm) 60%,transparent),transparent);
+  box-shadow:0 0 16px color-mix(in srgb,var(--gamesense-cool) 24%,transparent);
+}
+
+.gamesense-ability-video-slot{
+  display:grid;
+  align-items:stretch;
+  min-width:0;
+  min-height:100%;
+}
+
+.gamesense-ability-video-slot:empty{
+  display:none;
+}
+
+.gamesense-ability-video-slot .gamesense-ability-video{
+  width:100% !important;
+  max-width:none !important;
+  height:100% !important;
+  min-height:0 !important;
+  justify-self:stretch !important;
+  grid-template-rows:auto minmax(0,1fr) auto;
+}
+
+.gamesense-ability-video-slot .gamesense-ability-video .gamesense-video-embed,
+.gamesense-ability-video-slot .gamesense-ability-video-player{
+  height:100% !important;
+  min-height:245px !important;
+}
+
+.gamesense-ability-panel .gamesense-ability-video{
+  display:none !important;
+}
+
+@media (max-width:900px){
+  .gamesense-ability-stage{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  .gamesense-ability-breaker{
+    width:100%;
+    min-height:1px;
+    height:1px;
+    background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gamesense-cool) 68%,transparent),color-mix(in srgb,var(--gamesense-warm) 58%,transparent),transparent);
+  }
+
+  .gamesense-ability-video-slot .gamesense-ability-video .gamesense-video-embed,
+  .gamesense-ability-video-slot .gamesense-ability-video-player{
+    min-height:220px !important;
+  }
+}
 .gamesense-damage-table > .gamesense-damage-range-pager{
   display:none !important;
 }
@@ -3409,3 +3504,24 @@ body.gamesense-media-open{overflow:hidden !important;}
     transform:translateX(-50%) !important;
   }
 }
+
+/* Final role color override must sit after the dossier-label color pass. */
+.gamesense-agent-entry-card[data-role-tone] .gamesense-entry-index,
+.gamesense-agent-entry-card[data-role-tone] .gamesense-entry-copy strong{
+  color:var(--agent-card-role-color,var(--gamesense-cool,#58d4c8)) !important;
+  text-shadow:0 0 16px color-mix(in srgb,var(--agent-card-role-color,var(--gamesense-cool,#58d4c8)) 38%,transparent),0 2px 12px rgba(0,0,0,.62) !important;
+}
+
+.gamesense-agent-entry-card[data-role-tone="duelist"] .gamesense-entry-index,
+.gamesense-agent-entry-card[data-role-tone="duelist"] .gamesense-entry-copy strong{color:#ff4655 !important;}
+.gamesense-agent-entry-card[data-role-tone="controller"] .gamesense-entry-index,
+.gamesense-agent-entry-card[data-role-tone="controller"] .gamesense-entry-copy strong{color:#a78bfa !important;}
+.gamesense-agent-entry-card[data-role-tone="initiator"] .gamesense-entry-index,
+.gamesense-agent-entry-card[data-role-tone="initiator"] .gamesense-entry-copy strong{color:#38bdf8 !important;}
+.gamesense-agent-entry-card[data-role-tone="sentinel"] .gamesense-entry-index,
+.gamesense-agent-entry-card[data-role-tone="sentinel"] .gamesense-entry-copy strong{color:#34d399 !important;}
+
+html body .gamesense-agent-entry-card[data-role-tone="duelist"] .gamesense-entry-index{color:#ff4655 !important;}
+html body .gamesense-agent-entry-card[data-role-tone="controller"] .gamesense-entry-index{color:#a78bfa !important;}
+html body .gamesense-agent-entry-card[data-role-tone="initiator"] .gamesense-entry-index{color:#38bdf8 !important;}
+html body .gamesense-agent-entry-card[data-role-tone="sentinel"] .gamesense-entry-index{color:#34d399 !important;}

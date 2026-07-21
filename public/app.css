@@ -56233,3 +56233,111 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-g
 #page-stats .stats-map-card.is-no-data .stats-map-no-data-tag{
   opacity:1 !important;
 }
+
+/* 2026-07-21 stats map polish: map-name inactive labels, full-card X, and readable game counts. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  grid-template-rows:repeat(2,minmax(138px,1fr)) !important;
+  grid-auto-rows:minmax(138px,1fr) !important;
+  gap:6px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  min-height:138px !important;
+  padding:7px 8px !important;
+}
+
+#page-stats .stats-map-result-line{
+  gap:5px !important;
+  justify-self:stretch !important;
+  width:max-content !important;
+  max-width:100% !important;
+  box-sizing:border-box !important;
+  overflow:visible !important;
+}
+
+#page-stats .stats-map-meta{
+  width:100% !important;
+  justify-self:stretch !important;
+  align-self:stretch !important;
+  justify-items:stretch !important;
+}
+
+#page-stats .stats-map-meta .stats-main-text{
+  justify-self:center !important;
+  text-align:center !important;
+}
+
+#page-stats .stats-map-result-line .stats-sub-text,
+#page-stats .stats-map-games{
+  flex:0 0 auto !important;
+  width:auto !important;
+  max-width:none !important;
+  overflow:visible !important;
+  text-overflow:unset !important;
+}
+
+#page-stats .stats-map-games{
+  font-size:9px !important;
+  letter-spacing:.01em !important;
+  padding-left:0 !important;
+  border-left:0 !important;
+}
+
+#page-stats .stats-map-result-line .stats-sub-text,
+#page-stats .stats-map-games{
+  font-size:8px !important;
+}
+
+#page-stats .stats-map-out-badge{
+  display:none !important;
+}
+
+#page-stats .stats-map-out-name{
+  position:absolute !important;
+  left:50% !important;
+  bottom:6px !important;
+  z-index:5 !important;
+  transform:translateX(-50%) !important;
+  display:block !important;
+  width:max-content !important;
+  max-width:calc(100% - 12px) !important;
+  color:#f8fafc !important;
+  font:950 13px/1 var(--font-display,"Rajdhani",sans-serif) !important;
+  letter-spacing:.04em !important;
+  text-align:center !important;
+  text-transform:uppercase !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.78),0 0 10px rgba(248,113,113,.36) !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+
+#page-stats .stats-map-card.is-out-of-season .stats-main-text,
+#page-stats .stats-map-card.is-out-of-season .stats-map-result-line{
+  opacity:0 !important;
+}
+
+#page-stats .stats-map-excluded-x{
+  inset:0 !important;
+  z-index:4 !important;
+  overflow:hidden !important;
+}
+
+#page-stats .stats-map-excluded-x::before,
+#page-stats .stats-map-excluded-x::after{
+  width:170% !important;
+  height:4px !important;
+  background:linear-gradient(90deg, rgba(248,113,113,.06), rgba(248,113,113,.96) 9%, rgba(248,113,113,.96) 91%, rgba(248,113,113,.06)) !important;
+  box-shadow:0 0 16px rgba(248,113,113,.52),0 2px 14px rgba(0,0,0,.6) !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #page-stats .stats-map-out-name{
+  bottom:8px !important;
+  font-size:12px !important;
+}
+
+#page-stats .stats-map-card.is-excluded::after,
+#page-stats .stats-map-card[data-excluded="true"]::after{
+  content:none !important;
+  display:none !important;
+}

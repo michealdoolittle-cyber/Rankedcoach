@@ -24,7 +24,7 @@ const phaseTwoSurfaces = Object.freeze({
   stats: [
     ".stats-summary-card", ".stats-performance-card", ".stats-breakdown-card",
     ".stats-maps-card", ".stats-agents-card", ".stats-weapons-card",
-    ".stats-trend-tone", ".stats-map-out-badge"
+    ".stats-trend-tone"
   ],
   insights: [
     ".insight-action-hero", ".insight-card", ".trend-content.open",
@@ -135,8 +135,7 @@ const surfaceContentExtremes = Object.freeze({
     "button[data-gamesense-open]": { short: "Learn Maps", long: "Learn Weapons" },
     "#statsActMobileTrigger": { short: "V26 A1", long: "Season 2026 Act 3" },
     ".stats-season-title": { short: "V26 A1", long: "Season 2026 Act 3" },
-    ".stats-trend-tone": { short: "Watch", long: "Needs Work" },
-    ".stats-map-out-badge": { short: "Out", long: "Out-of-Season" }
+    ".stats-trend-tone": { short: "Watch", long: "Needs Work" }
   },
   insights: {
     ".insight-action-hero": { short: "Protect this read.", long: "Protect the clearest adjustment before your next ranked block." },
@@ -552,8 +551,7 @@ async function ensureLayoutTagFixtures(page, pageKey) {
         { selector: ".weekly-focus-confidence", className: "weekly-focus-confidence confidence-high", text: "Confidence: High" }
       ],
       stats: [
-        { selector: ".stats-trend-tone", className: "stats-trend-tone", text: "Watch", parentClass: "stats-trend-card stats-trend-warn" },
-        { selector: ".stats-map-out-badge", className: "stats-map-out-badge", text: "Out-of-Season" }
+        { selector: ".stats-trend-tone", className: "stats-trend-tone", text: "Watch", parentClass: "stats-trend-card stats-trend-warn" }
       ],
       insights: [
         { selector: ".insight-tag", className: "insight-tag", text: "GOOD", parentClass: "insight-card insight-good" },
@@ -675,7 +673,7 @@ async function runPhaseTwoCoverage(page, browser) {
       "#statsBreakdown",
       "#statsBreakdown .stats-breakdown-cardlet"
     ], style);
-    await assertTagSemanticColors(page, [".stats-trend-tone", ".stats-map-out-badge"], style);
+    await assertTagSemanticColors(page, [".stats-trend-tone"], style);
     await assertStatsTrendTextVisible(page, style);
     await captureSurfaceSet(page, "stats", phaseTwoSurfaces.stats, style, tiles);
     await activateCoveragePage(page, "insights");
