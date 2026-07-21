@@ -3525,3 +3525,23 @@ html body .gamesense-agent-entry-card[data-role-tone="duelist"] .gamesense-entry
 html body .gamesense-agent-entry-card[data-role-tone="controller"] .gamesense-entry-index{color:#a78bfa !important;}
 html body .gamesense-agent-entry-card[data-role-tone="initiator"] .gamesense-entry-index{color:#38bdf8 !important;}
 html body .gamesense-agent-entry-card[data-role-tone="sentinel"] .gamesense-entry-index{color:#34d399 !important;}
+
+/* 2026-07-21 Ability selector height polish: the 2x2 grid stretches to the video rail. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage{
+  align-items:stretch !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage .gamesense-ability-grid{
+  height:100% !important;
+  min-height:0 !important;
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(2,minmax(0,1fr)) !important;
+  align-content:stretch !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage .gamesense-ability-grid button{
+  height:100% !important;
+  min-height:0 !important;
+  aspect-ratio:auto !important;
+  align-content:center !important;
+}

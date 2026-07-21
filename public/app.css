@@ -56341,3 +56341,71 @@ html.is-mobile-layout body.is-mobile-layout #page-stats .stats-map-out-name{
   content:none !important;
   display:none !important;
 }
+
+/* 2026-07-21 Stats trend header polish: tone sits beside signal media; copy fills the freed space. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsPerformanceChart.stats-trends-grid{
+  grid-template-rows:repeat(2,minmax(148px,1fr)) !important;
+  grid-auto-rows:minmax(148px,1fr) !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card{
+  display:grid !important;
+  grid-template-rows:auto minmax(0,.86fr) minmax(0,1.14fr) !important;
+  align-content:stretch !important;
+  min-height:148px !important;
+  gap:5px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:6px !important;
+  min-height:24px !important;
+  width:100% !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-tone{
+  order:1 !important;
+  margin-right:2px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-context{
+  order:2 !important;
+  flex:0 1 auto !important;
+  justify-content:flex-end !important;
+  gap:6px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-context .trend-signal-media{
+  order:1 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-kicker{
+  order:2 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-copy{
+  display:grid !important;
+  align-content:space-evenly !important;
+  min-height:0 !important;
+  gap:3px !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend-card .stats-trend-detail{
+  display:flex !important;
+  align-items:flex-start !important;
+  min-height:0 !important;
+}
+
+#page-stats .stats-map-result-line{
+  width:max-content !important;
+  max-width:100% !important;
+  justify-self:center !important;
+  justify-content:center !important;
+  margin-inline:auto !important;
+}
+
+#page-stats .stats-map-meta{
+  grid-template-columns:minmax(0,1fr) !important;
+}
