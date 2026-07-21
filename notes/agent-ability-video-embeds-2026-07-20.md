@@ -18,7 +18,13 @@ function ability(id, name, slot, agent, summary, stats, purpose, setup, video = 
   return { id, name, slot, icon: agentAsset(agent, id), summary, stats, purpose, setup, video };
 }
 ```
-`video` shape: `{ videoId: "<YouTube video ID>", title: "<real video title, for the iframe's accessible title>", startSeconds: <optional int> }`. Use `startSeconds` (appended as `&start=N` to the embed) for cases where the best available demonstration is a timestamped clip inside a longer guide/highlight video rather than a dedicated single-ability video — most ability demos will realistically be a moment inside a broader agent guide, not a standalone upload.
+`video` shape: `{ videoId: "<YouTube video ID>", title: "<real video title, for the iframe's accessible title>", startSeconds: <optional int>, endSeconds: <optional int> }`.
+
+**Correction (2026-07-21):** Riot's official ability content — and most other sites' — is a single combined kit-showcase video per agent covering all 4 abilities back to back, not 4 separate uploads. That means `startSeconds` alone isn't enough: without an end bound, the embed keeps playing straight into the *next* ability's segment once the current one finishes, which is wrong. **Always pair `startSeconds` with `endSeconds`** when pointing at a segment of a combined video, using YouTube's embed `&end=N` parameter alongside `&start=N` so playback stops exactly at the ability's own segment boundary.
+
+**Sourcing priority, in order:**
+1. A genuine standalone per-ability video (already spliced out as its own upload, by Riot or a trusted creator who's done this work) — use it directly with no `startSeconds`/`endSeconds` needed, it's already the right length.
+2. A combined kit-showcase video, with `startSeconds`/`endSeconds` set to the exact segment for that specific ability — this will be the common case, budget for it.
 
 ## 3a. Source Michael found (2026-07-21) — confirm the technical shape before wiring it in
 
@@ -51,12 +57,12 @@ function renderAbilityDetail(agent, ability) {
       <div class="gamesense-fact-panel-head">...</div>
       <p>${escapeHtml(ability.summary)}</p>
       ${renderStatChips(ability.stats)}
-      ${ability.video ? `<div class="gamesense-ability-video">${renderYouTubePlayer(ability.video.videoId + (ability.video.startSeconds ? `?start=${ability.video.startSeconds}` : ""), ability.video.title)}</div>` : ""}
+      ${ability.video ? `<div class="gamesense-ability-video">${renderYouTubePlayer(ability.video.videoId, ability.video.title, { start: ability.video.startSeconds, end: ability.video.endSeconds })}</div>` : ""}
       <div class="gamesense-fact-read">...</div>
     </article>`;
 }
 ```
-(Adjust the `start` param wiring to however `renderYouTubePlayer`'s existing `URLSearchParams` construction handles extra params cleanly — don't just string-concat onto the videoId, pass `startSeconds` through properly so the existing `autoplay`/`controls`/`rel` params aren't clobbered.)
+`renderYouTubePlayer()` needs a small signature extension to accept the optional `start`/`end` pair and add them into its existing `URLSearchParams` construction (`gamesense-library.js:562-569`) alongside `autoplay`/`controls`/`rel`/`playsinline` — don't string-concat onto the videoId, extend the params object cleanly so nothing already there gets clobbered. Only set `start`/`end` on the params when both are present (a lone `start` with no `end` re-introduces the bleed-into-the-next-ability bug above); when using a genuine standalone per-ability video, pass neither and it plays the whole thing normally.
 
 **Placement:** put the video above or below the "Round purpose"/"Setup and difficulty" text sections — Codex's call on which reads better, but keep the existing text content, don't replace it with video-only (matches the established Layout Style hard rule: new presentation adds to existing content, never removes it).
 
@@ -72,6 +78,7 @@ function renderAbilityDetail(agent, ability) {
 2. Spot-check at least 5 of the newly wired abilities in the actual rendered panel — confirm the embed shows the right agent using the right ability, not a loosely-matched or wrong-agent video.
 3. Confirm abilities with no video still render cleanly, text-only, no empty video container.
 4. Confirm the embed doesn't autoplay (matches `renderYouTubePlayer`'s existing `autoplay: "0"` default) and doesn't fight the panel's layout on mobile.
+4a. For every ability sourced from a combined kit-showcase video, confirm playback actually stops at `endSeconds` and doesn't bleed into the next ability's segment — this is the specific bug the `start`-without-`end` version would have shipped with.
 5. Confirm switching between abilities (via `selectAbility()`'s targeted re-render) correctly swaps the video too, not just the text — no stale iframe left over from the previously selected ability.
 6. `node --check` on every touched file; run the existing visual-audit suite before deploying.
 7. Bump the cache key in `public/index.html`.
