@@ -289,6 +289,49 @@ async function run() {
     assert.equal(roleStatContext.divider, true, JSON.stringify(roleStatContext));
     assert.match(roleStatContext.games, /\d+\s*games?/i);
     assert.ok(await page.locator("#page-stats .stats-map-games").count() > 0);
+    const statsMapPoolState = await page.locator("#statsMapsList").evaluate(container => {
+      const cards = [...container.querySelectorAll(".stats-map-card")];
+      return {
+        total: cards.length,
+        active: cards.filter(card => card.dataset.activePool === "true").map(card => card.querySelector(".stats-main-text")?.textContent?.trim()),
+        out: cards.filter(card => card.dataset.activePool === "false").map(card => card.querySelector(".stats-main-text")?.textContent?.trim()),
+        outNoDataTags: cards.filter(card => card.dataset.activePool === "false" && card.querySelector(".stats-map-no-data-tag")).length,
+        outBadgesCentered: cards.filter(card => card.dataset.activePool === "false").every(card => {
+          const cardRect = card.getBoundingClientRect();
+          const badge = card.querySelector(".stats-map-out-badge")?.getBoundingClientRect();
+          return badge && Math.abs((badge.left + badge.right) / 2 - (cardRect.left + cardRect.right) / 2) <= 2;
+        }),
+        activeNoDataTags: cards.filter(card => card.dataset.activePool === "true" && card.dataset.hasData === "false" && card.querySelector(".stats-map-no-data-tag")).length,
+        excludedCrosses: cards.filter(card => card.dataset.activePool === "false" && card.querySelector(".stats-map-excluded-x")).length,
+        resultLineDetails: cards.filter(card => card.dataset.activePool === "true" && card.dataset.hasData === "true").map(card => {
+          const line = card.querySelector(".stats-map-result-line")?.getBoundingClientRect();
+          const children = [...card.querySelectorAll(".stats-map-result-line > *")].map(item => item.getBoundingClientRect());
+          return {
+            map: card.querySelector(".stats-main-text")?.textContent?.trim(),
+            line: line?.toJSON(),
+            children: children.map(child => child.toJSON()),
+            display: line ? getComputedStyle(card.querySelector(".stats-map-result-line")).display : ""
+          };
+        }),
+        resultLineCentered: cards.filter(card => card.dataset.activePool === "true" && card.dataset.hasData === "true").every(card => {
+          const line = card.querySelector(".stats-map-result-line")?.getBoundingClientRect();
+          const children = [...card.querySelectorAll(".stats-map-result-line > *")].map(item => item.getBoundingClientRect());
+          if (!line || children.length !== 2) return false;
+          const groupLeft = Math.min(...children.map(child => child.left));
+          const groupRight = Math.max(...children.map(child => child.right));
+          return children.every(child => child.left >= line.left - 1 && child.right <= line.right + 1)
+            && Math.abs((groupLeft + groupRight) / 2 - (line.left + line.right) / 2) <= 2;
+        })
+      };
+    });
+    assert.equal(statsMapPoolState.total, 13, JSON.stringify(statsMapPoolState));
+    assert.deepEqual([...statsMapPoolState.active].sort(), ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"]);
+    assert.deepEqual([...statsMapPoolState.out].sort(), ["Abyss", "Bind", "Corrode", "Fracture", "Icebox", "Pearl"]);
+    assert.equal(statsMapPoolState.outNoDataTags, 0, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.outBadgesCentered, true, JSON.stringify(statsMapPoolState));
+    assert.ok(statsMapPoolState.activeNoDataTags >= 1, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.excludedCrosses, 6, JSON.stringify(statsMapPoolState));
+    assert.equal(statsMapPoolState.resultLineCentered, true, JSON.stringify(statsMapPoolState));
     assert.ok(await page.locator("#page-stats .stats-trend-context .trend-signal-media").count() > 0);
     const trendImages = page.locator("#page-stats .stats-trend-context .trend-signal-media.has-image img");
     assert.ok(await trendImages.count() > 0);

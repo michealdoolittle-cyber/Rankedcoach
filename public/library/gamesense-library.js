@@ -1054,6 +1054,11 @@
   }
 
   function renderAbilityVideo(video = null) {
+    const videoSrc = String(video?.src || "").trim();
+    if (/^https:\/\/cmsassets\.rgpub\.io\/sanity\/files\/dsfx7636\/game_data\/[^"'<>]+\.mp4\?accountingTag=VAL$/i.test(videoSrc)) {
+      const sourceUrl = String(video?.source || "https://playvalorant.com/en-us/agents/").trim();
+      return `<div class="gamesense-ability-video"><span>Ability demo</span><video class="gamesense-ability-video-player" controls preload="metadata" playsinline aria-label="${escapeHtml(video.title || "VALORANT ability demo")}"><source src="${escapeHtml(videoSrc)}" type="video/mp4"></video>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">Official Riot agent page</a>` : ""}</div>`;
+    }
     const videoId = String(video?.videoId || "").trim();
     if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return "";
     const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}${Number(video.startSeconds) > 0 ? `&t=${Math.floor(Number(video.startSeconds))}s` : ""}`;

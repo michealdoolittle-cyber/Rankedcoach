@@ -56106,3 +56106,130 @@ html.is-mobile-layout body.is-mobile-layout #page-home .impact-meter-caption{
   line-height:1 !important;
   overflow:visible !important;
 }
+
+/* Stats map pool correction v27: show all map previews, split no-data from out-of-season. */
+#page-stats #statsMapsList.stats-map-grid,
+#page-stats .stats-map-grid{
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  padding-right:4px !important;
+  scrollbar-width:thin !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats #statsMapsList.stats-map-grid,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-map-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  grid-template-rows:none !important;
+  grid-auto-rows:minmax(84px,92px) !important;
+  align-content:start !important;
+  overflow-y:auto !important;
+}
+
+#page-stats .stats-map-card{
+  position:relative !important;
+}
+
+#page-stats .stats-map-card.is-out-of-season{
+  border-color:rgba(248,113,113,.32) !important;
+  opacity:.82 !important;
+}
+
+#page-stats .stats-map-card.is-out-of-season .stats-map-image{
+  filter:grayscale(.88) saturate(.55) brightness(.62) !important;
+}
+
+#page-stats .stats-map-result-line{
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:8px !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+
+#page-stats .stats-map-result-line .stats-sub-text,
+#page-stats .stats-map-games{
+  justify-self:center !important;
+  text-align:center !important;
+  padding:0 !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:clip !important;
+}
+
+#page-stats .stats-map-games{
+  color:#e2e8f0 !important;
+}
+
+#page-stats .stats-map-no-data-tag{
+  justify-self:center !important;
+  display:inline-grid !important;
+  place-items:center !important;
+  min-height:18px !important;
+  padding:3px 8px !important;
+  border:1px solid rgba(148,163,184,.34) !important;
+  border-radius:999px !important;
+  background:rgba(15,23,42,.68) !important;
+  color:#cbd5e1 !important;
+  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif) !important;
+  letter-spacing:.08em !important;
+  text-transform:uppercase !important;
+}
+
+#page-stats .stats-map-out-badge{
+  position:absolute !important;
+  left:50% !important;
+  bottom:6px !important;
+  transform:translateX(-50%) !important;
+  display:inline-grid !important;
+  place-items:center !important;
+  margin:1px auto 0 !important;
+  width:max-content !important;
+  max-width:calc(100% - 12px) !important;
+  text-align:center !important;
+  text-align-last:center !important;
+  color:#fca5a5 !important;
+}
+
+#page-stats .stats-map-excluded-x{
+  position:absolute !important;
+  inset:5px !important;
+  width:auto !important;
+  height:auto !important;
+  transform:none !important;
+  display:block !important;
+  color:transparent !important;
+  background:transparent !important;
+  border:0 !important;
+  pointer-events:none !important;
+  z-index:4 !important;
+}
+
+#page-stats .stats-map-excluded-x::before,
+#page-stats .stats-map-excluded-x::after{
+  content:"" !important;
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:142% !important;
+  height:3px !important;
+  border-radius:999px !important;
+  background:linear-gradient(90deg, transparent, rgba(248,113,113,.92) 12%, rgba(248,113,113,.92) 88%, transparent) !important;
+  box-shadow:0 0 12px rgba(248,113,113,.42), 0 2px 12px rgba(0,0,0,.55) !important;
+  transform-origin:center !important;
+}
+
+#page-stats .stats-map-excluded-x::before{
+  transform:translate(-50%,-50%) rotate(42deg) !important;
+}
+
+#page-stats .stats-map-excluded-x::after{
+  transform:translate(-50%,-50%) rotate(-42deg) !important;
+}
+
+#page-stats .stats-map-card.is-out-of-season :is(.stats-map-out-badge,.stats-map-excluded-x,.stats-map-excluded-x::before,.stats-map-excluded-x::after),
+#page-stats .stats-map-card.is-no-data .stats-map-no-data-tag{
+  opacity:1 !important;
+}

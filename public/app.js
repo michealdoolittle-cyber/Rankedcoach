@@ -956,13 +956,13 @@ function getWeekEnd(date = new Date()) {
 }
 
 const COMPETITIVE_MAP_POOL = [
-  "Abyss",
-  "Bind",
+  "Ascent",
   "Breeze",
-  "Corrode",
   "Haven",
-  "Pearl",
-  "Split"
+  "Lotus",
+  "Split",
+  "Summit",
+  "Sunset"
 ];
 
 const ALL_VALORANT_MAP_NAMES = [
@@ -973,9 +973,12 @@ const ALL_VALORANT_MAP_NAMES = [
   "Corrode",
   "Fracture",
   "Haven",
+  "Icebox",
   "Lotus",
   "Pearl",
-  "Split"
+  "Split",
+  "Summit",
+  "Sunset"
 ];
 
 const DEMO_ACT_MAP_POOLS = {
@@ -983,7 +986,8 @@ const DEMO_ACT_MAP_POOLS = {
   "Season 2025 Act 6": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
   "Season 2026 Act 1": ["Abyss", "Bind", "Breeze", "Corrode", "Haven", "Pearl", "Split"],
   "Season 2026 Act 2": ["Bind", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"],
-  "Season 2026 Act 3": ["Ascent", "Breeze", "Fracture", "Haven", "Lotus", "Pearl", "Split"]
+  "Season 2026 Act 3": ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"],
+  "Season 2026 Act 4": ["Ascent", "Breeze", "Haven", "Lotus", "Split", "Summit", "Sunset"]
 };
 
 const MAP_DETAIL_PRESETS = {
@@ -994,9 +998,12 @@ const MAP_DETAIL_PRESETS = {
   Corrode: { bestGun: "Phantom", worstGun: "Sheriff", style: "Mid control and late site pressure matter more than raw pace." },
   Fracture: { bestGun: "Phantom", worstGun: "Operator", style: "Pinch timing and fast rotates punish slow information." },
   Haven: { bestGun: "Phantom", worstGun: "Odin", style: "Rotations and layered info create high-value split-second decisions." },
+  Icebox: { bestGun: "Vandal", worstGun: "Shorty", style: "Vertical fights and long plants reward disciplined post-plant spacing." },
   Lotus: { bestGun: "Phantom", worstGun: "Marshal", style: "Three-site pressure rewards early info and fast team decisions." },
   Pearl: { bestGun: "Vandal", worstGun: "Shorty", style: "Long corridors and retake depth reward clean trade timing." },
-  Split: { bestGun: "Phantom", worstGun: "Guardian", style: "Compact chokes magnify utility value and anchor discipline." }
+  Split: { bestGun: "Phantom", worstGun: "Guardian", style: "Compact chokes magnify utility value and anchor discipline." },
+  Summit: { bestGun: "Vandal", worstGun: "Bucky", style: "Fresh-map routing rewards clear lane calls and conservative first-contact spacing." },
+  Sunset: { bestGun: "Phantom", worstGun: "Shorty", style: "Mid pressure and compact site fights reward clean utility timing." }
 };
 
 function uuid() {
@@ -50851,13 +50858,8 @@ function renderStatsMapsModel() {
     maps.map(map => [String(map?.map || "").toLowerCase(), map])
   );
   const selectedAct = model?.currentAct || activeStatsActLabel || "";
-  const playedMapNames = maps
-    .filter(map => safeNumber(map?.matchesPlayed || map?.matches) > 0)
-    .map(map => String(map?.map || "").trim())
-    .filter(Boolean);
   const configuredPool = DEMO_ACT_MAP_POOLS[selectedAct] || [];
-  const activePool = [...new Set([...configuredPool, ...playedMapNames])];
-  if (!activePool.length) activePool.push(...COMPETITIVE_MAP_POOL);
+  const activePool = [...new Set(configuredPool.length ? configuredPool : COMPETITIVE_MAP_POOL)];
   const poolSet = new Set(activePool.map(mapName => String(mapName).toLowerCase()));
   const activeMapNames = activePool.slice().sort((a, b) => {
     const mapA = mapByName.get(String(a).toLowerCase());
@@ -50891,15 +50893,19 @@ function renderStatsMapsModel() {
     const card = document.createElement("button");
     card.type = "button";
     card.disabled = !canOpen;
-    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded" : ""}`;
+    card.dataset.activePool = isActivePool ? "true" : "false";
+    card.dataset.hasData = hasData ? "true" : "false";
+    card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded is-out-of-season" : " is-active-pool"}${isActivePool && !hasData ? " is-no-data" : ""}`;
     card.innerHTML = `
-      ${!canOpen ? `<span class="stats-map-excluded-x" aria-hidden="true">X</span>` : ""}
+      ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true"></span>` : ""}
       <img class="stats-map-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)}">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">
-          <span class="stats-sub-text ${hasData ? winrateTone : ""}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
-          ${hasData ? `<span class="stats-map-games">${safeNumber(map?.matchesPlayed || map?.matches)} games</span>` : ""}
+          ${hasData
+            ? `<span class="stats-sub-text ${winrateTone}">${Math.round(winrateValue)}% WR</span><span class="stats-map-games">${safeNumber(map?.matchesPlayed || map?.matches)} games</span>`
+            : (isActivePool ? `<span class="stats-map-no-data-tag">No Data</span>` : "")
+          }
         </span>
         ${!isActivePool ? `<span class="stats-map-out-badge">Out-of-Season</span>` : ""}
       </div>

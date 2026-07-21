@@ -214,6 +214,7 @@ async function run() {
     await desktop.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await desktop.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
     await desktop.route("https://media.valorant-api.com/videos/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await desktop.route("https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
     await desktop.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
     await desktop.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title><main>Sketchfab model viewer</main>" }));
     await desktop.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
@@ -870,6 +871,14 @@ async function run() {
     const agentPatchOrder = await desktop.locator(".gamesense-agent-facts .gamesense-patch-history li > span").allInnerTexts();
     assert.deepEqual(agentPatchOrder, [...agentPatchOrder].sort((left, right) => Number.parseFloat(right.replace(/[^\d.]/g, "")) - Number.parseFloat(left.replace(/[^\d.]/g, ""))));
     await desktop.locator(".gamesense-agent-hero").screenshot({ path: path.join(__dirname, "tmp", "gamesense-agent-fundamentals-desktop.png") });
+    const authoredAbilityVideoCoverage = await desktop.evaluate(() => {
+      const authored = new Set(["jett", "sova", "omen", "viper", "cypher", "sage"]);
+      return (globalThis.RankedCoachGamesenseReference?.agents || [])
+        .filter(agent => authored.has(agent.id))
+        .flatMap(agent => (agent.abilities || []).map(ability => ({ agent: agent.id, ability: ability.id, src: ability.video?.src || "" })));
+    });
+    assert.equal(authoredAbilityVideoCoverage.length, 24);
+    assert.equal(authoredAbilityVideoCoverage.every(item => /^https:\/\/cmsassets\.rgpub\.io\/sanity\/files\/dsfx7636\/game_data\/.+\.mp4\?accountingTag=VAL$/i.test(item.src)), true, JSON.stringify(authoredAbilityVideoCoverage));
     assert.equal(await desktop.locator("[data-gamesense-ability]").count(), 4);
     assert.equal(await desktop.locator(".gamesense-ability-panel").count(), 1);
     await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(node => { window.__rankedCoachAgentPortraitNode = node; });
@@ -887,7 +896,10 @@ async function run() {
     assert.equal(await desktop.locator("html").getAttribute("data-gamesense-transition"), null);
     await desktop.locator('[data-gamesense-ability="cloudburst"].active').waitFor({ state: "visible" });
     assert.match(await desktop.locator(".gamesense-ability-panel").innerText(), /2\.5 seconds/i);
-    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 1);
+    assert.match(await desktop.locator(".gamesense-ability-video-player source").getAttribute("src"), /3353597819f0c032d56ff947d9762368b4ee6c6b\.mp4\?accountingTag=VAL/i);
+    assert.equal(await desktop.locator(".gamesense-ability-video-player").getAttribute("controls"), "");
+    assert.equal(await desktop.locator(".gamesense-ability-video-player").getAttribute("preload"), "metadata");
     assert.equal(await desktop.locator('[data-gamesense-ability="cloudburst"].active').count(), 1);
     assert.match(await desktop.locator('[data-gamesense-ability="cloudburst"]').evaluate(button => getComputedStyle(button, "::after").content), /Selected/i);
     await desktop.waitForTimeout(2200);
@@ -921,12 +933,14 @@ async function run() {
       assert.equal(await desktop.locator(`[data-gamesense-ability="${abilityId}"]`).getAttribute("aria-pressed"), "true");
       assert.equal(await desktop.locator(".gamesense-agent-portrait-wrap").evaluate(node => window.__rankedCoachOmenPortraitNode === node && node.isConnected), true);
     }
-    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 1);
+    assert.match(await desktop.locator(".gamesense-ability-video-player source").getAttribute("src"), /252cf8ad86b6aca6210ba93ea856f52708476eba\.mp4\?accountingTag=VAL/i);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "sova"));
     await desktop.locator('.gamesense-agent-detail-head h2').getByText("Sova", { exact: true }).waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-ability="recon-bolt"]');
-    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 0);
+    assert.equal(await desktop.locator(".gamesense-ability-video").count(), 1);
+    assert.match(await desktop.locator(".gamesense-ability-video-player source").getAttribute("src"), /50f9d870fa2a9b9ba38408eb718ffc06879c11a8\.mp4\?accountingTag=VAL/i);
 
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("agents", "reyna"));
     await desktop.locator('.gamesense-agent-detail-head h2').getByText("Reyna", { exact: true }).waitFor({ state: "visible" });
@@ -1359,6 +1373,7 @@ async function run() {
     await mobile.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await mobile.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
     await mobile.route("https://media.valorant-api.com/videos/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
+    await mobile.route("https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
     await mobile.route("https://valorant.dyn.riotcdn.net/**", route => route.fulfill({ contentType: "video/mp4", body: "" }));
     await mobile.route("https://sketchfab.com/models/**/embed**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Interactive 3D model</title><main>Sketchfab model viewer</main>" }));
     await mobile.route("https://www.youtube-nocookie.com/embed/**", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><title>Bundle showcase</title>" }));
