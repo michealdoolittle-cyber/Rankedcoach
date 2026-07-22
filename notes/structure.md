@@ -6,7 +6,7 @@
 - `public/index.html` owns the full static shell, modals, navigation, manual logging fields, and page containers.
 - `public/app.js` is the main runtime and holds state, data transforms, renderers, profile persistence, chart logic, mobile/desktop behavior, insight generation, logging, stats, and customization.
 - `public/app.css` contains global desktop/mobile styling plus many later lock/fix blocks.
-- `public/sandbox-fx.*` contains legacy standalone visual-editor animation helpers. The stale `Active-Edit.html` shell was retired on 2026-07-22; production profile frames do not load these helpers.
+- `public/sandbox-fx.*` contains legacy standalone visual-editor animation helpers. The stale `Active-Edit.html` shell was retired on 2026-07-22; production profile frames do not load these helpers. The old tracked `projects/Live-App-35/` standalone mirror was also removed on 2026-07-22 after confirming it was not referenced by live code.
 - `supabase/functions/ask-coach/index.ts` is the deployed Ask Coach edge function.
 - `cloudflare/functions/*` holds Cloudflare serverless endpoints for Riot integration and bug reports.
 - `scripts/*` contains fixture/demo/build helper scripts.
