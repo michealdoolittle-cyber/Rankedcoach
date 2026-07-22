@@ -3511,15 +3511,30 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   height:100%;
   max-height:none;
   min-height:0;
-  overflow:auto;
-  padding:8px 34px 8px 9px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:8px 44px 8px 9px;
   border:1px solid rgba(148,163,184,.18);
   border-radius:8px;
   background:rgba(2,6,23,.74);
   color:#dffcff;
   font:800 9px/1.28 "IBM Plex Mono",monospace;
-  word-break:break-all;
+  white-space:nowrap;
+  word-break:normal;
   box-sizing:border-box;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(103,232,249,.45) rgba(15,23,42,.45);
+}
+.gamesense-crosshair-code-box code::-webkit-scrollbar{
+  height:6px;
+}
+.gamesense-crosshair-code-box code::-webkit-scrollbar-track{
+  background:rgba(15,23,42,.45);
+  border-radius:999px;
+}
+.gamesense-crosshair-code-box code::-webkit-scrollbar-thumb{
+  background:rgba(103,232,249,.45);
+  border-radius:999px;
 }
 .gamesense-crosshair-code-box button{
   position:absolute;
