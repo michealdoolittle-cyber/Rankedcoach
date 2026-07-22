@@ -14,6 +14,7 @@
   let activeMediaPlayer = null;
   let libraryPageActive = false;
   let collageHydrationToken = 0;
+  let crosshairCopyResetTimer = 0;
   const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -35,36 +36,36 @@
     "8": "#ffffff"
   });
   const vcrdbCrosshairSeeds = Object.freeze([
-    { id: "12029", code: "0;P;o;0;f;0;0t;1;0l;2;0o;0;0a;1;0f;0;1b;0" },
-    { id: "12028", code: "0;P;c;1;o;0.246;d;1;m;1;0l;20;0v;3;0g;1;0o;1;0a;1;0e;3;1b;0" },
-    { id: "12027", code: "0;p;0;P;c;5;h;0;d;1;m;1;0t;0;0l;7;0o;0;0a;1;0f;0;1o;0;1a;1;1m;0;1e;0.3" },
-    { id: "12026", code: "0;P;h;0;f;0;0t;5;0l;1;0o;2;0a;0.3;0f;0;1t;1;1l;4;1o;1;1a;1;1m;0;1f;0" },
-    { id: "12025", code: "0;P;c;5;h;0;f;0;0l;5;0o;0;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;1m;0;1f;0" },
-    { id: "12024", code: "0;s;1;P;o;1;f;0;0t;1;0l;3;0o;2;0a;1;0m;1;0f;0;0s;0.05;1t;0;1l;0;1o;0;1a;0;1m;0;1f;0" },
-    { id: "12023", code: "0;P;c;8;u;000000FF;o;0.015;d;1;b;1;z;6;a;0.418;f;0;0l;3;0v;3;0g;1;0o;1;0a;1;0f;0;1l;1;1v;1;1g;1;1o;1;1a;0.632;1m;0;1f;0" },
-    { id: "12022", code: "0;s;1;P;o;0.1;f;0;s;0;0t;1;0l;20;0o;1;0a;1;0f;0;1b;0" },
-    { id: "12021", code: "0;P;c;5;h;0;0t;1;0l;4;0o;0;0a;1;0f;0;1b;0" },
-    { id: "12020", code: "0;c;1;s;1;P;h;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0;S;c;5;s;0.85" },
-    { id: "12019", code: "0;P;d;1;f;0;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" },
-    { id: "12018", code: "0;P;c;8;u;000000FF;h;0;b;1;0l;3;0o;0;0a;1;0f;0;1b;0" },
-    { id: "12017", code: "0;c;1;P;c;8;u;000000FF;h;0;b;1;f;0;0l;3;0o;0;0a;1;0f;0;1b;0" },
-    { id: "12016", code: "0;c;1;s;1;P;c;8;u;957DADFF;h;0;b;1;f;0;m;1;0l;2;0o;0;0a;1;0f;0;1b;0;S;c;5;s;2;o;1" },
-    { id: "12015", code: "0;P;t;2;o;1;d;1;0t;10;0l;19;0v;0;0g;1;0o;1;0a;0;0e;0;1l;10;1v;0;1g;1;1o;19;1a;0;1s;0;1e;0" },
-    { id: "12014", code: "0;P;c;5;o;1;d;1;z;3;f;0;0t;4;0l;1;0o;1;0a;1;0m;1;0s;0.04;0e;0.08;1b;0" },
-    { id: "12013", code: "0;P;h;0;f;0;0t;1;0l;2;0o;0;0a;1;0m;1;0f;0;0s;0.051;1b;0" },
-    { id: "12012", code: "0;P;c;8;u;000000FF;t;6;o;1;d;1;b;1;z;6;0t;10;0l;20;0o;11;0a;1;0e;3;1t;10;1l;10;1o;40;1a;1;1s;3;1e;3" },
-    { id: "12011", code: "0;P;c;8;u;0FFF50FF;h;0;b;1;0t;1;0l;5;0v;1;0g;1;0o;1;0a;1;0f;0;1t;3;1v;0;1g;1;1o;3;1a;1;1m;0;1f;0" },
-    { id: "12010", code: "0;s;1;P;o;1;d;1;z;1;f;0;0t;1;0l;1;0o;0;0a;1;0f;0;1b;0;S;d;0" },
-    { id: "12009", code: "0;P;o;1;d;1;0l;20;0o;20;0a;1;0m;1;1t;10;1o;40;1a;1" },
-    { id: "12008", code: "0;p;0;c;1;s;1;P;c;8;u;FC5A8DFF;h;0;d;1;b;1;z;3;f;0;m;1;0t;10;0l;0;0v;3;0g;1;0o;1;0a;1;0f;0;1t;9;1v;0;1g;1;1o;3;1a;1;1m;0;1f;0;A;c;8;u;F28D9FFF;h;0;d;1;b;1;a;0.254;0t;3;0l;5;0o;0;0a;0.755;0f;0;1t;5;1o;2;1a;1;1m;0;1f;0;S;b;1;c;8;t;F28D9FFF" },
-    { id: "12007", code: "0;P;o;0.8;0t;5;0l;1;0o;1;0a;0.4;0f;0;1t;1;1l;1;1o;2;1a;1;1m;0;1f;0" },
-    { id: "12006", code: "0;s;1;P;c;3;o;0.3;f;0;0t;1;0l;3;0o;1;0a;1;0f;0;1b;0;S;o;1" },
-    { id: "12005", code: "0;s;1;P;c;5;o;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0;S;c;5;s;0.6;o;1" },
-    { id: "12004", code: "0;P;h;0;m;1;0l;5;0v;3;0g;1;0o;1;0a;1;0e;0.1;1b;0" },
-    { id: "12003", code: "0;P;c;5;o;1;f;0;0t;1;0l;3;0o;2;0a;1;0f;0;1b;0" },
-    { id: "12002", code: "0;s;1;P;c;2;h;0;f;0;0l;2;0o;1;0a;1;0f;0;1b;0;S;c;0" },
-    { id: "12000", code: "0;p;0;s;1;P;o;0.3;f;0;0l;3;0o;2;0a;1;0f;0;1b;0;A;o;0.3;d;1;m;1;0l;2;0o;0;0a;0.5;0f;0;1b;0;S;s;0.5;o;1" },
-    { id: "11999", code: "0;c;1;s;1;P;o;1;d;1;f;0;0l;2;0v;0;0g;1;0o;0;0a;1;0f;0;1b;0;S;c;5;o;1" }
+    { id: "4", name: "Simple X", code: "0;P;c;4;h;0;d;1;f;0;0t;6;0l;1;0o;1;0a;1;0f;0;1b;0", tags: "", copied: 1069622 },
+    { id: "6", name: "Target", code: "0;P;c;1;h;0;d;1;z;1;f;0;0t;5;0l;1;0o;2;0a;1;0f;0;1t;1;1l;1;1o;3;1a;1;1m;0;1f;0", tags: "", copied: 709484 },
+    { id: "7", name: "Windmill", code: "0;P;c;1;t;6;o;1;d;1;z;6;a;0;f;0;m;1;0t;10;0l;20;0o;20;0a;1;0m;1;0e;0.1;1t;10;1l;10;1o;40;1a;1;1m;0", tags: "fun", copied: 1384099 },
+    { id: "9", name: "Flappy Bird", code: "0;P;c;1;t;3;o;1;f;0;0t;6;0l;20;0o;13;0a;1;0f;0;1t;9;1l;4;1o;9;1a;1;1m;0;1f;0", tags: "fun", copied: 490791 },
+    { id: "10", name: "Smiley", code: "0;P;c;7;t;2;o;1;d;1;z;3;a;0;f;0;0t;10;0l;2;0o;2;0a;1;0f;0;1b;0", tags: "fun", copied: 415279 },
+    { id: "12", name: "Wheel", code: "0;P;c;7;o;1;d;1;f;0;0l;4;0o;1;0a;0;0f;0;1t;6;1l;1;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 249041 },
+    { id: "13", name: "Exclamation", code: "0;P;c;7;t;4;o;1;d;1;z;6;a;0;f;0;0t;6;0l;4;0o;0;0a;1;0f;0;1l;5;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 177530 },
+    { id: "14", name: "Ornament", code: "0;P;c;7;o;0.8;f;0;0t;5;0l;2;0o;0;0a;1;0f;0;1t;1;1l;1;1o;2;1a;1;1m;0;1f;0", tags: "fun", copied: 425296 },
+    { id: "15", name: "Webs", code: "0;P;c;7;h;0;f;0;0l;1;0a;1;0f;0;1t;10;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 100161 },
+    { id: "16", name: "Poke Ball", code: "0;P;c;7;o;1;d;1;f;0;0t;10;0l;5;0o;0;0a;1;0f;0;1t;6;1l;1;1o;5;1a;0;1m;0;1f;0", tags: "fun", copied: 297774 },
+    { id: "18", name: "Shuriken", code: "0;P;c;7;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1t;8;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 1048756 },
+    { id: "20", name: "Flower 1", code: "0;P;c;6;o;1;d;1;z;4;f;0;m;1;0t;8;0l;3;0o;2;0a;0;0f;0;1l;3;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 545158 },
+    { id: "21", name: "Hashtag", code: "0;P;h;0;f;0;0b;0;1t;7;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 147027 },
+    { id: "22", name: "Church Crosses", code: "0;P;h;0;d;1;z;3;f;0;0t;3;0l;14;0o;6;0a;1;0f;0;1t;9;1l;3;1o;12;1a;1;1m;0;1f;0", tags: "fun", copied: 212934 },
+    { id: "119", name: "The Throb", code: "0;p;0;s;1;P;c;5;h;0;m;1;0t;4;0l;1;0o;1;0a;1;0m;1;0s;0.04;0e;0.08;1o;2;1a;1;1m;0;1f;0;A;c;5;h;0;d;1;0b;0;1b;0;S;d;0", tags: "fun", copied: 569421 },
+    { id: "382", name: "Heart", code: "0;P;c;7;o;0.1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "fun", copied: 180888 },
+    { id: "383", name: "Pink Heart", code: "0;P;c;6;o;0.1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "fun", copied: 137169 },
+    { id: "384", name: "Big Heart", code: "0;P;c;7;o;0.1;d;1;z;1;a;0;m;1;0t;10;0l;5;0a;1;0f;0;1t;4;1l;10;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 133950 },
+    { id: "722", name: "Mahluna", code: "0;c;1;P;c;5;o;0;m;1;0t;4;0l;2;0o;1;0a;1;0e;0;1b;0", tags: "team", copied: 531269 },
+    { id: "960", name: "Fishnet", code: "0;P;o;1;d;1;a;0;f;0;0t;8;0l;2;0o;5;0a;0;0f;0;1l;8;1o;2;1a;0;1m;0;1f;0", tags: "fun", copied: 133530 },
+    { id: "1549", name: "Glasses", code: "0;P;t;2;o;1;d;1;0t;10;0l;19;0v;0;0g;1;0o;1;0a;0;0e;0;1l;10;1v;0;1g;1;1o;19;1a;0;1s;0;1e;0", tags: "fun", copied: 1104106 },
+    { id: "1581", name: "Cursor", code: "0;P;h;0;d;1;z;5;0b;0;1t;6;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 184735 },
+    { id: "1582", name: "Candy", code: "0;P;h;0;0t;5;0l;2;0v;0;0g;1;0a;1;0f;0;1t;3;1l;5;1v;1;1g;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 350030 },
+    { id: "1583", name: "Steve", code: "0;P;c;5;t;2;o;1;0t;6;0l;4;0v;3;0g;1;0o;0;0a;1;0f;0;1t;6;1v;6;1g;1;1o;5;1a;1;1m;0;1f;0", tags: "fun", copied: 159504 },
+    { id: "1705", name: "Sakura", code: "0;P;c;8;u;F28D9FFF;h;0;d;1;b;1;a;0.254;0t;3;0l;5;0o;0;0a;0.755;0f;0;1t;5;1o;2;1a;1;1m;0;1f;0", tags: "", copied: 734805 },
+    { id: "1706", name: "Peach", code: "0;c;1;s;1;P;c;8;u;FF6781FF;h;0;b;1;0l;3;0o;2;0a;1;0f;0;1b;0;S;s;0.347;o;1", tags: "", copied: 136678 },
+    { id: "1707", name: "Heart When Fire", code: "0;P;c;8;u;F97AC0FF;o;0.1;b;1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "", copied: 200263 },
+    { id: "1708", name: "Flappy", code: "0;c;1;s;1;P;c;8;u;008000FF;t;3;o;1;b;1;0t;4;0l;0;0v;18;0g;1;0o;10;0a;1;0f;0;1t;10;1l;0;1v;4;1g;1;1o;7;1a;1;1m;0;1f;0", tags: "", copied: 373208 },
+    { id: "1", name: "The Sun", code: "0;P;c;4;h;0;f;0;0l;2;0a;1;0f;0;1t;4;1l;1;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 198701 },
+    { id: "2", name: "Sun", code: "0;P;c;3;h;0;d;1;z;6;a;0.538;m;1;0t;10;0l;2;0o;5;0a;0.137;0f;0;1b;0", tags: "fun", copied: 66934 }
   ]);
   const crosshairSeedEntries = Object.freeze([
     {
@@ -147,15 +148,17 @@
     },
     ...vcrdbCrosshairSeeds.map((entry, index) => ({
       id: `vcrdb-${entry.id}`,
-      player: `VCRDB #${entry.id}`,
+      player: entry.name || `VCRDB #${entry.id}`,
       team: "VCRDB Community",
       type: "Community",
       libraryRank: 7 + index,
       code: entry.code,
       sourceName: "VCRDB",
-      sourceUrl: "https://www.vcrdb.net/",
+      sourceUrl: `https://www.vcrdb.net/crosshair/${entry.id}`,
       photo: "",
-      tags: ["community", "import", "crosshair"]
+      tags: [entry.tags || "community", `${Number(entry.copied || 0).toLocaleString()} copies`].filter(Boolean),
+      copied: entry.copied,
+      previewReferenceUrl: "https://op.gg/valorant/crosshairs/editor"
     }))
   ]);
   const crosshairBackendState = {
@@ -166,7 +169,8 @@
     likes: new Map(),
     liked: new Set(),
     favorites: new Set(),
-    pending: new Set()
+    pending: new Set(),
+    lastCopiedId: ""
   };
   const CROSSHAIR_BACKEND_FLAG_KEY = "rankedcoach_crosshair_backend_enabled_v1";
   const roleIconMap = Object.freeze({
@@ -493,7 +497,7 @@
     const sections = { global: {}, P: {}, A: {}, S: {} };
     let target = sections.global;
     const tokens = String(code || "").split(";").map(part => part.trim()).filter(part => part !== "");
-    for (let index = 0; index < tokens.length; index += 1) {
+    for (let index = tokens[0] === "0" ? 1 : 0; index < tokens.length; index += 1) {
       const key = tokens[index];
       if (key === "P" || key === "A" || key === "S") {
         target = sections[key];
@@ -519,48 +523,65 @@
   }
 
   function getCrosshairLineSettings(settings = {}, prefix = "0") {
-    const length = Math.max(
-      readCrosshairNumber(settings, `${prefix}l`, 0),
-      readCrosshairNumber(settings, `${prefix}v`, 0)
-    );
-    const thickness = Math.max(1, readCrosshairNumber(settings, `${prefix}t`, readCrosshairNumber(settings, `${prefix}g`, 1)));
-    const offset = Math.max(0, readCrosshairNumber(settings, `${prefix}o`, 2));
-    const opacity = Math.max(0, Math.min(1, readCrosshairNumber(settings, `${prefix}a`, 1)));
-    const hidden = settings[`${prefix}b`] === "0" && length <= 0;
-    return { length, thickness, offset, opacity, hidden };
+    const defaults = prefix === "0"
+      ? { enabled: 1, thickness: 2, length: 6, verticalLength: 6, verticalEnabled: 0, offset: 3, opacity: .8 }
+      : { enabled: 1, thickness: 2, length: 2, verticalLength: 2, verticalEnabled: 0, offset: 10, opacity: .35 };
+    const enabled = readCrosshairNumber(settings, `${prefix}b`, defaults.enabled) > 0;
+    const horizontalLength = enabled ? Math.max(0, readCrosshairNumber(settings, `${prefix}l`, defaults.length)) : 0;
+    const useVerticalLength = readCrosshairNumber(settings, `${prefix}g`, defaults.verticalEnabled) > 0;
+    const verticalLength = enabled
+      ? Math.max(0, useVerticalLength ? readCrosshairNumber(settings, `${prefix}v`, defaults.verticalLength) : horizontalLength)
+      : 0;
+    const thickness = enabled ? Math.max(0, readCrosshairNumber(settings, `${prefix}t`, defaults.thickness)) : 0;
+    const offset = Math.max(0, readCrosshairNumber(settings, `${prefix}o`, defaults.offset));
+    const opacity = Math.max(0, Math.min(1, readCrosshairNumber(settings, `${prefix}a`, defaults.opacity)));
+    const hidden = !enabled || thickness <= 0 || (horizontalLength <= 0 && verticalLength <= 0);
+    return { horizontalLength, verticalLength, thickness, offset, opacity, hidden };
   }
 
-  function renderCrosshairLineSet({ length = 0, thickness = 1, offset = 2, opacity = 1, hidden = false } = {}, color = "#ffffff", scale = 5.8) {
-    if (hidden || length <= 0 || opacity <= 0) return "";
+  function renderCrosshairLineSet({ horizontalLength = 0, verticalLength = 0, thickness = 1, offset = 2, opacity = 1, hidden = false } = {}, color = "#ffffff", outline = {}, scale = 2.7) {
+    if (hidden || opacity <= 0 || (horizontalLength <= 0 && verticalLength <= 0)) return "";
     const center = 64;
-    const lineLength = Math.max(5, length * scale);
-    const lineThickness = Math.max(2, thickness * 2.4);
-    const gap = Math.max(3, offset * 3.2);
+    const horizontal = horizontalLength > 0 ? Math.max(5, horizontalLength * scale) : 0;
+    const vertical = verticalLength > 0 ? Math.max(5, verticalLength * scale) : 0;
+    const lineThickness = Math.max(1.5, thickness * scale);
+    const gap = Math.max(0, offset * scale);
     const halfThickness = lineThickness / 2;
     const safeColor = escapeHtml(color);
     const safeOpacity = Math.max(.08, Math.min(1, opacity));
+    const strokeWidth = Math.max(0, Number(outline.width) || 0) * scale;
+    const strokeAttrs = strokeWidth > 0
+      ? ` stroke="rgba(2,6,23,.92)" stroke-width="${strokeWidth}" stroke-opacity="${Math.max(0, Math.min(1, Number(outline.alpha) || 0))}"`
+      : "";
     return `
-      <rect x="${center - halfThickness}" y="${center - gap - lineLength}" width="${lineThickness}" height="${lineLength}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>
-      <rect x="${center - halfThickness}" y="${center + gap}" width="${lineThickness}" height="${lineLength}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>
-      <rect x="${center - gap - lineLength}" y="${center - halfThickness}" width="${lineLength}" height="${lineThickness}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>
-      <rect x="${center + gap}" y="${center - halfThickness}" width="${lineLength}" height="${lineThickness}" rx="${Math.min(3, halfThickness)}" fill="${safeColor}" opacity="${safeOpacity}"></rect>`;
+      ${vertical > 0 ? `<rect x="${center - halfThickness}" y="${center - gap - vertical}" width="${lineThickness}" height="${vertical}" fill="${safeColor}" opacity="${safeOpacity}"${strokeAttrs}></rect>` : ""}
+      ${vertical > 0 ? `<rect x="${center - halfThickness}" y="${center + gap}" width="${lineThickness}" height="${vertical}" fill="${safeColor}" opacity="${safeOpacity}"${strokeAttrs}></rect>` : ""}
+      ${horizontal > 0 ? `<rect x="${center - gap - horizontal}" y="${center - halfThickness}" width="${horizontal}" height="${lineThickness}" fill="${safeColor}" opacity="${safeOpacity}"${strokeAttrs}></rect>` : ""}
+      ${horizontal > 0 ? `<rect x="${center + gap}" y="${center - halfThickness}" width="${horizontal}" height="${lineThickness}" fill="${safeColor}" opacity="${safeOpacity}"${strokeAttrs}></rect>` : ""}`;
   }
 
   function renderCrosshairPreview(entry = {}) {
     const settings = parseCrosshairCode(entry.code);
     const color = getCrosshairColor(settings);
-    const outlineOpacity = Math.max(0, Math.min(1, readCrosshairNumber(settings, "o", 0)));
-    const dotOn = settings.d === "1";
-    const dotSize = Math.max(2.8, readCrosshairNumber(settings, "z", readCrosshairNumber(settings, "t", 2)) * 2.8);
+    const outlineEnabled = readCrosshairNumber(settings, "h", 1) > 0;
+    const outline = {
+      width: outlineEnabled ? readCrosshairNumber(settings, "t", 1) : 0,
+      alpha: outlineEnabled ? readCrosshairNumber(settings, "o", .5) : 0
+    };
+    const dotOn = readCrosshairNumber(settings, "d", 0) > 0;
+    const dotSize = Math.max(1.8, readCrosshairNumber(settings, "z", 2) * 2.7);
     const inner = getCrosshairLineSettings(settings, "0");
     const outer = getCrosshairLineSettings(settings, "1");
-    const hasInner = !inner.hidden && inner.length > 0;
-    const hasOuter = !outer.hidden && outer.length > 0 && outer.opacity > 0;
-    const dotMarkup = dotOn || (!hasInner && !hasOuter)
-      ? `<circle cx="64" cy="64" r="${dotSize}" fill="${escapeHtml(color)}" opacity="${Math.max(.18, readCrosshairNumber(settings, "a", 1))}"></circle>`
+    const hasInner = !inner.hidden && (inner.horizontalLength > 0 || inner.verticalLength > 0) && inner.opacity > 0;
+    const hasOuter = !outer.hidden && (outer.horizontalLength > 0 || outer.verticalLength > 0) && outer.opacity > 0;
+    const dotOpacity = Math.max(.18, readCrosshairNumber(settings, "a", 1));
+    const dotX = Math.floor(64 - dotSize / 2);
+    const dotY = Math.floor(64 - dotSize / 2);
+    const dotStroke = outline.width > 0
+      ? ` stroke="rgba(2,6,23,.92)" stroke-width="${Math.max(1, outline.width * 2.1)}" stroke-opacity="${Math.max(0, Math.min(1, outline.alpha))}"`
       : "";
-    const outlineMarkup = outlineOpacity > 0
-      ? `<circle cx="64" cy="64" r="${Math.max(dotSize + 2, 4)}" fill="none" stroke="rgba(2,6,23,.86)" stroke-width="${Math.max(2, readCrosshairNumber(settings, "t", 1) * 1.7)}" opacity="${outlineOpacity}"></circle>`
+    const dotMarkup = dotOn || (!hasInner && !hasOuter)
+      ? `<rect x="${dotX}" y="${dotY}" width="${dotSize}" height="${dotSize}" fill="${escapeHtml(color)}" opacity="${dotOpacity}"${dotStroke}></rect>`
       : "";
     return `
       <svg class="gamesense-crosshair-svg" viewBox="0 0 128 128" role="img" aria-label="${escapeHtml(entry.player)} crosshair preview">
@@ -570,16 +591,10 @@
             <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
           </filter>
         </defs>
-        <rect x="8" y="8" width="112" height="112" rx="17" fill="rgba(2,6,23,.82)" stroke="rgba(103,232,249,.18)"></rect>
-        <g opacity=".18" stroke="rgba(148,163,184,.8)" stroke-width="1">
-          <path d="M64 17v16M64 95v16M17 64h16M95 64h16"></path>
-          <circle cx="64" cy="64" r="28" fill="none"></circle>
-        </g>
         <g filter="url(#crosshairGlow-${escapeHtml(entry.id)})">
-          ${renderCrosshairLineSet(outer, color, 4.6)}
-          ${renderCrosshairLineSet(inner, color, 6)}
-          ${outlineMarkup}
+          ${renderCrosshairLineSet(inner, color, outline)}
           ${dotMarkup}
+          ${renderCrosshairLineSet(outer, color, outline)}
         </g>
       </svg>`;
   }
@@ -628,21 +643,25 @@
     const pendingLike = crosshairBackendState.pending.has(`crosshair_likes:${entry.id}`);
     const pendingFavorite = crosshairBackendState.pending.has(`crosshair_favorites:${entry.id}`);
     const likes = getCrosshairLikeCount(entry.id);
+    const isCommunity = entry.type === "Community";
+    const copied = crosshairBackendState.lastCopiedId === entry.id;
     return `
-      <article class="gamesense-crosshair-card" data-gamesense-crosshair-card="${escapeHtml(entry.id)}">
-        <div class="gamesense-crosshair-player">
-          ${renderCrosshairPhoto(entry)}
-          <div>
-            <span>${escapeHtml(entry.team || "Pro")}</span>
-            <strong>${escapeHtml(entry.player)}</strong>
-            <small>${escapeHtml(entry.tags?.join(" | ") || "Verified code")}</small>
-          </div>
-        </div>
+      <article class="gamesense-crosshair-card${isCommunity ? " is-community" : ""}" data-gamesense-crosshair-card="${escapeHtml(entry.id)}" aria-label="${escapeHtml(entry.player)} crosshair">
+        ${isCommunity ? "" : `
+          <div class="gamesense-crosshair-player">
+            ${renderCrosshairPhoto(entry)}
+            <div>
+              <span>${escapeHtml(entry.team || "Pro")}</span>
+              <strong>${escapeHtml(entry.player)}</strong>
+              <small>${escapeHtml(entry.tags?.join(" | ") || "Verified code")}</small>
+            </div>
+          </div>`}
         <div class="gamesense-crosshair-build">
           ${renderCrosshairPreviewMarkup(entry)}
           <div class="gamesense-crosshair-code-box">
             <code>${escapeHtml(entry.code)}</code>
-            <button type="button" data-gamesense-crosshair-copy="${escapeHtml(entry.id)}" aria-label="Copy ${escapeHtml(entry.player)} crosshair code">${renderCopyIcon()}</button>
+            <button type="button" data-gamesense-crosshair-copy="${escapeHtml(entry.id)}" class="${copied ? "is-copied" : ""}" aria-label="Copy ${escapeHtml(entry.player)} crosshair code">${renderCopyIcon()}</button>
+            ${copied ? `<span class="gamesense-crosshair-copy-confirm" role="status">Copied</span>` : ""}
           </div>
         </div>
         <div class="gamesense-crosshair-actions">
@@ -658,6 +677,7 @@
     const references = [
       { label: "ProSettings VALORANT Crosshair Database", url: "https://prosettings.net/tools/valorant-crosshair-database/" },
       { label: "VCRDB Valorant Crosshair Database", url: "https://www.vcrdb.net/" },
+      { label: "OP.GG VALORANT Crosshair Editor", url: "https://op.gg/valorant/crosshairs/editor" },
       { label: "PCGamesN VALORANT crosshair code references", url: "https://www.pcgamesn.com/valorant/crosshairs-best-codes" }
     ];
     return `
@@ -666,7 +686,7 @@
         <div>
           ${references.map(ref => `<a href="${escapeHtml(ref.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(ref.label)}</a>`).join("")}
         </div>
-        <small>Crosshair import strings are public Valorant profile codes. Reference links credit the databases used for seed entries and do not imply endorsement.</small>
+        <small>Crosshair import strings are public Valorant profile codes. VCRDB entries are selected for visibly distinct previews and OP.GG's editor is the reference path for import-preview verification. Links credit the databases used for seed entries and do not imply endorsement.</small>
       </footer>`;
   }
 
@@ -809,14 +829,22 @@
   function copyCrosshairCode(id = "") {
     const entry = getCrosshairEntry(id);
     if (!entry) return;
+    const markCopied = () => {
+      crosshairBackendState.lastCopiedId = entry.id;
+      crosshairBackendState.status = `${entry.player} crosshair code copied.`;
+      render({ direction: "replace" });
+      clearTimeout(crosshairCopyResetTimer);
+      crosshairCopyResetTimer = setTimeout(() => {
+        if (crosshairBackendState.lastCopiedId !== entry.id) return;
+        crosshairBackendState.lastCopiedId = "";
+        if (state.topic === "crosshairs") render({ direction: "replace" });
+      }, 2600);
+    };
     const write = navigator.clipboard?.writeText
       ? navigator.clipboard.writeText(entry.code)
       : Promise.reject(new Error("Clipboard unavailable"));
     write
-      .then(() => {
-        crosshairBackendState.status = `${entry.player} crosshair code copied.`;
-        render({ direction: "replace" });
-      })
+      .then(markCopied)
       .catch(() => {
         const textarea = document.createElement("textarea");
         textarea.value = entry.code;
@@ -827,14 +855,17 @@
         textarea.select();
         const copied = document.execCommand?.("copy");
         textarea.remove();
-        crosshairBackendState.status = copied ? `${entry.player} crosshair code copied.` : "Copy failed. Select the code text manually.";
-        render({ direction: "replace" });
+        if (copied) markCopied();
+        else {
+          crosshairBackendState.status = "Copy failed. Select the code text manually.";
+          render({ direction: "replace" });
+        }
       });
   }
 
   function getTopicCollageMarkup(topic = "") {
     if (topic === "crosshairs") {
-      return crosshairSeedEntries.slice(0, 6).map(entry => `
+      return crosshairSeedEntries.slice(0, 18).map(entry => `
         <span class="gamesense-topic-crosshair-sample">
           ${renderCrosshairPreviewMarkup(entry)}
         </span>`).join("");
