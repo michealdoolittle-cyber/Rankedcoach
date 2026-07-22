@@ -748,7 +748,6 @@
             <div>
               <span>${escapeHtml(entry.team || "Pro")}</span>
               <strong>${escapeHtml(entry.player)}</strong>
-              <small>${escapeHtml(entry.tags?.join(" | ") || "Verified code")}</small>
             </div>
           </div>`}
         <div class="gamesense-crosshair-build">
