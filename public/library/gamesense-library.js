@@ -15,6 +15,7 @@
   let libraryPageActive = false;
   let collageHydrationToken = 0;
   let crosshairCopyResetTimer = 0;
+  const topicCollageShuffleSalt = Math.random().toString(36).slice(2);
   const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
     maps: { label: "Maps", copy: "Attack, defense, role notes, current comps, and marked tactical layouts." },
@@ -36,36 +37,104 @@
     "8": "#ffffff"
   });
   const vcrdbCrosshairSeeds = Object.freeze([
-    { id: "4", name: "Simple X", code: "0;P;c;4;h;0;d;1;f;0;0t;6;0l;1;0o;1;0a;1;0f;0;1b;0", tags: "", copied: 1069622 },
-    { id: "6", name: "Target", code: "0;P;c;1;h;0;d;1;z;1;f;0;0t;5;0l;1;0o;2;0a;1;0f;0;1t;1;1l;1;1o;3;1a;1;1m;0;1f;0", tags: "", copied: 709484 },
-    { id: "7", name: "Windmill", code: "0;P;c;1;t;6;o;1;d;1;z;6;a;0;f;0;m;1;0t;10;0l;20;0o;20;0a;1;0m;1;0e;0.1;1t;10;1l;10;1o;40;1a;1;1m;0", tags: "fun", copied: 1384099 },
+    { id: "1", name: "The Sun", code: "0;P;c;4;h;0;f;0;0l;2;0a;1;0f;0;1t;4;1l;1;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 198702 },
+    { id: "2", name: "Sun", code: "0;P;c;3;h;0;d;1;z;6;a;0.538;m;1;0t;10;0l;2;0o;5;0a;0.137;0f;0;1b;0", tags: "fun", copied: 66934 },
+    { id: "4", name: "Simple X", code: "0;P;c;4;h;0;d;1;f;0;0t;6;0l;1;0o;1;0a;1;0f;0;1b;0", tags: "", copied: 1069629 },
+    { id: "5", name: "Beginner Friendly", code: "0;P;c;1;o;1;d;1;0a;1;0e;0.1;1b;0", tags: "", copied: 110302 },
+    { id: "6", name: "Target", code: "0;P;c;1;h;0;d;1;z;1;f;0;0t;5;0l;1;0o;2;0a;1;0f;0;1t;1;1l;1;1o;3;1a;1;1m;0;1f;0", tags: "", copied: 709490 },
+    { id: "7", name: "Windmill", code: "0;P;c;1;t;6;o;1;d;1;z;6;a;0;f;0;m;1;0t;10;0l;20;0o;20;0a;1;0m;1;0e;0.1;1t;10;1l;10;1o;40;1a;1;1m;0", tags: "fun", copied: 1384108 },
     { id: "9", name: "Flappy Bird", code: "0;P;c;1;t;3;o;1;f;0;0t;6;0l;20;0o;13;0a;1;0f;0;1t;9;1l;4;1o;9;1a;1;1m;0;1f;0", tags: "fun", copied: 490791 },
-    { id: "10", name: "Smiley", code: "0;P;c;7;t;2;o;1;d;1;z;3;a;0;f;0;0t;10;0l;2;0o;2;0a;1;0f;0;1b;0", tags: "fun", copied: 415279 },
-    { id: "12", name: "Wheel", code: "0;P;c;7;o;1;d;1;f;0;0l;4;0o;1;0a;0;0f;0;1t;6;1l;1;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 249041 },
-    { id: "13", name: "Exclamation", code: "0;P;c;7;t;4;o;1;d;1;z;6;a;0;f;0;0t;6;0l;4;0o;0;0a;1;0f;0;1l;5;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 177530 },
-    { id: "14", name: "Ornament", code: "0;P;c;7;o;0.8;f;0;0t;5;0l;2;0o;0;0a;1;0f;0;1t;1;1l;1;1o;2;1a;1;1m;0;1f;0", tags: "fun", copied: 425296 },
-    { id: "15", name: "Webs", code: "0;P;c;7;h;0;f;0;0l;1;0a;1;0f;0;1t;10;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 100161 },
-    { id: "16", name: "Poke Ball", code: "0;P;c;7;o;1;d;1;f;0;0t;10;0l;5;0o;0;0a;1;0f;0;1t;6;1l;1;1o;5;1a;0;1m;0;1f;0", tags: "fun", copied: 297774 },
-    { id: "18", name: "Shuriken", code: "0;P;c;7;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1t;8;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 1048756 },
-    { id: "20", name: "Flower 1", code: "0;P;c;6;o;1;d;1;z;4;f;0;m;1;0t;8;0l;3;0o;2;0a;0;0f;0;1l;3;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 545158 },
+    { id: "10", name: "Smiley", code: "0;P;c;7;t;2;o;1;d;1;z;3;a;0;f;0;0t;10;0l;2;0o;2;0a;1;0f;0;1b;0", tags: "fun", copied: 415281 },
+    { id: "11", name: "Clown", code: "0;P;c;7;t;2;o;1;d;1;z;3;f;0;0t;10;0l;2;0o;2;0a;1;0f;0;1b;0", tags: "fun", copied: 166274 },
+    { id: "12", name: "Wheel", code: "0;P;c;7;o;1;d;1;f;0;0l;4;0o;1;0a;0;0f;0;1t;6;1l;1;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 249042 },
+    { id: "13", name: "Exclamation", code: "0;P;c;7;t;4;o;1;d;1;z;6;a;0;f;0;0t;6;0l;4;0o;0;0a;1;0f;0;1l;5;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 177531 },
+    { id: "14", name: "Ornament", code: "0;P;c;7;o;0.8;f;0;0t;5;0l;2;0o;0;0a;1;0f;0;1t;1;1l;1;1o;2;1a;1;1m;0;1f;0", tags: "fun", copied: 425301 },
+    { id: "15", name: "Webs", code: "0;P;c;7;h;0;f;0;0l;1;0a;1;0f;0;1t;10;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 100162 },
+    { id: "16", name: "Pokéball", code: "0;P;c;7;o;1;d;1;f;0;0t;10;0l;5;0o;0;0a;1;0f;0;1t;6;1l;1;1o;5;1a;0;1m;0;1f;0", tags: "fun", copied: 297776 },
+    { id: "17", name: "Medkit", code: "0;P;c;7;h;0;f;0;0t;6;0l;1;0o;0;0a;1;0f;0;1t;10;1l;1;1o;5;1a;1;1m;0;1f;0", tags: "fun", copied: 151205 },
+    { id: "18", name: "Shuriken", code: "0;P;c;7;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1t;8;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 1048767 },
+    { id: "19", name: "Instagram", code: "0;P;c;6;h;0;d;1;z;1;f;0;s;0;0t;4;0l;1;0o;2;0a;1;0f;0;1t;10;1l;1;1o;5;1a;1;1m;0;1f;0", tags: "fun", copied: 217771 },
+    { id: "20", name: "Flower 1", code: "0;P;c;6;o;1;d;1;z;4;f;0;m;1;0t;8;0l;3;0o;2;0a;0;0f;0;1l;3;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 545160 },
     { id: "21", name: "Hashtag", code: "0;P;h;0;f;0;0b;0;1t;7;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 147027 },
-    { id: "22", name: "Church Crosses", code: "0;P;h;0;d;1;z;3;f;0;0t;3;0l;14;0o;6;0a;1;0f;0;1t;9;1l;3;1o;12;1a;1;1m;0;1f;0", tags: "fun", copied: 212934 },
-    { id: "119", name: "The Throb", code: "0;p;0;s;1;P;c;5;h;0;m;1;0t;4;0l;1;0o;1;0a;1;0m;1;0s;0.04;0e;0.08;1o;2;1a;1;1m;0;1f;0;A;c;5;h;0;d;1;0b;0;1b;0;S;d;0", tags: "fun", copied: 569421 },
-    { id: "382", name: "Heart", code: "0;P;c;7;o;0.1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "fun", copied: 180888 },
+    { id: "22", name: "Church crosses", code: "0;P;h;0;d;1;z;3;f;0;0t;3;0l;14;0o;6;0a;1;0f;0;1t;9;1l;3;1o;12;1a;1;1m;0;1f;0", tags: "fun", copied: 212935 },
+    { id: "23", name: "Windows", code: "0;P;o;1;d;1;z;6;0b;0;1t;6;1l;3;1o;0;1a;0;1m;0;1f;0", tags: "fun", copied: 95347 },
+    { id: "24", name: "Burger", code: "0;P;t;2;o;1;d;1;f;0;0t;10;0l;3;0a;1;0f;0;1b;0", tags: "fun", copied: 126093 },
+    { id: "25", name: "Star", code: "0;P;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1t;8;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 688722 },
+    { id: "26", name: "TicTacToe", code: "0;P;h;0;f;0;0t;10;0l;1;0o;2;0a;1;0f;0;1b;0", tags: "fun", copied: 114848 },
+    { id: "27", name: "Daisy", code: "0;P;h;0;0t;10;0l;3;0o;1;0a;1;0f;0;1b;0", tags: "fun", copied: 144748 },
+    { id: "28", name: "Big one", code: "0;P;t;6;o;1;0t;4;0l;1;0o;15;0a;0;0f;0;1t;4;1l;7;1a;0;1m;0;1f;0", tags: "fun", copied: 207114 },
+    { id: "29", name: "Mushrooms", code: "0;P;o;1;f;0;0t;4;0l;1;0o;5;0a;0;0f;0;1l;4;1o;3;1a;0;1m;0;1f;0", tags: "fun", copied: 207601 },
+    { id: "30", name: "4 Usbs", code: "0;P;o;1;f;0;0t;3;0l;2;0a;1;0f;0;1t;1;1l;5;1o;2;1a;0;1m;0;1f;0", tags: "fun", copied: 255865 },
+    { id: "35", name: "Arrows", code: "0;P;h;0;f;0;m;1;0t;4;0l;1;0a;1;0f;0;1l;5;1o;2;1a;1;1m;0;1f;0", tags: "fun", copied: 373048 },
+    { id: "36", name: "Snowflake 2", code: "0;P;h;0;f;0;m;1;0l;3;0o;2;0a;1;0f;0;1t;8;1l;1;1o;2;1a;1;1m;0;1f;0", tags: "fun", copied: 186646 },
+    { id: "37", name: "Circle", code: "0;P;c;1;h;0;m;1;0l;2;0o;2;0a;1;0f;0;1t;4;1l;1;1o;2;1a;1;1m;0;1f;0", tags: "", copied: 370341 },
+    { id: "38", name: "xbox", code: "0;P;c;1;h;0;f;0;m;1;0t;3;0l;3;0o;2;0a;1;0f;0;1t;6;1l;1;1o;4;1a;1;1m;0;1f;0", tags: "fun", copied: 176482 },
+    { id: "39", name: "Flower 2", code: "0;P;c;6;h;0;d;1;f;0;0l;3;0a;1;0f;0;1t;4;1o;3;1a;1;1m;0;1f;0", tags: "fun", copied: 229520 },
+    { id: "40", name: "Diamond", code: "0;P;c;5;h;0;f;0;0t;1;0l;3;0o;0;0a;1;0f;0;1t;3;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 1399656 },
+    { id: "41", name: "Plungers", code: "0;P;c;6;t;3;o;0.25;d;1;z;3;a;0.5;f;0;m;1;0t;1;0l;17;0o;20;0a;1;0m;1;1t;9;1l;7;1o;15;1a;0.5;1m;0", tags: "fun", copied: 292950 },
+    { id: "42", name: "Snowflake 1", code: "0;P;h;0;f;0;0o;0;0a;1;0f;0;1t;4;1o;2;1a;1;1m;0;1f;0", tags: "fun", copied: 339515 },
+    { id: "43", name: "Among Us", code: "0;P;c;5;t;3;o;1;f;0;m;1;0t;4;0l;5;0o;0;0a;1;0f;0;1t;8;1l;3;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 278095 },
+    { id: "80", name: "Globe", code: "0;P;o;1;f;0;0t;10;0l;4;0a;0;0f;0;1t;4;1o;6;1a;0;1m;0;1f;0", tags: "fun", copied: 202535 },
+    { id: "81", name: "Rounded Square", code: "0;P;t;3;o;1;d;1;z;4;f;0;m;1;0l;3;0o;0;0a;1;0f;0;1b;0", tags: "fun", copied: 312487 },
+    { id: "82", name: "Black", code: "0;P;c;1;t;2;o;0.75;f;0;m;1;0t;1;0l;4;0o;1;0a;0;0f;0;1b;0", tags: "", copied: 153908 },
+    { id: "84", name: "Hollow Circle", code: "0;P;h;0;f;0;0t;4;0l;1;0o;2;0a;1;0f;0;1b;0", tags: "fun", copied: 1688280 },
+    { id: "85", name: "Small Dot", code: "0;P;d;1;f;0;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0", tags: "", copied: 7497549 },
+    { id: "86", name: "Cloud", code: "0;P;h;0;f;0;0t;9;0l;1;0o;1;0a;1;0f;0;1t;3;1l;1;1o;4;1a;1;1m;0;1f;0", tags: "fun", copied: 177274 },
+    { id: "87", name: "fishychair", code: "0;P;c;1;h;0;d;1;f;0;0t;6;0l;1;0o;1;0a;1;0f;0;1b;0", tags: "", copied: 397629 },
+    { id: "88", name: "Circle Dot", code: "0;P;c;5;h;0;f;0;0l;2;0o;0;0a;1;0f;0;1b;0", tags: "", copied: 1241125 },
+    { id: "89", name: "Reyna Flash", code: "0;P;c;6;t;6;o;0.3;f;0;0t;1;0l;5;0o;5;0a;1;0f;0;1t;10;1l;4;1o;5;1a;0.5;1m;0;1f;0", tags: "fun", copied: 799841 },
+    { id: "119", name: "The Throb", code: "0;p;0;s;1;P;c;5;h;0;m;1;0t;4;0l;1;0o;1;0a;1;0m;1;0s;0.04;0e;0.08;1o;2;1a;1;1m;0;1f;0;A;c;5;h;0;d;1;0b;0;1b;0;S;d;0", tags: "fun", copied: 569425 },
+    { id: "382", name: "Heart", code: "0;P;c;7;o;0.1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "fun", copied: 180889 },
     { id: "383", name: "Pink Heart", code: "0;P;c;6;o;0.1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "fun", copied: 137169 },
     { id: "384", name: "Big Heart", code: "0;P;c;7;o;0.1;d;1;z;1;a;0;m;1;0t;10;0l;5;0a;1;0f;0;1t;4;1l;10;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 133950 },
-    { id: "722", name: "Mahluna", code: "0;c;1;P;c;5;o;0;m;1;0t;4;0l;2;0o;1;0a;1;0e;0;1b;0", tags: "team", copied: 531269 },
     { id: "960", name: "Fishnet", code: "0;P;o;1;d;1;a;0;f;0;0t;8;0l;2;0o;5;0a;0;0f;0;1l;8;1o;2;1a;0;1m;0;1f;0", tags: "fun", copied: 133530 },
-    { id: "1549", name: "Glasses", code: "0;P;t;2;o;1;d;1;0t;10;0l;19;0v;0;0g;1;0o;1;0a;0;0e;0;1l;10;1v;0;1g;1;1o;19;1a;0;1s;0;1e;0", tags: "fun", copied: 1104106 },
-    { id: "1581", name: "Cursor", code: "0;P;h;0;d;1;z;5;0b;0;1t;6;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 184735 },
-    { id: "1582", name: "Candy", code: "0;P;h;0;0t;5;0l;2;0v;0;0g;1;0a;1;0f;0;1t;3;1l;5;1v;1;1g;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 350030 },
-    { id: "1583", name: "Steve", code: "0;P;c;5;t;2;o;1;0t;6;0l;4;0v;3;0g;1;0o;0;0a;1;0f;0;1t;6;1v;6;1g;1;1o;5;1a;1;1m;0;1f;0", tags: "fun", copied: 159504 },
-    { id: "1705", name: "Sakura", code: "0;P;c;8;u;F28D9FFF;h;0;d;1;b;1;a;0.254;0t;3;0l;5;0o;0;0a;0.755;0f;0;1t;5;1o;2;1a;1;1m;0;1f;0", tags: "", copied: 734805 },
-    { id: "1706", name: "Peach", code: "0;c;1;s;1;P;c;8;u;FF6781FF;h;0;b;1;0l;3;0o;2;0a;1;0f;0;1b;0;S;s;0.347;o;1", tags: "", copied: 136678 },
-    { id: "1707", name: "Heart When Fire", code: "0;P;c;8;u;F97AC0FF;o;0.1;b;1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "", copied: 200263 },
-    { id: "1708", name: "Flappy", code: "0;c;1;s;1;P;c;8;u;008000FF;t;3;o;1;b;1;0t;4;0l;0;0v;18;0g;1;0o;10;0a;1;0f;0;1t;10;1l;0;1v;4;1g;1;1o;7;1a;1;1m;0;1f;0", tags: "", copied: 373208 },
-    { id: "1", name: "The Sun", code: "0;P;c;4;h;0;f;0;0l;2;0a;1;0f;0;1t;4;1l;1;1o;0;1a;1;1m;0;1f;0", tags: "fun", copied: 198701 },
-    { id: "2", name: "Sun", code: "0;P;c;3;h;0;d;1;z;6;a;0.538;m;1;0t;10;0l;2;0o;5;0a;0.137;0f;0;1b;0", tags: "fun", copied: 66934 }
+    { id: "1439", name: "JOLLZTV", code: "0;s;1;P;c;4;o;1;f;0;0t;1;0l;3;0o;1;0a;1;0f;0;1b;0;S;c;0;s;1.08;o;1", tags: "", copied: 143509 },
+    { id: "1549", name: "Glasses", code: "0;P;t;2;o;1;d;1;0t;10;0l;19;0v;0;0g;1;0o;1;0a;0;0e;0;1l;10;1v;0;1g;1;1o;19;1a;0;1s;0;1e;0", tags: "fun", copied: 1104113 },
+    { id: "1581", name: "Cursor", code: "0;P;h;0;d;1;z;5;0b;0;1t;6;1l;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 184737 },
+    { id: "1582", name: "Candy", code: "0;P;h;0;0t;5;0l;2;0v;0;0g;1;0a;1;0f;0;1t;3;1l;5;1v;1;1g;1;1o;1;1a;1;1m;0;1f;0", tags: "fun", copied: 350034 },
+    { id: "1583", name: "Steve", code: "0;P;c;5;t;2;o;1;0t;6;0l;4;0v;3;0g;1;0o;0;0a;1;0f;0;1t;6;1v;6;1g;1;1o;5;1a;1;1m;0;1f;0", tags: "fun", copied: 159505 },
+    { id: "1705", name: "Sakura", code: "0;P;c;8;u;F28D9FFF;h;0;d;1;b;1;a;0.254;0t;3;0l;5;0o;0;0a;0.755;0f;0;1t;5;1o;2;1a;1;1m;0;1f;0", tags: "", copied: 734811 },
+    { id: "1706", name: "peach", code: "0;c;1;s;1;P;c;8;u;FF6781FF;h;0;b;1;0l;3;0o;2;0a;1;0f;0;1b;0;S;s;0.347;o;1", tags: "", copied: 136678 },
+    { id: "1707", name: "Heart when fire", code: "0;P;c;8;u;F97AC0FF;o;0.1;b;1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "", copied: 200264 },
+    { id: "1708", name: "Flappy", code: "0;c;1;s;1;P;c;8;u;008000FF;t;3;o;1;b;1;0t;4;0l;0;0v;18;0g;1;0o;10;0a;1;0f;0;1t;10;1l;0;1v;4;1g;1;1o;7;1a;1;1m;0;1f;0", tags: "", copied: 373210 }
+  ]);
+  const vcrdbProCrosshairSeeds = Object.freeze([
+    { id: "66", name: "yay", code: "0;P;h;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 5718229 },
+    { id: "95", name: "Sacy", code: "0;P;h;0;f;0;0t;1;0l;4;0o;1;0a;1;0f;0;1t;3;1o;2;1a;1;1m;0;1f;0", tags: "team", copied: 2948859 },
+    { id: "92", name: "LESS", code: "0;P;o;0;f;0;0t;1;0l;2;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 2291563 },
+    { id: "78", name: "ScreaM", code: "0;P;c;5;o;0.286;d;1;f;0;0t;0;0l;0;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 2023410 },
+    { id: "103", name: "Dep", code: "0;s;1;P;o;0.1;f;0;s;0;0t;1;0l;2;0o;1;0a;1;0f;0;1b;0", tags: "team", copied: 2005272 },
+    { id: "91", name: "Aspas", code: "0;P;c;5;o;1;d;1;z;3;f;0;0b;0;1b;0", tags: "team", copied: 1858413 },
+    { id: "463", name: "Tarik", code: "0;P;o;1;d;1;0b;0;1b;0", tags: "team", copied: 1692648 },
+    { id: "74", name: "Cryo", code: "0;P;c;5;h;0;f;0;0l;3;0o;2;0a;1;0f;0;1b;0", tags: "team", copied: 1345627 },
+    { id: "72", name: "cNed", code: "0;P;h;0;f;0;0l;5;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 1333486 },
+    { id: "405", name: "BONECOLD", code: "0;P;c;1;h;0;f;0;0l;2;0o;1;0a;1;0f;0;1b;0", tags: "team", copied: 1175705 },
+    { id: "71", name: "Sinatraa", code: "0;P;c;5;o;1;f;0;0t;1;0l;3;0a;1;0f;0;1b;0", tags: "team", copied: 897226 },
+    { id: "102", name: "Crow", code: "0;s;1;P;o;1;f;0;0t;1;0l;1;0o;1;0a;1;0f;0;1b;0;S;c;0;s;0.5;o;1", tags: "team", copied: 869404 },
+    { id: "56", name: "Derke", code: "0;P;o;1;d;1;f;0;s;0;0t;0;0l;1;0o;0;0a;1;0f;0;1t;0;1l;1;1o;0;1a;1;1m;0;1f;0", tags: "team", copied: 838435 },
+    { id: "31", name: "Shroud", code: "0;P;c;4;h;0;f;0;0l;5;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 784892 },
+    { id: "76", name: "nAts", code: "0;P;c;1;o;1;f;0;0t;1;0l;2;0o;2;0a;1;0f;0;1b;0", tags: "team", copied: 756592 },
+    { id: "396", name: "Zombs", code: "0;P;h;0;f;0;0l;3;0o;2;0a;1;0f;0;1b;0", tags: "team", copied: 730888 },
+    { id: "105", name: "Tennn", code: "0;P;h;0;0l;4;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 715062 },
+    { id: "113", name: "Jamppi", code: "0;s;1;P;h;0;0t;1;0o;2;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;1m;0;1f;0;S;o;0.502", tags: "team", copied: 712296 },
+    { id: "434", name: "Koldamenta", code: "0;P;c;7;h;0;f;0;0l;0;0o;4;0a;1;0f;0;1t;4;1o;1;1a;1;1m;0;1f;0", tags: "team", copied: 711401 },
+    { id: "410", name: "Shao", code: "0;P;c;5;h;0;d;1;f;0;0l;4;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 697626 },
+    { id: "44", name: "Asuna", code: "0;P;o;1;0t;1;0l;2;0a;1;0f;0;1b;0", tags: "team", copied: 560395 },
+    { id: "722", name: "Mahluna", code: "0;c;1;P;c;5;o;0;m;1;0t;4;0l;2;0o;1;0a;1;0e;0;1b;0", tags: "team", copied: 531270 },
+    { id: "443", name: "Lakia", code: "0;P;h;0;0t;5;0l;1;0o;2;0a;1;0f;0;1b;0", tags: "team", copied: 531211 },
+    { id: "411", name: "Ardiis", code: "0;P;c;5;h;0;f;0;0t;1;0l;0;0o;0;0a;1;0f;0;1t;1;1o;1;1a;1;1m;0;1f;0", tags: "team", copied: 497611 },
+    { id: "111", name: "Soulcas", code: "0;s;1;P;o;1;d;1;z;3;f;0;0b;0;1b;0;S;s;0.762", tags: "team", copied: 478036 },
+    { id: "98", name: "JonahP", code: "0;P;c;5;o;1;0t;1;0l;3;0o;1;0a;1;0f;0;1b;0", tags: "team", copied: 419012 },
+    { id: "57", name: "otom", code: "0;P;c;5;h;0;f;0;0t;1;0o;1;0a;1;0f;0;1b;0", tags: "team", copied: 406450 },
+    { id: "51", name: "BuZz", code: "0;P;c;5;o;1;f;0;0t;1;0l;2;0o;2;0a;1;0f;0;1b;0", tags: "team", copied: 406365 },
+    { id: "460", name: "Kyedae", code: "0;P;c;5;h;0;0l;4;0o;2;0a;1;0f;0;1b;0", tags: "team", copied: 376483 },
+    { id: "395", name: "Sheydos", code: "0;P;c;7;t;2;o;1;d;1;f;0;0b;0;1b;0", tags: "team", copied: 360613 },
+    { id: "409", name: "ANGE1", code: "0;P;c;7;h;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 355040 },
+    { id: "79", name: "LuckeRRR", code: "0;P;c;1;h;0;d;1;a;0.98;0b;0;1b;0", tags: "team", copied: 333208 },
+    { id: "68", name: "ShahZaM", code: "0;P;c;1;o;1;f;0;0l;5;0a;0.5;0f;0;1b;0", tags: "team", copied: 311514 },
+    { id: "114", name: "Nivera", code: "0;s;1;P;o;1;0t;1;0l;2;0o;2;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;S;c;1;o;0.5", tags: "team", copied: 308949 },
+    { id: "115", name: "Nukkye", code: "0;s;1;P;o;1;d;1;f;0;0b;0;1b;0;S;s;0.85;o;1", tags: "team", copied: 305527 },
+    { id: "424", name: "Dicey", code: "0;P;c;5;h;0;f;0;0t;1;0l;3;0o;1;0a;1;0f;0;1b;0", tags: "team", copied: 301119 }
   ]);
   const crosshairSeedEntries = Object.freeze([
     {
@@ -146,12 +215,26 @@
       proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="26" y="24" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="22" y="24" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="26" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="22" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="24" width="2" height="2" fill="#ffffff" fill-opacity="1" /></svg>`,
       tags: ["white", "dot", "operator"]
     },
+    ...vcrdbProCrosshairSeeds.map((entry, index) => ({
+      id: `vcrdb-pro-${entry.id}`,
+      player: entry.name || `VCRDB Pro #${entry.id}`,
+      team: "VCRDB Team/Pro",
+      type: "Pro",
+      libraryRank: 7 + index,
+      code: entry.code,
+      sourceName: "VCRDB",
+      sourceUrl: `https://www.vcrdb.net/crosshair/${entry.id}`,
+      photo: "",
+      tags: ["pro/team", `${Number(entry.copied || 0).toLocaleString()} copies`].filter(Boolean),
+      copied: entry.copied,
+      previewReferenceUrl: "https://op.gg/valorant/crosshairs/editor"
+    })),
     ...vcrdbCrosshairSeeds.map((entry, index) => ({
       id: `vcrdb-${entry.id}`,
       player: entry.name || `VCRDB #${entry.id}`,
       team: "VCRDB Community",
       type: "Community",
-      libraryRank: 7 + index,
+      libraryRank: 100 + index,
       code: entry.code,
       sourceName: "VCRDB",
       sourceUrl: `https://www.vcrdb.net/crosshair/${entry.id}`,
@@ -361,6 +444,18 @@
     const normalized = String(src || "").trim();
     if (!normalized || /vod-secure\.twitch\.tv\/_404\/404_processing_/i.test(normalized)) return "";
     return normalized;
+  }
+
+  function hashCollageValue(value = "") {
+    return String(value || "").split("").reduce((hash, character) => {
+      return ((hash << 5) - hash + character.charCodeAt(0)) | 0;
+    }, 0);
+  }
+
+  function getShuffledCollageItems(items = [], salt = topicCollageShuffleSalt) {
+    return [...items].sort((left, right) => {
+      return hashCollageValue(`${salt}:${left}`) - hashCollageValue(`${salt}:${right}`);
+    });
   }
 
   function getDeferredCollageImageMarkup(src = "", className = "") {
@@ -694,6 +789,7 @@
     const activeTab = normalizeCrosshairTab(state.crosshairTab);
     const entries = getVisibleCrosshairEntries();
     const favoriteEmpty = activeTab === "Favorites" && !entries.length;
+    const gridMode = activeTab === "Pro's" ? "is-pro-tab" : "is-dense-tab";
     const backendNote = crosshairBackendState.unavailable
       ? "Apply the crosshair Supabase tables to turn on shared Likes and saved Favorites."
       : "Likes and Favorites are account-gated so one player can only vote once per crosshair.";
@@ -710,7 +806,7 @@
           <button type="button" class="gamesense-crosshair-sort" data-gamesense-crosshair-sort="${state.crosshairSort === "asc" ? "desc" : "asc"}">Likes ${state.crosshairSort === "asc" ? "↑" : "↓"}</button>
         </div>
         <p class="gamesense-crosshair-note">${escapeHtml(crosshairBackendState.status || backendNote)}</p>
-        <div class="gamesense-crosshair-grid">
+        <div class="gamesense-crosshair-grid ${gridMode}">
           ${entries.length
             ? entries.map(renderCrosshairCard).join("")
             : `<p class="gamesense-crosshair-empty">${favoriteEmpty ? "Log in and heart a crosshair to build your saved list." : "No crosshairs match this filter yet."}</p>`}
@@ -865,10 +961,15 @@
 
   function getTopicCollageMarkup(topic = "") {
     if (topic === "crosshairs") {
-      return crosshairSeedEntries.slice(0, 18).map(entry => `
+      return crosshairSeedEntries.filter(entry => entry.type === "Community").slice(0, 20).map(entry => `
         <span class="gamesense-topic-crosshair-sample">
           ${renderCrosshairPreviewMarkup(entry)}
         </span>`).join("");
+    }
+    if (topic === "weapons") {
+      return getShuffledCollageItems(getTopicCollageImages(topic)).slice(0, 20)
+        .map(src => getDeferredCollageImageMarkup(src))
+        .join("");
     }
     if (topic === "playlist") {
       return (featuredPlaylist?.items || [])

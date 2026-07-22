@@ -3107,8 +3107,8 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 
 .gamesense-topic-card[data-gamesense-topic="crosshairs"] .gamesense-topic-collage{
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  grid-template-rows:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(5,minmax(0,1fr));
   gap:6px;
   padding:16px;
   opacity:.68;
@@ -3307,6 +3307,36 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:8px;
+}
+@media (min-width:821px){
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-pro-tab{
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab{
+    grid-template-columns:repeat(6,minmax(0,1fr));
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    padding:8px;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-community{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-player,
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-preview{
+    min-height:112px;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab .gamesense-crosshair-card.is-community .gamesense-crosshair-preview{
+    grid-column:1;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab .gamesense-crosshair-card.is-community .gamesense-crosshair-code-box,
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab .gamesense-crosshair-card.is-community .gamesense-crosshair-actions{
+    grid-column:2;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-code-box code{
+    font-size:8px;
+  }
 }
 .gamesense-crosshair-card{
   display:grid;
@@ -3914,8 +3944,8 @@ body.gamesense-media-open{overflow:hidden !important;}
 .gamesense-damage-target span::after{display:none !important;}
 
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{
-  grid-template-columns:repeat(5,minmax(0,1fr)) !important;
-  grid-template-rows:repeat(4,minmax(0,1fr)) !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  grid-template-rows:repeat(5,minmax(0,1fr)) !important;
   gap:6px !important;
   padding:16px !important;
 }
