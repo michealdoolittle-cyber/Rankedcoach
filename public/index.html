@@ -285,20 +285,20 @@ AUTH MODAL
   <div class="lens-modal daily-warmup-card" role="dialog" aria-modal="true" aria-labelledby="dailyWarmupTitle">
     <div class="lens-modal-header daily-warmup-header">
       <div>
-        <div class="daily-warmup-kicker" id="dailyWarmupKicker">Daily Warm-Up Check</div>
-        <div class="lens-modal-title" id="dailyWarmupTitle">Get your first fights ready</div>
+        <div class="daily-warmup-kicker" id="dailyWarmupKicker">Daily Warm-Up</div>
+        <div class="lens-modal-title" id="dailyWarmupTitle">Prep for Your Matches</div>
       </div>
     </div>
     <div class="daily-warmup-body">
       <div class="daily-warmup-intro" data-daily-training-section="warmup">
-        Pick up to four drills before ranked. Range work is self-reported; DM and TDM can be checked against Henrik after your next sync.
-        Warm-up helps your mechanics, but the real test is carrying the same discipline into live rounds.
+        Pick up to four drills before playing ranked. Range work is self-reported; DM and TDM can be checked against Henrik after your next sync.
+        A warm-up helps mechanical consistency and in-game focus.
       </div>
       <div class="daily-warmup-count" data-daily-training-section="warmup"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
       <div class="daily-warmup-randomizer" data-daily-training-section="warmup">
         <button id="dailyWarmupRandomize" class="daily-warmup-randomize" type="button" aria-controls="dailyWarmupGrid">
           <span class="daily-warmup-randomize-icon" aria-hidden="true">4</span>
-          <span class="daily-warmup-randomize-copy"><strong>Randomize 4 drills</strong><small>Highlights only. Nothing is checked until you choose it.</small></span>
+          <span class="daily-warmup-randomize-copy"><strong>Randomize 4 drills</strong><small>Highlights drills only. Nothing is checked until you choose it.</small></span>
           <span class="daily-warmup-randomize-arrow" aria-hidden="true">&#8635;</span>
         </button>
         <div id="dailyWarmupRandomStatus" class="daily-warmup-random-status" aria-live="polite"></div>
@@ -310,47 +310,47 @@ AUTH MODAL
       <div class="daily-warmup-grid" id="dailyWarmupGrid" data-daily-training-section="warmup">
         <button type="button" class="daily-warmup-drill" data-warmup-drill="weapon-choice" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Weapon Choice</strong><span>Set the weapon you want this session's mechanics built around.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Weapon Focus</strong><span>Set the weapon you want this session's mechanics built around.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="burst-peeking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Burst Peeking</strong><span>Keep Strafe mode off, stop your own peek, and fire a controlled burst.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Burst Peeking</strong><span>Keep bot Strafe mode off, get behind cover, and fire a controlled burst when peeking.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="burst-peeking-strafe" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Burst Peeking w/ Strafe</strong><span>Turn on Strafe mode and track each bot's movement before a controlled burst.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Burst Peeking w/ Strafe</strong><span>Keep bot Strafe mode on, get behind cover, and fire a controlled burst when peeking.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="tap-fire-rhythm" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Tap Fire Rhythm Training</strong><span>Tap only after recoil settles so every shot stays deliberate.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Tap Fire Rhythm Training</strong><span>Tap fire in rhythmic recoil resets, focusing on precise one-shot headshot mini-flicks.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="easy-bots-flicking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Easy Bots Flicking</strong><span>Stay still and build smooth head-level flicks without rushing the confirm.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Easy Bots Flicking</strong><span>Center to the range, enable easy bots, and focus on smooth head-level motions from one bot to the next.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="medium-bots-flicking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Medium Bots Flicking</strong><span>Stay still while raising the pace and keeping every crosshair stop controlled.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Medium Bots Flicking</strong><span>Center to the range, enable medium bots, and focus on smooth head-level motions from one bot to the next.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="hard-bots-flicking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Hard Bots Flicking</strong><span>Stay still and test reaction speed without turning misses into panic flicks.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Hard Bots Flicking</strong><span>Center to the range, enable hard bots, and focus on fast reaction times and precise flicks.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="head-tracking" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Head Tracking</strong><span>Hold the crosshair on a moving head before taking the shot.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Head Tracking</strong><span>Locate a bot, move in long smooth motions while tracing the bot's head, then counter-strafe and shoot.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="head-tracking-strafe" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Head Tracking w/ Strafe</strong><span>Turn on Strafe mode and track the moving bot while you remain stationary.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Head Tracking w/ Strafe</strong><span>Turn on Strafe mode and track the moving bot while you move, then counter-strafe and shoot.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="drone-target-switching" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Drone Target Switching</strong><span>Stay still, disable infinite ammo, and transfer one held burst between drones.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Drone Target Switching</strong><span>Stay still, disable infinite ammo, and transfer one held burst between two drones.</span></span>
         </button>
         <button type="button" class="daily-warmup-drill" data-warmup-drill="spray-control-dummy" aria-pressed="false">
           <span class="daily-warmup-select-indicator" aria-hidden="true"></span>
-          <span class="daily-warmup-drill-copy"><strong>Spray Control Target Dummy</strong><span>Use the large range dummy, disable infinite ammo, and climb the distance settings.</span></span>
+          <span class="daily-warmup-drill-copy"><strong>Spray Control Target Dummy</strong><span>Use the range-finding dummy, disable infinite ammo, and change distance settings while countering the weapon's recoil and sway.</span></span>
         </button>
       </div>
       <label id="dailyWarmupWeaponField" class="daily-warmup-weapon" data-daily-training-section="warmup" hidden>
@@ -380,8 +380,8 @@ AUTH MODAL
         <div id="dailyWarmupPostgameStatus" class="daily-warmup-postgame-status" aria-live="polite"></div>
       </section>
       <div class="daily-warmup-actions" data-daily-training-section="warmup">
-        <button id="dailyWarmupSkip" type="button" class="daily-warmup-skip">Skip today</button>
-        <button id="dailyWarmupSave" type="button" class="daily-warmup-save">Save warm-up</button>
+        <button id="dailyWarmupSkip" type="button" class="daily-warmup-skip">Skip</button>
+        <button id="dailyWarmupSave" type="button" class="daily-warmup-save">Save</button>
       </div>
     </div>
   </div>
@@ -459,7 +459,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel is-active" data-profile-panel="theme">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Theme Selector</div>
-              <div class="profile-edit-panel-copy">Swap the full app identity with premium skin-line inspired backgrounds, cards, motion, and UI interactions.</div>
+              <div class="profile-edit-panel-copy">Swap the full app identity with premium backgrounds, cards, motion, and UI interactions.</div>
             </div>
 
             <div class="profile-edit-grid">
@@ -476,7 +476,7 @@ RIOT PROFILE MODAL
                   <input id="editProfileCustomAccent" class="theme-accent-input" type="color" value="#ff4655" aria-label="Choose a custom accent color">
                   <button id="editProfileCustomAccentReset" class="pd-item theme-accent-reset" type="button">Theme Default</button>
                 </div>
-                <small class="profile-edit-field-note">Layer a personal accent color over the selected theme.</small>
+                <small class="profile-edit-field-note">Personal accent color for the selected theme.</small>
               </div>
 
               <div class="profile-edit-field profile-edit-field-motion">
@@ -485,7 +485,7 @@ RIOT PROFILE MODAL
                   <option value="static">Standard</option>
                   <option value="ambient">Calm Motion</option>
                 </select>
-                <small class="profile-edit-field-note">Adds one lighter shared motion option for free themes on mobile.</small>
+                <small class="profile-edit-field-note">Adds a lighter motion for free themes on mobile.</small>
               </div>
             </div>
           </section>
@@ -549,7 +549,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="icon">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Agent Profile Icon</div>
-              <div class="profile-edit-panel-copy">Choose the identity icon that represents the active profile everywhere in the header and profile shell.</div>
+              <div class="profile-edit-panel-copy">Select your preferred agent profile icon.</div>
             </div>
 
             <div class="profile-edit-grid">
@@ -564,7 +564,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="borderColor">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Profile Border Color</div>
-              <div class="profile-edit-panel-copy">Choose the avatar frame color. Rank-inspired colors are included for a cleaner launch look.</div>
+              <div class="profile-edit-panel-copy">Choose your avatar's frame color.</div>
             </div>
 
             <div class="profile-edit-grid">
@@ -579,7 +579,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="border">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Profile Border</div>
-              <div class="profile-edit-panel-copy">Choose the avatar frame shape. These are unofficial RankedCoach frames built to fit the nav bar cleanly.</div>
+              <div class="profile-edit-panel-copy">Choose your avatar frame shape.</div>
             </div>
 
             <div class="profile-edit-grid">
@@ -587,7 +587,7 @@ RIOT PROFILE MODAL
               <div class="profile-border-motion-row profile-edit-field-full">
                 <div>
                   <div class="profile-border-motion-title">Animate Border</div>
-                  <div class="profile-border-motion-copy">Play a clean animation style based on the selected border shape.</div>
+                  <div class="profile-border-motion-copy">Play a clean animation based on the selected border shape.</div>
                 </div>
                 <label class="auth-switch-control profile-border-motion-switch" aria-label="Animate selected profile border">
                   <input id="editProfileBorderRotate" type="checkbox" role="switch" />
@@ -604,7 +604,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-profile-panel="banner">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Banner</div>
-            <div class="profile-edit-panel-copy">Choose a Valorant player-card banner for the full nav bar background.</div>
+            <div class="profile-edit-panel-copy">Choose a player-card banner that fits your style.</div>
             </div>
 
             <div class="profile-edit-grid">
@@ -646,10 +646,10 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel is-active" data-account-support-panel="account">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Account</div>
-              <div class="profile-edit-panel-copy">Update your username, recovery contact, and authenticator protection here.</div>
+              <div class="profile-edit-panel-copy">Update your username, recovery contact, and authentication settings.</div>
             </div>
             <div id="accountSupportSecurityGuestNote" class="account-support-security-note" hidden>
-              Log in from the settings menu to manage recovery info and authenticator protection.
+              Log in from the settings menu to manage recovery info and authentication settings.
             </div>
             <div id="accountSupportSecurityForm" class="security-settings-body account-support-security-form">
               <label class="auth-field">
@@ -684,7 +684,7 @@ RIOT PROFILE MODAL
               <div class="security-totp-setup" id="securityTotpSetup" hidden>
                 <div class="security-totp-copy">
                   <strong>Set up authenticator app</strong>
-                  <span>Scan this QR code with 2FAS Auth, Google Authenticator, Authy, or another TOTP app. Then enter the 6-digit code to finish.</span>
+                  <span>Scan this QR code with 2FAS Auth, Google Authenticator, Authy, or another TOTP app. Then enter the 6-digit code to complete setup.</span>
                 </div>
                 <div class="security-totp-grid">
                   <div class="security-totp-qr-wrap">
@@ -707,7 +707,7 @@ RIOT PROFILE MODAL
             <div class="account-support-accessibility-card">
               <div class="account-support-accessibility-head">
                 <div class="profile-edit-panel-title">Accessibility</div>
-                <div class="profile-edit-panel-copy">Make contrast, motion, and layout easier to find for the active profile.</div>
+                <div class="profile-edit-panel-copy">Technical tools built into RankedCoach that improve usability for users with disabilities.</div>
               </div>
               <div class="account-support-accessibility-grid">
                 <label class="auth-field">
@@ -738,7 +738,7 @@ RIOT PROFILE MODAL
           <section class="profile-edit-panel" data-account-support-panel="support">
             <div class="profile-edit-panel-head">
               <div class="profile-edit-panel-title">Support</div>
-              <div class="profile-edit-panel-copy">Reach out, support RankedCoach, or review policy links.</div>
+              <div class="profile-edit-panel-copy">Reach out, support RankedCoach with donations, or review policy links.</div>
             </div>
             <div class="account-support-row-list">
               <div class="account-support-support-group">
@@ -748,7 +748,7 @@ RIOT PROFILE MODAL
                 <a class="pd-item account-support-row" href="privacy.html">Privacy Policy</a>
               </div>
               <div class="account-support-tip-card">
-                <div class="account-support-tip-copy">Support RankedCoach directly if you want to help fund more polish and coaching features.</div>
+                <div class="account-support-tip-copy">Support RankedCoach directly if you want to help fund the developer and app creation.</div>
                 <a class="pd-item account-support-row account-support-tip-row" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev</a>
               </div>
             </div>
@@ -1131,7 +1131,7 @@ GAMESENSE LIBRARY
           <div>
             <span class="gamesense-hero-kicker">Ranked Field Guide</span>
             <h1>Gamesense Library</h1>
-            <p>Map plans, agent jobs, and weapon decisions you can review before the queue pops.</p>
+            <p>Keep yourself up to date with the latest news, updates, insights, and more.</p>
           </div>
         </header>
         <div id="gamesenseLibraryView" class="gamesense-library-view" aria-live="polite"></div>
@@ -1149,7 +1149,7 @@ INSIGHTS PAGE
           <div class="insight-action">
           <div class="insight-action-hero">
             <div class="card-sub insight-priority-title" id="insightFocusTitle">Building Your Focus...</div>
-            <div class="insight-action-copy">The one adjustment most worth protecting in your next block of matches.</div>
+            <div class="insight-action-copy">The one adjustment that will have the biggest impact on your performance.</div>
             <div class="insight-progress">
               <div class="insight-progress-bar"></div>
             </div>
@@ -1195,7 +1195,7 @@ INSIGHTS PAGE
 
         <div class="card insights-trends-card">
           <div class="card-sub">Trend Groups</div>
-          <div class="insights-trends-intro">Open a group to see what your matches and logs are showing.</div>
+          <div class="insights-trends-intro">Select a category tile card.</div>
 
           <div class="insight-trends">
             <div class="insight-trend-row" data-trend="performance">
@@ -1234,7 +1234,7 @@ INSIGHTS PAGE
       </div>
       <footer class="site-footer">
         <div class="site-footer__brand">RankedCoach</div>
-        <div class="site-footer__copy">Performance review, match tracking, and coaching-focused improvement tools for competitive players.</div>
+        <div class="site-footer__copy">Performance review, post-match tracking, and coaching-focused improvement tools for competitive players.</div>
         <div class="site-footer__actions">
           <a class="site-footer__button site-footer__button--primary" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Donate to RankedCoach</a>
           <a class="site-footer__button site-footer__button--secondary" href="mailto:business@rankedcoach.gg?subject=RankedCoach%20Business%20Support">Business Support</a>
@@ -1312,7 +1312,7 @@ STATS PAGE
                         <div class="stats-proof-kicker">Peak Progress</div>
                       </div>
                       <p id="statsHistoryBoundaryNote" class="stats-history-boundary-note" role="note" hidden></p>
-                      <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile timeline.</div>
+                      <div id="statsPeakProofNote" class="stats-proof-note">Highest point reached in this profile's history.</div>
                     </div>
                   </div>
                   <div class="stats-summary-selector-row stats-summary-selector-bottom">
@@ -1784,7 +1784,7 @@ stroke-linejoin="round"/>
             <div class="card-header">
               <div>
                 <div class="card-title">RR Snapshot</div>
-                <div class="card-sub">Synced rank movement summary from the active profile.</div>
+                <div class="card-sub">Synced matches and role impact report.</div>
               </div>
             </div>
 
@@ -1868,7 +1868,7 @@ stroke-linejoin="round"/>
     <div class="rr-match-stats" id="rrMatchStats">
       <div class="rr-match-stats-head">
         <div class="rr-match-stats-title" id="rrMatchTitle">Latest Game</div>
-        <div class="rr-match-stats-meta" id="rrMatchMeta">Select a game dot to inspect its snapshot.</div>
+        <div class="rr-match-stats-meta" id="rrMatchMeta">Select a game dot to inspect its match snapshot.</div>
       </div>
 
       <div class="rr-stat">
@@ -1923,19 +1923,19 @@ stroke-linejoin="round"/>
           </div>
           <div class="lens-modal-body">
             <div class="lens-modal-section">
-              <h3 class="lens-modal-subtitle" id="lensModalWeightingTitle">Why This Score Changed</h3>
+              <h3 class="lens-modal-subtitle" id="lensModalWeightingTitle">Score Weight</h3>
               <div id="lensWeightingBlock">Loading...</div>
             </div>
             <div class="lens-modal-section">
               <div class="lens-modal-subtitle-row">
-                <h3 class="lens-modal-subtitle" id="lensModalStatsTitle">What Moved This Score</h3>
+                <h3 class="lens-modal-subtitle" id="lensModalStatsTitle">Score Values</h3>
                 <button class="impact-opportunity-tab" id="impactOpportunityTab" type="button" aria-expanded="false" aria-controls="impactOpportunityPanel">Score Opportunities <span aria-hidden="true">+</span></button>
               </div>
               <ul id="lensStatsList"></ul>
               <aside class="impact-opportunity-pullout" id="impactOpportunityPullout">
                 <div class="impact-opportunity-panel" id="impactOpportunityPanel" aria-label="How this impact score could improve">
                   <div class="impact-opportunity-head">How This Score Could Move</div>
-                  <div class="impact-opportunity-copy">The largest weighted gaps appear first. Point movement is formula-based and assumes every other component stays unchanged.</div>
+                  <div class="impact-opportunity-copy">Ordered from highest-impact to lowest-impact changes you can make right now to improve your performance in this role.</div>
                   <div class="impact-opportunity-list" id="impactOpportunityList"></div>
                 </div>
               </aside>
@@ -1962,13 +1962,11 @@ stroke-linejoin="round"/>
         <div class="logging-hero">
           <div class="logging-hero-copy">
             <div class="logging-hero-kicker">Session Debrief</div>
-            <div class="logging-hero-title">Lock in what this match actually taught you.</div>
-            <div class="logging-hero-text">Capture the agent, the focus category, how the match felt, and the one thing you want the coaching model to remember.</div>
+            <div class="logging-hero-title">Lock in your match details.</div>
           </div>
           <div class="logging-live-card" id="loggingLiveCard">
             <div class="logging-live-pill" id="loggingLiveTone">Waiting For Reflection</div>
             <div class="logging-live-focus" id="loggingLiveFocus">Pick an agent and focus category to build the debrief.</div>
-            <div class="logging-live-meta" id="loggingLiveMeta">Add a rating, mood, or map to see it here.</div>
           </div>
         </div>
 
@@ -2002,31 +2000,23 @@ stroke-linejoin="round"/>
     </span>
     <select id="logFocusSelect" class="ui-interactive logging-input pill-value" aria-label="Focus category">
       <option value="">Focus Category</option>
-      <option value="Aim">Aim</option>
       <option value="Crosshair Discipline">Crosshair Discipline</option>
-      <option value="Duel Discipline">Duel Discipline</option>
+      <option value="Duel Discipline">Discipline</option>
       <option value="Positioning">Positioning</option>
       <option value="Trading">Trading</option>
-      <option value="Trade Conversion">Trade Conversion</option>
       <option value="Entry">Entry</option>
-      <option value="Timing">Timing</option>
+      <option value="Timing">Lurking</option>
       <option value="Information Gathering">Information Gathering</option>
-      <option value="Map Awareness">Map Awareness</option>
-      <option value="Utility">Utility</option>
       <option value="Utility Usage">Utility Usage</option>
       <option value="Utility Timing">Utility Timing</option>
-      <option value="Team Utility">Team Utility</option>
-      <option value="Support Value">Support Value</option>
       <option value="Post-Plant Control">Post-Plant Control</option>
       <option value="Round Survivability">Round Survivability</option>
       <option value="Eco Conversion">Eco Conversion</option>
-      <option value="Awareness Check">Awareness Check</option>
-      <option value="Retake Timing">Retake Timing</option>
-      <option value="Comms Discipline">Comms Discipline</option>
-      <option value="Weapon Category Use">Weapon Pattern</option>
+      <option value="Awareness Check">Map Awareness</option>
+      <option value="Retake Timing">Retake</option>
+      <option value="Comms Discipline">Comms</option>
+      <option value="Weapon Category Use">Economy</option>
       <option value="Mental Reset">Mental Reset</option>
-      <option value="Game Sense">Game Sense</option>
-      <option value="General">General</option>
       <option value="Other">Other</option>
     </select>
   </div>
@@ -2066,7 +2056,7 @@ stroke-linejoin="round"/>
           <div class="manual-match-head">
             <div>
               <div class="manual-match-kicker">Offline Match Report</div>
-              <div class="manual-match-title">Add match stats when live match sync is unavailable.</div>
+              <div class="manual-match-title">Add match stats when offline.</div>
             </div>
             <div class="manual-match-status">Live sync uses your Riot ID. Use this report when a match cannot be pulled.</div>
           </div>
@@ -2125,17 +2115,6 @@ stroke-linejoin="round"/>
                 <option value="145">130-159</option>
                 <option value="175">160-189</option>
                 <option value="205">190+</option>
-              </select>
-            </label>
-            <label class="manual-field">
-              <span>HS% Range</span>
-              <select id="manualHS">
-                <option value="">Choose rough HS%</option>
-                <option value="10">Under 15%</option>
-                <option value="18">15-21%</option>
-                <option value="25">22-28%</option>
-                <option value="32">29-35%</option>
-                <option value="40">36%+</option>
               </select>
             </label>
           </div>
@@ -2241,7 +2220,7 @@ stroke-linejoin="round"/>
       <div class="card-header">
         <div>
           <div class="card-title">Reflection Feed</div>
-          <div class="card-sub">Your coaching journal for patterns, weaknesses, and follow-up review.</div>
+          <div class="card-sub">Your coaching journal of past matches.</div>
         </div>
       </div>
 
@@ -2370,6 +2349,6 @@ stroke-linejoin="round"/>
 <script src="library/gamesense-library.js?v=20260722-playlist-settings-01"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
-  <script type="module" src="app.js?v=20260722-loading-quotes-01"></script>
+  <script type="module" src="app.js?v=20260722-index-copy-01"></script>
 </body>
 </html>

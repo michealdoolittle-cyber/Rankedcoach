@@ -600,9 +600,9 @@ function setDailyTrainingModalMode(mode = "warmup", options = {}) {
   const title = document.getElementById("dailyWarmupTitle");
   const skip = document.getElementById("dailyWarmupSkip");
   const close = document.getElementById("dailyWarmupClose");
-  if (kicker) kicker.textContent = resolvedMode === "postgame" ? "Post-Game Aim Training" : "Daily Warm-Up Check";
-  if (title) title.textContent = resolvedMode === "postgame" ? "Close the session with clean reps" : "Get your first fights ready";
-  if (skip) skip.textContent = modal.dataset.dismissBehavior === "skip" ? "Skip today" : "Close";
+  if (kicker) kicker.textContent = resolvedMode === "postgame" ? "Post-Game Aim Training" : "Daily Warm-Up";
+  if (title) title.textContent = resolvedMode === "postgame" ? "Close the session with clean reps" : "Prep for Your Matches";
+  if (skip) skip.textContent = modal.dataset.dismissBehavior === "skip" ? "Skip" : "Close";
   if (close) close.setAttribute("aria-label", resolvedMode === "postgame" ? "Close post-game aim training" : "Close warm-up menu");
 }
 
@@ -12475,7 +12475,6 @@ function getManualReportValues() {
     assists: readManualNumber("manualAssists", 0),
     acs: readManualNumber("manualACS", 0),
     adr: readManualNumber("manualADR", 0),
-    hs: readManualNumber("manualHS", 0),
     pendingVerification: true
   };
 }
@@ -12497,7 +12496,6 @@ function setManualReportFormValues(report = null) {
   assign("manualAssists", values.assists);
   assign("manualACS", values.acs);
   assign("manualADR", values.adr);
-  assign("manualHS", values.hs);
 }
 
 function resetManualReportForm() {
@@ -12510,8 +12508,7 @@ function resetManualReportForm() {
     deaths: "",
     assists: "",
     acs: "",
-    adr: "",
-    hs: ""
+    adr: ""
   });
 }
 
@@ -12542,6 +12539,16 @@ function buildManualMatchFromLogEntry(entry = {}) {
   const agent = String(entry.agent || "").trim() || "Unknown";
   const mapName = String(entry.map || "").trim() || "Unknown";
   const matchId = entry.matchId || `manual-${entry.id || uuid()}`;
+  const manualStats = {
+    kills: { value: safeNumber(manual.kills) },
+    deaths: { value: safeNumber(manual.deaths) },
+    assists: { value: safeNumber(manual.assists) },
+    scorePerRound: { value: safeNumber(manual.acs) },
+    damagePerRound: { value: safeNumber(manual.adr) }
+  };
+  if (manual.hs !== null && manual.hs !== undefined && String(manual.hs).trim() !== "") {
+    manualStats.headshotsPercentage = { value: safeNumber(manual.hs) };
+  }
 
   return {
     id: matchId,
@@ -12566,14 +12573,7 @@ function buildManualMatchFromLogEntry(entry = {}) {
     },
     segments: [{
       type: "overview",
-      stats: {
-        kills: { value: safeNumber(manual.kills) },
-        deaths: { value: safeNumber(manual.deaths) },
-        assists: { value: safeNumber(manual.assists) },
-        scorePerRound: { value: safeNumber(manual.acs) },
-        damagePerRound: { value: safeNumber(manual.adr) },
-        headshotsPercentage: { value: safeNumber(manual.hs) }
-      }
+      stats: manualStats
     }],
     manualReport: {
       ...manual,
@@ -16499,43 +16499,23 @@ const allAgents = [
 ];
 
 const focusesList = [
-  "Aim",
   "Crosshair Discipline",
   "Duel Discipline",
   "Positioning",
   "Trading",
-  "Trade Conversion",
   "Entry",
   "Timing",
-  "First Contact",
   "Information Gathering",
-  "Angle Discipline",
-  "Spacing",
-  "Pacing",
-  "Objective Play",
-  "Map Awareness",
-  "Map Preparation",
-  "Utility",
   "Utility Usage",
   "Utility Timing",
-  "Team Utility",
-  "Role Teamwork",
-  "Support Value",
-  "Damage Output",
   "Post-Plant Control",
   "Round Survivability",
   "Eco Conversion",
-  "Multi-Kill Conversion",
-  "Clutch Discipline",
   "Awareness Check",
   "Retake Timing",
   "Comms Discipline",
-  "Team Comms",
-  "Self Comms",
-  "Weapon Pattern",
-  "Mental Reset",
-  "Game Sense",
-  "General"
+  "Weapon Category Use",
+  "Mental Reset"
 ];
 
 const agentRoles = {
@@ -18703,8 +18683,9 @@ function syncLogFocusCustomDropdown() {
   if (!select) return;
 
   const value = String(select.value || "").trim();
+  const selectedLabel = select.selectedOptions?.[0]?.textContent?.trim() || value;
   const mobileBrowseLabel = isMobileLayoutViewport();
-  if (valueEl) valueEl.textContent = mobileBrowseLabel ? "Browse" : (value && value !== "Other" ? value : "Browse");
+  if (valueEl) valueEl.textContent = mobileBrowseLabel ? "Browse" : (value && value !== "Other" ? selectedLabel : "Browse");
 
   const roleClasses = ["role-duelist", "role-controller", "role-initiator", "role-sentinel"];
   trigger?.classList.remove(...roleClasses);
@@ -18727,6 +18708,12 @@ function syncLogFocusSelectOptions() {
   const optionValues = ["", ...focusesList, "Other"];
   const optionLabels = new Map([
     ["", "Focus Category"],
+    ["Duel Discipline", "Discipline"],
+    ["Timing", "Lurking"],
+    ["Awareness Check", "Map Awareness"],
+    ["Retake Timing", "Retake"],
+    ["Comms Discipline", "Comms"],
+    ["Weapon Category Use", "Economy"],
     ["Other", "Other"]
   ]);
 
@@ -18889,7 +18876,7 @@ function updateLoggingDebriefPreview() {
   const toneEl = document.getElementById("loggingLiveTone");
   const focusEl = document.getElementById("loggingLiveFocus");
   const metaEl = document.getElementById("loggingLiveMeta");
-  if (!toneEl || !focusEl || !metaEl) return;
+  if (!toneEl || !focusEl) return;
 
   const agent = document.getElementById("logAgentDisplay")?.dataset?.agent || "";
   const focusSelect = document.getElementById("logFocusSelect");
@@ -18929,9 +18916,11 @@ function updateLoggingDebriefPreview() {
   if (hasSelectedNumber(selectedLogSelfComms)) metaParts.push(`Self Comms ${selectedLogSelfComms}/5`);
   if (map) metaParts.push(map);
   if (notes) metaParts.push(`${Math.min(notes.length, 140)} chars captured`);
-  metaEl.textContent = metaParts.length
-    ? metaParts.join(" | ")
-    : "Add a rating, mood, or map to see it here.";
+  if (metaEl) {
+    metaEl.textContent = metaParts.length
+      ? metaParts.join(" | ")
+      : "Add a rating, mood, or map to see it here.";
+  }
 }
 
 function renderInsightCards() {
@@ -40838,9 +40827,9 @@ function selectAgentFromModal(agent){
     if(focusDisplay && (!focusDisplay.textContent || focusDisplay.textContent === "-")){
 
       const defaultFocusMap = {
-        duelist: "Aim",
-        initiator: "Utility",
-        controller: "Game Sense",
+        duelist: "Duel Discipline",
+        initiator: "Utility Usage",
+        controller: "Timing",
         sentinel: "Positioning"
       };
 
@@ -42028,8 +42017,7 @@ function getLogFormMissingFields(entry = {}) {
       ["manualDeaths", "deaths"],
       ["manualAssists", "assists"],
       ["manualACS", "ACS"],
-      ["manualADR", "ADR"],
-      ["manualHS", "HS %"]
+      ["manualADR", "ADR"]
     ].forEach(([id, label]) => {
       if (!isManualInputFilled(id)) missing.push(label);
     });
@@ -42057,7 +42045,6 @@ function focusFirstMissingLogField(missing = []) {
     first === "assists" ? document.getElementById("manualAssists") :
     first === "ACS" ? document.getElementById("manualACS") :
     first === "ADR" ? document.getElementById("manualADR") :
-    first === "HS %" ? document.getElementById("manualHS") :
     document.getElementById("logSaveBtn");
   snapLoggingFormToTarget(target);
 }
@@ -42536,17 +42523,15 @@ function renderLogSessionSelector() {
 
 function buildDemoLogEntriesFromMatches(matchList = []) {
   const fallbackFocusOptions = [
-    "Trade Conversion",
     "Duel Discipline",
     "Positioning",
     "Eco Conversion",
-    "Map Awareness",
-    "Team Utility",
     "Round Survivability",
     "Utility Timing",
+    "Awareness Check",
     "Retake Timing",
     "Comms Discipline",
-    "Weapon Pattern",
+    "Weapon Category Use",
     "Mental Reset"
   ];
   const lossNotes = [
