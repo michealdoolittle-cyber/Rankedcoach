@@ -741,7 +741,7 @@
     const isCommunity = entry.type === "Community";
     const copied = crosshairBackendState.lastCopiedId === entry.id;
     return `
-      <article class="gamesense-crosshair-card${isCommunity ? " is-community" : ""}" data-gamesense-crosshair-card="${escapeHtml(entry.id)}" aria-label="${escapeHtml(entry.player)} crosshair">
+      <article class="gamesense-crosshair-card${isCommunity ? " is-community" : " is-pro"}" data-gamesense-crosshair-card="${escapeHtml(entry.id)}" aria-label="${escapeHtml(entry.player)} crosshair">
         ${isCommunity ? "" : `
           <div class="gamesense-crosshair-player">
             ${renderCrosshairPhoto(entry)}

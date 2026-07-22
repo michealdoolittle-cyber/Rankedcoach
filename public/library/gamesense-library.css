@@ -3309,29 +3309,34 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   gap:8px;
 }
 @media (min-width:821px){
-  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-pro-tab{
-    grid-template-columns:repeat(4,minmax(0,1fr));
-  }
-  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab{
-    grid-template-columns:repeat(6,minmax(0,1fr));
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid{
+    grid-template-columns:repeat(12,minmax(0,1fr));
+    align-items:start;
+    gap:10px;
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card{
     grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-column:span 3;
     gap:6px;
     padding:8px;
+    aspect-ratio:1.18 / 1;
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-community{
     grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-column:span 2;
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-player,
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-preview{
-    min-height:112px;
+    min-height:0;
   }
-  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab .gamesense-crosshair-card.is-community .gamesense-crosshair-preview{
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-pro{
+    grid-column:span 3;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-community .gamesense-crosshair-preview{
     grid-column:1;
   }
-  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab .gamesense-crosshair-card.is-community .gamesense-crosshair-code-box,
-  html:not(.is-mobile-layout) .gamesense-crosshair-grid.is-dense-tab .gamesense-crosshair-card.is-community .gamesense-crosshair-actions{
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-community .gamesense-crosshair-code-box,
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-community .gamesense-crosshair-actions{
     grid-column:2;
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-code-box code{
