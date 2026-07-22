@@ -91,6 +91,10 @@ const TOPIC_KEYWORDS = Object.freeze({
   "Settings/Gear": Object.freeze(["settings", "gear", "peripheral", "peripherals", "monitor", "icc", "color", "clarity", "graphics", "nvidia", "pc settings", "resolution", "sens", "sensitivity"])
 });
 
+const GENERAL_PLAYLIST_TITLE_PATTERNS = Object.freeze([
+  /\bhow to actually improve game sense in valorant\b/i
+]);
+
 function decodeHtml(value = "") {
   return String(value)
     .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
@@ -125,6 +129,10 @@ export function getStaticPlaylistVideos() {
   return STATIC_PLAYLIST_VIDEOS.map(video => Object.freeze({ ...video }));
 }
 
+export function getPlaylistGuideSearchTargets() {
+  return GUIDE_SEARCH_TARGETS.map(target => Object.freeze({ ...target }));
+}
+
 function getGuideTargetAliases(targetName = "") {
   const normalized = normalizeSearchText(targetName);
   const aliases = new Set([normalized]);
@@ -156,7 +164,7 @@ export function isPopularGuideSearchCandidate(video = {}, target = {}) {
   if (!/^[A-Za-z0-9_-]{11}$/.test(String(video.id || ""))) return false;
   if (video.isLive || video.wasLive || video.isVod || video.isShort) return false;
   if (!hasValorantMetadata(video) && !/\bvalorant\b/i.test(text)) return false;
-  if (!hasGuideTargetCue(title, target.targetName) && !hasGuideTargetCue(description, target.targetName)) return false;
+  if (!hasGuideTargetCue(title, target.targetName)) return false;
   if (!hasGuideCue(text)) return false;
   if (hasGuideRejectCue(title)) return false;
   return true;
@@ -422,7 +430,6 @@ export async function fetchPopularGuideSearchVideos(env = {}, options = {}) {
   const apiKey = String(env.YOUTUBE_DATA_API_KEY || "").trim();
   if (!apiKey) return [];
   const targets = Array.isArray(options.targets) && options.targets.length ? options.targets : GUIDE_SEARCH_TARGETS;
-  const maxSearches = Number.isFinite(Number(options.maxSearches)) ? Math.max(0, Number(options.maxSearches)) : targets.length;
   const videos = [];
   const searchTargets = [];
   for (const target of targets) {
@@ -430,7 +437,7 @@ export async function fetchPopularGuideSearchVideos(env = {}, options = {}) {
     const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey);
     if (cached) {
       videos.push(cached);
-    } else if (cached === undefined && searchTargets.length < maxSearches) {
+    } else if (cached === undefined) {
       searchTargets.push(target);
     }
   }
@@ -447,6 +454,7 @@ export async function fetchPopularGuideSearchVideos(env = {}, options = {}) {
 }
 
 export function categorizeCreatorTitle(title = "") {
+  if (GENERAL_PLAYLIST_TITLE_PATTERNS.some(pattern => pattern.test(String(title || "")))) return "General";
   const normalized = normalizeSearchText(title);
   let best = null;
   for (const [topic, keywords] of Object.entries(TOPIC_KEYWORDS)) {
@@ -731,7 +739,7 @@ export async function handlePlaylistRequest(env = {}) {
   ]);
   if (videoResult.status !== "fulfilled") throw videoResult.reason;
   const videos = videoResult.value;
-  const guideSearchResult = await Promise.allSettled([fetchPopularGuideSearchVideos(env, { maxSearches: 6 })]);
+  const guideSearchResult = await Promise.allSettled([fetchPopularGuideSearchVideos(env)]);
   const guideSearchVideos = guideSearchResult[0]?.status === "fulfilled" ? guideSearchResult[0].value : [];
   if (guideSearchResult[0]?.status === "rejected") console.warn("Popular guide search refresh skipped", guideSearchResult[0].reason?.message || guideSearchResult[0].reason);
   const twitchMedia = twitchResult.status === "fulfilled" ? twitchResult.value : { streams: [], vods: [] };

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
+  AGENT_NAMES,
+  MAP_NAMES,
   TRUSTED_YOUTUBE_CHANNELS,
   TRUSTED_TWITCH_CHANNELS,
   buildFeaturedPlaylist,
@@ -13,6 +15,7 @@ import {
   fetchTrustedTwitchVods,
   findAffectedDossiers,
   findConfidentCollectionVideo,
+  getPlaylistGuideSearchTargets,
   getStaticPlaylistVideos,
   getPatchDescriptor,
   isPopularGuideSearchCandidate,
@@ -74,6 +77,10 @@ for (const [channel, title] of creatorSamples) {
 }
 assert.equal(categorizeCreatorTitle("A quiet afternoon update"), "General", "An unrelated title must fail closed into General.");
 assert.equal(categorizeCreatorTitle("Best Valorant monitor settings and clarity guide"), "Settings/Gear", "Settings and gear titles must map into the dedicated Playlist section.");
+assert.equal(categorizeCreatorTitle("How to Actually IMPROVE Game Sense in Valorant - (no BS)"), "General", "Broad game-sense videos must stay in General instead of a narrow coaching bucket.");
+assert.equal(getPlaylistGuideSearchTargets().length, AGENT_NAMES.length + MAP_NAMES.length, "Popular guide sourcing must cover every declared agent and every declared map.");
+assert.deepEqual(getPlaylistGuideSearchTargets().filter(target => target.targetType === "Agent").map(target => target.targetName), AGENT_NAMES, "Every declared agent must receive a popular guide search target.");
+assert.deepEqual(getPlaylistGuideSearchTargets().filter(target => target.targetType === "Map").map(target => target.targetName), MAP_NAMES, "Every declared map must receive a popular guide search target.");
 
 const blackspyreId = "aSFtc5Y-ORQ";
 const blackspyreMetadataResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${blackspyreId}&format=json`);
@@ -136,6 +143,17 @@ class MemoryKv {
   }
 }
 
+assert.equal(isPopularGuideSearchCandidate({
+  id: "IfoxN-v8Nyc",
+  title: "How to Actually IMPROVE Game Sense in Valorant - (no BS)",
+  description: "Learn Jett, Bind, and ranked decision-making ideas.",
+  channel: "Guide Channel",
+  isValorant: true,
+  isShort: false,
+  isLive: false,
+  wasLive: false,
+  isVod: false
+}, { targetName: "Jett" }), false, "Broad game-sense videos must not be accepted as target-specific agent/map guide search hits.");
 assert.equal(isPopularGuideSearchCandidate({
   id: "jettGuid001",
   title: "VALORANT Jett Guide - Complete Tips",
