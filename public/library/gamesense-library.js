@@ -20,7 +20,7 @@
     agents: { label: "Agents", copy: "Role expectations, ability facts, costs, timing, and repeatable setups." },
     weapons: { label: "Weapons", copy: "Selectable weapon art, damage ranges, economy, and fight decisions." },
     playlist: { label: "Playlist", copy: "Current patch reads and trusted coaching videos, credited to their creators." },
-    crosshairs: { label: "Crosshairs", copy: "Pro crosshair codes, rendered previews, likes, and saved favorites." }
+    crosshairs: { label: "Crosshairs", copy: "Pro and community crosshair codes, rendered previews, likes, and saved favorites." }
   };
   const crosshairTabs = Object.freeze(["All", "Top 30 Popular", "Pro's", "Favorites"]);
   const valorantCrosshairColors = Object.freeze({
@@ -34,12 +34,45 @@
     "7": "#ff0000",
     "8": "#ffffff"
   });
+  const vcrdbCrosshairSeeds = Object.freeze([
+    { id: "12029", code: "0;P;o;0;f;0;0t;1;0l;2;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12028", code: "0;P;c;1;o;0.246;d;1;m;1;0l;20;0v;3;0g;1;0o;1;0a;1;0e;3;1b;0" },
+    { id: "12027", code: "0;p;0;P;c;5;h;0;d;1;m;1;0t;0;0l;7;0o;0;0a;1;0f;0;1o;0;1a;1;1m;0;1e;0.3" },
+    { id: "12026", code: "0;P;h;0;f;0;0t;5;0l;1;0o;2;0a;0.3;0f;0;1t;1;1l;4;1o;1;1a;1;1m;0;1f;0" },
+    { id: "12025", code: "0;P;c;5;h;0;f;0;0l;5;0o;0;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;1m;0;1f;0" },
+    { id: "12024", code: "0;s;1;P;o;1;f;0;0t;1;0l;3;0o;2;0a;1;0m;1;0f;0;0s;0.05;1t;0;1l;0;1o;0;1a;0;1m;0;1f;0" },
+    { id: "12023", code: "0;P;c;8;u;000000FF;o;0.015;d;1;b;1;z;6;a;0.418;f;0;0l;3;0v;3;0g;1;0o;1;0a;1;0f;0;1l;1;1v;1;1g;1;1o;1;1a;0.632;1m;0;1f;0" },
+    { id: "12022", code: "0;s;1;P;o;0.1;f;0;s;0;0t;1;0l;20;0o;1;0a;1;0f;0;1b;0" },
+    { id: "12021", code: "0;P;c;5;h;0;0t;1;0l;4;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12020", code: "0;c;1;s;1;P;h;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0;S;c;5;s;0.85" },
+    { id: "12019", code: "0;P;d;1;f;0;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12018", code: "0;P;c;8;u;000000FF;h;0;b;1;0l;3;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12017", code: "0;c;1;P;c;8;u;000000FF;h;0;b;1;f;0;0l;3;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12016", code: "0;c;1;s;1;P;c;8;u;957DADFF;h;0;b;1;f;0;m;1;0l;2;0o;0;0a;1;0f;0;1b;0;S;c;5;s;2;o;1" },
+    { id: "12015", code: "0;P;t;2;o;1;d;1;0t;10;0l;19;0v;0;0g;1;0o;1;0a;0;0e;0;1l;10;1v;0;1g;1;1o;19;1a;0;1s;0;1e;0" },
+    { id: "12014", code: "0;P;c;5;o;1;d;1;z;3;f;0;0t;4;0l;1;0o;1;0a;1;0m;1;0s;0.04;0e;0.08;1b;0" },
+    { id: "12013", code: "0;P;h;0;f;0;0t;1;0l;2;0o;0;0a;1;0m;1;0f;0;0s;0.051;1b;0" },
+    { id: "12012", code: "0;P;c;8;u;000000FF;t;6;o;1;d;1;b;1;z;6;0t;10;0l;20;0o;11;0a;1;0e;3;1t;10;1l;10;1o;40;1a;1;1s;3;1e;3" },
+    { id: "12011", code: "0;P;c;8;u;0FFF50FF;h;0;b;1;0t;1;0l;5;0v;1;0g;1;0o;1;0a;1;0f;0;1t;3;1v;0;1g;1;1o;3;1a;1;1m;0;1f;0" },
+    { id: "12010", code: "0;s;1;P;o;1;d;1;z;1;f;0;0t;1;0l;1;0o;0;0a;1;0f;0;1b;0;S;d;0" },
+    { id: "12009", code: "0;P;o;1;d;1;0l;20;0o;20;0a;1;0m;1;1t;10;1o;40;1a;1" },
+    { id: "12008", code: "0;p;0;c;1;s;1;P;c;8;u;FC5A8DFF;h;0;d;1;b;1;z;3;f;0;m;1;0t;10;0l;0;0v;3;0g;1;0o;1;0a;1;0f;0;1t;9;1v;0;1g;1;1o;3;1a;1;1m;0;1f;0;A;c;8;u;F28D9FFF;h;0;d;1;b;1;a;0.254;0t;3;0l;5;0o;0;0a;0.755;0f;0;1t;5;1o;2;1a;1;1m;0;1f;0;S;b;1;c;8;t;F28D9FFF" },
+    { id: "12007", code: "0;P;o;0.8;0t;5;0l;1;0o;1;0a;0.4;0f;0;1t;1;1l;1;1o;2;1a;1;1m;0;1f;0" },
+    { id: "12006", code: "0;s;1;P;c;3;o;0.3;f;0;0t;1;0l;3;0o;1;0a;1;0f;0;1b;0;S;o;1" },
+    { id: "12005", code: "0;s;1;P;c;5;o;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0;S;c;5;s;0.6;o;1" },
+    { id: "12004", code: "0;P;h;0;m;1;0l;5;0v;3;0g;1;0o;1;0a;1;0e;0.1;1b;0" },
+    { id: "12003", code: "0;P;c;5;o;1;f;0;0t;1;0l;3;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12002", code: "0;s;1;P;c;2;h;0;f;0;0l;2;0o;1;0a;1;0f;0;1b;0;S;c;0" },
+    { id: "12000", code: "0;p;0;s;1;P;o;0.3;f;0;0l;3;0o;2;0a;1;0f;0;1b;0;A;o;0.3;d;1;m;1;0l;2;0o;0;0a;0.5;0f;0;1b;0;S;s;0.5;o;1" },
+    { id: "11999", code: "0;c;1;s;1;P;o;1;d;1;f;0;0l;2;0v;0;0g;1;0o;0;0a;1;0f;0;1b;0;S;c;5;o;1" }
+  ]);
   const crosshairSeedEntries = Object.freeze([
     {
       id: "tenz-2026-cyan",
       player: "TenZ",
       team: "T1 / Creator",
       type: "Pro",
+      libraryRank: 1,
       code: "0;s;1;P;c;5;o;0;f;0;0l;2;0v;2;0g;1;0o;1;0a;1;0f;0;1b;0",
       sourceName: "ProSettings",
       sourceUrl: "https://prosettings.net/players/tenz/",
@@ -52,6 +85,7 @@
       player: "zekken",
       team: "Sentinels",
       type: "Pro",
+      libraryRank: 2,
       code: "0;s;1;P;c;1;t;2;o;1;d;1;0b;0;1b;0;S;b;1;c;8;s;0.823",
       sourceName: "ProSettings",
       sourceUrl: "https://prosettings.net/players/zekken/",
@@ -64,6 +98,7 @@
       player: "f0rsakeN",
       team: "Paper Rex",
       type: "Pro",
+      libraryRank: 3,
       code: "0;p;0;c;1;s;1;P;h;0;f;0;s;0;0l;3;0v;3;0g;1;0o;0;0a;1;0f;0;1b;0;A;o;1;d;1;0b;0;1b;0;S;d;0",
       sourceName: "ProSettings",
       sourceUrl: "https://prosettings.net/players/f0rsaken/",
@@ -76,6 +111,7 @@
       player: "Jinggg",
       team: "Paper Rex",
       type: "Pro",
+      libraryRank: 4,
       code: "0;s;1;P;c;1;o;1;0t;1;0l;2;0o;2;0a;1;0f;0;1b;0;S;c;5",
       sourceName: "PCGamesN",
       sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
@@ -88,6 +124,7 @@
       player: "something",
       team: "Paper Rex",
       type: "Pro",
+      libraryRank: 5,
       code: "0;P;o;0.619;d;1;f;0;s;0;0t;1;0l;0;0o;2;0a;1;0f;0;1b;0",
       sourceName: "PCGamesN",
       sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
@@ -100,13 +137,26 @@
       player: "ZmjjKK",
       team: "EDward Gaming",
       type: "Pro",
+      libraryRank: 6,
       code: "0;p;0;s;1;P;c;7;o;1;f;0;s;0;0t;1;0l;3;0o;2;0a;1;0f;0;1b;0;A;o;1;d;1;0b;0;1t;0;S;c;0;s;0.591;o;1",
       sourceName: "PCGamesN",
       sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
       photo: "https://prosettings.net/wp-content/uploads/zmjjkk-220x220-fitcontain-q99-gb283-s1.png",
       proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="26" y="24" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="22" y="24" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="26" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="22" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="24" width="2" height="2" fill="#ffffff" fill-opacity="1" /></svg>`,
       tags: ["white", "dot", "operator"]
-    }
+    },
+    ...vcrdbCrosshairSeeds.map((entry, index) => ({
+      id: `vcrdb-${entry.id}`,
+      player: `VCRDB #${entry.id}`,
+      team: "VCRDB Community",
+      type: "Community",
+      libraryRank: 7 + index,
+      code: entry.code,
+      sourceName: "VCRDB",
+      sourceUrl: "https://www.vcrdb.net/",
+      photo: "",
+      tags: ["community", "import", "crosshair"]
+    }))
   ]);
   const crosshairBackendState = {
     loading: false,
@@ -556,6 +606,8 @@
     return [...entries].sort((left, right) => {
       const byLikes = (getCrosshairLikeCount(left.id) - getCrosshairLikeCount(right.id)) * direction;
       if (byLikes) return byLikes;
+      const byRank = (Number(left.libraryRank) || 9999) - (Number(right.libraryRank) || 9999);
+      if (byRank) return byRank;
       return left.player.localeCompare(right.player);
     });
   }
@@ -592,10 +644,6 @@
             <code>${escapeHtml(entry.code)}</code>
             <button type="button" data-gamesense-crosshair-copy="${escapeHtml(entry.id)}" aria-label="Copy ${escapeHtml(entry.player)} crosshair code">${renderCopyIcon()}</button>
           </div>
-          <div class="gamesense-crosshair-source">
-            <span>Verified via ${escapeHtml(entry.sourceName || "source")}</span>
-            <a href="${escapeHtml(entry.sourceUrl || "#")}" target="_blank" rel="noopener noreferrer">Source</a>
-          </div>
         </div>
         <div class="gamesense-crosshair-actions">
           <button type="button" data-gamesense-crosshair-like="${escapeHtml(entry.id)}" class="${liked ? "active" : ""}" aria-pressed="${liked ? "true" : "false"}" ${pendingLike ? "disabled" : ""}>
@@ -604,6 +652,22 @@
           <button type="button" data-gamesense-crosshair-favorite="${escapeHtml(entry.id)}" class="gamesense-crosshair-favorite ${favorite ? "active" : ""}" aria-pressed="${favorite ? "true" : "false"}" aria-label="${favorite ? "Remove favorite" : "Save favorite"}" ${pendingFavorite ? "disabled" : ""}>♥</button>
         </div>
       </article>`;
+  }
+
+  function renderCrosshairReferences() {
+    const references = [
+      { label: "ProSettings VALORANT Crosshair Database", url: "https://prosettings.net/tools/valorant-crosshair-database/" },
+      { label: "VCRDB Valorant Crosshair Database", url: "https://www.vcrdb.net/" },
+      { label: "PCGamesN VALORANT crosshair code references", url: "https://www.pcgamesn.com/valorant/crosshairs-best-codes" }
+    ];
+    return `
+      <footer class="gamesense-crosshair-references" aria-label="Crosshair direct references">
+        <span>Direct references</span>
+        <div>
+          ${references.map(ref => `<a href="${escapeHtml(ref.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(ref.label)}</a>`).join("")}
+        </div>
+        <small>Crosshair import strings are public Valorant profile codes. Reference links credit the databases used for seed entries and do not imply endorsement.</small>
+      </footer>`;
   }
 
   function renderCrosshairLibrary() {
@@ -615,7 +679,7 @@
       : "Likes and Favorites are account-gated so one player can only vote once per crosshair.";
     return `
       <div class="gamesense-gallery-head gamesense-crosshair-gallery-head">
-        <div><strong>Crosshair Library</strong><small>Verified pro codes with rendered previews and copy-ready imports.</small></div>
+        <div><strong>Crosshair Library</strong><small>Verified pro and community codes with rendered previews and copy-ready imports.</small></div>
         <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
       </div>
       <section class="gamesense-crosshair-panel">
@@ -631,6 +695,7 @@
             ? entries.map(renderCrosshairCard).join("")
             : `<p class="gamesense-crosshair-empty">${favoriteEmpty ? "Log in and heart a crosshair to build your saved list." : "No crosshairs match this filter yet."}</p>`}
         </div>
+        ${renderCrosshairReferences()}
       </section>`;
   }
 

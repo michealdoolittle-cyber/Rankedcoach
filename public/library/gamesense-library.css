@@ -3304,10 +3304,10 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 }
 .gamesense-crosshair-card{
   display:grid;
-  grid-template-columns:minmax(84px,104px) minmax(0,1fr) max-content;
-  grid-template-rows:auto;
+  grid-template-columns:112px 112px minmax(0,1fr);
+  grid-template-rows:minmax(42px,1fr) 34px 34px;
   align-items:stretch;
-  gap:8px;
+  gap:6px 8px;
   min-width:0;
   padding:9px;
   border:1px solid rgba(148,163,184,.22);
@@ -3322,11 +3322,14 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   box-shadow:0 0 20px color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 16%,transparent);
 }
 .gamesense-crosshair-player{
+  grid-column:1;
+  grid-row:1 / 4;
   display:grid;
   align-content:center;
   justify-items:center;
   gap:5px;
   min-width:0;
+  min-height:120px;
   padding:6px;
   border:1px solid rgba(103,232,249,.13);
   border-radius:8px;
@@ -3357,8 +3360,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);
   letter-spacing:.04em;
 }
-.gamesense-crosshair-player span,
-.gamesense-crosshair-source span{
+.gamesense-crosshair-player span{
   color:var(--gamesense-cool,#58d4c8);
   font:900 8px/1 var(--font-display,"Rajdhani",sans-serif);
   letter-spacing:.1em;
@@ -3378,24 +3380,21 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   font-size:8px;
   line-height:1.12;
 }
-.gamesense-crosshair-build{
-  display:grid;
-  grid-template-columns:70px minmax(0,1fr);
-  grid-template-rows:minmax(70px,auto) auto;
-  align-items:center;
-  gap:6px 8px;
-  min-width:0;
-}
+.gamesense-crosshair-build{display:contents;}
 .gamesense-crosshair-preview{
-  grid-column:1;
-  grid-row:1 / 3;
+  grid-column:2;
+  grid-row:1 / 4;
   display:grid;
   place-items:center;
-  width:70px;
-  height:70px;
-  border:1px solid rgba(148,163,184,.16);
+  width:100%;
+  height:100%;
+  min-height:120px;
+  border:1px solid rgba(226,232,240,.14);
   border-radius:8px;
-  background:#111827;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.06),transparent 48%),
+    #2f343d;
+  box-shadow:inset 0 0 0 1px rgba(2,6,23,.34);
 }
 .gamesense-crosshair-preview .valorant-crosshair-svg,
 .gamesense-crosshair-preview .gamesense-crosshair-svg{
@@ -3412,17 +3411,19 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 }
 .gamesense-crosshair-code-box{
   position:relative;
-  grid-column:2;
+  grid-column:3;
   grid-row:1;
   display:grid;
   align-self:stretch;
   min-width:0;
+  min-height:0;
 }
 .gamesense-crosshair-code-box code{
   display:block;
   width:100%;
   height:100%;
-  max-height:70px;
+  max-height:none;
+  min-height:0;
   overflow:auto;
   padding:8px 34px 8px 9px;
   border:1px solid rgba(148,163,184,.18);
@@ -3455,32 +3456,20 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   stroke:currentColor;
   stroke-width:1.8;
 }
-.gamesense-crosshair-source{
-  grid-column:2;
-  grid-row:2;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-}
-.gamesense-crosshair-source a{
-  color:var(--gamesense-warm,#f6c453);
-  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);
-  text-transform:uppercase;
-  text-decoration:none;
-}
 .gamesense-crosshair-actions{
   grid-column:3;
-  grid-row:1;
+  grid-row:2 / 4;
   display:grid;
-  align-items:center;
-  align-content:center;
-  justify-content:center;
+  grid-template-rows:1fr 1fr;
+  align-items:stretch;
+  align-content:stretch;
+  justify-content:stretch;
   gap:6px;
 }
 .gamesense-crosshair-actions button{
   min-height:30px;
   padding:6px 8px;
+  width:100%;
 }
 .gamesense-crosshair-actions button b{
   min-width:22px;
@@ -3506,6 +3495,44 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   border-radius:14px;
   color:var(--text-muted,#a8b3c7);
   text-align:center;
+}
+.gamesense-crosshair-references{
+  display:grid;
+  gap:8px;
+  padding:12px;
+  border:1px solid rgba(148,163,184,.18);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(15,23,42,.68),rgba(2,6,23,.84));
+}
+.gamesense-crosshair-references span{
+  color:var(--gamesense-cool,#58d4c8);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.gamesense-crosshair-references div{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.gamesense-crosshair-references a{
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  padding:6px 9px;
+  border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 36%,transparent);
+  border-radius:999px;
+  color:var(--gamesense-warm,#f6c453);
+  background:rgba(246,196,83,.08);
+  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  text-decoration:none;
+}
+.gamesense-crosshair-references small{
+  color:var(--text-muted,#a8b3c7);
+  font-size:10px;
+  line-height:1.35;
 }
 
 @media (max-width:1180px){
@@ -3534,17 +3561,30 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
     grid-template-columns:minmax(0,1fr);
   }
   html.is-mobile-layout .gamesense-crosshair-card{
+    grid-template-columns:1fr 1fr;
     grid-template-rows:auto auto auto;
   }
-  html.is-mobile-layout .gamesense-crosshair-build{
-    grid-template-columns:70px minmax(0,1fr);
+  html.is-mobile-layout .gamesense-crosshair-player{
+    grid-column:1;
+    grid-row:1;
+    min-height:116px;
+  }
+  html.is-mobile-layout .gamesense-crosshair-preview{
+    grid-column:2;
+    grid-row:1;
+    min-height:116px;
+  }
+  html.is-mobile-layout .gamesense-crosshair-code-box{
+    grid-column:1 / -1;
+    grid-row:2;
+    min-height:58px;
   }
   html.is-mobile-layout .gamesense-crosshair-actions{
-    grid-column:1;
-    grid-row:auto;
+    grid-column:1 / -1;
+    grid-row:3;
     justify-content:stretch;
-    grid-template-columns:1fr auto;
-    flex-wrap:wrap;
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto;
   }
   html.is-mobile-layout .gamesense-crosshair-actions button{
     flex:1 1 120px;
