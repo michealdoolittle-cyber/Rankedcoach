@@ -12979,12 +12979,103 @@ function activeProfileHasRiotId() {
   return Boolean(String(getActiveProfile?.()?.riotId || "").trim());
 }
 
+const LOADING_MOTIVATION_QUOTES = Object.freeze([
+  Object.freeze({ text: "You got to back yourself a little bit.", source: "TenZ" }),
+  Object.freeze({ text: "If you don't believe in yourself, no one else will.", source: "VCT Pro Community" }),
+  Object.freeze({ text: "If you want to climb and be better, you have to expect your teammates to be worse.", source: "zkVAL" }),
+  Object.freeze({ text: "Play with purpose, mute negativity, and keep improving.", source: "Valorant Mental Coach" }),
+  Object.freeze({ text: "I don't think I'm the best, but I also don't think there is anyone better.", source: "olofmeister" }),
+  Object.freeze({ text: "They can't guard me.", source: "Demon1" }),
+  Object.freeze({ text: "You have to believe you are the best player in the lobby, even when the scoreboard says otherwise.", source: "yay" }),
+  Object.freeze({ text: "The moment you fear the enemy's aim is the moment you've already lost the round.", source: "nAts" }),
+  Object.freeze({ text: "Confidence isn't thinking you'll never make a mistake. It's knowing you can recover when you do.", source: "Chronicle" }),
+  Object.freeze({ text: "If you change the way that you look at things, the things you look at change. It's all about perspective.", source: "Asuna" }),
+  Object.freeze({ text: "We can't have any expectations from our teammates... we just gotta deal with it and control what we can control.", source: "zkVAL" }),
+  Object.freeze({ text: "Mute the noise, look at your own crosshair, and play your own game.", source: "Marved" }),
+  Object.freeze({ text: "Belief in oneself is incredibly infectious. It generates momentum.", source: "Aimee Mullins" }),
+  Object.freeze({ text: "I didn't walk through all that fire just to smell the smoke.", source: "Jalen Hurts" }),
+  Object.freeze({ text: "Practice like you've never won, perform like you've never lost.", source: "Elite Gaming Culture" }),
+  Object.freeze({ text: "If you stop making risky plays out of fear, you stop growing as a player.", source: "Dapr" }),
+  Object.freeze({ text: "I don't care who is on the other side of the angle. A headshot is a headshot.", source: "Demon1" }),
+  Object.freeze({ text: "Never let the enemy see you hesitate. Even a bad plan executed with 100% confidence can win a round.", source: "Zellsis" }),
+  Object.freeze({ text: "Complaining and comparing and expecting things doesn't do anything at all for you.", source: "Pro Player Performance Advice" }),
+  Object.freeze({ text: "Mute the toxic comms immediately. Your focus is worth more than their opinions.", source: "Marved" }),
+  Object.freeze({ text: "Discipline and accountability will take you much further than raw mechanical talent ever will.", source: "Bonkar" }),
+  Object.freeze({ text: "The moment you accept that you are the problem, you give yourself the power to fix it.", source: "nAts" }),
+  Object.freeze({ text: "Consistency doesn't come from lucky clips. It comes from the mastery of the absolute basics.", source: "Valorant Coach" })
+]);
+const LOADING_QUOTE_ROTATE_MS = 4600;
+let loginInitializationQuoteTimer = 0;
+let appLoadingQuoteTimer = 0;
+
+function getRandomLoadingMotivationQuote(previousText = "") {
+  const quotes = LOADING_MOTIVATION_QUOTES;
+  if (!quotes.length) return Object.freeze({ text: "Play with purpose, mute negativity, and keep improving.", source: "Valorant Mental Coach" });
+  const available = quotes.filter(quote => quote.text !== previousText);
+  return (available.length ? available : quotes)[Math.floor(Math.random() * (available.length ? available.length : quotes.length))];
+}
+
+function formatLoadingMotivationQuote(quote = {}, options = {}) {
+  const text = String(quote.text || "").trim();
+  const source = String(quote.source || "").trim();
+  if (!text) return "";
+  return options.inlineSource && source ? `“${text}” — ${source}` : `“${text}”`;
+}
+
+function renderLoginInitializationQuote(options = {}) {
+  const copyEl = document.getElementById("loginInitCopy");
+  const detailEl = document.getElementById("loginInitDetail");
+  if (!copyEl) return null;
+  const previous = copyEl.dataset.loadingQuoteText || "";
+  const quote = options.forceNew || !previous
+    ? getRandomLoadingMotivationQuote(previous)
+    : { text: previous, source: copyEl.dataset.loadingQuoteSource || "" };
+  copyEl.dataset.loadingQuoteText = quote.text;
+  copyEl.dataset.loadingQuoteSource = quote.source;
+  copyEl.textContent = formatLoadingMotivationQuote(quote);
+  if (detailEl) detailEl.textContent = quote.source ? `— ${quote.source}` : "";
+  return quote;
+}
+
+function startLoginInitializationQuoteRotation() {
+  window.clearInterval(loginInitializationQuoteTimer);
+  renderLoginInitializationQuote({ forceNew: true });
+  loginInitializationQuoteTimer = window.setInterval(() => renderLoginInitializationQuote({ forceNew: true }), LOADING_QUOTE_ROTATE_MS);
+}
+
+function stopLoginInitializationQuoteRotation() {
+  window.clearInterval(loginInitializationQuoteTimer);
+  loginInitializationQuoteTimer = 0;
+}
+
+function renderAppLoadingQuote(options = {}) {
+  const copyEl = document.getElementById("appLoadingCopy");
+  if (!copyEl) return null;
+  const previous = copyEl.dataset.loadingQuoteText || "";
+  const quote = options.forceNew || !previous
+    ? getRandomLoadingMotivationQuote(previous)
+    : { text: previous, source: copyEl.dataset.loadingQuoteSource || "" };
+  copyEl.dataset.loadingQuoteText = quote.text;
+  copyEl.dataset.loadingQuoteSource = quote.source;
+  copyEl.textContent = formatLoadingMotivationQuote(quote, { inlineSource: true });
+  return quote;
+}
+
+function startAppLoadingQuoteRotation() {
+  window.clearInterval(appLoadingQuoteTimer);
+  renderAppLoadingQuote({ forceNew: true });
+  appLoadingQuoteTimer = window.setInterval(() => renderAppLoadingQuote({ forceNew: true }), LOADING_QUOTE_ROTATE_MS);
+}
+
+function stopAppLoadingQuoteRotation() {
+  window.clearInterval(appLoadingQuoteTimer);
+  appLoadingQuoteTimer = 0;
+}
+
 function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "", detail = "") {
   const overlay = document.getElementById("loginInitOverlay");
   const bar = document.getElementById("loginInitProgressBar");
   const percentEl = document.getElementById("loginInitProgressPercent");
-  const copyEl = document.getElementById("loginInitCopy");
-  const detailEl = document.getElementById("loginInitDetail");
   const titleEl = document.getElementById("loginInitTitle");
   const nextPercent = Math.max(0, Math.min(100, Math.round(percent)));
 
@@ -12993,8 +13084,7 @@ function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "",
   const progressEl = overlay?.querySelector?.(".login-init-progress");
   progressEl?.setAttribute("aria-valuenow", String(nextPercent));
   progressEl?.classList.toggle("is-busy", nextPercent > 0 && nextPercent < 100);
-  if (copyEl && copy) copyEl.textContent = copy;
-  if (detailEl) detailEl.textContent = detail || "";
+  renderLoginInitializationQuote();
   if (titleEl) titleEl.textContent = nextPercent >= 100 ? "You are ready" : "Warming up your account";
 
   const stepOrder = ["Profile", "Security", "Coach", "Ready"];
@@ -13009,6 +13099,7 @@ function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "",
 
 function showLoginInitializationOverlay(copy = "", detail = "") {
   applyLoginInitializationTheme(getActiveProfile());
+  startLoginInitializationQuoteRotation();
   setLoginInitializationProgress(
     6,
     copy || "Opening your RankedCoach account.",
@@ -13107,6 +13198,7 @@ function hideLoginInitializationOverlay() {
     releaseInitialAppBootGuard();
     hideModalById?.("loginInitOverlay");
     clearLoginInitializationTheme();
+    stopLoginInitializationQuoteRotation();
     notifyDailyEntranceMotionReady();
   }, 420);
 }
@@ -13115,6 +13207,7 @@ function dismissLoginInitializationOverlay() {
   releaseInitialAppBootGuard();
   hideModalById?.("loginInitOverlay");
   clearLoginInitializationTheme();
+  stopLoginInitializationQuoteRotation();
 }
 
 function shouldShowRiotProfilePrompt(options = {}) {
@@ -13609,7 +13702,7 @@ function ensureAppLoadingVeil() {
     <div class="app-loading-card">
       <div class="app-loading-mark">RC</div>
       <div class="app-loading-title" id="appLoadingTitle">Loading RankedCoach</div>
-      <div class="app-loading-copy" id="appLoadingCopy">Preparing your dashboard...</div>
+      <div class="app-loading-copy" id="appLoadingCopy">“Play with purpose, mute negativity, and keep improving.” — Valorant Mental Coach</div>
       <div class="app-loading-progress-meta"><span id="appLoadingProgressLabel">Loading</span><strong id="appLoadingPercent">0%</strong></div>
       <div class="app-loading-bar" id="appLoadingProgress" role="progressbar" aria-label="Loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="appLoadingProgressBar"></span></div>
     </div>
@@ -13634,10 +13727,9 @@ function showAppLoadingVeil(message = "Preparing your dashboard...", options = {
   appLoadingVeilDepth += 1;
   const title = document.getElementById("appLoadingTitle");
   const progressLabel = document.getElementById("appLoadingProgressLabel");
-  const copy = document.getElementById("appLoadingCopy");
   if (title) title.textContent = options.title || "Loading RankedCoach";
   if (progressLabel) progressLabel.textContent = options.progressLabel || "Loading";
-  if (copy) copy.textContent = message;
+  startAppLoadingQuoteRotation();
   setAppLoadingVeilProgress(options.percent ?? 8);
   veil.hidden = false;
   veil.setAttribute("aria-hidden", "false");
@@ -13646,8 +13738,7 @@ function showAppLoadingVeil(message = "Preparing your dashboard...", options = {
 }
 
 function setAppLoadingVeilMessage(message = "Preparing your dashboard...") {
-  const copy = document.getElementById("appLoadingCopy");
-  if (copy) copy.textContent = message;
+  renderAppLoadingQuote();
 }
 
 function hideAppLoadingVeil({ force = false } = {}) {
@@ -13657,6 +13748,7 @@ function hideAppLoadingVeil({ force = false } = {}) {
   if (!veil) return;
   veil.classList.remove("is-visible");
   veil.setAttribute("aria-hidden", "true");
+  stopAppLoadingQuoteRotation();
   document.body?.classList.remove("app-loading-active");
   window.setTimeout(() => {
     if (!veil.classList.contains("is-visible")) veil.hidden = true;

@@ -10011,12 +10011,12 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 }
 
 .login-init-copy{
-  min-height:42px;
+  min-height:70px;
   margin-top:10px;
   color:#cbd5e1;
-  font-size:15px;
+  font-size:clamp(14px, 1.4vw, 16px);
   font-weight:750;
-  line-height:1.4;
+  line-height:1.34;
 }
 
 .login-init-progress-meta,
@@ -10046,10 +10046,11 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 
 .login-init-detail{
   margin-top:10px;
-  color:rgba(226,232,240,.84);
+  color:rgba(255,214,102,.9);
   font-size:12px;
-  font-weight:700;
+  font-weight:900;
   line-height:1.45;
+  letter-spacing:.04em;
 }
 
 .login-init-progress{
@@ -20196,7 +20197,7 @@ SUMMARY BAR
 }
 
 .app-loading-card{
-  width:min(320px, 86vw);
+  width:min(430px, 88vw);
   display:grid;
   gap:12px;
   justify-items:center;
@@ -20232,6 +20233,10 @@ SUMMARY BAR
 .app-loading-copy{
   color:#cbd5e1;
   font-weight:800;
+  line-height:1.38;
+  min-height:66px;
+  display:flex;
+  align-items:center;
 }
 
 .app-loading-progress-meta{
