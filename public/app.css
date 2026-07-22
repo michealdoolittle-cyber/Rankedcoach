@@ -56592,6 +56592,28 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
   line-height:1.18 !important;
 }
 
+/* 2026-07-21 compass readability pass:
+   the SVG rail should remain large even under short desktop viewports and
+   saved layout-style overrides. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell{
+  grid-template-columns:minmax(0,1fr) minmax(168px,228px) !important;
+  align-items:stretch !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-svg-wrap{
+  min-height:168px !important;
+  height:100% !important;
+  padding:0 !important;
+}
+
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-svg-wrap svg,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .sw-compass-mini{
+  width:100% !important;
+  height:100% !important;
+  max-width:228px !important;
+  max-height:228px !important;
+}
+
 #page-stats .stats-map-image.stats-map-layout-image{
   object-fit:contain !important;
   object-position:center center !important;

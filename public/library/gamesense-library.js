@@ -44,6 +44,7 @@
       sourceName: "ProSettings",
       sourceUrl: "https://prosettings.net/players/tenz/",
       photo: "https://prosettings.net/wp-content/uploads/tenz-220x220-fitcontain-q99-gb283-s1.png",
+      proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="26" y="24" width="2" height="2" fill="#00ffff" fill-opacity="1" /><rect x="25.5" y="23.5" width="3" height="3" fill="none" stroke="#000" stroke-width="1" stroke-opacity="0" /><rect x="22" y="24" width="2" height="2" fill="#00ffff" fill-opacity="1" /><rect x="21.5" y="23.5" width="3" height="3" fill="none" stroke="#000" stroke-width="1" stroke-opacity="0" /><rect x="24" y="26" width="2" height="2" fill="#00ffff" fill-opacity="1" /><rect x="23.5" y="25.5" width="3" height="3" fill="none" stroke="#000" stroke-width="1" stroke-opacity="0" /><rect x="24" y="22" width="2" height="2" fill="#00ffff" fill-opacity="1" /><rect x="23.5" y="21.5" width="3" height="3" fill="none" stroke="#000" stroke-width="1" stroke-opacity="0" /></svg>`,
       tags: ["cyan", "compact", "inner lines"]
     },
     {
@@ -55,6 +56,7 @@
       sourceName: "ProSettings",
       sourceUrl: "https://prosettings.net/players/zekken/",
       photo: "https://prosettings.net/wp-content/uploads/zekken-220x220-fitcontain-q99-gb283-s1.png",
+      proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="24" y="24" width="2" height="2" fill="#00ff00" fill-opacity="1" /><rect x="23" y="23" width="4" height="4" fill="none" stroke="#000" stroke-width="2" stroke-opacity="1" /></svg>`,
       tags: ["green", "dot", "outline"]
     },
     {
@@ -66,6 +68,7 @@
       sourceName: "ProSettings",
       sourceUrl: "https://prosettings.net/players/f0rsaken/",
       photo: "https://prosettings.net/wp-content/uploads/f0rsaken-220x220-fitcontain-q99-gb283-s1.png",
+      proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="25" y="24" width="3" height="2" fill="#ffffff" fill-opacity="1" /><rect x="22" y="24" width="3" height="2" fill="#ffffff" fill-opacity="1" /><rect x="24" y="25" width="2" height="3" fill="#ffffff" fill-opacity="1" /><rect x="24" y="22" width="2" height="3" fill="#ffffff" fill-opacity="1" /></svg>`,
       tags: ["white", "tight", "inner lines"]
     },
     {
@@ -77,6 +80,7 @@
       sourceName: "PCGamesN",
       sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
       photo: "https://prosettings.net/wp-content/uploads/jinggg-220x220-fitcontain-q99-gb283-s1.png",
+      proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="27" y="24" width="3" height="2" fill="#FF99FF" fill-opacity="1" /><rect x="26.5" y="23.5" width="4" height="3" fill="none" stroke="#000" stroke-width="1" stroke-opacity="1" /><rect x="20" y="24" width="3" height="2" fill="#FF99FF" fill-opacity="1" /><rect x="19.5" y="23.5" width="4" height="3" fill="none" stroke="#000" stroke-width="1" stroke-opacity="1" /><rect x="24" y="27" width="2" height="3" fill="#FF99FF" fill-opacity="1" /><rect x="23.5" y="26.5" width="3" height="4" fill="none" stroke="#000" stroke-width="1" stroke-opacity="1" /><rect x="24" y="20" width="2" height="3" fill="#FF99FF" fill-opacity="1" /><rect x="23.5" y="19.5" width="3" height="4" fill="none" stroke="#000" stroke-width="1" stroke-opacity="1" /></svg>`,
       tags: ["green", "short lines", "entry"]
     },
     {
@@ -88,18 +92,20 @@
       sourceName: "PCGamesN",
       sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
       photo: "https://prosettings.net/wp-content/uploads/something-220x220-fitcontain-q99-gb283-s1.png",
+      proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="26" y="24" width="2" height="2" fill="#ffffff" fill-opacity="1" /><rect x="22" y="24" width="2" height="2" fill="#ffffff" fill-opacity="1" /><rect x="24" y="26" width="2" height="2" fill="#ffffff" fill-opacity="1" /><rect x="24" y="22" width="2" height="2" fill="#ffffff" fill-opacity="1" /></svg>`,
       tags: ["white", "dot", "minimal"]
     },
     {
-      id: "boaster-2026-green-dot",
-      player: "Boaster",
-      team: "Fnatic",
+      id: "zmjjkk-2026-white-dot",
+      player: "ZmjjKK",
+      team: "EDward Gaming",
       type: "Pro",
-      code: "0;s;1;P;c;1;o;1;d;1;0l;0;0o;2;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;S;c;1;o;1",
+      code: "0;p;0;s;1;P;c;7;o;1;f;0;s;0;0t;1;0l;3;0o;2;0a;1;0f;0;1b;0;A;o;1;d;1;0b;0;1t;0;S;c;0;s;0.591;o;1",
       sourceName: "PCGamesN",
       sourceUrl: "https://www.pcgamesn.com/valorant/crosshairs-best-codes",
-      photo: "https://prosettings.net/wp-content/uploads/boaster-220x220-fitcontain-q99-gb283-s1.png",
-      tags: ["green", "dot", "igl"]
+      photo: "https://prosettings.net/wp-content/uploads/zmjjkk-220x220-fitcontain-q99-gb283-s1.png",
+      proSettingsSvg: `<svg class="valorant-crosshair-svg" xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><rect x="26" y="24" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="22" y="24" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="26" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="22" width="2" height="2" fill="#ffffff" fill-opacity="0.8" /><rect x="24" y="24" width="2" height="2" fill="#ffffff" fill-opacity="1" /></svg>`,
+      tags: ["white", "dot", "operator"]
     }
   ]);
   const crosshairBackendState = {
@@ -528,6 +534,14 @@
       </svg>`;
   }
 
+  function renderCrosshairPreviewMarkup(entry = {}) {
+    return `<span class="gamesense-crosshair-preview">${entry.proSettingsSvg || renderCrosshairPreview(entry)}</span>`;
+  }
+
+  function renderCopyIcon() {
+    return `<svg class="gamesense-copy-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="10" height="10" rx="2"></rect><rect x="5" y="5" width="10" height="10" rx="2"></rect></svg>`;
+  }
+
   function renderCrosshairPhoto(entry = {}) {
     const initials = getCrosshairInitials(entry.player);
     return `
@@ -573,15 +587,17 @@
           </div>
         </div>
         <div class="gamesense-crosshair-build">
-          ${renderCrosshairPreview(entry)}
-          <code>${escapeHtml(entry.code)}</code>
+          ${renderCrosshairPreviewMarkup(entry)}
+          <div class="gamesense-crosshair-code-box">
+            <code>${escapeHtml(entry.code)}</code>
+            <button type="button" data-gamesense-crosshair-copy="${escapeHtml(entry.id)}" aria-label="Copy ${escapeHtml(entry.player)} crosshair code">${renderCopyIcon()}</button>
+          </div>
           <div class="gamesense-crosshair-source">
             <span>Verified via ${escapeHtml(entry.sourceName || "source")}</span>
             <a href="${escapeHtml(entry.sourceUrl || "#")}" target="_blank" rel="noopener noreferrer">Source</a>
           </div>
         </div>
         <div class="gamesense-crosshair-actions">
-          <button type="button" data-gamesense-crosshair-copy="${escapeHtml(entry.id)}">Copy code</button>
           <button type="button" data-gamesense-crosshair-like="${escapeHtml(entry.id)}" class="${liked ? "active" : ""}" aria-pressed="${liked ? "true" : "false"}" ${pendingLike ? "disabled" : ""}>
             <span>Like</span><b>${likes}</b>
           </button>
@@ -755,7 +771,7 @@
     if (topic === "crosshairs") {
       return crosshairSeedEntries.slice(0, 6).map(entry => `
         <span class="gamesense-topic-crosshair-sample">
-          ${renderCrosshairPreview(entry)}
+          ${renderCrosshairPreviewMarkup(entry)}
         </span>`).join("");
     }
     if (topic === "playlist") {

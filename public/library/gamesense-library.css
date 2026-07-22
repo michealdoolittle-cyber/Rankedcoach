@@ -3122,7 +3122,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   min-width:0;
   min-height:0;
 }
-.gamesense-topic-crosshair-sample .gamesense-crosshair-svg{
+.gamesense-topic-crosshair-sample .gamesense-crosshair-preview{
   width:100%;
   height:100%;
   min-height:0;
@@ -3300,17 +3300,18 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 .gamesense-crosshair-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:12px;
+  gap:8px;
 }
 .gamesense-crosshair-card{
   display:grid;
-  grid-template-columns:minmax(150px,.75fr) minmax(0,1.2fr);
-  grid-template-rows:minmax(0,1fr) auto;
-  gap:12px;
+  grid-template-columns:minmax(84px,104px) minmax(0,1fr) max-content;
+  grid-template-rows:auto;
+  align-items:stretch;
+  gap:8px;
   min-width:0;
-  padding:14px;
+  padding:9px;
   border:1px solid rgba(148,163,184,.22);
-  border-radius:16px;
+  border-radius:11px;
   background:
     radial-gradient(circle at 72% 24%,color-mix(in srgb,var(--gamesense-cool,#58d4c8) 14%,transparent),transparent 38%),
     linear-gradient(145deg,rgba(15,23,42,.92),rgba(2,6,23,.96));
@@ -3324,11 +3325,11 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   display:grid;
   align-content:center;
   justify-items:center;
-  gap:10px;
+  gap:5px;
   min-width:0;
-  padding:10px;
+  padding:6px;
   border:1px solid rgba(103,232,249,.13);
-  border-radius:12px;
+  border-radius:8px;
   background:rgba(2,6,23,.38);
   text-align:center;
 }
@@ -3336,7 +3337,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   position:relative;
   display:grid;
   place-items:center;
-  width:min(110px,70%);
+  width:54px;
   aspect-ratio:1;
   overflow:hidden;
   border:1px solid rgba(103,232,249,.28);
@@ -3353,53 +3354,110 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
 }
 .gamesense-crosshair-photo b{
   color:var(--gamesense-cool,#58d4c8);
-  font:900 26px/1 var(--font-display,"Rajdhani",sans-serif);
+  font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);
   letter-spacing:.04em;
 }
 .gamesense-crosshair-player span,
 .gamesense-crosshair-source span{
   color:var(--gamesense-cool,#58d4c8);
-  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);
+  font:900 8px/1 var(--font-display,"Rajdhani",sans-serif);
   letter-spacing:.1em;
   text-transform:uppercase;
 }
 .gamesense-crosshair-player strong{
   display:block;
-  margin-top:4px;
+  margin-top:3px;
   color:#f8fafc;
-  font:900 22px/.96 var(--font-display,"Rajdhani",sans-serif);
+  font:900 14px/.96 var(--font-display,"Rajdhani",sans-serif);
   text-transform:uppercase;
 }
 .gamesense-crosshair-player small{
   display:block;
-  margin-top:5px;
+  margin-top:2px;
   color:var(--text-muted,#a8b3c7);
-  font-size:10px;
+  font-size:8px;
+  line-height:1.12;
 }
 .gamesense-crosshair-build{
   display:grid;
-  gap:8px;
+  grid-template-columns:70px minmax(0,1fr);
+  grid-template-rows:minmax(70px,auto) auto;
+  align-items:center;
+  gap:6px 8px;
   min-width:0;
+}
+.gamesense-crosshair-preview{
+  grid-column:1;
+  grid-row:1 / 3;
+  display:grid;
+  place-items:center;
+  width:70px;
+  height:70px;
+  border:1px solid rgba(148,163,184,.16);
+  border-radius:8px;
+  background:#111827;
+}
+.gamesense-crosshair-preview .valorant-crosshair-svg,
+.gamesense-crosshair-preview .gamesense-crosshair-svg{
+  width:50px;
+  height:50px;
+  min-width:50px;
+  min-height:50px;
+  image-rendering:pixelated;
 }
 .gamesense-crosshair-svg{
   display:block;
   width:100%;
-  min-height:158px;
+  min-height:50px;
 }
-.gamesense-crosshair-build code{
+.gamesense-crosshair-code-box{
+  position:relative;
+  grid-column:2;
+  grid-row:1;
+  display:grid;
+  align-self:stretch;
+  min-width:0;
+}
+.gamesense-crosshair-code-box code{
   display:block;
   width:100%;
+  height:100%;
   max-height:70px;
   overflow:auto;
-  padding:9px;
+  padding:8px 34px 8px 9px;
   border:1px solid rgba(148,163,184,.18);
-  border-radius:9px;
+  border-radius:8px;
   background:rgba(2,6,23,.74);
   color:#dffcff;
-  font:800 10px/1.35 "IBM Plex Mono",monospace;
+  font:800 9px/1.28 "IBM Plex Mono",monospace;
   word-break:break-all;
+  box-sizing:border-box;
+}
+.gamesense-crosshair-code-box button{
+  position:absolute;
+  right:5px;
+  top:5px;
+  display:grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  min-height:0;
+  padding:0;
+  border:1px solid rgba(103,232,249,.3);
+  border-radius:6px;
+  background:rgba(15,23,42,.92);
+  color:var(--gamesense-cool,#58d4c8);
+}
+.gamesense-copy-icon{
+  width:15px;
+  height:15px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
 }
 .gamesense-crosshair-source{
+  grid-column:2;
+  grid-row:2;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -3412,11 +3470,17 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   text-decoration:none;
 }
 .gamesense-crosshair-actions{
-  grid-column:1 / -1;
-  display:flex;
+  grid-column:3;
+  grid-row:1;
+  display:grid;
   align-items:center;
-  justify-content:flex-end;
-  gap:8px;
+  align-content:center;
+  justify-content:center;
+  gap:6px;
+}
+.gamesense-crosshair-actions button{
+  min-height:30px;
+  padding:6px 8px;
 }
 .gamesense-crosshair-actions button b{
   min-width:22px;
@@ -3426,7 +3490,7 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   color:var(--gamesense-warm,#f6c453);
 }
 .gamesense-crosshair-favorite{
-  min-width:38px;
+  min-width:34px;
   color:#fda4af !important;
   font-size:16px !important;
 }
@@ -3472,12 +3536,26 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   html.is-mobile-layout .gamesense-crosshair-card{
     grid-template-rows:auto auto auto;
   }
+  html.is-mobile-layout .gamesense-crosshair-build{
+    grid-template-columns:70px minmax(0,1fr);
+  }
   html.is-mobile-layout .gamesense-crosshair-actions{
+    grid-column:1;
+    grid-row:auto;
     justify-content:stretch;
+    grid-template-columns:1fr auto;
     flex-wrap:wrap;
   }
   html.is-mobile-layout .gamesense-crosshair-actions button{
     flex:1 1 120px;
+  }
+}
+
+@media (min-width:821px){
+  html:not(.is-mobile-layout) .gamesense-topic-card:is([data-gamesense-topic="weapons"],[data-gamesense-topic="playlist"],[data-gamesense-topic="crosshairs"]) > strong{
+    font-size:clamp(24px,2vw,34px) !important;
+    letter-spacing:.01em !important;
+    line-height:.92 !important;
   }
 }
 
