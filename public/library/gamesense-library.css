@@ -3319,7 +3319,8 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
     grid-column:span 3;
     gap:6px;
     padding:8px;
-    aspect-ratio:1.18 / 1;
+    aspect-ratio:1 / 1;
+    overflow:hidden;
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-community{
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -3327,7 +3328,19 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-player,
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-preview{
+    grid-row:1;
+    align-self:start;
+    height:auto;
+    aspect-ratio:1 / 1;
     min-height:0;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-player{
+    grid-column:1;
+    aspect-ratio:1 / 1;
+    height:auto;
+  }
+  html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-preview{
+    grid-column:2;
   }
   html:not(.is-mobile-layout) .gamesense-crosshair-grid:is(.is-pro-tab,.is-dense-tab) .gamesense-crosshair-card.is-pro{
     grid-column:span 3;
