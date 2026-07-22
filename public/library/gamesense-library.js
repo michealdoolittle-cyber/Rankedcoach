@@ -1234,7 +1234,7 @@
   }
 
   function getPlaylistFilters() {
-    return ["All", "Home", "News", "Live/Streaming", "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality"];
+    return ["All", "Home", "News", "Live/Streaming", "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"];
   }
 
   function isPlaylistVod(item = {}) {

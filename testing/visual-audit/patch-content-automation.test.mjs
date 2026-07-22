@@ -7,12 +7,15 @@ import {
   buildFeaturedPlaylist,
   categorizeCreatorTitle,
   extractBalanceUpdateText,
+  fetchPopularGuideSearchVideos,
   fetchTrustedChannelVideos,
   fetchTrustedTwitchStreams,
   fetchTrustedTwitchVods,
   findAffectedDossiers,
   findConfidentCollectionVideo,
+  getStaticPlaylistVideos,
   getPatchDescriptor,
+  isPopularGuideSearchCandidate,
   runPatchContentAutomation
 } from "../../worker/content-automation.mjs";
 
@@ -70,6 +73,7 @@ for (const [channel, title] of creatorSamples) {
   assert.notEqual(categorizeCreatorTitle(title), "General", `${channel}'s focused sample must map beyond General.`);
 }
 assert.equal(categorizeCreatorTitle("A quiet afternoon update"), "General", "An unrelated title must fail closed into General.");
+assert.equal(categorizeCreatorTitle("Best Valorant monitor settings and clarity guide"), "Settings/Gear", "Settings and gear titles must map into the dedicated Playlist section.");
 
 const blackspyreId = "aSFtc5Y-ORQ";
 const blackspyreMetadataResponse = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${blackspyreId}&format=json`);
@@ -114,6 +118,9 @@ assert.notEqual(classifiedPlaylist.items.find(item => item.id === "creator-buff-
 assert.equal(classifiedPlaylist.items.find(item => item.id === "long-guide")?.needsContentReview, false, "A metadata-confirmed long guide must not be mislabeled as a VOD from its title.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "feed-fallback")?.needsContentReview, false, "A title-only fallback must not be treated as live or queued for Live/Streaming review.");
 assert.equal(classifiedPlaylist.items.find(item => item.id === "twitch-123456")?.classificationReason, "twitch-archive-vod", "A Twitch archive must carry structural VOD provenance.");
+const settingsOverridePlaylist = buildFeaturedPlaylist(getStaticPlaylistVideos(), "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
+assert.equal(settingsOverridePlaylist.items[0]?.topicType, "Settings/Gear", "The pinned TenZ settings video must appear in Settings/Gear.");
+assert.equal(settingsOverridePlaylist.items[0]?.id, "d8CXBLRgP-A", "The pinned TenZ settings video must use the verified requested YouTube ID.");
 
 class MemoryKv {
   constructor() { this.values = new Map(); }
@@ -127,6 +134,91 @@ class MemoryKv {
     void cursor;
     return { keys: [...this.values.keys()].filter(key => key.startsWith(prefix)).map(name => ({ name })), list_complete: true };
   }
+}
+
+assert.equal(isPopularGuideSearchCandidate({
+  id: "jettGuid001",
+  title: "VALORANT Jett Guide - Complete Tips",
+  description: "Learn Jett utility and entry pathing.",
+  channel: "Guide Channel",
+  isValorant: true,
+  isShort: false,
+  isLive: false,
+  wasLive: false,
+  isVod: false
+}, { targetName: "Jett" }), true, "A target-specific Valorant guide must be eligible for popular guide sourcing.");
+assert.equal(isPopularGuideSearchCandidate({
+  id: "jettMontage1",
+  title: "VALORANT Jett Highlights Montage",
+  description: "Frag movie clips.",
+  channel: "Clip Channel",
+  isValorant: true,
+  isShort: false,
+  isLive: false,
+  wasLive: false,
+  isVod: false
+}, { targetName: "Jett" }), false, "Montages must not be accepted as guide catalog entries.");
+
+const guideSearchKv = new MemoryKv();
+const fetchBeforeGuideSearchCheck = globalThis.fetch;
+globalThis.fetch = async input => {
+  const url = new URL(String(input));
+  if (url.href.startsWith("https://www.googleapis.com/youtube/v3/search")) {
+    const query = url.searchParams.get("q");
+    assert.equal(url.searchParams.get("order"), "viewCount", "Popular guide sourcing must use YouTube's view-count sort.");
+    assert.equal(url.searchParams.get("regionCode"), "US", "Popular guide sourcing must target English/NA discovery.");
+    const id = query.includes("Jett") ? "jettGuid001" : "bindGuid002";
+    const target = query.includes("Jett") ? "Jett" : "Bind";
+    return new Response(JSON.stringify({ items: [{
+      id: { videoId: id },
+      snippet: {
+        channelId: `channel-${target}`,
+        channelTitle: `${target} Coach`,
+        title: `VALORANT ${target} Guide - Complete Ranked Tips`,
+        description: `A real Valorant ${target} guide for ranked.`,
+        publishedAt: "2026-07-18T12:00:00Z",
+        thumbnails: { high: { url: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` } }
+      }
+    }] }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+  if (url.href.startsWith("https://www.googleapis.com/youtube/v3/videos")) {
+    const ids = url.searchParams.get("id").split(",");
+    return new Response(JSON.stringify({ items: ids.map(id => {
+      const target = id === "jettGuid001" ? "Jett" : "Bind";
+      return {
+        id,
+        snippet: {
+          channelId: `channel-${target}`,
+          channelTitle: `${target} Coach`,
+          title: `VALORANT ${target} Guide - Complete Ranked Tips`,
+          description: `A real Valorant ${target} guide for ranked.`,
+          publishedAt: "2026-07-18T12:00:00Z",
+          thumbnails: { high: { url: `https://i.ytimg.com/vi/${id}/hqdefault.jpg` } },
+          tags: ["Valorant", target, "Guide"]
+        },
+        contentDetails: { duration: "PT12M30S" },
+        liveStreamingDetails: {}
+      };
+    }) }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
+  return fetchBeforeGuideSearchCheck(input);
+};
+try {
+  const popularGuides = await fetchPopularGuideSearchVideos({
+    CONTENT_AUTOMATION: guideSearchKv,
+    YOUTUBE_DATA_API_KEY: "test-youtube-key"
+  }, {
+    targets: [
+      { targetType: "Agent", targetName: "Jett", topicType: "Agent" },
+      { targetType: "Map", targetName: "Bind", topicType: "Map Knowledge" }
+    ],
+    batchSize: 2
+  });
+  assert.deepEqual(popularGuides.map(video => [video.targetName, video.topicTypeOverride]), [["Jett", "Agent"], ["Bind", "Map Knowledge"]], "Popular guide searches must file exact agent/map matches into their respective Playlist categories.");
+  const guidePlaylist = buildFeaturedPlaylist(popularGuides, "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
+  assert.deepEqual(guidePlaylist.items.map(item => item.topicType), ["Agent", "Map Knowledge"], "Popular searched guide videos must preserve their target categories after playlist build.");
+} finally {
+  globalThis.fetch = fetchBeforeGuideSearchCheck;
 }
 
 assert.equal(TRUSTED_TWITCH_CHANNELS.length, 29, "Every requested Twitch channel must stay on the trusted live allowlist.");

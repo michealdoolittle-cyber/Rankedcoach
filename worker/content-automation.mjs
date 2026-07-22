@@ -5,10 +5,13 @@ const YOUTUBE_API_ROOT = "https://www.googleapis.com/youtube/v3";
 const YOUTUBE_FEED_ROOT = "https://www.youtube.com/feeds/videos.xml";
 const MAX_CHANNEL_VIDEOS = 15;
 const MAX_TWITCH_ARCHIVES = 15;
+const PLAYLIST_MAX_ITEMS = 120;
 const PLAYLIST_CACHE_WINDOW_MS = 5 * 60 * 1000;
 const TWITCH_TOKEN_CACHE_KEY = "playlist:twitch-token";
 const TWITCH_API_ROOT = "https://api.twitch.tv/helix";
 const PLAYLIST_CLASSIFICATION_REVIEW_TTL_SECONDS = 7 * 24 * 60 * 60;
+const PLAYLIST_GUIDE_SEARCH_CACHE_TTL_SECONDS = 14 * 24 * 60 * 60;
+const PLAYLIST_GUIDE_SEARCH_MISS_TTL_SECONDS = 24 * 60 * 60;
 
 export const AGENT_NAMES = Object.freeze([
   "Astra", "Breach", "Brimstone", "Chamber", "Clove", "Cypher", "Deadlock", "Fade", "Gekko",
@@ -19,6 +22,42 @@ export const AGENT_NAMES = Object.freeze([
 export const WEAPON_NAMES = Object.freeze([
   "Ares", "Bucky", "Bulldog", "Classic", "Frenzy", "Ghost", "Guardian", "Judge", "Marshal",
   "Odin", "Operator", "Outlaw", "Phantom", "Sheriff", "Shorty", "Spectre", "Stinger", "Vandal"
+]);
+
+export const MAP_NAMES = Object.freeze([
+  "Abyss", "Ascent", "Bind", "Breeze", "Corrode", "Fracture", "Haven", "Icebox", "Lotus",
+  "Pearl", "Split", "Summit", "Sunset"
+]);
+
+const PLAYLIST_TOPIC_TYPES = Object.freeze(["General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"]);
+const PLAYLIST_TOPIC_TYPE_SET = new Set(PLAYLIST_TOPIC_TYPES);
+
+const GUIDE_SEARCH_TARGETS = Object.freeze([
+  ...AGENT_NAMES.map(name => Object.freeze({ targetType: "Agent", targetName: name, topicType: "Agent" })),
+  ...MAP_NAMES.map(name => Object.freeze({ targetType: "Map", targetName: name, topicType: "Map Knowledge" }))
+]);
+
+const STATIC_PLAYLIST_VIDEOS = Object.freeze([
+  Object.freeze({
+    id: "d8CXBLRgP-A",
+    platform: "youtube",
+    channel: "TenZ",
+    channelKind: "creator",
+    title: "Find your PERFECT Sensitivity and Optimal Settings! | SEN TenZ",
+    description: "Sensitivity, clarity, and optimal Valorant settings guidance from TenZ.",
+    publishedAt: "2025-01-01T00:00:00.000Z",
+    thumbnail: "https://i.ytimg.com/vi/d8CXBLRgP-A/hqdefault.jpg",
+    url: "https://www.youtube.com/watch?v=d8CXBLRgP-A",
+    sourceType: "settings-gear",
+    topicTypeOverride: "Settings/Gear",
+    isCatalogPinned: true,
+    isShort: false,
+    isLive: false,
+    wasLive: false,
+    isVod: false,
+    hasStructuralMediaMetadata: true,
+    isValorant: true
+  })
 ]);
 
 export const TRUSTED_YOUTUBE_CHANNELS = Object.freeze([
@@ -46,9 +85,10 @@ export const TRUSTED_TWITCH_CHANNELS = Object.freeze([
 const TOPIC_KEYWORDS = Object.freeze({
   Role: Object.freeze(["role", "controller", "duelist", "initiator", "sentinel", "entry", "entries", "lurk", "anchor"]),
   Agent: Object.freeze(["agent", "agents", ...AGENT_NAMES.map(name => normalizeSearchText(name))]),
-  "Map Knowledge": Object.freeze(["ascent", "bind", "breeze", "fracture", "haven", "icebox", "lotus", "pearl", "split", "sunset", "summit"]),
+  "Map Knowledge": Object.freeze(MAP_NAMES.map(name => normalizeSearchText(name))),
   Mechanics: Object.freeze(["aim", "crosshair", "flick", "spray", "recoil", "gunfight", "peeking", "one tapped", "sensitivity", "movement", "strafe", "deadzon", "counter straf", "jump peek", "jiggle"]),
-  Mentality: Object.freeze(["mindset", "tilt", "toxic", "confidence", "mental", "improving", "hardstuck", "comms", "communication", "callout", "teammate", "teamplay", "igl"])
+  Mentality: Object.freeze(["mindset", "tilt", "toxic", "confidence", "mental", "improving", "hardstuck", "comms", "communication", "callout", "teammate", "teamplay", "igl"]),
+  "Settings/Gear": Object.freeze(["settings", "gear", "peripheral", "peripherals", "monitor", "icc", "color", "clarity", "graphics", "nvidia", "pc settings", "resolution", "sens", "sensitivity"])
 });
 
 function decodeHtml(value = "") {
@@ -70,6 +110,56 @@ export function normalizeSearchText(value = "") {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function playlistTargetSlug(value = "") {
+  return normalizeSearchText(value).replace(/\s+/g, "-");
+}
+
+function getPlaylistTopicOverride(video = {}) {
+  const topic = String(video.topicTypeOverride || "").trim();
+  return PLAYLIST_TOPIC_TYPE_SET.has(topic) ? topic : "";
+}
+
+export function getStaticPlaylistVideos() {
+  return STATIC_PLAYLIST_VIDEOS.map(video => Object.freeze({ ...video }));
+}
+
+function getGuideTargetAliases(targetName = "") {
+  const normalized = normalizeSearchText(targetName);
+  const aliases = new Set([normalized]);
+  const compressed = normalized.replace(/\s+/g, "");
+  if (compressed && compressed !== normalized) aliases.add(compressed);
+  if (normalized === "kay o") aliases.add("kayo");
+  return [...aliases].filter(Boolean);
+}
+
+function hasGuideTargetCue(text = "", targetName = "") {
+  const padded = ` ${normalizeSearchText(text)} `;
+  return getGuideTargetAliases(targetName).some(alias => padded.includes(` ${alias} `));
+}
+
+function hasGuideCue(text = "") {
+  const normalized = normalizeSearchText(text);
+  return /\b(?:guide|how to|tips?|tutorial|lineups?|setups?|setup|playbook|complete|ultimate|learn|master|masterclass|ranked|pro analysis)\b/.test(normalized);
+}
+
+function hasGuideRejectCue(text = "") {
+  const normalized = normalizeSearchText(text);
+  return /\b(?:montage|highlights?|fragmovie|cinematic|trailer|reaction|reacts?|clips?|leaks?|skin|skins|bundle|bundles|night market)\b/.test(normalized);
+}
+
+export function isPopularGuideSearchCandidate(video = {}, target = {}) {
+  const title = String(video.title || "");
+  const description = String(video.description || "");
+  const text = `${title} ${description}`;
+  if (!/^[A-Za-z0-9_-]{11}$/.test(String(video.id || ""))) return false;
+  if (video.isLive || video.wasLive || video.isVod || video.isShort) return false;
+  if (!hasValorantMetadata(video) && !/\bvalorant\b/i.test(text)) return false;
+  if (!hasGuideTargetCue(title, target.targetName) && !hasGuideTargetCue(description, target.targetName)) return false;
+  if (!hasGuideCue(text)) return false;
+  if (hasGuideRejectCue(title)) return false;
+  return true;
 }
 
 export function getPatchDescriptor(payload = {}) {
@@ -215,6 +305,8 @@ async function enrichYouTubeVideos(videos = [], apiKey = "") {
       ...video,
       title: decodeHtml(snippet.title || video.title),
       description: decodeHtml(snippet.description || video.description || ""),
+      channelId: String(video.channelId || snippet.channelId || ""),
+      channel: String(video.channel || snippet.channelTitle || ""),
       publishedAt: String(snippet.publishedAt || video.publishedAt || ""),
       thumbnail: String(snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || video.thumbnail),
       tags: Array.isArray(snippet.tags) ? snippet.tags : [],
@@ -258,6 +350,102 @@ export async function fetchTrustedChannelVideos(env = {}, options = {}) {
   return enrichYouTubeVideos(videos, apiKey);
 }
 
+async function readCachedGuideSearchVideo(kv, cacheKey = "") {
+  if (!kv?.get || !cacheKey) return undefined;
+  const cached = await kv.get(cacheKey, "json");
+  if (!cached?.expiresAt || Date.parse(cached.expiresAt) <= Date.now()) return undefined;
+  return cached.video ? Object.freeze(cached.video) : null;
+}
+
+async function writeCachedGuideSearchVideo(kv, cacheKey = "", video = null) {
+  if (!kv?.put || !cacheKey) return;
+  const hasVideo = Boolean(video);
+  const ttl = hasVideo ? PLAYLIST_GUIDE_SEARCH_CACHE_TTL_SECONDS : PLAYLIST_GUIDE_SEARCH_MISS_TTL_SECONDS;
+  await kv.put(cacheKey, JSON.stringify({
+    video,
+    cachedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + ttl * 1000).toISOString()
+  }), { expirationTtl: ttl });
+}
+
+async function fetchMostPopularGuideForTarget(env = {}, target = {}) {
+  const apiKey = String(env.YOUTUBE_DATA_API_KEY || "").trim();
+  if (!apiKey || !target?.targetName) return null;
+  const cacheKey = `playlist:guide-search:${String(target.targetType || "target").toLowerCase()}:${playlistTargetSlug(target.targetName)}`;
+  const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey);
+  if (cached !== undefined) return cached;
+  const searchUrl = new URL(`${YOUTUBE_API_ROOT}/search`);
+  searchUrl.searchParams.set("part", "snippet");
+  searchUrl.searchParams.set("q", `Valorant ${target.targetName} Guide`);
+  searchUrl.searchParams.set("type", "video");
+  searchUrl.searchParams.set("order", "viewCount");
+  searchUrl.searchParams.set("regionCode", "US");
+  searchUrl.searchParams.set("relevanceLanguage", "en");
+  searchUrl.searchParams.set("safeSearch", "moderate");
+  searchUrl.searchParams.set("videoEmbeddable", "true");
+  searchUrl.searchParams.set("maxResults", "8");
+  searchUrl.searchParams.set("key", apiKey);
+  const payload = await fetchJson(searchUrl);
+  const candidates = (payload.items || []).map(item => {
+    const id = String(item?.id?.videoId || "");
+    if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return null;
+    const snippet = item.snippet || {};
+    return Object.freeze({
+      id,
+      platform: "youtube",
+      channelId: String(snippet.channelId || ""),
+      channel: String(snippet.channelTitle || ""),
+      channelKind: "searched-guide",
+      title: decodeHtml(snippet.title || ""),
+      description: decodeHtml(snippet.description || ""),
+      publishedAt: String(snippet.publishedAt || ""),
+      thumbnail: String(snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${id}/hqdefault.jpg`),
+      url: `https://www.youtube.com/watch?v=${id}`
+    });
+  }).filter(Boolean);
+  const enriched = await enrichYouTubeVideos(candidates, apiKey);
+  const match = enriched.find(video => isPopularGuideSearchCandidate(video, target));
+  const video = match ? Object.freeze({
+    ...match,
+    sourceType: "searched-guide",
+    topicTypeOverride: target.topicType,
+    targetType: target.targetType,
+    targetName: target.targetName,
+    searchTerm: `Valorant ${target.targetName} Guide`,
+    isCatalogPinned: true
+  }) : null;
+  await writeCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey, video);
+  return video;
+}
+
+export async function fetchPopularGuideSearchVideos(env = {}, options = {}) {
+  const apiKey = String(env.YOUTUBE_DATA_API_KEY || "").trim();
+  if (!apiKey) return [];
+  const targets = Array.isArray(options.targets) && options.targets.length ? options.targets : GUIDE_SEARCH_TARGETS;
+  const maxSearches = Number.isFinite(Number(options.maxSearches)) ? Math.max(0, Number(options.maxSearches)) : targets.length;
+  const videos = [];
+  const searchTargets = [];
+  for (const target of targets) {
+    const cacheKey = `playlist:guide-search:${String(target.targetType || "target").toLowerCase()}:${playlistTargetSlug(target.targetName)}`;
+    const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey);
+    if (cached) {
+      videos.push(cached);
+    } else if (cached === undefined && searchTargets.length < maxSearches) {
+      searchTargets.push(target);
+    }
+  }
+  const batchSize = Math.max(1, Math.min(8, Number(options.batchSize || 6)));
+  for (let index = 0; index < searchTargets.length; index += batchSize) {
+    const batch = searchTargets.slice(index, index + batchSize);
+    const results = await Promise.allSettled(batch.map(target => fetchMostPopularGuideForTarget(env, target)));
+    results.forEach((result, offset) => {
+      if (result.status === "fulfilled" && result.value) videos.push(result.value);
+      if (result.status === "rejected") console.warn(`Popular guide search skipped for ${batch[offset]?.targetName || "unknown target"}`, result.reason?.message || result.reason);
+    });
+  }
+  return videos;
+}
+
 export function categorizeCreatorTitle(title = "") {
   const normalized = normalizeSearchText(title);
   let best = null;
@@ -282,19 +470,25 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const items = videos
     .filter(video => !suppressedIds.has(video.id))
-    .sort((left, right) => Date.parse(right.publishedAt || 0) - Date.parse(left.publishedAt || 0))
+    .sort((left, right) => {
+      const pinnedDelta = Number(Boolean(right.isCatalogPinned)) - Number(Boolean(left.isCatalogPinned));
+      return pinnedDelta || (Date.parse(right.publishedAt || 0) - Date.parse(left.publishedAt || 0));
+    })
     .map(video => {
     const sourceType = getVideoSourceType(video, patchLabel);
     const streaming = getLiveStreamingClassification({ ...video, sourceType });
+    const topicOverride = getPlaylistTopicOverride(video);
     const topicType = streaming.matches
       ? "Live/Streaming"
       : isPlaylistVodSource(video, sourceType)
         ? "VOD's"
+      : topicOverride
+        ? topicOverride
       : (sourceType === "riot-official" || sourceType === "patch-breakdown") && hasNewsCue(video, sourceType)
         ? "News"
         : video.isShort
           ? "YT Shorts"
-          : sourceType === "creator-guide"
+          : (sourceType === "creator-guide" || sourceType === "searched-guide")
             ? categorizeCreatorTitle(video.title)
             : "General";
     return Object.freeze({
@@ -307,7 +501,7 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
       isNewThisWeek: Date.parse(video.publishedAt || 0) >= oneWeekAgo,
       isNewIn24Hours: Date.parse(video.publishedAt || 0) >= oneDayAgo
     });
-  }).slice(0, 40);
+  }).slice(0, PLAYLIST_MAX_ITEMS);
   const currentPatchVideo = items.find(item => item.sourceType === "patch-breakdown") || null;
   return Object.freeze({
     patchLabel,
@@ -537,11 +731,16 @@ export async function handlePlaylistRequest(env = {}) {
   ]);
   if (videoResult.status !== "fulfilled") throw videoResult.reason;
   const videos = videoResult.value;
+  const guideSearchResult = await Promise.allSettled([fetchPopularGuideSearchVideos(env, { maxSearches: 6 })]);
+  const guideSearchVideos = guideSearchResult[0]?.status === "fulfilled" ? guideSearchResult[0].value : [];
+  if (guideSearchResult[0]?.status === "rejected") console.warn("Popular guide search refresh skipped", guideSearchResult[0].reason?.message || guideSearchResult[0].reason);
   const twitchMedia = twitchResult.status === "fulfilled" ? twitchResult.value : { streams: [], vods: [] };
   if (twitchResult.status === "rejected") console.warn("Twitch media refresh skipped", twitchResult.reason?.message || twitchResult.reason);
   const suppressed = await readSuppressedVideoIds(env.CONTENT_AUTOMATION);
   const youtubeStreams = buildYouTubeLiveStreams(videos);
   const playlist = buildFeaturedPlaylist([
+    ...getStaticPlaylistVideos(),
+    ...guideSearchVideos,
     ...videos.filter(video => !video.isLive),
     ...twitchMedia.vods.slice(0, MAX_TWITCH_ARCHIVES)
   ], patch.label, suppressed);
@@ -559,7 +758,7 @@ export async function handlePlaylistRequest(env = {}) {
       twitch: Boolean(String(env.TWITCH_CLIENT_ID || "").trim() && String(env.TWITCH_CLIENT_SECRET || "").trim())
     },
     cachedAt: new Date().toISOString(),
-    source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api+twitch-helix" : "trusted-channel-feeds+twitch-helix"
+    source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api+popular-guide-search+twitch-helix" : "trusted-channel-feeds+twitch-helix"
   };
   await env.CONTENT_AUTOMATION?.put?.("playlist:featured", JSON.stringify(payload), { expirationTtl: 3600 });
   return payload;

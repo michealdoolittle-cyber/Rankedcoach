@@ -14,8 +14,8 @@ function startServer() {
     const server = http.createServer((request, response) => {
       let url = decodeURIComponent((request.url || "/").split("?")[0]);
       if (url === "/api/content/playlist") {
-        const images = ["breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png", "split-card.png", "bind-card.png"];
-        const channels = ["Dopai", "Woohoojin", "Konpeki", "Rooney", "Rem", "Charla7an"];
+        const images = ["breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png"];
+        const channels = ["Dopai", "Woohoojin", "Konpeki", "Rooney", "Rem", "Charla7an", "TenZ"];
         response.writeHead(200, { "Content-Type": "application/json" });
         return response.end(JSON.stringify({
           patchLabel: "13.01",
@@ -34,17 +34,17 @@ function startServer() {
             url: "https://www.twitch.tv/charla7an"
           }],
           items: images.map((image, index) => ({
-            id: `video${String(index + 1).padStart(6, "0")}`,
-            title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked", "Yoru buffs in Patch 13.01", "Ranked coaching VOD"][index],
+            id: index === 6 ? "d8CXBLRgP-A" : `video${String(index + 1).padStart(6, "0")}`,
+            title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked", "Yoru buffs in Patch 13.01", "Ranked coaching VOD", "Find your PERFECT Sensitivity and Optimal Settings! | SEN TenZ"][index],
             channel: channels[index],
             platform: index === 5 ? "twitch" : "youtube",
             upstreamId: index === 5 ? "1234567890" : "",
-            sourceType: index === 2 ? "youtube-vod" : index === 5 ? "twitch-archive" : "creator-guide",
-            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "VOD's"][index],
+            sourceType: index === 2 ? "youtube-vod" : index === 5 ? "twitch-archive" : index === 6 ? "settings-gear" : "creator-guide",
+            topicType: ["Role", "Mechanics", "Map Knowledge", "YT Shorts", "News", "VOD's", "Settings/Gear"][index],
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/${image}`,
-            url: index === 5 ? "https://www.twitch.tv/videos/1234567890" : `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
+            url: index === 5 ? "https://www.twitch.tv/videos/1234567890" : index === 6 ? "https://www.youtube.com/watch?v=d8CXBLRgP-A" : `https://www.youtube.com/watch?v=video${String(index + 1).padStart(6, "0")}`,
             isNewThisWeek: true,
-            isNewIn24Hours: true,
+            isNewIn24Hours: index !== 6,
             isShort: index === 3 || index === 4,
             isVod: index === 2 || index === 5
           }))
@@ -350,7 +350,7 @@ async function run() {
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 5);
     assert.doesNotMatch(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
-    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 12);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 13);
     assert.equal(await desktop.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     const playlistFilterThemeState = await desktop.locator(".gamesense-playlist-filters").evaluate(filters => {
@@ -398,8 +398,10 @@ async function run() {
     await desktop.locator('[data-gamesense-playlist-filter="Live/Streaming"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Charla7an.*412 watching/is);
     assert.doesNotMatch(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
+    await desktop.locator('[data-gamesense-playlist-filter="Settings/Gear"]').click();
+    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Optimal Settings.*TenZ/is);
     await desktop.locator('[data-gamesense-playlist-filter="All"]').click();
-    assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 6, "All must render every Playlist item without filtering.");
+    assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 7, "All must render every Playlist item without filtering.");
     await desktop.locator(".gamesense-back").click();
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.click('[data-gamesense-topic="maps"]');
@@ -1422,7 +1424,7 @@ async function run() {
     await mobile.locator(".gamesense-playlist-home").waitFor({ state: "visible" });
     await mobile.waitForTimeout(700);
     assert.doesNotMatch(await mobile.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
-    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 12);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 13);
     assert.equal(await mobile.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
