@@ -178,10 +178,30 @@ assert.equal(isPopularGuideSearchCandidate({
 }, { targetName: "Jett" }), false, "Montages must not be accepted as guide catalog entries.");
 
 const guideSearchKv = new MemoryKv();
+let guideSearchRequestCount = 0;
+await guideSearchKv.put("playlist:guide-search:agent:jett", JSON.stringify({
+  video: {
+    id: "IfoxN-v8Nyc",
+    platform: "youtube",
+    title: "How to Actually IMPROVE Game Sense in Valorant - (no BS)",
+    description: "Learn Jett, Bind, and ranked decision-making ideas.",
+    channel: "Guide Channel",
+    sourceType: "searched-guide",
+    topicTypeOverride: "Agent",
+    isValorant: true,
+    isShort: false,
+    isLive: false,
+    wasLive: false,
+    isVod: false
+  },
+  cachedAt: "2026-07-18T12:00:00Z",
+  expiresAt: "2099-01-01T00:00:00Z"
+}));
 const fetchBeforeGuideSearchCheck = globalThis.fetch;
 globalThis.fetch = async input => {
   const url = new URL(String(input));
   if (url.href.startsWith("https://www.googleapis.com/youtube/v3/search")) {
+    guideSearchRequestCount += 1;
     const query = url.searchParams.get("q");
     assert.equal(url.searchParams.get("order"), "viewCount", "Popular guide sourcing must use YouTube's view-count sort.");
     assert.equal(url.searchParams.get("regionCode"), "US", "Popular guide sourcing must target English/NA discovery.");
@@ -233,6 +253,7 @@ try {
     batchSize: 2
   });
   assert.deepEqual(popularGuides.map(video => [video.targetName, video.topicTypeOverride]), [["Jett", "Agent"], ["Bind", "Map Knowledge"]], "Popular guide searches must file exact agent/map matches into their respective Playlist categories.");
+  assert.equal(guideSearchRequestCount, 2, "Invalid cached broad guide hits must be ignored so every uncached or stale target is searched again.");
   const guidePlaylist = buildFeaturedPlaylist(popularGuides, "13.01", new Set(), Date.parse("2026-07-18T18:00:00Z"));
   assert.deepEqual(guidePlaylist.items.map(item => item.topicType), ["Agent", "Map Knowledge"], "Popular searched guide videos must preserve their target categories after playlist build.");
 } finally {

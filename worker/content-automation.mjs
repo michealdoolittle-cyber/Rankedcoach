@@ -358,11 +358,13 @@ export async function fetchTrustedChannelVideos(env = {}, options = {}) {
   return enrichYouTubeVideos(videos, apiKey);
 }
 
-async function readCachedGuideSearchVideo(kv, cacheKey = "") {
+async function readCachedGuideSearchVideo(kv, cacheKey = "", target = {}) {
   if (!kv?.get || !cacheKey) return undefined;
   const cached = await kv.get(cacheKey, "json");
   if (!cached?.expiresAt || Date.parse(cached.expiresAt) <= Date.now()) return undefined;
-  return cached.video ? Object.freeze(cached.video) : null;
+  if (!cached.video) return null;
+  const video = Object.freeze(cached.video);
+  return isPopularGuideSearchCandidate(video, target) ? video : undefined;
 }
 
 async function writeCachedGuideSearchVideo(kv, cacheKey = "", video = null) {
@@ -380,7 +382,7 @@ async function fetchMostPopularGuideForTarget(env = {}, target = {}) {
   const apiKey = String(env.YOUTUBE_DATA_API_KEY || "").trim();
   if (!apiKey || !target?.targetName) return null;
   const cacheKey = `playlist:guide-search:${String(target.targetType || "target").toLowerCase()}:${playlistTargetSlug(target.targetName)}`;
-  const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey);
+  const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey, target);
   if (cached !== undefined) return cached;
   const searchUrl = new URL(`${YOUTUBE_API_ROOT}/search`);
   searchUrl.searchParams.set("part", "snippet");
@@ -434,7 +436,7 @@ export async function fetchPopularGuideSearchVideos(env = {}, options = {}) {
   const searchTargets = [];
   for (const target of targets) {
     const cacheKey = `playlist:guide-search:${String(target.targetType || "target").toLowerCase()}:${playlistTargetSlug(target.targetName)}`;
-    const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey);
+    const cached = await readCachedGuideSearchVideo(env.CONTENT_AUTOMATION, cacheKey, target);
     if (cached) {
       videos.push(cached);
     } else if (cached === undefined) {
