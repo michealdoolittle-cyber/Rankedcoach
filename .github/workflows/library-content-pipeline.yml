@@ -1,0 +1,71 @@
+name: Library content pipeline
+
+on:
+  schedule:
+    - cron: "29 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rankedcoach-library-content
+  cancel-in-progress: false
+
+jobs:
+  draft-review-promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install screenshot browser
+        working-directory: testing/visual-audit
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Generate governed drafts
+        run: node scripts/generate-library-drafts.mjs
+
+      - name: Plan promotion
+        run: node scripts/promote-library-drafts.mjs --plan
+
+      - name: Capture before state
+        run: node testing/visual-audit/library-draft-screenshots.js --phase before
+
+      - name: Promote approved fields and create reviews
+        run: node scripts/promote-library-drafts.mjs
+        env:
+          RANKEDCOACH_NTFY_TOKEN: ${{ secrets.RANKEDCOACH_NTFY_TOKEN }}
+
+      - name: Capture after state
+        run: node testing/visual-audit/library-draft-screenshots.js --phase after
+
+      - name: Finalize review screenshots
+        run: node scripts/promote-library-drafts.mjs --refresh-screenshots --skip-notify
+
+      - name: Verify generated output
+        run: |
+          node --check public/library/gamesense-promoted.js
+          node --test testing/library-pipeline.test.mjs
+
+      - name: Commit current canonical changes
+        shell: bash
+        run: |
+          git config user.name "RankedCoach Library Bot"
+          git config user.email "rankedcoach-library-bot@users.noreply.github.com"
+          git add public/library/_drafts public/library/gamesense-promoted.js public/assets/library/maps/bind-layout-labeled.svg public/assets/library/maps/breeze-layout-labeled.svg
+          if git diff --cached --quiet; then
+            echo "No approved Library changes."
+            exit 0
+          fi
+          git commit -m "Refresh governed Library content"
+          git push origin HEAD:main

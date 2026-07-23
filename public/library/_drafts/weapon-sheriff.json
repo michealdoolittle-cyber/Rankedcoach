@@ -1,0 +1,199 @@
+{
+  "id": "sheriff",
+  "label": "Sheriff",
+  "image": "https://media.valorant-api.com/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702/displayicon.png",
+  "cost": 800,
+  "magazine": 6,
+  "fireRate": "4 rounds/sec",
+  "penetration": "High",
+  "damageRanges": [
+    {
+      "range": "0-30m",
+      "head": 159.5,
+      "body": 55,
+      "legs": 46.75
+    },
+    {
+      "range": "30-50m",
+      "head": 145,
+      "body": 50,
+      "legs": 42.5
+    }
+  ],
+  "focus": "Protect the 0-30m one-shot headshot range and let recoil settle. This is a stop-and-shoot weapon, not a flick gun.",
+  "whenToUse": [
+    "Buy it when an eco round needs one-shot headshot threat inside 30 meters.",
+    "Its high penetration can punish a confirmed common wall position, but six rounds demand a planned exit."
+  ],
+  "howToUse": [
+    "Stop moving before every shot and hold your crosshair at head height on likely angles before the enemy appears. The Sheriff punishes a late flick far more than it rewards one.",
+    "If the target is moving or at range, two body shots beat forcing a low-percentage headshot. Do not spam after a miss; reset to cover and take the next deliberate shot."
+  ],
+  "patchHistory": [
+    {
+      "patch": "3.00",
+      "note": "Walking inaccuracy rose from 0.25 to 1.2 and running inaccuracy from 2.0 to 3.0.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+    },
+    {
+      "patch": "6.11",
+      "note": "Minimum spread on ropes rose from 0.35 to 0.78 as rope combat was made less reliable.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+    }
+  ],
+  "pickRate": 5.7,
+  "killConversion": 0.66,
+  "roundConversion": "Available by buy type",
+  "uuid": "e336c6b8-418d-9340-d77f-7a9e4cfe0702",
+  "source": "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "weapon",
+    "slug": "sheriff",
+    "entityName": "Sheriff",
+    "operation": "merge",
+    "groupId": "sidearms",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "image": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cost": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "magazine": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fireRate": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "penetration": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "damageRanges": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "focus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "whenToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "howToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "killConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roundConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

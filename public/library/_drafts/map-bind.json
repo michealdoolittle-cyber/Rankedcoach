@@ -1,0 +1,699 @@
+{
+  "id": "bind",
+  "label": "Bind",
+  "inCompetitivePool": false,
+  "cardImage": "https://media.valorant-api.com/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba/splash.png",
+  "layoutImage": "/assets/library/maps/bind-layout-labeled.svg",
+  "callouts": [
+    {
+      "id": "bind-1",
+      "sourceKey": "A::Exit",
+      "sourceLabel": "A Exit",
+      "label": "A Exit",
+      "superRegionName": "A",
+      "regionName": "Exit",
+      "x": 92.35,
+      "y": 52.21
+    },
+    {
+      "id": "bind-2",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 51.75,
+      "y": 59.2
+    },
+    {
+      "id": "bind-3",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 76.33,
+      "y": 60.69
+    },
+    {
+      "id": "bind-4",
+      "sourceKey": "A::Short",
+      "sourceLabel": "A Short",
+      "label": "A Short",
+      "superRegionName": "A",
+      "regionName": "Short",
+      "x": 62.44,
+      "y": 49.65
+    },
+    {
+      "id": "bind-5",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 73.41,
+      "y": 33.34
+    },
+    {
+      "id": "bind-6",
+      "sourceKey": "A::Teleporter",
+      "sourceLabel": "A Teleporter",
+      "label": "A Teleporter",
+      "superRegionName": "A",
+      "regionName": "Teleporter",
+      "x": 60.58,
+      "y": 41.11
+    },
+    {
+      "id": "bind-7",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 58.15,
+      "y": 95.8
+    },
+    {
+      "id": "bind-8",
+      "sourceKey": "B::Exit",
+      "sourceLabel": "B Exit",
+      "label": "B Exit",
+      "superRegionName": "B",
+      "regionName": "Exit",
+      "x": 47.29,
+      "y": 44.12
+    },
+    {
+      "id": "bind-9",
+      "sourceKey": "B::Hall",
+      "sourceLabel": "B Hall",
+      "label": "B Hall",
+      "superRegionName": "B",
+      "regionName": "Hall",
+      "x": 28.54,
+      "y": 20.16
+    },
+    {
+      "id": "bind-10",
+      "sourceKey": "B::Link",
+      "sourceLabel": "B Link",
+      "label": "B Link",
+      "superRegionName": "B",
+      "regionName": "Link",
+      "x": 42.23,
+      "y": 59.22
+    },
+    {
+      "id": "bind-11",
+      "sourceKey": "B::Fountain",
+      "sourceLabel": "B Fountain",
+      "label": "B Fountain",
+      "superRegionName": "B",
+      "regionName": "Fountain",
+      "x": 25.89,
+      "y": 62.91
+    },
+    {
+      "id": "bind-12",
+      "sourceKey": "B::Long",
+      "sourceLabel": "B Long",
+      "label": "B Long",
+      "superRegionName": "B",
+      "regionName": "Long",
+      "x": 19.27,
+      "y": 51.52
+    },
+    {
+      "id": "bind-13",
+      "sourceKey": "B::Short",
+      "sourceLabel": "B Short",
+      "label": "B Short",
+      "superRegionName": "B",
+      "regionName": "Short",
+      "x": 39.66,
+      "y": 52.95
+    },
+    {
+      "id": "bind-14",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 29.19,
+      "y": 31.22
+    },
+    {
+      "id": "bind-15",
+      "sourceKey": "B::Teleporter",
+      "sourceLabel": "B Teleporter",
+      "label": "B Teleporter",
+      "superRegionName": "B",
+      "regionName": "Teleporter",
+      "x": 15.07,
+      "y": 43.49
+    },
+    {
+      "id": "bind-16",
+      "sourceKey": "B::Window",
+      "sourceLabel": "B Window",
+      "label": "B Hookah",
+      "superRegionName": "B",
+      "regionName": "Window",
+      "x": 32.27,
+      "y": 44.68
+    },
+    {
+      "id": "bind-17",
+      "sourceKey": "A::Bath",
+      "sourceLabel": "A Bath",
+      "label": "A Showers",
+      "superRegionName": "A",
+      "regionName": "Bath",
+      "x": 83.95,
+      "y": 43.03
+    },
+    {
+      "id": "bind-18",
+      "sourceKey": "Attacker Side::Cave",
+      "sourceLabel": "Attacker Side Cave",
+      "label": "Attacker Side Cave",
+      "superRegionName": "Attacker Side",
+      "regionName": "Cave",
+      "x": 59.21,
+      "y": 73.63
+    },
+    {
+      "id": "bind-19",
+      "sourceKey": "A::Cubby",
+      "sourceLabel": "A Cubby",
+      "label": "A Cubby",
+      "superRegionName": "A",
+      "regionName": "Cubby",
+      "x": 58.73,
+      "y": 45.99
+    },
+    {
+      "id": "bind-20",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 51.69,
+      "y": 10.37
+    },
+    {
+      "id": "bind-21",
+      "sourceKey": "B::Elbow",
+      "sourceLabel": "B Elbow",
+      "label": "B Elbow",
+      "superRegionName": "B",
+      "regionName": "Elbow",
+      "x": 15.83,
+      "y": 30.6
+    },
+    {
+      "id": "bind-22",
+      "sourceKey": "B::Garden",
+      "sourceLabel": "B Garden",
+      "label": "B Garden",
+      "superRegionName": "B",
+      "regionName": "Garden",
+      "x": 24.67,
+      "y": 42.81
+    },
+    {
+      "id": "bind-23",
+      "sourceKey": "A::Lamps",
+      "sourceLabel": "A Lamps",
+      "label": "A Lamps / U-Haul",
+      "superRegionName": "A",
+      "regionName": "Lamps",
+      "x": 58.17,
+      "y": 33.92
+    },
+    {
+      "id": "bind-24",
+      "sourceKey": "A::Tower",
+      "sourceLabel": "A Tower",
+      "label": "A Heaven",
+      "superRegionName": "A",
+      "regionName": "Tower",
+      "x": 72.78,
+      "y": 20.81
+    }
+  ],
+  "plantSpots": [
+    {
+      "number": 1,
+      "site": "A",
+      "label": "A Truck Default",
+      "rate": null,
+      "x": 75.6,
+      "y": 34.5,
+      "previewLabel": "A Truck in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/4d5161107bb15614535dae6dfc7f86bea500d003-763x663.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 2,
+      "site": "A",
+      "label": "A Open Plant",
+      "rate": null,
+      "x": 68.5,
+      "y": 35.7,
+      "previewLabel": "A Open in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/b996cd4c248b1766a76f753742b3b3bd5a4760e8-763x663.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 1,
+      "site": "B",
+      "label": "B Default",
+      "rate": null,
+      "x": 31.4,
+      "y": 31.3,
+      "previewLabel": "B Default in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/ae001b00624f314098333175e48aa9d7a317c2c2-857x661.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 2,
+      "site": "B",
+      "label": "B Long Plant",
+      "rate": null,
+      "x": 26.7,
+      "y": 31.3,
+      "previewLabel": "B open-site in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/52e28edead38b5b1ec0dcbfaf074fb2894cd7725-857x661.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 3,
+      "site": "B",
+      "label": "B Window Plant",
+      "rate": null,
+      "x": 29.1,
+      "y": 32.4,
+      "previewLabel": "B open-site in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/52e28edead38b5b1ec0dcbfaf074fb2894cd7725-857x661.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    }
+  ],
+  "plantRateNote": "Bind is outside the active competitive rotation, so no active-season PC plant-rate sample is available.",
+  "weaponSuggestions": [
+    {
+      "weapon": "Phantom",
+      "image": "/assets/weapons/phantom.png",
+      "category": "rifle",
+      "fit": "Best rifle fit",
+      "locations": "Hookah, Lamps, Showers",
+      "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+      "note": "Compact chokes and frequent smoke fights reward the Phantom's close-range control."
+    },
+    {
+      "weapon": "Operator",
+      "image": "/assets/weapons/operator.png",
+      "category": "sniper",
+      "fit": "Strong sniper fit",
+      "side": "DEF",
+      "locations": "B Long, A Tower, A Short",
+      "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+      "conversion": "Conversion read: stronger than a shotgun while the first duel stays long; Judge and Bucky gain value once Hookah or Lamps is the planned contact.",
+      "note": "On defense, long lanes create early picks, while either teleporter can turn a missed opening read into a fast cross-map fight. Pair the Operator with an escape tool and a called rotation."
+    },
+    {
+      "weapon": "Ghost",
+      "image": "/assets/weapons/ghost.png",
+      "category": "pistol",
+      "fit": "Pistol-round fit",
+      "locations": "A Short, Showers, B Long",
+      "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+      "note": "The quiet, accurate first shot fits Bind's early lane fights while keeping utility in the buy."
+    },
+    {
+      "weapon": "Judge",
+      "image": "/assets/weapons/judge.png",
+      "category": "shotgun",
+      "fit": "Close conversion rival",
+      "side": "DEF",
+      "locations": "Hookah, Lamps, U-Haul",
+      "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+      "conversion": "Conversion read: more repeatable than an Operator when the setup guarantees two close contacts; much weaker if attackers can reset to Long or Showers.",
+      "note": "On defense, commit it to a compact choke and plan the rifle recovery after the first conversion."
+    },
+    {
+      "weapon": "Stinger",
+      "image": "/assets/weapons/stinger.png",
+      "category": "eco",
+      "fit": "Eco outlier",
+      "locations": "Hookah, Lamps, Showers",
+      "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+      "note": "The low-cost damage output is useful only when the setup protects a close fight and a short magazine."
+    }
+  ],
+  "macro": {
+    "_researchNote": "internal only, do not render",
+    "_researchUrl": "https://www.zleague.gg/theportal/woohoojin-mastering-the-bind-map-in-valorant/",
+    "defense": [
+      "Treat Hookah, Showers, Octagon, and U-Haul as Bind's high-value control areas. Double up when the read calls for it; owning one of these lanes gives the retake a flank route and shortens the next rotation.",
+      "On A site, contest Showers or U-Haul before settling into straight-site positions. Giving up both lets attackers flood the site with utility and leaves the retake entering through predictable lanes.",
+      "Look for repeated defaults, late lurks, and teleporter timings, then call an early punish. Waiting until the execute lands gives the pattern its value."
+    ],
+    "attack": [
+      "Bind's two teleporters turn lane control into fast cross-map rotations. Draw utility or defenders first, then arrive at the exit together instead of treating first contact as a forced site commitment.",
+      "Read the defensive composition before choosing pace: break sentinel utility early and commit late into double Sentinel; hit earlier into double Controller before rotating smokes recycle; hold disciplined defaults into double Initiator so repeated information sees no commitment; against double Duelist, take or hold forward lanes so aggression is called and traded."
+    ]
+  },
+  "siteTips": [
+    {
+      "label": "A Showers",
+      "text": "Clear Showers before the spike crosses Truck. A defender left there can split the site, punish the plant, and isolate the A Short group.",
+      "roles": [
+        "Duelist",
+        "Initiator"
+      ]
+    },
+    {
+      "label": "A Lamps / U-Haul",
+      "text": "Take and hold Lamps/U-Haul through the plant. It is the defenders' closest retake path and protects the planter from an immediate site re-entry.",
+      "roles": [
+        "Controller",
+        "Sentinel"
+      ]
+    },
+    {
+      "label": "B Hookah",
+      "text": "Build the B split around synchronized Hookah and Garden/B Long contact. Hold the drop until the Long group can trade, then clear site and Elbow from different directions.",
+      "roles": [
+        "Duelist",
+        "Initiator"
+      ]
+    },
+    {
+      "label": "B Long / Octagon",
+      "text": "Keep Long or Octagon after the plant while a teammate holds site or Hookah. That crossfire forces the retake to clear separate lines instead of collapsing through Defender Spawn and Elbow together.",
+      "roles": [
+        "Controller",
+        "Sentinel"
+      ]
+    }
+  ],
+  "teamplayTips": [
+    {
+      "label": "Common fake",
+      "text": "Sell A with Showers and A Short utility, then send one player through the A teleporter while the spike group holds B Long. Call whether the exit player is selling Hookah pressure or joining the hit before the audio plays."
+    },
+    {
+      "label": "Eco-round plan",
+      "text": "Group the low buy to break one piece of sentinel utility and force a compact trade through Showers, U-Haul, or Hookah. Recover the first rifle before spreading into open lanes."
+    },
+    {
+      "label": "Round-plan execution",
+      "text": "Before barriers drop, name the first lane, the teleporter trigger, and the reset condition. Bind's rotations are fast only when the destination group is ready for the exit fight."
+    }
+  ],
+  "roleNotes": {
+    "Duelist": [
+      {
+        "category": "attack",
+        "text": "Take first space through A Short, Showers, Hookah, or B Long after support utility lands."
+      },
+      {
+        "category": "sites",
+        "text": "On A, force the Showers split angle off and clear U-Haul/Lamps; on B, clear Hookah and Elbow before teammates spread into site."
+      },
+      {
+        "category": "defense",
+        "text": "Contest Hookah, Showers, Octagon, or U-Haul with an escape plan instead of dry re-peeking after contact."
+      }
+    ],
+    "Initiator": [
+      {
+        "category": "attack",
+        "text": "Reveal or clear Hookah, B Long, Showers, and A Short immediately before the entry moves."
+      },
+      {
+        "category": "sites",
+        "text": "Use flashes and scans to isolate U-Haul/Lamps, A Tower, Elbow, and Defender Spawn rather than covering empty space."
+      },
+      {
+        "category": "teamplay",
+        "text": "Track teleporter audio and call the exit so the team rotates before the destination fight is already lost."
+      }
+    ],
+    "Controller": [
+      {
+        "category": "sites",
+        "text": "For A hits, smoke off A Tower and cover U-Haul/Lamps or Showers based on the lane the team owns; for B hits, smoke off Defender Spawn and Elbow."
+      },
+      {
+        "category": "teamplay",
+        "text": "One-way smokes are setup-dependent and should not replace the smokes the execute needs."
+      },
+      {
+        "category": "defense",
+        "text": "Keep one smoke or damage tool for the post-plant because Bind retakes arrive through narrow named lanes."
+      }
+    ],
+    "Sentinel": [
+      {
+        "category": "teamplay",
+        "text": "Place flank utility where it survives common prefire paths and still catches teleporter rotations."
+      },
+      {
+        "category": "defense",
+        "text": "Anchor where you can punish Hookah, B Long, A Short, or Showers contact without giving a free first death."
+      },
+      {
+        "category": "defense",
+        "text": "Change trap and camera height between gun rounds so the same clear does not solve the setup twice."
+      }
+    ]
+  },
+  "metaComp": {
+    "agents": [],
+    "composition": "No current ranked composition sample",
+    "patch": "13.01"
+  },
+  "metaComps": [],
+  "compStatus": "Bind is outside Tracker Network's current rolling Competitive map sample, so no current composition reference is shown.",
+  "agentInsights": {
+    "Clove": "Post-death smokes keep both teleporter rotations covered after an opening fight.",
+    "Raze": "Explosive movement and clearing utility break Bind's narrow Hookah, Showers, and A Short chokes.",
+    "Fade": "Haunt and Prowlers clear U-Haul/Lamps, Hookah, and site corners immediately before contact.",
+    "Cypher": "Flank information survives teleporter rotations; B is the higher-success anchor site in this current sample.",
+    "Skye": "Guiding Light can curve through both compact site entrances and support fast re-clears."
+  },
+  "lineupLinks": [
+    {
+      "label": "LineupsValorant — Bind",
+      "url": "https://lineupsvalorant.com/"
+    },
+    {
+      "label": "UpForge Lineup Library — Bind",
+      "url": "https://upforge.gg/lineups"
+    }
+  ],
+  "uuid": "2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba",
+  "coordinates": "34°2'A'N,6°51'Z'W",
+  "calloutLabelsBakedIn": true,
+  "source": "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "bind",
+    "entityName": "Bind",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
+          "https://valohub.co/maps/bind",
+          "https://www.reddit.com/r/VALORANT/comments/1dlyx4x/why_does_bind_have_different_callouts_then_the_map/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "siteTips": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "teamplayTips": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roleNotes": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compStatus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

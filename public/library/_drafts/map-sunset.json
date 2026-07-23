@@ -1,0 +1,314 @@
+{
+  "id": "sunset",
+  "label": "Sunset",
+  "uuid": "92584fbe-486a-b1b2-9faa-39b0f486b498",
+  "coordinates": "34° 2′ C″ N, 118° 12′ YT″ W",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/displayicon.png",
+  "calloutLabelsBakedIn": false,
+  "callouts": [
+    {
+      "id": "sunset-1",
+      "sourceKey": "B::Boba",
+      "sourceLabel": "B Boba",
+      "label": "B Boba",
+      "superRegionName": "B",
+      "regionName": "Boba",
+      "x": 12.56,
+      "y": 34.4
+    },
+    {
+      "id": "sunset-2",
+      "sourceKey": "Mid::Tiles",
+      "sourceLabel": "Mid Tiles",
+      "label": "Mid Tiles",
+      "superRegionName": "Mid",
+      "regionName": "Tiles",
+      "x": 53.12,
+      "y": 65.6
+    },
+    {
+      "id": "sunset-3",
+      "sourceKey": "B::Market",
+      "sourceLabel": "B Market",
+      "label": "B Market",
+      "superRegionName": "B",
+      "regionName": "Market",
+      "x": 23.48,
+      "y": 53.12
+    },
+    {
+      "id": "sunset-4",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 4.37,
+      "y": 56.24
+    },
+    {
+      "id": "sunset-5",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 5.93,
+      "y": 67.16
+    },
+    {
+      "id": "sunset-6",
+      "sourceKey": "B::Lobby",
+      "sourceLabel": "B Lobby",
+      "label": "B Lobby",
+      "superRegionName": "B",
+      "regionName": "Lobby",
+      "x": 29.72,
+      "y": 78.08
+    },
+    {
+      "id": "sunset-7",
+      "sourceKey": "Mid::Bottom",
+      "sourceLabel": "Mid Bottom",
+      "label": "Mid Bottom",
+      "superRegionName": "Mid",
+      "regionName": "Bottom",
+      "x": 34.2,
+      "y": 65.6
+    },
+    {
+      "id": "sunset-8",
+      "sourceKey": "Mid::Courtyard",
+      "sourceLabel": "Mid Courtyard",
+      "label": "Mid Courtyard",
+      "superRegionName": "Mid",
+      "regionName": "Courtyard",
+      "x": 40.64,
+      "y": 56.24
+    },
+    {
+      "id": "sunset-9",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 65.6,
+      "y": 65.6
+    },
+    {
+      "id": "sunset-10",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 67.16,
+      "y": 54.68
+    },
+    {
+      "id": "sunset-11",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 73.4,
+      "y": 34.4
+    },
+    {
+      "id": "sunset-12",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 74.96,
+      "y": 43.76
+    },
+    {
+      "id": "sunset-13",
+      "sourceKey": "A::Elbow",
+      "sourceLabel": "A Elbow",
+      "label": "A Elbow",
+      "superRegionName": "A",
+      "regionName": "Elbow",
+      "x": 82.76,
+      "y": 50
+    },
+    {
+      "id": "sunset-14",
+      "sourceKey": "A::Alley",
+      "sourceLabel": "A Alley",
+      "label": "A Alley",
+      "superRegionName": "A",
+      "regionName": "Alley",
+      "x": 78.08,
+      "y": 25.04
+    },
+    {
+      "id": "sunset-15",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 34.49,
+      "y": 21.88
+    },
+    {
+      "id": "sunset-16",
+      "sourceKey": "Mid::Top",
+      "sourceLabel": "Mid Top",
+      "label": "Mid Top",
+      "superRegionName": "Mid",
+      "regionName": "Top",
+      "x": 34.4,
+      "y": 35.96
+    },
+    {
+      "id": "sunset-17",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 46.88,
+      "y": 98.56
+    }
+  ],
+  "source": "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US",
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "sunset",
+    "entityName": "Sunset",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US",
+          "https://valohub.co/maps/sunset",
+          "https://www.valocheck.com/maps/sunset/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

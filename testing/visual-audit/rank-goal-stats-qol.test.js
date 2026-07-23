@@ -148,22 +148,29 @@ async function run() {
     await page.click("#dailyWarmupSkip").catch(() => {});
 
     const focusOptions = await page.locator("#logFocusSelect option").evaluateAll(options => options.map(option => option.value));
-    assert.equal(focusOptions.length, 39, JSON.stringify(focusOptions));
+    assert.equal(focusOptions.length, 19, JSON.stringify(focusOptions));
     assert.equal(new Set(focusOptions).size, focusOptions.length, JSON.stringify(focusOptions));
-    [
-      "Aim",
-      "Trade Conversion",
+    assert.deepEqual(focusOptions, [
+      "",
+      "Crosshair Discipline",
+      "Duel Discipline",
+      "Positioning",
+      "Trading",
+      "Entry",
+      "Timing",
       "Information Gathering",
-      "Map Preparation",
+      "Utility Usage",
+      "Utility Timing",
       "Post-Plant Control",
-      "Multi-Kill Conversion",
+      "Round Survivability",
+      "Eco Conversion",
+      "Awareness Check",
+      "Retake Timing",
       "Comms Discipline",
-      "Self Comms",
-      "Game Sense",
-      "General",
+      "Weapon Category Use",
+      "Mental Reset",
       "Other"
-    ].forEach(category => assert.ok(focusOptions.includes(category), `${category}: ${JSON.stringify(focusOptions)}`));
-    assert.equal(focusOptions.includes("Weapon Category Use"), false, JSON.stringify(focusOptions));
+    ]);
 
     assert.equal(await page.locator("#navGoalTargetIcon").getAttribute("alt"), "Diamond 3");
     const storedGoal = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.goalRank);
@@ -334,7 +341,7 @@ async function run() {
     assert.equal(statsMapPoolState.outNoDataTags, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outBadges, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outNamesCentered, true, JSON.stringify(statsMapPoolState));
-    assert.match(statsMapPoolState.summitImage, /media\.valorant-api\.com\/maps\/756da597-416b-c0f2-f47b-afbdf28670bc\/displayicon\.png/i);
+    assert.match(statsMapPoolState.summitImage, /media\.valorant-api\.com\/maps\/756da597-416b-c0f2-f47b-afbdf28670bc\/splash\.png/i);
     assert.ok(statsMapPoolState.activeNoDataTags >= 1, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.excludedCrosses, 6, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.resultLineCentered, true, JSON.stringify(statsMapPoolState));

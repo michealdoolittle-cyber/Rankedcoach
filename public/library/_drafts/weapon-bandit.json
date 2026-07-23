@@ -1,0 +1,139 @@
+{
+  "id": "bandit",
+  "label": "Bandit",
+  "uuid": "410b2e0b-4ceb-1321-1727-20858f7f3477",
+  "image": "https://media.valorant-api.com/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477/displayicon.png",
+  "cost": 600,
+  "magazine": 8,
+  "fireRate": "5.1 rounds/sec",
+  "penetration": "Medium",
+  "damageRanges": [
+    {
+      "range": "0-10m",
+      "head": 152,
+      "body": 39,
+      "legs": 33
+    },
+    {
+      "range": "10-30m",
+      "head": 128,
+      "body": 39,
+      "legs": 33
+    },
+    {
+      "range": "30-50m",
+      "head": 112,
+      "body": 34,
+      "legs": 28
+    }
+  ],
+  "source": "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "weapon",
+    "slug": "bandit",
+    "entityName": "Bandit",
+    "operation": "merge",
+    "groupId": "sidearms",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "image": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cost": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "magazine": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fireRate": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "penetration": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "damageRanges": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/410b2e0b-4ceb-1321-1727-20858f7f3477?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

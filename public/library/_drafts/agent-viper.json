@@ -1,0 +1,300 @@
+{
+  "id": "viper",
+  "label": "Viper",
+  "role": "Controller",
+  "maps": [
+    "Breeze",
+    "Split",
+    "Lotus"
+  ],
+  "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/fullportrait.png",
+  "fundamentals": [
+    "Toxic Screen and Poison Cloud share fuel, so cycle them around the team's contact instead of spending the full tank before anyone can take space.",
+    "Her wall is permanent for the round and the orb is only recoverable during Buy Phase. Commit each setup to the lanes your team actually plans to contest.",
+    "Snake Bite's Vulnerable effect turns teammate damage into the real threat. Pair it with a choke, smoke, plant sound, or swing rather than relying on the puddle alone."
+  ],
+  "patchHistory": [
+    {
+      "patch": "3.00",
+      "note": "Snake Bite duration fell from 8 to 6.5 seconds and its price rose from 100 to 200 credits as Riot reduced Viper's stall time.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+    },
+    {
+      "patch": "8.08",
+      "note": "Smoke uptime fell to 12 seconds, minimum activation fuel rose to 30%, and Snake Bite moved to one 300-credit charge with a 6.5-second duration.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-8-08/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "poison-cloud",
+      "name": "Poison Cloud",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/abilities/ability1/displayicon.png",
+      "summary": "EQUIP a gas emitter. FIRE to throw the emitter that perpetually remains throughout the round. ALT FIRE to lob. RE-USE the ability to create a toxic gas cloud that Decays opponents inside it at the cost of fuel. This ability can be picked up to be REDEPLOYED before the round starts and can be RE-USED more than once throughout the round.",
+      "stats": {
+        "Cost": "200 credits",
+        "Charges": "1",
+        "Uptime": "Up to 12 seconds on full solo fuel",
+        "Reactivation": "5-second delay"
+      },
+      "purpose": "Control a choke repeatedly and create strong one-way fights from stable ledges.",
+      "setup": "One-ways are a core strength, but difficult throws need a reproducible lineup. If the orb misses, the setup can be unrecoverable after Buy Phase.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/49ff8efd75b76941da3018362061275d3a1d43d6.mp4?accountingTag=VAL",
+        "title": "Viper Poison Cloud ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+    },
+    {
+      "id": "toxic-screen",
+      "name": "Toxic Screen",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a gas emitter launcher that penetrates terrain. FIRE to deploy a long line of gas emitters. RE-USE the ability to create a tall wall of toxic gas that Decays opponents that cross it at the cost of fuel. This ability can be RE-USED more than once.",
+      "stats": {
+        "Cost": "Free",
+        "Charges": "1",
+        "Uptime": "Up to 12 seconds on full solo fuel",
+        "Reactivation": "5-second delay"
+      },
+      "purpose": "Split open sites, hide several crossing lanes at once, and control when defenders regain information.",
+      "setup": "Place it for the entire round plan. The emitters cannot be moved, so a wall that helps defenders retake can hurt the team later.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/36db8f44946850c2a20aba43d8ad3ecd977c7d7e.mp4?accountingTag=VAL",
+        "title": "Viper Toxic Screen ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+    },
+    {
+      "id": "snake-bite",
+      "name": "Snake Bite",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a chemical launcher. FIRE to launch a canister that shatters upon hitting the floor, creating a lingering chemical zone that damages and applies Vulnerable.",
+      "stats": {
+        "Cost": "300 credits",
+        "Charges": "1",
+        "Duration": "6.5 seconds",
+        "Damage": "Damage over time"
+      },
+      "purpose": "Clear a corner, stop a plant or defuse, and double the threat of teammate damage through Vulnerable.",
+      "setup": "Damage depends on how long the target remains inside, so pair it with a choke, smoke, stun, or confirmed spike timing.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/9eeb3090efed080792e6ea2f264fd60ebb12694e.mp4?accountingTag=VAL",
+        "title": "Viper Snake Bite ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+    },
+    {
+      "id": "viper-s-pit",
+      "name": "Viper's Pit",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP a chemical sprayer. FIRE to spray a chemical cloud in all directions around Viper, creating a large cloud that Nearsights players and Decays the health of enemies inside of it. HOLD the ability key to disperse the cloud early.",
+      "stats": {
+        "Cost": "9 ultimate points",
+        "Duration": "Persistent while maintained",
+        "Damage": "Decay, not direct damage",
+        "Recharge": "No"
+      },
+      "purpose": "Lock down a planted spike or high-value zone and force close, uncertain fights.",
+      "setup": "Move between several safe pockets. Repeating one hiding spot turns the entire ultimate into one pre-aimed duel.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/4601fd972c588a79cdd910b2497546f156886c40.mp4?accountingTag=VAL",
+        "title": "Viper's Pit ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+    },
+    {
+      "id": "toxic",
+      "name": "Toxic",
+      "slot": "Passive - Passive",
+      "icon": "",
+      "summary": "You gradually generate and replenish the toxin that fuels your abilities.  Enemies that cross through Viper's Poison Cloud, Toxic Screen, or Viper's Pit are instantly inflicted with at least 30 Decay. Their Decay level increases the longer they remain in contact with it.",
+      "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+    }
+  ],
+  "pickRate": 0.9,
+  "pickRateRank": 25,
+  "sampleLabel": "Tracker Network | Past two weeks",
+  "mapPickRates": {
+    "Breeze": 3.9,
+    "Split": 0.6,
+    "Lotus": 0.5
+  },
+  "mapWinRates": {
+    "Breeze": 50.4,
+    "Split": 47.9,
+    "Lotus": 48.2
+  },
+  "lore": [
+    {
+      "label": "Origin",
+      "value": "United States",
+      "note": "Viper is an American chemist who applies a formidable scientific mind directly to the battlefield."
+    },
+    {
+      "label": "Lore",
+      "value": "Toxic field commander",
+      "note": "Her chemical devices control space and impair enemies, and she is willing to use every advantage to secure the mission."
+    }
+  ],
+  "uuid": "707eab51-4836-f488-046a-cda6bf494859",
+  "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "viper",
+    "entityName": "Viper",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

@@ -51140,7 +51140,7 @@ function renderStatsMapsModel() {
     card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded is-out-of-season" : " is-active-pool"}${isActivePool && !hasData ? " is-no-data" : ""}`;
     card.innerHTML = `
       ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true"></span>` : ""}
-      <img class="stats-map-image stats-map-layout-image" src="${getStatsMapLayoutUrl(mapName)}" alt="${escapeHtml(mapName)} tactical layout">
+      <img class="stats-map-image stats-map-photo-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)} map artwork">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">

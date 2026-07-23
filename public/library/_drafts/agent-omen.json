@@ -1,0 +1,292 @@
+{
+  "id": "omen",
+  "label": "Omen",
+  "role": "Controller",
+  "maps": [
+    "Haven",
+    "Ascent",
+    "Lotus"
+  ],
+  "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/fullportrait.png",
+  "fundamentals": [
+    "Dark Cover recharges, so survive the opening long enough to reshape the late round. Place each smoke against a named defender angle the team is ready to cross.",
+    "Paranoia phases through terrain and objects and can hit teammates, which makes its path a team timing tool: call the lane, cast beside the entry, then swing with them.",
+    "Shrouded Step and From the Shadows create doubt before they create kills. Teleport when sound, smoke, or pressure gives the enemy more than one landing to respect."
+  ],
+  "patchHistory": [
+    {
+      "patch": "4.04",
+      "note": "Dark Cover cooldown fell from 40 to 30 seconds and projectile speed rose from 2800 to 6400; Shrouded Step became cheaper and faster to complete.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-04/"
+    },
+    {
+      "patch": "13.00",
+      "note": "Enemy-facing Shrouded Step audio was updated to make nearby teleports easier to parse during chaotic fights.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "paranoia",
+      "name": "Paranoia",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/abilities/ability1/displayicon.png",
+      "summary": "EQUIP a blinding orb.  FIRE to throw it forward, briefly Nearsighting and Deafening all players it touches. This projectile can pass straight through walls.",
+      "stats": {
+        "Cost": "250 credits",
+        "Charges": "1",
+        "Debuff": "About 2 seconds",
+        "Damage": "None"
+      },
+      "purpose": "Start a coordinated swing through a narrow lane or disable a defender holding behind cover.",
+      "setup": "Call the path before casting. It can hit teammates, so align the projectile beside their approach rather than through them.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/f401fc788f3182b6d5aa25af6056c842117b1b36.mp4?accountingTag=VAL",
+        "title": "Omen Paranoia ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+    },
+    {
+      "id": "dark-cover",
+      "name": "Dark Cover",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a shadow orb, entering a phased world to place and target the orbs. PRESS the ability key to throw the shadow orb to the marked location, creating a long-lasting shadow sphere that blocks vision. HOLD FIRE while targeting to move the marker further away. HOLD ALT FIRE while targeting to move the marker closer. PRESS RELOAD to toggle normal targeting view.",
+      "stats": {
+        "Cost": "1 free; extra charge 150",
+        "Charges": "2",
+        "Duration": "15 seconds",
+        "Recharge": "Cooldown"
+      },
+      "purpose": "Remove named angles, sell pressure across the map, and preserve a smoke for the late round.",
+      "setup": "One-ways are possible on ledges and boxes, but require consistent placement. A complete execute smoke matters more than a fragile trick setup.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ba0b035a5ff2bb8d9487ba461b3d15900ff50f6b.mp4?accountingTag=VAL",
+        "title": "Omen Dark Cover ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+    },
+    {
+      "id": "shrouded-step",
+      "name": "Shrouded Step",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a shrouded step ability and see its range indicator. FIRE to begin a brief channel, then teleport to the marked location.",
+      "stats": {
+        "Cost": "100 credits",
+        "Charges": "2",
+        "Recharge": "No",
+        "Damage": "None"
+      },
+      "purpose": "Reach elevation, escape utility, cross a watched gap, or reposition after making noise elsewhere.",
+      "setup": "Hide the channel sound or force the enemy to watch multiple landing points. Unsupported open-ground teleports are a gamble.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/33550fee410c5a55ea8832f41827a12aaddb686f.mp4?accountingTag=VAL",
+        "title": "Omen Shrouded Step ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+    },
+    {
+      "id": "from-the-shadows",
+      "name": "From the Shadows",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP a tactical map. FIRE to begin teleporting to the selected location. While teleporting, Omen will appear as a Shade that can be destroyed by an enemy to cancel his teleport, or PRESS EQUIP for Omen to cancel his teleport.",
+      "stats": {
+        "Cost": "7 ultimate points",
+        "Range": "Map-wide",
+        "Damage": "None",
+        "Recharge": "No"
+      },
+      "purpose": "Recover the spike, force defenders to turn, sell a fake, or convert information into a fast rotation.",
+      "setup": "Choose a landing with cover and a reason. A cancel can still create value if it forces the enemy to abandon position.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/252cf8ad86b6aca6210ba93ea856f52708476eba.mp4?accountingTag=VAL",
+        "title": "Omen From the Shadows ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+    }
+  ],
+  "pickRate": 4.9,
+  "pickRateRank": 7,
+  "sampleLabel": "Tracker Network | Past two weeks",
+  "mapPickRates": {
+    "Haven": 5.6,
+    "Ascent": 5.3,
+    "Lotus": 5.2
+  },
+  "mapWinRates": {
+    "Haven": 47.6,
+    "Ascent": 47.6,
+    "Lotus": 47.5
+  },
+  "lore": [
+    {
+      "label": "Origin",
+      "value": "Unknown",
+      "note": "Omen is a phantom of memory whose fragmented identity remains one of the Protocol's deepest mysteries."
+    },
+    {
+      "label": "Lore",
+      "value": "Shadow-born hunter",
+      "note": "He moves through darkness, blinds the opposition, and lets uncertainty spread before striking from an unexpected angle."
+    }
+  ],
+  "uuid": "8e253930-4c05-31dd-1b6c-968525494517",
+  "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "omen",
+    "entityName": "Omen",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

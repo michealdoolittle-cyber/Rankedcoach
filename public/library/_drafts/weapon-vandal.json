@@ -1,0 +1,198 @@
+{
+  "id": "vandal",
+  "label": "Vandal",
+  "image": "https://media.valorant-api.com/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872/displayicon.png",
+  "cost": 2900,
+  "magazine": 25,
+  "fireRate": "9.75 rounds/sec",
+  "penetration": "Medium",
+  "damageRanges": [
+    {
+      "range": "0-50m",
+      "head": 160,
+      "body": 40,
+      "legs": 34
+    }
+  ],
+  "focus": "No damage falloff. Favor clean taps and short bursts once the first controlled shots are gone.",
+  "whenToUse": [
+    "Choose it on full buys when long sightlines and one-shot headshots matter.",
+    "Favor it when your plan includes disciplined taps, bursts, or medium-penetration spam through a known position."
+  ],
+  "howToUse": [
+    "Tap at long range, use two-to-four-shot bursts at mid range, and commit to a spray only when the target is close enough to track.",
+    "Stop before the first shot and reset after the controlled bullets; running recoil is deliberately harsher."
+  ],
+  "patchHistory": [
+    {
+      "patch": "1.07",
+      "note": "Fire rate rose from 9.25 to 9.75 rounds per second and body damage rose from 39 to 40.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-1-07/"
+    },
+    {
+      "patch": "6.11",
+      "note": "Running vertical recoil rose from 1.5x to 1.8x and reserve ammo fell from 75 to 50.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+    },
+    {
+      "patch": "11.08",
+      "note": "Protected spray bullets rose from four to six while horizontal recoil timing was retuned.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    }
+  ],
+  "pickRate": 37.6,
+  "killConversion": 1.01,
+  "roundConversion": "Available by buy type",
+  "uuid": "9c82e19d-4575-0200-1a81-3eacf00cf872",
+  "source": "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "weapon",
+    "slug": "vandal",
+    "entityName": "Vandal",
+    "operation": "merge",
+    "groupId": "rifles",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "image": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cost": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "magazine": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fireRate": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "penetration": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "damageRanges": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "focus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "whenToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "howToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "killConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roundConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

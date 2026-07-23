@@ -1,0 +1,217 @@
+{
+  "id": "gekko",
+  "label": "Gekko",
+  "role": "Initiator",
+  "maps": [],
+  "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/fullportrait.png",
+  "fundamentals": [
+    "Riot identifies Gekko as a Initiator. Gekko the Angeleno leads a tight-knit crew of calamitous creatures. His buddies bound forward, scattering enemies out of the way, with Gekko chasing them down to regroup and go again.",
+    "Dizzy is Gekko's current Signature ability. EQUIP Dizzy. FIRE to send Dizzy soaring forward through the air. Dizzy charges then unleashes plasma blasts at enemies in line of sight. Enemies hit by her plasma are Blinded. When Dizzy expires she reverts into a dormant globule. INTERACT to reclaim the globule and gain another Dizzy charge after a short cooldown.",
+    "Thrash is Gekko's Ultimate ability. EQUIP Thrash. FIRE to link with Thrash's mind and steer her through enemy territory. ACTIVATE to lunge forward and explode, Detaining any players in a small radius. When Thrash expires she reverts into a dormant globule. INTERACT to reclaim the globule and gain another Thrash charge after a short cooldown. Thrash can be reclaimed once."
+  ],
+  "patchHistory": [
+    {
+      "patch": "12.07",
+      "note": "Dizzy Bugfix Buff: Fixed a bug where she would only target an enemy if their head was visible.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-07/"
+    },
+    {
+      "patch": "12.05",
+      "note": "Thrash Bugfix: Fixed a bug where a floating gun may briefly appear when a suppression effect interrupts it",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "wingman",
+      "name": "Wingman",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/abilities/ability1/displayicon.png",
+      "summary": "EQUIP Wingman. FIRE to send Wingman forward seeking enemies. Wingman unleashes a concussive blast toward the first enemy he sees. ALT FIRE when targeting a Spike site or planted Spike to have Wingman defuse or plant the Spike. To plant, Gekko must have the Spike in his inventory. When Wingman expires he reverts into a dormant globule. INTERACT to reclaim the globule and gain another Wingman charge after a short cooldown.",
+      "stats": {
+        "Cost": "300 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Wingman limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
+      "setup": "Wingman must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+    },
+    {
+      "id": "dizzy",
+      "name": "Dizzy",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/abilities/ability2/displayicon.png",
+      "summary": "EQUIP Dizzy. FIRE to send Dizzy soaring forward through the air. Dizzy charges then unleashes plasma blasts at enemies in line of sight. Enemies hit by her plasma are Blinded. When Dizzy expires she reverts into a dormant globule. INTERACT to reclaim the globule and gain another Dizzy charge after a short cooldown.",
+      "stats": {
+        "Cost": "Free signature charge",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Dizzy is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
+      "setup": "Dizzy must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+    },
+    {
+      "id": "mosh-pit",
+      "name": "Mosh Pit",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/abilities/grenade/displayicon.png",
+      "summary": "EQUIP Mosh. FIRE to throw Mosh like a grenade. ALT FIRE to lob. Upon landing Mosh duplicates across a large area that deals a small amount of damage over time then after a short delay explodes. INTERACT to reclaim the globule and gain another Mosh charge after a short cooldown.",
+      "stats": {
+        "Cost": "250 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Mosh Pit applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "Mosh Pit must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+    },
+    {
+      "id": "thrash",
+      "name": "Thrash",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP Thrash. FIRE to link with Thrash’s mind and steer her through enemy territory. ACTIVATE to lunge forward and explode, Detaining any players in a small radius. When Thrash expires she reverts into a dormant globule. INTERACT to reclaim the globule and gain another Thrash charge after a short cooldown. Thrash can be reclaimed once.",
+      "stats": {
+        "Cost": "8 ultimate points",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Thrash applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "Thrash must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+    }
+  ],
+  "lore": [
+    {
+      "label": "Official role",
+      "value": "Initiator",
+      "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+    },
+    {
+      "label": "Official profile",
+      "value": "Gekko",
+      "note": "Gekko the Angeleno leads a tight-knit crew of calamitous creatures. His buddies bound forward, scattering enemies out of the way, with Gekko chasing them down to regroup and go again."
+    }
+  ],
+  "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
+  "uuid": "e370fa57-4757-3604-3648-499e1f642d3f",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "gekko",
+    "entityName": "Gekko",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

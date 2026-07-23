@@ -1,0 +1,300 @@
+{
+  "id": "jett",
+  "label": "Jett",
+  "role": "Duelist",
+  "maps": [
+    "Breeze",
+    "Ascent",
+    "Haven"
+  ],
+  "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/fullportrait.png",
+  "fundamentals": [
+    "Tailwind makes Jett one of the safest Operator holders: take a one-and-done angle, then dash back beside cover after the shot.",
+    "Cloudburst is a short crossing tool. Pair it with Tailwind to break one sightline, then clear the next fight instead of treating it like a full controller smoke.",
+    "Updraft and Blade Storm stay accurate while moving, so use elevation to change the defender's crosshair height only when you know where you can land."
+  ],
+  "patchHistory": [
+    {
+      "patch": "4.08",
+      "note": "Tailwind changed to a primed dash: after a 0.75-second delay, Jett received a 12-second window to use it.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-08/"
+    },
+    {
+      "patch": "7.04",
+      "note": "Tailwind's window fell to 7.5 seconds with a 1-second windup; Cloudburst fell to 2.5 seconds, Updraft to one charge, and Blade Storm rose to 8 points.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-7-04/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "updraft",
+      "name": "Updraft",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/abilities/ability1/displayicon.png",
+      "summary": "INSTANTLY propel Jett high into the air.",
+      "stats": {
+        "Cost": "150 credits",
+        "Charges": "1",
+        "Recharge": "No",
+        "Damage": "None"
+      },
+      "purpose": "Reach unexpected elevation, clear vertical utility, or combine with Blade Storm.",
+      "setup": "Use it with a clear landing plan. The weapon re-equip delay makes unsupported airtime punishable.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/4cbc968f05713579aae9464c5a16dc3f6863f943.mp4?accountingTag=VAL",
+        "title": "Jett Updraft ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+    },
+    {
+      "id": "tailwind",
+      "name": "Tailwind",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/abilities/ability2/displayicon.png",
+      "summary": "ACTIVATE to prepare a gust of wind for a limited time. RE-USE the wind to propel Jett in the direction she is moving. If Jett is standing still, she propels forward. Tailwind charge resets every two kills.",
+      "stats": {
+        "Cost": "Free",
+        "Charges": "1",
+        "Recharge": "After 2 kills",
+        "Damage": "None"
+      },
+      "purpose": "Create entry space or escape after an Operator shot or opening duel.",
+      "setup": "Use the dash with a clear destination. It should end behind cover or inside a planned Cloudburst.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ec6b3cf1f8ac09d597b0193de1d7bb81335b40e4.mp4?accountingTag=VAL",
+        "title": "Jett Tailwind ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+    },
+    {
+      "id": "cloudburst",
+      "name": "Cloudburst",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/abilities/grenade/displayicon.png",
+      "summary": "INSTANTLY throw a projectile that expands into a brief vision-blocking cloud on impact with a surface. HOLD the ability key to curve the smoke in the direction of your crosshair.",
+      "stats": {
+        "Cost": "200 credits",
+        "Charges": "2",
+        "Duration": "2.5 seconds",
+        "Damage": "None"
+      },
+      "purpose": "Break one sightline long enough to dash, cross, isolate, or retrieve the spike.",
+      "setup": "Small one-ways are possible, but the short duration makes them a momentary duel tool rather than controller coverage.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/3353597819f0c032d56ff947d9762368b4ee6c6b.mp4?accountingTag=VAL",
+        "title": "Jett Cloudburst ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+    },
+    {
+      "id": "blade-storm",
+      "name": "Blade Storm",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP a set of highly accurate throwing knives. FIRE to throw a single knife and recharge knives on a kill. ALT FIRE to throw all remaining daggers but does not recharge on a kill.",
+      "stats": {
+        "Cost": "8 ultimate points",
+        "Ammo": "5 knives",
+        "Damage": "50 body / 150 head",
+        "Falloff": "No single-fire falloff"
+      },
+      "purpose": "Preserve economy, fight accurately while moving, and pair vertical movement with a weapon that stays precise.",
+      "setup": "Single-fire for reliable resets. Alternate fire is a close-range commitment and does not restore knives on a kill.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/667770571300e065b332617e5c8f2e009ed88928.mp4?accountingTag=VAL",
+        "title": "Jett Blade Storm ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+    },
+    {
+      "id": "drift",
+      "name": "Drift",
+      "slot": "Passive - Passive",
+      "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/abilities/passive/displayicon.png",
+      "summary": "Holding the jump button while falling allows you to glide through the air.",
+      "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+    }
+  ],
+  "pickRate": 10.3,
+  "pickRateRank": 1,
+  "sampleLabel": "Tracker Network | Past two weeks",
+  "mapPickRates": {
+    "Breeze": 11.7,
+    "Ascent": 11.3,
+    "Haven": 11.3
+  },
+  "mapWinRates": {
+    "Breeze": 50.4,
+    "Ascent": 49.9,
+    "Haven": 50
+  },
+  "lore": [
+    {
+      "label": "Origin",
+      "value": "South Korea",
+      "note": "Jett represents her home country with an agile, evasive fighting style built around speed and calculated risk."
+    },
+    {
+      "label": "Lore",
+      "value": "Wind-driven duelist",
+      "note": "Her supernatural command of wind lets her move through fights in ways few opponents can track, favoring precision over brute force."
+    }
+  ],
+  "uuid": "add6443a-41bd-e414-f6ad-e58d267f4e95",
+  "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "jett",
+    "entityName": "Jett",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

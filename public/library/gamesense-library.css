@@ -2647,6 +2647,27 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   background:none !important;
 }
 
+.gamesense-map-data-status{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  margin:7px 7px 0 0;
+  padding:5px 10px;
+  border:1px solid rgba(251,191,36,.82);
+  border-radius:999px;
+  color:#fff5c2;
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.gamesense-map-data-status--caution{
+  background:
+    repeating-linear-gradient(135deg,rgba(251,191,36,.28) 0 8px,rgba(2,6,23,.9) 8px 16px),
+    rgba(15,23,42,.96);
+  box-shadow:0 0 18px rgba(251,191,36,.16);
+}
+
 /* 2026-07-21 Library selector polish: two-map tabs, role-colored agent labels, and side-by-side ability demos. */
 .gamesense-agent-entry-card[data-role-tone="duelist"]{--agent-card-role-color:#ff4655;}
 .gamesense-agent-entry-card[data-role-tone="controller"]{--agent-card-role-color:#a78bfa;}

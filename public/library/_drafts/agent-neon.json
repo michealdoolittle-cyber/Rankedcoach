@@ -1,0 +1,217 @@
+{
+  "id": "neon",
+  "label": "Neon",
+  "role": "Duelist",
+  "maps": [],
+  "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/fullportrait.png",
+  "fundamentals": [
+    "Riot identifies Neon as a Duelist. Filipino Agent Neon surges forward at shocking speeds, discharging bursts of bioelectric radiance as fast as her body generates it. She races ahead to catch enemies off guard then strikes them down quicker than lightning.",
+    "High Gear is Neon's current Signature ability. INSTANTLY channel Neon's power for Increased Speed. When charged, ALT FIRE to trigger an electric slide dash. Slide charge resets every two kills.",
+    "Overdrive is Neon's Ultimate ability. Unleash Neon's full power and speed for a short duration, regaining all her fuel and a slide charge. FIRE to channel the power into a deadly lightning beam with high movement accuracy. Kills reset the duration of the effect. "
+  ],
+  "patchHistory": [
+    {
+      "patch": "12.09",
+      "note": "High Gear Nerf: Jumping while active no longer provides any speed bonus while Neon is airborne. Instead, Neon's air speed while sprinting will match melee speed.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+    },
+    {
+      "patch": "12.07",
+      "note": "High Gear Bugfix: Fixed a bug where the slide was not playing SFX for moving across different surface types.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-07/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "high-gear",
+      "name": "High Gear",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/abilities/ability2/displayicon.png",
+      "summary": "INSTANTLY channel Neon’s power for Increased Speed. When charged, ALT FIRE to trigger an electric slide dash. Slide charge resets every two kills.",
+      "stats": {
+        "Cost": "Free signature charge",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "High Gear changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
+      "setup": "High Gear needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+    },
+    {
+      "id": "relay-bolt",
+      "name": "Relay Bolt",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/abilities/ability1/displayicon.png",
+      "summary": "INSTANTLY throw an energy bolt that bounces once. Upon hitting each surface, the bolt electrifies the ground below with a Concussive blast.",
+      "stats": {
+        "Cost": "200 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Relay Bolt limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
+      "setup": "Relay Bolt needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+    },
+    {
+      "id": "fast-lane",
+      "name": "Fast Lane",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/abilities/grenade/displayicon.png",
+      "summary": "FIRE two energy lines forward on the ground that extend a short distance or until they hit a surface. The lines rise into walls of static electricity that block vision.",
+      "stats": {
+        "Cost": "300 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Fast Lane performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
+      "setup": "Fast Lane needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+    },
+    {
+      "id": "overdrive",
+      "name": "Overdrive",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/abilities/ultimate/displayicon.png",
+      "summary": "Unleash Neon’s full power and speed for a short duration, regaining all her fuel and a slide charge. FIRE to channel the power into a deadly lightning beam with high movement accuracy. Kills reset the duration of the effect. ",
+      "stats": {
+        "Cost": "8 ultimate points",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Overdrive changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
+      "setup": "Overdrive needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+    }
+  ],
+  "lore": [
+    {
+      "label": "Official role",
+      "value": "Duelist",
+      "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+    },
+    {
+      "label": "Official profile",
+      "value": "Neon",
+      "note": "Filipino Agent Neon surges forward at shocking speeds, discharging bursts of bioelectric radiance as fast as her body generates it. She races ahead to catch enemies off guard then strikes them down quicker than lightning."
+    }
+  ],
+  "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
+  "uuid": "bb2a4828-46eb-8cd1-e765-15848195d751",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "neon",
+    "entityName": "Neon",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

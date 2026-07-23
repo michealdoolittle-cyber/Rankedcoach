@@ -1,0 +1,264 @@
+{
+  "id": "raze",
+  "label": "Raze",
+  "role": "Duelist",
+  "maps": [
+    "Lotus",
+    "Split",
+    "Sunset"
+  ],
+  "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/fullportrait.png",
+  "fundamentals": [
+    "Boom Bot and Paint Shells clear the close positions that stop your entry. Send the clear first, then move while the defender is displaced.",
+    "Blast Pack creates fast space, but the landing still needs cover or teammate pressure. Use the second pack to finish the route or escape the trade.",
+    "Showstopper is strongest after utility or contact narrows the defender's exits. Fire at the space they must cross instead of guessing at a hidden player."
+  ],
+  "patchHistory": [
+    {
+      "patch": "12.02",
+      "note": "Boom Bot can now be concussed.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-02/"
+    },
+    {
+      "patch": "11.08",
+      "note": "Slows now reduce Blast Pack movement while Raze is airborne.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "blast-pack",
+      "name": "Blast Pack",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ability1/displayicon.png",
+      "summary": "INSTANTLY throw a Blast Pack that will stick to surfaces. RE-USE the ability after deployment to detonate, moving anything hit and dealing damage if fully armed.",
+      "stats": {
+        "Cost": "200 credits",
+        "Charges": "2",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Blast Pack applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "Blast Pack needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+    },
+    {
+      "id": "paint-shells",
+      "name": "Paint Shells",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a cluster grenade. FIRE to throw the grenade, which does damage and creates sub-munitions, each doing damage to anyone in their range. ALT FIRE to lob. Paint Shells charge resets every two kills.",
+      "stats": {
+        "Cost": "Free signature charge",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Paint Shells applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "Paint Shells must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+    },
+    {
+      "id": "boom-bot",
+      "name": "Boom Bot",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a Boom Bot. FIRE will deploy the bot, causing it to travel in a straight line on the ground, bouncing off walls. The Boom Bot will lock on to any enemies in its frontal cone and chase them, exploding for heavy damage if it reaches them.",
+      "stats": {
+        "Cost": "300 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Boom Bot applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "Boom Bot must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+    },
+    {
+      "id": "showstopper",
+      "name": "Showstopper",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP a rocket launcher. FIRE to shoot a rocket that does massive area damage on contact with anything.",
+      "stats": {
+        "Cost": "8 ultimate points",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Showstopper applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "Showstopper must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+    }
+  ],
+  "lore": [
+    {
+      "label": "Origin",
+      "value": "Brazil",
+      "note": "Raze brings a bold personality and a large collection of explosives from Brazil into every operation."
+    },
+    {
+      "label": "Lore",
+      "value": "Explosive space maker",
+      "note": "Her aggressive tools excel at clearing tight positions and dislodging opponents who rely on entrenched cover."
+    }
+  ],
+  "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
+  "pickRate": 4,
+  "pickRateRank": 10,
+  "sampleLabel": "Tracker Network | Past two weeks",
+  "mapPickRates": {
+    "Lotus": 6.5,
+    "Split": 5.9,
+    "Sunset": 4.4
+  },
+  "mapWinRates": {
+    "Lotus": 50.6,
+    "Split": 50.7,
+    "Sunset": 50.3
+  },
+  "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "raze",
+    "entityName": "Raze",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

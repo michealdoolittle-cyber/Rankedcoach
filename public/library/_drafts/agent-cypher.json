@@ -1,0 +1,292 @@
+{
+  "id": "cypher",
+  "label": "Cypher",
+  "role": "Sentinel",
+  "maps": [
+    "Split",
+    "Sunset",
+    "Haven"
+  ],
+  "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/fullportrait.png",
+  "fundamentals": [
+    "Trapwire is strongest when your position can punish the slow and reveal. Build the crossfire first, then choose a wire attackers cannot clear safely.",
+    "Cyber Cage breaks vision and announces a crossing, so pair its audio cue with a swing or use it to leave before the trade arrives.",
+    "Spycam keeps value while Cypher stays alive. Change camera and wire height between gun rounds so one learned clear does not solve the whole setup."
+  ],
+  "patchHistory": [
+    {
+      "patch": "11.08",
+      "note": "Trapwire windup fell to 0.9 seconds, stopped concussing, and instead applied a 50% slow plus a one-second reveal; Spycam gained clearer proximity audio and stealth rules.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    },
+    {
+      "patch": "13.00",
+      "note": "Trapwire windup was reduced again, from 0.9 to 0.7 seconds, improving Cypher's anchor conversion window.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "cyber-cage",
+      "name": "Cyber Cage",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/abilities/ability1/displayicon.png",
+      "summary": "INSTANTLY toss the cyber cage in front of Cypher. ACTIVATE to create a zone that blocks vision and plays an audio cue when enemies pass through it.",
+      "stats": {
+        "Cost": "100 credits each",
+        "Charges": "2",
+        "Duration": "About 7 seconds",
+        "Damage": "None"
+      },
+      "purpose": "Break vision, isolate a choke, or trigger a swing from the crossing audio.",
+      "setup": "One-way cages are possible on many ledges and are strong when the exposed feet line is consistent. Test the height from both sides.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/54a8dfaa9b82c7aaf994b0432bb25ef1e95c985c.mp4?accountingTag=VAL",
+        "title": "Cypher Cyber Cage ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+    },
+    {
+      "id": "spycam",
+      "name": "Spycam",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a spycam. FIRE to place the spycam at the targeted location. RE-USE this ability to take control of the camera's view. While in control of the camera, FIRE to shoot a marking dart. This dart will Reveal the location of any player struck by the dart. This ability can be picked up to be REDEPLOYED.",
+      "stats": {
+        "Cost": "Free",
+        "Charges": "1",
+        "Recharge": "Cooldown if destroyed",
+        "Damage": "None"
+      },
+      "purpose": "Confirm an execute, watch a rotation, and force an enemy to turn away from the gunfight.",
+      "setup": "Use a view that answers one question clearly. A hidden camera pointed at empty geometry is not information.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/825ba0643c74ad583350d1eb562bb7650ad78ae0.mp4?accountingTag=VAL",
+        "title": "Cypher Spycam ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+    },
+    {
+      "id": "trapwire",
+      "name": "Trapwire",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a trapwire. FIRE to place a destructible and covert trapwire at the targeted location, creating a line that spans between the placed location and the wall opposite. Enemy players who cross a trapwire will be Slowed and Revealed after a short period if they do not destroy the device in time. This ability can be picked up to be REDEPLOYED.",
+      "stats": {
+        "Cost": "200 credits each",
+        "Charges": "2",
+        "Windup": "0.9 seconds on PC",
+        "Damage": "No meaningful direct damage"
+      },
+      "purpose": "Protect a flank, delay an entry, and create a guaranteed wallbang or swing timing.",
+      "setup": "Change height and anchor position. A trip has little value if attackers can clear it without exposing themselves.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/aab21b75eb43f0e8cc9c0b816cb4877ae868b9fd.mp4?accountingTag=VAL",
+        "title": "Cypher Trapwire ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+    },
+    {
+      "id": "neural-theft",
+      "name": "Neural Theft",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/abilities/ultimate/displayicon.png",
+      "summary": "INSTANTLY use on a targeted dead enemy to download information on their team.  After a brief delay, the location of all living enemy players will be Revealed twice.",
+      "stats": {
+        "Cost": "7 ultimate points",
+        "Pulses": "2 reveals",
+        "Damage": "None",
+        "Requirement": "Recent enemy corpse"
+      },
+      "purpose": "Call rotations, isolate lurkers, and time a swing between reveal pulses.",
+      "setup": "Say which enemy position changes the plan. The second reveal can punish players who immediately reposition after the first.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ddeaad5ff2e4865351755b71fdc4fc97339fb334.mp4?accountingTag=VAL",
+        "title": "Cypher Neural Theft ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+    }
+  ],
+  "pickRate": 3.4,
+  "pickRateRank": 11,
+  "sampleLabel": "Tracker Network | Past two weeks",
+  "mapPickRates": {
+    "Split": 4.9,
+    "Sunset": 4.5,
+    "Haven": 3.8
+  },
+  "mapWinRates": {
+    "Split": 50.2,
+    "Sunset": 50.1,
+    "Haven": 50.6
+  },
+  "lore": [
+    {
+      "label": "Origin",
+      "value": "Morocco",
+      "note": "Cypher is a Moroccan information broker who watches the battlefield through an extensive surveillance network."
+    },
+    {
+      "label": "Lore",
+      "value": "Keeper of secrets",
+      "note": "He tracks movement, protects hidden information, and treats every enemy habit as another secret waiting to be uncovered."
+    }
+  ],
+  "uuid": "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
+  "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "cypher",
+    "entityName": "Cypher",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

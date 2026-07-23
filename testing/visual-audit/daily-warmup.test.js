@@ -211,7 +211,7 @@ async function run() {
     await page.waitForTimeout(350);
     assert.equal(await page.locator("#dailyWarmupModal .daily-warmup-card").evaluate(element => getComputedStyle(element).opacity), "1");
     const expectedDrills = [
-      "Weapon Choice",
+      "Weapon Focus",
       "Burst Peeking",
       "Burst Peeking w/ Strafe",
       "Tap Fire Rhythm Training",
@@ -298,7 +298,7 @@ async function run() {
     assert.equal(await page.locator("#loggingTrainingMenuTitle").innerText(), "POST-GAME AIM TRAINING");
     const warmupGameId = await submitManualReflection(page, {
       agent: "Jett",
-      focus: "Aim",
+      focus: "Crosshair Discipline",
       map: "Ascent",
       rating: 4,
       mood: "Fun",

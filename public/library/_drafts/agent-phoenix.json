@@ -1,0 +1,232 @@
+{
+  "id": "phoenix",
+  "label": "Phoenix",
+  "role": "Duelist",
+  "maps": [],
+  "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/fullportrait.png",
+  "fundamentals": [
+    "Riot identifies Phoenix as a Duelist. Hailing from the U.K., Phoenix's star power shines through in his fighting style, igniting the battlefield with flash and flare. Whether he's got backup or not, he's rushing in to fight on his own terms.",
+    "Curveball is Phoenix's current Signature ability. EQUIP a flare orb that takes a curving path and detonates shortly after throwing. FIRE to curve the flare orb to the left, detonating and Blinding any player who sees the orb. ALT FIRE to curve the flare orb to the right. Curveball resets a charge every two kills.",
+    "Run it Back is Phoenix's Ultimate ability. INSTANTLY place a marker at Phoenix's location. While this ability is active, dying or allowing the timer to expire will end this ability and bring Phoenix back to this location with full health and the amount of armor he had when the ability was cast."
+  ],
+  "patchHistory": [
+    {
+      "patch": "12.01",
+      "note": "Run it Back Bugfix Buff: Fixed a bug where Phoenix would remain nearsighted from certain abilities after respawning from Run it Back.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-01/"
+    },
+    {
+      "patch": "12.00",
+      "note": "Hot Hands Bugfix Buff: Fixed an issue where throw animations would break if aiming straight down",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "blaze",
+      "name": "Blaze",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a flame wall. FIRE to create a line of flame that moves forward, passing through the world and creating a wall of fire that blocks vision and damages players passing through it. The fire wall heals Phoenix instead of dealing damage. HOLD FIRE to bend the wall in the direction of your crosshair.",
+      "stats": {
+        "Cost": "150 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Blaze controls sightlines. Place it on the specific defender view the team needs removed, then move while that view is blocked.",
+      "setup": "Blaze must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+    },
+    {
+      "id": "hot-hands",
+      "name": "Hot Hands",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/abilities/ability1/displayicon.png",
+      "summary": "EQUIP a fireball. FIRE to throw a fireball that explodes after a set amount of time or upon hitting the ground, creating a lingering fire zone that damages enemies. The fire zone heals Phoenix instead of dealing damage. ALT FIRE to lob.",
+      "stats": {
+        "Cost": "200 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Hot Hands preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
+      "setup": "Hot Hands must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+    },
+    {
+      "id": "curveball",
+      "name": "Curveball",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a flare orb that takes a curving path and detonates shortly after throwing. FIRE to curve the flare orb to the left, detonating and Blinding any player who sees the orb. ALT FIRE to curve the flare orb to the right. Curveball resets a charge every two kills.",
+      "stats": {
+        "Cost": "250 credits",
+        "Charges": "2",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Curveball is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
+      "setup": "Curveball must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+    },
+    {
+      "id": "run-it-back",
+      "name": "Run it Back",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/abilities/ultimate/displayicon.png",
+      "summary": "INSTANTLY place a marker at Phoenix's location. While this ability is active, dying or allowing the timer to expire will end this ability and bring Phoenix back to this location with full health and the amount of armor he had when the ability was cast.",
+      "stats": {
+        "Cost": "6 ultimate points",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Run it Back preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
+      "setup": "Run it Back needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+    },
+    {
+      "id": "heating-up",
+      "name": "Heating Up",
+      "slot": "Passive - Passive",
+      "icon": "",
+      "summary": "PASSIVELY Heal Phoenix instead of taking damage after standing in Phoenix's own fire",
+      "stats": {
+        "Cost": "Passive; no purchase",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Heating Up preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
+      "setup": "Heating Up needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+    }
+  ],
+  "lore": [
+    {
+      "label": "Official role",
+      "value": "Duelist",
+      "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+    },
+    {
+      "label": "Official profile",
+      "value": "Phoenix",
+      "note": "Hailing from the U.K., Phoenix's star power shines through in his fighting style, igniting the battlefield with flash and flare. Whether he's got backup or not, he's rushing in to fight on his own terms."
+    }
+  ],
+  "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
+  "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "phoenix",
+    "entityName": "Phoenix",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

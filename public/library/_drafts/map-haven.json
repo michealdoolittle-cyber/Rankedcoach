@@ -1,0 +1,460 @@
+{
+  "id": "haven",
+  "label": "Haven",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047/displayicon.png",
+  "callouts": [
+    {
+      "id": "haven-1",
+      "sourceKey": "A::Garden",
+      "sourceLabel": "A Garden",
+      "label": "A Garden",
+      "superRegionName": "A",
+      "regionName": "Garden",
+      "x": 74.22,
+      "y": 41.02
+    },
+    {
+      "id": "haven-2",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 28.98,
+      "y": 32.44
+    },
+    {
+      "id": "haven-3",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 62.39,
+      "y": 38.48
+    },
+    {
+      "id": "haven-4",
+      "sourceKey": "A::Long",
+      "sourceLabel": "A Long",
+      "label": "A Long",
+      "superRegionName": "A",
+      "regionName": "Long",
+      "x": 57.59,
+      "y": 17.7
+    },
+    {
+      "id": "haven-5",
+      "sourceKey": "A::Sewer",
+      "sourceLabel": "A Sewer",
+      "label": "A Sewer",
+      "superRegionName": "A",
+      "regionName": "Sewer",
+      "x": 49.98,
+      "y": 38.38
+    },
+    {
+      "id": "haven-6",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 40.15,
+      "y": 16.95
+    },
+    {
+      "id": "haven-7",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 89.52,
+      "y": 51.21
+    },
+    {
+      "id": "haven-8",
+      "sourceKey": "B::Back",
+      "sourceLabel": "B Back",
+      "label": "B Back",
+      "superRegionName": "B",
+      "regionName": "Back",
+      "x": 29.36,
+      "y": 49.53
+    },
+    {
+      "id": "haven-9",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 40.11,
+      "y": 50.14
+    },
+    {
+      "id": "haven-10",
+      "sourceKey": "C::Link",
+      "sourceLabel": "C Link",
+      "label": "C Link",
+      "superRegionName": "C",
+      "regionName": "Link",
+      "x": 34.31,
+      "y": 64.93
+    },
+    {
+      "id": "haven-11",
+      "sourceKey": "C::Lobby",
+      "sourceLabel": "C Lobby",
+      "label": "C Lobby",
+      "superRegionName": "C",
+      "regionName": "Lobby",
+      "x": 66.44,
+      "y": 76.59
+    },
+    {
+      "id": "haven-12",
+      "sourceKey": "C::Long",
+      "sourceLabel": "C Long",
+      "label": "C Long",
+      "superRegionName": "C",
+      "regionName": "Long",
+      "x": 64.41,
+      "y": 89.45
+    },
+    {
+      "id": "haven-13",
+      "sourceKey": "C::Garage",
+      "sourceLabel": "C Garage",
+      "label": "C Garage",
+      "superRegionName": "C",
+      "regionName": "Garage",
+      "x": 49.35,
+      "y": 62.92
+    },
+    {
+      "id": "haven-14",
+      "sourceKey": "C::Window",
+      "sourceLabel": "C Window",
+      "label": "C Window",
+      "superRegionName": "C",
+      "regionName": "Window",
+      "x": 41.9,
+      "y": 64.35
+    },
+    {
+      "id": "haven-15",
+      "sourceKey": "C::Site",
+      "sourceLabel": "C Site",
+      "label": "C Site",
+      "superRegionName": "C",
+      "regionName": "Site",
+      "x": 41.77,
+      "y": 82.11
+    },
+    {
+      "id": "haven-16",
+      "sourceKey": "C::Cubby",
+      "sourceLabel": "C Cubby",
+      "label": "C Cubby",
+      "superRegionName": "C",
+      "regionName": "Cubby",
+      "x": 60.13,
+      "y": 80.17
+    },
+    {
+      "id": "haven-17",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 13.98,
+      "y": 42.18
+    },
+    {
+      "id": "haven-18",
+      "sourceKey": "Mid::Doors",
+      "sourceLabel": "Mid Doors",
+      "label": "Mid Doors",
+      "superRegionName": "Mid",
+      "regionName": "Doors",
+      "x": 62.37,
+      "y": 63.14
+    },
+    {
+      "id": "haven-19",
+      "sourceKey": "Mid::Courtyard",
+      "sourceLabel": "Mid Courtyard",
+      "label": "Mid Courtyard",
+      "superRegionName": "Mid",
+      "regionName": "Courtyard",
+      "x": 59,
+      "y": 50.61
+    },
+    {
+      "id": "haven-20",
+      "sourceKey": "Mid::Window",
+      "sourceLabel": "Mid Window",
+      "label": "Mid Window",
+      "superRegionName": "Mid",
+      "regionName": "Window",
+      "x": 67.59,
+      "y": 49.65
+    },
+    {
+      "id": "haven-21",
+      "sourceKey": "A::Tower",
+      "sourceLabel": "A Tower",
+      "label": "A Tower",
+      "superRegionName": "A",
+      "regionName": "Tower",
+      "x": 30.8,
+      "y": 13.86
+    }
+  ],
+  "plantSpots": [],
+  "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+  "weaponSuggestions": [],
+  "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
+  "macro": {
+    "defense": [],
+    "attack": []
+  },
+  "siteTips": [],
+  "teamplayTips": [],
+  "roleNotes": {},
+  "metaComp": {
+    "agents": [],
+    "composition": "No verified current ranked composition sample",
+    "patch": "13.01"
+  },
+  "metaComps": [],
+  "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+  "agentInsights": {},
+  "lineupLinks": [],
+  "source": "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US",
+  "uuid": "2bee0dc9-4ffe-519b-1cbd-7fbe763a6047",
+  "coordinates": "27°28'A'N,89°38'WZ'E",
+  "calloutLabelsBakedIn": false,
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "haven",
+    "entityName": "Haven",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US",
+          "https://valohub.co/maps/haven",
+          "https://www.valocheck.com/maps/haven/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestionNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "siteTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "teamplayTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "roleNotes": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compStatus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "id": "kay-o",
+  "label": "KAY/O",
+  "role": "Initiator",
+  "maps": [],
+  "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/fullportrait.png",
+  "fundamentals": [
+    "Riot identifies KAY/O as a Initiator. KAY/O is a machine of war built for a single purpose: neutralizing radiants. His power to Suppress enemy abilities dismantles his opponents' capacity to fight back, securing him and his allies the ultimate edge.",
+    "FRAG/ment is KAY/O's current Signature ability. EQUIP an explosive fragment. FIRE to throw. ALT FIRE to lob. The fragment sticks to the floor and explodes multiple times, dealing near lethal damage at the center with each explosion.",
+    "NULL/cmd is KAY/O's Ultimate ability. INSTANTLY overload with polarized radianite energy that pulses from KAY/O in a massive radius. Enemies hit with pulses are Suppressed for a short duration. While overloaded, KAY/O gains Combat Stim and can be re-stabilized if downed."
+  ],
+  "patchHistory": [
+    {
+      "patch": "13.01",
+      "note": "Current ability verification: KAY/O is listed in Riot's live playable-agent content feed. No additional balance value is inferred.",
+      "source": "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US"
+    },
+    {
+      "patch": "13.01",
+      "note": "Roster verification: KAY/O is listed in Riot's live playable-agent content feed. No additional balance value is inferred.",
+      "source": "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "frag-ment",
+      "name": "FRAG/ment",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/abilities/grenade/displayicon.png",
+      "summary": "EQUIP an explosive fragment. FIRE to throw. ALT FIRE to lob. The fragment sticks to the floor and explodes multiple times, dealing near lethal damage at the center with each explosion.",
+      "stats": {
+        "Cost": "Free signature charge",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text; economy detail unavailable"
+      },
+      "purpose": "FRAG/ment applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "FRAG/ment must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+    },
+    {
+      "id": "flash-drive",
+      "name": "FLASH/drive",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/abilities/ability1/displayicon.png",
+      "summary": "EQUIP a flash grenade. FIRE to overhand throw. ALT FIRE to lob a weaker version that explodes quickly. The flash grenade explodes after a short fuse, Blinding anyone in line of sight.",
+      "stats": {
+        "Cost": "Current client value not published in Riot's public content feed",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text; economy detail unavailable"
+      },
+      "purpose": "FLASH/drive is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
+      "setup": "FLASH/drive must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+    },
+    {
+      "id": "zero-point",
+      "name": "ZERO/point",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a suppression blade. FIRE to throw. The blade sticks to the first surface it hits, winds up, and Suppresses anyone in the radius of the explosion. Enemies can destroy this blade.",
+      "stats": {
+        "Cost": "Current client value not published in Riot's public content feed",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text; economy detail unavailable"
+      },
+      "purpose": "ZERO/point limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
+      "setup": "ZERO/point must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+    },
+    {
+      "id": "null-cmd",
+      "name": "NULL/cmd",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/abilities/ultimate/displayicon.png",
+      "summary": "INSTANTLY overload with polarized radianite energy that pulses from KAY/O in a massive radius. Enemies hit with pulses are Suppressed for a short duration. While overloaded, KAY/O gains Combat Stim and can be re-stabilized if downed.",
+      "stats": {
+        "Cost": "Ultimate-point value not published in Riot's public content feed",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text; economy detail unavailable"
+      },
+      "purpose": "NULL/cmd limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
+      "setup": "NULL/cmd should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+    }
+  ],
+  "lore": [
+    {
+      "label": "Official role",
+      "value": "Initiator",
+      "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+    },
+    {
+      "label": "Official profile",
+      "value": "KAY/O",
+      "note": "KAY/O is a machine of war built for a single purpose: neutralizing radiants. His power to Suppress enemy abilities dismantles his opponents' capacity to fight back, securing him and his allies the ultimate edge."
+    }
+  ],
+  "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
+  "uuid": "601dbbe7-43ce-be57-2a40-4abd24953621",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "kay-o",
+    "entityName": "KAY/O",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

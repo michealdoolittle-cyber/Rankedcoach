@@ -1,0 +1,394 @@
+{
+  "id": "icebox",
+  "label": "Icebox",
+  "uuid": "e2ad5c54-4114-a870-9641-8ea21279579a",
+  "coordinates": "76°44' A\"N 149°30' Z\"E",
+  "inCompetitivePool": false,
+  "cardImage": "https://media.valorant-api.com/maps/e2ad5c54-4114-a870-9641-8ea21279579a/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/e2ad5c54-4114-a870-9641-8ea21279579a/displayicon.png",
+  "calloutLabelsBakedIn": false,
+  "callouts": [
+    {
+      "id": "icebox-1",
+      "sourceKey": "B::Garage",
+      "sourceLabel": "B Garage",
+      "label": "B Garage",
+      "superRegionName": "B",
+      "regionName": "Garage",
+      "x": 35.76,
+      "y": 39.47
+    },
+    {
+      "id": "icebox-2",
+      "sourceKey": "A::Belt",
+      "sourceLabel": "A Belt",
+      "label": "A Belt",
+      "superRegionName": "A",
+      "regionName": "Belt",
+      "x": 39.9,
+      "y": 82.31
+    },
+    {
+      "id": "icebox-3",
+      "sourceKey": "A::Nest",
+      "sourceLabel": "A Nest",
+      "label": "A Nest",
+      "superRegionName": "A",
+      "regionName": "Nest",
+      "x": 52.5,
+      "y": 78.35
+    },
+    {
+      "id": "icebox-4",
+      "sourceKey": "A::Pipes",
+      "sourceLabel": "A Pipes",
+      "label": "A Pipes",
+      "superRegionName": "A",
+      "regionName": "Pipes",
+      "x": 49.26,
+      "y": 74.75
+    },
+    {
+      "id": "icebox-5",
+      "sourceKey": "A::Rafters",
+      "sourceLabel": "A Rafters",
+      "label": "A Rafters",
+      "superRegionName": "A",
+      "regionName": "Rafters",
+      "x": 76.62,
+      "y": 76.91
+    },
+    {
+      "id": "icebox-6",
+      "sourceKey": "A::Screen",
+      "sourceLabel": "A Screen",
+      "label": "A Screen",
+      "superRegionName": "A",
+      "regionName": "Screen",
+      "x": 69.96,
+      "y": 67.19
+    },
+    {
+      "id": "icebox-7",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 69.06,
+      "y": 76.55
+    },
+    {
+      "id": "icebox-8",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 13.98,
+      "y": 58.73
+    },
+    {
+      "id": "icebox-9",
+      "sourceKey": "B::Yellow",
+      "sourceLabel": "B Yellow",
+      "label": "B Yellow",
+      "superRegionName": "B",
+      "regionName": "Yellow",
+      "x": 45.84,
+      "y": 15.71
+    },
+    {
+      "id": "icebox-10",
+      "sourceKey": "B::Back",
+      "sourceLabel": "B Back",
+      "label": "B Back",
+      "superRegionName": "B",
+      "regionName": "Back",
+      "x": 76.76,
+      "y": 28.66
+    },
+    {
+      "id": "icebox-11",
+      "sourceKey": "B::Cubby",
+      "sourceLabel": "B Cubby",
+      "label": "B Cubby",
+      "superRegionName": "B",
+      "regionName": "Cubby",
+      "x": 39,
+      "y": 22.91
+    },
+    {
+      "id": "icebox-12",
+      "sourceKey": "B::Green",
+      "sourceLabel": "B Green",
+      "label": "B Green",
+      "superRegionName": "B",
+      "regionName": "Green",
+      "x": 40.98,
+      "y": 33.71
+    },
+    {
+      "id": "icebox-13",
+      "sourceKey": "B::Hall",
+      "sourceLabel": "B Hall",
+      "label": "B Hall",
+      "superRegionName": "B",
+      "regionName": "Hall",
+      "x": 67.98,
+      "y": 28.31
+    },
+    {
+      "id": "icebox-14",
+      "sourceKey": "B::Hut",
+      "sourceLabel": "B Hut",
+      "label": "B Hut",
+      "superRegionName": "B",
+      "regionName": "Hut",
+      "x": 77.7,
+      "y": 40.73
+    },
+    {
+      "id": "icebox-15",
+      "sourceKey": "B::Kitchen",
+      "sourceLabel": "B Kitchen",
+      "label": "B Kitchen",
+      "superRegionName": "B",
+      "regionName": "Kitchen",
+      "x": 70.53,
+      "y": 46.46
+    },
+    {
+      "id": "icebox-16",
+      "sourceKey": "B::Orange",
+      "sourceLabel": "B Orange",
+      "label": "B Orange",
+      "superRegionName": "B",
+      "regionName": "Orange",
+      "x": 58.26,
+      "y": 35.02
+    },
+    {
+      "id": "icebox-17",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 64.56,
+      "y": 18.05
+    },
+    {
+      "id": "icebox-18",
+      "sourceKey": "B::Snowman",
+      "sourceLabel": "B Snowman",
+      "label": "B Snowman",
+      "superRegionName": "B",
+      "regionName": "Snowman",
+      "x": 74.54,
+      "y": 14.27
+    },
+    {
+      "id": "icebox-19",
+      "sourceKey": "B::Snow Pile",
+      "sourceLabel": "B Snow Pile",
+      "label": "B Snow Pile",
+      "superRegionName": "B",
+      "regionName": "Snow Pile",
+      "x": 64.02,
+      "y": 43.25
+    },
+    {
+      "id": "icebox-20",
+      "sourceKey": "B::Tube",
+      "sourceLabel": "B Tube",
+      "label": "B Tube",
+      "superRegionName": "B",
+      "regionName": "Tube",
+      "x": 55.2,
+      "y": 47.03
+    },
+    {
+      "id": "icebox-21",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 96.96,
+      "y": 57.47
+    },
+    {
+      "id": "icebox-22",
+      "sourceKey": "Mid::Blue",
+      "sourceLabel": "Mid Blue",
+      "label": "Mid Blue",
+      "superRegionName": "Mid",
+      "regionName": "Blue",
+      "x": 53.04,
+      "y": 50.81
+    },
+    {
+      "id": "icebox-23",
+      "sourceKey": "Mid::Boiler",
+      "sourceLabel": "Mid Boiler",
+      "label": "Mid Boiler",
+      "superRegionName": "Mid",
+      "regionName": "Boiler",
+      "x": 67.08,
+      "y": 54.77
+    },
+    {
+      "id": "icebox-24",
+      "sourceKey": "Mid::Pallet",
+      "sourceLabel": "Mid Pallet",
+      "label": "Mid Pallet",
+      "superRegionName": "Mid",
+      "regionName": "Pallet",
+      "x": 58.8,
+      "y": 62.51
+    },
+    {
+      "id": "icebox-25",
+      "sourceKey": "B::Fence",
+      "sourceLabel": "B Fence",
+      "label": "B Fence",
+      "superRegionName": "B",
+      "regionName": "Fence",
+      "x": 71.91,
+      "y": 27.86
+    }
+  ],
+  "source": "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US",
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "icebox",
+    "entityName": "Icebox",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US",
+          "https://valohub.co/maps/icebox",
+          "https://www.valocheck.com/maps/icebox/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

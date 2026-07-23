@@ -1,0 +1,193 @@
+{
+  "id": "operator",
+  "label": "Operator",
+  "image": "https://media.valorant-api.com/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7/displayicon.png",
+  "cost": 4700,
+  "magazine": 5,
+  "fireRate": "0.6 rounds/sec",
+  "penetration": "High",
+  "damageRanges": [
+    {
+      "range": "0-50m",
+      "head": 255,
+      "body": 150,
+      "legs": 120
+    }
+  ],
+  "focus": "Plan the escape before taking the shot. Missing without cover or movement utility exposes the weapon's slow cycle.",
+  "whenToUse": [
+    "Buy it when the economy can support the weapon and the round offers a long first-contact lane.",
+    "Agents with an escape tool can take a more aggressive opening angle; everyone else needs hard cover beside the shot."
+  ],
+  "howToUse": [
+    "Plan the escape before scoping, fire once, then reposition while the enemy spends utility on the old angle.",
+    "Avoid unsupported repeeks: the slow cycle, movement speed, and equip timing all give opponents a punish window."
+  ],
+  "patchHistory": [
+    {
+      "patch": "1.09",
+      "note": "Price rose from 4500 to 5000 while scoped movement, fire rate, equip time, and jump-land accuracy were all reduced.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-1-09/"
+    },
+    {
+      "patch": "3.00",
+      "note": "Price fell from 5000 to the current 4700 credits.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+    }
+  ],
+  "pickRate": 5.8,
+  "killConversion": 1.32,
+  "roundConversion": "Available by buy type",
+  "uuid": "a03b24d3-4319-996d-0f8c-94bbfba1dfc7",
+  "source": "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "weapon",
+    "slug": "operator",
+    "entityName": "Operator",
+    "operation": "merge",
+    "groupId": "snipers",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "image": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cost": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "magazine": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fireRate": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "penetration": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "damageRanges": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "focus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "whenToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "howToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "killConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roundConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

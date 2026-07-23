@@ -1,0 +1,217 @@
+{
+  "id": "deadlock",
+  "label": "Deadlock",
+  "role": "Sentinel",
+  "maps": [],
+  "icon": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/fullportrait.png",
+  "fundamentals": [
+    "Riot identifies Deadlock as a Sentinel. Norwegian operative Deadlock deploys an array of cutting-edge nanowire to secure the battlefield from even the most lethal assault. No one escapes her vigilant watch, nor survives her unyielding ferocity.",
+    "GravNet is Deadlock's current Signature ability. EQUIP a GravNet grenade. FIRE to throw. ALT FIRE to lob. The GravNet detonates upon landing, forcing any characters caught within to crouch and move slowly.",
+    "Annihilation is Deadlock's Ultimate ability. EQUIP a Nanowire Accelerator. FIRE to unleash a pulse of nanowires that captures the first enemy contacted. The cocooned enemy is pulled along a nanowire path and will die unless they are freed. The nanowire cocoon is destructible."
+  ],
+  "patchHistory": [
+    {
+      "patch": "12.00",
+      "note": "GravNet and Barrier Mesh Bugfix Buff: Fixed an issue where throw animations would break if aiming straight down",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+    },
+    {
+      "patch": "11.08",
+      "note": "GravNet Nerf: Cooldown increased from 40s to 60s",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "sonic-sensor",
+      "name": "Sonic Sensor",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/abilities/ability1/displayicon.png",
+      "summary": "EQUIP a Sonic Sensor. FIRE to deploy. The sensor monitors an area for enemies making sound. It concusses that area if footsteps, weapons fire, or significant noise are detected. This ability can be picked up to be REDEPLOYED.",
+      "stats": {
+        "Cost": "200 credits",
+        "Charges": "2",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Sonic Sensor provides information. Use the reveal, detection, or tracking result to name an occupied space before a teammate commits.",
+      "setup": "Sonic Sensor must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+    },
+    {
+      "id": "barrier-mesh",
+      "name": "Barrier Mesh",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a Barrier Mesh disc. FIRE to throw forward. Upon landing, the disc generates barriers from the origin point that block character movement.",
+      "stats": {
+        "Cost": "300 credits",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Barrier Mesh changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
+      "setup": "Barrier Mesh must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+    },
+    {
+      "id": "gravnet",
+      "name": "GravNet",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a GravNet grenade. FIRE to throw. ALT FIRE to lob. The GravNet detonates upon landing, forcing any characters caught within to crouch and move slowly.",
+      "stats": {
+        "Cost": "Free signature charge",
+        "Charges": "1",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "GravNet applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+      "setup": "GravNet must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+    },
+    {
+      "id": "annihilation",
+      "name": "Annihilation",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP a Nanowire Accelerator. FIRE to unleash a pulse of nanowires that captures the first enemy contacted. The cocooned enemy is pulled along a nanowire path and will die unless they are freed. The nanowire cocoon is destructible.",
+      "stats": {
+        "Cost": "7 ultimate points",
+        "Charges": "Current client value not published in Riot's public content feed",
+        "Source": "Riot game text + Valorant Wiki current infobox"
+      },
+      "purpose": "Annihilation performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
+      "setup": "Annihilation must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
+      "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+    }
+  ],
+  "lore": [
+    {
+      "label": "Official role",
+      "value": "Sentinel",
+      "note": "Sentinels are defensive experts who can lock down areas and watch flanks, both on attacker and defender rounds."
+    },
+    {
+      "label": "Official profile",
+      "value": "Deadlock",
+      "note": "Norwegian operative Deadlock deploys an array of cutting-edge nanowire to secure the battlefield from even the most lethal assault. No one escapes her vigilant watch, nor survives her unyielding ferocity."
+    }
+  ],
+  "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US",
+  "uuid": "cc8b64c8-4b25-4ff9-6e7f-37b4da43d235",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "deadlock",
+    "entityName": "Deadlock",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

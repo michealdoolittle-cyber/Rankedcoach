@@ -1459,7 +1459,11 @@
 
   function renderMarkedMap(map) {
     const isPlants = state.mapView === "plants";
-    const markers = isPlants ? map.plantSpots || [] : map.callouts || [];
+    const markers = isPlants
+      ? map.plantSpots || []
+      : map.calloutLabelsBakedIn
+        ? []
+        : map.callouts || [];
     const markerOffsets = [[13, -18], [18, 2], [10, 20], [-22, 15], [-24, -10]];
     return `
       <section class="gamesense-tactical-card">
@@ -1540,12 +1544,12 @@
       <div class="gamesense-tips-panel" role="tabpanel">
         <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
         <div class="gamesense-tip-grid">
-          ${tips.map(item => {
+          ${tips.length ? tips.map(item => {
             const text = typeof item === "string" ? item : item.text;
             const label = typeof item === "string" ? "Round read" : item.label || "Round read";
             const isRoleTip = Boolean(activeRole && roleTips.includes(item));
             return `<article class="gamesense-tip${isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(isRoleTip ? activeRole : label)}</span><p>${escapeHtml(text)}</p></article>`;
-          }).join("")}
+          }).join("") : `<article class="gamesense-tip gamesense-tip-review-hold"><span>Data still in review</span><p>No tactical recommendation is published for this view until its sources clear the Library corroboration gate.</p></article>`}
         </div>
       </div>`;
   }
@@ -1739,8 +1743,8 @@
     }
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
-        <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
-        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
+        <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.dataStatus === "in-review" ? `<small class="gamesense-map-data-status gamesense-map-data-status--caution">Data Still In Review</small>` : ""}${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
+        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch || map.patchVersion || "Current")}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
       <div class="gamesense-detail-grid">
         ${renderMapTips(map)}
@@ -1907,15 +1911,18 @@
 
   function renderWeaponFact(weapon) {
     if (!weapon) return "";
+    const focus = weapon.focus || "Canonical weapon facts are available. Tactical guidance is still in review.";
+    const whenToUse = (weapon.whenToUse || []).length ? weapon.whenToUse : ["No verified use-case guidance is published yet."];
+    const howToUse = (weapon.howToUse || []).length ? weapon.howToUse : ["No verified handling guidance is published yet."];
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
         <div class="gamesense-weapon-panel-art"><img src="${escapeHtml(weapon.image)}" alt="${escapeHtml(weapon.label)}"></div>
-        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div><p class="gamesense-round-conversion-note">A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately.</p><p>${escapeHtml(weapon.focus)}</p></div>
+        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div><p class="gamesense-round-conversion-note">A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately.</p><p>${escapeHtml(focus)}</p></div>
         ${renderStatChips({ Cost: `${weapon.cost} credits`, Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
         <div class="gamesense-weapon-guidance">
-          <section><span>When to use it</span><ul>${(weapon.whenToUse || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section><span>How to use it</span><ul>${(weapon.howToUse || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
+          <section><span>When to use it</span><ul>${whenToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
+          <section><span>How to use it</span><ul>${howToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
         </div>
         <details class="gamesense-patch-history gamesense-weapon-history">
           <summary>Patch history</summary>

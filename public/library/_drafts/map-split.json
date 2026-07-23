@@ -1,0 +1,982 @@
+{
+  "id": "split",
+  "label": "Split",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/d960549e-485c-e861-8d71-aa9d1aed12a2/splash.png",
+  "layoutImage": "/assets/library/maps/split-layout-trn.png",
+  "callouts": [
+    {
+      "id": "split-1",
+      "sourceKey": "A::Back",
+      "sourceLabel": "A Back",
+      "label": "A Back",
+      "superRegionName": "A",
+      "regionName": "Back",
+      "x": 22.93,
+      "y": 12.47
+    },
+    {
+      "id": "split-2",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 65.05,
+      "y": 16.61
+    },
+    {
+      "id": "split-3",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 49.17,
+      "y": 20.77
+    },
+    {
+      "id": "split-4",
+      "sourceKey": "A::Rafters",
+      "sourceLabel": "A Rafters",
+      "label": "A Rafters",
+      "superRegionName": "A",
+      "regionName": "Rafters",
+      "x": 35.4,
+      "y": 27.37
+    },
+    {
+      "id": "split-5",
+      "sourceKey": "A::Ramps",
+      "sourceLabel": "A Ramps",
+      "label": "A Ramps",
+      "superRegionName": "A",
+      "regionName": "Ramps",
+      "x": 47.17,
+      "y": 35.98
+    },
+    {
+      "id": "split-6",
+      "sourceKey": "A::Screens",
+      "sourceLabel": "A Screens",
+      "label": "A Screens",
+      "superRegionName": "A",
+      "regionName": "Screens",
+      "x": 15.04,
+      "y": 25.7
+    },
+    {
+      "id": "split-7",
+      "sourceKey": "A::Sewer",
+      "sourceLabel": "A Sewer",
+      "label": "A Sewers",
+      "superRegionName": "A",
+      "regionName": "Sewer",
+      "x": 65.75,
+      "y": 31.83
+    },
+    {
+      "id": "split-8",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 31.48,
+      "y": 18.37
+    },
+    {
+      "id": "split-9",
+      "sourceKey": "A::Tower",
+      "sourceLabel": "A Tower",
+      "label": "A Heaven",
+      "superRegionName": "A",
+      "regionName": "Tower",
+      "x": 31.58,
+      "y": 33.59
+    },
+    {
+      "id": "split-10",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 84.68,
+      "y": 54.92
+    },
+    {
+      "id": "split-11",
+      "sourceKey": "B::Alley",
+      "sourceLabel": "B Alley",
+      "label": "B Alley",
+      "superRegionName": "B",
+      "regionName": "Alley",
+      "x": 21.3,
+      "y": 78.79
+    },
+    {
+      "id": "split-12",
+      "sourceKey": "B::Back",
+      "sourceLabel": "B Back",
+      "label": "B Back",
+      "superRegionName": "B",
+      "regionName": "Back",
+      "x": 26.36,
+      "y": 93.99
+    },
+    {
+      "id": "split-13",
+      "sourceKey": "B::Link",
+      "sourceLabel": "B Link",
+      "label": "B Link",
+      "superRegionName": "B",
+      "regionName": "Link",
+      "x": 65.73,
+      "y": 69.97
+    },
+    {
+      "id": "split-14",
+      "sourceKey": "B::Garage",
+      "sourceLabel": "B Garage",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Garage",
+      "x": 54.2,
+      "y": 86.85
+    },
+    {
+      "id": "split-15",
+      "sourceKey": "B::Rafters",
+      "sourceLabel": "B Rafters",
+      "label": "B Rafters",
+      "superRegionName": "B",
+      "regionName": "Rafters",
+      "x": 36.87,
+      "y": 74.73
+    },
+    {
+      "id": "split-16",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 35.35,
+      "y": 86.66
+    },
+    {
+      "id": "split-17",
+      "sourceKey": "B::Stairs",
+      "sourceLabel": "B Stairs",
+      "label": "B Stairs",
+      "superRegionName": "B",
+      "regionName": "Stairs",
+      "x": 31.48,
+      "y": 61.48
+    },
+    {
+      "id": "split-18",
+      "sourceKey": "B::Tower",
+      "sourceLabel": "B Tower",
+      "label": "B Heaven",
+      "superRegionName": "B",
+      "regionName": "Tower",
+      "x": 42.96,
+      "y": 68.44
+    },
+    {
+      "id": "split-19",
+      "sourceKey": "B::Lobby",
+      "sourceLabel": "B Lobby",
+      "label": "B Lobby",
+      "superRegionName": "B",
+      "regionName": "Lobby",
+      "x": 68.75,
+      "y": 79.68
+    },
+    {
+      "id": "split-20",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 14.29,
+      "y": 53.05
+    },
+    {
+      "id": "split-21",
+      "sourceKey": "Mid::Bottom",
+      "sourceLabel": "Mid Bottom",
+      "label": "Mid Bottom",
+      "superRegionName": "Mid",
+      "regionName": "Bottom",
+      "x": 61.6,
+      "y": 54.76
+    },
+    {
+      "id": "split-22",
+      "sourceKey": "Mid::Mail",
+      "sourceLabel": "Mid Mail",
+      "label": "Mid Mail",
+      "superRegionName": "Mid",
+      "regionName": "Mail",
+      "x": 46.71,
+      "y": 60.75
+    },
+    {
+      "id": "split-23",
+      "sourceKey": "Mid::Top",
+      "sourceLabel": "Mid Top",
+      "label": "Mid Top",
+      "superRegionName": "Mid",
+      "regionName": "Top",
+      "x": 48.36,
+      "y": 53.99
+    },
+    {
+      "id": "split-24",
+      "sourceKey": "Mid::Vent",
+      "sourceLabel": "Mid Vent",
+      "label": "Mid Vents",
+      "superRegionName": "Mid",
+      "regionName": "Vent",
+      "x": 42.58,
+      "y": 45.15
+    }
+  ],
+  "plantSpots": [
+    {
+      "number": 1,
+      "site": "A",
+      "label": "A Default",
+      "rate": 15.39,
+      "x": 84.3,
+      "y": 29.6,
+      "previewLabel": "A Default in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/b99bab902f64289dcade6a53f141639c33ac3a1e-1466x646.jpg?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 2,
+      "site": "A",
+      "label": "A Screens Plant",
+      "rate": 4.83,
+      "x": 93.6,
+      "y": 25.4,
+      "previewLabel": "A lower-site in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/ab0936e9b7742f98920efa81852740809650bad4-733x646.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 3,
+      "site": "A",
+      "label": "A Open Plant",
+      "rate": 18.58,
+      "x": 92.6,
+      "y": 33.8,
+      "previewLabel": "A open corner in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/3d2a7e4491b82d82be503ab28141c932658a3ff1-733x646.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 1,
+      "site": "B",
+      "label": "B Open Plant",
+      "rate": 26.94,
+      "x": 11.1,
+      "y": 29.6,
+      "previewLabel": "B Main plant in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/ded16cdf2c51e60bfbaa8e80dd40740610dee46f-663x653.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 2,
+      "site": "B",
+      "label": "B Default",
+      "rate": 53.76,
+      "x": 12.3,
+      "y": 34.4,
+      "previewLabel": "B Default in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/73c66772d5104035c44ce207d3b7ad4a827d6a15-663x653.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    }
+  ],
+  "plantRateNote": "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
+  "weaponSuggestions": [
+    {
+      "weapon": "Phantom",
+      "image": "/assets/weapons/phantom.png",
+      "category": "rifle",
+      "fit": "Highest rifle conversion",
+      "locations": "A Main, B Main, Vents, Mail",
+      "roundConversion": {
+        "scope": "Combined",
+        "value": 51.18,
+        "sample": "1,385,619 active-season full-buy rounds",
+        "comparisonLabel": "Second rifle",
+        "comparisonWeapon": "Vandal",
+        "comparisonValue": 50.26
+      },
+      "note": "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control."
+    },
+    {
+      "weapon": "Operator",
+      "image": "/assets/weapons/operator.png",
+      "category": "sniper",
+      "fit": "Conditional sniper",
+      "side": "DEF",
+      "locations": "A Ramps, B Main, Mid",
+      "roundConversion": {
+        "scope": "Defense",
+        "value": 54.62,
+        "sample": "158,318 active-season defense full-buy rounds",
+        "comparisonLabel": "Second sniper",
+        "comparisonWeapon": "Outlaw",
+        "comparisonValue": 46.61
+      },
+      "conversion": "Conversion read: excellent for the opening lane, but Judge and Bucky gain value after attackers enter Split's tight towers, vents, and site pockets.",
+      "note": "On defense, take the opening pick beside an exit. Do not drag the slow cycle into a forced close retake."
+    },
+    {
+      "weapon": "Ghost",
+      "image": "/assets/weapons/ghost.png",
+      "category": "pistol",
+      "fit": "Highest pistol conversion",
+      "locations": "A Main, Mid, B Main",
+      "roundConversion": {
+        "scope": "Combined",
+        "value": 50.64,
+        "sample": "2,851,065 active-season pistol rounds",
+        "comparisonLabel": "Second pistol",
+        "comparisonWeapon": "Frenzy",
+        "comparisonValue": 50.59
+      },
+      "note": "Its first-shot accuracy covers the medium lanes without consuming the utility budget needed to break Split's chokes."
+    },
+    {
+      "weapon": "Judge",
+      "image": "/assets/weapons/judge.png",
+      "category": "shotgun",
+      "fit": "High close conversion",
+      "side": "DEF",
+      "locations": "B Tower, Vents, A Heaven",
+      "roundConversion": {
+        "scope": "Defense",
+        "value": 49.84,
+        "sample": "36,692 active-season defense full-buy rounds",
+        "comparisonLabel": "Second shotgun",
+        "comparisonWeapon": "Bucky",
+        "comparisonValue": 46.08
+      },
+      "conversion": "Conversion read: the Judge is the stronger shotgun when the route forces repeated close fights, but loses value immediately if Mid or Main opens the range.",
+      "note": "On defense, anchor one compact route, vary the corner, and plan how the weapon leaves the round after the first close duel."
+    },
+    {
+      "weapon": "Spectre",
+      "image": "/assets/weapons/spectre.png",
+      "category": "eco",
+      "fit": "Highest eco conversion",
+      "locations": "B Tower, Vents, A Main",
+      "roundConversion": {
+        "scope": "Combined",
+        "value": 33.75,
+        "sample": "134,619 active-season second-round-loss rounds",
+        "comparisonLabel": "Second SMG",
+        "comparisonWeapon": "Stinger",
+        "comparisonValue": 30.18
+      },
+      "note": "The compact corners suit the Spectre, but do not carry the setup into open Mid."
+    }
+  ],
+  "macro": {
+    "_researchNote": "internal only, do not render",
+    "_researchUrl": "https://www.youtube.com/watch?v=I2kxN3-V4zg",
+    "defense": [
+      "Split's compact design means mid connects both sites more directly than on most maps — losing mid control lets attackers move and threaten either site quickly."
+    ],
+    "attack": [
+      "A and B sites are small and sit at opposite ends of the map — a slow read on which site is live costs more here than on a map with a real mid buffer.",
+      "Controlling the center is often the deciding factor for both attack and defense, since it enables fast movement between points and keeps the defense guessing."
+    ]
+  },
+  "siteTips": [
+    {
+      "label": "A Site",
+      "text": "Clear A Heaven and Screens as separate jobs before settling the plant; one smoke does not confirm either space is empty.",
+      "roles": [
+        "Duelist",
+        "Initiator"
+      ]
+    },
+    {
+      "label": "A Ramps",
+      "text": "Ramps control splits the defender's Heaven setup and gives the attack a safer route out of A Main.",
+      "roles": [
+        "Controller",
+        "Sentinel"
+      ]
+    },
+    {
+      "label": "B Site",
+      "text": "Pair B Main pressure with Mail or B Heaven utility so the entry is not fighting both elevations at once.",
+      "roles": [
+        "Duelist",
+        "Initiator"
+      ]
+    },
+    {
+      "label": "B Alley",
+      "text": "Keep the defender rotation lane blocked until the spike is secure, then shift the smoke or stall toward the retake choke.",
+      "roles": [
+        "Controller",
+        "Sentinel"
+      ]
+    }
+  ],
+  "teamplayTips": [
+    {
+      "label": "Mid split",
+      "text": "Treat Vents and Mail as two separate clears. The site group should wait until the Mid group can pressure the matching Heaven lane."
+    },
+    {
+      "label": "Utility spacing",
+      "text": "Compact sites amplify utility, but stacked tools can be cleared together. Leave enough distance that one grenade cannot erase the full setup."
+    },
+    {
+      "label": "Retake reserve",
+      "text": "Hold one flash, smoke, slow, or damage tool for the retake; Split's small sites let one late cast touch most of the fight."
+    }
+  ],
+  "roleNotes": {
+    "Duelist": [
+      {
+        "category": "attack",
+        "text": "Use movement or explosive utility to break the first choke at A Main, B Main, or Mid."
+      },
+      {
+        "category": "sites",
+        "text": "Take vertical space in A Heaven, B Heaven, Vents, and Mail after support utility forces defenders off the angle."
+      },
+      {
+        "category": "defense",
+        "text": "Pressure a choke only when you can fall back before the trade arrives."
+      }
+    ],
+    "Initiator": [
+      {
+        "category": "attack",
+        "text": "Narrow lanes reward flashes, stuns, and damage utility that land immediately before the swing."
+      },
+      {
+        "category": "sites",
+        "text": "Clear A Heaven, Screens, B Heaven, Mail, and Vents as separate jobs instead of calling an entire site clear."
+      },
+      {
+        "category": "defense",
+        "text": "Hold one piece of retake utility because Split sites are compact enough for a single well-timed cast to change the round."
+      }
+    ],
+    "Controller": [
+      {
+        "category": "sites",
+        "text": "On A, remove A Heaven and Screens; on B, remove B Heaven and the defender rotation lane."
+      },
+      {
+        "category": "attack",
+        "text": "Mid control usually needs a smoke at Mail or Vents so the team can fight one elevation at a time."
+      },
+      {
+        "category": "teamplay",
+        "text": "Use ledge one-ways only when the height is consistent and teammates know the exposed lane."
+      }
+    ],
+    "Sentinel": [
+      {
+        "category": "teamplay",
+        "text": "Trap the route that connects Mid to the site hit so defenders receive the rotation warning early."
+      },
+      {
+        "category": "defense",
+        "text": "Layer stall utility with enough spacing that one grenade cannot clear everything."
+      },
+      {
+        "category": "defense",
+        "text": "Rotate setups between B Main, Mid, and A Main pressure so attackers must re-clear the map each gun round."
+      }
+    ]
+  },
+  "metaComp": {
+    "agents": [
+      "Clove",
+      "Cypher",
+      "Jett",
+      "Reyna",
+      "Skye"
+    ],
+    "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel",
+    "patch": "13.01 + 13.00"
+  },
+  "metaComps": [
+    {
+      "label": "Double-duelist layout",
+      "agents": [
+        "Clove",
+        "Cypher",
+        "Jett",
+        "Reyna",
+        "Skye"
+      ],
+      "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel"
+    },
+    {
+      "label": "Double-initiator layout",
+      "agents": [
+        "Clove",
+        "Cypher",
+        "Fade",
+        "Jett",
+        "Skye"
+      ],
+      "composition": "1 Controller, 1 Duelist, 2 Initiators, 1 Sentinel"
+    },
+    {
+      "label": "Double-sentinel layout",
+      "agents": [
+        "Clove",
+        "Cypher",
+        "Jett",
+        "Sage",
+        "Skye"
+      ],
+      "composition": "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels"
+    }
+  ],
+  "compSample": {
+    "rankLabel": "Ascendant to Radiant",
+    "patchLabel": "13.01 + 13.00",
+    "currentPatchAgentSelections": 4170,
+    "combinedAgentSelections": 637716,
+    "source": "OP.GG Competitive",
+    "note": "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
+  },
+  "highRankPickRates": {
+    "Clove": 16.18,
+    "Cypher": 6.88,
+    "Fade": 4.49,
+    "Jett": 14.04,
+    "Neon": 2.45,
+    "Raze": 7.84,
+    "Reyna": 8.7,
+    "Sage": 5.54,
+    "Skye": 11.07
+  },
+  "rolePickRates": [
+    {
+      "agent": "Astra",
+      "role": "Controller",
+      "mapRate": 0.3,
+      "globalRate": 0.84
+    },
+    {
+      "agent": "Breach",
+      "role": "Initiator",
+      "mapRate": 1.12,
+      "globalRate": 0.68
+    },
+    {
+      "agent": "Brimstone",
+      "role": "Controller",
+      "mapRate": 0.24,
+      "globalRate": 0.25
+    },
+    {
+      "agent": "Chamber",
+      "role": "Sentinel",
+      "mapRate": 5.64,
+      "globalRate": 8.72
+    },
+    {
+      "agent": "Clove",
+      "role": "Controller",
+      "mapRate": 16.18,
+      "globalRate": 14.46
+    },
+    {
+      "agent": "Cypher",
+      "role": "Sentinel",
+      "mapRate": 6.88,
+      "globalRate": 4.5
+    },
+    {
+      "agent": "Deadlock",
+      "role": "Sentinel",
+      "mapRate": 0.63,
+      "globalRate": 0.58
+    },
+    {
+      "agent": "Fade",
+      "role": "Initiator",
+      "mapRate": 4.49,
+      "globalRate": 4.6
+    },
+    {
+      "agent": "Gekko",
+      "role": "Initiator",
+      "mapRate": 0.14,
+      "globalRate": 0.42
+    },
+    {
+      "agent": "Harbor",
+      "role": "Controller",
+      "mapRate": 0.05,
+      "globalRate": 0.4
+    },
+    {
+      "agent": "Iso",
+      "role": "Duelist",
+      "mapRate": 0.65,
+      "globalRate": 0.95
+    },
+    {
+      "agent": "Jett",
+      "role": "Duelist",
+      "mapRate": 14.04,
+      "globalRate": 15.62
+    },
+    {
+      "agent": "KAY/O",
+      "role": "Initiator",
+      "mapRate": 0.29,
+      "globalRate": 0.43
+    },
+    {
+      "agent": "Killjoy",
+      "role": "Sentinel",
+      "mapRate": 0.69,
+      "globalRate": 2.61
+    },
+    {
+      "agent": "Miks",
+      "role": "Controller",
+      "mapRate": 0.97,
+      "globalRate": 0.91
+    },
+    {
+      "agent": "Neon",
+      "role": "Duelist",
+      "mapRate": 2.45,
+      "globalRate": 3.35
+    },
+    {
+      "agent": "Omen",
+      "role": "Controller",
+      "mapRate": 2.75,
+      "globalRate": 3.08
+    },
+    {
+      "agent": "Phoenix",
+      "role": "Duelist",
+      "mapRate": 3.35,
+      "globalRate": 5.17
+    },
+    {
+      "agent": "Raze",
+      "role": "Duelist",
+      "mapRate": 7.84,
+      "globalRate": 3.5
+    },
+    {
+      "agent": "Reyna",
+      "role": "Duelist",
+      "mapRate": 8.7,
+      "globalRate": 9.11
+    },
+    {
+      "agent": "Sage",
+      "role": "Sentinel",
+      "mapRate": 5.54,
+      "globalRate": 1.74
+    },
+    {
+      "agent": "Skye",
+      "role": "Initiator",
+      "mapRate": 11.07,
+      "globalRate": 2.52
+    },
+    {
+      "agent": "Sova",
+      "role": "Initiator",
+      "mapRate": 0.48,
+      "globalRate": 9.49
+    },
+    {
+      "agent": "Tejo",
+      "role": "Initiator",
+      "mapRate": 0.62,
+      "globalRate": 0.47
+    },
+    {
+      "agent": "Veto",
+      "role": "Sentinel",
+      "mapRate": 0.74,
+      "globalRate": 0.61
+    },
+    {
+      "agent": "Viper",
+      "role": "Controller",
+      "mapRate": 0.7,
+      "globalRate": 1.22
+    },
+    {
+      "agent": "Vyse",
+      "role": "Sentinel",
+      "mapRate": 0.81,
+      "globalRate": 1.34
+    },
+    {
+      "agent": "Waylay",
+      "role": "Duelist",
+      "mapRate": 2.11,
+      "globalRate": 1.87
+    },
+    {
+      "agent": "Yoru",
+      "role": "Duelist",
+      "mapRate": 0.55,
+      "globalRate": 0.56
+    }
+  ],
+  "agentInsights": {
+    "Clove": "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",
+    "Jett": "Dash breaks the first compact choke and Updraft contests Split's stacked Heaven positions.",
+    "Raze": "Paint Shells and Blast Packs punish Split's compact chokes and vertical defender pockets.",
+    "Neon": "Fast Lane and High Gear turn a Mid opening into site pressure before defenders reset their vertical crossfires.",
+    "Reyna": "Dismiss lets her escape the close first duel, but the comp still relies on Skye to make that fight favorable.",
+    "Skye": "Guiding Light bends through Split's tight corners and Trailblazer clears the close pockets before both duelists commit.",
+    "Fade": "Prowlers clear close corners while Haunt confirms the stacked vertical positions around Mid.",
+    "Sage": "Wall and Slow Orbs delay narrow site entrances; B currently gives her the higher anchor conversion.",
+    "Cypher": "Trips control Mid-to-site rotations and let the anchor survive instead of guessing which choke broke."
+  },
+  "lineupLinks": [
+    {
+      "label": "LineupsValorant — Split",
+      "url": "https://lineupsvalorant.com/"
+    },
+    {
+      "label": "UpForge Lineup Library — Split",
+      "url": "https://upforge.gg/lineups"
+    }
+  ],
+  "uuid": "d960549e-485c-e861-8d71-aa9d1aed12a2",
+  "coordinates": "35°41'CD'N,139°41'WX'E",
+  "calloutLabelsBakedIn": true,
+  "source": "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "split",
+    "entityName": "Split",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US",
+          "https://valohub.co/maps/split",
+          "https://valorantinfo.gg/maps/split/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "siteTips": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "teamplayTips": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roleNotes": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compSample": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "highRankPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "rolePickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

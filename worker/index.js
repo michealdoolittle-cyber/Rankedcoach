@@ -47,6 +47,7 @@ import {
 import {
   handlePlaylistRequest,
   handleSkinMediaRequest,
+  runLibraryContentAutomation,
   runPatchContentAutomation
 } from "./content-automation.mjs";
 
@@ -156,7 +157,11 @@ export default {
     return env.ASSETS.fetch(request);
   },
 
-  scheduled(_controller, env, executionContext) {
-    executionContext.waitUntil(runPatchContentAutomation(env));
+  scheduled(controller, env, executionContext) {
+    const isDailyResearch = String(controller?.cron || "") === "43 9 * * *";
+    executionContext.waitUntil(Promise.all([
+      runPatchContentAutomation(env),
+      runLibraryContentAutomation(env, { daily: isDailyResearch })
+    ]));
   }
 };

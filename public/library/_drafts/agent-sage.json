@@ -1,0 +1,292 @@
+{
+  "id": "sage",
+  "label": "Sage",
+  "role": "Sentinel",
+  "maps": [
+    "Split",
+    "Sunset",
+    "Haven"
+  ],
+  "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/displayicon.png",
+  "portrait": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/fullportrait.png",
+  "fundamentals": [
+    "Barrier Orb changes the map, not just the timer. Place it to secure a plant, split a retake, or create an elevation the opponent must clear deliberately.",
+    "Slow Orb is a timing tool: land it where attackers still need to cross, then let teammate damage or a coordinated peek punish the reduced movement.",
+    "Healing Orb and Resurrection gain value when Sage survives. Play one layer behind first contact and clear the recovery route before committing to a revive."
+  ],
+  "patchHistory": [
+    {
+      "patch": "11.08",
+      "note": "Barrier Orb cost fell from 400 to 300 and fortified after 2 seconds, while fortified segment health fell from 800 to 600.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    },
+    {
+      "patch": "13.00",
+      "note": "Healing Orb's self-heal-over-time increased from 50 to 100, restoring more of Sage's personal sustain.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+    }
+  ],
+  "abilities": [
+    {
+      "id": "slow-orb",
+      "name": "Slow Orb",
+      "slot": "C - Basic",
+      "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/abilities/ability1/displayicon.png",
+      "summary": "EQUIP a slowing orb. FIRE to throw a slowing orb forward that detonates upon landing, creating a lingering field that Slows and reduces the dash speed of players caught inside of it.",
+      "stats": {
+        "Cost": "200 credits each",
+        "Charges": "2",
+        "Duration": "7 seconds",
+        "Damage": "None"
+      },
+      "purpose": "Hold attackers in damage utility, stop a fast hit, and make a retake swing easier to time.",
+      "setup": "Throw it where enemies must cross, not where they already finished moving. Layer two slows only when the extra time changes the round.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/45053483528b96cbe003ac39e6b53c9866d5fea6.mp4?accountingTag=VAL",
+        "title": "Sage Slow Orb ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+    },
+    {
+      "id": "healing-orb",
+      "name": "Healing Orb",
+      "slot": "Q - Basic",
+      "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/abilities/ability2/displayicon.png",
+      "summary": "EQUIP a healing orb. FIRE with your crosshairs over a damaged ally to activate a Heal-Over-Time on them. ALT FIRE while Sage is damaged to activate a self Heal-Over-Time.",
+      "stats": {
+        "Cost": "Free",
+        "Charges": "1",
+        "Recharge": "Cooldown",
+        "Damage": "None"
+      },
+      "purpose": "Restore a teammate who can take another meaningful fight and preserve armor value.",
+      "setup": "Do not cross an exposed lane just to heal. Ask whether the healed player can actually rejoin the round.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/a247d196383136d3de15b4d6d9c816e3c8054ba0.mp4?accountingTag=VAL",
+        "title": "Sage Healing Orb ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+    },
+    {
+      "id": "barrier-orb",
+      "name": "Barrier Orb",
+      "slot": "E - Signature",
+      "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/abilities/grenade/displayicon.png",
+      "summary": "EQUIP a barrier orb. FIRE places a wall that fortifies after a few seconds. ALT FIRE rotates the targeter.",
+      "stats": {
+        "Cost": "300 credits",
+        "Charges": "1",
+        "Duration": "40 seconds",
+        "Health": "600 per fortified segment"
+      },
+      "purpose": "Delay a choke, secure a plant, reshape an angle, or elevate a teammate.",
+      "setup": "Off-angle walls are possible, but every exposed segment can give attackers a safe breaking target. Build for a specific fight or timing.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/a79b1d6838cee5572b428babd74a2db0c07f4ea5.mp4?accountingTag=VAL",
+        "title": "Sage Barrier Orb ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+    },
+    {
+      "id": "resurrection",
+      "name": "Resurrection",
+      "slot": "X - Ultimate",
+      "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/abilities/ultimate/displayicon.png",
+      "summary": "EQUIP a resurrection ability. FIRE with your crosshairs placed over a dead ally to begin resurrecting them. After a brief channel, the ally will be brought back to life with full health.",
+      "stats": {
+        "Cost": "7 ultimate points",
+        "Charges": "1",
+        "Health": "Full health",
+        "Damage": "None"
+      },
+      "purpose": "Recover a key weapon, restore numbers, or force defenders to contest the body.",
+      "setup": "Clear the body and name the revived player's escape route first. A resurrection that immediately dies spends the ultimate without restoring pressure.",
+      "video": {
+        "provider": "riot",
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/df83929ed5da349c37a5bf4600c2b55010c72402.mp4?accountingTag=VAL",
+        "title": "Sage Resurrection ability demo",
+        "source": "https://playvalorant.com/en-us/agents/"
+      },
+      "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+    }
+  ],
+  "pickRate": 6.8,
+  "pickRateRank": 5,
+  "sampleLabel": "Tracker Network | Past two weeks",
+  "mapPickRates": {
+    "Split": 8.9,
+    "Sunset": 6.7,
+    "Haven": 6.5
+  },
+  "mapWinRates": {
+    "Split": 52.3,
+    "Sunset": 51.9,
+    "Haven": 51.5
+  },
+  "lore": [
+    {
+      "label": "Origin",
+      "value": "China",
+      "note": "Sage creates safety for her team wherever the mission takes them and serves as a calm center in chaotic fights."
+    },
+    {
+      "label": "Lore",
+      "value": "Radiant stronghold",
+      "note": "Her Radiant power heals allies, denies ground, and can return a fallen teammate to the fight."
+    }
+  ],
+  "uuid": "569fdd95-4d10-43ab-ca70-79becc718b46",
+  "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "agent",
+    "slug": "sage",
+    "entityName": "Sage",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "role": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "maps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "icon": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "portrait": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fundamentals": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "abilities": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

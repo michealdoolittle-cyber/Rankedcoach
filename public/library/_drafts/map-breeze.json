@@ -1,0 +1,995 @@
+{
+  "id": "breeze",
+  "label": "Breeze",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/splash.png",
+  "layoutImage": "/assets/library/maps/breeze-layout-labeled.svg",
+  "callouts": [
+    {
+      "id": "breeze-1",
+      "sourceKey": "Mid::Hall",
+      "sourceLabel": "Mid Hall",
+      "label": "Mid Hall",
+      "superRegionName": "Mid",
+      "regionName": "Hall",
+      "x": 63.95,
+      "y": 53.51
+    },
+    {
+      "id": "breeze-2",
+      "sourceKey": "A::Bridge",
+      "sourceLabel": "A Bridge",
+      "label": "A Bridge",
+      "superRegionName": "A",
+      "regionName": "Bridge",
+      "x": 71.19,
+      "y": 24.51
+    },
+    {
+      "id": "breeze-3",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 71.19,
+      "y": 21.01
+    },
+    {
+      "id": "breeze-4",
+      "sourceKey": "Defender Side::Arches",
+      "sourceLabel": "Defender Side Arches",
+      "label": "Defender Side Arches",
+      "superRegionName": "Defender Side",
+      "regionName": "Arches",
+      "x": 37.41,
+      "y": 17.51
+    },
+    {
+      "id": "breeze-5",
+      "sourceKey": "Mid::Wood Doors",
+      "sourceLabel": "Mid Wood Doors",
+      "label": "Mid Wood Doors",
+      "superRegionName": "Mid",
+      "regionName": "Wood Doors",
+      "x": 64.36,
+      "y": 49.53
+    },
+    {
+      "id": "breeze-6",
+      "sourceKey": "Mid::Pillar",
+      "sourceLabel": "Mid Pillar",
+      "label": "Mid Pillar",
+      "superRegionName": "Mid",
+      "regionName": "Pillar",
+      "x": 49.84,
+      "y": 54.08
+    },
+    {
+      "id": "breeze-7",
+      "sourceKey": "Mid::Top",
+      "sourceLabel": "Mid Top",
+      "label": "Mid Top",
+      "superRegionName": "Mid",
+      "regionName": "Top",
+      "x": 50.19,
+      "y": 40.08
+    },
+    {
+      "id": "breeze-8",
+      "sourceKey": "Mid::Nest",
+      "sourceLabel": "Mid Nest",
+      "label": "Mid Nest",
+      "superRegionName": "Mid",
+      "regionName": "Nest",
+      "x": 48.44,
+      "y": 22.76
+    },
+    {
+      "id": "breeze-9",
+      "sourceKey": "B::Window",
+      "sourceLabel": "B Window",
+      "label": "B Window",
+      "superRegionName": "B",
+      "regionName": "Window",
+      "x": 17.29,
+      "y": 67.73
+    },
+    {
+      "id": "breeze-10",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 15.36,
+      "y": 58.46
+    },
+    {
+      "id": "breeze-11",
+      "sourceKey": "B::Elbow",
+      "sourceLabel": "B Elbow",
+      "label": "B Elbow",
+      "superRegionName": "B",
+      "regionName": "Elbow",
+      "x": 26.21,
+      "y": 50.58
+    },
+    {
+      "id": "breeze-12",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 6.96,
+      "y": 38.16
+    },
+    {
+      "id": "breeze-13",
+      "sourceKey": "B::Tunnel",
+      "sourceLabel": "B Tunnel",
+      "label": "B Tunnel",
+      "superRegionName": "B",
+      "regionName": "Tunnel",
+      "x": 36.36,
+      "y": 38.16
+    },
+    {
+      "id": "breeze-14",
+      "sourceKey": "A::Ramp",
+      "sourceLabel": "A Ramp",
+      "label": "A Ramp",
+      "superRegionName": "A",
+      "regionName": "Ramp",
+      "x": 65.59,
+      "y": 32.21
+    },
+    {
+      "id": "breeze-15",
+      "sourceKey": "B::Back",
+      "sourceLabel": "B Back",
+      "label": "B Back",
+      "superRegionName": "B",
+      "regionName": "Back",
+      "x": 6.79,
+      "y": 30.46
+    },
+    {
+      "id": "breeze-16",
+      "sourceKey": "B::Wall",
+      "sourceLabel": "B Wall",
+      "label": "B Wall",
+      "superRegionName": "B",
+      "regionName": "Wall",
+      "x": 25.51,
+      "y": 23.46
+    },
+    {
+      "id": "breeze-17",
+      "sourceKey": "Mid::Cannon",
+      "sourceLabel": "Mid Cannon",
+      "label": "Mid Cannon",
+      "superRegionName": "Mid",
+      "regionName": "Cannon",
+      "x": 33.56,
+      "y": 63.01
+    },
+    {
+      "id": "breeze-18",
+      "sourceKey": "Mid::Bottom",
+      "sourceLabel": "Mid Bottom",
+      "label": "Mid Bottom",
+      "superRegionName": "Mid",
+      "regionName": "Bottom",
+      "x": 49.84,
+      "y": 72.28
+    },
+    {
+      "id": "breeze-19",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 70.31,
+      "y": 92.06
+    },
+    {
+      "id": "breeze-20",
+      "sourceKey": "A::Shop",
+      "sourceLabel": "A Shop",
+      "label": "A Shop",
+      "superRegionName": "A",
+      "regionName": "Shop",
+      "x": 76.26,
+      "y": 68.26
+    },
+    {
+      "id": "breeze-21",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 90.79,
+      "y": 49.53
+    },
+    {
+      "id": "breeze-22",
+      "sourceKey": "A::Pyramids",
+      "sourceLabel": "A Pyramids",
+      "label": "A Pyramids",
+      "superRegionName": "A",
+      "regionName": "Pyramids",
+      "x": 84.66,
+      "y": 46.91
+    },
+    {
+      "id": "breeze-23",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 43.36,
+      "y": 87.33
+    }
+  ],
+  "plantSpots": [
+    {
+      "number": 1,
+      "site": "A",
+      "label": "A Pyramid Default",
+      "rate": 44.15,
+      "x": 91.4,
+      "y": 47.8,
+      "previewLabel": "A Pyramid in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 2,
+      "site": "A",
+      "label": "A Open Pyramid",
+      "rate": 13,
+      "x": 81.7,
+      "y": 47.8,
+      "previewLabel": "A Pyramid in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 3,
+      "site": "A",
+      "label": "A Deep Pyramid",
+      "rate": 20.3,
+      "x": 93.7,
+      "y": 47.8,
+      "previewLabel": "A Pyramid in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 4,
+      "site": "A",
+      "label": "A Safe Pyramid",
+      "rate": 7.44,
+      "x": 84.7,
+      "y": 47.8,
+      "previewLabel": "A Pyramid in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 1,
+      "site": "B",
+      "label": "B Pillar Default",
+      "rate": 83.61,
+      "x": 14,
+      "y": 31.6,
+      "previewLabel": "B Pillar in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/2c999bc13e7f9ae68fb4fd749a5b2684b82a483f-531x652.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 2,
+      "site": "B",
+      "label": "B Open Plant",
+      "rate": 0.71,
+      "x": 17.1,
+      "y": 30.5,
+      "previewLabel": "B open plant in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/2ec53a4e3cead720efc4ab4f107576e37a851174-531x652.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    },
+    {
+      "number": 3,
+      "site": "B",
+      "label": "B Back Plant",
+      "rate": 1.51,
+      "x": 10.6,
+      "y": 31.9,
+      "previewLabel": "B open plant in-game reference",
+      "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/2ec53a4e3cead720efc4ab4f107576e37a851174-531x652.png?auto=format",
+      "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+    }
+  ],
+  "plantRateNote": "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
+  "weaponSuggestions": [
+    {
+      "weapon": "Phantom",
+      "image": "/assets/weapons/phantom.png",
+      "category": "rifle",
+      "fit": "Highest rifle conversion",
+      "locations": "A Main, B Main, Mid",
+      "roundConversion": {
+        "scope": "Combined",
+        "value": 50.87,
+        "sample": "896,805 active-season full-buy rounds",
+        "comparisonLabel": "Second rifle",
+        "comparisonWeapon": "Vandal",
+        "comparisonValue": 50.41
+      },
+      "note": "Smoke fights and close site finishes give the Phantom a narrow conversion edge, while the Vandal remains the cleaner long-lane one-tap choice."
+    },
+    {
+      "weapon": "Operator",
+      "image": "/assets/weapons/operator.png",
+      "category": "sniper",
+      "fit": "High-value sniper",
+      "side": "DEF",
+      "locations": "A Main, B Main, Mid Nest",
+      "roundConversion": {
+        "scope": "Defense",
+        "value": 52.43,
+        "sample": "230,391 active-season defense full-buy rounds",
+        "comparisonLabel": "Second sniper",
+        "comparisonWeapon": "Outlaw",
+        "comparisonValue": 44.64
+      },
+      "conversion": "Conversion read: the Operator wins the defense-side sniper comparison; Judge or Bucky only catches up inside a deliberately protected Tunnel or Hall pocket.",
+      "note": "On defense, the map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after contact."
+    },
+    {
+      "weapon": "Ghost",
+      "image": "/assets/weapons/ghost.png",
+      "category": "pistol",
+      "fit": "Highest pistol conversion",
+      "locations": "A Main, Mid, B Main",
+      "roundConversion": {
+        "scope": "Combined",
+        "value": 50.64,
+        "sample": "2,791,564 active-season pistol rounds",
+        "comparisonLabel": "Second pistol",
+        "comparisonWeapon": "Sheriff",
+        "comparisonValue": 50.21
+      },
+      "note": "Use cover and first-shot accuracy across Breeze's long pistol lanes while preserving credits for utility."
+    },
+    {
+      "weapon": "Judge",
+      "image": "/assets/weapons/judge.png",
+      "category": "shotgun",
+      "fit": "Best shotgun conversion",
+      "side": "DEF",
+      "locations": "A Hall, B Tunnel",
+      "roundConversion": {
+        "scope": "Defense",
+        "value": 48.24,
+        "sample": "27,678 active-season defense full-buy rounds",
+        "comparisonLabel": "Second shotgun",
+        "comparisonWeapon": "Bucky",
+        "comparisonValue": 44.24
+      },
+      "conversion": "Conversion read: the shotgun remains location-dependent and cannot match the Operator across Breeze's open sites.",
+      "note": "On defense, treat it as a protected Hall or Tunnel ambush, then recover a ranged weapon before rotating into open space."
+    },
+    {
+      "weapon": "Spectre",
+      "image": "/assets/weapons/spectre.png",
+      "category": "eco",
+      "fit": "Highest eco conversion",
+      "locations": "Tunnel and close Hall pockets",
+      "roundConversion": {
+        "scope": "Combined",
+        "value": 33.61,
+        "sample": "128,040 active-season second-round-loss rounds",
+        "comparisonLabel": "Second SMG",
+        "comparisonWeapon": "Stinger",
+        "comparisonValue": 29.69
+      },
+      "note": "Use it with a deliberate close-range route; most Breeze fights still expose an SMG's range limit."
+    }
+  ],
+  "macro": {
+    "_researchNote": "internal only, do not render",
+    "_researchUrl": "https://www.youtube.com/watch?v=0VLyBGR5sNA",
+    "defense": [
+      "Mid is the strategic core of this map — mid control is less about the space itself and more about the pressure it lets you apply to both sites at once."
+    ],
+    "attack": [
+      "Smoking Mid Nest removes the Operator angle that otherwise dominates that lane — a specific, repeatable utility play, not just a generic smoke.",
+      "Smoking Tunnel forces defenders into a binary choice: play the tunnel more aggressively than they'd like, or fall back and give up the space."
+    ]
+  },
+  "siteTips": [
+    {
+      "label": "A Pyramids",
+      "text": "Split the two pyramids into separate clears. Plant only after the close side and Back Site lane have been accounted for.",
+      "roles": [
+        "Duelist",
+        "Initiator"
+      ]
+    },
+    {
+      "label": "A Bridge",
+      "text": "Keep Bridge denied during the plant; its elevation watches both the site crossing and several pyramid plants.",
+      "roles": [
+        "Controller",
+        "Sentinel"
+      ]
+    },
+    {
+      "label": "B Pillar",
+      "text": "Use Pillar to isolate the first defender, then clear Back Site before spreading into the open plant lanes.",
+      "roles": [
+        "Duelist",
+        "Initiator"
+      ]
+    },
+    {
+      "label": "B Tunnel",
+      "text": "Tunnel control shortens the defender rotation and protects a B split, but only if the Mid player can be traded.",
+      "roles": [
+        "Controller",
+        "Sentinel"
+      ]
+    }
+  ],
+  "teamplayTips": [
+    {
+      "label": "Mid leverage",
+      "text": "Keep one player connected to Mid while the site group pressures Main; that threat prevents both defenders from leaning into one entrance."
+    },
+    {
+      "label": "Long trades",
+      "text": "Breeze spacing stretches trade distance. Say who follows the first contact before crossing an open lane."
+    },
+    {
+      "label": "Late information",
+      "text": "Save one scan, camera, or flank trap for the rotation because a wrong site read costs more time here than on compact maps."
+    }
+  ],
+  "roleNotes": {
+    "Duelist": [
+      {
+        "category": "attack",
+        "text": "Use movement to cross the long exposed lanes after recon or a flash removes the first angle."
+      },
+      {
+        "category": "attack",
+        "text": "Create pressure from Mid or Hall so defenders cannot hold one site entrance with every rifle."
+      },
+      {
+        "category": "defense",
+        "text": "Operator rounds need a planned escape route; do not repeat the same long angle after revealing the weapon."
+      }
+    ],
+    "Initiator": [
+      {
+        "category": "attack",
+        "text": "Scan or drone the long sightline the duelist is about to cross, not the site after contact begins."
+      },
+      {
+        "category": "sites",
+        "text": "Use Mid Nest, Tunnel, Back Site, and Hall as named utility targets so the team knows what is actually cleared."
+      },
+      {
+        "category": "teamplay",
+        "text": "Save one information tool for the late rotation because the distance between sites makes false reads expensive."
+      }
+    ],
+    "Controller": [
+      {
+        "category": "sites",
+        "text": "Viper-style walls are strongest when they split a site into a playable front half and an isolated defender half."
+      },
+      {
+        "category": "attack",
+        "text": "Remove Mid Nest or Tunnel when taking center control; both positions can hold multiple rotation paths."
+      },
+      {
+        "category": "teamplay",
+        "text": "Prioritize complete lane denial and fuel timing over difficult one-way setups on Breeze's open geometry."
+      }
+    ],
+    "Sentinel": [
+      {
+        "category": "teamplay",
+        "text": "Use flank utility to protect the long rotations, then survive so that information remains useful."
+      },
+      {
+        "category": "defense",
+        "text": "Anchor from off-angles that force attackers to clear after crossing open ground."
+      },
+      {
+        "category": "defense",
+        "text": "Do not stack every piece of utility on one site when Mid pressure can break the setup from behind."
+      }
+    ]
+  },
+  "metaComp": {
+    "agents": [
+      "Chamber",
+      "Clove",
+      "Jett",
+      "Reyna",
+      "Sova"
+    ],
+    "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel",
+    "patch": "13.01 + 13.00"
+  },
+  "metaComps": [
+    {
+      "label": "Double-duelist layout",
+      "agents": [
+        "Chamber",
+        "Clove",
+        "Jett",
+        "Reyna",
+        "Sova"
+      ],
+      "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel"
+    },
+    {
+      "label": "Double-controller layout",
+      "agents": [
+        "Chamber",
+        "Clove",
+        "Jett",
+        "Sova",
+        "Viper"
+      ],
+      "composition": "2 Controllers, 1 Duelist, 1 Initiator, 1 Sentinel"
+    },
+    {
+      "label": "Double-controller + double-initiator",
+      "agents": [
+        "Clove",
+        "Jett",
+        "KAY/O",
+        "Sova",
+        "Viper"
+      ],
+      "composition": "2 Controllers, 1 Duelist, 2 Initiators"
+    }
+  ],
+  "compSample": {
+    "rankLabel": "Ascendant to Radiant",
+    "patchLabel": "13.01 + 13.00",
+    "currentPatchAgentSelections": 4324,
+    "combinedAgentSelections": 631146,
+    "source": "OP.GG Competitive",
+    "note": "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
+  },
+  "highRankPickRates": {
+    "Chamber": 16.09,
+    "Clove": 8.55,
+    "Iso": 1.32,
+    "Jett": 18.47,
+    "KAY/O": 0.52,
+    "Neon": 3.74,
+    "Reyna": 11.15,
+    "Sova": 17.13,
+    "Viper": 6.92
+  },
+  "rolePickRates": [
+    {
+      "agent": "Astra",
+      "role": "Controller",
+      "mapRate": 3.89,
+      "globalRate": 0.84
+    },
+    {
+      "agent": "Breach",
+      "role": "Initiator",
+      "mapRate": 0.07,
+      "globalRate": 0.68
+    },
+    {
+      "agent": "Brimstone",
+      "role": "Controller",
+      "mapRate": 0.21,
+      "globalRate": 0.25
+    },
+    {
+      "agent": "Chamber",
+      "role": "Sentinel",
+      "mapRate": 16.09,
+      "globalRate": 8.72
+    },
+    {
+      "agent": "Clove",
+      "role": "Controller",
+      "mapRate": 8.55,
+      "globalRate": 14.46
+    },
+    {
+      "agent": "Cypher",
+      "role": "Sentinel",
+      "mapRate": 1.27,
+      "globalRate": 4.5
+    },
+    {
+      "agent": "Deadlock",
+      "role": "Sentinel",
+      "mapRate": 0.15,
+      "globalRate": 0.58
+    },
+    {
+      "agent": "Fade",
+      "role": "Initiator",
+      "mapRate": 0.14,
+      "globalRate": 4.6
+    },
+    {
+      "agent": "Gekko",
+      "role": "Initiator",
+      "mapRate": 0.17,
+      "globalRate": 0.42
+    },
+    {
+      "agent": "Harbor",
+      "role": "Controller",
+      "mapRate": 2.06,
+      "globalRate": 0.4
+    },
+    {
+      "agent": "Iso",
+      "role": "Duelist",
+      "mapRate": 1.32,
+      "globalRate": 0.95
+    },
+    {
+      "agent": "Jett",
+      "role": "Duelist",
+      "mapRate": 18.47,
+      "globalRate": 15.62
+    },
+    {
+      "agent": "KAY/O",
+      "role": "Initiator",
+      "mapRate": 0.52,
+      "globalRate": 0.43
+    },
+    {
+      "agent": "Killjoy",
+      "role": "Sentinel",
+      "mapRate": 0.06,
+      "globalRate": 2.61
+    },
+    {
+      "agent": "Miks",
+      "role": "Controller",
+      "mapRate": 0.91,
+      "globalRate": 0.91
+    },
+    {
+      "agent": "Neon",
+      "role": "Duelist",
+      "mapRate": 3.74,
+      "globalRate": 3.35
+    },
+    {
+      "agent": "Omen",
+      "role": "Controller",
+      "mapRate": 1.39,
+      "globalRate": 3.08
+    },
+    {
+      "agent": "Phoenix",
+      "role": "Duelist",
+      "mapRate": 1.88,
+      "globalRate": 5.17
+    },
+    {
+      "agent": "Raze",
+      "role": "Duelist",
+      "mapRate": 0.23,
+      "globalRate": 3.5
+    },
+    {
+      "agent": "Reyna",
+      "role": "Duelist",
+      "mapRate": 11.15,
+      "globalRate": 9.11
+    },
+    {
+      "agent": "Sage",
+      "role": "Sentinel",
+      "mapRate": 0.53,
+      "globalRate": 1.74
+    },
+    {
+      "agent": "Skye",
+      "role": "Initiator",
+      "mapRate": 0.47,
+      "globalRate": 2.52
+    },
+    {
+      "agent": "Sova",
+      "role": "Initiator",
+      "mapRate": 17.13,
+      "globalRate": 9.49
+    },
+    {
+      "agent": "Tejo",
+      "role": "Initiator",
+      "mapRate": 0.11,
+      "globalRate": 0.47
+    },
+    {
+      "agent": "Veto",
+      "role": "Sentinel",
+      "mapRate": 0.38,
+      "globalRate": 0.61
+    },
+    {
+      "agent": "Viper",
+      "role": "Controller",
+      "mapRate": 6.92,
+      "globalRate": 1.22
+    },
+    {
+      "agent": "Vyse",
+      "role": "Sentinel",
+      "mapRate": 0.17,
+      "globalRate": 1.34
+    },
+    {
+      "agent": "Waylay",
+      "role": "Duelist",
+      "mapRate": 1.24,
+      "globalRate": 1.87
+    },
+    {
+      "agent": "Yoru",
+      "role": "Duelist",
+      "mapRate": 0.77,
+      "globalRate": 0.56
+    }
+  ],
+  "agentInsights": {
+    "Chamber": "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
+    "Clove": "Long-range smoke placement stays useful through Breeze rotations, and post-death utility protects late hits.",
+    "Jett": "Dash and Updraft create a safe exit from the long Operator lanes that define first contact.",
+    "Neon": "High Gear closes Breeze's long gaps quickly enough to punish defenders before cross-map help arrives.",
+    "Reyna": "Dismiss gives a self-sufficient escape after winning one of Breeze's exposed long-range duels.",
+    "Iso": "Double Tap and Contingency help isolate one long sightline instead of fighting the full open site.",
+    "KAY/O": "ZERO/point and suppression give the second-initiator layout a direct way to disable defensive utility before crossing Breeze's long lanes.",
+    "Sova": "Recon and Drone clear wide sightlines where close-range flashes cannot cover every defender.",
+    "Sage": "Barrier and Slow Orbs compress open entrances; A is the stronger current anchor site for her stall package.",
+    "Viper": "Toxic Screen divides the open sites into playable halves and preserves fuel for post-plant denial."
+  },
+  "lineupLinks": [
+    {
+      "label": "LineupsValorant — Breeze",
+      "url": "https://lineupsvalorant.com/"
+    },
+    {
+      "label": "UpForge Lineup Library — Breeze",
+      "url": "https://upforge.gg/lineups"
+    }
+  ],
+  "uuid": "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
+  "coordinates": "26°11'AG\"N 71°10'WY\"W",
+  "calloutLabelsBakedIn": true,
+  "source": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "breeze",
+    "entityName": "Breeze",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
+          "https://valohub.co/maps/breeze",
+          "https://www.redbull.com/us-en/valorant-breeze-map-guide"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "siteTips": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "teamplayTips": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roleNotes": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compSample": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "highRankPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "rolePickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

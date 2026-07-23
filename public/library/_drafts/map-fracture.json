@@ -1,0 +1,470 @@
+{
+  "id": "fracture",
+  "label": "Fracture",
+  "inCompetitivePool": false,
+  "cardImage": "https://media.valorant-api.com/maps/b529448b-4d60-346e-e89e-00a4c527a405/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/b529448b-4d60-346e-e89e-00a4c527a405/displayicon.png",
+  "callouts": [
+    {
+      "id": "fracture-1",
+      "sourceKey": "Attacker Side::Bridge",
+      "sourceLabel": "Attacker Side Bridge",
+      "label": "Attacker Side Bridge",
+      "superRegionName": "Attacker Side",
+      "regionName": "Bridge",
+      "x": 49.8,
+      "y": 12.6
+    },
+    {
+      "id": "fracture-2",
+      "sourceKey": "B::Bench",
+      "sourceLabel": "B Bench",
+      "label": "B Bench",
+      "superRegionName": "B",
+      "regionName": "Bench",
+      "x": 33.1,
+      "y": 26.1
+    },
+    {
+      "id": "fracture-3",
+      "sourceKey": "B::Arcade",
+      "sourceLabel": "B Arcade",
+      "label": "B Arcade",
+      "superRegionName": "B",
+      "regionName": "Arcade",
+      "x": 23.1,
+      "y": 36.18
+    },
+    {
+      "id": "fracture-4",
+      "sourceKey": "B::Tower",
+      "sourceLabel": "B Tower",
+      "label": "B Tower",
+      "superRegionName": "B",
+      "regionName": "Tower",
+      "x": 12.01,
+      "y": 44.18
+    },
+    {
+      "id": "fracture-5",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 9.35,
+      "y": 51.8
+    },
+    {
+      "id": "fracture-6",
+      "sourceKey": "B::Generator",
+      "sourceLabel": "B Generator",
+      "label": "B Generator",
+      "superRegionName": "B",
+      "regionName": "Generator",
+      "x": 29.33,
+      "y": 50.36
+    },
+    {
+      "id": "fracture-7",
+      "sourceKey": "B::Link",
+      "sourceLabel": "B Link",
+      "label": "B Link",
+      "superRegionName": "B",
+      "regionName": "Link",
+      "x": 34.32,
+      "y": 43.84
+    },
+    {
+      "id": "fracture-8",
+      "sourceKey": "B::Canteen",
+      "sourceLabel": "B Canteen",
+      "label": "B Canteen",
+      "superRegionName": "B",
+      "regionName": "Canteen",
+      "x": 31.22,
+      "y": 60.12
+    },
+    {
+      "id": "fracture-9",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 65.85,
+      "y": 48.68
+    },
+    {
+      "id": "fracture-10",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 50.41,
+      "y": 44.17
+    },
+    {
+      "id": "fracture-11",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 14.02,
+      "y": 69.05
+    },
+    {
+      "id": "fracture-12",
+      "sourceKey": "B::Tree",
+      "sourceLabel": "B Tree",
+      "label": "B Tree",
+      "superRegionName": "B",
+      "regionName": "Tree",
+      "x": 23.64,
+      "y": 76.86
+    },
+    {
+      "id": "fracture-13",
+      "sourceKey": "B::Tunnel",
+      "sourceLabel": "B Tunnel",
+      "label": "B Tunnel",
+      "superRegionName": "B",
+      "regionName": "Tunnel",
+      "x": 24.04,
+      "y": 57.85
+    },
+    {
+      "id": "fracture-14",
+      "sourceKey": "A::Hall",
+      "sourceLabel": "A Hall",
+      "label": "A Hall",
+      "superRegionName": "A",
+      "regionName": "Hall",
+      "x": 71.74,
+      "y": 76.09
+    },
+    {
+      "id": "fracture-15",
+      "sourceKey": "A::Door",
+      "sourceLabel": "A Door",
+      "label": "A Door",
+      "superRegionName": "A",
+      "regionName": "Door",
+      "x": 70.83,
+      "y": 70.29
+    },
+    {
+      "id": "fracture-16",
+      "sourceKey": "A::Rope",
+      "sourceLabel": "A Rope",
+      "label": "A Rope",
+      "superRegionName": "A",
+      "regionName": "Rope",
+      "x": 63.91,
+      "y": 63.81
+    },
+    {
+      "id": "fracture-17",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 82.61,
+      "y": 69.73
+    },
+    {
+      "id": "fracture-18",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 82.01,
+      "y": 52.21
+    },
+    {
+      "id": "fracture-19",
+      "sourceKey": "A::Drop",
+      "sourceLabel": "A Drop",
+      "label": "A Drop",
+      "superRegionName": "A",
+      "regionName": "Drop",
+      "x": 77.74,
+      "y": 43
+    },
+    {
+      "id": "fracture-20",
+      "sourceKey": "A::Dish",
+      "sourceLabel": "A Dish",
+      "label": "A Dish",
+      "superRegionName": "A",
+      "regionName": "Dish",
+      "x": 66.55,
+      "y": 27.47
+    },
+    {
+      "id": "fracture-21",
+      "sourceKey": "A::Gate",
+      "sourceLabel": "A Gate",
+      "label": "A Gate",
+      "superRegionName": "A",
+      "regionName": "Gate",
+      "x": 67.9,
+      "y": 14.48
+    },
+    {
+      "id": "fracture-22",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 48.3,
+      "y": 81.69
+    }
+  ],
+  "plantSpots": [],
+  "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+  "weaponSuggestions": [],
+  "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
+  "macro": {
+    "defense": [],
+    "attack": []
+  },
+  "siteTips": [],
+  "teamplayTips": [],
+  "roleNotes": {},
+  "metaComp": {
+    "agents": [],
+    "composition": "No verified current ranked composition sample",
+    "patch": "13.01"
+  },
+  "metaComps": [],
+  "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+  "agentInsights": {},
+  "lineupLinks": [],
+  "source": "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US",
+  "uuid": "b529448b-4d60-346e-e89e-00a4c527a405",
+  "coordinates": "35°48'BI\"N 106°08'YQ\"W",
+  "calloutLabelsBakedIn": false,
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "fracture",
+    "entityName": "Fracture",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US",
+          "https://valohub.co/maps/fracture",
+          "https://www.valocheck.com/maps/fracture/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestionNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "siteTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "teamplayTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "roleNotes": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compStatus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

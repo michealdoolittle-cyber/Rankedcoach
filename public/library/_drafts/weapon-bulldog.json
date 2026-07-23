@@ -1,0 +1,198 @@
+{
+  "id": "bulldog",
+  "label": "Bulldog",
+  "image": "https://media.valorant-api.com/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7/displayicon.png",
+  "cost": 2050,
+  "magazine": 24,
+  "fireRate": "10 rounds/sec",
+  "penetration": "Medium",
+  "damageRanges": [
+    {
+      "range": "0-50m",
+      "head": 115.5,
+      "body": 35,
+      "legs": 29.75
+    }
+  ],
+  "focus": "Use alternate-fire bursts for planned mid-range fights and avoid forcing full-auto recoil at long range.",
+  "whenToUse": [
+    "Use it on a lighter rifle buy when the team still needs armor and utility.",
+    "It works best on mid-range lanes where ADS burst gives a clean first engagement and full-auto protects a close collapse."
+  ],
+  "howToUse": [
+    "Use ADS burst for a planned medium-to-long fight, then wait for the short recovery before the next burst.",
+    "Switch to full-auto only when the opponent closes distance; do not drag the burst cadence into a long spray."
+  ],
+  "patchHistory": [
+    {
+      "patch": "3.00",
+      "note": "Hip-fire rate rose from 9.15 to 9.5 rounds per second and price fell from 2100 to 2050.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+    },
+    {
+      "patch": "4.00",
+      "note": "Hip-fire rate rose to 10 and burst recovery improved from 0.4 to 0.35 seconds.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-0/"
+    },
+    {
+      "patch": "11.08",
+      "note": "Horizontal recoil timing was lengthened from 0.37 to 0.6 seconds as rifle sprays were retuned.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+    }
+  ],
+  "pickRate": 3.5,
+  "killConversion": 0.8,
+  "roundConversion": "Available by buy type",
+  "uuid": "ae3de142-4d85-2547-dd26-4e90bed35cf7",
+  "source": "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "weapon",
+    "slug": "bulldog",
+    "entityName": "Bulldog",
+    "operation": "merge",
+    "groupId": "precision",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "image": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cost": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "magazine": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fireRate": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "penetration": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "damageRanges": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "focus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "whenToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "howToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "killConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roundConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

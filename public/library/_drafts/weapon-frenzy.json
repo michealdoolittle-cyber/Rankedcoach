@@ -1,0 +1,204 @@
+{
+  "id": "frenzy",
+  "label": "Frenzy",
+  "image": "https://media.valorant-api.com/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3/displayicon.png",
+  "cost": 450,
+  "magazine": 15,
+  "fireRate": "10 rounds/sec",
+  "penetration": "Low",
+  "damageRanges": [
+    {
+      "range": "0-20m",
+      "head": 78,
+      "body": 26,
+      "legs": 22.1
+    },
+    {
+      "range": "20-50m",
+      "head": 63,
+      "body": 21,
+      "legs": 17.85
+    }
+  ],
+  "focus": "Treat it like a compact SMG: close distance, control the short magazine, and avoid long-range tap races.",
+  "whenToUse": [
+    "Buy it for close pistol-round pressure or a save-round path that reaches SMG distance quickly.",
+    "It pairs with agents who can cross open space before the 15-round magazine is committed."
+  ],
+  "howToUse": [
+    "Crouch the moment you commit to a close fight; it tightens the spread noticeably, and the first three bullets stay close to perfectly accurate.",
+    "Pre-fire the corner you are about to peek. The fire rate is high enough that starting your spray a beat early costs almost nothing and means your bullets are already tracking when the enemy appears."
+  ],
+  "patchHistory": [
+    {
+      "patch": "2.03",
+      "note": "Price rose from 400 to 500 credits after the Frenzy crowded other pistol-round options.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-2-03/"
+    },
+    {
+      "patch": "3.00",
+      "note": "Price fell to 450 while walking and running inaccuracy increased.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+    },
+    {
+      "patch": "6.11",
+      "note": "Minimum spread increased, maximum spread arrived in five bullets, and running recoil rose from 1.25x to 1.5x.",
+      "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+    }
+  ],
+  "pickRate": 1.9,
+  "killConversion": 0.53,
+  "roundConversion": "Available by buy type",
+  "uuid": "44d4e95c-4157-0037-81b2-17841bf2e8e3",
+  "source": "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "weapon",
+    "slug": "frenzy",
+    "entityName": "Frenzy",
+    "operation": "merge",
+    "groupId": "sidearms",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "image": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cost": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "magazine": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "fireRate": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "penetration": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "damageRanges": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "focus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "whenToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "howToUse": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchHistory": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "killConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "roundConversion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

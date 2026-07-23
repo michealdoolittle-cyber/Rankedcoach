@@ -1,0 +1,480 @@
+{
+  "id": "abyss",
+  "label": "Abyss",
+  "inCompetitivePool": false,
+  "cardImage": "https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/224b0a95-48b9-f703-1bd8-67aca101a61f/displayicon.png",
+  "callouts": [
+    {
+      "id": "abyss-1",
+      "sourceKey": "A::Bridge",
+      "sourceLabel": "A Bridge",
+      "label": "A Bridge",
+      "superRegionName": "A",
+      "regionName": "Bridge",
+      "x": 46.96,
+      "y": 3.83
+    },
+    {
+      "id": "abyss-2",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 30.15,
+      "y": 27.32
+    },
+    {
+      "id": "abyss-3",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 77.54,
+      "y": 23.67
+    },
+    {
+      "id": "abyss-4",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 63.37,
+      "y": 19.22
+    },
+    {
+      "id": "abyss-5",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 48.38,
+      "y": 15.17
+    },
+    {
+      "id": "abyss-6",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 90.09,
+      "y": 42.3
+    },
+    {
+      "id": "abyss-7",
+      "sourceKey": "A::Tower",
+      "sourceLabel": "A Tower",
+      "label": "A Tower",
+      "superRegionName": "A",
+      "regionName": "Tower",
+      "x": 48.99,
+      "y": 25.5
+    },
+    {
+      "id": "abyss-8",
+      "sourceKey": "Mid::Bend",
+      "sourceLabel": "Mid Bend",
+      "label": "Mid Bend",
+      "superRegionName": "Mid",
+      "regionName": "Bend",
+      "x": 58.71,
+      "y": 63.77
+    },
+    {
+      "id": "abyss-9",
+      "sourceKey": "B::Link",
+      "sourceLabel": "B Link",
+      "label": "B Link",
+      "superRegionName": "B",
+      "regionName": "Link",
+      "x": 30.96,
+      "y": 66.2
+    },
+    {
+      "id": "abyss-10",
+      "sourceKey": "B::Lobby",
+      "sourceLabel": "B Lobby",
+      "label": "B Lobby",
+      "superRegionName": "B",
+      "regionName": "Lobby",
+      "x": 82.6,
+      "y": 79.56
+    },
+    {
+      "id": "abyss-11",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 62.35,
+      "y": 86.04
+    },
+    {
+      "id": "abyss-12",
+      "sourceKey": "B::Nest",
+      "sourceLabel": "B Nest",
+      "label": "B Nest",
+      "superRegionName": "B",
+      "regionName": "Nest",
+      "x": 67.42,
+      "y": 90.3
+    },
+    {
+      "id": "abyss-13",
+      "sourceKey": "Mid::Bottom",
+      "sourceLabel": "Mid Bottom",
+      "label": "Mid Bottom",
+      "superRegionName": "Mid",
+      "regionName": "Bottom",
+      "x": 54.66,
+      "y": 53.24
+    },
+    {
+      "id": "abyss-14",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 40.48,
+      "y": 85.84
+    },
+    {
+      "id": "abyss-15",
+      "sourceKey": "Mid::Catwalk",
+      "sourceLabel": "Mid Catwalk",
+      "label": "Mid Catwalk",
+      "superRegionName": "Mid",
+      "regionName": "Catwalk",
+      "x": 54.25,
+      "y": 45.14
+    },
+    {
+      "id": "abyss-16",
+      "sourceKey": "B::Danger",
+      "sourceLabel": "B Danger",
+      "label": "B Danger",
+      "superRegionName": "B",
+      "regionName": "Danger",
+      "x": 55.67,
+      "y": 97.39
+    },
+    {
+      "id": "abyss-17",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 7.27,
+      "y": 42.3
+    },
+    {
+      "id": "abyss-18",
+      "sourceKey": "Mid::Library",
+      "sourceLabel": "Mid Library",
+      "label": "Mid Library",
+      "superRegionName": "Mid",
+      "regionName": "Library",
+      "x": 45.14,
+      "y": 52.63
+    },
+    {
+      "id": "abyss-19",
+      "sourceKey": "A::Secret",
+      "sourceLabel": "A Secret",
+      "label": "A Secret",
+      "superRegionName": "A",
+      "regionName": "Secret",
+      "x": 18.81,
+      "y": 19.42
+    },
+    {
+      "id": "abyss-20",
+      "sourceKey": "A::Security",
+      "sourceLabel": "A Security",
+      "label": "A Security",
+      "superRegionName": "A",
+      "regionName": "Security",
+      "x": 25.9,
+      "y": 10.31
+    },
+    {
+      "id": "abyss-21",
+      "sourceKey": "Mid::Top",
+      "sourceLabel": "Mid Top",
+      "label": "Mid Top",
+      "superRegionName": "Mid",
+      "regionName": "Top",
+      "x": 30.76,
+      "y": 43.72
+    },
+    {
+      "id": "abyss-22",
+      "sourceKey": "B::Tower",
+      "sourceLabel": "B Tower",
+      "label": "B Tower",
+      "superRegionName": "B",
+      "regionName": "Tower",
+      "x": 29.75,
+      "y": 81.79
+    },
+    {
+      "id": "abyss-23",
+      "sourceKey": "A::Vent",
+      "sourceLabel": "A Vent",
+      "label": "A Vent",
+      "superRegionName": "A",
+      "regionName": "Vent",
+      "x": 47.37,
+      "y": 36.23
+    }
+  ],
+  "plantSpots": [],
+  "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+  "weaponSuggestions": [],
+  "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
+  "macro": {
+    "defense": [],
+    "attack": []
+  },
+  "siteTips": [],
+  "teamplayTips": [],
+  "roleNotes": {},
+  "metaComp": {
+    "agents": [],
+    "composition": "No verified current ranked composition sample",
+    "patch": "13.01"
+  },
+  "metaComps": [],
+  "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+  "agentInsights": {},
+  "lineupLinks": [],
+  "source": "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US",
+  "uuid": "224b0a95-48b9-f703-1bd8-67aca101a61f",
+  "coordinates": "70° 50' AJ\" N, 9° 00' VX\" W",
+  "calloutLabelsBakedIn": false,
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "abyss",
+    "entityName": "Abyss",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US",
+          "https://valohub.co/maps/abyss",
+          "https://www.valocheck.com/maps/abyss/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestionNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "siteTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "teamplayTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "roleNotes": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compStatus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

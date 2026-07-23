@@ -1,11 +1,27 @@
 const DEFAULT_NTFY_TOPIC = "rankedcoach-deploys-mk7x2q";
 const VERSION_URL = "https://valorant-api.com/v1/version";
+const AGENTS_URL = "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US";
+const MAPS_URL = "https://valorant-api.com/v1/maps?language=en-US";
+const WEAPONS_URL = "https://valorant-api.com/v1/weapons?language=en-US";
 const RIOT_NEWS_ROOT = "https://playvalorant.com/en-us/news/game-updates";
 const YOUTUBE_API_ROOT = "https://www.googleapis.com/youtube/v3";
 const YOUTUBE_FEED_ROOT = "https://www.youtube.com/feeds/videos.xml";
 const MAX_CHANNEL_VIDEOS = 15;
 const MAX_TWITCH_ARCHIVES = 15;
 const PLAYLIST_MAX_ITEMS = 120;
+const LIBRARY_ENTITY_SNAPSHOT_KEY = "library:entities:v1";
+const LIBRARY_DAILY_RESEARCH_KEY = "library:research:last";
+const COMPETITIVE_MAP_NAMES = Object.freeze([
+  "Abyss", "Ascent", "Bind", "Breeze", "Corrode", "Fracture", "Haven",
+  "Icebox", "Lotus", "Pearl", "Split", "Summit", "Sunset"
+]);
+export const TRUSTED_LIBRARY_SITES = Object.freeze([
+  Object.freeze({ id: "riot-api", kind: "canonical", url: "https://valorant-api.com/v1" }),
+  Object.freeze({ id: "riot-official", kind: "canonical", url: "https://playvalorant.com/en-us/" }),
+  Object.freeze({ id: "valohub", kind: "synthesized", url: "https://valohub.co/maps/{slug}" }),
+  Object.freeze({ id: "valocheck", kind: "synthesized", url: "https://www.valocheck.com/maps/{slug}/" }),
+  Object.freeze({ id: "valorantinfo", kind: "synthesized", url: "https://valorantinfo.gg/maps/{slug}/" })
+]);
 const PLAYLIST_CACHE_WINDOW_MS = 5 * 60 * 1000;
 const TWITCH_TOKEN_CACHE_KEY = "playlist:twitch-token";
 const TWITCH_API_ROOT = "https://api.twitch.tv/helix";
@@ -711,6 +727,239 @@ async function notifyLowConfidencePlaylistReviews(env, items = []) {
   const labels = pending.slice(0, 8).map(({ item }) => `${item.channel || "Unknown creator"}: ${item.title || item.id}`);
   await notifyReview(env, `Playlist content review needed - low-confidence title fallback marked Live/Streaming: ${labels.join(" | ")}`);
   await Promise.all(pending.map(({ key }) => kv.put(key, "1", { expirationTtl: PLAYLIST_CLASSIFICATION_REVIEW_TTL_SECONDS })));
+}
+
+function librarySlug(value = "") {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function libraryFingerprint(value) {
+  const text = JSON.stringify(value);
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+function canonicalAgentSnapshot(agent = {}) {
+  const abilities = (agent.abilities || []).map(ability => ({
+    slot: ability.slot,
+    name: ability.displayName,
+    description: ability.description,
+    icon: ability.displayIcon
+  }));
+  return {
+    id: librarySlug(agent.displayName),
+    uuid: agent.uuid,
+    label: agent.displayName,
+    role: agent.role?.displayName || "",
+    icon: agent.displayIconSmall || agent.displayIcon || "",
+    portrait: agent.fullPortraitV2 || agent.fullPortrait || "",
+    abilities,
+    fingerprint: libraryFingerprint({ role: agent.role?.displayName, abilities })
+  };
+}
+
+function canonicalMapSnapshot(map = {}) {
+  const callouts = (map.callouts || []).map(callout => ({
+    superRegionName: callout.superRegionName,
+    regionName: callout.regionName,
+    location: callout.location
+  }));
+  return {
+    id: librarySlug(map.displayName),
+    uuid: map.uuid,
+    label: map.displayName,
+    cardImage: map.splash || "",
+    layoutImage: map.displayIcon || "",
+    coordinates: map.coordinates || "",
+    callouts,
+    fingerprint: libraryFingerprint({
+      displayIcon: map.displayIcon,
+      splash: map.splash,
+      coordinates: map.coordinates,
+      callouts
+    })
+  };
+}
+
+function canonicalWeaponSnapshot(weapon = {}) {
+  const stats = weapon.weaponStats || {};
+  const values = {
+    cost: weapon.shopData?.cost,
+    category: weapon.shopData?.category,
+    fireRate: stats.fireRate,
+    magazineSize: stats.magazineSize,
+    wallPenetration: stats.wallPenetration,
+    damageRanges: stats.damageRanges
+  };
+  return {
+    id: librarySlug(weapon.displayName),
+    uuid: weapon.uuid,
+    label: weapon.displayName,
+    image: weapon.displayIcon || "",
+    ...values,
+    fingerprint: libraryFingerprint(values)
+  };
+}
+
+export async function fetchLibraryEntitySnapshot() {
+  const [agentsPayload, mapsPayload, weaponsPayload] = await Promise.all([
+    fetchJson(AGENTS_URL),
+    fetchJson(MAPS_URL),
+    fetchJson(WEAPONS_URL)
+  ]);
+  const competitiveMaps = new Set(COMPETITIVE_MAP_NAMES);
+  return Object.freeze({
+    capturedAt: new Date().toISOString(),
+    agents: Object.freeze(unwrapValorantApiData(agentsPayload).filter(Boolean).map(canonicalAgentSnapshot)),
+    maps: Object.freeze(unwrapValorantApiData(mapsPayload).filter(map => competitiveMaps.has(map.displayName)).map(canonicalMapSnapshot)),
+    weapons: Object.freeze(unwrapValorantApiData(weaponsPayload)
+      .filter(weapon => weapon.shopData && weapon.weaponStats && weapon.displayName !== "Melee")
+      .map(canonicalWeaponSnapshot))
+  });
+}
+
+export function diffLibraryEntitySnapshots(previous = {}, current = {}) {
+  const diffCategory = category => {
+    const before = new Map((previous[category] || []).map(item => [item.uuid, item]));
+    const after = new Map((current[category] || []).map(item => [item.uuid, item]));
+    const added = [...after.values()].filter(item => !before.has(item.uuid));
+    const changed = [...after.values()].filter(item => (
+      before.has(item.uuid) && before.get(item.uuid).fingerprint !== item.fingerprint
+    ));
+    const removed = [...before.values()].filter(item => !after.has(item.uuid));
+    return Object.freeze({ added: Object.freeze(added), changed: Object.freeze(changed), removed: Object.freeze(removed) });
+  };
+  return Object.freeze({
+    agents: diffCategory("agents"),
+    maps: diffCategory("maps"),
+    weapons: diffCategory("weapons")
+  });
+}
+
+function hasLibraryEntityChanges(diff = {}) {
+  return ["agents", "maps", "weapons"].some(category => (
+    (diff[category]?.added?.length || 0)
+    + (diff[category]?.changed?.length || 0)
+    + (diff[category]?.removed?.length || 0)
+  ));
+}
+
+async function queueLibraryCanonicalDrafts(kv, diff, patch) {
+  const queued = [];
+  for (const category of ["agents", "maps", "weapons"]) {
+    for (const changeType of ["added", "changed"]) {
+      for (const entity of diff[category]?.[changeType] || []) {
+        const draft = {
+          schemaVersion: 1,
+          category: category.slice(0, -1),
+          slug: entity.id,
+          operation: changeType === "added" ? "append" : "merge",
+          patchVersion: patch.label,
+          generatedAt: new Date().toISOString(),
+          canonical: entity,
+          _tier: "canonical",
+          approved: true,
+          _sources: [
+            category === "agents" ? AGENTS_URL : category === "maps" ? MAPS_URL : WEAPONS_URL
+          ]
+        };
+        const key = `library:draft:${category.slice(0, -1)}:${entity.id}`;
+        await kv.put(key, JSON.stringify(draft));
+        queued.push(key);
+      }
+    }
+  }
+  return queued;
+}
+
+async function verifyLibraryResearchSources(mapName = "") {
+  const slug = librarySlug(mapName);
+  const candidates = TRUSTED_LIBRARY_SITES
+    .filter(source => source.kind === "synthesized")
+    .map(source => ({ ...source, url: source.url.replace("{slug}", slug) }));
+  const checks = await Promise.allSettled(candidates.map(async source => {
+    const response = await fetch(source.url, {
+      method: "GET",
+      headers: { "User-Agent": "RankedCoach-Content-Automation/1.0" },
+      signal: AbortSignal.timeout(8_000)
+    });
+    return { ...source, available: response.ok, status: response.status };
+  }));
+  return checks.map((result, index) => (
+    result.status === "fulfilled"
+      ? result.value
+      : { ...candidates[index], available: false, status: 0 }
+  ));
+}
+
+async function queueDailyLibraryResearch(kv, snapshot, patch) {
+  const queued = [];
+  for (const map of snapshot.maps || []) {
+    const checkedSources = await verifyLibraryResearchSources(map.label);
+    const available = checkedSources.filter(source => source.available);
+    const draft = {
+      schemaVersion: 1,
+      category: "map",
+      slug: map.id,
+      patchVersion: patch.label,
+      generatedAt: new Date().toISOString(),
+      _tier: "synthesized",
+      approved: false,
+      _sources: checkedSources.map(source => source.url),
+      sourceChecks: checkedSources,
+      status: available.length >= 3 ? "ready-for-synthesis" : "held-for-corroboration",
+      fields: {}
+    };
+    // The worker deliberately does not fabricate prose. It queues a governed
+    // draft with source evidence; a synthesis job may only fill fields after
+    // three independent current sources are actually available.
+    const key = `library:research:map:${map.id}`;
+    await kv.put(key, JSON.stringify(draft), { expirationTtl: 14 * 24 * 60 * 60 });
+    queued.push(key);
+  }
+  await kv.put(LIBRARY_DAILY_RESEARCH_KEY, JSON.stringify({
+    patchVersion: patch.label,
+    checkedAt: new Date().toISOString(),
+    queued
+  }));
+  return queued;
+}
+
+export async function runLibraryContentAutomation(env = {}, options = {}) {
+  const kv = env.CONTENT_AUTOMATION;
+  if (!kv) throw new Error("CONTENT_AUTOMATION KV is not configured.");
+  const [snapshot, patch] = await Promise.all([
+    fetchLibraryEntitySnapshot(),
+    getCurrentPatch(env)
+  ]);
+  const previous = await kv.get(LIBRARY_ENTITY_SNAPSHOT_KEY, "json");
+  const diff = diffLibraryEntitySnapshots(previous || {}, snapshot);
+  const queuedCanonical = await queueLibraryCanonicalDrafts(kv, diff, patch);
+  await kv.put(LIBRARY_ENTITY_SNAPSHOT_KEY, JSON.stringify(snapshot));
+  const queuedResearch = options.daily ? await queueDailyLibraryResearch(kv, snapshot, patch) : [];
+  if (previous && hasLibraryEntityChanges(diff)) {
+    const labels = ["agents", "maps", "weapons"].flatMap(category => (
+      [...(diff[category].added || []), ...(diff[category].changed || [])]
+        .map(entity => `${category.slice(0, -1)}:${entity.label}`)
+    ));
+    try {
+      await notifyReview(env, `Library canonical change detected for Patch ${patch.label}: ${labels.slice(0, 20).join(", ")}. ${queuedCanonical.length} governed draft(s) queued.`);
+    } catch (error) {
+      console.warn("Library canonical-change notification skipped", error?.message || error);
+    }
+  }
+  return Object.freeze({
+    initialized: !previous,
+    changed: hasLibraryEntityChanges(diff),
+    patch: patch.label,
+    diff,
+    queuedCanonical,
+    queuedResearch
+  });
 }
 
 export async function runPatchContentAutomation(env = {}) {

@@ -1,0 +1,470 @@
+{
+  "id": "ascent",
+  "label": "Ascent",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319/displayicon.png",
+  "callouts": [
+    {
+      "id": "ascent-1",
+      "sourceKey": "A::Tree",
+      "sourceLabel": "A Tree",
+      "label": "A Tree",
+      "superRegionName": "A",
+      "regionName": "Tree",
+      "x": 39.82,
+      "y": 29.46
+    },
+    {
+      "id": "ascent-2",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 60.29,
+      "y": 25.9
+    },
+    {
+      "id": "ascent-3",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 48.42,
+      "y": 20.07
+    },
+    {
+      "id": "ascent-4",
+      "sourceKey": "A::Window",
+      "sourceLabel": "A Window",
+      "label": "A Window",
+      "superRegionName": "A",
+      "regionName": "Window",
+      "x": 24.12,
+      "y": 29.16
+    },
+    {
+      "id": "ascent-5",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 35.01,
+      "y": 14.25
+    },
+    {
+      "id": "ascent-6",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 81.74,
+      "y": 56.9
+    },
+    {
+      "id": "ascent-7",
+      "sourceKey": "B::Lobby",
+      "sourceLabel": "B Lobby",
+      "label": "B Lobby",
+      "superRegionName": "B",
+      "regionName": "Lobby",
+      "x": 71.66,
+      "y": 67.76
+    },
+    {
+      "id": "ascent-8",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 40.5,
+      "y": 71.21
+    },
+    {
+      "id": "ascent-9",
+      "sourceKey": "B::Boat House",
+      "sourceLabel": "B Boat House",
+      "label": "B Boat House",
+      "superRegionName": "B",
+      "regionName": "Boat House",
+      "x": 27.05,
+      "y": 88.72
+    },
+    {
+      "id": "ascent-10",
+      "sourceKey": "Mid::Bottom",
+      "sourceLabel": "Mid Bottom",
+      "label": "Mid Bottom",
+      "superRegionName": "Mid",
+      "regionName": "Bottom",
+      "x": 39.73,
+      "y": 49.47
+    },
+    {
+      "id": "ascent-11",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 28.55,
+      "y": 73.73
+    },
+    {
+      "id": "ascent-12",
+      "sourceKey": "Mid::Catwalk",
+      "sourceLabel": "Mid Catwalk",
+      "label": "Mid Catwalk",
+      "superRegionName": "Mid",
+      "regionName": "Catwalk",
+      "x": 52.5,
+      "y": 41.11
+    },
+    {
+      "id": "ascent-13",
+      "sourceKey": "Mid::Cubby",
+      "sourceLabel": "Mid Cubby",
+      "label": "Mid Cubby",
+      "superRegionName": "Mid",
+      "regionName": "Cubby",
+      "x": 45.48,
+      "y": 33.61
+    },
+    {
+      "id": "ascent-14",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 13.18,
+      "y": 43.36
+    },
+    {
+      "id": "ascent-15",
+      "sourceKey": "A::Garden",
+      "sourceLabel": "A Garden",
+      "label": "A Garden",
+      "superRegionName": "A",
+      "regionName": "Garden",
+      "x": 28.53,
+      "y": 30.91
+    },
+    {
+      "id": "ascent-16",
+      "sourceKey": "Mid::Market",
+      "sourceLabel": "Mid Market",
+      "label": "Mid Market",
+      "superRegionName": "Mid",
+      "regionName": "Market",
+      "x": 29.85,
+      "y": 49.7
+    },
+    {
+      "id": "ascent-17",
+      "sourceKey": "Mid::Courtyard",
+      "sourceLabel": "Mid Courtyard",
+      "label": "Mid Courtyard",
+      "superRegionName": "Mid",
+      "regionName": "Courtyard",
+      "x": 49.28,
+      "y": 48.77
+    },
+    {
+      "id": "ascent-18",
+      "sourceKey": "Mid::Link",
+      "sourceLabel": "Mid Link",
+      "label": "Mid Link",
+      "superRegionName": "Mid",
+      "regionName": "Link",
+      "x": 51.43,
+      "y": 61.75
+    },
+    {
+      "id": "ascent-19",
+      "sourceKey": "Mid::Pizza",
+      "sourceLabel": "Mid Pizza",
+      "label": "Mid Pizza",
+      "superRegionName": "Mid",
+      "regionName": "Pizza",
+      "x": 30.55,
+      "y": 44.71
+    },
+    {
+      "id": "ascent-20",
+      "sourceKey": "A::Rafters",
+      "sourceLabel": "A Rafters",
+      "label": "A Rafters",
+      "superRegionName": "A",
+      "regionName": "Rafters",
+      "x": 23.92,
+      "y": 14.41
+    },
+    {
+      "id": "ascent-21",
+      "sourceKey": "Mid::Top",
+      "sourceLabel": "Mid Top",
+      "label": "Mid Top",
+      "superRegionName": "Mid",
+      "regionName": "Top",
+      "x": 66.48,
+      "y": 38.05
+    },
+    {
+      "id": "ascent-22",
+      "sourceKey": "A::Wine",
+      "sourceLabel": "A Wine",
+      "label": "A Wine",
+      "superRegionName": "A",
+      "regionName": "Wine",
+      "x": 48.56,
+      "y": 5.81
+    }
+  ],
+  "plantSpots": [],
+  "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+  "weaponSuggestions": [],
+  "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
+  "macro": {
+    "defense": [],
+    "attack": []
+  },
+  "siteTips": [],
+  "teamplayTips": [],
+  "roleNotes": {},
+  "metaComp": {
+    "agents": [],
+    "composition": "No verified current ranked composition sample",
+    "patch": "13.01"
+  },
+  "metaComps": [],
+  "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+  "agentInsights": {},
+  "lineupLinks": [],
+  "source": "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US",
+  "uuid": "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
+  "coordinates": "45°26'BF'N,12°20'Q'E",
+  "calloutLabelsBakedIn": false,
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "ascent",
+    "entityName": "Ascent",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US",
+          "https://valohub.co/maps/ascent",
+          "https://www.valocheck.com/maps/ascent/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestionNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "siteTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "teamplayTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "roleNotes": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compStatus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

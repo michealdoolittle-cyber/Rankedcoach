@@ -1,0 +1,530 @@
+{
+  "id": "lotus",
+  "label": "Lotus",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/displayicon.png",
+  "callouts": [
+    {
+      "id": "lotus-1",
+      "sourceKey": "A::Top",
+      "sourceLabel": "A Top",
+      "label": "A Top",
+      "superRegionName": "A",
+      "regionName": "Top",
+      "x": 81.81,
+      "y": 25.1
+    },
+    {
+      "id": "lotus-2",
+      "sourceKey": "A::Drop",
+      "sourceLabel": "A Drop",
+      "label": "A Drop",
+      "superRegionName": "A",
+      "regionName": "Drop",
+      "x": 89.35,
+      "y": 23.26
+    },
+    {
+      "id": "lotus-3",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 85.49,
+      "y": 36.08
+    },
+    {
+      "id": "lotus-4",
+      "sourceKey": "A::Hut",
+      "sourceLabel": "A Hut",
+      "label": "A Hut",
+      "superRegionName": "A",
+      "regionName": "Hut",
+      "x": 85.49,
+      "y": 34.77
+    },
+    {
+      "id": "lotus-5",
+      "sourceKey": "A::Tree",
+      "sourceLabel": "A Tree",
+      "label": "A Tree",
+      "superRegionName": "A",
+      "regionName": "Tree",
+      "x": 85.49,
+      "y": 47.5
+    },
+    {
+      "id": "lotus-6",
+      "sourceKey": "A::Door",
+      "sourceLabel": "A Door",
+      "label": "A Door",
+      "superRegionName": "A",
+      "regionName": "Door",
+      "x": 82.95,
+      "y": 51.39
+    },
+    {
+      "id": "lotus-7",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 75.43,
+      "y": 53.7
+    },
+    {
+      "id": "lotus-8",
+      "sourceKey": "A::Rubble",
+      "sourceLabel": "A Rubble",
+      "label": "A Rubble",
+      "superRegionName": "A",
+      "regionName": "Rubble",
+      "x": 80.89,
+      "y": 60.09
+    },
+    {
+      "id": "lotus-9",
+      "sourceKey": "A::Root",
+      "sourceLabel": "A Root",
+      "label": "A Root",
+      "superRegionName": "A",
+      "regionName": "Root",
+      "x": 69.2,
+      "y": 60.09
+    },
+    {
+      "id": "lotus-10",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 66.55,
+      "y": 72.44
+    },
+    {
+      "id": "lotus-11",
+      "sourceKey": "C::Lobby",
+      "sourceLabel": "C Lobby",
+      "label": "C Lobby",
+      "superRegionName": "C",
+      "regionName": "Lobby",
+      "x": 34.13,
+      "y": 81.67
+    },
+    {
+      "id": "lotus-12",
+      "sourceKey": "B::Pillars",
+      "sourceLabel": "B Pillars",
+      "label": "B Pillars",
+      "superRegionName": "B",
+      "regionName": "Pillars",
+      "x": 50.29,
+      "y": 66.1
+    },
+    {
+      "id": "lotus-13",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 45.13,
+      "y": 56.66
+    },
+    {
+      "id": "lotus-14",
+      "sourceKey": "C::Door",
+      "sourceLabel": "C Door",
+      "label": "C Door",
+      "superRegionName": "C",
+      "regionName": "Door",
+      "x": 32.86,
+      "y": 57.08
+    },
+    {
+      "id": "lotus-15",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 50.29,
+      "y": 45.93
+    },
+    {
+      "id": "lotus-16",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 60.51,
+      "y": 48.5
+    },
+    {
+      "id": "lotus-17",
+      "sourceKey": "B::Upper",
+      "sourceLabel": "B Upper",
+      "label": "B Upper",
+      "superRegionName": "B",
+      "regionName": "Upper",
+      "x": 56.4,
+      "y": 36.46
+    },
+    {
+      "id": "lotus-18",
+      "sourceKey": "C::Waterfall",
+      "sourceLabel": "C Waterfall",
+      "label": "C Waterfall",
+      "superRegionName": "C",
+      "regionName": "Waterfall",
+      "x": 31.12,
+      "y": 43.39
+    },
+    {
+      "id": "lotus-19",
+      "sourceKey": "C::Link",
+      "sourceLabel": "C Link",
+      "label": "C Link",
+      "superRegionName": "C",
+      "regionName": "Link",
+      "x": 35.56,
+      "y": 37.75
+    },
+    {
+      "id": "lotus-20",
+      "sourceKey": "A::Stairs",
+      "sourceLabel": "A Stairs",
+      "label": "A Stairs",
+      "superRegionName": "A",
+      "regionName": "Stairs",
+      "x": 73.28,
+      "y": 32.32
+    },
+    {
+      "id": "lotus-21",
+      "sourceKey": "C::Mound",
+      "sourceLabel": "C Mound",
+      "label": "C Mound",
+      "superRegionName": "C",
+      "regionName": "Mound",
+      "x": 34.13,
+      "y": 63.96
+    },
+    {
+      "id": "lotus-22",
+      "sourceKey": "C::Main",
+      "sourceLabel": "C Main",
+      "label": "C Main",
+      "superRegionName": "C",
+      "regionName": "Main",
+      "x": 22.81,
+      "y": 53.53
+    },
+    {
+      "id": "lotus-23",
+      "sourceKey": "C::Bend",
+      "sourceLabel": "C Bend",
+      "label": "C Bend",
+      "superRegionName": "C",
+      "regionName": "Bend",
+      "x": 7.45,
+      "y": 51.04
+    },
+    {
+      "id": "lotus-24",
+      "sourceKey": "C::Site",
+      "sourceLabel": "C Site",
+      "label": "C Site",
+      "superRegionName": "C",
+      "regionName": "Site",
+      "x": 14.76,
+      "y": 43.7
+    },
+    {
+      "id": "lotus-25",
+      "sourceKey": "C::Hall",
+      "sourceLabel": "C Hall",
+      "label": "C Hall",
+      "superRegionName": "C",
+      "regionName": "Hall",
+      "x": 14.76,
+      "y": 34.88
+    },
+    {
+      "id": "lotus-26",
+      "sourceKey": "C::Gravel",
+      "sourceLabel": "C Gravel",
+      "label": "C Gravel",
+      "superRegionName": "C",
+      "regionName": "Gravel",
+      "x": 32.86,
+      "y": 27.43
+    },
+    {
+      "id": "lotus-27",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 57.7,
+      "y": 22.03
+    },
+    {
+      "id": "lotus-28",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 51.08,
+      "y": 81.69
+    }
+  ],
+  "plantSpots": [],
+  "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+  "weaponSuggestions": [],
+  "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
+  "macro": {
+    "defense": [],
+    "attack": []
+  },
+  "siteTips": [],
+  "teamplayTips": [],
+  "roleNotes": {},
+  "metaComp": {
+    "agents": [],
+    "composition": "No verified current ranked composition sample",
+    "patch": "13.01"
+  },
+  "metaComps": [],
+  "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+  "agentInsights": {},
+  "lineupLinks": [],
+  "source": "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US",
+  "uuid": "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
+  "coordinates": "14°07'AD.4\"N8 74°53'XY\"E8",
+  "calloutLabelsBakedIn": false,
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "lotus",
+    "entityName": "Lotus",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US",
+          "https://valohub.co/maps/lotus",
+          "https://www.valocheck.com/maps/lotus/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "plantSpots": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantRateNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestions": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponSuggestionNote": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "macro": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "siteTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "teamplayTips": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "roleNotes": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Held from publication because Riot's canonical map feed contains no tactical guidance and the retired generator logged no sources"
+    },
+    "metaComp": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "metaComps": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compStatus": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "agentInsights": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "lineupLinks": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}

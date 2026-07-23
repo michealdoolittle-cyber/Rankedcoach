@@ -1,0 +1,384 @@
+{
+  "id": "summit",
+  "label": "Summit",
+  "uuid": "756da597-416b-c0f2-f47b-afbdf28670bc",
+  "coordinates": "29° 18' FC\" N, 110° 25' ZQ\" E",
+  "inCompetitivePool": true,
+  "cardImage": "https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/splash.png",
+  "layoutImage": "https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/displayicon.png",
+  "calloutLabelsBakedIn": false,
+  "callouts": [
+    {
+      "id": "summit-1",
+      "sourceKey": "Mid::Bottom",
+      "sourceLabel": "Mid Bottom",
+      "label": "Mid Bottom",
+      "superRegionName": "Mid",
+      "regionName": "Bottom",
+      "x": 48.43,
+      "y": 41.64
+    },
+    {
+      "id": "summit-2",
+      "sourceKey": "Mid::Top",
+      "sourceLabel": "Mid Top",
+      "label": "Mid Top",
+      "superRegionName": "Mid",
+      "regionName": "Top",
+      "x": 53.68,
+      "y": 67.7
+    },
+    {
+      "id": "summit-3",
+      "sourceKey": "A::Lobby",
+      "sourceLabel": "A Lobby",
+      "label": "A Lobby",
+      "superRegionName": "A",
+      "regionName": "Lobby",
+      "x": 69.43,
+      "y": 74.08
+    },
+    {
+      "id": "summit-4",
+      "sourceKey": "A::Main",
+      "sourceLabel": "A Main",
+      "label": "A Main",
+      "superRegionName": "A",
+      "regionName": "Main",
+      "x": 69.43,
+      "y": 56.64
+    },
+    {
+      "id": "summit-5",
+      "sourceKey": "A::Garden",
+      "sourceLabel": "A Garden",
+      "label": "A Garden",
+      "superRegionName": "A",
+      "regionName": "Garden",
+      "x": 79.18,
+      "y": 40.33
+    },
+    {
+      "id": "summit-6",
+      "sourceKey": "A::Site",
+      "sourceLabel": "A Site",
+      "label": "A Site",
+      "superRegionName": "A",
+      "regionName": "Site",
+      "x": 91.74,
+      "y": 40.33
+    },
+    {
+      "id": "summit-7",
+      "sourceKey": "A::Art",
+      "sourceLabel": "A Art",
+      "label": "A Art",
+      "superRegionName": "A",
+      "regionName": "Art",
+      "x": 79.18,
+      "y": 26.45
+    },
+    {
+      "id": "summit-8",
+      "sourceKey": "A::Cave",
+      "sourceLabel": "A Cave",
+      "label": "A Cave",
+      "superRegionName": "A",
+      "regionName": "Cave",
+      "x": 95.68,
+      "y": 26.45
+    },
+    {
+      "id": "summit-9",
+      "sourceKey": "A::Hall",
+      "sourceLabel": "A Hall",
+      "label": "A Hall",
+      "superRegionName": "A",
+      "regionName": "Hall",
+      "x": 69.24,
+      "y": 26.45
+    },
+    {
+      "id": "summit-10",
+      "sourceKey": "A::Link",
+      "sourceLabel": "A Link",
+      "label": "A Link",
+      "superRegionName": "A",
+      "regionName": "Link",
+      "x": 65.12,
+      "y": 36.01
+    },
+    {
+      "id": "summit-11",
+      "sourceKey": "B::Lobby",
+      "sourceLabel": "B Lobby",
+      "label": "B Lobby",
+      "superRegionName": "B",
+      "regionName": "Lobby",
+      "x": 28.93,
+      "y": 59.45
+    },
+    {
+      "id": "summit-12",
+      "sourceKey": "Defender Side::Spawn",
+      "sourceLabel": "Defender Side Spawn",
+      "label": "Defender Side Spawn",
+      "superRegionName": "Defender Side",
+      "regionName": "Spawn",
+      "x": 51.05,
+      "y": 7.33
+    },
+    {
+      "id": "summit-13",
+      "sourceKey": "Mid::Window",
+      "sourceLabel": "Mid Window",
+      "label": "Mid Window",
+      "superRegionName": "Mid",
+      "regionName": "Window",
+      "x": 48.43,
+      "y": 32.64
+    },
+    {
+      "id": "summit-14",
+      "sourceKey": "B::Gym",
+      "sourceLabel": "B Gym",
+      "label": "B Gym",
+      "superRegionName": "B",
+      "regionName": "Gym",
+      "x": 27.99,
+      "y": 18.95
+    },
+    {
+      "id": "summit-15",
+      "sourceKey": "B::Trophy",
+      "sourceLabel": "B Trophy",
+      "label": "B Trophy",
+      "superRegionName": "B",
+      "regionName": "Trophy",
+      "x": 32.3,
+      "y": 29.83
+    },
+    {
+      "id": "summit-16",
+      "sourceKey": "B::Tower",
+      "sourceLabel": "B Tower",
+      "label": "B Tower",
+      "superRegionName": "B",
+      "regionName": "Tower",
+      "x": 15.62,
+      "y": 21.58
+    },
+    {
+      "id": "summit-17",
+      "sourceKey": "B::Drop",
+      "sourceLabel": "B Drop",
+      "label": "B Drop",
+      "superRegionName": "B",
+      "regionName": "Drop",
+      "x": 5.3,
+      "y": 24.01
+    },
+    {
+      "id": "summit-18",
+      "sourceKey": "B::Site",
+      "sourceLabel": "B Site",
+      "label": "B Site",
+      "superRegionName": "B",
+      "regionName": "Site",
+      "x": 15.05,
+      "y": 33.76
+    },
+    {
+      "id": "summit-19",
+      "sourceKey": "B::Link",
+      "sourceLabel": "B Link",
+      "label": "B Link",
+      "superRegionName": "B",
+      "regionName": "Link",
+      "x": 33.05,
+      "y": 41.64
+    },
+    {
+      "id": "summit-20",
+      "sourceKey": "Mid::Fountain",
+      "sourceLabel": "Mid Fountain",
+      "label": "Mid Fountain",
+      "superRegionName": "Mid",
+      "regionName": "Fountain",
+      "x": 51.05,
+      "y": 55.33
+    },
+    {
+      "id": "summit-21",
+      "sourceKey": "Mid::Bend",
+      "sourceLabel": "Mid Bend",
+      "label": "Mid Bend",
+      "superRegionName": "Mid",
+      "regionName": "Bend",
+      "x": 63.62,
+      "y": 49.33
+    },
+    {
+      "id": "summit-22",
+      "sourceKey": "Mid::Tiles",
+      "sourceLabel": "Mid Tiles",
+      "label": "Mid Tiles",
+      "superRegionName": "Mid",
+      "regionName": "Tiles",
+      "x": 36.49,
+      "y": 60.68
+    },
+    {
+      "id": "summit-23",
+      "sourceKey": "B::Main",
+      "sourceLabel": "B Main",
+      "label": "B Main",
+      "superRegionName": "B",
+      "regionName": "Main",
+      "x": 18.62,
+      "y": 49.14
+    },
+    {
+      "id": "summit-24",
+      "sourceKey": "Attacker Side::Spawn",
+      "sourceLabel": "Attacker Side Spawn",
+      "label": "Attacker Side Spawn",
+      "superRegionName": "Attacker Side",
+      "regionName": "Spawn",
+      "x": 3.99,
+      "y": 89.64
+    }
+  ],
+  "source": "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US",
+  "dataStatus": "in-review",
+  "lastReviewed": "2026-07-23",
+  "patchVersion": "13.01",
+  "_meta": {
+    "schemaVersion": 1,
+    "category": "map",
+    "slug": "summit",
+    "entityName": "Summit",
+    "operation": "merge",
+    "groupId": "",
+    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generationReason": "Scheduled canonical refresh",
+    "patchVersion": "13.01",
+    "lastReviewed": "2026-07-23"
+  },
+  "_fieldMeta": {
+    "id": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "label": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "coordinates": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "inCompetitivePool": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "cardImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "callouts": {
+      "_tier": "mixed",
+      "approved": false,
+      "positions": {
+        "_tier": "canonical",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+        ],
+        "approved": true,
+        "confidence": "n/a (auto-approved)"
+      },
+      "labels": {
+        "_tier": "synthesized",
+        "_sources": [
+          "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US",
+          "https://valohub.co/maps/summit",
+          "https://www.valocheck.com/maps/summit/"
+        ],
+        "approved": false,
+        "confidence": "3 references logged; explicit approval required"
+      }
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    }
+  }
+}
