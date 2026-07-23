@@ -50,6 +50,12 @@ import {
   runLibraryContentAutomation,
   runPatchContentAutomation
 } from "./content-automation.mjs";
+import { EMBEDDED_KNOWLEDGE_SOURCES } from "./embedded-knowledge-sources.mjs";
+import {
+  LIBRARY_KNOWLEDGE_AUDIT_BASELINE,
+  LIBRARY_KNOWLEDGE_INDEX
+} from "./knowledge-library-audit-baseline.mjs";
+import { runKnowledgePipeline } from "./knowledge-pipeline.mjs";
 
 const API_ROUTES = new Map([
   ["GET /api/riot/health", getRiotHealth],
@@ -159,9 +165,18 @@ export default {
 
   scheduled(controller, env, executionContext) {
     const isDailyResearch = String(controller?.cron || "") === "43 9 * * *";
-    executionContext.waitUntil(Promise.all([
+    const jobs = [
       runPatchContentAutomation(env),
       runLibraryContentAutomation(env, { daily: isDailyResearch })
-    ]));
+    ];
+    if (isDailyResearch) {
+      jobs.push(runKnowledgePipeline(env, {
+        sources: EMBEDDED_KNOWLEDGE_SOURCES,
+        batchSize: 4,
+        libraryAudit: LIBRARY_KNOWLEDGE_AUDIT_BASELINE,
+        libraryKnowledgeIndex: LIBRARY_KNOWLEDGE_INDEX
+      }));
+    }
+    executionContext.waitUntil(Promise.all(jobs));
   }
 };
