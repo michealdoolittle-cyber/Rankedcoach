@@ -4,6 +4,7 @@ import {
   readdir,
   writeFile
 } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import {
@@ -28,6 +29,7 @@ const baselineRequested = process.argv.includes("--baseline");
 const refreshScreenshots = process.argv.includes("--refresh-screenshots");
 const planPath = path.join(DRAFT_ROOT, "_promotion-plan.json");
 const reviewedDate = todayIso();
+const BASELINE_DIRECTIVE = "notes/promotion-sequencing-bug-2026-07-24.md";
 
 function checkJavaScript(filePath) {
   const result = spawnSync(process.execPath, ["--check", filePath], {
@@ -76,20 +78,20 @@ function mergeCanonicalCalloutPositions(current = [], incoming = []) {
   });
 }
 
-function selectPromotedPatch(draft, current) {
+function selectPromotedPatch(draft, current, { baseline = false } = {}) {
   const patch = {};
   const rows = [];
   for (const [field, meta] of Object.entries(draft._fieldMeta || {})) {
     if (!(field in draft)) continue;
-    let allowed = canPromote(meta);
+    let allowed = baseline || canPromote(meta);
     let nextValue = draft[field];
     let sources = meta._sources || [];
     let confidence = meta.confidence || "";
     let tier = meta._tier || "synthesized";
 
     if (field === "callouts" && meta._tier === "mixed") {
-      const positionsAllowed = canPromote(meta.positions);
-      const labelsAllowed = canPromote(meta.labels);
+      const positionsAllowed = baseline || canPromote(meta.positions);
+      const labelsAllowed = baseline || canPromote(meta.labels);
       if (positionsAllowed && labelsAllowed) {
         allowed = true;
         sources = [...new Set([...(meta.positions?._sources || []), ...(meta.labels?._sources || [])])];
@@ -123,6 +125,50 @@ function selectPromotedPatch(draft, current) {
   patch.lastReviewed = draft._meta.lastReviewed || reviewedDate;
   patch.patchVersion = draft._meta.patchVersion || "Current";
   return { patch, rows };
+}
+
+async function validateBaselineBatch(files) {
+  if (!files.length) throw new Error("Baseline promotion refused: no governed drafts were found.");
+  const drafts = await Promise.all(files.map(async file => ({
+    file,
+    value: JSON.parse(await readFile(path.join(DRAFT_ROOT, file), "utf8"))
+  })));
+  const timestamps = drafts.map(({ file, value }) => {
+    const timestamp = Date.parse(value?._meta?.generatedAt || "");
+    if (!Number.isFinite(timestamp)) {
+      throw new Error(`Baseline promotion refused: ${file} has no valid _meta.generatedAt timestamp.`);
+    }
+    return timestamp;
+  });
+  const patchVersions = [...new Set(drafts.map(({ value }) => value?._meta?.patchVersion || "Current"))];
+  if (patchVersions.length !== 1) {
+    throw new Error(`Baseline promotion refused: drafts span multiple patch versions (${patchVersions.join(", ")}).`);
+  }
+  const oldest = Math.min(...timestamps);
+  const newest = Math.max(...timestamps);
+  if (newest - oldest > 5 * 60 * 1000) {
+    throw new Error(`Baseline promotion refused: draft timestamps span more than five minutes (${new Date(oldest).toISOString()} to ${new Date(newest).toISOString()}). Regenerate one final batch first.`);
+  }
+  const plan = JSON.parse(await readFile(planPath, "utf8"));
+  const planTimestamp = Date.parse(plan?.generatedAt || "");
+  if (!Number.isFinite(planTimestamp) || planTimestamp < newest) {
+    throw new Error("Baseline promotion refused: run --plan after the final draft generation so the irreversible promotion cannot consume a partial batch.");
+  }
+  const digest = createHash("sha256");
+  for (const { file, value } of drafts) {
+    digest.update(file);
+    digest.update("\0");
+    digest.update(JSON.stringify(value));
+    digest.update("\0");
+  }
+  return {
+    draftCount: drafts.length,
+    patchVersion: patchVersions[0],
+    oldestGeneratedAt: new Date(oldest).toISOString(),
+    newestGeneratedAt: new Date(newest).toISOString(),
+    plannedAt: new Date(planTimestamp).toISOString(),
+    sha256: digest.digest("hex")
+  };
 }
 
 function categoryPlural(category) {
@@ -402,13 +448,14 @@ const state = await loadLibraryState();
 const files = (await readdir(DRAFT_ROOT))
   .filter(file => /^(agent|map|weapon)-.+\.json$/i.test(file))
   .sort();
+const baselineBatch = baselineRequested ? await validateBaselineBatch(files) : null;
 const promoted = { agents: [], maps: [], weapons: [] };
 const entries = [];
 
 for (const file of files) {
   const draft = JSON.parse(await readFile(path.join(DRAFT_ROOT, file), "utf8"));
   const current = getEntity(state, draft._meta.category, draft._meta.slug);
-  const { patch, rows } = selectPromotedPatch(draft, current);
+  const { patch, rows } = selectPromotedPatch(draft, current, { baseline: baselineRequested });
   if (!patch.id) patch.id = draft._meta.slug;
   if (draft._meta.category === "weapon") {
     promoted.weapons.push({ groupId: draft._meta.groupId || "other", patch });
@@ -449,9 +496,13 @@ await writeJson(planPath, plan);
 if (baselineRequested) {
   await writeJson(BASELINE_MARKER, {
     completedAt: new Date().toISOString(),
-    patchVersion: entries[0]?.draft?._meta?.patchVersion || "Current",
+    patchVersion: baselineBatch.patchVersion,
     changedEntities: entries.length,
-    note: "One-time baseline exception consumed. All future synthesized fields require reviewed approval."
+    promotedEntities: files.length,
+    batch: baselineBatch,
+    resetLog: "public/library/_drafts/baseline-reset-2026-07-24.json",
+    directive: BASELINE_DIRECTIVE,
+    note: "Corrected one-time baseline exception consumed after validating the final draft batch. All future synthesized fields require reviewed approval."
   });
 }
 

@@ -8,8 +8,26 @@
       "id": "astra",
       "label": "Astra",
       "role": "Controller",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Astra as a Controller. Ghanaian Agent Astra harnesses the energies of the cosmos to reshape battlefields to her whim. With full command of her astral form and a talent for deep strategic foresight, she's always eons ahead of her enemy's next move.",
+        "Astra's current ability slots are listed directly from Riot's live game-content feed.",
+        "Astral Form / Cosmic Divide is Astra's Ultimate ability. ACTIVATE to enter Astral Form where you can place Stars with FIRE. Stars can be reactivated later, transforming them into a Nova Pulse, Nebula, or Gravity Well.\r\n\r\nWhen Cosmic Divide is charged, use ALT FIRE in Astral Form to begin aiming it, then FIRE to select two locations. An infinite Cosmic Divide connects the two points you select. Cosmic Divide blocks bullets and sound."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.05",
+          "note": "Astral Form Bugfix: Fixed a bug where a floating gun may briefly appear when a suppression effect interrupts it",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        },
+        {
+          "patch": "12.00",
+          "note": "Nebula/Dissipate Bugfix: Fixed a bug where Nebula created by Dissipate did not have an icon on the minimap.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "nova-pulse",
@@ -87,6 +105,18 @@
           "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Controller",
+          "note": "Controllers are experts in slicing up dangerous territory to set their team up for success."
+        },
+        {
+          "label": "Official profile",
+          "value": "Astra",
+          "note": "Ghanaian Agent Astra harnesses the energies of the cosmos to reshape battlefields to her whim. With full command of her astral form and a talent for deep strategic foresight, she's always eons ahead of her enemy's next move."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
       "uuid": "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
       "lastReviewed": "2026-07-23",
@@ -96,8 +126,26 @@
       "id": "breach",
       "label": "Breach",
       "role": "Initiator",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/5f8d3a7f-467b-97f3-062c-13acf203c006/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/5f8d3a7f-467b-97f3-062c-13acf203c006/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Breach as a Initiator. The bionic Swede Breach fires powerful, targeted kinetic blasts to aggressively clear a path through enemy ground. The damage and disruption he inflicts ensures no fight is ever fair.",
+        "Fault Line is Breach's current Signature ability. EQUIP a Seismic Blast. HOLD FIRE to increase the distance. RELEASE to set off the quake, Concussing all players in its zone and in a line up to the zone.",
+        "Rolling Thunder is Breach's Ultimate ability. EQUIP a Seismic Charge. FIRE to send a cascading quake through all terrain in a large zone. The quake Concusses and knocks up anyone caught in it."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.00",
+          "note": "Flashpoint Buff: Projectile speed increased from 2000 to 2400",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        },
+        {
+          "patch": "11.08",
+          "note": "Fault Line Nerf: Cooldown increased from 40s to 60s",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+        }
+      ],
       "abilities": [
         {
           "id": "flashpoint",
@@ -160,6 +208,18 @@
           "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Initiator",
+          "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+        },
+        {
+          "label": "Official profile",
+          "value": "Breach",
+          "note": "The bionic Swede Breach fires powerful, targeted kinetic blasts to aggressively clear a path through enemy ground. The damage and disruption he inflicts ensures no fight is ever fair."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
       "uuid": "5f8d3a7f-467b-97f3-062c-13acf203c006",
       "lastReviewed": "2026-07-23",
@@ -169,8 +229,26 @@
       "id": "brimstone",
       "label": "Brimstone",
       "role": "Controller",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Brimstone as a Controller. Joining from the U.S.A., Brimstone's orbital arsenal ensures his squad always has the advantage. His ability to deliver utility precisely and safely make him the unmatched boots-on-the-ground commander.",
+        "Sky Smoke is Brimstone's current Signature ability. EQUIP a tactical map. FIRE to set locations where Brimstone's smoke clouds will land. ALT FIRE to confirm, launching long-lasting smoke clouds that block vision in the selected area.",
+        "Orbital Strike is Brimstone's Ultimate ability. EQUIP a tactical map. FIRE to launch a lingering orbital strike laser at the selected location, dealing high damage-over-time to players caught in the selected area."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.05",
+          "note": "Sky Smoke Bugfix: Fixed a bug where his equip pose was displaying unintended VFX when viewed far away.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        },
+        {
+          "patch": "12.00",
+          "note": "Sky Smoke and Orbital Strike Adjustment: Tactical map updated for better readability",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "stim-beacon",
@@ -233,6 +311,18 @@
           "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Controller",
+          "note": "Controllers are experts in slicing up dangerous territory to set their team up for success."
+        },
+        {
+          "label": "Official profile",
+          "value": "Brimstone",
+          "note": "Joining from the U.S.A., Brimstone's orbital arsenal ensures his squad always has the advantage. His ability to deliver utility precisely and safely make him the unmatched boots-on-the-ground commander."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
       "uuid": "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
       "lastReviewed": "2026-07-23",
@@ -242,8 +332,26 @@
       "id": "chamber",
       "label": "Chamber",
       "role": "Sentinel",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Chamber as a Sentinel. Well-dressed and well-armed, French weapons designer Chamber expels aggressors with deadly precision. He leverages his custom arsenal to hold the line and pick off enemies from afar, with a contingency built for every plan.",
+        "Rendezvous is Chamber's current Signature ability. EQUIP a teleport anchor. FIRE to place it on the ground. While on the ground and in range of the anchor, REACTIVATE to quickly teleport to the anchor. The anchor can be picked up to be REDEPLOYED.",
+        "Tour De Force is Chamber's Ultimate ability. ACTIVATE to summon a powerful, custom sniper rifle that will kill an enemy with any direct hit to the upper body. ALT FIRE to aim down sights. Killing an enemy creates a lingering field that Slows players caught inside of it."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.09",
+          "note": "Headhunter Bugfix Buff: Fixed a bug where ADS-ing while firing created an animation that covers too much of the screen",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+        },
+        {
+          "patch": "12.04",
+          "note": "Trademark Bugfix: Fixed a bug where it would play its reactivation SFX twice if he had Suppress expiring on him.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-04/"
+        }
+      ],
       "abilities": [
         {
           "id": "rendezvous",
@@ -306,6 +414,18 @@
           "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Sentinel",
+          "note": "Sentinels are defensive experts who can lock down areas and watch flanks, both on attacker and defender rounds."
+        },
+        {
+          "label": "Official profile",
+          "value": "Chamber",
+          "note": "Well-dressed and well-armed, French weapons designer Chamber expels aggressors with deadly precision. He leverages his custom arsenal to hold the line and pick off enemies from afar, with a contingency built for every plan."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
       "uuid": "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
       "lastReviewed": "2026-07-23",
@@ -315,8 +435,26 @@
       "id": "clove",
       "label": "Clove",
       "role": "Controller",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/1dbf2edd-4729-0984-3115-daa5eed44993/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/1dbf2edd-4729-0984-3115-daa5eed44993/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Clove as a Controller. Scottish troublemaker Clove makes mischief for enemies in both the heat of combat and the cold of death. The young immortal keeps foes guessing, even from beyond the grave, their return to the living only ever a moment away.",
+        "Ruse is Clove's current Signature ability. EQUIP a view of the battlefield. FIRE to set the locations where Clove's clouds will settle. ALT FIRE to confirm, launching clouds that block vision in the chosen areas. Clove can use this ability after death.",
+        "Not Dead Yet is Clove's Ultimate ability. After dying, ACTIVATE to resurrect. Once resurrected, Clove must earn a kill or a damaging assist within a set time or they will die. REACTIVATE to cancel early."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.06",
+          "note": "Ruse Bugfix Buff: Fixed a bug where post-death Ruse could not be unequipped without casting it.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-06/"
+        },
+        {
+          "patch": "12.05",
+          "note": "Ruse Nerf: Smoke duration 14s >> 6s when casted while dead",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        }
+      ],
       "abilities": [
         {
           "id": "pick-me-up",
@@ -379,6 +517,18 @@
           "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Controller",
+          "note": "Controllers are experts in slicing up dangerous territory to set their team up for success."
+        },
+        {
+          "label": "Official profile",
+          "value": "Clove",
+          "note": "Scottish troublemaker Clove makes mischief for enemies in both the heat of combat and the cold of death. The young immortal keeps foes guessing, even from beyond the grave, their return to the living only ever a moment away."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
       "uuid": "1dbf2edd-4729-0984-3115-daa5eed44993",
       "lastReviewed": "2026-07-23",
@@ -388,8 +538,30 @@
       "id": "cypher",
       "label": "Cypher",
       "role": "Sentinel",
+      "maps": [
+        "Split",
+        "Sunset",
+        "Haven"
+      ],
       "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/fullportrait.png",
+      "fundamentals": [
+        "Trapwire is strongest when your position can punish the slow and reveal. Build the crossfire first, then choose a wire attackers cannot clear safely.",
+        "Cyber Cage breaks vision and announces a crossing, so pair its audio cue with a swing or use it to leave before the trade arrives.",
+        "Spycam keeps value while Cypher stays alive. Change camera and wire height between gun rounds so one learned clear does not solve the whole setup."
+      ],
+      "patchHistory": [
+        {
+          "patch": "11.08",
+          "note": "Trapwire windup fell to 0.9 seconds, stopped concussing, and instead applied a 50% slow plus a one-second reveal; Spycam gained clearer proximity audio and stealth rules.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+        },
+        {
+          "patch": "13.00",
+          "note": "Trapwire windup was reduced again, from 0.9 to 0.7 seconds, improving Cypher's anchor conversion window.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "cyber-cage",
@@ -480,6 +652,31 @@
           "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
         }
       ],
+      "pickRate": 3.4,
+      "pickRateRank": 11,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Split": 4.9,
+        "Sunset": 4.5,
+        "Haven": 3.8
+      },
+      "mapWinRates": {
+        "Split": 50.2,
+        "Sunset": 50.1,
+        "Haven": 50.6
+      },
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "Morocco",
+          "note": "Cypher is a Moroccan information broker who watches the battlefield through an extensive surveillance network."
+        },
+        {
+          "label": "Lore",
+          "value": "Keeper of secrets",
+          "note": "He tracks movement, protects hidden information, and treats every enemy habit as another secret waiting to be uncovered."
+        }
+      ],
       "uuid": "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
       "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US",
       "lastReviewed": "2026-07-23",
@@ -489,8 +686,26 @@
       "id": "deadlock",
       "label": "Deadlock",
       "role": "Sentinel",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Deadlock as a Sentinel. Norwegian operative Deadlock deploys an array of cutting-edge nanowire to secure the battlefield from even the most lethal assault. No one escapes her vigilant watch, nor survives her unyielding ferocity.",
+        "GravNet is Deadlock's current Signature ability. EQUIP a GravNet grenade. FIRE to throw. ALT FIRE to lob. The GravNet detonates upon landing, forcing any characters caught within to crouch and move slowly.",
+        "Annihilation is Deadlock's Ultimate ability. EQUIP a Nanowire Accelerator. FIRE to unleash a pulse of nanowires that captures the first enemy contacted. The cocooned enemy is pulled along a nanowire path and will die unless they are freed. The nanowire cocoon is destructible."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.00",
+          "note": "GravNet and Barrier Mesh Bugfix Buff: Fixed an issue where throw animations would break if aiming straight down",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        },
+        {
+          "patch": "11.08",
+          "note": "GravNet Nerf: Cooldown increased from 40s to 60s",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+        }
+      ],
       "abilities": [
         {
           "id": "sonic-sensor",
@@ -553,6 +768,18 @@
           "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Sentinel",
+          "note": "Sentinels are defensive experts who can lock down areas and watch flanks, both on attacker and defender rounds."
+        },
+        {
+          "label": "Official profile",
+          "value": "Deadlock",
+          "note": "Norwegian operative Deadlock deploys an array of cutting-edge nanowire to secure the battlefield from even the most lethal assault. No one escapes her vigilant watch, nor survives her unyielding ferocity."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/cc8b64c8-4b25-4ff9-6e7f-37b4da43d235?language=en-US",
       "uuid": "cc8b64c8-4b25-4ff9-6e7f-37b4da43d235",
       "lastReviewed": "2026-07-23",
@@ -562,8 +789,26 @@
       "id": "fade",
       "label": "Fade",
       "role": "Initiator",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/dade69b4-4f5a-8528-247b-219e5a1facd6/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Fade as a Initiator. Turkish bounty hunter Fade unleashes the power of raw nightmare to seize enemy secrets. Attuned with terror itself, she hunts down targets and reveals their deepest fears - before crushing them in the dark.",
+        "Haunt is Fade's current Signature ability. EQUIP a haunting watcher. FIRE to throw. The watcher drops down after a set time. RE-USE to drop the watcher early. The watcher lashes out on impact, Revealing enemies in its line of sight and creating terror trails to them. Enemies can destroy the watcher.",
+        "Nightfall is Fade's Ultimate ability. EQUIP the power of nightmare itself. FIRE to unleash a wave of unstoppable nightmare energy. Enemies caught in the wave are Marked by terror trails, Deafened, and Decayed."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.04",
+          "note": "Nightfall Bugfix: Fixed a bug where its minimap indicator was slightly smaller than the actual ability.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-04/"
+        },
+        {
+          "patch": "12.01",
+          "note": "Prowler Bugfix: Fixed a bug where it was missing a VFX asset when viewed in Left Handed Mode.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-01/"
+        }
+      ],
       "abilities": [
         {
           "id": "seize",
@@ -626,6 +871,18 @@
           "source": "https://valorant-api.com/v1/agents/dade69b4-4f5a-8528-247b-219e5a1facd6?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Initiator",
+          "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+        },
+        {
+          "label": "Official profile",
+          "value": "Fade",
+          "note": "Turkish bounty hunter Fade unleashes the power of raw nightmare to seize enemy secrets. Attuned with terror itself, she hunts down targets and reveals their deepest fears - before crushing them in the dark."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/dade69b4-4f5a-8528-247b-219e5a1facd6?language=en-US",
       "uuid": "dade69b4-4f5a-8528-247b-219e5a1facd6",
       "lastReviewed": "2026-07-23",
@@ -635,8 +892,26 @@
       "id": "gekko",
       "label": "Gekko",
       "role": "Initiator",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Gekko as a Initiator. Gekko the Angeleno leads a tight-knit crew of calamitous creatures. His buddies bound forward, scattering enemies out of the way, with Gekko chasing them down to regroup and go again.",
+        "Dizzy is Gekko's current Signature ability. EQUIP Dizzy. FIRE to send Dizzy soaring forward through the air. Dizzy charges then unleashes plasma blasts at enemies in line of sight. Enemies hit by her plasma are Blinded. When Dizzy expires she reverts into a dormant globule. INTERACT to reclaim the globule and gain another Dizzy charge after a short cooldown.",
+        "Thrash is Gekko's Ultimate ability. EQUIP Thrash. FIRE to link with Thrash's mind and steer her through enemy territory. ACTIVATE to lunge forward and explode, Detaining any players in a small radius. When Thrash expires she reverts into a dormant globule. INTERACT to reclaim the globule and gain another Thrash charge after a short cooldown. Thrash can be reclaimed once."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.07",
+          "note": "Dizzy Bugfix Buff: Fixed a bug where she would only target an enemy if their head was visible.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-07/"
+        },
+        {
+          "patch": "12.05",
+          "note": "Thrash Bugfix: Fixed a bug where a floating gun may briefly appear when a suppression effect interrupts it",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        }
+      ],
       "abilities": [
         {
           "id": "wingman",
@@ -699,6 +974,18 @@
           "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Initiator",
+          "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+        },
+        {
+          "label": "Official profile",
+          "value": "Gekko",
+          "note": "Gekko the Angeleno leads a tight-knit crew of calamitous creatures. His buddies bound forward, scattering enemies out of the way, with Gekko chasing them down to regroup and go again."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
       "uuid": "e370fa57-4757-3604-3648-499e1f642d3f",
       "lastReviewed": "2026-07-23",
@@ -708,8 +995,26 @@
       "id": "harbor",
       "label": "Harbor",
       "role": "Controller",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/95b78ed7-4637-86d9-7e41-71ba8c293152/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/95b78ed7-4637-86d9-7e41-71ba8c293152/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Harbor as a Controller. Hailing from India's coast, Harbor storms the field wielding ancient technology with dominion over water. He unleashes frothing rapids and crushing waves to shield his allies, or pummel those that oppose him.",
+        "Cove is Harbor's current Signature ability. EQUIP Cove. ACTIVATE to form a water Smoke in the select location. HOLD FIRE while targeting to move the marker further away and HOLD ALT FIRE to move it closer. RELOAD to toggle targeting view. REACTIVATE to Shield the water Smoke, blocking any bullets that hit it. The Shielded water Smoke can be destroyed.",
+        "Reckoning is Harbor's Ultimate ability. EQUIP Reckoning. FIRE to unleash the full power of your artifact, releasing a surge of water that barrels forward to Nearsight and Slow enemies that are hit."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.05",
+          "note": "Storm Surge Bugfix: Fixed a bug where his relic was not glowing when equipping it in Left Handed Mode.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        },
+        {
+          "patch": "12.04",
+          "note": "Storm Surge Bugfix: Fixed a bug where it could briefly persist into the next round when cast right before a round ends.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-04/"
+        }
+      ],
       "abilities": [
         {
           "id": "high-tide",
@@ -772,6 +1077,18 @@
           "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Controller",
+          "note": "Controllers are experts in slicing up dangerous territory to set their team up for success."
+        },
+        {
+          "label": "Official profile",
+          "value": "Harbor",
+          "note": "Hailing from India's coast, Harbor storms the field wielding ancient technology with dominion over water. He unleashes frothing rapids and crushing waves to shield his allies, or pummel those that oppose him."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
       "uuid": "95b78ed7-4637-86d9-7e41-71ba8c293152",
       "lastReviewed": "2026-07-23",
@@ -781,8 +1098,26 @@
       "id": "iso",
       "label": "Iso",
       "role": "Duelist",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/0e38b510-41a8-5780-5e8f-568b2a4f2d6c/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/0e38b510-41a8-5780-5e8f-568b2a4f2d6c/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Iso as a Duelist. Chinese fixer for hire Iso falls into a flow state to dismantle the opposition. Reconfiguring ambient energy into bulletproof protection, he advances with focus towards his next duel to the death.",
+        "Double Tap is Iso's current Signature ability. INSTANTLY start channeling your focus. Once focused: gain a shield which absorbs one instance of damage from any source, reload more quickly, and enter a flow state during which downed enemies you kill or damage spawn an energy orb. Shooting this orb refreshes your flow state and your existing shield, or grants another.",
+        "Kill Contract is Iso's Ultimate ability. EQUIP an interdimensional arena. FIRE to hurl a column of energy through the battlefield, pulling and healing both you and the first enemy hit into the arena to duel to the death."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.00",
+          "note": "Undercut Bugfix Buff: Fixed an issue where throw animations would break if aiming straight down",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        },
+        {
+          "patch": "11.11",
+          "note": "Kill Contract Bugfix Nerf: Fixed a bug where Clove and Reyna would not enter the arena at full health and with full shields or overheal if they entered with damaged overheal.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-11/"
+        }
+      ],
       "abilities": [
         {
           "id": "undercut",
@@ -845,6 +1180,18 @@
           "source": "https://valorant-api.com/v1/agents/0e38b510-41a8-5780-5e8f-568b2a4f2d6c?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Duelist",
+          "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+        },
+        {
+          "label": "Official profile",
+          "value": "Iso",
+          "note": "Chinese fixer for hire Iso falls into a flow state to dismantle the opposition. Reconfiguring ambient energy into bulletproof protection, he advances with focus towards his next duel to the death."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/0e38b510-41a8-5780-5e8f-568b2a4f2d6c?language=en-US",
       "uuid": "0e38b510-41a8-5780-5e8f-568b2a4f2d6c",
       "lastReviewed": "2026-07-23",
@@ -854,8 +1201,30 @@
       "id": "jett",
       "label": "Jett",
       "role": "Duelist",
+      "maps": [
+        "Breeze",
+        "Ascent",
+        "Haven"
+      ],
       "icon": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/add6443a-41bd-e414-f6ad-e58d267f4e95/fullportrait.png",
+      "fundamentals": [
+        "Tailwind makes Jett one of the safest Operator holders: take a one-and-done angle, then dash back beside cover after the shot.",
+        "Cloudburst is a short crossing tool. Pair it with Tailwind to break one sightline, then clear the next fight instead of treating it like a full controller smoke.",
+        "Updraft and Blade Storm stay accurate while moving, so use elevation to change the defender's crosshair height only when you know where you can land."
+      ],
+      "patchHistory": [
+        {
+          "patch": "4.08",
+          "note": "Tailwind changed to a primed dash: after a 0.75-second delay, Jett received a 12-second window to use it.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-08/"
+        },
+        {
+          "patch": "7.04",
+          "note": "Tailwind's window fell to 7.5 seconds with a 1-second windup; Cloudburst fell to 2.5 seconds, Updraft to one charge, and Blade Storm rose to 8 points.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-7-04/"
+        }
+      ],
       "abilities": [
         {
           "id": "updraft",
@@ -954,6 +1323,31 @@
           "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US"
         }
       ],
+      "pickRate": 10.3,
+      "pickRateRank": 1,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Breeze": 11.7,
+        "Ascent": 11.3,
+        "Haven": 11.3
+      },
+      "mapWinRates": {
+        "Breeze": 50.4,
+        "Ascent": 49.9,
+        "Haven": 50
+      },
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "South Korea",
+          "note": "Jett represents her home country with an agile, evasive fighting style built around speed and calculated risk."
+        },
+        {
+          "label": "Lore",
+          "value": "Wind-driven duelist",
+          "note": "Her supernatural command of wind lets her move through fights in ways few opponents can track, favoring precision over brute force."
+        }
+      ],
       "uuid": "add6443a-41bd-e414-f6ad-e58d267f4e95",
       "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US",
       "lastReviewed": "2026-07-23",
@@ -963,8 +1357,26 @@
       "id": "kay-o",
       "label": "KAY/O",
       "role": "Initiator",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies KAY/O as a Initiator. KAY/O is a machine of war built for a single purpose: neutralizing radiants. His power to Suppress enemy abilities dismantles his opponents' capacity to fight back, securing him and his allies the ultimate edge.",
+        "FRAG/ment is KAY/O's current Signature ability. EQUIP an explosive fragment. FIRE to throw. ALT FIRE to lob. The fragment sticks to the floor and explodes multiple times, dealing near lethal damage at the center with each explosion.",
+        "NULL/cmd is KAY/O's Ultimate ability. INSTANTLY overload with polarized radianite energy that pulses from KAY/O in a massive radius. Enemies hit with pulses are Suppressed for a short duration. While overloaded, KAY/O gains Combat Stim and can be re-stabilized if downed."
+      ],
+      "patchHistory": [
+        {
+          "patch": "13.01",
+          "note": "Current ability verification: KAY/O is listed in Riot's live playable-agent content feed. No additional balance value is inferred.",
+          "source": "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US"
+        },
+        {
+          "patch": "13.01",
+          "note": "Roster verification: KAY/O is listed in Riot's live playable-agent content feed. No additional balance value is inferred.",
+          "source": "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US"
+        }
+      ],
       "abilities": [
         {
           "id": "frag-ment",
@@ -1027,6 +1439,18 @@
           "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Initiator",
+          "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+        },
+        {
+          "label": "Official profile",
+          "value": "KAY/O",
+          "note": "KAY/O is a machine of war built for a single purpose: neutralizing radiants. His power to Suppress enemy abilities dismantles his opponents' capacity to fight back, securing him and his allies the ultimate edge."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
       "uuid": "601dbbe7-43ce-be57-2a40-4abd24953621",
       "lastReviewed": "2026-07-23",
@@ -1036,8 +1460,26 @@
       "id": "killjoy",
       "label": "Killjoy",
       "role": "Sentinel",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/1e58de9c-4950-5125-93e9-a0aee9f98746/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/1e58de9c-4950-5125-93e9-a0aee9f98746/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Killjoy as a Sentinel. The genius of Germany, Killjoy effortlessly secures key battlefield positions with her arsenal of inventions. If their damage doesn't take her enemies out, the debuff her robots provide will make short work of them.",
+        "Killjoy's current ability slots are listed directly from Riot's live game-content feed.",
+        "Lockdown is Killjoy's Ultimate ability. EQUIP the Lockdown device. FIRE to deploy the device. After a long windup, the device Detains all enemies caught in the radius. The device can be destroyed by enemies."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.04",
+          "note": "Turret Buff: Can now be rotated while holding down ALT-FIRE. ACTIVATE now swaps its direction.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-04/"
+        },
+        {
+          "patch": "12.01",
+          "note": "Bugfix: Fixed a bug where Killjoy's neck and hair clip would shift inconsistently while moving with an Odin equipped.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-01/"
+        }
+      ],
       "abilities": [
         {
           "id": "nanoswarm",
@@ -1100,6 +1542,18 @@
           "source": "https://valorant-api.com/v1/agents/1e58de9c-4950-5125-93e9-a0aee9f98746?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Sentinel",
+          "note": "Sentinels are defensive experts who can lock down areas and watch flanks, both on attacker and defender rounds."
+        },
+        {
+          "label": "Official profile",
+          "value": "Killjoy",
+          "note": "The genius of Germany, Killjoy effortlessly secures key battlefield positions with her arsenal of inventions. If their damage doesn't take her enemies out, the debuff her robots provide will make short work of them."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/1e58de9c-4950-5125-93e9-a0aee9f98746?language=en-US",
       "uuid": "1e58de9c-4950-5125-93e9-a0aee9f98746",
       "lastReviewed": "2026-07-23",
@@ -1109,8 +1563,26 @@
       "id": "miks",
       "label": "Miks",
       "role": "Controller",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Miks as a Controller. Straight from Croatia, Miks takes the stage channeling pure sound energy. With his infectious passion and sonic powers, he rallies his squad to move as one as they set the tempo on the battlefield together.",
+        "Waveform is Miks's current Signature ability. EQUIP a Map Targeter. FIRE to set locations. ALT-FIRE to spawn Smokes at selected locations.",
+        "Bassquake is Miks's Ultimate ability. EQUIP Bassquake. FIRE to build up and unleash Sonic Radiance forward, knocking back, Deafening, and Slowing players."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.09",
+          "note": "Harmonize Bugfix: Updated tooltip description.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+        },
+        {
+          "patch": "12.07",
+          "note": "Bassquake Bugfix: Fixed a bug where using it would cause the minimap cone to blink on use.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-07/"
+        }
+      ],
       "abilities": [
         {
           "id": "m-pulse",
@@ -1173,6 +1645,18 @@
           "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Controller",
+          "note": "Controllers are experts in slicing up dangerous territory to set their team up for success."
+        },
+        {
+          "label": "Official profile",
+          "value": "Miks",
+          "note": "Straight from Croatia, Miks takes the stage channeling pure sound energy. With his infectious passion and sonic powers, he rallies his squad to move as one as they set the tempo on the battlefield together."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
       "uuid": "7c8a4701-4de6-9355-b254-e09bc2a34b72",
       "lastReviewed": "2026-07-23",
@@ -1182,8 +1666,26 @@
       "id": "neon",
       "label": "Neon",
       "role": "Duelist",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Neon as a Duelist. Filipino Agent Neon surges forward at shocking speeds, discharging bursts of bioelectric radiance as fast as her body generates it. She races ahead to catch enemies off guard then strikes them down quicker than lightning.",
+        "High Gear is Neon's current Signature ability. INSTANTLY channel Neon's power for Increased Speed. When charged, ALT FIRE to trigger an electric slide dash. Slide charge resets every two kills.",
+        "Overdrive is Neon's Ultimate ability. Unleash Neon's full power and speed for a short duration, regaining all her fuel and a slide charge. FIRE to channel the power into a deadly lightning beam with high movement accuracy. Kills reset the duration of the effect. "
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.09",
+          "note": "High Gear Nerf: Jumping while active no longer provides any speed bonus while Neon is airborne. Instead, Neon's air speed while sprinting will match melee speed.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+        },
+        {
+          "patch": "12.07",
+          "note": "High Gear Bugfix: Fixed a bug where the slide was not playing SFX for moving across different surface types.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-07/"
+        }
+      ],
       "abilities": [
         {
           "id": "high-gear",
@@ -1246,6 +1748,18 @@
           "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Duelist",
+          "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+        },
+        {
+          "label": "Official profile",
+          "value": "Neon",
+          "note": "Filipino Agent Neon surges forward at shocking speeds, discharging bursts of bioelectric radiance as fast as her body generates it. She races ahead to catch enemies off guard then strikes them down quicker than lightning."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
       "uuid": "bb2a4828-46eb-8cd1-e765-15848195d751",
       "lastReviewed": "2026-07-23",
@@ -1255,8 +1769,30 @@
       "id": "omen",
       "label": "Omen",
       "role": "Controller",
+      "maps": [
+        "Haven",
+        "Ascent",
+        "Lotus"
+      ],
       "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/fullportrait.png",
+      "fundamentals": [
+        "Dark Cover recharges, so survive the opening long enough to reshape the late round. Place each smoke against a named defender angle the team is ready to cross.",
+        "Paranoia phases through terrain and objects and can hit teammates, which makes its path a team timing tool: call the lane, cast beside the entry, then swing with them.",
+        "Shrouded Step and From the Shadows create doubt before they create kills. Teleport when sound, smoke, or pressure gives the enemy more than one landing to respect."
+      ],
+      "patchHistory": [
+        {
+          "patch": "4.04",
+          "note": "Dark Cover cooldown fell from 40 to 30 seconds and projectile speed rose from 2800 to 6400; Shrouded Step became cheaper and faster to complete.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-04/"
+        },
+        {
+          "patch": "13.00",
+          "note": "Enemy-facing Shrouded Step audio was updated to make nearby teleports easier to parse during chaotic fights.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "paranoia",
@@ -1347,6 +1883,31 @@
           "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
         }
       ],
+      "pickRate": 4.9,
+      "pickRateRank": 7,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Haven": 5.6,
+        "Ascent": 5.3,
+        "Lotus": 5.2
+      },
+      "mapWinRates": {
+        "Haven": 47.6,
+        "Ascent": 47.6,
+        "Lotus": 47.5
+      },
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "Unknown",
+          "note": "Omen is a phantom of memory whose fragmented identity remains one of the Protocol's deepest mysteries."
+        },
+        {
+          "label": "Lore",
+          "value": "Shadow-born hunter",
+          "note": "He moves through darkness, blinds the opposition, and lets uncertainty spread before striking from an unexpected angle."
+        }
+      ],
       "uuid": "8e253930-4c05-31dd-1b6c-968525494517",
       "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US",
       "lastReviewed": "2026-07-23",
@@ -1356,8 +1917,26 @@
       "id": "phoenix",
       "label": "Phoenix",
       "role": "Duelist",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Phoenix as a Duelist. Hailing from the U.K., Phoenix's star power shines through in his fighting style, igniting the battlefield with flash and flare. Whether he's got backup or not, he's rushing in to fight on his own terms.",
+        "Curveball is Phoenix's current Signature ability. EQUIP a flare orb that takes a curving path and detonates shortly after throwing. FIRE to curve the flare orb to the left, detonating and Blinding any player who sees the orb. ALT FIRE to curve the flare orb to the right. Curveball resets a charge every two kills.",
+        "Run it Back is Phoenix's Ultimate ability. INSTANTLY place a marker at Phoenix's location. While this ability is active, dying or allowing the timer to expire will end this ability and bring Phoenix back to this location with full health and the amount of armor he had when the ability was cast."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.01",
+          "note": "Run it Back Bugfix Buff: Fixed a bug where Phoenix would remain nearsighted from certain abilities after respawning from Run it Back.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-01/"
+        },
+        {
+          "patch": "12.00",
+          "note": "Hot Hands Bugfix Buff: Fixed an issue where throw animations would break if aiming straight down",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "blaze",
@@ -1435,6 +2014,18 @@
           "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Duelist",
+          "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+        },
+        {
+          "label": "Official profile",
+          "value": "Phoenix",
+          "note": "Hailing from the U.K., Phoenix's star power shines through in his fighting style, igniting the battlefield with flash and flare. Whether he's got backup or not, he's rushing in to fight on his own terms."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
       "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
       "lastReviewed": "2026-07-23",
@@ -1444,9 +2035,30 @@
       "id": "raze",
       "label": "Raze",
       "role": "Duelist",
-      "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
+      "maps": [
+        "Lotus",
+        "Split",
+        "Sunset"
+      ],
       "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/fullportrait.png",
+      "fundamentals": [
+        "Boom Bot and Paint Shells clear the close positions that stop your entry. Send the clear first, then move while the defender is displaced.",
+        "Blast Pack creates fast space, but the landing still needs cover or teammate pressure. Use the second pack to finish the route or escape the trade.",
+        "Showstopper is strongest after utility or contact narrows the defender's exits. Fire at the space they must cross instead of guessing at a hidden player."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.02",
+          "note": "Boom Bot can now be concussed.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-02/"
+        },
+        {
+          "patch": "11.08",
+          "note": "Slows now reduce Blast Pack movement while Raze is airborne.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+        }
+      ],
       "abilities": [
         {
           "id": "blast-pack",
@@ -1454,6 +2066,13 @@
           "slot": "C - Basic",
           "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ability1/displayicon.png",
           "summary": "INSTANTLY throw a Blast Pack that will stick to surfaces. RE-USE the ability after deployment to detonate, moving anything hit and dealing damage if fully armed.",
+          "stats": {
+            "Cost": "200 credits",
+            "Charges": "2",
+            "Source": "Riot game text + Valorant Wiki current infobox"
+          },
+          "purpose": "Blast Pack applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+          "setup": "Blast Pack needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
           "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
         },
         {
@@ -1462,6 +2081,13 @@
           "slot": "Q - Basic",
           "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ability2/displayicon.png",
           "summary": "EQUIP a cluster grenade. FIRE to throw the grenade, which does damage and creates sub-munitions, each doing damage to anyone in their range. ALT FIRE to lob. Paint Shells charge resets every two kills.",
+          "stats": {
+            "Cost": "Free signature charge",
+            "Charges": "1",
+            "Source": "Riot game text + Valorant Wiki current infobox"
+          },
+          "purpose": "Paint Shells applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+          "setup": "Paint Shells must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
           "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
         },
         {
@@ -1470,6 +2096,13 @@
           "slot": "E - Signature",
           "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/grenade/displayicon.png",
           "summary": "EQUIP a Boom Bot. FIRE will deploy the bot, causing it to travel in a straight line on the ground, bouncing off walls. The Boom Bot will lock on to any enemies in its frontal cone and chase them, exploding for heavy damage if it reaches them.",
+          "stats": {
+            "Cost": "300 credits",
+            "Charges": "1",
+            "Source": "Riot game text + Valorant Wiki current infobox"
+          },
+          "purpose": "Boom Bot applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+          "setup": "Boom Bot must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
           "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
         },
         {
@@ -1478,10 +2111,43 @@
           "slot": "X - Ultimate",
           "icon": "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ultimate/displayicon.png",
           "summary": "EQUIP a rocket launcher. FIRE to shoot a rocket that does massive area damage on contact with anything.",
+          "stats": {
+            "Cost": "8 ultimate points",
+            "Charges": "Current client value not published in Riot's public content feed",
+            "Source": "Riot game text + Valorant Wiki current infobox"
+          },
+          "purpose": "Showstopper applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
+          "setup": "Showstopper must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
           "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "Brazil",
+          "note": "Raze brings a bold personality and a large collection of explosives from Brazil into every operation."
+        },
+        {
+          "label": "Lore",
+          "value": "Explosive space maker",
+          "note": "Her aggressive tools excel at clearing tight positions and dislodging opponents who rely on entrenched cover."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
+      "pickRate": 4,
+      "pickRateRank": 10,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Lotus": 6.5,
+        "Split": 5.9,
+        "Sunset": 4.4
+      },
+      "mapWinRates": {
+        "Lotus": 50.6,
+        "Split": 50.7,
+        "Sunset": 50.3
+      },
+      "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
       "lastReviewed": "2026-07-23",
       "patchVersion": "13.01"
     },
@@ -1489,8 +2155,26 @@
       "id": "reyna",
       "label": "Reyna",
       "role": "Duelist",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Reyna as a Duelist. Forged in the heart of Mexico, Reyna dominates single combat, popping off with each kill she scores. Her capability is only limited by her raw skill, making her sharply dependent on performance. ",
+        "Dismiss is Reyna's current Signature ability. INSTANTLY consume a nearby Soul Orb, becoming Intangible for a short duration. If EMPRESS is active, also become Invisible.",
+        "Empress is Reyna's Ultimate ability. INSTANTLY enter a frenzy, gaining a Combat Stim that increases firing, equip and reload speed dramatically. Gain infinite charges of Soul Harvest abilities."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.02",
+          "note": "Soul Harvest Nerf: Orbs duration in world decreased from 4s >> 3s",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-02/"
+        },
+        {
+          "patch": "12.00",
+          "note": "Leer Bugfix Buff: Fixed an issue where throw animations would break if aiming straight down",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "devour",
@@ -1553,6 +2237,18 @@
           "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Duelist",
+          "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+        },
+        {
+          "label": "Official profile",
+          "value": "Reyna",
+          "note": "Forged in the heart of Mexico, Reyna dominates single combat, popping off with each kill she scores. Her capability is only limited by her raw skill, making her sharply dependent on performance. "
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
       "uuid": "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
       "lastReviewed": "2026-07-23",
@@ -1562,8 +2258,30 @@
       "id": "sage",
       "label": "Sage",
       "role": "Sentinel",
+      "maps": [
+        "Split",
+        "Sunset",
+        "Haven"
+      ],
       "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/fullportrait.png",
+      "fundamentals": [
+        "Barrier Orb changes the map, not just the timer. Place it to secure a plant, split a retake, or create an elevation the opponent must clear deliberately.",
+        "Slow Orb is a timing tool: land it where attackers still need to cross, then let teammate damage or a coordinated peek punish the reduced movement.",
+        "Healing Orb and Resurrection gain value when Sage survives. Play one layer behind first contact and clear the recovery route before committing to a revive."
+      ],
+      "patchHistory": [
+        {
+          "patch": "11.08",
+          "note": "Barrier Orb cost fell from 400 to 300 and fortified after 2 seconds, while fortified segment health fell from 800 to 600.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+        },
+        {
+          "patch": "13.00",
+          "note": "Healing Orb's self-heal-over-time increased from 50 to 100, restoring more of Sage's personal sustain.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "slow-orb",
@@ -1654,6 +2372,31 @@
           "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
         }
       ],
+      "pickRate": 6.8,
+      "pickRateRank": 5,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Split": 8.9,
+        "Sunset": 6.7,
+        "Haven": 6.5
+      },
+      "mapWinRates": {
+        "Split": 52.3,
+        "Sunset": 51.9,
+        "Haven": 51.5
+      },
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "China",
+          "note": "Sage creates safety for her team wherever the mission takes them and serves as a calm center in chaotic fights."
+        },
+        {
+          "label": "Lore",
+          "value": "Radiant stronghold",
+          "note": "Her Radiant power heals allies, denies ground, and can return a fallen teammate to the fight."
+        }
+      ],
       "uuid": "569fdd95-4d10-43ab-ca70-79becc718b46",
       "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US",
       "lastReviewed": "2026-07-23",
@@ -1663,8 +2406,26 @@
       "id": "skye",
       "label": "Skye",
       "role": "Initiator",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/6f2a04ca-43e0-be17-7f36-b3908627744d/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/6f2a04ca-43e0-be17-7f36-b3908627744d/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Skye as a Initiator. Hailing from Australia, Skye and her band of beasts trailblaze the way through hostile territory. With her creations hampering the enemy, and her power to heal others, the team is strongest and safest by Skye's side.",
+        "Guiding Light is Skye's current Signature ability. EQUIP a hawk trinket. FIRE to send it forward. HOLD FIRE to guide the hawk in the direction of your crosshair. RE-USE while the hawk is in flight to transform it into a flash. The flash reaches max potency after a short duration during the hawk's flight.",
+        "Seekers is Skye's Ultimate ability. EQUIP a Seeker trinket. FIRE to send out three Seekers to track down the three closest enemies. If a Seeker reaches its target, it Nearsights and slows them. Enemies can destroy the Seekers."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.05",
+          "note": "Guiding Light Added: Added 60s Cooldown",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        },
+        {
+          "patch": "12.04",
+          "note": "Seekers Bugfix: Fixed an observer bug where they would not show on the minimap when she is an attacker.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-04/"
+        }
+      ],
       "abilities": [
         {
           "id": "trailblazer",
@@ -1727,6 +2488,18 @@
           "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Initiator",
+          "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+        },
+        {
+          "label": "Official profile",
+          "value": "Skye",
+          "note": "Hailing from Australia, Skye and her band of beasts trailblaze the way through hostile territory. With her creations hampering the enemy, and her power to heal others, the team is strongest and safest by Skye's side."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
       "uuid": "6f2a04ca-43e0-be17-7f36-b3908627744d",
       "lastReviewed": "2026-07-23",
@@ -1736,8 +2509,30 @@
       "id": "sova",
       "label": "Sova",
       "role": "Initiator",
+      "maps": [
+        "Ascent",
+        "Haven",
+        "Breeze"
+      ],
       "icon": "https://media.valorant-api.com/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa/fullportrait.png",
+      "fundamentals": [
+        "Recon Bolt is strongest where defenders must expose themselves to break it. Call the pulse before it lands so the entry can move on the reveal.",
+        "Owl Drone should clear the route your first player will actually take; start close enough that teammates can trade the drone's contact.",
+        "Shock Bolt and Hunter's Fury convert confirmed information. Use them after a tag, plant sound, or teammate call rather than guessing at empty space."
+      ],
+      "patchHistory": [
+        {
+          "patch": "4.08",
+          "note": "Owl Drone duration fell from 10 to 7 seconds and health from 125 to 100; its dart dropped from three reveal pings to two, while Shock Bolt max damage fell to 75.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-08/"
+        },
+        {
+          "patch": "13.00",
+          "note": "Sova's signature cooldown was reduced from 60 to 50 seconds, restoring more late-round Recon Bolt opportunities.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-00/"
+        }
+      ],
       "abilities": [
         {
           "id": "shock-bolt",
@@ -1836,6 +2631,31 @@
           "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
         }
       ],
+      "pickRate": 4.9,
+      "pickRateRank": 7,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Ascent": 8.4,
+        "Haven": 7.9,
+        "Breeze": 7.7
+      },
+      "mapWinRates": {
+        "Ascent": 51.3,
+        "Haven": 50.8,
+        "Breeze": 50.8
+      },
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "Russia",
+          "note": "Raised through the severity of the Russian tundra, Sova is a patient scout and relentless tracker."
+        },
+        {
+          "label": "Lore",
+          "value": "Hunter of hidden threats",
+          "note": "Specialized equipment and a custom bow help him reveal, pursue, and eliminate enemies who believe they are concealed."
+        }
+      ],
       "uuid": "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US",
       "lastReviewed": "2026-07-23",
@@ -1845,8 +2665,21 @@
       "id": "tejo",
       "label": "Tejo",
       "role": "Initiator",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/b444168c-4e35-8076-db47-ef9bf368f384/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/b444168c-4e35-8076-db47-ef9bf368f384/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Tejo as a Initiator. A veteran intelligence consultant from Colombia, Tejo's ballistic guidance system pressures the enemy to relinquish their ground - or their lives. His targeted strikes keep opponents off balance and under his heel.",
+        "Guided Salvo is Tejo's current Signature ability. EQUIP an AR targeting system. FIRE to select up to two target locations on the map. ALT FIRE to launch missiles that autonomously navigate to target locations, detonating repeatedly for damage on arrival.",
+        "Armageddon is Tejo's Ultimate ability. EQUIP a tactical strike targeting map. FIRE to select the origin point of the strike. FIRE again to set the end point and launch the attack, unleashing a wave of lethal damaging explosions along the strike path. ALT FIRE during map targeting to cancel the origin point."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.09",
+          "note": "Guided Salvo Bugfix: Fixed issue where the equip idle sound kept playing long after cast.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+        }
+      ],
       "abilities": [
         {
           "id": "guided-salvo",
@@ -1909,6 +2742,18 @@
           "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Initiator",
+          "note": "Initiators challenge angles by setting up their team to enter contested ground and push defenders away."
+        },
+        {
+          "label": "Official profile",
+          "value": "Tejo",
+          "note": "A veteran intelligence consultant from Colombia, Tejo's ballistic guidance system pressures the enemy to relinquish their ground - or their lives. His targeted strikes keep opponents off balance and under his heel."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
       "uuid": "b444168c-4e35-8076-db47-ef9bf368f384",
       "lastReviewed": "2026-07-23",
@@ -1918,8 +2763,26 @@
       "id": "veto",
       "label": "Veto",
       "role": "Sentinel",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Veto as a Sentinel. Empowered by an unstoppable DNA mutation, Senegalese enforcer Veto defies the rules of engagement by nullifying his opponent's powers and technology. On Veto's battlefield, gunplay is your only guarantee.",
+        "Interceptor is Veto's current Signature ability. EQUIP the Interceptor. FIRE to place the Interceptor at projected location. Once placed, RE-USE to activate. Once active, it will destroy any utility that would BOUNCE off a player and/or be destroyed naturally by gunfire. Enemies can destroy the Interceptor.",
+        "Evolution is Veto's Ultimate ability. INSTANTLY begin to fully mutate, gaining a combat stim, regeneration, and becoming IMMUNE to all forms of debuffs."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.08",
+          "note": "Evolution Bugfix: Fixed a bug where Viper's Toxic Screen SFX would activate repeatedly when Veto walked into it with Evolution active",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-08/"
+        },
+        {
+          "patch": "12.06",
+          "note": "Crosscut Bugfix: Fixed a bug where the icon was missing on the minimap when the Enemy Highlight Color setting was set to red.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-06/"
+        }
+      ],
       "abilities": [
         {
           "id": "interceptor",
@@ -1982,6 +2845,18 @@
           "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Sentinel",
+          "note": "Sentinels are defensive experts who can lock down areas and watch flanks, both on attacker and defender rounds."
+        },
+        {
+          "label": "Official profile",
+          "value": "Veto",
+          "note": "Empowered by an unstoppable DNA mutation, Senegalese enforcer Veto defies the rules of engagement by nullifying his opponent's powers and technology. On Veto's battlefield, gunplay is your only guarantee."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
       "uuid": "92eeef5d-43b5-1d4a-8d03-b3927a09034b",
       "lastReviewed": "2026-07-23",
@@ -1991,8 +2866,30 @@
       "id": "viper",
       "label": "Viper",
       "role": "Controller",
+      "maps": [
+        "Breeze",
+        "Split",
+        "Lotus"
+      ],
       "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/fullportrait.png",
+      "fundamentals": [
+        "Toxic Screen and Poison Cloud share fuel, so cycle them around the team's contact instead of spending the full tank before anyone can take space.",
+        "Her wall is permanent for the round and the orb is only recoverable during Buy Phase. Commit each setup to the lanes your team actually plans to contest.",
+        "Snake Bite's Vulnerable effect turns teammate damage into the real threat. Pair it with a choke, smoke, plant sound, or swing rather than relying on the puddle alone."
+      ],
+      "patchHistory": [
+        {
+          "patch": "3.00",
+          "note": "Snake Bite duration fell from 8 to 6.5 seconds and its price rose from 100 to 200 credits as Riot reduced Viper's stall time.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+        },
+        {
+          "patch": "8.08",
+          "note": "Smoke uptime fell to 12 seconds, minimum activation fuel rose to 30%, and Snake Bite moved to one 300-credit charge with a 6.5-second duration.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-8-08/"
+        }
+      ],
       "abilities": [
         {
           "id": "poison-cloud",
@@ -2091,6 +2988,31 @@
           "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
         }
       ],
+      "pickRate": 0.9,
+      "pickRateRank": 25,
+      "sampleLabel": "Tracker Network | Past two weeks",
+      "mapPickRates": {
+        "Breeze": 3.9,
+        "Split": 0.6,
+        "Lotus": 0.5
+      },
+      "mapWinRates": {
+        "Breeze": 50.4,
+        "Split": 47.9,
+        "Lotus": 48.2
+      },
+      "lore": [
+        {
+          "label": "Origin",
+          "value": "United States",
+          "note": "Viper is an American chemist who applies a formidable scientific mind directly to the battlefield."
+        },
+        {
+          "label": "Lore",
+          "value": "Toxic field commander",
+          "note": "Her chemical devices control space and impair enemies, and she is willing to use every advantage to secure the mission."
+        }
+      ],
       "uuid": "707eab51-4836-f488-046a-cda6bf494859",
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US",
       "lastReviewed": "2026-07-23",
@@ -2100,8 +3022,21 @@
       "id": "vyse",
       "label": "Vyse",
       "role": "Sentinel",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/efba5359-4016-a1e5-7626-b1ae76895940/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/efba5359-4016-a1e5-7626-b1ae76895940/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Vyse as a Sentinel. Metallic mastermind Vyse unleashes liquid metal to isolate, trap, and disarm her enemies. Through cunning and manipulation, she forces all who oppose her to fear the battlefield itself.",
+        "Arc Rose is Vyse's current Signature ability. EQUIP an Arc Rose. Target a surface and FIRE to place a stealthed Arc Rose, or ALT FIRE to place the Arc Rose through it. REUSE to blind all players looking at it. This ability can be picked up to be REDEPLOYED.",
+        "Steel Garden is Vyse's Ultimate ability. EQUIP a bramble of liquid metal. FIRE to send the metal erupting from you as a torrent of metal thorns, JAMMING enemy primary weapons after a brief windup."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.09",
+          "note": "Shear Bugfix Buff: Fixed a bug where possessable drones (Sova's Owl Drone, Skye's Trailblazer, Tejo's Stealth Drone) would trigger the arming audio",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+        }
+      ],
       "abilities": [
         {
           "id": "shear",
@@ -2164,6 +3099,18 @@
           "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Sentinel",
+          "note": "Sentinels are defensive experts who can lock down areas and watch flanks, both on attacker and defender rounds."
+        },
+        {
+          "label": "Official profile",
+          "value": "Vyse",
+          "note": "Metallic mastermind Vyse unleashes liquid metal to isolate, trap, and disarm her enemies. Through cunning and manipulation, she forces all who oppose her to fear the battlefield itself."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
       "uuid": "efba5359-4016-a1e5-7626-b1ae76895940",
       "lastReviewed": "2026-07-23",
@@ -2173,8 +3120,26 @@
       "id": "waylay",
       "label": "Waylay",
       "role": "Duelist",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/df1cb487-4902-002e-5c17-d28e83e78588/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/df1cb487-4902-002e-5c17-d28e83e78588/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Waylay as a Duelist. Thailand's prismatic radiant Waylay transforms into light itself as she darts across the battlefield, striking down her targets through shards of light before flitting back to safety, all in the blink of an eye.",
+        "Refract is Waylay's current Signature ability. INSTANTLY create a beacon of light on the floor. REACTIVATE to speed back to your beacon as a mote of pure light. You are invulnerable as you travel. Refract resets a charge every two kills.",
+        "Convergent Paths is Waylay's Ultimate ability. EQUIP to focus your prismatic power. FIRE to create an afterimage of yourself that projects a beam of light. After a brief delay, you gain a powerful speed boost and the beam expands, Hindering other players in the area."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.06",
+          "note": "Saturate Nerf: Changed from INSTANT to EQUIP.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-06/"
+        },
+        {
+          "patch": "11.08",
+          "note": "Saturate Nerf: Hindered duration decreased from 4s to 3s",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+        }
+      ],
       "abilities": [
         {
           "id": "refract",
@@ -2237,6 +3202,18 @@
           "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US"
         }
       ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Duelist",
+          "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+        },
+        {
+          "label": "Official profile",
+          "value": "Waylay",
+          "note": "Thailand's prismatic radiant Waylay transforms into light itself as she darts across the battlefield, striking down her targets through shards of light before flitting back to safety, all in the blink of an eye."
+        }
+      ],
       "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
       "uuid": "df1cb487-4902-002e-5c17-d28e83e78588",
       "lastReviewed": "2026-07-23",
@@ -2246,8 +3223,26 @@
       "id": "yoru",
       "label": "Yoru",
       "role": "Duelist",
+      "maps": [],
       "icon": "https://media.valorant-api.com/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89/displayicon.png",
       "portrait": "https://media.valorant-api.com/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89/fullportrait.png",
+      "fundamentals": [
+        "Riot identifies Yoru as a Duelist. Japanese native Yoru rips holes straight through reality to infiltrate enemy lines unseen. Using deception and aggression in equal measure, he gets the drop on each target before they know where to look.",
+        "FAKEOUT is Yoru's current Signature ability. EQUIP an echo that transforms into a mirror image of Yoru when activated. FIRE to instantly activate the mirror image and send it forward. ALT FIRE to place an inactive echo. USE to transform an inactive echo into a mirror image and send it forward.  Mirror images explode in a Blinding flash when destroyed by enemies.",
+        "DIMENSIONAL DRIFT is Yoru's Ultimate ability. EQUIP a mask that can see between dimensions. FIRE to drift into Yoru's dimension, unable to be affected or seen by enemies from the outside. REACTIVATE to exit Yoru's dimension early."
+      ],
+      "patchHistory": [
+        {
+          "patch": "12.07",
+          "note": "Dimensional Drift Bugfix Buff: Fixed a bug where during Dimensional Drift, he could not see invisible abilities even if he was close enough to them.",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-07/"
+        },
+        {
+          "patch": "12.05",
+          "note": "Gatecrash Nerf: Duration beacon is active reduced 30s >> 15s",
+          "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-05/"
+        }
+      ],
       "abilities": [
         {
           "id": "fakeout",
@@ -2308,6 +3303,18 @@
           "purpose": "DIMENSIONAL DRIFT performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
           "setup": "DIMENSIONAL DRIFT must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
           "source": "https://valorant-api.com/v1/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89?language=en-US"
+        }
+      ],
+      "lore": [
+        {
+          "label": "Official role",
+          "value": "Duelist",
+          "note": "Duelists are self-sufficient fraggers who their team expects, through abilities and skills, to get high frags and seek out engagements first."
+        },
+        {
+          "label": "Official profile",
+          "value": "Yoru",
+          "note": "Japanese native Yoru rips holes straight through reality to infiltrate enemy lines unseen. Using deception and aggression in equal measure, he gets the drop on each target before they know where to look."
         }
       ],
       "source": "https://valorant-api.com/v1/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89?language=en-US",
@@ -2555,6 +3562,10 @@
           "y": 36.23
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -2562,6 +3573,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US",
       "uuid": "224b0a95-48b9-f703-1bd8-67aca101a61f",
       "coordinates": "70° 50' AJ\" N, 9° 00' VX\" W",
@@ -2798,6 +3818,10 @@
           "y": 5.81
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -2805,6 +3829,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US",
       "uuid": "7eaecc1b-4337-bbf6-6ab9-04b8f06b3319",
       "coordinates": "45°26'BF'N,12°20'Q'E",
@@ -3061,6 +4094,258 @@
           "y": 20.81
         }
       ],
+      "plantSpots": [
+        {
+          "number": 1,
+          "site": "A",
+          "label": "A Truck Default",
+          "rate": null,
+          "x": 75.6,
+          "y": 34.5,
+          "previewLabel": "A Truck in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/4d5161107bb15614535dae6dfc7f86bea500d003-763x663.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 2,
+          "site": "A",
+          "label": "A Open Plant",
+          "rate": null,
+          "x": 68.5,
+          "y": 35.7,
+          "previewLabel": "A Open in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/b996cd4c248b1766a76f753742b3b3bd5a4760e8-763x663.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 1,
+          "site": "B",
+          "label": "B Default",
+          "rate": null,
+          "x": 31.4,
+          "y": 31.3,
+          "previewLabel": "B Default in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/ae001b00624f314098333175e48aa9d7a317c2c2-857x661.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 2,
+          "site": "B",
+          "label": "B Long Plant",
+          "rate": null,
+          "x": 26.7,
+          "y": 31.3,
+          "previewLabel": "B open-site in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/52e28edead38b5b1ec0dcbfaf074fb2894cd7725-857x661.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 3,
+          "site": "B",
+          "label": "B Window Plant",
+          "rate": null,
+          "x": 29.1,
+          "y": 32.4,
+          "previewLabel": "B open-site in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/52e28edead38b5b1ec0dcbfaf074fb2894cd7725-857x661.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        }
+      ],
+      "plantRateNote": "Bind is outside the active competitive rotation, so no active-season PC plant-rate sample is available.",
+      "weaponSuggestions": [
+        {
+          "weapon": "Phantom",
+          "image": "/assets/weapons/phantom.png",
+          "category": "rifle",
+          "fit": "Best rifle fit",
+          "locations": "Hookah, Lamps, Showers",
+          "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+          "note": "Compact chokes and frequent smoke fights reward the Phantom's close-range control."
+        },
+        {
+          "weapon": "Operator",
+          "image": "/assets/weapons/operator.png",
+          "category": "sniper",
+          "fit": "Strong sniper fit",
+          "side": "DEF",
+          "locations": "B Long, A Tower, A Short",
+          "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+          "conversion": "Conversion read: stronger than a shotgun while the first duel stays long; Judge and Bucky gain value once Hookah or Lamps is the planned contact.",
+          "note": "On defense, long lanes create early picks, while either teleporter can turn a missed opening read into a fast cross-map fight. Pair the Operator with an escape tool and a called rotation."
+        },
+        {
+          "weapon": "Ghost",
+          "image": "/assets/weapons/ghost.png",
+          "category": "pistol",
+          "fit": "Pistol-round fit",
+          "locations": "A Short, Showers, B Long",
+          "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+          "note": "The quiet, accurate first shot fits Bind's early lane fights while keeping utility in the buy."
+        },
+        {
+          "weapon": "Judge",
+          "image": "/assets/weapons/judge.png",
+          "category": "shotgun",
+          "fit": "Close conversion rival",
+          "side": "DEF",
+          "locations": "Hookah, Lamps, U-Haul",
+          "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+          "conversion": "Conversion read: more repeatable than an Operator when the setup guarantees two close contacts; much weaker if attackers can reset to Long or Showers.",
+          "note": "On defense, commit it to a compact choke and plan the rifle recovery after the first conversion."
+        },
+        {
+          "weapon": "Stinger",
+          "image": "/assets/weapons/stinger.png",
+          "category": "eco",
+          "fit": "Eco outlier",
+          "locations": "Hookah, Lamps, Showers",
+          "roundConversionUnavailable": "Bind is outside the active-season Competitive sample.",
+          "note": "The low-cost damage output is useful only when the setup protects a close fight and a short magazine."
+        }
+      ],
+      "macro": {
+        "_researchNote": "internal only, do not render",
+        "_researchUrl": "https://www.zleague.gg/theportal/woohoojin-mastering-the-bind-map-in-valorant/",
+        "defense": [
+          "Treat Hookah, Showers, Octagon, and U-Haul as Bind's high-value control areas. Double up when the read calls for it; owning one of these lanes gives the retake a flank route and shortens the next rotation.",
+          "On A site, contest Showers or U-Haul before settling into straight-site positions. Giving up both lets attackers flood the site with utility and leaves the retake entering through predictable lanes.",
+          "Look for repeated defaults, late lurks, and teleporter timings, then call an early punish. Waiting until the execute lands gives the pattern its value."
+        ],
+        "attack": [
+          "Bind's two teleporters turn lane control into fast cross-map rotations. Draw utility or defenders first, then arrive at the exit together instead of treating first contact as a forced site commitment.",
+          "Read the defensive composition before choosing pace: break sentinel utility early and commit late into double Sentinel; hit earlier into double Controller before rotating smokes recycle; hold disciplined defaults into double Initiator so repeated information sees no commitment; against double Duelist, take or hold forward lanes so aggression is called and traded."
+        ]
+      },
+      "siteTips": [
+        {
+          "label": "A Showers",
+          "text": "Clear Showers before the spike crosses Truck. A defender left there can split the site, punish the plant, and isolate the A Short group.",
+          "roles": [
+            "Duelist",
+            "Initiator"
+          ]
+        },
+        {
+          "label": "A Lamps / U-Haul",
+          "text": "Take and hold Lamps/U-Haul through the plant. It is the defenders' closest retake path and protects the planter from an immediate site re-entry.",
+          "roles": [
+            "Controller",
+            "Sentinel"
+          ]
+        },
+        {
+          "label": "B Hookah",
+          "text": "Build the B split around synchronized Hookah and Garden/B Long contact. Hold the drop until the Long group can trade, then clear site and Elbow from different directions.",
+          "roles": [
+            "Duelist",
+            "Initiator"
+          ]
+        },
+        {
+          "label": "B Long / Octagon",
+          "text": "Keep Long or Octagon after the plant while a teammate holds site or Hookah. That crossfire forces the retake to clear separate lines instead of collapsing through Defender Spawn and Elbow together.",
+          "roles": [
+            "Controller",
+            "Sentinel"
+          ]
+        }
+      ],
+      "teamplayTips": [
+        {
+          "label": "Common fake",
+          "text": "Sell A with Showers and A Short utility, then send one player through the A teleporter while the spike group holds B Long. Call whether the exit player is selling Hookah pressure or joining the hit before the audio plays."
+        },
+        {
+          "label": "Eco-round plan",
+          "text": "Group the low buy to break one piece of sentinel utility and force a compact trade through Showers, U-Haul, or Hookah. Recover the first rifle before spreading into open lanes."
+        },
+        {
+          "label": "Round-plan execution",
+          "text": "Before barriers drop, name the first lane, the teleporter trigger, and the reset condition. Bind's rotations are fast only when the destination group is ready for the exit fight."
+        }
+      ],
+      "roleNotes": {
+        "Duelist": [
+          {
+            "category": "attack",
+            "text": "Take first space through A Short, Showers, Hookah, or B Long after support utility lands."
+          },
+          {
+            "category": "sites",
+            "text": "On A, force the Showers split angle off and clear U-Haul/Lamps; on B, clear Hookah and Elbow before teammates spread into site."
+          },
+          {
+            "category": "defense",
+            "text": "Contest Hookah, Showers, Octagon, or U-Haul with an escape plan instead of dry re-peeking after contact."
+          }
+        ],
+        "Initiator": [
+          {
+            "category": "attack",
+            "text": "Reveal or clear Hookah, B Long, Showers, and A Short immediately before the entry moves."
+          },
+          {
+            "category": "sites",
+            "text": "Use flashes and scans to isolate U-Haul/Lamps, A Tower, Elbow, and Defender Spawn rather than covering empty space."
+          },
+          {
+            "category": "teamplay",
+            "text": "Track teleporter audio and call the exit so the team rotates before the destination fight is already lost."
+          }
+        ],
+        "Controller": [
+          {
+            "category": "sites",
+            "text": "For A hits, smoke off A Tower and cover U-Haul/Lamps or Showers based on the lane the team owns; for B hits, smoke off Defender Spawn and Elbow."
+          },
+          {
+            "category": "teamplay",
+            "text": "One-way smokes are setup-dependent and should not replace the smokes the execute needs."
+          },
+          {
+            "category": "defense",
+            "text": "Keep one smoke or damage tool for the post-plant because Bind retakes arrive through narrow named lanes."
+          }
+        ],
+        "Sentinel": [
+          {
+            "category": "teamplay",
+            "text": "Place flank utility where it survives common prefire paths and still catches teleporter rotations."
+          },
+          {
+            "category": "defense",
+            "text": "Anchor where you can punish Hookah, B Long, A Short, or Showers contact without giving a free first death."
+          },
+          {
+            "category": "defense",
+            "text": "Change trap and camera height between gun rounds so the same clear does not solve the setup twice."
+          }
+        ]
+      },
+      "metaComp": {
+        "agents": [],
+        "composition": "No current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Bind is outside Tracker Network's current rolling Competitive map sample, so no current composition reference is shown.",
+      "agentInsights": {
+        "Clove": "Post-death smokes keep both teleporter rotations covered after an opening fight.",
+        "Raze": "Explosive movement and clearing utility break Bind's narrow Hookah, Showers, and A Short chokes.",
+        "Fade": "Haunt and Prowlers clear U-Haul/Lamps, Hookah, and site corners immediately before contact.",
+        "Cypher": "Flank information survives teleporter rotations; B is the higher-success anchor site in this current sample.",
+        "Skye": "Guiding Light can curve through both compact site entrances and support fast re-clears."
+      },
+      "lineupLinks": [
+        {
+          "label": "LineupsValorant — Bind",
+          "url": "https://lineupsvalorant.com/"
+        },
+        {
+          "label": "UpForge Lineup Library — Bind",
+          "url": "https://upforge.gg/lineups"
+        }
+      ],
       "uuid": "2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba",
       "coordinates": "34°2'A'N,6°51'Z'W",
       "calloutLabelsBakedIn": true,
@@ -3306,6 +4591,552 @@
           "y": 87.33
         }
       ],
+      "plantSpots": [
+        {
+          "number": 1,
+          "site": "A",
+          "label": "A Pyramid Default",
+          "rate": 44.15,
+          "x": 91.4,
+          "y": 47.8,
+          "previewLabel": "A Pyramid in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 2,
+          "site": "A",
+          "label": "A Open Pyramid",
+          "rate": 13,
+          "x": 81.7,
+          "y": 47.8,
+          "previewLabel": "A Pyramid in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 3,
+          "site": "A",
+          "label": "A Deep Pyramid",
+          "rate": 20.3,
+          "x": 93.7,
+          "y": 47.8,
+          "previewLabel": "A Pyramid in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 4,
+          "site": "A",
+          "label": "A Safe Pyramid",
+          "rate": 7.44,
+          "x": 84.7,
+          "y": 47.8,
+          "previewLabel": "A Pyramid in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 1,
+          "site": "B",
+          "label": "B Pillar Default",
+          "rate": 83.61,
+          "x": 14,
+          "y": 31.6,
+          "previewLabel": "B Pillar in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/2c999bc13e7f9ae68fb4fd749a5b2684b82a483f-531x652.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 2,
+          "site": "B",
+          "label": "B Open Plant",
+          "rate": 0.71,
+          "x": 17.1,
+          "y": 30.5,
+          "previewLabel": "B open plant in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/2ec53a4e3cead720efc4ab4f107576e37a851174-531x652.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 3,
+          "site": "B",
+          "label": "B Back Plant",
+          "rate": 1.51,
+          "x": 10.6,
+          "y": 31.9,
+          "previewLabel": "B open plant in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/2ec53a4e3cead720efc4ab4f107576e37a851174-531x652.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        }
+      ],
+      "plantRateNote": "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
+      "weaponSuggestions": [
+        {
+          "weapon": "Phantom",
+          "image": "/assets/weapons/phantom.png",
+          "category": "rifle",
+          "fit": "Highest rifle conversion",
+          "locations": "A Main, B Main, Mid",
+          "roundConversion": {
+            "scope": "Combined",
+            "value": 50.87,
+            "sample": "896,805 active-season full-buy rounds",
+            "comparisonLabel": "Second rifle",
+            "comparisonWeapon": "Vandal",
+            "comparisonValue": 50.41
+          },
+          "note": "Smoke fights and close site finishes give the Phantom a narrow conversion edge, while the Vandal remains the cleaner long-lane one-tap choice."
+        },
+        {
+          "weapon": "Operator",
+          "image": "/assets/weapons/operator.png",
+          "category": "sniper",
+          "fit": "High-value sniper",
+          "side": "DEF",
+          "locations": "A Main, B Main, Mid Nest",
+          "roundConversion": {
+            "scope": "Defense",
+            "value": 52.43,
+            "sample": "230,391 active-season defense full-buy rounds",
+            "comparisonLabel": "Second sniper",
+            "comparisonWeapon": "Outlaw",
+            "comparisonValue": 44.64
+          },
+          "conversion": "Conversion read: the Operator wins the defense-side sniper comparison; Judge or Bucky only catches up inside a deliberately protected Tunnel or Hall pocket.",
+          "note": "On defense, the map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after contact."
+        },
+        {
+          "weapon": "Ghost",
+          "image": "/assets/weapons/ghost.png",
+          "category": "pistol",
+          "fit": "Highest pistol conversion",
+          "locations": "A Main, Mid, B Main",
+          "roundConversion": {
+            "scope": "Combined",
+            "value": 50.64,
+            "sample": "2,791,564 active-season pistol rounds",
+            "comparisonLabel": "Second pistol",
+            "comparisonWeapon": "Sheriff",
+            "comparisonValue": 50.21
+          },
+          "note": "Use cover and first-shot accuracy across Breeze's long pistol lanes while preserving credits for utility."
+        },
+        {
+          "weapon": "Judge",
+          "image": "/assets/weapons/judge.png",
+          "category": "shotgun",
+          "fit": "Best shotgun conversion",
+          "side": "DEF",
+          "locations": "A Hall, B Tunnel",
+          "roundConversion": {
+            "scope": "Defense",
+            "value": 48.24,
+            "sample": "27,678 active-season defense full-buy rounds",
+            "comparisonLabel": "Second shotgun",
+            "comparisonWeapon": "Bucky",
+            "comparisonValue": 44.24
+          },
+          "conversion": "Conversion read: the shotgun remains location-dependent and cannot match the Operator across Breeze's open sites.",
+          "note": "On defense, treat it as a protected Hall or Tunnel ambush, then recover a ranged weapon before rotating into open space."
+        },
+        {
+          "weapon": "Spectre",
+          "image": "/assets/weapons/spectre.png",
+          "category": "eco",
+          "fit": "Highest eco conversion",
+          "locations": "Tunnel and close Hall pockets",
+          "roundConversion": {
+            "scope": "Combined",
+            "value": 33.61,
+            "sample": "128,040 active-season second-round-loss rounds",
+            "comparisonLabel": "Second SMG",
+            "comparisonWeapon": "Stinger",
+            "comparisonValue": 29.69
+          },
+          "note": "Use it with a deliberate close-range route; most Breeze fights still expose an SMG's range limit."
+        }
+      ],
+      "macro": {
+        "_researchNote": "internal only, do not render",
+        "_researchUrl": "https://www.youtube.com/watch?v=0VLyBGR5sNA",
+        "defense": [
+          "Mid is the strategic core of this map — mid control is less about the space itself and more about the pressure it lets you apply to both sites at once."
+        ],
+        "attack": [
+          "Smoking Mid Nest removes the Operator angle that otherwise dominates that lane — a specific, repeatable utility play, not just a generic smoke.",
+          "Smoking Tunnel forces defenders into a binary choice: play the tunnel more aggressively than they'd like, or fall back and give up the space."
+        ]
+      },
+      "siteTips": [
+        {
+          "label": "A Pyramids",
+          "text": "Split the two pyramids into separate clears. Plant only after the close side and Back Site lane have been accounted for.",
+          "roles": [
+            "Duelist",
+            "Initiator"
+          ]
+        },
+        {
+          "label": "A Bridge",
+          "text": "Keep Bridge denied during the plant; its elevation watches both the site crossing and several pyramid plants.",
+          "roles": [
+            "Controller",
+            "Sentinel"
+          ]
+        },
+        {
+          "label": "B Pillar",
+          "text": "Use Pillar to isolate the first defender, then clear Back Site before spreading into the open plant lanes.",
+          "roles": [
+            "Duelist",
+            "Initiator"
+          ]
+        },
+        {
+          "label": "B Tunnel",
+          "text": "Tunnel control shortens the defender rotation and protects a B split, but only if the Mid player can be traded.",
+          "roles": [
+            "Controller",
+            "Sentinel"
+          ]
+        }
+      ],
+      "teamplayTips": [
+        {
+          "label": "Mid leverage",
+          "text": "Keep one player connected to Mid while the site group pressures Main; that threat prevents both defenders from leaning into one entrance."
+        },
+        {
+          "label": "Long trades",
+          "text": "Breeze spacing stretches trade distance. Say who follows the first contact before crossing an open lane."
+        },
+        {
+          "label": "Late information",
+          "text": "Save one scan, camera, or flank trap for the rotation because a wrong site read costs more time here than on compact maps."
+        }
+      ],
+      "roleNotes": {
+        "Duelist": [
+          {
+            "category": "attack",
+            "text": "Use movement to cross the long exposed lanes after recon or a flash removes the first angle."
+          },
+          {
+            "category": "attack",
+            "text": "Create pressure from Mid or Hall so defenders cannot hold one site entrance with every rifle."
+          },
+          {
+            "category": "defense",
+            "text": "Operator rounds need a planned escape route; do not repeat the same long angle after revealing the weapon."
+          }
+        ],
+        "Initiator": [
+          {
+            "category": "attack",
+            "text": "Scan or drone the long sightline the duelist is about to cross, not the site after contact begins."
+          },
+          {
+            "category": "sites",
+            "text": "Use Mid Nest, Tunnel, Back Site, and Hall as named utility targets so the team knows what is actually cleared."
+          },
+          {
+            "category": "teamplay",
+            "text": "Save one information tool for the late rotation because the distance between sites makes false reads expensive."
+          }
+        ],
+        "Controller": [
+          {
+            "category": "sites",
+            "text": "Viper-style walls are strongest when they split a site into a playable front half and an isolated defender half."
+          },
+          {
+            "category": "attack",
+            "text": "Remove Mid Nest or Tunnel when taking center control; both positions can hold multiple rotation paths."
+          },
+          {
+            "category": "teamplay",
+            "text": "Prioritize complete lane denial and fuel timing over difficult one-way setups on Breeze's open geometry."
+          }
+        ],
+        "Sentinel": [
+          {
+            "category": "teamplay",
+            "text": "Use flank utility to protect the long rotations, then survive so that information remains useful."
+          },
+          {
+            "category": "defense",
+            "text": "Anchor from off-angles that force attackers to clear after crossing open ground."
+          },
+          {
+            "category": "defense",
+            "text": "Do not stack every piece of utility on one site when Mid pressure can break the setup from behind."
+          }
+        ]
+      },
+      "metaComp": {
+        "agents": [
+          "Chamber",
+          "Clove",
+          "Jett",
+          "Reyna",
+          "Sova"
+        ],
+        "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel",
+        "patch": "13.01 + 13.00"
+      },
+      "metaComps": [
+        {
+          "label": "Double-duelist layout",
+          "agents": [
+            "Chamber",
+            "Clove",
+            "Jett",
+            "Reyna",
+            "Sova"
+          ],
+          "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel"
+        },
+        {
+          "label": "Double-controller layout",
+          "agents": [
+            "Chamber",
+            "Clove",
+            "Jett",
+            "Sova",
+            "Viper"
+          ],
+          "composition": "2 Controllers, 1 Duelist, 1 Initiator, 1 Sentinel"
+        },
+        {
+          "label": "Double-controller + double-initiator",
+          "agents": [
+            "Clove",
+            "Jett",
+            "KAY/O",
+            "Sova",
+            "Viper"
+          ],
+          "composition": "2 Controllers, 1 Duelist, 2 Initiators"
+        }
+      ],
+      "compSample": {
+        "rankLabel": "Ascendant to Radiant",
+        "patchLabel": "13.01 + 13.00",
+        "currentPatchAgentSelections": 4324,
+        "combinedAgentSelections": 631146,
+        "source": "OP.GG Competitive",
+        "note": "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
+      },
+      "highRankPickRates": {
+        "Chamber": 16.09,
+        "Clove": 8.55,
+        "Iso": 1.32,
+        "Jett": 18.47,
+        "KAY/O": 0.52,
+        "Neon": 3.74,
+        "Reyna": 11.15,
+        "Sova": 17.13,
+        "Viper": 6.92
+      },
+      "rolePickRates": [
+        {
+          "agent": "Astra",
+          "role": "Controller",
+          "mapRate": 3.89,
+          "globalRate": 0.84
+        },
+        {
+          "agent": "Breach",
+          "role": "Initiator",
+          "mapRate": 0.07,
+          "globalRate": 0.68
+        },
+        {
+          "agent": "Brimstone",
+          "role": "Controller",
+          "mapRate": 0.21,
+          "globalRate": 0.25
+        },
+        {
+          "agent": "Chamber",
+          "role": "Sentinel",
+          "mapRate": 16.09,
+          "globalRate": 8.72
+        },
+        {
+          "agent": "Clove",
+          "role": "Controller",
+          "mapRate": 8.55,
+          "globalRate": 14.46
+        },
+        {
+          "agent": "Cypher",
+          "role": "Sentinel",
+          "mapRate": 1.27,
+          "globalRate": 4.5
+        },
+        {
+          "agent": "Deadlock",
+          "role": "Sentinel",
+          "mapRate": 0.15,
+          "globalRate": 0.58
+        },
+        {
+          "agent": "Fade",
+          "role": "Initiator",
+          "mapRate": 0.14,
+          "globalRate": 4.6
+        },
+        {
+          "agent": "Gekko",
+          "role": "Initiator",
+          "mapRate": 0.17,
+          "globalRate": 0.42
+        },
+        {
+          "agent": "Harbor",
+          "role": "Controller",
+          "mapRate": 2.06,
+          "globalRate": 0.4
+        },
+        {
+          "agent": "Iso",
+          "role": "Duelist",
+          "mapRate": 1.32,
+          "globalRate": 0.95
+        },
+        {
+          "agent": "Jett",
+          "role": "Duelist",
+          "mapRate": 18.47,
+          "globalRate": 15.62
+        },
+        {
+          "agent": "KAY/O",
+          "role": "Initiator",
+          "mapRate": 0.52,
+          "globalRate": 0.43
+        },
+        {
+          "agent": "Killjoy",
+          "role": "Sentinel",
+          "mapRate": 0.06,
+          "globalRate": 2.61
+        },
+        {
+          "agent": "Miks",
+          "role": "Controller",
+          "mapRate": 0.91,
+          "globalRate": 0.91
+        },
+        {
+          "agent": "Neon",
+          "role": "Duelist",
+          "mapRate": 3.74,
+          "globalRate": 3.35
+        },
+        {
+          "agent": "Omen",
+          "role": "Controller",
+          "mapRate": 1.39,
+          "globalRate": 3.08
+        },
+        {
+          "agent": "Phoenix",
+          "role": "Duelist",
+          "mapRate": 1.88,
+          "globalRate": 5.17
+        },
+        {
+          "agent": "Raze",
+          "role": "Duelist",
+          "mapRate": 0.23,
+          "globalRate": 3.5
+        },
+        {
+          "agent": "Reyna",
+          "role": "Duelist",
+          "mapRate": 11.15,
+          "globalRate": 9.11
+        },
+        {
+          "agent": "Sage",
+          "role": "Sentinel",
+          "mapRate": 0.53,
+          "globalRate": 1.74
+        },
+        {
+          "agent": "Skye",
+          "role": "Initiator",
+          "mapRate": 0.47,
+          "globalRate": 2.52
+        },
+        {
+          "agent": "Sova",
+          "role": "Initiator",
+          "mapRate": 17.13,
+          "globalRate": 9.49
+        },
+        {
+          "agent": "Tejo",
+          "role": "Initiator",
+          "mapRate": 0.11,
+          "globalRate": 0.47
+        },
+        {
+          "agent": "Veto",
+          "role": "Sentinel",
+          "mapRate": 0.38,
+          "globalRate": 0.61
+        },
+        {
+          "agent": "Viper",
+          "role": "Controller",
+          "mapRate": 6.92,
+          "globalRate": 1.22
+        },
+        {
+          "agent": "Vyse",
+          "role": "Sentinel",
+          "mapRate": 0.17,
+          "globalRate": 1.34
+        },
+        {
+          "agent": "Waylay",
+          "role": "Duelist",
+          "mapRate": 1.24,
+          "globalRate": 1.87
+        },
+        {
+          "agent": "Yoru",
+          "role": "Duelist",
+          "mapRate": 0.77,
+          "globalRate": 0.56
+        }
+      ],
+      "agentInsights": {
+        "Chamber": "Trademark protects the long flank while Rendezvous supports aggressive Operator holds; B has the stronger current defensive success in this sample.",
+        "Clove": "Long-range smoke placement stays useful through Breeze rotations, and post-death utility protects late hits.",
+        "Jett": "Dash and Updraft create a safe exit from the long Operator lanes that define first contact.",
+        "Neon": "High Gear closes Breeze's long gaps quickly enough to punish defenders before cross-map help arrives.",
+        "Reyna": "Dismiss gives a self-sufficient escape after winning one of Breeze's exposed long-range duels.",
+        "Iso": "Double Tap and Contingency help isolate one long sightline instead of fighting the full open site.",
+        "KAY/O": "ZERO/point and suppression give the second-initiator layout a direct way to disable defensive utility before crossing Breeze's long lanes.",
+        "Sova": "Recon and Drone clear wide sightlines where close-range flashes cannot cover every defender.",
+        "Sage": "Barrier and Slow Orbs compress open entrances; A is the stronger current anchor site for her stall package.",
+        "Viper": "Toxic Screen divides the open sites into playable halves and preserves fuel for post-plant denial."
+      },
+      "lineupLinks": [
+        {
+          "label": "LineupsValorant — Breeze",
+          "url": "https://lineupsvalorant.com/"
+        },
+        {
+          "label": "UpForge Lineup Library — Breeze",
+          "url": "https://upforge.gg/lineups"
+        }
+      ],
       "uuid": "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
       "coordinates": "26°11'AG\"N 71°10'WY\"W",
       "calloutLabelsBakedIn": true,
@@ -3531,6 +5362,10 @@
           "y": 49.07
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -3538,6 +5373,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115?language=en-US",
       "uuid": "1c18ab1f-420d-0d8b-71d0-77ad3c439115",
       "coordinates": "48° 38' FH\" N8, 1° 33' YV\" W8",
@@ -3774,6 +5618,10 @@
           "y": 81.69
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -3781,6 +5629,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US",
       "uuid": "b529448b-4d60-346e-e89e-00a4c527a405",
       "coordinates": "35°48'BI\"N 106°08'YQ\"W",
@@ -4007,6 +5864,10 @@
           "y": 13.86
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -4014,6 +5875,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US",
       "uuid": "2bee0dc9-4ffe-519b-1cbd-7fbe763a6047",
       "coordinates": "27°28'A'N,89°38'WZ'E",
@@ -4576,6 +6446,10 @@
           "y": 81.69
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -4583,6 +6457,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US",
       "uuid": "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
       "coordinates": "14°07'AD.4\"N8 74°53'XY\"E8",
@@ -4859,6 +6742,10 @@
           "y": 95.89
         }
       ],
+      "plantSpots": [],
+      "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+      "weaponSuggestions": [],
+      "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
       "macro": {
         "defense": [],
         "attack": []
@@ -4866,6 +6753,15 @@
       "siteTips": [],
       "teamplayTips": [],
       "roleNotes": {},
+      "metaComp": {
+        "agents": [],
+        "composition": "No verified current ranked composition sample",
+        "patch": "13.01"
+      },
+      "metaComps": [],
+      "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
+      "agentInsights": {},
+      "lineupLinks": [],
       "source": "https://valorant-api.com/v1/maps/fd267378-4d1d-484f-ff52-77821ed10dc2?language=en-US",
       "uuid": "fd267378-4d1d-484f-ff52-77821ed10dc2",
       "coordinates": "38°42'ED\"N8 9°08'XS\"W8",
@@ -5120,6 +7016,529 @@
           "regionName": "Vent",
           "x": 42.58,
           "y": 45.15
+        }
+      ],
+      "plantSpots": [
+        {
+          "number": 1,
+          "site": "A",
+          "label": "A Default",
+          "rate": 15.39,
+          "x": 84.3,
+          "y": 29.6,
+          "previewLabel": "A Default in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/b99bab902f64289dcade6a53f141639c33ac3a1e-1466x646.jpg?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 2,
+          "site": "A",
+          "label": "A Screens Plant",
+          "rate": 4.83,
+          "x": 93.6,
+          "y": 25.4,
+          "previewLabel": "A lower-site in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/ab0936e9b7742f98920efa81852740809650bad4-733x646.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 3,
+          "site": "A",
+          "label": "A Open Plant",
+          "rate": 18.58,
+          "x": 92.6,
+          "y": 33.8,
+          "previewLabel": "A open corner in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/3d2a7e4491b82d82be503ab28141c932658a3ff1-733x646.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 1,
+          "site": "B",
+          "label": "B Open Plant",
+          "rate": 26.94,
+          "x": 11.1,
+          "y": 29.6,
+          "previewLabel": "B Main plant in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/ded16cdf2c51e60bfbaa8e80dd40740610dee46f-663x653.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        },
+        {
+          "number": 2,
+          "site": "B",
+          "label": "B Default",
+          "rate": 53.76,
+          "x": 12.3,
+          "y": 34.4,
+          "previewLabel": "B Default in-game reference",
+          "previewImage": "https://cdn.sanity.io/images/ccckgjf9/production/73c66772d5104035c44ce207d3b7ad4a827d6a15-663x653.png?auto=format",
+          "previewSource": "https://dignitas.gg/articles/the-best-plant-spots-for-every-map"
+        }
+      ],
+      "plantRateNote": "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
+      "weaponSuggestions": [
+        {
+          "weapon": "Phantom",
+          "image": "/assets/weapons/phantom.png",
+          "category": "rifle",
+          "fit": "Highest rifle conversion",
+          "locations": "A Main, B Main, Vents, Mail",
+          "roundConversion": {
+            "scope": "Combined",
+            "value": 51.18,
+            "sample": "1,385,619 active-season full-buy rounds",
+            "comparisonLabel": "Second rifle",
+            "comparisonWeapon": "Vandal",
+            "comparisonValue": 50.26
+          },
+          "note": "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control."
+        },
+        {
+          "weapon": "Operator",
+          "image": "/assets/weapons/operator.png",
+          "category": "sniper",
+          "fit": "Conditional sniper",
+          "side": "DEF",
+          "locations": "A Ramps, B Main, Mid",
+          "roundConversion": {
+            "scope": "Defense",
+            "value": 54.62,
+            "sample": "158,318 active-season defense full-buy rounds",
+            "comparisonLabel": "Second sniper",
+            "comparisonWeapon": "Outlaw",
+            "comparisonValue": 46.61
+          },
+          "conversion": "Conversion read: excellent for the opening lane, but Judge and Bucky gain value after attackers enter Split's tight towers, vents, and site pockets.",
+          "note": "On defense, take the opening pick beside an exit. Do not drag the slow cycle into a forced close retake."
+        },
+        {
+          "weapon": "Ghost",
+          "image": "/assets/weapons/ghost.png",
+          "category": "pistol",
+          "fit": "Highest pistol conversion",
+          "locations": "A Main, Mid, B Main",
+          "roundConversion": {
+            "scope": "Combined",
+            "value": 50.64,
+            "sample": "2,851,065 active-season pistol rounds",
+            "comparisonLabel": "Second pistol",
+            "comparisonWeapon": "Frenzy",
+            "comparisonValue": 50.59
+          },
+          "note": "Its first-shot accuracy covers the medium lanes without consuming the utility budget needed to break Split's chokes."
+        },
+        {
+          "weapon": "Judge",
+          "image": "/assets/weapons/judge.png",
+          "category": "shotgun",
+          "fit": "High close conversion",
+          "side": "DEF",
+          "locations": "B Tower, Vents, A Heaven",
+          "roundConversion": {
+            "scope": "Defense",
+            "value": 49.84,
+            "sample": "36,692 active-season defense full-buy rounds",
+            "comparisonLabel": "Second shotgun",
+            "comparisonWeapon": "Bucky",
+            "comparisonValue": 46.08
+          },
+          "conversion": "Conversion read: the Judge is the stronger shotgun when the route forces repeated close fights, but loses value immediately if Mid or Main opens the range.",
+          "note": "On defense, anchor one compact route, vary the corner, and plan how the weapon leaves the round after the first close duel."
+        },
+        {
+          "weapon": "Spectre",
+          "image": "/assets/weapons/spectre.png",
+          "category": "eco",
+          "fit": "Highest eco conversion",
+          "locations": "B Tower, Vents, A Main",
+          "roundConversion": {
+            "scope": "Combined",
+            "value": 33.75,
+            "sample": "134,619 active-season second-round-loss rounds",
+            "comparisonLabel": "Second SMG",
+            "comparisonWeapon": "Stinger",
+            "comparisonValue": 30.18
+          },
+          "note": "The compact corners suit the Spectre, but do not carry the setup into open Mid."
+        }
+      ],
+      "macro": {
+        "_researchNote": "internal only, do not render",
+        "_researchUrl": "https://www.youtube.com/watch?v=I2kxN3-V4zg",
+        "defense": [
+          "Split's compact design means mid connects both sites more directly than on most maps — losing mid control lets attackers move and threaten either site quickly."
+        ],
+        "attack": [
+          "A and B sites are small and sit at opposite ends of the map — a slow read on which site is live costs more here than on a map with a real mid buffer.",
+          "Controlling the center is often the deciding factor for both attack and defense, since it enables fast movement between points and keeps the defense guessing."
+        ]
+      },
+      "siteTips": [
+        {
+          "label": "A Site",
+          "text": "Clear A Heaven and Screens as separate jobs before settling the plant; one smoke does not confirm either space is empty.",
+          "roles": [
+            "Duelist",
+            "Initiator"
+          ]
+        },
+        {
+          "label": "A Ramps",
+          "text": "Ramps control splits the defender's Heaven setup and gives the attack a safer route out of A Main.",
+          "roles": [
+            "Controller",
+            "Sentinel"
+          ]
+        },
+        {
+          "label": "B Site",
+          "text": "Pair B Main pressure with Mail or B Heaven utility so the entry is not fighting both elevations at once.",
+          "roles": [
+            "Duelist",
+            "Initiator"
+          ]
+        },
+        {
+          "label": "B Alley",
+          "text": "Keep the defender rotation lane blocked until the spike is secure, then shift the smoke or stall toward the retake choke.",
+          "roles": [
+            "Controller",
+            "Sentinel"
+          ]
+        }
+      ],
+      "teamplayTips": [
+        {
+          "label": "Mid split",
+          "text": "Treat Vents and Mail as two separate clears. The site group should wait until the Mid group can pressure the matching Heaven lane."
+        },
+        {
+          "label": "Utility spacing",
+          "text": "Compact sites amplify utility, but stacked tools can be cleared together. Leave enough distance that one grenade cannot erase the full setup."
+        },
+        {
+          "label": "Retake reserve",
+          "text": "Hold one flash, smoke, slow, or damage tool for the retake; Split's small sites let one late cast touch most of the fight."
+        }
+      ],
+      "roleNotes": {
+        "Duelist": [
+          {
+            "category": "attack",
+            "text": "Use movement or explosive utility to break the first choke at A Main, B Main, or Mid."
+          },
+          {
+            "category": "sites",
+            "text": "Take vertical space in A Heaven, B Heaven, Vents, and Mail after support utility forces defenders off the angle."
+          },
+          {
+            "category": "defense",
+            "text": "Pressure a choke only when you can fall back before the trade arrives."
+          }
+        ],
+        "Initiator": [
+          {
+            "category": "attack",
+            "text": "Narrow lanes reward flashes, stuns, and damage utility that land immediately before the swing."
+          },
+          {
+            "category": "sites",
+            "text": "Clear A Heaven, Screens, B Heaven, Mail, and Vents as separate jobs instead of calling an entire site clear."
+          },
+          {
+            "category": "defense",
+            "text": "Hold one piece of retake utility because Split sites are compact enough for a single well-timed cast to change the round."
+          }
+        ],
+        "Controller": [
+          {
+            "category": "sites",
+            "text": "On A, remove A Heaven and Screens; on B, remove B Heaven and the defender rotation lane."
+          },
+          {
+            "category": "attack",
+            "text": "Mid control usually needs a smoke at Mail or Vents so the team can fight one elevation at a time."
+          },
+          {
+            "category": "teamplay",
+            "text": "Use ledge one-ways only when the height is consistent and teammates know the exposed lane."
+          }
+        ],
+        "Sentinel": [
+          {
+            "category": "teamplay",
+            "text": "Trap the route that connects Mid to the site hit so defenders receive the rotation warning early."
+          },
+          {
+            "category": "defense",
+            "text": "Layer stall utility with enough spacing that one grenade cannot clear everything."
+          },
+          {
+            "category": "defense",
+            "text": "Rotate setups between B Main, Mid, and A Main pressure so attackers must re-clear the map each gun round."
+          }
+        ]
+      },
+      "metaComp": {
+        "agents": [
+          "Clove",
+          "Cypher",
+          "Jett",
+          "Reyna",
+          "Skye"
+        ],
+        "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel",
+        "patch": "13.01 + 13.00"
+      },
+      "metaComps": [
+        {
+          "label": "Double-duelist layout",
+          "agents": [
+            "Clove",
+            "Cypher",
+            "Jett",
+            "Reyna",
+            "Skye"
+          ],
+          "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel"
+        },
+        {
+          "label": "Double-initiator layout",
+          "agents": [
+            "Clove",
+            "Cypher",
+            "Fade",
+            "Jett",
+            "Skye"
+          ],
+          "composition": "1 Controller, 1 Duelist, 2 Initiators, 1 Sentinel"
+        },
+        {
+          "label": "Double-sentinel layout",
+          "agents": [
+            "Clove",
+            "Cypher",
+            "Jett",
+            "Sage",
+            "Skye"
+          ],
+          "composition": "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels"
+        }
+      ],
+      "compSample": {
+        "rankLabel": "Ascendant to Radiant",
+        "patchLabel": "13.01 + 13.00",
+        "currentPatchAgentSelections": 4170,
+        "combinedAgentSelections": 637716,
+        "source": "OP.GG Competitive",
+        "note": "OP.GG Competitive Ascendant+ map picks from Patch 13.01 are combined with Patch 13.00 because the current high-rank window is still small. Percentages are individual agent pick share within the combined Ascendant-to-Radiant map sample; no five-agent lineup win rate is claimed."
+      },
+      "highRankPickRates": {
+        "Clove": 16.18,
+        "Cypher": 6.88,
+        "Fade": 4.49,
+        "Jett": 14.04,
+        "Neon": 2.45,
+        "Raze": 7.84,
+        "Reyna": 8.7,
+        "Sage": 5.54,
+        "Skye": 11.07
+      },
+      "rolePickRates": [
+        {
+          "agent": "Astra",
+          "role": "Controller",
+          "mapRate": 0.3,
+          "globalRate": 0.84
+        },
+        {
+          "agent": "Breach",
+          "role": "Initiator",
+          "mapRate": 1.12,
+          "globalRate": 0.68
+        },
+        {
+          "agent": "Brimstone",
+          "role": "Controller",
+          "mapRate": 0.24,
+          "globalRate": 0.25
+        },
+        {
+          "agent": "Chamber",
+          "role": "Sentinel",
+          "mapRate": 5.64,
+          "globalRate": 8.72
+        },
+        {
+          "agent": "Clove",
+          "role": "Controller",
+          "mapRate": 16.18,
+          "globalRate": 14.46
+        },
+        {
+          "agent": "Cypher",
+          "role": "Sentinel",
+          "mapRate": 6.88,
+          "globalRate": 4.5
+        },
+        {
+          "agent": "Deadlock",
+          "role": "Sentinel",
+          "mapRate": 0.63,
+          "globalRate": 0.58
+        },
+        {
+          "agent": "Fade",
+          "role": "Initiator",
+          "mapRate": 4.49,
+          "globalRate": 4.6
+        },
+        {
+          "agent": "Gekko",
+          "role": "Initiator",
+          "mapRate": 0.14,
+          "globalRate": 0.42
+        },
+        {
+          "agent": "Harbor",
+          "role": "Controller",
+          "mapRate": 0.05,
+          "globalRate": 0.4
+        },
+        {
+          "agent": "Iso",
+          "role": "Duelist",
+          "mapRate": 0.65,
+          "globalRate": 0.95
+        },
+        {
+          "agent": "Jett",
+          "role": "Duelist",
+          "mapRate": 14.04,
+          "globalRate": 15.62
+        },
+        {
+          "agent": "KAY/O",
+          "role": "Initiator",
+          "mapRate": 0.29,
+          "globalRate": 0.43
+        },
+        {
+          "agent": "Killjoy",
+          "role": "Sentinel",
+          "mapRate": 0.69,
+          "globalRate": 2.61
+        },
+        {
+          "agent": "Miks",
+          "role": "Controller",
+          "mapRate": 0.97,
+          "globalRate": 0.91
+        },
+        {
+          "agent": "Neon",
+          "role": "Duelist",
+          "mapRate": 2.45,
+          "globalRate": 3.35
+        },
+        {
+          "agent": "Omen",
+          "role": "Controller",
+          "mapRate": 2.75,
+          "globalRate": 3.08
+        },
+        {
+          "agent": "Phoenix",
+          "role": "Duelist",
+          "mapRate": 3.35,
+          "globalRate": 5.17
+        },
+        {
+          "agent": "Raze",
+          "role": "Duelist",
+          "mapRate": 7.84,
+          "globalRate": 3.5
+        },
+        {
+          "agent": "Reyna",
+          "role": "Duelist",
+          "mapRate": 8.7,
+          "globalRate": 9.11
+        },
+        {
+          "agent": "Sage",
+          "role": "Sentinel",
+          "mapRate": 5.54,
+          "globalRate": 1.74
+        },
+        {
+          "agent": "Skye",
+          "role": "Initiator",
+          "mapRate": 11.07,
+          "globalRate": 2.52
+        },
+        {
+          "agent": "Sova",
+          "role": "Initiator",
+          "mapRate": 0.48,
+          "globalRate": 9.49
+        },
+        {
+          "agent": "Tejo",
+          "role": "Initiator",
+          "mapRate": 0.62,
+          "globalRate": 0.47
+        },
+        {
+          "agent": "Veto",
+          "role": "Sentinel",
+          "mapRate": 0.74,
+          "globalRate": 0.61
+        },
+        {
+          "agent": "Viper",
+          "role": "Controller",
+          "mapRate": 0.7,
+          "globalRate": 1.22
+        },
+        {
+          "agent": "Vyse",
+          "role": "Sentinel",
+          "mapRate": 0.81,
+          "globalRate": 1.34
+        },
+        {
+          "agent": "Waylay",
+          "role": "Duelist",
+          "mapRate": 2.11,
+          "globalRate": 1.87
+        },
+        {
+          "agent": "Yoru",
+          "role": "Duelist",
+          "mapRate": 0.55,
+          "globalRate": 0.56
+        }
+      ],
+      "agentInsights": {
+        "Clove": "Fast smokes cover Mail, Vents, and either Heaven while the team changes direction through Mid.",
+        "Jett": "Dash breaks the first compact choke and Updraft contests Split's stacked Heaven positions.",
+        "Raze": "Paint Shells and Blast Packs punish Split's compact chokes and vertical defender pockets.",
+        "Neon": "Fast Lane and High Gear turn a Mid opening into site pressure before defenders reset their vertical crossfires.",
+        "Reyna": "Dismiss lets her escape the close first duel, but the comp still relies on Skye to make that fight favorable.",
+        "Skye": "Guiding Light bends through Split's tight corners and Trailblazer clears the close pockets before both duelists commit.",
+        "Fade": "Prowlers clear close corners while Haunt confirms the stacked vertical positions around Mid.",
+        "Sage": "Wall and Slow Orbs delay narrow site entrances; B currently gives her the higher anchor conversion.",
+        "Cypher": "Trips control Mid-to-site rotations and let the anchor survive instead of guessing which choke broke."
+      },
+      "lineupLinks": [
+        {
+          "label": "LineupsValorant — Split",
+          "url": "https://lineupsvalorant.com/"
+        },
+        {
+          "label": "UpForge Lineup Library — Split",
+          "url": "https://upforge.gg/lineups"
         }
       ],
       "uuid": "d960549e-485c-e861-8d71-aa9d1aed12a2",
@@ -5669,6 +8088,30 @@
             "legs": 7.65
           }
         ],
+        "focus": "Damage is per pellet. Protect the close-range fight and do not expose the long recovery to a second enemy.",
+        "whenToUse": [
+          "Choose it for a low-cost close hold where one patient shot can recover a better weapon.",
+          "It fits corners with hard cover that protect the long recovery after a miss."
+        ],
+        "howToUse": [
+          "Stand still, let the target enter the first damage band, and center the body so enough pellets connect.",
+          "Do not expose to a second enemy until the pump finishes; the weapon rewards one isolated fight at a time."
+        ],
+        "patchHistory": [
+          {
+            "patch": "3.00",
+            "note": "Price fell from 900 to 850 credits.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "12.09",
+            "note": "Close-range pellet damage fell from 40/20/17 to 34/17/14, minimum spread rose to 3.0, and moving spread increased.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+          }
+        ],
+        "pickRate": 1.1,
+        "killConversion": 0.65,
+        "roundConversion": "Available by buy type",
         "uuid": "910be174-449b-c412-ab22-d0873436b21b",
         "source": "https://valorant-api.com/v1/weapons/910be174-449b-c412-ab22-d0873436b21b?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5693,6 +8136,35 @@
             "legs": 29.75
           }
         ],
+        "focus": "Use alternate-fire bursts for planned mid-range fights and avoid forcing full-auto recoil at long range.",
+        "whenToUse": [
+          "Use it on a lighter rifle buy when the team still needs armor and utility.",
+          "It works best on mid-range lanes where ADS burst gives a clean first engagement and full-auto protects a close collapse."
+        ],
+        "howToUse": [
+          "Use ADS burst for a planned medium-to-long fight, then wait for the short recovery before the next burst.",
+          "Switch to full-auto only when the opponent closes distance; do not drag the burst cadence into a long spray."
+        ],
+        "patchHistory": [
+          {
+            "patch": "3.00",
+            "note": "Hip-fire rate rose from 9.15 to 9.5 rounds per second and price fell from 2100 to 2050.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "4.00",
+            "note": "Hip-fire rate rose to 10 and burst recovery improved from 0.4 to 0.35 seconds.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-0/"
+          },
+          {
+            "patch": "11.08",
+            "note": "Horizontal recoil timing was lengthened from 0.37 to 0.6 seconds as rifle sprays were retuned.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+          }
+        ],
+        "pickRate": 3.5,
+        "killConversion": 0.8,
+        "roundConversion": "Available by buy type",
         "uuid": "ae3de142-4d85-2547-dd26-4e90bed35cf7",
         "source": "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5723,6 +8195,30 @@
             "legs": 18.7
           }
         ],
+        "focus": "Use controlled taps at range, and do not sleep on the alt-fire. Its three-round burst stays accurate while jumping or running, which makes it a real close-range movement option.",
+        "whenToUse": [
+          "Keep it when utility matters more than a pistol upgrade, or when the round plan sets up a close, sudden right-click fight.",
+          "Its free cost preserves the full 800-credit pistol-round budget."
+        ],
+        "howToUse": [
+          "Tap with primary fire at range and let recoil settle before the next shot.",
+          "Jump-peek tight corners with the alt-fire. Commit only when the full three-shot burst can land, or when a headshot plus one body shot can finish an unarmored target inside 30 meters."
+        ],
+        "patchHistory": [
+          {
+            "patch": "2.00",
+            "note": "Jumping error for alternate fire rose from 0.4 to 1.0 and repeated right-click bursts gained a stronger recovery curve.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-2-0/"
+          },
+          {
+            "patch": "3.00",
+            "note": "Walking and running inaccuracy increased as Riot tightened moving sidearm fire.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          }
+        ],
+        "pickRate": 4.8,
+        "killConversion": 0.72,
+        "roundConversion": "Available by buy type",
         "uuid": "29a0cfab-485b-f5d5-779a-b59f85e204a8",
         "source": "https://valorant-api.com/v1/weapons/29a0cfab-485b-f5d5-779a-b59f85e204a8?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5753,6 +8249,35 @@
             "legs": 17.85
           }
         ],
+        "focus": "Treat it like a compact SMG: close distance, control the short magazine, and avoid long-range tap races.",
+        "whenToUse": [
+          "Buy it for close pistol-round pressure or a save-round path that reaches SMG distance quickly.",
+          "It pairs with agents who can cross open space before the 15-round magazine is committed."
+        ],
+        "howToUse": [
+          "Crouch the moment you commit to a close fight; it tightens the spread noticeably, and the first three bullets stay close to perfectly accurate.",
+          "Pre-fire the corner you are about to peek. The fire rate is high enough that starting your spray a beat early costs almost nothing and means your bullets are already tracking when the enemy appears."
+        ],
+        "patchHistory": [
+          {
+            "patch": "2.03",
+            "note": "Price rose from 400 to 500 credits after the Frenzy crowded other pistol-round options.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-2-03/"
+          },
+          {
+            "patch": "3.00",
+            "note": "Price fell to 450 while walking and running inaccuracy increased.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "6.11",
+            "note": "Minimum spread increased, maximum spread arrived in five bullets, and running recoil rose from 1.25x to 1.5x.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          }
+        ],
+        "pickRate": 1.9,
+        "killConversion": 0.53,
+        "roundConversion": "Available by buy type",
         "uuid": "44d4e95c-4157-0037-81b2-17841bf2e8e3",
         "source": "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5783,6 +8308,30 @@
             "legs": 21.25
           }
         ],
+        "focus": "Use the clean first shot and quiet profile for disciplined pistol-round picks; reset instead of panic-spamming.",
+        "whenToUse": [
+          "Choose it for quiet pistol-round taps, medium sightlines, and a utility-light 500-credit buy.",
+          "It rewards first-shot accuracy against unarmored targets through 30 meters."
+        ],
+        "howToUse": [
+          "Hold head height and commit to a tap or two. The spray stays close to a straight line through the first two or three bullets before it kicks, so you do not need a full reset between them.",
+          "Use the silenced profile to take a first pick without broadcasting the exact lane through tracers."
+        ],
+        "patchHistory": [
+          {
+            "patch": "3.00",
+            "note": "Walking inaccuracy rose from 0.25 to 0.92 and running inaccuracy from 1.85 to 2.3.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "6.11",
+            "note": "Minimum spread on ropes rose from 0.35 to 0.6 as rope combat was made less reliable.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          }
+        ],
+        "pickRate": 8.1,
+        "killConversion": 0.6,
+        "roundConversion": "Available by buy type",
         "uuid": "1baa85b4-4c70-1284-64bb-6481dfc3bb4e",
         "source": "https://valorant-api.com/v1/weapons/1baa85b4-4c70-1284-64bb-6481dfc3bb4e?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5807,6 +8356,35 @@
             "legs": 48.75
           }
         ],
+        "focus": "Treat every shot as a resettable single-fire decision; high penetration supports disciplined wallbangs.",
+        "whenToUse": [
+          "Buy it when head-level long lanes and high-penetration wallbangs are worth more than automatic fire.",
+          "It is a deliberate mid-price rifle choice when armor and required utility still fit the team buy."
+        ],
+        "howToUse": [
+          "Fire one settled shot at a time at range; at closer distances, keep a measured rhythm instead of panic-spamming.",
+          "Hold narrow head-height lanes and use the high penetration only on confirmed common positions."
+        ],
+        "patchHistory": [
+          {
+            "patch": "1.08",
+            "note": "Price fell from 2500 to 2400, fire rate rose from 4.75 to 5.25 rounds per second, and recovery improved.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-1-08/"
+          },
+          {
+            "patch": "3.00",
+            "note": "Price fell again, from 2400 to 2250 credits.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "4.00",
+            "note": "The ADS fire-rate penalty was removed and one more shot was added before the recovery curve begins.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-0/"
+          }
+        ],
+        "pickRate": 3.1,
+        "killConversion": 0.86,
+        "roundConversion": "Available by buy type",
         "uuid": "4ade7faa-4cf1-8376-95ef-39884480959b",
         "source": "https://valorant-api.com/v1/weapons/4ade7faa-4cf1-8376-95ef-39884480959b?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5843,6 +8421,30 @@
             "legs": 5.95
           }
         ],
+        "focus": "Damage is per pellet. Own a tight choke and have a route to recover a rifle after the first conversion.",
+        "whenToUse": [
+          "Hold a tight choke where enemies must enter inside the first damage band.",
+          "Use it when an escape path or dropped-rifle upgrade is available after the first close kill."
+        ],
+        "howToUse": [
+          "Set your feet before firing, center the full pellet pattern, and make the enemy clear into your range.",
+          "Do not chase through open ground; reposition between shots so the magazine can cover more than one contact."
+        ],
+        "patchHistory": [
+          {
+            "patch": "3.00",
+            "note": "Price rose from 1600 to 1850 and pellet damage at 10 and 15 meters was reduced.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "12.09",
+            "note": "Minimum and movement spread increased, sharply reducing accuracy while walking, running, jumping, or using ropes.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+          }
+        ],
+        "pickRate": 2.2,
+        "killConversion": 0.84,
+        "roundConversion": "Available by buy type",
         "uuid": "ec845bf4-4f79-ddda-a3da-0db3774b2794",
         "source": "https://valorant-api.com/v1/weapons/ec845bf4-4f79-ddda-a3da-0db3774b2794?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5867,6 +8469,30 @@
             "legs": 85.85
           }
         ],
+        "focus": "Use mobility and fast follow-up positioning to punish unarmored buys without overstaying a scoped lane.",
+        "whenToUse": [
+          "Buy it to punish unarmored or light-buy opponents without breaking the next rifle round.",
+          "Its high scoped movement fits mobile long-lane picks and quick repositioning."
+        ],
+        "howToUse": [
+          "Hold head height against full armor and accept body shots only when the enemy economy suggests no shields.",
+          "Move after the first shot; the low price buys flexibility, not permission to repeat a revealed lane."
+        ],
+        "patchHistory": [
+          {
+            "patch": "2.03",
+            "note": "Scoped movement rose from 76% to 90%, price fell from 1100 to 1000, and zoom increased from 2.5x to 3.5x.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-2-03/"
+          },
+          {
+            "patch": "3.00",
+            "note": "Price fell again, from 1000 to 950 credits.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          }
+        ],
+        "pickRate": 4.1,
+        "killConversion": 0.68,
+        "roundConversion": "Available by buy type",
         "uuid": "c4883e50-4494-202c-3ec3-6b8a9284f00b",
         "source": "https://valorant-api.com/v1/weapons/c4883e50-4494-202c-3ec3-6b8a9284f00b?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5921,6 +8547,30 @@
             "legs": 120
           }
         ],
+        "focus": "Plan the escape before taking the shot. Missing without cover or movement utility exposes the weapon's slow cycle.",
+        "whenToUse": [
+          "Buy it when the economy can support the weapon and the round offers a long first-contact lane.",
+          "Agents with an escape tool can take a more aggressive opening angle; everyone else needs hard cover beside the shot."
+        ],
+        "howToUse": [
+          "Plan the escape before scoping, fire once, then reposition while the enemy spends utility on the old angle.",
+          "Avoid unsupported repeeks: the slow cycle, movement speed, and equip timing all give opponents a punish window."
+        ],
+        "patchHistory": [
+          {
+            "patch": "1.09",
+            "note": "Price rose from 4500 to 5000 while scoped movement, fire rate, equip time, and jump-land accuracy were all reduced.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-1-09/"
+          },
+          {
+            "patch": "3.00",
+            "note": "Price fell from 5000 to the current 4700 credits.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          }
+        ],
+        "pickRate": 5.8,
+        "killConversion": 1.32,
+        "roundConversion": "Available by buy type",
         "uuid": "a03b24d3-4319-996d-0f8c-94bbfba1dfc7",
         "source": "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5945,6 +8595,25 @@
             "legs": 119
           }
         ],
+        "focus": "Punish light armor with a body shot and manage the two-round chamber as a paired burst, not an endless hold.",
+        "whenToUse": [
+          "Use it against likely light armor or when a 2400-credit sniper preserves the next full buy.",
+          "Its rapid two-shot chamber can punish a second target or finish a tagged full-armor opponent."
+        ],
+        "howToUse": [
+          "Treat the chamber as a two-shot plan: take the first body shot, correct quickly, then leave before the long full reload.",
+          "Partial reloads are faster than replacing both shells, so track whether one shot remains before repeating the lane."
+        ],
+        "patchHistory": [
+          {
+            "patch": "8.00",
+            "note": "The Outlaw entered the arsenal as a two-shot sniper built to sit between the Marshal and Operator in price and stopping power.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/a-new-addition-to-the-arsenal-outlaw-insights/"
+          }
+        ],
+        "pickRate": 2.4,
+        "killConversion": 0.91,
+        "roundConversion": "Available by buy type",
         "uuid": "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c",
         "source": "https://valorant-api.com/v1/weapons/5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -5975,6 +8644,30 @@
             "legs": 29.75
           }
         ],
+        "focus": "Higher fire rate and a silenced profile reward close-to-mid fights; respect the long-range headshot falloff.",
+        "whenToUse": [
+          "Choose it for close-to-mid fights, smoke spam, and positions where a silenced shot keeps your location less obvious.",
+          "Its larger magazine and faster fire rate fit multi-target holds better than long one-tap lanes."
+        ],
+        "howToUse": [
+          "Burst through mid range and lean on controlled sprays inside 20 meters, where a headshot still kills full armor.",
+          "Respect the 20-meter headshot falloff and shorten the fight before challenging a Vandal on an open lane."
+        ],
+        "patchHistory": [
+          {
+            "patch": "6.11",
+            "note": "Running vertical recoil rose from 1.5x to 1.8x and reserve ammo fell from 90 to 60.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          },
+          {
+            "patch": "11.08",
+            "note": "Protected spray bullets rose from six to eight and horizontal recoil timing was retuned to make close-to-mid sprays more controllable.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+          }
+        ],
+        "pickRate": 21.2,
+        "killConversion": 1.03,
+        "roundConversion": "Available by buy type",
         "uuid": "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a",
         "source": "https://valorant-api.com/v1/weapons/ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -6005,6 +8698,30 @@
             "legs": 42.5
           }
         ],
+        "focus": "Protect the 0-30m one-shot headshot range and let recoil settle. This is a stop-and-shoot weapon, not a flick gun.",
+        "whenToUse": [
+          "Buy it when an eco round needs one-shot headshot threat inside 30 meters.",
+          "Its high penetration can punish a confirmed common wall position, but six rounds demand a planned exit."
+        ],
+        "howToUse": [
+          "Stop moving before every shot and hold your crosshair at head height on likely angles before the enemy appears. The Sheriff punishes a late flick far more than it rewards one.",
+          "If the target is moving or at range, two body shots beat forcing a low-percentage headshot. Do not spam after a miss; reset to cover and take the next deliberate shot."
+        ],
+        "patchHistory": [
+          {
+            "patch": "3.00",
+            "note": "Walking inaccuracy rose from 0.25 to 1.2 and running inaccuracy from 2.0 to 3.0.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "6.11",
+            "note": "Minimum spread on ropes rose from 0.35 to 0.78 as rope combat was made less reliable.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          }
+        ],
+        "pickRate": 5.7,
+        "killConversion": 0.66,
+        "roundConversion": "Available by buy type",
         "uuid": "e336c6b8-418d-9340-d77f-7a9e4cfe0702",
         "source": "https://valorant-api.com/v1/weapons/e336c6b8-418d-9340-d77f-7a9e4cfe0702?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -6041,6 +8758,30 @@
             "legs": 2.55
           }
         ],
+        "focus": "Damage is per pellet. Use it as a concealed close-corner answer, then immediately upgrade from the dropped weapon.",
+        "whenToUse": [
+          "Use it as a concealed sidearm for one close corner, often beside a rifle or Operator.",
+          "It is a save-round ambush tool when the first contact can immediately yield an upgrade."
+        ],
+        "howToUse": [
+          "Hide the weapon until the target fills the spread, stop moving, and commit both shells only if the first does not finish.",
+          "After contact, take the dropped weapon or leave; two shells cannot hold an extended lane."
+        ],
+        "patchHistory": [
+          {
+            "patch": "6.11",
+            "note": "Price rose from 150 to 300, reserve ammo fell from ten to six, and damage at the first two ranges was reduced.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          },
+          {
+            "patch": "12.09",
+            "note": "Fire rate fell from 3.33 to 3.0 and movement spread increased across walking, running, crouch-walking, jumping, and ropes.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-12-09/"
+          }
+        ],
+        "pickRate": 1.5,
+        "killConversion": 0.57,
+        "roundConversion": "Available by buy type",
         "uuid": "42da8ccc-40d5-affc-beec-15aa47b42eda",
         "source": "https://valorant-api.com/v1/weapons/42da8ccc-40d5-affc-beec-15aa47b42eda?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -6077,6 +8818,35 @@
             "legs": 17
           }
         ],
+        "focus": "Close distance and transfer through multiple targets; long-range rifle duels waste the weapon's mobility advantage.",
+        "whenToUse": [
+          "Choose it for anti-eco rounds, close site holds, and run paths that can avoid open rifle lanes.",
+          "The 30-round magazine supports a controlled transfer when multiple lightly armed opponents collapse together."
+        ],
+        "howToUse": [
+          "Close distance with cover, then use a compact spray and transfer; burst or disengage once the fight stretches beyond 15 meters.",
+          "Movement is part of the weapon's identity, but stop for any fight where the first bullets must be dependable."
+        ],
+        "patchHistory": [
+          {
+            "patch": "4.00",
+            "note": "Spray error began earlier, moving recoil multipliers rose from 1.25x to 1.5x, and protected spray bullets fell from eight to five.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-4-0/"
+          },
+          {
+            "patch": "6.11",
+            "note": "Running vertical recoil rose from 1.5x to 1.8x.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          },
+          {
+            "patch": "11.08",
+            "note": "Total spread fell from 1.5 to 1.3, tap efficiency rose from two to three, and protected bullets rose from four to five.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+          }
+        ],
+        "pickRate": 5.9,
+        "killConversion": 0.78,
+        "roundConversion": "Available by buy type",
         "uuid": "462080d1-4035-2937-7c09-27aa2a5c27a7",
         "source": "https://valorant-api.com/v1/weapons/462080d1-4035-2937-7c09-27aa2a5c27a7?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -6107,6 +8877,35 @@
             "legs": 19
           }
         ],
+        "focus": "Commit to close fights or controlled alternate-fire bursts. The magazine disappears quickly if the first transfer is late.",
+        "whenToUse": [
+          "Use it on a force or save where a close first kill can recover a rifle.",
+          "It is strongest in tight corridors and fast contact plans where its low price and burst damage can matter immediately."
+        ],
+        "howToUse": [
+          "Full-auto only at close range and control the first four-to-six bullets; the 20-round magazine disappears quickly.",
+          "Use ADS burst for a measured mid-range chance, then reset instead of stacking inaccurate bursts."
+        ],
+        "patchHistory": [
+          {
+            "patch": "2.03",
+            "note": "Price rose to 1100, full-auto fire rate fell from 18 to 16, and recoil became more aggressive after the third bullet.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-2-03/"
+          },
+          {
+            "patch": "3.00",
+            "note": "Price returned from 1100 to 950 credits.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-3-0/"
+          },
+          {
+            "patch": "11.08",
+            "note": "Full-auto spread rose from 1.3 to 1.5 and reached maximum spread one bullet sooner.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+          }
+        ],
+        "pickRate": 2.8,
+        "killConversion": 0.69,
+        "roundConversion": "Available by buy type",
         "uuid": "f7e1b454-4ad4-1063-ec0a-159e56b58941",
         "source": "https://valorant-api.com/v1/weapons/f7e1b454-4ad4-1063-ec0a-159e56b58941?language=en-US",
         "lastReviewed": "2026-07-23",
@@ -6131,6 +8930,35 @@
             "legs": 34
           }
         ],
+        "focus": "No damage falloff. Favor clean taps and short bursts once the first controlled shots are gone.",
+        "whenToUse": [
+          "Choose it on full buys when long sightlines and one-shot headshots matter.",
+          "Favor it when your plan includes disciplined taps, bursts, or medium-penetration spam through a known position."
+        ],
+        "howToUse": [
+          "Tap at long range, use two-to-four-shot bursts at mid range, and commit to a spray only when the target is close enough to track.",
+          "Stop before the first shot and reset after the controlled bullets; running recoil is deliberately harsher."
+        ],
+        "patchHistory": [
+          {
+            "patch": "1.07",
+            "note": "Fire rate rose from 9.25 to 9.75 rounds per second and body damage rose from 39 to 40.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-1-07/"
+          },
+          {
+            "patch": "6.11",
+            "note": "Running vertical recoil rose from 1.5x to 1.8x and reserve ammo fell from 75 to 50.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-6-11/"
+          },
+          {
+            "patch": "11.08",
+            "note": "Protected spray bullets rose from four to six while horizontal recoil timing was retuned.",
+            "source": "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-11-08/"
+          }
+        ],
+        "pickRate": 37.6,
+        "killConversion": 1.01,
+        "roundConversion": "Available by buy type",
         "uuid": "9c82e19d-4575-0200-1a81-3eacf00cf872",
         "source": "https://valorant-api.com/v1/weapons/9c82e19d-4575-0200-1a81-3eacf00cf872?language=en-US",
         "lastReviewed": "2026-07-23",

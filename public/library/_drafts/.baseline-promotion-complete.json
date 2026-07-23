@@ -1,6 +1,17 @@
 {
-  "completedAt": "2026-07-23T19:15:24.047Z",
+  "completedAt": "2026-07-23T20:49:51.403Z",
   "patchVersion": "13.01",
-  "changedEntities": 61,
-  "note": "One-time baseline exception consumed. All future synthesized fields require reviewed approval."
+  "changedEntities": 0,
+  "promotedEntities": 61,
+  "batch": {
+    "draftCount": 61,
+    "patchVersion": "13.01",
+    "oldestGeneratedAt": "2026-07-23T19:50:34.311Z",
+    "newestGeneratedAt": "2026-07-23T19:50:34.311Z",
+    "plannedAt": "2026-07-23T19:50:35.626Z",
+    "sha256": "40d351d2f6c8b7dd8a478571c3710dfe4fce49a9d2f94fe51d12f8a1b568c4e5"
+  },
+  "resetLog": "public/library/_drafts/baseline-reset-2026-07-24.json",
+  "directive": "notes/promotion-sequencing-bug-2026-07-24.md",
+  "note": "Corrected one-time baseline exception consumed after validating the final draft batch. All future synthesized fields require reviewed approval."
 }

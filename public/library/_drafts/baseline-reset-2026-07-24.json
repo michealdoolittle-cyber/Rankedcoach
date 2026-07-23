@@ -1,0 +1,11 @@
+{
+  "resetAt": "2026-07-23T20:49:35.5560191Z",
+  "reason": "The first baseline marker was written before the final governed drafts and the corrected authored map/reference content were ready. The incomplete exception is archived here so the validated final batch can consume the one-time baseline exactly once.",
+  "directive": "notes/promotion-sequencing-bug-2026-07-24.md",
+  "archivedMarker": {
+    "completedAt": "2026-07-23T19:15:24.047Z",
+    "patchVersion": "13.01",
+    "changedEntities": 61,
+    "note": "One-time baseline exception consumed. All future synthesized fields require reviewed approval."
+  }
+}

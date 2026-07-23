@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
@@ -38,9 +39,16 @@ test("Raze is one authored entity with canonical abilities", async () => {
 
 test("Bind, Breeze, and Split have complete governed callouts", async () => {
   const expected = { bind: 24, breeze: 23, split: 24 };
+  const authoredState = await loadLibraryState({ includePromoted: false });
+  const promotedState = await loadLibraryState();
   for (const [slug, count] of Object.entries(expected)) {
     const draft = await readDraft("map", slug);
+    const authored = authoredState.maps.find(map => map.id === slug);
+    const promoted = promotedState.maps.find(map => map.id === slug);
     assert.equal(draft.callouts.length, count);
+    assert.equal(authored.callouts.length, count);
+    assert.equal(promoted.callouts.length, count);
+    assert.deepEqual(promoted.callouts, draft.callouts);
     assert.equal(draft.calloutLabelsBakedIn, true);
     assert.equal(draft._fieldMeta.callouts.positions._tier, "canonical");
     assert.equal(draft._fieldMeta.callouts.labels._tier, "synthesized");
@@ -50,6 +58,37 @@ test("Bind, Breeze, and Split have complete governed callouts", async () => {
   const bind = await readDraft("map", "bind");
   assert.equal(bind.callouts.find(item => item.sourceLabel === "A Bath").label, "A Showers");
   assert.equal(bind.callouts.find(item => item.sourceLabel === "B Window").label, "B Hookah");
+});
+
+test("corrected baseline reset is logged, locked, and tied to one final batch", async () => {
+  const reset = JSON.parse(await readFile(path.join(DRAFT_ROOT, "baseline-reset-2026-07-24.json"), "utf8"));
+  const marker = JSON.parse(await readFile(path.join(DRAFT_ROOT, ".baseline-promotion-complete.json"), "utf8"));
+  assert.equal(reset.directive, "notes/promotion-sequencing-bug-2026-07-24.md");
+  assert.equal(reset.archivedMarker.completedAt, "2026-07-23T19:15:24.047Z");
+  assert.equal(marker.directive, reset.directive);
+  assert.equal(marker.resetLog, "public/library/_drafts/baseline-reset-2026-07-24.json");
+  assert.equal(marker.promotedEntities, 61);
+  assert.equal(marker.batch.draftCount, 61);
+  assert.equal(marker.batch.oldestGeneratedAt, marker.batch.newestGeneratedAt);
+  assert.match(marker.batch.sha256, /^[a-f0-9]{64}$/);
+
+  const retry = spawnSync(process.execPath, [
+    "scripts/promote-library-drafts.mjs",
+    "--baseline",
+    "--skip-notify"
+  ], {
+    cwd: ROOT,
+    encoding: "utf8"
+  });
+  assert.notEqual(retry.status, 0);
+  assert.match(`${retry.stdout}\n${retry.stderr}`, /one-time baseline auto-promotion has already been used/i);
+});
+
+test("promotion cache keys identify the corrected baseline", async () => {
+  const index = await readFile(path.join(ROOT, "public", "index.html"), "utf8");
+  assert.match(index, /gamesense-maps\.js\?v=20260724-promotion-sequence-01/);
+  assert.match(index, /gamesense-reference\.js\?v=20260724-promotion-sequence-01/);
+  assert.match(index, /gamesense-promoted\.js\?v=20260724-promotion-sequence-01/);
 });
 
 test("baked label maps suppress the second dynamic label layer", async () => {

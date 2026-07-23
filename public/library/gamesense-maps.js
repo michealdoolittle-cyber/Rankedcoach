@@ -47,18 +47,33 @@
       label: "Bind",
       inCompetitivePool: false,
       cardImage: "/assets/library/maps/bind-card.png",
-      layoutImage: "/assets/library/maps/bind-layout.png",
+      layoutImage: "/assets/library/maps/bind-layout-labeled.svg",
+      calloutLabelsBakedIn: true,
       callouts: [
-        { label: "A Site", x: 73.4, y: 33.3 },
-        { label: "A Bath", x: 83.9, y: 43.0 },
-        { label: "A Short", x: 62.4, y: 49.7 },
-        { label: "A Lamps", x: 58.2, y: 33.9 },
-        { label: "A Tower", x: 72.8, y: 20.8 },
-        { label: "B Site", x: 29.2, y: 31.2 },
-        { label: "B Long", x: 19.3, y: 51.5 },
-        { label: "B Window", x: 32.3, y: 44.7 },
-        { label: "B Elbow", x: 15.8, y: 30.6 },
-        { label: "B Garden", x: 24.7, y: 42.8 }
+        { id: "bind-1", sourceKey: "A::Exit", sourceLabel: "A Exit", label: "A Exit", superRegionName: "A", regionName: "Exit", x: 92.35, y: 52.21 },
+        { id: "bind-2", sourceKey: "A::Link", sourceLabel: "A Link", label: "A Link", superRegionName: "A", regionName: "Link", x: 51.75, y: 59.2 },
+        { id: "bind-3", sourceKey: "A::Lobby", sourceLabel: "A Lobby", label: "A Lobby", superRegionName: "A", regionName: "Lobby", x: 76.33, y: 60.69 },
+        { id: "bind-4", sourceKey: "A::Short", sourceLabel: "A Short", label: "A Short", superRegionName: "A", regionName: "Short", x: 62.44, y: 49.65 },
+        { id: "bind-5", sourceKey: "A::Site", sourceLabel: "A Site", label: "A Site", superRegionName: "A", regionName: "Site", x: 73.41, y: 33.34 },
+        { id: "bind-6", sourceKey: "A::Teleporter", sourceLabel: "A Teleporter", label: "A Teleporter", superRegionName: "A", regionName: "Teleporter", x: 60.58, y: 41.11 },
+        { id: "bind-7", sourceKey: "Attacker Side::Spawn", sourceLabel: "Attacker Side Spawn", label: "Attacker Side Spawn", superRegionName: "Attacker Side", regionName: "Spawn", x: 58.15, y: 95.8 },
+        { id: "bind-8", sourceKey: "B::Exit", sourceLabel: "B Exit", label: "B Exit", superRegionName: "B", regionName: "Exit", x: 47.29, y: 44.12 },
+        { id: "bind-9", sourceKey: "B::Hall", sourceLabel: "B Hall", label: "B Hall", superRegionName: "B", regionName: "Hall", x: 28.54, y: 20.16 },
+        { id: "bind-10", sourceKey: "B::Link", sourceLabel: "B Link", label: "B Link", superRegionName: "B", regionName: "Link", x: 42.23, y: 59.22 },
+        { id: "bind-11", sourceKey: "B::Fountain", sourceLabel: "B Fountain", label: "B Fountain", superRegionName: "B", regionName: "Fountain", x: 25.89, y: 62.91 },
+        { id: "bind-12", sourceKey: "B::Long", sourceLabel: "B Long", label: "B Long", superRegionName: "B", regionName: "Long", x: 19.27, y: 51.52 },
+        { id: "bind-13", sourceKey: "B::Short", sourceLabel: "B Short", label: "B Short", superRegionName: "B", regionName: "Short", x: 39.66, y: 52.95 },
+        { id: "bind-14", sourceKey: "B::Site", sourceLabel: "B Site", label: "B Site", superRegionName: "B", regionName: "Site", x: 29.19, y: 31.22 },
+        { id: "bind-15", sourceKey: "B::Teleporter", sourceLabel: "B Teleporter", label: "B Teleporter", superRegionName: "B", regionName: "Teleporter", x: 15.07, y: 43.49 },
+        { id: "bind-16", sourceKey: "B::Window", sourceLabel: "B Window", label: "B Hookah", superRegionName: "B", regionName: "Window", x: 32.27, y: 44.68 },
+        { id: "bind-17", sourceKey: "A::Bath", sourceLabel: "A Bath", label: "A Showers", superRegionName: "A", regionName: "Bath", x: 83.95, y: 43.03 },
+        { id: "bind-18", sourceKey: "Attacker Side::Cave", sourceLabel: "Attacker Side Cave", label: "Attacker Side Cave", superRegionName: "Attacker Side", regionName: "Cave", x: 59.21, y: 73.63 },
+        { id: "bind-19", sourceKey: "A::Cubby", sourceLabel: "A Cubby", label: "A Cubby", superRegionName: "A", regionName: "Cubby", x: 58.73, y: 45.99 },
+        { id: "bind-20", sourceKey: "Defender Side::Spawn", sourceLabel: "Defender Side Spawn", label: "Defender Side Spawn", superRegionName: "Defender Side", regionName: "Spawn", x: 51.69, y: 10.37 },
+        { id: "bind-21", sourceKey: "B::Elbow", sourceLabel: "B Elbow", label: "B Elbow", superRegionName: "B", regionName: "Elbow", x: 15.83, y: 30.6 },
+        { id: "bind-22", sourceKey: "B::Garden", sourceLabel: "B Garden", label: "B Garden", superRegionName: "B", regionName: "Garden", x: 24.67, y: 42.81 },
+        { id: "bind-23", sourceKey: "A::Lamps", sourceLabel: "A Lamps", label: "A Lamps / U-Haul", superRegionName: "A", regionName: "Lamps", x: 58.17, y: 33.92 },
+        { id: "bind-24", sourceKey: "A::Tower", sourceLabel: "A Tower", label: "A Heaven", superRegionName: "A", regionName: "Tower", x: 72.78, y: 20.81 }
       ],
       plantSpots: [
         { number: 1, site: "A", label: "A Truck Default", rate: null, x: 75.6, y: 34.5, previewLabel: "A Truck in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/4d5161107bb15614535dae6dfc7f86bea500d003-763x663.png?auto=format", previewSource: PLANT_IMAGE_SOURCE },
@@ -69,41 +84,41 @@
       ],
       plantRateNote: "Bind is outside the active competitive rotation, so no active-season PC plant-rate sample is available.",
       weaponSuggestions: [
-        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Best rifle fit", evidence: "0.84 kills per round | 202 average damage", locations: "Hookah, Lamps, Bath", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", note: "Compact chokes and frequent smoke fights reward the Phantom's close-range control." },
-        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Strong sniper fit", side: "DEF", evidence: "0.80 kills per round | 220 average damage", locations: "B Long, A Tower, A Short", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", conversion: "Conversion read: stronger than a shotgun while the first duel stays long; Judge and Bucky gain value once Hookah or Lamps is the planned contact.", note: "On defense, long lanes create early picks, but the lack of mid makes a missed read expensive. Pair it with an escape tool or planned teleporter rotation." },
-        { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Pistol-round fit", evidence: "500 credits | one-shot headshot through 30m", locations: "A Short, Bath, B Long", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", note: "The quiet, accurate first shot fits Bind's early lane fights while keeping utility in the buy." },
-        { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Close conversion rival", side: "DEF", evidence: "1,850 credits | five-shell magazine", locations: "Hookah, Lamps, U-Hall", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", conversion: "Conversion read: more repeatable than an Operator when the setup guarantees two close contacts; much weaker if attackers can reset to Long or Bath.", note: "On defense, commit it to a compact choke and plan the rifle recovery after the first conversion." },
-        { weapon: "Stinger", image: "/assets/weapons/stinger.png", category: "eco", fit: "Eco outlier", evidence: "228 average damage | 1,100 credits", locations: "Hookah, Lamps, Bath", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", note: "The low-cost damage output is useful only when the setup protects a close fight and a short magazine." }
+        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Best rifle fit", locations: "Hookah, Lamps, Showers", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", note: "Compact chokes and frequent smoke fights reward the Phantom's close-range control." },
+        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Strong sniper fit", side: "DEF", locations: "B Long, A Tower, A Short", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", conversion: "Conversion read: stronger than a shotgun while the first duel stays long; Judge and Bucky gain value once Hookah or Lamps is the planned contact.", note: "On defense, long lanes create early picks, while either teleporter can turn a missed opening read into a fast cross-map fight. Pair the Operator with an escape tool and a called rotation." },
+        { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Pistol-round fit", locations: "A Short, Showers, B Long", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", note: "The quiet, accurate first shot fits Bind's early lane fights while keeping utility in the buy." },
+        { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Close conversion rival", side: "DEF", locations: "Hookah, Lamps, U-Haul", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", conversion: "Conversion read: more repeatable than an Operator when the setup guarantees two close contacts; much weaker if attackers can reset to Long or Showers.", note: "On defense, commit it to a compact choke and plan the rifle recovery after the first conversion." },
+        { weapon: "Stinger", image: "/assets/weapons/stinger.png", category: "eco", fit: "Eco outlier", locations: "Hookah, Lamps, Showers", roundConversionUnavailable: "Bind is outside the active-season Competitive sample.", note: "The low-cost damage output is useful only when the setup protects a close fight and a short magazine." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
         _researchUrl: "https://www.zleague.gg/theportal/woohoojin-mastering-the-bind-map-in-valorant/",
         defense: [
-          "Double up to contest the weak-side lane rather than spreading thin — accept giving up a low-value area to reinforce a high-value one instead.",
-          "Shower control is the priority defensive anchor on this map — losing it tends to cascade into losing the rest of the defensive setup.",
-          "Watch for predictable attacker patterns (a late shower lurk is a common one) — recognizing the pattern opens a window to punish it."
+          "Treat Hookah, Showers, Octagon, and U-Haul as Bind's high-value control areas. Double up when the read calls for it; owning one of these lanes gives the retake a flank route and shortens the next rotation.",
+          "On A site, contest Showers or U-Haul before settling into straight-site positions. Giving up both lets attackers flood the site with utility and leaves the retake entering through predictable lanes.",
+          "Look for repeated defaults, late lurks, and teleporter timings, then call an early punish. Waiting until the execute lands gives the pattern its value."
         ],
         attack: [
-          "Bind has no mid, so once you commit to a site the rotation is fully committed too — there's no cheap way to redirect mid-execute.",
-          "Target whatever gap the enemy's agent picks create, rather than defaulting to the same site read every round."
+          "Bind's two teleporters turn lane control into fast cross-map rotations. Draw utility or defenders first, then arrive at the exit together instead of treating first contact as a forced site commitment.",
+          "Read the defensive composition before choosing pace: break sentinel utility early and commit late into double Sentinel; hit earlier into double Controller before rotating smokes recycle; hold disciplined defaults into double Initiator so repeated information sees no commitment; against double Duelist, take or hold forward lanes so aggression is called and traded."
         ]
       },
       siteTips: [
-        { label: "A Short", text: "Clear Lamps before the spike crosses Truck; leaving it live lets one defender split the entire plant setup.", roles: ["Duelist", "Initiator"] },
-        { label: "A Bath", text: "Bath control creates the open plant and removes the safest close retake path. Hold it through the plant instead of abandoning it on entry.", roles: ["Controller", "Sentinel"] },
-        { label: "B Hookah", text: "Pair the Hookah drop with B Long pressure so defenders cannot aim at both elevations at once.", roles: ["Duelist", "Initiator"] },
-        { label: "B Long", text: "Keep Elbow and Defender Spawn cut while the spike is planted for Long; otherwise the planter is exposed before the post-plant begins.", roles: ["Controller", "Sentinel"] }
+        { label: "A Showers", text: "Clear Showers before the spike crosses Truck. A defender left there can split the site, punish the plant, and isolate the A Short group.", roles: ["Duelist", "Initiator"] },
+        { label: "A Lamps / U-Haul", text: "Take and hold Lamps/U-Haul through the plant. It is the defenders' closest retake path and protects the planter from an immediate site re-entry.", roles: ["Controller", "Sentinel"] },
+        { label: "B Hookah", text: "Build the B split around synchronized Hookah and Garden/B Long contact. Hold the drop until the Long group can trade, then clear site and Elbow from different directions.", roles: ["Duelist", "Initiator"] },
+        { label: "B Long / Octagon", text: "Keep Long or Octagon after the plant while a teammate holds site or Hookah. That crossfire forces the retake to clear separate lines instead of collapsing through Defender Spawn and Elbow together.", roles: ["Controller", "Sentinel"] }
       ],
       teamplayTips: [
-        { label: "Teleport timing", text: "Call teleporter audio immediately and name the exit. The rotation is only useful if the destination player is ready for the next fight." },
-        { label: "Two-lane hits", text: "Pressure both entrances to a site before committing so one defender cannot hold every attacker in a single choke." },
-        { label: "Post-plant jobs", text: "Assign one player to the spike and one to the flank before chasing exits; Bind's teleporters make late routes arrive quickly." }
+        { label: "Common fake", text: "Sell A with Showers and A Short utility, then send one player through the A teleporter while the spike group holds B Long. Call whether the exit player is selling Hookah pressure or joining the hit before the audio plays." },
+        { label: "Eco-round plan", text: "Group the low buy to break one piece of sentinel utility and force a compact trade through Showers, U-Haul, or Hookah. Recover the first rifle before spreading into open lanes." },
+        { label: "Round-plan execution", text: "Before barriers drop, name the first lane, the teleporter trigger, and the reset condition. Bind's rotations are fast only when the destination group is ready for the exit fight." }
       ],
       roleNotes: {
-        Duelist: [{ category: "attack", text: "Take first space through A Short, Bath, Hookah, or B Long after support utility lands." }, { category: "sites", text: "Clear Lamps and Hookah with movement or explosive utility before teammates cross the choke." }, { category: "defense", text: "Contest one high-value lane with an escape plan instead of dry re-peeking after contact." }],
-        Initiator: [{ category: "attack", text: "Reveal or clear Hookah, B Long, Bath, and A Short immediately before the entry moves." }, { category: "sites", text: "Use flashes and scans to isolate Lamps, A Heaven, Elbow, and Defender Spawn rather than covering empty space." }, { category: "teamplay", text: "Track teleporter audio so the team can rotate before the destination fight is already lost." }],
-        Controller: [{ category: "sites", text: "For A hits, remove A Heaven and Lamps; for B hits, remove Defender Spawn and Elbow." }, { category: "teamplay", text: "One-way smokes are setup-dependent and should not replace the smokes the execute needs." }, { category: "defense", text: "Keep one smoke or damage tool for the post-plant because Bind retakes arrive through narrow named lanes." }],
-        Sentinel: [{ category: "teamplay", text: "Place flank utility where it survives common prefire paths and still catches teleporter rotations." }, { category: "defense", text: "Anchor where you can punish Hookah drop, B Long, A Short, or Bath contact without giving a free first death." }, { category: "defense", text: "Change trap and camera height between gun rounds so the same clear does not solve the setup twice." }]
+        Duelist: [{ category: "attack", text: "Take first space through A Short, Showers, Hookah, or B Long after support utility lands." }, { category: "sites", text: "On A, force the Showers split angle off and clear U-Haul/Lamps; on B, clear Hookah and Elbow before teammates spread into site." }, { category: "defense", text: "Contest Hookah, Showers, Octagon, or U-Haul with an escape plan instead of dry re-peeking after contact." }],
+        Initiator: [{ category: "attack", text: "Reveal or clear Hookah, B Long, Showers, and A Short immediately before the entry moves." }, { category: "sites", text: "Use flashes and scans to isolate U-Haul/Lamps, A Tower, Elbow, and Defender Spawn rather than covering empty space." }, { category: "teamplay", text: "Track teleporter audio and call the exit so the team rotates before the destination fight is already lost." }],
+        Controller: [{ category: "sites", text: "For A hits, smoke off A Tower and cover U-Haul/Lamps or Showers based on the lane the team owns; for B hits, smoke off Defender Spawn and Elbow." }, { category: "teamplay", text: "One-way smokes are setup-dependent and should not replace the smokes the execute needs." }, { category: "defense", text: "Keep one smoke or damage tool for the post-plant because Bind retakes arrive through narrow named lanes." }],
+        Sentinel: [{ category: "teamplay", text: "Place flank utility where it survives common prefire paths and still catches teleporter rotations." }, { category: "defense", text: "Anchor where you can punish Hookah, B Long, A Short, or Showers contact without giving a free first death." }, { category: "defense", text: "Change trap and camera height between gun rounds so the same clear does not solve the setup twice." }]
       },
       metaComp: {
         agents: [],
@@ -114,8 +129,8 @@
       compStatus: "Bind is outside Tracker Network's current rolling Competitive map sample, so no current composition reference is shown.",
       agentInsights: {
         Clove: "Post-death smokes keep both teleporter rotations covered after an opening fight.",
-        Raze: "Explosive movement and clearing utility break Bind's narrow Hookah, Bath, and A Short chokes.",
-        Fade: "Haunt and Prowlers clear Lamps, Hookah, and site corners immediately before contact.",
+        Raze: "Explosive movement and clearing utility break Bind's narrow Hookah, Showers, and A Short chokes.",
+        Fade: "Haunt and Prowlers clear U-Haul/Lamps, Hookah, and site corners immediately before contact.",
         Cypher: "Flank information survives teleporter rotations; B is the higher-success anchor site in this current sample.",
         Skye: "Guiding Light can curve through both compact site entrances and support fast re-clears."
       },
@@ -129,17 +144,32 @@
       label: "Breeze",
       inCompetitivePool: true,
       cardImage: "/assets/library/maps/breeze-card.png",
-      layoutImage: "/assets/library/maps/breeze-layout.png",
+      layoutImage: "/assets/library/maps/breeze-layout-labeled.svg",
+      calloutLabelsBakedIn: true,
       callouts: [
-        { label: "A Site", x: 90.8, y: 49.5 },
-        { label: "A Lobby", x: 70.3, y: 92.1 },
-        { label: "Mid Hall", x: 63.9, y: 53.5 },
-        { label: "Mid Nest", x: 48.4, y: 22.8 },
-        { label: "Mid Wood Doors", x: 64.4, y: 49.5 },
-        { label: "B Tunnel", x: 36.4, y: 38.2 },
-        { label: "B Site", x: 7.0, y: 38.2 },
-        { label: "B Main", x: 15.4, y: 58.5 },
-        { label: "B Back", x: 6.8, y: 30.5 }
+        { id: "breeze-1", sourceKey: "Mid::Hall", sourceLabel: "Mid Hall", label: "Mid Hall", superRegionName: "Mid", regionName: "Hall", x: 63.95, y: 53.51 },
+        { id: "breeze-2", sourceKey: "A::Bridge", sourceLabel: "A Bridge", label: "A Bridge", superRegionName: "A", regionName: "Bridge", x: 71.19, y: 24.51 },
+        { id: "breeze-3", sourceKey: "Defender Side::Spawn", sourceLabel: "Defender Side Spawn", label: "Defender Side Spawn", superRegionName: "Defender Side", regionName: "Spawn", x: 71.19, y: 21.01 },
+        { id: "breeze-4", sourceKey: "Defender Side::Arches", sourceLabel: "Defender Side Arches", label: "Defender Side Arches", superRegionName: "Defender Side", regionName: "Arches", x: 37.41, y: 17.51 },
+        { id: "breeze-5", sourceKey: "Mid::Wood Doors", sourceLabel: "Mid Wood Doors", label: "Mid Wood Doors", superRegionName: "Mid", regionName: "Wood Doors", x: 64.36, y: 49.53 },
+        { id: "breeze-6", sourceKey: "Mid::Pillar", sourceLabel: "Mid Pillar", label: "Mid Pillar", superRegionName: "Mid", regionName: "Pillar", x: 49.84, y: 54.08 },
+        { id: "breeze-7", sourceKey: "Mid::Top", sourceLabel: "Mid Top", label: "Mid Top", superRegionName: "Mid", regionName: "Top", x: 50.19, y: 40.08 },
+        { id: "breeze-8", sourceKey: "Mid::Nest", sourceLabel: "Mid Nest", label: "Mid Nest", superRegionName: "Mid", regionName: "Nest", x: 48.44, y: 22.76 },
+        { id: "breeze-9", sourceKey: "B::Window", sourceLabel: "B Window", label: "B Window", superRegionName: "B", regionName: "Window", x: 17.29, y: 67.73 },
+        { id: "breeze-10", sourceKey: "B::Main", sourceLabel: "B Main", label: "B Main", superRegionName: "B", regionName: "Main", x: 15.36, y: 58.46 },
+        { id: "breeze-11", sourceKey: "B::Elbow", sourceLabel: "B Elbow", label: "B Elbow", superRegionName: "B", regionName: "Elbow", x: 26.21, y: 50.58 },
+        { id: "breeze-12", sourceKey: "B::Site", sourceLabel: "B Site", label: "B Site", superRegionName: "B", regionName: "Site", x: 6.96, y: 38.16 },
+        { id: "breeze-13", sourceKey: "B::Tunnel", sourceLabel: "B Tunnel", label: "B Tunnel", superRegionName: "B", regionName: "Tunnel", x: 36.36, y: 38.16 },
+        { id: "breeze-14", sourceKey: "A::Ramp", sourceLabel: "A Ramp", label: "A Ramp", superRegionName: "A", regionName: "Ramp", x: 65.59, y: 32.21 },
+        { id: "breeze-15", sourceKey: "B::Back", sourceLabel: "B Back", label: "B Back", superRegionName: "B", regionName: "Back", x: 6.79, y: 30.46 },
+        { id: "breeze-16", sourceKey: "B::Wall", sourceLabel: "B Wall", label: "B Wall", superRegionName: "B", regionName: "Wall", x: 25.51, y: 23.46 },
+        { id: "breeze-17", sourceKey: "Mid::Cannon", sourceLabel: "Mid Cannon", label: "Mid Cannon", superRegionName: "Mid", regionName: "Cannon", x: 33.56, y: 63.01 },
+        { id: "breeze-18", sourceKey: "Mid::Bottom", sourceLabel: "Mid Bottom", label: "Mid Bottom", superRegionName: "Mid", regionName: "Bottom", x: 49.84, y: 72.28 },
+        { id: "breeze-19", sourceKey: "A::Lobby", sourceLabel: "A Lobby", label: "A Lobby", superRegionName: "A", regionName: "Lobby", x: 70.31, y: 92.06 },
+        { id: "breeze-20", sourceKey: "A::Shop", sourceLabel: "A Shop", label: "A Shop", superRegionName: "A", regionName: "Shop", x: 76.26, y: 68.26 },
+        { id: "breeze-21", sourceKey: "A::Site", sourceLabel: "A Site", label: "A Site", superRegionName: "A", regionName: "Site", x: 90.79, y: 49.53 },
+        { id: "breeze-22", sourceKey: "A::Pyramids", sourceLabel: "A Pyramids", label: "A Pyramids", superRegionName: "A", regionName: "Pyramids", x: 84.66, y: 46.91 },
+        { id: "breeze-23", sourceKey: "Attacker Side::Spawn", sourceLabel: "Attacker Side Spawn", label: "Attacker Side Spawn", superRegionName: "Attacker Side", regionName: "Spawn", x: 43.36, y: 87.33 }
       ],
       plantSpots: [
         { number: 1, site: "A", label: "A Pyramid Default", rate: 44.15, x: 91.4, y: 47.8, previewLabel: "A Pyramid in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/0482846d2a0c463405dbcbb0313bc04f81e4e9ca-1042x697.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
@@ -152,11 +182,11 @@
       ],
       plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
       weaponSuggestions: [
-        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Highest rifle conversion", evidence: "0.84 kills per round | 202 average damage", locations: "A Main, B Main, Mid", roundConversion: { scope: "Combined", value: 50.87, sample: "896,805 active-season full-buy rounds", comparisonLabel: "Second rifle", comparisonWeapon: "Vandal", comparisonValue: 50.41 }, note: "Smoke fights and close site finishes give the Phantom a narrow conversion edge, while the Vandal remains the cleaner long-lane one-tap choice." },
-        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "High-value sniper", side: "DEF", evidence: "0.80 kills per round | 220 average damage", locations: "A Main, B Main, Mid Nest", roundConversion: { scope: "Defense", value: 52.43, sample: "230,391 active-season defense full-buy rounds", comparisonLabel: "Second sniper", comparisonWeapon: "Outlaw", comparisonValue: 44.64 }, conversion: "Conversion read: the Operator wins the defense-side sniper comparison; Judge or Bucky only catches up inside a deliberately protected Tunnel or Hall pocket.", note: "On defense, the map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after contact." },
-        { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Highest pistol conversion", evidence: "500 credits | one-shot headshot through 30m", locations: "A Main, Mid, B Main", roundConversion: { scope: "Combined", value: 50.64, sample: "2,791,564 active-season pistol rounds", comparisonLabel: "Second pistol", comparisonWeapon: "Sheriff", comparisonValue: 50.21 }, note: "Use cover and first-shot accuracy across Breeze's long pistol lanes while preserving credits for utility." },
-        { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Best shotgun conversion", side: "DEF", evidence: "1,850 credits | five-shell magazine", locations: "A Hall, B Tunnel", roundConversion: { scope: "Defense", value: 48.24, sample: "27,678 active-season defense full-buy rounds", comparisonLabel: "Second shotgun", comparisonWeapon: "Bucky", comparisonValue: 44.24 }, conversion: "Conversion read: the shotgun remains location-dependent and cannot match the Operator across Breeze's open sites.", note: "On defense, treat it as a protected Hall or Tunnel ambush, then recover a ranged weapon before rotating into open space." },
-        { weapon: "Spectre", image: "/assets/weapons/spectre.png", category: "eco", fit: "Highest eco conversion", evidence: "30-round magazine | 1,600 credits", locations: "Tunnel and close Hall pockets", roundConversion: { scope: "Combined", value: 33.61, sample: "128,040 active-season second-round-loss rounds", comparisonLabel: "Second SMG", comparisonWeapon: "Stinger", comparisonValue: 29.69 }, note: "Use it with a deliberate close-range route; most Breeze fights still expose an SMG's range limit." }
+        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Highest rifle conversion", locations: "A Main, B Main, Mid", roundConversion: { scope: "Combined", value: 50.87, sample: "896,805 active-season full-buy rounds", comparisonLabel: "Second rifle", comparisonWeapon: "Vandal", comparisonValue: 50.41 }, note: "Smoke fights and close site finishes give the Phantom a narrow conversion edge, while the Vandal remains the cleaner long-lane one-tap choice." },
+        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "High-value sniper", side: "DEF", locations: "A Main, B Main, Mid Nest", roundConversion: { scope: "Defense", value: 52.43, sample: "230,391 active-season defense full-buy rounds", comparisonLabel: "Second sniper", comparisonWeapon: "Outlaw", comparisonValue: 44.64 }, conversion: "Conversion read: the Operator wins the defense-side sniper comparison; Judge or Bucky only catches up inside a deliberately protected Tunnel or Hall pocket.", note: "On defense, the map gives repeated long-lane shots. Mobility or teleport tools make the weapon safer after contact." },
+        { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Highest pistol conversion", locations: "A Main, Mid, B Main", roundConversion: { scope: "Combined", value: 50.64, sample: "2,791,564 active-season pistol rounds", comparisonLabel: "Second pistol", comparisonWeapon: "Sheriff", comparisonValue: 50.21 }, note: "Use cover and first-shot accuracy across Breeze's long pistol lanes while preserving credits for utility." },
+        { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Best shotgun conversion", side: "DEF", locations: "A Hall, B Tunnel", roundConversion: { scope: "Defense", value: 48.24, sample: "27,678 active-season defense full-buy rounds", comparisonLabel: "Second shotgun", comparisonWeapon: "Bucky", comparisonValue: 44.24 }, conversion: "Conversion read: the shotgun remains location-dependent and cannot match the Operator across Breeze's open sites.", note: "On defense, treat it as a protected Hall or Tunnel ambush, then recover a ranged weapon before rotating into open space." },
+        { weapon: "Spectre", image: "/assets/weapons/spectre.png", category: "eco", fit: "Highest eco conversion", locations: "Tunnel and close Hall pockets", roundConversion: { scope: "Combined", value: 33.61, sample: "128,040 active-season second-round-loss rounds", comparisonLabel: "Second SMG", comparisonWeapon: "Stinger", comparisonValue: 29.69 }, note: "Use it with a deliberate close-range route; most Breeze fights still expose an SMG's range limit." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
@@ -229,17 +259,32 @@
       inCompetitivePool: true,
       cardImage: "/assets/library/maps/split-card.png",
       layoutImage: "/assets/library/maps/split-layout-trn.png",
+      calloutLabelsBakedIn: true,
       callouts: [
-        { label: "A Site", x: 81.6, y: 31.5 },
-        { label: "A Main", x: 79.2, y: 49.2 },
-        { label: "A Rafters", x: 72.6, y: 35.4 },
-        { label: "A Screens", x: 74.3, y: 15.0 },
-        { label: "Mid Bottom", x: 45.2, y: 61.6 },
-        { label: "Mid Vent", x: 54.9, y: 42.6 },
-        { label: "Mid Mail", x: 39.3, y: 46.7 },
-        { label: "B Tower", x: 31.6, y: 43.0 },
-        { label: "B Site", x: 13.3, y: 35.4 },
-        { label: "B Garage", x: 13.2, y: 54.2 }
+        { id: "split-1", sourceKey: "A::Back", sourceLabel: "A Back", label: "A Back", superRegionName: "A", regionName: "Back", x: 22.93, y: 12.47 },
+        { id: "split-2", sourceKey: "A::Lobby", sourceLabel: "A Lobby", label: "A Lobby", superRegionName: "A", regionName: "Lobby", x: 65.05, y: 16.61 },
+        { id: "split-3", sourceKey: "A::Main", sourceLabel: "A Main", label: "A Main", superRegionName: "A", regionName: "Main", x: 49.17, y: 20.77 },
+        { id: "split-4", sourceKey: "A::Rafters", sourceLabel: "A Rafters", label: "A Rafters", superRegionName: "A", regionName: "Rafters", x: 35.4, y: 27.37 },
+        { id: "split-5", sourceKey: "A::Ramps", sourceLabel: "A Ramps", label: "A Ramps", superRegionName: "A", regionName: "Ramps", x: 47.17, y: 35.98 },
+        { id: "split-6", sourceKey: "A::Screens", sourceLabel: "A Screens", label: "A Screens", superRegionName: "A", regionName: "Screens", x: 15.04, y: 25.7 },
+        { id: "split-7", sourceKey: "A::Sewer", sourceLabel: "A Sewer", label: "A Sewers", superRegionName: "A", regionName: "Sewer", x: 65.75, y: 31.83 },
+        { id: "split-8", sourceKey: "A::Site", sourceLabel: "A Site", label: "A Site", superRegionName: "A", regionName: "Site", x: 31.48, y: 18.37 },
+        { id: "split-9", sourceKey: "A::Tower", sourceLabel: "A Tower", label: "A Heaven", superRegionName: "A", regionName: "Tower", x: 31.58, y: 33.59 },
+        { id: "split-10", sourceKey: "Attacker Side::Spawn", sourceLabel: "Attacker Side Spawn", label: "Attacker Side Spawn", superRegionName: "Attacker Side", regionName: "Spawn", x: 84.68, y: 54.92 },
+        { id: "split-11", sourceKey: "B::Alley", sourceLabel: "B Alley", label: "B Alley", superRegionName: "B", regionName: "Alley", x: 21.3, y: 78.79 },
+        { id: "split-12", sourceKey: "B::Back", sourceLabel: "B Back", label: "B Back", superRegionName: "B", regionName: "Back", x: 26.36, y: 93.99 },
+        { id: "split-13", sourceKey: "B::Link", sourceLabel: "B Link", label: "B Link", superRegionName: "B", regionName: "Link", x: 65.73, y: 69.97 },
+        { id: "split-14", sourceKey: "B::Garage", sourceLabel: "B Garage", label: "B Main", superRegionName: "B", regionName: "Garage", x: 54.2, y: 86.85 },
+        { id: "split-15", sourceKey: "B::Rafters", sourceLabel: "B Rafters", label: "B Rafters", superRegionName: "B", regionName: "Rafters", x: 36.87, y: 74.73 },
+        { id: "split-16", sourceKey: "B::Site", sourceLabel: "B Site", label: "B Site", superRegionName: "B", regionName: "Site", x: 35.35, y: 86.66 },
+        { id: "split-17", sourceKey: "B::Stairs", sourceLabel: "B Stairs", label: "B Stairs", superRegionName: "B", regionName: "Stairs", x: 31.48, y: 61.48 },
+        { id: "split-18", sourceKey: "B::Tower", sourceLabel: "B Tower", label: "B Heaven", superRegionName: "B", regionName: "Tower", x: 42.96, y: 68.44 },
+        { id: "split-19", sourceKey: "B::Lobby", sourceLabel: "B Lobby", label: "B Lobby", superRegionName: "B", regionName: "Lobby", x: 68.75, y: 79.68 },
+        { id: "split-20", sourceKey: "Defender Side::Spawn", sourceLabel: "Defender Side Spawn", label: "Defender Side Spawn", superRegionName: "Defender Side", regionName: "Spawn", x: 14.29, y: 53.05 },
+        { id: "split-21", sourceKey: "Mid::Bottom", sourceLabel: "Mid Bottom", label: "Mid Bottom", superRegionName: "Mid", regionName: "Bottom", x: 61.6, y: 54.76 },
+        { id: "split-22", sourceKey: "Mid::Mail", sourceLabel: "Mid Mail", label: "Mid Mail", superRegionName: "Mid", regionName: "Mail", x: 46.71, y: 60.75 },
+        { id: "split-23", sourceKey: "Mid::Top", sourceLabel: "Mid Top", label: "Mid Top", superRegionName: "Mid", regionName: "Top", x: 48.36, y: 53.99 },
+        { id: "split-24", sourceKey: "Mid::Vent", sourceLabel: "Mid Vent", label: "Mid Vents", superRegionName: "Mid", regionName: "Vent", x: 42.58, y: 45.15 }
       ],
       plantSpots: [
         { number: 1, site: "A", label: "A Default", rate: 15.39, x: 84.3, y: 29.6, previewLabel: "A Default in-game reference", previewImage: "https://cdn.sanity.io/images/ccckgjf9/production/b99bab902f64289dcade6a53f141639c33ac3a1e-1466x646.jpg?auto=format", previewSource: PLANT_IMAGE_SOURCE },
@@ -250,11 +295,11 @@
       ],
       plantRateNote: "Plant rate is each numbered spot's share of successful plants on that site in active-season PC Competitive.",
       weaponSuggestions: [
-        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Highest rifle conversion", evidence: "0.84 kills per round | 202 average damage", locations: "A Main, B Main, Vents, Mail", roundConversion: { scope: "Combined", value: 51.18, sample: "1,385,619 active-season full-buy rounds", comparisonLabel: "Second rifle", comparisonWeapon: "Vandal", comparisonValue: 50.26 }, note: "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control." },
-        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Conditional sniper", side: "DEF", evidence: "0.80 kills per round | 220 average damage", locations: "A Ramps, B Main, Mid", roundConversion: { scope: "Defense", value: 54.62, sample: "158,318 active-season defense full-buy rounds", comparisonLabel: "Second sniper", comparisonWeapon: "Outlaw", comparisonValue: 46.61 }, conversion: "Conversion read: excellent for the opening lane, but Judge and Bucky gain value after attackers enter Split's tight towers, vents, and site pockets.", note: "On defense, take the opening pick beside an exit. Do not drag the slow cycle into a forced close retake." },
-        { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Highest pistol conversion", evidence: "500 credits | one-shot headshot through 30m", locations: "A Main, Mid, B Main", roundConversion: { scope: "Combined", value: 50.64, sample: "2,851,065 active-season pistol rounds", comparisonLabel: "Second pistol", comparisonWeapon: "Frenzy", comparisonValue: 50.59 }, note: "Its first-shot accuracy covers the medium lanes without consuming the utility budget needed to break Split's chokes." },
-        { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "High close conversion", side: "DEF", evidence: "1,850 credits | five-shell magazine", locations: "B Tower, Vents, A Heaven", roundConversion: { scope: "Defense", value: 49.84, sample: "36,692 active-season defense full-buy rounds", comparisonLabel: "Second shotgun", comparisonWeapon: "Bucky", comparisonValue: 46.08 }, conversion: "Conversion read: the Judge is the stronger shotgun when the route forces repeated close fights, but loses value immediately if Mid or Main opens the range.", note: "On defense, anchor one compact route, vary the corner, and plan how the weapon leaves the round after the first close duel." },
-        { weapon: "Spectre", image: "/assets/weapons/spectre.png", category: "eco", fit: "Highest eco conversion", evidence: "30-round magazine | 1,600 credits", locations: "B Tower, Vents, A Main", roundConversion: { scope: "Combined", value: 33.75, sample: "134,619 active-season second-round-loss rounds", comparisonLabel: "Second SMG", comparisonWeapon: "Stinger", comparisonValue: 30.18 }, note: "The compact corners suit the Spectre, but do not carry the setup into open Mid." }
+        { weapon: "Phantom", image: "/assets/weapons/phantom.png", category: "rifle", fit: "Highest rifle conversion", locations: "A Main, B Main, Vents, Mail", roundConversion: { scope: "Combined", value: 51.18, sample: "1,385,619 active-season full-buy rounds", comparisonLabel: "Second rifle", comparisonWeapon: "Vandal", comparisonValue: 50.26 }, note: "Split's compact chokes and smoke-heavy site fights reward the Phantom's close-range control." },
+        { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Conditional sniper", side: "DEF", locations: "A Ramps, B Main, Mid", roundConversion: { scope: "Defense", value: 54.62, sample: "158,318 active-season defense full-buy rounds", comparisonLabel: "Second sniper", comparisonWeapon: "Outlaw", comparisonValue: 46.61 }, conversion: "Conversion read: excellent for the opening lane, but Judge and Bucky gain value after attackers enter Split's tight towers, vents, and site pockets.", note: "On defense, take the opening pick beside an exit. Do not drag the slow cycle into a forced close retake." },
+        { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Highest pistol conversion", locations: "A Main, Mid, B Main", roundConversion: { scope: "Combined", value: 50.64, sample: "2,851,065 active-season pistol rounds", comparisonLabel: "Second pistol", comparisonWeapon: "Frenzy", comparisonValue: 50.59 }, note: "Its first-shot accuracy covers the medium lanes without consuming the utility budget needed to break Split's chokes." },
+        { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "High close conversion", side: "DEF", locations: "B Tower, Vents, A Heaven", roundConversion: { scope: "Defense", value: 49.84, sample: "36,692 active-season defense full-buy rounds", comparisonLabel: "Second shotgun", comparisonWeapon: "Bucky", comparisonValue: 46.08 }, conversion: "Conversion read: the Judge is the stronger shotgun when the route forces repeated close fights, but loses value immediately if Mid or Main opens the range.", note: "On defense, anchor one compact route, vary the corner, and plan how the weapon leaves the round after the first close duel." },
+        { weapon: "Spectre", image: "/assets/weapons/spectre.png", category: "eco", fit: "Highest eco conversion", locations: "B Tower, Vents, A Main", roundConversion: { scope: "Combined", value: 33.75, sample: "134,619 active-season second-round-loss rounds", comparisonLabel: "Second SMG", comparisonWeapon: "Stinger", comparisonValue: 30.18 }, note: "The compact corners suit the Spectre, but do not carry the setup into open Mid." }
       ],
       macro: {
         _researchNote: "internal only, do not render",
