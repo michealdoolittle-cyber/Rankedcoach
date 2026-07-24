@@ -3,6 +3,30 @@ const OWNER_ROLES = new Set(["owner", "admin"]);
 let dashboard = null;
 let loading = false;
 let activeProposalBucket = "review";
+let loadController = null;
+let loadSequence = 0;
+
+function researchPageLimits() {
+  const compact = document.documentElement.classList.contains("is-mobile-layout")
+    || document.body?.classList.contains("is-mobile-layout")
+    || window.matchMedia?.("(max-width: 760px), (pointer: coarse) and (max-width: 900px)")?.matches;
+  return compact
+    ? { proposalLimit: 10, sourceLimit: 20 }
+    : { proposalLimit: 50, sourceLimit: 100 };
+}
+
+function resetResearchScroll() {
+  const modal = document.getElementById("accountSupportModal");
+  [
+    modal,
+    modal?.querySelector(".lens-modal"),
+    modal?.querySelector(".account-support-modal-body"),
+    modal?.querySelector(".account-support-panels"),
+    modal?.querySelector("#knowledgeResearchPanel")
+  ].filter(Boolean).forEach(element => {
+    element.scrollTop = 0;
+  });
+}
 
 function escapeHtml(value = "") {
   return String(value)
@@ -358,15 +382,24 @@ function updateLocalProposal(proposalId, patch = {}, publishedRecord = null) {
 }
 
 async function load(options = {}) {
-  if (loading) return;
+  const force = options.force === true;
+  if (loading && !force) return;
   const user = await globalThis.RankedCoachAuthBridge?.getFreshUser?.();
   if (!isOwner(user)) return;
   const proposalOffset = Math.max(0, Number(options.proposalOffset || 0));
   const sourceOffset = Math.max(0, Number(options.sourceOffset || 0));
+  const { proposalLimit, sourceLimit } = researchPageLimits();
+  if (force) loadController?.abort();
+  const controller = new AbortController();
+  const sequence = ++loadSequence;
+  loadController = controller;
   loading = true;
   setStatus("Loading the private research queue…");
   try {
-    const next = await request(`/api/knowledge/review?proposalBucket=${encodeURIComponent(activeProposalBucket)}&proposalOffset=${proposalOffset}&proposalLimit=50&sourceOffset=${sourceOffset}&sourceLimit=100`);
+    const next = await request(`/api/knowledge/review?proposalBucket=${encodeURIComponent(activeProposalBucket)}&proposalOffset=${proposalOffset}&proposalLimit=${proposalLimit}&sourceOffset=${sourceOffset}&sourceLimit=${sourceLimit}`, {
+      signal: controller.signal
+    });
+    if (sequence !== loadSequence) return;
     if (options.appendProposals && dashboard?.review && next?.review) {
       next.review.proposals = [...(dashboard.review.proposals || []), ...(next.review.proposals || [])];
       next.review.page = {
@@ -391,9 +424,14 @@ async function load(options = {}) {
     dashboard = next;
     render({ preserveView: Boolean(options.appendProposals || options.appendSources) });
   } catch (error) {
-    setStatus(error.message, "error");
+    if (sequence === loadSequence && error?.name !== "AbortError") {
+      setStatus(error.message, "error");
+    }
   } finally {
-    loading = false;
+    if (sequence === loadSequence) {
+      loading = false;
+      loadController = null;
+    }
   }
 }
 
@@ -515,8 +553,7 @@ async function runAutomaticProcessing(button) {
     const acquired = (result.processed || []).filter(item => item.status === "acquired-private").length;
     const waiting = (result.processed || []).length - acquired;
     setStatus(`Automatic processing finished: ${acquired} video(s) processed${waiting ? `, ${waiting} waiting or unavailable` : ""}.`, "ready");
-    loading = false;
-    await load();
+    await load({ force: true });
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
@@ -529,8 +566,7 @@ document.getElementById("knowledgeTranscriptForm")?.addEventListener("submit", e
   void importTranscript(event.currentTarget).catch(error => setStatus(error.message, "error"));
 });
 document.getElementById("knowledgeResearchRefresh")?.addEventListener("click", () => {
-  loading = false;
-  void load();
+  void load({ force: true });
 });
 document.getElementById("knowledgeResearchRun")?.addEventListener("click", event => {
   void runAutomaticProcessing(event.currentTarget);
@@ -545,8 +581,8 @@ document.getElementById("knowledgeResearchPanel")?.addEventListener("click", eve
     const bucket = bucketButton.dataset.knowledgeBucket;
     if (!["review", "approved", "rejected"].includes(bucket) || bucket === activeProposalBucket) return;
     activeProposalBucket = bucket;
-    loading = false;
-    void load();
+    resetResearchScroll();
+    void load({ force: true });
     return;
   }
   const loadProposalsButton = event.target.closest("[data-knowledge-load-proposals]");

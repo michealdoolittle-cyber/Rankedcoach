@@ -996,6 +996,13 @@ const MAP_ARTWORK_UUIDS = {
   Summit: "756da597-416b-c0f2-f47b-afbdf28670bc",
   Sunset: "92584fbe-486a-b1b2-9faa-39b0f486b498"
 };
+const GENERIC_MAP_ARTWORK_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
+    <rect width="320" height="180" fill="#0f172a"/>
+    <path d="M0 45h320M0 90h320M0 135h320M80 0v180M160 0v180M240 0v180" stroke="#334155" stroke-width="2" opacity=".55"/>
+    <path d="M160 42c-24 0-43 19-43 43 0 33 43 67 43 67s43-34 43-67c0-24-19-43-43-43Zm0 61a18 18 0 1 1 0-36 18 18 0 0 1 0 36Z" fill="#67e8f9"/>
+  </svg>
+`)}`;
 
 const DEMO_ACT_MAP_POOLS = {
   "Season 2025 Act 5": ["Ascent", "Bind", "Breeze", "Corrode", "Haven", "Lotus", "Abyss"],
@@ -3850,7 +3857,7 @@ function getMapIconUrl(mapName) {
   const normalized = String(mapName || "").trim();
   const uuid = MAP_ARTWORK_UUIDS[normalized];
   if (uuid) return `https://media.valorant-api.com/maps/${uuid}/splash.png`;
-  return `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${encodeURIComponent(normalized)}.png`;
+  return GENERIC_MAP_ARTWORK_URL;
 }
 
 function getStatsMapLayoutUrl(mapName) {
@@ -10944,9 +10951,12 @@ function getTrendSignalMediaMarkup(item = {}) {
   if (directMediaUrl) {
     mediaUrl = directMediaUrl;
   } else if (mediaType === "agent" && mediaValue) {
-    mediaUrl = getAgentIconUrl(mediaValue);
-    mediaAlt = `${mediaValue} agent`;
-  } else if (mediaType === "map" && mediaValue && mediaValue !== "--") {
+    const canonicalAgent = Object.keys(agentRoles).find(agent => agent.toLowerCase() === mediaValue.toLowerCase());
+    if (canonicalAgent) {
+      mediaUrl = getAgentIconUrl(canonicalAgent);
+      mediaAlt = `${canonicalAgent} agent`;
+    }
+  } else if (mediaType === "map" && MAP_ARTWORK_UUIDS[mediaValue]) {
     mediaUrl = getMapIconUrl(mediaValue);
     mediaAlt = `${mediaValue} map`;
   } else if (mediaType === "weapon" && mediaValue && mediaValue !== "--") {

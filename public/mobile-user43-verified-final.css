@@ -16703,3 +16703,71 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-deskt
     color:color-mix(in srgb,var(--theme-accent,var(--accent,#ff4655)) 72%,white 28%) !important;
   }
 }
+
+/* Owner Research mobile lock: one native scroll surface, reliable touch targets,
+   and a bounded card so iOS cannot hand the gesture to a clipped parent. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal.active,
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal.is-opening{
+    overflow:hidden !important;
+    touch-action:pan-y !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal.active > .account-support-modal-card,
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal.is-opening > .account-support-modal-card{
+    display:flex !important;
+    flex-direction:column !important;
+    width:min(420px, calc(100vw - 18px)) !important;
+    max-width:calc(100vw - 18px) !important;
+    height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    min-height:0 !important;
+    max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    margin:0 auto !important;
+    overflow:hidden !important;
+    touch-action:pan-y !important;
+    will-change:auto !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal .account-support-modal-body{
+    flex:1 1 0% !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    overscroll-behavior:contain !important;
+    -webkit-overflow-scrolling:touch !important;
+    touch-action:pan-y !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal :is(
+    .account-support-shell,
+    .account-support-panels,
+    #knowledgeResearchPanel.profile-edit-panel.is-active
+  ){
+    height:auto !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal #knowledgeResearchPanel :is(
+    button,
+    summary,
+    a,
+    input,
+    select
+  ){
+    pointer-events:auto !important;
+    touch-action:manipulation !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #accountSupportModal#accountSupportModal #knowledgeResearchPanel :is(
+    .knowledge-review-actions > *,
+    .knowledge-proposal-actions > *,
+    .knowledge-review-bins > button,
+    .knowledge-source-actions > button,
+    .knowledge-load-more
+  ){
+    min-height:44px !important;
+  }
+}

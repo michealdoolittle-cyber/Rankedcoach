@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
-const { chromium } = require("playwright");
+const { chromium, webkit } = require("playwright");
 
 const publicRoot = path.resolve(__dirname, "..", "..", "public");
 const port = 41831;
@@ -374,17 +374,75 @@ async function dismissTransientModals(page) {
   }
 }
 
+async function activateControl(page, locator, mobile, label = "control") {
+  await locator.scrollIntoViewIfNeeded();
+  if (!mobile) {
+    await locator.click();
+    return;
+  }
+  const box = await locator.boundingBox();
+  assert.ok(box, `${label} has no touch target.`);
+  const hit = await page.evaluate(({ x, y }) => {
+    const element = document.elementFromPoint(x, y);
+    return {
+      tag: element?.tagName || "",
+      text: element?.textContent?.trim() || "",
+      disabled: Boolean(element?.closest?.("button")?.disabled)
+    };
+  }, {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2
+  });
+  assert.equal(hit.disabled, false, `${label} is disabled at its touch point: ${JSON.stringify(hit)}`);
+  await locator.tap();
+}
+
+async function swipeResearchBody(page) {
+  const body = page.locator("#accountSupportModal .account-support-modal-body");
+  const box = await body.boundingBox();
+  assert.ok(box, "Research scroll body has no mobile bounding box.");
+  const before = await body.evaluate(element => element.scrollTop);
+  const x = box.x + box.width * .5;
+  const startY = Math.min(box.y + box.height - 80, box.y + box.height * .78);
+  const endY = Math.max(box.y + 100, box.y + box.height * .28);
+  const browserName = page.context().browser()?.browserType().name();
+  if (browserName === "chromium") {
+    const session = await page.context().newCDPSession(page);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y: startY, id: 1, radiusX: 4, radiusY: 4, force: .5 }]
+    });
+    for (let step = 1; step <= 6; step += 1) {
+      const y = startY + ((endY - startY) * step / 6);
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x, y, id: 1, radiusX: 4, radiusY: 4, force: .5 }]
+      });
+      await page.waitForTimeout(16);
+    }
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  } else {
+    await body.evaluate((element, distance) => {
+      element.scrollTop += distance;
+      element.dispatchEvent(new Event("scroll", { bubbles: false }));
+    }, startY - endY);
+  }
+  await page.waitForTimeout(220);
+  const after = await body.evaluate(element => element.scrollTop);
+  assert.ok(after > before + 100, `Research touch swipe did not scroll: ${JSON.stringify({ before, after })}`);
+}
+
 async function openResearch(page, mobile) {
   await page.waitForFunction(() => !document.getElementById("accountSupportResearchTab")?.hidden);
   if (mobile) {
-    await page.click("#mobileHeaderSettingsBtn");
+    await activateControl(page, page.locator("#mobileHeaderSettingsBtn"), true, "mobile settings");
   } else {
     await page.click("#profileDropdownToggle");
   }
   await page.locator("#profileDropdown.open").waitFor({ state: "visible" });
-  await page.click("#pdAccountSupportBtn");
+  await activateControl(page, page.locator("#pdAccountSupportBtn"), mobile, "Account and Support");
   await page.locator('#accountSupportModal.active[aria-hidden="false"]').waitFor({ state: "visible" });
-  await page.click("#accountSupportResearchTab");
+  await activateControl(page, page.locator("#accountSupportResearchTab"), mobile, "Research tab");
   await page.locator(".knowledge-proposal-card").first().waitFor({ state: "visible" });
 }
 
@@ -456,10 +514,18 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     delete item.publishedEntity;
   }
   state.published = { updatedAt: null, items: [] };
-  const page = await browser.newPage({ viewport: options.viewport });
+  const page = await browser.newPage({
+    viewport: options.viewport,
+    isMobile: Boolean(options.mobile),
+    hasTouch: Boolean(options.mobile),
+    deviceScaleFactor: options.mobile ? 2 : 1
+  });
   const errors = [];
   page.on("console", message => {
-    if (message.type() === "error") errors.push(`console: ${message.text()}`);
+    if (message.type() === "error") {
+      const location = message.location();
+      errors.push(`console: ${message.text()}${location?.url ? ` (${location.url}:${location.lineNumber || 0})` : ""}`);
+    }
   });
   page.on("pageerror", error => errors.push(`page: ${error.message}`));
   page.on("response", response => {
@@ -476,14 +542,16 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   await dismissTransientModals(page);
   await openResearch(page, options.mobile);
 
+  const proposalPageLimit = options.mobile ? 10 : 50;
+  const sourcePageLimit = options.mobile ? 20 : 100;
   assert.equal(await page.locator("#knowledgeResearchPanel.is-active:not([hidden])").count(), 1);
   await page.locator("#knowledgeResearchStatus").waitFor({ state: "visible" });
   assert.match(await page.locator("#knowledgeResearchStatus").textContent(), /Private review review-browser/);
   assert.equal(await page.locator(".knowledge-research-summary > div").count(), 6);
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 50);
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), proposalPageLimit);
   assert.equal(await page.locator(".knowledge-review-bins button").count(), 3);
   assert.equal(await page.locator('[data-knowledge-bucket="review"]').getAttribute("aria-pressed"), "true");
-  assert.equal(await page.locator(".knowledge-source-queue article").count(), 100);
+  assert.equal(await page.locator(".knowledge-source-queue article").count(), sourcePageLimit);
   assert.equal(await page.locator(".knowledge-proposal-card").first().locator(".knowledge-context-notes article").count(), 1);
   assert.equal(await page.locator(".knowledge-proposal-card").first().locator(":scope > p").count(), 0);
   assert.equal(await page.locator(".knowledge-proposal-card").first().locator(".knowledge-supporting-context blockquote").count(), 2);
@@ -524,8 +592,44 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     assert.equal(await page.locator(`.knowledge-proposal-card [data-knowledge-action="${action}"]`).first().isVisible(), true);
   }
 
+  if (options.mobile) {
+    const mobileSurfaces = await page.evaluate(() => {
+      const modal = document.querySelector("#accountSupportModal .account-support-modal-card");
+      const body = document.querySelector("#accountSupportModal .account-support-modal-body");
+      const close = document.getElementById("accountSupportClose");
+      const modalStyle = getComputedStyle(modal);
+      const bodyStyle = getComputedStyle(body);
+      const closeRect = close.getBoundingClientRect();
+      return {
+        modalOverflowY: modalStyle.overflowY,
+        modalHeight: modal.clientHeight,
+        modalScrollHeight: modal.scrollHeight,
+        bodyOverflowY: bodyStyle.overflowY,
+        bodyTouchAction: bodyStyle.touchAction,
+        bodyHeight: body.clientHeight,
+        bodyScrollHeight: body.scrollHeight,
+        closeWidth: closeRect.width,
+        closeHeight: closeRect.height
+      };
+    });
+    assert.equal(mobileSurfaces.modalOverflowY, "hidden", JSON.stringify(mobileSurfaces));
+    assert.equal(mobileSurfaces.modalScrollHeight, mobileSurfaces.modalHeight, JSON.stringify(mobileSurfaces));
+    assert.ok(["auto", "scroll"].includes(mobileSurfaces.bodyOverflowY), JSON.stringify(mobileSurfaces));
+    assert.match(mobileSurfaces.bodyTouchAction, /pan-y/, JSON.stringify(mobileSurfaces));
+    assert.ok(mobileSurfaces.bodyScrollHeight > mobileSurfaces.bodyHeight, JSON.stringify(mobileSurfaces));
+    assert.ok(mobileSurfaces.closeWidth >= 38 && mobileSurfaces.closeHeight >= 38, JSON.stringify(mobileSurfaces));
+
+    await activateControl(page, page.locator('[data-account-support-tab="support"]'), true, "Support tab");
+    assert.equal(await page.locator('[data-account-support-panel="support"].is-active').count(), 1);
+    await activateControl(page, page.locator('[data-account-support-tab="account"]'), true, "Account tab");
+    assert.equal(await page.locator('[data-account-support-panel="account"].is-active').count(), 1);
+    await activateControl(page, page.locator("#accountSupportResearchTab"), true, "Research tab");
+    await page.locator(".knowledge-proposal-card").first().waitFor({ state: "visible" });
+    await swipeResearchBody(page);
+  }
+
   const runCount = actions.length;
-  await page.click("#knowledgeResearchRun");
+  await activateControl(page, page.locator("#knowledgeResearchRun"), options.mobile, "Process Playlist Now");
   for (let attempt = 0; attempt < 100 && actions.length === runCount; attempt += 1) {
     await page.waitForTimeout(25);
   }
@@ -534,39 +638,83 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     action.path === "/api/knowledge/run" && action.body.batchSize === 24
   )), "Process Playlist Now did not call the automatic pipeline.");
 
+  const refreshRequestCount = reviewRequests.length;
+  const refreshResponse = page.waitForResponse(response => (
+    response.url().includes("/api/knowledge/review") && response.request().method() === "GET"
+  ));
+  await activateControl(page, page.locator("#knowledgeResearchRefresh"), options.mobile, "Refresh");
+  await refreshResponse;
+  for (let attempt = 0; attempt < 100 && reviewRequests.length === refreshRequestCount; attempt += 1) {
+    await page.waitForTimeout(25);
+  }
+  await page.waitForTimeout(50);
+  assert.ok(reviewRequests.length > refreshRequestCount, "Refresh did not reload the private queue.");
+  assert.equal(reviewRequests.at(-1).proposalLimit, proposalPageLimit);
+  assert.equal(reviewRequests.at(-1).sourceLimit, sourcePageLimit);
+
   const sourceQueue = page.locator(".knowledge-source-queue");
-  await sourceQueue.locator("summary").click();
+  await activateControl(page, sourceQueue.locator("summary"), options.mobile, "Registered research sources");
   assert.equal(await sourceQueue.getAttribute("open"), "");
+
+  const retryActionCount = actions.length;
+  await activateControl(page, sourceQueue.locator("[data-knowledge-source-retry]").first(), options.mobile, "Retry source");
+  for (let attempt = 0; attempt < 120 && !actions.slice(retryActionCount).some(action => action.path === "/api/knowledge/run"); attempt += 1) {
+    await page.waitForTimeout(25);
+  }
+  assert.ok(actions.slice(retryActionCount).some(action => action.path === "/api/knowledge/retry"), "Retry did not queue the source.");
+  assert.ok(actions.slice(retryActionCount).some(action => action.path === "/api/knowledge/run"), "Retry did not restart processing.");
+  await page.locator("#knowledgeResearchStatus").filter({ hasText: "Private review review-browser" }).waitFor();
+
+  await activateControl(page, sourceQueue.locator("summary"), options.mobile, "Registered research sources");
+  await activateControl(page, sourceQueue.locator("[data-knowledge-source-prefill]").first(), options.mobile, "Manual transcript recovery");
+  const transcriptDetails = page.locator(".knowledge-transcript-import");
+  assert.equal(await transcriptDetails.getAttribute("open"), "");
+  await activateControl(page, transcriptDetails.locator("summary"), options.mobile, "Manual transcript recovery disclosure");
+  assert.equal(await transcriptDetails.getAttribute("open"), null);
+  await activateControl(page, transcriptDetails.locator("summary"), options.mobile, "Manual transcript recovery disclosure");
+  assert.equal(await transcriptDetails.getAttribute("open"), "");
+  assert.match(await page.locator("#knowledgeSourceTitle").inputValue(), /deliberately long educational title/i);
+  await page.locator("#knowledgeSourceEntities").fill("Bind, Viper");
+  await page.locator("#knowledgeTranscriptText").fill("00:12 Pair the first utility with a teammate ready to trade.\n00:27 Keep the spacing close through the choke.");
+  const transcriptActionCount = actions.length;
+  await activateControl(page, transcriptDetails.locator('button[type="submit"]'), options.mobile, "Process Manual Transcript");
+  for (let attempt = 0; attempt < 100 && !actions.slice(transcriptActionCount).some(action => action.path === "/api/knowledge/transcripts"); attempt += 1) {
+    await page.waitForTimeout(25);
+  }
+  assert.ok(actions.slice(transcriptActionCount).some(action => action.path === "/api/knowledge/transcripts"), "Manual transcript was not submitted.");
+  await page.locator("#knowledgeResearchStatus").filter({ hasText: "Private review review-browser" }).waitFor();
+
+  await activateControl(page, sourceQueue.locator("summary"), options.mobile, "Registered research sources");
   const sourceRequestCount = reviewRequests.length;
-  await page.click("[data-knowledge-load-sources]");
-  await page.waitForFunction(() => document.querySelectorAll(".knowledge-source-queue article").length === 101);
+  await activateControl(page, page.locator("[data-knowledge-load-sources]"), options.mobile, "Load more sources");
+  await page.waitForFunction(expected => document.querySelectorAll(".knowledge-source-queue article").length === expected, Math.min(101, sourcePageLimit * 2));
   assert.equal(await sourceQueue.getAttribute("open"), "", "Source disclosure closed after loading another page.");
   assert.deepEqual(reviewRequests[sourceRequestCount], {
     proposalBucket: "review",
     proposalOffset: 0,
-    proposalLimit: 50,
-    sourceOffset: 100,
-    sourceLimit: 100
+    proposalLimit: proposalPageLimit,
+    sourceOffset: sourcePageLimit,
+    sourceLimit: sourcePageLimit
   });
   const sourceIds = await page.locator(".knowledge-source-queue article").evaluateAll(articles => (
     articles.map(article => article.querySelector("strong")?.textContent)
   ));
-  assert.equal(new Set(sourceIds).size, 101, "Source pagination appended a duplicate row.");
+  assert.equal(new Set(sourceIds).size, Math.min(101, sourcePageLimit * 2), "Source pagination appended a duplicate row.");
 
   const proposalRequestCount = reviewRequests.length;
-  await page.click("[data-knowledge-load-proposals]");
-  await page.waitForFunction(() => document.querySelectorAll(".knowledge-proposal-card").length === 51);
+  await activateControl(page, page.locator("[data-knowledge-load-proposals]"), options.mobile, "Load more proposals");
+  await page.waitForFunction(expected => document.querySelectorAll(".knowledge-proposal-card").length === expected, Math.min(51, proposalPageLimit * 2));
   assert.deepEqual(reviewRequests[proposalRequestCount], {
     proposalBucket: "review",
-    proposalOffset: 50,
-    proposalLimit: 50,
+    proposalOffset: proposalPageLimit,
+    proposalLimit: proposalPageLimit,
     sourceOffset: 0,
-    sourceLimit: 100
+    sourceLimit: sourcePageLimit
   });
   const proposalIds = await page.locator(".knowledge-proposal-card").evaluateAll(cards => (
     cards.map(card => card.dataset.knowledgeProposal)
   ));
-  assert.equal(new Set(proposalIds).size, 51, "Proposal pagination appended a duplicate card.");
+  assert.equal(new Set(proposalIds).size, Math.min(51, proposalPageLimit * 2), "Proposal pagination appended a duplicate card.");
   assert.equal(await sourceQueue.getAttribute("open"), "", "Proposal pagination closed the source disclosure.");
 
   const first = page.locator(".knowledge-proposal-card").first();
@@ -598,48 +746,53 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     await page.screenshot({ path: options.screenshot, fullPage: false });
   }
 
-  const late = page.locator('[data-knowledge-proposal="proposal-late"]');
+  const actionProposalId = options.mobile ? "proposal-page-20" : "proposal-late";
+  const loadedProposalCount = Math.min(51, proposalPageLimit * 2);
+  const loadedSourceCount = Math.min(101, sourcePageLimit * 2);
+  const late = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
   const draftWording = "Pair Showers utility with an immediate trade plan so early control becomes usable team space.";
   await late.locator("[data-knowledge-wording]").fill(draftWording);
+  const draftButton = late.locator('[data-knowledge-action="draft"]');
+  await draftButton.scrollIntoViewIfNeeded();
   const beforeDraftScroll = await researchScrollState(page);
-  await late.locator('[data-knowledge-action="draft"]').evaluate(button => button.click());
-  await page.locator('[data-knowledge-proposal="proposal-late"] .knowledge-review-state.is-draft').waitFor({ state: "visible" });
+  await activateControl(page, draftButton, options.mobile, "Save Draft");
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-draft`).waitFor({ state: "visible" });
   assertScrollPreserved(beforeDraftScroll, await researchScrollState(page), "Saving a draft");
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 51);
-  assert.equal(await page.locator(".knowledge-source-queue article").count(), 101);
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), loadedProposalCount);
+  assert.equal(await page.locator(".knowledge-source-queue article").count(), loadedSourceCount);
   assert.equal(await sourceQueue.getAttribute("open"), "");
   assert.ok(actions.some(action => (
     action.path === "/api/knowledge/draft"
-    && action.body.proposalId === "proposal-late"
+    && action.body.proposalId === actionProposalId
     && action.body.rankedCoachWording === draftWording
   )));
 
-  const drafted = page.locator('[data-knowledge-proposal="proposal-late"]');
+  const drafted = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
   await drafted.locator("[data-knowledge-original]").check();
   await drafted.locator("[data-knowledge-category]").selectOption("map");
   await drafted.locator("[data-knowledge-entity]").fill("Bind");
-  await drafted.locator('[data-knowledge-action="publish"]').evaluate(button => button.click());
-  await page.locator('[data-knowledge-proposal="proposal-late"]').waitFor({ state: "detached" });
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 50);
+  await activateControl(page, drafted.locator('[data-knowledge-action="publish"]'), options.mobile, "Publish to Library");
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"]`).waitFor({ state: "detached" });
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), loadedProposalCount - 1);
   assert.match(await page.locator('[data-knowledge-bucket="approved"]').textContent(), /1/);
-  await page.locator('[data-knowledge-bucket="approved"]').click();
-  await page.locator('[data-knowledge-proposal="proposal-late"] .knowledge-review-state.is-published').waitFor({ state: "visible" });
-  assert.equal(await page.locator('[data-knowledge-proposal="proposal-late"] [data-knowledge-action="unpublish"]').isVisible(), true);
+  await activateControl(page, page.locator('[data-knowledge-bucket="approved"]'), options.mobile, "Approved bin");
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-published`).waitFor({ state: "visible" });
+  assert.equal(await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action="unpublish"]`).isVisible(), true);
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
   assert.ok(actions.some(action => (
     action.path === "/api/knowledge/publish"
-    && action.body.proposalId === "proposal-late"
+    && action.body.proposalId === actionProposalId
     && action.body.category === "map"
     && action.body.entity === "Bind"
     && action.body.confirmOriginalWording === true
   )));
 
-  await page.locator('[data-knowledge-bucket="review"]').click();
+  await activateControl(page, page.locator('[data-knowledge-bucket="review"]'), options.mobile, "To Review bin");
   await page.locator('[data-knowledge-proposal="proposal-two"]').waitFor({ state: "visible" });
-  await page.locator('[data-knowledge-proposal="proposal-two"] [data-knowledge-action="reject"]').evaluate(button => button.click());
+  await activateControl(page, page.locator('[data-knowledge-proposal="proposal-two"] [data-knowledge-action="reject"]'), options.mobile, "Reject");
   await page.locator('[data-knowledge-proposal="proposal-two"]').waitFor({ state: "detached" });
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 49);
-  await page.locator('[data-knowledge-bucket="rejected"]').click();
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), proposalPageLimit - 1);
+  await activateControl(page, page.locator('[data-knowledge-bucket="rejected"]'), options.mobile, "Rejected bin");
   await page.locator('[data-knowledge-proposal="proposal-two"] .knowledge-review-state.is-rejected').waitFor({ state: "visible" });
   assert.match(
     await page.locator('[data-knowledge-proposal="proposal-two"] .knowledge-rejection-reason').textContent(),
@@ -648,12 +801,12 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.ok(actions.some(action => action.path === "/api/knowledge/reject" && action.body.proposalId === "proposal-two"));
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
 
-  await page.locator('[data-knowledge-bucket="approved"]').click();
-  await page.locator('[data-knowledge-proposal="proposal-late"]').waitFor({ state: "visible" });
-  await page.locator('[data-knowledge-proposal="proposal-late"] [data-knowledge-action="unpublish"]').evaluate(button => button.click());
-  await page.locator('[data-knowledge-proposal="proposal-late"] .knowledge-review-state.is-approved').waitFor({ state: "visible" });
+  await activateControl(page, page.locator('[data-knowledge-bucket="approved"]'), options.mobile, "Approved bin");
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"]`).waitFor({ state: "visible" });
+  await activateControl(page, page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action="unpublish"]`), options.mobile, "Remove from Library");
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-approved`).waitFor({ state: "visible" });
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
-  assert.ok(actions.some(action => action.path === "/api/knowledge/unpublish" && action.body.proposalId === "proposal-late"));
+  assert.ok(actions.some(action => action.path === "/api/knowledge/unpublish" && action.body.proposalId === actionProposalId));
 
   await assertNoOverflow(page, options.mobile);
   const rootOverflow = await page.evaluate(() => ({
@@ -661,28 +814,62 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     scrollWidth: document.documentElement.scrollWidth
   }));
   assert.ok(rootOverflow.scrollWidth <= rootOverflow.clientWidth + 1, `Document overflowed: ${JSON.stringify(rootOverflow)}`);
+  if (options.mobile) {
+    await activateControl(page, page.locator("#accountSupportClose"), true, "Close Account and Support");
+    await page.waitForFunction(() => (
+      document.getElementById("accountSupportModal")?.getAttribute("aria-hidden") === "true"
+      && getComputedStyle(document.getElementById("accountSupportModal")).display === "none"
+    ));
+    const modalCloseState = await page.evaluate(() => ({
+      locked: document.body.classList.contains("mobile-modal-open"),
+      active: [...document.querySelectorAll(".lens-modal-overlay, .agent-modal, .profile-edit-overlay, .auth-modal-overlay")]
+        .filter(modal => modal.classList.contains("active") || modal.classList.contains("is-opening") || modal.classList.contains("is-closing"))
+        .map(modal => ({
+          id: modal.id,
+          classes: modal.className,
+          hidden: modal.hidden,
+          ariaHidden: modal.getAttribute("aria-hidden"),
+          display: getComputedStyle(modal).display,
+          pointerEvents: getComputedStyle(modal).pointerEvents
+        }))
+    }));
+    assert.equal(modalCloseState.locked, false, JSON.stringify(modalCloseState));
+  }
   assert.deepEqual(errors, []);
   await page.close();
 }
 
 async function run() {
   const { server, actions, reviewRequests, state } = await startServer();
-  const browser = await chromium.launch();
+  const browserMode = String(process.env.RANKEDCOACH_KNOWLEDGE_BROWSER || "chromium").toLowerCase();
+  const chromiumBrowser = browserMode === "webkit" ? null : await chromium.launch();
+  const webkitBrowser = ["webkit", "all"].includes(browserMode) ? await webkit.launch() : null;
   try {
-    await runViewport(browser, actions, reviewRequests, state, {
-      viewport: { width: 1440, height: 1000 },
-      mobile: false,
-      screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-desktop.png")
-    });
-    Object.assign(state, dashboardFixture());
-    await runViewport(browser, actions, reviewRequests, state, {
-      viewport: { width: 390, height: 844 },
-      mobile: true,
-      screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-mobile.png")
-    });
+    if (chromiumBrowser) {
+      await runViewport(chromiumBrowser, actions, reviewRequests, state, {
+        viewport: { width: 1440, height: 1000 },
+        mobile: false,
+        screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-desktop.png")
+      });
+      Object.assign(state, dashboardFixture());
+      await runViewport(chromiumBrowser, actions, reviewRequests, state, {
+        viewport: { width: 390, height: 844 },
+        mobile: true,
+        screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-mobile-chromium.png")
+      });
+    }
+    if (webkitBrowser) {
+      Object.assign(state, dashboardFixture());
+      await runViewport(webkitBrowser, actions, reviewRequests, state, {
+        viewport: { width: 390, height: 844 },
+        mobile: true,
+        screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-mobile-webkit.png")
+      });
+    }
     console.log(`Knowledge review browser workflow passed (${actions.length} owner actions).`);
   } finally {
-    await browser.close();
+    await chromiumBrowser?.close();
+    await webkitBrowser?.close();
     await new Promise(resolve => server.close(resolve));
   }
 }
