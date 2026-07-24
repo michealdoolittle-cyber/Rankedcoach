@@ -4,6 +4,7 @@
   "inCompetitivePool": true,
   "cardImage": "https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/splash.png",
   "layoutImage": "/assets/library/maps/breeze-layout-labeled.svg",
+  "calloutLabelsBakedIn": true,
   "callouts": [
     {
       "id": "breeze-1",
@@ -784,7 +785,6 @@
   ],
   "uuid": "2fb9a4fd-47b8-4e7d-a969-74b4046ebd53",
   "coordinates": "26°11'AG\"N 71°10'WY\"W",
-  "calloutLabelsBakedIn": true,
   "source": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
   "lastReviewed": "2026-07-23",
   "patchVersion": "13.01",
@@ -795,10 +795,10 @@
     "entityName": "Breeze",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generatedAt": "2026-07-24T03:51:35.455Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
-    "lastReviewed": "2026-07-23"
+    "lastReviewed": "2026-07-24"
   },
   "_fieldMeta": {
     "id": {
@@ -834,6 +834,14 @@
       "confidence": "n/a (auto-approved)"
     },
     "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
         "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
@@ -956,14 +964,6 @@
       "confidence": "n/a (auto-approved)"
     },
     "coordinates": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
         "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"

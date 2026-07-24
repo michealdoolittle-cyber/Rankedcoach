@@ -4,6 +4,7 @@
   "inCompetitivePool": true,
   "cardImage": "https://media.valorant-api.com/maps/d960549e-485c-e861-8d71-aa9d1aed12a2/splash.png",
   "layoutImage": "/assets/library/maps/split-layout-trn.png",
+  "calloutLabelsBakedIn": true,
   "callouts": [
     {
       "id": "split-1",
@@ -771,7 +772,6 @@
   ],
   "uuid": "d960549e-485c-e861-8d71-aa9d1aed12a2",
   "coordinates": "35°41'CD'N,139°41'WX'E",
-  "calloutLabelsBakedIn": true,
   "source": "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US",
   "lastReviewed": "2026-07-23",
   "patchVersion": "13.01",
@@ -782,10 +782,10 @@
     "entityName": "Split",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-23T19:50:34.311Z",
+    "generatedAt": "2026-07-24T03:51:35.455Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
-    "lastReviewed": "2026-07-23"
+    "lastReviewed": "2026-07-24"
   },
   "_fieldMeta": {
     "id": {
@@ -821,6 +821,14 @@
       "confidence": "n/a (auto-approved)"
     },
     "layoutImage": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
         "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
@@ -943,14 +951,6 @@
       "confidence": "n/a (auto-approved)"
     },
     "coordinates": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
         "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US"
