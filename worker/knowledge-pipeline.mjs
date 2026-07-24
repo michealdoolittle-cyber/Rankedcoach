@@ -2091,6 +2091,7 @@ async function runKnowledgePipelineUnlocked(env = {}, options = {}) {
         ? claimsFromVideoInsights(source, semantic.insights)
         : extractStructuredClaims(source, sections);
       const analysisDegraded = [
+        "analysis-not-configured",
         "analysis-rate-limited",
         "analysis-unavailable",
         "analysis-ungrounded"

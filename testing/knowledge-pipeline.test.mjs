@@ -573,6 +573,22 @@ test("scheduled knowledge run stores research privately and cannot publish", asy
         headers: { "Content-Type": "application/json" }
       });
     }
+    if (url === "https://analysis.example.test") {
+      return Response.json({
+        model: "test-semantic-model",
+        insights: [{
+          startSeconds: 1,
+          endSeconds: 5,
+          contextExcerpt: "When you take map control, trade with your teammate instead of peeking alone.",
+          suggestedWording: "Take map control with a teammate close enough to convert the opening contact.",
+          whyItMatters: "Connected spacing turns first contact into retained team space.",
+          type: "coaching",
+          topic: "map-control",
+          entities: [],
+          confidence: "high"
+        }]
+      });
+    }
     throw new Error(`Unexpected URL: ${url}`);
   };
   const result = await runKnowledgePipeline({
@@ -585,9 +601,23 @@ test("scheduled knowledge run stores research privately and cannot publish", asy
     now: new Date("2026-07-23T00:00:00.000Z")
   });
   assert.equal(result.publicationWrites, 0);
-  assert.equal(result.processed[0].status, "acquired-private");
+  assert.equal(result.processed[0].status, "analysis-degraded");
   assert.ok(await kv.get(`${KNOWLEDGE_STORAGE_KEYS.privateTranscriptPrefix}youtube-abcdefghijk`));
   assert.ok(await kv.get(`${KNOWLEDGE_STORAGE_KEYS.privateClaimsPrefix}youtube-abcdefghijk`));
+  const upgraded = await runKnowledgePipeline({
+    CONTENT_AUTOMATION: kv,
+    KNOWLEDGE_PIPELINE_TOKEN: "pipeline-token",
+    KNOWLEDGE_ANALYSIS_ENDPOINT: "https://analysis.example.test"
+  }, {
+    sources: [source],
+    batchSize: 1,
+    fetchImpl,
+    notify: false,
+    now: new Date("2026-07-23T02:00:00.000Z")
+  });
+  assert.equal(upgraded.processed[0].status, "acquired-private");
+  const upgradedDashboard = await getKnowledgeOwnerDashboard(kv);
+  assert.equal(upgradedDashboard.sources[0].analysisStatus, "analyzed");
   const report = await kv.get(KNOWLEDGE_STORAGE_KEYS.latestReview, "json");
   assert.equal(report.publicationRule.includes("not published automatically"), true);
   assert.doesNotMatch(JSON.stringify(report), /trade with your teammate instead of peeking alone/i);
