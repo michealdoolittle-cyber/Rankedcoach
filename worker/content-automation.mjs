@@ -1,3 +1,5 @@
+import { CURATED_PLAYLIST_RESEARCH_ARCHIVE } from "./curated-playlist-research.mjs";
+
 const DEFAULT_NTFY_TOPIC = "rankedcoach-deploys-mk7x2q";
 const VERSION_URL = "https://valorant-api.com/v1/version";
 const AGENTS_URL = "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US";
@@ -145,6 +147,57 @@ function getPlaylistTopicOverride(video = {}) {
 
 export function getStaticPlaylistVideos() {
   return STATIC_PLAYLIST_VIDEOS.map(video => Object.freeze({ ...video }));
+}
+
+export function getCuratedPlaylistResearchArchive() {
+  return Object.freeze(CURATED_PLAYLIST_RESEARCH_ARCHIVE.map(video => Object.freeze({
+    ...video,
+    entities: Object.freeze([...(video.entities || [video.targetName].filter(Boolean))])
+  })));
+}
+
+// Kept as a video-oriented alias for callers that treat every Playlist source
+// as media rather than as an archive record.
+export const getCuratedPlaylistResearchVideos = getCuratedPlaylistResearchArchive;
+
+function playlistResearchIdentity(video = {}) {
+  const url = String(video.url || "");
+  const platform = String(
+    video.platform
+    || (/(?:^|\.)twitch\.tv\b/i.test(url) ? "twitch" : "youtube")
+  ).trim().toLowerCase();
+  let upstreamId = String(video.upstreamId || video.id || "").trim();
+  if (platform === "youtube") {
+    upstreamId = url.match(/[?&]v=([A-Za-z0-9_-]{11})(?:[&#]|$)/)?.[1]
+      || url.match(/youtu\.be\/([A-Za-z0-9_-]{11})(?:[?&#/]|$)/i)?.[1]
+      || upstreamId.replace(/^youtube-/i, "");
+  } else if (platform === "twitch") {
+    upstreamId = url.match(/twitch\.tv\/videos\/(\d+)(?:[?&#/]|$)/i)?.[1]
+      || upstreamId.replace(/^twitch-/i, "");
+  }
+  return platform && upstreamId ? `${platform}:${upstreamId}` : "";
+}
+
+export function dedupePlaylistVideos(items = []) {
+  const identities = new Set();
+  const deduped = [];
+  for (const item of Array.isArray(items) ? items : []) {
+    const identity = playlistResearchIdentity(item);
+    if (!identity || identities.has(identity)) continue;
+    identities.add(identity);
+    deduped.push(item);
+  }
+  return Object.freeze(deduped);
+}
+
+export function mergePlaylistResearchArchive(staleItems = [], currentItems = [], curatedItems = []) {
+  // `dedupePlaylistVideos` keeps the first occurrence, so precedence is made
+  // explicit here: curated > current upstream metadata > stale archive.
+  return dedupePlaylistVideos([
+    ...(Array.isArray(curatedItems) ? curatedItems : []),
+    ...(Array.isArray(currentItems) ? currentItems : []),
+    ...(Array.isArray(staleItems) ? staleItems : [])
+  ]);
 }
 
 export function getPlaylistGuideSearchTargets() {
@@ -1015,8 +1068,13 @@ export async function handlePlaylistRequest(env = {}) {
     ...twitchMedia.vods.slice(0, MAX_TWITCH_ARCHIVES)
   ];
   const playlist = buildFeaturedPlaylist(playlistCandidates, patch.label, suppressed);
-  const researchArchive = buildFeaturedPlaylist(
+  const cumulativeResearchCandidates = mergePlaylistResearchArchive(
+    cachedArchive?.items,
     playlistCandidates,
+    getCuratedPlaylistResearchArchive()
+  );
+  const researchArchive = buildFeaturedPlaylist(
+    cumulativeResearchCandidates,
     patch.label,
     suppressed,
     Date.now(),

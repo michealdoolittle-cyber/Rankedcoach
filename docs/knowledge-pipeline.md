@@ -4,10 +4,10 @@ The knowledge pipeline is a private research and review system layered on top of
 
 ## What runs automatically
 
-The daily `43 9 * * *` worker schedule:
+The `17 */6 * * *` and daily `43 9 * * *` worker schedules:
 
 1. Registers embedded and cached Playlist YouTube/Twitch sources.
-2. Acquires a small batch of available public YouTube captions.
+2. Acquires up to 24 available public YouTube caption sources per run.
 3. Stores normalized transcripts under private `knowledge:private:*` KV keys.
 4. Extracts timestamped statistical and coaching claims.
 5. Compares each concept to the current governed Gamesense fields.
@@ -18,6 +18,8 @@ The daily `43 9 * * *` worker schedule:
 Twitch media is registered, but remains `provider-required`; no transcript is invented when a public transcript is unavailable. Cosmetic showcase videos are registered for inventory completeness but excluded from coaching extraction.
 
 YouTube's public caption metadata is attempted directly. If YouTube exposes a caption track but returns no caption body to a server-side request, the source moves to `provider-required` instead of being treated as researched. A private transcript service can be configured through `KNOWLEDGE_TRANSCRIPT_ENDPOINT` and optional `KNOWLEDGE_TRANSCRIPT_TOKEN`; it must return timestamped cues and is never called from the browser.
+
+Owner-selected exact videos are stored separately from the public 120-card Featured Playlist. They enter the cumulative private `playlist:knowledge-sources` archive, are deduplicated by platform and upstream video ID, and are also compiled into the embedded source registry so a cache refresh cannot remove them. The private archive is capped at 5,000 sources. Curated metadata wins over a dynamic copy of the same video; current upstream metadata wins over a stale archived copy.
 
 ## Owner workflow in the app
 
@@ -73,6 +75,14 @@ node scripts/review-library-knowledge.mjs
 This audits all governed agent, map, and weapon drafts for source coverage, empty coaching opportunities, exact duplicate concepts, contradiction candidates, approval state, and patch freshness. The report intentionally omits private methodology and transcript wording.
 
 ## Source registry
+
+For a heading-based owner outline of exact YouTube links, run:
+
+```powershell
+node scripts/import-owner-research-outline.mjs <outline.txt>
+```
+
+The importer recognizes the governed map, agent, and role headings, collapses duplicate URL occurrences, preserves explicit YouTube start offsets, verifies each video's public title/channel/thumbnail through YouTube oEmbed, and regenerates `worker/curated-playlist-research.mjs`. It does not add the video's channel to the trusted-feed allowlist and does not download transcripts.
 
 Run after embedded video references change:
 

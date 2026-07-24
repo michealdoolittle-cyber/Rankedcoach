@@ -29,7 +29,16 @@ import {
   saveKnowledgeProposalDraft,
   splitTranscriptIntoSections
 } from "../worker/knowledge-pipeline.mjs";
-import { buildFeaturedPlaylist } from "../worker/content-automation.mjs";
+import {
+  AGENT_NAMES,
+  MAP_NAMES,
+  buildFeaturedPlaylist,
+  dedupePlaylistVideos,
+  getCuratedPlaylistResearchArchive,
+  mergePlaylistResearchArchive
+} from "../worker/content-automation.mjs";
+import { CURATED_PLAYLIST_RESEARCH_ARCHIVE } from "../worker/curated-playlist-research.mjs";
+import { EMBEDDED_KNOWLEDGE_SOURCES } from "../worker/embedded-knowledge-sources.mjs";
 import {
   auditLibraryDrafts,
   renderLibraryAuditMarkdown
@@ -1593,7 +1602,7 @@ test("run lease, maximum batch, and deadline bound overlapping research work", a
   assert.equal(fetchCount, 0);
 
   const batchKv = new MemoryKv();
-  const batchSources = Array.from({ length: 15 }, (_value, index) => ({
+  const batchSources = Array.from({ length: 27 }, (_value, index) => ({
     id: String(index).padStart(11, "x"),
     platform: "youtube",
     title: `Guide ${index}`,
@@ -1607,7 +1616,7 @@ test("run lease, maximum batch, and deadline bound overlapping research work", a
     notify: false,
     now: new Date("2026-07-24T07:25:00.000Z")
   });
-  assert.equal(bounded.processed.length, 12);
+  assert.equal(bounded.processed.length, 24);
   assert.equal(bounded.deferred, 3);
 
   const deadlineKv = new MemoryKv();
@@ -1670,6 +1679,167 @@ test("historical Playlist research can retain more than the 120-card public view
   assert.equal(buildFeaturedPlaylist(videos, "", new Set(), Date.now(), { maxItems: 2_000 }).items.length, 250);
 });
 
+test("curated Playlist research archive is complete, scoped, canonical, and educational", () => {
+  const curated = getCuratedPlaylistResearchArchive();
+  assert.equal(CURATED_PLAYLIST_RESEARCH_ARCHIVE.length, 167);
+  assert.equal(curated.length, 167);
+  assert.notEqual(curated, CURATED_PLAYLIST_RESEARCH_ARCHIVE, "The getter must not expose the manifest array for mutation.");
+
+  const ids = curated.map(source => source.id);
+  assert.equal(new Set(ids).size, 167, "Every curated video must have one unique canonical YouTube ID.");
+  const validRoles = new Set(["Controller", "Duelist", "Initiator", "Sentinel", "All Roles"]);
+  const expectedTopic = {
+    Map: "Map Knowledge",
+    Agent: "Agent",
+    Role: "Role"
+  };
+  const scopes = {
+    Map: new Set(),
+    Agent: new Set(),
+    Role: new Set()
+  };
+
+  for (const source of curated) {
+    assert.match(source.id, /^[A-Za-z0-9_-]{11}$/);
+    assert.equal(source.platform, "youtube");
+    assert.equal(source.url, `https://www.youtube.com/watch?v=${source.id}`);
+    assert.ok(String(source.title || "").trim(), `${source.id} must have a verified title.`);
+    assert.ok(String(source.channel || "").trim(), `${source.id} must have a verified publisher.`);
+    assert.equal(source.thumbnail, `https://i.ytimg.com/vi/${source.id}/hqdefault.jpg`);
+    assert.notEqual(source.isLive, true);
+    assert.notEqual(source.wasLive, true);
+    assert.notEqual(source.isVod, true);
+    assert.notEqual(source.isShort, true);
+    assert.ok(scopes[source.targetType], `${source.id} has an unsupported target type.`);
+    assert.equal(source.topicType || source.topicTypeOverride, expectedTopic[source.targetType]);
+    assert.ok(Array.isArray(source.entities) && source.entities.includes(source.targetName));
+    if (source.targetType === "Map") assert.ok(MAP_NAMES.includes(source.targetName));
+    if (source.targetType === "Agent") assert.ok(AGENT_NAMES.includes(source.targetName));
+    if (source.targetType === "Role") assert.ok(validRoles.has(source.targetName));
+    scopes[source.targetType].add(source.targetName);
+
+    const normalized = normalizeKnowledgeSource(source);
+    assert.ok(normalized, `${source.id} must normalize into a knowledge source.`);
+    assert.equal(normalized.researchEligible, true);
+    assert.equal(normalized.transcriptStatus, "pending");
+    assert.equal(
+      normalized.startSeconds,
+      Math.max(0, Number(source.startSeconds || 0)),
+      `${source.id} must retain the owner's selected research start offset.`
+    );
+  }
+
+  assert.deepEqual({
+    maps: scopes.Map.size,
+    agents: scopes.Agent.size,
+    roles: scopes.Role.size
+  }, {
+    maps: 13,
+    agents: 29,
+    roles: 5
+  });
+});
+
+test("curated videos dedupe by canonical identity and stay out of the public 120-card view", () => {
+  const curated = getCuratedPlaylistResearchArchive();
+  const first = curated[0];
+  const deduped = dedupePlaylistVideos([
+    first,
+    { ...first, title: "Duplicate metadata must not win" },
+    ...curated.slice(1)
+  ]);
+  assert.equal(deduped.length, 167);
+  assert.equal(deduped[0].title, first.title, "Dedupe must preserve the first canonical record.");
+
+  const publicCandidates = Array.from({ length: 130 }, (_value, index) => ({
+    id: `pub${String(index).padStart(8, "0")}`,
+    platform: "youtube",
+    channel: "Current Coach",
+    channelKind: "creator",
+    title: `Current Valorant guide ${index}`,
+    publishedAt: new Date(2026, 0, 1, 0, index).toISOString(),
+    isLive: false,
+    wasLive: false,
+    isVod: false,
+    isShort: false,
+    isValorant: true
+  }));
+  const featured = buildFeaturedPlaylist(dedupePlaylistVideos(publicCandidates));
+  const researchCandidates = mergePlaylistResearchArchive([], publicCandidates, curated);
+  const researchArchive = buildFeaturedPlaylist(
+    researchCandidates,
+    "",
+    new Set(),
+    Date.now(),
+    { maxItems: 5_000 }
+  );
+  const curatedIds = new Set(curated.map(source => source.id));
+
+  assert.equal(featured.items.length, 120);
+  assert.equal(featured.items.some(source => curatedIds.has(source.id)), false);
+  assert.equal(researchArchive.items.length, publicCandidates.length + curated.length);
+  assert.equal(
+    curated.every(source => researchArchive.items.some(item => item.id === source.id)),
+    true,
+    "Every curated source must enter the private research archive."
+  );
+});
+
+test("every curated archive source is present in the generated embedded registry", () => {
+  const embeddedById = new Map(EMBEDDED_KNOWLEDGE_SOURCES
+    .filter(source => source.platform === "youtube")
+    .map(source => [source.id, source]));
+  const missing = getCuratedPlaylistResearchArchive()
+    .map(source => source.id)
+    .filter(id => !embeddedById.has(id));
+  assert.deepEqual(missing, []);
+  assert.ok(embeddedById.size >= CURATED_PLAYLIST_RESEARCH_ARCHIVE.length);
+});
+
+test("processing a curated archive source remains private until owner publication", async () => {
+  const kv = new MemoryKv();
+  const [source] = getCuratedPlaylistResearchArchive();
+  const result = await runKnowledgePipeline({ CONTENT_AUTOMATION: kv }, {
+    sources: [source],
+    batchSize: 1,
+    fetchImpl: youtubeCaptionFetch(),
+    notify: false,
+    now: new Date("2026-07-24T19:00:00.000Z")
+  });
+
+  assert.equal(result.publicationWrites, 0);
+  assert.equal(result.processed.length, 1);
+  assert.ok(await kv.get(`${KNOWLEDGE_STORAGE_KEYS.privateTranscriptPrefix}youtube-${source.id}`));
+  assert.ok(await kv.get(`${KNOWLEDGE_STORAGE_KEYS.privateClaimsPrefix}youtube-${source.id}`));
+  assert.deepEqual(await getPublishedKnowledge(kv), { updatedAt: null, items: [] });
+  assert.equal([...kv.values.keys()].some(key => key.startsWith("knowledge:published:")), false);
+});
+
+test("owner-selected start offsets exclude earlier transcript material from research", async () => {
+  const kv = new MemoryKv();
+  const source = {
+    ...getCuratedPlaylistResearchArchive()[0],
+    startSeconds: 5
+  };
+  await runKnowledgePipeline({ CONTENT_AUTOMATION: kv }, {
+    sources: [source],
+    batchSize: 1,
+    fetchImpl: youtubeCaptionFetch(),
+    notify: false,
+    now: new Date("2026-07-24T19:05:00.000Z")
+  });
+
+  const transcript = await kv.get(
+    `${KNOWLEDGE_STORAGE_KEYS.privateTranscriptPrefix}youtube-${source.id}`,
+    "json"
+  );
+  assert.deepEqual(
+    transcript.cues.map(cue => cue.startMs),
+    [5_000],
+    "Research must begin at the owner's explicit YouTube timestamp."
+  );
+});
+
 test("complete Library audit covers every governed draft without publishing", async () => {
   const audit = await auditLibraryDrafts(DRAFT_ROOT, { currentPatch: "13.01" });
   assert.deepEqual(audit.scope, {
@@ -1692,11 +1862,16 @@ test("complete Library audit covers every governed draft without publishing", as
 
 test("both worker schedules refresh the Playlist before private knowledge processing", async () => {
   const worker = await readFile(path.join(ROOT, "worker", "index.js"), "utf8");
-  const registry = await readFile(path.join(ROOT, "worker", "embedded-knowledge-sources.mjs"), "utf8");
   const libraryBaseline = await readFile(path.join(ROOT, "worker", "knowledge-library-audit-baseline.mjs"), "utf8");
   assert.match(worker, /await handlePlaylistRequest\(env\)[\s\S]*runKnowledgePipeline/);
   assert.match(worker, /batchSize:\s*24/);
   assert.match(worker, /runPlaylistKnowledgeAutomation\(env, \{ notify: isDailyResearch \}\)/);
-  assert.equal((registry.match(/"platform": "youtube"/g) || []).length, 46);
+  const embeddedIds = new Set(EMBEDDED_KNOWLEDGE_SOURCES.map(source => `${source.platform}:${source.id}`));
+  assert.equal(embeddedIds.size, EMBEDDED_KNOWLEDGE_SOURCES.length, "The generated embedded registry must stay deduplicated.");
+  assert.equal(
+    getCuratedPlaylistResearchArchive().every(source => embeddedIds.has(`youtube:${source.id}`)),
+    true,
+    "Schedules must receive every curated archive source through the generated registry."
+  );
   assert.match(libraryBaseline, /LIBRARY_KNOWLEDGE_INDEX/);
 });

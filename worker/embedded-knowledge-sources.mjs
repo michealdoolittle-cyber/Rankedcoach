@@ -3,14 +3,55 @@
 export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
   {
     "platform": "youtube",
+    "id": "_DAxdH_Tvw4",
+    "url": "https://www.youtube.com/watch?v=_DAxdH_Tvw4",
+    "title": "This TEJO GUIDE Will Make You a SoloQ Monster in VALORANT!",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Tejo"
+    ],
+    "startSeconds": 335
+  },
+  {
+    "platform": "youtube",
+    "id": "_fBw3ZyC3Fw",
+    "url": "https://www.youtube.com/watch?v=_fBw3ZyC3Fw",
+    "title": "How to ACTUALLY play Lotus like a PRO",
+    "channel": "Valorant Kitchen",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Lotus"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
     "id": "_NmzHBD0BEk",
     "url": "https://www.youtube.com/watch?v=_NmzHBD0BEk",
     "title": "doombringer collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "doombringer"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "_WwXFX3ivXc",
+    "url": "https://www.youtube.com/watch?v=_WwXFX3ivXc",
+    "title": "The ULTIMATE VYSE Guide for VALORANT!",
+    "channel": "Rem",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Vyse"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -19,9 +60,37 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "ora by onetap collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "ora-by-onetap"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "-Kdi2J_kIVs",
+    "url": "https://www.youtube.com/watch?v=-Kdi2J_kIVs",
+    "title": "How To Play TEJO On Every Map",
+    "channel": "Berate",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Tejo"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "-l2s_JNRIiI",
+    "url": "https://www.youtube.com/watch?v=-l2s_JNRIiI",
+    "title": "How to Dominate on the New Breeze",
+    "channel": "signed",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Breeze"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -30,9 +99,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "blastx collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "blastx"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "-qgS0MAzLJE",
+    "url": "https://www.youtube.com/watch?v=-qgS0MAzLJE",
+    "title": "Why You Suck at Playing Initiator (And How to Fix It)",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Initiator"
+    ],
+    "startSeconds": 151
+  },
+  {
+    "platform": "youtube",
+    "id": "-vgR_Nqfbgs",
+    "url": "https://www.youtube.com/watch?v=-vgR_Nqfbgs",
+    "title": "How to Carry on Phoenix",
+    "channel": "Maxie",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Phoenix"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "0EDe79bzgr8",
+    "url": "https://www.youtube.com/watch?v=0EDe79bzgr8",
+    "title": "Why You Can't get Kills as Jett",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Jett"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -41,7 +151,22 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "Embedded map strategy research video",
     "channel": "Registered Library source",
     "sourceKind": "map-strategy-video",
-    "entities": []
+    "topicType": "Map Knowledge",
+    "entities": [],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "136LPiJPYY0",
+    "url": "https://www.youtube.com/watch?v=136LPiJPYY0",
+    "title": "The ONLY Guide You Need to MASTER OMEN",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Omen"
+    ],
+    "startSeconds": 26
   },
   {
     "platform": "youtube",
@@ -50,9 +175,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "valiant hero collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "valiant-hero"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "2oZ0mP2-nAU",
+    "url": "https://www.youtube.com/watch?v=2oZ0mP2-nAU",
+    "title": "HOW TO PLAY GEKKO LIKE A VCT PLAYER!",
+    "channel": "Team Vitality VALORANT",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Gekko"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -61,9 +201,63 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "champions 2023 collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "champions-2023"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "439vfL_WeXo",
+    "url": "https://www.youtube.com/watch?v=439vfL_WeXo",
+    "title": "The ULTIMATE Phoenix Guide for VALORANT 2025 - Rank Up FAST with New Tech!",
+    "channel": "xtr",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Phoenix"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "441tMwoFSeE",
+    "url": "https://www.youtube.com/watch?v=441tMwoFSeE",
+    "title": "Radiant Iso Guide (Valorant Tips)",
+    "channel": "Jaeky",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Iso"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "4ltUDIdDRMQ",
+    "url": "https://www.youtube.com/watch?v=4ltUDIdDRMQ",
+    "title": "The Last Killjoy Guide You’ll Ever Need | ALL MAPS — TIMESTAMPED",
+    "channel": "Keeoh",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Killjoy"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "4Rw8nKowEEU",
+    "url": "https://www.youtube.com/watch?v=4Rw8nKowEEU",
+    "title": "Split Premier Guide, from a Pro Coach | 2025 Meta",
+    "channel": "Fellowship Esports",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Split"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -72,9 +266,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "elderflame collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "elderflame"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -83,9 +279,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "xerofang collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "xerofang"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "5yqNa4HIq5Q",
+    "url": "https://www.youtube.com/watch?v=5yqNa4HIq5Q",
+    "title": "BEST Fade Lineups ALL MAPS 2026 Guide Valorant! 📍",
+    "channel": "Frost LIVE",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Fade"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "6B1Uy4_Jvlk",
+    "url": "https://www.youtube.com/watch?v=6B1Uy4_Jvlk",
+    "title": "6 things I learned hitting TOP 100 as controller ONLY",
+    "channel": "Dopai",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Controller"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "6iClB_z2iAY",
+    "url": "https://www.youtube.com/watch?v=6iClB_z2iAY",
+    "title": "Advanced Omen Teleport Guide (All Maps) *2026*",
+    "channel": "Berate",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Omen"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -94,9 +331,102 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "primordium collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "primordium"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "6XupFaHh_UY",
+    "url": "https://www.youtube.com/watch?v=6XupFaHh_UY",
+    "title": "Fracture Premier Guide, From a Pro Coach",
+    "channel": "Fellowship Esports",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Fracture"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "7A6J_FbIjbE",
+    "url": "https://www.youtube.com/watch?v=7A6J_FbIjbE",
+    "title": "Radiant CORRODE Guide For Valorant Ranked",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Corrode"
+    ],
+    "startSeconds": 483
+  },
+  {
+    "platform": "youtube",
+    "id": "7fS62T5aGYE",
+    "url": "https://www.youtube.com/watch?v=7fS62T5aGYE",
+    "title": "The SECRETS to Winning Attack Rounds on CORRODE!",
+    "channel": "Valorant Kitchen",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Corrode"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "7iK8xg42LZY",
+    "url": "https://www.youtube.com/watch?v=7iK8xg42LZY",
+    "title": "The ONLY Astra Guide You'll EVER Need! (2025)",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Astra"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "7njFHZ7iP2Q",
+    "url": "https://www.youtube.com/watch?v=7njFHZ7iP2Q",
+    "title": "The ONLY Gekko Guide You'll EVER Need!",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Gekko"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "7rf5oBmWr4M",
+    "url": "https://www.youtube.com/watch?v=7rf5oBmWr4M",
+    "title": "The most important trick to Winning on Bind",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Bind"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "7XP0vA66fUk",
+    "url": "https://www.youtube.com/watch?v=7XP0vA66fUk",
+    "title": "FUNDAMENTAL Reyna TIPS That Make You IMMORTAL (Valorant)",
+    "channel": "Duckeeh",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Reyna"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -105,9 +435,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "ion collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "ion"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "8FWNZxjV5PQ",
+    "url": "https://www.youtube.com/watch?v=8FWNZxjV5PQ",
+    "title": "How to DOMINATE on RAZE!! (Complete RADIANT Guide)",
+    "channel": "ikah",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Raze"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "8mP-JdUz5Us",
+    "url": "https://www.youtube.com/watch?v=8mP-JdUz5Us",
+    "title": "COMPLETE Pearl Entry & Defense Angle Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Pearl"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "8vbwCEe8tFg",
+    "url": "https://www.youtube.com/watch?v=8vbwCEe8tFg",
+    "title": "HOW TO RANKED: FADE",
+    "channel": "toast1ez",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Fade"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -116,9 +487,193 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "cyrax collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "cyrax"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "9M2sNJ1AANs",
+    "url": "https://www.youtube.com/watch?v=9M2sNJ1AANs",
+    "title": "ULTIMATE RADIANT YORU GUIDE 3000+ hours experience- Basic and Advanced Techniques",
+    "channel": "LotharHS VALORANT Laboratory",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Yoru"
+    ],
+    "startSeconds": 13
+  },
+  {
+    "platform": "youtube",
+    "id": "9NqcyEi-stQ",
+    "url": "https://www.youtube.com/watch?v=9NqcyEi-stQ",
+    "title": "The Only *UPDATED* Breach Guide You'll EVER NEED! (2023)",
+    "channel": "ProGuides Valorant Tips, Tricks and Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Breach"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "9rQnpB1HxWA",
+    "url": "https://www.youtube.com/watch?v=9rQnpB1HxWA",
+    "title": "The Problem with KAY/O that NOBODY is Talking About",
+    "channel": "LrohVCT",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "KAY/O"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "9TyolMdIjsg",
+    "url": "https://www.youtube.com/watch?v=9TyolMdIjsg",
+    "title": "BIND GUIDE.",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Bind"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "9Yg-HaZdmxU",
+    "url": "https://www.youtube.com/watch?v=9Yg-HaZdmxU",
+    "title": "How to Play Jett (Valorant Tips)",
+    "channel": "Jaeky",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Jett"
+    ],
+    "startSeconds": 24
+  },
+  {
+    "platform": "youtube",
+    "id": "9ZKAxsxvJRs",
+    "url": "https://www.youtube.com/watch?v=9ZKAxsxvJRs",
+    "title": "How to Play *SUMMIT* in Valorant Ranked! (Radiant Map Guide)",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Summit"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "A_SuPBvsvy0",
+    "url": "https://www.youtube.com/watch?v=A_SuPBvsvy0",
+    "title": "The ONLY Guide You Need To MASTER REYNA",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Reyna"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "a0Vg6F9c9lw",
+    "url": "https://www.youtube.com/watch?v=a0Vg6F9c9lw",
+    "title": "HARBOR IS THE *NEW* PRO META !!! | TenZ",
+    "channel": "TenZ",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Harbor"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "a1oOROWQrtA",
+    "url": "https://www.youtube.com/watch?v=a1oOROWQrtA",
+    "title": "How to Play CORRODE Like the Pros | COMPLETE Guide",
+    "channel": "randomnoobtv",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Corrode"
+    ],
+    "startSeconds": 471
+  },
+  {
+    "platform": "youtube",
+    "id": "a2sfBF0HA3A",
+    "url": "https://www.youtube.com/watch?v=a2sfBF0HA3A",
+    "title": "COMPLETE Corrode Entry & Defense Angle Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Corrode"
+    ],
+    "startSeconds": 15
+  },
+  {
+    "platform": "youtube",
+    "id": "AcVGB_u-O-8",
+    "url": "https://www.youtube.com/watch?v=AcVGB_u-O-8",
+    "title": "Riot FINALLY Made Harbor META… He's BROKEN",
+    "channel": "Teets",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Harbor"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "AKyp8hmoK_w",
+    "url": "https://www.youtube.com/watch?v=AKyp8hmoK_w",
+    "title": "The ONLY Miks Guide You’ll Ever Need (ft. Boaster)",
+    "channel": "FNATIC Valorant",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Miks"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "AS4M2tCXrLY",
+    "url": "https://www.youtube.com/watch?v=AS4M2tCXrLY",
+    "title": "32 Insane Vyse Mechanics",
+    "channel": "MrLowlander",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Vyse"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "AseqYI-7rpI",
+    "url": "https://www.youtube.com/watch?v=AseqYI-7rpI",
+    "title": "KAY/O Basics: What Every New Player Should Know",
+    "channel": "todo",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "KAY/O"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -127,9 +682,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "blackspyre collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "blackspyre"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -138,9 +695,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "rogue collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "rogue"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "bATyRKYQbP4",
+    "url": "https://www.youtube.com/watch?v=bATyRKYQbP4",
+    "title": "How to Play Raze Like Zekken",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Raze"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -149,9 +721,37 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "mystbloom collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "mystbloom"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "bIK68DC5ovg",
+    "url": "https://www.youtube.com/watch?v=bIK68DC5ovg",
+    "title": "How to be useful on KJ",
+    "channel": "Maxie",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Killjoy"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "bIR_TVV5yJI",
+    "url": "https://www.youtube.com/watch?v=bIR_TVV5yJI",
+    "title": "The Ultimate Beginners Guide for Cypher (Valorant 2024)",
+    "channel": "Dylan B Gamin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Cypher"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -160,9 +760,89 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "champions 2025 collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "champions-2025"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "BpAvTmBkDC4",
+    "url": "https://www.youtube.com/watch?v=BpAvTmBkDC4",
+    "title": "How to Exploit Lotus like a Pro",
+    "channel": "Sentinels",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Lotus"
+    ],
+    "startSeconds": 303
+  },
+  {
+    "platform": "youtube",
+    "id": "BrCgVl_WdUs",
+    "url": "https://www.youtube.com/watch?v=BrCgVl_WdUs",
+    "title": "How to Entry with Neon",
+    "channel": "nxrth",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Neon"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "c_5Jy4fykoQ",
+    "url": "https://www.youtube.com/watch?v=c_5Jy4fykoQ",
+    "title": "What OMEN Mains Don't Tell YOU: Tips & Tricks",
+    "channel": "DBW",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Omen"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "CImuyLEP5pM",
+    "url": "https://www.youtube.com/watch?v=CImuyLEP5pM",
+    "title": "HOW TO: MIKS",
+    "channel": "toast1ez",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Miks"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "CqM5NUTz-Ms",
+    "url": "https://www.youtube.com/watch?v=CqM5NUTz-Ms",
+    "title": "The unexpected impact of Harbor's rework",
+    "channel": "Sentinels",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Harbor"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "cZL-ZjgVoWk",
+    "url": "https://www.youtube.com/watch?v=cZL-ZjgVoWk",
+    "title": "*NEW* Best Deadlock Setups For EVERY Map",
+    "channel": "Boni",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Deadlock"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -171,9 +851,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "arcane collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "arcane"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "D5IXDf0woUQ",
+    "url": "https://www.youtube.com/watch?v=D5IXDf0woUQ",
+    "title": "SEN TenZ ULTIMATE GEKKO GUIDE !!!!",
+    "channel": "TenZ",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Gekko"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -182,7 +877,35 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "Find your PERFECT Sensitivity and Optimal Settings! | SEN TenZ",
     "channel": "TenZ",
     "sourceKind": "settings-gear",
-    "entities": []
+    "topicType": "Settings/Gear",
+    "entities": [],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "dEzotUpYHjA",
+    "url": "https://www.youtube.com/watch?v=dEzotUpYHjA",
+    "title": "Ultimate Beginner Yoru Guide!",
+    "channel": "Berate",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Yoru"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "DHlreIU_uUs",
+    "url": "https://www.youtube.com/watch?v=DHlreIU_uUs",
+    "title": "The Art Of The Controller",
+    "channel": "BubbaWubba",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Controller"
+    ],
+    "startSeconds": 3
   },
   {
     "platform": "youtube",
@@ -191,9 +914,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "glitchpop collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "glitchpop"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "DsNe0ht81DQ",
+    "url": "https://www.youtube.com/watch?v=DsNe0ht81DQ",
+    "title": "How to Play Yoru For Beginners (Guide)",
+    "channel": "rob",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Yoru"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "e3MWhsdSPqE",
+    "url": "https://www.youtube.com/watch?v=e3MWhsdSPqE",
+    "title": "Inside the Mind of a TOP 0.01% Initiator One Trick",
+    "channel": "Lynx",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Initiator"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "eb0rnhevvbk",
+    "url": "https://www.youtube.com/watch?v=eb0rnhevvbk",
+    "title": "How an Instalock Jett Main Carries in Ranked",
+    "channel": "Maxie",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Jett"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -202,9 +966,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "chronovoid collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "chronovoid"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -213,9 +979,219 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "dolmir s revenge collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "dolmir-s-revenge"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Eq2zi3dUvl4",
+    "url": "https://www.youtube.com/watch?v=Eq2zi3dUvl4",
+    "title": "Stop LOSING on SUNSET! - VALORANT",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Sunset"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "eWiHe4Ynnp0",
+    "url": "https://www.youtube.com/watch?v=eWiHe4Ynnp0",
+    "title": "The True Radiant Chamber Guide!",
+    "channel": "Isot",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Chamber"
+    ],
+    "startSeconds": 373
+  },
+  {
+    "platform": "youtube",
+    "id": "F46Kv35WkLE",
+    "url": "https://www.youtube.com/watch?v=F46Kv35WkLE",
+    "title": "A Series With Tons Of CYPHER Tips And Tricks | Cypher To Ascendant",
+    "channel": "MrLowlander",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Cypher"
+    ],
+    "startSeconds": 428
+  },
+  {
+    "platform": "youtube",
+    "id": "F89C2zL9_e0",
+    "url": "https://www.youtube.com/watch?v=F89C2zL9_e0",
+    "title": "The 10 Astra Tips - Valorant",
+    "channel": "Damezz",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Astra"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "FC0utzZ0wHw",
+    "url": "https://www.youtube.com/watch?v=FC0utzZ0wHw",
+    "title": "Who is the BEST Sentinel in Valorant?",
+    "channel": "Keeoh",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Sentinel"
+    ],
+    "startSeconds": 708
+  },
+  {
+    "platform": "youtube",
+    "id": "FDc-DPzs-80",
+    "url": "https://www.youtube.com/watch?v=FDc-DPzs-80",
+    "title": "These 5 Gekko Tips Got Me Radiant",
+    "channel": "SoMarcus",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Gekko"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "FDgXEFM2cqY",
+    "url": "https://www.youtube.com/watch?v=FDgXEFM2cqY",
+    "title": "The Ultimate Guide To Deadlock...",
+    "channel": "Boni",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Deadlock"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "FhfofvhY7u4",
+    "url": "https://www.youtube.com/watch?v=FhfofvhY7u4",
+    "title": "I Nonstop Played Viper For 1 Month, Here's What I Learned",
+    "channel": "MrLowlander",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Viper"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "FndfMWMScAU",
+    "url": "https://www.youtube.com/watch?v=FndfMWMScAU",
+    "title": "Pro Breaks Down NEW MAP - Summit",
+    "channel": "nAts",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Summit"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "fw_VbMbTi8w",
+    "url": "https://www.youtube.com/watch?v=fw_VbMbTi8w",
+    "title": "Crazy Chamber Strategies To Rank Up Faster || Chamber To Radiant (FINALE)",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Chamber"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "FZESsnkwUyw",
+    "url": "https://www.youtube.com/watch?v=FZESsnkwUyw",
+    "title": "How to Actually Play Duelist Properly",
+    "channel": "bonkar",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Duelist"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "G6729x2C9bI",
+    "url": "https://www.youtube.com/watch?v=G6729x2C9bI",
+    "title": "How To Play RAZE in Valorant (PRO Tips & Tricks Series) || Raze To Immortal (#1)",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Raze"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "GbrquyjCJDw",
+    "url": "https://www.youtube.com/watch?v=GbrquyjCJDw",
+    "title": "I Played Nonstop Killjoy For Months, Here's What I Learned",
+    "channel": "MrLowlander",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Killjoy"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "gBrxodae3Ao",
+    "url": "https://www.youtube.com/watch?v=gBrxodae3Ao",
+    "title": "The secret to top fragging on duelist",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Duelist"
+    ],
+    "startSeconds": 307
+  },
+  {
+    "platform": "youtube",
+    "id": "GEbxLkO1EsE",
+    "url": "https://www.youtube.com/watch?v=GEbxLkO1EsE",
+    "title": "8 Advanced Waylay Tricks That Will Make You UNSTOPPABLE!",
+    "channel": "Valorant Kitchen",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Waylay"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "GYN-bW8FpLM",
+    "url": "https://www.youtube.com/watch?v=GYN-bW8FpLM",
+    "title": "The 4 Chamber Playstyles You Should Be Copying",
+    "channel": "FLOWSHIZZLE",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Chamber"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -224,9 +1200,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "phaseguard collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "phaseguard"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "H_7KGOaEhmE",
+    "url": "https://www.youtube.com/watch?v=H_7KGOaEhmE",
+    "title": "The only WAYLAY guide you will EVER need.",
+    "channel": "ikah",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Waylay"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -235,9 +1226,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "divergence collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "divergence"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -246,9 +1239,76 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "protocol 781 a collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "protocol-781-a"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "HAqpUl3lydQ",
+    "url": "https://www.youtube.com/watch?v=HAqpUl3lydQ",
+    "title": "Bind Premier Guide, From a Pro Coach",
+    "channel": "Fellowship Esports",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Bind"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "HEpqZQpclJ4",
+    "url": "https://www.youtube.com/watch?v=HEpqZQpclJ4",
+    "title": "What Pros Already Know About the New Breeze",
+    "channel": "Airen",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Breeze"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "HLE32CD555k",
+    "url": "https://www.youtube.com/watch?v=HLE32CD555k",
+    "title": "The ONLY GUIDE You Need to MASTER SOVA",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Sova"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "hSXXY0zMJmY",
+    "url": "https://www.youtube.com/watch?v=hSXXY0zMJmY",
+    "title": "5 IN-DEPTH Ability Tips to MASTER GEKKO in Valorant",
+    "channel": "Duckeeh",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Gekko"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "hx4EU_pkw-Q",
+    "url": "https://www.youtube.com/watch?v=hx4EU_pkw-Q",
+    "title": "Summit Sucks, Here's a Complete Map Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Summit"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -257,7 +1317,48 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "Embedded map strategy research video",
     "channel": "Registered Library source",
     "sourceKind": "map-strategy-video",
-    "entities": []
+    "topicType": "Map Knowledge",
+    "entities": [],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "IBG1WQ4maBA",
+    "url": "https://www.youtube.com/watch?v=IBG1WQ4maBA",
+    "title": "COMPLETE Ascent Entry & Defense Angle Guide [2024]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Ascent"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "iK9puzpuVfo",
+    "url": "https://www.youtube.com/watch?v=iK9puzpuVfo",
+    "title": "I SPECTATED THE #1 Reyna In VALORANT",
+    "channel": "Rem",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Reyna"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "irv3iohBkjs",
+    "url": "https://www.youtube.com/watch?v=irv3iohBkjs",
+    "title": "Haven Guide ft. Cavern",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Haven"
+    ],
+    "startSeconds": 62
   },
   {
     "platform": "youtube",
@@ -266,9 +1367,180 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "holo meridian collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "holo-meridian"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "jeAlvLKFBmc",
+    "url": "https://www.youtube.com/watch?v=jeAlvLKFBmc",
+    "title": "Is Iso's Ultimate Even An Advantage?",
+    "channel": "royalG",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Iso"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ji69ahDwwqs",
+    "url": "https://www.youtube.com/watch?v=ji69ahDwwqs",
+    "title": "COMPLETE Waylay Attack & Defense Agent Guide [2025]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Waylay"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "jIjw1DppXxM",
+    "url": "https://www.youtube.com/watch?v=jIjw1DppXxM",
+    "title": "How to Play Deadlock (Valorant Tips)",
+    "channel": "Jaeky",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Deadlock"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "JipByQrA-gU",
+    "url": "https://www.youtube.com/watch?v=JipByQrA-gU",
+    "title": "ALL GREAT FADES DO THIS",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Fade"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Jjl8y_j_sgs",
+    "url": "https://www.youtube.com/watch?v=Jjl8y_j_sgs",
+    "title": "The ONLY Miks Guide You'll Ever Need! - Valorant",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Miks"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "JlpbFpPH5pQ",
+    "url": "https://www.youtube.com/watch?v=JlpbFpPH5pQ",
+    "title": "Sunset Is Free If You Play It Like This",
+    "channel": "p1ops",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Sunset"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "JqbHh3ymnjk",
+    "url": "https://www.youtube.com/watch?v=JqbHh3ymnjk",
+    "title": "The ULTIMATE Waylay Guide for VALORANT! (PRO Tips & Tricks)",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Waylay"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "jspCQg61_S0",
+    "url": "https://www.youtube.com/watch?v=jspCQg61_S0",
+    "title": "COMPLETE Lotus Entry & Defense Angle Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Lotus"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "jt7qDoQ1Zd4",
+    "url": "https://www.youtube.com/watch?v=jt7qDoQ1Zd4",
+    "title": "The ULTIMATE Miks Guide for VALORANT!",
+    "channel": "Rem",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Miks"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "juZOFGtHm_c",
+    "url": "https://www.youtube.com/watch?v=juZOFGtHm_c",
+    "title": "Valorant Initiator Guide: How to get started (Sova, Fade, Skye, Kay/o, Breach)",
+    "channel": "SimpleVal",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Initiator"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "KCeYJbZJpkg",
+    "url": "https://www.youtube.com/watch?v=KCeYJbZJpkg",
+    "title": "i tried new veto buff...",
+    "channel": "GrimLIVE",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Veto"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "KI5d7Jz0sMA",
+    "url": "https://www.youtube.com/watch?v=KI5d7Jz0sMA",
+    "title": "COMPLETE Sunset 2.0 Entry & Defense Angle Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Sunset"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "kolGGUnFL0U",
+    "url": "https://www.youtube.com/watch?v=kolGGUnFL0U",
+    "title": "3 Minute Astra Guide - A Guide for Valorant",
+    "channel": "3 Minute Valorant",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Astra"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -277,9 +1549,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "neo frontier collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "neo-frontier"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -288,9 +1562,76 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "imperium collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "imperium"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "KwsUf1N4Rfo",
+    "url": "https://www.youtube.com/watch?v=KwsUf1N4Rfo",
+    "title": "The Astra Mindset Guide (2025)",
+    "channel": "Damezz",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Astra"
+    ],
+    "startSeconds": 11
+  },
+  {
+    "platform": "youtube",
+    "id": "kwxOY6ZCymk",
+    "url": "https://www.youtube.com/watch?v=kwxOY6ZCymk",
+    "title": "How to SOLO CARRY with JETT in 2026 (Radiant Jett Guide)",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Jett"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "KxNYwyPfsT0",
+    "url": "https://www.youtube.com/watch?v=KxNYwyPfsT0",
+    "title": "What 3000+ Hours on Sage Teaches You ft. Grim - Valorant Agent Guide",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Sage"
+    ],
+    "startSeconds": 124
+  },
+  {
+    "platform": "youtube",
+    "id": "kZ-84XMrynA",
+    "url": "https://www.youtube.com/watch?v=kZ-84XMrynA",
+    "title": "I Only Played MIKS For The Whole Day, Here's What I Learned",
+    "channel": "MrLowlander",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Miks"
+    ],
+    "startSeconds": 30
+  },
+  {
+    "platform": "youtube",
+    "id": "LbcPQO_AdJI",
+    "url": "https://www.youtube.com/watch?v=LbcPQO_AdJI",
+    "title": "Ultimate 2026 Viper Lineup Guide",
+    "channel": "nAts",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Viper"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -299,9 +1640,63 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "champions 2021 collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "champions-2021"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Lprr6e6sosU",
+    "url": "https://www.youtube.com/watch?v=Lprr6e6sosU",
+    "title": "TenZ Explain NEW Veto Buffs, Tip & Tricks || Valorant ||  #valorant #gaming #valorantclips",
+    "channel": "iiTzKalki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Veto"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "lSxYHTNABuo",
+    "url": "https://www.youtube.com/watch?v=lSxYHTNABuo",
+    "title": "Updated Split Guide 2026",
+    "channel": "Dopai",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Split"
+    ],
+    "startSeconds": 15
+  },
+  {
+    "platform": "youtube",
+    "id": "MjrvSKLjuIs",
+    "url": "https://www.youtube.com/watch?v=MjrvSKLjuIs",
+    "title": "The NEW Way to Play Controller!",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Controller"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "mLwPYATjw3A",
+    "url": "https://www.youtube.com/watch?v=mLwPYATjw3A",
+    "title": "How To Carry in Ranked on Skye",
+    "channel": "Maxie",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Skye"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -310,9 +1705,115 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "radiant entertainment system collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "radiant-entertainment-system"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "mRO_nrVOqN8",
+    "url": "https://www.youtube.com/watch?v=mRO_nrVOqN8",
+    "title": "The TRIUMPHANT Return of the TEJO META!",
+    "channel": "Teets",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Tejo"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "MxdNNBJY-Es",
+    "url": "https://www.youtube.com/watch?v=MxdNNBJY-Es",
+    "title": "Valorant's Rank #1 Controller Will Blow Your Mind",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Controller"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "MyZ1ZMOv3k0",
+    "url": "https://www.youtube.com/watch?v=MyZ1ZMOv3k0",
+    "title": "The ONLY Deadlock Guide You'll Need. (Top 1%)",
+    "channel": "sullyyarb",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Deadlock"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Mz3j9lp_tZI",
+    "url": "https://www.youtube.com/watch?v=Mz3j9lp_tZI",
+    "title": "*ULTIMATE* Radiant Killjoy Guide 2026! (KJ Tech + Tips & Tricks)",
+    "channel": "Reco",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Killjoy"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "n20WzwnHGRw",
+    "url": "https://www.youtube.com/watch?v=n20WzwnHGRw",
+    "title": "The ONLY Raze Guide You'll EVER Need! - Valorant Agent Guide",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Raze"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ngDgL_40aP8",
+    "url": "https://www.youtube.com/watch?v=ngDgL_40aP8",
+    "title": "Ranking Every Agent on NEW Breeze in VALORANT",
+    "channel": "Kanga",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Breeze"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "nk8yrbKYhk0",
+    "url": "https://www.youtube.com/watch?v=nk8yrbKYhk0",
+    "title": "VALORANT Abyss Map Guide: Dominate Ranked with Pro Tips (VCT Coach Knowledge)",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Abyss"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ntPwCj2KFpI",
+    "url": "https://www.youtube.com/watch?v=ntPwCj2KFpI",
+    "title": "The ONLY Phoenix guide you need to hit RADIANT…",
+    "channel": "SoaR Valorant",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Phoenix"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -321,9 +1822,63 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "rgx 11z pro collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "rgx-11z-pro"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "obEe0IvUqj8",
+    "url": "https://www.youtube.com/watch?v=obEe0IvUqj8",
+    "title": "How to play Viper - Setups, Game Theory & more",
+    "channel": "Locked",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Viper"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "OL2syQglUhw",
+    "url": "https://www.youtube.com/watch?v=OL2syQglUhw",
+    "title": "3 TIPS to DOMINATE on EVERY ROLE in Valorant | Duelist, Initiator, Controller and Sentinel",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "All Roles"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ONbyvNV_YO4",
+    "url": "https://www.youtube.com/watch?v=ONbyvNV_YO4",
+    "title": "HOW TO RANKED: BREACH",
+    "channel": "toast1ez",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Breach"
+    ],
+    "startSeconds": 59
+  },
+  {
+    "platform": "youtube",
+    "id": "p32l7DQZfXQ",
+    "url": "https://www.youtube.com/watch?v=p32l7DQZfXQ",
+    "title": "The ULTIMATE Cypher Guide (2026)",
+    "channel": "ItsFlameBTW",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Cypher"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -332,9 +1887,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "splashx collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "splashx"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "pC60Z9HAqlw",
+    "url": "https://www.youtube.com/watch?v=pC60Z9HAqlw",
+    "title": "COMPLETE Abyss Entry & Defense Angle Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Abyss"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "pefnbebcs9k",
+    "url": "https://www.youtube.com/watch?v=pefnbebcs9k",
+    "title": "How to DOMINATE on Haven | RADIANT GUIDE/PLAYBOOK",
+    "channel": "Dopai",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Haven"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "PsiyJvJ9kbc",
+    "url": "https://www.youtube.com/watch?v=PsiyJvJ9kbc",
+    "title": "What Makes A Good Sentinel?",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Sentinel"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -343,9 +1939,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "aemondir collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "aemondir"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -354,9 +1952,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "bolt collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "bolt"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Pv4LDkWGFOo",
+    "url": "https://www.youtube.com/watch?v=Pv4LDkWGFOo",
+    "title": "How to Actually Play Split (In Just 8 Minutes)",
+    "channel": "p1ops",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Split"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -365,9 +1978,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "kuronami collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "kuronami"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "QbaMRzINRkI",
+    "url": "https://www.youtube.com/watch?v=QbaMRzINRkI",
+    "title": "The Only Controller That Climbs High Radiant | Full Clove Guide",
+    "channel": "ProGuides Valorant Tips, Tricks and Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Clove"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "qKckQRNOkXk",
+    "url": "https://www.youtube.com/watch?v=qKckQRNOkXk",
+    "title": "HOW TO RANKED: JETT",
+    "channel": "toast1ez",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Jett"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "QnUkOYbTAz8",
+    "url": "https://www.youtube.com/watch?v=QnUkOYbTAz8",
+    "title": "HOW TO: CLIMB RANKED WITH SOVA",
+    "channel": "toast1ez",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Sova"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -376,9 +2030,63 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "solarstride collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "solarstride"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "QVhnlXUFtNQ",
+    "url": "https://www.youtube.com/watch?v=QVhnlXUFtNQ",
+    "title": "A Complete Beginner's Guide to ASTRA",
+    "channel": "FLOWSHIZZLE",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Astra"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "R_-cA-DLtWA",
+    "url": "https://www.youtube.com/watch?v=R_-cA-DLtWA",
+    "title": "How To Solo Hard Carry on Brimstone! - VALORANT",
+    "channel": "ProGuides Valorant Tips, Tricks and Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Brimstone"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "r4AsYU9rmb4",
+    "url": "https://www.youtube.com/watch?v=r4AsYU9rmb4",
+    "title": "5 Pro Tips ONLY Tejo Mains Know!",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Tejo"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "r7htJmHVj5U",
+    "url": "https://www.youtube.com/watch?v=r7htJmHVj5U",
+    "title": "Split Guide ft. Cavern",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Split"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -387,9 +2095,297 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "blackthorn collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "blackthorn"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Re2kFs0DA3o",
+    "url": "https://www.youtube.com/watch?v=Re2kFs0DA3o",
+    "title": "Fracture Sucks, Here's a Complete Map Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Fracture"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "RiEtwcYCK88",
+    "url": "https://www.youtube.com/watch?v=RiEtwcYCK88",
+    "title": "Icebox Guide",
+    "channel": "Woohoojin",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Icebox"
+    ],
+    "startSeconds": 3858
+  },
+  {
+    "platform": "youtube",
+    "id": "rK9Xow-8V0g",
+    "url": "https://www.youtube.com/watch?v=rK9Xow-8V0g",
+    "title": "The only NEON guide you will EVER need.",
+    "channel": "ikah",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Neon"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "rOPHclJgf1M",
+    "url": "https://www.youtube.com/watch?v=rOPHclJgf1M",
+    "title": "The ONLY Harbor guide you need to hit RADIANT…",
+    "channel": "SoaR Valorant",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Harbor"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "RSzBwuCrP-o",
+    "url": "https://www.youtube.com/watch?v=RSzBwuCrP-o",
+    "title": "The ONLY Kayo Guide You'll EVER Need! (2024)",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "KAY/O"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "RYzYuB6IeH8",
+    "url": "https://www.youtube.com/watch?v=RYzYuB6IeH8",
+    "title": "TenZ FULL *NEW* GEKKO UPDATE REVIEW !!!",
+    "channel": "TenZ Replay",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Gekko"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "S6zNv5GuQGQ",
+    "url": "https://www.youtube.com/watch?v=S6zNv5GuQGQ",
+    "title": "Here’s How You ACTUALLY Play Summit",
+    "channel": "Airen",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Summit"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "SaRikMdp3rI",
+    "url": "https://www.youtube.com/watch?v=SaRikMdp3rI",
+    "title": "The Ultimate Guide to Vyse",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Vyse"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "Sc_t4wzIBoU",
+    "url": "https://www.youtube.com/watch?v=Sc_t4wzIBoU",
+    "title": "Absolute Basics of Omen",
+    "channel": "Berate",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Omen"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "sGJiGXA_uco",
+    "url": "https://www.youtube.com/watch?v=sGJiGXA_uco",
+    "title": "How to CARRY With Veto",
+    "channel": "Berate",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Veto"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "sLVbIT-BI_w",
+    "url": "https://www.youtube.com/watch?v=sLVbIT-BI_w",
+    "title": "Instalocking Neon Made Me Insane...",
+    "channel": "Valec",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Neon"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "svPKK9swRr4",
+    "url": "https://www.youtube.com/watch?v=svPKK9swRr4",
+    "title": "How to Sage Wall on Every Map (Guide)",
+    "channel": "Grim",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Sage"
+    ],
+    "startSeconds": 341
+  },
+  {
+    "platform": "youtube",
+    "id": "t-tUIssI8WQ",
+    "url": "https://www.youtube.com/watch?v=t-tUIssI8WQ",
+    "title": "Ranking Every Agent on Summit | VALORANT",
+    "channel": "Kanga",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Summit"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "T94ZjD9IPB0",
+    "url": "https://www.youtube.com/watch?v=T94ZjD9IPB0",
+    "title": "5 Tips to Know Before Playing Waylay",
+    "channel": "Acend Club",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Waylay"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "TOFSAVqvQf4",
+    "url": "https://www.youtube.com/watch?v=TOFSAVqvQf4",
+    "title": "Is MIKS a Good Main Agent for Valorant Ranked Grind?",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Miks"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "TsZI9COIPq4",
+    "url": "https://www.youtube.com/watch?v=TsZI9COIPq4",
+    "title": "How to be USEFUL on OMEN",
+    "channel": "Maxie",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Omen"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "tz7YNjTIB2U",
+    "url": "https://www.youtube.com/watch?v=tz7YNjTIB2U",
+    "title": "HOW TO PLAY FRACTURE LIKE A PRO | PLAYBOOK & GUIDE",
+    "channel": "Valorant Kitchen",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Fracture"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "u08SxJtG3p0",
+    "url": "https://www.youtube.com/watch?v=u08SxJtG3p0",
+    "title": "I Watched 100 Ascent Games So You Don’t Have To",
+    "channel": "p1ops",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Ascent"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "U87ZlV7PQRE",
+    "url": "https://www.youtube.com/watch?v=U87ZlV7PQRE",
+    "title": "The ONLY GUIDE You Need to MASTER RAZE",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Raze"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "uAnyzBM0X44",
+    "url": "https://www.youtube.com/watch?v=uAnyzBM0X44",
+    "title": "1 Breach Tip You NEED To Know For Every Map",
+    "channel": "Vitalytoly",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Breach"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "UQ--yj9VlPc",
+    "url": "https://www.youtube.com/watch?v=UQ--yj9VlPc",
+    "title": "The Complete ISO GUIDE for IMPROVING in VALORANT!!",
+    "channel": "TempoKD",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Iso"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "vaiWvGvszjs",
+    "url": "https://www.youtube.com/watch?v=vaiWvGvszjs",
+    "title": "You NEED To Know This BEFORE Playing Veto!",
+    "channel": "Thinking Man's Valorant",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Veto"
+    ],
+    "startSeconds": 183
   },
   {
     "platform": "youtube",
@@ -398,9 +2394,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "araxys collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "araxys"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "VHRybuFMdbU",
+    "url": "https://www.youtube.com/watch?v=VHRybuFMdbU",
+    "title": "How to win more Iso ultimates - VALORANT Guide by VCT analyst // Lothar's Lab#95",
+    "channel": "LotharHS",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Iso"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "vkqCjGOiXYg",
+    "url": "https://www.youtube.com/watch?v=vkqCjGOiXYg",
+    "title": "10 Tips & Tricks for DEADLOCK You NEED to Know - Radiant Deadlock Guide VALORANT",
+    "channel": "Brush",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Deadlock"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "VM3q0c71urw",
+    "url": "https://www.youtube.com/watch?v=VM3q0c71urw",
+    "title": "perfect sentinel is easy, actually",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Sentinel"
+    ],
+    "startSeconds": 824
   },
   {
     "platform": "youtube",
@@ -409,9 +2446,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "champions 2024 collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "champions-2024"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "WgFVsicmygo",
+    "url": "https://www.youtube.com/watch?v=WgFVsicmygo",
+    "title": "Pearl Premier Guide, from a Pro Coach | New Meta",
+    "channel": "Fellowship Esports",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Pearl"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -420,9 +2472,37 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "reaver collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "reaver"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "WNb1Miky4Bw",
+    "url": "https://www.youtube.com/watch?v=WNb1Miky4Bw",
+    "title": "THIS IS HOW TENZ PLAYS DEADLOCK IN 2026 🤣",
+    "channel": "TenZ Replay",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Deadlock"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "WS1Tt5vjszo",
+    "url": "https://www.youtube.com/watch?v=WS1Tt5vjszo",
+    "title": "How to Play Skye From a Valorant Pro! | TSM Subroza Valorant",
+    "channel": "TSM",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Skye"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -431,9 +2511,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "evori dreamwings collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "evori-dreamwings"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "wV3g1dbgKqA",
+    "url": "https://www.youtube.com/watch?v=wV3g1dbgKqA",
+    "title": "Icebox Premier Guide, from a Pro Coach",
+    "channel": "Fellowship Esports",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Icebox"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -442,9 +2537,76 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "oni collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "oni"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "XKd3U9JCLL8",
+    "url": "https://www.youtube.com/watch?v=XKd3U9JCLL8",
+    "title": "Sova Guide 2024: How to play Sova in Valorant ranked",
+    "channel": "AverageJonas",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Sova"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "XNMgCjPs9T8",
+    "url": "https://www.youtube.com/watch?v=XNMgCjPs9T8",
+    "title": "What Makes A Good Duelist?",
+    "channel": "Konpeki",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Duelist"
+    ],
+    "startSeconds": 414
+  },
+  {
+    "platform": "youtube",
+    "id": "XvcKw-t2ci0",
+    "url": "https://www.youtube.com/watch?v=XvcKw-t2ci0",
+    "title": "How the #1 Vyse Thinks...",
+    "channel": "Chef",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Vyse"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "xwlRdAh-XEo",
+    "url": "https://www.youtube.com/watch?v=xwlRdAh-XEo",
+    "title": "Haven Premier Guide, from a Pro Coach | NEW 2025",
+    "channel": "Fellowship Esports",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Haven"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "xxfrFpLp8JQ",
+    "url": "https://www.youtube.com/watch?v=xxfrFpLp8JQ",
+    "title": "The Art Of The Initiator",
+    "channel": "BubbaWubba",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Initiator"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -453,9 +2615,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "champions 2022 collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "champions-2022"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "yIRRRwqBA7E",
+    "url": "https://www.youtube.com/watch?v=yIRRRwqBA7E",
+    "title": "How To Play CHAMBER in Valorant (PRO Tips & Tricks Series) || Chamber To Radiant (#1)",
+    "channel": "CHARLATAN | Radiant Coach",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Chamber"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -464,9 +2641,37 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "singularity collection video",
     "channel": "Dittozkul",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "singularity"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ysO09QrES3s",
+    "url": "https://www.youtube.com/watch?v=ysO09QrES3s",
+    "title": "Phoenix is really good right now",
+    "channel": "Maxie",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Phoenix"
+    ],
+    "startSeconds": 850
+  },
+  {
+    "platform": "youtube",
+    "id": "z1owph5QsxM",
+    "url": "https://www.youtube.com/watch?v=z1owph5QsxM",
+    "title": "Entry like a Radiant | Full Duelist Guide",
+    "channel": "randomnoobtv",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Role",
+    "entities": [
+      "Duelist"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -475,9 +2680,11 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "Official VCT collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "VCT cosmetics"
-    ]
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -486,9 +2693,50 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "prime 2 0 collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "prime-2-0"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ZKVx1AVwibg",
+    "url": "https://www.youtube.com/watch?v=ZKVx1AVwibg",
+    "title": "The ULTIMATE Brimstone Guide! - Lineups, Smoke Tips and MORE! - Valorant Agent Guide",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Brimstone"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ZrINkPmwqQY",
+    "url": "https://www.youtube.com/watch?v=ZrINkPmwqQY",
+    "title": "How To Master Breach: Tips & Tricks",
+    "channel": "Vitalytoly",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Breach"
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ZRkUafkqvOc",
+    "url": "https://www.youtube.com/watch?v=ZRkUafkqvOc",
+    "title": "The ONLY Yoru Guide You'll EVER Need!",
+    "channel": "SC Valorant Guides",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Agent",
+    "entities": [
+      "Yoru"
+    ],
+    "startSeconds": 0
   },
   {
     "platform": "youtube",
@@ -497,9 +2745,24 @@ export const EMBEDDED_KNOWLEDGE_SOURCES = Object.freeze([
     "title": "ayakashi collection video",
     "channel": "VALORANT",
     "sourceKind": "skin-collection-video",
+    "topicType": "",
     "entities": [
       "ayakashi"
-    ]
+    ],
+    "startSeconds": 0
+  },
+  {
+    "platform": "youtube",
+    "id": "ztBr3Qkbxdo",
+    "url": "https://www.youtube.com/watch?v=ztBr3Qkbxdo",
+    "title": "COMPLETE Icebox 2.0 Entry & Defense Angle Guide [2026]",
+    "channel": "Slayerkey",
+    "sourceKind": "owner-curated-research-video",
+    "topicType": "Map Knowledge",
+    "entities": [
+      "Icebox"
+    ],
+    "startSeconds": 0
   }
 ].map(source => Object.freeze({
   ...source,

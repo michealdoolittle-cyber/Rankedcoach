@@ -13,7 +13,7 @@ const RUN_LEASE_KEY = "knowledge:run:lease";
 const PUBLISHED_PREFIX = "knowledge:published:";
 const PUBLISHED_INDEX_KEY = "knowledge:published:index";
 const DEFAULT_BATCH_SIZE = 4;
-const MAX_PIPELINE_BATCH_SIZE = 12;
+const MAX_PIPELINE_BATCH_SIZE = 24;
 const DEFAULT_PIPELINE_DEADLINE_MS = 9 * 60 * 1_000;
 const RUN_LEASE_TTL_MS = 12 * 60 * 1_000;
 const MAX_TRANSCRIPT_CUES = 12_000;
@@ -219,6 +219,7 @@ export function normalizeKnowledgeSource(source = {}, registeredAt = nowIso()) {
     source.channelKind
   ].map(normalizeWhitespace).filter(Boolean).join(" ");
   const topicType = normalizeWhitespace(source.topicType || source.topicTypeOverride || "");
+  const startSeconds = Math.max(0, Number(source.startSeconds || 0));
   const researchEligible = source.researchEligible !== false
     && !/(?:skin|collection|showcase|live-stream)/i.test(sourceClassifiers)
     && !/^(?:News|YT Shorts|Live\/Streaming)$/i.test(topicType)
@@ -234,6 +235,7 @@ export function normalizeKnowledgeSource(source = {}, registeredAt = nowIso()) {
     publisherKey: sourcePublisher({ ...source, url }),
     sourceKind,
     topicType,
+    startSeconds,
     entities: unique((source.entities || [source.targetName]).map(normalizeWhitespace)),
     registeredAt,
     researchEligible,
@@ -579,6 +581,7 @@ function groundInsightsAgainstTranscript(insights = [], cues = []) {
 
 export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl = fetch) {
   const identity = sourceIdentity(source);
+  const sourceStartSeconds = Math.max(0, Number(source.startSeconds || 0));
   // A dedicated Gemini key is preferred. A project-level Google API key may
   // also have Generative Language enabled; if it does not, caption analysis
   // continues through the deterministic fallback below.
@@ -640,6 +643,9 @@ export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl =
           type: "text",
           text: [
             "Analyze this public Valorant educational video for a private RankedCoach owner-review queue.",
+            ...(sourceStartSeconds > 0
+              ? [`The owner selected the video from ${sourceStartSeconds} seconds onward. Ignore content and insights that end before that timestamp.`]
+              : []),
             `Return no more than ${MAX_VIDEO_INSIGHTS} distinct, actionable coaching or clearly qualified statistical insights.`,
             "Ignore sponsorships, subscriptions, channel promotion, greetings, jokes, outros, and generic filler.",
             "For esports analysis, extract what players do: a repeatable setup, decision, timing, spacing, utility sequence, positioning choice, adaptation, or punish.",
@@ -683,7 +689,10 @@ export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl =
   } catch {
     return Object.freeze({ status: "gemini-invalid-output", language: "", cues: [], insights: [] });
   }
-  const insights = normalizeGeminiVideoInsights(structured);
+  const insights = Object.freeze(
+    normalizeGeminiVideoInsights(structured)
+      .filter(insight => insight.endSeconds > sourceStartSeconds)
+  );
   const cues = insights.map(insight => Object.freeze({
     startMs: Math.round(insight.startSeconds * 1_000),
     durationMs: Math.max(1_000, Math.round((insight.endSeconds - insight.startSeconds) * 1_000)),
@@ -2335,7 +2344,9 @@ async function runKnowledgePipelineUnlocked(env = {}, options = {}) {
         processed.push({ sourceId: source.id, status: transcriptStatus, claims: 0 });
         return;
       }
-      const cues = normalizeValorantTranscript(transcript.cues);
+      const sourceStartMs = Math.max(0, Number(source.startSeconds || 0) * 1_000);
+      const cues = normalizeValorantTranscript(transcript.cues)
+        .filter(cue => cue.startMs + cue.durationMs > sourceStartMs);
       const sections = splitTranscriptIntoSections(cues);
       const semantic = transcript.insights?.length
         ? { status: "analyzed", insights: transcript.insights, model: String(env.KNOWLEDGE_VIDEO_MODEL || DEFAULT_GEMINI_VIDEO_MODEL) }

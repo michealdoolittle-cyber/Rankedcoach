@@ -15,6 +15,7 @@ import {
   fetchTrustedTwitchVods,
   findAffectedDossiers,
   findConfidentCollectionVideo,
+  getCuratedPlaylistResearchArchive,
   getPlaylistGuideSearchTargets,
   getStaticPlaylistVideos,
   getPatchDescriptor,
@@ -55,6 +56,31 @@ for (const channel of creatorChannels) {
   assert.equal(metadataResponse.ok, true, `${channel.name}'s sample must resolve through YouTube oEmbed.`);
   const metadata = await metadataResponse.json();
   assert.equal(new URL(metadata.author_url).pathname.toLowerCase(), `/${channel.handle.toLowerCase()}`, `${channel.name}'s channel ID must resolve to ${channel.handle}.`);
+}
+
+const curatedResearchArchive = getCuratedPlaylistResearchArchive();
+assert.equal(curatedResearchArchive.length, 167, "The owner-curated research archive must retain every unique submitted video.");
+const curatedOembedMetadata = new Map();
+for (let index = 0; index < curatedResearchArchive.length; index += 12) {
+  const batch = curatedResearchArchive.slice(index, index + 12);
+  const results = await Promise.all(batch.map(async source => {
+    const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(source.url)}&format=json`);
+    assert.equal(response.ok, true, `${source.id} must remain a publicly resolvable YouTube video.`);
+    return [source.id, await response.json()];
+  }));
+  results.forEach(([id, metadata]) => curatedOembedMetadata.set(id, metadata));
+}
+assert.equal(curatedOembedMetadata.size, 167);
+for (const source of curatedResearchArchive) {
+  const metadata = curatedOembedMetadata.get(source.id);
+  assert.ok(String(metadata?.title || "").trim(), `${source.id} must expose a public title.`);
+  assert.ok(String(metadata?.author_name || "").trim(), `${source.id} must expose a public publisher.`);
+  assert.equal(metadata.author_name.trim(), source.channel, `${source.id} must retain its verified publisher metadata.`);
+  assert.equal(
+    new URL(metadata.author_url).href.replace(/\/+$/, "").toLowerCase(),
+    new URL(source.channelUrl).href.replace(/\/+$/, "").toLowerCase(),
+    `${source.id} must retain its verified publisher URL.`
+  );
 }
 
 const liveSkinVideos = await fetchTrustedChannelVideos({}, { kind: "skin" });

@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getStaticPlaylistVideos } from "../worker/content-automation.mjs";
+import { CURATED_PLAYLIST_RESEARCH_ARCHIVE } from "../worker/curated-playlist-research.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const collectionsPath = path.join(root, "public", "library", "gamesense-collections.js");
@@ -33,7 +34,9 @@ const add = source => {
     title: source.title,
     channel: source.channel,
     sourceKind: source.sourceKind,
-    entities: source.entities || []
+    topicType: source.topicType || "",
+    entities: source.entities || [],
+    startSeconds: Math.max(0, Number(source.startSeconds || 0))
   });
 };
 
@@ -41,7 +44,18 @@ for (const video of getStaticPlaylistVideos()) {
   add({
     ...video,
     sourceKind: video.sourceType || "playlist-video",
+    topicType: video.topicType || video.topicTypeOverride || "",
     entities: [video.targetName].filter(Boolean)
+  });
+}
+
+for (const video of CURATED_PLAYLIST_RESEARCH_ARCHIVE) {
+  add({
+    ...video,
+    sourceKind: video.sourceKind || video.sourceType || "curated-playlist-guide",
+    topicType: video.topicType || video.topicTypeOverride || "",
+    entities: video.entities || [video.targetName].filter(Boolean),
+    startSeconds: video.startSeconds
   });
 }
 
@@ -53,6 +67,7 @@ for (const match of collectionsSource.matchAll(collectionPattern)) {
     title: `${collection.replace(/-/g, " ")} collection video`,
     channel: match[4],
     sourceKind: "skin-collection-video",
+    topicType: "",
     entities: [collection]
   });
 }
@@ -64,6 +79,7 @@ if (officialVct) {
     title: "Official VCT collection video",
     channel: officialVct[2],
     sourceKind: "skin-collection-video",
+    topicType: "",
     entities: ["VCT cosmetics"]
   });
 }
@@ -75,6 +91,7 @@ for (const match of mapsSource.matchAll(/_researchUrl:\s*"(https:\/\/www\.youtub
     title: "Embedded map strategy research video",
     channel: "Registered Library source",
     sourceKind: "map-strategy-video",
+    topicType: "Map Knowledge",
     entities: []
   });
 }
