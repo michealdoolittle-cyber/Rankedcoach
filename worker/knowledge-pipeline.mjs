@@ -377,6 +377,7 @@ function normalizeGeminiVideoInsights(payload = {}) {
     .map(item => {
       const contextExcerpt = normalizeWhitespace(item?.contextExcerpt).split(" ").slice(0, 28).join(" ");
       const suggestedWording = normalizeWhitespace(item?.suggestedWording);
+      const selectionReason = normalizeWhitespace(item?.selectionReason);
       const startSeconds = Math.max(0, Number(item?.startSeconds || 0));
       const endSeconds = Math.max(startSeconds, Number(item?.endSeconds || startSeconds + 8));
       const type = item?.type === "statistical" ? "statistical" : "coaching";
@@ -386,17 +387,19 @@ function normalizeGeminiVideoInsights(payload = {}) {
         ...entityMatches(`${contextExcerpt} ${suggestedWording}`)
       ].map(normalizeWhitespace)).filter(entity => ENTITY_NAMES.includes(entity));
       if (contextExcerpt.length < 20 || suggestedWording.length < 20) return null;
-      return Object.freeze({
+      const normalized = {
         startSeconds,
         endSeconds,
         contextExcerpt,
         suggestedWording,
         whyItMatters: normalizeWhitespace(item?.whyItMatters),
+        selectionReason: selectionReason || selectionReasonForInsight({ type, topic, entities }),
         type,
         topic,
         entities: Object.freeze(entities),
         confidence: ["high", "medium", "low"].includes(item?.confidence) ? item.confidence : "medium"
-      });
+      };
+      return transferableVideoInsight(normalized) ? Object.freeze(normalized) : null;
     })
     .filter(Boolean));
 }
@@ -539,6 +542,7 @@ export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl =
             contextExcerpt: { type: "string" },
             suggestedWording: { type: "string" },
             whyItMatters: { type: "string" },
+            selectionReason: { type: "string" },
             type: { type: "string", enum: ["coaching", "statistical"] },
             topic: { type: "string", enum: ["economy", "mechanics", "teamplay", "map-control", "agent", "mentality", "general"] },
             entities: { type: "array", items: { type: "string" } },
@@ -546,7 +550,7 @@ export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl =
           },
           required: [
             "startSeconds", "endSeconds", "contextExcerpt", "suggestedWording",
-            "whyItMatters", "type", "topic", "entities", "confidence"
+            "whyItMatters", "selectionReason", "type", "topic", "entities", "confidence"
           ]
         }
       }
@@ -571,9 +575,12 @@ export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl =
             "Analyze this public Valorant educational video for a private RankedCoach owner-review queue.",
             `Return no more than ${MAX_VIDEO_INSIGHTS} distinct, actionable coaching or clearly qualified statistical insights.`,
             "Ignore sponsorships, subscriptions, channel promotion, greetings, jokes, outros, and generic filler.",
+            "For esports analysis, extract what players do: a repeatable setup, decision, timing, spacing, utility sequence, positioning choice, adaptation, or punish.",
+            "Do not extract how a team is doing: standings, season form, roster narratives, qualification, tournament placement, series scores, map scores, or praise/criticism of a team's results.",
             "Anchor every insight to the exact spoken timestamp. contextExcerpt must be at most 28 spoken words used only for private verification.",
             "suggestedWording must be an original concise RankedCoach paraphrase, never a copied sentence.",
             "whyItMatters should explain the player decision or outcome in one short sentence.",
+            "selectionReason must tell the owner which repeatable action and decision-to-outcome link made this passage worth extracting.",
             `Only use these entity names when clearly relevant: ${ENTITY_NAMES.join(", ")}.`,
             "If the video contains no specific useful Valorant instruction, return an empty insights array."
           ].join(" ")
@@ -1006,6 +1013,34 @@ function coachingSignal(text = "") {
   return /\b(?:should|need to|make sure|avoid|always|never|when|if|because|try|focus|treat|use|hold|play|rotate|peek|swing|trade|smoke|flash|plant|retake|entry|anchor|buy|save)\b/i.test(text);
 }
 
+function tacticalActionSignal(text = "") {
+  return /\b(?:ability|aim|angle|anchor|anti-eco|buy|call|clarity|clear|commit|communicat\w*|contact|contrast|crossfire|crosshair|default|defend|deny|discipline|double[- ]?peek|dpi|drill|economy|entry|execute|fake|flash|flank|focus|fps|gear|hold|info|keyboard|lane|latency|lineup|lur[kc]|mental|monitor|mouse|movement|off[- ]?angle|peek|peripheral|plant|position|practice|pressure|push|reclear|recoil|reset|resolution|retake|review|rotate|routine|save|sensitivity|setting|setup|site|smoke|space|spacing|split|swing|tempo|timing|trade|train|trap|utility|wall|warmup)\b/i.test(text);
+}
+
+function esportsResultNarrative(text = "") {
+  return /\b(?:champion(?:ship)?|eliminat(?:ed|ion)|finals?|group stage|lost the (?:map|match|series)|map score|match score|playoffs?|qualified|qualifying|record (?:this|in)|roster|season (?:form|record|results?|standings)|series score|standings|tournament (?:placement|result)|won the (?:map|match|series))\b/i.test(text);
+}
+
+function selectionReasonForInsight(insight = {}) {
+  const entity = (insight.entities || [])[0];
+  const scope = entity ? `${entity} ` : "";
+  const topic = String(insight.topic || "general").replaceAll("-", " ");
+  return `Selected because this passage describes a repeatable ${scope}${topic} decision and connects the action to a gameplay consequence.`;
+}
+
+function transferableVideoInsight(insight = {}) {
+  const excerpt = normalizeWhitespace(insight.contextExcerpt);
+  const wording = normalizeWhitespace(insight.suggestedWording);
+  const combined = `${excerpt} ${wording}`;
+  if (promotionalTranscriptSegment(combined)) return false;
+  if (esportsResultNarrative(excerpt) && !tacticalActionSignal(excerpt)) return false;
+  if (insight.type === "statistical") {
+    return tacticalActionSignal(excerpt)
+      || /\b(?:acs|adr|credits?|damage|headshot|pick rate|round conversion|rounds?|usage rate|win rate)\b/i.test(excerpt);
+  }
+  return tacticalActionSignal(excerpt) && (coachingSignal(combined) || /\b(?:adapt|counter|punish|respond|sequence)\b/i.test(combined));
+}
+
 function promotionalTranscriptSegment(text = "") {
   return /\b(?:subscribe|subscribing|like the video|hit the bell|leave a comment|comment down below|link in the description|sponsor(?:ed)?|use code|thanks? for watching|see you (?:guys )?(?:next|later)|follow me|my channel|on stream)\b/i.test(text);
 }
@@ -1105,6 +1140,7 @@ export function extractStructuredClaims(source, sections = []) {
         clean.length >= 28
         && clean.length <= 420
         && !promotionalTranscriptSegment(clean)
+        && (!esportsResultNarrative(clean) || tacticalActionSignal(clean))
         && (coachingSignal(clean) || type === "statistical")
       ) {
         const topic = classifyTopic(clean);
@@ -1130,7 +1166,8 @@ export function extractStructuredClaims(source, sections = []) {
           evidenceUrl: evidenceUrl(source, startSeconds),
           // Excerpts are stored only under the private claim prefix. Review
           // reports and approval records deliberately omit transcript wording.
-          privateExcerpt: clean
+          privateExcerpt: clean,
+          selectionReason: selectionReasonForInsight({ type, topic, entities })
         }));
       }
     }
@@ -1165,7 +1202,7 @@ export function extractStructuredClaims(source, sections = []) {
 }
 
 function claimsFromVideoInsights(source, insights = []) {
-  return Object.freeze(insights.map(insight => {
+  return Object.freeze(insights.filter(transferableVideoInsight).map(insight => {
     const text = normalizeWhitespace(`${insight.contextExcerpt} ${insight.suggestedWording}`);
     const tokens = conceptTokens(text);
     const entities = unique([...(insight.entities || []), ...entityMatches(text)]);
@@ -1190,6 +1227,7 @@ function claimsFromVideoInsights(source, insights = []) {
       privateExcerpt: insight.contextExcerpt,
       suggestedWording: insight.suggestedWording,
       whyItMatters: insight.whyItMatters,
+      selectionReason: insight.selectionReason || selectionReasonForInsight(insight),
       confidence: insight.confidence,
       extractionKind: "semantic-video-analysis"
     });
@@ -1234,7 +1272,15 @@ function conceptIdentityForClaim(claim = {}) {
 }
 
 export function buildKnowledgeConsensus(claimDocuments = []) {
-  const claims = claimDocuments.flatMap(document => document.claims || []);
+  const claims = claimDocuments
+    .flatMap(document => document.claims || [])
+    .filter(claim => transferableVideoInsight({
+      contextExcerpt: claim.privateExcerpt,
+      suggestedWording: claim.suggestedWording || claim.privateExcerpt,
+      type: claim.type,
+      topic: claim.topic,
+      entities: claim.entities
+    }));
   const clusters = [];
   const exactConcepts = new Map();
   const tokenBuckets = new Map();
@@ -1326,6 +1372,8 @@ export function buildKnowledgeConsensus(claimDocuments = []) {
       entities: Object.freeze(unique(cluster.claims.flatMap(claim => claim.entities))),
       suggestedWording: cluster.claims.find(claim => claim.suggestedWording)?.suggestedWording || null,
       whyItMatters: cluster.claims.find(claim => claim.whyItMatters)?.whyItMatters || null,
+      selectionReason: cluster.claims.find(claim => claim.selectionReason)?.selectionReason
+        || selectionReasonForInsight(cluster.claims[0]),
       claimIds: Object.freeze(cluster.claims.map(claim => claim.id)),
       evidence: Object.freeze(cluster.claims.map(claim => Object.freeze({
         sourceId: claim.sourceId,
@@ -1424,6 +1472,7 @@ function proposalFromConcept(concept, createdAt, libraryComparison) {
     recommendation,
     suggestedWording: concept.suggestedWording || null,
     whyItMatters: concept.whyItMatters || null,
+    selectionReason: concept.selectionReason || null,
     rankedCoachWording: null,
     approvalStatus: "pending-owner-approval",
     createdAt
@@ -1578,6 +1627,7 @@ function proposalAnalysisFingerprint(proposal = {}) {
     recommendation: proposal.recommendation || "",
     suggestedWording: proposal.suggestedWording || "",
     whyItMatters: proposal.whyItMatters || "",
+    selectionReason: proposal.selectionReason || "",
     orphanedPublication: proposal.orphanedPublication === true
   }));
 }
@@ -2524,7 +2574,35 @@ function words(value = "", max = 28) {
   return normalizeWhitespace(value).split(" ").filter(Boolean).slice(0, max).join(" ");
 }
 
-function proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById) {
+function surroundingTranscriptExcerpts(claim, transcript = {}) {
+  const cues = normalizeValorantTranscript(transcript.cues || []);
+  if (!cues.length) return Object.freeze([]);
+  const startMs = Math.max(0, Number(claim.startSeconds || 0) * 1_000);
+  const endMs = Math.max(startMs, Number(claim.endSeconds || claim.startSeconds || 0) * 1_000);
+  const before = cues
+    .filter(cue => {
+      const cueEnd = Number(cue.startMs || 0) + Math.max(1_000, Number(cue.durationMs || 0));
+      return cueEnd <= startMs && cueEnd >= startMs - 18_000;
+    })
+    .slice(-3);
+  const after = cues
+    .filter(cue => Number(cue.startMs || 0) >= endMs && Number(cue.startMs || 0) <= endMs + 18_000)
+    .slice(0, 3);
+  const excerpt = (label, selected) => {
+    if (!selected.length) return null;
+    return Object.freeze({
+      label,
+      startSeconds: Number(selected[0].startMs || 0) / 1_000,
+      text: words(selected.map(cue => cue.text).join(" "), 42)
+    });
+  };
+  return Object.freeze([
+    excerpt("Lead-in", before),
+    excerpt("Follow-through", after)
+  ].filter(item => item?.text));
+}
+
+function proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById, transcriptBySource) {
   const claims = (proposal.claimIds || [])
     .map(id => claimById.get(id))
     .filter(Boolean);
@@ -2547,15 +2625,30 @@ function proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById) 
       contextExcerpt: words(claim.privateExcerpt, 28),
       keywords: Object.freeze((claim.tokens || []).slice(0, 8)),
       whyItMatters: normalizeWhitespace(claim.whyItMatters),
+      selectionReason: normalizeWhitespace(
+        claim.selectionReason
+        || proposal.selectionReason
+        || selectionReasonForInsight(claim)
+      ),
+      supportingExcerpts: surroundingTranscriptExcerpts(claim, transcriptBySource.get(claim.sourceId)),
       confidence: claim.confidence || "",
       extractionKind: claim.extractionKind || "caption-rule-analysis"
     });
   }));
 }
 
+function proposalBucketForStatus(status = "") {
+  if (status === "rejected") return "rejected";
+  if (status === "published" || status === "approved") return "approved";
+  return "review";
+}
+
 export async function getKnowledgeOwnerDashboard(kv, options = {}) {
   const proposalOffset = Math.max(0, Number(options.proposalOffset || 0));
   const proposalLimit = Math.max(1, Math.min(100, Number(options.proposalLimit || 50)));
+  const proposalBucket = ["review", "approved", "rejected"].includes(options.proposalBucket)
+    ? options.proposalBucket
+    : "review";
   const sourceOffset = Math.max(0, Number(options.sourceOffset || 0));
   const sourceLimit = Math.max(1, Math.min(200, Number(options.sourceLimit || 100)));
   const [registry, review, published, lastRun] = await Promise.all([
@@ -2565,11 +2658,18 @@ export async function getKnowledgeOwnerDashboard(kv, options = {}) {
     kv.get(LAST_RUN_KEY, "json")
   ]);
   const index = reviewProposalIndex(review);
+  const bucketCounts = index.reduce((counts, item) => {
+    counts[proposalBucketForStatus(item.approvalStatus)] += 1;
+    return counts;
+  }, { review: 0, approved: 0, rejected: 0 });
+  const bucketIndex = index.filter(item => proposalBucketForStatus(item.approvalStatus) === proposalBucket);
   let proposals = [];
   if (Array.isArray(review?.proposals)) {
-    proposals = review.proposals.slice(proposalOffset, proposalOffset + proposalLimit);
+    proposals = review.proposals
+      .filter(proposal => proposalBucketForStatus(proposal.approvalStatus) === proposalBucket)
+      .slice(proposalOffset, proposalOffset + proposalLimit);
   } else {
-    proposals = (await Promise.all(index
+    proposals = (await Promise.all(bucketIndex
       .slice(proposalOffset, proposalOffset + proposalLimit)
       .map(item => kv.get(`${PROPOSAL_PREFIX}${item.id}`, "json"))))
       .filter(Boolean);
@@ -2577,11 +2677,14 @@ export async function getKnowledgeOwnerDashboard(kv, options = {}) {
   const evidenceSourceIds = unique(proposals.flatMap(proposal => (
     (proposal.evidence || []).map(item => item.sourceId)
   )));
-  const claimDocuments = (await Promise.all(evidenceSourceIds.map(sourceId => (
-    kv.get(`${PRIVATE_CLAIMS_PREFIX}${sourceId}`, "json")
-  )))).filter(Boolean);
+  const [claimDocuments, transcriptDocuments] = await Promise.all([
+    Promise.all(evidenceSourceIds.map(sourceId => kv.get(`${PRIVATE_CLAIMS_PREFIX}${sourceId}`, "json"))),
+    Promise.all(evidenceSourceIds.map(sourceId => kv.get(`${PRIVATE_TRANSCRIPT_PREFIX}${sourceId}`, "json")))
+  ]);
+  const availableClaimDocuments = claimDocuments.filter(Boolean);
   const sourceById = new Map(registry.map(source => [source.id, source]));
-  const claims = claimDocuments.flatMap(document => document.claims || []);
+  const transcriptBySource = new Map(transcriptDocuments.filter(Boolean).map(document => [document.sourceId, document]));
+  const claims = availableClaimDocuments.flatMap(document => document.claims || []);
   const claimById = new Map(claims.map(claim => [claim.id, claim]));
   const claimByEvidence = new Map(claims.map(claim => [
     `${claim.sourceId}:${Math.round(Number(claim.startSeconds || 0) * 1_000)}`,
@@ -2629,12 +2732,14 @@ export async function getKnowledgeOwnerDashboard(kv, options = {}) {
       page: Object.freeze({
         offset: proposalOffset,
         limit: proposalLimit,
-        total: index.length,
-        hasMore: proposalOffset + proposalLimit < index.length
+        total: bucketIndex.length,
+        hasMore: proposalOffset + proposalLimit < bucketIndex.length,
+        bucket: proposalBucket,
+        bucketCounts: Object.freeze(bucketCounts)
       }),
       proposals: Object.freeze(proposals.map(proposal => Object.freeze({
         ...proposal,
-        contextNotes: proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById)
+        contextNotes: proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById, transcriptBySource)
       })))
     }) : null,
     published

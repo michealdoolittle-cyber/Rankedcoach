@@ -98,6 +98,47 @@ test("knowledge API errors use authentication and validation status codes", asyn
   assert.equal(knowledgeApiErrorResponse(new Error("A valid category is required.")).status, 400);
 });
 
+test("owner review API paginates the selected decision bin", async () => {
+  const proposalIndex = [
+    { id: "proposal-review", approvalStatus: "pending-owner-approval" },
+    { id: "proposal-approved", approvalStatus: "published" },
+    { id: "proposal-rejected", approvalStatus: "rejected" }
+  ];
+  const kv = new MemoryKv({
+    "knowledge:review:latest": JSON.stringify({
+      id: "review-bins",
+      createdAt: "2026-07-24T08:00:00.000Z",
+      status: "review-required",
+      summary: {},
+      proposalIndex
+    }),
+    "knowledge:proposal:proposal-review": JSON.stringify({ ...proposalIndex[0], evidence: [] }),
+    "knowledge:proposal:proposal-approved": JSON.stringify({ ...proposalIndex[1], evidence: [] }),
+    "knowledge:proposal:proposal-rejected": JSON.stringify({ ...proposalIndex[2], evidence: [] })
+  });
+  const request = new Request("https://www.rankedcoach.gg/api/knowledge/review?proposalBucket=rejected", {
+    headers: {
+      Authorization: "Bearer owner-token",
+      Origin: "https://www.rankedcoach.gg"
+    }
+  });
+  const response = await handleKnowledgeOwnerRequest(request, {
+    CONTENT_AUTOMATION: kv
+  }, {
+    fetchImpl: async () => Response.json({
+      id: "owner-id",
+      email: "owner@example.com",
+      app_metadata: { role: "owner" },
+      user_metadata: { username: "Michael" }
+    })
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(body.review.proposals.map(item => item.id), ["proposal-rejected"]);
+  assert.deepEqual(body.review.page.bucketCounts, { review: 1, approved: 1, rejected: 1 });
+  assert.equal(body.review.page.bucket, "rejected");
+});
+
 test("owner processing continues from retained storage when Playlist refresh fails", async () => {
   const kv = new MemoryKv();
   const request = new Request("https://www.rankedcoach.gg/api/knowledge/run", {

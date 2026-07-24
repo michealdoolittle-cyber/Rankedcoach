@@ -26,10 +26,13 @@ The owner account now has an **Account & Support → Research** tab. It:
 1. shows the registered Playlist research inventory and transcript status;
 2. accepts VTT, SRT, or `MM:SS` timestamped transcript imports;
 3. processes imported text immediately into private claims and a transcript-free review;
-4. shows evidence timestamps, relationships, and pending proposals without showing transcript excerpts;
+4. shows the selected private transcript passage, its lead-in and follow-through, the extraction rationale, evidence timestamps, and proposal relationships;
 5. requires original RankedCoach wording plus an explicit originality confirmation;
 6. requires a second, separate Publish action and a map, agent, weapon, or general Library target; and
-7. can remove a published update without deleting its private research history.
+7. moves published and rejected decisions out of the active queue into separate Approved and Rejected bins; and
+8. can remove a published update without deleting its private research history.
+
+The extractor selects transferable player behavior and preparation choices: setups, decisions, timing, spacing, utility sequences, positioning, practice, settings, adaptations, and punishments. Esports standings, season form, roster narratives, qualification, tournament placement, map or series scores, and general commentary about how a team is performing are rejected unless the same passage explains the repeatable action responsible for the outcome. Each proposal shows one exact selected passage plus nearby lead-in/follow-through context; independently corroborating sources appear as additional evidence cards.
 
 Normal accounts never receive the Research tab or private review API. The Worker verifies the Supabase access token and then requires an `owner`/`admin` app role or the configured `KNOWLEDGE_OWNER_EMAILS` allowlist.
 

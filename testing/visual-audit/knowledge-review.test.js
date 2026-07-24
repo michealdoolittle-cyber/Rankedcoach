@@ -36,6 +36,7 @@ function proposal(id, overrides = {}) {
     approvalStatus: "pending-owner-approval",
     suggestedWording: "Pair the first Showers utility with a teammate who can immediately trade the space you create.",
     whyItMatters: "Coordinated utility turns early space into a repeatable site-entry option.",
+    selectionReason: "This passage identifies a repeatable paired-utility decision and explains how the team converts the created space.",
     evidence: [{
       sourceId: "youtube-source-one",
       startSeconds: 72,
@@ -53,6 +54,19 @@ function proposal(id, overrides = {}) {
       contextExcerpt: "Use the first Showers utility with your teammate ready to trade so the space becomes useful instead of isolated pressure.",
       keywords: ["Showers", "utility", "trade"],
       whyItMatters: "The first utility matters only when the team can convert its space.",
+      selectionReason: "This passage identifies a repeatable paired-utility decision and explains how the team converts the created space.",
+      supportingExcerpts: [
+        {
+          label: "Lead-in",
+          startSeconds: 65,
+          text: "The team first establishes Showers pressure without sending the entry player through the choke alone."
+        },
+        {
+          label: "Follow-through",
+          startSeconds: 84,
+          text: "Once the utility lands, the second player stays close enough to trade and retain the space."
+        }
+      ],
       confidence: "high",
       extractionKind: "semantic-video-analysis"
     }],
@@ -191,9 +205,21 @@ function startServer() {
         assert.equal(request.headers.authorization, "Bearer owner-browser-token");
         const proposalOffset = Math.max(0, Number(requestUrl.searchParams.get("proposalOffset") || 0));
         const proposalLimit = Math.max(1, Number(requestUrl.searchParams.get("proposalLimit") || 50));
+        const proposalBucket = requestUrl.searchParams.get("proposalBucket") || "review";
         const sourceOffset = Math.max(0, Number(requestUrl.searchParams.get("sourceOffset") || 0));
         const sourceLimit = Math.max(1, Number(requestUrl.searchParams.get("sourceLimit") || 100));
-        reviewRequests.push({ proposalOffset, proposalLimit, sourceOffset, sourceLimit });
+        const bucketForStatus = status => {
+          if (status === "rejected") return "rejected";
+          if (status === "published" || status === "approved") return "approved";
+          return "review";
+        };
+        const bucketCounts = state.review.proposals.reduce((counts, item) => {
+          counts[bucketForStatus(item.approvalStatus)] += 1;
+          return counts;
+        }, { review: 0, approved: 0, rejected: 0 });
+        const bucketProposals = state.review.proposals
+          .filter(item => bucketForStatus(item.approvalStatus) === proposalBucket);
+        reviewRequests.push({ proposalBucket, proposalOffset, proposalLimit, sourceOffset, sourceLimit });
         return json(response, {
           sourceSummary: {
             total: state.sources.length,
@@ -213,10 +239,12 @@ function startServer() {
             page: {
               offset: proposalOffset,
               limit: proposalLimit,
-              total: state.review.proposals.length,
-              hasMore: proposalOffset + proposalLimit < state.review.proposals.length
+              total: bucketProposals.length,
+              hasMore: proposalOffset + proposalLimit < bucketProposals.length,
+              bucket: proposalBucket,
+              bucketCounts
             },
-            proposals: state.review.proposals.slice(proposalOffset, proposalOffset + proposalLimit)
+            proposals: bucketProposals.slice(proposalOffset, proposalOffset + proposalLimit)
           },
           published: state.published
         });
@@ -419,7 +447,15 @@ function assertScrollPreserved(before, after, label) {
   }
 }
 
-async function runViewport(browser, actions, reviewRequests, options) {
+async function runViewport(browser, actions, reviewRequests, state, options) {
+  for (const item of state.review.proposals) {
+    item.approvalStatus = "pending-owner-approval";
+    delete item.rankedCoachWording;
+    delete item.rejectionReason;
+    delete item.publishedCategory;
+    delete item.publishedEntity;
+  }
+  state.published = { updatedAt: null, items: [] };
   const page = await browser.newPage({ viewport: options.viewport });
   const errors = [];
   page.on("console", message => {
@@ -445,8 +481,13 @@ async function runViewport(browser, actions, reviewRequests, options) {
   assert.match(await page.locator("#knowledgeResearchStatus").textContent(), /Private review review-browser/);
   assert.equal(await page.locator(".knowledge-research-summary > div").count(), 6);
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 50);
+  assert.equal(await page.locator(".knowledge-review-bins button").count(), 3);
+  assert.equal(await page.locator('[data-knowledge-bucket="review"]').getAttribute("aria-pressed"), "true");
   assert.equal(await page.locator(".knowledge-source-queue article").count(), 100);
   assert.equal(await page.locator(".knowledge-proposal-card").first().locator(".knowledge-context-notes article").count(), 1);
+  assert.equal(await page.locator(".knowledge-proposal-card").first().locator(":scope > p").count(), 0);
+  assert.equal(await page.locator(".knowledge-proposal-card").first().locator(".knowledge-supporting-context blockquote").count(), 2);
+  assert.match(await page.locator(".knowledge-proposal-card").first().locator(".knowledge-selection-rationale").textContent(), /repeatable paired-utility decision/i);
   assert.match(await page.locator(".knowledge-proposal-card").first().locator("mark").allTextContents().then(values => values.join(" ")), /Showers|utility/i);
   assert.equal(await page.locator(".knowledge-proposal-card").first().locator(".knowledge-context-note-head a").textContent(), "1:12");
   assert.equal(
@@ -501,6 +542,7 @@ async function runViewport(browser, actions, reviewRequests, options) {
   await page.waitForFunction(() => document.querySelectorAll(".knowledge-source-queue article").length === 101);
   assert.equal(await sourceQueue.getAttribute("open"), "", "Source disclosure closed after loading another page.");
   assert.deepEqual(reviewRequests[sourceRequestCount], {
+    proposalBucket: "review",
     proposalOffset: 0,
     proposalLimit: 50,
     sourceOffset: 100,
@@ -515,6 +557,7 @@ async function runViewport(browser, actions, reviewRequests, options) {
   await page.click("[data-knowledge-load-proposals]");
   await page.waitForFunction(() => document.querySelectorAll(".knowledge-proposal-card").length === 51);
   assert.deepEqual(reviewRequests[proposalRequestCount], {
+    proposalBucket: "review",
     proposalOffset: 50,
     proposalLimit: 50,
     sourceOffset: 0,
@@ -545,7 +588,10 @@ async function runViewport(browser, actions, reviewRequests, options) {
       };
     });
     assert.ok(mobileEvidenceGeometry.context?.top >= 0, JSON.stringify(mobileEvidenceGeometry));
-    assert.ok(mobileEvidenceGeometry.actions?.bottom <= mobileEvidenceGeometry.viewportHeight, JSON.stringify(mobileEvidenceGeometry));
+    assert.ok(mobileEvidenceGeometry.context?.bottom <= mobileEvidenceGeometry.viewportHeight, JSON.stringify(mobileEvidenceGeometry));
+    await first.locator(".knowledge-proposal-actions").scrollIntoViewIfNeeded();
+    const actionBottom = await first.locator(".knowledge-proposal-actions").evaluate(actions => actions.getBoundingClientRect().bottom);
+    assert.ok(actionBottom <= mobileEvidenceGeometry.viewportHeight, JSON.stringify({ actionBottom, viewportHeight: mobileEvidenceGeometry.viewportHeight }));
     await page.screenshot({ path: options.screenshot, fullPage: false });
   } else {
     await first.scrollIntoViewIfNeeded();
@@ -572,13 +618,14 @@ async function runViewport(browser, actions, reviewRequests, options) {
   await drafted.locator("[data-knowledge-original]").check();
   await drafted.locator("[data-knowledge-category]").selectOption("map");
   await drafted.locator("[data-knowledge-entity]").fill("Bind");
-  const beforePublishScroll = await researchScrollState(page);
   await drafted.locator('[data-knowledge-action="publish"]').evaluate(button => button.click());
+  await page.locator('[data-knowledge-proposal="proposal-late"]').waitFor({ state: "detached" });
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), 50);
+  assert.match(await page.locator('[data-knowledge-bucket="approved"]').textContent(), /1/);
+  await page.locator('[data-knowledge-bucket="approved"]').click();
   await page.locator('[data-knowledge-proposal="proposal-late"] .knowledge-review-state.is-published').waitFor({ state: "visible" });
-  assertScrollPreserved(beforePublishScroll, await researchScrollState(page), "Publishing");
   assert.equal(await page.locator('[data-knowledge-proposal="proposal-late"] [data-knowledge-action="unpublish"]').isVisible(), true);
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 51);
-  assert.equal(await page.locator(".knowledge-source-queue article").count(), 101);
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
   assert.ok(actions.some(action => (
     action.path === "/api/knowledge/publish"
     && action.body.proposalId === "proposal-late"
@@ -587,25 +634,25 @@ async function runViewport(browser, actions, reviewRequests, options) {
     && action.body.confirmOriginalWording === true
   )));
 
-  const beforeRejectScroll = await researchScrollState(page);
+  await page.locator('[data-knowledge-bucket="review"]').click();
+  await page.locator('[data-knowledge-proposal="proposal-two"]').waitFor({ state: "visible" });
   await page.locator('[data-knowledge-proposal="proposal-two"] [data-knowledge-action="reject"]').evaluate(button => button.click());
+  await page.locator('[data-knowledge-proposal="proposal-two"]').waitFor({ state: "detached" });
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), 49);
+  await page.locator('[data-knowledge-bucket="rejected"]').click();
   await page.locator('[data-knowledge-proposal="proposal-two"] .knowledge-review-state.is-rejected').waitFor({ state: "visible" });
-  assertScrollPreserved(beforeRejectScroll, await researchScrollState(page), "Rejecting");
   assert.match(
     await page.locator('[data-knowledge-proposal="proposal-two"] .knowledge-rejection-reason').textContent(),
     /Owner rejected/
   );
   assert.ok(actions.some(action => action.path === "/api/knowledge/reject" && action.body.proposalId === "proposal-two"));
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 51);
-  assert.equal(await page.locator(".knowledge-source-queue article").count(), 101);
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
 
-  const beforeUnpublishScroll = await researchScrollState(page);
+  await page.locator('[data-knowledge-bucket="approved"]').click();
+  await page.locator('[data-knowledge-proposal="proposal-late"]').waitFor({ state: "visible" });
   await page.locator('[data-knowledge-proposal="proposal-late"] [data-knowledge-action="unpublish"]').evaluate(button => button.click());
   await page.locator('[data-knowledge-proposal="proposal-late"] .knowledge-review-state.is-approved').waitFor({ state: "visible" });
-  assertScrollPreserved(beforeUnpublishScroll, await researchScrollState(page), "Removing published guidance");
-  assert.equal(await page.locator(".knowledge-proposal-card").count(), 51);
-  assert.equal(await page.locator(".knowledge-source-queue article").count(), 101);
-  assert.equal(await sourceQueue.getAttribute("open"), "");
+  assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
   assert.ok(actions.some(action => action.path === "/api/knowledge/unpublish" && action.body.proposalId === "proposal-late"));
 
   await assertNoOverflow(page, options.mobile);
@@ -622,13 +669,13 @@ async function run() {
   const { server, actions, reviewRequests, state } = await startServer();
   const browser = await chromium.launch();
   try {
-    await runViewport(browser, actions, reviewRequests, {
+    await runViewport(browser, actions, reviewRequests, state, {
       viewport: { width: 1440, height: 1000 },
       mobile: false,
       screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-desktop.png")
     });
     Object.assign(state, dashboardFixture());
-    await runViewport(browser, actions, reviewRequests, {
+    await runViewport(browser, actions, reviewRequests, state, {
       viewport: { width: 390, height: 844 },
       mobile: true,
       screenshot: path.join(os.tmpdir(), "rankedcoach-knowledge-review-mobile.png")

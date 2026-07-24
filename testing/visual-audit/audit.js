@@ -26,6 +26,10 @@ function startServer() {
         res.writeHead(200, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ patchLabel: "13.01", patchTag: "", newThisWeek: 0, items: [] }));
       }
+      if (u === "/api/content/knowledge") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ updatedAt: null, items: [] }));
+      }
       if (u === "/api/content/skin-media") {
         res.writeHead(200, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ matches: {} }));

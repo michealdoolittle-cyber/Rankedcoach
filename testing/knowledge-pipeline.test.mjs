@@ -247,6 +247,7 @@ test("official Gemini YouTube analysis returns structured timestamped review ins
               contextExcerpt: "Hold the trade spacing before the team crosses the first Bind choke.",
               suggestedWording: "Keep a teammate in trade range before committing through Bind's first choke.",
               whyItMatters: "The spacing preserves the follow-up after first contact.",
+              selectionReason: "This passage explains a repeatable spacing decision and its trade consequence.",
               type: "coaching",
               topic: "teamplay",
               entities: ["Bind"],
@@ -289,6 +290,7 @@ test("configured private transcript analyzer converts captions into semantic rev
         contextExcerpt: "Hold trade spacing before crossing into Bind A.",
         suggestedWording: "Keep a teammate in trade range before committing through Bind A.",
         whyItMatters: "The follow-up protects the site entry after first contact.",
+        selectionReason: "This passage links a repeatable spacing choice to preserving the entry trade.",
         type: "coaching",
         topic: "teamplay",
         entities: ["Bind"],
@@ -299,6 +301,63 @@ test("configured private transcript analyzer converts captions into semantic rev
   assert.equal(analysis.status, "analyzed");
   assert.equal(analysis.model, "gpt-test");
   assert.equal(analysis.insights[0].startSeconds, 12);
+  assert.match(analysis.insights[0].selectionReason, /repeatable spacing/i);
+});
+
+test("esports analysis keeps transferable tactics and rejects season-result commentary", async () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Pro Bind analysis",
+    channel: "Thinking Man's Valorant",
+    sourceKind: "strategy-guide"
+  });
+  const cues = [
+    {
+      startMs: 12_000,
+      durationMs: 5_000,
+      text: "They won the series and qualified after a strong season in the standings."
+    },
+    {
+      startMs: 22_000,
+      durationMs: 5_000,
+      text: "They use the Viper wall to split the site before the entry swings through."
+    }
+  ];
+  const analysis = await analyzeKnowledgeTranscript(source, cues, {
+    KNOWLEDGE_PIPELINE_TOKEN: "shared-test-token",
+    KNOWLEDGE_ANALYSIS_ENDPOINT: "https://analysis.example.test"
+  }, async () => Response.json({
+    model: "gpt-test",
+    insights: [
+      {
+        startSeconds: 12,
+        endSeconds: 17,
+        contextExcerpt: cues[0].text,
+        suggestedWording: "Treat qualification as proof that the team is currently strong.",
+        whyItMatters: "The season result shows how the team is performing.",
+        selectionReason: "The team qualified after a strong season.",
+        type: "statistical",
+        topic: "general",
+        entities: [],
+        confidence: "low"
+      },
+      {
+        startSeconds: 22,
+        endSeconds: 27,
+        contextExcerpt: cues[1].text,
+        suggestedWording: "Use Viper's wall to divide the site before your entry player commits.",
+        whyItMatters: "The wall reduces the number of angles the entry must fight at once.",
+        selectionReason: "This passage identifies a repeatable utility sequence and the space it creates.",
+        type: "coaching",
+        topic: "agent",
+        entities: ["Viper", "Bind"],
+        confidence: "high"
+      }
+    ]
+  }));
+  assert.equal(analysis.insights.length, 1);
+  assert.match(analysis.insights[0].suggestedWording, /Viper's wall/);
 });
 
 test("lowercase unpunctuated captions create cue-anchored notes", () => {
@@ -662,8 +721,11 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   const ownerDashboard = await getKnowledgeOwnerDashboard(kv);
   assert.equal(ownerDashboard.sources[0].transcriptStatus, "acquired-private");
   assert.ok(ownerDashboard.review.proposals.length >= 2);
+  assert.ok(ownerDashboard.review.page.bucketCounts.review >= 2);
   assert.match(JSON.stringify(ownerDashboard), /hold the trade spacing before crossing/i);
   assert.ok(ownerDashboard.review.proposals.every(item => item.contextNotes.length >= 1));
+  assert.ok(ownerDashboard.review.proposals.some(item => item.contextNotes.some(note => note.supportingExcerpts.length >= 1)));
+  assert.ok(ownerDashboard.review.proposals.every(item => item.contextNotes.every(note => note.selectionReason)));
   const proposal = ownerDashboard.review.proposals.find(item => item.type === "coaching");
   await assert.rejects(
     publishApprovedKnowledge(kv, { proposalId: proposal.id, owner: "Michael", category: "map", entity: "Bind" }),
@@ -675,8 +737,9 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
     rankedCoachWording: "Keep one teammate close enough to trade before the team commits through Bind’s first choke.",
     confirmOriginalWording: true
   }, new Date("2026-07-24T00:02:00.000Z"));
-  const approvedDashboard = await getKnowledgeOwnerDashboard(kv);
+  const approvedDashboard = await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" });
   assert.equal(approvedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "approved");
+  assert.equal(approvedDashboard.review.page.bucketCounts.approved, 1);
   const published = await publishApprovedKnowledge(kv, {
     proposalId: proposal.id,
     owner: "Michael",
@@ -685,7 +748,7 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   }, new Date("2026-07-24T00:03:00.000Z"));
   assert.equal(published.status, "published");
   assert.equal(published.entity, "Bind");
-  const publishedDashboard = await getKnowledgeOwnerDashboard(kv);
+  const publishedDashboard = await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" });
   assert.equal(publishedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "published");
   const publicIndex = await getPublishedKnowledge(kv);
   assert.equal(publicIndex.items.length, 1);
@@ -717,7 +780,7 @@ test("draft and reject decisions persist without publishing", async () => {
     owner: "Michael",
     reason: "Too broad for the current Library."
   });
-  const rejected = (await getKnowledgeOwnerDashboard(kv)).review.proposals[0];
+  const rejected = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "rejected" })).review.proposals[0];
   assert.equal(rejected.approvalStatus, "rejected");
   assert.equal((await getPublishedKnowledge(kv)).items.length, 0);
 });
@@ -1062,7 +1125,7 @@ test("removed evidence updates proposals and invalid publications return to owne
     notify: false,
     now: new Date("2026-07-24T07:05:00.000Z")
   });
-  const held = (await getKnowledgeOwnerDashboard(kv)).review.proposals
+  const held = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" })).review.proposals
     .find(item => item.type === "statistical");
   assert.equal(held.evidence.length, 1);
   assert.equal(held.state, "single-source");
@@ -1081,7 +1144,7 @@ test("removed evidence updates proposals and invalid publications return to owne
     notify: false,
     now: new Date("2026-07-24T07:10:00.000Z")
   });
-  const orphan = (await getKnowledgeOwnerDashboard(kv)).review.proposals
+  const orphan = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" })).review.proposals
     .find(item => item.type === "statistical");
   assert.equal(orphan.orphanedPublication, true);
   assert.equal(orphan.state, "evidence-removed");

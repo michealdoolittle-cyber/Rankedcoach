@@ -87,6 +87,7 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
     return json(await getKnowledgeOwnerDashboard(kv, {
       proposalOffset: url.searchParams.get("proposalOffset"),
       proposalLimit: url.searchParams.get("proposalLimit"),
+      proposalBucket: url.searchParams.get("proposalBucket"),
       sourceOffset: url.searchParams.get("sourceOffset"),
       sourceLimit: url.searchParams.get("sourceLimit")
     }));

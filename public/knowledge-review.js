@@ -2,6 +2,7 @@ const OWNER_EMAILS = new Set(["michealdoolittle@gmail.com"]);
 const OWNER_ROLES = new Set(["owner", "admin"]);
 let dashboard = null;
 let loading = false;
+let activeProposalBucket = "review";
 
 function escapeHtml(value = "") {
   return String(value)
@@ -90,6 +91,20 @@ function contextNotesMarkup(proposal = {}) {
             <a href="${escapeHtml(note.url)}" target="_blank" rel="noopener noreferrer">${formatTimestamp(note.startSeconds)}</a>
           </div>
           <blockquote>${highlightedContext(note.contextExcerpt, note.keywords)}</blockquote>
+          ${(note.supportingExcerpts || []).length ? `
+            <div class="knowledge-supporting-context">
+              ${note.supportingExcerpts.map(excerpt => `
+                <div>
+                  <span>${escapeHtml(excerpt.label)} · ${formatTimestamp(excerpt.startSeconds)}</span>
+                  <blockquote>${escapeHtml(excerpt.text)}</blockquote>
+                </div>
+              `).join("")}
+            </div>
+          ` : ""}
+          <div class="knowledge-selection-rationale">
+            <strong>Why this passage was selected</strong>
+            <span>${escapeHtml(note.selectionReason || proposal.selectionReason || "It contains a repeatable in-round decision with a clear coaching application.")}</span>
+          </div>
           ${note.whyItMatters ? `<p><b>Why it matters:</b> ${escapeHtml(note.whyItMatters)}</p>` : ""}
         </article>
       `).join("")}
@@ -104,6 +119,12 @@ function inferCategory(proposal = {}) {
   if (maps.has(entity)) return "map";
   if (weapons.has(entity)) return "weapon";
   return entity ? "agent" : "general";
+}
+
+function proposalBucketForStatus(status = "") {
+  if (status === "rejected") return "rejected";
+  if (status === "published" || status === "approved") return "approved";
+  return "review";
 }
 
 function renderSummary() {
@@ -144,12 +165,35 @@ function renderSummary() {
   `;
 }
 
+function renderProposalBins() {
+  const root = document.getElementById("knowledgeReviewBins");
+  if (!root) return;
+  const counts = dashboard?.review?.page?.bucketCounts || {};
+  const labels = {
+    review: "To Review",
+    approved: "Approved",
+    rejected: "Rejected"
+  };
+  root.innerHTML = Object.entries(labels).map(([bucket, label]) => `
+    <button class="pd-item${activeProposalBucket === bucket ? " is-active" : ""}" type="button" data-knowledge-bucket="${bucket}" aria-pressed="${activeProposalBucket === bucket}">
+      <span>${label}</span>
+      <b>${Number(counts[bucket] || 0)}</b>
+    </button>
+  `).join("");
+}
+
 function renderProposals() {
   const root = document.getElementById("knowledgeProposalList");
   if (!root) return;
-  const proposals = dashboard?.review?.proposals || [];
+  const proposals = (dashboard?.review?.proposals || [])
+    .filter(proposal => proposalBucketForStatus(proposal.approvalStatus) === activeProposalBucket);
   if (!proposals.length) {
-    root.innerHTML = `<div class="knowledge-empty-state">No transcript-derived proposals yet. Process the Playlist queue now, or use manual recovery for a video without accessible captions.</div>`;
+    const messages = {
+      review: "No transcript-derived proposals are waiting for review. Process the Playlist queue now, or use manual recovery for a video without accessible captions.",
+      approved: "No approved insights are in this bin yet.",
+      rejected: "No rejected insights are in this bin yet."
+    };
+    root.innerHTML = `<div class="knowledge-empty-state">${messages[activeProposalBucket]}</div>`;
     return;
   }
   root.innerHTML = proposals.map(proposal => {
@@ -173,7 +217,6 @@ function renderProposals() {
           <span>Confidence: ${escapeHtml((proposal.confidenceBand || "limited").replaceAll("-", " "))}</span>
           <span>Library: ${escapeHtml(libraryRelationship.replaceAll("-", " "))}</span>
         </div>
-        <p>${escapeHtml(publishBlocked ? proposal.recommendation : proposal.whyItMatters || proposal.recommendation || "Review the evidence and write original RankedCoach guidance.")}</p>
         ${(proposal.contradictions || []).length ? `
           <div class="knowledge-conflict-note">
             <strong>Conflict requires resolution</strong>
@@ -259,6 +302,7 @@ function restoreResearchView(view = {}) {
 function render(options = {}) {
   const view = options.preserveView ? captureResearchView() : null;
   renderSummary();
+  renderProposalBins();
   renderProposals();
   const createdAt = dashboard?.review?.createdAt;
   setStatus(createdAt
@@ -287,7 +331,15 @@ function updateLocalProposal(proposalId, patch = {}, publishedRecord = null) {
   const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
   if (!proposal) return false;
   const previousStatus = proposal.approvalStatus || "pending-owner-approval";
+  const previousBucket = proposalBucketForStatus(previousStatus);
   Object.assign(proposal, patch);
+  const nextBucket = proposalBucketForStatus(proposal.approvalStatus);
+  const bucketCounts = dashboard?.review?.page?.bucketCounts;
+  if (bucketCounts && previousBucket !== nextBucket) {
+    bucketCounts[previousBucket] = Math.max(0, Number(bucketCounts[previousBucket] || 0) - 1);
+    bucketCounts[nextBucket] = Number(bucketCounts[nextBucket] || 0) + 1;
+    dashboard.review.page.total = Number(bucketCounts[activeProposalBucket] || 0);
+  }
   updateReviewSummary(previousStatus, proposal.approvalStatus);
   if (!dashboard.published) dashboard.published = { updatedAt: null, items: [] };
   const publishedItems = Array.isArray(dashboard.published.items) ? dashboard.published.items : [];
@@ -314,7 +366,7 @@ async function load(options = {}) {
   loading = true;
   setStatus("Loading the private research queue…");
   try {
-    const next = await request(`/api/knowledge/review?proposalOffset=${proposalOffset}&proposalLimit=50&sourceOffset=${sourceOffset}&sourceLimit=100`);
+    const next = await request(`/api/knowledge/review?proposalBucket=${encodeURIComponent(activeProposalBucket)}&proposalOffset=${proposalOffset}&proposalLimit=50&sourceOffset=${sourceOffset}&sourceLimit=100`);
     if (options.appendProposals && dashboard?.review && next?.review) {
       next.review.proposals = [...(dashboard.review.proposals || []), ...(next.review.proposals || [])];
       next.review.page = {
@@ -488,6 +540,15 @@ document.getElementById("knowledgeProposalList")?.addEventListener("click", even
   if (button) void proposalAction(button);
 });
 document.getElementById("knowledgeResearchPanel")?.addEventListener("click", event => {
+  const bucketButton = event.target.closest("[data-knowledge-bucket]");
+  if (bucketButton) {
+    const bucket = bucketButton.dataset.knowledgeBucket;
+    if (!["review", "approved", "rejected"].includes(bucket) || bucket === activeProposalBucket) return;
+    activeProposalBucket = bucket;
+    loading = false;
+    void load();
+    return;
+  }
   const loadProposalsButton = event.target.closest("[data-knowledge-load-proposals]");
   if (loadProposalsButton) {
     void load({
