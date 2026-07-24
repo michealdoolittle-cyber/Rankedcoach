@@ -18,4 +18,9 @@ test("private transcript analyzer is token-gated and returns structured non-stor
   assert.match(source, /suggestedWording/);
   assert.match(source, /whyItMatters/);
   assert.match(source, /Never invent a number/);
+  assert.match(source, /MAX_REVIEW_EXCERPT_WORDS\s*=\s*120/);
+  assert.match(source, /complete contiguous passage/);
+  assert.match(source, /smallest edit needed/);
+  assert.match(source, /seven consecutive source words/);
+  assert.doesNotMatch(source, /no more than 28 consecutive transcript words/);
 });

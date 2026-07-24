@@ -17,7 +17,7 @@ test("owner research tab is hidden by default and loaded through the governed cl
   ]);
   assert.match(html, /id="accountSupportResearchTab"[^>]+hidden/);
   assert.match(html, /id="knowledgeResearchPanel"[^>]+hidden/);
-  assert.match(html, /knowledge-review\.js\?v=20260724-knowledge-auto-review-03/);
+  assert.match(html, /knowledge-review\.js\?v=[^"]+/);
   assert.match(app, /const tabOrder = \["account", "support", "research"\]/);
   assert.match(app, /RankedCoachKnowledgeReview\?\.syncAccess/);
   assert.match(reviewClient, /app_metadata\?\.role/);

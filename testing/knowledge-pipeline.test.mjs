@@ -379,6 +379,276 @@ test("lowercase unpunctuated captions create cue-anchored notes", () => {
   assert.match(claims[0].evidenceUrl, /t=12s/);
 });
 
+test("fallback claims keep a punctuated same-topic explanation together across normal pauses", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Trade spacing explanation",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cues = [
+    {
+      startMs: 0,
+      durationMs: 1_000,
+      text: "Hold your teammate close while the first utility takes space."
+    },
+    {
+      startMs: 3_000,
+      durationMs: 1_000,
+      text: "Coordinate the next utility so the trade remains available through lane 2 after contact."
+    },
+    {
+      startMs: 6_500,
+      durationMs: 1_000,
+      text: "Use the teammate's follow-up to preserve the trade through the final choke."
+    }
+  ];
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.equal(claims.length, 1);
+  assert.equal(claims[0].privateExcerpt, cues.map(cue => cue.text).join(" "));
+  assert.equal(claims[0].startSeconds, 0);
+  assert.equal(claims[0].endSeconds, 7.5);
+});
+
+test("fallback claims split confirmed topic changes without mixing explanations", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Teamplay and economy guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cues = [
+    { startMs: 0, durationMs: 1_000, text: "Hold the trade with your teammate while the utility lands." },
+    { startMs: 1_500, durationMs: 1_000, text: "Coordinate the teammate follow-up before the team commits." },
+    { startMs: 3_000, durationMs: 1_000, text: "Save your credits when the next full buy matters more." },
+    { startMs: 4_500, durationMs: 1_000, text: "Avoid spending credits on a force buy so the economy can recover together." }
+  ];
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.equal(claims.length, 2);
+  assert.deepEqual(claims.map(claim => claim.topic), ["teamplay", "economy"]);
+  assert.doesNotMatch(claims[0].privateExcerpt, /credits|force buy/i);
+  assert.doesNotMatch(claims[1].privateExcerpt, /teammate follow-up|trade with/i);
+});
+
+test("fallback claims retain general bridges but stop at a genuine long pause", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Connected trade explanation",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const connected = [
+    { startMs: 0, durationMs: 1_000, text: "Hold the trade with your teammate before the first contact." },
+    { startMs: 2_000, durationMs: 1_000, text: "This keeps the plan connected while the next decision develops." },
+    { startMs: 4_000, durationMs: 1_000, text: "Use the teammate follow-up so the trade remains available." }
+  ];
+  const connectedClaims = extractStructuredClaims(source, splitTranscriptIntoSections(connected));
+  assert.equal(connectedClaims.length, 1);
+  assert.match(connectedClaims[0].privateExcerpt, /next decision develops/);
+
+  const separated = [
+    connected[0],
+    {
+      startMs: 5_100,
+      durationMs: 1_000,
+      text: "Use coordinated utility so the support player can follow the final execute."
+    }
+  ];
+  const separatedClaims = extractStructuredClaims(source, splitTranscriptIntoSections(separated));
+  assert.equal(separatedClaims.length, 2);
+});
+
+test("fallback claim segments stay bounded without losing a long same-topic explanation", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Long teamplay explanation",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cueTexts = [
+    "Hold the teammate trade while the first utility establishes safe contact through the opening choke.",
+    "Coordinate the support timing so the second teammate can preserve pressure without becoming isolated.",
+    "Use the next utility with the team ready to trade any defender who contests the shared space.",
+    "Keep teammate spacing connected while the caller confirms which lane the coordinated group will pressure.",
+    "Hold support utility until the teammate reaches cover and can trade the next defensive contact.",
+    "Coordinate the team response so every utility choice has a nearby teammate ready to follow it.",
+    "Use the teammate trade to preserve control while the support player prepares the next utility layer.",
+    "Keep the group connected so the final teammate can trade and continue the coordinated site plan."
+  ];
+  const cues = cueTexts.map((text, index) => ({
+    startMs: index * 1_500,
+    durationMs: 1_000,
+    text
+  }));
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.ok(claims.length >= 2);
+  assert.ok(claims.every(claim => claim.privateExcerpt.length <= 600));
+  for (const cueText of cueTexts) {
+    assert.equal(
+      claims.filter(claim => claim.privateExcerpt.includes(cueText)).length,
+      1
+    );
+  }
+});
+
+test("text-only fallback sections use the same topic-continuity boundaries", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Imported guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const text = [
+    "Hold the teammate trade while the first utility lands.",
+    "Coordinate the team follow-up before the next contact.",
+    "Save your credits when the next full buy is more important.",
+    "Avoid spending credits on the force buy so the economy can recover together."
+  ].join(" ");
+  const claims = extractStructuredClaims(source, [{
+    startMs: 0,
+    endMs: 12_000,
+    text,
+    cues: []
+  }]);
+  assert.equal(claims.length, 2);
+  assert.deepEqual(claims.map(claim => claim.topic), ["teamplay", "economy"]);
+});
+
+test("lowercase unpunctuated captions still split confirmed topic changes", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Unpunctuated strategy guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cues = [
+    { startMs: 0, durationMs: 1_000, text: "hold the trade with your teammate while utility lands" },
+    { startMs: 1_500, durationMs: 1_000, text: "coordinate the teammate follow-up before the team commits" },
+    { startMs: 3_000, durationMs: 1_000, text: "save credits so the next full buy remains available" },
+    { startMs: 4_500, durationMs: 1_000, text: "avoid spending credits while the economy recovers" }
+  ];
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.equal(claims.length, 2);
+  assert.deepEqual(claims.map(claim => claim.topic), ["teamplay", "economy"]);
+});
+
+test("one explicit topic transition can close the previous explanation", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Explicit transition guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cues = [
+    { startMs: 0, durationMs: 1_000, text: "Hold the trade with your teammate while utility lands." },
+    { startMs: 1_500, durationMs: 1_000, text: "Coordinate the teammate follow-up before the team commits." },
+    { startMs: 3_000, durationMs: 1_000, text: "For economy, save credits so the next full buy remains available." }
+  ];
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.equal(claims.length, 2);
+  assert.deepEqual(claims.map(claim => claim.topic), ["teamplay", "economy"]);
+});
+
+test("tactical timing numbers stay inside their same-topic explanation", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Trade timing guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cues = [
+    { startMs: 0, durationMs: 1_000, text: "Hold the trade with your teammate before the first contact." },
+    { startMs: 1_500, durationMs: 1_000, text: "Wait 5 seconds before using the support utility with the team." },
+    { startMs: 3_000, durationMs: 1_000, text: "Then use the teammate trade to complete the coordinated execute." }
+  ];
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.equal(claims.length, 1);
+  assert.equal(claims[0].privateExcerpt, cues.map(cue => cue.text).join(" "));
+  assert.equal(claims[0].type, "coaching");
+});
+
+test("observed samples are statistical without treating damage utility as a metric", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Measured round review",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const sampleClaims = extractStructuredClaims(source, [{
+    startMs: 0,
+    endMs: 4_000,
+    text: "Use this sample carefully: the agent won 12 of 20 rounds, so treat the result as context rather than certainty.",
+    cues: []
+  }]);
+  const utilityClaims = extractStructuredClaims(source, [{
+    startMs: 0,
+    endMs: 4_000,
+    text: "Use damage utility before your teammate swings because the pressure creates a safer trade.",
+    cues: []
+  }]);
+  assert.equal(sampleClaims.length, 1);
+  assert.equal(sampleClaims[0].type, "statistical");
+  assert.equal(utilityClaims.length, 1);
+  assert.equal(utilityClaims[0].type, "coaching");
+});
+
+test("fallback passages are bounded by reviewer words as well as characters", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Dense teamplay guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const shortTokens = Array.from({ length: 204 }, (_value, index) => (
+    `${String.fromCharCode(97 + Math.floor(index / (26 * 26)))}`
+    + `${String.fromCharCode(97 + (Math.floor(index / 26) % 26))}`
+    + `${String.fromCharCode(97 + (index % 26))}`
+  ));
+  const blocks = Array.from({ length: 12 }, (_value, blockIndex) => [
+    "use",
+    "teammate",
+    "trade",
+    ...shortTokens.slice(blockIndex * 17, (blockIndex + 1) * 17)
+  ].join(" "));
+  const text = `${blocks.join(" ")}.`;
+  const claims = extractStructuredClaims(source, [{
+    startMs: 0,
+    endMs: 24_000,
+    text,
+    cues: [{ startMs: 0, durationMs: 24_000, text }]
+  }]);
+  assert.ok(claims.length >= 2);
+  assert.ok(claims.every(claim => claim.privateExcerpt.split(" ").length <= 120));
+  assert.ok(claims.every(claim => claim.privateExcerpt.length <= 600));
+});
+
+test("start-only transcript timestamps preserve genuine pauses", () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Paused teamplay guide",
+    channel: "Coach",
+    sourceKind: "strategy-guide"
+  });
+  const cues = parseTimestampedTranscript(`
+00:00 Hold the trade with your teammate before the first contact.
+00:10 Use coordinated utility so the support player can follow the final execute.
+  `);
+  assert.equal(cues[0].durationMs, 4_000);
+  const claims = extractStructuredClaims(source, splitTranscriptIntoSections(cues));
+  assert.equal(claims.length, 2);
+});
+
 test("configured private transcript provider can supply public-video cues without browser exposure", async () => {
   const source = normalizeKnowledgeSource({
     id: "abcdefghijk",
@@ -531,6 +801,91 @@ test("semantic grounding keeps the closest ordered words from the real cue span"
     analysis.insights[0].contextExcerpt,
     /keep your teammate close enough to trade the first lane before anyone swings alone/i
   );
+});
+
+test("semantic grounding preserves a complete multi-sentence reviewer passage", async () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Complete execute explanation",
+    channel: "Coach",
+    sourceKind: "map-guide"
+  });
+  const passage = [
+    "Before the execute begins, call which teammate will trade the first contact and which utility creates the opening.",
+    "Hold the second player close enough to preserve that trade instead of letting the entry cross the choke alone.",
+    "Once the first defender is cleared, use the remaining utility to protect the follow-up so the team keeps the space it earned.",
+    "That sequence gives every player a clear timing and keeps one isolated duel from ending the entire site hit."
+  ].join(" ");
+  const analysis = await analyzeKnowledgeTranscript(source, [{
+    startMs: 20_000,
+    durationMs: 32_000,
+    text: passage
+  }], {
+    KNOWLEDGE_PIPELINE_TOKEN: "shared-test-token",
+    KNOWLEDGE_ANALYSIS_ENDPOINT: "https://analysis.example.test"
+  }, async () => Response.json({
+    model: "gpt-test",
+    insights: [{
+      startSeconds: 20,
+      endSeconds: 52,
+      contextExcerpt: passage,
+      suggestedWording: "Before the execute, call the first trade and opening utility, then keep the second player connected so the team preserves its earned space.",
+      whyItMatters: "The sequence protects the entry and the follow-up from isolated fights.",
+      selectionReason: "This passage explains the complete trade and utility sequence behind a connected execute.",
+      type: "coaching",
+      topic: "teamplay",
+      entities: [],
+      confidence: "high"
+    }]
+  }));
+  assert.equal(analysis.status, "analyzed");
+  assert.equal(analysis.insights.length, 1);
+  assert.ok(analysis.insights[0].contextExcerpt.split(" ").length > 28);
+  assert.match(analysis.insights[0].contextExcerpt, /ending the entire site hit\.$/i);
+});
+
+test("approximate semantic grounding cannot expand past the reviewer word cap", async () => {
+  const source = normalizeKnowledgeSource({
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Bounded execute explanation",
+    channel: "Coach",
+    sourceKind: "map-guide"
+  });
+  const transcriptWords = [
+    "Use", "trade", "spacing", "with", "your", "teammate", "before", "the", "execute", "because",
+    ...Array.from({ length: 113 }, (_value, index) => `detail${String(index).padStart(3, "0")}`)
+  ];
+  const omitted = new Set([40, 80, 100]);
+  const modelExcerpt = transcriptWords.filter((_word, index) => !omitted.has(index)).join(" ");
+  assert.equal(transcriptWords.length, 123);
+  assert.equal(modelExcerpt.split(" ").length, 120);
+  const analysis = await analyzeKnowledgeTranscript(source, [{
+    startMs: 20_000,
+    durationMs: 32_000,
+    text: transcriptWords.join(" ")
+  }], {
+    KNOWLEDGE_PIPELINE_TOKEN: "shared-test-token",
+    KNOWLEDGE_ANALYSIS_ENDPOINT: "https://analysis.example.test"
+  }, async () => Response.json({
+    model: "gpt-test",
+    insights: [{
+      startSeconds: 20,
+      endSeconds: 52,
+      contextExcerpt: modelExcerpt,
+      suggestedWording: "Keep the teammate connected through the execute so the opening trade remains available.",
+      whyItMatters: "The connected spacing protects the opening fight.",
+      selectionReason: "This passage describes a repeatable execute decision.",
+      type: "coaching",
+      topic: "teamplay",
+      entities: [],
+      confidence: "high"
+    }]
+  }));
+  assert.equal(analysis.status, "analyzed");
+  assert.equal(analysis.insights.length, 1);
+  assert.ok(analysis.insights[0].contextExcerpt.split(" ").length <= 120);
 });
 
 test("semantic grounding rejects the same transcript words in a fabricated order", async () => {
@@ -686,7 +1041,7 @@ test("scheduled knowledge run stores research privately and cannot publish", asy
   const approval = await approveKnowledgeProposal(kv, {
     proposalId: proposal.id,
     owner: "Michael",
-    rankedCoachWording: "Trade the first lane contact so your team keeps map control after the opening duel.",
+    rankedCoachWording: proposal.suggestedWording,
     confirmOriginalWording: true
   }, new Date("2026-07-23T00:05:00.000Z"));
   assert.equal(approval.status, "approved-for-manual-library-promotion");
@@ -754,6 +1109,67 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   assert.equal(publicIndex.items.length, 1);
   assert.match(publicIndex.items[0].wording, /Keep one teammate/);
   assert.doesNotMatch(JSON.stringify(publicIndex), /hold the trade spacing before crossing/i);
+});
+
+test("owner review shows a complete selected passage with wider contiguous context", async () => {
+  const kv = new MemoryKv();
+  const before = Array.from({ length: 6 }, (_value, index) => ({
+    startMs: index * 2_500,
+    durationMs: 1_500,
+    text: `Hold map control through lane ${index + 1} while the site rotation keeps every covered space connected.`
+  }));
+  const selected = [
+    {
+      startMs: 15_000,
+      durationMs: 1_500,
+      text: "Use Astra's ability after the first contact so the defender cannot immediately reclaim the choke."
+    },
+    {
+      startMs: 17_500,
+      durationMs: 1_500,
+      text: "Hold the next ability until Astra's timing confirms the defender is fully committed."
+    },
+    {
+      startMs: 20_000,
+      durationMs: 1_500,
+      text: "Use the final ability after Astra confirms the defender is committed and cannot escape."
+    }
+  ];
+  const after = Array.from({ length: 6 }, (_value, index) => ({
+    startMs: 22_500 + (index * 2_500),
+    durationMs: 1_500,
+    text: `Keep crosshair placement steady through follow-up angle ${index + 1} before the next controlled movement begins.`
+  }));
+  await ingestTimestampedKnowledgeTranscript(kv, {
+    source: {
+      platform: "youtube",
+      url: "https://www.youtube.com/watch?v=contextwide",
+      title: "Astra execute context",
+      publisher: "Coach Context",
+      entities: ["Astra"]
+    },
+    cues: [...before, ...selected, ...after]
+  }, {
+    now: new Date("2026-07-24T01:00:00.000Z"),
+    libraryKnowledgeIndex: []
+  });
+  const dashboard = await getKnowledgeOwnerDashboard(kv);
+  const note = dashboard.review.proposals
+    .flatMap(proposal => proposal.contextNotes)
+    .find(context => /Astra's ability after the first contact/i.test(context.contextExcerpt));
+  assert.ok(note);
+  assert.ok(note.contextExcerpt.split(" ").length > 28, note.contextExcerpt);
+  assert.match(note.contextExcerpt, /defender is committed and cannot escape/i);
+  const leadIn = note.supportingExcerpts.find(excerpt => excerpt.label === "Lead-in");
+  const followThrough = note.supportingExcerpts.find(excerpt => excerpt.label === "Follow-through");
+  assert.ok(leadIn.text.split(" ").length > 42);
+  assert.ok(followThrough.text.split(" ").length > 42);
+  assert.match(leadIn.text, /lane 6/i);
+  assert.match(followThrough.text, /angle 1/i);
+  assert.doesNotMatch(
+    JSON.stringify(await getPublishedKnowledge(kv)),
+    /Astra's ability after the first contact/i
+  );
 });
 
 test("draft and reject decisions persist without publishing", async () => {

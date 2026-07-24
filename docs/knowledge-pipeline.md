@@ -34,6 +34,8 @@ The owner account now has an **Account & Support → Research** tab. It:
 
 The extractor selects transferable player behavior and preparation choices: setups, decisions, timing, spacing, utility sequences, positioning, practice, settings, adaptations, and punishments. Esports standings, season form, roster narratives, qualification, tournament placement, map or series scores, and general commentary about how a team is performing are rejected unless the same passage explains the repeatable action responsible for the outcome. Each proposal shows one exact selected passage plus nearby lead-in/follow-through context; independently corroborating sources appear as additional evidence cards.
 
+Selected passages follow topic continuity instead of ending at the first sentence or ordinary speaking pause. Reviewer evidence remains bounded and private: the selected passage is capped at 120 spoken words, while lead-in and follow-through context are separately capped and stop at a genuine long pause. Suggested RankedCoach wording starts from that source passage and makes the smallest terminology, clarity, and format edits needed instead of independently restructuring the creator's point.
+
 Normal accounts never receive the Research tab or private review API. The Worker verifies the Supabase access token and then requires an `owner`/`admin` app role or the configured `KNOWLEDGE_OWNER_EMAILS` allowlist.
 
 Player-facing Library dossiers request only `/api/content/knowledge`. That route contains owner-approved RankedCoach wording, its Library target, and timestamped evidence URLs. It never contains transcript text, claim excerpts, source weights, formulas, or private consensus internals.

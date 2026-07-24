@@ -27,6 +27,14 @@ const DEFAULT_GEMINI_VIDEO_MODEL = "gemini-3.6-flash";
 const GEMINI_API_REVISION = "2026-05-20";
 const MAX_VIDEO_INSIGHTS = 24;
 const MAX_FALLBACK_CLAIMS_PER_SOURCE = 24;
+const MAX_REVIEW_EXCERPT_WORDS = 120;
+const MAX_SURROUNDING_EXCERPT_WORDS = 96;
+const MAX_SURROUNDING_EXCERPT_CUES = 8;
+const SURROUNDING_EXCERPT_WINDOW_MS = 36_000;
+const CLAIM_TOPIC_PAUSE_MS = 4_000;
+const MAX_CLAIM_SENTENCE_UNIT_CHARACTERS = 320;
+const MAX_CLAIM_SEGMENT_CHARACTERS = 600;
+const MAX_CLAIM_SEGMENT_WORDS = MAX_REVIEW_EXCERPT_WORDS;
 
 const TERMINOLOGY = Object.freeze([
   Object.freeze([/\bgame[\s-]*sense\b/gi, "game sense"]),
@@ -375,7 +383,10 @@ function normalizeGeminiVideoInsights(payload = {}) {
   return Object.freeze((Array.isArray(payload?.insights) ? payload.insights : [])
     .slice(0, MAX_VIDEO_INSIGHTS)
     .map(item => {
-      const contextExcerpt = normalizeWhitespace(item?.contextExcerpt).split(" ").slice(0, 28).join(" ");
+      const contextExcerpt = normalizeWhitespace(item?.contextExcerpt)
+        .split(" ")
+        .slice(0, MAX_REVIEW_EXCERPT_WORDS)
+        .join(" ");
       const suggestedWording = normalizeWhitespace(item?.suggestedWording);
       const selectionReason = normalizeWhitespace(item?.selectionReason);
       const startSeconds = Math.max(0, Number(item?.startSeconds || 0));
@@ -411,7 +422,12 @@ function evidenceTokens(value = "") {
       const normalized = raw
         .toLowerCase()
         .replace(/[^a-z0-9%/]+/g, "");
-      return normalized ? { raw, normalized } : null;
+      return normalized ? {
+        raw,
+        normalized,
+        characterStart: Number(match.index || 0),
+        characterEnd: Number(match.index || 0) + raw.length
+      } : null;
     })
     .filter(Boolean);
 }
@@ -456,10 +472,76 @@ function closestTranscriptTokenSpan(insight, cues = []) {
   ));
   if (transcriptTokens.length < 4) return null;
 
+  const groundedSpan = (start, length) => {
+    if (length > MAX_REVIEW_EXCERPT_WORDS) return null;
+    const matchedTokens = transcriptTokens.slice(start, start + length);
+    const firstToken = matchedTokens[0];
+    const lastToken = matchedTokens[matchedTokens.length - 1];
+    const contextExcerpt = nearbyCues
+      .slice(firstToken.cueIndex, lastToken.cueIndex + 1)
+      .map((cue, offset) => {
+        const cueIndex = firstToken.cueIndex + offset;
+        const cueText = String(cue.text || "");
+        const from = cueIndex === firstToken.cueIndex ? firstToken.characterStart : 0;
+        const trailingPunctuation = cueIndex === lastToken.cueIndex
+          ? String(cueText.slice(lastToken.characterEnd).match(/^[.!?]["')\]]*/)?.[0] || "")
+          : "";
+        const to = cueIndex === lastToken.cueIndex
+          ? lastToken.characterEnd + trailingPunctuation.length
+          : cueText.length;
+        return cueText.slice(from, to);
+      })
+      .join(" ");
+    return {
+      startMs: firstToken.startMs,
+      endMs: lastToken.endMs,
+      contextExcerpt: normalizeWhitespace(contextExcerpt)
+    };
+  };
+  const exactStart = transcriptTokens.findIndex((_token, start) => (
+    start + claimed.length <= transcriptTokens.length
+    && claimed.every((token, offset) => transcriptTokens[start + offset].normalized === token)
+  ));
+  if (exactStart >= 0) return groundedSpan(exactStart, claimed.length);
+
   let best = null;
   const minimumLength = Math.max(4, claimed.length - 3);
-  const maximumLength = Math.min(transcriptTokens.length, claimed.length + 3);
-  for (let start = 0; start < transcriptTokens.length; start += 1) {
+  const maximumLength = Math.min(
+    transcriptTokens.length,
+    claimed.length + 3,
+    MAX_REVIEW_EXCERPT_WORDS
+  );
+  const tokenFrequency = transcriptTokens.reduce((frequency, token) => {
+    frequency.set(token.normalized, Number(frequency.get(token.normalized) || 0) + 1);
+    return frequency;
+  }, new Map());
+  const anchors = claimed
+    .slice(0, Math.min(12, claimed.length))
+    .map((token, claimedIndex) => ({
+      token,
+      claimedIndex,
+      frequency: Number(tokenFrequency.get(token) || 0)
+    }))
+    .filter(anchor => anchor.frequency > 0)
+    .sort((left, right) => left.frequency - right.frequency || left.claimedIndex - right.claimedIndex)
+    .slice(0, 3);
+  const anchoredStarts = new Set();
+  for (const anchor of anchors) {
+    transcriptTokens.forEach((token, transcriptIndex) => {
+      if (token.normalized !== anchor.token) return;
+      const start = transcriptIndex - anchor.claimedIndex;
+      if (start >= 0 && start < transcriptTokens.length) anchoredStarts.add(start);
+    });
+  }
+  const candidateStarts = (anchoredStarts.size
+    ? [...anchoredStarts]
+    : transcriptTokens.map((_token, index) => index))
+    .sort((left, right) => (
+      Math.abs(transcriptTokens[left].startMs - claimedStartMs)
+      - Math.abs(transcriptTokens[right].startMs - claimedStartMs)
+    ))
+    .slice(0, 128);
+  for (const start of candidateStarts) {
     for (let length = minimumLength; length <= maximumLength && start + length <= transcriptTokens.length; length += 1) {
       const candidate = transcriptTokens
         .slice(start, start + length)
@@ -479,22 +561,7 @@ function closestTranscriptTokenSpan(insight, cues = []) {
   const requiredOverlap = Math.max(4, Math.ceil(claimed.length * 0.78));
   if (!best || best.score < 0.78 || best.overlap < requiredOverlap) return null;
 
-  const matchEnd = best.start + best.length;
-  const contextCapacity = Math.max(0, 28 - best.length);
-  const contextStart = Math.max(0, best.start - Math.floor(contextCapacity / 2));
-  const contextEnd = Math.min(
-    transcriptTokens.length,
-    Math.max(matchEnd, contextStart + Math.min(28, transcriptTokens.length))
-  );
-  const matchedTokens = transcriptTokens.slice(best.start, matchEnd);
-  return {
-    startMs: matchedTokens[0].startMs,
-    endMs: matchedTokens[matchedTokens.length - 1].endMs,
-    contextExcerpt: transcriptTokens
-      .slice(Math.max(0, contextEnd - 28), contextEnd)
-      .map(token => token.raw)
-      .join(" ")
-  };
+  return groundedSpan(best.start, best.length);
 }
 
 function groundInsightsAgainstTranscript(insights = [], cues = []) {
@@ -577,8 +644,8 @@ export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl =
             "Ignore sponsorships, subscriptions, channel promotion, greetings, jokes, outros, and generic filler.",
             "For esports analysis, extract what players do: a repeatable setup, decision, timing, spacing, utility sequence, positioning choice, adaptation, or punish.",
             "Do not extract how a team is doing: standings, season form, roster narratives, qualification, tournament placement, series scores, map scores, or praise/criticism of a team's results.",
-            "Anchor every insight to the exact spoken timestamp. contextExcerpt must be at most 28 spoken words used only for private verification.",
-            "suggestedWording must be an original concise RankedCoach paraphrase, never a copied sentence.",
+            `Anchor every insight to the exact spoken timestamp. contextExcerpt is private reviewer evidence: copy the complete contiguous passage that explains one coaching point, normally 45-${MAX_REVIEW_EXCERPT_WORDS} spoken words and never more than ${MAX_REVIEW_EXCERPT_WORDS}. Do not stop after the first sentence when the speaker continues the same explanation.`,
+            "suggestedWording must make the smallest edit needed for accurate Valorant terminology, clarity, and concise player-facing use. Preserve the source meaning and sequence instead of independently restructuring it. Public approval rejects any seven consecutive source words, so the suggestion must not retain a seven-word source sequence verbatim.",
             "whyItMatters should explain the player decision or outcome in one short sentence.",
             "selectionReason must tell the owner which repeatable action and decision-to-outcome link made this passage worth extracting.",
             `Only use these entity names when clearly relevant: ${ENTITY_NAMES.join(", ")}.`,
@@ -942,54 +1009,173 @@ export function splitTranscriptIntoSections(cues = [], options = {}) {
 
 function sentenceParts(value = "") {
   return String(value)
-    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .split(/(?<=[.!?])\s+(?=\S)/)
     .map(normalizeWhitespace)
     .filter(Boolean);
 }
 
-function cueAnchoredClaimSegments(section = {}) {
-  const cues = Array.isArray(section.cues) ? section.cues : [];
-  if (!cues.length) {
-    let offsetMs = Number(section.startMs || 0);
-    return sentenceParts(section.text).map(text => {
-      const durationMs = Math.max(
-        1_000,
-        Math.round((text.length / Math.max(String(section.text || "").length, 1))
-          * Math.max(Number(section.endMs || 0) - Number(section.startMs || 0), 1_000))
-      );
-      const segment = { text, startMs: offsetMs, endMs: offsetMs + durationMs };
-      offsetMs += durationMs;
-      return segment;
-    });
+function boundedTextParts(
+  value = "",
+  maxCharacters = MAX_CLAIM_SENTENCE_UNIT_CHARACTERS,
+  maxWords = MAX_CLAIM_SEGMENT_WORDS
+) {
+  const parts = [];
+  for (const sentence of sentenceParts(value)) {
+    const words = sentence.split(" ").filter(Boolean);
+    let current = "";
+    let currentWords = 0;
+    for (const word of words) {
+      if (
+        current
+        && (
+          current.length + word.length + 1 > maxCharacters
+          || currentWords >= maxWords
+        )
+      ) {
+        parts.push(current);
+        current = "";
+        currentWords = 0;
+      }
+      current = current ? `${current} ${word}` : word;
+      currentWords += 1;
+    }
+    if (current) parts.push(current);
   }
+  return parts;
+}
 
+function approximateSegmentationCues(section = {}) {
+  const text = normalizeWhitespace(section.text);
+  if (!text) return [];
+  const parts = boundedTextParts(text);
+  const startMs = Math.max(0, Number(section.startMs || 0));
+  const totalDurationMs = Math.max(
+    1_000,
+    Number(section.endMs || 0) - startMs
+  );
+  const totalCharacters = Math.max(1, parts.reduce((sum, part) => sum + part.length, 0));
+  let elapsedMs = 0;
+  return parts.map((part, index) => {
+    const remainingMs = Math.max(1, totalDurationMs - elapsedMs);
+    const durationMs = index === parts.length - 1
+      ? remainingMs
+      : Math.max(1, Math.round(totalDurationMs * (part.length / totalCharacters)));
+    const cue = {
+      startMs: startMs + elapsedMs,
+      durationMs,
+      text: part
+    };
+    elapsedMs += durationMs;
+    return cue;
+  });
+}
+
+function claimSentenceUnits(section = {}) {
+  const sectionCues = Array.isArray(section.cues) && section.cues.length
+    ? section.cues
+    : approximateSegmentationCues(section);
+  const cues = sectionCues.flatMap(cue => {
+    const text = normalizeWhitespace(cue.text);
+    const parts = boundedTextParts(text);
+    if (parts.length <= 1) return [{ ...cue, text }];
+    const durationMs = Math.max(1_000, Number(cue.durationMs || 0));
+    const totalCharacters = Math.max(1, parts.reduce((sum, part) => sum + part.length, 0));
+    let elapsedMs = 0;
+    return parts.map((part, index) => {
+      const remainingMs = Math.max(1, durationMs - elapsedMs);
+      const partDurationMs = index === parts.length - 1
+        ? remainingMs
+        : Math.max(1, Math.round(durationMs * (part.length / totalCharacters)));
+      const expanded = {
+        startMs: Number(cue.startMs || 0) + elapsedMs,
+        durationMs: partDurationMs,
+        text: part
+      };
+      elapsedMs += partDurationMs;
+      return expanded;
+    });
+  }).filter(cue => cue.text);
+  return cues.map((cue, index) => {
+    const previous = cues[index - 1];
+    const gapBefore = previous
+      ? Number(cue.startMs || 0) - (
+        Number(previous.startMs || 0) + Math.max(1_000, Number(previous.durationMs || 0))
+      )
+      : 0;
+    const text = normalizeWhitespace(cue.text);
+    return {
+      text,
+      topic: classifyTopic(text),
+      claimType: segmentationClaimType(text),
+      startMs: Number(cue.startMs || 0),
+      endMs: Number(cue.startMs || 0) + Math.max(1_000, Number(cue.durationMs || 0)),
+      breakBefore: index > 0 && gapBefore >= CLAIM_TOPIC_PAUSE_MS
+    };
+  });
+}
+
+function cueAnchoredClaimSegments(section = {}) {
+  const units = claimSentenceUnits(section);
   const segments = [];
   let buffer = [];
   let characters = 0;
+  let wordCount = 0;
+  let activeTopic = "general";
+  let activeClaimType = "coaching";
   const flush = () => {
     if (!buffer.length) return;
     const first = buffer[0];
     const last = buffer[buffer.length - 1];
-    const text = normalizeWhitespace(buffer.map(cue => cue.text).join(" "));
+    const text = normalizeWhitespace(buffer.map(unit => unit.text).join(" "));
     if (text) {
       segments.push({
         text,
         startMs: Number(first.startMs || 0),
-        endMs: Number(last.startMs || 0) + Math.max(1_000, Number(last.durationMs || 0))
+        endMs: Number(last.endMs || last.startMs || 0)
       });
     }
     buffer = [];
     characters = 0;
+    wordCount = 0;
+    activeTopic = "general";
+    activeClaimType = "coaching";
   };
 
-  for (let index = 0; index < cues.length; index += 1) {
-    const cue = cues[index];
-    const next = cues[index + 1];
-    buffer.push(cue);
-    characters += String(cue.text || "").length + 1;
-    const closesSentence = /[.!?]["')\]]?\s*$/.test(String(cue.text || ""));
-    const hasNaturalPause = next && Number(next.startMs || 0) - (Number(cue.startMs || 0) + Number(cue.durationMs || 0)) >= 1_750;
-    if ((closesSentence && characters >= 28) || characters >= 260 || hasNaturalPause) flush();
+  const nextSpecificTopic = index => {
+    for (let offset = 1; offset <= 2 && index + offset < units.length; offset += 1) {
+      const candidate = units[index + offset];
+      if (candidate.breakBefore) return "general";
+      if (candidate.topic !== "general") return candidate.topic;
+    }
+    return "general";
+  };
+
+  for (let index = 0; index < units.length; index += 1) {
+    const unit = units[index];
+    const topicChanged = (
+      buffer.length
+      && activeTopic !== "general"
+      && unit.topic !== "general"
+      && unit.topic !== activeTopic
+      && (
+        nextSpecificTopic(index) === unit.topic
+        || explicitTopicTransition(unit.text)
+      )
+    );
+    const claimTypeChanged = buffer.length && unit.claimType !== activeClaimType;
+    const exceedsLimit = (
+      buffer.length
+      && (
+        characters + unit.text.length + 1 > MAX_CLAIM_SEGMENT_CHARACTERS
+        || wordCount + unit.text.split(" ").filter(Boolean).length > MAX_CLAIM_SEGMENT_WORDS
+      )
+    );
+    if (buffer.length && (unit.breakBefore || topicChanged || claimTypeChanged || exceedsLimit)) flush();
+    buffer.push(unit);
+    characters += unit.text.length + 1;
+    wordCount += unit.text.split(" ").filter(Boolean).length;
+    if (activeTopic === "general" && unit.topic !== "general") activeTopic = unit.topic;
+    activeClaimType = unit.claimType;
   }
   flush();
   return segments;
@@ -999,10 +1185,30 @@ function classifyTopic(text = "") {
   return TOPIC_RULES.find(rule => rule.pattern.test(text))?.id || "general";
 }
 
+function statisticalClaimSignal(text = "") {
+  return (
+    /\b\d+(?:\.\d+)?\s*%/i.test(text)
+    || /\b(?:win rate|pick rate|usage rate|damage per round|acs|adr|k\/d|sample size)\b/i.test(text)
+    || /\b(?:over|across|sample of)\s+\d+(?:\.\d+)?\s+rounds?\b/i.test(text)
+    || /\b\d+(?:\.\d+)?\s+(?:of|out of)\s+\d+(?:\.\d+)?\s+(?:rounds?|games?|matches?)\b/i.test(text)
+    || /\b\d+(?:\.\d+)?\s+(?:wins?|losses?|kills?|deaths?|assists?)\s+(?:in|across|over|out of)\s+\d+(?:\.\d+)?\s+(?:rounds?|games?|matches?)\b/i.test(text)
+    || /\b(?:dealt|took|averaged?)\s+\d+(?:\.\d+)?\s+damage\b/i.test(text)
+    || /\b\d+(?:\.\d+)?\s+damage\b/i.test(text)
+  );
+}
+
 function classifyClaimType(text = "") {
-  return /\b\d+(?:\.\d+)?%?\b|\b(?:win rate|pick rate|usage rate|damage|credits?|seconds?|rounds?|acs|adr|k\/d)\b/i.test(text)
-    ? "statistical"
-    : "coaching";
+  return statisticalClaimSignal(text) ? "statistical" : "coaching";
+}
+
+function segmentationClaimType(text = "") {
+  return classifyClaimType(text);
+}
+
+function explicitTopicTransition(text = "") {
+  return /^(?:now|next|instead|moving on|for (?:economy|mechanics|teamplay|map control|agents?|mentality)|on (?:economy|mechanics|teamplay|map control|agents?|mentality))\b/i.test(
+    normalizeWhitespace(text)
+  );
 }
 
 function claimStance(text = "") {
@@ -1124,9 +1330,6 @@ export function parseTimestampedTranscript(input = "") {
     }
   }
   cues.sort((left, right) => left.startMs - right.startMs);
-  for (let index = 0; index < cues.length - 1; index += 1) {
-    cues[index].durationMs = Math.max(1_000, cues[index + 1].startMs - cues[index].startMs);
-  }
   return normalizeValorantTranscript(cues);
 }
 
@@ -1138,7 +1341,7 @@ export function extractStructuredClaims(source, sections = []) {
       const type = classifyClaimType(clean);
       if (
         clean.length >= 28
-        && clean.length <= 420
+        && clean.length <= MAX_CLAIM_SEGMENT_CHARACTERS
         && !promotionalTranscriptSegment(clean)
         && (!esportsResultNarrative(clean) || tacticalActionSignal(clean))
         && (coachingSignal(clean) || type === "statistical")
@@ -1180,7 +1383,7 @@ export function extractStructuredClaims(source, sections = []) {
         Math.min(5, actionSignals) * 3
         + Math.min(3, claim.entities.length) * 2
         + (/\b(?:because|so that|instead|before|after|when|if)\b/i.test(text) ? 2 : 0)
-        + (text.length >= 55 && text.length <= 260 ? 2 : 0)
+        + (text.length >= 55 && text.length <= MAX_CLAIM_SEGMENT_CHARACTERS ? 2 : 0)
         - (claim.type === "statistical" ? 1 : 0)
         - (/\b(?:i think|i guess|maybe|kind of|sort of|you know)\b/i.test(text) ? 2 : 0)
       );
@@ -2570,8 +2773,12 @@ export async function getPublishedKnowledge(kv) {
   });
 }
 
-function words(value = "", max = 28) {
+function words(value = "", max = MAX_REVIEW_EXCERPT_WORDS) {
   return normalizeWhitespace(value).split(" ").filter(Boolean).slice(0, max).join(" ");
+}
+
+function trailingWords(value = "", max = MAX_SURROUNDING_EXCERPT_WORDS) {
+  return normalizeWhitespace(value).split(" ").filter(Boolean).slice(-max).join(" ");
 }
 
 function surroundingTranscriptExcerpts(claim, transcript = {}) {
@@ -2579,21 +2786,40 @@ function surroundingTranscriptExcerpts(claim, transcript = {}) {
   if (!cues.length) return Object.freeze([]);
   const startMs = Math.max(0, Number(claim.startSeconds || 0) * 1_000);
   const endMs = Math.max(startMs, Number(claim.endSeconds || claim.startSeconds || 0) * 1_000);
-  const before = cues
-    .filter(cue => {
-      const cueEnd = Number(cue.startMs || 0) + Math.max(1_000, Number(cue.durationMs || 0));
-      return cueEnd <= startMs && cueEnd >= startMs - 18_000;
-    })
-    .slice(-3);
-  const after = cues
-    .filter(cue => Number(cue.startMs || 0) >= endMs && Number(cue.startMs || 0) <= endMs + 18_000)
-    .slice(0, 3);
+  const before = [];
+  let beforeBoundaryMs = startMs;
+  for (let index = cues.length - 1; index >= 0; index -= 1) {
+    const cue = cues[index];
+    const cueStartMs = Number(cue.startMs || 0);
+    const cueEndMs = cueStartMs + Math.max(1_000, Number(cue.durationMs || 0));
+    if (cueEndMs > startMs) continue;
+    if (cueEndMs < startMs - SURROUNDING_EXCERPT_WINDOW_MS) break;
+    if (beforeBoundaryMs - cueEndMs >= CLAIM_TOPIC_PAUSE_MS) break;
+    before.unshift(cue);
+    beforeBoundaryMs = cueStartMs;
+    if (before.length >= MAX_SURROUNDING_EXCERPT_CUES) break;
+  }
+  const after = [];
+  let afterBoundaryMs = endMs;
+  for (const cue of cues) {
+    const cueStartMs = Number(cue.startMs || 0);
+    const cueEndMs = cueStartMs + Math.max(1_000, Number(cue.durationMs || 0));
+    if (cueStartMs < endMs) continue;
+    if (cueStartMs > endMs + SURROUNDING_EXCERPT_WINDOW_MS) break;
+    if (cueStartMs - afterBoundaryMs >= CLAIM_TOPIC_PAUSE_MS) break;
+    after.push(cue);
+    afterBoundaryMs = cueEndMs;
+    if (after.length >= MAX_SURROUNDING_EXCERPT_CUES) break;
+  }
   const excerpt = (label, selected) => {
     if (!selected.length) return null;
+    const combined = selected.map(cue => cue.text).join(" ");
     return Object.freeze({
       label,
       startSeconds: Number(selected[0].startMs || 0) / 1_000,
-      text: words(selected.map(cue => cue.text).join(" "), 42)
+      text: label === "Lead-in"
+        ? trailingWords(combined, MAX_SURROUNDING_EXCERPT_WORDS)
+        : words(combined, MAX_SURROUNDING_EXCERPT_WORDS)
     });
   };
   return Object.freeze([
@@ -2622,7 +2848,7 @@ function proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById, 
       startSeconds: Number(claim.startSeconds || 0),
       endSeconds: Number(claim.endSeconds || claim.startSeconds || 0),
       url: claim.evidenceUrl,
-      contextExcerpt: words(claim.privateExcerpt, 28),
+      contextExcerpt: words(claim.privateExcerpt, MAX_REVIEW_EXCERPT_WORDS),
       keywords: Object.freeze((claim.tokens || []).slice(0, 8)),
       whyItMatters: normalizeWhitespace(claim.whyItMatters),
       selectionReason: normalizeWhitespace(

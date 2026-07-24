@@ -9,6 +9,7 @@ const OPENAI_MODEL = Deno.env.get("KNOWLEDGE_MODEL") || Deno.env.get("OPENAI_MOD
 const PIPELINE_TOKEN = Deno.env.get("KNOWLEDGE_PIPELINE_TOKEN") || "";
 const MAX_TRANSCRIPT_CHARACTERS = 120_000;
 const MAX_INSIGHTS = 24;
+const MAX_REVIEW_EXCERPT_WORDS = 120;
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -130,9 +131,9 @@ Deno.serve(async (request) => {
       "A pro match result may provide context, but it is never itself a coaching insight. The extracted passage must explain an observable action and why it worked or failed.",
       "Never invent a number, agent, map, weapon, result, or timestamp.",
       "For statistical notes, retain the sample qualifier and use confidence low unless multiple observations are explicitly described.",
-      "contextExcerpt is private reviewer evidence and must contain no more than 28 consecutive transcript words.",
+      `contextExcerpt is private reviewer evidence: copy the complete contiguous passage that explains one coaching point, normally 45-${MAX_REVIEW_EXCERPT_WORDS} consecutive transcript words and never more than ${MAX_REVIEW_EXCERPT_WORDS}. Do not stop after the first sentence when the speaker continues the same explanation.`,
       "contextExcerpt must be copied exactly from words spoken near the supplied startSeconds and endSeconds; unsupported excerpts are discarded server-side.",
-      "suggestedWording must be an original RankedCoach paraphrase in direct player-facing language, not a transcript quote.",
+      "suggestedWording must make the smallest edit needed for accurate Valorant terminology, clarity, and concise direct player-facing use. Preserve the source meaning and sequence instead of independently restructuring it. Public approval rejects any seven consecutive source words, so the suggestion must not retain a seven-word source sequence verbatim.",
       "whyItMatters must connect the decision to a round outcome without claiming causation the transcript does not support.",
       "selectionReason must tell the owner which repeatable action and decision-to-outcome link made the passage worth extracting.",
       "Prefer 8-16 high-value insights. Return fewer when the video is repetitive or not instructional.",
