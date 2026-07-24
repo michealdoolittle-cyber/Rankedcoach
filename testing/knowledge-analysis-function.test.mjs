@@ -6,10 +6,13 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 
 test("private transcript analyzer is token-gated and returns structured non-stored insights", async () => {
-  const source = await readFile(
-    path.join(root, "supabase", "functions", "knowledge-analyze", "index.ts"),
-    "utf8"
-  );
+  const [source, config] = await Promise.all([
+    readFile(
+      path.join(root, "supabase", "functions", "knowledge-analyze", "index.ts"),
+      "utf8"
+    ),
+    readFile(path.join(root, "supabase", "config.toml"), "utf8")
+  ]);
   assert.match(source, /KNOWLEDGE_PIPELINE_TOKEN/);
   assert.match(source, /x-rankedcoach-pipeline-token/);
   assert.match(source, /store:\s*false/);
@@ -23,4 +26,5 @@ test("private transcript analyzer is token-gated and returns structured non-stor
   assert.match(source, /smallest edit needed/);
   assert.match(source, /seven consecutive source words/);
   assert.doesNotMatch(source, /no more than 28 consecutive transcript words/);
+  assert.match(config, /\[functions\.knowledge-analyze\]\s+verify_jwt\s*=\s*false/);
 });
