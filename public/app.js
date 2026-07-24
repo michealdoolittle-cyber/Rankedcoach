@@ -13057,6 +13057,7 @@ function stopLoginInitializationQuoteRotation() {
 
 function renderAppLoadingQuote(options = {}) {
   const copyEl = document.getElementById("appLoadingCopy");
+  const sourceEl = document.getElementById("appLoadingSource");
   if (!copyEl) return null;
   const previous = copyEl.dataset.loadingQuoteText || "";
   const quote = options.forceNew || !previous
@@ -13064,7 +13065,8 @@ function renderAppLoadingQuote(options = {}) {
     : { text: previous, source: copyEl.dataset.loadingQuoteSource || "" };
   copyEl.dataset.loadingQuoteText = quote.text;
   copyEl.dataset.loadingQuoteSource = quote.source;
-  copyEl.textContent = formatLoadingMotivationQuote(quote, { inlineSource: true });
+  copyEl.textContent = formatLoadingMotivationQuote(quote);
+  if (sourceEl) sourceEl.textContent = quote.source ? `— ${quote.source}` : "";
   return quote;
 }
 
@@ -13709,7 +13711,10 @@ function ensureAppLoadingVeil() {
     <div class="app-loading-card">
       <div class="app-loading-mark">RC</div>
       <div class="app-loading-title" id="appLoadingTitle">Loading RankedCoach</div>
-      <div class="app-loading-copy" id="appLoadingCopy">“Play with purpose, mute negativity, and keep improving.” — Valorant Mental Coach</div>
+      <div class="app-loading-quote">
+        <div class="app-loading-copy" id="appLoadingCopy">“Play with purpose, mute negativity, and keep improving.”</div>
+        <div class="app-loading-source" id="appLoadingSource">— Valorant Mental Coach</div>
+      </div>
       <div class="app-loading-progress-meta"><span id="appLoadingProgressLabel">Loading</span><strong id="appLoadingPercent">0%</strong></div>
       <div class="app-loading-bar" id="appLoadingProgress" role="progressbar" aria-label="Loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="appLoadingProgressBar"></span></div>
     </div>

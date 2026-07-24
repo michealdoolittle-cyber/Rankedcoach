@@ -20239,6 +20239,54 @@ SUMMARY BAR
   align-items:center;
 }
 
+.app-loading-quote,
+.login-init-quote{
+  display:grid;
+  justify-items:center;
+  gap:6px;
+  width:100%;
+  text-align:center;
+}
+
+.app-loading-source,
+.login-init-quote .login-init-detail{
+  color:#94a3b8;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.2;
+}
+
+.login-init-quote .login-init-copy{
+  margin:0;
+}
+
+/* Layout styles may decorate the Compass, but must not shrink its readable geometry. */
+@media (min-width:821px){
+  #page-home .home-middle-row{
+    min-height:260px !important;
+  }
+  #page-home .compass-panel,
+  #page-home .compass-main{
+    min-height:260px !important;
+    height:100% !important;
+  }
+  #page-home .compass-main .compass-summary-body{
+    grid-template-columns:minmax(0,1fr) minmax(190px,.9fr) !important;
+    min-height:164px !important;
+  }
+  #page-home .compass-main .compass-svg-wrap{
+    min-width:190px !important;
+    min-height:164px !important;
+  }
+  #page-home .compass-main .compass-svg-wrap svg,
+  #page-home .compass-main .sw-compass-mini{
+    width:100% !important;
+    min-width:190px !important;
+    height:164px !important;
+    min-height:164px !important;
+  }
+}
+
 .app-loading-progress-meta{
   margin-top:2px;
 }

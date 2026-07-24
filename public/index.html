@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260724-knowledge-review-bins-04">
+  <link rel="stylesheet" href="app.css?v=20260724-library-fix-pass-05">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -77,7 +77,7 @@
   <link rel="preload" as="image" href="https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/splash.png" fetchpriority="high">
   <link rel="preload" as="image" href="https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/splash.png" fetchpriority="high">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260724-knowledge-auto-review-03">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260724-library-fix-pass-05">
   <link rel="stylesheet" href="layout-styles.css?v=20260723-library-pipeline-ui-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -263,12 +263,14 @@ AUTH MODAL
   <div class="login-init-card">
     <div class="login-init-kicker">RankedCoach</div>
     <div class="login-init-title" id="loginInitTitle">Starting RankedCoach</div>
-    <div class="login-init-copy" id="loginInitCopy">“Play with purpose, mute negativity, and keep improving.”</div>
+    <div class="login-init-quote">
+      <div class="login-init-copy" id="loginInitCopy">“Play with purpose, mute negativity, and keep improving.”</div>
+      <div class="login-init-detail" id="loginInitDetail">— Valorant Mental Coach</div>
+    </div>
     <div class="login-init-progress-meta"><span>Account loading</span><strong id="loginInitProgressPercent">8%</strong></div>
     <div class="login-init-progress is-busy" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
       <div class="login-init-progress-bar" id="loginInitProgressBar" style="width:8%"></div>
     </div>
-    <div class="login-init-detail" id="loginInitDetail">— Valorant Mental Coach</div>
     <div class="login-init-steps">
       <span id="loginInitStepProfile" class="is-active">Profile</span>
       <span id="loginInitStepSecurity">Security</span>
@@ -2402,10 +2404,11 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-encyclopedia.js?v=20260723-library-pipeline-ui-01"></script>
   <script src="library/gamesense-promoted.js?v=20260724-promotion-sequence-01"></script>
   <script src="library/gamesense-collections.js?v=20260718-content-automation-01"></script>
-<script src="library/gamesense-library.js?v=20260724-knowledge-auto-review-03"></script>
+<script>window.RankedCoachCrosshairBackendEnabled = true;</script>
+<script src="library/gamesense-library.js?v=20260724-library-fix-pass-05"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
-  <script type="module" src="app.js?v=20260724-knowledge-auto-review-03"></script>
+  <script type="module" src="app.js?v=20260724-library-fix-pass-05"></script>
   <script type="module" src="knowledge-review.js?v=20260724-knowledge-review-bins-04"></script>
 </body>
 </html>

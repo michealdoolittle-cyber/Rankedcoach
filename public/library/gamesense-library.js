@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home", crosshairTab: "All", crosshairSort: "desc" };
+  const state = { topic: "overview", itemId: "", role: "", detailId: "", mapView: "locations", tipView: "attack", mapZoom: 1, compAgent: "", compRole: "Controller", agentRole: "all", mapSeason: "in", playlistFilter: "Home", crosshairTab: "All", crosshairTeam: "All teams", crosshairSort: "desc" };
   const collectionLoadErrors = new Map();
   let activeSkinPreview = null;
   let activeSkinViewIndex = 0;
@@ -769,7 +769,12 @@
     if (tab === "Favorites") {
       return getSortedCrosshairEntries(crosshairSeedEntries.filter(entry => crosshairBackendState.favorites.has(entry.id)));
     }
-    if (tab === "Pro's") return getSortedCrosshairEntries(crosshairSeedEntries.filter(entry => entry.type === "Pro"));
+    if (tab === "Pro's") {
+      return getSortedCrosshairEntries(crosshairSeedEntries.filter(entry =>
+        entry.type === "Pro"
+        && (state.crosshairTeam === "All teams" || (entry.team || "Free agent") === state.crosshairTeam)
+      ));
+    }
     if (tab === "Top 30 Popular") return getSortedCrosshairEntries().slice(0, 30);
     return getSortedCrosshairEntries();
   }
@@ -834,6 +839,10 @@
     const backendNote = crosshairBackendState.unavailable
       ? "Apply the crosshair Supabase tables to turn on shared Likes and saved Favorites."
       : "Likes and Favorites are account-gated so one player can only vote once per crosshair.";
+    const proTeams = ["All teams", ...new Set(crosshairSeedEntries
+      .filter(entry => entry.type === "Pro")
+      .map(entry => entry.team || "Free agent")
+      .sort((left, right) => left.localeCompare(right)))];
     return `
       <div class="gamesense-gallery-head gamesense-crosshair-gallery-head">
         <div><strong>Crosshair Library</strong><small>Verified pro and community codes with rendered previews and copy-ready imports.</small></div>
@@ -846,6 +855,9 @@
           </div>
           <button type="button" class="gamesense-crosshair-sort" data-gamesense-crosshair-sort="${state.crosshairSort === "asc" ? "desc" : "asc"}">Likes ${state.crosshairSort === "asc" ? "↑" : "↓"}</button>
         </div>
+        ${activeTab === "Pro's" ? `<div class="gamesense-crosshair-team-tabs" role="tablist" aria-label="Filter pro crosshairs by team">
+          ${proTeams.map(team => `<button type="button" data-gamesense-crosshair-team="${escapeHtml(team)}" class="${team === state.crosshairTeam ? "active" : ""}" aria-selected="${team === state.crosshairTeam}"><span aria-hidden="true">${escapeHtml(getCrosshairInitials(team))}</span><b>${escapeHtml(team)}</b></button>`).join("")}
+        </div>` : ""}
         <p class="gamesense-crosshair-note">${escapeHtml(crosshairBackendState.status || backendNote)}</p>
         <div class="gamesense-crosshair-grid ${gridMode}">
           ${entries.length
@@ -1648,7 +1660,6 @@
             <div class="gamesense-weapon-suggestion-detail">
               ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong>${escapeHtml(item.roundConversion.scope)} round conversion percent: ${Number(item.roundConversion.value).toFixed(2)}%</strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
               ${item.conversion ? `<em class="gamesense-conversion-read">${escapeHtml(item.conversion)}</em>` : ""}
-              ${item.locations ? `<p class="gamesense-weapon-locations"><strong>Best locations</strong><span>${escapeHtml(item.locations)}</span></p>` : ""}
               <p class="gamesense-weapon-evidence">${escapeHtml(item.evidence)}</p>
               <p class="gamesense-weapon-context">${escapeHtml(item.note)}</p>
             </div>
@@ -2126,7 +2137,12 @@
     });
     overlay.classList.remove("is-open");
     overlay.classList.add("is-closing");
-    window.setTimeout(() => overlay.remove(), 220);
+    window.setTimeout(() => {
+      overlay.remove();
+      if (!document.querySelector('[role="dialog"], .lens-modal-overlay.active')) {
+        document.body.classList.remove("mobile-modal-open");
+      }
+    }, 220);
   }
 
   function getSkinPreviewItem(trigger) {
@@ -2571,6 +2587,9 @@
       }
     });
     document.body.appendChild(overlay);
+    if (window.matchMedia("(max-width: 820px)").matches) {
+      document.body.classList.add("mobile-modal-open");
+    }
     activeSkinPreview = overlay;
     const staticStage = overlay.querySelector(".gamesense-skin-model-stage.is-static");
     if (staticStage) {
@@ -3210,6 +3229,12 @@
     const crosshairTab = event.target.closest?.("[data-gamesense-crosshair-tab]");
     if (crosshairTab) {
       state.crosshairTab = normalizeCrosshairTab(crosshairTab.dataset.gamesenseCrosshairTab);
+      render({ direction: "replace" });
+      return;
+    }
+    const crosshairTeam = event.target.closest?.("[data-gamesense-crosshair-team]");
+    if (crosshairTeam) {
+      state.crosshairTeam = crosshairTeam.dataset.gamesenseCrosshairTeam || "All teams";
       render({ direction: "replace" });
       return;
     }

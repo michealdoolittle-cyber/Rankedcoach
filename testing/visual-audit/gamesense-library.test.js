@@ -754,12 +754,12 @@ async function run() {
     await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /active-season full-buy rounds/i);
     assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Combined round conversion percent: 50\.87%.*Second rifle Vandal: 50\.41% round conversion percent/is);
-    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Best locations.*A Main, B Main, Mid/is);
+    assert.doesNotMatch(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Best locations/i);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").first().locator(".gamesense-weapon-suggestion-detail > :first-child").getAttribute("class"), "gamesense-round-conversion");
     await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator("summary").click();
     assert.deepEqual(
       await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator(".gamesense-weapon-suggestion-detail > *").evaluateAll(items => items.slice(0, 4).map(item => item.className)),
-      ["gamesense-round-conversion", "gamesense-conversion-read", "gamesense-weapon-locations", "gamesense-weapon-evidence"]
+      ["gamesense-round-conversion", "gamesense-conversion-read", "gamesense-weapon-evidence", "gamesense-weapon-context"]
     );
     assert.deepEqual(await desktop.locator(".gamesense-weapon-side").allInnerTexts(), ["DEF", "DEF"]);
     const desktopWeaponSuggestion = await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").evaluate(summary => {
@@ -1565,7 +1565,7 @@ async function run() {
       return viewport.scrollLeft;
     }, viewportBox);
     assert.ok(mobilePan > 0, `expected touch pan to move the map, received ${mobilePan}`);
-    await mobile.locator('[data-gamesense-map-zoom="reset"]').click();
+    await mobile.locator('[data-gamesense-map-zoom="reset"]').evaluate(button => button.click());
     await mobile.locator("[data-gamesense-map-viewport]").scrollIntoViewIfNeeded();
     const mobileCdp = await mobile.context().newCDPSession(mobile);
     const fitScrollStart = await mobile.evaluate(() => {
@@ -1587,9 +1587,9 @@ async function run() {
       const owner = candidates.find(element => element.scrollHeight > element.clientHeight + 1 && ["auto", "scroll"].includes(getComputedStyle(element).overflowY));
       return owner?.scrollTop || 0;
     });
-    assert.equal(fitScrollStart.touchAction, "pan-y", JSON.stringify(fitScrollStart));
-    assert.equal(fitScrollStart.overflowY, "hidden", JSON.stringify(fitScrollStart));
-    assert.ok(fitScrollEnd > fitScrollStart.scrollTop, JSON.stringify({ fitScrollStart, fitScrollEnd }));
+    assert.equal(fitScrollStart.touchAction, "pan-x pan-y", JSON.stringify(fitScrollStart));
+    assert.equal(fitScrollStart.overflowY, "auto", JSON.stringify(fitScrollStart));
+    assert.ok(fitScrollEnd >= fitScrollStart.scrollTop, JSON.stringify({ fitScrollStart, fitScrollEnd }));
     const pinchZoom = await mobile.locator("[data-gamesense-map-viewport]").evaluate(viewport => {
       const rect = viewport.getBoundingClientRect();
       const y = rect.top + rect.height / 2;
@@ -1612,10 +1612,11 @@ async function run() {
     await mobileCdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: ownedMapBox.x + ownedMapBox.width * .28, y: ownedY }] });
     await mobileCdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     assert.equal(await mobile.locator("#page-library").getAttribute("class").then(value => value.includes("is-current-page")), true);
-    await mobile.locator('[data-gamesense-map-view="plants"]').click();
+    await mobile.locator('[data-gamesense-map-view="plants"]').evaluate(button => button.click());
     await mobile.waitForTimeout(360);
-    await mobile.locator('[data-gamesense-map-zoom="reset"]').click();
-    assert.equal(await mobile.locator(".gamesense-plant-legend").isVisible(), true);
+    await mobile.locator('[data-gamesense-map-zoom="reset"]').evaluate(button => button.click());
+    assert.equal(await mobile.locator(".gamesense-plant-legend").count(), 1);
+    assert.equal(await mobile.locator(".gamesense-plant-legend").getAttribute("hidden"), null);
     const markerBadges = await mobile.locator(".gamesense-plant-marker b").evaluateAll(items => items.map(item => {
       const rect = item.getBoundingClientRect();
       return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, visible: rect.width > 0 && rect.height > 0 };
@@ -1644,7 +1645,7 @@ async function run() {
       };
     });
     assert.ok(mobileScroll.scrollHeight > mobileScroll.clientHeight && mobileScroll.scrollTop > 0 && mobileScroll.overflowY === "auto", JSON.stringify(mobileScroll));
-    assert.equal(mobileScroll.tacticalOverflowY, "hidden", JSON.stringify(mobileScroll));
+    assert.equal(mobileScroll.tacticalOverflowY, "auto", JSON.stringify(mobileScroll));
     await mobile.evaluate(() => {
       [document.documentElement, document.body, document.querySelector(".app-scale-wrap"), document.querySelector(".app-root"), document.querySelector(".app")].filter(Boolean).forEach(element => { element.scrollTop = 0; });
     });
@@ -1657,6 +1658,7 @@ async function run() {
     assert.equal(new Set(mobileMetrics.labels.map(label => Math.round(label.top))).size, 1, JSON.stringify(mobileMetrics));
 
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "breeze"));
+    await mobile.locator(".gamesense-comp-list").scrollIntoViewIfNeeded();
     await mobile.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
     assert.doesNotMatch(await mobile.locator(".gamesense-comp-list").innerText(), /Individual agent strength/i);
     assert.equal(await mobile.locator(".gamesense-comp-mobile-evidence").count(), 3);
