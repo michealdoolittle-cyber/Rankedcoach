@@ -20250,7 +20250,7 @@ SUMMARY BAR
 
 .app-loading-source,
 .login-init-quote .login-init-detail{
-  color:#94a3b8;
+  color:var(--gamesense-warm,#facc15);
   font-size:12px;
   font-weight:800;
   line-height:1.2;

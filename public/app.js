@@ -1599,11 +1599,13 @@ function ensureMobileBottomShell() {
     if (!pageButton) return;
     closeAllMobileOverlays();
     const pageId = pageButton.dataset.mobilePage;
-    if (pageId === "library" && getActivePageElement()?.id === "page-library") {
+    const targetPage = document.getElementById(`page-${pageId}`);
+    const isVisuallyCurrent = targetPage?.classList.contains("is-current-page");
+    if (pageId === "library" && getActivePageElement()?.id === "page-library" && isVisuallyCurrent) {
       globalThis.RankedCoachGamesenseLibrary?.reset?.();
       return;
     }
-    if (getActivePageElement()?.id !== `page-${pageId}`) {
+    if (getActivePageElement()?.id !== `page-${pageId}` || !isVisuallyCurrent) {
       activatePage(pageId, { mobileNavHandoff: true });
     }
   };

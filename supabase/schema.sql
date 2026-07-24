@@ -278,31 +278,56 @@ create policy "account_security_preferences_delete_own"
   using (auth.uid() = user_id);
 
 drop policy if exists "crosshair_likes_select_public" on public.crosshair_likes;
-create policy "crosshair_likes_select_public"
+drop policy if exists "crosshair_likes_select_own" on public.crosshair_likes;
+create policy "crosshair_likes_select_own"
   on public.crosshair_likes for select
-  using (true);
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 drop policy if exists "crosshair_likes_insert_own" on public.crosshair_likes;
 create policy "crosshair_likes_insert_own"
   on public.crosshair_likes for insert
-  with check (auth.uid() = user_id);
+  to authenticated
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "crosshair_likes_delete_own" on public.crosshair_likes;
 create policy "crosshair_likes_delete_own"
   on public.crosshair_likes for delete
-  using (auth.uid() = user_id);
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 drop policy if exists "crosshair_favorites_select_own" on public.crosshair_favorites;
 create policy "crosshair_favorites_select_own"
   on public.crosshair_favorites for select
-  using (auth.uid() = user_id);
+  to authenticated
+  using ((select auth.uid()) = user_id);
 
 drop policy if exists "crosshair_favorites_insert_own" on public.crosshair_favorites;
 create policy "crosshair_favorites_insert_own"
   on public.crosshair_favorites for insert
-  with check (auth.uid() = user_id);
+  to authenticated
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "crosshair_favorites_delete_own" on public.crosshair_favorites;
 create policy "crosshair_favorites_delete_own"
   on public.crosshair_favorites for delete
-  using (auth.uid() = user_id);
+  to authenticated
+  using ((select auth.uid()) = user_id);
+
+create or replace function public.get_crosshair_like_counts()
+returns table (crosshair_id text, like_count bigint)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select likes.crosshair_id, count(*)::bigint
+  from public.crosshair_likes as likes
+  group by likes.crosshair_id;
+$$;
+
+revoke all on function public.get_crosshair_like_counts() from public;
+grant execute on function public.get_crosshair_like_counts() to anon, authenticated;
+
+revoke all on public.crosshair_likes, public.crosshair_favorites from anon, authenticated;
+grant select, insert, delete on public.crosshair_likes, public.crosshair_favorites to authenticated;

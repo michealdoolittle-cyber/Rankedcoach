@@ -176,6 +176,16 @@
     nukkye: "https://prosettings.net/wp-content/uploads/nukkye-220x220-fitcontain-q99-gb283-s1.png",
     dicey: "https://prosettings.net/wp-content/uploads/dicey-220x220-fitcontain-q99-gb283-s1.png"
   });
+  // Team marks mirror the official VALORANT Esports team records. The all-team
+  // and free-agent marks are neutral RankedCoach artwork, not organization logos.
+  const crosshairTeamBrandMap = Object.freeze({
+    "All teams": { logo: "/assets/library/teams/all-teams.svg", label: "All teams" },
+    "T1 / Creator": { logo: "/assets/library/teams/t1.png", label: "T1 / Creator" },
+    Sentinels: { logo: "/assets/library/teams/sentinels.png", label: "Sentinels" },
+    "Paper Rex": { logo: "/assets/library/teams/paper-rex.png", label: "Paper Rex" },
+    "EDward Gaming": { logo: "/assets/library/teams/edward-gaming.png", label: "EDward Gaming" },
+    "Free agent": { logo: "/assets/library/teams/free-agent.svg", label: "Free agent" }
+  });
   const crosshairSeedEntries = Object.freeze([
     {
       id: "tenz-2026-cyan",
@@ -258,7 +268,7 @@
     ...vcrdbProCrosshairSeeds.map((entry, index) => ({
       id: `vcrdb-pro-${entry.id}`,
       player: entry.name || `VCRDB Pro #${entry.id}`,
-      team: "VCRDB Team/Pro",
+      team: "Free agent",
       type: "Pro",
       libraryRank: 7 + index,
       code: entry.code,
@@ -630,6 +640,11 @@
     return words.slice(0, 2).map(word => word[0]).join("").toUpperCase();
   }
 
+  function renderCrosshairTeamLogo(team = "Free agent") {
+    const brand = crosshairTeamBrandMap[team] || crosshairTeamBrandMap["Free agent"];
+    return `<img src="${escapeHtml(brand.logo)}" alt="" aria-hidden="true" loading="eager" decoding="async" style="display:block;width:22px;height:22px;max-width:100%;object-fit:contain;">`;
+  }
+
   function parseCrosshairCode(code = "") {
     const sections = { global: {}, P: {}, A: {}, S: {} };
     let target = sections.global;
@@ -819,7 +834,8 @@
       { label: "ProSettings VALORANT Crosshair Database", url: "https://prosettings.net/tools/valorant-crosshair-database/" },
       { label: "VCRDB Valorant Crosshair Database", url: "https://www.vcrdb.net/" },
       { label: "OP.GG VALORANT Crosshair Editor", url: "https://op.gg/valorant/crosshairs/editor" },
-      { label: "PCGamesN VALORANT crosshair code references", url: "https://www.pcgamesn.com/valorant/crosshairs-best-codes" }
+      { label: "PCGamesN VALORANT crosshair code references", url: "https://www.pcgamesn.com/valorant/crosshairs-best-codes" },
+      { label: "VALORANT Esports current team records and marks", url: "https://valorantesports.com/en-GB/gpr/2026/current" }
     ];
     return `
       <footer class="gamesense-crosshair-references" aria-label="Crosshair direct references">
@@ -856,7 +872,7 @@
           <button type="button" class="gamesense-crosshair-sort" data-gamesense-crosshair-sort="${state.crosshairSort === "asc" ? "desc" : "asc"}">Likes ${state.crosshairSort === "asc" ? "↑" : "↓"}</button>
         </div>
         ${activeTab === "Pro's" ? `<div class="gamesense-crosshair-team-tabs" role="tablist" aria-label="Filter pro crosshairs by team">
-          ${proTeams.map(team => `<button type="button" data-gamesense-crosshair-team="${escapeHtml(team)}" class="${team === state.crosshairTeam ? "active" : ""}" aria-selected="${team === state.crosshairTeam}"><span aria-hidden="true">${escapeHtml(getCrosshairInitials(team))}</span><b>${escapeHtml(team)}</b></button>`).join("")}
+          ${proTeams.map(team => `<button type="button" data-gamesense-crosshair-team="${escapeHtml(team)}" class="${team === state.crosshairTeam ? "active" : ""}" aria-selected="${team === state.crosshairTeam}"><span aria-hidden="true">${renderCrosshairTeamLogo(team)}</span><b>${escapeHtml(team)}</b></button>`).join("")}
         </div>` : ""}
         <p class="gamesense-crosshair-note">${escapeHtml(crosshairBackendState.status || backendNote)}</p>
         <div class="gamesense-crosshair-grid ${gridMode}">
@@ -869,7 +885,7 @@
   }
 
   async function hydrateCrosshairState(options = {}) {
-    if (crosshairBackendState.loading || (crosshairBackendState.loaded && !options.force && !(crosshairBackendState.unavailable && isCrosshairBackendEnabled()))) return;
+    if (crosshairBackendState.loading || (crosshairBackendState.loaded && !options.force)) return;
     const client = getCrosshairClient();
     if (!client) return;
     if (!isCrosshairBackendEnabled()) {
@@ -881,19 +897,17 @@
     }
     crosshairBackendState.loading = true;
     try {
-      const likeCountResults = await Promise.all(crosshairSeedEntries.map(entry =>
-        client.from("crosshair_likes").select("crosshair_id", { count: "exact", head: true }).eq("crosshair_id", entry.id)
-      ));
-      const countError = likeCountResults.find(result => result.error)?.error;
-      if (countError) {
+      const likeCountResult = await client.rpc("get_crosshair_like_counts");
+      if (likeCountResult.error) {
         crosshairBackendState.unavailable = true;
+        crosshairBackendState.loaded = true;
         crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
         return;
       }
-      const likeCounts = new Map();
-      likeCountResults.forEach((result, index) => {
-        likeCounts.set(crosshairSeedEntries[index].id, Number(result.count || 0));
-      });
+      const likeCounts = new Map((likeCountResult.data || []).map(row => [
+        String(row?.crosshair_id || ""),
+        Number(row?.like_count || 0)
+      ]).filter(([id]) => Boolean(id)));
       const user = await getCrosshairUser();
       let liked = new Set();
       let favorites = new Set();
@@ -902,6 +916,12 @@
           client.from("crosshair_likes").select("crosshair_id").eq("user_id", user.id),
           client.from("crosshair_favorites").select("crosshair_id").eq("user_id", user.id)
         ]);
+        if (ownLikes.error || ownFavorites.error) {
+          crosshairBackendState.unavailable = true;
+          crosshairBackendState.loaded = true;
+          crosshairBackendState.status = "Crosshair Likes and Favorites could not be loaded. Try again in a moment.";
+          return;
+        }
         if (!ownLikes.error) liked = new Set((ownLikes.data || []).map(row => String(row?.crosshair_id || "")).filter(Boolean));
         if (!ownFavorites.error) favorites = new Set((ownFavorites.data || []).map(row => String(row?.crosshair_id || "")).filter(Boolean));
       }
@@ -913,6 +933,7 @@
       crosshairBackendState.status = "";
     } catch (_error) {
       crosshairBackendState.unavailable = true;
+      crosshairBackendState.loaded = true;
       crosshairBackendState.status = "Crosshair Likes and Favorites are waiting on the new Supabase tables.";
     } finally {
       crosshairBackendState.loading = false;
@@ -1658,7 +1679,7 @@
               <strong class="gamesense-weapon-suggestion-name">${escapeHtml(item.weapon)}</strong>
             </summary>
             <div class="gamesense-weapon-suggestion-detail">
-              ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong>${escapeHtml(item.roundConversion.scope)} round conversion percent: ${Number(item.roundConversion.value).toFixed(2)}%</strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
+              ${item.roundConversion ? `<section class="gamesense-round-conversion"><strong><span class="gamesense-round-conversion-label">${escapeHtml(item.roundConversion.scope)} round conversion percent:</span> <span class="gamesense-round-conversion-value">${Number(item.roundConversion.value).toFixed(2)}%</span></strong><span>${escapeHtml(item.roundConversion.comparisonLabel)} ${escapeHtml(item.roundConversion.comparisonWeapon)}: ${Number(item.roundConversion.comparisonValue).toFixed(2)}% round conversion percent.</span><small>${escapeHtml(item.roundConversion.sample)}</small></section>` : `<section class="gamesense-round-conversion is-unavailable"><strong>Round conversion percent: unavailable</strong><span>${escapeHtml(item.roundConversionUnavailable || "No verified active-season map sample is available.")}</span></section>`}
               ${item.conversion ? `<em class="gamesense-conversion-read">${escapeHtml(item.conversion)}</em>` : ""}
               <p class="gamesense-weapon-evidence">${escapeHtml(item.evidence)}</p>
               <p class="gamesense-weapon-context">${escapeHtml(item.note)}</p>
@@ -2038,7 +2059,11 @@
     const grid = archive?.querySelector?.(".gamesense-collection-grid");
     if (!grid || collections.length <= COLLECTION_ARCHIVE_BATCH_SIZE) return;
     const token = ++collectionArchiveRenderToken;
-    let offset = COLLECTION_ARCHIVE_BATCH_SIZE;
+    let offset = Math.max(
+      COLLECTION_ARCHIVE_BATCH_SIZE,
+      Number(grid.dataset.gamesenseCollectionRendered || COLLECTION_ARCHIVE_BATCH_SIZE)
+    );
+    if (offset >= collections.length) return;
     const schedule = callback => {
       if (typeof window.requestIdleCallback === "function") {
         window.requestIdleCallback(callback, { timeout: 180 });
@@ -2104,6 +2129,14 @@
     const cached = provider.getCached(weapon.label);
     if (cached) {
       collectionLoadErrors.delete(weapon.label);
+      const archive = document.querySelector("#gamesenseLibraryView .gamesense-collection-archive");
+      const renderedGrid = archive?.querySelector?.(".gamesense-collection-grid");
+      const alreadyRendered = archive?.dataset?.gamesenseCollectionWeapon === weapon.id
+        && Number(renderedGrid?.dataset?.gamesenseCollectionTotal || -1) === cached.length;
+      if (alreadyRendered) {
+        scheduleWeaponCollectionBatches(archive, weapon, cached);
+        return;
+      }
       replaceWeaponCollectionArchive(weapon, cached);
       return;
     }
@@ -2984,7 +3017,9 @@
     if (!root) return;
     const direction = ["forward", "backward", "replace"].includes(options.direction) ? options.direction : "none";
     const shouldAnimate = ["forward", "backward"].includes(direction)
-      && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+      && !document.documentElement.classList.contains("is-mobile-layout")
+      && !window.matchMedia?.("(max-width: 820px)")?.matches;
     if (!shouldAnimate) {
       commitRender(root);
       return null;

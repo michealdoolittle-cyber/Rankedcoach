@@ -1510,7 +1510,11 @@ async function run() {
     await mobile.locator(".gamesense-back").click();
     await mobile.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await mobile.click('[data-gamesense-topic="maps"]');
-    await mobile.waitForFunction(() => document.documentElement.dataset.gamesenseTransition === "forward");
+    assert.equal(
+      await mobile.evaluate(() => document.documentElement.dataset.gamesenseTransition || ""),
+      "",
+      "Mobile Library navigation must avoid full-page view transitions."
+    );
     await mobile.locator('.gamesense-map-entry-card').first().waitFor({ state: "visible" });
     assert.equal(await mobile.locator('[data-gamesense-map-season="all"]').count(), 0);
     assert.equal(await mobile.locator('.gamesense-map-entry-card').count(), 7);
@@ -1657,6 +1661,11 @@ async function run() {
     assert.ok(mobileMetrics.labels.every(label => label.height >= 44 && label.width > 0 && label.whiteSpace === "nowrap"), JSON.stringify(mobileMetrics));
     assert.equal(new Set(mobileMetrics.labels.map(label => Math.round(label.top))).size, 1, JSON.stringify(mobileMetrics));
 
+    if (!await mobile.locator("#page-library").evaluate(page => page.classList.contains("is-current-page"))) {
+      await mobile.waitForTimeout(500);
+      await mobile.click('.mobile-bottom-page-btn[data-mobile-page="library"]');
+      await mobile.locator("#page-library.is-current-page").waitFor({ state: "visible" });
+    }
     await mobile.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("maps", "breeze"));
     await mobile.locator(".gamesense-comp-list").scrollIntoViewIfNeeded();
     await mobile.locator(".gamesense-comp-option").first().waitFor({ state: "visible" });
