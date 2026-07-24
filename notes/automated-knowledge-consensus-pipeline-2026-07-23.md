@@ -1,6 +1,6 @@
 # Automated Knowledge and Consensus Pipeline
 
-**Status: active in production.** The private scheduled research foundation shipped in `3487172`. The owner-facing transcript import, review, approval, and explicit Library publication workflow is implemented in the follow-up release. Public YouTube retrieval remains best-effort; sources that cannot be retrieved stay held until a timestamped transcript is imported or a private provider supplies it.
+**Status: implementation complete; release verification pending.** The private scheduled research foundation shipped in `3487172`. The follow-up release automatically refreshes the Playlist source archive, retrieves available public YouTube captions, produces semantic transcript notes through the private analyzer, and places timestamped highlights plus editable RankedCoach wording in the owner-only review queue. The owner can save a draft, reject it, or explicitly publish it to the Library. Videos without an accessible transcript remain held for an automatic retry or manual recovery; nothing publishes automatically.
 
 ## Purpose
 
@@ -16,17 +16,19 @@ Implement an automated research pipeline that transforms trusted educational con
 ## Video pipeline
 
 1. Register embedded YouTube and Twitch videos.
-2. Acquire available public transcripts, beginning with embedded YouTube videos.
+2. Acquire available public transcripts automatically, beginning with embedded YouTube videos.
 3. Store transcripts privately.
 4. Normalize VALORANT terminology.
 5. Split transcripts into coaching sections.
-6. Extract structured coaching claims.
+6. Extract structured coaching claims with private semantic analysis, using deterministic caption rules only as a graceful fallback.
 7. Compare claims against existing Gamesense knowledge.
 8. Merge duplicates.
 9. Flag contradictions.
 10. Queue proposals for human approval.
 11. Publish only owner-approved original RankedCoach wording.
 12. Preserve timestamped links to the supporting videos.
+
+The scheduled job runs after each Playlist refresh. The owner can also use **Process Playlist Now** from Account & Support > Research. The private review UI shows short highlighted transcript context, suggested original wording, and the destination selector without exposing full transcripts to players.
 
 ## Consensus
 

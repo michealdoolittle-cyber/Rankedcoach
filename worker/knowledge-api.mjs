@@ -4,6 +4,10 @@ import {
   getPublishedKnowledge,
   ingestTimestampedKnowledgeTranscript,
   publishApprovedKnowledge,
+  queueKnowledgeSourceRetry,
+  rejectKnowledgeProposal,
+  runKnowledgePipeline,
+  saveKnowledgeProposalDraft,
   unpublishKnowledge
 } from "./knowledge-pipeline.mjs";
 
@@ -80,7 +84,12 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
   if (!kv) throw new Error("Knowledge storage is unavailable.");
   const url = new URL(request.url);
   if (request.method === "GET" && url.pathname === "/api/knowledge/review") {
-    return json(await getKnowledgeOwnerDashboard(kv));
+    return json(await getKnowledgeOwnerDashboard(kv, {
+      proposalOffset: url.searchParams.get("proposalOffset"),
+      proposalLimit: url.searchParams.get("proposalLimit"),
+      sourceOffset: url.searchParams.get("sourceOffset"),
+      sourceLimit: url.searchParams.get("sourceLimit")
+    }));
   }
   if (request.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
   const body = await readJson(request);
@@ -90,6 +99,37 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
       libraryKnowledgeIndex: options.libraryKnowledgeIndex
     }), { status: 201 });
   }
+  if (url.pathname === "/api/knowledge/run") {
+    if (typeof options.refreshPlaylist === "function") {
+      try {
+        await options.refreshPlaylist();
+      } catch (error) {
+        console.warn("Playlist refresh skipped before owner knowledge processing", error?.message || error);
+      }
+    }
+    return json(await runKnowledgePipeline(env, {
+      sources: options.sources || [],
+      batchSize: Number(body.batchSize || 24),
+      libraryAudit: options.libraryAudit,
+      libraryKnowledgeIndex: options.libraryKnowledgeIndex,
+      notify: false
+    }));
+  }
+  if (url.pathname === "/api/knowledge/retry") {
+    return json(await queueKnowledgeSourceRetry(kv, body));
+  }
+  if (url.pathname === "/api/knowledge/draft") {
+    return json(await saveKnowledgeProposalDraft(kv, {
+      ...body,
+      owner: owner.displayName
+    }));
+  }
+  if (url.pathname === "/api/knowledge/reject") {
+    return json(await rejectKnowledgeProposal(kv, {
+      ...body,
+      owner: owner.displayName
+    }));
+  }
   if (url.pathname === "/api/knowledge/approve") {
     return json(await approveKnowledgeProposal(kv, {
       ...body,
@@ -97,6 +137,12 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
     }));
   }
   if (url.pathname === "/api/knowledge/publish") {
+    if (body.rankedCoachWording) {
+      await approveKnowledgeProposal(kv, {
+        ...body,
+        owner: owner.displayName
+      });
+    }
     return json(await publishApprovedKnowledge(kv, {
       ...body,
       owner: owner.displayName
@@ -114,7 +160,7 @@ export function knowledgeApiErrorResponse(error) {
     ? 401
     : /Owner access required/.test(message)
       ? 403
-      : /required|valid|large|Cross-origin/.test(message)
+      : /required|valid|large|Cross-origin|Rewrite|corroboration|conflict before publication|before (?:approval|rejecting)|Remove .*before/.test(message)
         ? 400
         : 500;
   return json({ error: message }, { status });

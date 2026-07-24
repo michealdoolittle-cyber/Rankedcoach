@@ -89,6 +89,21 @@ const API_ROUTES = new Map([
   ["OPTIONS /api/henrik/raw", optionsHenrikRaw]
 ]);
 
+async function runPlaylistKnowledgeAutomation(env, options = {}) {
+  try {
+    await handlePlaylistRequest(env);
+  } catch (error) {
+    console.warn("Playlist refresh skipped before knowledge processing", error?.message || error);
+  }
+  return runKnowledgePipeline(env, {
+    sources: EMBEDDED_KNOWLEDGE_SOURCES,
+    batchSize: 24,
+    libraryAudit: LIBRARY_KNOWLEDGE_AUDIT_BASELINE,
+    libraryKnowledgeIndex: LIBRARY_KNOWLEDGE_INDEX,
+    notify: options.notify === true
+  });
+}
+
 function jsonResponse(payload, init = {}) {
   const headers = new Headers(init.headers || {});
   headers.set("Content-Type", "application/json; charset=utf-8");
@@ -161,7 +176,9 @@ async function handleApiRequest(request, env, executionContext) {
     try {
       return await handleKnowledgeOwnerRequest(request, env, {
         libraryAudit: LIBRARY_KNOWLEDGE_AUDIT_BASELINE,
-        libraryKnowledgeIndex: LIBRARY_KNOWLEDGE_INDEX
+        libraryKnowledgeIndex: LIBRARY_KNOWLEDGE_INDEX,
+        sources: EMBEDDED_KNOWLEDGE_SOURCES,
+        refreshPlaylist: () => handlePlaylistRequest(env)
       });
     } catch (error) {
       console.error("Knowledge owner request failed", url.pathname, error?.message || error);
@@ -195,16 +212,9 @@ export default {
     const isDailyResearch = String(controller?.cron || "") === "43 9 * * *";
     const jobs = [
       runPatchContentAutomation(env),
-      runLibraryContentAutomation(env, { daily: isDailyResearch })
+      runLibraryContentAutomation(env, { daily: isDailyResearch }),
+      runPlaylistKnowledgeAutomation(env, { notify: isDailyResearch })
     ];
-    if (isDailyResearch) {
-      jobs.push(runKnowledgePipeline(env, {
-        sources: EMBEDDED_KNOWLEDGE_SOURCES,
-        batchSize: 4,
-        libraryAudit: LIBRARY_KNOWLEDGE_AUDIT_BASELINE,
-        libraryKnowledgeIndex: LIBRARY_KNOWLEDGE_INDEX
-      }));
-    }
     executionContext.waitUntil(Promise.all(jobs));
   }
 };

@@ -89,7 +89,7 @@
       <a href="mailto:business@rankedcoach.gg">Business</a>
     </nav>
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: July 11, 2026</p>
+    <p class="meta">Last updated: July 24, 2026</p>
 
     <p>RankedCoach provides match review, improvement tracking, and coaching-oriented analytics for competitive players. This policy explains what information we collect, how we use it, who we share it with, and the choices available to you.</p>
     <p class="page-note">RankedCoach is intended for personal performance review, self-reflection, and user-authorized coaching workflows. Riot-ID-based match sync is opt-in and limited to the features you choose to use.</p>
@@ -122,11 +122,15 @@
     <h2>Storage and Service Providers</h2>
     <p>We use third-party infrastructure to run RankedCoach, including:</p>
     <ul>
-      <li><strong>Supabase</strong> — account authentication, encrypted database storage for profiles, saved matches, and reflections, and our Ask Coach coaching-assistant function.</li>
+      <li><strong>Supabase</strong> — account authentication, encrypted database storage for profiles, saved matches, and reflections, and our Ask Coach and private knowledge-analysis functions.</li>
       <li><strong>Cloudflare</strong> — application hosting, edge request routing, and secret management for server-side API credentials.</li>
+      <li><strong>OpenAI</strong> — server-side analysis used to produce structured coaching notes from public educational-video captions and to support AI coaching features. Knowledge-analysis requests disable provider-side response storage.</li>
       <li><strong>HenrikDev</strong> — third-party Riot-sourced match/rank data retrieval, described above.</li>
     </ul>
     <p>These providers may support additional functions such as content delivery, communications, and — if enabled in the future — payments. We do not share more data with any provider than is needed for them to perform their function for us.</p>
+
+    <h2>Educational Video Research</h2>
+    <p>RankedCoach may process publicly available metadata and caption text from educational videos already referenced in the Library Playlist. This processing happens server-side to create private, timestamped context notes for the owner review queue. Full transcripts and private context notes are not exposed through the public knowledge endpoint. Only owner-reviewed, original RankedCoach guidance may be published to players; published records omit transcript text and private analysis metadata.</p>
 
     <h2>Cookies and Local Storage</h2>
     <p>RankedCoach may use browser local storage or similar technologies to preserve settings, local app state, and session-related preferences. These technologies help the site function and improve usability.</p>

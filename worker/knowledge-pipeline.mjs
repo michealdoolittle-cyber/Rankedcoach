@@ -7,12 +7,26 @@ const PROPOSAL_PREFIX = "knowledge:proposal:";
 const APPROVAL_PREFIX = "knowledge:approval:";
 const REVIEW_PREFIX = "knowledge:review:";
 const LATEST_REVIEW_KEY = "knowledge:review:latest";
+const REVIEW_DIRTY_KEY = "knowledge:review:dirty";
 const LAST_RUN_KEY = "knowledge:run:last";
+const RUN_LEASE_KEY = "knowledge:run:lease";
 const PUBLISHED_PREFIX = "knowledge:published:";
 const PUBLISHED_INDEX_KEY = "knowledge:published:index";
 const DEFAULT_BATCH_SIZE = 4;
+const MAX_PIPELINE_BATCH_SIZE = 12;
+const DEFAULT_PIPELINE_DEADLINE_MS = 9 * 60 * 1_000;
+const RUN_LEASE_TTL_MS = 12 * 60 * 1_000;
 const MAX_TRANSCRIPT_CUES = 12_000;
-const MAX_SOURCE_ITEMS = 2_000;
+const MAX_SOURCE_ITEMS = 6_000;
+const YOUTUBE_ANDROID_CLIENT_VERSION = "20.10.38";
+const YOUTUBE_BROWSER_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36";
+const YOUTUBE_ANDROID_USER_AGENT = `com.google.android.youtube/${YOUTUBE_ANDROID_CLIENT_VERSION} (Linux; U; Android 11) gzip`;
+const GEMINI_INTERACTIONS_URL = "https://generativelanguage.googleapis.com/v1beta/interactions";
+const DEFAULT_KNOWLEDGE_ANALYSIS_ENDPOINT = "https://jqrsjaaxtdxfmpbtrupj.supabase.co/functions/v1/knowledge-analyze";
+const DEFAULT_GEMINI_VIDEO_MODEL = "gemini-3.6-flash";
+const GEMINI_API_REVISION = "2026-05-20";
+const MAX_VIDEO_INSIGHTS = 24;
+const MAX_FALLBACK_CLAIMS_PER_SOURCE = 24;
 
 const TERMINOLOGY = Object.freeze([
   Object.freeze([/\bgame[\s-]*sense\b/gi, "game sense"]),
@@ -54,6 +68,12 @@ const ENTITY_NAMES = Object.freeze([
   "Guardian", "Judge", "Marshal", "Odin", "Operator", "Outlaw", "Phantom", "Sheriff", "Shorty",
   "Spectre", "Stinger", "Vandal"
 ]);
+const MAP_ENTITY_NAMES = new Set(ENTITY_NAMES.slice(0, 13));
+const WEAPON_ENTITY_NAMES = new Set([
+  "Ares", "Bandit", "Bucky", "Bulldog", "Classic", "Frenzy", "Ghost", "Guardian", "Judge",
+  "Marshal", "Odin", "Operator", "Outlaw", "Phantom", "Sheriff", "Shorty", "Spectre", "Stinger", "Vandal"
+]);
+const AGENT_ENTITY_NAMES = new Set(ENTITY_NAMES.filter(name => !MAP_ENTITY_NAMES.has(name) && !WEAPON_ENTITY_NAMES.has(name)));
 
 function nowIso(now = new Date()) {
   return new Date(now).toISOString();
@@ -83,7 +103,7 @@ function slug(value = "") {
     .replace(/^-|-$/g, "");
 }
 
-function fingerprint(value = "") {
+function legacyFingerprint32(value = "") {
   let hash = 2166136261;
   for (const character of String(value)) {
     hash ^= character.codePointAt(0);
@@ -92,8 +112,45 @@ function fingerprint(value = "") {
   return (hash >>> 0).toString(16).padStart(8, "0");
 }
 
+function fingerprint(value = "") {
+  let hash = 0x6c62272e07bb014262b821756295c58dn;
+  const prime = 0x0000000001000000000000000000013bn;
+  const mask = (1n << 128n) - 1n;
+  for (const byte of new TextEncoder().encode(String(value))) {
+    hash ^= BigInt(byte);
+    hash = (hash * prime) & mask;
+  }
+  return hash.toString(16).padStart(32, "0");
+}
+
 function unique(items = []) {
   return [...new Set(items.filter(Boolean))];
+}
+
+function canonicalPublicationEntity(category, value = "") {
+  if (category === "general") return "";
+  const allowed = category === "map"
+    ? MAP_ENTITY_NAMES
+    : category === "weapon"
+      ? WEAPON_ENTITY_NAMES
+      : AGENT_ENTITY_NAMES;
+  const normalized = normalizeWhitespace(value).toLowerCase();
+  return [...allowed].find(entity => entity.toLowerCase() === normalized) || "";
+}
+
+function containsCopiedTranscriptPhrase(wording = "", excerpt = "", phraseLength = 7) {
+  const normalize = value => normalizeWhitespace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9%/ ]+/g, "")
+    .split(" ")
+    .filter(Boolean);
+  const draft = normalize(wording);
+  const source = normalize(excerpt).join(" ");
+  if (draft.length < phraseLength) return false;
+  for (let index = 0; index <= draft.length - phraseLength; index += 1) {
+    if (source.includes(draft.slice(index, index + phraseLength).join(" "))) return true;
+  }
+  return false;
 }
 
 function youtubeId(value = "") {
@@ -147,8 +204,16 @@ export function normalizeKnowledgeSource(source = {}, registeredAt = nowIso()) {
   const url = identity.platform === "youtube"
     ? `https://www.youtube.com/watch?v=${identity.upstreamId}`
     : `https://www.twitch.tv/videos/${identity.upstreamId}`;
-  const sourceKind = normalizeWhitespace(source.sourceKind || source.channelKind || source.sourceType || "community-video");
-  const researchEligible = !/(?:skin|collection|showcase|live-stream)/i.test(sourceKind)
+  const sourceKind = normalizeWhitespace(source.sourceKind || source.sourceType || source.channelKind || "community-video");
+  const sourceClassifiers = [
+    source.sourceKind,
+    source.sourceType,
+    source.channelKind
+  ].map(normalizeWhitespace).filter(Boolean).join(" ");
+  const topicType = normalizeWhitespace(source.topicType || source.topicTypeOverride || "");
+  const researchEligible = source.researchEligible !== false
+    && !/(?:skin|collection|showcase|live-stream)/i.test(sourceClassifiers)
+    && !/^(?:News|YT Shorts|Live\/Streaming)$/i.test(topicType)
     && source.isLive !== true;
   return Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
@@ -160,7 +225,7 @@ export function normalizeKnowledgeSource(source = {}, registeredAt = nowIso()) {
     publisher: normalizeWhitespace(source.channel || source.creator || source.publisher || "Unknown"),
     publisherKey: sourcePublisher({ ...source, url }),
     sourceKind,
-    topicType: normalizeWhitespace(source.topicType || source.topicTypeOverride || ""),
+    topicType,
     entities: unique((source.entities || [source.targetName]).map(normalizeWhitespace)),
     registeredAt,
     researchEligible,
@@ -193,14 +258,28 @@ export async function registerKnowledgeSources(kv, sources = [], now = new Date(
     const source = normalizeKnowledgeSource(candidate, registeredAt);
     if (!source) continue;
     const previous = existing.get(source.id);
+    const eligibilityChanged = Boolean(previous)
+      && previous.researchEligible !== source.researchEligible;
+    const preserveResearchState = Boolean(previous) && !eligibilityChanged;
     const next = {
       ...source,
       registeredAt: previous?.registeredAt || source.registeredAt,
-      transcriptStatus: previous?.transcriptStatus || source.transcriptStatus,
-      lastTranscriptAttemptAt: previous?.lastTranscriptAttemptAt || null,
-      transcriptLanguage: previous?.transcriptLanguage || "",
-      cueCount: Number(previous?.cueCount || 0),
-      claimCount: Number(previous?.claimCount || 0)
+      transcriptStatus: preserveResearchState ? previous.transcriptStatus : source.transcriptStatus,
+      lastTranscriptAttemptAt: preserveResearchState ? previous.lastTranscriptAttemptAt || null : null,
+      transcriptLanguage: preserveResearchState ? previous.transcriptLanguage || "" : "",
+      cueCount: preserveResearchState ? Number(previous.cueCount || 0) : 0,
+      claimCount: preserveResearchState ? Number(previous.claimCount || 0) : 0,
+      extractionKind: preserveResearchState ? previous.extractionKind || "" : "",
+      lastErrorClass: preserveResearchState ? previous.lastErrorClass || "" : "",
+      attemptCount: preserveResearchState ? Number(previous.attemptCount || 0) : 0,
+      nextRetryAt: preserveResearchState ? previous.nextRetryAt || null : null,
+      retryRequestedAt: preserveResearchState ? previous.retryRequestedAt || null : null,
+      analysisStatus: preserveResearchState ? previous.analysisStatus || "" : "",
+      eligibilityChangedAt: eligibilityChanged ? registeredAt : previous?.eligibilityChangedAt || null,
+      eligibilityReviewPending: eligibilityChanged
+        ? true
+        : previous?.eligibilityReviewPending === true,
+      eligibilityReviewedAt: previous?.eligibilityReviewedAt || null
     };
     existing.set(next.id, next);
     normalized.push(next);
@@ -282,6 +361,314 @@ function selectCaptionTrack(tracks = []) {
     || null;
 }
 
+function interactionOutputText(payload = {}) {
+  if (typeof payload.output_text === "string") return payload.output_text;
+  return (payload.steps || [])
+    .filter(step => step?.type === "model_output")
+    .flatMap(step => step.content || [])
+    .filter(content => content?.type === "text")
+    .map(content => content.text || "")
+    .join("\n");
+}
+
+function normalizeGeminiVideoInsights(payload = {}) {
+  return Object.freeze((Array.isArray(payload?.insights) ? payload.insights : [])
+    .slice(0, MAX_VIDEO_INSIGHTS)
+    .map(item => {
+      const contextExcerpt = normalizeWhitespace(item?.contextExcerpt).split(" ").slice(0, 28).join(" ");
+      const suggestedWording = normalizeWhitespace(item?.suggestedWording);
+      const startSeconds = Math.max(0, Number(item?.startSeconds || 0));
+      const endSeconds = Math.max(startSeconds, Number(item?.endSeconds || startSeconds + 8));
+      const type = item?.type === "statistical" ? "statistical" : "coaching";
+      const topic = TOPIC_RULES.some(rule => rule.id === item?.topic) ? item.topic : classifyTopic(`${contextExcerpt} ${suggestedWording}`);
+      const entities = unique([
+        ...(Array.isArray(item?.entities) ? item.entities : []),
+        ...entityMatches(`${contextExcerpt} ${suggestedWording}`)
+      ].map(normalizeWhitespace)).filter(entity => ENTITY_NAMES.includes(entity));
+      if (contextExcerpt.length < 20 || suggestedWording.length < 20) return null;
+      return Object.freeze({
+        startSeconds,
+        endSeconds,
+        contextExcerpt,
+        suggestedWording,
+        whyItMatters: normalizeWhitespace(item?.whyItMatters),
+        type,
+        topic,
+        entities: Object.freeze(entities),
+        confidence: ["high", "medium", "low"].includes(item?.confidence) ? item.confidence : "medium"
+      });
+    })
+    .filter(Boolean));
+}
+
+function evidenceTokens(value = "") {
+  return [...String(value).matchAll(/[a-z0-9%/]+(?:['’.-][a-z0-9%/]+)*/gi)]
+    .map(match => {
+      const raw = match[0];
+      const normalized = raw
+        .toLowerCase()
+        .replace(/[^a-z0-9%/]+/g, "");
+      return normalized ? { raw, normalized } : null;
+    })
+    .filter(Boolean);
+}
+
+function orderedTokenOverlap(left = [], right = []) {
+  const rows = new Array(right.length + 1).fill(0);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    let diagonal = 0;
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const previous = rows[rightIndex];
+      rows[rightIndex] = left[leftIndex - 1] === right[rightIndex - 1]
+        ? diagonal + 1
+        : Math.max(rows[rightIndex], rows[rightIndex - 1]);
+      diagonal = previous;
+    }
+  }
+  return rows[right.length];
+}
+
+function closestTranscriptTokenSpan(insight, cues = []) {
+  const claimed = evidenceTokens(insight.contextExcerpt).map(token => token.normalized);
+  if (claimed.length < 4) return null;
+  const claimedStartMs = Math.max(0, Number(insight.startSeconds || 0) * 1_000);
+  const claimedEndMs = Math.max(
+    claimedStartMs,
+    Number(insight.endSeconds || insight.startSeconds || 0) * 1_000
+  );
+  const nearbyCues = normalizeValorantTranscript(cues)
+    .filter(cue => {
+      const cueStart = Number(cue.startMs || 0);
+      const cueEnd = cueStart + Math.max(1_000, Number(cue.durationMs || 0));
+      return cueEnd >= claimedStartMs - 8_000 && cueStart <= claimedEndMs + 8_000;
+    })
+    .sort((left, right) => Number(left.startMs || 0) - Number(right.startMs || 0));
+  const transcriptTokens = nearbyCues.flatMap((cue, cueIndex) => (
+    evidenceTokens(cue.text).map(token => ({
+      ...token,
+      cueIndex,
+      startMs: Number(cue.startMs || 0),
+      endMs: Number(cue.startMs || 0) + Math.max(1_000, Number(cue.durationMs || 0))
+    }))
+  ));
+  if (transcriptTokens.length < 4) return null;
+
+  let best = null;
+  const minimumLength = Math.max(4, claimed.length - 3);
+  const maximumLength = Math.min(transcriptTokens.length, claimed.length + 3);
+  for (let start = 0; start < transcriptTokens.length; start += 1) {
+    for (let length = minimumLength; length <= maximumLength && start + length <= transcriptTokens.length; length += 1) {
+      const candidate = transcriptTokens
+        .slice(start, start + length)
+        .map(token => token.normalized);
+      const overlap = orderedTokenOverlap(claimed, candidate);
+      const score = overlap / Math.max(claimed.length, candidate.length);
+      const timestampDistance = Math.abs(transcriptTokens[start].startMs - claimedStartMs);
+      if (
+        !best
+        || score > best.score
+        || (score === best.score && timestampDistance < best.timestampDistance)
+      ) {
+        best = { start, length, overlap, score, timestampDistance };
+      }
+    }
+  }
+  const requiredOverlap = Math.max(4, Math.ceil(claimed.length * 0.78));
+  if (!best || best.score < 0.78 || best.overlap < requiredOverlap) return null;
+
+  const matchEnd = best.start + best.length;
+  const contextCapacity = Math.max(0, 28 - best.length);
+  const contextStart = Math.max(0, best.start - Math.floor(contextCapacity / 2));
+  const contextEnd = Math.min(
+    transcriptTokens.length,
+    Math.max(matchEnd, contextStart + Math.min(28, transcriptTokens.length))
+  );
+  const matchedTokens = transcriptTokens.slice(best.start, matchEnd);
+  return {
+    startMs: matchedTokens[0].startMs,
+    endMs: matchedTokens[matchedTokens.length - 1].endMs,
+    contextExcerpt: transcriptTokens
+      .slice(Math.max(0, contextEnd - 28), contextEnd)
+      .map(token => token.raw)
+      .join(" ")
+  };
+}
+
+function groundInsightsAgainstTranscript(insights = [], cues = []) {
+  return Object.freeze(insights.map(insight => {
+    const grounded = closestTranscriptTokenSpan(insight, cues);
+    if (!grounded) return null;
+    return Object.freeze({
+      ...insight,
+      startSeconds: grounded.startMs / 1_000,
+      endSeconds: grounded.endMs / 1_000,
+      contextExcerpt: grounded.contextExcerpt
+    });
+  }).filter(Boolean));
+}
+
+export async function acquireGeminiYouTubeInsights(source, env = {}, fetchImpl = fetch) {
+  const identity = sourceIdentity(source);
+  // A dedicated Gemini key is preferred. A project-level Google API key may
+  // also have Generative Language enabled; if it does not, caption analysis
+  // continues through the deterministic fallback below.
+  const apiKey = String(
+    env.GEMINI_API_KEY
+    || env.GOOGLE_GENERATIVE_AI_API_KEY
+    || ""
+  ).trim();
+  if (!identity || identity.platform !== "youtube") {
+    return Object.freeze({ status: "unsupported", language: "", cues: [], insights: [] });
+  }
+  if (!apiKey) {
+    return Object.freeze({ status: "gemini-not-configured", language: "", cues: [], insights: [] });
+  }
+  const schema = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      insights: {
+        type: "array",
+        maxItems: MAX_VIDEO_INSIGHTS,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            startSeconds: { type: "integer", minimum: 0 },
+            endSeconds: { type: "integer", minimum: 0 },
+            contextExcerpt: { type: "string" },
+            suggestedWording: { type: "string" },
+            whyItMatters: { type: "string" },
+            type: { type: "string", enum: ["coaching", "statistical"] },
+            topic: { type: "string", enum: ["economy", "mechanics", "teamplay", "map-control", "agent", "mentality", "general"] },
+            entities: { type: "array", items: { type: "string" } },
+            confidence: { type: "string", enum: ["high", "medium", "low"] }
+          },
+          required: [
+            "startSeconds", "endSeconds", "contextExcerpt", "suggestedWording",
+            "whyItMatters", "type", "topic", "entities", "confidence"
+          ]
+        }
+      }
+    },
+    required: ["insights"]
+  };
+  const response = await fetchImpl(GEMINI_INTERACTIONS_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+      "Api-Revision": GEMINI_API_REVISION
+    },
+    body: JSON.stringify({
+      model: String(env.KNOWLEDGE_VIDEO_MODEL || DEFAULT_GEMINI_VIDEO_MODEL),
+      store: false,
+      input: [
+        { type: "video", uri: source.url, mime_type: "video/mp4" },
+        {
+          type: "text",
+          text: [
+            "Analyze this public Valorant educational video for a private RankedCoach owner-review queue.",
+            `Return no more than ${MAX_VIDEO_INSIGHTS} distinct, actionable coaching or clearly qualified statistical insights.`,
+            "Ignore sponsorships, subscriptions, channel promotion, greetings, jokes, outros, and generic filler.",
+            "Anchor every insight to the exact spoken timestamp. contextExcerpt must be at most 28 spoken words used only for private verification.",
+            "suggestedWording must be an original concise RankedCoach paraphrase, never a copied sentence.",
+            "whyItMatters should explain the player decision or outcome in one short sentence.",
+            `Only use these entity names when clearly relevant: ${ENTITY_NAMES.join(", ")}.`,
+            "If the video contains no specific useful Valorant instruction, return an empty insights array."
+          ].join(" ")
+        }
+      ],
+      response_format: {
+        type: "text",
+        mime_type: "application/json",
+        schema
+      },
+      generation_config: {
+        max_output_tokens: 8_000,
+        thinking_level: "low"
+      }
+    }),
+    signal: AbortSignal.timeout(110_000)
+  });
+  if (!response.ok) {
+    return Object.freeze({
+      status: response.status === 429 ? "gemini-rate-limited" : "gemini-unavailable",
+      language: "",
+      cues: [],
+      insights: []
+    });
+  }
+  const interaction = await response.json().catch(() => ({}));
+  if (interaction.status && interaction.status !== "completed") {
+    return Object.freeze({ status: "gemini-incomplete", language: "", cues: [], insights: [] });
+  }
+  let structured = {};
+  try {
+    structured = JSON.parse(interactionOutputText(interaction));
+  } catch {
+    return Object.freeze({ status: "gemini-invalid-output", language: "", cues: [], insights: [] });
+  }
+  const insights = normalizeGeminiVideoInsights(structured);
+  const cues = insights.map(insight => Object.freeze({
+    startMs: Math.round(insight.startSeconds * 1_000),
+    durationMs: Math.max(1_000, Math.round((insight.endSeconds - insight.startSeconds) * 1_000)),
+    text: insight.contextExcerpt
+  }));
+  return Object.freeze({
+    status: insights.length ? "acquired" : "no-actionable-insights",
+    language: "en",
+    trackKind: "gemini-public-youtube-video-analysis",
+    cues: Object.freeze(cues),
+    insights
+  });
+}
+
+export async function analyzeKnowledgeTranscript(source, cues = [], env = {}, fetchImpl = fetch) {
+  const token = String(env.KNOWLEDGE_PIPELINE_TOKEN || "").trim();
+  if (!token || !cues.length) {
+    return Object.freeze({ status: "analysis-not-configured", insights: [], model: "" });
+  }
+  const endpoint = String(env.KNOWLEDGE_ANALYSIS_ENDPOINT || DEFAULT_KNOWLEDGE_ANALYSIS_ENDPOINT).trim();
+  try {
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-rankedcoach-pipeline-token": token
+      },
+      body: JSON.stringify({
+        source: {
+          id: source.id,
+          title: source.title,
+          publisher: source.publisher,
+          topicType: source.topicType,
+          entities: source.entities
+        },
+        cues
+      }),
+      signal: AbortSignal.timeout(110_000)
+    });
+    if (!response.ok) {
+      return Object.freeze({
+        status: response.status === 429 ? "analysis-rate-limited" : "analysis-unavailable",
+        insights: [],
+        model: ""
+      });
+    }
+    const payload = await response.json().catch(() => ({}));
+    const normalized = normalizeGeminiVideoInsights(payload);
+    const insights = groundInsightsAgainstTranscript(normalized, cues);
+    return Object.freeze({
+      status: insights.length ? "analyzed" : normalized.length ? "analysis-ungrounded" : "no-actionable-insights",
+      insights,
+      model: normalizeWhitespace(payload.model)
+    });
+  } catch (_error) {
+    return Object.freeze({ status: "analysis-unavailable", insights: [], model: "" });
+  }
+}
+
 export function parseYouTubeTranscriptPayload(payload = {}) {
   const cues = [];
   for (const event of payload.events || []) {
@@ -315,80 +702,191 @@ function parseTimedTextXml(value = "") {
   return cues;
 }
 
-export async function acquirePublicYouTubeTranscript(source, fetchImpl = fetch) {
-  const identity = sourceIdentity(source);
-  if (!identity || identity.platform !== "youtube") {
-    return Object.freeze({ status: "unsupported", language: "", cues: [] });
-  }
-  const watchResponse = await fetchImpl(`https://www.youtube.com/watch?v=${identity.upstreamId}&hl=en`, {
-    headers: { "User-Agent": "RankedCoach-Knowledge-Research/1.0" },
-    signal: AbortSignal.timeout(20_000)
-  });
-  if (!watchResponse.ok) {
-    return Object.freeze({ status: "watch-page-unavailable", language: "", cues: [] });
-  }
-  const tracks = extractYouTubeCaptionTracks(await watchResponse.text());
-  const track = selectCaptionTrack(tracks);
-  if (!track) return Object.freeze({ status: "no-public-transcript", language: "", cues: [] });
+async function fetchYouTubeCaptionTrack(track, fetchImpl = fetch, userAgent = YOUTUBE_ANDROID_USER_AGENT) {
+  if (!track?.baseUrl) return Object.freeze({ language: "", trackKind: "", cues: [] });
   const transcriptUrl = new URL(track.baseUrl);
   transcriptUrl.searchParams.set("fmt", "json3");
-  const transcriptResponse = await fetchImpl(transcriptUrl, {
-    headers: { "User-Agent": "RankedCoach-Knowledge-Research/1.0" },
+  const response = await fetchImpl(transcriptUrl, {
+    headers: {
+      "User-Agent": userAgent,
+      "Accept-Language": "en-US,en;q=0.9"
+    },
     signal: AbortSignal.timeout(20_000)
   });
-  if (!transcriptResponse.ok) {
-    return Object.freeze({ status: "transcript-unavailable", language: track.languageCode, cues: [] });
-  }
-  const transcriptBody = await transcriptResponse.text();
+  if (!response.ok) return Object.freeze({ language: track.languageCode || "", trackKind: track.kind || "", cues: [] });
+  const body = await response.text();
   let cues = [];
-  if (transcriptBody.trim()) {
+  if (body.trim()) {
     try {
-      cues = parseYouTubeTranscriptPayload(JSON.parse(transcriptBody));
+      cues = parseYouTubeTranscriptPayload(JSON.parse(body));
     } catch {
-      cues = parseTimedTextXml(transcriptBody);
+      cues = parseTimedTextXml(body);
     }
   }
   return Object.freeze({
-    status: cues.length ? "acquired" : "empty-transcript",
-    language: track.languageCode,
+    language: track.languageCode || "",
     trackKind: track.kind || "human",
     cues: Object.freeze(cues)
   });
 }
 
+export async function acquireYouTubeAndroidTranscript(source, options = {}) {
+  const fetchImpl = options.fetchImpl || fetch;
+  const identity = sourceIdentity(source);
+  if (!identity || identity.platform !== "youtube") {
+    return Object.freeze({ status: "unsupported", language: "", cues: [] });
+  }
+  const apiKey = String(options.apiKey || "").trim();
+  const clientVersion = String(options.clientVersion || YOUTUBE_ANDROID_CLIENT_VERSION);
+  const endpoint = new URL("https://www.youtube.com/youtubei/v1/player");
+  endpoint.searchParams.set("prettyPrint", "false");
+  if (apiKey) endpoint.searchParams.set("key", apiKey);
+  const response = await fetchImpl(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent": YOUTUBE_ANDROID_USER_AGENT,
+      "X-Youtube-Client-Name": "3",
+      "X-Youtube-Client-Version": clientVersion
+    },
+    body: JSON.stringify({
+      context: {
+        client: {
+          clientName: "ANDROID",
+          clientVersion,
+          androidSdkVersion: 30,
+          hl: "en",
+          gl: "US"
+        }
+      },
+      videoId: identity.upstreamId
+    }),
+    signal: AbortSignal.timeout(20_000)
+  });
+  if (!response.ok) {
+    return Object.freeze({ status: "android-player-unavailable", language: "", cues: [] });
+  }
+  const payload = await response.json().catch(() => ({}));
+  const playability = String(payload?.playabilityStatus?.status || "");
+  if (playability && playability !== "OK") {
+    return Object.freeze({ status: "video-unavailable", language: "", cues: [] });
+  }
+  const tracks = (payload?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [])
+    .filter(track => track?.baseUrl && track?.languageCode)
+    .map(track => ({
+      baseUrl: String(track.baseUrl),
+      languageCode: String(track.languageCode),
+      name: normalizeWhitespace(track.name?.simpleText || track.name?.runs?.map(run => run.text).join("") || track.languageCode),
+      kind: String(track.kind || ""),
+      isTranslatable: Boolean(track.isTranslatable)
+    }));
+  const track = selectCaptionTrack(tracks);
+  if (!track) return Object.freeze({ status: "no-public-transcript", language: "", cues: [] });
+  const transcript = await fetchYouTubeCaptionTrack(track, fetchImpl, YOUTUBE_ANDROID_USER_AGENT);
+  return Object.freeze({
+    status: transcript.cues.length ? "acquired" : "empty-transcript",
+    language: transcript.language,
+    trackKind: transcript.trackKind === "asr" ? "youtube-auto-caption" : "youtube-caption",
+    cues: transcript.cues
+  });
+}
+
+export async function acquirePublicYouTubeTranscript(source, fetchImpl = fetch) {
+  const identity = sourceIdentity(source);
+  if (!identity || identity.platform !== "youtube") {
+    return Object.freeze({ status: "unsupported", language: "", cues: [] });
+  }
+  // Public timed-text URLs returned by the normal watch page are frequently
+  // empty from server runtimes. The player response supplies the same public
+  // caption track and is therefore attempted first, while the watch-page path
+  // remains as a compatibility fallback.
+  try {
+    const androidTranscript = await acquireYouTubeAndroidTranscript(source, { fetchImpl });
+    if (androidTranscript.status === "acquired" || androidTranscript.status === "no-public-transcript") {
+      return androidTranscript;
+    }
+  } catch (_error) {
+    // Continue through the watch-page compatibility path.
+  }
+  try {
+    const watchResponse = await fetchImpl(`https://www.youtube.com/watch?v=${identity.upstreamId}&hl=en`, {
+      headers: {
+        "User-Agent": YOUTUBE_BROWSER_USER_AGENT,
+        "Accept-Language": "en-US,en;q=0.9"
+      },
+      signal: AbortSignal.timeout(20_000)
+    });
+    if (watchResponse.ok) {
+      const html = await watchResponse.text();
+      const track = selectCaptionTrack(extractYouTubeCaptionTracks(html));
+      if (track) {
+        const transcript = await fetchYouTubeCaptionTrack(track, fetchImpl, YOUTUBE_BROWSER_USER_AGENT);
+        if (transcript.cues.length) {
+          return Object.freeze({
+            status: "acquired",
+            language: transcript.language,
+            trackKind: transcript.trackKind || "youtube-caption",
+            cues: transcript.cues
+          });
+        }
+      }
+    }
+  } catch (_error) {
+    // The public watch page is frequently bot-gated from data-center IPs.
+  }
+  return Object.freeze({ status: "transcript-unavailable", language: "", cues: [] });
+}
+
 export async function acquireKnowledgeTranscript(source, env = {}, fetchImpl = fetch) {
   const providerEndpoint = String(env.KNOWLEDGE_TRANSCRIPT_ENDPOINT || "").trim();
   if (providerEndpoint) {
-    const response = await fetchImpl(providerEndpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(env.KNOWLEDGE_TRANSCRIPT_TOKEN
-          ? { Authorization: `Bearer ${String(env.KNOWLEDGE_TRANSCRIPT_TOKEN)}` }
-          : {})
-      },
-      body: JSON.stringify({
-        platform: source.platform,
-        videoId: source.upstreamId,
-        url: source.url,
-        language: "en"
-      }),
-      signal: AbortSignal.timeout(30_000)
-    });
-    if (response.ok) {
-      const payload = await response.json();
-      const cues = normalizeValorantTranscript(Array.isArray(payload?.cues) ? payload.cues : []);
-      if (cues.length) {
-        return Object.freeze({
-          status: "acquired",
-          language: String(payload.language || "en"),
-          trackKind: "configured-private-provider",
-          cues: Object.freeze(cues)
-        });
+    try {
+      const response = await fetchImpl(providerEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(env.KNOWLEDGE_TRANSCRIPT_TOKEN
+            ? { Authorization: `Bearer ${String(env.KNOWLEDGE_TRANSCRIPT_TOKEN)}` }
+            : {})
+        },
+        body: JSON.stringify({
+          platform: source.platform,
+          videoId: source.upstreamId,
+          url: source.url,
+          language: "en"
+        }),
+        signal: AbortSignal.timeout(30_000)
+      });
+      if (response.ok) {
+        const payload = await response.json();
+        const cues = normalizeValorantTranscript(Array.isArray(payload?.cues) ? payload.cues : []);
+        if (cues.length) {
+          return Object.freeze({
+            status: "acquired",
+            language: String(payload.language || "en"),
+            trackKind: "configured-private-provider",
+            cues: Object.freeze(cues)
+          });
+        }
       }
+    } catch (_error) {
+      // Continue to the public caption path.
     }
   }
-  return acquirePublicYouTubeTranscript(source, fetchImpl);
+  let publicTranscript;
+  try {
+    publicTranscript = await acquirePublicYouTubeTranscript(source, fetchImpl);
+  } catch (_error) {
+    publicTranscript = Object.freeze({ status: "transcript-unavailable", language: "", cues: [] });
+  }
+  if (publicTranscript.status === "acquired") return publicTranscript;
+  try {
+    const semanticVideo = await acquireGeminiYouTubeInsights(source, env, fetchImpl);
+    if (["acquired", "no-actionable-insights"].includes(semanticVideo.status)) return semanticVideo;
+  } catch (_error) {
+    // Retain the caption failure status so the retry queue can back off.
+  }
+  return publicTranscript;
 }
 
 export function normalizeValorantTranscript(cues = []) {
@@ -442,6 +940,54 @@ function sentenceParts(value = "") {
     .filter(Boolean);
 }
 
+function cueAnchoredClaimSegments(section = {}) {
+  const cues = Array.isArray(section.cues) ? section.cues : [];
+  if (!cues.length) {
+    let offsetMs = Number(section.startMs || 0);
+    return sentenceParts(section.text).map(text => {
+      const durationMs = Math.max(
+        1_000,
+        Math.round((text.length / Math.max(String(section.text || "").length, 1))
+          * Math.max(Number(section.endMs || 0) - Number(section.startMs || 0), 1_000))
+      );
+      const segment = { text, startMs: offsetMs, endMs: offsetMs + durationMs };
+      offsetMs += durationMs;
+      return segment;
+    });
+  }
+
+  const segments = [];
+  let buffer = [];
+  let characters = 0;
+  const flush = () => {
+    if (!buffer.length) return;
+    const first = buffer[0];
+    const last = buffer[buffer.length - 1];
+    const text = normalizeWhitespace(buffer.map(cue => cue.text).join(" "));
+    if (text) {
+      segments.push({
+        text,
+        startMs: Number(first.startMs || 0),
+        endMs: Number(last.startMs || 0) + Math.max(1_000, Number(last.durationMs || 0))
+      });
+    }
+    buffer = [];
+    characters = 0;
+  };
+
+  for (let index = 0; index < cues.length; index += 1) {
+    const cue = cues[index];
+    const next = cues[index + 1];
+    buffer.push(cue);
+    characters += String(cue.text || "").length + 1;
+    const closesSentence = /[.!?]["')\]]?\s*$/.test(String(cue.text || ""));
+    const hasNaturalPause = next && Number(next.startMs || 0) - (Number(cue.startMs || 0) + Number(cue.durationMs || 0)) >= 1_750;
+    if ((closesSentence && characters >= 28) || characters >= 260 || hasNaturalPause) flush();
+  }
+  flush();
+  return segments;
+}
+
 function classifyTopic(text = "") {
   return TOPIC_RULES.find(rule => rule.pattern.test(text))?.id || "general";
 }
@@ -458,6 +1004,10 @@ function claimStance(text = "") {
 
 function coachingSignal(text = "") {
   return /\b(?:should|need to|make sure|avoid|always|never|when|if|because|try|focus|treat|use|hold|play|rotate|peek|swing|trade|smoke|flash|plant|retake|entry|anchor|buy|save)\b/i.test(text);
+}
+
+function promotionalTranscriptSegment(text = "") {
+  return /\b(?:subscribe|subscribing|like the video|hit the bell|leave a comment|comment down below|link in the description|sponsor(?:ed)?|use code|thanks? for watching|see you (?:guys )?(?:next|later)|follow me|my channel|on stream)\b/i.test(text);
 }
 
 function entityMatches(text = "") {
@@ -548,21 +1098,24 @@ export function parseTimestampedTranscript(input = "") {
 export function extractStructuredClaims(source, sections = []) {
   const claims = [];
   for (const section of sections) {
-    let offsetMs = section.startMs;
-    for (const sentence of sentenceParts(section.text)) {
-      const clean = normalizeWhitespace(sentence);
-      const approximateDurationMs = Math.max(1_000, Math.round((clean.length / Math.max(section.text.length, 1)) * Math.max(section.endMs - section.startMs, 1_000)));
+    for (const segment of cueAnchoredClaimSegments(section)) {
+      const clean = normalizeWhitespace(segment.text);
       const type = classifyClaimType(clean);
-      if (clean.length >= 28 && clean.length <= 420 && (coachingSignal(clean) || type === "statistical")) {
+      if (
+        clean.length >= 28
+        && clean.length <= 420
+        && !promotionalTranscriptSegment(clean)
+        && (coachingSignal(clean) || type === "statistical")
+      ) {
         const topic = classifyTopic(clean);
         const entities = entityMatches(clean);
         const tokens = conceptTokens(clean);
-        const startSeconds = Math.max(0, offsetMs / 1000);
-        const endSeconds = Math.max(startSeconds, (offsetMs + approximateDurationMs) / 1000);
+        const startSeconds = Math.max(0, Number(segment.startMs || 0) / 1000);
+        const endSeconds = Math.max(startSeconds, Number(segment.endMs || segment.startMs || 0) / 1000);
         const conceptKey = `${type}:${topic}:${entities.map(slug).sort().join(",")}:${fingerprint(tokens.sort().join(" "))}`;
         claims.push(Object.freeze({
           schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
-          id: `${source.id}-${fingerprint(`${offsetMs}:${clean}`)}`,
+          id: `${source.id}-${fingerprint(`${segment.startMs}:${clean}`)}`,
           sourceId: source.id,
           sourcePublisher: source.publisherKey,
           sourceKind: source.sourceKind,
@@ -580,10 +1133,67 @@ export function extractStructuredClaims(source, sections = []) {
           privateExcerpt: clean
         }));
       }
-      offsetMs += approximateDurationMs;
     }
   }
-  return Object.freeze(claims);
+  const scored = claims
+    .map(claim => {
+      const text = claim.privateExcerpt;
+      const actionSignals = (text.match(/\b(?:use|hold|avoid|trade|peek|swing|rotate|smoke|flash|plant|retake|buy|save|position|crosshair|sensitivity|utility)\b/gi) || []).length;
+      const score = (
+        Math.min(5, actionSignals) * 3
+        + Math.min(3, claim.entities.length) * 2
+        + (/\b(?:because|so that|instead|before|after|when|if)\b/i.test(text) ? 2 : 0)
+        + (text.length >= 55 && text.length <= 260 ? 2 : 0)
+        - (claim.type === "statistical" ? 1 : 0)
+        - (/\b(?:i think|i guess|maybe|kind of|sort of|you know)\b/i.test(text) ? 2 : 0)
+      );
+      return { claim, score };
+    })
+    .sort((left, right) => right.score - left.score || left.claim.startSeconds - right.claim.startSeconds);
+  const selected = [];
+  for (const candidate of scored) {
+    if (selected.some(existing => (
+      existing.type === candidate.claim.type
+      && existing.topic === candidate.claim.topic
+      && jaccard(existing.tokens, candidate.claim.tokens) >= 0.8
+    ))) continue;
+    selected.push(candidate.claim);
+    if (selected.length >= MAX_FALLBACK_CLAIMS_PER_SOURCE) break;
+  }
+  selected.sort((left, right) => left.startSeconds - right.startSeconds);
+  return Object.freeze(selected);
+}
+
+function claimsFromVideoInsights(source, insights = []) {
+  return Object.freeze(insights.map(insight => {
+    const text = normalizeWhitespace(`${insight.contextExcerpt} ${insight.suggestedWording}`);
+    const tokens = conceptTokens(text);
+    const entities = unique([...(insight.entities || []), ...entityMatches(text)]);
+    const startSeconds = Math.max(0, Number(insight.startSeconds || 0));
+    const endSeconds = Math.max(startSeconds, Number(insight.endSeconds || startSeconds));
+    const conceptKey = `${insight.type}:${insight.topic}:${entities.map(slug).sort().join(",")}:${fingerprint(tokens.sort().join(" "))}`;
+    return Object.freeze({
+      schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+      id: `${source.id}-${fingerprint(`${startSeconds}:${text}`)}`,
+      sourceId: source.id,
+      sourcePublisher: source.publisherKey,
+      sourceKind: source.sourceKind,
+      type: insight.type,
+      topic: insight.topic,
+      entities: Object.freeze(entities),
+      stance: claimStance(insight.suggestedWording),
+      conceptKey,
+      tokens: Object.freeze(tokens),
+      startSeconds,
+      endSeconds,
+      evidenceUrl: evidenceUrl(source, startSeconds),
+      privateExcerpt: insight.contextExcerpt,
+      suggestedWording: insight.suggestedWording,
+      whyItMatters: insight.whyItMatters,
+      confidence: insight.confidence,
+      extractionKind: "semantic-video-analysis"
+    });
+  }));
 }
 
 function numericValues(text = "") {
@@ -609,25 +1219,67 @@ function claimSimilarity(left, right) {
   return sharedEntities ? jaccard(left.tokens, right.tokens) : 0;
 }
 
+function conceptIdentityForClaim(claim = {}) {
+  const entities = [...(claim.entities || [])].map(slug).sort().join(",");
+  const tokens = [...(claim.tokens || [])].sort().join(" ");
+  const canonicalSeed = `${claim.type}:${claim.topic}:${entities}:${tokens}`;
+  const legacyConceptKey = `${claim.type}:${claim.topic}:${entities}:${legacyFingerprint32(tokens)}`;
+  return Object.freeze({
+    id: `concept-${fingerprint(canonicalSeed)}`,
+    legacyIds: Object.freeze(unique([
+      claim.conceptKey ? `concept-${legacyFingerprint32(claim.conceptKey)}` : "",
+      `concept-${legacyFingerprint32(legacyConceptKey)}`
+    ]))
+  });
+}
+
 export function buildKnowledgeConsensus(claimDocuments = []) {
   const claims = claimDocuments.flatMap(document => document.claims || []);
   const clusters = [];
+  const exactConcepts = new Map();
+  const tokenBuckets = new Map();
   for (const claim of claims) {
-    const cluster = clusters.find(candidate => (
-      candidate.type === claim.type
-      && (candidate.conceptKeys.has(claim.conceptKey) || candidate.claims.some(existing => claimSimilarity(existing, claim) >= 0.72))
-    ));
+    let cluster = exactConcepts.has(claim.conceptKey)
+      ? clusters[exactConcepts.get(claim.conceptKey)]
+      : null;
+    if (!cluster) {
+      const bucketKeys = (claim.tokens || [])
+        .map(token => `${claim.type}:${claim.topic}:${token}`)
+        .sort((left, right) => (tokenBuckets.get(left)?.size || 0) - (tokenBuckets.get(right)?.size || 0))
+        .slice(0, 4);
+      const candidateIndexes = new Set(bucketKeys.flatMap(key => [...(tokenBuckets.get(key) || [])]));
+      cluster = [...candidateIndexes]
+        .map(index => clusters[index])
+        .find(candidate => (
+          candidate?.type === claim.type
+          && candidate.claims.some(existing => claimSimilarity(existing, claim) >= 0.72)
+        ));
+    }
     if (cluster) {
       cluster.claims.push(claim);
       cluster.conceptKeys.add(claim.conceptKey);
+      const identity = conceptIdentityForClaim(claim);
+      if (identity.id !== cluster.id) cluster.legacyIds.add(identity.id);
+      for (const legacyId of identity.legacyIds) cluster.legacyIds.add(legacyId);
     } else {
-      clusters.push({
-        id: `concept-${fingerprint(claim.conceptKey)}`,
+      const identity = conceptIdentityForClaim(claim);
+      cluster = {
+        index: clusters.length,
+        id: identity.id,
+        legacyIds: new Set(identity.legacyIds),
         type: claim.type,
         topic: claim.topic,
         claims: [claim],
         conceptKeys: new Set([claim.conceptKey])
-      });
+      };
+      clusters.push(cluster);
+    }
+    const clusterIndex = cluster.index;
+    exactConcepts.set(claim.conceptKey, clusterIndex);
+    for (const token of claim.tokens || []) {
+      const key = `${claim.type}:${claim.topic}:${token}`;
+      if (!tokenBuckets.has(key)) tokenBuckets.set(key, new Set());
+      tokenBuckets.get(key).add(clusterIndex);
     }
   }
 
@@ -664,6 +1316,7 @@ export function buildKnowledgeConsensus(claimDocuments = []) {
           : "limited";
     return Object.freeze({
       id: cluster.id,
+      legacyIds: Object.freeze([...cluster.legacyIds]),
       type: cluster.type,
       topic: cluster.topic,
       state,
@@ -671,6 +1324,8 @@ export function buildKnowledgeConsensus(claimDocuments = []) {
       publishers: Object.freeze(publishers),
       sourceCount: unique(cluster.claims.map(claim => claim.sourceId)).length,
       entities: Object.freeze(unique(cluster.claims.flatMap(claim => claim.entities))),
+      suggestedWording: cluster.claims.find(claim => claim.suggestedWording)?.suggestedWording || null,
+      whyItMatters: cluster.claims.find(claim => claim.whyItMatters)?.whyItMatters || null,
       claimIds: Object.freeze(cluster.claims.map(claim => claim.id)),
       evidence: Object.freeze(cluster.claims.map(claim => Object.freeze({
         sourceId: claim.sourceId,
@@ -756,15 +1411,19 @@ function proposalFromConcept(concept, createdAt, libraryComparison) {
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
     id: `proposal-${concept.id}`,
     conceptId: concept.id,
+    legacyProposalIds: Object.freeze((concept.legacyIds || []).map(id => `proposal-${id}`)),
     type: concept.type,
     topic: concept.topic,
     entities: concept.entities,
     state: concept.state,
     confidenceBand: concept.confidenceBand,
+    claimIds: concept.claimIds,
     evidence: concept.evidence,
     contradictions: concept.contradictions,
     libraryComparison,
     recommendation,
+    suggestedWording: concept.suggestedWording || null,
+    whyItMatters: concept.whyItMatters || null,
     rankedCoachWording: null,
     approvalStatus: "pending-owner-approval",
     createdAt
@@ -790,11 +1449,12 @@ export function buildKnowledgeReview(consensus, options = {}) {
     libraryConflicts: proposals.filter(proposal => proposal.libraryComparison.relationship === "conflicts-with-library").length,
     newOpportunities: proposals.filter(proposal => proposal.libraryComparison.relationship === "new-opportunity").length,
     pendingApproval: proposals.length,
+    rejected: 0,
     published: 0
   });
   return Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
-    id: `review-${createdAt.replace(/[^0-9]/g, "").slice(0, 14)}`,
+    id: `review-${createdAt.replace(/[^0-9]/g, "")}`,
     createdAt,
     status: "review-required",
     summary,
@@ -804,35 +1464,347 @@ export function buildKnowledgeReview(consensus, options = {}) {
   });
 }
 
-async function collectClaimDocuments(kv) {
-  const documents = [];
-  for (const key of await listKvKeys(kv, PRIVATE_CLAIMS_PREFIX)) {
-    const document = await kv.get(key, "json");
-    if (document?.claims) documents.push(document);
+async function collectClaimDocuments(kv, options = {}) {
+  const registry = options.registry || await readSourceRegistry(kv);
+  const eligibleSourceIds = new Set(
+    registry
+      .filter(source => source.researchEligible !== false)
+      .map(source => source.id)
+  );
+  const keys = new Set(await listKvKeys(kv, PRIVATE_CLAIMS_PREFIX));
+  for (const sourceId of options.directSourceIds || []) {
+    if (sourceId) keys.add(`${PRIVATE_CLAIMS_PREFIX}${sourceId}`);
   }
-  return documents;
+  const documentsBySource = new Map();
+  const keyList = [...keys];
+  for (let offset = 0; offset < keyList.length; offset += 24) {
+    const batch = await Promise.all(keyList.slice(offset, offset + 24).map(key => kv.get(key, "json")));
+    for (const document of batch) {
+      const sourceId = String(document?.source?.id || "");
+      if (sourceId && eligibleSourceIds.has(sourceId) && Array.isArray(document.claims)) {
+        documentsBySource.set(sourceId, document);
+      }
+    }
+  }
+  for (const [sourceId, document] of options.overlayDocuments || []) {
+    if (eligibleSourceIds.has(sourceId) && Array.isArray(document?.claims)) {
+      documentsBySource.set(sourceId, document);
+    }
+  }
+  return [...documentsBySource.values()];
 }
 
-async function persistKnowledgeReview(kv, review, consensus) {
-  await kv.put(`${PRIVATE_CONSENSUS_PREFIX}${review.id}`, JSON.stringify(consensus));
-  const persistedProposals = [];
-  for (const proposal of review.proposals) {
-    const previous = await kv.get(`${PROPOSAL_PREFIX}${proposal.id}`, "json");
-    if (previous?.approvalStatus === "approved" || previous?.approvalStatus === "published") {
-      persistedProposals.push(previous);
+function activeReviewDirty(record) {
+  return Boolean(record?.generationId && record.status === "pending");
+}
+
+async function markReviewDirty(kv, input = {}) {
+  const existing = await kv.get(REVIEW_DIRTY_KEY, "json");
+  const generationId = input.generationId
+    || existing?.generationId
+    || `generation-${fingerprint(`${input.startedAt || nowIso()}:${Math.random()}`)}`;
+  const record = {
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    generationId,
+    status: "pending",
+    startedAt: input.startedAt || existing?.startedAt || nowIso(),
+    plannedSourceIds: unique([
+      ...(existing?.plannedSourceIds || []),
+      ...(input.plannedSourceIds || [])
+    ]),
+    changedSourceIds: unique([
+      ...(existing?.changedSourceIds || []),
+      ...(input.changedSourceIds || [])
+    ]),
+    reason: normalizeWhitespace(input.reason || existing?.reason || "knowledge-review-rebuild")
+  };
+  await kv.put(REVIEW_DIRTY_KEY, JSON.stringify(record));
+  return record;
+}
+
+async function clearReviewDirty(kv, generationId, completedAt = nowIso()) {
+  const current = await kv.get(REVIEW_DIRTY_KEY, "json");
+  if (!current || current.generationId !== generationId) return;
+  if (typeof kv.delete === "function") {
+    await kv.delete(REVIEW_DIRTY_KEY);
+    return;
+  }
+  await kv.put(REVIEW_DIRTY_KEY, JSON.stringify({
+    ...current,
+    status: "completed",
+    completedAt
+  }));
+}
+
+function reviewProposalIndex(review = {}) {
+  if (Array.isArray(review?.proposalIndex)) return review.proposalIndex;
+  return (review?.proposals || []).map(proposal => ({
+    id: proposal.id,
+    approvalStatus: proposal.approvalStatus || "pending-owner-approval",
+    analysisFingerprint: proposalAnalysisFingerprint(proposal),
+    legacyProposalIds: [...(proposal.legacyProposalIds || [])]
+  }));
+}
+
+function proposalAnalysisFingerprint(proposal = {}) {
+  const evidence = [...(proposal.evidence || [])]
+    .map(item => ({
+      sourceId: String(item.sourceId || ""),
+      startSeconds: Number(item.startSeconds || 0),
+      endSeconds: Number(item.endSeconds || 0),
+      url: String(item.url || "")
+    }))
+    .sort((left, right) => (
+      left.sourceId.localeCompare(right.sourceId)
+      || left.startSeconds - right.startSeconds
+      || left.endSeconds - right.endSeconds
+    ));
+  return fingerprint(JSON.stringify({
+    type: proposal.type || "coaching",
+    topic: proposal.topic || "general",
+    entities: [...(proposal.entities || [])].sort(),
+    state: proposal.state || "single-source",
+    confidenceBand: proposal.confidenceBand || "limited",
+    claimIds: [...(proposal.claimIds || [])].sort(),
+    evidence,
+    contradictions: [...(proposal.contradictions || [])]
+      .map(item => ({
+        leftClaimId: item.leftClaimId || "",
+        rightClaimId: item.rightClaimId || "",
+        reason: item.reason || ""
+      }))
+      .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right))),
+    libraryComparison: proposal.libraryComparison || null,
+    recommendation: proposal.recommendation || "",
+    suggestedWording: proposal.suggestedWording || "",
+    whyItMatters: proposal.whyItMatters || "",
+    orphanedPublication: proposal.orphanedPublication === true
+  }));
+}
+
+function proposalCanRemainPublished(proposal = {}) {
+  if (proposal.orphanedPublication === true || proposal.state === "evidence-removed") return false;
+  if (
+    proposal.state === "conflicted"
+    || proposal.libraryComparison?.relationship === "conflicts-with-library"
+  ) return false;
+  return proposal.type !== "statistical" || proposal.state === "corroborated";
+}
+
+function publicationHoldReason(proposal = {}) {
+  if (proposal.orphanedPublication === true || proposal.state === "evidence-removed") {
+    return "supporting-evidence-removed";
+  }
+  if (proposal.state === "conflicted") return "source-conflict";
+  if (proposal.libraryComparison?.relationship === "conflicts-with-library") return "library-conflict";
+  if (proposal.type === "statistical" && proposal.state !== "corroborated") {
+    return "statistical-corroboration-lost";
+  }
+  return "";
+}
+
+function orphanProposalFromPublication(item = {}, createdAt = nowIso()) {
+  const id = String(item.proposalId || item.id || "");
+  return {
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    id,
+    conceptId: String(item.conceptId || id.replace(/^proposal-/, "")),
+    legacyProposalIds: [],
+    type: item.type === "statistical" ? "statistical" : "coaching",
+    topic: normalizeWhitespace(item.topic || "general"),
+    entities: Object.freeze((item.entities || []).map(normalizeWhitespace).filter(Boolean)),
+    state: "evidence-removed",
+    confidenceBand: "unverified",
+    claimIds: Object.freeze([]),
+    evidence: Object.freeze([...(item.evidence || [])]),
+    contradictions: Object.freeze([]),
+    libraryComparison: Object.freeze({ relationship: "evidence-removed", matches: Object.freeze([]) }),
+    recommendation: "Supporting transcript evidence no longer appears in the current research set. Remove this update or re-approve it from fresh evidence.",
+    suggestedWording: null,
+    whyItMatters: "This published guidance no longer has a current transcript-derived concept behind it.",
+    rankedCoachWording: normalizeWhitespace(item.wording),
+    approvalStatus: "published",
+    publishedAt: item.publishedAt || null,
+    publishedCategory: item.category || "general",
+    publishedEntity: item.entity || "",
+    publicationNeedsReview: true,
+    publicationHoldReason: "supporting-evidence-removed",
+    orphanedPublication: true,
+    createdAt
+  };
+}
+
+function mergeProposalDecision(proposal, previous, analysisUpdatedAt) {
+  if (!["draft", "approved", "published", "rejected"].includes(previous?.approvalStatus)) return proposal;
+  const publicationNeedsReview = previous.approvalStatus === "published" && (
+    previous.publicationNeedsReview === true
+    || !proposalCanRemainPublished(proposal)
+  );
+  return {
+    ...proposal,
+    rankedCoachWording: previous.rankedCoachWording || proposal.rankedCoachWording,
+    approvalStatus: previous.approvalStatus,
+    draftSavedAt: previous.draftSavedAt || null,
+    draftSavedBy: previous.draftSavedBy || null,
+    approvedAt: previous.approvedAt || null,
+    approvedBy: previous.approvedBy || null,
+    rejectedAt: previous.rejectedAt || null,
+    rejectedBy: previous.rejectedBy || null,
+    rejectionReason: previous.rejectionReason || null,
+    publishedAt: previous.publishedAt || null,
+    publishedCategory: previous.publishedCategory || null,
+    publishedEntity: previous.publishedEntity || null,
+    unpublishedAt: previous.unpublishedAt || null,
+    analysisUpdatedAt,
+    publicationNeedsReview,
+    publicationHoldReason: publicationNeedsReview
+      ? previous.publicationHoldReason || publicationHoldReason(proposal)
+      : ""
+  };
+}
+
+async function persistKnowledgeReview(kv, review, consensus, options = {}) {
+  await kv.put(`${PRIVATE_CONSENSUS_PREFIX}${review.id}`, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    reviewId: review.id,
+    statisticalConcepts: consensus.statistical?.length || 0,
+    coachingConcepts: consensus.coaching?.length || 0,
+    storedAs: "per-proposal-private-records"
+  }));
+  const [previousReview, publishedIndex] = await Promise.all([
+    kv.get(LATEST_REVIEW_KEY, "json"),
+    kv.get(PUBLISHED_INDEX_KEY, "json")
+  ]);
+  const previousIndex = new Map();
+  for (const item of reviewProposalIndex(previousReview)) {
+    previousIndex.set(item.id, item);
+    for (const legacyId of item.legacyProposalIds || []) {
+      if (!previousIndex.has(legacyId)) previousIndex.set(legacyId, item);
+    }
+  }
+  const freshProposals = [...review.proposals];
+  const freshById = new Map();
+  for (const proposal of freshProposals) {
+    freshById.set(proposal.id, proposal);
+    for (const legacyId of proposal.legacyProposalIds || []) freshById.set(legacyId, proposal);
+  }
+  const resolveFreshProposal = itemId => {
+    if (freshById.has(itemId)) return freshById.get(itemId);
+    const previous = previousIndex.get(itemId);
+    return unique([previous?.id, ...(previous?.legacyProposalIds || [])])
+      .map(id => freshById.get(id))
+      .find(Boolean);
+  };
+  const publishedItems = Array.isArray(publishedIndex?.items) ? publishedIndex.items : [];
+  const orphanProposals = publishedItems
+    .filter(item => !resolveFreshProposal(String(item.proposalId || item.id || "")))
+    .map(item => orphanProposalFromPublication(item, review.createdAt));
+  const proposals = [...freshProposals, ...orphanProposals];
+  const proposalIndex = new Array(proposals.length);
+  let cursor = 0;
+  const persistWorker = async () => {
+    while (cursor < proposals.length) {
+      const index = cursor;
+      cursor += 1;
+      const proposal = proposals[index];
+      const candidateIds = unique([proposal.id, ...(proposal.legacyProposalIds || [])]);
+      const previousEntry = candidateIds.map(id => previousIndex.get(id)).find(Boolean);
+      const analysisFingerprint = proposalAnalysisFingerprint(proposal);
+      const analyticallyChanged = (
+        !previousEntry
+        || previousEntry.id !== proposal.id
+        || previousEntry.analysisFingerprint !== analysisFingerprint
+      );
+      if (!analyticallyChanged) {
+        proposalIndex[index] = {
+          id: proposal.id,
+          approvalStatus: previousEntry.approvalStatus || "pending-owner-approval",
+          analysisFingerprint,
+          legacyProposalIds: [...(proposal.legacyProposalIds || [])]
+        };
+        continue;
+      }
+      const key = `${PROPOSAL_PREFIX}${proposal.id}`;
+      const previousId = previousEntry?.id || proposal.id;
+      const previous = await kv.get(`${PROPOSAL_PREFIX}${previousId}`, "json");
+      const merged = mergeProposalDecision(proposal, previous, review.createdAt);
+      await kv.put(key, JSON.stringify(merged));
+      if (previousId !== proposal.id) {
+        const approval = await kv.get(`${APPROVAL_PREFIX}${previousId}`, "json");
+        if (approval) {
+          await kv.put(`${APPROVAL_PREFIX}${proposal.id}`, JSON.stringify({
+            ...approval,
+            proposalId: proposal.id,
+            migratedFromProposalId: previousId
+          }));
+        }
+      }
+      proposalIndex[index] = {
+        id: proposal.id,
+        approvalStatus: merged.approvalStatus,
+        analysisFingerprint,
+        legacyProposalIds: [...(proposal.legacyProposalIds || [])]
+      };
+    }
+  };
+  await Promise.all(Array.from(
+    { length: Math.min(8, Math.max(1, proposals.length)) },
+    () => persistWorker()
+  ));
+  const reconciledPublished = new Map();
+  for (const item of publishedItems) {
+    const itemId = String(item.proposalId || item.id || "");
+    const proposal = resolveFreshProposal(itemId);
+    if (!proposal) {
+      const held = {
+        ...item,
+        status: "held-for-review",
+        holdReason: "supporting-evidence-removed",
+        heldAt: review.createdAt
+      };
+      reconciledPublished.set(itemId, held);
+      await kv.put(`${PUBLISHED_PREFIX}${itemId}`, JSON.stringify(held));
       continue;
     }
-    await kv.put(`${PROPOSAL_PREFIX}${proposal.id}`, JSON.stringify(proposal));
-    persistedProposals.push(proposal);
+    const valid = proposalCanRemainPublished(proposal);
+    const wasAlreadyHeld = item.status !== "published";
+    const status = valid && !wasAlreadyHeld ? "published" : "held-for-review";
+    const migrated = {
+      ...item,
+      id: proposal.id,
+      proposalId: proposal.id,
+      conceptId: proposal.conceptId,
+      type: proposal.type,
+      topic: proposal.topic,
+      entities: [...(proposal.entities || [])],
+      evidence: [...(proposal.evidence || [])],
+      status,
+      holdReason: status === "published"
+        ? ""
+        : item.holdReason || publicationHoldReason(proposal) || "owner-reapproval-required",
+      ...(status === "published" ? {} : { heldAt: item.heldAt || review.createdAt })
+    };
+    reconciledPublished.set(proposal.id, migrated);
+    await kv.put(`${PUBLISHED_PREFIX}${proposal.id}`, JSON.stringify(migrated));
   }
+  if (publishedItems.length) {
+    await kv.put(PUBLISHED_INDEX_KEY, JSON.stringify({
+      schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+      updatedAt: review.createdAt,
+      items: [...reconciledPublished.values()]
+    }));
+  }
+  const { proposals: _proposals, ...reviewWithoutProposals } = review;
   const persistedReview = {
-    ...review,
+    ...reviewWithoutProposals,
     summary: {
       ...review.summary,
-      pendingApproval: persistedProposals.filter(proposal => proposal.approvalStatus === "pending-owner-approval").length,
-      published: persistedProposals.filter(proposal => proposal.approvalStatus === "published").length
+      pendingApproval: proposalIndex.filter(item => item.approvalStatus === "pending-owner-approval").length,
+      rejected: proposalIndex.filter(item => item.approvalStatus === "rejected").length,
+      published: proposalIndex.filter(item => item.approvalStatus === "published").length
     },
-    proposals: persistedProposals
+    proposalCount: proposalIndex.length,
+    proposalIndex
   };
   await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(persistedReview));
   await kv.put(LATEST_REVIEW_KEY, JSON.stringify(persistedReview));
@@ -841,16 +1813,24 @@ async function persistKnowledgeReview(kv, review, consensus) {
 
 async function updateLatestReviewProposal(kv, proposal) {
   const review = await kv.get(LATEST_REVIEW_KEY, "json");
-  if (!review?.proposals?.length) return;
-  const proposals = review.proposals.map(item => item.id === proposal.id ? proposal : item);
+  const proposalIndex = reviewProposalIndex(review);
+  if (!proposalIndex.length) return;
+  const updatedIndex = proposalIndex.map(item => (
+    item.id === proposal.id
+      ? { ...item, id: proposal.id, approvalStatus: proposal.approvalStatus }
+      : item
+  ));
+  const { proposals: _proposals, ...reviewWithoutProposals } = review;
   const updated = {
-    ...review,
+    ...reviewWithoutProposals,
     summary: {
       ...review.summary,
-      pendingApproval: proposals.filter(item => item.approvalStatus === "pending-owner-approval").length,
-      published: proposals.filter(item => item.approvalStatus === "published").length
+      pendingApproval: updatedIndex.filter(item => item.approvalStatus === "pending-owner-approval").length,
+      rejected: updatedIndex.filter(item => item.approvalStatus === "rejected").length,
+      published: updatedIndex.filter(item => item.approvalStatus === "published").length
     },
-    proposals
+    proposalCount: updatedIndex.length,
+    proposalIndex: updatedIndex
   };
   await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(updated));
   await kv.put(LATEST_REVIEW_KEY, JSON.stringify(updated));
@@ -874,15 +1854,13 @@ export async function ingestTimestampedKnowledgeTranscript(kv, input = {}, optio
   const sections = splitTranscriptIntoSections(cues);
   const claims = extractStructuredClaims(source, sections);
   const ingestedAt = nowIso(now);
-  await kv.put(`${PRIVATE_TRANSCRIPT_PREFIX}${source.id}`, JSON.stringify({
-    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
-    sourceId: source.id,
-    acquiredAt: ingestedAt,
-    language: normalizeWhitespace(input.language || "en"),
-    trackKind: "owner-imported-timestamped-transcript",
-    cues
-  }));
-  await kv.put(`${PRIVATE_CLAIMS_PREFIX}${source.id}`, JSON.stringify({
+  const dirty = await markReviewDirty(kv, {
+    startedAt: ingestedAt,
+    plannedSourceIds: [source.id],
+    changedSourceIds: [source.id],
+    reason: "owner-transcript-import"
+  });
+  const claimDocument = {
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
     source: {
       id: source.id,
@@ -895,17 +1873,30 @@ export async function ingestTimestampedKnowledgeTranscript(kv, input = {}, optio
     },
     extractedAt: ingestedAt,
     claims
+  };
+  await kv.put(`${PRIVATE_TRANSCRIPT_PREFIX}${source.id}`, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    sourceId: source.id,
+    acquiredAt: ingestedAt,
+    language: normalizeWhitespace(input.language || "en"),
+    trackKind: "owner-imported-timestamped-transcript",
+    cues
   }));
+  await kv.put(`${PRIVATE_CLAIMS_PREFIX}${source.id}`, JSON.stringify(claimDocument));
   const registry = await readSourceRegistry(kv);
-  await writeSourceRegistry(kv, registry.map(entry => entry.id === source.id ? {
+  const updatedRegistry = registry.map(entry => entry.id === source.id ? {
     ...entry,
     transcriptStatus: "acquired-private",
     lastTranscriptAttemptAt: ingestedAt,
     transcriptLanguage: normalizeWhitespace(input.language || "en"),
     cueCount: cues.length,
     claimCount: claims.length
-  } : entry), ingestedAt);
-  const claimDocuments = await collectClaimDocuments(kv);
+  } : entry);
+  const claimDocuments = await collectClaimDocuments(kv, {
+    registry: updatedRegistry,
+    directSourceIds: dirty.plannedSourceIds,
+    overlayDocuments: new Map([[source.id, claimDocument]])
+  });
   const consensus = buildKnowledgeConsensus(claimDocuments);
   const review = buildKnowledgeReview(consensus, {
     now,
@@ -913,7 +1904,11 @@ export async function ingestTimestampedKnowledgeTranscript(kv, input = {}, optio
     claimDocuments,
     libraryKnowledgeIndex: options.libraryKnowledgeIndex || []
   });
-  const persistedReview = await persistKnowledgeReview(kv, review, consensus);
+  const persistedReview = await persistKnowledgeReview(kv, review, consensus, {
+    changedSourceIds: [source.id]
+  });
+  await writeSourceRegistry(kv, updatedRegistry, ingestedAt);
+  await clearReviewDirty(kv, dirty.generationId, ingestedAt);
   return Object.freeze({
     sourceId: source.id,
     cueCount: cues.length,
@@ -924,15 +1919,49 @@ export async function ingestTimestampedKnowledgeTranscript(kv, input = {}, optio
   });
 }
 
-function pendingSources(sources, providerAvailable = false) {
-  return sources.filter(source => (
-    source.platform === "youtube"
-    && source.researchEligible !== false
-    && source.transcriptStatus !== "acquired-private"
-    && (
-      ["pending", "retry-required"].includes(source.transcriptStatus || "pending")
-      || (providerAvailable && source.transcriptStatus === "provider-required")
-    )
+function sourceRetryDelayMs(attemptCount = 1) {
+  const exponent = Math.max(0, Math.min(7, Number(attemptCount || 1) - 1));
+  return Math.min(7 * 24 * 60 * 60 * 1_000, 60 * 60 * 1_000 * (2 ** exponent));
+}
+
+function nextSourceRetryAt(now, attemptCount) {
+  return new Date(new Date(now).getTime() + sourceRetryDelayMs(attemptCount)).toISOString();
+}
+
+function pendingSources(sources, options = {}) {
+  const nowMs = new Date(options.now || new Date()).getTime();
+  const retryable = new Set([
+    "watch-page-unavailable",
+    "android-player-unavailable",
+    "transcript-unavailable",
+    "empty-transcript",
+    "no-public-transcript",
+    "gemini-rate-limited",
+    "gemini-unavailable",
+    "gemini-incomplete",
+    "gemini-invalid-output",
+    "pipeline-error"
+  ]);
+  const priority = source => {
+    if (source.retryRequestedAt) return 0;
+    if ((source.transcriptStatus || "pending") === "pending" || !source.lastTranscriptAttemptAt) return 1;
+    if (source.transcriptStatus === "analysis-degraded") return 2;
+    return 3;
+  };
+  return sources.filter(source => {
+    if (source.platform !== "youtube" || source.researchEligible === false) return false;
+    const status = source.transcriptStatus || "pending";
+    if (status === "pending") return true;
+    if (status === "retry-required" && source.retryRequestedAt) return true;
+    if (status === "provider-required") return options.providerAvailable === true;
+    if (status === "analysis-degraded" && options.analyzerAvailable !== true) return false;
+    if (status !== "analysis-degraded" && !retryable.has(status)) return false;
+    const retryAt = Date.parse(source.nextRetryAt || 0);
+    return !Number.isFinite(retryAt) || retryAt <= nowMs;
+  }).sort((left, right) => (
+    priority(left) - priority(right)
+    || Date.parse(left.lastTranscriptAttemptAt || left.registeredAt || 0)
+      - Date.parse(right.lastTranscriptAttemptAt || right.registeredAt || 0)
   ));
 }
 
@@ -949,54 +1978,140 @@ async function notifyReview(env, message) {
   return response.ok;
 }
 
-export async function runKnowledgePipeline(env = {}, options = {}) {
+async function acquireRunLease(kv, now = new Date()) {
+  const acquiredAt = nowIso(now);
+  const nowMs = new Date(now).getTime();
+  const current = await kv.get(RUN_LEASE_KEY, "json");
+  if (current?.token && Date.parse(current.expiresAt || 0) > nowMs) return null;
+  const lease = {
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    token: fingerprint(`${acquiredAt}:${Math.random()}:${current?.token || ""}`),
+    acquiredAt,
+    expiresAt: new Date(nowMs + RUN_LEASE_TTL_MS).toISOString()
+  };
+  await kv.put(
+    RUN_LEASE_KEY,
+    JSON.stringify(lease),
+    { expirationTtl: Math.ceil(RUN_LEASE_TTL_MS / 1_000) }
+  );
+  const confirmed = await kv.get(RUN_LEASE_KEY, "json");
+  return confirmed?.token === lease.token ? lease : null;
+}
+
+async function releaseRunLease(kv, lease, now = new Date()) {
+  if (!lease?.token) return;
+  const current = await kv.get(RUN_LEASE_KEY, "json");
+  if (current?.token !== lease.token) return;
+  if (typeof kv.delete === "function") {
+    await kv.delete(RUN_LEASE_KEY);
+    return;
+  }
+  await kv.put(RUN_LEASE_KEY, JSON.stringify({
+    ...current,
+    releasedAt: nowIso(now),
+    expiresAt: nowIso(now)
+  }));
+}
+
+async function runKnowledgePipelineUnlocked(env = {}, options = {}) {
   const kv = env.CONTENT_AUTOMATION;
   if (!kv) throw new Error("CONTENT_AUTOMATION KV is not configured.");
   const now = options.now || new Date();
-  const cachedPlaylist = await kv.get("playlist:featured", "json");
+  const ranAt = nowIso(now);
+  const deadlineMs = Math.max(1, Number(options.deadlineMs || DEFAULT_PIPELINE_DEADLINE_MS));
+  const deadlineAt = Date.now() + deadlineMs;
+  const existingDirty = await kv.get(REVIEW_DIRTY_KEY, "json");
+  const [cachedPlaylist, playlistArchive] = await Promise.all([
+    kv.get("playlist:featured", "json"),
+    kv.get("playlist:knowledge-sources", "json")
+  ]);
   const suppliedSources = [
     ...(options.sources || []),
+    ...((playlistArchive?.items || []).filter(item => !item.isLive && !item.wasLive)),
     ...((cachedPlaylist?.items || []).filter(item => !item.isLive && !item.wasLive)),
     ...((cachedPlaylist?.liveStreams || []).filter(item => item.isVod))
   ];
   const registered = await registerKnowledgeSources(kv, suppliedSources, now);
-  const batchSize = Math.max(1, Math.min(12, Number(options.batchSize || DEFAULT_BATCH_SIZE)));
+  const batchSize = Math.max(1, Math.min(MAX_PIPELINE_BATCH_SIZE, Number(options.batchSize || DEFAULT_BATCH_SIZE)));
   const providerAvailable = Boolean(String(env.KNOWLEDGE_TRANSCRIPT_ENDPOINT || "").trim());
+  const analyzerAvailable = Boolean(String(env.KNOWLEDGE_PIPELINE_TOKEN || "").trim());
   const sourceRegistry = await readSourceRegistry(kv);
   const sourceState = new Map(sourceRegistry.map(source => [source.id, source]));
-  const queue = pendingSources(sourceRegistry, providerAvailable).slice(0, batchSize);
+  const pending = pendingSources(sourceRegistry, { providerAvailable, analyzerAvailable, now });
+  const queue = pending.slice(0, batchSize);
+  const eligibilityChangedSourceIds = sourceRegistry
+    .filter(source => source.eligibilityReviewPending === true)
+    .map(source => source.id);
+  let dirty = activeReviewDirty(existingDirty) ? existingDirty : null;
+  if (queue.length || eligibilityChangedSourceIds.length || dirty) {
+    dirty = await markReviewDirty(kv, {
+      generationId: dirty?.generationId,
+      startedAt: dirty?.startedAt || ranAt,
+      plannedSourceIds: unique([
+        ...(dirty?.plannedSourceIds || []),
+        ...queue.map(source => source.id),
+        ...eligibilityChangedSourceIds
+      ]),
+      changedSourceIds: unique([
+        ...(dirty?.changedSourceIds || []),
+        ...eligibilityChangedSourceIds
+      ]),
+      reason: dirty?.reason || "scheduled-knowledge-run"
+    });
+  }
   const processed = [];
+  const claimDocumentsWritten = new Map();
   const updateSourceStatus = (source, patch) => {
     sourceState.set(source.id, { ...source, ...patch });
   };
-  for (const source of queue) {
+  const processSource = async source => {
     const attemptedAt = nowIso(now);
     try {
       const transcript = await acquireKnowledgeTranscript(source, env, options.fetchImpl || fetch);
       if (transcript.status !== "acquired") {
-        const transcriptStatus = transcript.status === "empty-transcript"
-          ? "provider-required"
-          : transcript.status;
+        const transcriptStatus = transcript.status;
+        const attemptCount = Number(source.attemptCount || 0) + 1;
         updateSourceStatus(source, {
           transcriptStatus,
           lastTranscriptAttemptAt: attemptedAt,
-          transcriptLanguage: transcript.language || ""
+          transcriptLanguage: transcript.language || "",
+          attemptCount,
+          nextRetryAt: nextSourceRetryAt(now, attemptCount),
+          retryRequestedAt: null
         });
         processed.push({ sourceId: source.id, status: transcriptStatus, claims: 0 });
-        continue;
+        return;
       }
       const cues = normalizeValorantTranscript(transcript.cues);
       const sections = splitTranscriptIntoSections(cues);
-      const claims = extractStructuredClaims(source, sections);
+      const semantic = transcript.insights?.length
+        ? { status: "analyzed", insights: transcript.insights, model: String(env.KNOWLEDGE_VIDEO_MODEL || DEFAULT_GEMINI_VIDEO_MODEL) }
+        : await analyzeKnowledgeTranscript(source, cues, env, options.fetchImpl || fetch);
+      const claims = semantic.insights?.length
+        ? claimsFromVideoInsights(source, semantic.insights)
+        : extractStructuredClaims(source, sections);
+      const analysisDegraded = [
+        "analysis-rate-limited",
+        "analysis-unavailable",
+        "analysis-ungrounded"
+      ].includes(semantic.status);
+      const transcriptStatus = !claims.length
+        ? "no-actionable-insights"
+        : analysisDegraded
+          ? "analysis-degraded"
+          : "acquired-private";
       await kv.put(`${PRIVATE_TRANSCRIPT_PREFIX}${source.id}`, JSON.stringify({
         schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
         sourceId: source.id,
         acquiredAt: attemptedAt,
         language: transcript.language,
         trackKind: transcript.trackKind,
+        semanticAnalysis: semantic.insights?.length
+          ? { insightCount: semantic.insights.length, model: semantic.model, status: semantic.status }
+          : null,
         cues
       }));
-      await kv.put(`${PRIVATE_CLAIMS_PREFIX}${source.id}`, JSON.stringify({
+      const claimDocument = {
         schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
         source: {
           id: source.id,
@@ -1009,27 +2124,90 @@ export async function runKnowledgePipeline(env = {}, options = {}) {
         },
         extractedAt: attemptedAt,
         claims
-      }));
+      };
+      await kv.put(`${PRIVATE_CLAIMS_PREFIX}${source.id}`, JSON.stringify(claimDocument));
+      claimDocumentsWritten.set(source.id, claimDocument);
       updateSourceStatus(source, {
-        transcriptStatus: "acquired-private",
+        transcriptStatus,
         lastTranscriptAttemptAt: attemptedAt,
         transcriptLanguage: transcript.language,
         cueCount: cues.length,
-        claimCount: claims.length
+        claimCount: claims.length,
+        extractionKind: semantic.insights?.length ? "semantic-video-analysis" : "caption-rule-analysis",
+        analysisStatus: semantic.status,
+        attemptCount: analysisDegraded ? Number(source.attemptCount || 0) + 1 : 0,
+        nextRetryAt: analysisDegraded ? nextSourceRetryAt(now, Number(source.attemptCount || 0) + 1) : null,
+        retryRequestedAt: null,
+        lastErrorClass: ""
       });
-      processed.push({ sourceId: source.id, status: "acquired-private", claims: claims.length });
+      processed.push({
+        sourceId: source.id,
+        status: transcriptStatus,
+        claims: claims.length,
+        claimDocumentWritten: true
+      });
     } catch (error) {
+      const attemptCount = Number(source.attemptCount || 0) + 1;
       updateSourceStatus(source, {
-        transcriptStatus: "retry-required",
+        transcriptStatus: "pipeline-error",
         lastTranscriptAttemptAt: attemptedAt,
-        lastErrorClass: error?.name || "Error"
+        lastErrorClass: error?.name || "Error",
+        attemptCount,
+        nextRetryAt: nextSourceRetryAt(now, attemptCount),
+        retryRequestedAt: null
       });
-      processed.push({ sourceId: source.id, status: "retry-required", claims: 0 });
+      processed.push({ sourceId: source.id, status: "pipeline-error", claims: 0 });
+    }
+  };
+  let queueCursor = 0;
+  const runQueueWorker = async () => {
+    while (queueCursor < queue.length && Date.now() < deadlineAt) {
+      const source = queue[queueCursor];
+      queueCursor += 1;
+      await processSource(source);
+    }
+  };
+  await Promise.all(Array.from(
+    { length: Math.min(3, queue.length) },
+    () => runQueueWorker()
+  ));
+  const queueOrder = new Map(queue.map((source, index) => [source.id, index]));
+  processed.sort((left, right) => queueOrder.get(left.sourceId) - queueOrder.get(right.sourceId));
+
+  if (!processed.length && !activeReviewDirty(dirty)) {
+    const latestReview = await kv.get(LATEST_REVIEW_KEY, "json");
+    if (latestReview) {
+      const result = Object.freeze({
+        schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+        ranAt,
+        registered: registered.length,
+        processed: Object.freeze([]),
+        deferred: pending.length,
+        reviewId: latestReview.id,
+        summary: latestReview.summary,
+        publicationWrites: 0
+      });
+      await kv.put(LAST_RUN_KEY, JSON.stringify(result));
+      return result;
     }
   }
-  await writeSourceRegistry(kv, [...sourceState.values()], nowIso(now));
 
-  const claimDocuments = await collectClaimDocuments(kv);
+  const updatedRegistry = [...sourceState.values()];
+  const changedSourceIds = unique([
+    ...(dirty?.changedSourceIds || []),
+    ...eligibilityChangedSourceIds,
+    ...processed
+      .filter(item => item.claimDocumentWritten)
+      .map(item => item.sourceId)
+  ]);
+  const claimDocuments = await collectClaimDocuments(kv, {
+    registry: updatedRegistry,
+    directSourceIds: unique([
+      ...(dirty?.plannedSourceIds || []),
+      ...changedSourceIds
+    ]),
+    overlayDocuments: claimDocumentsWritten
+  });
   const consensus = buildKnowledgeConsensus(claimDocuments);
   const review = buildKnowledgeReview(consensus, {
     now,
@@ -1037,12 +2215,26 @@ export async function runKnowledgePipeline(env = {}, options = {}) {
     claimDocuments,
     libraryKnowledgeIndex: options.libraryKnowledgeIndex || []
   });
-  const persistedReview = await persistKnowledgeReview(kv, review, consensus);
+  const persistedReview = await persistKnowledgeReview(kv, review, consensus, {
+    changedSourceIds
+  });
+  const reconciledRegistry = updatedRegistry.map(source => (
+    eligibilityChangedSourceIds.includes(source.id)
+      ? {
+          ...source,
+          eligibilityReviewPending: false,
+          eligibilityReviewedAt: ranAt
+        }
+      : source
+  ));
+  await writeSourceRegistry(kv, reconciledRegistry, ranAt);
+  if (dirty) await clearReviewDirty(kv, dirty.generationId, ranAt);
   const result = Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
-    ranAt: nowIso(now),
+    ranAt,
     registered: registered.length,
     processed: Object.freeze(processed),
+    deferred: Math.max(0, pending.length - processed.length),
     reviewId: persistedReview.id,
     summary: persistedReview.summary,
     publicationWrites: 0
@@ -1062,6 +2254,36 @@ export async function runKnowledgePipeline(env = {}, options = {}) {
   return result;
 }
 
+export async function runKnowledgePipeline(env = {}, options = {}) {
+  const kv = env.CONTENT_AUTOMATION;
+  if (!kv) throw new Error("CONTENT_AUTOMATION KV is not configured.");
+  const now = options.now || new Date();
+  const lease = await acquireRunLease(kv, now);
+  if (!lease) {
+    const lastRun = await kv.get(LAST_RUN_KEY, "json");
+    return Object.freeze({
+      schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+      ranAt: nowIso(now),
+      registered: 0,
+      processed: Object.freeze([]),
+      deferred: 0,
+      reviewId: lastRun?.reviewId || null,
+      summary: lastRun?.summary || null,
+      publicationWrites: 0,
+      skipped: "run-in-progress"
+    });
+  }
+  try {
+    return await runKnowledgePipelineUnlocked(env, options);
+  } finally {
+    try {
+      await releaseRunLease(kv, lease, options.now || new Date());
+    } catch (error) {
+      console.warn("Knowledge run lease release skipped", error?.message || error);
+    }
+  }
+}
+
 export async function approveKnowledgeProposal(kv, approval = {}, now = new Date()) {
   const proposalId = String(approval.proposalId || "").trim();
   const owner = normalizeWhitespace(approval.owner);
@@ -1075,6 +2297,15 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
   const key = `${PROPOSAL_PREFIX}${proposalId}`;
   const proposal = await kv.get(key, "json");
   if (!proposal) throw new Error(`Knowledge proposal not found: ${proposalId}`);
+  for (const evidence of proposal.evidence || []) {
+    const document = await kv.get(`${PRIVATE_CLAIMS_PREFIX}${evidence.sourceId}`, "json");
+    const claim = (document?.claims || []).find(item => (
+      Math.abs(Number(item.startSeconds || 0) - Number(evidence.startSeconds || 0)) < 0.01
+    ));
+    if (claim?.privateExcerpt && containsCopiedTranscriptPhrase(rankedCoachWording, claim.privateExcerpt)) {
+      throw new Error("Rewrite the insight in original RankedCoach wording before approval; it still contains a long transcript phrase.");
+    }
+  }
   const approvedAt = nowIso(now);
   const record = Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
@@ -1099,26 +2330,108 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
   return record;
 }
 
+export async function saveKnowledgeProposalDraft(kv, draft = {}, now = new Date()) {
+  const proposalId = String(draft.proposalId || "").trim();
+  const owner = normalizeWhitespace(draft.owner);
+  const rankedCoachWording = normalizeWhitespace(draft.rankedCoachWording);
+  if (!proposalId || !owner || rankedCoachWording.length < 20) {
+    throw new Error("Owner, proposalId, and at least 20 characters of RankedCoach wording are required.");
+  }
+  const key = `${PROPOSAL_PREFIX}${proposalId}`;
+  const proposal = await kv.get(key, "json");
+  if (!proposal) throw new Error(`Knowledge proposal not found: ${proposalId}`);
+  if (proposal.approvalStatus === "published") {
+    throw new Error("Remove this guidance from the Library before changing its draft.");
+  }
+  const updatedProposal = {
+    ...proposal,
+    rankedCoachWording,
+    approvalStatus: "draft",
+    draftSavedAt: nowIso(now),
+    draftSavedBy: owner,
+    rejectedAt: null,
+    rejectedBy: null,
+    rejectionReason: null
+  };
+  await kv.put(key, JSON.stringify(updatedProposal));
+  await updateLatestReviewProposal(kv, updatedProposal);
+  return Object.freeze({ proposalId, status: "draft-saved" });
+}
+
+export async function rejectKnowledgeProposal(kv, rejection = {}, now = new Date()) {
+  const proposalId = String(rejection.proposalId || "").trim();
+  const owner = normalizeWhitespace(rejection.owner);
+  const reason = normalizeWhitespace(rejection.reason || "Not suitable for RankedCoach publication.");
+  if (!proposalId || !owner) throw new Error("Owner and proposal ID are required.");
+  const key = `${PROPOSAL_PREFIX}${proposalId}`;
+  const proposal = await kv.get(key, "json");
+  if (!proposal) throw new Error(`Knowledge proposal not found: ${proposalId}`);
+  if (proposal.approvalStatus === "published") {
+    throw new Error("Remove the published guidance from the Library before rejecting it.");
+  }
+  const updatedProposal = {
+    ...proposal,
+    approvalStatus: "rejected",
+    rejectedAt: nowIso(now),
+    rejectedBy: owner,
+    rejectionReason: reason
+  };
+  await kv.put(key, JSON.stringify(updatedProposal));
+  await updateLatestReviewProposal(kv, updatedProposal);
+  return Object.freeze({ proposalId, status: "rejected" });
+}
+
+export async function queueKnowledgeSourceRetry(kv, input = {}, now = new Date()) {
+  const sourceId = String(input.sourceId || "").trim();
+  if (!sourceId) throw new Error("Source ID is required.");
+  const registry = await readSourceRegistry(kv);
+  let found = false;
+  const updated = registry.map(source => {
+    if (source.id !== sourceId) return source;
+    found = true;
+    return {
+      ...source,
+      transcriptStatus: "retry-required",
+      retryRequestedAt: nowIso(now),
+      nextRetryAt: null,
+      lastErrorClass: ""
+    };
+  });
+  if (!found) throw new Error(`Knowledge source not found: ${sourceId}`);
+  await writeSourceRegistry(kv, updated, nowIso(now));
+  return Object.freeze({ sourceId, status: "retry-required" });
+}
+
 export async function publishApprovedKnowledge(kv, publication = {}, now = new Date()) {
   const proposalId = String(publication.proposalId || "").trim();
   const owner = normalizeWhitespace(publication.owner);
   const category = normalizeWhitespace(publication.category || "general").toLowerCase();
-  const entity = normalizeWhitespace(publication.entity);
+  const entity = canonicalPublicationEntity(category, publication.entity);
   if (!proposalId || !owner || !["general", "map", "agent", "weapon"].includes(category)) {
     throw new Error("Proposal, owner, and a valid Library category are required.");
   }
-  if (category !== "general" && !entity) throw new Error("A target entity is required for contextual Library publication.");
+  if (category !== "general" && !entity) throw new Error("Choose a valid map, agent, or weapon for contextual Library publication.");
   const proposalKey = `${PROPOSAL_PREFIX}${proposalId}`;
   const proposal = await kv.get(proposalKey, "json");
   const approval = await kv.get(`${APPROVAL_PREFIX}${proposalId}`, "json");
   if (!proposal || !approval || proposal.approvalStatus !== "approved") {
     throw new Error("Only an owner-approved proposal can be published.");
   }
+  if (
+    proposal.state === "conflicted"
+    || proposal.libraryComparison?.relationship === "conflicts-with-library"
+  ) {
+    throw new Error("Resolve the source or Library conflict before publication.");
+  }
+  if (proposal.type === "statistical" && proposal.state !== "corroborated") {
+    throw new Error("A statistical insight needs corroboration from independent sources before publication.");
+  }
   const publishedAt = nowIso(now);
   const record = Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
     id: proposalId,
     proposalId,
+    conceptId: proposal.conceptId,
     wording: approval.rankedCoachWording,
     type: proposal.type,
     topic: proposal.topic,
@@ -1181,22 +2494,116 @@ export async function unpublishKnowledge(kv, publication = {}, now = new Date())
 
 export async function getPublishedKnowledge(kv) {
   const index = await kv.get(PUBLISHED_INDEX_KEY, "json");
+  const items = (Array.isArray(index?.items) ? index.items : [])
+    .filter(item => item?.status === "published" && typeof item.wording === "string")
+    .map(item => Object.freeze({
+      id: String(item.id || ""),
+      wording: normalizeWhitespace(item.wording),
+      type: item.type === "statistical" ? "statistical" : "coaching",
+      topic: normalizeWhitespace(item.topic || "general"),
+      category: ["general", "map", "agent", "weapon"].includes(item.category) ? item.category : "general",
+      entity: normalizeWhitespace(item.entity),
+      entities: Object.freeze((item.entities || []).map(normalizeWhitespace).filter(Boolean)),
+      evidence: Object.freeze((item.evidence || []).map(evidence => Object.freeze({
+        sourceId: String(evidence.sourceId || ""),
+        startSeconds: Math.max(0, Number(evidence.startSeconds || 0)),
+        endSeconds: Math.max(0, Number(evidence.endSeconds || 0)),
+        url: String(evidence.url || "")
+      }))),
+      publishedAt: item.publishedAt || null,
+      status: "published"
+    }));
   return Object.freeze({
     updatedAt: index?.updatedAt || null,
-    items: Object.freeze((Array.isArray(index?.items) ? index.items : []).filter(item => (
-      item?.status === "published" && typeof item.wording === "string"
-    )))
+    items: Object.freeze(items)
   });
 }
 
-export async function getKnowledgeOwnerDashboard(kv) {
-  const [registry, review, published] = await Promise.all([
+function words(value = "", max = 28) {
+  return normalizeWhitespace(value).split(" ").filter(Boolean).slice(0, max).join(" ");
+}
+
+function proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById) {
+  const claims = (proposal.claimIds || [])
+    .map(id => claimById.get(id))
+    .filter(Boolean);
+  if (!claims.length) {
+    for (const evidence of proposal.evidence || []) {
+      const claim = claimByEvidence.get(`${evidence.sourceId}:${Math.round(Number(evidence.startSeconds || 0) * 1_000)}`);
+      if (claim) claims.push(claim);
+    }
+  }
+  return Object.freeze(claims.slice(0, 5).map(claim => {
+    const source = sourceById.get(claim.sourceId) || {};
+    return Object.freeze({
+      claimId: claim.id,
+      sourceId: claim.sourceId,
+      sourceTitle: source.title || "Playlist video",
+      sourcePublisher: source.publisher || "Unknown creator",
+      startSeconds: Number(claim.startSeconds || 0),
+      endSeconds: Number(claim.endSeconds || claim.startSeconds || 0),
+      url: claim.evidenceUrl,
+      contextExcerpt: words(claim.privateExcerpt, 28),
+      keywords: Object.freeze((claim.tokens || []).slice(0, 8)),
+      whyItMatters: normalizeWhitespace(claim.whyItMatters),
+      confidence: claim.confidence || "",
+      extractionKind: claim.extractionKind || "caption-rule-analysis"
+    });
+  }));
+}
+
+export async function getKnowledgeOwnerDashboard(kv, options = {}) {
+  const proposalOffset = Math.max(0, Number(options.proposalOffset || 0));
+  const proposalLimit = Math.max(1, Math.min(100, Number(options.proposalLimit || 50)));
+  const sourceOffset = Math.max(0, Number(options.sourceOffset || 0));
+  const sourceLimit = Math.max(1, Math.min(200, Number(options.sourceLimit || 100)));
+  const [registry, review, published, lastRun] = await Promise.all([
     readSourceRegistry(kv),
     kv.get(LATEST_REVIEW_KEY, "json"),
-    getPublishedKnowledge(kv)
+    getPublishedKnowledge(kv),
+    kv.get(LAST_RUN_KEY, "json")
   ]);
+  const index = reviewProposalIndex(review);
+  let proposals = [];
+  if (Array.isArray(review?.proposals)) {
+    proposals = review.proposals.slice(proposalOffset, proposalOffset + proposalLimit);
+  } else {
+    proposals = (await Promise.all(index
+      .slice(proposalOffset, proposalOffset + proposalLimit)
+      .map(item => kv.get(`${PROPOSAL_PREFIX}${item.id}`, "json"))))
+      .filter(Boolean);
+  }
+  const evidenceSourceIds = unique(proposals.flatMap(proposal => (
+    (proposal.evidence || []).map(item => item.sourceId)
+  )));
+  const claimDocuments = (await Promise.all(evidenceSourceIds.map(sourceId => (
+    kv.get(`${PRIVATE_CLAIMS_PREFIX}${sourceId}`, "json")
+  )))).filter(Boolean);
+  const sourceById = new Map(registry.map(source => [source.id, source]));
+  const claims = claimDocuments.flatMap(document => document.claims || []);
+  const claimById = new Map(claims.map(claim => [claim.id, claim]));
+  const claimByEvidence = new Map(claims.map(claim => [
+    `${claim.sourceId}:${Math.round(Number(claim.startSeconds || 0) * 1_000)}`,
+    claim
+  ]));
   return Object.freeze({
-    sources: Object.freeze(registry.map(source => Object.freeze({
+    sourceSummary: Object.freeze({
+      total: registry.length,
+      processed: registry.filter(source => source.transcriptStatus === "acquired-private").length,
+      waiting: registry.filter(source => ![
+        "acquired-private",
+        "registered-non-educational",
+        "no-actionable-insights",
+        "video-unavailable"
+      ].includes(source.transcriptStatus)).length
+    }),
+    sourcePage: Object.freeze({
+      offset: sourceOffset,
+      limit: sourceLimit,
+      total: registry.length,
+      hasMore: sourceOffset + sourceLimit < registry.length
+    }),
+    sources: Object.freeze(registry.slice(sourceOffset, sourceOffset + sourceLimit).map(source => Object.freeze({
       id: source.id,
       platform: source.platform,
       title: source.title,
@@ -1204,16 +2611,30 @@ export async function getKnowledgeOwnerDashboard(kv) {
       sourceKind: source.sourceKind,
       url: source.url,
       transcriptStatus: source.transcriptStatus,
+      lastTranscriptAttemptAt: source.lastTranscriptAttemptAt || null,
+      nextRetryAt: source.nextRetryAt || null,
+      extractionKind: source.extractionKind || "",
+      analysisStatus: source.analysisStatus || "",
       cueCount: Number(source.cueCount || 0),
       claimCount: Number(source.claimCount || 0)
     }))),
+    lastRun: lastRun || null,
     review: review ? Object.freeze({
       id: review.id,
       createdAt: review.createdAt || null,
       status: review.status,
       summary: review.summary,
       libraryGapCount: Number(review.libraryAudit?.missingOpportunities?.length || 0),
-      proposals: Object.freeze([...(review.proposals || [])])
+      page: Object.freeze({
+        offset: proposalOffset,
+        limit: proposalLimit,
+        total: index.length,
+        hasMore: proposalOffset + proposalLimit < index.length
+      }),
+      proposals: Object.freeze(proposals.map(proposal => Object.freeze({
+        ...proposal,
+        contextNotes: proposalOwnerContext(proposal, claimById, claimByEvidence, sourceById)
+      })))
     }) : null,
     published
   });
@@ -1228,7 +2649,9 @@ export const KNOWLEDGE_STORAGE_KEYS = Object.freeze({
   approvalPrefix: APPROVAL_PREFIX,
   reviewPrefix: REVIEW_PREFIX,
   latestReview: LATEST_REVIEW_KEY,
+  reviewDirty: REVIEW_DIRTY_KEY,
   lastRun: LAST_RUN_KEY,
+  runLease: RUN_LEASE_KEY,
   publishedPrefix: PUBLISHED_PREFIX,
   publishedIndex: PUBLISHED_INDEX_KEY
 });

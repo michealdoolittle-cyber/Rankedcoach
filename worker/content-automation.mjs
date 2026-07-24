@@ -9,6 +9,8 @@ const YOUTUBE_FEED_ROOT = "https://www.youtube.com/feeds/videos.xml";
 const MAX_CHANNEL_VIDEOS = 15;
 const MAX_TWITCH_ARCHIVES = 15;
 const PLAYLIST_MAX_ITEMS = 120;
+const PLAYLIST_KNOWLEDGE_SOURCE_MAX_ITEMS = 5_000;
+const PLAYLIST_KNOWLEDGE_SOURCE_ARCHIVE_KEY = "playlist:knowledge-sources";
 const LIBRARY_ENTITY_SNAPSHOT_KEY = "library:entities:v1";
 const LIBRARY_DAILY_RESEARCH_KEY = "library:research:last";
 const COMPETITIVE_MAP_NAMES = Object.freeze([
@@ -491,7 +493,11 @@ function getVideoSourceType(video, patchLabel = "") {
   return "riot-official";
 }
 
-export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedIds = new Set(), now = Date.now()) {
+export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedIds = new Set(), now = Date.now(), options = {}) {
+  const maxItems = Math.max(1, Math.min(
+    PLAYLIST_KNOWLEDGE_SOURCE_MAX_ITEMS,
+    Number(options.maxItems || PLAYLIST_MAX_ITEMS)
+  ));
   const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
   const oneDayAgo = now - 24 * 60 * 60 * 1000;
   const items = videos
@@ -527,7 +533,7 @@ export function buildFeaturedPlaylist(videos = [], patchLabel = "", suppressedId
       isNewThisWeek: Date.parse(video.publishedAt || 0) >= oneWeekAgo,
       isNewIn24Hours: Date.parse(video.publishedAt || 0) >= oneDayAgo
     });
-  }).slice(0, PLAYLIST_MAX_ITEMS);
+  }).slice(0, maxItems);
   const currentPatchVideo = items.find(item => item.sourceType === "patch-breakdown") || null;
   return Object.freeze({
     patchLabel,
@@ -982,7 +988,12 @@ export async function runPatchContentAutomation(env = {}) {
 
 export async function handlePlaylistRequest(env = {}) {
   const cached = await env.CONTENT_AUTOMATION?.get?.("playlist:featured", "json");
-  if (cached?.cachedAt && Date.now() - Date.parse(cached.cachedAt) < PLAYLIST_CACHE_WINDOW_MS) return cached;
+  const cachedArchive = await env.CONTENT_AUTOMATION?.get?.(PLAYLIST_KNOWLEDGE_SOURCE_ARCHIVE_KEY, "json");
+  if (
+    cached?.cachedAt
+    && Date.now() - Date.parse(cached.cachedAt) < PLAYLIST_CACHE_WINDOW_MS
+    && Array.isArray(cachedArchive?.items)
+  ) return cached;
   const patch = await getCurrentPatch(env);
   const [videoResult, twitchResult] = await Promise.allSettled([
     fetchTrustedChannelVideos(env, { kind: "playlist" }),
@@ -997,12 +1008,20 @@ export async function handlePlaylistRequest(env = {}) {
   if (twitchResult.status === "rejected") console.warn("Twitch media refresh skipped", twitchResult.reason?.message || twitchResult.reason);
   const suppressed = await readSuppressedVideoIds(env.CONTENT_AUTOMATION);
   const youtubeStreams = buildYouTubeLiveStreams(videos);
-  const playlist = buildFeaturedPlaylist([
+  const playlistCandidates = [
     ...getStaticPlaylistVideos(),
     ...guideSearchVideos,
     ...videos.filter(video => !video.isLive),
     ...twitchMedia.vods.slice(0, MAX_TWITCH_ARCHIVES)
-  ], patch.label, suppressed);
+  ];
+  const playlist = buildFeaturedPlaylist(playlistCandidates, patch.label, suppressed);
+  const researchArchive = buildFeaturedPlaylist(
+    playlistCandidates,
+    patch.label,
+    suppressed,
+    Date.now(),
+    { maxItems: PLAYLIST_KNOWLEDGE_SOURCE_MAX_ITEMS }
+  );
   try {
     await notifyLowConfidencePlaylistReviews(env, playlist.items);
   } catch (error) {
@@ -1019,7 +1038,14 @@ export async function handlePlaylistRequest(env = {}) {
     cachedAt: new Date().toISOString(),
     source: env.YOUTUBE_DATA_API_KEY ? "youtube-data-api+popular-guide-search+twitch-helix" : "trusted-channel-feeds+twitch-helix"
   };
-  await env.CONTENT_AUTOMATION?.put?.("playlist:featured", JSON.stringify(payload), { expirationTtl: 3600 });
+  await Promise.all([
+    env.CONTENT_AUTOMATION?.put?.("playlist:featured", JSON.stringify(payload), { expirationTtl: 3600 }),
+    env.CONTENT_AUTOMATION?.put?.(PLAYLIST_KNOWLEDGE_SOURCE_ARCHIVE_KEY, JSON.stringify({
+      schemaVersion: 1,
+      cachedAt: payload.cachedAt,
+      items: researchArchive.items
+    }))
+  ]);
   return payload;
 }
 

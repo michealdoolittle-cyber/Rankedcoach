@@ -12233,6 +12233,9 @@ function activateAccountSupportTab(tabKey = "account") {
       window.setTimeout(() => panel.classList.remove("is-tab-entering"), 280);
     }
   });
+  if (nextTabKey === "research") {
+    void globalThis.RankedCoachKnowledgeReview?.load?.();
+  }
 }
 
 function openAccountSupportModal(tabKey = "account") {
