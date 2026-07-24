@@ -56,6 +56,11 @@ import {
   LIBRARY_KNOWLEDGE_INDEX
 } from "./knowledge-library-audit-baseline.mjs";
 import { runKnowledgePipeline } from "./knowledge-pipeline.mjs";
+import {
+  handleKnowledgeOwnerRequest,
+  handlePublicKnowledgeRequest,
+  knowledgeApiErrorResponse
+} from "./knowledge-api.mjs";
 
 const API_ROUTES = new Map([
   ["GET /api/riot/health", getRiotHealth],
@@ -138,6 +143,29 @@ async function handleApiRequest(request, env, executionContext) {
     } catch (error) {
       console.error("Skin media request failed", error);
       return jsonResponse({ error: "Skin media lookup is temporarily unavailable." }, { status: 502 });
+    }
+  }
+
+  if (url.pathname === "/api/content/knowledge") {
+    if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, { status: 405 });
+    try {
+      return await handlePublicKnowledgeRequest(env);
+    } catch (error) {
+      console.error("Published knowledge request failed", error);
+      return jsonResponse({ updatedAt: null, items: [] });
+    }
+  }
+
+  if (url.pathname.startsWith("/api/knowledge/")) {
+    if (request.method === "OPTIONS") return new Response(null, { status: 204 });
+    try {
+      return await handleKnowledgeOwnerRequest(request, env, {
+        libraryAudit: LIBRARY_KNOWLEDGE_AUDIT_BASELINE,
+        libraryKnowledgeIndex: LIBRARY_KNOWLEDGE_INDEX
+      });
+    } catch (error) {
+      console.error("Knowledge owner request failed", url.pathname, error?.message || error);
+      return knowledgeApiErrorResponse(error);
     }
   }
 

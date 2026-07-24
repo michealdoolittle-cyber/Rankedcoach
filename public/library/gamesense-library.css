@@ -4088,3 +4088,53 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage
   aspect-ratio:auto !important;
   align-content:center !important;
 }
+/* Owner-approved transcript research promoted into the player-facing Library. */
+.gamesense-knowledge-updates {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid rgba(255, 200, 65, .34);
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(8, 18, 34, .88), rgba(17, 24, 45, .78));
+}
+
+.gamesense-knowledge-update-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.gamesense-knowledge-update-grid article {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 13px;
+  border: 1px solid rgba(103, 232, 249, .2);
+  border-radius: 10px;
+  background: rgba(2, 8, 23, .72);
+}
+
+.gamesense-knowledge-update-grid article > span {
+  color: var(--gamesense-warm, #ffc841);
+  font: 900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.gamesense-knowledge-update-grid p {
+  margin: 0;
+  color: var(--text-main, #f8fafc);
+  line-height: 1.45;
+}
+
+.gamesense-knowledge-update-grid article > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gamesense-knowledge-update-grid a {
+  color: var(--gamesense-cool, #67e8f9);
+  font-size: 11px;
+}

@@ -8,9 +8,11 @@ const APPROVAL_PREFIX = "knowledge:approval:";
 const REVIEW_PREFIX = "knowledge:review:";
 const LATEST_REVIEW_KEY = "knowledge:review:latest";
 const LAST_RUN_KEY = "knowledge:run:last";
+const PUBLISHED_PREFIX = "knowledge:published:";
+const PUBLISHED_INDEX_KEY = "knowledge:published:index";
 const DEFAULT_BATCH_SIZE = 4;
 const MAX_TRANSCRIPT_CUES = 12_000;
-const MAX_SOURCE_ITEMS = 240;
+const MAX_SOURCE_ITEMS = 2_000;
 
 const TERMINOLOGY = Object.freeze([
   Object.freeze([/\bgame[\s-]*sense\b/gi, "game sense"]),
@@ -494,6 +496,55 @@ function evidenceUrl(source, startSeconds) {
   return url.toString();
 }
 
+function transcriptTimestampMs(value = "") {
+  const parts = String(value || "").trim().replace(",", ".").split(":").map(Number);
+  if (!parts.length || parts.some(part => !Number.isFinite(part))) return null;
+  if (parts.length === 2) return Math.round(((parts[0] * 60) + parts[1]) * 1000);
+  if (parts.length === 3) return Math.round(((parts[0] * 3600) + (parts[1] * 60) + parts[2]) * 1000);
+  return null;
+}
+
+export function parseTimestampedTranscript(input = "") {
+  if (Array.isArray(input)) {
+    return normalizeValorantTranscript(input.map(cue => ({
+      startMs: Number(cue?.startMs ?? cue?.offsetMs ?? 0),
+      durationMs: Number(cue?.durationMs ?? Math.max(1_000, Number(cue?.endMs || 0) - Number(cue?.startMs || 0))),
+      text: cue?.text || cue?.content || ""
+    })));
+  }
+  const lines = String(input || "").replace(/\r/g, "").split("\n");
+  const cues = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line || /^WEBVTT$/i.test(line) || /^\d+$/.test(line)) continue;
+    const range = line.match(/^(\d{1,2}:\d{2}(?::\d{2})?[,.]\d{1,3})\s*-->\s*(\d{1,2}:\d{2}(?::\d{2})?[,.]\d{1,3})/);
+    if (range) {
+      const startMs = transcriptTimestampMs(range[1]);
+      const endMs = transcriptTimestampMs(range[2]);
+      const textLines = [];
+      while (index + 1 < lines.length && lines[index + 1].trim()) {
+        if (lines[index + 1].includes("-->")) break;
+        textLines.push(lines[index + 1].trim());
+        index += 1;
+      }
+      if (startMs != null && endMs != null && textLines.length) {
+        cues.push({ startMs, durationMs: Math.max(1_000, endMs - startMs), text: textLines.join(" ") });
+      }
+      continue;
+    }
+    const stamped = line.match(/^\[?(\d{1,2}:\d{2}(?::\d{2})?(?:[,.]\d{1,3})?)\]?\s+(.+)$/);
+    if (stamped) {
+      const startMs = transcriptTimestampMs(stamped[1]);
+      if (startMs != null) cues.push({ startMs, durationMs: 4_000, text: stamped[2] });
+    }
+  }
+  cues.sort((left, right) => left.startMs - right.startMs);
+  for (let index = 0; index < cues.length - 1; index += 1) {
+    cues[index].durationMs = Math.max(1_000, cues[index + 1].startMs - cues[index].startMs);
+  }
+  return normalizeValorantTranscript(cues);
+}
+
 export function extractStructuredClaims(source, sections = []) {
   const claims = [];
   for (const section of sections) {
@@ -762,6 +813,117 @@ async function collectClaimDocuments(kv) {
   return documents;
 }
 
+async function persistKnowledgeReview(kv, review, consensus) {
+  await kv.put(`${PRIVATE_CONSENSUS_PREFIX}${review.id}`, JSON.stringify(consensus));
+  const persistedProposals = [];
+  for (const proposal of review.proposals) {
+    const previous = await kv.get(`${PROPOSAL_PREFIX}${proposal.id}`, "json");
+    if (previous?.approvalStatus === "approved" || previous?.approvalStatus === "published") {
+      persistedProposals.push(previous);
+      continue;
+    }
+    await kv.put(`${PROPOSAL_PREFIX}${proposal.id}`, JSON.stringify(proposal));
+    persistedProposals.push(proposal);
+  }
+  const persistedReview = {
+    ...review,
+    summary: {
+      ...review.summary,
+      pendingApproval: persistedProposals.filter(proposal => proposal.approvalStatus === "pending-owner-approval").length,
+      published: persistedProposals.filter(proposal => proposal.approvalStatus === "published").length
+    },
+    proposals: persistedProposals
+  };
+  await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(persistedReview));
+  await kv.put(LATEST_REVIEW_KEY, JSON.stringify(persistedReview));
+  return persistedReview;
+}
+
+async function updateLatestReviewProposal(kv, proposal) {
+  const review = await kv.get(LATEST_REVIEW_KEY, "json");
+  if (!review?.proposals?.length) return;
+  const proposals = review.proposals.map(item => item.id === proposal.id ? proposal : item);
+  const updated = {
+    ...review,
+    summary: {
+      ...review.summary,
+      pendingApproval: proposals.filter(item => item.approvalStatus === "pending-owner-approval").length,
+      published: proposals.filter(item => item.approvalStatus === "published").length
+    },
+    proposals
+  };
+  await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(updated));
+  await kv.put(LATEST_REVIEW_KEY, JSON.stringify(updated));
+}
+
+export async function ingestTimestampedKnowledgeTranscript(kv, input = {}, options = {}) {
+  if (!kv) throw new Error("CONTENT_AUTOMATION KV is not configured.");
+  const now = options.now || new Date();
+  const [source] = await registerKnowledgeSources(kv, [{
+    ...(input.source || {}),
+    researchEligible: true,
+    sourceKind: input.source?.sourceKind || "owner-imported-educational-video"
+  }], now);
+  if (!source || source.researchEligible === false) {
+    throw new Error("A valid educational YouTube or Twitch source is required.");
+  }
+  const cues = parseTimestampedTranscript(input.cues || input.transcript || "");
+  if (!cues.length) {
+    throw new Error("A timestamped transcript is required. Use VTT, SRT, or lines beginning with MM:SS.");
+  }
+  const sections = splitTranscriptIntoSections(cues);
+  const claims = extractStructuredClaims(source, sections);
+  const ingestedAt = nowIso(now);
+  await kv.put(`${PRIVATE_TRANSCRIPT_PREFIX}${source.id}`, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    sourceId: source.id,
+    acquiredAt: ingestedAt,
+    language: normalizeWhitespace(input.language || "en"),
+    trackKind: "owner-imported-timestamped-transcript",
+    cues
+  }));
+  await kv.put(`${PRIVATE_CLAIMS_PREFIX}${source.id}`, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    source: {
+      id: source.id,
+      platform: source.platform,
+      publisher: source.publisher,
+      publisherKey: source.publisherKey,
+      sourceKind: source.sourceKind,
+      title: source.title,
+      url: source.url
+    },
+    extractedAt: ingestedAt,
+    claims
+  }));
+  const registry = await readSourceRegistry(kv);
+  await writeSourceRegistry(kv, registry.map(entry => entry.id === source.id ? {
+    ...entry,
+    transcriptStatus: "acquired-private",
+    lastTranscriptAttemptAt: ingestedAt,
+    transcriptLanguage: normalizeWhitespace(input.language || "en"),
+    cueCount: cues.length,
+    claimCount: claims.length
+  } : entry), ingestedAt);
+  const claimDocuments = await collectClaimDocuments(kv);
+  const consensus = buildKnowledgeConsensus(claimDocuments);
+  const review = buildKnowledgeReview(consensus, {
+    now,
+    libraryAudit: options.libraryAudit || null,
+    claimDocuments,
+    libraryKnowledgeIndex: options.libraryKnowledgeIndex || []
+  });
+  const persistedReview = await persistKnowledgeReview(kv, review, consensus);
+  return Object.freeze({
+    sourceId: source.id,
+    cueCount: cues.length,
+    claimCount: claims.length,
+    reviewId: persistedReview.id,
+    summary: persistedReview.summary,
+    publicationWrites: 0
+  });
+}
+
 function pendingSources(sources, providerAvailable = false) {
   return sources.filter(source => (
     source.platform === "youtube"
@@ -875,30 +1037,23 @@ export async function runKnowledgePipeline(env = {}, options = {}) {
     claimDocuments,
     libraryKnowledgeIndex: options.libraryKnowledgeIndex || []
   });
-  await kv.put(`${PRIVATE_CONSENSUS_PREFIX}${review.id}`, JSON.stringify(consensus));
-  for (const proposal of review.proposals) {
-    const previous = await kv.get(`${PROPOSAL_PREFIX}${proposal.id}`, "json");
-    if (previous?.approvalStatus === "approved") continue;
-    await kv.put(`${PROPOSAL_PREFIX}${proposal.id}`, JSON.stringify(proposal));
-  }
-  await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(review));
-  await kv.put(LATEST_REVIEW_KEY, JSON.stringify(review));
+  const persistedReview = await persistKnowledgeReview(kv, review, consensus);
   const result = Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
     ranAt: nowIso(now),
     registered: registered.length,
     processed: Object.freeze(processed),
-    reviewId: review.id,
-    summary: review.summary,
+    reviewId: persistedReview.id,
+    summary: persistedReview.summary,
     publicationWrites: 0
   });
   await kv.put(LAST_RUN_KEY, JSON.stringify(result));
-  const libraryGapCount = Number(review.libraryAudit?.missingOpportunities?.length || 0);
-  if ((review.summary.pendingApproval > 0 || libraryGapCount > 0) && options.notify !== false) {
+  const libraryGapCount = Number(persistedReview.libraryAudit?.missingOpportunities?.length || 0);
+  if ((persistedReview.summary.pendingApproval > 0 || libraryGapCount > 0) && options.notify !== false) {
     try {
       await notifyReview(
         env,
-        `RankedCoach knowledge review ${review.id}: ${review.summary.corroborated} corroborated, ${review.summary.conflicts + review.summary.libraryConflicts} conflict(s), ${review.summary.pendingApproval} proposal(s), ${libraryGapCount} existing Library gap(s) awaiting owner review. Nothing was published.`
+        `RankedCoach knowledge review ${persistedReview.id}: ${persistedReview.summary.corroborated} corroborated, ${persistedReview.summary.conflicts + persistedReview.summary.libraryConflicts} conflict(s), ${persistedReview.summary.pendingApproval} proposal(s), ${libraryGapCount} existing Library gap(s) awaiting owner review. Nothing was published.`
       );
     } catch (error) {
       console.warn("Knowledge review notification skipped", error?.message || error);
@@ -932,14 +1087,136 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
     evidence: proposal.evidence
   });
   await kv.put(`${APPROVAL_PREFIX}${proposalId}`, JSON.stringify(record));
-  await kv.put(key, JSON.stringify({
+  const updatedProposal = {
     ...proposal,
     rankedCoachWording,
     approvalStatus: "approved",
     approvedAt,
     approvedBy: owner
-  }));
+  };
+  await kv.put(key, JSON.stringify(updatedProposal));
+  await updateLatestReviewProposal(kv, updatedProposal);
   return record;
+}
+
+export async function publishApprovedKnowledge(kv, publication = {}, now = new Date()) {
+  const proposalId = String(publication.proposalId || "").trim();
+  const owner = normalizeWhitespace(publication.owner);
+  const category = normalizeWhitespace(publication.category || "general").toLowerCase();
+  const entity = normalizeWhitespace(publication.entity);
+  if (!proposalId || !owner || !["general", "map", "agent", "weapon"].includes(category)) {
+    throw new Error("Proposal, owner, and a valid Library category are required.");
+  }
+  if (category !== "general" && !entity) throw new Error("A target entity is required for contextual Library publication.");
+  const proposalKey = `${PROPOSAL_PREFIX}${proposalId}`;
+  const proposal = await kv.get(proposalKey, "json");
+  const approval = await kv.get(`${APPROVAL_PREFIX}${proposalId}`, "json");
+  if (!proposal || !approval || proposal.approvalStatus !== "approved") {
+    throw new Error("Only an owner-approved proposal can be published.");
+  }
+  const publishedAt = nowIso(now);
+  const record = Object.freeze({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    id: proposalId,
+    proposalId,
+    wording: approval.rankedCoachWording,
+    type: proposal.type,
+    topic: proposal.topic,
+    category,
+    entity,
+    entities: Object.freeze([...(proposal.entities || [])]),
+    evidence: Object.freeze((proposal.evidence || []).map(item => Object.freeze({
+      sourceId: item.sourceId,
+      startSeconds: Number(item.startSeconds || 0),
+      endSeconds: Number(item.endSeconds || 0),
+      url: item.url
+    }))),
+    publishedAt,
+    status: "published"
+  });
+  await kv.put(`${PUBLISHED_PREFIX}${proposalId}`, JSON.stringify(record));
+  const existing = await kv.get(PUBLISHED_INDEX_KEY, "json");
+  const items = Array.isArray(existing?.items) ? existing.items.filter(item => item.id !== record.id) : [];
+  items.push(record);
+  await kv.put(PUBLISHED_INDEX_KEY, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    updatedAt: publishedAt,
+    items
+  }));
+  const updatedProposal = {
+    ...proposal,
+    approvalStatus: "published",
+    publishedAt,
+    publishedCategory: category,
+    publishedEntity: entity
+  };
+  await kv.put(proposalKey, JSON.stringify(updatedProposal));
+  await updateLatestReviewProposal(kv, updatedProposal);
+  return record;
+}
+
+export async function unpublishKnowledge(kv, publication = {}, now = new Date()) {
+  const proposalId = String(publication.proposalId || "").trim();
+  if (!proposalId) throw new Error("Proposal ID is required.");
+  const existing = await kv.get(PUBLISHED_INDEX_KEY, "json");
+  const items = Array.isArray(existing?.items) ? existing.items.filter(item => item.id !== proposalId) : [];
+  await kv.put(PUBLISHED_INDEX_KEY, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    updatedAt: nowIso(now),
+    items
+  }));
+  const proposalKey = `${PROPOSAL_PREFIX}${proposalId}`;
+  const proposal = await kv.get(proposalKey, "json");
+  if (proposal) {
+    const updatedProposal = {
+      ...proposal,
+      approvalStatus: "approved",
+      unpublishedAt: nowIso(now)
+    };
+    await kv.put(proposalKey, JSON.stringify(updatedProposal));
+    await updateLatestReviewProposal(kv, updatedProposal);
+  }
+  return Object.freeze({ proposalId, status: "unpublished" });
+}
+
+export async function getPublishedKnowledge(kv) {
+  const index = await kv.get(PUBLISHED_INDEX_KEY, "json");
+  return Object.freeze({
+    updatedAt: index?.updatedAt || null,
+    items: Object.freeze((Array.isArray(index?.items) ? index.items : []).filter(item => (
+      item?.status === "published" && typeof item.wording === "string"
+    )))
+  });
+}
+
+export async function getKnowledgeOwnerDashboard(kv) {
+  const [registry, review, published] = await Promise.all([
+    readSourceRegistry(kv),
+    kv.get(LATEST_REVIEW_KEY, "json"),
+    getPublishedKnowledge(kv)
+  ]);
+  return Object.freeze({
+    sources: Object.freeze(registry.map(source => Object.freeze({
+      id: source.id,
+      platform: source.platform,
+      title: source.title,
+      publisher: source.publisher,
+      sourceKind: source.sourceKind,
+      url: source.url,
+      transcriptStatus: source.transcriptStatus,
+      cueCount: Number(source.cueCount || 0),
+      claimCount: Number(source.claimCount || 0)
+    }))),
+    review: review ? Object.freeze({
+      id: review.id,
+      createdAt: review.createdAt || null,
+      status: review.status,
+      summary: review.summary,
+      libraryGapCount: Number(review.libraryAudit?.missingOpportunities?.length || 0),
+      proposals: Object.freeze([...(review.proposals || [])])
+    }) : null,
+    published
+  });
 }
 
 export const KNOWLEDGE_STORAGE_KEYS = Object.freeze({
@@ -951,5 +1228,7 @@ export const KNOWLEDGE_STORAGE_KEYS = Object.freeze({
   approvalPrefix: APPROVAL_PREFIX,
   reviewPrefix: REVIEW_PREFIX,
   latestReview: LATEST_REVIEW_KEY,
-  lastRun: LAST_RUN_KEY
+  lastRun: LAST_RUN_KEY,
+  publishedPrefix: PUBLISHED_PREFIX,
+  publishedIndex: PUBLISHED_INDEX_KEY
 });

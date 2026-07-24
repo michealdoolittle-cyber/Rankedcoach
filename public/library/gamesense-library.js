@@ -11,6 +11,8 @@
   let collectionArchiveRenderToken = 0;
   let featuredPlaylist = null;
   let featuredPlaylistRequest = null;
+  let publishedKnowledge = [];
+  let publishedKnowledgeRequest = null;
   let activeMediaPlayer = null;
   let libraryPageActive = false;
   let collageHydrationToken = 0;
@@ -574,6 +576,7 @@
     if (libraryPageActive === nextActive) {
       if (nextActive) {
         hydrateFeaturedPlaylist();
+        hydratePublishedKnowledge();
         scheduleTopicCollageHydration();
       }
       return;
@@ -582,6 +585,7 @@
     collageHydrationToken += 1;
     if (libraryPageActive) {
       hydrateFeaturedPlaylist();
+      hydratePublishedKnowledge();
       scheduleTopicCollageHydration();
     }
   }
@@ -1172,6 +1176,52 @@
     return Array.isArray(getReference()[topic]) ? getReference()[topic] : [];
   }
 
+  function renderPublishedKnowledge(category = "general", entity = "") {
+    const normalizedEntity = String(entity || "").trim().toLowerCase();
+    const items = publishedKnowledge.filter(item => (
+      item.category === "general"
+      || (item.category === category && String(item.entity || "").trim().toLowerCase() === normalizedEntity)
+    ));
+    if (!items.length) return "";
+    return `
+      <section class="gamesense-knowledge-updates">
+        <div class="gamesense-section-heading"><span>RankedCoach Research</span><strong>Approved coaching updates</strong></div>
+        <div class="gamesense-knowledge-update-grid">${items.map(item => `
+          <article>
+            <span>${escapeHtml(item.topic || "Coaching principle")}</span>
+            <p>${escapeHtml(item.wording)}</p>
+            <div>${(item.evidence || []).slice(0, 4).map((evidence, index) => `
+              <a href="${escapeHtml(evidence.url)}" target="_blank" rel="noopener noreferrer">Video evidence ${index + 1} · ${Math.floor(Number(evidence.startSeconds || 0) / 60)}:${String(Math.floor(Number(evidence.startSeconds || 0) % 60)).padStart(2, "0")}</a>
+            `).join("")}</div>
+          </article>
+        `).join("")}</div>
+      </section>`;
+  }
+
+  function hydratePublishedKnowledge(options = {}) {
+    if (publishedKnowledgeRequest && !options.force) return publishedKnowledgeRequest;
+    publishedKnowledgeRequest = fetch("/api/content/knowledge", {
+      headers: { Accept: "application/json" },
+      cache: options.force ? "reload" : "default"
+    })
+      .then(response => {
+        if (!response.ok) throw new Error(`Knowledge updates returned ${response.status}`);
+        return response.json();
+      })
+      .then(payload => {
+        publishedKnowledge = Array.isArray(payload?.items) ? payload.items : [];
+        if (libraryPageActive) render({ direction: "replace" });
+        return publishedKnowledge;
+      })
+      .catch(error => {
+        console.warn("Published coaching updates refresh skipped", error?.message || error);
+        publishedKnowledge = [];
+        return publishedKnowledge;
+      })
+      .finally(() => { publishedKnowledgeRequest = null; });
+    return publishedKnowledgeRequest;
+  }
+
   function renderOverview() {
     const season = getReference().season || {};
     return `
@@ -1187,6 +1237,7 @@
             </button>
           `).join("")}
         </div>
+        ${renderPublishedKnowledge("general")}
       </div>`;
   }
 
@@ -1756,7 +1807,8 @@
         </section>
       </div>
       ${renderMarkedMap(map)}
-      ${renderRelatedVideo(map)}`;
+      ${renderRelatedVideo(map)}
+      ${renderPublishedKnowledge("map", map.label)}`;
   }
 
   function renderStatChips(stats = {}) {
@@ -1859,7 +1911,8 @@
           return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(getMapArtwork(mapName))}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
         }).join("") : `<p class="gamesense-map-fit-unavailable">No verified current-season map-fit sample is attached to this agent dossier.</p>`}</div>
       </section>
-      ${renderRelatedVideo(agent)}`;
+      ${renderRelatedVideo(agent)}
+      ${renderPublishedKnowledge("agent", agent.label)}`;
   }
 
   function safePercent(value) {
@@ -2015,7 +2068,8 @@
         ${renderWeaponFact(selected)}
       </section>
       ${renderWeaponCollectionArchive(selected, getWeaponCollectionProvider()?.getCached(selected?.label), collectionLoadErrors.get(selected?.label) || "")}
-      ${renderRelatedVideo(selected)}`;
+      ${renderRelatedVideo(selected)}
+      ${renderPublishedKnowledge("weapon", selected?.label)}`;
   }
 
   function getSelectedWeapon() {
@@ -3384,6 +3438,10 @@
     const weapon = getSelectedWeapon();
     if (!weapon || weapon.label !== event.detail?.weaponName) return;
     replaceWeaponCollectionArchive(weapon, getWeaponCollectionProvider()?.getCached(weapon.label));
+  });
+
+  window.addEventListener("rankedcoach:knowledge-updated", () => {
+    void hydratePublishedKnowledge({ force: true });
   });
 
   decorateWarmupDrills();

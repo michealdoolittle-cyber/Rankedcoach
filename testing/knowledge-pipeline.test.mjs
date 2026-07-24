@@ -11,9 +11,14 @@ import {
   buildKnowledgeReview,
   extractStructuredClaims,
   extractYouTubeCaptionTracks,
+  getKnowledgeOwnerDashboard,
+  getPublishedKnowledge,
+  ingestTimestampedKnowledgeTranscript,
   normalizeKnowledgeSource,
   normalizeValorantTranscript,
   parseYouTubeTranscriptPayload,
+  parseTimestampedTranscript,
+  publishApprovedKnowledge,
   registerKnowledgeSources,
   runKnowledgePipeline,
   splitTranscriptIntoSections
@@ -256,6 +261,64 @@ test("scheduled knowledge run stores research privately and cannot publish", asy
   }, new Date("2026-07-23T00:05:00.000Z"));
   assert.equal(approval.status, "approved-for-manual-library-promotion");
   assert.equal([...kv.values.keys()].some(key => key.startsWith("library:draft:")), false);
+});
+
+test("owner-imported timestamped transcripts create reviewable claims and only approved wording can publish", async () => {
+  const kv = new MemoryKv();
+  const cues = parseTimestampedTranscript(`
+00:01 Pair your first utility with a teammate so the team can trade the opening lane safely.
+00:08 When you take Bind A control, hold the trade spacing before crossing into the site.
+00:15 A 54% win rate over 200 rounds is a sample to review, not a guaranteed result.
+  `);
+  assert.equal(cues.length, 3);
+  const ingestion = await ingestTimestampedKnowledgeTranscript(kv, {
+    source: {
+      platform: "youtube",
+      url: "https://www.youtube.com/watch?v=abcdefghijk",
+      title: "Bind teamplay guide",
+      publisher: "Coach A",
+      entities: ["Bind"]
+    },
+    cues
+  }, {
+    now: new Date("2026-07-24T00:00:00.000Z"),
+    libraryKnowledgeIndex: []
+  });
+  assert.equal(ingestion.publicationWrites, 0);
+  assert.equal(ingestion.cueCount, 3);
+  assert.ok(ingestion.claimCount >= 2);
+
+  const ownerDashboard = await getKnowledgeOwnerDashboard(kv);
+  assert.equal(ownerDashboard.sources[0].transcriptStatus, "acquired-private");
+  assert.ok(ownerDashboard.review.proposals.length >= 2);
+  assert.doesNotMatch(JSON.stringify(ownerDashboard), /hold the trade spacing before crossing/i);
+  const proposal = ownerDashboard.review.proposals.find(item => item.type === "coaching");
+  await assert.rejects(
+    publishApprovedKnowledge(kv, { proposalId: proposal.id, owner: "Michael", category: "map", entity: "Bind" }),
+    /owner-approved/
+  );
+  await approveKnowledgeProposal(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    rankedCoachWording: "Keep one teammate close enough to trade before the team commits through Bind’s first choke.",
+    confirmOriginalWording: true
+  }, new Date("2026-07-24T00:02:00.000Z"));
+  const approvedDashboard = await getKnowledgeOwnerDashboard(kv);
+  assert.equal(approvedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "approved");
+  const published = await publishApprovedKnowledge(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    category: "map",
+    entity: "Bind"
+  }, new Date("2026-07-24T00:03:00.000Z"));
+  assert.equal(published.status, "published");
+  assert.equal(published.entity, "Bind");
+  const publishedDashboard = await getKnowledgeOwnerDashboard(kv);
+  assert.equal(publishedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "published");
+  const publicIndex = await getPublishedKnowledge(kv);
+  assert.equal(publicIndex.items.length, 1);
+  assert.match(publicIndex.items[0].wording, /Keep one teammate/);
+  assert.doesNotMatch(JSON.stringify(publicIndex), /hold the trade spacing before crossing/i);
 });
 
 test("complete Library audit covers every governed draft without publishing", async () => {

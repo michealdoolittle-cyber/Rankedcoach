@@ -19,6 +19,22 @@ Twitch media is registered, but remains `provider-required`; no transcript is in
 
 YouTube's public caption metadata is attempted directly. If YouTube exposes a caption track but returns no caption body to a server-side request, the source moves to `provider-required` instead of being treated as researched. A private transcript service can be configured through `KNOWLEDGE_TRANSCRIPT_ENDPOINT` and optional `KNOWLEDGE_TRANSCRIPT_TOKEN`; it must return timestamped cues and is never called from the browser.
 
+## Owner workflow in the app
+
+The owner account now has an **Account & Support → Research** tab. It:
+
+1. shows the registered Playlist research inventory and transcript status;
+2. accepts VTT, SRT, or `MM:SS` timestamped transcript imports;
+3. processes imported text immediately into private claims and a transcript-free review;
+4. shows evidence timestamps, relationships, and pending proposals without showing transcript excerpts;
+5. requires original RankedCoach wording plus an explicit originality confirmation;
+6. requires a second, separate Publish action and a map, agent, weapon, or general Library target; and
+7. can remove a published update without deleting its private research history.
+
+Normal accounts never receive the Research tab or private review API. The Worker verifies the Supabase access token and then requires an `owner`/`admin` app role or the configured `KNOWLEDGE_OWNER_EMAILS` allowlist.
+
+Player-facing Library dossiers request only `/api/content/knowledge`. That route contains owner-approved RankedCoach wording, its Library target, and timestamped evidence URLs. It never contains transcript text, claim excerpts, source weights, formulas, or private consensus internals.
+
 ## Privacy boundary
 
 No public route serves transcripts, excerpts, consensus internals, weights, or normalization details. Browser assets do not contain transcript data. Private records stay in the `CONTENT_AUTOMATION` KV namespace under:
@@ -39,7 +55,7 @@ Registered public metadata is consolidated under `knowledge:sources:registry` so
 - original RankedCoach wording of at least 20 characters; and
 - an explicit confirmation that the wording is not copied transcript text.
 
-Approval creates an `approved-for-manual-library-promotion` record. It does not edit `gamesense-*.js`, create a promoted Library overlay, commit, deploy, or publish. Manual governed promotion remains a separate action.
+Approval creates an `approved-for-manual-library-promotion` record. It does not publish. The owner must separately choose **Publish to Library**, which adds only the approved original wording and timestamped evidence to the public publication index. The underlying governed `gamesense-*.js` baseline remains unchanged.
 
 ## Full Library review
 

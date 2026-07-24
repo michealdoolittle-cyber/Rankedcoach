@@ -1,6 +1,6 @@
 # Automated Knowledge and Consensus Pipeline
 
-**Status: implementation in progress.**
+**Status: active in production.** The private scheduled research foundation shipped in `3487172`. The owner-facing transcript import, review, approval, and explicit Library publication workflow is implemented in the follow-up release. Public YouTube retrieval remains best-effort; sources that cannot be retrieved stay held until a timestamped transcript is imported or a private provider supplies it.
 
 ## Purpose
 

@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260722-loading-quotes-01">
+  <link rel="stylesheet" href="app.css?v=20260724-knowledge-review-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -77,7 +77,7 @@
   <link rel="preload" as="image" href="https://media.valorant-api.com/maps/756da597-416b-c0f2-f47b-afbdf28670bc/splash.png" fetchpriority="high">
   <link rel="preload" as="image" href="https://media.valorant-api.com/maps/92584fbe-486a-b1b2-9faa-39b0f486b498/splash.png" fetchpriority="high">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260723-library-pipeline-ui-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260724-knowledge-review-01">
   <link rel="stylesheet" href="layout-styles.css?v=20260723-library-pipeline-ui-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -640,6 +640,7 @@ RIOT PROFILE MODAL
         <aside class="profile-edit-nav account-support-nav">
           <button class="profile-edit-tab is-active" type="button" data-account-support-tab="account">Account</button>
           <button class="profile-edit-tab" type="button" data-account-support-tab="support">Support</button>
+          <button id="accountSupportResearchTab" class="profile-edit-tab" type="button" data-account-support-tab="research" hidden>Research</button>
         </aside>
 
         <div class="profile-edit-panels account-support-panels">
@@ -752,6 +753,52 @@ RIOT PROFILE MODAL
                 <a class="pd-item account-support-row account-support-tip-row" href="mailto:support@rankedcoach.gg?subject=Support%20RankedCoach%20Donation%20Setup">Tip to Dev</a>
               </div>
             </div>
+          </section>
+
+          <section id="knowledgeResearchPanel" class="profile-edit-panel knowledge-research-panel" data-account-support-panel="research" hidden>
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Knowledge Research</div>
+              <div class="profile-edit-panel-copy">Import timestamped educational transcripts, review extracted principles, write original RankedCoach guidance, and publish it deliberately.</div>
+            </div>
+            <div id="knowledgeResearchStatus" class="knowledge-research-status" aria-live="polite">Loading the private research queue…</div>
+            <div id="knowledgeResearchSummary" class="knowledge-research-summary"></div>
+            <details class="knowledge-transcript-import">
+              <summary>Import a timestamped transcript</summary>
+              <form id="knowledgeTranscriptForm">
+                <div class="knowledge-import-grid">
+                  <label class="auth-field">
+                    <span>Video URL</span>
+                    <input id="knowledgeSourceUrl" type="url" required placeholder="https://www.youtube.com/watch?v=…" />
+                  </label>
+                  <label class="auth-field">
+                    <span>Video title</span>
+                    <input id="knowledgeSourceTitle" type="text" required maxlength="180" />
+                  </label>
+                  <label class="auth-field">
+                    <span>Creator</span>
+                    <input id="knowledgeSourcePublisher" type="text" required maxlength="100" />
+                  </label>
+                  <label class="auth-field">
+                    <span>Related map, agent, or weapon</span>
+                    <input id="knowledgeSourceEntities" type="text" placeholder="Bind, Viper" maxlength="160" />
+                  </label>
+                </div>
+                <label class="auth-field">
+                  <span>Timestamped transcript</span>
+                  <textarea id="knowledgeTranscriptText" required rows="9" placeholder="00:12 Take control of A Main with paired utility…&#10;00:27 Hold the trade spacing before entering site…"></textarea>
+                  <small>Accepted formats: VTT, SRT, or one MM:SS timestamp per line. Transcript wording stays private.</small>
+                </label>
+                <button class="pd-item auth-main-btn" type="submit">Process Transcript</button>
+              </form>
+            </details>
+            <div class="knowledge-review-head">
+              <div>
+                <strong>Owner Review Queue</strong>
+                <span>Nothing reaches players until you approve original wording and then publish it.</span>
+              </div>
+              <button id="knowledgeResearchRefresh" class="pd-item" type="button">Refresh</button>
+            </div>
+            <div id="knowledgeProposalList" class="knowledge-proposal-list"></div>
           </section>
         </div>
       </div>
@@ -2347,9 +2394,10 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-encyclopedia.js?v=20260723-library-pipeline-ui-01"></script>
   <script src="library/gamesense-promoted.js?v=20260724-promotion-sequence-01"></script>
   <script src="library/gamesense-collections.js?v=20260718-content-automation-01"></script>
-<script src="library/gamesense-library.js?v=20260723-library-pipeline-ui-01"></script>
+<script src="library/gamesense-library.js?v=20260724-knowledge-review-01"></script>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
-  <script type="module" src="app.js?v=20260723-library-pipeline-ui-01"></script>
+  <script type="module" src="app.js?v=20260724-knowledge-review-01"></script>
+  <script type="module" src="knowledge-review.js?v=20260724-knowledge-review-01"></script>
 </body>
 </html>

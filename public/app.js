@@ -12178,6 +12178,7 @@ function syncAccountSupportUI(profile = getActiveProfile()) {
   }
   syncAccountSupportAccessibilityControls(profile);
   syncManualEntryModeUI?.();
+  globalThis.RankedCoachKnowledgeReview?.syncAccess?.(currentAuthUser);
 }
 
 function syncAccountSupportAccessibilityControls(profile = getActiveProfile()) {
@@ -12208,7 +12209,7 @@ function saveAccountSupportAccessibilitySettings() {
 function activateAccountSupportTab(tabKey = "account") {
   const shell = document.querySelector("#accountSupportModal .account-support-shell");
   const previousTab = shell?.dataset.activeAccountSupportTab || "";
-  const tabOrder = ["account", "support"];
+  const tabOrder = ["account", "support", "research"];
   const nextTabKey = tabOrder.includes(tabKey) ? tabKey : "account";
   const previousIndex = tabOrder.indexOf(previousTab);
   const nextIndex = tabOrder.indexOf(nextTabKey);
@@ -12243,6 +12244,9 @@ function openAccountSupportModal(tabKey = "account") {
   if (currentAuthUser && tabKey === "account") {
     void hydrateSecuritySettingsFromBackend();
     void refreshSecurityTotpState();
+  }
+  if (tabKey === "research") {
+    void globalThis.RankedCoachKnowledgeReview?.load?.();
   }
 }
 
