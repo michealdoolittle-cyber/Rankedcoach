@@ -98,7 +98,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
   "uuid": "e370fa57-4757-3604-3648-499e1f642d3f",
-  "lastReviewed": "2026-07-23",
+  "lastReviewed": "2026-07-24",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -107,7 +107,7 @@
     "entityName": "Gekko",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-24T03:51:35.455Z",
+    "generatedAt": "2026-07-24T09:01:38.509Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-24"

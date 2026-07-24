@@ -22,7 +22,7 @@
     }
   ],
   "source": "https://valorant-api.com/v1/weapons/63e6c2b6-4a8e-869c-3d4c-e38355226584?language=en-US",
-  "lastReviewed": "2026-07-23",
+  "lastReviewed": "2026-07-24",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -31,7 +31,7 @@
     "entityName": "Odin",
     "operation": "merge",
     "groupId": "machine-guns",
-    "generatedAt": "2026-07-24T03:51:35.455Z",
+    "generatedAt": "2026-07-24T09:01:38.509Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-24"

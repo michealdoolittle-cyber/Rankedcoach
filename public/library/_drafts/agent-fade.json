@@ -98,7 +98,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/dade69b4-4f5a-8528-247b-219e5a1facd6?language=en-US",
   "uuid": "dade69b4-4f5a-8528-247b-219e5a1facd6",
-  "lastReviewed": "2026-07-23",
+  "lastReviewed": "2026-07-24",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -107,7 +107,7 @@
     "entityName": "Fade",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-24T03:51:35.455Z",
+    "generatedAt": "2026-07-24T09:01:38.509Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-24"

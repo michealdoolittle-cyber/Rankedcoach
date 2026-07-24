@@ -46,7 +46,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "29a0cfab-485b-f5d5-779a-b59f85e204a8",
   "source": "https://valorant-api.com/v1/weapons/29a0cfab-485b-f5d5-779a-b59f85e204a8?language=en-US",
-  "lastReviewed": "2026-07-23",
+  "lastReviewed": "2026-07-24",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -55,7 +55,7 @@
     "entityName": "Classic",
     "operation": "merge",
     "groupId": "sidearms",
-    "generatedAt": "2026-07-24T03:51:35.455Z",
+    "generatedAt": "2026-07-24T09:01:38.509Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-24"
