@@ -249,9 +249,19 @@ function ensureActiveProposal(proposals = []) {
 
 function proposalCardMarkup(proposal) {
   const published = proposal.approvalStatus === "published";
+  const approved = proposal.approvalStatus === "approved";
   const rejected = proposal.approvalStatus === "rejected";
   const libraryRelationship = proposal.libraryComparison?.relationship || "new-opportunity";
-  const publishBlocked = proposal.state === "conflicted" || libraryRelationship === "conflicts-with-library";
+  const statisticalPublishBlocked = proposal.type === "statistical" && proposal.state !== "corroborated";
+  const publishBlocked = proposal.state === "conflicted"
+    || libraryRelationship === "conflicts-with-library"
+    || statisticalPublishBlocked;
+  const publishBlockedTitle = statisticalPublishBlocked
+    ? "Statistical insights need corroboration from independent sources before publication."
+    : "Resolve the evidence conflict before publication.";
+  const primaryAction = approved ? "publish" : "approve";
+  const primaryLabel = approved ? "Publish to Library" : "Approve";
+  const primaryBlocked = approved && publishBlocked;
   const busy = pendingProposalIds.has(proposal.id);
   const form = proposalFormState(proposal);
   const feedback = proposalFeedback.get(proposal.id);
@@ -278,8 +288,8 @@ function proposalCardMarkup(proposal) {
       ${proposal.publicationNeedsReview ? `<div class="knowledge-conflict-note"><strong>Published guidance needs review</strong><span>New evidence now conflicts with this item. Review it before leaving it in the Library.</span></div>` : ""}
       ${contextNotesMarkup(proposal)}
       <label class="auth-field">
-        <span>Editable RankedCoach insight</span>
-        <textarea data-knowledge-wording rows="3" ${published ? "readonly" : ""} placeholder="Write the player-facing coaching guidance in RankedCoach's voice.">${escapeHtml(form.wording)}</textarea>
+        <span>${published ? "Published RankedCoach insight" : approved ? "Approved RankedCoach insight" : "Editable RankedCoach insight"}</span>
+        <textarea data-knowledge-wording rows="3" ${(published || approved) ? "readonly" : ""} placeholder="Write the player-facing coaching guidance in RankedCoach's voice.">${escapeHtml(form.wording)}</textarea>
       </label>
       <div class="knowledge-proposal-feedback" data-knowledge-action-feedback data-tone="${escapeHtml(feedback?.tone || "")}" ${feedback?.message ? "" : "hidden"}>${escapeHtml(feedback?.message || "")}</div>
       ${published ? `
@@ -297,26 +307,29 @@ function proposalCardMarkup(proposal) {
         </div>
         <button class="pd-item knowledge-unpublish" type="button" data-knowledge-action="unpublish" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Remove from Library</button>
       ` : `
-        <div class="knowledge-publication-targets">
-          <label class="auth-field">
-            <span>Library location</span>
-            <select data-knowledge-category>
-              ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
-            </select>
+        ${approved ? `
+          <div class="knowledge-publication-targets">
+            <label class="auth-field">
+              <span>Library location</span>
+              <select data-knowledge-category>
+                ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="auth-field">
+              <span>Map, agent, or weapon</span>
+              <input data-knowledge-entity value="${escapeHtml(form.entity)}" placeholder="Bind" />
+            </label>
+          </div>
+        ` : `
+          <label class="knowledge-original-confirm">
+            <input type="checkbox" data-knowledge-original ${form.confirmed ? "checked" : ""} />
+            <span>I reviewed this as original RankedCoach wording, not copied transcript text.</span>
           </label>
-          <label class="auth-field">
-            <span>Map, agent, or weapon</span>
-            <input data-knowledge-entity value="${escapeHtml(form.entity)}" placeholder="Bind" />
-          </label>
-        </div>
-        <label class="knowledge-original-confirm">
-          <input type="checkbox" data-knowledge-original ${form.confirmed ? "checked" : ""} />
-          <span>I reviewed this as original RankedCoach wording, not copied transcript text.</span>
-        </label>
+        `}
         ${rejected ? `<p class="knowledge-rejection-reason">Rejected: ${escapeHtml(proposal.rejectionReason || "Not selected for publication.")}</p>` : ""}
         <div class="knowledge-proposal-actions">
-          <button class="pd-item" type="button" data-knowledge-action="draft" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Save Draft</button>
-          <button class="pd-item auth-main-btn" type="button" data-knowledge-action="publish" ${(publishBlocked || busy) ? "disabled" : ""} ${publishBlocked ? `title="Resolve the evidence conflict before publication."` : ""} ${busy ? `data-knowledge-was-disabled="${publishBlocked}"` : ""}>Publish to Library</button>
+          <button class="pd-item" type="button" data-knowledge-action="draft" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>${approved ? "Revise in Review" : "Save Draft"}</button>
+          <button class="pd-item auth-main-btn" type="button" data-knowledge-action="${primaryAction}" ${(primaryBlocked || busy) ? "disabled" : ""} ${primaryBlocked ? `title="${publishBlockedTitle}"` : ""} ${busy ? `data-knowledge-was-disabled="${primaryBlocked}"` : ""}>${primaryLabel}</button>
           <button class="pd-item knowledge-reject" type="button" data-knowledge-action="reject" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Reject</button>
         </div>
       `}
@@ -380,13 +393,13 @@ function renderProposals(options = {}) {
     review: {
       active: "Active review",
       queue: "Review queue",
-      help: "Draft keeps this item here. Reject and Publish move it to their completed bin.",
+      help: "Draft keeps this item here. Approve moves it to Approved; Reject moves it to Rejected.",
       empty: "No transcript-derived proposals are waiting for review. Process the Playlist queue now, or use manual recovery for a video without accessible captions."
     },
     approved: {
       active: "Approved insight",
       queue: "Approved archive",
-      help: "Published and previously approved guidance stays collected here.",
+      help: "Approved wording stays private until you separately publish it to the Library.",
       empty: "No approved insights are in this bin yet."
     },
     rejected: {
@@ -697,6 +710,7 @@ async function proposalAction(button) {
   captureProposalDraft(card);
   const pendingMessages = {
     draft: "Saving this draft privately…",
+    approve: "Moving this insight to Approved…",
     publish: "Publishing the reviewed insight…",
     reject: "Moving this insight to Rejected…",
     unpublish: "Removing this guidance from the Library…"
@@ -728,16 +742,33 @@ async function proposalAction(button) {
       });
       if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Draft saved privately. Players cannot see it.", "ready");
-    } else if (action === "publish") {
+    } else if (action === "approve") {
       const confirmed = card.querySelector("[data-knowledge-original]")?.checked === true;
+      const approvalRecord = await request("/api/knowledge/approve", {
+        method: "POST",
+        body: JSON.stringify({
+          proposalId,
+          rankedCoachWording: wording,
+          confirmOriginalWording: confirmed
+        })
+      });
+      const updated = updateLocalProposal(proposalId, {
+        rankedCoachWording: wording,
+        approvalStatus: "approved",
+        approvedAt: approvalRecord.approvedAt || new Date().toISOString(),
+        rejectionReason: null,
+        rejectedAt: null,
+        rejectedBy: null
+      });
+      if (!updated) await load({ force: true, allowDuringProposalAction: true });
+      setStatus("Insight approved. It is waiting privately in Approved and is not visible to players.", "ready");
+    } else if (action === "publish") {
       const category = card.querySelector("[data-knowledge-category]")?.value || "general";
       const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
       const publishedRecord = await request("/api/knowledge/publish", {
         method: "POST",
         body: JSON.stringify({
           proposalId,
-          rankedCoachWording: wording,
-          confirmOriginalWording: confirmed,
           category,
           entity
         })

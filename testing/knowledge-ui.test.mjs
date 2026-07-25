@@ -26,7 +26,10 @@ test("owner research tab is hidden by default and loaded through the governed cl
   assert.match(reviewClient, /\/api\/knowledge\/run/);
   assert.match(reviewClient, /\/api\/knowledge\/draft/);
   assert.match(reviewClient, /\/api\/knowledge\/reject/);
+  assert.match(reviewClient, /\/api\/knowledge\/approve/);
   assert.match(reviewClient, /\/api\/knowledge\/publish/);
+  assert.match(reviewClient, /const primaryAction = approved \? "publish" : "approve"/);
+  assert.match(reviewClient, /const primaryLabel = approved \? "Publish to Library" : "Approve"/);
 });
 
 test("player Library consumes only the safe published-knowledge endpoint", async () => {

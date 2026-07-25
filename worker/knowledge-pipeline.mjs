@@ -2562,6 +2562,9 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
   const key = `${PROPOSAL_PREFIX}${proposalId}`;
   const proposal = await kv.get(key, "json");
   if (!proposal) throw new Error(`Knowledge proposal not found: ${proposalId}`);
+  if (proposal.approvalStatus === "published") {
+    throw new Error("Remove the published guidance from the Library before approving it again.");
+  }
   for (const evidence of proposal.evidence || []) {
     const document = await kv.get(`${PRIVATE_CLAIMS_PREFIX}${evidence.sourceId}`, "json");
     const claim = (document?.claims || []).find(item => (
@@ -2588,7 +2591,10 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
     rankedCoachWording,
     approvalStatus: "approved",
     approvedAt,
-    approvedBy: owner
+    approvedBy: owner,
+    rejectedAt: null,
+    rejectedBy: null,
+    rejectionReason: null
   };
   await kv.put(key, JSON.stringify(updatedProposal));
   await updateLatestReviewProposal(kv, updatedProposal);

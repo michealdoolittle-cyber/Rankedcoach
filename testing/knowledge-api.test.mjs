@@ -96,6 +96,8 @@ test("knowledge API errors use authentication and validation status codes", asyn
   assert.equal(knowledgeApiErrorResponse(new Error("Authentication required.")).status, 401);
   assert.equal(knowledgeApiErrorResponse(new Error("Owner access required.")).status, 403);
   assert.equal(knowledgeApiErrorResponse(new Error("A valid category is required.")).status, 400);
+  assert.equal(knowledgeApiErrorResponse(new Error("Approval must confirm that the wording is original.")).status, 400);
+  assert.equal(knowledgeApiErrorResponse(new Error("Only an owner-approved proposal can be published.")).status, 400);
 });
 
 test("owner review API paginates the selected decision bin", async () => {
@@ -137,6 +139,143 @@ test("owner review API paginates the selected decision bin", async () => {
   assert.deepEqual(body.review.proposals.map(item => item.id), ["proposal-rejected"]);
   assert.deepEqual(body.review.page.bucketCounts, { review: 1, approved: 1, rejected: 1 });
   assert.equal(body.review.page.bucket, "rejected");
+});
+
+test("owner approval stays private until a separate publish request", async () => {
+  const proposal = {
+    id: "proposal-two-stage",
+    conceptId: "concept-two-stage",
+    type: "coaching",
+    topic: "map-control",
+    entities: ["Bind"],
+    state: "single-source",
+    approvalStatus: "pending-owner-approval",
+    evidence: []
+  };
+  const kv = new MemoryKv({
+    "knowledge:review:latest": JSON.stringify({
+      id: "review-two-stage",
+      createdAt: "2026-07-25T00:00:00.000Z",
+      status: "review-required",
+      summary: { pendingApproval: 1, published: 0 },
+      proposalIndex: [{ id: proposal.id, approvalStatus: proposal.approvalStatus }]
+    }),
+    [`knowledge:proposal:${proposal.id}`]: JSON.stringify(proposal)
+  });
+  const fetchImpl = async () => Response.json({
+    id: "owner-id",
+    email: "owner@example.com",
+    app_metadata: { role: "owner" },
+    user_metadata: { username: "Michael" }
+  });
+  const approvalResponse = await handleKnowledgeOwnerRequest(new Request(
+    "https://www.rankedcoach.gg/api/knowledge/approve",
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer owner-token",
+        "Content-Type": "application/json",
+        Origin: "https://www.rankedcoach.gg"
+      },
+      body: JSON.stringify({
+        proposalId: proposal.id,
+        rankedCoachWording: "Pair the first Showers utility with a teammate who can immediately trade the space.",
+        confirmOriginalWording: true
+      })
+    }
+  ), { CONTENT_AUTOMATION: kv }, { fetchImpl });
+  assert.equal(approvalResponse.status, 200);
+  assert.equal((await approvalResponse.json()).status, "approved-for-manual-library-promotion");
+  assert.equal((await kv.get(`knowledge:proposal:${proposal.id}`, "json")).approvalStatus, "approved");
+  assert.equal((await handlePublicKnowledgeRequest({ CONTENT_AUTOMATION: kv }).then(response => response.json())).items.length, 0);
+
+  const approvedDashboardResponse = await handleKnowledgeOwnerRequest(new Request(
+    "https://www.rankedcoach.gg/api/knowledge/review?proposalBucket=approved",
+    {
+      headers: {
+        Authorization: "Bearer owner-token",
+        Origin: "https://www.rankedcoach.gg"
+      }
+    }
+  ), { CONTENT_AUTOMATION: kv }, { fetchImpl });
+  const approvedDashboard = await approvedDashboardResponse.json();
+  assert.deepEqual(approvedDashboard.review.proposals.map(item => item.id), [proposal.id]);
+  assert.equal(approvedDashboard.review.proposals[0].approvalStatus, "approved");
+
+  const publicationResponse = await handleKnowledgeOwnerRequest(new Request(
+    "https://www.rankedcoach.gg/api/knowledge/publish",
+    {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer owner-token",
+        "Content-Type": "application/json",
+        Origin: "https://www.rankedcoach.gg"
+      },
+      body: JSON.stringify({
+        proposalId: proposal.id,
+        category: "map",
+        entity: "Bind"
+      })
+    }
+  ), { CONTENT_AUTOMATION: kv }, { fetchImpl });
+  assert.equal(publicationResponse.status, 200);
+  assert.equal((await publicationResponse.json()).status, "published");
+  assert.equal((await handlePublicKnowledgeRequest({ CONTENT_AUTOMATION: kv }).then(response => response.json())).items.length, 1);
+});
+
+test("publish cannot implicitly approve a pending proposal", async () => {
+  const proposal = {
+    id: "proposal-pending-publish",
+    conceptId: "concept-pending-publish",
+    type: "coaching",
+    topic: "teamplay",
+    entities: [],
+    state: "single-source",
+    approvalStatus: "pending-owner-approval",
+    evidence: []
+  };
+  const kv = new MemoryKv({
+    "knowledge:review:latest": JSON.stringify({
+      id: "review-pending-publish",
+      createdAt: "2026-07-25T00:00:00.000Z",
+      status: "review-required",
+      summary: { pendingApproval: 1, published: 0 },
+      proposalIndex: [{ id: proposal.id, approvalStatus: proposal.approvalStatus }]
+    }),
+    [`knowledge:proposal:${proposal.id}`]: JSON.stringify(proposal)
+  });
+  const request = new Request("https://www.rankedcoach.gg/api/knowledge/publish", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer owner-token",
+      "Content-Type": "application/json",
+      Origin: "https://www.rankedcoach.gg"
+    },
+    body: JSON.stringify({
+      proposalId: proposal.id,
+      rankedCoachWording: "This wording must not silently approve and publish the pending proposal.",
+      confirmOriginalWording: true,
+      category: "general",
+      entity: ""
+    })
+  });
+  const fetchImpl = async () => Response.json({
+    id: "owner-id",
+    email: "owner@example.com",
+    app_metadata: { role: "owner" },
+    user_metadata: { username: "Michael" }
+  });
+  let failure;
+  try {
+    await handleKnowledgeOwnerRequest(request, { CONTENT_AUTOMATION: kv }, { fetchImpl });
+  } catch (error) {
+    failure = error;
+  }
+  assert.match(failure?.message || "", /owner-approved/);
+  assert.equal(knowledgeApiErrorResponse(failure).status, 400);
+  assert.equal((await kv.get(`knowledge:proposal:${proposal.id}`, "json")).approvalStatus, "pending-owner-approval");
+  assert.equal(await kv.get(`knowledge:approval:${proposal.id}`, "json"), null);
+  assert.equal((await handlePublicKnowledgeRequest({ CONTENT_AUTOMATION: kv }).then(response => response.json())).items.length, 0);
 });
 
 test("owner processing continues from retained storage when Playlist refresh fails", async () => {

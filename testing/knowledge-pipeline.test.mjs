@@ -1104,6 +1104,7 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   const approvedDashboard = await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" });
   assert.equal(approvedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "approved");
   assert.equal(approvedDashboard.review.page.bucketCounts.approved, 1);
+  assert.equal((await getPublishedKnowledge(kv)).items.length, 0);
   const published = await publishApprovedKnowledge(kv, {
     proposalId: proposal.id,
     owner: "Michael",

@@ -266,14 +266,26 @@ function startServer() {
           item.approvalStatus = "draft";
           return json(response, { proposalId: item.id, status: "draft-saved" });
         }
-        if (item && url === "/api/knowledge/publish") {
+        if (item && url === "/api/knowledge/approve") {
           item.rankedCoachWording = body.rankedCoachWording;
+          item.approvalStatus = "approved";
+          item.approvedAt = "2026-07-24T02:39:00.000Z";
+          return json(response, {
+            proposalId: item.id,
+            approvedAt: item.approvedAt,
+            status: "approved-for-manual-library-promotion"
+          });
+        }
+        if (item && url === "/api/knowledge/publish") {
+          if (item.approvalStatus !== "approved") {
+            return json(response, { error: "Only an owner-approved proposal can be published." }, 400);
+          }
           item.approvalStatus = "published";
           item.publishedCategory = body.category;
           item.publishedEntity = body.entity;
           state.published.items = [{
             id: item.id,
-            wording: body.rankedCoachWording,
+            wording: item.rankedCoachWording,
             category: body.category,
             entity: body.entity,
             publishedAt: "2026-07-24T02:40:00.000Z",
@@ -657,35 +669,19 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     await page.locator(".knowledge-proposal-card").first().locator("[data-knowledge-wording]").inputValue(),
     "Pair the first Showers utility with a teammate who can immediately trade the space you create."
   );
-  const categoryDisplay = await page.locator(".knowledge-proposal-card").first().locator("[data-knowledge-category]").evaluate(select => {
-    const style = getComputedStyle(select);
-    const rect = select.getBoundingClientRect();
-    return {
-      value: select.value,
-      selectedText: select.selectedOptions[0]?.textContent || "",
-      color: style.color,
-      fontSize: Number.parseFloat(style.fontSize),
-      fontWeight: style.fontWeight,
-      lineHeight: Number.parseFloat(style.lineHeight),
-      width: rect.width,
-      height: rect.height,
-      opacity: Number.parseFloat(style.opacity),
-      visibility: style.visibility,
-      clipPath: style.clipPath
-    };
-  });
-  assert.equal(categoryDisplay.value, "map");
-  assert.equal(categoryDisplay.selectedText, "Map");
-  assert.ok(categoryDisplay.fontSize >= (options.mobile ? 16 : 14), JSON.stringify(categoryDisplay));
-  assert.ok(categoryDisplay.lineHeight >= categoryDisplay.fontSize, JSON.stringify(categoryDisplay));
-  assert.notEqual(categoryDisplay.color, "rgba(0, 0, 0, 0)");
-  assert.equal(categoryDisplay.opacity, 1);
-  assert.equal(categoryDisplay.visibility, "visible");
-  assert.equal(categoryDisplay.clipPath, "none");
-  assert.ok(categoryDisplay.width >= 140 && categoryDisplay.height >= 40, JSON.stringify(categoryDisplay));
-  for (const action of ["draft", "publish", "reject"]) {
+  assert.equal(
+    await page.locator(".knowledge-proposal-card").first().locator("[data-knowledge-category], [data-knowledge-entity]").count(),
+    0,
+    "Publication targeting controls appeared before the insight was approved."
+  );
+  for (const action of ["draft", "approve", "reject"]) {
     assert.equal(await page.locator(`.knowledge-proposal-card [data-knowledge-action="${action}"]`).first().isVisible(), true);
   }
+  assert.equal(await page.locator('.knowledge-proposal-card [data-knowledge-action="publish"]').count(), 0);
+  assert.equal(
+    (await page.locator('.knowledge-proposal-card [data-knowledge-action="approve"]').textContent()).trim(),
+    "Approve"
+  );
 
   const unsavedProposalId = await page.locator(".knowledge-proposal-card").getAttribute("data-knowledge-proposal");
   const unsavedWording = "Unsaved owner wording must survive leaving this bin and returning before any draft request is sent.";
@@ -1037,18 +1033,28 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
 
   const drafted = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
   await drafted.locator("[data-knowledge-original]").check();
-  await drafted.locator("[data-knowledge-category]").selectOption("map");
-  await drafted.locator("[data-knowledge-entity]").fill("Bind");
-  const publishButton = drafted.locator('[data-knowledge-action="publish"]');
+  const reviewRequestsBeforeApproval = reviewRequests.length;
+  const approvalRequestsBefore = actions.filter(action => (
+    action.path === "/api/knowledge/approve" && action.body.proposalId === actionProposalId
+  )).length;
+  const publicationRequestsBefore = actions.filter(action => (
+    action.path === "/api/knowledge/publish" && action.body.proposalId === actionProposalId
+  )).length;
+  const approveButton = drafted.locator('[data-knowledge-action="approve"]');
   await assertActionLatency(
     page,
-    publishButton,
+    approveButton,
     async () => {
-      await activateControl(page, publishButton, options.mobile, "Publish to Library");
+      await activateControl(page, approveButton, options.mobile, "Approve");
       await page.locator(`[data-knowledge-proposal="${nextProposalId}"]`).waitFor({ state: "visible" });
     },
-    "Publishing an insight",
+    "Approving an insight",
     options.mobile ? 900 : 650
+  );
+  assert.equal(
+    reviewRequests.length,
+    reviewRequestsBeforeApproval,
+    "Approval required a full queue refresh instead of updating the Review and Approved bins immediately."
   );
   assert.equal(await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"]`).count(), 0);
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
@@ -1056,25 +1062,89 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(
     await page.locator(".knowledge-review-queue-item[aria-pressed=\"true\"]").getAttribute("data-knowledge-select-proposal"),
     nextProposalId,
-    "Publishing did not advance to the adjacent review proposal."
+    "Approval did not advance to the adjacent review proposal."
   );
   assert.match(await page.locator('[data-knowledge-bucket="approved"]').textContent(), /1/);
+  assert.equal(await page.locator("[data-knowledge-summary-published]").textContent(), "0");
+  assert.equal(state.published.items.length, 0, "Approval unexpectedly wrote to the public knowledge index.");
+  const approvalActions = actions.filter(action => (
+    action.path === "/api/knowledge/approve" && action.body.proposalId === actionProposalId
+  ));
+  assert.equal(approvalActions.length, approvalRequestsBefore + 1);
+  assert.equal(approvalActions.at(-1).body.rankedCoachWording, draftWording);
+  assert.equal(approvalActions.at(-1).body.confirmOriginalWording, true);
+  assert.equal("category" in approvalActions.at(-1).body, false);
+  assert.equal("entity" in approvalActions.at(-1).body, false);
+  assert.equal(
+    actions.filter(action => action.path === "/api/knowledge/publish" && action.body.proposalId === actionProposalId).length,
+    publicationRequestsBefore,
+    "The Review approval action also published the insight."
+  );
+
   await activateControl(page, page.locator('[data-knowledge-bucket="approved"]'), options.mobile, "Approved bin");
-  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-published`).waitFor({ state: "visible" });
-  assert.equal(await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action="unpublish"]`).isVisible(), true);
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-approved`).waitFor({ state: "visible" });
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
   assert.equal(await page.locator(".knowledge-review-queue-item").count(), 1);
   assert.equal(
     await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"]`).getAttribute("aria-pressed"),
     "true"
   );
-  assert.ok(actions.some(action => (
+  const approvedCard = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
+  assert.equal(await approvedCard.locator("[data-knowledge-wording]").getAttribute("readonly"), "");
+  assert.equal(await approvedCard.locator('[data-knowledge-action="approve"]').count(), 0);
+  assert.equal(
+    (await approvedCard.locator('[data-knowledge-action="publish"]').textContent()).trim(),
+    "Publish to Library"
+  );
+  const categoryDisplay = await approvedCard.locator("[data-knowledge-category]").evaluate(select => {
+    const style = getComputedStyle(select);
+    const rect = select.getBoundingClientRect();
+    return {
+      value: select.value,
+      selectedText: select.selectedOptions[0]?.textContent || "",
+      color: style.color,
+      fontSize: Number.parseFloat(style.fontSize),
+      lineHeight: Number.parseFloat(style.lineHeight),
+      width: rect.width,
+      height: rect.height,
+      opacity: Number.parseFloat(style.opacity),
+      visibility: style.visibility,
+      clipPath: style.clipPath
+    };
+  });
+  assert.equal(categoryDisplay.value, "general");
+  assert.equal(categoryDisplay.selectedText, "General");
+  assert.ok(categoryDisplay.fontSize >= (options.mobile ? 16 : 14), JSON.stringify(categoryDisplay));
+  assert.ok(categoryDisplay.lineHeight >= categoryDisplay.fontSize, JSON.stringify(categoryDisplay));
+  assert.notEqual(categoryDisplay.color, "rgba(0, 0, 0, 0)");
+  assert.equal(categoryDisplay.opacity, 1);
+  assert.equal(categoryDisplay.visibility, "visible");
+  assert.equal(categoryDisplay.clipPath, "none");
+  assert.ok(categoryDisplay.width >= 140 && categoryDisplay.height >= 40, JSON.stringify(categoryDisplay));
+  await approvedCard.locator("[data-knowledge-category]").selectOption("map");
+  await approvedCard.locator("[data-knowledge-entity]").fill("Bind");
+  const publishButton = approvedCard.locator('[data-knowledge-action="publish"]');
+  await assertActionLatency(
+    page,
+    publishButton,
+    async () => {
+      await activateControl(page, publishButton, options.mobile, "Publish to Library");
+      await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-published`).waitFor({ state: "visible" });
+    },
+    "Publishing an approved insight",
+    options.mobile ? 900 : 650
+  );
+  assert.equal(await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action="unpublish"]`).isVisible(), true);
+  assert.equal(await page.locator("[data-knowledge-summary-published]").textContent(), "1");
+  const publicationActions = actions.filter(action => (
     action.path === "/api/knowledge/publish"
     && action.body.proposalId === actionProposalId
-    && action.body.category === "map"
-    && action.body.entity === "Bind"
-    && action.body.confirmOriginalWording === true
-  )));
+  ));
+  assert.equal(publicationActions.length, publicationRequestsBefore + 1);
+  assert.equal(publicationActions.at(-1).body.category, "map");
+  assert.equal(publicationActions.at(-1).body.entity, "Bind");
+  assert.equal("rankedCoachWording" in publicationActions.at(-1).body, false);
+  assert.equal("confirmOriginalWording" in publicationActions.at(-1).body, false);
 
   await activateControl(page, page.locator('[data-knowledge-bucket="review"]'), options.mobile, "To Review bin");
   await page.locator('[data-knowledge-select-proposal="proposal-two"]').waitFor({ state: "visible" });
@@ -1127,6 +1197,11 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(
     await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"]`).getAttribute("aria-pressed"),
     "true"
+  );
+  assert.equal(
+    (await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action="publish"]`).textContent()).trim(),
+    "Publish to Library",
+    "Unpublishing did not return the item to its approved, separately publishable state."
   );
   assert.ok(actions.some(action => action.path === "/api/knowledge/unpublish" && action.body.proposalId === actionProposalId));
 

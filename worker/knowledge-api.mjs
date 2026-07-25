@@ -138,12 +138,6 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
     }));
   }
   if (url.pathname === "/api/knowledge/publish") {
-    if (body.rankedCoachWording) {
-      await approveKnowledgeProposal(kv, {
-        ...body,
-        owner: owner.displayName
-      });
-    }
     return json(await publishApprovedKnowledge(kv, {
       ...body,
       owner: owner.displayName
@@ -161,7 +155,7 @@ export function knowledgeApiErrorResponse(error) {
     ? 401
     : /Owner access required/.test(message)
       ? 403
-      : /required|valid|large|Cross-origin|Rewrite|corroboration|conflict before publication|before (?:approval|rejecting)|Remove .*before/.test(message)
+      : /required|valid|large|Cross-origin|Rewrite|must confirm|corroboration|conflict before publication|owner-approved|before (?:approval|rejecting)|Remove .*before/.test(message)
         ? 400
         : 500;
   return json({ error: message }, { status });
