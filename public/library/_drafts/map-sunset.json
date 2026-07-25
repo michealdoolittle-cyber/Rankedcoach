@@ -181,7 +181,7 @@
   ],
   "source": "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US",
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-24",
+  "lastReviewed": "2026-07-25",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -190,7 +190,7 @@
     "entityName": "Sunset",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-25T03:45:15.250Z",
+    "generatedAt": "2026-07-25T08:27:50.474Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-25"
