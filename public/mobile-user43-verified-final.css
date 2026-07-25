@@ -16765,9 +16765,39 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-deskt
     .knowledge-review-actions > *,
     .knowledge-proposal-actions > *,
     .knowledge-review-bins > button,
+    .knowledge-review-queue-item,
     .knowledge-source-actions > button,
     .knowledge-load-more
   ){
     min-height:44px !important;
+  }
+}
+
+/* Research input-performance lock: the owner queue uses an opaque backdrop
+   instead of stacking several live full-screen blur filters while editing. */
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  html.is-mobile-layout body.is-mobile-layout.knowledge-research-active #accountSupportModal#accountSupportModal.active,
+  html.is-mobile-layout body.is-mobile-layout.knowledge-research-active #accountSupportModal#accountSupportModal.is-opening{
+    background:rgba(2,6,23,.94) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.knowledge-research-active::before,
+  html.is-mobile-layout body.is-mobile-layout.knowledge-research-active.mobile-modal-open .app-root::after{
+    background:rgba(2,6,23,.86) !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.knowledge-research-active #knowledgeResearchPanel :is(
+    textarea,
+    .knowledge-review-queue-item
+  ){
+    touch-action:manipulation !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout.knowledge-research-active #knowledgeResearchPanel .knowledge-review-queue-item{
+    min-height:56px !important;
   }
 }

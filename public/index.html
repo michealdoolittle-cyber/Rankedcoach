@@ -55,11 +55,11 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260724-library-followup-06">
+  <link rel="stylesheet" href="app.css?v=20260724-research-queue-02">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
-  <link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260724-research-mobile-01">
+  <link rel="stylesheet" href="mobile-user43-verified-final.css?v=20260724-research-queue-02">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
@@ -796,7 +796,29 @@ RIOT PROFILE MODAL
               <span>RankedCoach keeps repeatable player actions and preparation choices—setups, decisions, timing, spacing, utility, positioning, practice, settings, adaptations, and punishments. Team standings, season form, roster stories, qualification, and match or series results are excluded unless the passage explains the transferable action itself.</span>
             </div>
             <div id="knowledgeReviewBins" class="knowledge-review-bins" role="group" aria-label="Review queue bins"></div>
-            <div id="knowledgeProposalList" class="knowledge-proposal-list"></div>
+            <div id="knowledgeProposalList" class="knowledge-proposal-list">
+              <section class="knowledge-active-review" data-knowledge-active-review aria-labelledby="knowledgeActiveProposalLabel">
+                <div class="knowledge-review-section-head">
+                  <div>
+                    <span id="knowledgeActiveProposalLabel">Active review</span>
+                    <strong id="knowledgeActiveProposalCount"></strong>
+                  </div>
+                  <small id="knowledgeActiveProposalHelp"></small>
+                </div>
+                <div id="knowledgeActiveProposal"></div>
+              </section>
+              <section class="knowledge-review-queue" aria-labelledby="knowledgeProposalQueueLabel">
+                <div class="knowledge-review-section-head">
+                  <div>
+                    <span id="knowledgeProposalQueueLabel">Review queue</span>
+                    <strong id="knowledgeProposalQueueCount"></strong>
+                  </div>
+                  <small>Choose an item to make it the active review.</small>
+                </div>
+                <div id="knowledgeProposalQueueList" class="knowledge-review-queue-list"></div>
+                <div id="knowledgeProposalQueueFooter" class="knowledge-review-queue-footer"></div>
+              </section>
+            </div>
           </section>
         </div>
       </div>
@@ -2397,6 +2419,6 @@ stroke-linejoin="round"/>
   <script src="integrations/riot-sync.js?v=20260714-stats-library-console-02"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
   <script type="module" src="app.js?v=20260724-research-mobile-01"></script>
-  <script type="module" src="knowledge-review.js?v=20260724-research-mobile-01"></script>
+  <script type="module" src="knowledge-review.js?v=20260724-research-queue-02"></script>
 </body>
 </html>

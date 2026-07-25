@@ -5,6 +5,14 @@ let loading = false;
 let activeProposalBucket = "review";
 let loadController = null;
 let loadSequence = 0;
+const activeProposalIds = {
+  review: "",
+  approved: "",
+  rejected: ""
+};
+const proposalFormDrafts = new Map();
+const proposalFeedback = new Map();
+const pendingProposalIds = new Set();
 
 function researchPageLimits() {
   const compact = document.documentElement.classList.contains("is-mobile-layout")
@@ -167,9 +175,9 @@ function renderSummary() {
     <div><span>Sources</span><strong>${dashboard?.sourceSummary?.total ?? dashboard?.sourcePage?.total ?? sources.length}</strong></div>
     <div><span>Transcript highlights processed</span><strong>${dashboard?.sourceSummary?.processed ?? acquired}</strong></div>
     <div><span>Waiting for transcript</span><strong>${dashboard?.sourceSummary?.waiting ?? waiting}</strong></div>
-    <div><span>Review proposals</span><strong>${dashboard?.review?.page?.total ?? dashboard?.review?.proposals?.length ?? 0}</strong></div>
+    <div><span>Review proposals</span><strong data-knowledge-summary-proposals>${dashboard?.review?.page?.total ?? dashboard?.review?.proposals?.length ?? 0}</strong></div>
     <div><span>Corroborated principles</span><strong>${Number(summary.corroborated || 0)}</strong></div>
-    <div><span>Published updates</span><strong>${dashboard?.published?.items?.length || 0}</strong></div>
+    <div><span>Published updates</span><strong data-knowledge-summary-published>${dashboard?.published?.items?.length || 0}</strong></div>
     <details class="knowledge-source-queue">
       <summary>Registered research sources</summary>
       <div>${sources.filter(source => source.transcriptStatus !== "registered-non-educational").map(source => `
@@ -199,103 +207,216 @@ function renderProposalBins() {
     rejected: "Rejected"
   };
   root.innerHTML = Object.entries(labels).map(([bucket, label]) => `
-    <button class="pd-item${activeProposalBucket === bucket ? " is-active" : ""}" type="button" data-knowledge-bucket="${bucket}" aria-pressed="${activeProposalBucket === bucket}">
+    <button class="pd-item${activeProposalBucket === bucket ? " is-active" : ""}" type="button" data-knowledge-bucket="${bucket}" aria-pressed="${activeProposalBucket === bucket}" ${pendingProposalIds.size ? "disabled" : ""}>
       <span>${label}</span>
       <b>${Number(counts[bucket] || 0)}</b>
     </button>
   `).join("");
 }
 
-function renderProposals() {
+function currentBucketProposals() {
+  return (dashboard?.review?.proposals || [])
+    .filter(proposal => proposalBucketForStatus(proposal.approvalStatus) === activeProposalBucket);
+}
+
+function proposalFormState(proposal = {}) {
+  const saved = proposalFormDrafts.get(proposal.id) || {};
+  return {
+    wording: saved.wording ?? proposal.rankedCoachWording ?? proposal.suggestedWording ?? "",
+    category: saved.category ?? proposal.publishedCategory ?? inferCategory(proposal),
+    entity: saved.entity ?? proposal.publishedEntity ?? proposal.entities?.[0] ?? "",
+    confirmed: saved.confirmed === true
+  };
+}
+
+function captureProposalDraft(card = document.querySelector("[data-knowledge-active-review] [data-knowledge-proposal]")) {
+  const proposalId = card?.dataset.knowledgeProposal;
+  if (!proposalId) return;
+  proposalFormDrafts.set(proposalId, {
+    wording: card.querySelector("[data-knowledge-wording]")?.value ?? "",
+    category: card.querySelector("[data-knowledge-category]")?.value ?? "general",
+    entity: card.querySelector("[data-knowledge-entity]")?.value ?? "",
+    confirmed: card.querySelector("[data-knowledge-original]")?.checked === true
+  });
+}
+
+function ensureActiveProposal(proposals = []) {
+  const requestedId = activeProposalIds[activeProposalBucket];
+  const active = proposals.find(proposal => proposal.id === requestedId) || proposals[0] || null;
+  activeProposalIds[activeProposalBucket] = active?.id || "";
+  return active;
+}
+
+function proposalCardMarkup(proposal) {
+  const published = proposal.approvalStatus === "published";
+  const rejected = proposal.approvalStatus === "rejected";
+  const libraryRelationship = proposal.libraryComparison?.relationship || "new-opportunity";
+  const publishBlocked = proposal.state === "conflicted" || libraryRelationship === "conflicts-with-library";
+  const busy = pendingProposalIds.has(proposal.id);
+  const form = proposalFormState(proposal);
+  const feedback = proposalFeedback.get(proposal.id);
+  return `
+    <article class="knowledge-proposal-card" data-knowledge-proposal="${escapeHtml(proposal.id)}" ${busy ? `aria-busy="true"` : ""}>
+      <div class="knowledge-proposal-heading">
+        <div>
+          <span>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</span>
+          <strong>${escapeHtml((proposal.entities || []).join(", ") || "General coaching")}</strong>
+        </div>
+        <span class="knowledge-review-state is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml((proposal.approvalStatus || "pending").replaceAll("-", " "))}</span>
+      </div>
+      <div class="knowledge-proposal-analysis">
+        <span>Consensus: ${escapeHtml((proposal.state || "single-source").replaceAll("-", " "))}</span>
+        <span>Confidence: ${escapeHtml((proposal.confidenceBand || "limited").replaceAll("-", " "))}</span>
+        <span>Library: ${escapeHtml(libraryRelationship.replaceAll("-", " "))}</span>
+      </div>
+      ${(proposal.contradictions || []).length ? `
+        <div class="knowledge-conflict-note">
+          <strong>Conflict requires resolution</strong>
+          <span>${escapeHtml([...new Set(proposal.contradictions.map(item => item.reason || "conflicting source guidance"))].join("; "))}</span>
+        </div>
+      ` : ""}
+      ${proposal.publicationNeedsReview ? `<div class="knowledge-conflict-note"><strong>Published guidance needs review</strong><span>New evidence now conflicts with this item. Review it before leaving it in the Library.</span></div>` : ""}
+      ${contextNotesMarkup(proposal)}
+      <label class="auth-field">
+        <span>Editable RankedCoach insight</span>
+        <textarea data-knowledge-wording rows="3" ${published ? "readonly" : ""} placeholder="Write the player-facing coaching guidance in RankedCoach's voice.">${escapeHtml(form.wording)}</textarea>
+      </label>
+      <div class="knowledge-proposal-feedback" data-knowledge-action-feedback data-tone="${escapeHtml(feedback?.tone || "")}" ${feedback?.message ? "" : "hidden"}>${escapeHtml(feedback?.message || "")}</div>
+      ${published ? `
+        <div class="knowledge-publication-targets">
+          <label class="auth-field">
+            <span>Library location</span>
+            <select data-knowledge-category disabled>
+              ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
+            </select>
+          </label>
+          <label class="auth-field">
+            <span>Map, agent, or weapon</span>
+            <input data-knowledge-entity value="${escapeHtml(form.entity)}" readonly placeholder="Bind" />
+          </label>
+        </div>
+        <button class="pd-item knowledge-unpublish" type="button" data-knowledge-action="unpublish" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Remove from Library</button>
+      ` : `
+        <div class="knowledge-publication-targets">
+          <label class="auth-field">
+            <span>Library location</span>
+            <select data-knowledge-category>
+              ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
+            </select>
+          </label>
+          <label class="auth-field">
+            <span>Map, agent, or weapon</span>
+            <input data-knowledge-entity value="${escapeHtml(form.entity)}" placeholder="Bind" />
+          </label>
+        </div>
+        <label class="knowledge-original-confirm">
+          <input type="checkbox" data-knowledge-original ${form.confirmed ? "checked" : ""} />
+          <span>I reviewed this as original RankedCoach wording, not copied transcript text.</span>
+        </label>
+        ${rejected ? `<p class="knowledge-rejection-reason">Rejected: ${escapeHtml(proposal.rejectionReason || "Not selected for publication.")}</p>` : ""}
+        <div class="knowledge-proposal-actions">
+          <button class="pd-item" type="button" data-knowledge-action="draft" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Save Draft</button>
+          <button class="pd-item auth-main-btn" type="button" data-knowledge-action="publish" ${(publishBlocked || busy) ? "disabled" : ""} ${publishBlocked ? `title="Resolve the evidence conflict before publication."` : ""} ${busy ? `data-knowledge-was-disabled="${publishBlocked}"` : ""}>Publish to Library</button>
+          <button class="pd-item knowledge-reject" type="button" data-knowledge-action="reject" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Reject</button>
+        </div>
+      `}
+    </article>
+  `;
+}
+
+function queueItemMarkup(proposal, activeId) {
+  const entity = (proposal.entities || []).join(", ") || "General coaching";
+  const status = (proposal.approvalStatus || "pending").replaceAll("-", " ");
+  return `
+    <button class="pd-item knowledge-review-queue-item${proposal.id === activeId ? " is-active" : ""}" type="button"
+      data-knowledge-select-proposal="${escapeHtml(proposal.id)}"
+      aria-pressed="${proposal.id === activeId}" ${pendingProposalIds.size ? "disabled" : ""}>
+      <span>
+        <strong>${escapeHtml(entity)}</strong>
+        <small>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</small>
+      </span>
+      <b class="is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml(status)}</b>
+    </button>
+  `;
+}
+
+function ensureProposalWorkspace(root) {
+  if (document.getElementById("knowledgeActiveProposal") && document.getElementById("knowledgeProposalQueueList")) return;
+  root.innerHTML = `
+    <section class="knowledge-active-review" data-knowledge-active-review aria-labelledby="knowledgeActiveProposalLabel">
+      <div class="knowledge-review-section-head">
+        <div><span id="knowledgeActiveProposalLabel">Active review</span><strong id="knowledgeActiveProposalCount"></strong></div>
+        <small id="knowledgeActiveProposalHelp"></small>
+      </div>
+      <div id="knowledgeActiveProposal"></div>
+    </section>
+    <section class="knowledge-review-queue" aria-labelledby="knowledgeProposalQueueLabel">
+      <div class="knowledge-review-section-head">
+        <div><span id="knowledgeProposalQueueLabel">Review queue</span><strong id="knowledgeProposalQueueCount"></strong></div>
+        <small>Choose an item to make it the active review.</small>
+      </div>
+      <div id="knowledgeProposalQueueList" class="knowledge-review-queue-list"></div>
+      <div id="knowledgeProposalQueueFooter" class="knowledge-review-queue-footer"></div>
+    </section>
+  `;
+}
+
+function renderProposals(options = {}) {
   const root = document.getElementById("knowledgeProposalList");
   if (!root) return;
-  const proposals = (dashboard?.review?.proposals || [])
-    .filter(proposal => proposalBucketForStatus(proposal.approvalStatus) === activeProposalBucket);
-  if (!proposals.length) {
-    const messages = {
-      review: "No transcript-derived proposals are waiting for review. Process the Playlist queue now, or use manual recovery for a video without accessible captions.",
-      approved: "No approved insights are in this bin yet.",
-      rejected: "No rejected insights are in this bin yet."
-    };
-    root.innerHTML = `<div class="knowledge-empty-state">${messages[activeProposalBucket]}</div>`;
-    return;
+  const view = options.preserveView ? captureResearchView() : null;
+  ensureProposalWorkspace(root);
+  const proposals = currentBucketProposals();
+  const active = ensureActiveProposal(proposals);
+  const activeHost = document.getElementById("knowledgeActiveProposal");
+  const queueHost = document.getElementById("knowledgeProposalQueueList");
+  const queueFooter = document.getElementById("knowledgeProposalQueueFooter");
+  const activeLabel = document.getElementById("knowledgeActiveProposalLabel");
+  const activeCount = document.getElementById("knowledgeActiveProposalCount");
+  const activeHelp = document.getElementById("knowledgeActiveProposalHelp");
+  const queueLabel = document.getElementById("knowledgeProposalQueueLabel");
+  const queueCount = document.getElementById("knowledgeProposalQueueCount");
+  const labels = {
+    review: {
+      active: "Active review",
+      queue: "Review queue",
+      help: "Draft keeps this item here. Reject and Publish move it to their completed bin.",
+      empty: "No transcript-derived proposals are waiting for review. Process the Playlist queue now, or use manual recovery for a video without accessible captions."
+    },
+    approved: {
+      active: "Approved insight",
+      queue: "Approved archive",
+      help: "Published and previously approved guidance stays collected here.",
+      empty: "No approved insights are in this bin yet."
+    },
+    rejected: {
+      active: "Rejected insight",
+      queue: "Rejected archive",
+      help: "Rejected research stays here for reference and can still be revised later.",
+      empty: "No rejected insights are in this bin yet."
+    }
+  }[activeProposalBucket];
+  const total = Number(dashboard?.review?.page?.total ?? proposals.length);
+  const activeIndex = active ? proposals.findIndex(proposal => proposal.id === active.id) : -1;
+  if (activeLabel) activeLabel.textContent = labels.active;
+  if (activeCount) activeCount.textContent = active ? `${activeIndex + 1} of ${proposals.length} loaded` : "";
+  if (activeHelp) activeHelp.textContent = labels.help;
+  if (queueLabel) queueLabel.textContent = labels.queue;
+  if (queueCount) queueCount.textContent = `${proposals.length} of ${total} loaded`;
+  if (activeHost) {
+    activeHost.innerHTML = active
+      ? proposalCardMarkup(active)
+      : `<div class="knowledge-empty-state">${labels.empty}</div>`;
   }
-  root.innerHTML = proposals.map(proposal => {
-    const published = proposal.approvalStatus === "published";
-    const rejected = proposal.approvalStatus === "rejected";
-    const libraryRelationship = proposal.libraryComparison?.relationship || "new-opportunity";
-    const publishBlocked = proposal.state === "conflicted" || libraryRelationship === "conflicts-with-library";
-    const entity = String(proposal.publishedEntity || proposal.entities?.[0] || "");
-    const category = String(proposal.publishedCategory || inferCategory(proposal));
-    return `
-      <article class="knowledge-proposal-card" data-knowledge-proposal="${escapeHtml(proposal.id)}">
-        <div class="knowledge-proposal-heading">
-          <div>
-            <span>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</span>
-            <strong>${escapeHtml((proposal.entities || []).join(", ") || "General coaching")}</strong>
-          </div>
-          <span class="knowledge-review-state is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml((proposal.approvalStatus || "pending").replaceAll("-", " "))}</span>
-        </div>
-        <div class="knowledge-proposal-analysis">
-          <span>Consensus: ${escapeHtml((proposal.state || "single-source").replaceAll("-", " "))}</span>
-          <span>Confidence: ${escapeHtml((proposal.confidenceBand || "limited").replaceAll("-", " "))}</span>
-          <span>Library: ${escapeHtml(libraryRelationship.replaceAll("-", " "))}</span>
-        </div>
-        ${(proposal.contradictions || []).length ? `
-          <div class="knowledge-conflict-note">
-            <strong>Conflict requires resolution</strong>
-            <span>${escapeHtml([...new Set(proposal.contradictions.map(item => item.reason || "conflicting source guidance"))].join("; "))}</span>
-          </div>
-        ` : ""}
-        ${proposal.publicationNeedsReview ? `<div class="knowledge-conflict-note"><strong>Published guidance needs review</strong><span>New evidence now conflicts with this item. Review it before leaving it in the Library.</span></div>` : ""}
-        ${contextNotesMarkup(proposal)}
-        <label class="auth-field">
-          <span>Editable RankedCoach insight</span>
-          <textarea data-knowledge-wording rows="3" ${published ? "readonly" : ""} placeholder="Write the player-facing coaching guidance in RankedCoach's voice.">${escapeHtml(proposal.rankedCoachWording || proposal.suggestedWording || "")}</textarea>
-        </label>
-        ${published ? `
-          <div class="knowledge-publication-targets">
-            <label class="auth-field">
-              <span>Library location</span>
-              <select data-knowledge-category disabled>
-                ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
-              </select>
-            </label>
-            <label class="auth-field">
-              <span>Map, agent, or weapon</span>
-              <input data-knowledge-entity value="${escapeHtml(entity)}" readonly placeholder="Bind" />
-            </label>
-          </div>
-          <button class="pd-item knowledge-unpublish" type="button" data-knowledge-action="unpublish">Remove from Library</button>
-        ` : `
-          <div class="knowledge-publication-targets">
-            <label class="auth-field">
-              <span>Library location</span>
-              <select data-knowledge-category>
-                ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
-              </select>
-            </label>
-            <label class="auth-field">
-              <span>Map, agent, or weapon</span>
-              <input data-knowledge-entity value="${escapeHtml(entity)}" placeholder="Bind" />
-            </label>
-          </div>
-          <label class="knowledge-original-confirm">
-            <input type="checkbox" data-knowledge-original />
-            <span>I reviewed this as original RankedCoach wording, not copied transcript text.</span>
-          </label>
-          ${rejected ? `<p class="knowledge-rejection-reason">Rejected: ${escapeHtml(proposal.rejectionReason || "Not selected for publication.")}</p>` : ""}
-          <div class="knowledge-proposal-actions">
-            <button class="pd-item" type="button" data-knowledge-action="draft">Save Draft</button>
-            <button class="pd-item auth-main-btn" type="button" data-knowledge-action="publish" ${publishBlocked ? `disabled title="Resolve the evidence conflict before publication."` : ""}>Publish to Library</button>
-            <button class="pd-item knowledge-reject" type="button" data-knowledge-action="reject">Reject</button>
-          </div>
-        `}
-      </article>
-    `;
-  }).join("") + (dashboard?.review?.page?.hasMore
-    ? `<button class="pd-item knowledge-load-more" type="button" data-knowledge-load-proposals>Load more review proposals</button>`
-    : "");
+  if (queueHost) {
+    queueHost.innerHTML = proposals.map(proposal => queueItemMarkup(proposal, active?.id || "")).join("");
+  }
+  if (queueFooter) {
+    queueFooter.innerHTML = dashboard?.review?.page?.hasMore
+      ? `<button class="pd-item knowledge-load-more" type="button" data-knowledge-load-proposals>Load more ${escapeHtml(labels.queue.toLowerCase())}</button>`
+      : "";
+  }
+  if (view) restoreResearchView(view);
 }
 
 function captureResearchView() {
@@ -325,7 +446,7 @@ function restoreResearchView(view = {}) {
 
 function render(options = {}) {
   const view = options.preserveView ? captureResearchView() : null;
-  renderSummary();
+  if (!options.skipSummary) renderSummary();
   renderProposalBins();
   renderProposals();
   const createdAt = dashboard?.review?.createdAt;
@@ -336,7 +457,7 @@ function render(options = {}) {
 }
 
 function summaryStatusKey(status = "") {
-  if (status === "pending-owner-approval") return "pendingApproval";
+  if (status === "pending-owner-approval" || status === "draft") return "pendingApproval";
   if (status === "rejected") return "rejected";
   if (status === "published") return "published";
   return "";
@@ -347,22 +468,37 @@ function updateReviewSummary(previousStatus, nextStatus) {
   if (!summary || previousStatus === nextStatus) return;
   const previousKey = summaryStatusKey(previousStatus);
   const nextKey = summaryStatusKey(nextStatus);
+  if (previousKey && previousKey === nextKey) return;
   if (previousKey) summary[previousKey] = Math.max(0, Number(summary[previousKey] || 0) - 1);
   if (nextKey) summary[nextKey] = Number(summary[nextKey] || 0) + 1;
 }
 
+function updateSummaryMetrics() {
+  const proposals = document.querySelector("[data-knowledge-summary-proposals]");
+  const published = document.querySelector("[data-knowledge-summary-published]");
+  if (proposals) {
+    proposals.textContent = String(dashboard?.review?.page?.total ?? currentBucketProposals().length);
+  }
+  if (published) {
+    published.textContent = String(dashboard?.published?.items?.length || 0);
+  }
+}
+
 function updateLocalProposal(proposalId, patch = {}, publishedRecord = null) {
-  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  const allProposals = dashboard?.review?.proposals || [];
+  const proposalIndex = allProposals.findIndex(item => item.id === proposalId);
+  const proposal = allProposals[proposalIndex];
   if (!proposal) return false;
   const previousStatus = proposal.approvalStatus || "pending-owner-approval";
   const previousBucket = proposalBucketForStatus(previousStatus);
+  const previousBucketProposals = currentBucketProposals();
+  const previousBucketIndex = previousBucketProposals.findIndex(item => item.id === proposalId);
   Object.assign(proposal, patch);
   const nextBucket = proposalBucketForStatus(proposal.approvalStatus);
   const bucketCounts = dashboard?.review?.page?.bucketCounts;
   if (bucketCounts && previousBucket !== nextBucket) {
     bucketCounts[previousBucket] = Math.max(0, Number(bucketCounts[previousBucket] || 0) - 1);
     bucketCounts[nextBucket] = Number(bucketCounts[nextBucket] || 0) + 1;
-    dashboard.review.page.total = Number(bucketCounts[activeProposalBucket] || 0);
   }
   updateReviewSummary(previousStatus, proposal.approvalStatus);
   if (!dashboard.published) dashboard.published = { updatedAt: null, items: [] };
@@ -377,12 +513,32 @@ function updateLocalProposal(proposalId, patch = {}, publishedRecord = null) {
     dashboard.published.items = publishedItems.filter(item => item.id !== proposalId);
     dashboard.published.updatedAt = new Date().toISOString();
   }
-  render({ preserveView: true });
+  if (previousBucket !== nextBucket) {
+    const nextActive = previousBucketProposals[previousBucketIndex + 1]
+      || previousBucketProposals[previousBucketIndex - 1]
+      || null;
+    if (activeProposalIds[previousBucket] === proposalId) {
+      activeProposalIds[previousBucket] = nextActive?.id || "";
+    }
+    allProposals.splice(proposalIndex, 1);
+    proposalFormDrafts.delete(proposalId);
+    proposalFeedback.delete(proposalId);
+  }
+  if (dashboard?.review?.page) {
+    const currentLoaded = currentBucketProposals().length;
+    const currentTotal = Number(bucketCounts?.[activeProposalBucket] ?? dashboard.review.page.total ?? currentLoaded);
+    dashboard.review.page.total = currentTotal;
+    dashboard.review.page.hasMore = currentLoaded < currentTotal;
+  }
+  renderProposalBins();
+  renderProposals({ preserveView: true });
+  updateSummaryMetrics();
   return true;
 }
 
 async function load(options = {}) {
   const force = options.force === true;
+  if (pendingProposalIds.size && options.allowDuringProposalAction !== true) return;
   if (loading && !force) return;
   const user = await globalThis.RankedCoachAuthBridge?.getFreshUser?.();
   if (!isOwner(user)) return;
@@ -401,7 +557,13 @@ async function load(options = {}) {
     });
     if (sequence !== loadSequence) return;
     if (options.appendProposals && dashboard?.review && next?.review) {
-      next.review.proposals = [...(dashboard.review.proposals || []), ...(next.review.proposals || [])];
+      const seen = new Set();
+      next.review.proposals = [...(dashboard.review.proposals || []), ...(next.review.proposals || [])]
+        .filter(proposal => {
+          if (!proposal?.id || seen.has(proposal.id)) return false;
+          seen.add(proposal.id);
+          return true;
+        });
       next.review.page = {
         ...(next.review.page || {}),
         offset: 0,
@@ -420,9 +582,15 @@ async function load(options = {}) {
         next.review.proposals = dashboard.review.proposals;
         next.review.page = dashboard.review.page;
       }
+    } else if (options.discardDrafts) {
+      proposalFormDrafts.clear();
+      proposalFeedback.clear();
     }
     dashboard = next;
-    render({ preserveView: Boolean(options.appendProposals || options.appendSources) });
+    render({
+      preserveView: Boolean(options.appendProposals || options.appendSources),
+      skipSummary: Boolean(options.appendProposals)
+    });
   } catch (error) {
     if (sequence === loadSequence && error?.name !== "AbortError") {
       setStatus(error.message, "error");
@@ -444,6 +612,17 @@ function syncAccess(user = globalThis.RankedCoachAuthBridge?.getUser?.()) {
   if (!allowed && panel?.classList.contains("is-active")) {
     document.querySelector('[data-account-support-tab="account"]')?.click();
   }
+  syncResearchPerformanceMode();
+}
+
+function syncResearchPerformanceMode() {
+  const modal = document.getElementById("accountSupportModal");
+  const panel = document.getElementById("knowledgeResearchPanel");
+  const active = Boolean(
+    panel?.classList.contains("is-active")
+    && (modal?.classList.contains("active") || modal?.classList.contains("is-opening"))
+  );
+  document.body?.classList.toggle("knowledge-research-active", active);
 }
 
 async function importTranscript(form) {
@@ -470,12 +649,67 @@ async function importTranscript(form) {
   await load();
 }
 
+function setProposalActionState(card, message = "", tone = "", busy = false) {
+  if (!card) return;
+  card.toggleAttribute("aria-busy", busy);
+  const proposalId = card.dataset.knowledgeProposal;
+  if (proposalId && message) proposalFeedback.set(proposalId, { message, tone });
+  const feedback = card.querySelector("[data-knowledge-action-feedback]");
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.dataset.tone = tone;
+    feedback.hidden = !message;
+  }
+  card.querySelectorAll("[data-knowledge-action]").forEach(actionButton => {
+    if (busy) {
+      actionButton.dataset.knowledgeWasDisabled = actionButton.disabled ? "true" : "false";
+      actionButton.disabled = true;
+    } else {
+      actionButton.disabled = actionButton.dataset.knowledgeWasDisabled === "true";
+      delete actionButton.dataset.knowledgeWasDisabled;
+    }
+  });
+}
+
+function setProposalNavigationBusy(busy) {
+  const panel = document.getElementById("knowledgeResearchPanel");
+  panel?.toggleAttribute("aria-busy", busy);
+  document.querySelectorAll(
+    "#knowledgeResearchPanel button:not([data-knowledge-action]), #accountSupportModal [data-account-support-tab]"
+  ).forEach(control => {
+    if (busy) {
+      if (control.dataset.knowledgeNavWasDisabled === undefined) {
+        control.dataset.knowledgeNavWasDisabled = control.disabled ? "true" : "false";
+      }
+      control.disabled = true;
+    } else {
+      control.disabled = control.dataset.knowledgeNavWasDisabled === "true";
+      delete control.dataset.knowledgeNavWasDisabled;
+    }
+  });
+}
+
 async function proposalAction(button) {
   const card = button.closest("[data-knowledge-proposal]");
   const proposalId = card?.dataset.knowledgeProposal;
-  if (!proposalId) return;
+  if (!proposalId || pendingProposalIds.has(proposalId)) return;
   const action = button.dataset.knowledgeAction;
-  button.disabled = true;
+  captureProposalDraft(card);
+  const pendingMessages = {
+    draft: "Saving this draft privately…",
+    publish: "Publishing the reviewed insight…",
+    reject: "Moving this insight to Rejected…",
+    unpublish: "Removing this guidance from the Library…"
+  };
+  if (loadController) {
+    loadController.abort();
+    loadController = null;
+    loadSequence += 1;
+    loading = false;
+  }
+  pendingProposalIds.add(proposalId);
+  setProposalNavigationBusy(true);
+  setProposalActionState(card, pendingMessages[action] || "Saving…", "pending", true);
   try {
     const wording = card.querySelector("[data-knowledge-wording]")?.value.trim() || "";
     if (action === "draft") {
@@ -483,11 +717,16 @@ async function proposalAction(button) {
         method: "POST",
         body: JSON.stringify({ proposalId, rankedCoachWording: wording })
       });
-      updateLocalProposal(proposalId, {
+      proposalFeedback.set(proposalId, {
+        message: "Draft saved privately. It remains in To Review.",
+        tone: "ready"
+      });
+      const updated = updateLocalProposal(proposalId, {
         rankedCoachWording: wording,
         approvalStatus: "draft",
         rejectionReason: null
       });
+      if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Draft saved privately. Players cannot see it.", "ready");
     } else if (action === "publish") {
       const confirmed = card.querySelector("[data-knowledge-original]")?.checked === true;
@@ -503,13 +742,14 @@ async function proposalAction(button) {
           entity
         })
       });
-      updateLocalProposal(proposalId, {
+      const updated = updateLocalProposal(proposalId, {
         rankedCoachWording: wording,
         approvalStatus: "published",
         publishedAt: publishedRecord.publishedAt || new Date().toISOString(),
         publishedCategory: category,
         publishedEntity: entity
       }, publishedRecord);
+      if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("The reviewed insight is now visible in the Library.", "ready");
       globalThis.dispatchEvent(new CustomEvent("rankedcoach:knowledge-updated"));
     } else if (action === "reject") {
@@ -518,27 +758,40 @@ async function proposalAction(button) {
         method: "POST",
         body: JSON.stringify({ proposalId, reason: rejectionReason })
       });
-      updateLocalProposal(proposalId, {
+      const updated = updateLocalProposal(proposalId, {
         approvalStatus: "rejected",
         rejectionReason
       });
+      if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Insight rejected. It will remain out of the Library.", "ready");
     } else if (action === "unpublish") {
       await request("/api/knowledge/unpublish", {
         method: "POST",
         body: JSON.stringify({ proposalId })
       });
-      updateLocalProposal(proposalId, {
+      proposalFeedback.set(proposalId, {
+        message: "Removed from the Library. This item remains in Approved for reference.",
+        tone: "ready"
+      });
+      const updated = updateLocalProposal(proposalId, {
         approvalStatus: "approved",
         unpublishedAt: new Date().toISOString()
       });
+      if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("The guidance was removed from the Library.", "ready");
       globalThis.dispatchEvent(new CustomEvent("rankedcoach:knowledge-updated"));
     }
   } catch (error) {
+    proposalFeedback.set(proposalId, { message: error.message, tone: "error" });
+    setProposalActionState(card, error.message, "error", false);
     setStatus(error.message, "error");
   } finally {
-    button.disabled = false;
+    pendingProposalIds.delete(proposalId);
+    setProposalNavigationBusy(false);
+    const currentCard = document.querySelector("[data-knowledge-active-review] [data-knowledge-proposal]");
+    if (currentCard?.dataset.knowledgeProposal === proposalId && currentCard.getAttribute("aria-busy") === "true") {
+      setProposalActionState(currentCard, proposalFeedback.get(proposalId)?.message || "", proposalFeedback.get(proposalId)?.tone || "", false);
+    }
   }
 }
 
@@ -566,20 +819,58 @@ document.getElementById("knowledgeTranscriptForm")?.addEventListener("submit", e
   void importTranscript(event.currentTarget).catch(error => setStatus(error.message, "error"));
 });
 document.getElementById("knowledgeResearchRefresh")?.addEventListener("click", () => {
-  void load({ force: true });
+  captureProposalDraft();
+  void load({ force: true, discardDrafts: true });
 });
 document.getElementById("knowledgeResearchRun")?.addEventListener("click", event => {
   void runAutomaticProcessing(event.currentTarget);
 });
-document.getElementById("knowledgeProposalList")?.addEventListener("click", event => {
+const proposalList = document.getElementById("knowledgeProposalList");
+proposalList?.addEventListener("click", event => {
+  const selection = event.target.closest("[data-knowledge-select-proposal]");
+  if (selection) {
+    if (pendingProposalIds.size) return;
+    const proposalId = selection.dataset.knowledgeSelectProposal;
+    if (!proposalId || proposalId === activeProposalIds[activeProposalBucket]) return;
+    captureProposalDraft();
+    activeProposalIds[activeProposalBucket] = proposalId;
+    renderProposals({ preserveView: true });
+    if (researchPageLimits().proposalLimit === 10) {
+      requestAnimationFrame(() => {
+        document.querySelector("[data-knowledge-active-review]")?.scrollIntoView({
+          block: "start",
+          behavior: "auto"
+        });
+      });
+    }
+    return;
+  }
   const button = event.target.closest("[data-knowledge-action]");
   if (button) void proposalAction(button);
 });
+const rememberProposalFormControl = event => {
+  const control = event.target;
+  const card = control.closest?.("[data-knowledge-proposal]");
+  const proposalId = card?.dataset.knowledgeProposal;
+  if (!proposalId) return;
+  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  if (!proposal) return;
+  const draft = proposalFormDrafts.get(proposalId) || proposalFormState(proposal);
+  if (control.matches("[data-knowledge-wording]")) draft.wording = control.value;
+  if (control.matches("[data-knowledge-category]")) draft.category = control.value;
+  if (control.matches("[data-knowledge-entity]")) draft.entity = control.value;
+  if (control.matches("[data-knowledge-original]")) draft.confirmed = control.checked;
+  proposalFormDrafts.set(proposalId, draft);
+};
+proposalList?.addEventListener("change", rememberProposalFormControl);
 document.getElementById("knowledgeResearchPanel")?.addEventListener("click", event => {
+  if (pendingProposalIds.size && event.target.closest("button, summary")) return;
   const bucketButton = event.target.closest("[data-knowledge-bucket]");
   if (bucketButton) {
+    if (pendingProposalIds.size) return;
     const bucket = bucketButton.dataset.knowledgeBucket;
     if (!["review", "approved", "rejected"].includes(bucket) || bucket === activeProposalBucket) return;
+    captureProposalDraft();
     activeProposalBucket = bucket;
     resetResearchScroll();
     void load({ force: true });
@@ -629,5 +920,15 @@ document.getElementById("knowledgeResearchPanel")?.addEventListener("click", eve
 });
 
 globalThis.RankedCoachKnowledgeReview = Object.freeze({ load, syncAccess });
+document.querySelectorAll("[data-account-support-tab]").forEach(tab => {
+  tab.addEventListener("click", () => requestAnimationFrame(syncResearchPerformanceMode));
+});
+const accountSupportModal = document.getElementById("accountSupportModal");
+if (accountSupportModal && typeof MutationObserver === "function") {
+  new MutationObserver(syncResearchPerformanceMode).observe(accountSupportModal, {
+    attributes: true,
+    attributeFilter: ["class", "aria-hidden"]
+  });
+}
 syncAccess(globalThis.RankedCoachAuthBridge?.getUser?.());
 globalThis.RankedCoachAuthBridge?.getFreshUser?.().then(syncAccess).catch(() => {});
