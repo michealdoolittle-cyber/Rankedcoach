@@ -107,10 +107,10 @@
     "entityName": "Killjoy",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-24T19:52:57.818Z",
+    "generatedAt": "2026-07-25T03:45:15.250Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
-    "lastReviewed": "2026-07-24"
+    "lastReviewed": "2026-07-25"
   },
   "_fieldMeta": {
     "id": {
