@@ -113,7 +113,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
   "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
-  "lastReviewed": "2026-07-25",
+  "lastReviewed": "2026-07-26",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -122,7 +122,7 @@
     "entityName": "Phoenix",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-26T04:04:21.105Z",
+    "generatedAt": "2026-07-26T08:43:08.934Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-26"
