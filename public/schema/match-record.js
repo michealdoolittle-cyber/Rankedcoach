@@ -103,6 +103,19 @@
     };
   }
 
+  function getUtilityCastCount(casts = {}) {
+    return Object.values(normalizeUtilityCasts(casts))
+      .reduce((total, value) => total + (Number(value) || 0), 0);
+  }
+
+  function normalizeCombatantEconomies(entries = []) {
+    return (Array.isArray(entries) ? entries : []).map(entry => ({
+      subject: cleanString(entry?.subject),
+      teamId: cleanString(entry?.teamId),
+      loadoutValue: readNumber(entry?.loadoutValue)
+    })).filter(entry => entry.subject && entry.teamId && entry.loadoutValue !== null);
+  }
+
   function normalizeRoundEntry(round = {}, index = 0) {
     return {
       roundIndex: readNumber(round.roundIndex, index),
@@ -118,7 +131,9 @@
       bombPlanter: cleanString(round.bombPlanter),
       bombDefuser: cleanString(round.bombDefuser),
       playerEconomy: normalizeEconomy(round.playerEconomy),
+      combatantEconomies: normalizeCombatantEconomies(round.combatantEconomies),
       utilityCasts: normalizeUtilityCasts(round.utilityCasts),
+      teammateUtilityCasts: readNumber(round.teammateUtilityCasts, 0),
       playerScore: readNumber(round.playerScore),
       damageDealt: readNumber(round.damageDealt, 0),
       wasAfk: Boolean(round.wasAfk),
@@ -459,6 +474,7 @@
     const initialAttackingTeam = inferInitialAttackingTeam(rawRounds, teamBySubject, teamIds);
 
     const roundByRound = rawRounds.map((round, index) => {
+      const playerStats = Array.isArray(round?.playerStats) ? round.playerStats : [];
       const playerRound = (Array.isArray(round?.playerStats) ? round.playerStats : [])
         .find(entry => cleanString(entry?.subject) === puuid) || {};
       const economy = (Array.isArray(round?.playerEconomies) ? round.playerEconomies : [])
@@ -480,7 +496,15 @@
         bombPlanter: round?.bombPlanter,
         bombDefuser: round?.bombDefuser,
         playerEconomy: economy,
+        combatantEconomies: (Array.isArray(round?.playerEconomies) ? round.playerEconomies : []).map(entry => ({
+          subject: entry?.subject,
+          teamId: teamBySubject.get(cleanString(entry?.subject)),
+          loadoutValue: entry?.loadoutValue
+        })),
         utilityCasts: playerRound.abilityCasts || playerRound.ability_casts,
+        teammateUtilityCasts: playerStats
+          .filter(entry => teammatePuuids.includes(cleanString(entry?.subject)))
+          .reduce((total, entry) => total + getUtilityCastCount(entry?.abilityCasts || entry?.ability_casts), 0),
         playerScore: playerRound.score,
         damageDealt: (Array.isArray(playerRound.damage) ? playerRound.damage : [])
           .reduce((total, item) => total + (readNumber(item?.damage, 0) || 0), 0),
@@ -523,6 +547,11 @@
       rank: context.rank || parsedPlayer.currenttier_patched,
       rr: context.rr,
       rrDelta: context.rrDelta,
+      rankElo: context.rankElo,
+      rrVerified: context.rrVerified === true,
+      rankDataSource: context.rankDataSource,
+      rankCapturedAt: context.rankCapturedAt,
+      isPlacementMatch: context.isPlacementMatch === true,
       trackedPlayer: {
         puuid,
         teamId: trackedTeam,

@@ -1121,6 +1121,51 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   assert.doesNotMatch(JSON.stringify(publicIndex), /hold the trade spacing before crossing/i);
 });
 
+test("agent-map publications require and preserve a canonical valid pair", async () => {
+  const kv = new MemoryKv();
+  await ingestTimestampedKnowledgeTranscript(kv, {
+    source: {
+      platform: "youtube",
+      url: "https://www.youtube.com/watch?v=agentmap123",
+      title: "Jett Breeze entry guide",
+      publisher: "Coach A",
+      entities: ["Jett", "Breeze"]
+    },
+    cues: parseTimestampedTranscript(`
+00:01 On Breeze, prime Tailwind before crossing the first long lane so the Operator cannot trap you in the open.
+00:08 Keep one teammate ready to trade the dash before the rest of the team commits through the site entrance.
+00:15 Save Cloudburst for the second angle so the first crossing does not become a second exposed fight.
+    `)
+  }, {
+    now: new Date("2026-07-24T01:00:00.000Z"),
+    libraryKnowledgeIndex: []
+  });
+  const proposal = (await getKnowledgeOwnerDashboard(kv)).review.proposals.find(item => item.type === "coaching");
+  await approveKnowledgeProposal(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    rankedCoachWording: "Jett should prime Tailwind before challenging Breeze's first long sightline.",
+    confirmOriginalWording: true
+  }, new Date("2026-07-24T01:01:00.000Z"));
+  const published = await publishApprovedKnowledge(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    category: "agent-map",
+    entity: "jett \u00b7 breeze"
+  }, new Date("2026-07-24T01:02:00.000Z"));
+  assert.equal(published.entity, "Jett \u00b7 Breeze");
+  assert.equal((await getPublishedKnowledge(kv)).items[0].category, "agent-map");
+  await assert.rejects(
+    publishApprovedKnowledge(kv, {
+      proposalId: proposal.id,
+      owner: "Michael",
+      category: "agent-map",
+      entity: "Jett \u00b7 Not A Map"
+    }),
+    /agent-map pair/
+  );
+});
+
 test("owner review shows a complete selected passage with wider contiguous context", async () => {
   const kv = new MemoryKv();
   const before = Array.from({ length: 6 }, (_value, index) => ({

@@ -404,6 +404,7 @@
     const mmrByMatchId = new Map(mmrHistory.map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot]));
     const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
+    const hydrateRoundData = options.hydrateRoundData === true;
     const pendingMatches = parsedMatches.filter(match => {
       const matchId = getParsedMatchId(match);
       return matchId && (!knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
@@ -414,10 +415,44 @@
     for (const parsedMatch of pendingMatches) {
       const matchId = getParsedMatchId(parsedMatch);
       try {
-        records.push(mapHenrikV4Match(parsedMatch, {
+        const v4Record = mapHenrikV4Match(parsedMatch, {
           puuid,
           mmrSnapshot: mmrByMatchId.get(matchId) || null
-        }));
+        });
+        if (!hydrateRoundData) {
+          records.push(v4Record);
+          continue;
+        }
+
+        try {
+          const rawPayload = await requestJsonWithRetry("/api/henrik/raw", { matchId, region }, {
+            ...options,
+            matchTimeoutMs: 50000,
+            matchRetryDelaysMs: options.rawMatchRetryDelaysMs || [1200, 2500]
+          });
+          records.push(mapHenrikRawMatch(rawPayload, {
+            puuid,
+            parsedMatch,
+            agent: v4Record.agent,
+            role: v4Record.role,
+            map: v4Record.map,
+            rank: v4Record.rank?.rank,
+            rr: v4Record.rank?.rr,
+            rrDelta: v4Record.rank?.rrDelta,
+            rankElo: v4Record.rank?.elo,
+            rrVerified: v4Record.rank?.verified === true,
+            rankDataSource: v4Record.rank?.source,
+            rankCapturedAt: v4Record.rank?.capturedAt,
+            isPlacementMatch: v4Record.isPlacementMatch === true
+          }));
+        } catch (error) {
+          records.push(v4Record);
+          failures.push({
+            matchId,
+            stage: "raw-round-data",
+            error: error?.message || "Round detail could not be loaded."
+          });
+        }
       } catch (error) {
         failures.push({ matchId, error: error?.message || "Match mapping failed." });
       }

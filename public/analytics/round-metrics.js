@@ -167,6 +167,64 @@
     };
   }
 
+  function getEconomyEntry(round = {}, subject = "") {
+    const normalizedSubject = String(subject || "").trim();
+    return (Array.isArray(round?.combatantEconomies) ? round.combatantEconomies : [])
+      .find(entry => String(entry?.subject || "").trim() === normalizedSubject) || null;
+  }
+
+  // These flags retain only the minimum structured evidence needed for a
+  // possible coaching callout. Utility timing is intentionally not inferred.
+  function deriveSituationalCoachingFlags(match = {}) {
+    const record = asCanonicalRecord(match);
+    if (!record?.trackedPlayer?.puuid || !Array.isArray(record?.roundByRound)) return [];
+
+    const puuid = String(record.trackedPlayer.puuid);
+    const teammatePuuids = new Set((record.trackedPlayer.teammatePuuids || []).map(String));
+    const matchId = String(record.id || record.legacyMatchId || "").trim() || null;
+    const agent = String(record.agent || "").trim() || null;
+    const map = String(record.map || "").trim() || null;
+    const flags = [];
+
+    record.roundByRound.forEach((round, index) => {
+      const kills = Array.isArray(round?.kills) ? round.kills : [];
+      const death = kills.find(kill => String(kill?.victim || "") === puuid) || null;
+      const deathTime = Number(death?.roundTime);
+      const killer = String(death?.killer || "").trim();
+      if (!death || !killer || !Number.isFinite(deathTime)) return;
+
+      const base = {
+        matchId,
+        agent,
+        map,
+        round: Number.isFinite(Number(round?.roundNum)) ? Number(round.roundNum) : index + 1,
+        timestampMs: deathTime
+      };
+      const traded = kills.some(kill => {
+        const elapsed = Number(kill?.roundTime) - deathTime;
+        return teammatePuuids.has(String(kill?.killer || ""))
+          && String(kill?.victim || "") === killer
+          && Number.isFinite(elapsed)
+          && elapsed >= 0
+          && elapsed <= TRADE_WINDOW_MS;
+      });
+      if (!traded) flags.push({ ...base, pattern: "untraded-death" });
+
+      const playerLoadout = Number(round?.playerEconomy?.loadoutValue);
+      const killerLoadout = Number(getEconomyEntry(round, killer)?.loadoutValue);
+      if (Number.isFinite(playerLoadout) && Number.isFinite(killerLoadout) && killerLoadout - playerLoadout >= 1600) {
+        flags.push({ ...base, pattern: "economy-mismatched-engagement" });
+      }
+
+      const teammateUtilityCasts = Number(round?.teammateUtilityCasts);
+      if (deathTime <= 10000 && Number.isFinite(teammateUtilityCasts) && teammateUtilityCasts === 0) {
+        flags.push({ ...base, pattern: "early-entry-before-utility" });
+      }
+    });
+
+    return flags;
+  }
+
   function computeMatchRoundMetrics(match = {}) {
     if (match?.roundMetrics?.totalRounds && match?.matchRecord?.roundByRound) return match.roundMetrics;
     const record = asCanonicalRecord(match);
@@ -278,6 +336,7 @@
         friendlyFireOutgoing: Number(behavior.friendlyFireOutgoing ?? behavior.friendly_fire_outgoing) || 0,
         affected: afkRounds > 0 || stayedInSpawnRounds > 0
       },
+      situationalFlags: deriveSituationalCoachingFlags(record),
       kast
     };
   }
@@ -377,6 +436,7 @@
     evaluateKastRound,
     classifyLoadoutValue,
     deriveAdvancedContextFromRoundByRound,
+    deriveSituationalCoachingFlags,
     computeMatchKast,
     aggregateMatchKast,
     computeMatchRoundMetrics,

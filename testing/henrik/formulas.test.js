@@ -135,6 +135,43 @@ const falseCloser = globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(
 assert.equal(falseCloser.clutchRounds, 0);
 assert.equal(falseCloser.clutchWins, 0);
 
+const situationalRecord = {
+  id: "situational-fixture",
+  agent: "Jett",
+  map: "Breeze",
+  trackedPlayer: {
+    puuid: me,
+    teammatePuuids: [teammate]
+  },
+  roundByRound: [
+    {
+      roundNum: 1,
+      playerEconomy: { loadoutValue: 1200 },
+      combatantEconomies: [{ subject: enemy, teamId: "enemy", loadoutValue: 3400 }],
+      teammateUtilityCasts: 0,
+      kills: [{ killer: enemy, victim: me, roundTime: 8000 }]
+    },
+    {
+      roundNum: 2,
+      playerEconomy: { loadoutValue: 3500 },
+      combatantEconomies: [{ subject: enemy, teamId: "enemy", loadoutValue: 3100 }],
+      teammateUtilityCasts: 2,
+      kills: [
+        { killer: enemy, victim: me, roundTime: 12000 },
+        { killer: teammate, victim: enemy, roundTime: 14000 }
+      ]
+    }
+  ]
+};
+const situationalFlags = globalThis.RankedCoachRoundMetrics.deriveSituationalCoachingFlags(situationalRecord);
+assert.deepEqual(situationalFlags.map(flag => flag.pattern), [
+  "untraded-death",
+  "economy-mismatched-engagement",
+  "early-entry-before-utility"
+]);
+assert.ok(situationalFlags.every(flag => flag.agent === "Jett" && flag.map === "Breeze" && flag.matchId === "situational-fixture"));
+assert.equal(globalThis.RankedCoachRoundMetrics.computeMatchRoundMetrics(situationalRecord).situationalFlags.length, 3);
+
 const gold = globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Gold 2", {
   hsPercent: 22.7,
   acs: 213,
@@ -146,4 +183,4 @@ assert.equal(gold.source.provisional, true);
 assert.equal(globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Radiant", {}), null);
 assert.equal(globalThis.RankedCoachRankBenchmarks.compareRankMetrics("Immortal 3", {}), null);
 
-console.log("Henrik formula checks passed: KAST, clutch/ace, discipline, trades, damage variance, and benchmark gaps preserved.");
+console.log("Henrik formula checks passed: KAST, clutch/ace, discipline, trades, situational flags, damage variance, and benchmark gaps preserved.");

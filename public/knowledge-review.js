@@ -153,6 +153,10 @@ function inferCategory(proposal = {}) {
   return entity ? "agent" : "general";
 }
 
+function publicationCategoryLabel(value = "") {
+  return value === "agent-map" ? "Agent + Map" : `${value[0]?.toUpperCase() || ""}${value.slice(1)}`;
+}
+
 function proposalBucketForStatus(status = "") {
   if (status === "rejected") return "rejected";
   if (status === "published" || status === "approved") return "approved";
@@ -297,12 +301,12 @@ function proposalCardMarkup(proposal) {
           <label class="auth-field">
             <span>Library location</span>
             <select data-knowledge-category disabled>
-              ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
+              ${["general", "map", "agent", "weapon", "agent-map"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
             </select>
           </label>
           <label class="auth-field">
-            <span>Map, agent, or weapon</span>
-            <input data-knowledge-entity value="${escapeHtml(form.entity)}" readonly placeholder="Bind" />
+            <span>Map, agent, weapon, or agent + map</span>
+            <input data-knowledge-entity value="${escapeHtml(form.entity)}" readonly placeholder="Jett · Breeze" />
           </label>
         </div>
         <button class="pd-item knowledge-unpublish" type="button" data-knowledge-action="unpublish" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Remove from Library</button>
@@ -312,12 +316,12 @@ function proposalCardMarkup(proposal) {
             <label class="auth-field">
               <span>Library location</span>
               <select data-knowledge-category>
-                ${["general", "map", "agent", "weapon"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${value[0].toUpperCase()}${value.slice(1)}</option>`).join("")}
+                ${["general", "map", "agent", "weapon", "agent-map"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
               </select>
             </label>
             <label class="auth-field">
-              <span>Map, agent, or weapon</span>
-              <input data-knowledge-entity value="${escapeHtml(form.entity)}" placeholder="Bind" />
+              <span>Map, agent, weapon, or agent + map</span>
+              <input data-knowledge-entity value="${escapeHtml(form.entity)}" placeholder="Jett · Breeze" />
             </label>
           </div>
         ` : `

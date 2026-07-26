@@ -19786,6 +19786,7 @@ function openImpactModal() {
   const weightingBlock = document.getElementById("lensWeightingBlock");
   const weightingTitle = document.getElementById("lensModalWeightingTitle");
   const statsTitle = document.getElementById("lensModalStatsTitle");
+  const researchCallout = document.getElementById("impactResearchCallout");
 
   if (!modal || !list) return;
 
@@ -19884,10 +19885,42 @@ function openImpactModal() {
     list.appendChild(row);
   });
 
+  renderImpactResearchCallout(researchCallout, { match, snapshot, impactScore });
+
   renderImpactOpportunityPullout({ roleWeightEntries, componentMap, roleKey });
 
   showModalById("lensModalOverlay");
 
+}
+
+function renderImpactResearchCallout(node, { match, snapshot, impactScore } = {}) {
+  if (!node) return;
+  node.hidden = true;
+  node.innerHTML = "";
+  if (impactScore >= 60) return;
+
+  const core = getMatchCore(match || {});
+  const agent = String(snapshot?.agent || core?.agent || "").trim();
+  const map = String(snapshot?.map || core?.map || "").trim();
+  const flags = match?.roundMetrics?.situationalFlags
+    || globalThis.RankedCoachRoundMetrics?.deriveSituationalCoachingFlags?.(match)
+    || [];
+  if (!agent || !map || !flags.length) return;
+
+  const expectedEntity = `${agent} \u00b7 ${map}`.toLowerCase();
+  const knowledge = globalThis.RankedCoachGamesenseLibrary?.getPublishedKnowledge?.() || [];
+  const item = knowledge.find(entry => entry?.category === "agent-map"
+    && String(entry?.entity || "").trim().toLowerCase() === expectedEntity);
+  if (!item?.wording) return;
+
+  const evidence = Array.isArray(item.evidence) ? item.evidence.slice(0, 2) : [];
+  node.hidden = false;
+  node.innerHTML = `
+    <div class="impact-research-callout__eyebrow">RankedCoach Research</div>
+    <strong>${escapeHtml(item.topic || `${agent} on ${map}`)}</strong>
+    <p>${escapeHtml(item.wording)}</p>
+    ${evidence.length ? `<div class="impact-research-callout__evidence">${evidence.map((source, index) => `<a href="${escapeHtml(source.url || "#")}" target="_blank" rel="noopener noreferrer">Source ${index + 1}</a>`).join("")}</div>` : ""}
+  `;
 }
 
 // ========================
@@ -49900,7 +49933,10 @@ async function importActiveProfileMatches(options = {}){
       historyLimit,
       historyStart,
       knownMatchIds,
-      refreshMatchIds
+      refreshMatchIds,
+      // Historical backfill remains aggregate-only. New matches after that
+      // one-time import receive raw round detail for verified coaching signals.
+      hydrateRoundData: !needsHistoryBackfill
     });
     profile.puuid = pullResult?.puuid || profile.puuid || "";
     profile.lastSyncSource = "henrik";

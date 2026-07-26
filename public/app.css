@@ -18454,6 +18454,47 @@ textarea {
   z-index:1;
 }
 
+.impact-research-callout{
+  margin-top:14px;
+  padding:14px;
+  border:1px solid color-mix(in srgb, var(--accent, #ff4655) 54%, transparent);
+  border-radius:14px;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--accent, #ff4655) 13%, #07111f), rgba(7,17,31,.92));
+}
+
+.impact-research-callout__eyebrow{
+  color:var(--accent, #ff4655);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.impact-research-callout strong{
+  display:block;
+  margin-top:4px;
+  color:#f8fafc;
+}
+
+.impact-research-callout p{
+  margin:7px 0 0;
+  color:#d7e1ee;
+  line-height:1.45;
+}
+
+.impact-research-callout__evidence{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.impact-research-callout__evidence a{
+  color:var(--accent, #ff4655);
+  font-size:12px;
+  font-weight:700;
+}
+
 #lensStatsListSecondary{
   margin:0;
   padding:0;

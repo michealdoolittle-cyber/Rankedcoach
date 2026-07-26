@@ -137,6 +137,13 @@ function unique(items = []) {
 
 function canonicalPublicationEntity(category, value = "") {
   if (category === "general") return "";
+  if (category === "agent-map") {
+    const [agentValue = "", mapValue = "", ...extra] = String(value).split("·");
+    if (extra.length) return "";
+    const agent = [...AGENT_ENTITY_NAMES].find(entity => entity.toLowerCase() === normalizeWhitespace(agentValue).toLowerCase());
+    const map = [...MAP_ENTITY_NAMES].find(entity => entity.toLowerCase() === normalizeWhitespace(mapValue).toLowerCase());
+    return agent && map ? `${agent} · ${map}` : "";
+  }
   const allowed = category === "map"
     ? MAP_ENTITY_NAMES
     : category === "weapon"
@@ -2678,10 +2685,10 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
   const owner = normalizeWhitespace(publication.owner);
   const category = normalizeWhitespace(publication.category || "general").toLowerCase();
   const entity = canonicalPublicationEntity(category, publication.entity);
-  if (!proposalId || !owner || !["general", "map", "agent", "weapon"].includes(category)) {
+  if (!proposalId || !owner || !["general", "map", "agent", "weapon", "agent-map"].includes(category)) {
     throw new Error("Proposal, owner, and a valid Library category are required.");
   }
-  if (category !== "general" && !entity) throw new Error("Choose a valid map, agent, or weapon for contextual Library publication.");
+  if (category !== "general" && !entity) throw new Error("Choose a valid map, agent, weapon, or agent-map pair for contextual Library publication.");
   const proposalKey = `${PROPOSAL_PREFIX}${proposalId}`;
   const proposal = await kv.get(proposalKey, "json");
   const approval = await kv.get(`${APPROVAL_PREFIX}${proposalId}`, "json");
@@ -2772,7 +2779,7 @@ export async function getPublishedKnowledge(kv) {
       wording: normalizeWhitespace(item.wording),
       type: item.type === "statistical" ? "statistical" : "coaching",
       topic: normalizeWhitespace(item.topic || "general"),
-      category: ["general", "map", "agent", "weapon"].includes(item.category) ? item.category : "general",
+      category: ["general", "map", "agent", "weapon", "agent-map"].includes(item.category) ? item.category : "general",
       entity: normalizeWhitespace(item.entity),
       entities: Object.freeze((item.entities || []).map(normalizeWhitespace).filter(Boolean)),
       evidence: Object.freeze((item.evidence || []).map(evidence => Object.freeze({

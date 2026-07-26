@@ -39,6 +39,8 @@ test("player Library consumes only the safe published-knowledge endpoint", async
   ]);
   assert.match(library, /fetch\("\/api\/content\/knowledge"/);
   assert.match(library, /Approved coaching updates/);
+  assert.match(library, /item\.category === "agent-map"/);
+  assert.match(library, /getPublishedKnowledge: \(\) => publishedKnowledge\.slice\(\)/);
   assert.doesNotMatch(library, /knowledge:private:transcript/);
   assert.match(worker, /handlePublicKnowledgeRequest/);
   assert.match(worker, /handleKnowledgeOwnerRequest/);

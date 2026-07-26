@@ -1214,6 +1214,7 @@
     const items = publishedKnowledge.filter(item => (
       item.category === "general"
       || (item.category === category && String(item.entity || "").trim().toLowerCase() === normalizedEntity)
+      || (item.category === "agent-map" && String(item.entity || "").split("\u00b7").map(value => value.trim().toLowerCase()).includes(normalizedEntity))
     ));
     if (!items.length) return "";
     return `
@@ -1243,6 +1244,7 @@
       })
       .then(payload => {
         publishedKnowledge = Array.isArray(payload?.items) ? payload.items : [];
+        window.dispatchEvent(new CustomEvent("rankedcoach:published-knowledge-ready"));
         if (libraryPageActive) render({ direction: "replace" });
         return publishedKnowledge;
       })
@@ -3510,6 +3512,7 @@
     open: openLibrary,
     render,
     reset: resetLibrary,
-    setPageActive: setLibraryPageActive
+    setPageActive: setLibraryPageActive,
+    getPublishedKnowledge: () => publishedKnowledge.slice()
   });
 })();
