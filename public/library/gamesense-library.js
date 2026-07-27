@@ -14,6 +14,8 @@
   let publishedKnowledge = [];
   let publishedKnowledgeRequest = null;
   let activeMediaPlayer = null;
+  let activeMediaPlayerCleanup = null;
+  let mediaPlayerSequence = 0;
   let libraryPageActive = false;
   let collageHydrationToken = 0;
   let crosshairCopyResetTimer = 0;
@@ -1320,7 +1322,7 @@
   }
 
   function getPlaylistFilters() {
-    return ["All", "Home", "News", "Live/Streaming", "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"];
+    return ["All", "Home", "Historical Archive", "News", "Live/Streaming", "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"];
   }
 
   function isPlaylistVod(item = {}) {
@@ -1342,19 +1344,123 @@
     return `<span class="gamesense-video-thumb-fallback" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 13h44v38H10z"></path><path d="m27 23 16 9-16 9z"></path></svg></span>`;
   }
 
-  function renderPlaylistVideoCard(video) {
+  function getPlaylistVideoWatchUrl(video = {}) {
+    const url = String(video.url || "").trim();
+    const startSeconds = Math.max(0, Math.floor(Number(video.startSeconds || 0)));
+    if (!url || !startSeconds || !/^(?:https?:)?\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\//i.test(url)) return url;
+    try {
+      const watchUrl = new URL(url, window.location.origin);
+      watchUrl.searchParams.set("t", `${startSeconds}s`);
+      return watchUrl.toString();
+    } catch {
+      return url;
+    }
+  }
+
+  function getPlaylistCatalogItems() {
+    const seen = new Set();
+    return [
+      ...(featuredPlaylist?.items || []),
+      ...(featuredPlaylist?.historicalItems || [])
+    ].filter(video => {
+      const platform = String(video?.platform || "youtube").toLowerCase();
+      const id = String(video?.upstreamId || video?.id || "").trim();
+      const identity = id ? `${platform}:${id}` : "";
+      if (!identity || seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    });
+  }
+
+  function normalizePlaylistVideoWatchKey(value = "") {
+    const match = String(value || "").trim().match(/^(youtube|twitch):([A-Za-z0-9_-]{1,128})$/i);
+    return match ? `${match[1].toLowerCase()}:${match[2]}` : "";
+  }
+
+  function getPlaylistVideoWatchKey(video = {}) {
+    const platform = String(video?.platform || "youtube").trim().toLowerCase();
+    if (platform === "youtube") {
+      const id = String(video?.upstreamId || video?.id || "").trim();
+      return /^[A-Za-z0-9_-]{11}$/.test(id) ? `youtube:${id}` : "";
+    }
+    if (platform === "twitch") {
+      const id = String(video?.upstreamId || "").trim()
+        || String(video?.url || "").match(/twitch\.tv\/videos\/(\d+)/i)?.[1]
+        || getTwitchChannel(video);
+      return /^[A-Za-z0-9_-]{1,128}$/.test(id) ? `twitch:${id}` : "";
+    }
+    return "";
+  }
+
+  function isPlaylistVideoWatched(video = {}) {
+    const watchKey = getPlaylistVideoWatchKey(video);
+    return Boolean(watchKey && globalThis.RankedCoachPlaylistWatchHistory?.hasWatched?.(watchKey));
+  }
+
+  function renderPlaylistWatchedPill(video = {}) {
+    return isPlaylistVideoWatched(video)
+      ? `<span class="gamesense-video-watched" aria-label="Watched">Watched</span>`
+      : "";
+  }
+
+  function formatYouTubeLikeCount(value) {
+    const count = Number(value);
+    if (!Number.isSafeInteger(count) || count < 0) return "";
+    try {
+      return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(count);
+    } catch {
+      return count.toLocaleString();
+    }
+  }
+
+  function renderYouTubeLikeMetric(video = {}) {
+    if (String(video.platform || "youtube").toLowerCase() !== "youtube") return "";
+    if (video.youtubeLikeMetricStatus !== "verified") return "";
+    const likeCount = formatYouTubeLikeCount(video.youtubeLikeCount);
+    return likeCount
+      ? `<small class="gamesense-video-youtube-metric" title="Official YouTube like count">${escapeHtml(likeCount)} YouTube likes</small>`
+      : "";
+  }
+
+  function syncPlaylistWatchedPills() {
+    const watchHistory = globalThis.RankedCoachPlaylistWatchHistory;
+    document.querySelectorAll(".gamesense-video-card[data-video-watch-key]").forEach(card => {
+      const watchKey = normalizePlaylistVideoWatchKey(card.dataset.videoWatchKey || "");
+      const watched = Boolean(watchKey && watchHistory?.hasWatched?.(watchKey));
+      card.classList.toggle("is-watched", watched);
+      const pill = card.querySelector(".gamesense-video-watched");
+      if (watched && !pill) {
+        card.insertAdjacentHTML("beforeend", `<span class="gamesense-video-watched" aria-label="Watched">Watched</span>`);
+      } else if (!watched && pill) {
+        pill.remove();
+      }
+    });
+  }
+
+  function renderPlaylistVideoCard(video, options = {}) {
     const isYouTube = String(video.platform || "youtube").toLowerCase() === "youtube";
     const twitchVideoId = String(video.upstreamId || "").trim() || String(video.url || "").match(/twitch\.tv\/videos\/(\d+)/i)?.[1] || "";
-    const sourceLabel = video.isShort ? "YouTube Short" : String(video.sourceType || "creator-guide").replace(/-/g, " ");
+    const historical = options.historical === true || video.archiveOnly === true;
+    const sourceLabel = historical
+      ? "Historical guide"
+      : video.isShort
+        ? "YouTube Short"
+        : String(video.sourceType || "creator-guide").replace(/-/g, " ");
     const displayTopic = isPlaylistVod(video) ? "VOD's" : String(video.topicType || "");
+    const targetLabel = String(video.targetName || "").trim();
+    const metadata = [targetLabel, displayTopic].filter(Boolean).join(" | ");
+    const watchUrl = getPlaylistVideoWatchUrl(video) || String(video.url || "");
+    const watchKey = getPlaylistVideoWatchKey(video);
+    const watched = isPlaylistVideoWatched(video);
     const thumbAction = isYouTube && /^[A-Za-z0-9_-]{11}$/.test(String(video.id || ""))
       ? `data-gamesense-play-video="${escapeHtml(video.id)}"`
       : /^\d+$/.test(twitchVideoId)
         ? `data-gamesense-play-twitch-video="${escapeHtml(twitchVideoId)}"`
-      : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
-    return `<article class="gamesense-video-card" data-video-id="${escapeHtml(video.id)}">
+        : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
+    return `<article class="gamesense-video-card${historical ? " gamesense-historical-video-card" : ""}${watched ? " is-watched" : ""}" data-video-id="${escapeHtml(video.id)}"${watchKey ? ` data-video-watch-key="${escapeHtml(watchKey)}"` : ""}>
       <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}">${renderMediaThumbnail(video.thumbnail)}<i aria-hidden="true"></i></button>
-      <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${displayTopic ? ` | ${escapeHtml(displayTopic)}` : ""}</p><a href="${escapeHtml(video.url)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch on YouTube" : "Watch on Twitch"}</a></div>
+      <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${metadata ? ` | ${escapeHtml(metadata)}` : ""}</p>${renderYouTubeLikeMetric(video)}<a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch &amp; like on YouTube" : "Watch on Twitch"}</a></div>
+      ${renderPlaylistWatchedPill(video)}
     </article>`;
   }
 
@@ -1369,8 +1475,10 @@
       origin
     });
     const startSeconds = Math.max(0, Math.floor(Number(options.startSeconds || 0)));
+    const playerId = String(options.playerId || "").replace(/[^A-Za-z0-9_-]/g, "");
     if (startSeconds) params.set("start", String(startSeconds));
-    return `<iframe class="gamesense-video-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+    if (options.enableJsApi === true) params.set("enablejsapi", "1");
+    return `<iframe class="gamesense-video-embed"${playerId ? ` id="${escapeHtml(playerId)}" data-gamesense-youtube-player="true"` : ""} src="https://www.youtube-nocookie.com/embed/${escapeHtml(videoId)}?${escapeHtml(params.toString())}" title="${escapeHtml(title)}" allow="accelerometer; autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
 
   function getTwitchChannel(stream = {}) {
@@ -1393,6 +1501,8 @@
   }
 
   function closeMediaPlayer() {
+    activeMediaPlayerCleanup?.();
+    activeMediaPlayerCleanup = null;
     if (!activeMediaPlayer) return;
     const overlay = activeMediaPlayer;
     activeMediaPlayer = null;
@@ -1401,14 +1511,61 @@
     window.setTimeout(() => overlay.remove(), 180);
   }
 
-  function openMediaPlayer({ platform = "youtube", id = "", channel = "", videoId = "", title = "VALORANT video", url = "" } = {}) {
+  function bindYouTubePlaybackWatch(frame, watchKey = "") {
+    const normalizedWatchKey = normalizePlaylistVideoWatchKey(watchKey);
+    if (!frame || !normalizedWatchKey) return () => {};
+
+    let reported = false;
+    const postToPlayer = payload => {
+      try {
+        frame.contentWindow?.postMessage(JSON.stringify({
+          ...payload,
+          id: frame.id,
+          channel: "widget"
+        }), "https://www.youtube-nocookie.com");
+      } catch (_error) {
+        // The modal can be closed before the third-party iframe is ready.
+      }
+    };
+    const subscribe = () => {
+      postToPlayer({ event: "listening" });
+      postToPlayer({ event: "command", func: "addEventListener", args: ["onStateChange"] });
+    };
+    const onMessage = event => {
+      if (event.source !== frame.contentWindow || !/^https:\/\/www\.youtube(?:-nocookie)?\.com$/i.test(String(event.origin || ""))) return;
+      let payload = event.data;
+      if (typeof payload === "string") {
+        try {
+          payload = JSON.parse(payload);
+        } catch (_error) {
+          return;
+        }
+      }
+      const state = Number(payload?.info?.playerState ?? payload?.info);
+      if (reported || payload?.event !== "onStateChange" || state !== 1) return;
+      reported = true;
+      globalThis.RankedCoachPlaylistWatchHistory?.markWatched?.(normalizedWatchKey);
+    };
+    frame.addEventListener("load", subscribe, { once: true });
+    window.addEventListener("message", onMessage);
+    window.setTimeout(subscribe, 0);
+    return () => {
+      frame.removeEventListener("load", subscribe);
+      window.removeEventListener("message", onMessage);
+    };
+  }
+
+  function openMediaPlayer({ platform = "youtube", id = "", channel = "", videoId = "", title = "VALORANT video", url = "", startSeconds = 0, sourceLabel = "Featured Video", watchKey = "" } = {}) {
     closeMediaPlayer();
     document.querySelectorAll("#gamesenseMediaOverlay").forEach(overlay => overlay.remove());
     const isTwitch = platform === "twitch";
+    const playerId = !isTwitch && normalizePlaylistVideoWatchKey(watchKey)
+      ? `gamesense-youtube-player-${++mediaPlayerSequence}`
+      : "";
     const player = isTwitch
       ? renderTwitchPlayer(channel, videoId)
-      : renderYouTubePlayer(id, title);
-    const externalLabel = isTwitch ? "Open on Twitch" : "Open on YouTube";
+      : renderYouTubePlayer(id, title, { startSeconds, enableJsApi: Boolean(playerId), playerId });
+    const externalLabel = isTwitch ? "Open on Twitch" : "Open & like on YouTube";
     const overlay = document.createElement("div");
     overlay.id = "gamesenseMediaOverlay";
     overlay.className = "gamesense-media-overlay";
@@ -1418,7 +1575,7 @@
     overlay.innerHTML = `
       <section class="gamesense-media-dialog">
         <header>
-          <div><span>${isTwitch ? "Live Stream" : "Featured Video"}</span><strong>${escapeHtml(title)}</strong></div>
+          <div><span>${isTwitch ? "Live Stream" : escapeHtml(sourceLabel)}</span><strong>${escapeHtml(title)}</strong></div>
           <button type="button" data-gamesense-close-media aria-label="Close video player">Close</button>
         </header>
         <div class="gamesense-media-stage${isTwitch ? " is-twitch" : ""}">${player}</div>
@@ -1430,6 +1587,12 @@
     document.body.appendChild(overlay);
     document.body.classList.add("gamesense-media-open");
     activeMediaPlayer = overlay;
+    if (playerId) {
+      activeMediaPlayerCleanup = bindYouTubePlaybackWatch(
+        overlay.querySelector("[data-gamesense-youtube-player]"),
+        watchKey
+      );
+    }
     window.requestAnimationFrame(() => overlay.classList.add("is-open"));
     overlay.querySelector("[data-gamesense-close-media]")?.focus({ preventScroll: true });
   }
@@ -1470,22 +1633,66 @@
     </section>`;
   }
 
+  function renderPlaylistSection(title, items, options = {}) {
+    if (!items.length) return "";
+    const historical = options.historical === true;
+    const copy = String(options.copy || "").trim();
+    return `<section class="gamesense-playlist-catalog-section${historical ? " is-historical" : ""}">
+      <div class="gamesense-playlist-section-head"><span>${escapeHtml(title)}</span><strong>${items.length}</strong></div>
+      ${copy ? `<p class="gamesense-playlist-section-copy">${escapeHtml(copy)}</p>` : ""}
+      <div class="gamesense-playlist-grid">${items.map(video => renderPlaylistVideoCard(video, { historical })).join("")}</div>
+    </section>`;
+  }
+
+  function renderHistoricalPlaylistArchive(items) {
+    const groups = new Map();
+    const topicOrder = ["Map Knowledge", "Agent", "Role"];
+    items.forEach(video => {
+      const topic = String(video.topicType || "General");
+      const target = String(video.targetName || "General");
+      const key = `${topic}\u0000${target}`;
+      if (!groups.has(key)) groups.set(key, { topic, target, items: [] });
+      groups.get(key).items.push(video);
+    });
+    const orderedGroups = [...groups.values()].sort((left, right) => (
+      (topicOrder.indexOf(left.topic) + 1 || 99) - (topicOrder.indexOf(right.topic) + 1 || 99)
+      || left.target.localeCompare(right.target)
+    ));
+    if (!orderedGroups.length) return `<p class="gamesense-playlist-empty">No verified historical guides are available right now.</p>`;
+    return `<section class="gamesense-playlist-historical-archive">
+      <div class="gamesense-playlist-section-head"><span>Historical archive</span><strong>${items.length}</strong></div>
+      <p class="gamesense-playlist-section-copy">Verified map, agent, and role guides are grouped by their original coaching subject. Open a subject to browse its full guide history.</p>
+      <div class="gamesense-playlist-historical-groups">
+        ${orderedGroups.map((group, index) => `<details class="gamesense-playlist-historical-group"${index === 0 ? " open" : ""}>
+          <summary><span>${escapeHtml(group.topic)}</span><strong>${escapeHtml(group.target)}</strong><em>${group.items.length} ${group.items.length === 1 ? "video" : "videos"}</em></summary>
+          <div class="gamesense-playlist-grid">${group.items.map(video => renderPlaylistVideoCard(video, { historical: true })).join("")}</div>
+        </details>`).join("")}
+      </div>
+    </section>`;
+  }
+
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
+    const historicalItems = featuredPlaylist?.historicalItems || [];
     const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
     const liveStreams = featuredPlaylist?.liveStreams || [];
     const visible = activeFilter === "All"
       ? items
       : activeFilter === "Home"
         ? []
+        : activeFilter === "Historical Archive"
+          ? []
         : activeFilter === "Live/Streaming"
           ? liveStreams
         : activeFilter === "VOD's"
           ? items.filter(isPlaylistVod)
           : items.filter(item => item.topicType === activeFilter);
+    const historicalVisible = ["Map Knowledge", "Agent", "Role"].includes(activeFilter)
+      ? historicalItems.filter(item => item.topicType === activeFilter)
+      : [];
     return `
       <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
-        <div><strong>Featured Playlist</strong><small>Trusted videos stay credited to their original creators.</small></div>
+        <div><strong>Featured Playlist</strong><small>Recent trusted releases and a separately preserved historical guide archive, credited to their original creators.</small></div>
         <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
       </div>
       <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
@@ -1493,9 +1700,17 @@
       </div>
       ${activeFilter === "Home"
         ? renderPlaylistHome(items)
+        : activeFilter === "Historical Archive"
+          ? renderHistoricalPlaylistArchive(historicalItems)
         : activeFilter === "Live/Streaming"
           ? `<div class="gamesense-playlist-grid gamesense-live-grid">${visible.length ? visible.map(renderPlaylistLiveCard).join("") : `<p class="gamesense-playlist-empty">No verified VALORANT streams are live right now.</p>`}</div>`
-          : `<div class="gamesense-playlist-grid">${visible.length ? visible.map(renderPlaylistVideoCard).join("") : `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>`}</div>`}`;
+          : `${renderPlaylistSection("Featured videos", visible)}
+              ${renderPlaylistSection("Historical guides", historicalVisible, {
+                historical: true,
+                copy: "These verified guides are preserved for historical context and filed under the same coaching category."
+              })}
+              ${!visible.length && !historicalVisible.length ? `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>` : ""}
+              ${activeFilter === "All" && historicalItems.length ? `<button class="gamesense-playlist-archive-link" type="button" data-gamesense-playlist-filter="Historical Archive">Browse ${historicalItems.length} historical guides</button>` : ""}`}`;
   }
 
   function renderGallery(topic) {
@@ -3312,14 +3527,17 @@
       const videoId = String(playlistVideo.dataset.gamesensePlayVideo || "");
       if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return;
       const video = [
-        ...(featuredPlaylist?.items || []),
+        ...getPlaylistCatalogItems(),
         ...(featuredPlaylist?.liveStreams || [])
       ].find(item => String(item?.id || "") === videoId) || {};
       openMediaPlayer({
         platform: "youtube",
         id: videoId,
         title: video.title || "Featured VALORANT video",
-        url: video.url || `https://www.youtube.com/watch?v=${videoId}`
+        url: getPlaylistVideoWatchUrl(video) || `https://www.youtube.com/watch?v=${videoId}`,
+        startSeconds: video.startSeconds,
+        sourceLabel: video.archiveOnly ? "Historical Guide" : "Featured Video",
+        watchKey: getPlaylistVideoWatchKey(video)
       });
       return;
     }
@@ -3504,6 +3722,10 @@
 
   window.addEventListener("rankedcoach:knowledge-updated", () => {
     void hydratePublishedKnowledge({ force: true });
+  });
+
+  window.addEventListener("rankedcoach:playlist-watch-history-updated", () => {
+    syncPlaylistWatchedPills();
   });
 
   decorateWarmupDrills();

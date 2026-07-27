@@ -33,6 +33,69 @@ function startServer() {
             thumbnail: `http://127.0.0.1:${port}/assets/library/maps/bind-card.png`,
             url: "https://www.twitch.tv/charla7an"
           }],
+          historicalItems: [
+            {
+              id: "histmap0001",
+              title: "Historical Corrode guide",
+              channel: "Archive Coach",
+              platform: "youtube",
+              sourceType: "owner-curated-research-video",
+              topicType: "Map Knowledge",
+              targetName: "Corrode",
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/bind-card.png`,
+              url: "https://www.youtube.com/watch?v=histmap0001",
+              startSeconds: 483,
+              archiveOnly: true,
+              isLive: false,
+              isVod: false,
+              isShort: false
+            },
+            {
+              id: "histmap0002",
+              title: "Historical Abyss guide",
+              channel: "Archive Coach",
+              platform: "youtube",
+              sourceType: "owner-curated-research-video",
+              topicType: "Map Knowledge",
+              targetName: "Abyss",
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/breeze-card.png`,
+              url: "https://www.youtube.com/watch?v=histmap0002",
+              archiveOnly: true,
+              isLive: false,
+              isVod: false,
+              isShort: false
+            },
+            {
+              id: "histagent01",
+              title: "Historical Jett guide",
+              channel: "Archive Coach",
+              platform: "youtube",
+              sourceType: "owner-curated-research-video",
+              topicType: "Agent",
+              targetName: "Jett",
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/split-card.png`,
+              url: "https://www.youtube.com/watch?v=histagent01",
+              archiveOnly: true,
+              isLive: false,
+              isVod: false,
+              isShort: false
+            },
+            {
+              id: "histrole001",
+              title: "Historical Controller guide",
+              channel: "Archive Coach",
+              platform: "youtube",
+              sourceType: "owner-curated-research-video",
+              topicType: "Role",
+              targetName: "Controller",
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/split-card.png`,
+              url: "https://www.youtube.com/watch?v=histrole001",
+              archiveOnly: true,
+              isLive: false,
+              isVod: false,
+              isShort: false
+            }
+          ],
           items: images.map((image, index) => ({
             id: index === 6 ? "d8CXBLRgP-A" : `video${String(index + 1).padStart(6, "0")}`,
             title: ["How to play your role", "Aim routine for ranked", "Breeze map guide", "How to keep calm in ranked", "Yoru buffs in Patch 13.01", "Ranked coaching VOD", "Find your PERFECT Sensitivity and Optimal Settings! | SEN TenZ"][index],
@@ -354,7 +417,7 @@ async function run() {
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid) .gamesense-video-card").count(), 5);
     assert.doesNotMatch(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
-    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 13);
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 14);
     assert.equal(await desktop.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     const playlistFilterThemeState = await desktop.locator(".gamesense-playlist-filters").evaluate(filters => {
@@ -376,6 +439,19 @@ async function run() {
     await desktop.locator(".gamesense-playlist-home .gamesense-video-card [data-gamesense-play-video]").first().click();
     const desktopYouTubeEmbed = desktop.locator("#gamesenseMediaOverlay .gamesense-video-embed:not(.gamesense-twitch-embed)");
     assert.match(await desktopYouTubeEmbed.getAttribute("src"), /youtube-nocookie\.com\/embed\/video000001\?.*autoplay=0.*controls=1.*fs=1.*playsinline=1.*rel=0/i);
+    assert.match(await desktopYouTubeEmbed.getAttribute("src"), /enablejsapi=1/i, "Playlist players must subscribe to the YouTube playback API before tracking a watch.");
+    await desktopYouTubeEmbed.evaluate(frame => {
+      window.dispatchEvent(new MessageEvent("message", {
+        source: frame.contentWindow,
+        origin: "https://www.youtube-nocookie.com",
+        data: JSON.stringify({ event: "onStateChange", info: 1 })
+      }));
+    });
+    await desktop.waitForFunction(() => {
+      const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
+      return profiles.some(profile => profile?.watchedPlaylistVideos?.some(record => record?.id === "youtube:video000001"));
+    });
+    assert.equal(await desktop.locator('[data-video-id="video000001"] .gamesense-video-watched').count(), 1, "A real YouTube playing event must mark the matching Playlist card watched.");
     const desktopYouTubeHitState = await desktopYouTubeEmbed.evaluate(frame => {
       const rect = frame.getBoundingClientRect();
       return {
@@ -404,6 +480,18 @@ async function run() {
     assert.doesNotMatch(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="Settings/Gear"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Optimal Settings.*TenZ/is);
+    await desktop.locator('[data-gamesense-playlist-filter="Map Knowledge"]').click();
+    assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical (Corrode|Abyss) guide/i);
+    await desktop.locator('[data-gamesense-playlist-filter="Agent"]').click();
+    assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical Jett guide/i);
+    await desktop.locator('[data-gamesense-playlist-filter="Role"]').click();
+    assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical Controller guide/i);
+    await desktop.locator('[data-gamesense-playlist-filter="Historical Archive"]').click();
+    assert.equal(await desktop.locator(".gamesense-playlist-historical-group").count(), 4, "Historical guides must remain grouped by their original category and target.");
+    await desktop.locator(".gamesense-playlist-historical-group", { hasText: "Corrode" }).locator("summary").click();
+    await desktop.locator('[data-video-id="histmap0001"] [data-gamesense-play-video]').click();
+    assert.match(await desktop.locator("#gamesenseMediaOverlay .gamesense-video-embed").getAttribute("src"), /start=483/);
+    await desktop.locator("#gamesenseMediaOverlay [data-gamesense-close-media]").click();
     await desktop.locator('[data-gamesense-playlist-filter="All"]').click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 7, "All must render every Playlist item without filtering.");
     await desktop.locator(".gamesense-back").click();
@@ -1365,7 +1453,10 @@ async function run() {
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 5);
-    assert.equal(await desktop.locator(".lens-modal-close").count(), 0);
+    // Account & Support keeps a close control in the static DOM while its
+    // modal is hidden. Library navigation must not expose a stray modal
+    // control, rather than assuming none exists anywhere in the document.
+    assert.equal(await desktop.locator(".lens-modal-close:visible").count(), 0);
 
     await desktop.click('.nav-btn[data-page="logging"]');
     await desktop.locator("#page-logging.active").waitFor({ state: "visible" });
@@ -1455,7 +1546,7 @@ async function run() {
     await mobile.locator(".gamesense-playlist-home").waitFor({ state: "visible" });
     await mobile.waitForTimeout(700);
     assert.doesNotMatch(await mobile.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
-    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 13);
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 14);
     assert.equal(await mobile.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);

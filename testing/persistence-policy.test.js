@@ -36,20 +36,44 @@ const consolidated = policy.consolidateProfiles([{
   puuid: "shared-puuid",
   name: "Old Device Copy",
   matches: [{ id: "match-a" }],
-  warmupLog: [{ date: "2026-07-12", drillsSelected: ["bots"] }]
+  warmupLog: [{ date: "2026-07-12", drillsSelected: ["bots"] }],
+  watchedPlaylistVideos: [
+    { id: "youtube:abcdefghijk", watchedAt: "2026-07-12T14:00:00.000Z" },
+    { id: "youtube:lmnopqrstuv", watchedAt: "2026-07-12T15:00:00.000Z" }
+  ]
 }, {
   id: "cloud-active",
   puuid: "shared-puuid",
   name: "Cloud Canonical",
   matches: [{ id: "match-b" }],
-  warmupLog: [{ date: "2026-07-13", drillsSelected: ["strafe"] }]
+  warmupLog: [{ date: "2026-07-13", drillsSelected: ["strafe"] }],
+  watchedPlaylistVideos: [
+    { id: "youtube:abcdefghijk", watchedAt: "2026-07-13T16:00:00.000Z" },
+    { id: "twitch:123456789", watchedAt: "2026-07-13T17:00:00.000Z" }
+  ]
 }], "cloud-active");
 assert.equal(consolidated.profiles.length, 1);
 assert.equal(consolidated.profiles[0].id, "cloud-active");
 assert.equal(consolidated.profiles[0].name, "Cloud Canonical");
 assert.deepEqual(consolidated.profiles[0].matches.map(match => match.id), ["match-a", "match-b"]);
 assert.deepEqual(consolidated.profiles[0].warmupLog.map(entry => entry.date), ["2026-07-12", "2026-07-13"]);
+assert.deepEqual(consolidated.profiles[0].watchedPlaylistVideos, [
+  { id: "youtube:lmnopqrstuv", watchedAt: "2026-07-12T15:00:00.000Z" },
+  { id: "youtube:abcdefghijk", watchedAt: "2026-07-13T16:00:00.000Z" },
+  { id: "twitch:123456789", watchedAt: "2026-07-13T17:00:00.000Z" }
+]);
 assert.equal(consolidated.idMap["device-a"], "cloud-active");
+
+const boundedWatchHistory = policy.normalizeWatchedPlaylistVideos([
+  { id: "not-a-canonical-id", watchedAt: "2026-07-12T00:00:00.000Z" },
+  ...Array.from({ length: 1005 }, (_item, index) => ({
+    id: `youtube:video-${String(index).padStart(4, "0")}`,
+    watchedAt: new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString()
+  }))
+]);
+assert.equal(boundedWatchHistory.length, 1000);
+assert.equal(boundedWatchHistory[0].id, "youtube:video-0005");
+assert.equal(boundedWatchHistory.at(-1).id, "youtube:video-1004");
 
 const compacted = policy.compactProfilesForLocalCache([{
   id: "profile-with-history",

@@ -3889,6 +3889,26 @@ html.is-mobile-layout .gamesense-tactical-scroll{
 .gamesense-playlist-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
 .gamesense-video-card{position:relative;isolation:isolate;overflow:hidden;border:1px solid color-mix(in srgb,var(--gamesense-cool,#58d4c8) 28%,transparent);border-radius:14px;background:var(--panel-bg,#111b2d);}
 .gamesense-video-card::before,.gamesense-video-card::after{pointer-events:none !important;}
+.gamesense-video-card.is-watched > div{padding-bottom:38px;}
+.gamesense-video-card > .gamesense-video-watched{
+  position:absolute;
+  z-index:5;
+  right:10px;
+  bottom:10px;
+  display:inline-flex;
+  align-items:center;
+  min-height:20px;
+  padding:0 8px;
+  border:1px solid rgba(74,222,128,.58);
+  border-radius:999px;
+  background:rgba(5,46,22,.88);
+  color:#86efac;
+  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  box-shadow:0 0 14px rgba(34,197,94,.16);
+  pointer-events:none;
+}
 .gamesense-video-thumb{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;}
 .gamesense-video-thumb{width:100%;padding:0;border:0;border-radius:0;background:transparent;cursor:pointer;}
 .gamesense-video-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .28s ease;}
@@ -3909,6 +3929,7 @@ html.is-mobile-layout .gamesense-tactical-scroll{
 .gamesense-video-card span{color:var(--gamesense-warm,#f6c453);font:800 9px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.1em;text-transform:uppercase;}
 .gamesense-video-card h3{margin:0;color:var(--text-main,#f8fafc);font:900 16px/1.15 var(--font-display,"Rajdhani",sans-serif);}
 .gamesense-video-card p{margin:0;color:var(--text-muted,#a8b3c7);font-size:11px;}
+.gamesense-video-card .gamesense-video-youtube-metric{color:var(--gamesense-warm,#f6c453);font:800 10px/1.1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.04em;text-transform:uppercase;}
 .gamesense-video-embed{position:relative;z-index:20;display:block;width:100%;min-width:200px;min-height:200px;aspect-ratio:16/9;border:0;background:#020617;pointer-events:auto !important;touch-action:auto !important;}
 .gamesense-twitch-embed{min-height:300px;}
 .gamesense-playlist-empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--text-muted,#a8b3c7);}
@@ -3983,6 +4004,22 @@ body.gamesense-media-open{overflow:hidden !important;}
 }
 .gamesense-playlist-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:8px 0 12px;color:var(--text-main,#f8fafc);font:900 18px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
 .gamesense-playlist-section-head strong{display:grid;place-items:center;min-width:32px;height:26px;padding:0 8px;border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 55%,transparent);border-radius:999px;color:var(--gamesense-warm,#f6c453);font-size:12px;}
+.gamesense-playlist-catalog-section{display:grid;gap:0;margin-top:16px;}
+.gamesense-playlist-catalog-section.is-historical{padding-top:18px;border-top:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 34%,transparent);}
+.gamesense-playlist-section-copy{max-width:760px;margin:-4px 0 13px;color:var(--text-muted,#a8b3c7);font-size:12px;line-height:1.45;}
+.gamesense-historical-video-card{border-color:color-mix(in srgb,var(--gamesense-warm,#f6c453) 38%,transparent);}
+.gamesense-playlist-archive-link{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:18px;padding:0 14px;border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 58%,transparent);border-radius:10px;background:color-mix(in srgb,var(--panel-bg,#111b2d) 80%,var(--gamesense-warm,#f6c453));color:var(--gamesense-warm,#f6c453);font:900 12px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.08em;text-transform:uppercase;}
+.gamesense-playlist-historical-archive{display:grid;gap:0;}
+.gamesense-playlist-historical-groups{display:grid;gap:10px;}
+.gamesense-playlist-historical-group{overflow:hidden;border:1px solid color-mix(in srgb,var(--gamesense-warm,#f6c453) 30%,transparent);border-radius:12px;background:color-mix(in srgb,var(--panel-bg,#111b2d) 92%,#000);}
+.gamesense-playlist-historical-group > summary{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px;row-gap:3px;min-height:56px;padding:11px 14px;cursor:pointer;list-style:none;}
+.gamesense-playlist-historical-group > summary::-webkit-details-marker{display:none;}
+.gamesense-playlist-historical-group > summary::after{content:"+";grid-column:2;grid-row:1 / span 2;color:var(--gamesense-warm,#f6c453);font:900 22px/1 var(--font-display,"Rajdhani",sans-serif);}
+.gamesense-playlist-historical-group[open] > summary::after{content:"−";}
+.gamesense-playlist-historical-group > summary span{grid-column:1;color:var(--gamesense-cool,#58d4c8);font:800 9px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.12em;text-transform:uppercase;}
+.gamesense-playlist-historical-group > summary strong{grid-column:1;color:var(--text-main,#f8fafc);font:900 17px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;}
+.gamesense-playlist-historical-group > summary em{grid-column:1;color:var(--text-muted,#a8b3c7);font:700 11px/1 var(--font-body,"Rajdhani",sans-serif);font-style:normal;}
+.gamesense-playlist-historical-group > .gamesense-playlist-grid{padding:0 12px 12px;}
 .gamesense-playlist-live-break{display:flex;align-items:center;gap:12px;margin:22px 0 14px;color:#ff4655;font:900 17px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.08em;text-transform:uppercase;}
 .gamesense-playlist-live-break::before,.gamesense-playlist-live-break::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,color-mix(in srgb,#ff4655 64%,transparent));}
 .gamesense-playlist-live-break::after{background:linear-gradient(90deg,color-mix(in srgb,#ff4655 64%,transparent),transparent);}
@@ -4011,6 +4048,8 @@ body.gamesense-media-open{overflow:hidden !important;}
   html.is-mobile-layout .gamesense-playlist-filters::-webkit-scrollbar-thumb{background:var(--theme-accent,var(--accent,#ff4655));border-radius:999px;}
   html.is-mobile-layout .gamesense-playlist-filters button{scroll-snap-align:start;}
   html.is-mobile-layout .gamesense-playlist-grid{grid-template-columns:minmax(0,1fr);}
+  html.is-mobile-layout .gamesense-playlist-historical-group > summary{min-height:62px;padding:12px;}
+  html.is-mobile-layout .gamesense-playlist-historical-group > .gamesense-playlist-grid{padding:0 8px 8px;}
   html.is-mobile-layout .gamesense-esports-link,
   html.is-mobile-layout .gamesense-related-video{align-items:stretch;flex-direction:column;}
   html.is-mobile-layout .gamesense-esports-link > a{align-self:flex-start;}

@@ -60,6 +60,38 @@
     return [...merged.values()];
   }
 
+  // Playlist watch history deliberately retains only a canonical media identity
+  // and the time it was watched. Keep it bounded so a long-lived profile
+  // cannot recreate the local-storage quota issue that match history once had.
+  const MAX_WATCHED_PLAYLIST_VIDEOS = 1000;
+
+  function normalizeWatchedPlaylistVideos(records = []) {
+    const source = Array.isArray(records) ? records : [];
+    const byId = new Map();
+    source.forEach(record => {
+      if (!record || typeof record !== "object") return;
+      const id = clean(record.id);
+      const watchedAt = clean(record.watchedAt);
+      if (!/^(?:youtube|twitch):[A-Za-z0-9_-]{1,128}$/.test(id)) return;
+      if (!Number.isFinite(Date.parse(watchedAt))) return;
+      const normalized = { id, watchedAt: new Date(watchedAt).toISOString() };
+      const existing = byId.get(id);
+      if (!existing || Date.parse(normalized.watchedAt) > Date.parse(existing.watchedAt)) {
+        byId.set(id, normalized);
+      }
+    });
+    return [...byId.values()]
+      .sort((left, right) => Date.parse(left.watchedAt) - Date.parse(right.watchedAt))
+      .slice(-MAX_WATCHED_PLAYLIST_VIDEOS);
+  }
+
+  function mergeWatchedPlaylistVideos(left = [], right = []) {
+    return normalizeWatchedPlaylistVideos([
+      ...(Array.isArray(left) ? left : []),
+      ...(Array.isArray(right) ? right : [])
+    ]);
+  }
+
   function consolidateProfiles(source = [], preferredId = "") {
     const profiles = [];
     const byIdentity = new Map();
@@ -83,7 +115,11 @@
         ...canonical,
         id: clean(canonical.id) || clean(secondary.id),
         matches: mergeUniqueRecords(secondary.matches, canonical.matches, match => clean(match?.matchId || match?.id || match?.metadata?.matchId)),
-        warmupLog: mergeUniqueRecords(secondary.warmupLog, canonical.warmupLog, entry => clean(entry?.date || entry?.id))
+        warmupLog: mergeUniqueRecords(secondary.warmupLog, canonical.warmupLog, entry => clean(entry?.date || entry?.id)),
+        watchedPlaylistVideos: mergeWatchedPlaylistVideos(
+          secondary.watchedPlaylistVideos,
+          canonical.watchedPlaylistVideos
+        )
       };
       profiles[existingIndex] = merged;
       idMap[clean(existing.id)] = merged.id;
@@ -141,6 +177,8 @@
     dedupeRowsById,
     chunkRows,
     consolidateProfiles,
+    normalizeWatchedPlaylistVideos,
+    mergeWatchedPlaylistVideos,
     compactMatchForLocalCache,
     compactProfilesForLocalCache
   });

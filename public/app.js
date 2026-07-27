@@ -15978,13 +15978,24 @@ function serializePersistentAccountState() {
 function applyPersistentAccountState(state = {}) {
   if (!state || typeof state !== "object") return;
 
+  let shouldPersistMergedPlaylistWatchHistory = false;
   backendSyncState.applyingRemote = true;
   try {
     if (Array.isArray(state.profiles) && state.profiles.length) {
+      const remoteProfiles = mergeLocalPlaylistWatchHistoryIntoRemoteProfiles(state.profiles);
+      const remoteHistoryByIdentity = new Map((state.profiles || []).map(profile => [
+        getPlaylistWatchHistoryProfileIdentity(profile),
+        normalizeWatchedPlaylistVideos(profile?.watchedPlaylistVideos)
+      ]));
+      shouldPersistMergedPlaylistWatchHistory = remoteProfiles.some(profile => {
+        const identity = getPlaylistWatchHistoryProfileIdentity(profile);
+        return JSON.stringify(normalizeWatchedPlaylistVideos(profile?.watchedPlaylistVideos))
+          !== JSON.stringify(remoteHistoryByIdentity.get(identity) || []);
+      });
       const consolidated = globalThis.RankedCoachPersistencePolicy?.consolidateProfiles?.(
-        state.profiles,
+        remoteProfiles,
         state.activeProfileId
-      ) || { profiles: state.profiles, activeProfileId: state.activeProfileId, idMap: {} };
+      ) || { profiles: remoteProfiles, activeProfileId: state.activeProfileId, idMap: {} };
       profiles = consolidated.profiles.map(normalizeProfileRecord);
       activeProfileId = consolidated.activeProfileId || profiles[0]?.id || activeProfileId;
       persistProfilesToLocalCache();
@@ -16057,8 +16068,12 @@ function applyPersistentAccountState(state = {}) {
     renderInsights?.();
     renderLogFeed?.();
     renderChart?.(currentSize);
+    notifyPlaylistWatchHistoryChanged();
   } finally {
     backendSyncState.applyingRemote = false;
+  }
+  if (shouldPersistMergedPlaylistWatchHistory) {
+    queuePersistentAccountSave("playlist-watch-history-merge");
   }
 }
 
@@ -43631,6 +43646,7 @@ function normalizeProfileRecord(profile = {}) {
     matches: Array.isArray(profile.matches) ? profile.matches : [],
     lastWarmupPromptDate: String(profile.lastWarmupPromptDate || ""),
     warmupLog: normalizeWarmupLog(profile.warmupLog),
+    watchedPlaylistVideos: normalizeWatchedPlaylistVideos(profile.watchedPlaylistVideos),
     themeKey: profile.themeKey || "default",
     frameTheme: profile.frameTheme || profile.themeKey || "default",
     customAccent: normalizeThemeAccentColor(profile.customAccent || ""),
@@ -43706,6 +43722,7 @@ function loadProfiles(){
       peakRR: 0,
       lastWarmupPromptDate: "",
       warmupLog: [],
+      watchedPlaylistVideos: [],
       accessibility: {
         contrastMode: "standard",
         motionMode: "standard",
@@ -43732,6 +43749,112 @@ function getActiveProfile(){
   return profiles.find(p => p.id === activeProfileId) || null;
 
 }
+
+// ========================
+// PLAYLIST WATCH HISTORY
+// ========================
+
+const PLAYLIST_WATCH_HISTORY_EVENT = "rankedcoach:playlist-watch-history-updated";
+
+function normalizePlaylistWatchKey(value = "") {
+  const match = String(value || "").trim().match(/^(youtube|twitch):([A-Za-z0-9_-]{1,128})$/i);
+  return match ? `${match[1].toLowerCase()}:${match[2]}` : "";
+}
+
+function normalizeWatchedPlaylistVideos(records = []) {
+  const policy = globalThis.RankedCoachPersistencePolicy?.normalizeWatchedPlaylistVideos;
+  if (typeof policy === "function") return policy(records);
+
+  const latestById = new Map();
+  (Array.isArray(records) ? records : []).forEach(record => {
+    const id = normalizePlaylistWatchKey(record?.id);
+    const watchedAt = String(record?.watchedAt || "").trim();
+    if (!id || !Number.isFinite(Date.parse(watchedAt))) return;
+    const normalized = { id, watchedAt: new Date(watchedAt).toISOString() };
+    const existing = latestById.get(id);
+    if (!existing || Date.parse(normalized.watchedAt) > Date.parse(existing.watchedAt)) {
+      latestById.set(id, normalized);
+    }
+  });
+  return [...latestById.values()]
+    .sort((left, right) => Date.parse(left.watchedAt) - Date.parse(right.watchedAt))
+    .slice(-1000);
+}
+
+function mergeWatchedPlaylistVideos(left = [], right = []) {
+  const merge = globalThis.RankedCoachPersistencePolicy?.mergeWatchedPlaylistVideos;
+  if (typeof merge === "function") return merge(left, right);
+  return normalizeWatchedPlaylistVideos([
+    ...(Array.isArray(left) ? left : []),
+    ...(Array.isArray(right) ? right : [])
+  ]);
+}
+
+function getPlaylistWatchHistoryProfileIdentity(profile = {}) {
+  const puuid = String(profile?.puuid || "").trim().toLowerCase();
+  if (puuid) return `puuid:${puuid}`;
+  const riotId = String(profile?.riotId || "").replace(/\s+/g, "").toLowerCase();
+  if (riotId) return `riot:${String(profile?.region || "NA").trim().toLowerCase()}:${riotId}`;
+  const id = String(profile?.id || "").trim();
+  return id ? `id:${id}` : "";
+}
+
+function mergeLocalPlaylistWatchHistoryIntoRemoteProfiles(remoteProfiles = []) {
+  const localByIdentity = new Map();
+  (profiles || []).forEach(profile => {
+    const identity = getPlaylistWatchHistoryProfileIdentity(profile);
+    if (!identity) return;
+    localByIdentity.set(identity, mergeWatchedPlaylistVideos(
+      localByIdentity.get(identity),
+      profile?.watchedPlaylistVideos
+    ));
+  });
+  return (Array.isArray(remoteProfiles) ? remoteProfiles : []).map(profile => {
+    const localWatchHistory = localByIdentity.get(getPlaylistWatchHistoryProfileIdentity(profile));
+    return localWatchHistory?.length
+      ? { ...profile, watchedPlaylistVideos: mergeWatchedPlaylistVideos(localWatchHistory, profile?.watchedPlaylistVideos) }
+      : profile;
+  });
+}
+
+function getWatchedPlaylistVideos(profile = getActiveProfile()) {
+  return normalizeWatchedPlaylistVideos(profile?.watchedPlaylistVideos);
+}
+
+function hasWatchedPlaylistVideo(watchKey = "", profile = getActiveProfile()) {
+  const id = normalizePlaylistWatchKey(watchKey);
+  return Boolean(id && getWatchedPlaylistVideos(profile).some(record => record.id === id));
+}
+
+function notifyPlaylistWatchHistoryChanged(profile = getActiveProfile()) {
+  window.dispatchEvent(new CustomEvent(PLAYLIST_WATCH_HISTORY_EVENT, {
+    detail: {
+      profileId: String(profile?.id || ""),
+      watchedVideoIds: getWatchedPlaylistVideos(profile).map(record => record.id)
+    }
+  }));
+}
+
+function markPlaylistVideoWatched(watchKey = "") {
+  const id = normalizePlaylistWatchKey(watchKey);
+  const profile = getActiveProfile();
+  if (!id || !profile || hasWatchedPlaylistVideo(id, profile)) return false;
+
+  profile.watchedPlaylistVideos = normalizeWatchedPlaylistVideos([
+    ...getWatchedPlaylistVideos(profile),
+    { id, watchedAt: new Date().toISOString() }
+  ]);
+  saveProfiles();
+  notifyPlaylistWatchHistoryChanged(profile);
+  return true;
+}
+
+globalThis.RankedCoachPlaylistWatchHistory = Object.freeze({
+  getWatched: () => getWatchedPlaylistVideos(),
+  hasWatched: watchKey => hasWatchedPlaylistVideo(watchKey),
+  markWatched: watchKey => markPlaylistVideoWatched(watchKey),
+  normalizeWatchKey: normalizePlaylistWatchKey
+});
 
 // ========================
 // CREATE PROFILE
@@ -43897,6 +44020,9 @@ function updateProfile(id, data){
   if (data.warmupLog != null) {
     profile.warmupLog = normalizeWarmupLog(data.warmupLog);
   }
+  if (data.watchedPlaylistVideos != null) {
+    profile.watchedPlaylistVideos = normalizeWatchedPlaylistVideos(data.watchedPlaylistVideos);
+  }
 
   if (nextRiotId !== previousRiotId || nextRegion !== previousRegion) {
     profile.startingRRDate = "";
@@ -43983,6 +44109,7 @@ function updateProfile(id, data){
   updateProfileHeaderUI();
   initStatsPage();
   scheduleRiotAutoSync();
+  if (data.watchedPlaylistVideos != null) notifyPlaylistWatchHistoryChanged(profile);
 
 }
 
@@ -44016,6 +44143,7 @@ function setActiveProfile(id){
   recomputeFromMatches();
 
   saveProfiles();
+  notifyPlaylistWatchHistoryChanged(next);
 
   renderProfilesUI();
   updateProfileHeaderUI();

@@ -32,6 +32,7 @@ import {
 import {
   AGENT_NAMES,
   MAP_NAMES,
+  buildHistoricalPlaylistArchive,
   buildFeaturedPlaylist,
   dedupePlaylistVideos,
   getCuratedPlaylistResearchArchive,
@@ -264,6 +265,16 @@ test("Playlist refresh includes a submitted Research video without private revie
     assert.equal(submitted.channel, "Coach A");
     assert.equal(submitted.url, "https://www.youtube.com/watch?v=abcdefghijk");
     assert.doesNotMatch(JSON.stringify(submitted), /private transcript|private claim|claims|consensus/i);
+    assert.equal(playlist.historicalItems.length, 167, "The public response must expose every verified owner-curated historical guide outside Featured.");
+    const publicUnion = dedupePlaylistVideos([...playlist.items, ...playlist.historicalItems]);
+    const publicIds = new Set(publicUnion.map(item => item.id));
+    assert.equal(
+      getCuratedPlaylistResearchArchive().every(source => publicIds.has(source.id)),
+      true,
+      "The public Featured + Historical union must expose every canonical curated video ID."
+    );
+    assert.equal(playlist.items.some(item => item.archiveOnly), false, "Historical entries must not displace the Featured feed.");
+    assert.doesNotMatch(JSON.stringify(playlist.historicalItems), /private transcript|private claim|claims|consensus/i);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -1900,7 +1911,7 @@ test("curated Playlist research archive is complete, scoped, canonical, and educ
   });
 });
 
-test("curated videos dedupe by canonical identity and stay out of the public 120-card view", () => {
+test("curated videos dedupe by canonical identity, retain category context, and stay outside the Featured cap", () => {
   const curated = getCuratedPlaylistResearchArchive();
   const first = curated[0];
   const deduped = dedupePlaylistVideos([
@@ -1925,6 +1936,7 @@ test("curated videos dedupe by canonical identity and stay out of the public 120
     isValorant: true
   }));
   const featured = buildFeaturedPlaylist(dedupePlaylistVideos(publicCandidates));
+  const historical = buildHistoricalPlaylistArchive(curated, featured.items);
   const researchCandidates = mergePlaylistResearchArchive([], publicCandidates, curated);
   const researchArchive = buildFeaturedPlaylist(
     researchCandidates,
@@ -1937,12 +1949,50 @@ test("curated videos dedupe by canonical identity and stay out of the public 120
 
   assert.equal(featured.items.length, 120);
   assert.equal(featured.items.some(source => curatedIds.has(source.id)), false);
+  assert.equal(historical.items.length, 167, "The separate Historical collection must not inherit the 120-card Featured cap.");
+  assert.equal(
+    curated.every(source => historical.items.some(item => item.id === source.id)),
+    true,
+    "Every curated source must be available through the public Historical collection."
+  );
+  assert.deepEqual(
+    Object.fromEntries(["Map Knowledge", "Agent", "Role"].map(topic => [
+      topic,
+      new Set(historical.items.filter(item => item.topicType === topic).map(item => item.targetName)).size
+    ])),
+    { "Map Knowledge": 13, Agent: 29, Role: 5 },
+    "Map, Agent, and Role Playlist filters must retain each curated source's original category and target context."
+  );
   assert.equal(researchArchive.items.length, publicCandidates.length + curated.length);
   assert.equal(
     curated.every(source => researchArchive.items.some(item => item.id === source.id)),
     true,
     "Every curated source must enter the private research archive."
   );
+});
+
+test("a curated guide trimmed from Featured remains reachable through Historical with its start offset", () => {
+  const [curated] = getCuratedPlaylistResearchArchive().filter(source => Number(source.startSeconds) > 0);
+  assert.ok(curated, "The fixture needs a curated source with an explicit YouTube start offset.");
+  const currentCandidates = Array.from({ length: 121 }, (_value, index) => ({
+    id: `cur${String(index).padStart(8, "0")}`,
+    platform: "youtube",
+    channel: "Current Coach",
+    channelKind: "creator",
+    title: `Current guide ${index}`,
+    publishedAt: new Date(2026, 6, 1, 0, index).toISOString(),
+    isLive: false,
+    wasLive: false,
+    isVod: false,
+    isShort: false,
+    isValorant: true
+  }));
+  const featured = buildFeaturedPlaylist([...currentCandidates, curated]);
+  assert.equal(featured.items.some(item => item.id === curated.id), false, "The older curated record should be trimmed from the 120-card Featured feed.");
+  const historical = buildHistoricalPlaylistArchive([curated], featured.items);
+  const reachable = historical.items.find(item => item.id === curated.id);
+  assert.ok(reachable, "A curated record trimmed from Featured must remain available in Historical.");
+  assert.equal(reachable.startSeconds, curated.startSeconds, "Historical playback must retain the owner's exact start offset.");
 });
 
 test("every curated archive source is present in the generated embedded registry", () => {

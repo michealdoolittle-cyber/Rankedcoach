@@ -28,6 +28,9 @@ export const TRUSTED_LIBRARY_SITES = Object.freeze([
   Object.freeze({ id: "valorantinfo", kind: "synthesized", url: "https://valorantinfo.gg/maps/{slug}/" })
 ]);
 const PLAYLIST_CACHE_WINDOW_MS = 5 * 60 * 1000;
+const PLAYLIST_YOUTUBE_LIKE_METRIC_CACHE_PREFIX = "playlist:youtube-like-metric:";
+const PLAYLIST_YOUTUBE_LIKE_METRIC_CACHE_TTL_SECONDS = 12 * 60 * 60;
+const PLAYLIST_YOUTUBE_LIKE_METRIC_UNAVAILABLE_CACHE_TTL_SECONDS = 60 * 60;
 const TWITCH_TOKEN_CACHE_KEY = "playlist:twitch-token";
 const TWITCH_API_ROOT = "https://api.twitch.tv/helix";
 const PLAYLIST_CLASSIFICATION_REVIEW_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -262,6 +265,38 @@ export function mergePlaylistResearchArchive(staleItems = [], currentItems = [],
   ]);
 }
 
+/**
+ * Builds the public, intentionally separate Historical Playlist archive.
+ *
+ * The owner-curated guide manifest was originally registered solely for the
+ * private research pipeline. It is public video metadata, though, and players
+ * need a durable way to find those map, agent, and role guides without
+ * displacing the time-bounded Featured feed. Keep the two collections
+ * separate: a guide already present in the actual Featured result is omitted
+ * here by canonical platform/video identity, but a candidate merely trimmed
+ * from the 120-card Featured cap remains discoverable in Historical.
+ */
+export function buildHistoricalPlaylistArchive(
+  curatedItems = [],
+  featuredItems = [],
+  patchLabel = "",
+  suppressedIds = new Set(),
+  now = Date.now()
+) {
+  const featuredIdentities = new Set((Array.isArray(featuredItems) ? featuredItems : [])
+    .map(playlistResearchIdentity)
+    .filter(Boolean));
+  const historicalCandidates = dedupePlaylistVideos(Array.isArray(curatedItems) ? curatedItems : [])
+    .filter(video => !featuredIdentities.has(playlistResearchIdentity(video)));
+  return buildFeaturedPlaylist(
+    historicalCandidates,
+    patchLabel,
+    suppressedIds,
+    now,
+    { maxItems: PLAYLIST_KNOWLEDGE_SOURCE_MAX_ITEMS }
+  );
+}
+
 export function getPlaylistGuideSearchTargets() {
   return GUIDE_SEARCH_TARGETS.map(target => Object.freeze({ ...target }));
 }
@@ -459,6 +494,123 @@ async function enrichYouTubeVideos(videos = [], apiKey = "") {
     };
     return Object.freeze({ ...enriched, isShort: hasYouTubeShortCue(enriched), isVod: wasLive, isValorant: hasValorantMetadata(enriched) });
   });
+}
+
+function getYouTubeVideoId(video = {}) {
+  const platform = String(video.platform || "youtube").trim().toLowerCase();
+  const id = String(video.upstreamId || video.id || "").trim();
+  return platform === "youtube" && /^[A-Za-z0-9_-]{11}$/.test(id) ? id : "";
+}
+
+function parseYouTubeLikeCount(value) {
+  if (typeof value !== "number" && (typeof value !== "string" || !/^\d+$/.test(value))) return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function buildYouTubeLikeMetric(status = "unavailable", likeCount = null) {
+  const verifiedLikeCount = status === "verified" ? parseYouTubeLikeCount(likeCount) : null;
+  return Object.freeze({
+    youtubeLikeCount: verifiedLikeCount,
+    youtubeLikeMetricStatus: verifiedLikeCount === null ? "unavailable" : "verified",
+    ...(verifiedLikeCount === null ? {} : { youtubeLikeMetricSource: "youtube-data-api-v3" })
+  });
+}
+
+async function readCachedYouTubeLikeMetric(kv, videoId = "") {
+  if (!kv?.get || !videoId) return null;
+  try {
+    const cached = await kv.get(`${PLAYLIST_YOUTUBE_LIKE_METRIC_CACHE_PREFIX}${videoId}`, "json");
+    if (!cached || Date.parse(cached.expiresAt || 0) <= Date.now()) return null;
+    if (cached.status === "verified" && parseYouTubeLikeCount(cached.likeCount) !== null) {
+      return buildYouTubeLikeMetric("verified", cached.likeCount);
+    }
+    return cached.status === "unavailable" ? buildYouTubeLikeMetric("unavailable") : null;
+  } catch {
+    // Metrics are optional enrichment. A cache read failure must not hide the Playlist.
+    return null;
+  }
+}
+
+async function writeCachedYouTubeLikeMetric(kv, videoId = "", metric = {}) {
+  if (!kv?.put || !videoId) return;
+  const verified = metric.youtubeLikeMetricStatus === "verified" && Number.isSafeInteger(metric.youtubeLikeCount);
+  const ttl = verified ? PLAYLIST_YOUTUBE_LIKE_METRIC_CACHE_TTL_SECONDS : PLAYLIST_YOUTUBE_LIKE_METRIC_UNAVAILABLE_CACHE_TTL_SECONDS;
+  const record = {
+    status: verified ? "verified" : "unavailable",
+    likeCount: verified ? metric.youtubeLikeCount : null,
+    checkedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + ttl * 1000).toISOString()
+  };
+  try {
+    await kv.put(`${PLAYLIST_YOUTUBE_LIKE_METRIC_CACHE_PREFIX}${videoId}`, JSON.stringify(record), { expirationTtl: ttl });
+  } catch {
+    // A failed cache write only means the next refresh will re-check YouTube.
+  }
+}
+
+/**
+ * Adds only official YouTube like counts to public Playlist records.
+ *
+ * `statistics.likeCount` comes from YouTube Data API v3. There is deliberately
+ * no guessed count, scrape, or in-app rating fallback: a missing API key,
+ * inaccessible video, disabled rating, or upstream failure is marked plainly
+ * as unavailable and the card keeps its direct YouTube link.
+ */
+export async function enrichYouTubeLikeMetrics(videos = [], env = {}) {
+  const sourceVideos = Array.isArray(videos) ? videos : [];
+  const apiKey = String(env.YOUTUBE_DATA_API_KEY || "").trim();
+  const videoIds = [...new Set(sourceVideos.map(getYouTubeVideoId).filter(Boolean))];
+  if (!videoIds.length) return Object.freeze(sourceVideos.map(video => Object.freeze({ ...video })));
+  if (!apiKey) return Object.freeze(sourceVideos.map(video => {
+    const videoId = getYouTubeVideoId(video);
+    return Object.freeze(videoId ? { ...video, ...buildYouTubeLikeMetric("unavailable") } : { ...video });
+  }));
+
+  const cachedEntries = await Promise.all(videoIds.map(async videoId => [
+    videoId,
+    await readCachedYouTubeLikeMetric(env.CONTENT_AUTOMATION, videoId)
+  ]));
+  const metrics = new Map(cachedEntries.filter(([, metric]) => metric));
+  const uncachedIds = videoIds.filter(videoId => !metrics.has(videoId));
+  const fetchedMetrics = new Map();
+
+  for (let index = 0; index < uncachedIds.length; index += 50) {
+    const ids = uncachedIds.slice(index, index + 50);
+    const url = new URL(`${YOUTUBE_API_ROOT}/videos`);
+    url.searchParams.set("part", "statistics");
+    url.searchParams.set("id", ids.join(","));
+    url.searchParams.set("key", apiKey);
+    try {
+      const payload = await fetchJson(url);
+      const returnedIds = new Set();
+      for (const item of payload.items || []) {
+        const videoId = String(item?.id || "");
+        if (!ids.includes(videoId)) continue;
+        returnedIds.add(videoId);
+        fetchedMetrics.set(videoId, buildYouTubeLikeMetric("verified", item?.statistics?.likeCount));
+      }
+      // A valid API response with no item (private/deleted) or no public count
+      // is an honest unavailable state and can be cached briefly.
+      ids.filter(videoId => !returnedIds.has(videoId)).forEach(videoId => {
+        fetchedMetrics.set(videoId, buildYouTubeLikeMetric("unavailable"));
+      });
+    } catch {
+      // Keep this refresh healthy if YouTube is temporarily unavailable. Do not
+      // cache a transient error; the next request can recover with a real count.
+    }
+  }
+
+  await Promise.allSettled([...fetchedMetrics.entries()].map(([videoId, metric]) =>
+    writeCachedYouTubeLikeMetric(env.CONTENT_AUTOMATION, videoId, metric)
+  ));
+  fetchedMetrics.forEach((metric, videoId) => metrics.set(videoId, metric));
+
+  return Object.freeze(sourceVideos.map(video => {
+    const videoId = getYouTubeVideoId(video);
+    const metric = videoId ? metrics.get(videoId) || buildYouTubeLikeMetric("unavailable") : null;
+    return Object.freeze(metric ? { ...video, ...metric } : { ...video });
+  }));
 }
 
 async function fetchJson(url, init = {}) {
@@ -1108,7 +1260,29 @@ export async function handlePlaylistRequest(env = {}) {
     cached?.cachedAt
     && Date.now() - Date.parse(cached.cachedAt) < PLAYLIST_CACHE_WINDOW_MS
     && Array.isArray(cachedArchive?.items)
-  ) return cached;
+  ) {
+    // A deployment can encounter a still-valid cache written before the
+    // public archive field existed. Derive it from the verified manifest so
+    // the new Historical tab is immediately complete instead of waiting for
+    // the next feed refresh, while respecting the same suppression list.
+    const historicalItems = Array.isArray(cached.historicalItems)
+      ? cached.historicalItems
+      : buildHistoricalPlaylistArchive(
+        getCuratedPlaylistResearchArchive(),
+        cached.items,
+        cached.patchLabel,
+        await readSuppressedVideoIds(env.CONTENT_AUTOMATION)
+      ).items;
+    const [itemsWithLikeMetrics, historicalItemsWithLikeMetrics] = await Promise.all([
+      enrichYouTubeLikeMetrics(cached.items, env),
+      enrichYouTubeLikeMetrics(historicalItems, env)
+    ]);
+    return {
+      ...cached,
+      items: itemsWithLikeMetrics,
+      historicalItems: historicalItemsWithLikeMetrics
+    };
+  }
   const patch = await getCurrentPatch(env);
   const [videoResult, twitchResult] = await Promise.allSettled([
     fetchTrustedChannelVideos(env, { kind: "playlist" }),
@@ -1134,6 +1308,16 @@ export async function handlePlaylistRequest(env = {}) {
     ...researchSubmittedVideos
   ]);
   const playlist = buildFeaturedPlaylist(playlistCandidates, patch.label, suppressed);
+  const historicalArchive = buildHistoricalPlaylistArchive(
+    getCuratedPlaylistResearchArchive(),
+    playlist.items,
+    patch.label,
+    suppressed
+  );
+  const [itemsWithLikeMetrics, historicalItemsWithLikeMetrics] = await Promise.all([
+    enrichYouTubeLikeMetrics(playlist.items, env),
+    enrichYouTubeLikeMetrics(historicalArchive.items, env)
+  ]);
   const cumulativeResearchCandidates = mergePlaylistResearchArchive(
     cachedArchive?.items,
     playlistCandidates,
@@ -1154,6 +1338,11 @@ export async function handlePlaylistRequest(env = {}) {
   const liveStreams = [...youtubeStreams, ...twitchMedia.streams].sort((left, right) => Number(right.viewerCount || 0) - Number(left.viewerCount || 0));
   const payload = {
     ...playlist,
+    items: itemsWithLikeMetrics,
+    // Deliberately independent from `items`: the bounded Featured feed
+    // remains stable, while every verified owner-curated historical guide is
+    // publicly available in its normal category and in Historical Archive.
+    historicalItems: historicalItemsWithLikeMetrics,
     liveStreams,
     liveAvailability: {
       youtube: Boolean(String(env.YOUTUBE_DATA_API_KEY || "").trim()),
