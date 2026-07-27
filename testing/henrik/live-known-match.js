@@ -80,6 +80,13 @@ async function main() {
   assert.equal("finishingDamage" in compactRecord.roundByRound[0].kills[0], false);
 
   const rawMatch = await postJson("/api/henrik/raw", { matchId, region: "na" });
+  const rawRounds = rawMatch?.data?.roundResults || rawMatch?.roundResults || [];
+  const rawKills = rawRounds.flatMap(round => (round?.playerStats || []).flatMap(player => player?.kills || []));
+  const killWithSnapshot = rawKills.find(kill => kill?.victimLocation && Array.isArray(kill?.playerLocations) && kill.playerLocations.length);
+  assert.ok(killWithSnapshot, "Known raw match must retain a kill-moment victim location and player snapshot.");
+  assert.equal(Number.isFinite(Number(killWithSnapshot.victimLocation.x)), true);
+  assert.equal(Number.isFinite(Number(killWithSnapshot.victimLocation.y)), true);
+  assert.equal(killWithSnapshot.playerLocations.some(player => player?.subject && player?.location), true);
   const record = globalThis.RankedCoachMatchRecord.fromHenrikRawMatch(rawMatch, { puuid });
   const kast = globalThis.RankedCoachRoundMetrics.computeMatchKast(record);
 
@@ -93,7 +100,7 @@ async function main() {
   assert.equal(Math.round(kast.overall.percentage), 77);
   assert.equal(kast.overall.tradeSavedRounds, 3);
 
-  console.log("Known v4 and Raw match passed: advanced economy/opening projection, 17/22 KAST, ceremonies, multi-kills, trades, and damage variance.");
+  console.log("Known v4 and Raw match passed: advanced economy/opening projection, 17/22 KAST, ceremonies, multi-kills, trades, damage variance, and a kill-moment location snapshot.");
 }
 
 main().catch(error => {

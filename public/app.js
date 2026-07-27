@@ -251,6 +251,7 @@ function normalizeWarmupLogEntry(entry = {}) {
     postGameAimTrainingCommitted: entry?.postGameAimTrainingCommitted === true,
     postGameCommittedAt: String(entry?.postGameCommittedAt || ""),
     postGameLogEntryId: String(entry?.postGameLogEntryId || ""),
+    sessionProfile: normalizeSessionCoachingProfile(entry?.sessionProfile),
     skipped: entry?.skipped === true,
     status: ["prompted", "completed", "skipped"].includes(entry?.status) ? entry.status : "prompted",
     promptedAt: String(entry?.promptedAt || ""),
@@ -635,6 +636,39 @@ function randomizeDailyWarmupSuggestions() {
     : "No unchecked drills are available to highlight.";
 }
 
+function syncDailyWarmupSessionFields(profile = getSessionCoachingProfile()) {
+  const session = normalizeSessionCoachingProfile(profile);
+  const fields = {
+    dailyWarmupSessionRole: session.role,
+    dailyWarmupSessionMode: session.mode,
+    dailyWarmupAgentMode: session.agentMode,
+    dailyWarmupSessionIntensity: session.intensity,
+    dailyWarmupFocusPreference: session.focusPreference,
+    dailyWarmupIntentTag: session.intentTag,
+    dailyWarmupSessionAgents: session.agents.join(", "),
+    dailyWarmupSessionExclusions: session.exclusions.join(", "),
+    dailyWarmupSessionNote: session.note
+  };
+  Object.entries(fields).forEach(([id, value]) => {
+    const field = document.getElementById(id);
+    if (field) field.value = value;
+  });
+}
+
+function readDailyWarmupSessionFields() {
+  return normalizeSessionCoachingProfile({
+    role: document.getElementById("dailyWarmupSessionRole")?.value,
+    mode: document.getElementById("dailyWarmupSessionMode")?.value,
+    agentMode: document.getElementById("dailyWarmupAgentMode")?.value,
+    intensity: document.getElementById("dailyWarmupSessionIntensity")?.value,
+    focusPreference: document.getElementById("dailyWarmupFocusPreference")?.value,
+    intentTag: document.getElementById("dailyWarmupIntentTag")?.value,
+    agents: document.getElementById("dailyWarmupSessionAgents")?.value,
+    exclusions: document.getElementById("dailyWarmupSessionExclusions")?.value,
+    note: document.getElementById("dailyWarmupSessionNote")?.value
+  });
+}
+
 function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey()) {
   const record = getDailyWarmupRecord(profile, date);
   const warmupMode = document.getElementById("dailyWarmupModal")?.dataset.trainingMode !== "postgame";
@@ -653,6 +687,7 @@ function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.g
   if (weapon) weapon.value = record?.weapon || "";
   const dmTdm = document.getElementById("dailyWarmupDmTdm");
   if (dmTdm) dmTdm.checked = record?.dmTdmSelfReported === true;
+  syncDailyWarmupSessionFields(getSessionCoachingProfile());
   renderDailyWarmupVerification(profile, date);
   renderDailyWarmupCorrelationStatus(profile);
   renderDailyPostgameState(profile, date);
@@ -798,6 +833,7 @@ function saveDailyWarmupCheck() {
     .filter(Boolean)
     .slice(0, DAILY_WARMUP_DRILL_LIMIT);
   const dmTdmSelfReported = document.getElementById("dailyWarmupDmTdm")?.checked === true;
+  const sessionProfile = setSessionCoachingProfile(readDailyWarmupSessionFields());
   if (!drillsSelected.length && !dmTdmSelfReported) {
     const currentRecord = getDailyWarmupRecord(profile, date);
     if (currentRecord && (isDailyWarmupCompleted(currentRecord) || currentRecord.warmupLogEntryId)) {
@@ -831,6 +867,7 @@ function saveDailyWarmupCheck() {
     weapon: drillsSelected.includes("weapon-choice") ? document.getElementById("dailyWarmupWeapon")?.value || "" : "",
     rangeDrillsSelfReported: drillsSelected.length > 0,
     dmTdmSelfReported,
+    sessionProfile,
     warmupFeedMarkerHidden: false,
     completedAt: getDailyWarmupRecord(profile, date)?.completedAt || nowISO()
   });
@@ -8731,7 +8768,9 @@ function answerAskCoachQuestion(question = "") {
   }
 
   const scenarioResponse = getAskCoachScenarioResponse(normalized, q);
-  if (scenarioResponse) return scenarioResponse;
+  if (scenarioResponse) {
+    return `General guidance — this response is not inferred from your imported match data.\n\n${scenarioResponse}`;
+  }
 
   const mapMention = COMPETITIVE_MAP_POOL.find(map => normalized.includes(map.toLowerCase()));
   if (mapMention && (normalized.includes("best agent") || normalized.includes("who") || normalized.includes("agent"))) {
@@ -14811,6 +14850,71 @@ let focusProgressMax = 5;     // sessions required
 let rrSum = 0;
 let sessionRRSum = 0;
 let activeRoleFilter = "any";
+// This is deliberately memory-only. It shapes today's Loadout without becoming a
+// permanent profile preference or a claim about what the player always plays.
+const SESSION_ROLE_KEYS = ["any", "duelist", "controller", "initiator", "sentinel"];
+const SESSION_AGENT_MODES = ["any", "specific", "main-only", "comfort", "secondary", "challenge"];
+const SESSION_QUEUE_MODES = ["main", "growth", "comfort", "challenge", "mechanics", "decision"];
+const SESSION_INTENSITIES = ["light", "steady", "focused", "high"];
+const SESSION_INTENT_TAGS = ["", "lurker", "flanker", "anchor", "rotator", "saver", "entry", "trader", "spike-carrier"];
+
+function normalizeSessionAgentNames(value) {
+  const knownByLower = new Map(allAgents.map(agent => [agent.toLowerCase(), agent]));
+  const values = Array.isArray(value) ? value : String(value || "").split(",");
+  return [...new Set(values
+    .map(item => knownByLower.get(String(item || "").trim().toLowerCase()))
+    .filter(Boolean))].slice(0, allAgents.length);
+}
+
+function selectWeeklyFocusCandidate(candidates = []) {
+  const available = (Array.isArray(candidates) ? candidates : []).filter(candidate => candidate?.available !== false && candidate?.label);
+  if (!available.length) return null;
+  const rank = { High: 3, Medium: 2, Low: 1 };
+  return available.slice().sort((left, right) => {
+    const confidenceGap = (rank[right?.confidence] || 0) - (rank[left?.confidence] || 0);
+    return confidenceGap || Number(right?.priority || 0) - Number(left?.priority || 0);
+  })[0];
+}
+
+function normalizeSessionCoachingProfile(value = {}) {
+  const profile = value && typeof value === "object" ? value : {};
+  const role = String(profile.role || profile.allowedRole || "any").toLowerCase();
+  const agentMode = String(profile.agentMode || "any").toLowerCase();
+  const mode = String(profile.mode || "main").toLowerCase();
+  const intensity = String(profile.intensity || "steady").toLowerCase();
+  const intentTag = String(profile.intentTag || "").toLowerCase();
+  return {
+    role: SESSION_ROLE_KEYS.includes(role) ? role : "any",
+    agentMode: SESSION_AGENT_MODES.includes(agentMode) ? agentMode : "any",
+    agents: normalizeSessionAgentNames(profile.agents),
+    exclusions: normalizeSessionAgentNames(profile.exclusions),
+    mode: SESSION_QUEUE_MODES.includes(mode) ? mode : "main",
+    intensity: SESSION_INTENSITIES.includes(intensity) ? intensity : "steady",
+    focusPreference: profile.focusPreference === "random" ? "random" : "weekly",
+    note: String(profile.note || "").trim().slice(0, 360),
+    intentTag: SESSION_INTENT_TAGS.includes(intentTag) ? intentTag : ""
+  };
+}
+
+let sessionCoachingProfile = {
+  role: "any", agentMode: "any", agents: [], exclusions: [], mode: "main",
+  intensity: "steady", focusPreference: "weekly", note: "", intentTag: ""
+};
+
+function getSessionCoachingProfile() {
+  return normalizeSessionCoachingProfile(sessionCoachingProfile);
+}
+
+function setSessionCoachingProfile(next = {}) {
+  sessionCoachingProfile = normalizeSessionCoachingProfile({ ...sessionCoachingProfile, ...next });
+  activeRoleFilter = sessionCoachingProfile.role;
+  return sessionCoachingProfile;
+}
+
+function resetSessionCoachingProfile() {
+  sessionCoachingProfile = normalizeSessionCoachingProfile();
+  activeRoleFilter = "any";
+}
 let currentMap = "";
 
 let logEntries = [];
@@ -16539,8 +16643,47 @@ const focusesList = [
   "Retake Timing",
   "Comms Discipline",
   "Weapon Category Use",
-  "Mental Reset"
+  "Mental Reset",
+  "First Contact",
+  "Angle Discipline",
+  "Spacing",
+  "Pacing",
+  "Objective Play",
+  "Map Preparation",
+  "Role Teamwork",
+  "Damage Output",
+  "Multi-Kill Conversion",
+  "Clutch Discipline",
+  "Self Comms",
+  "Weapon Pattern"
 ];
+
+const LOADOUT_FOCUS_BY_MODE = {
+  mechanics: ["Crosshair Discipline", "Duel Discipline", "Weapon Category Use", "Round Survivability"],
+  decision: ["Positioning", "Trading", "Timing", "Information Gathering", "Post-Plant Control", "Awareness Check", "Retake Timing", "Comms Discipline"],
+  growth: ["Duel Discipline", "Positioning", "Trading", "Timing", "Utility Usage", "Utility Timing", "Entry", "Round Survivability"],
+  comfort: ["Crosshair Discipline", "Positioning", "Information Gathering", "Post-Plant Control", "Comms Discipline"],
+  challenge: ["Entry", "Trading", "Utility Timing", "Retake Timing", "Eco Conversion", "Mental Reset"]
+};
+
+function getLoadoutAgentPool() {
+  const session = getSessionCoachingProfile();
+  const role = session.role !== "any" ? session.role : activeRoleFilter;
+  let pool = role && role !== "any" ? allAgents.filter(agent => agentRoles[agent] === role) : allAgents.slice();
+  const requested = new Set(session.agents);
+  if (session.agentMode !== "any" && requested.size) pool = pool.filter(agent => requested.has(agent));
+  pool = pool.filter(agent => !session.exclusions.includes(agent));
+  // An empty filtered pool must never quietly re-introduce an excluded pick.
+  return pool;
+}
+
+function getLoadoutFocusPool() {
+  const session = getSessionCoachingProfile();
+  const locked = getLockedWeeklyFocus();
+  if (session.focusPreference === "weekly" && locked && focusesList.includes(locked)) return [locked];
+  const constrained = LOADOUT_FOCUS_BY_MODE[session.mode];
+  return Array.isArray(constrained) && constrained.length ? constrained : focusesList;
+}
 
 const agentRoles = {
   Jett:"duelist",Raze:"duelist",Reyna:"duelist",Phoenix:"duelist",
@@ -41982,6 +42125,9 @@ function getLogFormValues(){
     mood: selectedLogMood,
     teamComms: selectedLogTeamComms,
     selfComms: selectedLogSelfComms,
+    intentTag: SESSION_INTENT_TAGS.includes(String(document.getElementById("logIntentTag")?.value || ""))
+      ? String(document.getElementById("logIntentTag")?.value || "")
+      : "",
     notes: logNotes?.value?.trim() || "",
     role: activeRole || "",
     manualMode: isManualEntryModeEnabled(),
@@ -42208,11 +42354,13 @@ if(entry.focus){
   const focusOtherWrap = document.getElementById("focusOtherWrap");
   const preview = document.getElementById("focusPreviewText");
   const logAgentImg = document.getElementById("logAgentImg");
+  const logIntentTag = document.getElementById("logIntentTag");
 
   if(logMap) logMap.value = "";
   if(logNotes) logNotes.value = "";
   if(logFocusSelect) logFocusSelect.value = "";
   if(logFocusOther) logFocusOther.value = "";
+  if(logIntentTag) logIntentTag.value = "";
   if(focusOtherWrap){
     focusOtherWrap.style.display = "none";
     focusOtherWrap.hidden = true;
@@ -42262,6 +42410,7 @@ function editLogEntry(id, options = {}){
   const preview = document.getElementById("focusPreviewText");
   const logMapEl = document.getElementById("logMap");
   const notesEl = document.getElementById("logNotes");
+  const intentTagEl = document.getElementById("logIntentTag");
 
   activeAgent = entry.agent || activeAgent;
   if(entry.agent && agentRoles?.[entry.agent]){
@@ -42290,6 +42439,7 @@ function editLogEntry(id, options = {}){
 
   if(logMapEl) logMapEl.value = entry.map || "";
   if(notesEl) notesEl.value = entry.notes;
+  if(intentTagEl) intentTagEl.value = SESSION_INTENT_TAGS.includes(String(entry.intentTag || "")) ? entry.intentTag : "";
   setManualReportFormValues(entry.manualReport || entry.manual || null);
 
   selectedLogRating = Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null;
@@ -43842,6 +43992,7 @@ function updateProfile(id, data){
 function setActiveProfile(id){
 
   const current = getActiveProfile();
+  const switchingProfile = String(current?.id || "") !== String(id || "");
 
   // save current matches
   if(current){
@@ -43849,6 +44000,7 @@ function setActiveProfile(id){
   }
 
   activeProfileId = id;
+  if (switchingProfile) resetSessionCoachingProfile();
   activeStatsActLabel = "";
 
   const next = getActiveProfile();
@@ -47994,13 +48146,13 @@ if(icon){
   // RANDOM AGENT + FOCUS
   // ---------------------------
 
-  let agents = allAgents;
+  const agents = getLoadoutAgentPool();
+  const focusPool = getLoadoutFocusPool();
 
-  if (activeRoleFilter !== "any") {
-    agents = allAgents.filter(a => agentRoles[a] === activeRoleFilter);
+  if (!agents.length) {
+    showToast?.("No eligible agent remains after this session's role and exclusion filters.", { tone: "neutral" });
+    return;
   }
-
-  if (!agents.length) return;
 
   let pick;
   do {
@@ -48009,8 +48161,8 @@ if(icon){
 
   let newFocus;
   do {
-    newFocus = focusesList[Math.floor(Math.random() * focusesList.length)];
-  } while (focusesList.length > 1 && newFocus === focusDisplay.textContent);
+    newFocus = focusPool[Math.floor(Math.random() * focusPool.length)];
+  } while (focusPool.length > 1 && newFocus === focusDisplay.textContent);
 
   agentName.classList.remove("agent-neutral");
   focusDisplay.classList.remove("focus-neutral");
@@ -50554,7 +50706,7 @@ function renderInsightsModel() {
   const model = getPlayerModel();
   const topInsights = (model?.insights || []).slice(0, 6);
   const insightDisplayPool = getInsightDisplayPool(model);
-  const topWeeklyCandidate = model?.scoring?.weeklyCandidates?.[0] || null;
+  const topWeeklyCandidate = selectWeeklyFocusCandidate(model?.scoring?.weeklyCandidates) || null;
   const lockedFocus = getLockedWeeklyFocus();
 
   cachedInsights = insightDisplayPool.slice();

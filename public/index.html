@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260726-situational-callouts-01">
+  <link rel="stylesheet" href="app.css?v=20260727-coaching-loop-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -283,6 +283,20 @@ AUTH MODAL
         Pick up to four drills before playing ranked. Range work is self-reported; DM and TDM can be checked against Henrik after your next sync.
         A warm-up helps mechanical consistency and in-game focus.
       </div>
+      <section class="daily-warmup-session" data-daily-training-section="warmup" aria-labelledby="dailyWarmupSessionTitle">
+        <div class="daily-warmup-session-heading"><strong id="dailyWarmupSessionTitle">This session</strong><span>Optional preferences constrain Loadout for this browser session only.</span></div>
+        <div class="daily-warmup-session-grid">
+          <label><span>Role</span><select id="dailyWarmupSessionRole"><option value="any">Any role</option><option value="duelist">Duelist</option><option value="controller">Controller</option><option value="initiator">Initiator</option><option value="sentinel">Sentinel</option></select></label>
+          <label><span>Queue mode</span><select id="dailyWarmupSessionMode"><option value="main">Main</option><option value="growth">Growth</option><option value="comfort">Comfort</option><option value="challenge">Challenge</option><option value="mechanics">Mechanics</option><option value="decision">Decision</option></select></label>
+          <label><span>Agent pool</span><select id="dailyWarmupAgentMode"><option value="any">Any agent</option><option value="specific">Specific agents</option><option value="main-only">Main only</option><option value="comfort">Comfort pool</option><option value="secondary">Secondary pool</option><option value="challenge">Challenge pool</option></select></label>
+          <label><span>Intensity</span><select id="dailyWarmupSessionIntensity"><option value="steady">Steady</option><option value="light">Light</option><option value="focused">Focused</option><option value="high">High</option></select></label>
+          <label><span>Focus preference</span><select id="dailyWarmupFocusPreference"><option value="weekly">Continue weekly focus</option><option value="random">Vary the focus</option></select></label>
+          <label><span>Intent tag</span><select id="dailyWarmupIntentTag"><option value="">No intent tag</option><option value="lurker">Lurker</option><option value="flanker">Flanker</option><option value="anchor">Anchor</option><option value="rotator">Rotator</option><option value="saver">Saver</option><option value="entry">Entry</option><option value="trader">Trader</option><option value="spike-carrier">Spike carrier</option></select></label>
+        </div>
+        <label class="daily-warmup-session-wide"><span>Agents to include (comma-separated)</span><input id="dailyWarmupSessionAgents" type="text" maxlength="180" placeholder="Jett, Omen, Viper"></label>
+        <label class="daily-warmup-session-wide"><span>Agents to exclude (comma-separated)</span><input id="dailyWarmupSessionExclusions" type="text" maxlength="180" placeholder="Leave blank to exclude nobody"></label>
+        <label class="daily-warmup-session-wide"><span>Session note</span><textarea id="dailyWarmupSessionNote" maxlength="360" placeholder="What are you trying to practice or what context should coaching respect?"></textarea></label>
+      </section>
       <div class="daily-warmup-count" data-daily-training-section="warmup"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
       <div class="daily-warmup-randomizer" data-daily-training-section="warmup">
         <button id="dailyWarmupRandomize" class="daily-warmup-randomize" type="button" aria-controls="dailyWarmupGrid">
@@ -2273,6 +2287,12 @@ stroke-linejoin="round"/>
         <button type="button" class="logging-quick-chip" data-log-quick="Cheater.">Cheater</button>
       </div>
     </div>
+    <label class="logging-intent-tag">
+      <span>What were you mainly trying to do?</span>
+      <select id="logIntentTag" aria-label="Post-match intent">
+        <option value="">No intent tag</option><option value="lurker">Lurk</option><option value="flanker">Flank</option><option value="anchor">Anchor</option><option value="rotator">Rotate</option><option value="saver">Save</option><option value="entry">Entry</option><option value="trader">Trade</option><option value="spike-carrier">Carry spike</option>
+      </select>
+    </label>
     <textarea id="logNotes" class="logging-notes" placeholder="What actually happened in the match? Which focus category should the next review block target?"></textarea>
   </div>
 </div>
@@ -2419,7 +2439,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260726-situational-callouts-01"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
-  <script type="module" src="app.js?v=20260726-situational-callouts-01"></script>
+  <script type="module" src="app.js?v=20260727-coaching-loop-01"></script>
   <script type="module" src="knowledge-review.js?v=20260726-situational-callouts-01"></script>
 </body>
 </html>
