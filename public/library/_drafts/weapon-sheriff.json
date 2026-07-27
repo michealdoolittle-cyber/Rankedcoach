@@ -55,7 +55,7 @@
     "entityName": "Sheriff",
     "operation": "merge",
     "groupId": "sidearms",
-    "generatedAt": "2026-07-27T10:14:22.887Z",
+    "generatedAt": "2026-07-27T15:20:04.841Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-27"
