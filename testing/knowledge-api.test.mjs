@@ -22,6 +22,10 @@ class MemoryKv {
     this.values.set(key, String(value));
   }
 
+  async delete(key) {
+    this.values.delete(key);
+  }
+
   async list({ prefix = "" } = {}) {
     return {
       keys: [...this.values.keys()].filter(key => key.startsWith(prefix)).map(name => ({ name })),
@@ -90,6 +94,45 @@ test("public knowledge route exposes only the publication index", async () => {
   assert.match(body.items[0].wording, /Trade the first lane/);
   assert.doesNotMatch(JSON.stringify(body), /Private transcript wording/);
   assert.doesNotMatch(JSON.stringify(body), /Never expose|providerMetadata|Michael/);
+});
+
+test("owner transcript imports invalidate and refresh the public Playlist bridge", async () => {
+  const kv = new MemoryKv({
+    "playlist:featured": JSON.stringify({ cachedAt: "2026-07-27T00:00:00.000Z", items: [] })
+  });
+  let refreshCount = 0;
+  const request = new Request("https://www.rankedcoach.gg/api/knowledge/transcripts", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer owner-token",
+      "Content-Type": "application/json",
+      Origin: "https://www.rankedcoach.gg"
+    },
+    body: JSON.stringify({
+      source: {
+        platform: "youtube",
+        url: "https://www.youtube.com/watch?v=abcdefghijk",
+        title: "Owner submitted Bind guide",
+        publisher: "Coach A"
+      },
+      transcript: "00:12 Pair the first utility with a teammate ready to trade."
+    })
+  });
+  const response = await handleKnowledgeOwnerRequest(request, { CONTENT_AUTOMATION: kv }, {
+    refreshPlaylist: async () => {
+      refreshCount += 1;
+      assert.equal(await kv.get("playlist:featured", "json"), null, "The stale Playlist cache must be removed before refresh.");
+    },
+    fetchImpl: async () => Response.json({
+      id: "owner-id",
+      email: "owner@example.com",
+      app_metadata: { role: "owner" },
+      user_metadata: { username: "Michael" }
+    })
+  });
+  assert.equal(response.status, 201);
+  assert.equal(refreshCount, 1);
+  assert.equal(await kv.get("playlist:featured", "json"), null);
 });
 
 test("knowledge API errors use authentication and validation status codes", async () => {

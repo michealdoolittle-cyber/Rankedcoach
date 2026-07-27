@@ -217,6 +217,11 @@ function startServer() {
         response.end(JSON.stringify({ items: [], liveStreams: [], newIn24Hours: 0 }));
         return;
       }
+      if (url === "/api/content/knowledge") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ updatedAt: null, items: [] }));
+        return;
+      }
       if (url === "/api/content/skin-media") {
         response.writeHead(200, { "Content-Type": "application/json" });
         response.end(JSON.stringify({ matches: {} }));

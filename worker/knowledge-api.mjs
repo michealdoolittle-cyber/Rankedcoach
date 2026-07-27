@@ -95,10 +95,22 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
   const body = await readJson(request);
   if (url.pathname === "/api/knowledge/transcripts") {
-    return json(await ingestTimestampedKnowledgeTranscript(kv, body, {
+    const ingestion = await ingestTimestampedKnowledgeTranscript(kv, body, {
       libraryAudit: options.libraryAudit,
       libraryKnowledgeIndex: options.libraryKnowledgeIndex
-    }), { status: 201 });
+    });
+    // Owner-submitted Research videos are public Playlist candidates now. Drop
+    // the short-lived Playlist cache before refreshing so the submitted source
+    // appears immediately without exposing its private transcript or claims.
+    await kv.delete?.("playlist:featured");
+    if (typeof options.refreshPlaylist === "function") {
+      try {
+        await options.refreshPlaylist();
+      } catch (error) {
+        console.warn("Playlist refresh skipped after owner transcript import", error?.message || error);
+      }
+    }
+    return json(ingestion, { status: 201 });
   }
   if (url.pathname === "/api/knowledge/run") {
     if (typeof options.refreshPlaylist === "function") {

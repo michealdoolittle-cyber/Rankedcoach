@@ -1,4 +1,5 @@
 import { CURATED_PLAYLIST_RESEARCH_ARCHIVE } from "./curated-playlist-research.mjs";
+import { KNOWLEDGE_STORAGE_KEYS } from "./knowledge-pipeline.mjs";
 
 const DEFAULT_NTFY_TOPIC = "rankedcoach-deploys-mk7x2q";
 const VERSION_URL = "https://valorant-api.com/v1/version";
@@ -32,6 +33,7 @@ const TWITCH_API_ROOT = "https://api.twitch.tv/helix";
 const PLAYLIST_CLASSIFICATION_REVIEW_TTL_SECONDS = 7 * 24 * 60 * 60;
 const PLAYLIST_GUIDE_SEARCH_CACHE_TTL_SECONDS = 14 * 24 * 60 * 60;
 const PLAYLIST_GUIDE_SEARCH_MISS_TTL_SECONDS = 24 * 60 * 60;
+const OWNER_RESEARCH_SOURCE_KIND = "owner-imported-educational-video";
 
 export const AGENT_NAMES = Object.freeze([
   "Astra", "Breach", "Brimstone", "Chamber", "Clove", "Cypher", "Deadlock", "Fade", "Gekko",
@@ -159,6 +161,66 @@ export function getCuratedPlaylistResearchArchive() {
 // Kept as a video-oriented alias for callers that treat every Playlist source
 // as media rather than as an archive record.
 export const getCuratedPlaylistResearchVideos = getCuratedPlaylistResearchArchive;
+
+function normalizeOwnerResearchPlaylistVideo(source = {}) {
+  // The source registry is the knowledge pipeline's deliberately public-safe
+  // boundary. Keep this mapping explicit: private transcripts, claims,
+  // confidence, and consensus data must never reach the public Playlist.
+  if (String(source.sourceKind || "").trim() !== OWNER_RESEARCH_SOURCE_KIND) return null;
+  const platform = String(source.platform || "").trim().toLowerCase();
+  const upstreamId = String(source.upstreamId || "").trim();
+  const validYouTubeId = /^[A-Za-z0-9_-]{11}$/.test(upstreamId);
+  const validTwitchId = /^\d+$/.test(upstreamId);
+  if ((platform !== "youtube" || !validYouTubeId) && (platform !== "twitch" || !validTwitchId)) return null;
+
+  const title = String(source.title || "").trim();
+  const channel = String(source.publisher || "").trim();
+  const url = String(source.url || "").trim();
+  if (!title || !channel || !url) return null;
+  const topicTypeOverride = PLAYLIST_TOPIC_TYPE_SET.has(String(source.topicType || "").trim())
+    ? String(source.topicType).trim()
+    : "";
+  const entities = Object.freeze((Array.isArray(source.entities) ? source.entities : [])
+    .map(entity => String(entity || "").trim())
+    .filter(Boolean));
+
+  return Object.freeze({
+    id: upstreamId,
+    upstreamId,
+    platform,
+    channel,
+    channelKind: "owner-submitted",
+    title,
+    url,
+    thumbnail: platform === "youtube" ? `https://i.ytimg.com/vi/${upstreamId}/hqdefault.jpg` : "",
+    sourceType: "owner-submitted-research",
+    topicTypeOverride,
+    entities,
+    publishedAt: String(source.registeredAt || "").trim(),
+    isLive: false,
+    wasLive: false,
+    isVod: platform === "twitch",
+    isShort: false,
+    hasStructuralMediaMetadata: true,
+    isValorant: true
+  });
+}
+
+/**
+ * Returns public Playlist candidates for owner-submitted Research videos.
+ *
+ * This intentionally reads only the source registry's normalized metadata
+ * fields. The private transcript, claims, review, and consensus KV records
+ * remain outside this reader and cannot leak through the Playlist response.
+ */
+export async function getResearchSubmittedVideos(kv) {
+  if (!kv?.get) return Object.freeze([]);
+  const registry = await kv.get(KNOWLEDGE_STORAGE_KEYS.sourceRegistry, "json");
+  const videos = (Array.isArray(registry?.sources) ? registry.sources : [])
+    .map(normalizeOwnerResearchPlaylistVideo)
+    .filter(Boolean);
+  return Object.freeze(videos);
+}
 
 function playlistResearchIdentity(video = {}) {
   const url = String(video.url || "");
@@ -1061,12 +1123,16 @@ export async function handlePlaylistRequest(env = {}) {
   if (twitchResult.status === "rejected") console.warn("Twitch media refresh skipped", twitchResult.reason?.message || twitchResult.reason);
   const suppressed = await readSuppressedVideoIds(env.CONTENT_AUTOMATION);
   const youtubeStreams = buildYouTubeLiveStreams(videos);
-  const playlistCandidates = [
+  const researchSubmittedVideos = await getResearchSubmittedVideos(env.CONTENT_AUTOMATION);
+  const playlistCandidates = dedupePlaylistVideos([
     ...getStaticPlaylistVideos(),
     ...guideSearchVideos,
     ...videos.filter(video => !video.isLive),
-    ...twitchMedia.vods.slice(0, MAX_TWITCH_ARCHIVES)
-  ];
+    ...twitchMedia.vods.slice(0, MAX_TWITCH_ARCHIVES),
+    // Existing curated/trusted records retain precedence when an owner later
+    // submits the same video for Research; the Playlist stays duplicate-free.
+    ...researchSubmittedVideos
+  ]);
   const playlist = buildFeaturedPlaylist(playlistCandidates, patch.label, suppressed);
   const cumulativeResearchCandidates = mergePlaylistResearchArchive(
     cachedArchive?.items,

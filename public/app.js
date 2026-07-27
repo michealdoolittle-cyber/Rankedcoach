@@ -41010,6 +41010,7 @@ function selectAgentFromModal(agent){
   void strip.offsetWidth;
 
   strip.style.transition = `transform ${spinDuration}ms cubic-bezier(.23,1,.32,1)`;
+  animateLoadoutSlotHandle(spinDuration);
   strip.style.transform = `translateY(${finalY}px)`;
 
   setTimeout(() => {
@@ -48099,6 +48100,25 @@ svg.appendChild(dot);
 // SLOT MACHINE SPINNER (ORIGINAL ENGINE)
 // ============================
 
+// The handle stays inside the existing spin button, so the slot-machine
+// treatment adds no competing click target. Its cycle begins when the reel
+// begins and shares that reel's exact duration.
+function animateLoadoutSlotHandle(duration = spinDuration) {
+  const handle = document.getElementById("loadoutSlotHandle");
+  const arm = handle?.querySelector(".loadout-slot-handle-arm");
+  if (!handle || !arm) return;
+
+  const cycleDuration = Math.max(0, Number(duration) || spinDuration);
+  handle.style.setProperty("--loadout-handle-spin-duration", `${cycleDuration}ms`);
+  arm.classList.remove("is-pulling");
+  void arm.offsetWidth;
+  arm.classList.add("is-pulling");
+
+  window.setTimeout(() => {
+    arm.classList.remove("is-pulling");
+  }, cycleDuration + 40);
+}
+
 function spinLoadout() {
   spinIconLocked = false;
   const PRE_SPIN_DELAY = 220;
@@ -48166,6 +48186,11 @@ if(icon){
 
   agentName.classList.remove("agent-neutral");
   focusDisplay.classList.remove("focus-neutral");
+
+  // Start the physical pull at the same point the reel starts moving below.
+  setTimeout(() => {
+    animateLoadoutSlotHandle(spinDuration);
+  }, PRE_SPIN_DELAY);
 
 
   // ---------------------------
@@ -48409,6 +48434,7 @@ function spinLoadoutFromLogging(agent, focus){
   strip.style.transition =
     `transform 700ms cubic-bezier(.23,1,.32,1)`; // ðŸ”¥ shorter spin
 
+  animateLoadoutSlotHandle(700);
   strip.style.transform = `translateY(${finalY}px)`;
 
   // ========================

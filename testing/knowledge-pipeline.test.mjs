@@ -35,6 +35,8 @@ import {
   buildFeaturedPlaylist,
   dedupePlaylistVideos,
   getCuratedPlaylistResearchArchive,
+  getResearchSubmittedVideos,
+  handlePlaylistRequest,
   mergePlaylistResearchArchive
 } from "../worker/content-automation.mjs";
 import { CURATED_PLAYLIST_RESEARCH_ARCHIVE } from "../worker/curated-playlist-research.mjs";
@@ -153,6 +155,118 @@ test("embedded source registration distinguishes research from inventory", async
   assert.equal(registered.length, 3);
   const registry = await kv.get(KNOWLEDGE_STORAGE_KEYS.sourceRegistry, "json");
   assert.equal(registry.sources.length, 3);
+});
+
+test("owner-submitted Research sources become safe, duplicate-free Playlist candidates", async () => {
+  const kv = new MemoryKv();
+  await registerKnowledgeSources(kv, [
+    {
+      id: "abcdefghijk",
+      platform: "youtube",
+      title: "Bind teamplay guide",
+      publisher: "Coach A",
+      sourceKind: "owner-imported-educational-video",
+      topicType: "Map Knowledge",
+      entities: ["Bind"]
+    },
+    {
+      id: "lmnopqrstuv",
+      platform: "youtube",
+      title: "Automatic research inventory source",
+      publisher: "Coach B",
+      sourceKind: "map-guide"
+    }
+  ], new Date("2026-07-27T00:00:00.000Z"));
+  const registry = await kv.get(KNOWLEDGE_STORAGE_KEYS.sourceRegistry, "json");
+  registry.sources[0] = {
+    ...registry.sources[0],
+    privateTranscript: "This private transcript must never enter the Playlist.",
+    claims: [{ wording: "Private claim" }],
+    consensus: { confidence: 0.99 },
+    confidence: 0.99
+  };
+  await kv.put(KNOWLEDGE_STORAGE_KEYS.sourceRegistry, JSON.stringify(registry));
+
+  const candidates = await getResearchSubmittedVideos(kv);
+  assert.equal(candidates.length, 1, "Only manually submitted Research sources belong in the public bridge.");
+  assert.deepEqual(Object.keys(candidates[0]).sort(), [
+    "channel", "channelKind", "entities", "hasStructuralMediaMetadata", "id", "isLive", "isShort",
+    "isValorant", "isVod", "platform", "publishedAt", "sourceType", "thumbnail", "title",
+    "topicTypeOverride", "upstreamId", "url", "wasLive"
+  ]);
+  assert.deepEqual(candidates[0], {
+    id: "abcdefghijk",
+    upstreamId: "abcdefghijk",
+    platform: "youtube",
+    channel: "Coach A",
+    channelKind: "owner-submitted",
+    title: "Bind teamplay guide",
+    url: "https://www.youtube.com/watch?v=abcdefghijk",
+    thumbnail: "https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg",
+    sourceType: "owner-submitted-research",
+    topicTypeOverride: "Map Knowledge",
+    entities: ["Bind"],
+    publishedAt: "2026-07-27T00:00:00.000Z",
+    isLive: false,
+    wasLive: false,
+    isVod: false,
+    isShort: false,
+    hasStructuralMediaMetadata: true,
+    isValorant: true
+  });
+  assert.doesNotMatch(JSON.stringify(candidates), /private transcript|private claim|consensus|confidence/i);
+
+  const existingPlaylistRecord = {
+    ...candidates[0],
+    title: "Existing trusted Playlist record"
+  };
+  const deduped = dedupePlaylistVideos([existingPlaylistRecord, ...candidates]);
+  assert.equal(deduped.length, 1, "Submitting an existing Playlist video must not duplicate its public card.");
+  assert.equal(deduped[0].title, "Existing trusted Playlist record", "Existing trusted metadata keeps precedence.");
+  const featured = buildFeaturedPlaylist(candidates);
+  assert.equal(featured.items.length, 1);
+  assert.doesNotMatch(JSON.stringify(featured.items[0]), /private transcript|private claim|consensus/i);
+});
+
+test("Playlist refresh includes a submitted Research video without private review data", async () => {
+  const kv = new MemoryKv();
+  await registerKnowledgeSources(kv, [{
+    id: "abcdefghijk",
+    platform: "youtube",
+    title: "Owner submitted Bind guide",
+    publisher: "Coach A",
+    sourceKind: "owner-imported-educational-video",
+    entities: ["Bind"]
+  }], new Date("2026-07-27T00:00:00.000Z"));
+  const registry = await kv.get(KNOWLEDGE_STORAGE_KEYS.sourceRegistry, "json");
+  registry.sources[0] = {
+    ...registry.sources[0],
+    transcript: "Private transcript text.",
+    claims: [{ wording: "Private claim text." }],
+    confidence: 0.99
+  };
+  await kv.put(KNOWLEDGE_STORAGE_KEYS.sourceRegistry, JSON.stringify(registry));
+  await kv.put("patch:last", JSON.stringify({ label: "13.01" }));
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async input => {
+    const url = String(input);
+    if (url.startsWith("https://www.youtube.com/feeds/videos.xml")) {
+      return new Response("<?xml version=\"1.0\"?><feed></feed>", { status: 200 });
+    }
+    throw new Error(`Unexpected Playlist refresh request: ${url}`);
+  };
+  try {
+    const playlist = await handlePlaylistRequest({ CONTENT_AUTOMATION: kv });
+    const submitted = playlist.items.find(item => item.id === "abcdefghijk");
+    assert.ok(submitted, "A submitted Research video must be present after the next Playlist refresh.");
+    assert.equal(submitted.title, "Owner submitted Bind guide");
+    assert.equal(submitted.channel, "Coach A");
+    assert.equal(submitted.url, "https://www.youtube.com/watch?v=abcdefghijk");
+    assert.doesNotMatch(JSON.stringify(submitted), /private transcript|private claim|claims|consensus/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("public YouTube captions become normalized timestamped private claims", async () => {

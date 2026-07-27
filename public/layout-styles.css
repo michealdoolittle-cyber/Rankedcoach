@@ -2239,3 +2239,145 @@ html body #gamesenseLibraryView .gamesense-crosshair-tabs button[aria-selected="
   }
 }
 
+/* 2026-07-27 layout-safe-area locks ------------------------------------------------
+   A shaped parent reserves space for its corners. These content surfaces used to
+   retain their default fixed child heights/transforms, which made them spill into
+   that reserved area after a user chose a non-default layout. Keep the outer card
+   shape, but let its informational content use the actual available box. */
+
+/* Treat the quote and attribution as one centered loading-stage unit. The old
+   copy minimum-height separated a short quote from its author on tall cards. */
+.app-loading-quote,
+.login-init-quote{
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:8px !important;
+  min-height:96px !important;
+}
+
+.app-loading-quote .app-loading-copy,
+.login-init-quote .login-init-copy{
+  display:block !important;
+  min-height:0 !important;
+  margin:0 !important;
+}
+
+.app-loading-quote .app-loading-source,
+.login-init-quote .login-init-detail{
+  margin:0 !important;
+}
+
+/* A calendar is a deliberate overlay. Raise its containing stacking context, not
+   only the popover itself, so a later feed/footer sibling cannot paint above it. */
+html body #page-logging .logging-feed-card.is-calendar-open > .logging-session-bar{
+  position:relative !important;
+  z-index:2147483646 !important;
+  isolation:isolate !important;
+  overflow:visible !important;
+}
+
+html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
+  z-index:2147483647 !important;
+}
+
+@media (min-width:821px){
+  /* The outer compass card retains its baseline size. Its internal flex item must
+     not insist on the same 260px minimum after the shaped shell adds safe padding. */
+  body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    min-height:0 !important;
+    width:100% !important;
+    height:auto !important;
+    max-height:100% !important;
+    translate:none !important;
+    scale:none !important;
+    transform:none !important;
+  }
+
+  body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-summary-shell,
+  body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main > .compass-summary-body{
+    min-height:0 !important;
+    max-height:100% !important;
+    translate:none !important;
+    scale:none !important;
+    transform:none !important;
+  }
+
+  /* The summary card has a compact desktop baseline. Cap decorative safe-area
+     padding and make all three internal bands resolve against its real height. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-stats#page-stats .stats-summary-card{
+    padding-top:min(var(--layout-surface-safe-top, 6px),10px) !important;
+    padding-right:min(var(--layout-surface-safe-right, 8px),18px) !important;
+    padding-bottom:min(var(--layout-surface-safe-bottom, 6px),10px) !important;
+    padding-left:min(var(--layout-surface-safe-left, 8px),18px) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-stats#page-stats :is(.stats-summary-layout,.stats-summary-right,.stats-proof-row){
+    min-height:0 !important;
+    height:100% !important;
+    max-height:100% !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-stats#page-stats .stats-summary-grid{
+    min-height:0 !important;
+    grid-template-rows:repeat(2,minmax(0,1fr)) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-stats#page-stats .stats-summary-grid .stat-block{
+    min-height:0 !important;
+  }
+}
+
+/* Theme-builder geometry belongs to the loadout shell, never the square agent
+   frame. Preserve per-agent image offsets on the image itself while keeping the
+   frame centered and using the same contain behavior on desktop and mobile. */
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .loadout-card #agentFrame{
+  min-width:0 !important;
+  min-height:0 !important;
+  width:min(100%,var(--agent-frame-target-size,232px)) !important;
+  height:auto !important;
+  aspect-ratio:1 / 1 !important;
+  align-self:center !important;
+  justify-self:center !important;
+  overflow:hidden !important;
+  translate:none !important;
+  scale:none !important;
+  transform:none !important;
+}
+
+body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .loadout-card #agentFrame :is(.agent-reveal-art img,.agent-frame-art img){
+  object-fit:contain !important;
+  object-position:center center !important;
+}
+
+@media (max-width:820px), (hover:none) and (pointer:coarse){
+  /* Do not let a layout pseudo-element draw a second circular border behind the
+     selected profile frame. A 69px frame is ~11% larger than the old 62px ring. */
+  html.is-mobile-layout body.is-mobile-layout :is(#mobileHeaderProfileBtn.mobile-bottom-avatar-btn,#mobileBottomShell .mobile-bottom-avatar-btn).has-rc-mobile-frame{
+    border:0 !important;
+    outline:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    clip-path:none !important;
+    -webkit-clip-path:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#mobileHeaderProfileBtn.mobile-bottom-avatar-btn,#mobileBottomShell .mobile-bottom-avatar-btn).has-rc-mobile-frame::before,
+  html.is-mobile-layout body.is-mobile-layout :is(#mobileHeaderProfileBtn.mobile-bottom-avatar-btn,#mobileBottomShell .mobile-bottom-avatar-btn).has-rc-mobile-frame::after{
+    content:none !important;
+    display:none !important;
+    border:0 !important;
+    box-shadow:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout :is(#mobileHeaderProfileBtn.mobile-bottom-avatar-btn,#mobileBottomShell .mobile-bottom-avatar-btn) .rc-mobile-avatar-frame{
+    width:69px !important;
+    height:69px !important;
+    min-width:69px !important;
+    min-height:69px !important;
+  }
+}
+

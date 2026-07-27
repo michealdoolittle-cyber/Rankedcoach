@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260727-coaching-loop-01">
+  <link rel="stylesheet" href="app.css?v=20260727-layout-loadout-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -65,7 +65,7 @@
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
   <link rel="stylesheet" href="library/gamesense-library.css?v=20260724-library-followup-06">
-  <link rel="stylesheet" href="layout-styles.css?v=20260723-library-pipeline-ui-01">
+  <link rel="stylesheet" href="layout-styles.css?v=20260727-layout-loadout-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1599,27 +1599,16 @@ ALL
 </button>
               </div>
 
-              <!-- Spin Button -->
-<button id="spinAgentBtn" class="small-btn">
-
-<svg viewBox="0 0 24 24" class="spin-icon">
-
-<path d="M7 3v14M7 3l-3 3M7 3l3 3"
-stroke="currentColor"
-stroke-width="2"
-fill="none"
-stroke-linecap="round"
-stroke-linejoin="round"/>
-
-<path d="M17 21V7M17 21l-3-3M17 21l3-3"
-stroke="currentColor"
-stroke-width="2"
-fill="none"
-stroke-linecap="round"
-stroke-linejoin="round"/>
-
-</svg>
-
+              <!-- Spin Button: the handle is decorative; this remains the only spin target. -->
+<button id="spinAgentBtn" class="small-btn" type="button" aria-label="Spin loadout" title="Spin loadout">
+  <span id="loadoutSlotHandle" class="loadout-slot-handle" aria-hidden="true">
+    <span class="loadout-slot-handle-base"></span>
+    <span class="loadout-slot-handle-arm">
+      <span class="loadout-slot-handle-grip"></span>
+      <span class="loadout-slot-handle-shaft"></span>
+    </span>
+    <span class="loadout-slot-handle-label">SPIN</span>
+  </span>
 </button>
 
               <!-- Agent Frame -->
@@ -2439,7 +2428,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260726-situational-callouts-01"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
-  <script type="module" src="app.js?v=20260727-coaching-loop-01"></script>
+  <script type="module" src="app.js?v=20260727-layout-loadout-01"></script>
   <script type="module" src="knowledge-review.js?v=20260726-situational-callouts-01"></script>
 </body>
 </html>
