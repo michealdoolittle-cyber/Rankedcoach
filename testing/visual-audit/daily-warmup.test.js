@@ -228,6 +228,26 @@ async function run() {
     assert.equal(await page.locator(".daily-warmup-postgame").isVisible(), false);
     assert.equal(await page.locator(".daily-warmup-postgame-links a").count(), 2);
     assert.equal(await page.locator("#dailyWarmupRandomize").isVisible(), true);
+    assert.equal(await page.locator(".daily-warmup-session > .daily-warmup-loadout-row").count(), 3, "The daily Loadout panel must be exactly Exclude, One-trick, and Notes.");
+    assert.equal(await page.locator("#dailyWarmupSessionRole, #dailyWarmupSessionMode, #dailyWarmupAgentMode, #dailyWarmupSessionIntensity, #dailyWarmupFocusPreference, #dailyWarmupIntentTag, #dailyWarmupSessionAgents, #dailyWarmupSessionExclusions").count(), 0);
+    await page.click("#dailyWarmupExclusionPicker");
+    assert.equal(await page.locator('#dailyWarmupExclusionPickerMenu [data-loadout-picker-item="role"]').count(), 4);
+    assert.equal(await page.locator('#dailyWarmupExclusionPickerMenu [data-loadout-picker-item="agent"]').count(), 29);
+    await page.click('#dailyWarmupExclusionPickerMenu [data-loadout-picker-item="role"][data-loadout-picker-value="duelist"]');
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.loadoutExclusions?.includes("duelist"));
+    assert.equal(await page.locator('#dailyWarmupExclusionChips [data-loadout-value="duelist"]').count(), 1);
+    await page.click("#dailyWarmupOneTrickPicker");
+    await page.click('#dailyWarmupOneTrickPickerMenu [data-loadout-picker-item="agent"][data-loadout-picker-value="Sova"]');
+    await page.waitForFunction(() => {
+      const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0];
+      return profile?.loadoutOneTrick === "Sova" && Array.isArray(profile?.loadoutExclusions) && profile.loadoutExclusions.length === 0;
+    });
+    const oneTrickState = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]);
+    assert.equal(oneTrickState.loadoutOneTrick, "Sova");
+    assert.equal(oneTrickState.loadoutExclusions.length, 0);
+    assert.equal(await page.locator('#dailyWarmupOneTrickChip [data-loadout-value="Sova"]').count(), 1, "One-trick must stay rendered after its profile update.");
+    await page.click('#dailyWarmupOneTrickChip [data-loadout-value="Sova"]');
+    await page.waitForFunction(() => !JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.loadoutOneTrick);
     const rankedMatchCountBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.matches?.length || 0);
 
     const weaponChoice = page.locator('[data-warmup-drill="weapon-choice"]');
@@ -415,6 +435,11 @@ async function run() {
     });
     assert.ok(mobileWarmupHeader.headerTop >= 0 && mobileWarmupHeader.modalTop >= 0 && mobileWarmupHeader.modalRight <= mobileWarmupHeader.viewportWidth, JSON.stringify(mobileWarmupHeader));
     assert.equal(await mobile.locator("#dailyWarmupModal .lens-modal-close").count(), 0);
+    assert.equal(await mobile.locator(".daily-warmup-session > .daily-warmup-loadout-row").count(), 3);
+    await mobile.click("#dailyWarmupExclusionPicker");
+    assert.equal(await mobile.locator("#dailyWarmupExclusionPickerMenu").isVisible(), true);
+    assert.equal(await mobile.locator('#dailyWarmupExclusionPickerMenu [data-loadout-picker-item="agent"]').count(), 29);
+    await mobile.click("#dailyWarmupExclusionPicker");
     await mobile.click("#dailyWarmupRandomize");
     assert.equal(await mobile.locator("[data-warmup-drill].is-randomized").count(), 4);
     assert.equal(await mobile.locator("[data-warmup-drill].is-selected").count(), 0);

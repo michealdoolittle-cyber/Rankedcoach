@@ -24,6 +24,7 @@
     { id: "damage-spike-reliance", sourceRule: 102, category: "weapons", status: "active", condition: "damage-spike-reliance", minMatches: 6 },
     { id: "rifle-rank-hs-gap", sourceRule: 103, category: "weapons", status: "active", condition: "rifle-rank-hs-gap", minMatches: 6 },
     { id: "sniper-buy-conversion", sourceRule: 105, category: "weapons", status: "active", condition: "sniper-buy-conversion", minMatches: 6 },
+    { id: "declared-weapon-style-mismatch", sourceRule: 142, category: "weapons", status: "active", condition: "declared-weapon-style-mismatch", minMatches: 6 },
     { id: "weapon-small-sample", sourceRule: 150, category: "weapons", status: "policy", reason: "Use category coaching until a weapon has enough rounds." },
 
     { id: "utility-timing", sourceRule: 151, category: "utility", status: "blocked", reason: "Henrik provides cast counts but no cast timestamps." },
@@ -69,6 +70,48 @@
 
   function getRole(context, roleName) {
     return (context?.roles || []).find(role => String(role?.role || "").toLowerCase() === roleName) || null;
+  }
+
+  const DECLARED_WEAPON_STYLES = Object.freeze({
+    "aggressive-angles": {
+      label: "aggressive-angles",
+      families: ["sniper", "shotgun"],
+      minimumShare: 20,
+      action: "If aggressive angles are still the goal, plan the opening lane and the safe reposition before committing the next sniper or Judge buy."
+    },
+    "standard-rifle": {
+      label: "standard-rifle",
+      families: ["rifle"],
+      minimumShare: 48,
+      action: "If standard rifle economy is still the goal, protect the next Vandal or Phantom full-buy and avoid drifting into unplanned lower-value buys."
+    },
+    "close-range": {
+      label: "close-range",
+      families: ["smg", "shotgun"],
+      minimumShare: 20,
+      action: "If close-range pressure is still the goal, pick one short-lane plan and only take the next SMG or shotgun round where the distance is actually favorable."
+    }
+  });
+
+  function getDeclaredWeaponStyleMismatch(context = {}) {
+    const styleKey = String(context?.weapons?.declaredStyle || "").trim().toLowerCase();
+    const style = DECLARED_WEAPON_STYLES[styleKey];
+    const reportedRounds = number(context?.weapons?.rounds);
+    if (!style || reportedRounds < 40) return null;
+
+    const families = (context?.weapons?.families || []).filter((family) => style.families.includes(String(family?.typeKey || "").toLowerCase()));
+    const matchingRounds = families.reduce((sum, family) => sum + number(family?.rounds), 0);
+    const matchingWins = families.reduce((sum, family) => sum + (number(family?.rounds) * number(family?.winrate) / 100), 0);
+    const actualShare = reportedRounds ? matchingRounds / reportedRounds * 100 : 0;
+    if (actualShare >= style.minimumShare) return null;
+
+    return {
+      style,
+      reportedRounds,
+      matchingRounds,
+      matchingShare: actualShare,
+      matchingWinrate: matchingRounds ? matchingWins / matchingRounds * 100 : null
+    };
   }
 
   function evidenceFor(condition, context) {
@@ -157,6 +200,9 @@
         ? { sniper }
         : null;
     }
+    if (condition === "declared-weapon-style-mismatch") {
+      return getDeclaredWeaponStyleMismatch(context);
+    }
     if (condition === "utility-volume-conversion") {
       return number(context?.utility?.knownRounds) >= 80 && number(context?.utility?.castsPerRound) >= 1.5 && number(overview.winrate) < 45
         ? { castsPerRound: number(context.utility.castsPerRound), winrate: number(overview.winrate) }
@@ -232,6 +278,16 @@
       "damage-spike-reliance": () => ({ type: "warn", title: "Damage Is Leaning On A Few Big Rounds", preview: `You average ${evidence.killsPerMatch.toFixed(1)} kills per match, but your round damage changes sharply.`, what: "Your kill volume is healthy, but the damage is arriving unevenly.", why: "A few large rounds can lift the total while too many other rounds start without useful pressure.", action: "Use one repeatable early damage plan so more rounds contribute before the fight becomes chaotic.", focus: "Damage Consistency", priority: 83 }),
       "rifle-rank-hs-gap": () => ({ type: "warn", title: "Rifle Precision Trails The Rank Reference", preview: `${Math.round(evidence.rifleShare)}% rifle usage with ${evidence.hs.toFixed(1)}% HS against a provisional ${evidence.benchmark.toFixed(1)}% reference.`, what: "Headshot accuracy is a relevant gap here because rifles make up most of the weapon sample.", why: "The app only elevates this comparison when weapon mix and the rank reference support it together.", action: "For the next block, hold crosshair height through the first angle instead of correcting after contact.", focus: "Crosshair Placement", priority: 81 }),
       "sniper-buy-conversion": () => ({ type: "warn", title: "Sniper Rounds Are Not Paying Back", preview: `${evidence.sniper.rounds} sniper rounds are winning ${Math.round(evidence.sniper.winrate)}% of the time.`, what: "Your sniper buys are not returning enough round wins yet.", why: "A high-cost weapon has to win the round often enough, not just find one clean pick.", action: "Only take the next sniper buy with a planned opening angle and a safe reposition path.", focus: "Sniper Economy", priority: 84 }),
+      "declared-weapon-style-mismatch": () => ({
+        type: "warn",
+        title: "Declared Weapon Style Is Not Showing Up Yet",
+        preview: `${Math.round(evidence.matchingShare)}% of ${Math.round(evidence.reportedRounds)} reported weapon rounds match your ${evidence.style.label} preference.`,
+        what: "Your saved weapon preference and the retained round-by-round weapon mix are currently different.",
+        why: `${Math.round(evidence.matchingRounds)} matching round${Math.round(evidence.matchingRounds) === 1 ? "" : "s"}${evidence.matchingWinrate === null ? " are recorded." : ` are recorded at ${Math.round(evidence.matchingWinrate)}% round wins.`} This is a comparison with imported weapon rounds, not an assumption about your intended buys.`,
+        action: evidence.style.action,
+        focus: "Weapon Identity",
+        priority: 71
+      }),
       "utility-volume-conversion": () => ({ type: "warn", title: "Utility Needs A Clearer Follow-Up", preview: `${evidence.castsPerRound.toFixed(1)} recorded casts per round with ${Math.round(evidence.winrate)}% match wins.`, what: "You are using plenty of utility, but the rounds are not improving beside it yet.", why: "Cast counts show volume only; without timestamps, the app cannot claim the placement or timing was wrong.", action: "Pair one called piece of utility with one teammate action and review whether that sequence wins space.", focus: "Utility Coordination", priority: 78 }),
       "team-trade-efficiency": () => ({ type: "warn", title: "Teammate Deaths Need Faster Answers", preview: `${Math.round(evidence.rate)}% of ${evidence.opportunities} teammate-death rounds were traded by you.`, what: "Too many teammate deaths are going unanswered inside the trade window.", why: "This can come from spacing or different round jobs, so treat it as a coordination issue rather than an aim verdict.", action: "Start the next contact one step closer to the teammate most likely to fight first.", focus: "Trade Spacing", priority: 88 }),
       "individual-output-team-gap": () => ({ type: "warn", title: "Fight Value Is Not Becoming Team Wins", preview: `${evidence.kd.toFixed(2)} K/D with ${Math.round(evidence.winrate)}% WR and ${Math.round(evidence.tradeRate)}% trades given.`, what: "You are winning fights more often than the team is winning games.", why: "The issue is probably what happens after an advantage: spacing, regrouping, or the shared follow-up.", action: "After the first advantage, group with one teammate and make the next fight a trade instead of another solo duel.", focus: "Round Conversion", priority: 91 }),

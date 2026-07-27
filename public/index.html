@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260727-layout-loadout-01">
+  <link rel="stylesheet" href="app.css?v=20260727-loadout-layout-repair-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -65,7 +65,7 @@
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
   <link rel="stylesheet" href="library/gamesense-library.css?v=20260727-playlist-history-01">
-  <link rel="stylesheet" href="layout-styles.css?v=20260727-layout-loadout-01">
+  <link rel="stylesheet" href="layout-styles.css?v=20260727-loadout-layout-repair-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -284,18 +284,24 @@ AUTH MODAL
         A warm-up helps mechanical consistency and in-game focus.
       </div>
       <section class="daily-warmup-session" data-daily-training-section="warmup" aria-labelledby="dailyWarmupSessionTitle">
-        <div class="daily-warmup-session-heading"><strong id="dailyWarmupSessionTitle">This session</strong><span>Optional preferences constrain Loadout for this browser session only.</span></div>
-        <div class="daily-warmup-session-grid">
-          <label><span>Role</span><select id="dailyWarmupSessionRole"><option value="any">Any role</option><option value="duelist">Duelist</option><option value="controller">Controller</option><option value="initiator">Initiator</option><option value="sentinel">Sentinel</option></select></label>
-          <label><span>Queue mode</span><select id="dailyWarmupSessionMode"><option value="main">Main</option><option value="growth">Growth</option><option value="comfort">Comfort</option><option value="challenge">Challenge</option><option value="mechanics">Mechanics</option><option value="decision">Decision</option></select></label>
-          <label><span>Agent pool</span><select id="dailyWarmupAgentMode"><option value="any">Any agent</option><option value="specific">Specific agents</option><option value="main-only">Main only</option><option value="comfort">Comfort pool</option><option value="secondary">Secondary pool</option><option value="challenge">Challenge pool</option></select></label>
-          <label><span>Intensity</span><select id="dailyWarmupSessionIntensity"><option value="steady">Steady</option><option value="light">Light</option><option value="focused">Focused</option><option value="high">High</option></select></label>
-          <label><span>Focus preference</span><select id="dailyWarmupFocusPreference"><option value="weekly">Continue weekly focus</option><option value="random">Vary the focus</option></select></label>
-          <label><span>Intent tag</span><select id="dailyWarmupIntentTag"><option value="">No intent tag</option><option value="lurker">Lurker</option><option value="flanker">Flanker</option><option value="anchor">Anchor</option><option value="rotator">Rotator</option><option value="saver">Saver</option><option value="entry">Entry</option><option value="trader">Trader</option><option value="spike-carrier">Spike carrier</option></select></label>
+        <div class="daily-warmup-session-heading"><strong id="dailyWarmupSessionTitle">Today's Loadout</strong><span>These choices are saved to your profile for the next session.</span></div>
+        <div class="daily-warmup-loadout-row" data-loadout-picker-row="exclude">
+          <div class="daily-warmup-loadout-row-head"><span>Exclude</span><small>Optional: keep agents or a whole role out of today's spin.</small></div>
+          <div class="daily-warmup-loadout-row-control">
+            <div id="dailyWarmupExclusionChips" class="daily-warmup-loadout-chips" aria-live="polite"></div>
+            <button id="dailyWarmupExclusionPicker" class="daily-warmup-loadout-picker-trigger" type="button" data-loadout-picker-trigger="exclude" aria-expanded="false" aria-controls="dailyWarmupExclusionPickerMenu">Choose agents or roles</button>
+          </div>
+          <div id="dailyWarmupExclusionPickerMenu" class="daily-warmup-loadout-picker-menu" hidden></div>
         </div>
-        <label class="daily-warmup-session-wide"><span>Agents to include (comma-separated)</span><input id="dailyWarmupSessionAgents" type="text" maxlength="180" placeholder="Jett, Omen, Viper"></label>
-        <label class="daily-warmup-session-wide"><span>Agents to exclude (comma-separated)</span><input id="dailyWarmupSessionExclusions" type="text" maxlength="180" placeholder="Leave blank to exclude nobody"></label>
-        <label class="daily-warmup-session-wide"><span>Session note</span><textarea id="dailyWarmupSessionNote" maxlength="360" placeholder="What are you trying to practice or what context should coaching respect?"></textarea></label>
+        <div class="daily-warmup-loadout-row" data-loadout-picker-row="one-trick">
+          <div class="daily-warmup-loadout-row-head"><span>One-trick</span><small>Optional: make one agent your only eligible Loadout pick.</small></div>
+          <div class="daily-warmup-loadout-row-control">
+            <div id="dailyWarmupOneTrickChip" class="daily-warmup-loadout-chips" aria-live="polite"></div>
+            <button id="dailyWarmupOneTrickPicker" class="daily-warmup-loadout-picker-trigger" type="button" data-loadout-picker-trigger="one-trick" aria-expanded="false" aria-controls="dailyWarmupOneTrickPickerMenu">Choose one agent</button>
+          </div>
+          <div id="dailyWarmupOneTrickPickerMenu" class="daily-warmup-loadout-picker-menu" hidden></div>
+        </div>
+        <label class="daily-warmup-loadout-row daily-warmup-session-note"><span>Notes</span><textarea id="dailyWarmupSessionNote" maxlength="360" placeholder="What are you trying to practice or what context should coaching respect?"></textarea></label>
       </section>
       <div class="daily-warmup-count" data-daily-training-section="warmup"><strong id="dailyWarmupCount">0 / 4</strong><span>drills selected</span></div>
       <div class="daily-warmup-randomizer" data-daily-training-section="warmup">
@@ -452,6 +458,7 @@ RIOT PROFILE MODAL
         <aside class="profile-edit-nav">
           <button class="profile-edit-tab is-active" type="button" data-profile-tab="theme">Theme Selector</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="layoutStyle">Layout Style</button>
+          <button class="profile-edit-tab" type="button" data-profile-tab="loadout">Loadout Preference</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="icon">Agent Profile Icon</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="borderColor">Profile Border Color</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="border">Profile Border</button>
@@ -545,6 +552,26 @@ RIOT PROFILE MODAL
                   <option value="pressstart2p">Press Start 2P</option>
                 </select>
                 <small class="profile-edit-field-note">This global choice overrides the style font and also works with the default layout.</small>
+              </label>
+            </div>
+          </section>
+
+          <section class="profile-edit-panel" data-profile-panel="loadout">
+            <div class="profile-edit-panel-head">
+              <div class="profile-edit-panel-title">Loadout Preference</div>
+              <div class="profile-edit-panel-copy">This optional style is compared with your retained round-by-round weapon data. It never replaces what the matches actually show.</div>
+            </div>
+
+            <div class="profile-edit-grid">
+              <label class="profile-edit-field profile-edit-field-full">
+                <span>Preferred Weapon Style</span>
+                <select id="editProfileLoadoutWeaponStyle" class="profile-edit-select" aria-label="Choose your preferred weapon style">
+                  <option value="">No stated preference</option>
+                  <option value="aggressive-angles">Aggressive angles — Operator, Marshal, or Judge</option>
+                  <option value="standard-rifle">Standard rifle economy — Vandal or Phantom</option>
+                  <option value="close-range">Close-range pressure — SMGs and shotguns</option>
+                </select>
+                <small class="profile-edit-field-note">RankedCoach only shows an alignment insight after enough retained weapon rounds are available.</small>
               </label>
             </div>
           </section>
@@ -1599,16 +1626,27 @@ ALL
 </button>
               </div>
 
-              <!-- Spin Button: the handle is decorative; this remains the only spin target. -->
-<button id="spinAgentBtn" class="small-btn" type="button" aria-label="Spin loadout" title="Spin loadout">
-  <span id="loadoutSlotHandle" class="loadout-slot-handle" aria-hidden="true">
-    <span class="loadout-slot-handle-base"></span>
-    <span class="loadout-slot-handle-arm">
-      <span class="loadout-slot-handle-grip"></span>
-      <span class="loadout-slot-handle-shaft"></span>
-    </span>
-    <span class="loadout-slot-handle-label">SPIN</span>
-  </span>
+              <!-- Spin Button -->
+<button id="spinAgentBtn" class="small-btn">
+
+<svg viewBox="0 0 24 24" class="spin-icon">
+
+<path d="M7 3v14M7 3l-3 3M7 3l3 3"
+stroke="currentColor"
+stroke-width="2"
+fill="none"
+stroke-linecap="round"
+stroke-linejoin="round"/>
+
+<path d="M17 21V7M17 21l-3-3M17 21l3-3"
+stroke="currentColor"
+stroke-width="2"
+fill="none"
+stroke-linecap="round"
+stroke-linejoin="round"/>
+
+</svg>
+
 </button>
 
               <!-- Agent Frame -->
@@ -2414,7 +2452,7 @@ ALL
   <script src="schema/match-record.js?v=20260726-situational-callouts-01"></script>
   <script src="analytics/round-metrics.js?v=20260726-situational-callouts-01"></script>
   <script src="analytics/warmup-correlation.js?v=20260711-training-feed-02"></script>
-  <script src="analytics/coaching-rules.js?v=20260721-directive-audit-01"></script>
+  <script src="analytics/coaching-rules.js?v=20260727-loadout-layout-repair-01"></script>
   <script src="language/valorant-vocabulary.js?v=20260717-coaching-language-29"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260714-placement-account-ui-01"></script>
@@ -2428,7 +2466,7 @@ ALL
   <script src="library/gamesense-library.js?v=20260727-playlist-history-01"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
   <script src="daily-entrance-motion.js?v=20260720-map-stat-layout-02"></script>
-  <script type="module" src="app.js?v=20260727-playlist-history-01"></script>
+  <script type="module" src="app.js?v=20260727-loadout-layout-repair-01"></script>
   <script type="module" src="knowledge-review.js?v=20260726-situational-callouts-01"></script>
 </body>
 </html>

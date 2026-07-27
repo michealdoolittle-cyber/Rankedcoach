@@ -12,11 +12,11 @@ vm.runInThisContext(source, { filename: "public/analytics/coaching-rules.js" });
 
 const engine = globalThis.RankedCoachCoachingRules;
 const coverage = engine.getCoverage();
-assert.equal(coverage.total, 30);
+assert.equal(coverage.total, 31);
 assert.deepEqual(coverage.categories, {
   maps: 5,
   agents: 5,
-  weapons: 5,
+  weapons: 6,
   utility: 5,
   teamwork: 5,
   communication: 5
@@ -90,5 +90,34 @@ matches.forEach(match => {
 
 const lowData = engine.matchRules({ ...context, sample: { matchCount: 2, logCount: 1 } }, { maxResults: 8 });
 assert.deepEqual(lowData, []);
+
+const declaredStyleMismatch = engine.matchRules({
+  ...context,
+  weapons: {
+    rounds: 120,
+    declaredStyle: "aggressive-angles",
+    shares: { rifle: 78, sniper: 6, shotgun: 3 },
+    families: [
+      { typeKey: "rifle", rounds: 94, winrate: 48 },
+      { typeKey: "sniper", rounds: 7, winrate: 43 },
+      { typeKey: "shotgun", rounds: 3, winrate: 33 }
+    ]
+  }
+}, { maxResults: 99 });
+const declaredStyleRule = declaredStyleMismatch.find(match => match.coachingRuleId === "declared-weapon-style-mismatch");
+assert.ok(declaredStyleRule, "A declared style mismatch needs real reported weapon-round evidence.");
+assert.match(declaredStyleRule.preview, /reported weapon rounds/i);
+assert.match(declaredStyleRule.why, /imported weapon rounds/i);
+
+const declaredStyleAligned = engine.matchRules({
+  ...context,
+  weapons: {
+    rounds: 120,
+    declaredStyle: "standard-rifle",
+    shares: { rifle: 70 },
+    families: [{ typeKey: "rifle", rounds: 84, winrate: 51 }]
+  }
+}, { maxResults: 99 });
+assert.equal(declaredStyleAligned.some(match => match.coachingRuleId === "declared-weapon-style-mismatch"), false);
 
 console.log(`Coaching rules passed: ${coverage.total} sourced rules, ${coverage.active} active matchers, low-data suppression preserved.`);

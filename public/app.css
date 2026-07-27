@@ -20481,6 +20481,233 @@ SUMMARY BAR
 .daily-warmup-session textarea{min-height:60px;resize:vertical}
 .daily-warmup-session-wide{grid-column:1/-1}
 
+/* The session surface intentionally has only three choices: exclusions,
+   one-trick, and an optional note. Role colors mirror the existing app palette
+   supplied by the picker instead of introducing a second role treatment. */
+.daily-warmup-loadout-row{
+  display:grid;
+  gap:7px;
+  min-width:0;
+  padding:10px;
+  border:1px solid color-mix(in srgb,var(--border-soft,rgba(148,163,184,.28)) 82%,var(--accent-2,#38bdf8) 18%);
+  border-radius:10px;
+  background:color-mix(in srgb,var(--surface-raised,#111827) 72%,transparent);
+}
+
+.daily-warmup-loadout-row-head{
+  display:grid;
+  gap:2px;
+}
+
+.daily-warmup-loadout-row-head > span,
+.daily-warmup-session-note > span{
+  color:var(--text-main,#f8fafc);
+  font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-loadout-row-head small{
+  color:var(--text-muted,#a8b3c7);
+  font:700 11px/1.25 var(--font-body,"Rajdhani",sans-serif);
+}
+
+.daily-warmup-loadout-row-control{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+}
+
+.daily-warmup-loadout-chips{
+  display:flex;
+  flex:1 1 220px;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.daily-warmup-loadout-empty{
+  color:var(--text-muted,#a8b3c7);
+  font:700 11px/1.25 var(--font-body,"Rajdhani",sans-serif);
+}
+
+.daily-warmup-loadout-chip{
+  --loadout-role-color:#94a3b8;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:28px;
+  max-width:100%;
+  padding:5px 8px;
+  border:1px solid color-mix(in srgb,var(--loadout-role-color) 68%,var(--border-soft,rgba(148,163,184,.28)));
+  border-radius:999px;
+  background:color-mix(in srgb,var(--loadout-role-color) 17%,var(--surface-card,#0b1220));
+  color:color-mix(in srgb,var(--loadout-role-color) 72%,white 28%);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  transition:opacity .16s ease,transform .16s ease,filter .16s ease,background .16s ease;
+}
+
+.daily-warmup-loadout-chip:hover,
+.daily-warmup-loadout-chip:focus-visible{
+  border-color:var(--loadout-role-color);
+  filter:brightness(1.12);
+}
+
+.daily-warmup-loadout-chip > span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.daily-warmup-loadout-chip i{
+  color:var(--text-main,#f8fafc);
+  font:900 16px/.7 var(--font-body,"Rajdhani",sans-serif);
+  font-style:normal;
+}
+
+.daily-warmup-loadout-chip.is-removing{
+  border-color:#ff4655;
+  background:rgba(255,70,85,.22);
+  color:#fecaca;
+  opacity:0;
+  transform:scale(.88);
+  filter:saturate(.55);
+}
+
+.daily-warmup-loadout-picker-trigger{
+  flex:0 1 auto;
+  min-height:31px;
+  padding:7px 10px;
+  border:1px solid color-mix(in srgb,var(--accent-2,#38bdf8) 50%,var(--border-soft,rgba(148,163,184,.28)));
+  border-radius:8px;
+  background:color-mix(in srgb,var(--accent-2,#38bdf8) 12%,var(--surface-card,#0b1220));
+  color:var(--text-main,#f8fafc);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-loadout-picker-trigger[aria-expanded="true"]{
+  border-color:var(--accent-2,#38bdf8);
+  background:color-mix(in srgb,var(--accent-2,#38bdf8) 24%,var(--surface-card,#0b1220));
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent-2,#38bdf8) 18%,transparent);
+}
+
+.daily-warmup-loadout-picker-menu{
+  display:grid;
+  gap:10px;
+  max-height:min(390px,46vh);
+  padding:10px;
+  overflow:auto;
+  border:1px solid color-mix(in srgb,var(--accent-2,#38bdf8) 36%,var(--border-soft,rgba(148,163,184,.28)));
+  border-radius:9px;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--surface-card-2,#111827) 96%,black 4%),var(--surface-card,#0b1220));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 12px 28px rgba(0,0,0,.24);
+}
+
+.daily-warmup-loadout-picker-menu[hidden]{display:none!important}
+
+.daily-warmup-picker-role-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+}
+
+.daily-warmup-picker-tile{
+  --loadout-role-color:#94a3b8;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  min-height:38px;
+  padding:6px 7px;
+  border:1px solid color-mix(in srgb,var(--loadout-role-color) 52%,var(--border-soft,rgba(148,163,184,.28)));
+  border-radius:8px;
+  background:color-mix(in srgb,var(--loadout-role-color) 14%,var(--surface-raised,#111827));
+  color:color-mix(in srgb,var(--loadout-role-color) 54%,var(--text-main,#f8fafc));
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.045em;
+  text-align:left;
+  text-transform:uppercase;
+  transition:filter .16s ease,opacity .16s ease,transform .16s ease,background .16s ease;
+}
+
+.daily-warmup-picker-tile:not(:disabled):hover,
+.daily-warmup-picker-tile:not(:disabled):focus-visible{
+  border-color:var(--loadout-role-color);
+  background:color-mix(in srgb,var(--loadout-role-color) 28%,var(--surface-raised,#111827));
+  filter:brightness(1.13);
+  transform:translateY(-1px);
+}
+
+.daily-warmup-picker-tile img{
+  width:21px;
+  height:21px;
+  object-fit:contain;
+}
+
+.daily-warmup-picker-tile > span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* One-trick groups are headings, not a second set of selectable role filters. */
+.daily-warmup-picker-tile[data-loadout-picker-item="role-label"]{
+  cursor:default;
+  pointer-events:none;
+}
+
+.daily-warmup-picker-tile.is-selected,
+.daily-warmup-picker-tile:disabled{
+  border-color:rgba(148,163,184,.28);
+  background:rgba(71,85,105,.22);
+  color:rgba(203,213,225,.6);
+  opacity:.48;
+  filter:grayscale(.88);
+  cursor:not-allowed;
+}
+
+.daily-warmup-picker-agent-groups{display:grid;gap:8px}
+
+.daily-warmup-picker-agent-group{
+  display:grid;
+  gap:6px;
+  padding-top:8px;
+  border-top:1px solid color-mix(in srgb,var(--loadout-role-color) 28%,transparent);
+}
+
+.daily-warmup-picker-agent-group-head{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--loadout-role-color);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.daily-warmup-picker-agent-group-head img{width:17px;height:17px;object-fit:contain}
+
+.daily-warmup-picker-agent-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:5px;
+}
+
+.daily-warmup-picker-agent{grid-template-columns:20px minmax(0,1fr);min-height:34px;padding:5px 6px;font-size:9px}
+.daily-warmup-picker-agent img{width:20px;height:20px;border-radius:50%;background:rgba(2,6,23,.45)}
+
+.daily-warmup-session-note textarea{min-height:62px}
+
 .logging-intent-tag{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,200px);align-items:center;gap:10px;margin:0 0 9px;color:var(--text-muted,#a8b3c7);font:800 11px/1.2 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.05em;text-transform:uppercase}
 .logging-intent-tag select{min-width:0;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft,rgba(148,163,184,.28));border-radius:8px;background:var(--surface-raised,#111827);color:var(--text-main,#f8fafc);font:700 12px/1 var(--font-body,"Rajdhani",sans-serif)}
 
@@ -20996,6 +21223,40 @@ SUMMARY BAR
 
   html.is-mobile-layout body.is-mobile-layout .daily-warmup-session-grid{
     grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-loadout-row{
+    padding:9px;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-loadout-row-control{
+    align-items:stretch;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-loadout-chips{
+    flex-basis:100%;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-loadout-picker-trigger{
+    width:100%;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-loadout-picker-menu{
+    max-height:min(430px,48dvh);
+    padding:8px;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-picker-role-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-picker-agent-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-picker-agent{
+    grid-template-columns:19px minmax(0,1fr);
+    font-size:8px;
   }
 
   html.is-mobile-layout body.is-mobile-layout .logging-intent-tag{grid-template-columns:1fr;gap:6px}
@@ -57464,120 +57725,5 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .sw-compass-m
   .knowledge-source-queue article {
     align-items: stretch;
     flex-direction: column;
-  }
-}
-
-/* Loadout slot handle -----------------------------------------------------
-   Decorative content lives inside the existing #spinAgentBtn. All dimensions
-   are relative to that button so the many established mobile size overrides
-   continue to own the parent geometry. */
-#spinAgentBtn .loadout-slot-handle {
-  --loadout-handle-spin-duration: 1400ms;
-  position: absolute;
-  display: block;
-  inset: 6%;
-  width: auto;
-  height: auto;
-  max-width: 76px;
-  margin: auto;
-  min-width: 0;
-  min-height: 0;
-  box-sizing: border-box;
-  pointer-events: none;
-  isolation: isolate;
-}
-
-#spinAgentBtn .loadout-slot-handle-base {
-  position: absolute;
-  z-index: 1;
-  bottom: 5%;
-  left: 50%;
-  width: 62%;
-  aspect-ratio: 1.52 / 1;
-  transform: translateX(-50%);
-  border: 1px solid rgba(251, 191, 36, .72);
-  border-radius: 48% 48% 36% 36%;
-  background:
-    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, .56) 0 4%, transparent 5%),
-    linear-gradient(145deg, #69768a 0%, #273447 45%, #101828 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, .3),
-    inset 0 -5px 8px rgba(0, 0, 0, .36),
-    0 3px 9px rgba(0, 0, 0, .42),
-    0 0 12px rgba(251, 191, 36, .13);
-}
-
-#spinAgentBtn .loadout-slot-handle-arm {
-  position: absolute;
-  z-index: 2;
-  bottom: 12%;
-  left: 50%;
-  width: 16%;
-  height: 78%;
-  min-width: 6px;
-  transform: translateX(-50%) rotate(-13deg);
-  transform-origin: 50% 92%;
-  will-change: transform;
-}
-
-#spinAgentBtn .loadout-slot-handle-shaft {
-  position: absolute;
-  right: 50%;
-  bottom: 7%;
-  width: 48%;
-  height: 82%;
-  transform: translateX(50%);
-  border: 1px solid rgba(226, 232, 240, .56);
-  border-radius: 999px;
-  background: linear-gradient(90deg, #182335 0%, #91a2b8 45%, #304158 70%, #101828 100%);
-  box-shadow: inset 1px 0 1px rgba(255, 255, 255, .54), 0 2px 5px rgba(0, 0, 0, .48);
-}
-
-#spinAgentBtn .loadout-slot-handle-grip {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 50%;
-  width: 235%;
-  aspect-ratio: 1;
-  transform: translateX(-50%);
-  border: 2px solid rgba(255, 225, 133, .94);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 34% 29%, #fff8d1 0 7%, transparent 8%),
-    radial-gradient(circle at 55% 60%, #ff6371 0%, #c9233d 48%, #541323 100%);
-  box-shadow:
-    inset -4px -5px 8px rgba(63, 10, 25, .42),
-    0 0 12px rgba(255, 70, 85, .46),
-    0 3px 7px rgba(0, 0, 0, .42);
-}
-
-#spinAgentBtn .loadout-slot-handle-label {
-  position: absolute;
-  z-index: 3;
-  right: 50%;
-  bottom: 7%;
-  transform: translateX(50%);
-  color: #ffe7a3;
-  font: 900 clamp(7px, .63vw, 10px)/1 var(--font-display, "Rajdhani", sans-serif);
-  letter-spacing: .15em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .86);
-}
-
-#spinAgentBtn .loadout-slot-handle-arm.is-pulling {
-  animation: loadoutSlotHandlePull var(--loadout-handle-spin-duration) cubic-bezier(.22, 1, .36, 1) both;
-}
-
-@keyframes loadoutSlotHandlePull {
-  0%, 3% { transform: translateX(-50%) rotate(-13deg); }
-  12% { transform: translateX(-50%) rotate(28deg); }
-  18% { transform: translateX(-50%) rotate(19deg); }
-  25% { transform: translateX(-50%) rotate(25deg); }
-  34%, 100% { transform: translateX(-50%) rotate(-13deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #spinAgentBtn .loadout-slot-handle-arm.is-pulling {
-    animation: none;
   }
 }

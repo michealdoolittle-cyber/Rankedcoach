@@ -636,35 +636,134 @@ function randomizeDailyWarmupSuggestions() {
     : "No unchecked drills are available to highlight.";
 }
 
-function syncDailyWarmupSessionFields(profile = getSessionCoachingProfile()) {
-  const session = normalizeSessionCoachingProfile(profile);
-  const fields = {
-    dailyWarmupSessionRole: session.role,
-    dailyWarmupSessionMode: session.mode,
-    dailyWarmupAgentMode: session.agentMode,
-    dailyWarmupSessionIntensity: session.intensity,
-    dailyWarmupFocusPreference: session.focusPreference,
-    dailyWarmupIntentTag: session.intentTag,
-    dailyWarmupSessionAgents: session.agents.join(", "),
-    dailyWarmupSessionExclusions: session.exclusions.join(", "),
-    dailyWarmupSessionNote: session.note
+function getLoadoutPickerItemLabel(value = "") {
+  const role = normalizeLoadoutRole(value);
+  if (role) return getLoadoutRoleMeta(role).label;
+  return normalizeLoadoutAgent(value);
+}
+
+function isLoadoutRoleExclusion(value = "") {
+  return Boolean(normalizeLoadoutRole(value));
+}
+
+function isLoadoutPickerItemSelected(kind = "exclude", type = "agent", value = "", preferences = getLoadoutPreferences()) {
+  if (kind === "one-trick") return type === "agent" && preferences.oneTrick === value;
+  if (type === "role") return preferences.exclusions.includes(value);
+  return preferences.exclusions.includes(value) || preferences.exclusions.includes(agentRoles[value]);
+}
+
+function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadoutPreferences()) {
+  const renderRoleTile = (role) => {
+    const meta = getLoadoutRoleMeta(role);
+    const selected = kind === "exclude" && isLoadoutPickerItemSelected(kind, "role", role, preferences);
+    const roleTitle = kind === "exclude"
+      ? `Exclude every ${meta.label} agent`
+      : `${meta.label} agents are grouped below`;
+    return `
+      <button class="daily-warmup-picker-tile daily-warmup-picker-role role-${role}${selected ? " is-selected" : ""}" type="button" data-loadout-picker-item="${kind === "exclude" ? "role" : "role-label"}" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${role}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : (kind === "one-trick" ? "aria-disabled=\"true\" tabindex=\"-1\"" : "")} aria-label="${escapeHtml(roleTitle)}" title="${escapeHtml(roleTitle)}">
+        <img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true">
+        <span>${escapeHtml(meta.label)}</span>
+      </button>
+    `;
   };
-  Object.entries(fields).forEach(([id, value]) => {
-    const field = document.getElementById(id);
-    if (field) field.value = value;
+  const renderAgentTile = (agent) => {
+    const role = agentRoles[agent] || "";
+    const meta = getLoadoutRoleMeta(role);
+    const selected = isLoadoutPickerItemSelected(kind, "agent", agent, preferences);
+    const title = kind === "exclude" ? `Exclude ${agent}` : `One-trick ${agent}`;
+    return `
+      <button class="daily-warmup-picker-tile daily-warmup-picker-agent role-${role}${selected ? " is-selected" : ""}" type="button" data-loadout-picker-item="agent" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${escapeHtml(agent)}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : ""} aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}">
+        <img src="${escapeHtml(getAgentIconUrl(agent))}" alt="" aria-hidden="true">
+        <span>${escapeHtml(agent)}</span>
+      </button>
+    `;
+  };
+  const groups = LOADOUT_PICKER_ROLE_ORDER.map((role) => {
+    const meta = getLoadoutRoleMeta(role);
+    const agents = allAgents.filter((agent) => agentRoles[agent] === role);
+    return `
+      <section class="daily-warmup-picker-agent-group role-${role}" style="--loadout-role-color:${meta.color}">
+        <div class="daily-warmup-picker-agent-group-head"><img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true"><span>${escapeHtml(meta.label)}</span></div>
+        <div class="daily-warmup-picker-agent-grid">${agents.map(renderAgentTile).join("")}</div>
+      </section>
+    `;
+  }).join("");
+  return `
+    <div class="daily-warmup-picker-role-grid" aria-label="Role choices">${LOADOUT_PICKER_ROLE_ORDER.map(renderRoleTile).join("")}</div>
+    <div class="daily-warmup-picker-agent-groups">${groups}</div>
+  `;
+}
+
+function renderDailyWarmupLoadoutControls(profile = getActiveProfile?.()) {
+  const preferences = getLoadoutPreferences(profile);
+  const excludeChips = document.getElementById("dailyWarmupExclusionChips");
+  const oneTrickChip = document.getElementById("dailyWarmupOneTrickChip");
+  const exclusionMenu = document.getElementById("dailyWarmupExclusionPickerMenu");
+  const oneTrickMenu = document.getElementById("dailyWarmupOneTrickPickerMenu");
+  const exclusionTrigger = document.getElementById("dailyWarmupExclusionPicker");
+  const oneTrickTrigger = document.getElementById("dailyWarmupOneTrickPicker");
+
+  const renderChip = (kind, value) => {
+    const role = isLoadoutRoleExclusion(value) ? normalizeLoadoutRole(value) : agentRoles[value];
+    const meta = getLoadoutRoleMeta(role);
+    const label = getLoadoutPickerItemLabel(value);
+    return `<button class="daily-warmup-loadout-chip role-${role}" type="button" data-loadout-remove="${kind}" data-loadout-value="${escapeHtml(value)}" style="--loadout-role-color:${meta.color}" aria-label="Remove ${escapeHtml(label)}"><span>${escapeHtml(label)}</span><i aria-hidden="true">×</i></button>`;
+  };
+
+  if (excludeChips) {
+    excludeChips.innerHTML = preferences.exclusions.length
+      ? preferences.exclusions.map((value) => renderChip("exclude", value)).join("")
+      : `<span class="daily-warmup-loadout-empty">No exclusions — every agent is eligible.</span>`;
+  }
+  if (oneTrickChip) {
+    oneTrickChip.innerHTML = preferences.oneTrick
+      ? renderChip("one-trick", preferences.oneTrick)
+      : `<span class="daily-warmup-loadout-empty">No one-trick — Loadout stays random.</span>`;
+  }
+  if (exclusionTrigger) exclusionTrigger.textContent = preferences.exclusions.length ? "Add another exclusion" : "Choose agents or roles";
+  if (oneTrickTrigger) oneTrickTrigger.textContent = preferences.oneTrick ? "Change one-trick agent" : "Choose one agent";
+  if (exclusionMenu) exclusionMenu.innerHTML = renderDailyWarmupPickerItems("exclude", preferences);
+  if (oneTrickMenu) oneTrickMenu.innerHTML = renderDailyWarmupPickerItems("one-trick", preferences);
+}
+
+function setDailyWarmupPickerOpen(kind = "", shouldOpen = false) {
+  ["exclude", "one-trick"].forEach((candidate) => {
+    const isOpen = candidate === kind && shouldOpen;
+    const menu = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPickerMenu" : "dailyWarmupOneTrickPickerMenu");
+    const trigger = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPicker" : "dailyWarmupOneTrickPicker");
+    if (menu) menu.hidden = !isOpen;
+    if (trigger) trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
   });
+}
+
+function updateDailyWarmupLoadoutPreferences(next = {}) {
+  const profile = getActiveProfile?.();
+  if (!profile?.id) return;
+  const current = getLoadoutPreferences(profile);
+  const oneTrick = Object.prototype.hasOwnProperty.call(next, "oneTrick")
+    ? normalizeLoadoutAgent(next.oneTrick)
+    : current.oneTrick;
+  const exclusions = Object.prototype.hasOwnProperty.call(next, "exclusions")
+    ? normalizeLoadoutExclusions(next.exclusions)
+    : current.exclusions;
+  updateProfile(profile.id, {
+    loadoutExclusions: oneTrick ? [] : exclusions,
+    loadoutOneTrick: oneTrick
+  });
+  renderDailyWarmupLoadoutControls(getActiveProfile());
+}
+
+function syncDailyWarmupSessionFields(profile = getActiveProfile?.()) {
+  const session = getSessionCoachingProfile();
+  const note = document.getElementById("dailyWarmupSessionNote");
+  if (note) note.value = session.note;
+  renderDailyWarmupLoadoutControls(profile);
+  setDailyWarmupPickerOpen("", false);
 }
 
 function readDailyWarmupSessionFields() {
   return normalizeSessionCoachingProfile({
-    role: document.getElementById("dailyWarmupSessionRole")?.value,
-    mode: document.getElementById("dailyWarmupSessionMode")?.value,
-    agentMode: document.getElementById("dailyWarmupAgentMode")?.value,
-    intensity: document.getElementById("dailyWarmupSessionIntensity")?.value,
-    focusPreference: document.getElementById("dailyWarmupFocusPreference")?.value,
-    intentTag: document.getElementById("dailyWarmupIntentTag")?.value,
-    agents: document.getElementById("dailyWarmupSessionAgents")?.value,
-    exclusions: document.getElementById("dailyWarmupSessionExclusions")?.value,
+    ...getSessionCoachingProfile(),
     note: document.getElementById("dailyWarmupSessionNote")?.value
   });
 }
@@ -687,7 +786,7 @@ function resetDailyWarmupModal(profile = getActiveProfile?.(), date = document.g
   if (weapon) weapon.value = record?.weapon || "";
   const dmTdm = document.getElementById("dailyWarmupDmTdm");
   if (dmTdm) dmTdm.checked = record?.dmTdmSelfReported === true;
-  syncDailyWarmupSessionFields(getSessionCoachingProfile());
+  syncDailyWarmupSessionFields(profile);
   renderDailyWarmupVerification(profile, date);
   renderDailyWarmupCorrelationStatus(profile);
   renderDailyPostgameState(profile, date);
@@ -913,6 +1012,54 @@ function bindDailyWarmupEvents() {
   window.__rankedCoachDailyWarmupBound = true;
   document.addEventListener("click", event => {
     if (event.target?.closest?.("[data-warmup-info]")) return;
+    const pickerTrigger = event.target?.closest?.("[data-loadout-picker-trigger]");
+    if (pickerTrigger) {
+      const kind = pickerTrigger.dataset.loadoutPickerTrigger || "";
+      const isOpen = pickerTrigger.getAttribute("aria-expanded") === "true";
+      setDailyWarmupPickerOpen(kind, !isOpen);
+      return;
+    }
+    const pickerItem = event.target?.closest?.("[data-loadout-picker-item]");
+    if (pickerItem && !pickerItem.disabled) {
+      const kind = pickerItem.dataset.loadoutPickerKind || "";
+      const type = pickerItem.dataset.loadoutPickerItem || "";
+      const value = type === "role"
+        ? normalizeLoadoutRole(pickerItem.dataset.loadoutPickerValue)
+        : normalizeLoadoutAgent(pickerItem.dataset.loadoutPickerValue);
+      if (kind === "exclude" && value) {
+        const current = getLoadoutPreferences();
+        updateDailyWarmupLoadoutPreferences({
+          exclusions: [...current.exclusions, value],
+          oneTrick: ""
+        });
+      } else if (kind === "one-trick" && type === "agent" && value) {
+        updateDailyWarmupLoadoutPreferences({ exclusions: [], oneTrick: value });
+      }
+      setDailyWarmupPickerOpen("", false);
+      return;
+    }
+    const chip = event.target?.closest?.("[data-loadout-remove]");
+    if (chip) {
+      const kind = chip.dataset.loadoutRemove || "";
+      const value = kind === "exclude"
+        ? (normalizeLoadoutRole(chip.dataset.loadoutValue) || normalizeLoadoutAgent(chip.dataset.loadoutValue))
+        : normalizeLoadoutAgent(chip.dataset.loadoutValue);
+      if (!value) return;
+      chip.classList.add("is-removing");
+      window.setTimeout(() => {
+        const current = getLoadoutPreferences();
+        if (kind === "exclude") {
+          updateDailyWarmupLoadoutPreferences({
+            exclusions: current.exclusions.filter((entry) => entry !== value),
+            oneTrick: ""
+          });
+        } else if (kind === "one-trick") {
+          updateDailyWarmupLoadoutPreferences({ exclusions: current.exclusions, oneTrick: "" });
+        }
+      }, 180);
+      return;
+    }
+    if (!event.target?.closest?.(".daily-warmup-loadout-row")) setDailyWarmupPickerOpen("", false);
     if (event.target?.closest?.("#dailyWarmupRandomize")) {
       randomizeDailyWarmupSuggestions();
       return;
@@ -6314,7 +6461,8 @@ function buildCoachingRuleContext({
   evidenceLayer = null,
   coachingContext = null,
   currentRole = "",
-  totalKills = 0
+  totalKills = 0,
+  loadoutWeaponStyle = ""
 } = {}) {
   const matchSummaries = orderedMatches.map(match => {
     const core = getMatchCore(match);
@@ -6355,7 +6503,8 @@ function buildCoachingRuleContext({
     weapons: {
       rounds: safeNumber(coachingContext?.weaponRounds),
       shares: coachingContext?.familyShares || {},
-      families: coachingContext?.familySummaries || []
+      families: coachingContext?.familySummaries || [],
+      declaredStyle: normalizeLoadoutWeaponStyle(loadoutWeaponStyle)
     },
     utility: {
       timingAvailable: false,
@@ -6721,7 +6870,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     evidenceLayer,
     coachingContext,
     currentRole: currentSignalRole,
-    totalKills
+    totalKills,
+    loadoutWeaponStyle: getLoadoutPreferences(getActiveProfile?.()).weaponStyle
   });
   const coachingRuleMatches = globalThis.RankedCoachCoachingRules?.matchRules?.(coachingRuleContext, { maxResults: 4 }) || [];
   insights.push(...coachingRuleMatches);
@@ -14866,6 +15016,54 @@ function normalizeSessionAgentNames(value) {
     .filter(Boolean))].slice(0, allAgents.length);
 }
 
+const LOADOUT_PICKER_ROLE_ORDER = Object.freeze(["duelist", "initiator", "controller", "sentinel"]);
+const LOADOUT_ROLE_META = Object.freeze({
+  duelist: { label: "Duelist", color: "#ff4d5a" },
+  initiator: { label: "Initiator", color: "#6dd6ff" },
+  controller: { label: "Controller", color: "#c084fc" },
+  sentinel: { label: "Sentinel", color: "#4ade80" }
+});
+const LOADOUT_WEAPON_STYLE_KEYS = Object.freeze(["", "aggressive-angles", "standard-rifle", "close-range"]);
+
+function normalizeLoadoutRole(value = "") {
+  const role = String(value || "").trim().toLowerCase().replace(/^role:/, "");
+  return LOADOUT_PICKER_ROLE_ORDER.includes(role) ? role : "";
+}
+
+function normalizeLoadoutAgent(value = "") {
+  return normalizeSessionAgentNames([value])[0] || "";
+}
+
+function normalizeLoadoutExclusions(value = []) {
+  const source = Array.isArray(value) ? value : String(value || "").split(",");
+  const normalized = [];
+  source.forEach((entry) => {
+    const role = normalizeLoadoutRole(entry);
+    const agent = role ? "" : normalizeLoadoutAgent(entry);
+    const item = role || agent;
+    if (item && !normalized.includes(item)) normalized.push(item);
+  });
+  return normalized.slice(0, LOADOUT_PICKER_ROLE_ORDER.length + allAgents.length);
+}
+
+function normalizeLoadoutWeaponStyle(value = "") {
+  const style = String(value || "").trim().toLowerCase();
+  return LOADOUT_WEAPON_STYLE_KEYS.includes(style) ? style : "";
+}
+
+function getLoadoutRoleMeta(role = "") {
+  return LOADOUT_ROLE_META[normalizeLoadoutRole(role)] || { label: "Agent", color: "#94a3b8" };
+}
+
+function getLoadoutPreferences(profile = getActiveProfile?.()) {
+  const oneTrick = normalizeLoadoutAgent(profile?.loadoutOneTrick);
+  return {
+    exclusions: oneTrick ? [] : normalizeLoadoutExclusions(profile?.loadoutExclusions),
+    oneTrick,
+    weaponStyle: normalizeLoadoutWeaponStyle(profile?.loadoutWeaponStyle)
+  };
+}
+
 function selectWeeklyFocusCandidate(candidates = []) {
   const available = (Array.isArray(candidates) ? candidates : []).filter(candidate => candidate?.available !== false && candidate?.label);
   if (!available.length) return null;
@@ -16682,22 +16880,22 @@ const LOADOUT_FOCUS_BY_MODE = {
 };
 
 function getLoadoutAgentPool() {
-  const session = getSessionCoachingProfile();
-  const role = session.role !== "any" ? session.role : activeRoleFilter;
-  let pool = role && role !== "any" ? allAgents.filter(agent => agentRoles[agent] === role) : allAgents.slice();
-  const requested = new Set(session.agents);
-  if (session.agentMode !== "any" && requested.size) pool = pool.filter(agent => requested.has(agent));
-  pool = pool.filter(agent => !session.exclusions.includes(agent));
-  // An empty filtered pool must never quietly re-introduce an excluded pick.
-  return pool;
+  const preferences = getLoadoutPreferences();
+  // A one-trick is explicit: it intentionally overrides the visual role filter
+  // so the selected agent is the only possible Loadout outcome.
+  if (preferences.oneTrick) return [preferences.oneTrick];
+
+  const role = activeRoleFilter;
+  const excluded = new Set(preferences.exclusions);
+  return allAgents.filter((agent) => {
+    if (role && role !== "any" && agentRoles[agent] !== role) return false;
+    return !excluded.has(agent) && !excluded.has(agentRoles[agent]);
+  });
 }
 
 function getLoadoutFocusPool() {
-  const session = getSessionCoachingProfile();
   const locked = getLockedWeeklyFocus();
-  if (session.focusPreference === "weekly" && locked && focusesList.includes(locked)) return [locked];
-  const constrained = LOADOUT_FOCUS_BY_MODE[session.mode];
-  return Array.isArray(constrained) && constrained.length ? constrained : focusesList;
+  return locked && focusesList.includes(locked) ? [locked] : focusesList;
 }
 
 const agentRoles = {
@@ -41025,7 +41223,6 @@ function selectAgentFromModal(agent){
   void strip.offsetWidth;
 
   strip.style.transition = `transform ${spinDuration}ms cubic-bezier(.23,1,.32,1)`;
-  animateLoadoutSlotHandle(spinDuration);
   strip.style.transform = `translateY(${finalY}px)`;
 
   setTimeout(() => {
@@ -43623,6 +43820,8 @@ function normalizeFreeThemeMotionMode(value = "static") {
 
 function normalizeProfileRecord(profile = {}) {
   const avatarAgent = String(profile.avatarAgent || "").trim() || getDefaultProfileAvatarAgent();
+  const loadoutOneTrick = normalizeLoadoutAgent(profile.loadoutOneTrick);
+  const loadoutExclusions = loadoutOneTrick ? [] : normalizeLoadoutExclusions(profile.loadoutExclusions);
   return {
     ...profile,
     name: profile.name || "Main",
@@ -43646,6 +43845,9 @@ function normalizeProfileRecord(profile = {}) {
     matches: Array.isArray(profile.matches) ? profile.matches : [],
     lastWarmupPromptDate: String(profile.lastWarmupPromptDate || ""),
     warmupLog: normalizeWarmupLog(profile.warmupLog),
+    loadoutExclusions,
+    loadoutOneTrick,
+    loadoutWeaponStyle: normalizeLoadoutWeaponStyle(profile.loadoutWeaponStyle),
     watchedPlaylistVideos: normalizeWatchedPlaylistVideos(profile.watchedPlaylistVideos),
     themeKey: profile.themeKey || "default",
     frameTheme: profile.frameTheme || profile.themeKey || "default",
@@ -43722,6 +43924,9 @@ function loadProfiles(){
       peakRR: 0,
       lastWarmupPromptDate: "",
       warmupLog: [],
+      loadoutExclusions: [],
+      loadoutOneTrick: "",
+      loadoutWeaponStyle: "",
       watchedPlaylistVideos: [],
       accessibility: {
         contrastMode: "standard",
@@ -44019,6 +44224,18 @@ function updateProfile(id, data){
   }
   if (data.warmupLog != null) {
     profile.warmupLog = normalizeWarmupLog(data.warmupLog);
+  }
+  if (data.loadoutExclusions != null || data.loadoutOneTrick != null) {
+    const nextOneTrick = data.loadoutOneTrick != null
+      ? normalizeLoadoutAgent(data.loadoutOneTrick)
+      : normalizeLoadoutAgent(profile.loadoutOneTrick);
+    profile.loadoutOneTrick = nextOneTrick;
+    profile.loadoutExclusions = nextOneTrick
+      ? []
+      : normalizeLoadoutExclusions(data.loadoutExclusions != null ? data.loadoutExclusions : profile.loadoutExclusions);
+  }
+  if (data.loadoutWeaponStyle != null) {
+    profile.loadoutWeaponStyle = normalizeLoadoutWeaponStyle(data.loadoutWeaponStyle);
   }
   if (data.watchedPlaylistVideos != null) {
     profile.watchedPlaylistVideos = normalizeWatchedPlaylistVideos(data.watchedPlaylistVideos);
@@ -46216,6 +46433,7 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const layoutShapeSelect = document.getElementById("editProfileLayoutShape");
   const layoutTextureSelect = document.getElementById("editProfileLayoutTexture");
   const layoutFontSelect = document.getElementById("editProfileLayoutFont");
+  const loadoutWeaponStyleSelect = document.getElementById("editProfileLoadoutWeaponStyle");
   const avatarSelect = document.getElementById("editProfileAvatarAgent");
   const borderColorSelect = document.getElementById("editProfileBorderColor");
   const borderSelect = document.getElementById("editProfileBorderStyle");
@@ -46302,6 +46520,7 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   if (layoutShapeSelect) layoutShapeSelect.value = selectedLayoutShape;
   if (layoutTextureSelect) layoutTextureSelect.value = selectedLayoutTexture;
   if (layoutFontSelect) layoutFontSelect.value = selectedLayoutFont;
+  if (loadoutWeaponStyleSelect) loadoutWeaponStyleSelect.value = normalizeLoadoutWeaponStyle(profile?.loadoutWeaponStyle);
   setProfileLayoutStyleFontToggle(profile?.layoutStyleCustomFont !== false);
   setLayoutStyleMobileSection("shapes");
   renderLayoutStyleGalleries(selectedLayoutShape, selectedLayoutTexture);
@@ -46388,7 +46607,7 @@ function scheduleProfileEditTabPanelRefresh(tabKey = "theme") {
 function activateProfileEditTab(tabKey = "theme") {
   const shell = document.querySelector("#editProfileModal .profile-edit-shell");
   const previousTab = shell?.dataset.activeProfileTab || "";
-  const tabOrder = ["theme", "layoutStyle", "icon", "borderColor", "border", "banner"];
+  const tabOrder = ["theme", "layoutStyle", "loadout", "icon", "borderColor", "border", "banner"];
   const previousIndex = tabOrder.indexOf(previousTab);
   const nextIndex = tabOrder.indexOf(tabKey);
   const direction = previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex ? "back" : "forward";
@@ -46433,6 +46652,7 @@ function saveEditProfileModal() {
   const selectedLayoutShape = getProfileEditSelection("#editProfileLayoutShapeGallery [data-layout-shape-card].is-active", "data-layout-shape-card", document.getElementById("editProfileLayoutShape")?.value || profile.layoutShape || profile.layoutStyle || "default");
   const selectedLayoutTexture = getProfileEditSelection("#editProfileLayoutTextureGallery [data-layout-texture-card].is-active", "data-layout-texture-card", document.getElementById("editProfileLayoutTexture")?.value || profile.layoutTexture || "default");
   const selectedLayoutFont = normalizeProfileLayoutFont(document.getElementById("editProfileLayoutFont")?.value || profile.layoutFont);
+  const selectedLoadoutWeaponStyle = normalizeLoadoutWeaponStyle(document.getElementById("editProfileLoadoutWeaponStyle")?.value || profile.loadoutWeaponStyle);
   const selectedAvatar = getProfileEditSelection("#editProfileAvatarGallery [data-avatar-card].is-active", "data-avatar-card", document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent);
   const selectedBorderColor = getProfileEditSelection("#editProfileBorderColorGallery [data-border-color-card].is-active", "data-border-color-card", document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
   const selectedBorder = getProfileEditSelection("#editProfileBorderGallery [data-border-card].is-active", "data-border-card", document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
@@ -46451,6 +46671,7 @@ function saveEditProfileModal() {
     layoutTexture: normalizeProfileLayoutTexture(selectedLayoutTexture),
     layoutStyleCustomFont: getProfileLayoutStyleFontValue(profile),
     layoutFont: selectedLayoutFont,
+    loadoutWeaponStyle: selectedLoadoutWeaponStyle,
     avatarAgent: selectedAvatar,
     profileBorderColor: normalizeProfileBorderColor(selectedBorderColor),
     profileBorder: normalizeProfileBorderStyle(selectedBorder),
@@ -48228,25 +48449,6 @@ svg.appendChild(dot);
 // SLOT MACHINE SPINNER (ORIGINAL ENGINE)
 // ============================
 
-// The handle stays inside the existing spin button, so the slot-machine
-// treatment adds no competing click target. Its cycle begins when the reel
-// begins and shares that reel's exact duration.
-function animateLoadoutSlotHandle(duration = spinDuration) {
-  const handle = document.getElementById("loadoutSlotHandle");
-  const arm = handle?.querySelector(".loadout-slot-handle-arm");
-  if (!handle || !arm) return;
-
-  const cycleDuration = Math.max(0, Number(duration) || spinDuration);
-  handle.style.setProperty("--loadout-handle-spin-duration", `${cycleDuration}ms`);
-  arm.classList.remove("is-pulling");
-  void arm.offsetWidth;
-  arm.classList.add("is-pulling");
-
-  window.setTimeout(() => {
-    arm.classList.remove("is-pulling");
-  }, cycleDuration + 40);
-}
-
 function spinLoadout() {
   spinIconLocked = false;
   const PRE_SPIN_DELAY = 220;
@@ -48314,12 +48516,6 @@ if(icon){
 
   agentName.classList.remove("agent-neutral");
   focusDisplay.classList.remove("focus-neutral");
-
-  // Start the physical pull at the same point the reel starts moving below.
-  setTimeout(() => {
-    animateLoadoutSlotHandle(spinDuration);
-  }, PRE_SPIN_DELAY);
-
 
   // ---------------------------
   // TEXT SYNC
@@ -48562,7 +48758,6 @@ function spinLoadoutFromLogging(agent, focus){
   strip.style.transition =
     `transform 700ms cubic-bezier(.23,1,.32,1)`; // ðŸ”¥ shorter spin
 
-  animateLoadoutSlotHandle(700);
   strip.style.transform = `translateY(${finalY}px)`;
 
   // ========================

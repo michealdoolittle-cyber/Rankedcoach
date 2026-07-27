@@ -633,6 +633,48 @@ async function assertStatsTrendTextVisible(page, style) {
   });
 }
 
+async function assertHomeLoadoutAndCompassGeometry(page, style) {
+  const geometry = await page.locator("#page-home").evaluate(home => {
+    const rect = element => element?.getBoundingClientRect().toJSON() || null;
+    const loadout = home.querySelector(".loadout-card");
+    const frame = home.querySelector("#agentFrame");
+    const frameCell = frame?.parentElement;
+    const compass = home.querySelector(".compass-panel");
+    const compassParts = [
+      ".compass-main",
+      ".compass-summary-shell",
+      ".compass-summary-body",
+      ".compass-cards-grid",
+      ".compass-svg-wrap",
+      "#compassSvg"
+    ].map(selector => ({ selector, rect: rect(compass?.querySelector(selector)) })).filter(entry => entry.rect);
+    return {
+      loadout: rect(loadout),
+      frame: rect(frame),
+      frameCell: rect(frameCell),
+      compass: rect(compass),
+      compassParts,
+      compassOverflow: compass ? {
+        horizontal: compass.scrollWidth > compass.clientWidth + 1,
+        vertical: compass.scrollHeight > compass.clientHeight + 1
+      } : null
+    };
+  });
+  const contains = (outer, inner) => outer && inner
+    && inner.left >= outer.left - 1
+    && inner.right <= outer.right + 1
+    && inner.top >= outer.top - 1
+    && inner.bottom <= outer.bottom + 1;
+  assert.ok(contains(geometry.loadout, geometry.frame), `${style} agent frame escaped its shaped loadout card: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.frameCell, geometry.frame), `${style} agent frame exceeded its grid cell: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.compassParts.length >= 6, `${style} did not render the compass geometry: ${JSON.stringify(geometry)}`);
+  geometry.compassParts.forEach(part => {
+    assert.ok(contains(geometry.compass, part.rect), `${style} compass ${part.selector} escaped its shaped card: ${JSON.stringify(geometry)}`);
+  });
+  assert.equal(geometry.compassOverflow?.horizontal, false, `${style} compass has horizontal overflow: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.compassOverflow?.vertical, false, `${style} compass has vertical overflow: ${JSON.stringify(geometry)}`);
+}
+
 async function writeCoverageContactSheet(browser, style, tiles) {
   const review = await browser.newPage({ viewport: { width: 1500, height: 1000 } });
   await review.setContent(`<!doctype html><meta charset="utf-8"><style>
@@ -861,6 +903,8 @@ async function run() {
     const defaultTagPixelsAfter = await page.locator(".weekly-focus-confidence").first().screenshot();
     await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = ""; });
     assert.equal(defaultTagPixelsAfter.equals(defaultTagPixels), true, "Default Layout changed tag pixels");
+    await page.setViewportSize({ width: 1365, height: 768 });
+    await page.waitForTimeout(180);
     const excludedBefore = await page.evaluate(() => ({
       navClip: getComputedStyle(document.querySelector(".app-header")).clipPath,
       navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
@@ -886,6 +930,7 @@ async function run() {
     }));
     for (const style of layoutStyles) {
       await page.click(`[data-layout-shape-card="${style}"]`);
+      await page.waitForTimeout(80);
       assert.equal(await page.locator("body").getAttribute("data-layout-shape"), style);
       const bounds = await page.locator(".weekly-focus-card").evaluate(card => {
         const cardRect = card.getBoundingClientRect();
@@ -925,7 +970,15 @@ async function run() {
         })
       }));
       assert.deepEqual(excludedAfter, excludedBefore, `${style} changed an excluded surface`);
+      await assertHomeLoadoutAndCompassGeometry(page, `${style} desktop`);
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(180);
+      await assertHomeLoadoutAndCompassGeometry(page, `${style} mobile`);
+      await page.setViewportSize({ width: 1365, height: 768 });
+      await page.waitForTimeout(180);
     }
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForTimeout(180);
     await page.click('[data-layout-shape-card="honeycomb"]');
     await page.click('[data-layout-texture-card="rustpatina"]');
     assert.equal(await page.locator("body").getAttribute("data-layout-shape"), "honeycomb");
@@ -962,7 +1015,9 @@ async function run() {
     assert.equal(await page.locator("body").getAttribute("data-layout-texture"), "rustpatina");
     assert.equal(await page.locator("body").getAttribute("data-layout-font"), "ibmplexmono");
 
-    await runPhaseTwoCoverage(page, browser);
+    if (process.env.LAYOUT_STYLE_SKIP_PHASE_TWO !== "1") {
+      await runPhaseTwoCoverage(page, browser);
+    }
 
     await page.goto(`http://127.0.0.1:${port}/?profile=layout-two`, { waitUntil: "domcontentloaded" });
     await dismissWarmup(page);

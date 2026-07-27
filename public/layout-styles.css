@@ -2283,6 +2283,33 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
 }
 
 @media (min-width:821px){
+  /* A shaped card reserves real space around its corners.  The home grid used to
+     keep the middle row at its old 260px track, then clip the compass's 284px
+     readable area inside that smaller box.  Give that row an honest minimum and
+     let the Home page scroll naturally on shorter desktop viewports instead of
+     shrinking or cutting off the radar. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-layout{
+    height:auto !important;
+    min-height:100% !important;
+    grid-template-rows:minmax(calc(196px * var(--app-1080-scale)),auto) minmax(320px,auto) minmax(calc(296px * var(--app-1080-scale)),auto) !important;
+    align-content:start !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-middle-row,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-middle-row > .compass-panel{
+    min-height:320px !important;
+    height:100% !important;
+  }
+
+  /* Keep the compass clear of a clipped corner without spending the full safe
+     area twice.  Its header/content already sit inside the outer card's grid. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel{
+    padding-top:min(var(--layout-surface-safe-top,14px),14px) !important;
+    padding-right:min(var(--layout-surface-safe-right,18px),18px) !important;
+    padding-bottom:min(var(--layout-surface-safe-bottom,14px),14px) !important;
+    padding-left:min(var(--layout-surface-safe-left,18px),18px) !important;
+  }
+
   /* The outer compass card retains its baseline size. Its internal flex item must
      not insist on the same 260px minimum after the shaped shell adds safe padding. */
   body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .compass-panel > .compass-main{
@@ -2337,10 +2364,12 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
 body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .loadout-card #agentFrame{
   min-width:0 !important;
   min-height:0 !important;
-  width:min(100%,var(--agent-frame-target-size,232px)) !important;
-  height:auto !important;
+  width:auto !important;
+  max-width:100% !important;
+  height:100% !important;
+  max-height:100% !important;
   aspect-ratio:1 / 1 !important;
-  align-self:center !important;
+  align-self:stretch !important;
   justify-self:center !important;
   overflow:hidden !important;
   translate:none !important;
