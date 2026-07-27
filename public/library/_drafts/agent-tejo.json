@@ -93,7 +93,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
   "uuid": "b444168c-4e35-8076-db47-ef9bf368f384",
-  "lastReviewed": "2026-07-26",
+  "lastReviewed": "2026-07-27",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -102,7 +102,7 @@
     "entityName": "Tejo",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-27T04:12:18.953Z",
+    "generatedAt": "2026-07-27T10:14:22.887Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-27"

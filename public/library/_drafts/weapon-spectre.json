@@ -57,7 +57,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "462080d1-4035-2937-7c09-27aa2a5c27a7",
   "source": "https://valorant-api.com/v1/weapons/462080d1-4035-2937-7c09-27aa2a5c27a7?language=en-US",
-  "lastReviewed": "2026-07-26",
+  "lastReviewed": "2026-07-27",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -66,7 +66,7 @@
     "entityName": "Spectre",
     "operation": "merge",
     "groupId": "smgs",
-    "generatedAt": "2026-07-27T04:12:18.953Z",
+    "generatedAt": "2026-07-27T10:14:22.887Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-27"

@@ -98,7 +98,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
   "uuid": "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
-  "lastReviewed": "2026-07-26",
+  "lastReviewed": "2026-07-27",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -107,7 +107,7 @@
     "entityName": "Reyna",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-27T04:12:18.953Z",
+    "generatedAt": "2026-07-27T10:14:22.887Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-27"

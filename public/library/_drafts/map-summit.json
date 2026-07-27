@@ -251,7 +251,7 @@
   ],
   "source": "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US",
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-26",
+  "lastReviewed": "2026-07-27",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -260,7 +260,7 @@
     "entityName": "Summit",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-27T04:12:18.953Z",
+    "generatedAt": "2026-07-27T10:14:22.887Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-27"
