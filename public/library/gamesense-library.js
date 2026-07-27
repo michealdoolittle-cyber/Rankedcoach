@@ -345,6 +345,12 @@
     waylay: "df1cb487-4902-002e-5c17-d28e83e78588",
     yoru: "7f94d92c-4234-0a36-9646-3a87eb8b5c89"
   });
+  // These are the deliberately small overview portraits shipped locally. Do
+  // not point the overview at a missing thumbnail and then fall back to a
+  // 2048px remote portrait during the tab transition.
+  const overviewAgentPortraitThumbnailIds = Object.freeze(new Set([
+    "cypher", "jett", "omen", "sage", "sova", "viper"
+  ]));
   const compAgentRoles = Object.freeze({
     chamber: "sentinel", clove: "controller", cypher: "sentinel", fade: "initiator",
     gekko: "initiator", iso: "duelist", jett: "duelist", "kay-o": "initiator", killjoy: "sentinel",
@@ -469,6 +475,23 @@
     return local || getMapApiArtwork(mapName);
   }
 
+  // Overview tiles use small local art. The Valorant API splash images are
+  // 1920–3840px wide, and decoding thirteen of them as the Library appears
+  // blocks touch navigation. Detailed dossiers continue to use getMapArtwork.
+  function getOverviewMapThumbnail(map = {}) {
+    const id = assetSlug(map?.id || map?.label);
+    return id ? `/assets/library/maps/thumbs/${id}.jpg` : "";
+  }
+
+  // The overview shows one representative per role, so a card-sized portrait
+  // is sufficient here. Full portraits remain available inside Agent dossiers.
+  function getOverviewAgentPortraitThumbnail(agent = {}, fallback = "") {
+    const id = assetSlug(agent?.id || agent?.label || fallback);
+    return overviewAgentPortraitThumbnailIds.has(id)
+      ? `/assets/library/agents/${id}/portrait-card.png`
+      : "";
+  }
+
   function buildMapShell(label = "") {
     const id = assetSlug(label);
     return {
@@ -510,10 +533,17 @@
     });
   }
 
-  function getDeferredCollageImageMarkup(src = "", className = "") {
+  function getDeferredCollageImageMarkup(src = "", className = "", options = {}) {
     if (!src) return "";
     const classes = [className, "is-collage-loaded"].filter(Boolean).join(" ");
-    return `<img${classes ? ` class="${escapeHtml(classes)}"` : ""} src="${escapeHtml(src)}" alt="" loading="eager" decoding="async" fetchpriority="high">`;
+    const fallbackSrc = String(options?.fallbackSrc || "").trim();
+    const loading = options?.loading === "lazy" ? "lazy" : "eager";
+    const fetchPriority = options?.fetchPriority === "low"
+      ? "low"
+      : options?.fetchPriority === "auto"
+        ? "auto"
+        : "high";
+    return `<img${classes ? ` class="${escapeHtml(classes)}"` : ""} src="${escapeHtml(src)}" alt="" loading="${loading}" decoding="async" fetchpriority="${fetchPriority}"${fallbackSrc ? ` data-gamesense-overview-fallback-src="${escapeHtml(fallbackSrc)}"` : ""}>`;
   }
 
   function waitForCollageIdle(token) {
@@ -1061,19 +1091,35 @@
         { role: "duelist", fallback: "jett" },
         { role: "controller", fallback: "omen" },
         { role: "initiator", fallback: "sova" },
-        { role: "sentinel", fallback: "chamber" }
+        { role: "sentinel", fallback: "cypher" }
       ].map(({ role, fallback }) => {
-        const agent = agents.find(item => assetSlug(item?.role) === role) || agents.find(item => item?.id === fallback) || { id: fallback, label: fallback, portrait: `/assets/library/agents/${fallback}/portrait.png` };
+        const agent = agents.find(item => (
+          assetSlug(item?.role) === role
+          && overviewAgentPortraitThumbnailIds.has(assetSlug(item?.id || item?.label))
+        )) || agents.find(item => item?.id === fallback) || { id: fallback, label: fallback, portrait: `/assets/library/agents/${fallback}/portrait.png` };
+        const thumbnail = getOverviewAgentPortraitThumbnail(agent, fallback);
+        const fullPortrait = agent.portrait || getAgentFallbackIcon(agent.label || fallback);
         return `
           <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
             <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="eager" decoding="async" fetchpriority="high">
-            ${getDeferredCollageImageMarkup(agent.portrait || getAgentFallbackIcon(agent.label || fallback), "gamesense-topic-agent-art")}
+            ${getDeferredCollageImageMarkup(thumbnail || fullPortrait, "gamesense-topic-agent-art", {
+              fallbackSrc: thumbnail ? fullPortrait : ""
+            })}
           </span>`;
       });
       return rolePicks.join("");
     }
+    if (topic === "maps") {
+      return getMaps().map((map, index) => {
+        const fullArtwork = map?.cardImage || getMapArtwork(map?.label);
+        const thumbnail = getOverviewMapThumbnail(map);
+        return getDeferredCollageImageMarkup(thumbnail || fullArtwork, index === 12 ? "gamesense-topic-collage-wide" : "", {
+          fallbackSrc: thumbnail ? fullArtwork : ""
+        });
+      }).join("");
+    }
     return getTopicCollageImages(topic)
-      .map((src, index) => getDeferredCollageImageMarkup(src, topic === "maps" && index === 12 ? "gamesense-topic-collage-wide" : ""))
+      .map(src => getDeferredCollageImageMarkup(src))
       .join("");
   }
 
@@ -1280,6 +1326,14 @@
 
   function renderMapCard(item, index) {
     const isOutOfSeason = item.inCompetitivePool === false;
+    // Map selector cards never need a 1920–3840px dossier splash. Keeping
+    // their visual source at card resolution prevents thirteen image decodes
+    // from competing with page navigation; map details deliberately retain
+    // `item.cardImage` below as their full-resolution source.
+    const fullArtwork = item.cardImage || getMapArtwork(item.label);
+    const thumbnailArtwork = getOverviewMapThumbnail(item);
+    const cardArtwork = thumbnailArtwork || fullArtwork;
+    const fullArtworkFallback = thumbnailArtwork && fullArtwork ? ` data-gamesense-map-card-background-fallback="${escapeHtml(fullArtwork)}" data-gamesense-overview-fallback-src="${escapeHtml(fullArtwork)}"` : "";
     const activeSeasonMarks = isOutOfSeason ? "" : `
       <span class="gamesense-map-side-marks" aria-hidden="true">
         <span class="gamesense-map-side-mark is-attack" title="Attack">
@@ -1290,8 +1344,8 @@
         </span>
       </span>`;
     return `
-      <button class="gamesense-entry-card gamesense-map-entry-card${isOutOfSeason ? " is-out-of-season" : ""}" type="button" data-gamesense-item="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)}${isOutOfSeason ? ", out of season" : ""}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(item.cardImage)}')">
-        ${item.cardImage ? `<img class="gamesense-map-card-preload" src="${escapeHtml(item.cardImage)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}">` : ""}
+      <button class="gamesense-entry-card gamesense-map-entry-card${isOutOfSeason ? " is-out-of-season" : ""}" type="button" data-gamesense-item="${escapeHtml(item.id)}" aria-label="${escapeHtml(item.label)}${isOutOfSeason ? ", out of season" : ""}" style="--entry-index:${index};--map-card-image:url('${escapeHtml(cardArtwork)}')">
+        ${cardArtwork ? `<img class="gamesense-map-card-preload" src="${escapeHtml(cardArtwork)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}${fullArtworkFallback}>` : ""}
         <span class="gamesense-map-card-shade"></span>
         <span class="gamesense-map-card-frame" aria-hidden="true"></span>
         ${activeSeasonMarks}
@@ -2157,7 +2211,11 @@
           const pickRate = agent.mapPickRates?.[mapName];
           const tagName = map ? "button" : "article";
           const action = map ? ` type="button" data-gamesense-open="maps" data-gamesense-item-target="${escapeHtml(map.id)}"` : "";
-          return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(getMapArtwork(mapName))}" alt="" loading="lazy"><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
+          const fullArtwork = getMapArtwork(mapName);
+          const thumbnailArtwork = getOverviewMapThumbnail(map || { label: mapName });
+          const mapArtwork = thumbnailArtwork || fullArtwork;
+          const fallback = thumbnailArtwork && fullArtwork ? ` data-gamesense-overview-fallback-src="${escapeHtml(fullArtwork)}"` : "";
+          return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(mapArtwork)}" alt="" loading="lazy" decoding="async"${fallback}><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
         }).join("") : `<p class="gamesense-map-fit-unavailable">No verified current-season map-fit sample is attached to this agent dossier.</p>`}</div>
       </section>
       ${renderRelatedVideo(agent)}
@@ -3153,6 +3211,23 @@
       img.addEventListener("error", () => {
         const fallback = img.dataset.agentFallback;
         if (fallback && img.src !== fallback) img.src = fallback;
+      }, { once: true });
+    });
+    root.querySelectorAll("img[data-gamesense-map-card-background-fallback]").forEach(img => {
+      img.addEventListener("error", () => {
+        const fallback = img.dataset.gamesenseMapCardBackgroundFallback;
+        const card = img.closest(".gamesense-map-entry-card");
+        if (!fallback || !card || img.dataset.gamesenseMapCardFallbackUsed === "true") return;
+        img.dataset.gamesenseMapCardFallbackUsed = "true";
+        card.style.setProperty("--map-card-image", `url("${fallback.replace(/["\\\n\r]/g, "\\$&")}")`);
+      }, { once: true });
+    });
+    root.querySelectorAll("img[data-gamesense-overview-fallback-src]").forEach(img => {
+      img.addEventListener("error", () => {
+        const fallback = img.dataset.gamesenseOverviewFallbackSrc;
+        if (!fallback || img.dataset.gamesenseOverviewFallbackUsed === "true") return;
+        img.dataset.gamesenseOverviewFallbackUsed = "true";
+        img.src = fallback;
       }, { once: true });
     });
     root.querySelectorAll("img[data-crosshair-photo-fallback]").forEach(img => {

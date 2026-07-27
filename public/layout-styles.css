@@ -2283,24 +2283,21 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
 }
 
 @media (min-width:821px){
-  /* The desktop Home dashboard is a scrollable page inside the fixed app shell.
-     Its prior 100%-tall grid was allowed to resolve the RR row smaller than the
-     chart card's own readable minimum, so the bottom edge of the chart escaped
-     the grid at shorter desktop heights.  Let this one dashboard grid take its
-     intrinsic height; the page owns the resulting vertical scroll.  This keeps
-     every chart child inside its card without shrinking the compass to make room. */
+  /* Desktop Home is a fixed three-band workspace.  The previous intrinsic-height
+     fallback let the Compass claim a fourth of the viewport and pushed the RR
+     chart below the visible dashboard.  Keep the intended 30 / 30 / 40 split so
+     the chart is immediately usable instead of becoming a scroll destination. */
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home{
     overflow-x:hidden !important;
-    overflow-y:auto !important;
+    overflow-y:hidden !important;
     overscroll-behavior-y:contain;
-    scroll-padding-bottom:12px;
   }
 
   html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .home-layout{
-    height:auto !important;
-    min-height:100% !important;
-    grid-template-rows:minmax(calc(196px * var(--app-1080-scale)),auto) minmax(320px,auto) minmax(calc(296px * var(--app-1080-scale)),auto) !important;
-    align-content:start !important;
+    height:100% !important;
+    min-height:0 !important;
+    grid-template-rows:minmax(0,3fr) minmax(0,3fr) minmax(0,4fr) !important;
+    align-content:stretch !important;
   }
 
   /* Shaped surfaces reserve safe-area space inside the compass card. Preserve
@@ -2308,7 +2305,17 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
      rather than shrinking or cutting off the radar. */
   html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-middle-row,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-middle-row > .compass-panel{
-    min-height:320px !important;
+    min-height:0 !important;
+    height:100% !important;
+  }
+
+  /* These min-content locks were useful while Home used intrinsic rows, but now
+     make the middle band overflow its allotted third.  The individual Compass
+     pieces below shrink together, so this does not clip or scale its readout. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .home-middle-row,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .home-middle-row > .compass-panel,
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-chart-card{
+    min-height:0 !important;
     height:100% !important;
   }
 
@@ -2342,6 +2349,271 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
     translate:none !important;
     scale:none !important;
     transform:none !important;
+  }
+
+  /* Apply the same safe compacting to the default layout.  This supersedes the
+     older 260px Compass minimum only inside the fixed middle band. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-panel > .compass-main{
+    min-height:0 !important;
+    height:100% !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main .compass-summary-body{
+    grid-template-columns:minmax(0,1fr) minmax(128px,.76fr) !important;
+    min-height:0 !important;
+    height:100% !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main .compass-svg-wrap{
+    min-width:128px !important;
+    min-height:0 !important;
+    height:100% !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main :is(.compass-svg-wrap svg,.sw-compass-mini){
+    width:auto !important;
+    min-width:0 !important;
+    height:100% !important;
+    min-height:0 !important;
+    max-width:100% !important;
+    max-height:100% !important;
+    aspect-ratio:1 / 1 !important;
+    flex:0 1 auto !important;
+    align-self:center !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main :is(.compass-cards-grid,.compass-score-card){
+    min-height:0 !important;
+  }
+
+  /* The fixed middle band must share its real height with the impact meter,
+     rather than reserve a viewport-sized meter track and squeeze the fill on
+     shorter desktops.  Keep the report and caption compact so the vertical
+     meter still takes the clear majority of its card. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card{
+    grid-template-rows:minmax(28px,auto) minmax(0,1fr) minmax(8px,auto) !important;
+    gap:3px 8px !important;
+    padding:4px 10px !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card #impactRolePill{
+    min-height:28px !important;
+    padding:4px 8px !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-bar-outer{
+    height:100% !important;
+    min-height:0 !important;
+  }
+
+  /* A 30% middle band is still compact at 768px-high desktop windows.  In that
+     one case, show the playable Compass (four scores and a square radar) and
+     collapse the explanatory chrome rather than crushing the SVG into a thin
+     strip.  The full profile description remains available at normal desktop
+     heights and on mobile. */
+  @media (max-height:820px){
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-panel{
+      padding:8px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main{
+      gap:4px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-header{
+      min-height:18px !important;
+      align-items:center !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-header .card-sub,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-kicker,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-description,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home #compassDescriptionToggle{
+      display:none !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-source-pill{
+      padding:3px 6px !important;
+      font-size:9px !important;
+      line-height:1 !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell{
+      display:grid !important;
+      grid-template-columns:minmax(0,1fr) !important;
+      grid-template-rows:18px minmax(100px,1fr) !important;
+      align-items:stretch !important;
+      flex:1 1 auto !important;
+      min-height:0 !important;
+      height:auto !important;
+      gap:2px !important;
+      padding:1px 4px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home :is(.compass-summary-top-shell,.compass-summary-bottom-shell,.compass-summary-body){
+      min-height:0 !important;
+      height:100% !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-copy{
+      gap:0 !important;
+      justify-content:center !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-title{
+      font-size:11px !important;
+      line-height:1 !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-meta{
+      display:none !important;
+      flex-wrap:nowrap !important;
+      gap:3px !important;
+      overflow:hidden !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-meta span{
+      min-width:0 !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      padding:1px 4px !important;
+      font-size:8px !important;
+      line-height:1.1 !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-body{
+      grid-template-columns:minmax(0,1fr) minmax(80px,100px) !important;
+      gap:5px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-cards-grid{
+      gap:3px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-score-card{
+      padding:3px 4px !important;
+      gap:2px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-card-top{
+      gap:2px !important;
+      flex-wrap:nowrap !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-card-label{
+      font-size:8px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-card-tier,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-card-meta{
+      display:none !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-card-score-row{
+      gap:2px !important;
+      font-size:7px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-card-score-row strong{
+      font-size:15px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-bar-track{
+      height:4px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main .compass-svg-wrap{
+      min-width:100px !important;
+      min-height:100px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main :is(.compass-svg-wrap svg,.sw-compass-mini){
+      width:min(100%,100px) !important;
+      min-width:0 !important;
+      height:100px !important;
+      min-height:0 !important;
+      max-height:100px !important;
+      aspect-ratio:1 / 1 !important;
+      flex:0 0 100px !important;
+      align-self:center !important;
+    }
+  }
+
+  /* Home deliberately allocates 30% of the workspace to the middle band so
+     the RR chart keeps its 40% reading area.  On ordinary desktop heights,
+     the Compass profile summary duplicated the headline above it and consumed
+     most of that band, leaving a tiny or stretched radar.  Keep the actual
+     coaching controls (four scores + square radar), and collapse only that
+     redundant inner summary until there is enough vertical room to show both. */
+  @media (max-height:1100px){
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main{
+      gap:4px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-header{
+      min-height:18px !important;
+      align-items:center !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-header .card-sub,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-kicker,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-profile-description,
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home #compassDescriptionToggle{
+      display:none !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-source-pill{
+      padding:3px 6px !important;
+      font-size:9px !important;
+      line-height:1 !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell{
+      display:flex !important;
+      flex:1 1 auto !important;
+      flex-direction:column !important;
+      min-height:0 !important;
+      height:auto !important;
+      gap:0 !important;
+      padding:3px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-top-shell{
+      display:none !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-bottom-shell{
+      display:flex !important;
+      flex:1 1 auto !important;
+      min-height:0 !important;
+      height:auto !important;
+      padding:3px !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-body{
+      grid-template-columns:minmax(0,1fr) minmax(120px,170px) !important;
+      gap:8px !important;
+      min-height:0 !important;
+      height:100% !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main .compass-svg-wrap{
+      min-width:120px !important;
+      min-height:0 !important;
+      height:100% !important;
+    }
+
+    html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-main :is(.compass-svg-wrap svg,.sw-compass-mini){
+      width:auto !important;
+      min-width:0 !important;
+      height:100% !important;
+      min-height:0 !important;
+      max-width:100% !important;
+      max-height:170px !important;
+      aspect-ratio:1 / 1 !important;
+      flex:0 1 auto !important;
+      align-self:center !important;
+    }
   }
 
   /* The summary card has a compact desktop baseline. Cap decorative safe-area

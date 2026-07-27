@@ -681,7 +681,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-weapon-entry-card > :not(.gamesense-map-card-shade){position:relative;z-index:2;}
 .gamesense-topic-collage{position:absolute;inset:0;z-index:0;display:grid;grid-template-columns:repeat(3,1fr);overflow:hidden;opacity:.52;pointer-events:none;}
 .gamesense-topic-collage::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.05),rgba(2,6,23,.32) 38%,rgba(2,6,23,.96));}
-.gamesense-topic-collage img{width:100%;height:100%;min-width:0;object-fit:cover;filter:saturate(.86) contrast(1.06);}
+.gamesense-topic-collage img{width:100%;height:100%;min-width:0;object-fit:cover;/* The dark collage veil supplies the intended treatment; a per-image CSS filter makes a whole 13-map tile re-raster as it appears. */filter:none;}
 .gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;}
 .gamesense-topic-card[data-gamesense-topic="maps"] .gamesense-topic-collage img{height:100%;object-fit:cover;}
 .gamesense-topic-card[data-gamesense-topic="agents"] .gamesense-topic-collage{grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:0;opacity:.64;background:linear-gradient(135deg,#17253a,#070d18);}
@@ -690,7 +690,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-btn{
 .gamesense-topic-agent-art{width:100% !important;height:100% !important;min-height:0;object-fit:contain !important;object-position:center bottom;filter:saturate(.9) contrast(1.08) drop-shadow(0 12px 16px rgba(0,0,0,.72)) !important;}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage{inset:0;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));align-items:center;gap:9px;padding:12px 16px 112px;opacity:.62;background:linear-gradient(135deg,#17253a,#070d18);}
 .gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage::after{background:linear-gradient(180deg,rgba(2,6,23,.04),rgba(2,6,23,.26) 48%,rgba(2,6,23,.98));}
-.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage img{width:100%;height:100%;min-height:0;object-fit:contain;filter:grayscale(.2) saturate(.86) contrast(1.06) drop-shadow(0 7px 7px rgba(0,0,0,.68));}
+.gamesense-topic-card[data-gamesense-topic="weapons"] .gamesense-topic-collage img{width:100%;height:100%;min-height:0;object-fit:contain;filter:none;}
 .gamesense-topic-card:hover .gamesense-topic-collage{opacity:.66;}
 .gamesense-topic-card > strong{color:var(--gamesense-warm,#facc15);}
 

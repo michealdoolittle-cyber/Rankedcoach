@@ -14,7 +14,11 @@ function startServer() {
     const server = http.createServer((request, response) => {
       let url = decodeURIComponent((request.url || "/").split("?")[0]);
       if (url === "/api/content/playlist") {
-        const images = ["breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png", "split-card.png", "bind-card.png", "breeze-card.png"];
+        // Exercise the Playlist UI with card-sized fixture art. The full map
+        // splashes are 1920–3840px wide and make this UI test manufacture a
+        // decode stall that production's overview thumbnails deliberately
+        // avoid.
+        const images = ["thumbs/breeze.jpg", "thumbs/split.jpg", "thumbs/bind.jpg", "thumbs/breeze.jpg", "thumbs/split.jpg", "thumbs/bind.jpg", "thumbs/breeze.jpg"];
         const channels = ["Dopai", "Woohoojin", "Konpeki", "Rooney", "Rem", "Charla7an", "TenZ"];
         response.writeHead(200, { "Content-Type": "application/json" });
         return response.end(JSON.stringify({
@@ -30,7 +34,7 @@ function startServer() {
             channel: "Charla7an",
             title: "Radiant ranked coaching",
             viewerCount: 412,
-            thumbnail: `http://127.0.0.1:${port}/assets/library/maps/bind-card.png`,
+            thumbnail: `http://127.0.0.1:${port}/assets/library/maps/thumbs/bind.jpg`,
             url: "https://www.twitch.tv/charla7an"
           }],
           historicalItems: [
@@ -42,7 +46,7 @@ function startServer() {
               sourceType: "owner-curated-research-video",
               topicType: "Map Knowledge",
               targetName: "Corrode",
-              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/bind-card.png`,
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/thumbs/bind.jpg`,
               url: "https://www.youtube.com/watch?v=histmap0001",
               startSeconds: 483,
               archiveOnly: true,
@@ -58,7 +62,7 @@ function startServer() {
               sourceType: "owner-curated-research-video",
               topicType: "Map Knowledge",
               targetName: "Abyss",
-              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/breeze-card.png`,
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/thumbs/breeze.jpg`,
               url: "https://www.youtube.com/watch?v=histmap0002",
               archiveOnly: true,
               isLive: false,
@@ -73,7 +77,7 @@ function startServer() {
               sourceType: "owner-curated-research-video",
               topicType: "Agent",
               targetName: "Jett",
-              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/split-card.png`,
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/thumbs/split.jpg`,
               url: "https://www.youtube.com/watch?v=histagent01",
               archiveOnly: true,
               isLive: false,
@@ -88,7 +92,7 @@ function startServer() {
               sourceType: "owner-curated-research-video",
               topicType: "Role",
               targetName: "Controller",
-              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/split-card.png`,
+              thumbnail: `http://127.0.0.1:${port}/assets/library/maps/thumbs/split.jpg`,
               url: "https://www.youtube.com/watch?v=histrole001",
               archiveOnly: true,
               isLive: false,
@@ -231,9 +235,20 @@ function weaponSkinApiStub(url) {
 
 async function seed(page, profileId) {
   await page.addInitScript(id => {
+    const now = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     localStorage.setItem("valtracker_active_profile_id", id);
     localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{ id, name: "Library Test", accountName: "Library Test", region: "NA", matches: [] }]));
+    // This suite exercises Library rendering, not the once-per-day entrance
+    // choreography. Bypass that independent sequence so it cannot leave a
+    // newly selected Library page intentionally staged at opacity zero.
+    localStorage.setItem("rankedcoach_daily_entrance_v2:guest", JSON.stringify({
+      date,
+      skipped: true,
+      seenPages: [],
+      seenSections: []
+    }));
   }, profileId);
 }
 
@@ -337,6 +352,25 @@ async function run() {
     assert.ok(await desktop.locator('[data-gamesense-topic="crosshairs"] .gamesense-crosshair-svg').count() >= 5);
     assert.equal(await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').count(), 13);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')].every(image => image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0));
+    const mapOverviewImages = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => ({
+      currentSrc: image.currentSrc,
+      fallbackUsed: image.dataset.gamesenseOverviewFallbackUsed || "",
+      filter: getComputedStyle(image).filter,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight
+    })));
+    assert.ok(mapOverviewImages.every(image => /\/assets\/library\/maps\/thumbs\/[a-z-]+\.jpg$/i.test(image.currentSrc)), JSON.stringify(mapOverviewImages));
+    assert.ok(mapOverviewImages.every(image => image.fallbackUsed === "" && image.filter === "none" && image.naturalWidth <= 400 && image.naturalHeight <= 240), JSON.stringify(mapOverviewImages));
+    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="agents"] .gamesense-topic-agent-art')].every(image => image.complete && image.naturalWidth > 0));
+    const agentOverviewImages = await desktop.locator('[data-gamesense-topic="agents"] .gamesense-topic-agent-art').evaluateAll(images => images.map(image => ({
+      currentSrc: image.currentSrc,
+      loading: image.loading,
+      fetchPriority: image.fetchPriority,
+      complete: image.complete,
+      naturalWidth: image.naturalWidth
+    })));
+    assert.equal(agentOverviewImages.length, 4, JSON.stringify(agentOverviewImages));
+    assert.ok(agentOverviewImages.every(image => /\/assets\/library\/agents\/[a-z-]+\/portrait-card\.png$/i.test(image.currentSrc) && image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0 && image.naturalWidth <= 400), JSON.stringify(agentOverviewImages));
     const mapTopicCollageState = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage').evaluate(collage => {
       const images = [...collage.querySelectorAll("img")];
       const wide = images[12];
@@ -352,6 +386,7 @@ async function run() {
     assert.equal(mapTopicCollageState.rows, 5, JSON.stringify(mapTopicCollageState));
     assert.equal(mapTopicCollageState.wideColumn, "1 / -1", JSON.stringify(mapTopicCollageState));
     assert.match(mapTopicCollageState.wideRow, /^5(?: \/ auto)?$/, JSON.stringify(mapTopicCollageState));
+    await desktop.locator('[data-gamesense-topic="maps"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-maps-topic-desktop.png") });
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 19);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/") || image.src.includes("media.valorant-api.com/weapons/"))), true);
@@ -383,7 +418,7 @@ async function run() {
     });
     assert.ok(weaponTopicArt.imageRects.every(image => image.left >= weaponTopicArt.card.left && image.right <= weaponTopicArt.card.right && image.top >= weaponTopicArt.card.top && image.bottom <= weaponTopicArt.card.bottom), JSON.stringify(weaponTopicArt));
     assert.equal(weaponTopicArt.titleColor, "rgb(246, 196, 83)");
-    assert.ok(weaponTopicArt.filters.every(filter => filter.includes("grayscale")), JSON.stringify(weaponTopicArt));
+    assert.ok(weaponTopicArt.filters.every(filter => filter === "none"), JSON.stringify(weaponTopicArt));
     assert.ok(weaponTopicArt.actionBottom <= weaponTopicArt.titleTop + 1 && weaponTopicArt.titleBottom <= weaponTopicArt.copyTop + 1, JSON.stringify(weaponTopicArt));
     assert.ok(weaponTopicArt.actionTop <= weaponTopicArt.card.top + 32 && weaponTopicArt.titleVerticalDelta <= 12 && weaponTopicArt.card.bottom - weaponTopicArt.copyBottom <= 32, JSON.stringify(weaponTopicArt));
     assert.ok(weaponTopicArt.titleCenterDelta <= 1 && weaponTopicArt.actionCenterDelta <= 1 && weaponTopicArt.copyCenterDelta <= 1, JSON.stringify(weaponTopicArt));
@@ -1527,6 +1562,17 @@ async function run() {
     await mobile.waitForTimeout(700);
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 5);
     assert.equal(await mobile.locator('[data-gamesense-topic="crosshairs"]').count(), 1);
+    await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    const mobileMapOverviewImages = await mobile.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => ({
+      currentSrc: image.currentSrc,
+      fallbackUsed: image.dataset.gamesenseOverviewFallbackUsed || "",
+      filter: getComputedStyle(image).filter,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight
+    })));
+    assert.equal(mobileMapOverviewImages.length, 13, JSON.stringify(mobileMapOverviewImages));
+    assert.ok(mobileMapOverviewImages.every(image => /\/assets\/library\/maps\/thumbs\/[a-z-]+\.jpg$/i.test(image.currentSrc) && image.fallbackUsed === "" && image.filter === "none" && image.naturalWidth <= 400 && image.naturalHeight <= 240), JSON.stringify(mobileMapOverviewImages));
+    await mobile.locator('[data-gamesense-topic="maps"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-maps-topic-mobile.png") });
     await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     await mobile.locator('[data-gamesense-topic="agents"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-agents-topic-mobile.png") });
     assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 19);

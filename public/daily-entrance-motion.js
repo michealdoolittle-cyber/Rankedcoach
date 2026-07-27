@@ -32,6 +32,30 @@
     forceReplay: readForceReplayState(),
     pendingPages: new Map()
   };
+  let entranceSkipClickTimer = 0;
+
+  // The pointer that dismisses the entrance can resolve its later synthetic
+  // click against the newly revealed page. Consume that one click so skipping
+  // the animation never also opens a card underneath it.
+  function consumeEntranceSkipClick(event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    document.removeEventListener("click", consumeEntranceSkipClick, true);
+    if (entranceSkipClickTimer) {
+      window.clearTimeout(entranceSkipClickTimer);
+      entranceSkipClickTimer = 0;
+    }
+  }
+
+  function armEntranceSkipClickGuard() {
+    document.removeEventListener("click", consumeEntranceSkipClick, true);
+    if (entranceSkipClickTimer) window.clearTimeout(entranceSkipClickTimer);
+    document.addEventListener("click", consumeEntranceSkipClick, true);
+    entranceSkipClickTimer = window.setTimeout(() => {
+      document.removeEventListener("click", consumeEntranceSkipClick, true);
+      entranceSkipClickTimer = 0;
+    }, 750);
+  }
 
   function readForceReplayState() {
     try {
@@ -1325,6 +1349,7 @@
 
   document.addEventListener("pointerdown", (event) => {
     if (!runtime.ready || !event.isTrusted || (!runtime.activeRun && !runtime.scheduleTimer && !runtime.pendingPages.size)) return;
+    armEntranceSkipClickGuard();
     skipAll();
   }, true);
 

@@ -148,7 +148,11 @@ async function run() {
     await page.click("#dailyWarmupSkip").catch(() => {});
 
     const focusOptions = await page.locator("#logFocusSelect option").evaluateAll(options => options.map(option => option.value));
-    assert.equal(focusOptions.length, 19, JSON.stringify(focusOptions));
+    // Keep the logging selector aligned with the full rollable loadout pool.
+    // This deliberately includes the broader coaching categories added after the
+    // original 19-option list so a future template regression cannot silently
+    // hide them from reflections.
+    assert.equal(focusOptions.length, 31, JSON.stringify(focusOptions));
     assert.equal(new Set(focusOptions).size, focusOptions.length, JSON.stringify(focusOptions));
     assert.deepEqual(focusOptions, [
       "",
@@ -169,6 +173,18 @@ async function run() {
       "Comms Discipline",
       "Weapon Category Use",
       "Mental Reset",
+      "First Contact",
+      "Angle Discipline",
+      "Spacing",
+      "Pacing",
+      "Objective Play",
+      "Map Preparation",
+      "Role Teamwork",
+      "Damage Output",
+      "Multi-Kill Conversion",
+      "Clutch Discipline",
+      "Self Comms",
+      "Weapon Pattern",
       "Other"
     ]);
 
@@ -341,7 +357,7 @@ async function run() {
     assert.equal(statsMapPoolState.outNoDataTags, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outBadges, 0, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.outNamesCentered, true, JSON.stringify(statsMapPoolState));
-    assert.match(statsMapPoolState.summitImage, /media\.valorant-api\.com\/maps\/756da597-416b-c0f2-f47b-afbdf28670bc\/splash\.png/i);
+    assert.match(statsMapPoolState.summitImage, /\/assets\/library\/maps\/thumbs\/summit\.jpg$/i);
     assert.ok(statsMapPoolState.activeNoDataTags >= 1, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.excludedCrosses, 6, JSON.stringify(statsMapPoolState));
     assert.equal(statsMapPoolState.resultLineCentered, true, JSON.stringify(statsMapPoolState));
@@ -697,7 +713,12 @@ async function run() {
     await page.locator("#profileDropdownToggle").click();
     await page.locator("#pdAccountSupportBtn").click();
     await page.locator("#accountSupportModal.active").waitFor({ state: "visible" });
-    assert.equal(await page.locator("#accountSupportModal .lens-modal-close").count(), 0);
+    // The close control remains in the DOM for accessibility, but this modal
+    // intentionally uses its backdrop dismissal affordance instead of showing
+    // a duplicate visible close button.
+    const supportCloseControl = page.locator("#accountSupportModal .lens-modal-close");
+    assert.equal(await supportCloseControl.count(), 1);
+    assert.equal(await supportCloseControl.evaluate(control => getComputedStyle(control).display), "none");
     const modalMotion = await page.locator("#accountSupportModal > .lens-modal").evaluate(modal => ({
       duration: getComputedStyle(modal).transitionDuration,
       property: getComputedStyle(modal).transitionProperty
@@ -725,7 +746,7 @@ async function run() {
     await page.waitForTimeout(1500);
     await page.click("#dailyWarmupSkip").catch(() => {});
     await page.locator('.mobile-bottom-page-btn[data-mobile-page="stats"]').click();
-    await page.waitForFunction(() => document.getElementById("page-stats")?.getAnimations().some(animation => animation.id === "rankedcoach-page-button-slide"));
+    await page.waitForFunction(() => document.getElementById("page-stats")?.classList.contains("is-current-page"));
     await page.waitForTimeout(400);
     assert.equal(await page.locator("#page-stats .stats-season-title").evaluate(title => getComputedStyle(title).textAlign), "center");
     await page.locator('#mobileStatsTabs [data-mobile-stats-view="maps"]').click();

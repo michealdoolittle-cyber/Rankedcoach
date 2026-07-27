@@ -1205,6 +1205,13 @@ const MAP_ARTWORK_UUIDS = {
   Summit: "756da597-416b-c0f2-f47b-afbdf28670bc",
   Sunset: "92584fbe-486a-b1b2-9faa-39b0f486b498"
 };
+// Map cards and trend media never display anywhere near the 1920-3840px Riot
+// splash sources. Ship their 360px local derivatives instead so rendering the
+// thirteen-card Stats grid cannot decode a full-size image batch in the middle
+// of a page switch. Map dossier hero art continues to use its authored source.
+const MAP_CARD_THUMBNAIL_SLUGS = Object.freeze(Object.fromEntries(
+  ALL_VALORANT_MAP_NAMES.map(mapName => [mapName, mapName.toLowerCase()])
+));
 const GENERIC_MAP_ARTWORK_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
     <rect width="320" height="180" fill="#0f172a"/>
@@ -1444,7 +1451,8 @@ function getActivePageElement() {
     || document.querySelector(".page.active");
 }
 
-// Keep inactive mobile pages fully laid out but invisible so swipes stay compositor-only.
+// Snapshot inline styles used only while an adjacent mobile page is temporarily
+// promoted for an in-progress swipe preview.
 const MOBILE_PAGE_WARM_STYLE_PROPERTIES = [
   "position", "display", "top", "left", "right", "bottom", "width", "max-width",
   "height", "margin", "visibility", "opacity", "pointer-events", "content-visibility",
@@ -3361,6 +3369,9 @@ function ensureMobileSwipeAffordances() {
     if (!page) return;
     page.dataset.mobileLoggingView = stepMobileValue(page.dataset.mobileLoggingView || "form", ["form", "feed"], direction);
     ensureMobileLoggingTabs();
+    if (page.dataset.mobileLoggingView === "feed") {
+      scheduleLoggingFeedRender({ force: true });
+    }
   }, {
     allowControls: true,
     bindKey: "loggingTabs",
@@ -3878,10 +3889,19 @@ function installMobileTouchScrollGuard() {
 function scrollMobilePageToTop(options = {}) {
   if (isMobileLayoutViewport()) {
     const scrollContainer = getMobileScrollContainer();
-    if (scrollContainer) scrollContainer.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
-    if (document.documentElement) document.documentElement.scrollTop = 0;
+    // Mobile has one authoritative scroll surface: .app-root. Writing its
+    // position plus body, documentElement, and window on every page switch
+    // forced four separate scroll/layout updates in the tap handler.
+    if (scrollContainer) {
+      // Avoid reading scrollTop here: it would flush the page styles that were
+      // just updated for the transition. A no-op write is cheaper than that
+      // forced read, and the root owns mobile scrolling.
+      scrollContainer.scrollTop = 0;
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
     if (!options.deferExtent) scheduleMobileScrollExtentSync();
+    return;
   }
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
@@ -4051,6 +4071,8 @@ function getActiveAnalytics() {
 
 function getMapIconUrl(mapName) {
   const normalized = String(mapName || "").trim();
+  const thumbnailSlug = MAP_CARD_THUMBNAIL_SLUGS[normalized];
+  if (thumbnailSlug) return `/assets/library/maps/thumbs/${thumbnailSlug}.jpg`;
   const uuid = MAP_ARTWORK_UUIDS[normalized];
   if (uuid) return `https://media.valorant-api.com/maps/${uuid}/splash.png`;
   return GENERIC_MAP_ARTWORK_URL;
@@ -37593,6 +37615,7 @@ const THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS = Array.from(new Set([
 ]));
 const themeBuilderAutoFitState = {
   raf: 0,
+  idle: 0,
   resetBase: false,
   observer: null,
   fitted: new Set(),
@@ -37641,14 +37664,28 @@ function scheduleThemeBuilderAutoFitText(options = {}) {
   if (options?.resetBase) {
     themeBuilderAutoFitState.resetBase = true;
   }
-  if (themeBuilderAutoFitState.raf) return;
-  themeBuilderAutoFitState.raf = requestAnimationFrame(runThemeBuilderAutoFitText);
+  if (themeBuilderAutoFitState.raf || themeBuilderAutoFitState.idle) return;
+  // Let the page transition paint before measuring text. The fit pass writes
+  // and reads layout several times for a genuinely clipped value, so running it
+  // in the navigation frame made otherwise instant tab switches feel stalled.
+  themeBuilderAutoFitState.raf = requestAnimationFrame(() => {
+    themeBuilderAutoFitState.raf = 0;
+    if (typeof window.requestIdleCallback === "function") {
+      themeBuilderAutoFitState.idle = window.requestIdleCallback(() => {
+        themeBuilderAutoFitState.idle = 0;
+        runThemeBuilderAutoFitText();
+      }, { timeout: 180 });
+      return;
+    }
+    runThemeBuilderAutoFitText();
+  });
 }
 
 function resetThemeBuilderAutoFitElement(element, resetBase = false) {
   if (!(element instanceof HTMLElement)) return;
   element.style.removeProperty("--tb-auto-fit-font-size");
   element.removeAttribute("data-tb-auto-fit");
+  delete element.dataset.tbAutoFitSignature;
   if (resetBase) {
     delete element.dataset.tbAutoFitBaseFontSize;
   }
@@ -37701,7 +37738,11 @@ function isThemeBuilderAutoFitCandidate(element) {
   if (element.isContentEditable) return false;
   const owningPage = element.closest(".page");
   if (owningPage instanceof HTMLElement) {
-    if (!owningPage.classList.contains("active")) return false;
+    // Mobile keeps the neighbouring pages mounted so a swipe can preview them.
+    // Treating every mounted page as active made a tab press re-measure the
+    // entire Library, Stats and Insights DOM at once.  Only the visible page
+    // needs a live text fit; the others keep their last safe value until shown.
+    if (owningPage !== getActivePageElement()) return false;
     if (isLayoutStyleAutoFitActive()) {
       if (!LAYOUT_STYLE_AUTO_FIT_PAGE_IDS.has(owningPage.id)) return false;
       if (element.closest(LAYOUT_STYLE_AUTO_FIT_EXCLUDED_SELECTOR)) return false;
@@ -37739,8 +37780,20 @@ function isThemeBuilderAutoFitCandidate(element) {
 function collectThemeBuilderAutoFitCandidates() {
   const candidates = [];
   const seen = new Set();
+  const activePage = getActivePageElement();
+  const activePagePrefix = activePage?.id ? `#${activePage.id} ` : "";
   THEME_BUILDER_AUTO_FIT_TEXT_SELECTORS.forEach((selector) => {
-    document.querySelectorAll(selector).forEach((element) => {
+    // Every app-page selector is deliberately prefixed with its page id.  Strip
+    // that prefix when querying the active page so changing tabs does not scan
+    // the invisible pages' large collections just to reject them afterwards.
+    let queryRoot = document;
+    let querySelector = selector;
+    if (activePage && selector.startsWith("#page-")) {
+      if (!selector.startsWith(activePagePrefix)) return;
+      queryRoot = activePage;
+      querySelector = selector.slice(activePagePrefix.length);
+    }
+    queryRoot.querySelectorAll(querySelector).forEach((element) => {
       if (!isThemeBuilderAutoFitCandidate(element) || seen.has(element)) return;
       seen.add(element);
       candidates.push(element);
@@ -37762,6 +37815,29 @@ function fitThemeBuilderAutoFitElement(element) {
   const metrics = getThemeBuilderAutoFitContainerMetrics(element);
   const widthLimit = Math.max(12, metrics.width);
   const heightLimit = Math.max(8, metrics.height);
+  const textSignature = (element.textContent || "").replace(/\s+/g, " ").trim();
+  const signature = [
+    Math.round(widthLimit * 10) / 10,
+    Math.round(heightLimit * 10) / 10,
+    metrics.heightConstrained ? 1 : 0,
+    baseFontSize,
+    textSignature
+  ].join("|");
+  if (element.dataset.tbAutoFitSignature === signature) {
+    return;
+  }
+
+  // Most labels already fit. Record that inexpensive natural measurement and
+  // avoid the nine write/read binary-search probes until content or geometry
+  // actually changes. Previously every visible span received those probes.
+  if (!element.hasAttribute("data-tb-auto-fit")) {
+    const naturallyFitsWidth = element.scrollWidth <= widthLimit + 1;
+    const naturallyFitsHeight = !metrics.heightConstrained || element.scrollHeight <= heightLimit + 1;
+    if (naturallyFitsWidth && naturallyFitsHeight) {
+      element.dataset.tbAutoFitSignature = signature;
+      return;
+    }
+  }
   let minFontSize = Math.max(10, baseFontSize * 0.6);
   let maxFontSize = isLayoutStyleAutoFitActive()
     ? Math.max(minFontSize, baseFontSize)
@@ -37814,20 +37890,22 @@ function fitThemeBuilderAutoFitElement(element) {
 
   element.style.setProperty("--tb-auto-fit-font-size", `${Math.round(best * 100) / 100}px`);
   element.setAttribute("data-tb-auto-fit", "1");
+  element.dataset.tbAutoFitSignature = signature;
 }
 
 function runThemeBuilderAutoFitText() {
   themeBuilderAutoFitState.raf = 0;
+  themeBuilderAutoFitState.idle = 0;
   const resetBase = themeBuilderAutoFitState.resetBase;
   themeBuilderAutoFitState.resetBase = false;
   const candidates = collectThemeBuilderAutoFitCandidates();
   const activeCandidates = new Set(candidates);
 
   themeBuilderAutoFitState.fitted.forEach((element) => {
-    if (!activeCandidates.has(element) || resetBase) {
+    if (!element.isConnected || resetBase) {
       resetThemeBuilderAutoFitElement(element, resetBase);
     }
-    if (!activeCandidates.has(element)) {
+    if (!element.isConnected || (resetBase && !activeCandidates.has(element))) {
       themeBuilderAutoFitState.fitted.delete(element);
     }
   });
@@ -37846,6 +37924,10 @@ function syncLayoutStyleAutoFitText(layoutShape = "default") {
     if (themeBuilderAutoFitState.raf) {
       cancelAnimationFrame(themeBuilderAutoFitState.raf);
       themeBuilderAutoFitState.raf = 0;
+    }
+    if (themeBuilderAutoFitState.idle && typeof window.cancelIdleCallback === "function") {
+      window.cancelIdleCallback(themeBuilderAutoFitState.idle);
+      themeBuilderAutoFitState.idle = 0;
     }
     themeBuilderAutoFitState.fitted.forEach((element) => resetThemeBuilderAutoFitElement(element, true));
     themeBuilderAutoFitState.fitted.clear();
@@ -42206,16 +42288,33 @@ function markLoggingFeedDirty() {
 
 function scheduleLoggingFeedRender(options = {}) {
   const force = options.force === true;
+  // On phones the form is the default Logging view. Building the complete
+  // history DOM while that view is on screen makes a simple tab handoff pay for
+  // content the player cannot see, and can trigger a GC pause on larger logs.
+  // Keep the feed dirty until its own tab is requested instead.
+  if (shouldDeferLoggingFeedForMobileForm()) {
+    markLoggingFeedDirty();
+    return;
+  }
   if (!force && !isLoggingPageActive()) {
     markLoggingFeedDirty();
     return;
   }
+  // The feed DOM is retained while users move between tabs. Rebuilding it for
+  // an unchanged profile makes a clean Logging visit cost an extra full frame.
+  if (!force && loggingFeedRendered && !loggingFeedDirty) return;
 
   cancelScheduledLoggingFeedRender();
   loggingFeedRenderRaf = requestAnimationFrame(() => {
     loggingFeedRenderRaf = 0;
-    renderLogFeed({ force: true });
+    renderLogFeed({ force });
   });
+}
+
+function shouldDeferLoggingFeedForMobileForm() {
+  if (!isMobileLayoutViewport()) return false;
+  const page = document.getElementById("page-logging");
+  return Boolean(page) && (page.dataset.mobileLoggingView || "form") !== "feed";
 }
 
 function isFirstGameOfCurrentSession() {
@@ -43066,6 +43165,10 @@ function renderLogFeed(options = {}){
   if(!container) return;
 
   const force = options.force === true;
+  if (shouldDeferLoggingFeedForMobileForm()) {
+    markLoggingFeedDirty();
+    return;
+  }
   if (!force && !isLoggingPageActive()) {
     markLoggingFeedDirty();
     return;
@@ -43615,6 +43718,24 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     motion: "comet-trail"
   })
 ];
+
+// Keep the runtime class cleanup derived from the presets.  New animated
+// themes are added regularly; a handwritten remove list silently left the
+// newer scene classes on <body>, so changing themes could run several
+// full-screen animations at once.
+const PROFILE_THEME_MOTION_CLASS_NAMES = Object.freeze(Array.from(new Set([
+  "static",
+  "ambient-lite",
+  "kinetic",
+  "rings",
+  "orbit",
+  "shimmer",
+  "tide",
+  ...PROFILE_THEME_PRESETS,
+  ...PREMIUM_PROFILE_THEME_PRESETS
+].map((theme) => typeof theme === "string" ? theme : theme?.motion)
+  .filter(Boolean)
+  .map((motion) => `theme-${motion}`))));
 
 function getAvailableProfileThemePresets(user = currentAuthUser) {
   return isPremiumThemeQaUser(user)
@@ -45584,7 +45705,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (body) {
-    body.classList.remove("theme-static", "theme-ambient-lite", "theme-kinetic", "theme-rings", "theme-orbit", "theme-shimmer", "theme-tide", "theme-glint-sweep", "theme-shadow-drift", "theme-grid-drift", "theme-star-drift", "theme-water-flow", "theme-fog-drift", "theme-fractal-shift", "theme-solar-flow", "theme-prism-turn", "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
+    body.classList.remove(...PROFILE_THEME_MOTION_CLASS_NAMES, "access-high-contrast", "access-readable", "access-reduced-motion", "access-mobile-layout");
     body.dataset.theme = themeKey;
     body.dataset.themeMode = themeVisualMode;
     delete body.dataset.layoutStyle;
@@ -46772,6 +46893,21 @@ function updateNavUnderline(){
     (rect.left - parentRect.left) + "px";
 }
 
+let navUnderlineUpdateRaf = 0;
+
+function scheduleNavUnderlineUpdate() {
+  if (navUnderlineUpdateRaf) return;
+  // Reading nav geometry immediately after a page class change forces the
+  // browser to lay out the newly selected page in the click handler. Let the
+  // destination paint first, then position this purely decorative underline.
+  navUnderlineUpdateRaf = requestAnimationFrame(() => {
+    navUnderlineUpdateRaf = requestAnimationFrame(() => {
+      navUnderlineUpdateRaf = 0;
+      updateNavUnderline();
+    });
+  });
+}
+
 let pageTransitionToken = 0;
 let pageTransitionTimer = 0;
 let mobilePageHydrationTimer = 0;
@@ -46781,19 +46917,25 @@ function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
   const allowHiddenLayoutWork = Boolean(options?.allowHiddenLayoutWork);
   const immediatePreview = Boolean(options?.immediatePreview);
   switch (pageId) {
-    case "logging":
+    case "logging": {
       ensureMobileLoggingTabs();
       syncLogFocusCustomDropdown?.();
       syncLoggingQuickChipStates?.();
       updateLoggingDebriefPreview?.();
       ensureMobileManualReportControls();
-      if (immediatePreview) {
-        cancelScheduledLoggingFeedRender?.();
-        renderLogFeed?.({ force: true });
+      const loggingPage = document.getElementById("page-logging");
+      if ((loggingPage?.dataset.mobileLoggingView || "form") === "feed") {
+        if (immediatePreview) {
+          cancelScheduledLoggingFeedRender?.();
+          renderLogFeed?.({ force: true });
+        } else {
+          scheduleLoggingFeedRender();
+        }
       } else {
-        scheduleLoggingFeedRender({ force: true });
+        markLoggingFeedDirty();
       }
       break;
+    }
     case "stats":
       initStatsPage?.();
       ensureMobileStatsTabs();
@@ -46922,6 +47064,14 @@ function activatePage(pageId, options = {}){
   }
   const isMobilePageSwitch = isMobileLayoutViewport();
   const allPages = Array.from(document.querySelectorAll(".page"));
+  // Reset the one mobile scroll surface while the outgoing page is still the
+  // laid-out page. Doing this after flipping every page class forced the
+  // browser to synchronously lay out the incoming (often much larger) page in
+  // the tap handler.
+  const shouldResetMobileScroll = isMobilePageSwitch && currentPage && currentPage !== nextPage;
+  if (shouldResetMobileScroll) {
+    scrollMobilePageToTop({ deferExtent: true });
+  }
   if (!isMobilePageSwitch) {
     allPages.forEach(page => {
       page.classList.remove("is-mobile-page-ready", "is-current-page", "is-mobile-swipe-outgoing");
@@ -46933,48 +47083,34 @@ function activatePage(pageId, options = {}){
 
   if (isMobilePageSwitch && nextPage) {
     const token = ++pageTransitionToken;
-    const needsMobileLayoutWarmup = allPages.some(page => !page.classList.contains("is-mobile-page-ready"));
+    // Only the incoming page needs its first layout now. Keeping every hidden
+    // page "ready" made the full Library and the other inactive dashboards
+    // participate in every mobile navigation frame.
     if (pageTransitionTimer) {
       window.clearTimeout(pageTransitionTimer);
       pageTransitionTimer = 0;
     }
 
+    // Keep just the visible mobile page live. The former implementation kept
+    // every page (including the full Library) laid out off-screen so a swipe
+    // could preview it. That made each normal tab press recompose five pages.
+    // Swipe preview already promotes the adjacent page on demand, so it does
+    // not need this permanent warm-DOM cost.
     allPages.forEach(page => {
-      page.classList.add("active", "is-mobile-page-ready");
-      page.classList.toggle("is-current-page", page === nextPage);
+      const isCurrent = page === nextPage;
+      page.classList.toggle("active", isCurrent);
+      page.classList.toggle("is-mobile-page-ready", isCurrent);
+      page.classList.toggle("is-current-page", isCurrent);
       page.classList.remove("entering", "exiting");
-      setMobilePageCompositorReady(page, true);
+      setMobilePageCompositorReady(page, isCurrent);
     });
     syncMobilePageWarmLayouts();
 
-    if (
-      mobileNavHandoff
-      && currentPage
-      && currentPage !== nextPage
-      && !window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
-    ) {
-      window.requestAnimationFrame(() => {
-        if (token !== pageTransitionToken || !nextPage.isConnected) return;
-        nextPage.getAnimations?.().forEach(animation => {
-          if (animation.id === "rankedcoach-page-button-slide") animation.cancel();
-        });
-        const animation = nextPage.animate([
-          { opacity: .45, transform: `translate3d(${pageSlideDirection * 22}vw,0,0)` },
-          { opacity: 1, transform: "translate3d(0,0,0)" }
-        ], {
-          duration: 285,
-          easing: "cubic-bezier(.2,.82,.24,1)",
-          fill: "none"
-        });
-        animation.id = "rankedcoach-page-button-slide";
-      });
-    }
+    // Direct tab taps reveal the destination immediately. The explicit
+    // full-page Web Animation here was expensive on phones and did not add a
+    // distinct gesture affordance; drag/swipe navigation retains its own
+    // side-to-side preview animation above.
 
-    if (needsMobileLayoutWarmup) {
-      allPages.forEach(page => void page.offsetHeight);
-    }
-
-    scrollMobilePageToTop({ deferExtent: mobileNavHandoff });
     syncMobileBottomShellState({ deferExtent: mobileNavHandoff });
     if (mobileSwipeHandoff) {
       scheduleMobileScrollExtentSync();
@@ -47039,7 +47175,7 @@ function activatePage(pageId, options = {}){
       const activePageId = getActivePageElement()?.id?.replace("page-", "") || "";
       if (activePageId !== pageId) return;
       if (pageId === "logging") {
-        scheduleLoggingFeedRender({ force: true });
+        scheduleLoggingFeedRender();
       }
       if (pageId === "home" && pendingAgentFromLog) {
         const queuedAgent = pendingAgentFromLog;
@@ -47071,10 +47207,18 @@ function activatePage(pageId, options = {}){
 
     if (pageId === "home") {
       scheduleLoadoutValueTextFit();
-      forceChartIntroAnimation = true;
-      requestAnimationFrame(() => {
-        if (getActivePageElement()?.id === "page-home") renderChart(currentSize);
-      });
+      // The chart is already rendered from the live match state. Rebuilding its
+      // full SVG (and replaying the intro) on every Home tab visit was enough to
+      // miss several frames on a simple page switch. Only recover it if an
+      // earlier render genuinely left no chart behind; data, scope, and resize
+      // paths still render immediately where they belong.
+      const hasRenderedChart = Boolean(chartRow?.querySelector("svg"));
+      if (!hasRenderedChart) {
+        forceChartIntroAnimation = true;
+        requestAnimationFrame(() => {
+          if (getActivePageElement()?.id === "page-home") renderChart(currentSize);
+        });
+      }
     }
 
     if (pageId === "insights") {
@@ -47086,11 +47230,14 @@ function activatePage(pageId, options = {}){
     }
 
     if (pageId === "logging") {
-      scheduleLoggingFeedRender({ force: true });
+      scheduleLoggingFeedRender();
     }
 
-    scheduleThemeBuilderAutoFitText({ resetBase: true });
-    updateNavUnderline();
+    // A page switch does not change a text node's baseline font. Reuse the
+    // existing fit and only measure the newly visible page; full resets remain
+    // reserved for viewport, font, and style changes.
+    scheduleThemeBuilderAutoFitText();
+    scheduleNavUnderlineUpdate();
   };
 
   runPageActivationWork();

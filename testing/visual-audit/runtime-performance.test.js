@@ -93,7 +93,10 @@ async function waitForApp(page) {
 async function exerciseAnimatedRuntime(page, viewport) {
   const mobile = viewport.width < 700;
   const themeClass = mobile ? "theme-glint-sweep" : "theme-aurora-rift";
-  const motionTarget = mobile ? "#page-home .card" : ".app-root";
+  // Theme motion belongs to the two root scene layers.  Per-card animated
+  // overlays caused scrolling and tab switches to paint hundreds of layers on
+  // mobile, so the runtime budget explicitly guards the shared scene instead.
+  const motionTarget = ".app-root";
   const pseudo = "::before";
 
   await page.evaluate(({ nextThemeClass }) => {
@@ -109,6 +112,10 @@ async function exerciseAnimatedRuntime(page, viewport) {
     controller.activatePage("home");
   }, { nextThemeClass: themeClass });
   await page.waitForFunction(() => window.RankedCoachDailyEntrance.getState().activePage === "home", null, { timeout: 4000 });
+  // `activePage` is assigned before the delayed entrance sequence begins. Wait
+  // for the actual overlay before clicking so this dismissal cannot leak
+  // through to a Home-card control and contaminate navigation timing.
+  await page.waitForFunction(() => document.body.classList.contains("daily-entrance-motion-active"), null, { timeout: 4000 });
 
   const pausedTheme = await page.locator(motionTarget).first().evaluate((element, pseudoElement) => ({
     animationName: getComputedStyle(element, pseudoElement).animationName,
