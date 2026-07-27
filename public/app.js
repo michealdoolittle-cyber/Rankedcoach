@@ -653,14 +653,24 @@ function isLoadoutPickerItemSelected(kind = "exclude", type = "agent", value = "
 }
 
 function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadoutPreferences()) {
+  // This filter only helps the player browse the One-trick picker. It is
+  // deliberately not stored on the profile: the selected agent remains the
+  // only persistent preference.
+  const oneTrickRoleFilter = kind === "one-trick"
+    ? normalizeLoadoutRole(dailyWarmupOneTrickRoleFilter)
+    : "";
   const renderRoleTile = (role) => {
     const meta = getLoadoutRoleMeta(role);
     const selected = kind === "exclude" && isLoadoutPickerItemSelected(kind, "role", role, preferences);
+    const filtersOneTrick = kind === "one-trick";
+    const isActiveFilter = filtersOneTrick && oneTrickRoleFilter === role;
     const roleTitle = kind === "exclude"
       ? `Exclude every ${meta.label} agent`
-      : `${meta.label} agents are grouped below`;
+      : (isActiveFilter
+        ? `Show all agents (clear ${meta.label} filter)`
+        : `Show only ${meta.label} agents`);
     return `
-      <button class="daily-warmup-picker-tile daily-warmup-picker-role role-${role}${selected ? " is-selected" : ""}" type="button" data-loadout-picker-item="${kind === "exclude" ? "role" : "role-label"}" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${role}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : (kind === "one-trick" ? "aria-disabled=\"true\" tabindex=\"-1\"" : "")} aria-label="${escapeHtml(roleTitle)}" title="${escapeHtml(roleTitle)}">
+      <button class="daily-warmup-picker-tile daily-warmup-picker-role role-${role}${selected ? " is-selected" : ""}${isActiveFilter ? " is-filter-active" : ""}" type="button" data-loadout-picker-item="${kind === "exclude" ? "role" : "role-filter"}" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${role}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : ""}${filtersOneTrick ? ` aria-pressed="${isActiveFilter ? "true" : "false"}"` : ""} aria-label="${escapeHtml(roleTitle)}" title="${escapeHtml(roleTitle)}">
         <img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true">
         <span>${escapeHtml(meta.label)}</span>
       </button>
@@ -678,7 +688,8 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
       </button>
     `;
   };
-  const groups = LOADOUT_PICKER_ROLE_ORDER.map((role) => {
+  const visibleRoles = oneTrickRoleFilter ? [oneTrickRoleFilter] : LOADOUT_PICKER_ROLE_ORDER;
+  const groups = visibleRoles.map((role) => {
     const meta = getLoadoutRoleMeta(role);
     const agents = allAgents.filter((agent) => agentRoles[agent] === role);
     return `
@@ -690,7 +701,7 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
   }).join("");
   return `
     <div class="daily-warmup-picker-role-grid" aria-label="Role choices">${LOADOUT_PICKER_ROLE_ORDER.map(renderRoleTile).join("")}</div>
-    <div class="daily-warmup-picker-agent-groups">${groups}</div>
+    <div class="daily-warmup-picker-agent-groups" data-loadout-picker-agent-groups="${kind}">${groups}</div>
   `;
 }
 
@@ -727,6 +738,7 @@ function renderDailyWarmupLoadoutControls(profile = getActiveProfile?.()) {
 }
 
 function setDailyWarmupPickerOpen(kind = "", shouldOpen = false) {
+  if (kind !== "one-trick" || !shouldOpen) dailyWarmupOneTrickRoleFilter = "";
   ["exclude", "one-trick"].forEach((candidate) => {
     const isOpen = candidate === kind && shouldOpen;
     const menu = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPickerMenu" : "dailyWarmupOneTrickPickerMenu");
@@ -1016,6 +1028,9 @@ function bindDailyWarmupEvents() {
     if (pickerTrigger) {
       const kind = pickerTrigger.dataset.loadoutPickerTrigger || "";
       const isOpen = pickerTrigger.getAttribute("aria-expanded") === "true";
+      // Each fresh One-trick browse begins with the complete roster. The role
+      // control below is a temporary convenience filter, not another setting.
+      if (kind === "one-trick" && !isOpen) dailyWarmupOneTrickRoleFilter = "";
       setDailyWarmupPickerOpen(kind, !isOpen);
       return;
     }
@@ -1023,6 +1038,16 @@ function bindDailyWarmupEvents() {
     if (pickerItem && !pickerItem.disabled) {
       const kind = pickerItem.dataset.loadoutPickerKind || "";
       const type = pickerItem.dataset.loadoutPickerItem || "";
+      if (kind === "one-trick" && type === "role-filter") {
+        const role = normalizeLoadoutRole(pickerItem.dataset.loadoutPickerValue);
+        if (!role) return;
+        dailyWarmupOneTrickRoleFilter = dailyWarmupOneTrickRoleFilter === role ? "" : role;
+        renderDailyWarmupLoadoutControls(getActiveProfile());
+        setDailyWarmupPickerOpen("one-trick", true);
+        document.querySelector(`#dailyWarmupOneTrickPickerMenu [data-loadout-picker-item="role-filter"][data-loadout-picker-value="${role}"]`)
+          ?.focus?.({ preventScroll: true });
+        return;
+      }
       const value = type === "role"
         ? normalizeLoadoutRole(pickerItem.dataset.loadoutPickerValue)
         : normalizeLoadoutAgent(pickerItem.dataset.loadoutPickerValue);
@@ -1242,27 +1267,14 @@ window.addEventListener("unhandledrejection", (e) => {
 // ========================
 
 function scaleImpactCard() {
-  const card = document.querySelector(".impact-card");
   const inner = document.querySelector(".impact-bar-outer");
-  const rolePill = document.getElementById("impactRolePill");
+  if (!inner) return;
 
-  if (!card || !inner) return;
-
+  // The meter now owns a responsive CSS grid track. Scaling the whole rendered
+  // bar after layout made it look undersized and detached from the scoreboard
+  // in compact layout styles, even when the grid had given it the right space.
   inner.style.transform = "none";
-
-  const cardRect = card.getBoundingClientRect();
-  const innerRect = inner.getBoundingClientRect();
-  const reservedHeight = (rolePill?.getBoundingClientRect().height || 0) + 8;
-  const availableWidth = Math.max(1, cardRect.width - 16);
-  const availableHeight = Math.max(1, cardRect.height - reservedHeight - 4);
-
-  const scaleX = availableWidth / innerRect.width;
-  const scaleY = availableHeight / innerRect.height;
-  const rawScale = Math.min(scaleX, scaleY, 1);
-  const scale = rawScale < 0.98 ? Math.max(0.9, rawScale) : 1;
-
-  inner.style.transform = `scale(${scale})`;
-  inner.style.transformOrigin = "top center";
+  inner.style.transformOrigin = "";
 }
 
 function applyStaticTrackGradient(fillEl, percent, direction = "horizontal") {
@@ -15000,6 +15012,9 @@ let focusProgressMax = 5;     // sessions required
 let rrSum = 0;
 let sessionRRSum = 0;
 let activeRoleFilter = "any";
+// Transient browse state for the One-trick picker. It must never be written to
+// a profile: only the chosen one-trick agent is a durable preference.
+let dailyWarmupOneTrickRoleFilter = "";
 // This is deliberately memory-only. It shapes today's Loadout without becoming a
 // permanent profile preference or a claim about what the player always plays.
 const SESSION_ROLE_KEYS = ["any", "duelist", "controller", "initiator", "sentinel"];

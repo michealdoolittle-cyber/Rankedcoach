@@ -20660,10 +20660,16 @@ SUMMARY BAR
   white-space:nowrap;
 }
 
-/* One-trick groups are headings, not a second set of selectable role filters. */
-.daily-warmup-picker-tile[data-loadout-picker-item="role-label"]{
-  cursor:default;
-  pointer-events:none;
+/* In One-trick mode, a role button filters the visible roster for this open
+   picker only. It is intentionally distinct from disabled Exclude choices. */
+.daily-warmup-picker-tile[data-loadout-picker-item="role-filter"]{cursor:pointer}
+
+.daily-warmup-picker-tile[data-loadout-picker-item="role-filter"].is-filter-active{
+  border-color:var(--loadout-role-color);
+  background:color-mix(in srgb,var(--loadout-role-color) 32%,var(--surface-raised,#111827));
+  color:color-mix(in srgb,var(--loadout-role-color) 72%,white 28%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--loadout-role-color) 38%,transparent),0 0 12px color-mix(in srgb,var(--loadout-role-color) 20%,transparent);
+  filter:none;
 }
 
 .daily-warmup-picker-tile.is-selected,
@@ -57725,5 +57731,89 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .sw-compass-m
   .knowledge-source-queue article {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+/* Home component geometry: selected agent art is an icon/portrait, not the
+   retired silhouette crop. Keep the rendered asset centered inside the frame
+   at every card size; parent layout styles may change the frame size but never
+   its internal coordinate system. */
+#page-home .loadout-card #agentFrame .agent-reveal-art {
+  inset: 0 !important;
+  overflow: hidden !important;
+}
+
+#page-home .loadout-card #agentFrame .agent-reveal-art img,
+#page-home .loadout-card #agentFrame .agent-frame-portrait {
+  left: 50% !important;
+  top: 50% !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  /* Start at the geometric centre, then retain the agent-specific crop
+     adjustment supplied by the frame renderer. */
+  transform: translate(
+    calc(-50% + var(--agent-art-x-scaled, 0px)),
+    calc(-50% + var(--agent-art-y-scaled, 0px))
+  ) scale(var(--agent-art-scale, 1)) !important;
+  transform-origin: center center !important;
+}
+
+/* The desktop role-impact read shares the RR card's remaining row height.
+   Do not give the bar a fixed viewport height: that left it visibly shorter
+   than the adjacent score board whenever a layout card grew. */
+@media (min-width: 821px) {
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card {
+    /* The former two-column grid had a 70px minimum second track. On compact
+       shaped cards that minimum exceeded the card's content box and pushed
+       the pill, bar, and caption out through the right edge. The meter itself
+       positions its labels internally, so this parent only needs one fluid
+       track. */
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card #impactRolePill {
+    grid-column: 1 / -1 !important;
+    justify-self: start !important;
+    align-self: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-bar-outer {
+    /* These variables must live on the bar itself: its base declaration has
+       local values, so a value placed only on .impact-card cannot resize the
+       actual outlined meter or its fill. */
+    --impact-bar-left: clamp(38px, 37%, 64px) !important;
+    --impact-bar-right: clamp(4px, 6%, 12px) !important;
+    justify-self: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-scale {
+    width: var(--impact-bar-left) !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .rr-card .impact-card .impact-meter-caption {
+    grid-column: 1 / -1 !important;
+    justify-self: start !important;
+    align-self: end !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }

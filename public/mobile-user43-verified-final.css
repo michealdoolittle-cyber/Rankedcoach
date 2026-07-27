@@ -16622,7 +16622,11 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-trend
   -webkit-box-orient:initial !important;
   font-size:9px !important;
   font-weight:500 !important;
-  line-height:1.12 !important;
+  /* Four compact desktop rows leave a five-line detail only a fraction of a
+     pixel short. Keep the same 9px type and trim just enough leading to retain
+     a visible bottom clearance without treating the native grid as a Layout
+     Style surface. */
+  line-height:1.07 !important;
   white-space:normal !important;
   text-overflow:clip !important;
 }

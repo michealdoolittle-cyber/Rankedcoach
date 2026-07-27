@@ -278,6 +278,14 @@ async function activateCoveragePage(page, pageKey) {
   await page.waitForTimeout(80);
 }
 
+async function waitForViewportScale(page, width, height) {
+  await page.waitForFunction(({ width: expectedWidth, height: expectedHeight }) => {
+    const root = getComputedStyle(document.documentElement);
+    return Math.abs(Number.parseFloat(root.getPropertyValue("--app-base-width")) - expectedWidth) < 1
+      && Math.abs(Number.parseFloat(root.getPropertyValue("--app-base-height")) - expectedHeight) < 1;
+  }, { width, height }, { timeout: 5000 });
+}
+
 async function setCoverageLayoutStyle(page, style) {
   await page.evaluate(nextStyle => {
     document.body.dataset.layoutStyle = nextStyle;
@@ -342,10 +350,71 @@ async function restoreSurfaceVisibility(page) {
   });
 }
 
-async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
-  await makeSurfaceVisible(page, selector);
-  const locator = page.locator(`${selector}:visible`).first();
-  await locator.scrollIntoViewIfNeeded({ timeout: 5000 });
+function isTransientSurfaceRenderError(error) {
+  const message = String(error?.message || error || "");
+  return /(?:element is not attached|element was detached|element is not stable|not stable|execution context was destroyed)/i.test(message);
+}
+
+async function resolveStableSurface(page, selector, { retries = 2, timeout = 5000 } = {}) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      // This page can rerender the feed after its parent becomes active. Resolve
+      // the surface only after that render rather than carrying an old element
+      // handle into scrollIntoViewIfNeeded.
+      await makeSurfaceVisible(page, selector);
+      const locator = page.locator(`${selector}:visible`).first();
+      await locator.waitFor({ state: "visible", timeout });
+      await locator.scrollIntoViewIfNeeded({ timeout });
+      await locator.evaluate(async target => {
+        if (!target.isConnected) throw new Error("surface element was detached during capture setup");
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        if (!target.isConnected) throw new Error("surface element was detached before capture");
+        const rect = target.getBoundingClientRect();
+        if (rect.width <= 1 || rect.height <= 1) throw new Error("surface element has no stable painted bounds");
+      });
+      return locator;
+    } catch (error) {
+      lastError = error;
+      // A retry must start from the real DOM state, including any temporary
+      // visibility adjustment made for the previous, now-detached surface.
+      await restoreSurfaceVisibility(page).catch(() => {});
+      if (!isTransientSurfaceRenderError(error) || attempt === retries) throw error;
+      await page.waitForTimeout(60 * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
+async function restoreSurfaceText(page) {
+  await page.evaluate(() => {
+    const restore = globalThis.__layoutPhaseTwoTextRestore;
+    if (!restore?.leaf) {
+      globalThis.__layoutPhaseTwoTextRestore = null;
+      return;
+    }
+    const leaf = restore.leaf;
+    // If a rerender detached this element, its injected text left with the
+    // detached DOM node. Never let a failed locator action prevent cleanup of
+    // a still-connected leaf.
+    if (leaf.isConnected) {
+      leaf.textContent = restore.text;
+      if (restore.value != null && (leaf instanceof HTMLInputElement || leaf instanceof HTMLTextAreaElement)) {
+        leaf.value = restore.value;
+      }
+      if (restore.fitSize) leaf.style.setProperty("--tb-auto-fit-font-size", restore.fitSize);
+      else leaf.style.removeProperty("--tb-auto-fit-font-size");
+      if (restore.fitAttribute == null) leaf.removeAttribute("data-tb-auto-fit");
+      else leaf.setAttribute("data-tb-auto-fit", restore.fitAttribute);
+      if (restore.fitBase == null) delete leaf.dataset.tbAutoFitBaseFontSize;
+      else leaf.dataset.tbAutoFitBaseFontSize = restore.fitBase;
+    }
+    globalThis.__layoutPhaseTwoTextRestore = null;
+  });
+}
+
+async function captureSurfaceExtremeAttempt(page, pageKey, selector, mode, style) {
+  const locator = await resolveStableSurface(page, selector);
   const extremes = realContentExtremes[pageKey];
   await locator.evaluate((target, options) => {
     if (options.frameOnly) {
@@ -465,26 +534,29 @@ async function captureSurfaceExtreme(page, pageKey, selector, mode, style) {
   } catch (error) {
     throw new Error(`${style}/${pageKey}/${selector}/${mode} screenshot failed: ${error.message}`);
   }
-  await locator.evaluate(() => {
-    const restore = globalThis.__layoutPhaseTwoTextRestore;
-    if (!restore?.leaf) {
-      globalThis.__layoutPhaseTwoTextRestore = null;
-      return;
-    }
-    restore.leaf.textContent = restore.text;
-    if (restore.value != null && (restore.leaf instanceof HTMLInputElement || restore.leaf instanceof HTMLTextAreaElement)) {
-      restore.leaf.value = restore.value;
-    }
-    if (restore.fitSize) restore.leaf.style.setProperty("--tb-auto-fit-font-size", restore.fitSize);
-    else restore.leaf.style.removeProperty("--tb-auto-fit-font-size");
-    if (restore.fitAttribute == null) restore.leaf.removeAttribute("data-tb-auto-fit");
-    else restore.leaf.setAttribute("data-tb-auto-fit", restore.fitAttribute);
-    if (restore.fitBase == null) delete restore.leaf.dataset.tbAutoFitBaseFontSize;
-    else restore.leaf.dataset.tbAutoFitBaseFontSize = restore.fitBase;
-    globalThis.__layoutPhaseTwoTextRestore = null;
-  });
-  await restoreSurfaceVisibility(page);
   return { label: `${pageKey} · ${selector} · ${mode}`, image: image.toString("base64"), metrics };
+}
+
+async function captureSurfaceExtreme(page, pageKey, selector, mode, style, { retries = 2 } = {}) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    let shouldRetry = false;
+    try {
+      return await captureSurfaceExtremeAttempt(page, pageKey, selector, mode, style);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientSurfaceRenderError(error) || attempt === retries) throw error;
+      shouldRetry = true;
+    } finally {
+      // The capture mutates one leaf to exercise text fit. This finally block
+      // runs after every screenshot/evaluate error as well as successful
+      // captures, so the next surface always starts from the real UI state.
+      await restoreSurfaceText(page).catch(() => {});
+      await restoreSurfaceVisibility(page).catch(() => {});
+    }
+    if (shouldRetry) await page.waitForTimeout(60 * (attempt + 1));
+  }
+  throw lastError;
 }
 
 async function captureSurfaceSet(page, pageKey, selectors, style, tiles) {
@@ -634,11 +706,45 @@ async function assertStatsTrendTextVisible(page, style) {
 }
 
 async function assertHomeLoadoutAndCompassGeometry(page, style) {
+  await page.locator("#agentFrame").evaluate(frame => {
+    const reveal = frame.querySelector(".agent-reveal-art");
+    if (!reveal) return;
+    frame.dataset.agent = "jett";
+    frame.classList.add("agent-selected", "duelist");
+    [frame, reveal].forEach(element => {
+      element.style.setProperty("--agent-art-x", "13px");
+      element.style.setProperty("--agent-art-y", "16px");
+      element.style.setProperty("--agent-art-scale", ".91");
+    });
+    if (!reveal.querySelector("img")) {
+      reveal.innerHTML = '<img alt="Jett selected art" src="/assets/library/agents/jett/portrait.png">';
+    }
+  });
+  await page.waitForFunction(() => {
+    const image = document.querySelector("#agentFrame .agent-reveal-art img");
+    return Boolean(image?.complete && image.naturalWidth > 0);
+  }, null, { timeout: 10000 });
   const geometry = await page.locator("#page-home").evaluate(home => {
     const rect = element => element?.getBoundingClientRect().toJSON() || null;
     const loadout = home.querySelector(".loadout-card");
     const frame = home.querySelector("#agentFrame");
     const frameCell = frame?.parentElement;
+    const selectedArtClip = frame?.querySelector(".agent-reveal-art");
+    const selectedArt = frame?.querySelector(".agent-reveal-art img");
+    const scoreboard = home.querySelector(".rr-card .scoreboard");
+    const impact = home.querySelector(".rr-card .impact-card");
+    const impactPill = home.querySelector(".rr-card #impactRolePill");
+    const impactBar = home.querySelector(".rr-card .impact-bar-outer");
+    const impactMeter = home.querySelector(".rr-card .impact-meter");
+    const impactFill = home.querySelector(".rr-card #impactBarFill");
+    const impactCaption = home.querySelector(".rr-card .impact-meter-caption");
+    const impactStyle = impact ? getComputedStyle(impact) : null;
+    const impactBarStyle = impactBar ? getComputedStyle(impactBar) : null;
+    const impactTrackStyle = impactBar ? getComputedStyle(impactBar, "::after") : null;
+    const paddingLeft = Number.parseFloat(impactStyle?.paddingLeft || "0") || 0;
+    const paddingRight = Number.parseFloat(impactStyle?.paddingRight || "0") || 0;
+    const trackLeft = Number.parseFloat(impactTrackStyle?.left || "0") || 0;
+    const trackRight = Number.parseFloat(impactTrackStyle?.right || "0") || 0;
     const compass = home.querySelector(".compass-panel");
     const compassParts = [
       ".compass-main",
@@ -652,6 +758,26 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
       loadout: rect(loadout),
       frame: rect(frame),
       frameCell: rect(frameCell),
+      selectedArtClip: rect(selectedArtClip),
+      selectedArt: rect(selectedArt),
+      selectedArtStyle: selectedArt ? {
+        transform: getComputedStyle(selectedArt).transform,
+        x: getComputedStyle(selectedArt).getPropertyValue("--agent-art-x").trim(),
+        y: getComputedStyle(selectedArt).getPropertyValue("--agent-art-y").trim(),
+        scale: getComputedStyle(selectedArt).getPropertyValue("--agent-art-scale").trim(),
+        clipOverflow: getComputedStyle(selectedArtClip).overflow
+      } : null,
+      scoreboard: rect(scoreboard),
+      impact: rect(impact),
+      impactPill: rect(impactPill),
+      impactBar: rect(impactBar),
+      impactMeter: rect(impactMeter),
+      impactFill: rect(impactFill),
+      impactCaption: rect(impactCaption),
+      impactContentWidth: Math.max(0, (impact?.clientWidth || 0) - paddingLeft - paddingRight),
+      impactTrackWidth: Math.max(0, (impactBar?.clientWidth || 0) - trackLeft - trackRight),
+      impactBarTransform: impactBarStyle?.transform || "",
+      mobile: window.matchMedia("(max-width: 820px)").matches,
       compass: rect(compass),
       compassParts,
       compassOverflow: compass ? {
@@ -667,12 +793,100 @@ async function assertHomeLoadoutAndCompassGeometry(page, style) {
     && inner.bottom <= outer.bottom + 1;
   assert.ok(contains(geometry.loadout, geometry.frame), `${style} agent frame escaped its shaped loadout card: ${JSON.stringify(geometry)}`);
   assert.ok(contains(geometry.frameCell, geometry.frame), `${style} agent frame exceeded its grid cell: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.frame, geometry.selectedArtClip), `${style} selected-art clip escaped its frame: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.selectedArtStyle?.clipOverflow, "hidden", `${style} selected-art clip no longer contains authored crop offsets: ${JSON.stringify(geometry)}`);
+  assert.ok(geometry.selectedArt?.width > 0 && geometry.selectedArt?.height > 0, `${style} selected Jett art did not render: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.selectedArtStyle?.x, "13px", `${style} selected Jett X crop offset was lost: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.selectedArtStyle?.y, "16px", `${style} selected Jett Y crop offset was lost: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.selectedArtStyle?.scale, ".91", `${style} selected Jett scale crop was lost: ${JSON.stringify(geometry)}`);
+  assert.notEqual(geometry.selectedArtStyle?.transform, "none", `${style} selected Jett transform was removed: ${JSON.stringify(geometry)}`);
+  assert.ok(
+    Math.abs((geometry.selectedArt.left + geometry.selectedArt.right - geometry.frame.left - geometry.frame.right) / 2) <= Math.max(24, geometry.frame.width * .2)
+      && Math.abs((geometry.selectedArt.top + geometry.selectedArt.bottom - geometry.frame.top - geometry.frame.bottom) / 2) <= Math.max(24, geometry.frame.height * .2),
+    `${style} selected Jett art is not centred around its authored crop offset: ${JSON.stringify(geometry)}`
+  );
+  assert.ok(contains(geometry.impact, geometry.impactPill), `${style} role-impact pill escaped its card: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.impact, geometry.impactBar), `${style} role-impact bar escaped its card: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.impactBar, geometry.impactMeter), `${style} role-impact meter escaped its bar: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.impactBar, geometry.impactFill), `${style} role-impact fill escaped its bar: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.impact, geometry.impactCaption), `${style} role-impact caption escaped its card: ${JSON.stringify(geometry)}`);
+  assert.equal(geometry.impactBarTransform, "none", `${style} role-impact bar was visually scaled after grid layout: ${JSON.stringify(geometry)}`);
+  if (!geometry.mobile) {
+    assert.ok(
+      Math.abs(geometry.scoreboard.height - geometry.impact.height) <= 2,
+      `${style} role-impact card no longer matches the scoreboard height: ${JSON.stringify(geometry)}`
+    );
+    assert.ok(
+      geometry.impactBar.height >= geometry.impact.height * .6,
+      `${style} role-impact bar does not use the card's available height: ${JSON.stringify(geometry)}`
+    );
+    assert.ok(
+      geometry.impactPill.width >= geometry.impactContentWidth - 1
+        && geometry.impactBar.width >= geometry.impactContentWidth - 1
+        && geometry.impactCaption.width >= geometry.impactContentWidth - 1,
+      `${style} role-impact content does not stretch across the card's usable width: ${JSON.stringify(geometry)}`
+    );
+    assert.ok(
+      geometry.impactTrackWidth >= Math.max(24, Math.min(52, geometry.impactBar.width * .4)),
+      `${style} role-impact outlined meter remains too narrow for its bar: ${JSON.stringify(geometry)}`
+    );
+  }
   assert.ok(geometry.compassParts.length >= 6, `${style} did not render the compass geometry: ${JSON.stringify(geometry)}`);
   geometry.compassParts.forEach(part => {
     assert.ok(contains(geometry.compass, part.rect), `${style} compass ${part.selector} escaped its shaped card: ${JSON.stringify(geometry)}`);
   });
   assert.equal(geometry.compassOverflow?.horizontal, false, `${style} compass has horizontal overflow: ${JSON.stringify(geometry)}`);
   assert.equal(geometry.compassOverflow?.vertical, false, `${style} compass has vertical overflow: ${JSON.stringify(geometry)}`);
+}
+
+async function assertHomeChartFlow(page, label, { requireReachableDesktop = false } = {}) {
+  const geometry = await page.locator("#page-home").evaluate((home, requireReachable) => {
+    const rect = element => element?.getBoundingClientRect().toJSON() || null;
+    const layout = home.querySelector(".home-layout");
+    const chart = home.querySelector(".rr-chart-card");
+    const chartLayout = chart?.querySelector(".rr-chart-layout");
+    const chartWrap = chart?.querySelector(".home-chart-wrap");
+    const chartRow = chart?.querySelector("#chartRow");
+    const beforeScrollTop = home.scrollTop;
+    const before = {
+      home: rect(home),
+      layout: rect(layout),
+      chart: rect(chart),
+      chartLayout: rect(chartLayout),
+      chartWrap: rect(chartWrap),
+      chartRow: rect(chartRow),
+      scrollHeight: home.scrollHeight,
+      clientHeight: home.clientHeight,
+      overflowY: getComputedStyle(home).overflowY
+    };
+    let atChart = null;
+    if (requireReachable && home.scrollHeight > home.clientHeight + 1) {
+      const chartTopInScrollSpace = chart.getBoundingClientRect().top - home.getBoundingClientRect().top + home.scrollTop;
+      const maxScrollTop = home.scrollHeight - home.clientHeight;
+      home.scrollTop = Math.min(maxScrollTop, Math.max(0, chartTopInScrollSpace - 8));
+      atChart = { chart: rect(chart), home: rect(home), scrollTop: home.scrollTop };
+    }
+    home.scrollTop = beforeScrollTop;
+    return { before, atChart };
+  }, requireReachableDesktop);
+  const contains = (outer, inner) => outer && inner
+    && inner.left >= outer.left - 1
+    && inner.right <= outer.right + 1
+    && inner.top >= outer.top - 1
+    && inner.bottom <= outer.bottom + 1;
+  const containsVertically = (outer, inner) => outer && inner
+    && inner.top >= outer.top - 1
+    && inner.bottom <= outer.bottom + 1;
+  assert.ok(contains(geometry.before.layout, geometry.before.chart), `${label} chart card escaped the Home grid: ${JSON.stringify(geometry)}`);
+  assert.ok(contains(geometry.before.chart, geometry.before.chartLayout), `${label} chart layout escaped the chart card: ${JSON.stringify(geometry)}`);
+  // Mobile deliberately lets the graph bleed horizontally through some shaped
+  // card edges while its controls remain inset in .rr-chart-layout. Its
+  // vertical bounds must still remain inside the card.
+  assert.ok(containsVertically(geometry.before.chart, geometry.before.chartWrap), `${label} chart canvas wrapper escaped the chart card vertically: ${JSON.stringify(geometry)}`);
+  assert.ok(containsVertically(geometry.before.chart, geometry.before.chartRow), `${label} chart SVG row escaped the chart card vertically: ${JSON.stringify(geometry)}`);
+  if (geometry.atChart) {
+    assert.ok(contains(geometry.atChart.home, geometry.atChart.chart), `${label} chart card cannot be reached by the Home page scroll: ${JSON.stringify(geometry)}`);
+  }
 }
 
 async function writeCoverageContactSheet(browser, style, tiles) {
@@ -904,7 +1118,8 @@ async function run() {
     await page.locator("#editProfileModal").evaluate(modal => { modal.style.visibility = ""; });
     assert.equal(defaultTagPixelsAfter.equals(defaultTagPixels), true, "Default Layout changed tag pixels");
     await page.setViewportSize({ width: 1365, height: 768 });
-    await page.waitForTimeout(180);
+    await waitForViewportScale(page, 1365, 768);
+    await page.waitForTimeout(80);
     const excludedBefore = await page.evaluate(() => ({
       navClip: getComputedStyle(document.querySelector(".app-header")).clipPath,
       navBackground: getComputedStyle(document.querySelector(".app-header")).backgroundImage,
@@ -928,6 +1143,16 @@ async function run() {
         return { selector, clip: style.clipPath, padding: style.padding, borderLeftWidth: style.borderLeftWidth, background: style.backgroundImage };
       })
     }));
+    await assertHomeLoadoutAndCompassGeometry(page, "default desktop");
+    await assertHomeChartFlow(page, "default desktop", { requireReachableDesktop: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await waitForViewportScale(page, 390, 844);
+    await page.waitForTimeout(80);
+    await assertHomeLoadoutAndCompassGeometry(page, "default mobile");
+    await assertHomeChartFlow(page, "default mobile");
+    await page.setViewportSize({ width: 1365, height: 768 });
+    await waitForViewportScale(page, 1365, 768);
+    await page.waitForTimeout(80);
     for (const style of layoutStyles) {
       await page.click(`[data-layout-shape-card="${style}"]`);
       await page.waitForTimeout(80);
@@ -971,11 +1196,15 @@ async function run() {
       }));
       assert.deepEqual(excludedAfter, excludedBefore, `${style} changed an excluded surface`);
       await assertHomeLoadoutAndCompassGeometry(page, `${style} desktop`);
+      await assertHomeChartFlow(page, `${style} desktop`, { requireReachableDesktop: true });
       await page.setViewportSize({ width: 390, height: 844 });
-      await page.waitForTimeout(180);
+      await waitForViewportScale(page, 390, 844);
+      await page.waitForTimeout(80);
       await assertHomeLoadoutAndCompassGeometry(page, `${style} mobile`);
+      await assertHomeChartFlow(page, `${style} mobile`);
       await page.setViewportSize({ width: 1365, height: 768 });
-      await page.waitForTimeout(180);
+      await waitForViewportScale(page, 1365, 768);
+      await page.waitForTimeout(80);
     }
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForTimeout(180);

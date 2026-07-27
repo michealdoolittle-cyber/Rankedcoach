@@ -2283,18 +2283,29 @@ html body #page-logging .logging-feed-card.is-calendar-open #logCalendarPopover{
 }
 
 @media (min-width:821px){
-  /* A shaped card reserves real space around its corners.  The home grid used to
-     keep the middle row at its old 260px track, then clip the compass's 284px
-     readable area inside that smaller box.  Give that row an honest minimum and
-     let the Home page scroll naturally on shorter desktop viewports instead of
-     shrinking or cutting off the radar. */
-  html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-layout{
+  /* The desktop Home dashboard is a scrollable page inside the fixed app shell.
+     Its prior 100%-tall grid was allowed to resolve the RR row smaller than the
+     chart card's own readable minimum, so the bottom edge of the chart escaped
+     the grid at shorter desktop heights.  Let this one dashboard grid take its
+     intrinsic height; the page owns the resulting vertical scroll.  This keeps
+     every chart child inside its card without shrinking the compass to make room. */
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home{
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    overscroll-behavior-y:contain;
+    scroll-padding-bottom:12px;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .home-layout{
     height:auto !important;
     min-height:100% !important;
     grid-template-rows:minmax(calc(196px * var(--app-1080-scale)),auto) minmax(320px,auto) minmax(calc(296px * var(--app-1080-scale)),auto) !important;
     align-content:start !important;
   }
 
+  /* Shaped surfaces reserve safe-area space inside the compass card. Preserve
+     the base grid's readable middle-row minimum after that inset is applied,
+     rather than shrinking or cutting off the radar. */
   html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-middle-row,
   html:not(.is-mobile-layout) body:not(.is-mobile-layout):is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-home .home-middle-row > .compass-panel{
     min-height:320px !important;
