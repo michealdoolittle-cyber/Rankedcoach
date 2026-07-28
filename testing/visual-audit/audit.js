@@ -30,6 +30,34 @@ function startServer() {
         res.writeHead(200, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ updatedAt: null, items: [] }));
       }
+      if (u === "/api/content/patch-notes") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          title: "VALORANT Patch Notes 13.02",
+          label: "Patch 13.02",
+          effectiveDate: "2026-07-28T13:00:00.000Z",
+          sourceUrl: "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-02/",
+          bullets: ["Bug fixes, agent tuning, and competitive updates from Riot's official patch feed."],
+          sections: []
+        }));
+      }
+      if (u === "/api/content/player-cards") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          cachedAt: "2026-07-28T13:00:00.000Z",
+          count: 1,
+          source: "https://valorant-api.com/v1/playercards?language=en-US",
+          data: [{
+            uuid: "00000000-0000-0000-0000-000000000001",
+            displayName: "QA Player Card",
+            wideArt: `http://127.0.0.1:${PORT}/assets/library/maps/thumbs/bind.jpg`
+          }]
+        }));
+      }
+      if (u === "/favicon.ico") {
+        res.writeHead(204);
+        return res.end();
+      }
       if (u === "/api/content/skin-media") {
         res.writeHead(200, { "Content-Type": "application/json" });
         return res.end(JSON.stringify({ matches: {} }));

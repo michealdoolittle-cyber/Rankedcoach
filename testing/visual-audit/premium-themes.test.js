@@ -133,6 +133,34 @@ function startServer() {
         response.writeHead(200, { "Content-Type": "application/json" });
         return response.end(JSON.stringify({ updatedAt: null, items: [] }));
       }
+      if (url === "/api/content/patch-notes") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({
+          title: "VALORANT Patch Notes 13.02",
+          label: "Patch 13.02",
+          effectiveDate: "2026-07-28T13:00:00.000Z",
+          sourceUrl: "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-02/",
+          bullets: ["Bug fixes, agent tuning, and competitive updates from Riot's official patch feed."],
+          sections: []
+        }));
+      }
+      if (url === "/api/content/player-cards") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({
+          cachedAt: "2026-07-28T13:00:00.000Z",
+          count: 1,
+          source: "https://valorant-api.com/v1/playercards?language=en-US",
+          data: [{
+            uuid: "00000000-0000-0000-0000-000000000001",
+            displayName: "QA Player Card",
+            wideArt: `http://127.0.0.1:${port}/assets/library/maps/thumbs/bind.jpg`
+          }]
+        }));
+      }
+      if (url === "/favicon.ico") {
+        response.writeHead(204);
+        return response.end();
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(publicRoot, url);
       fs.readFile(file, (error, data) => {
@@ -269,7 +297,16 @@ async function runBrowserCheck() {
           await page.locator(`#page-${pageName}.active`).waitFor({ state: "visible" });
           const surface = page.locator(`#page-${pageName} .card`).first();
           await surface.waitFor({ state: "visible" });
-          assert.match(await surface.evaluate(card => getComputedStyle(card).backdropFilter || getComputedStyle(card).webkitBackdropFilter), /blur\(5px\)/, `${pageName} does not reveal the premium scene texture`);
+          const premiumSurface = await surface.evaluate(card => {
+            const style = getComputedStyle(card);
+            return {
+              backgroundImage: style.backgroundImage,
+              backgroundColor: style.backgroundColor,
+              backdropFilter: style.backdropFilter || style.webkitBackdropFilter
+            };
+          });
+          assert.notEqual(premiumSurface.backgroundImage, "none", `${pageName} does not keep a translucent premium surface: ${JSON.stringify(premiumSurface)}`);
+          assert.ok(["", "none"].includes(premiumSurface.backdropFilter), `${pageName} reintroduced per-card blur over animated premium themes: ${JSON.stringify(premiumSurface)}`);
         }
         await page.locator('[data-page="library"]').click();
         await page.locator("#page-library.active").waitFor({ state: "visible" });

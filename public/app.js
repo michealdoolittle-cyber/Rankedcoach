@@ -3440,7 +3440,7 @@ function ensureMobileSwipeAffordances() {
 
   bindMobileSwipe(document.querySelector("#editProfileModal .banner-category-toggle"), (direction) => {
     const current = activeProfileBannerCategory || "official";
-    setProfileBannerCategory(stepMobileValue(current, ["official", "unofficial"], direction));
+    setProfileBannerCategory(stepMobileValue(current, ["official", "unofficial", "geometric"], direction));
   }, {
     allowControls: true,
     bindKey: "bannerCategories",
@@ -3638,7 +3638,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const resolvedBorderColor = borderTones.color;
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
-    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}))`,
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}), color-mix(in srgb, ${borderTones.color3} 10%, ${colors.card2 || "#0f172a"}))`,
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
@@ -3653,6 +3653,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   button.dataset.profileBorderColor = borderColor;
   button.style.setProperty("--profile-ring-border", resolvedBorderColor);
   button.style.setProperty("--profile-ring-border-2", borderTones.color2);
+  button.style.setProperty("--profile-ring-border-3", borderTones.color3);
   button.style.setProperty("--profile-ring-gradient", borderTones.gradient);
   button.style.setProperty("--profile-ring-bg", ringBackground);
   button.style.setProperty("--profile-ring-glow", ringGlow);
@@ -43861,6 +43862,51 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
   })
 ];
 
+PREMIUM_PROFILE_THEME_PRESETS.push(
+  ...[
+    ["omega-nebula", "Omega Nebula", "#040716", "#1b0f3a", "#0b1024", "#24174a", "#c084fc", "#22d3ee", "star-drift"],
+    ["ion-snowfall", "Ion Snowfall", "#02111c", "#0d2a3d", "#071826", "#14344a", "#e0f2fe", "#38bdf8", "neon-rain"],
+    ["midnight-blizzard", "Midnight Blizzard", "#020617", "#0b1f36", "#06111f", "#132d47", "#bfdbfe", "#93c5fd", "fractal-shift"],
+    ["radiant-afterburn", "Radiant Afterburn", "#120403", "#3b0b07", "#1b0705", "#4a130a", "#fb923c", "#facc15", "solar-flow"],
+    ["fracture-emberfield", "Fracture Emberfield", "#110506", "#30100a", "#19080a", "#3c1710", "#ef4444", "#f97316", "ember-dragon"],
+    ["abyss-whirlpool", "Abyss Whirlpool", "#00121a", "#043041", "#031c29", "#0b4454", "#2dd4bf", "#38bdf8", "water-flow"],
+    ["pearl-undercurrent", "Pearl Undercurrent", "#01171d", "#08343f", "#06232d", "#124a55", "#67e8f9", "#14b8a6", "water-flow"],
+    ["split-kaleidoscope", "Split Kaleidoscope", "#090616", "#25123f", "#100d24", "#321a56", "#f472b6", "#22d3ee", "prism-turn"],
+    ["haven-aurora", "Haven Aurora", "#021014", "#10213e", "#071820", "#1a2f4f", "#5eead4", "#a78bfa", "aurora-rift"],
+    ["bind-sandstorm", "Bind Sandstorm", "#120b03", "#2d1a07", "#1b1007", "#3a220a", "#facc15", "#fb923c", "wind-flow"],
+    ["breeze-squall", "Breeze Squall", "#03131c", "#0b3545", "#061f2b", "#12485a", "#a7f3d0", "#38bdf8", "wind-flow"],
+    ["lotus-pollen", "Lotus Pollen", "#090816", "#1f1836", "#120d23", "#2d2444", "#f9a8d4", "#a3e635", "confetti-pop"],
+    ["sunset-neon", "Sunset Neon", "#110414", "#33102a", "#1b091f", "#441835", "#fb7185", "#facc15", "sound-wave"],
+    ["corrode-foundry", "Corrode Foundry", "#100602", "#2f1708", "#190b05", "#3f210d", "#fb923c", "#94a3b8", "toxic-sludge"],
+    ["summit-whiteout", "Summit Whiteout", "#06101a", "#17243a", "#0a1625", "#24324d", "#f8fafc", "#60a5fa", "fog-drift"],
+    ["vandal-signal", "Vandal Signal", "#020b08", "#082119", "#04120e", "#0f2e24", "#10b981", "#38bdf8", "data-stream"],
+    ["phantom-haze", "Phantom Haze", "#080b13", "#171526", "#101421", "#2a2439", "#c4b5fd", "#64748b", "fog-drift"],
+    ["operator-eclipse", "Operator Eclipse", "#030304", "#17130c", "#090908", "#1f1a12", "#f59e0b", "#7dd3fc", "eclipse-corona"],
+    ["judge-quake", "Judge Quake", "#0b0302", "#231006", "#130806", "#2f1709", "#ef4444", "#facc15", "solar-flow"],
+    ["sheriff-prism", "Sheriff Prism", "#070814", "#1c1030", "#111127", "#28204a", "#22d3ee", "#f472b6", "prism-turn"],
+    ["stinger-holo", "Stinger Holo", "#021018", "#042b35", "#041520", "#082735", "#34d399", "#38bdf8", "holo-grid"],
+    ["marshal-comet", "Marshal Comet", "#020816", "#0d1930", "#050b19", "#111d33", "#93c5fd", "#facc15", "comet-trail"],
+    ["classic-pulse", "Classic Pulse", "#090312", "#280b38", "#16071f", "#3a0d43", "#22d3ee", "#f472b6", "sound-wave"],
+    ["ghost-singularity", "Ghost Singularity", "#03030c", "#0d1030", "#070716", "#151538", "#a78bfa", "#60a5fa", "gravity-well"],
+    ["guardian-crystal", "Guardian Crystal", "#080714", "#181226", "#0c0a18", "#211832", "#f0abfc", "#67e8f9", "crystal-bloom"],
+    ["odin-railgun", "Odin Railgun", "#020713", "#0b1d3a", "#071426", "#10294a", "#60a5fa", "#f8fafc", "lightning-strike"],
+    ["ares-hazard", "Ares Hazard", "#030b02", "#102007", "#071006", "#17260b", "#a3e635", "#22c55e", "toxic-sludge"],
+    ["bulldog-byte", "Bulldog Byte", "#020b08", "#071f19", "#04110e", "#09251f", "#38bdf8", "#10b981", "data-stream"],
+    ["spectre-inkwell", "Spectre Inkwell", "#03050b", "#171026", "#090d17", "#24153a", "#818cf8", "#c084fc", "ink-bloom"],
+    ["shorty-party", "Shorty Party", "#0c0818", "#24113b", "#171029", "#38204b", "#facc15", "#fb7185", "confetti-pop"]
+  ].map(([value, label, base, base2, card, card2, accent, accent2, motion]) => createProfileTheme(value, label, "dark", {
+    base,
+    base2,
+    card,
+    card2,
+    accent,
+    accent2,
+    pattern: `radial-gradient(circle at 18% 20%, ${accent}26, transparent 26%), radial-gradient(circle at 78% 72%, ${accent2}20, transparent 30%)`,
+    pattern2: `linear-gradient(125deg, transparent 16%, ${accent}18 42%, ${accent2}14 68%, transparent 90%)`,
+    motion
+  }))
+);
+
 // Keep the runtime class cleanup derived from the presets.  New animated
 // themes are added regularly; a handwritten remove list silently left the
 // newer scene classes on <body>, so changing themes could run several
@@ -43911,6 +43957,75 @@ const PROFILE_BORDER_COLORS = [
   { value: "neon-pulse", label: "Neon Pulse", color: "#38bdf8", color2: "#facc15" },
   { value: "prime-gold", label: "Prime Gold", color: "#f8e08e", color2: "#7c3aed" }
 ];
+
+PROFILE_BORDER_COLORS.push(
+  ...[
+    ["arc-white", "Arc White", "#f8fafc"],
+    ["cryo-blue", "Cryo Blue", "#93c5fd"],
+    ["iris-violet", "Iris Violet", "#c084fc"],
+    ["lotus-pink", "Lotus Pink", "#f9a8d4"],
+    ["toxic-lime", "Toxic Lime", "#a3e635"],
+    ["harbor-aqua", "Harbor Aqua", "#2dd4bf"],
+    ["sunset-coral", "Sunset Coral", "#fb7185"],
+    ["forge-orange", "Forge Orange", "#fb923c"],
+    ["smoke-slate", "Smoke Slate", "#94a3b8"],
+    ["void-black", "Void Black", "#020617"]
+  ].map(([value, label, color]) => ({ value, label, color })),
+  ...[
+    ["arctic-venom", "Arctic Venom", "#67e8f9", "#a3e635"],
+    ["neon-candy", "Neon Candy", "#22d3ee", "#fb7185"],
+    ["lotus-fire", "Lotus Fire", "#f97316", "#facc15"],
+    ["rift-orchid", "Rift Orchid", "#8b5cf6", "#f0abfc"],
+    ["breach-flash", "Breach Flash", "#facc15", "#ef4444"],
+    ["harbor-depth", "Harbor Depth", "#0f766e", "#38bdf8"],
+    ["iso-edge", "Iso Edge", "#64748b", "#a855f7"],
+    ["clove-bloom", "Clove Bloom", "#f472b6", "#4ade80"],
+    ["gekko-pop", "Gekko Pop", "#84cc16", "#f97316"],
+    ["omen-static", "Omen Static", "#312e81", "#60a5fa"],
+    ["phoenix-ash", "Phoenix Ash", "#ef4444", "#111827"],
+    ["sage-glass", "Sage Glass", "#ccfbf1", "#14b8a6"],
+    ["sova-sky", "Sova Sky", "#38bdf8", "#f8fafc"],
+    ["viper-acid", "Viper Acid", "#16a34a", "#bef264"],
+    ["reaver-ember", "Reaver Ember", "#7c2d12", "#fb7185"],
+    ["singularity", "Singularity", "#020617", "#a78bfa"],
+    ["ion-orbit", "Ion Orbit", "#e0f2fe", "#38bdf8"],
+    ["sovereign", "Sovereign", "#fef3c7", "#a855f7"],
+    ["kuronami", "Kuronami", "#0f172a", "#22d3ee"],
+    ["glitchpop", "Glitchpop", "#ec4899", "#06b6d4"]
+  ].map(([value, label, color, color2]) => ({ value, label, color, color2 })),
+  ...[
+    ["radiant-prism", "Radiant Prism", "#facc15", "#ff4655", "#38bdf8"],
+    ["valorant-spectrum", "Valorant Spectrum", "#ff4655", "#facc15", "#22d3ee"],
+    ["nebula-core", "Nebula Core", "#8b5cf6", "#22d3ee", "#fb7185"],
+    ["aurora-lace", "Aurora Lace", "#5eead4", "#a78bfa", "#f0abfc"],
+    ["magma-crack", "Magma Crack", "#7f1d1d", "#fb923c", "#facc15"],
+    ["winterglass", "Winterglass", "#e0f2fe", "#60a5fa", "#a78bfa"],
+    ["jade-crown", "Jade Crown", "#047857", "#a3e635", "#fef3c7"],
+    ["arcade-pulse", "Arcade Pulse", "#22d3ee", "#ec4899", "#a3e635"],
+    ["night-market", "Night Market", "#020617", "#facc15", "#ef4444"],
+    ["controller-rift", "Controller Rift", "#06b6d4", "#6366f1", "#111827"],
+    ["duelist-heat", "Duelist Heat", "#ef4444", "#fb923c", "#facc15"],
+    ["initiator-flare", "Initiator Flare", "#3b82f6", "#facc15", "#f8fafc"],
+    ["sentinel-bastion", "Sentinel Bastion", "#22c55e", "#94a3b8", "#f8fafc"],
+    ["abyss-triad", "Abyss Triad", "#0f172a", "#38bdf8", "#a78bfa"],
+    ["ascent-sunset", "Ascent Sunset", "#fb7185", "#f97316", "#60a5fa"],
+    ["bind-teleport", "Bind Teleport", "#facc15", "#8b5cf6", "#14b8a6"],
+    ["breeze-current", "Breeze Current", "#38bdf8", "#2dd4bf", "#fef3c7"],
+    ["corrode-rust", "Corrode Rust", "#92400e", "#fb923c", "#64748b"],
+    ["fracture-reactor", "Fracture Reactor", "#f97316", "#22c55e", "#38bdf8"],
+    ["haven-gate", "Haven Gate", "#f8fafc", "#ef4444", "#38bdf8"],
+    ["icebox-rift", "Icebox Rift", "#e0f2fe", "#60a5fa", "#0f172a"],
+    ["lotus-bloom", "Lotus Bloom", "#f9a8d4", "#a3e635", "#facc15"],
+    ["pearl-depth", "Pearl Depth", "#0e7490", "#a7f3d0", "#f472b6"],
+    ["split-neon", "Split Neon", "#ec4899", "#22d3ee", "#facc15"],
+    ["summit-storm", "Summit Storm", "#64748b", "#60a5fa", "#f8fafc"],
+    ["sunset-dusk", "Sunset Dusk", "#fb7185", "#f97316", "#312e81"],
+    ["prime-trinity", "Prime Trinity", "#f8e08e", "#7c3aed", "#22d3ee"],
+    ["reyna-trinity", "Reyna Trinity", "#c026d3", "#fb7185", "#111827"],
+    ["sage-trinity", "Sage Trinity", "#2dd4bf", "#f8fafc", "#22c55e"],
+    ["omen-trinity", "Omen Trinity", "#6366f1", "#111827", "#38bdf8"]
+  ].map(([value, label, color, color2, color3]) => ({ value, label, color, color2, color3 }))
+);
 
 const PROFILE_BORDER_STYLES = [
   { value: "standard", label: "Standard", note: "Clean circular ring" },
@@ -44028,6 +44143,112 @@ PROFILE_BANNER_STYLES.push(
   { value: "rc-blood", label: "Blood", category: "unofficial", pattern: "linear-gradient(112deg, #120306, #450a0a 50%, #ef444440), radial-gradient(circle at 76% 18%, #fb718533, transparent 24%)" }
 );
 
+PROFILE_BANNER_STYLES.push(
+  ...[
+    ["static-obsidian", "Obsidian", "#03040a"],
+    ["static-valorant-red", "Valorant Red", "#ff4655"],
+    ["static-radiant-gold", "Radiant Gold", "#facc15"],
+    ["static-harbor-teal", "Harbor Teal", "#14b8a6"],
+    ["static-omen-indigo", "Omen Indigo", "#312e81"],
+    ["static-reyna-purple", "Reyna Purple", "#7e22ce"],
+    ["static-sage-mint", "Sage Mint", "#99f6e4"],
+    ["static-viper-green", "Viper Green", "#16a34a"],
+    ["static-neon-cyan", "Neon Cyan", "#22d3ee"],
+    ["static-phoenix-orange", "Phoenix Orange", "#f97316"],
+    ["static-icebox-blue", "Icebox Blue", "#60a5fa"],
+    ["static-sunset-pink", "Sunset Pink", "#fb7185"],
+    ["static-smoke-slate", "Smoke Slate", "#334155"],
+    ["static-prime-ivory", "Prime Ivory", "#f8e08e"],
+    ["static-pearl-aqua", "Pearl Aqua", "#67e8f9"],
+    ["static-fracture-lime", "Fracture Lime", "#a3e635"],
+    ["static-corrosion-rust", "Corrosion Rust", "#92400e"],
+    ["static-nocturne", "Nocturne", "#111827"],
+    ["static-blush", "Blush", "#f9a8d4"],
+    ["static-plasma", "Plasma", "#a855f7"]
+  ].map(([value, label, color]) => ({
+    value: `rc-banner-${value}`,
+    label,
+    category: "unofficial",
+    pattern: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 58%, #020617))`
+  })),
+  ...[
+    ["red-cyan", "Red / Cyan", "#ff4655", "#22d3ee"],
+    ["gold-purple", "Gold / Purple", "#facc15", "#8b5cf6"],
+    ["teal-pink", "Teal / Pink", "#14b8a6", "#fb7185"],
+    ["green-amber", "Green / Amber", "#22c55e", "#f59e0b"],
+    ["blue-ivory", "Blue / Ivory", "#2563eb", "#f8fafc"],
+    ["orange-slate", "Orange / Slate", "#f97316", "#334155"],
+    ["rose-navy", "Rose / Navy", "#e11d48", "#0f172a"],
+    ["lime-black", "Lime / Black", "#a3e635", "#020617"],
+    ["violet-aqua", "Violet / Aqua", "#7c3aed", "#67e8f9"],
+    ["coral-sky", "Coral / Sky", "#fb7185", "#38bdf8"],
+    ["jade-white", "Jade / White", "#10b981", "#f8fafc"],
+    ["magma-yellow", "Magma / Yellow", "#ef4444", "#facc15"],
+    ["storm-blue", "Storm / Blue", "#64748b", "#60a5fa"],
+    ["royal-pink", "Royal / Pink", "#4c1d95", "#f472b6"],
+    ["mint-indigo", "Mint / Indigo", "#99f6e4", "#312e81"],
+    ["sand-red", "Sand / Red", "#d6b98d", "#ef4444"],
+    ["pearl-violet", "Pearl / Violet", "#e0f2fe", "#a78bfa"],
+    ["forge-green", "Forge / Green", "#fb923c", "#16a34a"],
+    ["ink-cyan", "Ink / Cyan", "#020617", "#06b6d4"],
+    ["sunset-aqua", "Sunset / Aqua", "#f97316", "#2dd4bf"],
+    ["hazard-gold", "Hazard / Gold", "#111827", "#facc15"],
+    ["lotus-lime", "Lotus / Lime", "#f9a8d4", "#84cc16"],
+    ["abyss-purple", "Abyss / Purple", "#0f172a", "#8b5cf6"],
+    ["breeze-sea", "Breeze / Sea", "#38bdf8", "#0f766e"],
+    ["bind-sand", "Bind / Sand", "#a16207", "#fef3c7"],
+    ["split-neon", "Split / Neon", "#ec4899", "#22d3ee"],
+    ["haven-red", "Haven / Red", "#f8fafc", "#ef4444"],
+    ["ascent-cloud", "Ascent / Cloud", "#60a5fa", "#f8fafc"],
+    ["icebox-night", "Icebox / Night", "#bfdbfe", "#020617"],
+    ["fracture-core", "Fracture / Core", "#f97316", "#22c55e"],
+    ["sunset-dusk", "Sunset / Dusk", "#fb7185", "#312e81"],
+    ["corrode-oxide", "Corrode / Oxide", "#92400e", "#94a3b8"],
+    ["summit-static", "Summit / Static", "#f8fafc", "#64748b"],
+    ["prime-blue", "Prime / Blue", "#f8e08e", "#38bdf8"],
+    ["reaver-red", "Reaver / Red", "#7c2d12", "#fb7185"],
+    ["ion-white", "Ion / White", "#e0f2fe", "#38bdf8"],
+    ["kuronami-teal", "Kuronami / Teal", "#0f172a", "#14b8a6"],
+    ["glitchpop-cyan", "Glitchpop / Cyan", "#ec4899", "#06b6d4"],
+    ["sovereign-royal", "Sovereign / Royal", "#fef3c7", "#7c3aed"],
+    ["singularity-blue", "Singularity / Blue", "#020617", "#60a5fa"],
+    ["arcade-lime", "Arcade / Lime", "#22d3ee", "#a3e635"],
+    ["nebula-rose", "Nebula / Rose", "#8b5cf6", "#fb7185"],
+    ["aurora-teal", "Aurora / Teal", "#5eead4", "#a78bfa"],
+    ["data-green", "Data / Green", "#10b981", "#38bdf8"],
+    ["smoke-fog", "Smoke / Fog", "#64748b", "#c4b5fd"],
+    ["comet-gold", "Comet / Gold", "#93c5fd", "#facc15"],
+    ["crystal-bloom", "Crystal / Bloom", "#f0abfc", "#67e8f9"],
+    ["toxic-sludge", "Toxic / Sludge", "#a3e635", "#22c55e"],
+    ["eclipse-fire", "Eclipse / Fire", "#030304", "#f59e0b"],
+    ["victory-pop", "Victory / Pop", "#facc15", "#fb7185"]
+  ].map(([value, label, start, end]) => ({
+    value: `rc-banner-duo-${value}`,
+    label,
+    category: "unofficial",
+    pattern: `radial-gradient(circle at 18% 22%, ${start}55, transparent 32%), radial-gradient(circle at 82% 62%, ${end}4d, transparent 38%), linear-gradient(115deg, color-mix(in srgb, ${start} 62%, #020617), color-mix(in srgb, ${end} 54%, #020617))`
+  })),
+  ...[
+    ["geo-circuit-grid", "Circuit Grid", "repeating-linear-gradient(90deg, transparent 0 23px, rgba(103,232,249,.18) 23px 24px), repeating-linear-gradient(0deg, transparent 0 23px, rgba(103,232,249,.12) 23px 24px), linear-gradient(135deg,#061326,#0f172a)"],
+    ["geo-honeycomb", "Honeycomb", "radial-gradient(circle at 20% 20%,rgba(250,204,21,.18),transparent 24%), repeating-conic-gradient(from 30deg, rgba(250,204,21,.16) 0 12deg, transparent 12deg 60deg), linear-gradient(135deg,#111827,#1f2937)"],
+    ["geo-prism", "Prism Cut", "conic-gradient(from 24deg at 50% 50%, rgba(244,114,182,.26), rgba(34,211,238,.2), rgba(250,204,21,.18), rgba(244,114,182,.26)), linear-gradient(135deg,#070814,#1c1030)"],
+    ["geo-topo", "Topo Lines", "repeating-radial-gradient(circle at 30% 42%, rgba(167,139,250,.16) 0 2px, transparent 2px 18px), linear-gradient(135deg,#080b13,#171526)"],
+    ["geo-frost", "Frost Fracture", "linear-gradient(128deg, transparent 0 22%, rgba(224,242,254,.24) 23% 24%, transparent 25% 48%, rgba(96,165,250,.2) 49% 50%, transparent 51%), linear-gradient(135deg,#03101a,#0b2638)"],
+    ["geo-lava-cracks", "Lava Cracks", "repeating-linear-gradient(118deg, transparent 0 34px, rgba(251,146,60,.28) 35px 38px, transparent 39px 72px), radial-gradient(circle at 72% 30%,rgba(250,204,21,.26),transparent 22%), linear-gradient(135deg,#150502,#3a0b03)"],
+    ["geo-carbon", "Carbon Weave", "repeating-linear-gradient(45deg,rgba(255,255,255,.08) 0 2px,transparent 2px 8px), repeating-linear-gradient(135deg,rgba(255,255,255,.06) 0 2px,transparent 2px 8px), linear-gradient(135deg,#050608,#111827)"],
+    ["geo-radar", "Radar Sweep", "conic-gradient(from 0deg at 50% 50%, rgba(45,212,191,.3), transparent 18%, transparent), repeating-radial-gradient(circle,rgba(45,212,191,.16) 0 1px,transparent 1px 28px), linear-gradient(135deg,#01140f,#052f2b)"],
+    ["geo-eq-bars", "EQ Bars", "repeating-linear-gradient(90deg, rgba(34,211,238,.22) 0 6px, transparent 6px 16px), linear-gradient(180deg,transparent 34%,rgba(244,114,182,.18) 72%), linear-gradient(135deg,#090312,#280b38)"],
+    ["geo-kaleidoscope", "Kaleidoscope", "conic-gradient(from 45deg, rgba(34,211,238,.24), rgba(244,114,182,.22), rgba(250,204,21,.2), rgba(52,211,153,.18), rgba(34,211,238,.24)), linear-gradient(135deg,#090616,#25123f)"],
+    ["geo-ink-rings", "Ink Rings", "repeating-radial-gradient(circle at 55% 52%, rgba(129,140,248,.18) 0 2px, transparent 2px 22px), radial-gradient(circle at 50% 50%,rgba(2,6,23,.82),transparent 52%), linear-gradient(135deg,#03050b,#171026)"],
+    ["geo-star-map", "Star Map", "radial-gradient(circle at 12% 24%,#fff8 0 1px,transparent 2px), radial-gradient(circle at 68% 34%,#fff7 0 1px,transparent 2px), radial-gradient(circle at 82% 74%,#fff8 0 1px,transparent 2px), linear-gradient(135deg,#030512,#120b2b)"]
+  ].map(([value, label, pattern]) => ({
+    value: `rc-banner-${value}`,
+    label,
+    category: "geometric",
+    pattern
+  }))
+);
+
 const PREMIUM_PROFILE_BANNER_STYLES = [
   {
     value: "radiant-focus-signature",
@@ -44043,7 +44264,10 @@ const PREMIUM_PROFILE_BANNER_STYLES = [
   }
 ];
 
-const VALORANT_PLAYER_CARDS_ENDPOINT = "https://valorant-api.com/v1/playercards?language=en-US";
+const VALORANT_PLAYER_CARDS_ENDPOINTS = Object.freeze([
+  "/api/content/player-cards",
+  "https://valorant-api.com/v1/playercards?language=en-US"
+]);
 const VALORANT_PLAYER_CARD_VALUE_PREFIX = "valorant-card-";
 let dynamicProfileBannerStyles = [];
 let profileBannerCatalogPromise = null;
@@ -44051,7 +44275,9 @@ let profileBannerCatalogAttempted = false;
 let activeProfileBannerCategory = "official";
 
 function normalizeProfileBannerDisplayName(displayName = "") {
-  return normalizeWhitespace(displayName)
+  return String(displayName || "")
+    .replace(/\s+/g, " ")
+    .trim()
     .replace(/\s+Card$/i, "")
     .replace(/^V(\d+):\s*/i, "V$1 · ")
     || "Valorant Player Card";
@@ -45222,14 +45448,21 @@ function getResolvedProfileBorderTones(borderColor = "theme", theme = getThemePr
     ? (preset.color2 || primary)
     : (options.color2 || themeColors.accent2 || primary);
   const secondary = fallbackSecondary || primary;
-  const isTwoTone = Boolean(secondary && secondary !== primary);
+  const tertiary = preset?.color3 || options.color3 || "";
+  const stops = [primary, secondary, tertiary].filter(Boolean);
+  const uniqueStops = stops.filter((color, index) => stops.indexOf(color) === index);
+  const isTwoTone = uniqueStops.length > 1;
+  const gradient = uniqueStops.length >= 3
+    ? `linear-gradient(135deg, ${uniqueStops[0]} 0%, ${uniqueStops[1]} 52%, ${uniqueStops[2]} 100%)`
+    : uniqueStops.length === 2
+      ? `linear-gradient(135deg, ${uniqueStops[0]} 0%, ${uniqueStops[1]} 100%)`
+      : primary;
   return {
     color: primary,
     color2: secondary,
+    color3: tertiary || secondary,
     isTwoTone,
-    gradient: isTwoTone
-      ? `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`
-      : primary
+    gradient
   };
 }
 
@@ -45266,7 +45499,11 @@ function getBannerImageUrl(bannerStyle = "theme") {
 
 function getProfileBannerCategory(style = getProfileBannerStyle()) {
   if (!style || style.value === "theme") return "official";
-  return style.category === "unofficial" ? "unofficial" : "official";
+  return style.category === "geometric"
+    ? "geometric"
+    : style.category === "unofficial"
+      ? "unofficial"
+      : "official";
 }
 
 function refreshProfileBannerSelectOptions(selectedBanner = "theme") {
@@ -45288,13 +45525,19 @@ function ensureProfileBannerCatalogLoad(selectedBanner = "theme", themeKey = "de
     return profileBannerCatalogPromise;
   }
   profileBannerCatalogAttempted = true;
-  profileBannerCatalogPromise = fetch(VALORANT_PLAYER_CARDS_ENDPOINT, {
-    headers: { Accept: "application/json" }
-  })
-    .then(response => {
-      if (!response.ok) throw new Error(`Valorant banner catalog failed: ${response.status}`);
-      return response.json();
-    })
+  profileBannerCatalogPromise = (async () => {
+    let lastError = null;
+    for (const endpoint of VALORANT_PLAYER_CARDS_ENDPOINTS) {
+      try {
+        const response = await fetch(endpoint, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error(`Valorant banner catalog failed: ${response.status}`);
+        return await response.json();
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error("Valorant banner catalog failed.");
+  })()
     .then(payload => {
       const cards = Array.isArray(payload?.data) ? payload.data : [];
       dynamicProfileBannerStyles = cards
@@ -45316,12 +45559,17 @@ function ensureProfileBannerCatalogLoad(selectedBanner = "theme", themeKey = "de
 }
 
 function setProfileBannerCategory(category = "official") {
-  activeProfileBannerCategory = category === "unofficial" ? "unofficial" : "official";
+  const normalizedCategory = ["official", "unofficial", "geometric"].includes(String(category || ""))
+    ? String(category)
+    : "official";
+  activeProfileBannerCategory = normalizedCategory;
   const title = document.getElementById("profileBannerCategoryTitle");
   if (title) {
     title.textContent = activeProfileBannerCategory === "official"
       ? "Player Card Banner Valorant Official"
-      : "Player Card Banner Unofficial";
+      : activeProfileBannerCategory === "geometric"
+        ? "Player Card Banner Geometric"
+        : "Player Card Banner Colors";
   }
   document.querySelectorAll("[data-banner-category]").forEach((button) => {
     const isActive = button.dataset.bannerCategory === activeProfileBannerCategory;
@@ -45564,7 +45812,7 @@ function renderBorderColorGallery(selectedBorderColor = "theme") {
     const isActive = preset.value === activeColor;
     return `
       <button type="button" class="border-color-card ${tones.isTwoTone ? "is-two-tone" : ""} ${isActive ? "is-active" : ""}" data-border-color-card="${escapeHtml(preset.value)}" aria-pressed="${isActive ? "true" : "false"}">
-        <div class="border-color-preview" style="--border-color-accent:${tones.color}; --border-color-accent-2:${tones.color2}; --border-color-gradient:${tones.gradient}; --border-card-surface:${previewSurfaceColors.card || "#0b1220"}; --border-card-surface-2:${previewSurfaceColors.card2 || "#0f172a"}; --border-card-text:${previewSurfaceColors.text || "#f8fafc"};">
+        <div class="border-color-preview" style="--border-color-accent:${tones.color}; --border-color-accent-2:${tones.color2}; --border-color-accent-3:${tones.color3}; --border-color-gradient:${tones.gradient}; --border-card-surface:${previewSurfaceColors.card || "#0b1220"}; --border-card-surface-2:${previewSurfaceColors.card2 || "#0f172a"}; --border-card-text:${previewSurfaceColors.text || "#f8fafc"};">
           <div class="border-color-avatar">
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(preset.label)} border color preview">
           </div>
@@ -45612,7 +45860,7 @@ function renderBorderGallery(selectedBorder = "standard") {
     const isActive = style.value === activeBorder;
     const avatarPreviewMarkup = useMobileFramePreview
       ? `
-          <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
+          <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-border-3:${ringTones.color3}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
             ${getMobileAvatarFrameMarkup(style.value)}
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
           </div>
@@ -45852,7 +46100,7 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
           ">
           ${hasImage ? `<img class="banner-card-image" loading="lazy" decoding="async" src="${escapeHtml(style.image)}" alt="">` : ""}
           <div class="banner-card-name">${escapeHtml(style.label)}</div>
-          <div class="banner-card-strip">${getProfileBannerCategory(style) === "official" ? "Official" : "RankedCoach"}</div>
+          <div class="banner-card-strip">${getProfileBannerCategory(style) === "official" ? "Official" : getProfileBannerCategory(style) === "geometric" ? "Geometric" : "RankedCoach"}</div>
         </div>
       </button>
     `;
@@ -45935,7 +46183,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     : getResolvedProfileBorderTones(borderColor, theme);
   const resolvedBorderColor = borderTones.color;
   const ringBackground = colorMixOrFallback(
-    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}))`,
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}), color-mix(in srgb, ${borderTones.color3} 10%, ${colors.card2 || "#0f172a"}))`,
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
@@ -45972,6 +46220,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     target.dataset.profileBorderColor = borderColor;
     target.style.setProperty("--profile-ring-border", resolvedBorderColor);
     target.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    target.style.setProperty("--profile-ring-border-3", borderTones.color3);
     target.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     target.style.setProperty("--profile-ring-bg", ringBackground);
     target.style.setProperty("--profile-ring-glow", ringGlow);
@@ -45985,6 +46234,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   if (ring) {
     ring.style.setProperty("--profile-ring-border", resolvedBorderColor);
     ring.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    ring.style.setProperty("--profile-ring-border-3", borderTones.color3);
     ring.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     ring.style.setProperty("--profile-ring-bg", ringBackground);
     ring.style.setProperty("--profile-ring-glow", ringGlow);
@@ -46017,6 +46267,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     root.style.setProperty("--theme-glow", themeGlow);
     root.style.setProperty("--profile-ring-border", resolvedBorderColor);
     root.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    root.style.setProperty("--profile-ring-border-3", borderTones.color3);
     root.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     root.style.setProperty("--profile-ring-bg", ringBackground);
     root.style.setProperty("--profile-ring-glow", ringGlow);

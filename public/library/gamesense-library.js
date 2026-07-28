@@ -13,6 +13,10 @@
   let featuredPlaylistRequest = null;
   let featuredPlaylistStatus = "idle";
   let featuredPlaylistError = "";
+  let riotPatchNotes = null;
+  let riotPatchNotesRequest = null;
+  let riotPatchNotesStatus = "idle";
+  let riotPatchNotesError = "";
   let publishedKnowledge = [];
   let publishedKnowledgeRequest = null;
   let overviewRefreshQueued = false;
@@ -106,6 +110,108 @@
     { id: "1706", name: "peach", code: "0;c;1;s;1;P;c;8;u;FF6781FF;h;0;b;1;0l;3;0o;2;0a;1;0f;0;1b;0;S;s;0.347;o;1", tags: "", copied: 136678 },
     { id: "1707", name: "Heart when fire", code: "0;P;c;8;u;F97AC0FF;o;0.1;b;1;m;1;0t;5;0l;3;0o;1;0a;0.7;0f;0;1t;1;1l;5;1o;0;1a;0.7;1m;0;1f;0", tags: "", copied: 200264 },
     { id: "1708", name: "Flappy", code: "0;c;1;s;1;P;c;8;u;008000FF;t;3;o;1;b;1;0t;4;0l;0;0v;18;0g;1;0o;10;0a;1;0f;0;1t;10;1l;0;1v;4;1g;1;1o;7;1a;1;1m;0;1f;0", tags: "", copied: 373210 }
+  ]);
+  const vcrdbImportedCommunitySeeds = Object.freeze([
+    { id: "12174", code: "0;s;1;P;h;0;d;1;z;1;m;1;0t;1;0l;4;0v;4;0g;1;0o;0;0a;1;1b;0;S;c;4;o;1" },
+    { id: "12173", code: "0;s;1;P;c;5;h;0;0l;2;0o;0;0a;1;0m;1;0f;0;0s;0.03;1b;0;S;c;2;s;0;o;1" },
+    { id: "12172", code: "0;P;o;0.654;d;1;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12171", code: "0;P;c;8;u;F28D9FFF;h;0;d;1;b;1;a;0.254;0t;3;0l;5;0o;0;0a;0.755;0f;0;1t;5;1o;2;1a;1;1m;0;1f;0" },
+    { id: "12170", code: "0;s;1;P;h;0;0t;4;0l;1;0o;1;0a;1;0m;1;0s;0.04;0e;0.08;1o;2;1a;1;1m;0;1f;0;S;c;4;s;0.7;o;1" },
+    { id: "12169", code: "0;P;c;8;u;D0021BFF;t;2;o;0.05;d;1;b;1;z;1;0t;7;0l;1;0o;0;0a;0.05;0f;0;1t;1;1l;5;1o;1;1a;0.05;1m;0;1f;0" },
+    { id: "12168", code: "0;s;1;P;c;1;o;0.4;f;0;s;0;0b;0;1t;4;1l;1;1o;2;1a;1;1m;0;1f;0;S;c;1" },
+    { id: "12167", code: "0;p;0;P;c;8;u;FF8D89FF;o;0.157;d;1;b;1;a;0.484;m;1;0t;4;0l;2;0o;2;0a;1;0e;0.39;1o;3;1a;1;1m;0;1e;0.177" },
+    { id: "12166", code: "0;P;c;8;u;000000FF;h;0;b;1;m;1;0l;5;0v;3;0g;1;0o;1;0a;1;0e;0.1;1b;0" },
+    { id: "12165", code: "0;s;1;P;c;7;h;0;0l;8;0v;4;0g;1;0o;1;0a;1;0f;0;1b;0;S;o;1" },
+    { id: "12164", code: "0;P;c;8;h;0;b;1;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12163", code: "0;P;c;5;o;0.286;d;1;f;0;0t;0;0l;0;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12162", code: "0;P;h;0;0t;3;0l;2;0o;0;0a;1;0m;1;0f;0;0s;0.4;1b;0" },
+    { id: "12161", code: "0;s;1;P;h;0;f;0;0l;3;0o;0;0f;0;1b;0;S;o;1" },
+    { id: "12160", code: "0;c;1;s;1;P;c;8;u;000000FF;h;0;d;1;b;1;z;1;f;0;m;1;0t;1;0l;2;0o;0;0a;1;0m;1;0f;0;0s;0;1b;0;S;c;0;s;1.043;o;1" },
+    { id: "12159", code: "0;c;1;s;1;P;o;0;m;1;0t;4;0l;1;0o;1;0a;1;0e;0.111;1o;1;1a;0.629;1m;0;1e;0.111" },
+    { id: "12158", code: "0;P;c;1;h;0;0l;4;0v;4;0g;1;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12157", code: "0;P;h;0;f;0;m;1;0t;3;0l;0;0v;4;0g;1;0o;1;0a;0.616;0f;0;1t;1;1l;7;1v;3;1g;1;1o;2;1a;1;1m;0;1f;0" },
+    { id: "12156", code: "0;P;c;8;u;FFFFFF00;o;1;d;1;b;1;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12155", code: "0;P;c;8;d;1;b;1;z;6;a;0;0t;3;0l;20;0v;20;0g;1;0a;0;0m;1;1b;0" },
+    { id: "12154", code: "0;s;1;P;h;0;f;0;0t;1;0l;1;0v;1;0g;1;0o;0;0a;1;0f;0;1b;0;S;c;4;o;1" },
+    { id: "12153", code: "0;P;o;1;d;1;z;1;f;0;0t;1;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12152", code: "0;s;1;P;c;8;u;000000FF;t;2;o;0;d;1;b;1;z;6;m;1;0l;13;0v;3;0g;1;0o;2;0f;0;1v;0;1g;1;1o;9;1a;1;1f;0;1s;0.2" },
+    { id: "12151", code: "0;P;c;1;h;0;d;1;f;0;0g;1;0a;1;0f;0;1b;0" },
+    { id: "12150", code: "0;P;o;1;d;1;0l;1;0o;1;0a;1;0f;0;1b;0" },
+    { id: "12149", code: "0;s;1;P;d;1;f;0;0b;0;1l;0;1v;3;1g;1;1o;3;1a;0;1m;0;1e;2;S;c;0;s;0.628;o;1" },
+    { id: "12148", code: "0;s;1;P;o;1;f;0;0l;5;0o;4;0a;1;0f;0;1b;0;S;c;0;s;0.8;o;1" },
+    { id: "12147", code: "0;c;1;s;1;P;c;8;u;957DADFF;h;0;b;1;f;0;m;1;0l;2;0o;0;0a;1;0f;0;1b;0;S;c;5;s;2;o;1" },
+    { id: "12146", code: "0;P;o;1;d;1;0l;2;0v;0;0g;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12145", code: "0;P;f;0;0o;2;0a;1;0f;0;1l;0;1o;0;1a;1;1m;0;1f;0" },
+    { id: "12144", code: "0;P;c;8;b;1;0t;1;0l;4;0o;1;0a;1;0f;0;1t;3;1o;2;1a;1;1m;0;1f;0" },
+    { id: "12143", code: "0;P;c;5;h;0;f;0;0t;1;0l;3;0o;0;0a;1;0f;0;1t;3;1o;0;1a;1;1m;0;1f;0" },
+    { id: "12142", code: "0;P;d;1;f;0;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12141", code: "0;s;1;P;c;8;u;030303FF;o;1;b;1;f;0;0l;4;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12140", code: "0;p;0;s;1;P;c;8;u;000000FF;h;0;b;1;s;0;0l;3;0v;3;0g;1;0o;0;0a;1;0f;0;1b;0;A;d;1;z;1;0b;0;1b;0;S;b;1;c;8;t;000000FF;s;0.86;o;1" },
+    { id: "12139", code: "0;s;1;P;c;5;h;0;d;1;0t;6;0l;1;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12138", code: "0;P;c;5;d;1;f;0;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12137", code: "0;P;c;8;u;4A90E2FF;h;0;b;1;0t;1;0l;4;0v;2;0g;1;0o;2;0a;1;0f;0;1t;3;1v;1;1g;1;1o;3;1a;1;1m;0;1f;0" },
+    { id: "12136", code: "0;s;1;P;c;1;o;1;f;0;0l;4;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12135", code: "0;p;0;c;1;P;c;8;u;000000FF;h;0;b;1;m;1;0l;4;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12134", code: "0;P;c;7;h;0;d;1;z;1;m;1;0l;8;0v;8;0g;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12133", code: "0;p;0;s;1;P;o;0.3;f;0;m;1;0l;2;0o;2;0a;1;0f;0;1b;0;A;c;7;h;0;d;1;z;1;0t;3;0l;2;0o;0;0a;1;0f;0;1b;0;S;s;0" },
+    { id: "12132", code: "0;p;0;c;1;s;1;P;c;4;o;0;f;0;m;1;0l;2;0o;1;0a;1;0m;1;1b;0;A;c;8;u;000000FF;o;1;d;1;b;1;z;1;0b;0;1b;0" },
+    { id: "12131", code: "0;P;c;7;o;1;d;1;z;1;0t;1;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12130", code: "0;P;h;0;d;1;f;0;0t;10;0l;1;0v;0;0g;1;0o;4;0a;1;0f;0;1l;10;1v;0;1g;1;1o;3;1a;1" },
+    { id: "12129", code: "0;P;o;1;0t;1;0l;2;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12128", code: "0;p;0;c;1;s;1;P;c;8;u;FEA9FBFF;h;0;b;1;m;1;0t;4;0l;2;0o;1;0a;1;1b;0;A;d;1;0b;0;1b;0" },
+    { id: "12127", code: "0;P;o;1;f;0;0l;3;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12126", code: "0;P;c;8;u;00FF00FF;h;0;b;1;0l;3;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12125", code: "0;c;1;s;1;P;c;8;u;000000FF;t;3;o;0.055;d;1;b;1;z;5;a;0.45;f;0;m;1;0t;3;0l;2;0o;2;0a;0.3;0f;0;1t;1;1l;6;1o;0;1a;1;1m;0;1f;0;S;c;6;s;2.19;o;1" },
+    { id: "12124", code: "0;P;c;8;u;FF1900FF;h;0;d;1;b;1;a;0.8;0l;10;0o;5;0a;0.2;0e;0.1;1b;0" },
+    { id: "12121", code: "0;P;c;5;h;0;d;1;f;0;0l;4;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12120", code: "0;c;1;s;1;P;c;7;o;0;m;1;0t;3;0v;5;0g;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12119", code: "0;p;0;s;1;P;c;8;u;000000FF;h;0;b;1;0l;4;0o;0;0a;1;0f;0;1b;0;A;h;0;0l;4;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12118", code: "0;P;c;8;u;003D26FF;h;0;b;1;m;1;0t;8;0l;5;0v;0;0g;1;0o;0;0a;0;0e;2.125;1t;7;1l;3;1o;6;1a;0.734;1m;0;1f;0" },
+    { id: "12117", code: "0;s;1;P;c;1;o;1;d;1;z;3;f;0;0t;3;0l;0;0v;3;0g;1;0o;20;0a;1;0f;0;1t;3;1l;0;1v;3;1g;1;1o;40;1a;1;1m;0;1f;0;S;c;0;s;0;o;0" },
+    { id: "12116", code: "0;s;1;P;h;0;f;0;m;1;0l;2;0o;1;0a;1;0f;0;1b;0;S;s;2.57;o;0.62" },
+    { id: "12115", code: "0;c;1;P;h;0;f;0;0l;5;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12114", code: "0;s;1;P;o;1;d;1;f;0;0b;0;1b;0;S;c;0;s;0.8;o;1" },
+    { id: "12113", code: "0;s;1;P;c;8;u;FFB6C1FF;h;0;b;1;0t;3;0l;2;0o;0;0a;1;0m;1;0f;0;0s;0.021;1t;1;1l;3;1o;0;1a;1;1f;0;1s;0.021;S;b;1;c;8;t;FFB6C1FF;s;0.75;o;1" },
+    { id: "12112", code: "0;s;1;P;c;8;u;0000FFFF;h;0;b;1;0t;8;0l;0;0v;1;0g;1;0o;1;0a;1;0f;0;1v;3;1g;1;1o;1;1a;1;1m;0;1f;0;S;c;0;o;1" },
+    { id: "12111", code: "0;P;c;8;u;4B53C3FF;h;0;d;1;b;1;z;3;f;0;m;1;0t;10;0l;0;0v;0;0g;1;0o;1;0a;1;0f;0;1t;1;1o;1;1a;1;1m;0;1f;0" },
+    { id: "12110", code: "0;p;0;s;1;P;c;5;h;0;f;0;0l;2;0o;1;0a;1;0f;0;1b;0;A;o;1;d;1;z;1;m;1;0t;1;0l;1;0o;0;0a;1;0f;0;1b;0;S;c;5;o;1" },
+    { id: "12109", code: "0;s;1;P;o;1;0t;3;0l;1;0v;0;0g;1;0o;0;0a;1;0f;0;1t;1;1l;4;1g;1;1o;0;1a;1;1m;0;1f;0;S;c;5;s;0.538;o;1" },
+    { id: "12108", code: "0;p;0;c;1;s;1;P;c;8;u;C9A2DCFF;h;0;d;1;b;1;z;6;a;0;f;0;m;1;0l;4;0v;3;0g;1;0o;0;0a;1;0f;0;1b;0;A;c;7;h;0;0l;5;0o;1;0a;1;0f;0;1b;0;S;c;5;s;0.7;o;1" },
+    { id: "12107", code: "0;s;1;P;c;1;h;0;m;1;0l;2;0o;1;0a;1;0f;0;1b;0;S;c;1;o;1" },
+    { id: "12105", code: "0;P;d;1;m;1;0f;0;1l;8;1v;8;1g;1;1o;8;1e;0.732" },
+    { id: "12104", code: "0;P;c;8;u;00FF00FF;h;0;d;1;b;1;z;3;a;0.7;0t;1;0l;4;0v;4;0g;1;0o;0;0a;1;0m;1;0f;0;0s;0.023;1t;3;1l;1;1v;1;1g;1;1o;2;1a;1;1f;0;1s;0.02" },
+    { id: "12103", code: "0;c;1;s;1;P;t;4;o;1;d;1;z;5;a;0.556;0t;10;0l;20;0v;0;0g;1;0o;13;0a;1;0f;0;1t;1;1l;1;1v;0;1g;1;1o;14;1a;1;1s;0.064;1e;0.375;S;c;3;s;0.628;o;1" },
+    { id: "12102", code: "0;p;0;s;1;P;o;1;f;0;0t;1;0l;3;0o;2;0a;1;0f;0;1b;0;A;o;1;0t;1;0l;3;0o;2;0a;1;0f;0;1b;0;S;c;1;o;1" },
+    { id: "12101", code: "0;c;1;s;1;P;o;0;m;1;0l;8;0o;0;1a;0;S;s;0;o;1" },
+    { id: "12100", code: "0;s;1;P;c;5;o;1;d;1;0l;2;0o;0;0a;1;0m;1;0f;0;1b;0;S;c;5;o;0.6" },
+    { id: "12099", code: "0;p;0;s;1;P;c;8;u;36CCF2FF;h;0;b;1;m;1;0l;4;0v;4;0g;1;0o;1;0a;1;0m;1;0s;0.02;0e;0.02;1b;0;A;c;8;u;6AE7F0FF;o;1;d;1;b;1;a;0.82;m;1;0t;3;0l;0;0v;0;0g;1;0o;4;0a;1;0m;1;0s;0.047;0e;0.047;1b;0;S;b;1;c;8;t;00FBFFFF;s;0.58;o;1" },
+    { id: "12098", code: "0;P;c;5;o;0.4;m;1;0t;3;0l;2;0o;1;0a;0.541;0f;0;1o;2;1a;0.805;1m;0;1f;0" },
+    { id: "12097", code: "0;p;0;s;1;P;c;8;u;36CCF2FF;h;0;b;1;m;1;0v;3;0g;1;0a;1;0m;1;0s;0.073;0e;0.139;1b;0;A;c;8;u;6AE7F0FF;o;1;d;1;b;1;z;3;a;0.82;m;1;0t;3;0l;0;0v;0;0g;1;0o;4;0a;1;0m;1;0s;0.047;0e;0.073;1t;1;1l;9;1v;0;1g;1;1o;4;1a;0.714;1s;0.047;1e;0.073;S;b;1;c;8;t;00FBFFFF;s;0" },
+    { id: "12096", code: "0;s;1;P;c;5;h;0;f;0;0l;3;0o;0;0f;0;1b;0;S;o;1" },
+    { id: "12095", code: "0;p;0;P;c;7;h;0;0l;4;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12094", code: "0;P;c;5;h;0;d;1;z;1;f;0;m;1;0t;1;0l;2;0v;1;0g;1;0o;1;0a;1;0e;0.196;1b;0" },
+    { id: "12093", code: "0;P;c;8;o;1;d;1;b;1;z;1;0t;1;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12092", code: "0;s;1;P;c;8;u;FFFF80FF;h;0;d;1;b;1;z;1;f;0;0t;1;0l;15;0v;4;0g;1;0o;2;0a;1;0f;0;1t;6;1l;1;1o;3;1a;1;1m;0;1f;0;S;c;0;s;0.677;o;1" },
+    { id: "12091", code: "0;s;1;P;c;6;o;1;f;0;0l;7;0a;1;0f;0;1b;0;S;c;6;s;1.001;o;1" },
+    { id: "12090", code: "0;P;c;5;h;0;0l;3;0o;2;0a;1;0f;0;1b;0" },
+    { id: "12089", code: "0;c;1;s;1;P;h;0;d;1;a;0.15;f;0;m;1;0t;1;0l;2;0v;2;0g;1;0o;0;0a;1;0m;1;0f;0;0s;0;1b;0;S;s;1.26;o;1" },
+    { id: "12088", code: "0;p;0;P;c;4;o;1;d;1;z;6;a;0;m;1;0t;1;0l;1;0v;0;0g;1;0o;11;0a;0;0f;0;1t;6;1l;0;1v;3;1g;1;1o;0;1a;1;1s;0.053;1e;0.149" },
+    { id: "12086", code: "0;s;1;P;c;8;u;005AFFFF;o;1;d;1;b;1;0b;0;1b;0;S;d;0" },
+    { id: "12085", code: "0;P;c;1;h;0;d;1;z;3;0t;1;0l;1;0o;1;0a;1;0f;0;1b;0" },
+    { id: "12084", code: "0;s;1;P;h;0;0l;3;0o;1;0a;1;0f;0;1b;0;S;c;4;s;0.6" },
+    { id: "12083", code: "0;s;1;P;c;8;t;5;o;1;d;1;b;1;z;1;0t;5;0l;1;0v;0;0g;1;0o;10;0a;1;0f;0;1t;1;1l;0;1v;0;1g;1;1o;5;1a;0;1m;0;1f;0;S;d;0" },
+    { id: "12082", code: "0;p;0;s;1;P;h;0;f;0;m;1;0l;3;0o;2;0a;1;0f;0;1b;0;A;c;1;h;0;d;1;0b;0;1b;0;S;c;1;o;1" },
+    { id: "12080", code: "0;s;1;P;o;1;s;0;0t;3;0l;1;0v;0;0g;1;0o;0;0a;1;0f;0;1t;1;1l;4;1g;1;1o;0;1a;1;1m;0;1f;0;S;c;0;o;1" },
+    { id: "12079", code: "0;s;1;P;h;0;d;1;m;1;0l;4;0o;1;0a;1;0f;0;1b;0" },
+    { id: "12078", code: "0;P;o;0.8;0t;5;0l;1;0o;1;0a;0.4;0f;0;1t;1;1l;1;1o;2;1a;1;1m;0;1f;0" },
+    { id: "12076", code: "0;c;1;s;1;P;c;8;u;000000FF;h;0;d;1;b;1;z;3;a;0.6;m;1;0t;1;0l;3;0o;0;0a;0.6;0e;1.006;1t;3;1o;0;1a;0.5;1m;0;1e;1.006;S;b;1;c;8;o;0.3" },
+    { id: "12075", code: "0;P;c;8;u;00A3FFFF;o;1;b;1;0t;1;0l;2;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12074", code: "0;s;1;P;c;8;u;0079FAFF;o;1;d;1;b;1;f;0;0l;1;0o;0;0a;1;0f;0;1b;0" },
+    { id: "12072", code: "0;s;1;P;c;8;u;CBE0AFFF;o;0.83;d;1;b;1;m;1;0b;0;1b;0;S;b;1;c;8;t;CBE0AFFF;s;0.75;o;1" },
+    { id: "12071", code: "0;P;c;8;u;9B9B9BFF;h;0;b;1;m;1;0t;1;0v;3;0g;1;0o;2;0a;1;1b;0" },
+    { id: "12070", code: "0;P;o;0.245;d;1;0t;8;0l;1;0o;0;0a;1;0f;0;1t;8;1l;1;1o;0;1a;1;1m;0;1f;0" },
+    { id: "12069", code: "0;P;h;0;d;1;z;1;a;0.751;0t;1;0l;2;0a;1;0f;0;1t;3;1o;1;1a;0.7;1m;0;1f;0" },
+    { id: "12068", code: "0;c;1;P;c;7;d;1;f;0;0t;4;0l;1;0o;0;0a;1;0f;0;1b;0" }
   ]);
   const vcrdbProCrosshairSeeds = Object.freeze([
     { id: "66", name: "yay", code: "0;P;h;0;f;0;0l;4;0o;0;0a;1;0f;0;1b;0", tags: "team", copied: 5718229 },
@@ -298,6 +404,20 @@
       photo: "",
       tags: [entry.tags || "community", `${Number(entry.copied || 0).toLocaleString()} copies`].filter(Boolean),
       copied: entry.copied,
+      previewReferenceUrl: "https://op.gg/valorant/crosshairs/editor"
+    })),
+    ...vcrdbImportedCommunitySeeds.map((entry, index) => ({
+      id: `vcrdb-import-${entry.id}`,
+      player: `VCRDB Community #${entry.id}`,
+      team: "VCRDB Community",
+      type: "Community",
+      libraryRank: 200 + index,
+      code: entry.code,
+      sourceName: "VCRDB",
+      sourceUrl: `https://www.vcrdb.net/crosshair/${entry.id}`,
+      photo: "",
+      tags: ["community import"],
+      copied: 0,
       previewReferenceUrl: "https://op.gg/valorant/crosshairs/editor"
     }))
   ]);
@@ -644,6 +764,7 @@
         if (overviewRefreshQueued) requestOverviewRefresh();
         hydrateFeaturedPlaylist();
         hydratePublishedKnowledge();
+        hydrateRiotPatchNotes();
         scheduleTopicCollageHydration();
       }
       return;
@@ -654,6 +775,7 @@
       if (overviewRefreshQueued) requestOverviewRefresh();
       hydrateFeaturedPlaylist();
       hydratePublishedKnowledge();
+      hydrateRiotPatchNotes();
       scheduleTopicCollageHydration();
     }
   }
@@ -1362,6 +1484,86 @@
     return publishedKnowledgeRequest;
   }
 
+  function formatPatchDate(value = "") {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Effective date pending";
+    try {
+      return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(date);
+    } catch {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+
+  function renderLatestPatchNotes() {
+    if (riotPatchNotesStatus === "loading" && !riotPatchNotes) {
+      return `
+        <section class="gamesense-patch-notes-feed is-loading" aria-live="polite">
+          <div class="gamesense-section-heading"><span>Latest Riot Patch Notes</span><strong>Checking official update feed</strong></div>
+          <p>Loading the newest official VALORANT patch breakdown...</p>
+        </section>`;
+    }
+    if (!riotPatchNotes) {
+      return `
+        <section class="gamesense-patch-notes-feed ${riotPatchNotesStatus === "failed" ? "is-error" : ""}">
+          <div class="gamesense-section-heading"><span>Latest Riot Patch Notes</span><strong>${riotPatchNotesStatus === "failed" ? "Feed unavailable" : "Official update feed"}</strong></div>
+          <p>${escapeHtml(riotPatchNotesError || "Patch notes will appear here once the official Riot feed finishes loading.")}</p>
+        </section>`;
+    }
+    const bullets = Array.isArray(riotPatchNotes.bullets) ? riotPatchNotes.bullets : [];
+    const sections = Array.isArray(riotPatchNotes.sections) ? riotPatchNotes.sections : [];
+    return `
+      <section class="gamesense-patch-notes-feed">
+        <div class="gamesense-section-heading">
+          <span>Latest Riot Patch Notes</span>
+          <strong>${escapeHtml(riotPatchNotes.title || riotPatchNotes.label || "VALORANT Patch Notes")}</strong>
+        </div>
+        <div class="gamesense-patch-note-meta">
+          <span>${escapeHtml(riotPatchNotes.label || "Current Patch")}</span>
+          <span>Effective ${escapeHtml(formatPatchDate(riotPatchNotes.effectiveDate))}</span>
+          ${riotPatchNotes.sourceUrl ? `<a href="${escapeHtml(riotPatchNotes.sourceUrl)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}
+        </div>
+        ${riotPatchNotes.tagline ? `<p>${escapeHtml(riotPatchNotes.tagline)}</p>` : ""}
+        <div class="gamesense-patch-note-grid">
+          ${(bullets.length ? bullets : sections.slice(0, 4).map(section => `${section.title}: ${section.text}`)).slice(0, 6).map((item, index) => `
+            <article>
+              <span>${String(index + 1).padStart(2, "0")}</span>
+              <p>${escapeHtml(item)}</p>
+            </article>
+          `).join("")}
+        </div>
+      </section>`;
+  }
+
+  function hydrateRiotPatchNotes(options = {}) {
+    if (riotPatchNotesRequest && !options.force) return riotPatchNotesRequest;
+    if (riotPatchNotes && !options.force) return Promise.resolve(riotPatchNotes);
+    riotPatchNotesStatus = "loading";
+    riotPatchNotesError = "";
+    riotPatchNotesRequest = fetch("/api/content/patch-notes", {
+      headers: { Accept: "application/json" },
+      cache: options.force ? "reload" : "default"
+    })
+      .then(response => {
+        if (!response.ok) throw new Error(`Patch notes returned HTTP ${response.status}.`);
+        return response.json();
+      })
+      .then(payload => {
+        riotPatchNotes = payload && (payload.title || payload.label) ? payload : null;
+        riotPatchNotesStatus = riotPatchNotes ? "ready" : "failed";
+        if (state.topic === "overview") requestOverviewRefresh();
+        return riotPatchNotes;
+      })
+      .catch(error => {
+        console.warn("Riot patch notes refresh skipped", error?.message || error);
+        riotPatchNotesStatus = "failed";
+        riotPatchNotesError = "Latest Riot patch notes could not be reached. Please try again shortly.";
+        if (state.topic === "overview") requestOverviewRefresh();
+        return null;
+      })
+      .finally(() => { riotPatchNotesRequest = null; });
+    return riotPatchNotesRequest;
+  }
+
   function renderOverview() {
     const season = getReference().season || {};
     return `
@@ -1377,7 +1579,7 @@
             </button>
           `).join("")}
         </div>
-        ${renderPublishedKnowledge("general")}
+        ${renderLatestPatchNotes()}
       </div>`;
   }
 
@@ -1599,7 +1801,7 @@
     if (video.youtubeLikeMetricStatus !== "verified") return "";
     const likeCount = formatYouTubeLikeCount(video.youtubeLikeCount);
     return likeCount
-      ? `<small class="gamesense-video-youtube-metric" title="Official YouTube like count">${escapeHtml(likeCount)} YouTube likes</small>`
+      ? `<small class="gamesense-video-youtube-metric" title="Official YouTube like count">${escapeHtml(likeCount)} 👍</small>`
       : "";
   }
 
@@ -1729,17 +1931,17 @@
       }
       const state = Number(payload?.info?.playerState ?? payload?.info);
       if (payload?.event !== "onStateChange") return;
-      if (state === 1) {
-        hasStarted = true;
-        if (!reported && normalizedWatchKey) {
-          reported = true;
-          globalThis.RankedCoachPlaylistWatchHistory?.markWatched?.(normalizedWatchKey);
+      if (payload?.event !== "onStateChange" || state !== 1) {
+        if (state === 0 && hasStarted && !endedReported && typeof onEnded === "function") {
+          endedReported = true;
+          onEnded();
         }
         return;
       }
-      if (state === 0 && hasStarted && !endedReported && typeof onEnded === "function") {
-        endedReported = true;
-        onEnded();
+      hasStarted = true;
+      if (!reported && normalizedWatchKey) {
+        reported = true;
+        globalThis.RankedCoachPlaylistWatchHistory?.markWatched?.(normalizedWatchKey);
       }
     };
     frame.addEventListener("load", subscribe, { once: true });
@@ -3606,7 +3808,10 @@
     bindPlaylistFilterScroller();
     hydrateWeaponCollectionArchive();
     if (state.topic === "crosshairs") hydrateCrosshairState();
-    if (libraryPageActive) hydrateFeaturedPlaylist();
+    if (libraryPageActive) {
+      hydrateFeaturedPlaylist();
+      hydrateRiotPatchNotes();
+    }
     scheduleTopicCollageHydration();
   }
 

@@ -6,6 +6,8 @@ const VERSION_URL = "https://valorant-api.com/v1/version";
 const AGENTS_URL = "https://valorant-api.com/v1/agents?isPlayableCharacter=true&language=en-US";
 const MAPS_URL = "https://valorant-api.com/v1/maps?language=en-US";
 const WEAPONS_URL = "https://valorant-api.com/v1/weapons?language=en-US";
+const PLAYER_CARDS_URL = "https://valorant-api.com/v1/playercards?language=en-US";
+const RIOT_SITE_ROOT = "https://playvalorant.com";
 const RIOT_NEWS_ROOT = "https://playvalorant.com/en-us/news/game-updates";
 const YOUTUBE_API_ROOT = "https://www.googleapis.com/youtube/v3";
 const YOUTUBE_FEED_ROOT = "https://www.youtube.com/feeds/videos.xml";
@@ -14,6 +16,10 @@ const MAX_TWITCH_ARCHIVES = 15;
 const PLAYLIST_MAX_ITEMS = 120;
 const PLAYLIST_KNOWLEDGE_SOURCE_MAX_ITEMS = 5_000;
 const PLAYLIST_KNOWLEDGE_SOURCE_ARCHIVE_KEY = "playlist:knowledge-sources";
+const PLAYER_CARD_CATALOG_KEY = "profile:player-cards:v1";
+const PLAYER_CARD_CATALOG_TTL_SECONDS = 24 * 60 * 60;
+const RIOT_PATCH_NOTES_FEED_KEY = "riot:patch-notes:latest";
+const RIOT_PATCH_NOTES_FEED_TTL_SECONDS = 60 * 60;
 const LIBRARY_ENTITY_SNAPSHOT_KEY = "library:entities:v1";
 const LIBRARY_DAILY_RESEARCH_KEY = "library:research:last";
 const COMPETITIVE_MAP_NAMES = Object.freeze([
@@ -126,6 +132,7 @@ function decodeHtml(value = "") {
     .replace(/&#x([0-9a-f]+);/gi, (_match, code) => String.fromCodePoint(Number.parseInt(code, 16)))
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
@@ -347,6 +354,40 @@ export function getPatchDescriptor(payload = {}) {
   return Object.freeze({ branch, version: String(payload.version || ""), label, slug, notesUrl: `${RIOT_NEWS_ROOT}/valorant-patch-notes-${slug}/` });
 }
 
+async function getLatestRiotPatchNotesDescriptor() {
+  const listingHtml = await fetchText(`${RIOT_NEWS_ROOT}/`);
+  const entries = [...String(listingHtml).matchAll(/\/en-us\/news\/game-updates\/valorant-patch-notes-(\d+)-(\d+)\/?/gi)]
+    .map(match => {
+      const major = Number(match[1]);
+      const minor = Number(match[2]);
+      if (!Number.isFinite(major) || !Number.isFinite(minor)) return null;
+      const slug = `${major}-${String(minor).padStart(2, "0")}`;
+      return {
+        major,
+        minor,
+        label: `${major}.${String(minor).padStart(2, "0")}`,
+        slug,
+        notesUrl: `${RIOT_NEWS_ROOT}/valorant-patch-notes-${slug}/`
+      };
+    })
+    .filter(Boolean);
+  const seen = new Set();
+  const unique = entries.filter(entry => {
+    if (seen.has(entry.slug)) return false;
+    seen.add(entry.slug);
+    return true;
+  });
+  unique.sort((left, right) => (right.major - left.major) || (right.minor - left.minor));
+  const latest = unique[0];
+  if (!latest) throw new Error("No official Riot patch note links were found.");
+  return Object.freeze({
+    ...latest,
+    branch: `riot-news-${latest.label}`,
+    version: latest.label,
+    sourceIndexUrl: `${RIOT_NEWS_ROOT}/`
+  });
+}
+
 function unwrapValorantApiData(payload = {}) {
   return payload?.data && typeof payload.data === "object" ? payload.data : payload;
 }
@@ -354,6 +395,7 @@ function unwrapValorantApiData(payload = {}) {
 function stripHtml(value = "") {
   return decodeHtml(String(value).replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ").replace(/<[^>]+>/g, " "))
     .replace(/\s+/g, " ")
+    .replace(/\s+([,.;:!?])/g, "$1")
     .trim();
 }
 
@@ -1233,6 +1275,130 @@ export async function runLibraryContentAutomation(env = {}, options = {}) {
     queuedCanonical,
     queuedResearch
   });
+}
+
+export async function handlePlayerCardsRequest(env = {}) {
+  const cached = await env.CONTENT_AUTOMATION?.get?.(PLAYER_CARD_CATALOG_KEY, "json");
+  if (cached?.cachedAt && Array.isArray(cached.data) && cached.data.length > 100) {
+    return cached;
+  }
+  const payload = await fetchJson(PLAYER_CARDS_URL);
+  const cards = Array.isArray(payload?.data) ? payload.data : [];
+  const data = cards
+    .map(card => ({
+      uuid: String(card?.uuid || ""),
+      displayName: stripHtml(card?.displayName || "Valorant Player Card"),
+      wideArt: String(card?.wideArt || "").trim()
+    }))
+    .filter(card => /^[0-9a-f-]{36}$/i.test(card.uuid) && card.wideArt)
+    .sort((left, right) => left.displayName.localeCompare(right.displayName, undefined, { sensitivity: "base" }));
+  const result = Object.freeze({
+    cachedAt: new Date().toISOString(),
+    count: data.length,
+    source: PLAYER_CARDS_URL,
+    data
+  });
+  await env.CONTENT_AUTOMATION?.put?.(PLAYER_CARD_CATALOG_KEY, JSON.stringify(result), {
+    expirationTtl: PLAYER_CARD_CATALOG_TTL_SECONDS
+  });
+  return result;
+}
+
+function extractHtmlAttribute(value = "", attribute = "") {
+  const escaped = attribute.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = String(value).match(new RegExp(`${escaped}\\s*=\\s*["']([^"']+)["']`, "i"));
+  return decodeHtml(match?.[1] || "").trim();
+}
+
+function extractMetaContent(html = "", property = "") {
+  const escaped = property.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = String(html).match(new RegExp(`<meta\\b(?=[^>]*(?:property|name)=["']${escaped}["'])[^>]*>`, "i"));
+  return match ? extractHtmlAttribute(match[0], "content") : "";
+}
+
+function extractRiotPatchIntroBullets(html = "") {
+  const body = String(html);
+  const introStart = body.search(/Here(?:'|&#x27;|&rsquo;|’)?s what(?:'|&#x27;|&rsquo;|’)?s happening/i);
+  if (introStart < 0) return [];
+  const intro = body.slice(introStart, Math.min(body.length, introStart + 6000));
+  const list = intro.match(/<ul\b[^>]*>([\s\S]*?)<\/ul>/i)?.[1] || "";
+  return [...list.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)]
+    .map(match => stripHtml(match[1]))
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function extractRiotPatchSections(html = "") {
+  const body = String(html);
+  const headingMatches = [...body.matchAll(/<h([23])\b[^>]*>([\s\S]*?)<\/h\1>/gi)].map(match => ({
+    index: match.index,
+    end: match.index + match[0].length,
+    level: Number(match[1]),
+    title: stripHtml(match[2])
+  })).filter(heading => heading.title && !/^table of contents$/i.test(heading.title));
+  return headingMatches.map((heading, index) => {
+    const next = headingMatches.find((candidate, candidateIndex) => (
+      candidateIndex > index && candidate.level <= heading.level
+    ));
+    const text = stripHtml(body.slice(heading.end, next?.index || body.length));
+    return { title: heading.title, text };
+  }).filter(section => section.text && !/^all platforms$/i.test(section.title));
+}
+
+function trimPatchSummaryText(value = "", maxLength = 240) {
+  const text = stripHtml(value);
+  if (text.length <= maxLength) return text;
+  const sentence = text.slice(0, maxLength).replace(/\s+\S*$/, "").trim();
+  return `${sentence || text.slice(0, maxLength).trim()}…`;
+}
+
+function buildRiotPatchNotesPayload(patch = {}, html = "") {
+  const title = stripHtml(String(html).match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || "") || `VALORANT Patch Notes ${patch.label || ""}`.trim();
+  const tagline = stripHtml(String(html).match(/data-testid=["']tagline["'][\s\S]*?<div[^>]*>([\s\S]*?)<\/div>/i)?.[1] || "")
+    || extractMetaContent(html, "description")
+    || "Latest official VALORANT patch notes from Riot Games.";
+  const publishedAt = String(html).match(/<time\b[^>]*dateTime=["']([^"']+)["'][^>]*>/i)?.[1]
+    || String(html).match(/<time\b[^>]*datetime=["']([^"']+)["'][^>]*>/i)?.[1]
+    || "";
+  const introBullets = extractRiotPatchIntroBullets(html);
+  const sections = extractRiotPatchSections(html);
+  const fallbackBullets = sections
+    .filter(section => /agent|map|weapon|competitive|gameplay|system|bug|premier|esports|player behavior|console/i.test(section.title))
+    .slice(0, 6)
+    .map(section => `${section.title}: ${trimPatchSummaryText(section.text, 180)}`);
+  const bullets = (introBullets.length ? introBullets : fallbackBullets).slice(0, 6);
+  return Object.freeze({
+    title,
+    label: patch.label ? `Patch ${patch.label}` : title.replace(/^VALORANT\s+/i, ""),
+    effectiveDate: publishedAt || patch.checkedAt || new Date().toISOString(),
+    sourceUrl: patch.notesUrl,
+    sourceName: "Riot Games VALORANT Patch Notes",
+    tagline: trimPatchSummaryText(tagline, 220),
+    bullets,
+    sections: sections.slice(0, 8).map(section => ({
+      title: section.title,
+      text: trimPatchSummaryText(section.text, 260)
+    })),
+    cachedAt: new Date().toISOString()
+  });
+}
+
+export async function handlePatchNotesRequest(env = {}) {
+  const cached = await env.CONTENT_AUTOMATION?.get?.(RIOT_PATCH_NOTES_FEED_KEY, "json");
+  if (
+    cached?.cachedAt
+    && cached?.sourceUrl
+    && Date.now() - Date.parse(cached.cachedAt) < RIOT_PATCH_NOTES_FEED_TTL_SECONDS * 1000
+  ) {
+    return cached;
+  }
+  const patch = await getLatestRiotPatchNotesDescriptor();
+  const notesHtml = await fetchText(patch.notesUrl);
+  const payload = buildRiotPatchNotesPayload(patch, notesHtml);
+  await env.CONTENT_AUTOMATION?.put?.(RIOT_PATCH_NOTES_FEED_KEY, JSON.stringify(payload), {
+    expirationTtl: RIOT_PATCH_NOTES_FEED_TTL_SECONDS
+  });
+  return payload;
 }
 
 export async function runPatchContentAutomation(env = {}) {

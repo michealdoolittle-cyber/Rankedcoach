@@ -2195,6 +2195,26 @@ html .gamesense-map-entry-card.is-out-of-season .gamesense-map-card-copy .gamese
   font:700 10px/1.2 var(--font-body,"Rajdhani",sans-serif);
   text-align:right;
 }
+
+.gamesense-agent-portrait-wrap .gamesense-agent-rate{
+  top:8px;
+  padding:7px 9px;
+  gap:5px 8px;
+}
+
+.gamesense-agent-rate .gamesense-agent-rate-label{
+  font-size:10px;
+}
+
+.gamesense-agent-rate .gamesense-agent-rate-value strong{
+  font-size:16px;
+}
+
+.gamesense-agent-rate .gamesense-agent-rate-value b,
+.gamesense-agent-rate > small{
+  font-size:9px;
+  line-height:1.1;
+}
 .gamesense-comp-reference-label{
   color:var(--text-main,#f8fafc);
 }
@@ -3586,6 +3606,29 @@ html.is-mobile-layout .gamesense-tactical-scroll{
 .gamesense-crosshair-card.is-community .gamesense-crosshair-actions{
   grid-column:2;
 }
+
+.gamesense-video-card,
+.gamesense-crosshair-card,
+.gamesense-collection-card,
+.gamesense-weapon-suggestion{
+  content-visibility:auto;
+  contain:layout paint style;
+  contain-intrinsic-size:280px 180px;
+}
+
+.gamesense-entry-card,
+.gamesense-topic-card,
+.gamesense-comp-pick-row{
+  contain:layout paint style;
+}
+
+.gamesense-crosshair-card{
+  contain-intrinsic-size:360px 150px;
+}
+
+.gamesense-video-card{
+  contain-intrinsic-size:320px 260px;
+}
 .gamesense-crosshair-player{
   grid-column:1;
   grid-row:1 / 4;
@@ -4382,6 +4425,81 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage
 .gamesense-knowledge-update-grid a {
   color: var(--gamesense-cool, #67e8f9);
   font-size: 11px;
+}
+
+.gamesense-patch-notes-feed{
+  display:grid;
+  gap:12px;
+  margin-top:14px;
+  padding:16px;
+  border:1px solid color-mix(in srgb,var(--gamesense-cool,#67e8f9) 36%,rgba(255,255,255,.12));
+  border-radius:12px;
+  background:
+    radial-gradient(circle at 12% 16%,color-mix(in srgb,var(--gamesense-cool,#67e8f9) 16%,transparent),transparent 34%),
+    linear-gradient(135deg,rgba(8,18,34,.9),rgba(17,24,45,.8));
+}
+
+.gamesense-patch-notes-feed.is-loading,
+.gamesense-patch-notes-feed.is-error{
+  min-height:116px;
+  align-content:center;
+}
+
+.gamesense-patch-notes-feed > p{
+  margin:0;
+  color:var(--text-main,#f8fafc);
+  line-height:1.45;
+}
+
+.gamesense-patch-note-meta{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+.gamesense-patch-note-meta :is(span,a){
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:0 10px;
+  border:1px solid color-mix(in srgb,var(--gamesense-warm,#facc15) 34%,transparent);
+  border-radius:999px;
+  background:rgba(2,6,23,.54);
+  color:var(--gamesense-warm,#facc15);
+  font:900 10px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  text-decoration:none;
+}
+
+.gamesense-patch-note-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:10px;
+}
+
+.gamesense-patch-note-grid article{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+  padding:12px;
+  border:1px solid rgba(103,232,249,.18);
+  border-radius:10px;
+  background:rgba(2,8,23,.7);
+}
+
+.gamesense-patch-note-grid article > span{
+  color:var(--gamesense-cool,#67e8f9);
+  font:900 12px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.08em;
+}
+
+.gamesense-patch-note-grid p{
+  margin:0;
+  color:var(--text-main,#f8fafc);
+  line-height:1.35;
 }
 
 /* Final mobile interaction lock: the zoomed tactical map pans on both axes

@@ -45,6 +45,8 @@ import {
   onRequestPost as postHenrikRaw
 } from "../functions/api/henrik/raw.js";
 import {
+  handlePatchNotesRequest,
+  handlePlayerCardsRequest,
   handlePlaylistRequest,
   handleSkinMediaRequest,
   runLibraryContentAutomation,
@@ -146,6 +148,26 @@ async function handleApiRequest(request, env, executionContext) {
     } catch (error) {
       console.error("Playlist content request failed", error);
       return jsonResponse({ error: "Featured playlist is temporarily unavailable." }, { status: 502 });
+    }
+  }
+
+  if (url.pathname === "/api/content/player-cards") {
+    if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, { status: 405 });
+    try {
+      return jsonResponse(await handlePlayerCardsRequest(env));
+    } catch (error) {
+      console.error("Player-card catalog request failed", error);
+      return jsonResponse({ error: "Player-card catalog is temporarily unavailable." }, { status: 502 });
+    }
+  }
+
+  if (url.pathname === "/api/content/patch-notes") {
+    if (request.method !== "GET") return jsonResponse({ error: "Method not allowed" }, { status: 405 });
+    try {
+      return jsonResponse(await handlePatchNotesRequest(env));
+    } catch (error) {
+      console.error("Patch notes request failed", error);
+      return jsonResponse({ error: "Latest patch notes are temporarily unavailable." }, { status: 502 });
     }
   }
 

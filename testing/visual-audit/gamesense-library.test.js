@@ -131,6 +131,34 @@ function startServer() {
           ]
         }));
       }
+      if (url === "/api/content/patch-notes") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({
+          title: "VALORANT Patch Notes 13.02",
+          label: "Patch 13.02",
+          effectiveDate: "2026-07-28T13:00:00.000Z",
+          sourceUrl: "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-02/",
+          bullets: ["Bug fixes, agent tuning, and competitive updates from Riot's official patch feed."],
+          sections: []
+        }));
+      }
+      if (url === "/api/content/player-cards") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({
+          cachedAt: "2026-07-28T13:00:00.000Z",
+          count: 1,
+          source: "https://valorant-api.com/v1/playercards?language=en-US",
+          data: [{
+            uuid: "00000000-0000-0000-0000-000000000001",
+            displayName: "QA Player Card",
+            wideArt: `http://127.0.0.1:${port}/assets/library/maps/thumbs/bind.jpg`
+          }]
+        }));
+      }
+      if (url === "/favicon.ico") {
+        response.writeHead(204);
+        return response.end();
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(root, url);
       if (!file.startsWith(root)) { response.writeHead(403); return response.end("Forbidden"); }
@@ -536,20 +564,36 @@ async function run() {
     await desktop.locator('[data-gamesense-playlist-filter="YT Shorts"]').click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 1);
     await desktop.locator('[data-gamesense-playlist-filter="News"]').click();
-    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Yoru buffs in Patch 13\.01/i);
+    const desktopNewsGrid = desktop.locator(".gamesense-playlist-grid").first();
+    await desktopNewsGrid.scrollIntoViewIfNeeded();
+    await desktopNewsGrid.locator(".gamesense-video-card").first().waitFor({ state: "visible" });
+    assert.match(await desktopNewsGrid.innerText(), /Yoru buffs in Patch 13\.01/i);
     await desktop.locator("[data-gamesense-playlist-filter=\"VOD's\"]").click();
     assert.equal(await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").count(), 2);
-    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Breeze map guide/i);
-    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
+    const desktopVodGrid = desktop.locator(".gamesense-playlist-grid").first();
+    await desktopVodGrid.scrollIntoViewIfNeeded();
+    await desktopVodGrid.locator(".gamesense-video-card").first().waitFor({ state: "visible" });
+    const desktopVodText = await desktopVodGrid.innerText();
+    assert.match(desktopVodText, /Breeze map guide/i);
+    assert.match(desktopVodText, /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="Live"]').click();
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Live"]').getAttribute("aria-label"), "Live streams");
     assert.match(await desktop.locator('[data-gamesense-playlist-filter="Live"]').innerText(), /Live\s*🔴/u);
-    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Charla7an.*412 watching/is);
-    assert.doesNotMatch(await desktop.locator(".gamesense-playlist-grid").innerText(), /Ranked coaching VOD/i);
+    const desktopLiveGrid = desktop.locator(".gamesense-playlist-grid").first();
+    await desktopLiveGrid.scrollIntoViewIfNeeded();
+    const desktopLiveText = await desktopLiveGrid.innerText();
+    assert.match(desktopLiveText, /Charla7an.*412 watching/is);
+    assert.doesNotMatch(desktopLiveText, /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="Settings/Gear"]').click();
-    assert.match(await desktop.locator(".gamesense-playlist-grid").innerText(), /Optimal Settings.*TenZ/is);
+    const desktopSettingsGrid = desktop.locator(".gamesense-playlist-grid").first();
+    await desktopSettingsGrid.scrollIntoViewIfNeeded();
+    await desktopSettingsGrid.locator(".gamesense-video-card").first().waitFor({ state: "visible" });
+    assert.match(await desktopSettingsGrid.innerText(), /Optimal Settings.*TenZ/is);
     await desktop.locator('[data-gamesense-playlist-filter="Map Knowledge"]').click();
-    assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical (Corrode|Abyss) guide/i);
+    const desktopMapHistory = desktop.locator(".gamesense-playlist-catalog-section.is-historical").first();
+    await desktopMapHistory.scrollIntoViewIfNeeded();
+    await desktopMapHistory.locator(".gamesense-video-card").first().waitFor({ state: "visible" });
+    assert.match(await desktopMapHistory.innerText(), /Historical (Corrode|Abyss) guide/i);
     const mapKnowledgeAutoplay = desktop.locator('[data-gamesense-playlist-autoplay="Map Knowledge"]');
     assert.equal(await mapKnowledgeAutoplay.getAttribute("aria-pressed"), "false");
     await mapKnowledgeAutoplay.click();
@@ -573,9 +617,15 @@ async function run() {
     await desktop.waitForFunction(() => /histmap0001\?.*autoplay=1/i.test(document.querySelector("#gamesenseMediaOverlay .gamesense-video-embed")?.getAttribute("src") || ""));
     await desktop.locator("#gamesenseMediaOverlay [data-gamesense-close-media]").click();
     await desktop.locator('[data-gamesense-playlist-filter="Agent"]').click();
-    assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical Jett guide/i);
+    const desktopAgentHistory = desktop.locator(".gamesense-playlist-catalog-section.is-historical").first();
+    await desktopAgentHistory.scrollIntoViewIfNeeded();
+    await desktopAgentHistory.locator(".gamesense-video-card").first().waitFor({ state: "visible" });
+    assert.match(await desktopAgentHistory.innerText(), /Historical Jett guide/i);
     await desktop.locator('[data-gamesense-playlist-filter="Role"]').click();
-    assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical Controller guide/i);
+    const desktopRoleHistory = desktop.locator(".gamesense-playlist-catalog-section.is-historical").first();
+    await desktopRoleHistory.scrollIntoViewIfNeeded();
+    await desktopRoleHistory.locator(".gamesense-video-card").first().waitFor({ state: "visible" });
+    assert.match(await desktopRoleHistory.innerText(), /Historical Controller guide/i);
     await desktop.locator('[data-gamesense-playlist-filter="Historical Archive"]').click();
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Historical Archive"]').getAttribute("aria-selected"), "true");
     assert.equal(await desktop.locator(".gamesense-playlist-historical-group").count(), 4, "Historical guides must remain grouped by their original category and target.");
