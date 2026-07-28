@@ -11,6 +11,8 @@
   let collectionArchiveRenderToken = 0;
   let featuredPlaylist = null;
   let featuredPlaylistRequest = null;
+  let featuredPlaylistStatus = "idle";
+  let featuredPlaylistError = "";
   let publishedKnowledge = [];
   let publishedKnowledgeRequest = null;
   let overviewRefreshQueued = false;
@@ -1902,6 +1904,25 @@
     </section>`;
   }
 
+  function isFeaturedPlaylistLoading() {
+    return featuredPlaylistStatus === "idle" || featuredPlaylistStatus === "loading";
+  }
+
+  function renderPlaylistLoadingState(activeFilter = "Home") {
+    const label = activeFilter === "Home" ? "playlist" : `${activeFilter} videos`;
+    return `<section class="gamesense-playlist-loading" role="status" aria-live="polite" aria-label="Loading ${escapeHtml(label)}">
+      <span class="gamesense-playlist-loading-spinner" aria-hidden="true"></span>
+      <div><strong>Loading verified ${escapeHtml(label)}</strong><p>Preparing this category now.</p></div>
+    </section>`;
+  }
+
+  function renderPlaylistLoadFailure() {
+    return `<section class="gamesense-playlist-loading is-error" role="alert">
+      <div><strong>Playlist temporarily unavailable</strong><p>${escapeHtml(featuredPlaylistError || "The latest Playlist catalog could not be loaded.")}</p></div>
+      <button type="button" data-gamesense-playlist-retry>Try again</button>
+    </section>`;
+  }
+
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
     const historicalItems = featuredPlaylist?.historicalItems || [];
@@ -1921,6 +1942,24 @@
     const historicalVisible = ["Map Knowledge", "Agent", "Role"].includes(activeFilter)
       ? historicalItems.filter(item => item.topicType === activeFilter)
       : [];
+    const playlistContent = isFeaturedPlaylistLoading()
+      ? renderPlaylistLoadingState(activeFilter)
+      : featuredPlaylistStatus === "failed"
+        ? renderPlaylistLoadFailure()
+        : activeFilter === "Home"
+          ? renderPlaylistHome(items)
+          : activeFilter === "Historical Archive"
+            ? renderHistoricalPlaylistArchive(historicalItems)
+            : activeFilter === PLAYLIST_LIVE_FILTER
+              ? `<div class="gamesense-playlist-grid gamesense-live-grid">${visible.length ? visible.map(renderPlaylistLiveCard).join("") : `<p class="gamesense-playlist-empty">No verified VALORANT streams are live right now.</p>`}</div>`
+              : `${renderPlaylistSection("Featured videos", visible, { autoplayCategory: activeFilter })}
+                  ${renderPlaylistSection("Historical guides", historicalVisible, {
+                    historical: true,
+                    autoplayCategory: activeFilter,
+                    copy: "These verified guides are preserved for historical context and filed under the same coaching category."
+                  })}
+                  ${!visible.length && !historicalVisible.length ? `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>` : ""}
+                  ${activeFilter === "All" && historicalItems.length ? `<button class="gamesense-playlist-archive-link" type="button" data-gamesense-playlist-filter="Historical Archive">Browse ${historicalItems.length} historical guides</button>` : ""}`;
     return `
       <div class="gamesense-gallery-head gamesense-playlist-gallery-head">
         <div><strong>Featured Playlist</strong><small>Recent trusted releases and a separately preserved historical guide archive, credited to their original creators.</small></div>
@@ -1932,20 +1971,7 @@
         </div>
         ${renderPlaylistAutoplayControl(activeFilter)}
       </div>
-      ${activeFilter === "Home"
-        ? renderPlaylistHome(items)
-        : activeFilter === "Historical Archive"
-          ? renderHistoricalPlaylistArchive(historicalItems)
-          : activeFilter === PLAYLIST_LIVE_FILTER
-          ? `<div class="gamesense-playlist-grid gamesense-live-grid">${visible.length ? visible.map(renderPlaylistLiveCard).join("") : `<p class="gamesense-playlist-empty">No verified VALORANT streams are live right now.</p>`}</div>`
-          : `${renderPlaylistSection("Featured videos", visible, { autoplayCategory: activeFilter })}
-              ${renderPlaylistSection("Historical guides", historicalVisible, {
-                historical: true,
-                autoplayCategory: activeFilter,
-                copy: "These verified guides are preserved for historical context and filed under the same coaching category."
-              })}
-              ${!visible.length && !historicalVisible.length ? `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>` : ""}
-              ${activeFilter === "All" && historicalItems.length ? `<button class="gamesense-playlist-archive-link" type="button" data-gamesense-playlist-filter="Historical Archive">Browse ${historicalItems.length} historical guides</button>` : ""}`}`;
+      ${playlistContent}`;
   }
 
   function renderGallery(topic) {
@@ -3501,7 +3527,9 @@
   }
 
   function hydrateFeaturedPlaylist() {
-    if (featuredPlaylist || featuredPlaylistRequest) return;
+    if (featuredPlaylist || featuredPlaylistRequest) return featuredPlaylistRequest || Promise.resolve(featuredPlaylist);
+    featuredPlaylistStatus = "loading";
+    featuredPlaylistError = "";
     featuredPlaylistRequest = fetch("/api/content/playlist", { headers: { Accept: "application/json" } })
       .then(response => {
         if (!response.ok) throw new Error(`Featured Playlist returned HTTP ${response.status}.`);
@@ -3509,6 +3537,7 @@
       })
       .then(payload => {
         featuredPlaylist = payload && Array.isArray(payload.items) ? payload : { items: [], liveStreams: [], newIn24Hours: 0 };
+        featuredPlaylistStatus = "ready";
         if (state.topic === "overview") {
           const collage = document.querySelector("#gamesenseLibraryView .gamesense-playlist-topic-card .gamesense-topic-collage");
           if (collage) {
@@ -3523,9 +3552,22 @@
       })
       .catch(error => {
         console.warn("Featured Playlist refresh skipped", error?.message || error);
-        featuredPlaylist = { items: [], liveStreams: [], newIn24Hours: 0 };
+        featuredPlaylist = null;
+        featuredPlaylistStatus = "failed";
+        featuredPlaylistError = "The latest verified videos could not be reached. Please try again.";
+        if (state.topic === "playlist") render({ direction: "replace" });
       })
       .finally(() => { featuredPlaylistRequest = null; });
+    return featuredPlaylistRequest;
+  }
+
+  function retryFeaturedPlaylist() {
+    if (featuredPlaylistRequest) return;
+    featuredPlaylist = null;
+    featuredPlaylistStatus = "idle";
+    featuredPlaylistError = "";
+    hydrateFeaturedPlaylist();
+    if (state.topic === "playlist") render({ direction: "replace" });
   }
 
   function commitRender(root) {
@@ -3872,6 +3914,12 @@
     if (playlistFilter) {
       state.playlistFilter = normalizePlaylistFilter(playlistFilter.dataset.gamesensePlaylistFilter);
       render({ direction: "replace" });
+      return;
+    }
+    const playlistRetry = event.target.closest?.("[data-gamesense-playlist-retry]");
+    if (playlistRetry) {
+      event.preventDefault();
+      retryFeaturedPlaylist();
       return;
     }
     const playlistAutoplay = event.target.closest?.("[data-gamesense-playlist-autoplay]");

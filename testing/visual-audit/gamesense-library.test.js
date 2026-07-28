@@ -5,7 +5,7 @@ const path = require("path");
 const { chromium } = require("playwright");
 
 const root = path.resolve(__dirname, "..", "..", "public");
-const port = 41787;
+const port = Number(process.env.RANKEDCOACH_TEST_PORT || 41787);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp" };
 const pixelPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64");
 
@@ -298,6 +298,14 @@ async function run() {
     const desktop = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     desktop.on("console", message => { if (message.type() === "error") browserErrors.push(`desktop console: ${message.text()}`); });
     desktop.on("pageerror", error => browserErrors.push(`desktop page: ${error.message}`));
+    let delayFirstPlaylistResponse = true;
+    await desktop.route("**/api/content/playlist", async route => {
+      if (delayFirstPlaylistResponse) {
+        delayFirstPlaylistResponse = false;
+        await new Promise(resolve => setTimeout(resolve, 2200));
+      }
+      await route.continue();
+    });
     await desktop.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
     await desktop.route("https://valorant-api.com/v1/weapons/**", route => route.fulfill({ contentType: "application/json", body: weaponSkinApiStub(route.request().url()) }));
     await desktop.route("https://media.valorant-api.com/contenttiers/**", route => route.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="#fff" d="M12 1 23 12 12 23 1 12z"/></svg>' }));
@@ -346,6 +354,19 @@ async function run() {
     assert.ok(Math.abs(desktopControlSizes.logo - desktopControlSizes.right) <= 2 && Math.abs(desktopControlSizes.nav - desktopControlSizes.right) <= 2, JSON.stringify(desktopControlSizes));
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
+    // A category can be chosen before the remote catalog finishes loading.
+    // That state must remain a loader, never the false "nothing here" copy.
+    await desktop.click('[data-gamesense-topic="playlist"]');
+    await desktop.locator(".gamesense-playlist-loading").waitFor({ state: "visible" });
+    await desktop.locator('[data-gamesense-playlist-filter="Map Knowledge"]').click();
+    assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Map Knowledge"]').getAttribute("aria-selected"), "true");
+    assert.equal(await desktop.locator(".gamesense-playlist-loading").count(), 1);
+    assert.equal(await desktop.locator(".gamesense-playlist-empty").count(), 0, "A pending Playlist request must not render an empty category.");
+    await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").first().waitFor({ state: "visible", timeout: 5000 });
+    assert.match(await desktop.locator(".gamesense-playlist-grid").first().innerText(), /Breeze map guide/i);
+    await desktop.locator('[data-gamesense-playlist-filter="Home"]').click();
+    await desktop.locator(".gamesense-back").click();
+    await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
     await desktop.waitForTimeout(700);
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 5);
     assert.equal(await desktop.locator('[data-gamesense-topic="crosshairs"]').count(), 1);

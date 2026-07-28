@@ -3966,6 +3966,47 @@ html.is-mobile-layout .gamesense-tactical-scroll{
 .gamesense-video-embed{position:relative;z-index:20;display:block;width:100%;min-width:200px;min-height:200px;aspect-ratio:16/9;border:0;background:#020617;pointer-events:auto !important;touch-action:auto !important;}
 .gamesense-twitch-embed{min-height:300px;}
 .gamesense-playlist-empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--text-muted,#a8b3c7);}
+.gamesense-playlist-loading{
+  min-height:148px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin:0;
+  padding:28px;
+  border:1px solid color-mix(in srgb,var(--gamesense-cool,#58d4c8) 34%,transparent);
+  border-radius:12px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--panel-bg,#111b2d) 88%,var(--gamesense-cool,#58d4c8)),var(--panel-bg,#111b2d));
+  color:var(--text-main,#f8fafc);
+  text-align:left;
+}
+.gamesense-playlist-loading > div{display:grid;gap:4px;}
+.gamesense-playlist-loading strong{font:900 16px/1 var(--font-display,"Rajdhani",sans-serif);text-transform:uppercase;letter-spacing:.04em;}
+.gamesense-playlist-loading p{margin:0;color:var(--text-muted,#a8b3c7);font-size:12px;}
+.gamesense-playlist-loading-spinner{
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  border:3px solid color-mix(in srgb,var(--gamesense-cool,#58d4c8) 28%,transparent);
+  border-top-color:var(--gamesense-cool,#58d4c8);
+  border-radius:50%;
+  animation:gamesense-playlist-spin .72s linear infinite;
+}
+.gamesense-playlist-loading.is-error{border-color:color-mix(in srgb,var(--accent,#ff4655) 52%,transparent);}
+.gamesense-playlist-loading.is-error button{
+  min-height:36px;
+  margin-left:8px;
+  padding:0 14px;
+  border:1px solid color-mix(in srgb,var(--gamesense-cool,#58d4c8) 66%,transparent);
+  border-radius:8px;
+  background:color-mix(in srgb,var(--panel-bg,#111b2d) 68%,var(--gamesense-cool,#58d4c8));
+  color:var(--text-main,#f8fafc);
+  font:800 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+@keyframes gamesense-playlist-spin{to{transform:rotate(360deg);}}
 .gamesense-weapon-locations,.gamesense-round-conversion-note{display:grid;gap:4px;}
 .gamesense-weapon-locations strong{color:var(--gamesense-warm,#f6c453);font:800 10px/1 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.08em;text-transform:uppercase;}
 .gamesense-weapon-locations span,.gamesense-round-conversion-note{color:var(--text-muted,#a8b3c7);}

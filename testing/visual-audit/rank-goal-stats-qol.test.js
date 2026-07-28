@@ -215,6 +215,31 @@ async function run() {
     assert.equal(await page.locator("#profileRatingUnlocks .profile-activity-day").count(), 30);
     await page.locator("#profileRatingWidget").click();
 
+    // The Compass description is an alternate reading view: opening it must
+    // replace the score pills/radar rather than squeeze text above them.
+    const compassToggle = page.locator("#compassDescriptionToggle");
+    await compassToggle.waitFor({ state: "visible" });
+    await compassToggle.click();
+    const compassDescriptionView = await page.locator(".compass-summary-shell").evaluate(shell => {
+      const top = shell.querySelector(".compass-summary-top-shell");
+      const bottom = shell.querySelector(".compass-summary-bottom-shell");
+      const description = shell.querySelector("#compassProfileDescription");
+      return {
+        expanded: shell.classList.contains("is-expanded"),
+        topDisplay: getComputedStyle(top).display,
+        bottomDisplay: getComputedStyle(bottom).display,
+        descriptionDisplay: getComputedStyle(description).display,
+        topHeight: top.getBoundingClientRect().height,
+        shellHeight: shell.getBoundingClientRect().height
+      };
+    });
+    assert.equal(compassDescriptionView.expanded, true, JSON.stringify(compassDescriptionView));
+    assert.equal(compassDescriptionView.bottomDisplay, "none", JSON.stringify(compassDescriptionView));
+    assert.equal(compassDescriptionView.descriptionDisplay, "block", JSON.stringify(compassDescriptionView));
+    assert.ok(compassDescriptionView.topHeight >= compassDescriptionView.shellHeight * .9, JSON.stringify(compassDescriptionView));
+    await compassToggle.click();
+    assert.equal(await compassToggle.getAttribute("aria-expanded"), "false");
+
     await page.locator("#impactRolePill").click();
     await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
     assert.equal((await page.locator("#lensModalWeightingTitle").textContent()).trim(), "Why This Score Changed");

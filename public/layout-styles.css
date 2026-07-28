@@ -3163,3 +3163,80 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
   }
 }
 
+/* The Compass description is a true alternate card view, not extra content
+   squeezed above the score grid.  Once opened, the score pills and radar give
+   their full area to the readable coaching explanation on every layout. */
+#page-home .compass-summary-shell.is-expanded{
+  display:flex !important;
+  flex-direction:column !important;
+  min-height:0 !important;
+  height:100% !important;
+}
+
+#page-home .compass-summary-shell.is-expanded > .compass-summary-bottom-shell{
+  display:none !important;
+}
+
+#page-home .compass-summary-shell.is-expanded > .compass-summary-top-shell{
+  display:flex !important;
+  flex:1 1 100% !important;
+  min-height:0 !important;
+  height:100% !important;
+}
+
+#page-home .compass-summary-shell.is-expanded > .compass-summary-top-shell > .compass-summary-copy{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  grid-template-areas:"button" "desc" !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  align-items:stretch !important;
+  width:100% !important;
+  height:100% !important;
+  min-height:0 !important;
+  gap:8px !important;
+}
+
+#page-home .compass-summary-shell.is-expanded #compassProfileDescription{
+  display:block !important;
+  grid-area:desc !important;
+  min-height:0 !important;
+  max-height:none !important;
+  overflow:auto !important;
+}
+
+/* Compact desktop has an older selector with html/body qualifiers. Match that
+   specificity so its normal-score-grid display cannot win after the user
+   opens the alternate description view. */
+@media (min-width:821px){
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell.is-expanded > .compass-summary-bottom-shell{
+    display:none !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell.is-expanded > .compass-summary-top-shell{
+    display:flex !important;
+    flex:1 1 100% !important;
+    min-height:0 !important;
+    height:100% !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell.is-expanded > .compass-summary-top-shell > .compass-summary-copy{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    grid-template-areas:"button" "desc" !important;
+    grid-template-rows:auto minmax(0,1fr) !important;
+    align-items:stretch !important;
+    width:100% !important;
+    height:100% !important;
+    min-height:0 !important;
+    gap:8px !important;
+  }
+
+  html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .compass-summary-shell.is-expanded #compassProfileDescription{
+    display:block !important;
+    grid-area:desc !important;
+    min-height:0 !important;
+    max-height:none !important;
+    overflow:auto !important;
+  }
+}
+
