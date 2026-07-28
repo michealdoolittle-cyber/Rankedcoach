@@ -2,7 +2,21 @@
   "id": "gekko",
   "label": "Gekko",
   "role": "Initiator",
-  "maps": [],
+  "maps": [
+    "Ascent",
+    "Icebox",
+    "Fracture",
+    "Breeze",
+    "Abyss",
+    "Bind",
+    "Sunset",
+    "Haven",
+    "Pearl",
+    "Lotus",
+    "Summit",
+    "Corrode",
+    "Split"
+  ],
   "icon": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/e370fa57-4757-3604-3648-499e1f642d3f/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Wingman limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Wingman must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/e9a92a506942c735f5a986ee9489fad34b192843.mp4?accountingTag=VAL",
+        "title": "WINGMAN",
+        "source": "https://playvalorant.com/en-us/agents/gekko/",
+        "provider": "riot"
+      }
     },
     {
       "id": "dizzy",
@@ -51,7 +71,13 @@
       },
       "purpose": "Dizzy is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Dizzy must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/f3a565e0cde441f1754eeadda2427020a795d4a0.mp4?accountingTag=VAL",
+        "title": "DIZZY",
+        "source": "https://playvalorant.com/en-us/agents/gekko/",
+        "provider": "riot"
+      }
     },
     {
       "id": "mosh-pit",
@@ -66,7 +92,13 @@
       },
       "purpose": "Mosh Pit applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Mosh Pit must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/85f2c3958091bf4b8fb475c8bda0dcb10a409fbc.mp4?accountingTag=VAL",
+        "title": "MOSH PIT",
+        "source": "https://playvalorant.com/en-us/agents/gekko/",
+        "provider": "riot"
+      }
     },
     {
       "id": "thrash",
@@ -81,7 +113,13 @@
       },
       "purpose": "Thrash applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Thrash must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/fe30846150b8f87f7f945a3f0c82e59d0522dbdc.mp4?accountingTag=VAL",
+        "title": "THRASH",
+        "source": "https://playvalorant.com/en-us/agents/gekko/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/e370fa57-4757-3604-3648-499e1f642d3f?language=en-US",
   "uuid": "e370fa57-4757-3604-3648-499e1f642d3f",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 2.0111,
+  "pickRateRank": 28,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Ascent": 0.4848,
+    "Icebox": 4.4108,
+    "Fracture": 1.62,
+    "Breeze": 1.0307,
+    "Abyss": 2.8337,
+    "Bind": 2.6354,
+    "Sunset": 6.7507,
+    "Haven": 0.5894,
+    "Pearl": 2.8433,
+    "Lotus": 2.669,
+    "Summit": 2.3388,
+    "Corrode": 1.7669,
+    "Split": 0.7751
+  },
+  "mapWinRates": {
+    "Ascent": 52.9022,
+    "Icebox": 50.9713,
+    "Fracture": 50.1758,
+    "Breeze": 49.9411,
+    "Abyss": 49.416,
+    "Bind": 49.2069,
+    "Sunset": 48.3614,
+    "Haven": 48.2109,
+    "Pearl": 48.1967,
+    "Lotus": 47.6408,
+    "Summit": 47.2723,
+    "Corrode": 46.4479,
+    "Split": 43.0739
+  },
+  "mapFitSources": {
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Gekko",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

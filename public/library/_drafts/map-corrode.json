@@ -217,7 +217,7 @@
     }
   ],
   "plantSpots": [],
-  "plantRateNote": "Riot's public map-content feed does not publish plant-location percentages, so no plant share is estimated.",
+  "plantRateNote": "No source-verified named spike-plant locations are published for Corrode in the retained Library sources. The map is shown without fabricated site-centroid markers.",
   "weaponSuggestions": [],
   "weaponSuggestionNote": "No verified active-season weapon conversion sample is attached to this map dossier.",
   "macro": {
@@ -228,11 +228,52 @@
   "teamplayTips": [],
   "roleNotes": {},
   "metaComp": {
-    "agents": [],
-    "composition": "No verified current ranked composition sample",
-    "patch": "13.01"
+    "agents": [
+      "Clove",
+      "Jett",
+      "Reyna",
+      "Fade",
+      "Chamber"
+    ],
+    "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel",
+    "patch": "V26 Act 1",
+    "label": "Primary role layout"
   },
-  "metaComps": [],
+  "metaComps": [
+    {
+      "label": "Primary role layout",
+      "agents": [
+        "Clove",
+        "Jett",
+        "Reyna",
+        "Fade",
+        "Chamber"
+      ],
+      "composition": "1 Controller, 2 Duelists, 1 Initiator, 1 Sentinel"
+    },
+    {
+      "label": "Secondary role layout",
+      "agents": [
+        "Clove",
+        "Jett",
+        "Fade",
+        "Chamber",
+        "Deadlock"
+      ],
+      "composition": "1 Controller, 1 Duelist, 1 Initiator, 2 Sentinels"
+    },
+    {
+      "label": "Alternate role layout",
+      "agents": [
+        "Clove",
+        "Waylay",
+        "Fade",
+        "KAY/O",
+        "Chamber"
+      ],
+      "composition": "1 Controller, 1 Duelist, 2 Initiators, 1 Sentinel"
+    }
+  ],
   "compStatus": "Riot's public content feed does not publish measured five-agent composition win rates, so no lineup percentage is claimed.",
   "agentInsights": {},
   "lineupLinks": [],
@@ -241,8 +282,932 @@
   "coordinates": "48° 38' FH\" N8, 1° 33' YV\" W8",
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "plantLayoutImage": "/assets/library/maps/corrode-layout-plants.svg",
+  "tacticalMapSource": "https://valorant-api.com/v1/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115?language=en-US",
+  "highRankPickRates": {
+    "Astra": 2.954,
+    "Breach": 2.6402,
+    "Brimstone": 1.6496,
+    "Chamber": 52.1094,
+    "Clove": 80.7086,
+    "Cypher": 7.2808,
+    "Deadlock": 11.7707,
+    "Fade": 70.0479,
+    "Gekko": 1.7669,
+    "Harbor": 0.6793,
+    "Iso": 5.2751,
+    "Jett": 44.3396,
+    "KAY/O": 2.9603,
+    "Killjoy": 1.0161,
+    "Neon": 23.3825,
+    "Omen": 14.6633,
+    "Phoenix": 8.6061,
+    "Raze": 4.3977,
+    "Reyna": 37.0452,
+    "Sage": 5.1052,
+    "Skye": 4.0765,
+    "Sova": 13.5481,
+    "Tejo": 4.0035,
+    "Veto": 6.2553,
+    "Viper": 4.4018,
+    "Vyse": 18.3253,
+    "Waylay": 43.9074,
+    "Yoru": 27.0836
+  },
+  "rolePickRates": [
+    {
+      "agent": "Astra",
+      "role": "Controller",
+      "mapRate": 2.954,
+      "globalRate": 9.3044,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Breach",
+      "role": "Initiator",
+      "mapRate": 2.6402,
+      "globalRate": 3.3712,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Brimstone",
+      "role": "Controller",
+      "mapRate": 1.6496,
+      "globalRate": 4.1777,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Chamber",
+      "role": "Sentinel",
+      "mapRate": 52.1094,
+      "globalRate": 54.4804,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Clove",
+      "role": "Controller",
+      "mapRate": 80.7086,
+      "globalRate": 68.4483,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Cypher",
+      "role": "Sentinel",
+      "mapRate": 7.2808,
+      "globalRate": 14.5375,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Deadlock",
+      "role": "Sentinel",
+      "mapRate": 11.7707,
+      "globalRate": 5.7296,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Fade",
+      "role": "Initiator",
+      "mapRate": 70.0479,
+      "globalRate": 29.2182,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Gekko",
+      "role": "Initiator",
+      "mapRate": 1.7669,
+      "globalRate": 2.3758,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Harbor",
+      "role": "Controller",
+      "mapRate": 0.6793,
+      "globalRate": 1.7125,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Iso",
+      "role": "Duelist",
+      "mapRate": 5.2751,
+      "globalRate": 5.5152,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Jett",
+      "role": "Duelist",
+      "mapRate": 44.3396,
+      "globalRate": 59.2212,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "KAY/O",
+      "role": "Initiator",
+      "mapRate": 2.9603,
+      "globalRate": 2.9228,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Killjoy",
+      "role": "Sentinel",
+      "mapRate": 1.0161,
+      "globalRate": 8.3785,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Miks",
+      "role": "Controller",
+      "mapRate": null,
+      "globalRate": null,
+      "mapSampleAvailable": false,
+      "globalSampleAvailable": false
+    },
+    {
+      "agent": "Neon",
+      "role": "Duelist",
+      "mapRate": 23.3825,
+      "globalRate": 19.309,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Omen",
+      "role": "Controller",
+      "mapRate": 14.6633,
+      "globalRate": 12.1992,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Phoenix",
+      "role": "Duelist",
+      "mapRate": 8.6061,
+      "globalRate": 7.9902,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Raze",
+      "role": "Duelist",
+      "mapRate": 4.3977,
+      "globalRate": 14.0317,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Reyna",
+      "role": "Duelist",
+      "mapRate": 37.0452,
+      "globalRate": 36.1965,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Sage",
+      "role": "Sentinel",
+      "mapRate": 5.1052,
+      "globalRate": 8.7402,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Skye",
+      "role": "Initiator",
+      "mapRate": 4.0765,
+      "globalRate": 15.0422,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Sova",
+      "role": "Initiator",
+      "mapRate": 13.5481,
+      "globalRate": 40.5357,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Tejo",
+      "role": "Initiator",
+      "mapRate": 4.0035,
+      "globalRate": 4.4477,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Veto",
+      "role": "Sentinel",
+      "mapRate": 6.2553,
+      "globalRate": 4.2166,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Viper",
+      "role": "Controller",
+      "mapRate": 4.4018,
+      "globalRate": 10.2195,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Vyse",
+      "role": "Sentinel",
+      "mapRate": 18.3253,
+      "globalRate": 5.9652,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Waylay",
+      "role": "Duelist",
+      "mapRate": 43.9074,
+      "globalRate": 22.7703,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    },
+    {
+      "agent": "Yoru",
+      "role": "Duelist",
+      "mapRate": 27.0836,
+      "globalRate": 28.9426,
+      "mapSampleAvailable": true,
+      "globalSampleAvailable": true
+    }
+  ],
+  "compSample": {
+    "rankLabel": "Ascendant to Radiant",
+    "patchLabel": "V26 Act 1",
+    "currentPatchAgentSelections": 959030,
+    "combinedAgentSelections": 959030,
+    "source": "VStats.gg",
+    "note": "High-rank Competitive selection reference. Map and global pick shares use the same rank window; each role layout is an observed five-agent structure.",
+    "sourceUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/agent.json.gz"
+  },
+  "statsSource": {
+    "provider": "VStats.gg",
+    "actLabel": "V26 Act 1",
+    "patchLabel": "V26 Act 1",
+    "rankLabel": "Ascendant to Radiant",
+    "agentUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/agent.json.gz",
+    "compUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/comp.json.gz"
+  },
+  "weaponConversionReference": {
+    "source": {
+      "provider": "VStats.gg",
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1",
+      "rankLabel": "Ascendant to Radiant",
+      "weaponUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/weapon.json.gz"
+    },
+    "metrics": {
+      "Ares": {
+        "2nd_lost": {
+          "value": 28.4074,
+          "attackValue": 34.8378,
+          "defenseValue": 25.9969,
+          "attackRounds": 310,
+          "defenseRounds": 827,
+          "rounds": 1137
+        },
+        "2nd_won": {
+          "value": 79.4665,
+          "attackValue": 80.3156,
+          "defenseValue": 79.228,
+          "attackRounds": 2037,
+          "defenseRounds": 7255,
+          "rounds": 9292
+        },
+        "full_eco": {
+          "value": 43.6575,
+          "attackValue": 36.765,
+          "defenseValue": 46.0009,
+          "attackRounds": 68,
+          "defenseRounds": 200,
+          "rounds": 268
+        },
+        "unknown": {
+          "value": 44.9518,
+          "attackValue": 46.0583,
+          "defenseValue": 44.5555,
+          "attackRounds": 5391,
+          "defenseRounds": 15053,
+          "rounds": 20444
+        }
+      },
+      "Bandit": {
+        "2nd_lost": {
+          "value": 20.4211,
+          "attackValue": 20.949,
+          "defenseValue": 19.8829,
+          "attackRounds": 67092,
+          "defenseRounds": 65799,
+          "rounds": 132891
+        },
+        "2nd_won": {
+          "value": 77.7503,
+          "attackValue": 78.5337,
+          "defenseValue": 77.032,
+          "attackRounds": 21127,
+          "defenseRounds": 23040,
+          "rounds": 44167
+        },
+        "pistol": {
+          "value": 49.5703,
+          "attackValue": 48.215,
+          "defenseValue": 50.6564,
+          "attackRounds": 85442,
+          "defenseRounds": 106616,
+          "rounds": 192058
+        },
+        "unknown": {
+          "value": 32.1158,
+          "attackValue": 32.5646,
+          "defenseValue": 31.6923,
+          "attackRounds": 77009,
+          "defenseRounds": 81600,
+          "rounds": 158609
+        }
+      },
+      "Bucky": {
+        "2nd_lost": {
+          "value": 24.0933,
+          "attackValue": 25.7562,
+          "defenseValue": 23.178,
+          "attackRounds": 19996,
+          "defenseRounds": 36327,
+          "rounds": 56323
+        },
+        "2nd_won": {
+          "value": 79.4736,
+          "attackValue": 80.134,
+          "defenseValue": 78.8188,
+          "attackRounds": 19834,
+          "defenseRounds": 20004,
+          "rounds": 39838
+        },
+        "full_eco": {
+          "value": 49.4943,
+          "attackValue": 46.8302,
+          "defenseValue": 52.4642,
+          "attackRounds": 1719,
+          "defenseRounds": 1542,
+          "rounds": 3261
+        },
+        "unknown": {
+          "value": 39.4795,
+          "attackValue": 40.4849,
+          "defenseValue": 38.7443,
+          "attackRounds": 163647,
+          "defenseRounds": 223771,
+          "rounds": 387418
+        }
+      },
+      "Bulldog": {
+        "2nd_lost": {
+          "value": 35.6872,
+          "attackValue": 39.1063,
+          "defenseValue": 28.3135,
+          "attackRounds": 358,
+          "defenseRounds": 166,
+          "rounds": 524
+        },
+        "2nd_won": {
+          "value": 80.0965,
+          "attackValue": 80.7506,
+          "defenseValue": 79.4072,
+          "attackRounds": 48829,
+          "defenseRounds": 46337,
+          "rounds": 95166
+        },
+        "full_eco": {
+          "value": 45.8923,
+          "attackValue": 44.0529,
+          "defenseValue": 47.969,
+          "attackRounds": 1278,
+          "defenseRounds": 1132,
+          "rounds": 2410
+        },
+        "unknown": {
+          "value": 44.1422,
+          "attackValue": 43.4084,
+          "defenseValue": 44.8937,
+          "attackRounds": 86657,
+          "defenseRounds": 84618,
+          "rounds": 171275
+        }
+      },
+      "Classic": {
+        "2nd_lost": {
+          "value": 17.8317,
+          "attackValue": 18.08,
+          "defenseValue": 17.5426,
+          "attackRounds": 209470,
+          "defenseRounds": 179917,
+          "rounds": 389387
+        },
+        "2nd_won": {
+          "value": 77.2304,
+          "attackValue": 77.362,
+          "defenseValue": 77.0751,
+          "attackRounds": 8358,
+          "defenseRounds": 7088,
+          "rounds": 15446
+        },
+        "pistol": {
+          "value": 49.7865,
+          "attackValue": 48.7698,
+          "defenseValue": 51.0356,
+          "attackRounds": 360181,
+          "defenseRounds": 293152,
+          "rounds": 653333
+        },
+        "unknown": {
+          "value": 38.0442,
+          "attackValue": 37.8029,
+          "defenseValue": 38.3153,
+          "attackRounds": 276222,
+          "defenseRounds": 245927,
+          "rounds": 522149
+        }
+      },
+      "Frenzy": {
+        "2nd_lost": {
+          "value": 18.282,
+          "attackValue": 17.9087,
+          "defenseValue": 18.6572,
+          "attackRounds": 2440,
+          "defenseRounds": 2428,
+          "rounds": 4868
+        },
+        "2nd_won": {
+          "value": 72.1464,
+          "attackValue": 73.3017,
+          "defenseValue": 70.9101,
+          "attackRounds": 412,
+          "defenseRounds": 385,
+          "rounds": 797
+        },
+        "pistol": {
+          "value": 49.4727,
+          "attackValue": 48.7454,
+          "defenseValue": 50.4289,
+          "attackRounds": 18566,
+          "defenseRounds": 14121,
+          "rounds": 32687
+        },
+        "unknown": {
+          "value": 31.3209,
+          "attackValue": 32.7929,
+          "defenseValue": 30.0023,
+          "attackRounds": 2717,
+          "defenseRounds": 3033,
+          "rounds": 5750
+        }
+      },
+      "Ghost": {
+        "2nd_lost": {
+          "value": 18.4474,
+          "attackValue": 18.6135,
+          "defenseValue": 18.2245,
+          "attackRounds": 4851,
+          "defenseRounds": 3616,
+          "rounds": 8467
+        },
+        "2nd_won": {
+          "value": 79.2647,
+          "attackValue": 79.9467,
+          "defenseValue": 78.5538,
+          "attackRounds": 38023,
+          "defenseRounds": 36476,
+          "rounds": 74499
+        },
+        "pistol": {
+          "value": 50.2891,
+          "attackValue": 48.9248,
+          "defenseValue": 51.6846,
+          "attackRounds": 421627,
+          "defenseRounds": 412180,
+          "rounds": 833807
+        },
+        "unknown": {
+          "value": 35.848,
+          "attackValue": 37.0893,
+          "defenseValue": 34.5838,
+          "attackRounds": 9345,
+          "defenseRounds": 9175,
+          "rounds": 18520
+        }
+      },
+      "Guardian": {
+        "2nd_lost": {
+          "value": 40.0339,
+          "attackValue": 42.9561,
+          "defenseValue": 32.0758,
+          "attackRounds": 433,
+          "defenseRounds": 159,
+          "rounds": 592
+        },
+        "2nd_won": {
+          "value": 79.6075,
+          "attackValue": 80.6376,
+          "defenseValue": 78.7004,
+          "attackRounds": 52617,
+          "defenseRounds": 59758,
+          "rounds": 112375
+        },
+        "full_eco": {
+          "value": 47.2881,
+          "attackValue": 44.3522,
+          "defenseValue": 50.1542,
+          "attackRounds": 3161,
+          "defenseRounds": 3238,
+          "rounds": 6399
+        },
+        "unknown": {
+          "value": 44.0651,
+          "attackValue": 43.0287,
+          "defenseValue": 45.1032,
+          "attackRounds": 278674,
+          "defenseRounds": 278245,
+          "rounds": 556919
+        }
+      },
+      "Judge": {
+        "2nd_lost": {
+          "value": 26.5014,
+          "attackValue": 40.6254,
+          "defenseValue": 23.994,
+          "attackRounds": 256,
+          "defenseRounds": 1442,
+          "rounds": 1698
+        },
+        "2nd_won": {
+          "value": 80.7002,
+          "attackValue": 81.5217,
+          "defenseValue": 80.107,
+          "attackRounds": 13064,
+          "defenseRounds": 18093,
+          "rounds": 31157
+        },
+        "full_eco": {
+          "value": 50.591,
+          "attackValue": 47.8289,
+          "defenseValue": 52.8083,
+          "attackRounds": 3387,
+          "defenseRounds": 4219,
+          "rounds": 7606
+        },
+        "unknown": {
+          "value": 49.4249,
+          "attackValue": 49.8277,
+          "defenseValue": 49.1486,
+          "attackRounds": 140043,
+          "defenseRounds": 204182,
+          "rounds": 344225
+        }
+      },
+      "Marshal": {
+        "2nd_lost": {
+          "value": 22.1007,
+          "attackValue": 21.7865,
+          "defenseValue": 22.5517,
+          "attackRounds": 7670,
+          "defenseRounds": 5343,
+          "rounds": 13013
+        },
+        "2nd_won": {
+          "value": 80.1709,
+          "attackValue": 79.907,
+          "defenseValue": 80.3102,
+          "attackRounds": 20111,
+          "defenseRounds": 38126,
+          "rounds": 58237
+        },
+        "unknown": {
+          "value": 36.5938,
+          "attackValue": 36.2172,
+          "defenseValue": 36.9273,
+          "attackRounds": 32131,
+          "defenseRounds": 36280,
+          "rounds": 68411
+        },
+        "full_eco": {
+          "value": 39.4696,
+          "attackValue": 37.7548,
+          "defenseValue": 40.9224,
+          "attackRounds": 294,
+          "defenseRounds": 347,
+          "rounds": 641
+        }
+      },
+      "Odin": {
+        "2nd_won": {
+          "value": 81.2992,
+          "attackValue": 83.9084,
+          "defenseValue": 80.046,
+          "attackRounds": 609,
+          "defenseRounds": 1268,
+          "rounds": 1877
+        },
+        "full_eco": {
+          "value": 49.1573,
+          "attackValue": 45.6108,
+          "defenseValue": 50.401,
+          "attackRounds": 1219,
+          "defenseRounds": 3476,
+          "rounds": 4695
+        },
+        "unknown": {
+          "value": 57.1167,
+          "attackValue": 55.2287,
+          "defenseValue": 57.7725,
+          "attackRounds": 51701,
+          "defenseRounds": 148849,
+          "rounds": 200550
+        },
+        "2nd_lost": {
+          "value": 0,
+          "attackValue": 0,
+          "defenseValue": 0,
+          "attackRounds": 1,
+          "defenseRounds": 1,
+          "rounds": 2
+        }
+      },
+      "Operator": {
+        "full_eco": {
+          "value": 50.0834,
+          "attackValue": 50.7595,
+          "defenseValue": 49.7852,
+          "attackRounds": 3349,
+          "defenseRounds": 7595,
+          "rounds": 10944
+        },
+        "unknown": {
+          "value": 56.2288,
+          "attackValue": 54.5798,
+          "defenseValue": 56.9266,
+          "attackRounds": 164589,
+          "defenseRounds": 388938,
+          "rounds": 553527
+        }
+      },
+      "Outlaw": {
+        "2nd_lost": {
+          "value": 28.0647,
+          "attackValue": 29.5336,
+          "defenseValue": 22.9731,
+          "attackRounds": 5387,
+          "defenseRounds": 1554,
+          "rounds": 6941
+        },
+        "2nd_won": {
+          "value": 80.3995,
+          "attackValue": 81.4047,
+          "defenseValue": 79.9616,
+          "attackRounds": 27439,
+          "defenseRounds": 62982,
+          "rounds": 90421
+        },
+        "full_eco": {
+          "value": 47.9039,
+          "attackValue": 44.9635,
+          "defenseValue": 50.2827,
+          "attackRounds": 1152,
+          "defenseRounds": 1424,
+          "rounds": 2576
+        },
+        "unknown": {
+          "value": 57.2567,
+          "attackValue": 59.3822,
+          "defenseValue": 55.5733,
+          "attackRounds": 93127,
+          "defenseRounds": 117581,
+          "rounds": 210708
+        }
+      },
+      "Phantom": {
+        "2nd_lost": {
+          "value": 26.9231,
+          "attackValue": 35,
+          "defenseValue": 0,
+          "attackRounds": 20,
+          "defenseRounds": 6,
+          "rounds": 26
+        },
+        "2nd_won": {
+          "value": 80.4912,
+          "attackValue": 80.5324,
+          "defenseValue": 80.4113,
+          "attackRounds": 22437,
+          "defenseRounds": 11553,
+          "rounds": 33990
+        },
+        "full_eco": {
+          "value": 50.4625,
+          "attackValue": 48.5298,
+          "defenseValue": 52.2537,
+          "attackRounds": 34793,
+          "defenseRounds": 37543,
+          "rounds": 72336
+        },
+        "unknown": {
+          "value": 54.6138,
+          "attackValue": 53.4106,
+          "defenseValue": 55.7481,
+          "attackRounds": 1352649,
+          "defenseRounds": 1434772,
+          "rounds": 2787421
+        }
+      },
+      "Sheriff": {
+        "2nd_lost": {
+          "value": 21.2576,
+          "attackValue": 21.1972,
+          "defenseValue": 21.3207,
+          "attackRounds": 130963,
+          "defenseRounds": 125369,
+          "rounds": 256332
+        },
+        "2nd_won": {
+          "value": 77.7585,
+          "attackValue": 77.7718,
+          "defenseValue": 77.7464,
+          "attackRounds": 30239,
+          "defenseRounds": 33244,
+          "rounds": 63483
+        },
+        "pistol": {
+          "value": 50.0459,
+          "attackValue": 48.1282,
+          "defenseValue": 50.7227,
+          "attackRounds": 34375,
+          "defenseRounds": 97397,
+          "rounds": 131772
+        },
+        "unknown": {
+          "value": 32.2983,
+          "attackValue": 32.1027,
+          "defenseValue": 32.4985,
+          "attackRounds": 611355,
+          "defenseRounds": 597186,
+          "rounds": 1208541
+        }
+      },
+      "Shorty": {
+        "2nd_lost": {
+          "value": 18.1562,
+          "attackValue": 18.5987,
+          "defenseValue": 17.961,
+          "attackRounds": 7216,
+          "defenseRounds": 16353,
+          "rounds": 23569
+        },
+        "pistol": {
+          "value": 49.6457,
+          "attackValue": 49.6989,
+          "defenseValue": 49.5728,
+          "attackRounds": 12139,
+          "defenseRounds": 8864,
+          "rounds": 21003
+        },
+        "unknown": {
+          "value": 44.4775,
+          "attackValue": 45.4494,
+          "defenseValue": 43.5594,
+          "attackRounds": 38884,
+          "defenseRounds": 41166,
+          "rounds": 80050
+        },
+        "2nd_won": {
+          "value": 77.1156,
+          "attackValue": 79.3779,
+          "defenseValue": 75.5896,
+          "attackRounds": 257,
+          "defenseRounds": 381,
+          "rounds": 638
+        }
+      },
+      "Spectre": {
+        "2nd_lost": {
+          "value": 31.8497,
+          "attackValue": 34.7592,
+          "defenseValue": 27.7016,
+          "attackRounds": 2244,
+          "defenseRounds": 1574,
+          "rounds": 3818
+        },
+        "2nd_won": {
+          "value": 81.4482,
+          "attackValue": 81.5664,
+          "defenseValue": 81.3218,
+          "attackRounds": 73509,
+          "defenseRounds": 68688,
+          "rounds": 142197
+        },
+        "full_eco": {
+          "value": 46.753,
+          "attackValue": 43.9649,
+          "defenseValue": 50.7939,
+          "attackRounds": 1458,
+          "defenseRounds": 1006,
+          "rounds": 2464
+        },
+        "unknown": {
+          "value": 44.3434,
+          "attackValue": 43.928,
+          "defenseValue": 44.7973,
+          "attackRounds": 89290,
+          "defenseRounds": 81706,
+          "rounds": 170996
+        }
+      },
+      "Stinger": {
+        "2nd_lost": {
+          "value": 33.0857,
+          "attackValue": 35.7693,
+          "defenseValue": 27.9723,
+          "attackRounds": 14904,
+          "defenseRounds": 7822,
+          "rounds": 22726
+        },
+        "2nd_won": {
+          "value": 80.2432,
+          "attackValue": 80.5097,
+          "defenseValue": 79.9219,
+          "attackRounds": 24063,
+          "defenseRounds": 19963,
+          "rounds": 44026
+        },
+        "full_eco": {
+          "value": 47.4954,
+          "attackValue": 44.4889,
+          "defenseValue": 53.2076,
+          "attackRounds": 1007,
+          "defenseRounds": 530,
+          "rounds": 1537
+        },
+        "unknown": {
+          "value": 38.2927,
+          "attackValue": 38.0148,
+          "defenseValue": 38.6834,
+          "attackRounds": 128827,
+          "defenseRounds": 91658,
+          "rounds": 220485
+        }
+      },
+      "Vandal": {
+        "2nd_lost": {
+          "value": 19.8409,
+          "attackValue": 29.6869,
+          "defenseValue": 9.6773,
+          "attackRounds": 64,
+          "defenseRounds": 62,
+          "rounds": 126
+        },
+        "2nd_won": {
+          "value": 79.0463,
+          "attackValue": 79.113,
+          "defenseValue": 78.8859,
+          "attackRounds": 45800,
+          "defenseRounds": 19034,
+          "rounds": 64834
+        },
+        "full_eco": {
+          "value": 50.1068,
+          "attackValue": 48.203,
+          "defenseValue": 52.2144,
+          "attackRounds": 96875,
+          "defenseRounds": 87508,
+          "rounds": 184383
+        },
+        "unknown": {
+          "value": 53.3082,
+          "attackValue": 52.1335,
+          "defenseValue": 54.6415,
+          "attackRounds": 4044232,
+          "defenseRounds": 3562750,
+          "rounds": 7606982
+        }
+      }
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "map",
@@ -250,7 +1215,7 @@
     "entityName": "Corrode",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -451,6 +1416,48 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "plantLayoutImage": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "tacticalMapSource": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "highRankPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "rolePickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "compSample": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "statsSource": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "weaponConversionReference": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

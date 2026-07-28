@@ -2,7 +2,21 @@
   "id": "brimstone",
   "label": "Brimstone",
   "role": "Controller",
-  "maps": [],
+  "maps": [
+    "Icebox",
+    "Lotus",
+    "Ascent",
+    "Pearl",
+    "Split",
+    "Fracture",
+    "Bind",
+    "Summit",
+    "Abyss",
+    "Haven",
+    "Breeze",
+    "Corrode",
+    "Sunset"
+  ],
   "icon": "https://media.valorant-api.com/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Stim Beacon changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Stim Beacon should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
-      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/da2d65e4abc2129e284cf5248fd70925f093a0b3.mp4?accountingTag=VAL",
+        "title": "STIM BEACON",
+        "source": "https://playvalorant.com/en-us/agents/brimstone/",
+        "provider": "riot"
+      }
     },
     {
       "id": "incendiary",
@@ -51,7 +71,13 @@
       },
       "purpose": "Incendiary applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Incendiary must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/9df59d490062acceb7c6ca32a3650b55718381f7.mp4?accountingTag=VAL",
+        "title": "INCENDIARY",
+        "source": "https://playvalorant.com/en-us/agents/brimstone/",
+        "provider": "riot"
+      }
     },
     {
       "id": "sky-smoke",
@@ -66,7 +92,13 @@
       },
       "purpose": "Sky Smoke controls sightlines. Place it on the specific defender view the team needs removed, then move while that view is blocked.",
       "setup": "Sky Smoke must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/8e0b72295747346b60c354765944f5233fb208f2.mp4?accountingTag=VAL",
+        "title": "SKY SMOKE",
+        "source": "https://playvalorant.com/en-us/agents/brimstone/",
+        "provider": "riot"
+      }
     },
     {
       "id": "orbital-strike",
@@ -81,7 +113,13 @@
       },
       "purpose": "Orbital Strike applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Orbital Strike must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ccd8e6c574b7017a2681e5d37c744f5a654327e3.mp4?accountingTag=VAL",
+        "title": "ORBITAL STRIKE",
+        "source": "https://playvalorant.com/en-us/agents/brimstone/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/9f0d8ba9-4140-b941-57d3-a7ad57c6b417?language=en-US",
   "uuid": "9f0d8ba9-4140-b941-57d3-a7ad57c6b417",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 1.6,
+  "pickRateRank": 29,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Icebox": 0.8049,
+    "Lotus": 1.373,
+    "Ascent": 1.9333,
+    "Pearl": 2.4274,
+    "Split": 1.4978,
+    "Fracture": 32.4599,
+    "Bind": 20.0709,
+    "Summit": 1.9943,
+    "Abyss": 1.3654,
+    "Haven": 1.8209,
+    "Breeze": 1.2898,
+    "Corrode": 1.6496,
+    "Sunset": 1.2553
+  },
+  "mapWinRates": {
+    "Icebox": 51.9087,
+    "Lotus": 51.4834,
+    "Ascent": 51.3001,
+    "Pearl": 51.2829,
+    "Split": 51.1942,
+    "Fracture": 50.5567,
+    "Bind": 50.0259,
+    "Summit": 49.9672,
+    "Abyss": 49.7915,
+    "Haven": 49.259,
+    "Breeze": 49.0671,
+    "Corrode": 48.7674,
+    "Sunset": 47.4928
+  },
+  "mapFitSources": {
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Brimstone",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

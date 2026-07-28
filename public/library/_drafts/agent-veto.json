@@ -2,7 +2,20 @@
   "id": "veto",
   "label": "Veto",
   "role": "Sentinel",
-  "maps": [],
+  "maps": [
+    "Bind",
+    "Breeze",
+    "Pearl",
+    "Lotus",
+    "Split",
+    "Abyss",
+    "Sunset",
+    "Ascent",
+    "Corrode",
+    "Haven",
+    "Fracture",
+    "Summit"
+  ],
   "icon": "https://media.valorant-api.com/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b/fullportrait.png",
   "fundamentals": [
@@ -36,7 +49,13 @@
       },
       "purpose": "Interceptor performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Interceptor must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/e1e6a22165aecb88f0bb8527cfee9e16c6bdc788.mp4?accountingTag=VAL",
+        "title": "INTERCEPTOR",
+        "source": "https://playvalorant.com/en-us/agents/veto/",
+        "provider": "riot"
+      }
     },
     {
       "id": "crosscut",
@@ -51,7 +70,13 @@
       },
       "purpose": "Crosscut changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Crosscut must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/120c1d637aadbeb6995ca80f5819bf9647b9056c.mp4?accountingTag=VAL",
+        "title": "CROSSCUT",
+        "source": "https://playvalorant.com/en-us/agents/veto/",
+        "provider": "riot"
+      }
     },
     {
       "id": "evolution",
@@ -66,7 +91,13 @@
       },
       "purpose": "Evolution performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Evolution should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
-      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/4aafeeffca726a0bfdd0852c0543583dc43da41b.mp4?accountingTag=VAL",
+        "title": "EVOLUTION",
+        "source": "https://playvalorant.com/en-us/agents/veto/",
+        "provider": "riot"
+      }
     },
     {
       "id": "chokehold",
@@ -81,7 +112,13 @@
       },
       "purpose": "Chokehold limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Chokehold must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/c20ef1ed8b1ac66589d7be8ce91eb8d238add412.mp4?accountingTag=VAL",
+        "title": "CHOKEHOLD",
+        "source": "https://playvalorant.com/en-us/agents/veto/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +135,89 @@
   ],
   "source": "https://valorant-api.com/v1/agents/92eeef5d-43b5-1d4a-8d03-b3927a09034b?language=en-US",
   "uuid": "92eeef5d-43b5-1d4a-8d03-b3927a09034b",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 2.857,
+  "pickRateRank": 24,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Bind": 2.7129,
+    "Breeze": 1.7744,
+    "Pearl": 1.5407,
+    "Lotus": 2.6783,
+    "Split": 3.4201,
+    "Abyss": 7.6986,
+    "Sunset": 4.3232,
+    "Ascent": 1.966,
+    "Corrode": 6.2553,
+    "Haven": 1.8221,
+    "Fracture": 1.9155,
+    "Summit": 4.2424
+  },
+  "mapWinRates": {
+    "Bind": 51.848,
+    "Breeze": 50.4761,
+    "Pearl": 50.457,
+    "Lotus": 49.5197,
+    "Split": 49.2334,
+    "Abyss": 49.0271,
+    "Sunset": 48.5579,
+    "Ascent": 48.5403,
+    "Corrode": 48.3691,
+    "Haven": 47.755,
+    "Fracture": 47.6587,
+    "Summit": 47.4434
+  },
+  "mapFitSources": {
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +225,7 @@
     "entityName": "Veto",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +326,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

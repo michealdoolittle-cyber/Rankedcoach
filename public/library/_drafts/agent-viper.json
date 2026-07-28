@@ -4,8 +4,7 @@
   "role": "Controller",
   "maps": [
     "Breeze",
-    "Split",
-    "Lotus"
+    "Bind"
   ],
   "icon": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/707eab51-4836-f488-046a-cda6bf494859/fullportrait.png",
@@ -42,10 +41,10 @@
       "purpose": "Control a choke repeatedly and create strong one-way fights from stable ledges.",
       "setup": "One-ways are a core strength, but difficult throws need a reproducible lineup. If the orb misses, the setup can be unrecoverable after Buy Phase.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/49ff8efd75b76941da3018362061275d3a1d43d6.mp4?accountingTag=VAL",
         "title": "Viper Poison Cloud ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
     },
@@ -64,10 +63,10 @@
       "purpose": "Split open sites, hide several crossing lanes at once, and control when defenders regain information.",
       "setup": "Place it for the entire round plan. The emitters cannot be moved, so a wall that helps defenders retake can hurt the team later.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/36db8f44946850c2a20aba43d8ad3ecd977c7d7e.mp4?accountingTag=VAL",
         "title": "Viper Toxic Screen ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
     },
@@ -86,10 +85,10 @@
       "purpose": "Clear a corner, stop a plant or defuse, and double the threat of teammate damage through Vulnerable.",
       "setup": "Damage depends on how long the target remains inside, so pair it with a choke, smoke, stun, or confirmed spike timing.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/9eeb3090efed080792e6ea2f264fd60ebb12694e.mp4?accountingTag=VAL",
         "title": "Viper Snake Bite ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
     },
@@ -108,10 +107,10 @@
       "purpose": "Lock down a planted spike or high-value zone and force close, uncertain fights.",
       "setup": "Move between several safe pockets. Repeating one hiding spot turns the entire ultimate into one pre-aimed duel.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/4601fd972c588a79cdd910b2497546f156886c40.mp4?accountingTag=VAL",
         "title": "Viper's Pit ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
     },
@@ -124,19 +123,6 @@
       "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
     }
   ],
-  "pickRate": 0.9,
-  "pickRateRank": 25,
-  "sampleLabel": "Legacy unverified draft - excluded from promotion",
-  "mapPickRates": {
-    "Breeze": 3.9,
-    "Split": 0.6,
-    "Lotus": 0.5
-  },
-  "mapWinRates": {
-    "Breeze": 50.4,
-    "Split": 47.9,
-    "Lotus": 48.2
-  },
   "lore": [
     {
       "label": "Origin",
@@ -151,8 +137,95 @@
   ],
   "uuid": "707eab51-4836-f488-046a-cda6bf494859",
   "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 7.0643,
+  "pickRateRank": 17,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Haven": 0.5263,
+    "Sunset": 0.5506,
+    "Bind": 6.9993,
+    "Breeze": 37.1824,
+    "Icebox": 74.3045,
+    "Lotus": 2.3365,
+    "Corrode": 4.4018,
+    "Summit": 2.2149,
+    "Pearl": 0.7723,
+    "Fracture": 0.8094,
+    "Split": 6.2665,
+    "Ascent": 0.2096,
+    "Abyss": 0.4402
+  },
+  "mapWinRates": {
+    "Haven": 55.1104,
+    "Sunset": 52.0707,
+    "Bind": 50.0176,
+    "Breeze": 49.8132,
+    "Icebox": 49.5399,
+    "Lotus": 49.4239,
+    "Corrode": 49.4006,
+    "Summit": 49.3632,
+    "Pearl": 48.6451,
+    "Fracture": 47.2278,
+    "Split": 47.0955,
+    "Ascent": 45.8128,
+    "Abyss": 44.3898
+  },
+  "mapFitSources": {
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -160,7 +233,7 @@
     "entityName": "Viper",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -232,6 +305,40 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
     "pickRate": {
       "_tier": "synthesized",
       "_sources": [],
@@ -262,35 +369,7 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "lore": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "uuid": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "source": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "lastReviewed": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "patchVersion": {
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

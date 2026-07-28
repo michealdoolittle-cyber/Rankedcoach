@@ -2,7 +2,21 @@
   "id": "neon",
   "label": "Neon",
   "role": "Duelist",
-  "maps": [],
+  "maps": [
+    "Corrode",
+    "Breeze",
+    "Pearl",
+    "Split",
+    "Bind",
+    "Summit",
+    "Ascent",
+    "Fracture",
+    "Abyss",
+    "Sunset",
+    "Icebox",
+    "Haven",
+    "Lotus"
+  ],
   "icon": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/bb2a4828-46eb-8cd1-e765-15848195d751/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "High Gear changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "High Gear needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/a1c82c1a3aa3676bbff05dae9af8fdd8f2f25fb7.mp4?accountingTag=VAL",
+        "title": "HIGH GEAR",
+        "source": "https://playvalorant.com/en-us/agents/neon/",
+        "provider": "riot"
+      }
     },
     {
       "id": "relay-bolt",
@@ -51,7 +71,13 @@
       },
       "purpose": "Relay Bolt limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Relay Bolt needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/db28dddd3cf49297ca4c10c1898e4d3702af9d6f.mp4?accountingTag=VAL",
+        "title": "RELAY BOLT",
+        "source": "https://playvalorant.com/en-us/agents/neon/",
+        "provider": "riot"
+      }
     },
     {
       "id": "fast-lane",
@@ -66,7 +92,13 @@
       },
       "purpose": "Fast Lane performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Fast Lane needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/c1ba9d2ec4c567f6b27ddeab512ed245d5706e6b.mp4?accountingTag=VAL",
+        "title": "FAST LANE",
+        "source": "https://playvalorant.com/en-us/agents/neon/",
+        "provider": "riot"
+      }
     },
     {
       "id": "overdrive",
@@ -81,7 +113,13 @@
       },
       "purpose": "Overdrive changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Overdrive needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/917de7be4f9bad96b54f47a4de6f91c323a57a6a.mp4?accountingTag=VAL",
+        "title": "OVERDRIVE",
+        "source": "https://playvalorant.com/en-us/agents/neon/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
   "uuid": "bb2a4828-46eb-8cd1-e765-15848195d751",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 18.2596,
+  "pickRateRank": 9,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Corrode": 23.3825,
+    "Breeze": 20.4916,
+    "Pearl": 15.2896,
+    "Split": 12.9994,
+    "Bind": 30.5597,
+    "Summit": 20.7178,
+    "Ascent": 8.4918,
+    "Fracture": 18.5375,
+    "Abyss": 12.4201,
+    "Sunset": 27.7089,
+    "Icebox": 7.1007,
+    "Haven": 17.9917,
+    "Lotus": 20.6763
+  },
+  "mapWinRates": {
+    "Corrode": 52.9883,
+    "Breeze": 52.3264,
+    "Pearl": 51.8226,
+    "Split": 51.7998,
+    "Bind": 51.4887,
+    "Summit": 51.3669,
+    "Ascent": 51.3121,
+    "Fracture": 51.3094,
+    "Abyss": 51.1806,
+    "Sunset": 51.1066,
+    "Icebox": 51.0386,
+    "Haven": 50.6336,
+    "Lotus": 50.5317
+  },
+  "mapFitSources": {
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Neon",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

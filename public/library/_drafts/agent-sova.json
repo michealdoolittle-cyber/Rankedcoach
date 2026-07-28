@@ -3,9 +3,8 @@
   "label": "Sova",
   "role": "Initiator",
   "maps": [
-    "Ascent",
-    "Haven",
-    "Breeze"
+    "Breeze",
+    "Haven"
   ],
   "icon": "https://media.valorant-api.com/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa/fullportrait.png",
@@ -42,10 +41,10 @@
       "purpose": "Finish tagged enemies, clear utility, punish plants, and force players out of cover.",
       "setup": "Use full damage only when the center can land. Edge damage is pressure, not a guaranteed kill.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/7776fa677e90c72da94ec7d188d2d4618116c41b.mp4?accountingTag=VAL",
         "title": "Sova Shock Bolt ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
     },
@@ -64,10 +63,10 @@
       "purpose": "Confirm occupied lanes and make defenders turn away from the entry fight to break the dart.",
       "setup": "Place it where the pulse sees the fight but defenders cannot destroy it without exposing themselves.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/50f9d870fa2a9b9ba38408eb718ffc06879c11a8.mp4?accountingTag=VAL",
         "title": "Sova Recon Bolt ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
     },
@@ -86,10 +85,10 @@
       "purpose": "Clear the exact route the entry will take and force defenders to shoot or give up space.",
       "setup": "Start close enough that teammates can follow the drone. A full solo flight with nobody ready wastes the reveal window.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/6c6f036376c18ddf4ed0c589b506b8889d86a29a.mp4?accountingTag=VAL",
         "title": "Sova Owl Drone ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
     },
@@ -108,10 +107,10 @@
       "purpose": "Convert recon or a drone tag, deny a plant or defuse, and damage clustered rotations.",
       "setup": "Lead the target between blasts. Firing all three at the same stale position gives away the remaining shots.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/df9ce34c3d2a7f527929cac123501e1473e0da0e.mp4?accountingTag=VAL",
         "title": "Sova Hunter's Fury ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
     },
@@ -124,19 +123,6 @@
       "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
     }
   ],
-  "pickRate": 4.9,
-  "pickRateRank": 7,
-  "sampleLabel": "Legacy unverified draft - excluded from promotion",
-  "mapPickRates": {
-    "Ascent": 8.4,
-    "Haven": 7.9,
-    "Breeze": 7.7
-  },
-  "mapWinRates": {
-    "Ascent": 51.3,
-    "Haven": 50.8,
-    "Breeze": 50.8
-  },
   "lore": [
     {
       "label": "Origin",
@@ -151,8 +137,95 @@
   ],
   "uuid": "320b2a48-4d9b-a075-30f1-1f93a9b638fa",
   "source": "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 49.6788,
+  "pickRateRank": 3,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Lotus": 3.2674,
+    "Summit": 14.752,
+    "Corrode": 13.5481,
+    "Pearl": 9.9811,
+    "Bind": 6.4399,
+    "Sunset": 63.5148,
+    "Ascent": 88.3208,
+    "Breeze": 89.5668,
+    "Haven": 86.2068,
+    "Abyss": 82.7264,
+    "Icebox": 89.4924,
+    "Split": 2.7296,
+    "Fracture": 2.637
+  },
+  "mapWinRates": {
+    "Lotus": 51.8388,
+    "Summit": 51.0071,
+    "Corrode": 50.9949,
+    "Pearl": 50.977,
+    "Bind": 50.5054,
+    "Sunset": 50.4379,
+    "Ascent": 50.4318,
+    "Breeze": 50.2826,
+    "Haven": 50.2672,
+    "Abyss": 50.2447,
+    "Icebox": 49.6954,
+    "Split": 49.5876,
+    "Fracture": 49.0913
+  },
+  "mapFitSources": {
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -160,7 +233,7 @@
     "entityName": "Sova",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -232,6 +305,40 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
     "pickRate": {
       "_tier": "synthesized",
       "_sources": [],
@@ -262,35 +369,7 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "lore": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "uuid": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "source": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/320b2a48-4d9b-a075-30f1-1f93a9b638fa?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "lastReviewed": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "patchVersion": {
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

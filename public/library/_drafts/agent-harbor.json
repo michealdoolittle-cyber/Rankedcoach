@@ -2,7 +2,21 @@
   "id": "harbor",
   "label": "Harbor",
   "role": "Controller",
-  "maps": [],
+  "maps": [
+    "Fracture",
+    "Breeze",
+    "Pearl",
+    "Ascent",
+    "Summit",
+    "Icebox",
+    "Abyss",
+    "Lotus",
+    "Bind",
+    "Corrode",
+    "Split",
+    "Sunset",
+    "Haven"
+  ],
   "icon": "https://media.valorant-api.com/agents/95b78ed7-4637-86d9-7e41-71ba8c293152/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/95b78ed7-4637-86d9-7e41-71ba8c293152/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "High Tide limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "High Tide must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/1705161e278ec0d669e17e3392ece2cfb3555316.mp4?accountingTag=VAL",
+        "title": "HIGH TIDE",
+        "source": "https://playvalorant.com/en-us/agents/harbor/",
+        "provider": "riot"
+      }
     },
     {
       "id": "storm-surge",
@@ -51,7 +71,13 @@
       },
       "purpose": "Storm Surge is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Storm Surge must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/e8a2822075831bdda3b1a121a569c61cb865eb59.mp4?accountingTag=VAL",
+        "title": "STORM SURGE",
+        "source": "https://playvalorant.com/en-us/agents/harbor/",
+        "provider": "riot"
+      }
     },
     {
       "id": "cove",
@@ -66,7 +92,13 @@
       },
       "purpose": "Cove controls sightlines. Place it on the specific defender view the team needs removed, then move while that view is blocked.",
       "setup": "Cove must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/ba5abcf93cae8d9dfacaac56862dd400407d416e.mp4?accountingTag=VAL",
+        "title": "COVE (COVE SMOKE)",
+        "source": "https://playvalorant.com/en-us/agents/harbor/",
+        "provider": "riot"
+      }
     },
     {
       "id": "reckoning",
@@ -81,7 +113,13 @@
       },
       "purpose": "Reckoning is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Reckoning must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/820946b15b9a68ca46270d44363574dc634b8c1f.mp4?accountingTag=VAL",
+        "title": "RECKONING",
+        "source": "https://playvalorant.com/en-us/agents/harbor/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/95b78ed7-4637-86d9-7e41-71ba8c293152?language=en-US",
   "uuid": "95b78ed7-4637-86d9-7e41-71ba8c293152",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 2.2054,
+  "pickRateRank": 25,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Fracture": 0.7014,
+    "Breeze": 11.6218,
+    "Pearl": 1.5673,
+    "Ascent": 0.2201,
+    "Summit": 2.628,
+    "Icebox": 1.3421,
+    "Abyss": 1.1731,
+    "Lotus": 0.273,
+    "Bind": 0.4814,
+    "Corrode": 0.6793,
+    "Split": 0.2564,
+    "Sunset": 0.284,
+    "Haven": 0.1754
+  },
+  "mapWinRates": {
+    "Fracture": 50.0813,
+    "Breeze": 48.8024,
+    "Pearl": 47.5462,
+    "Ascent": 47.3418,
+    "Summit": 46.269,
+    "Icebox": 46.0766,
+    "Abyss": 44.3517,
+    "Lotus": 44.0209,
+    "Bind": 42.3471,
+    "Corrode": 40.5242,
+    "Split": 40.4673,
+    "Sunset": 38.6822,
+    "Haven": 31.9986
+  },
+  "mapFitSources": {
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Harbor",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

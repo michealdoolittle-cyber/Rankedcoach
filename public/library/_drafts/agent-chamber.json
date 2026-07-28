@@ -2,7 +2,21 @@
   "id": "chamber",
   "label": "Chamber",
   "role": "Sentinel",
-  "maps": [],
+  "maps": [
+    "Abyss",
+    "Fracture",
+    "Sunset",
+    "Breeze",
+    "Corrode",
+    "Lotus",
+    "Bind",
+    "Pearl",
+    "Icebox",
+    "Haven",
+    "Summit",
+    "Split",
+    "Ascent"
+  ],
   "icon": "https://media.valorant-api.com/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Rendezvous changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Rendezvous must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/6d191f3734a8170d99f66642041da9f33240d319.mp4?accountingTag=VAL",
+        "title": "RENDEZVOUS",
+        "source": "https://playvalorant.com/en-us/agents/chamber/",
+        "provider": "riot"
+      }
     },
     {
       "id": "trademark",
@@ -51,7 +71,13 @@
       },
       "purpose": "Trademark provides information. Use the reveal, detection, or tracking result to name an occupied space before a teammate commits.",
       "setup": "Trademark must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/245fa173c5d3677e3838d52fb155b6366d19c91b.mp4?accountingTag=VAL",
+        "title": "TRADEMARK",
+        "source": "https://playvalorant.com/en-us/agents/chamber/",
+        "provider": "riot"
+      }
     },
     {
       "id": "headhunter",
@@ -66,7 +92,13 @@
       },
       "purpose": "Headhunter performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Headhunter must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/745571f61d83d880c42278a35a072cdd8b7bfa12.mp4?accountingTag=VAL",
+        "title": "HEADHUNTER",
+        "source": "https://playvalorant.com/en-us/agents/chamber/",
+        "provider": "riot"
+      }
     },
     {
       "id": "tour-de-force",
@@ -81,7 +113,13 @@
       },
       "purpose": "Tour De Force limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Tour De Force needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/49f14376a65d54586c350e7fe863ba30911032a0.mp4?accountingTag=VAL",
+        "title": "TOUR DE FORCE",
+        "source": "https://playvalorant.com/en-us/agents/chamber/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
   "uuid": "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 42.2037,
+  "pickRateRank": 4,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Abyss": 63.7756,
+    "Fracture": 60.2943,
+    "Sunset": 35.7751,
+    "Breeze": 77.9606,
+    "Corrode": 52.1094,
+    "Lotus": 56.9442,
+    "Bind": 58.7882,
+    "Pearl": 65.9081,
+    "Icebox": 27.0715,
+    "Haven": 37.8242,
+    "Summit": 37.5021,
+    "Split": 26.0345,
+    "Ascent": 23.0457
+  },
+  "mapWinRates": {
+    "Abyss": 50.5174,
+    "Fracture": 50.0435,
+    "Sunset": 49.9599,
+    "Breeze": 49.8571,
+    "Corrode": 49.7407,
+    "Lotus": 49.713,
+    "Bind": 49.7097,
+    "Pearl": 49.6069,
+    "Icebox": 49.3228,
+    "Haven": 49.0249,
+    "Summit": 48.4324,
+    "Split": 47.9648,
+    "Ascent": 47.6523
+  },
+  "mapFitSources": {
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Chamber",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

@@ -2,7 +2,21 @@
   "id": "clove",
   "label": "Clove",
   "role": "Controller",
-  "maps": [],
+  "maps": [
+    "Icebox",
+    "Breeze",
+    "Bind",
+    "Pearl",
+    "Abyss",
+    "Summit",
+    "Fracture",
+    "Lotus",
+    "Ascent",
+    "Corrode",
+    "Split",
+    "Haven",
+    "Sunset"
+  ],
   "icon": "https://media.valorant-api.com/agents/1dbf2edd-4729-0984-3115-daa5eed44993/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/1dbf2edd-4729-0984-3115-daa5eed44993/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Pick-me-up preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Pick-me-up should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
-      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/4adb022f083d3887f73d23f60de71cccb45e6d83.mp4?accountingTag=VAL",
+        "title": "Pick-Me-Up",
+        "source": "https://playvalorant.com/en-us/agents/clove/",
+        "provider": "riot"
+      }
     },
     {
       "id": "ruse",
@@ -51,7 +71,13 @@
       },
       "purpose": "Ruse performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Ruse must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/f74f0d7b96cae0bcf51e97ad99883a370508a381.mp4?accountingTag=VAL",
+        "title": "Ruse",
+        "source": "https://playvalorant.com/en-us/agents/clove/",
+        "provider": "riot"
+      }
     },
     {
       "id": "not-dead-yet",
@@ -66,7 +92,13 @@
       },
       "purpose": "Not Dead Yet preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Not Dead Yet has a second activation in Riot's description. Decide what will trigger that follow-up before the first cast.",
-      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/b9e4ee59e2e2a492ec5a76f71c2161faa6f03981.mp4?accountingTag=VAL",
+        "title": "Not Dead Yet",
+        "source": "https://playvalorant.com/en-us/agents/clove/",
+        "provider": "riot"
+      }
     },
     {
       "id": "meddle",
@@ -81,7 +113,13 @@
       },
       "purpose": "Meddle performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Meddle must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/71b28c3a8e3b6f29a2523f2cada52f2ea5a1eab0.mp4?accountingTag=VAL",
+        "title": "Meddle",
+        "source": "https://playvalorant.com/en-us/agents/clove/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
   "uuid": "1dbf2edd-4729-0984-3115-daa5eed44993",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 70.7628,
+  "pickRateRank": 2,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Icebox": 23.8088,
+    "Breeze": 43.9161,
+    "Bind": 44.204,
+    "Pearl": 58.8755,
+    "Abyss": 68.1941,
+    "Summit": 71.2044,
+    "Fracture": 42.4289,
+    "Lotus": 74.8886,
+    "Ascent": 73.2963,
+    "Corrode": 80.7086,
+    "Split": 78.4779,
+    "Haven": 75.7771,
+    "Sunset": 78.0679
+  },
+  "mapWinRates": {
+    "Icebox": 53.2676,
+    "Breeze": 52.8205,
+    "Bind": 52.2114,
+    "Pearl": 52.158,
+    "Abyss": 52.0142,
+    "Summit": 51.6356,
+    "Fracture": 51.4316,
+    "Lotus": 51.3763,
+    "Ascent": 51.1815,
+    "Corrode": 51.1234,
+    "Split": 51.0589,
+    "Haven": 51.0544,
+    "Sunset": 50.9598
+  },
+  "mapFitSources": {
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Clove",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

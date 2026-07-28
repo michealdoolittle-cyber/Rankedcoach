@@ -2,7 +2,21 @@
   "id": "tejo",
   "label": "Tejo",
   "role": "Initiator",
-  "maps": [],
+  "maps": [
+    "Ascent",
+    "Summit",
+    "Fracture",
+    "Icebox",
+    "Corrode",
+    "Split",
+    "Lotus",
+    "Bind",
+    "Abyss",
+    "Sunset",
+    "Pearl",
+    "Haven",
+    "Breeze"
+  ],
   "icon": "https://media.valorant-api.com/agents/b444168c-4e35-8076-db47-ef9bf368f384/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/b444168c-4e35-8076-db47-ef9bf368f384/fullportrait.png",
   "fundamentals": [
@@ -31,7 +45,13 @@
       },
       "purpose": "Guided Salvo applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Guided Salvo must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/612a857ad0b5ebfa86611af953066356cd33fe97.mp4?accountingTag=VAL",
+        "title": "Guided Salvo",
+        "source": "https://playvalorant.com/en-us/agents/tejo/",
+        "provider": "riot"
+      }
     },
     {
       "id": "special-delivery",
@@ -46,7 +66,13 @@
       },
       "purpose": "Special Delivery applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Special Delivery must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/6fdd2855da57354f3f1d274bea06f8f24140ef23.mp4?accountingTag=VAL",
+        "title": "Special Delivery",
+        "source": "https://playvalorant.com/en-us/agents/tejo/",
+        "provider": "riot"
+      }
     },
     {
       "id": "armageddon",
@@ -61,7 +87,13 @@
       },
       "purpose": "Armageddon performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Armageddon must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/8060ca420965ebd775f8cdbe3589600ee5733911.mp4?accountingTag=VAL",
+        "title": "Armageddon",
+        "source": "https://playvalorant.com/en-us/agents/tejo/",
+        "provider": "riot"
+      }
     },
     {
       "id": "stealth-drone",
@@ -76,7 +108,13 @@
       },
       "purpose": "Stealth Drone provides information. Use the reveal, detection, or tracking result to name an occupied space before a teammate commits.",
       "setup": "Stealth Drone must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/68c56e770855ce32eab9ba4283e4496952295d9a.mp4?accountingTag=VAL",
+        "title": "Stealth Drone",
+        "source": "https://playvalorant.com/en-us/agents/tejo/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -93,8 +131,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
   "uuid": "b444168c-4e35-8076-db47-ef9bf368f384",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 2.1868,
+  "pickRateRank": 26,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Ascent": 0.8747,
+    "Summit": 5.3161,
+    "Fracture": 38.0075,
+    "Icebox": 0.5355,
+    "Corrode": 4.0035,
+    "Split": 3.1589,
+    "Lotus": 2.2782,
+    "Bind": 3.5835,
+    "Abyss": 4.2521,
+    "Sunset": 2.5401,
+    "Pearl": 4.3008,
+    "Haven": 0.759,
+    "Breeze": 0.5364
+  },
+  "mapWinRates": {
+    "Ascent": 51.4074,
+    "Summit": 51.0695,
+    "Fracture": 49.8932,
+    "Icebox": 49.5386,
+    "Corrode": 48.5605,
+    "Split": 48.1674,
+    "Lotus": 47.9224,
+    "Bind": 47.8147,
+    "Abyss": 47.6975,
+    "Sunset": 47.1493,
+    "Pearl": 46.7559,
+    "Haven": 46.378,
+    "Breeze": 45.8403
+  },
+  "mapFitSources": {
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -102,7 +227,7 @@
     "entityName": "Tejo",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -203,6 +328,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

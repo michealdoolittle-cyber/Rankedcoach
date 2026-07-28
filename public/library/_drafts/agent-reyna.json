@@ -2,7 +2,21 @@
   "id": "reyna",
   "label": "Reyna",
   "role": "Duelist",
-  "maps": [],
+  "maps": [
+    "Abyss",
+    "Icebox",
+    "Bind",
+    "Corrode",
+    "Breeze",
+    "Lotus",
+    "Summit",
+    "Sunset",
+    "Fracture",
+    "Split",
+    "Haven",
+    "Ascent",
+    "Pearl"
+  ],
   "icon": "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Devour preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Devour should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
-      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/327ccef09ef3c84a92320593c5db1bcb4b37e1e7.mp4?accountingTag=VAL",
+        "title": "DEVOUR",
+        "source": "https://playvalorant.com/en-us/agents/reyna/",
+        "provider": "riot"
+      }
     },
     {
       "id": "dismiss",
@@ -51,7 +71,13 @@
       },
       "purpose": "Dismiss performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Dismiss should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
-      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/6a7db5a37dd8e6e6671699ff30ad297cf1f2eeda.mp4?accountingTag=VAL",
+        "title": "DISMISS",
+        "source": "https://playvalorant.com/en-us/agents/reyna/",
+        "provider": "riot"
+      }
     },
     {
       "id": "leer",
@@ -66,7 +92,13 @@
       },
       "purpose": "Leer is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Leer must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/01030fba2df618b91c6185bb076f54e8c6c40415.mp4?accountingTag=VAL",
+        "title": "LEER",
+        "source": "https://playvalorant.com/en-us/agents/reyna/",
+        "provider": "riot"
+      }
     },
     {
       "id": "empress",
@@ -81,7 +113,13 @@
       },
       "purpose": "Empress changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Empress must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/d777e81e035db1430b1fbf664a432163deed5afb.mp4?accountingTag=VAL",
+        "title": "EMPRESS",
+        "source": "https://playvalorant.com/en-us/agents/reyna/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
   "uuid": "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 42.0353,
+  "pickRateRank": 5,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Abyss": 36.0269,
+    "Icebox": 67.4251,
+    "Bind": 33.2313,
+    "Corrode": 37.0452,
+    "Breeze": 51.9058,
+    "Lotus": 36.9386,
+    "Summit": 47.5987,
+    "Sunset": 38.8162,
+    "Fracture": 38.4036,
+    "Split": 39.4095,
+    "Haven": 41.0193,
+    "Ascent": 38.6581,
+    "Pearl": 36.0876
+  },
+  "mapWinRates": {
+    "Abyss": 50.2876,
+    "Icebox": 50.2602,
+    "Bind": 49.7683,
+    "Corrode": 49.6305,
+    "Breeze": 49.4809,
+    "Lotus": 49.3876,
+    "Summit": 49.3733,
+    "Sunset": 49.3059,
+    "Fracture": 49.2669,
+    "Split": 49.1731,
+    "Haven": 48.9144,
+    "Ascent": 48.5721,
+    "Pearl": 48.4265
+  },
+  "mapFitSources": {
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Reyna",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

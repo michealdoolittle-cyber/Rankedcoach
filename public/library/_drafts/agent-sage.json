@@ -3,9 +3,8 @@
   "label": "Sage",
   "role": "Sentinel",
   "maps": [
-    "Split",
-    "Sunset",
-    "Haven"
+    "Bind",
+    "Split"
   ],
   "icon": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/569fdd95-4d10-43ab-ca70-79becc718b46/fullportrait.png",
@@ -42,10 +41,10 @@
       "purpose": "Hold attackers in damage utility, stop a fast hit, and make a retake swing easier to time.",
       "setup": "Throw it where enemies must cross, not where they already finished moving. Layer two slows only when the extra time changes the round.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/45053483528b96cbe003ac39e6b53c9866d5fea6.mp4?accountingTag=VAL",
         "title": "Sage Slow Orb ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
     },
@@ -64,10 +63,10 @@
       "purpose": "Restore a teammate who can take another meaningful fight and preserve armor value.",
       "setup": "Do not cross an exposed lane just to heal. Ask whether the healed player can actually rejoin the round.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/a247d196383136d3de15b4d6d9c816e3c8054ba0.mp4?accountingTag=VAL",
         "title": "Sage Healing Orb ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
     },
@@ -86,10 +85,10 @@
       "purpose": "Delay a choke, secure a plant, reshape an angle, or elevate a teammate.",
       "setup": "Off-angle walls are possible, but every exposed segment can give attackers a safe breaking target. Build for a specific fight or timing.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/a79b1d6838cee5572b428babd74a2db0c07f4ea5.mp4?accountingTag=VAL",
         "title": "Sage Barrier Orb ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
     },
@@ -108,27 +107,14 @@
       "purpose": "Recover a key weapon, restore numbers, or force defenders to contest the body.",
       "setup": "Clear the body and name the revived player's escape route first. A resurrection that immediately dies spends the ultimate without restoring pressure.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/df83929ed5da349c37a5bf4600c2b55010c72402.mp4?accountingTag=VAL",
         "title": "Sage Resurrection ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
     }
   ],
-  "pickRate": 6.8,
-  "pickRateRank": 5,
-  "sampleLabel": "Legacy unverified draft - excluded from promotion",
-  "mapPickRates": {
-    "Split": 8.9,
-    "Sunset": 6.7,
-    "Haven": 6.5
-  },
-  "mapWinRates": {
-    "Split": 52.3,
-    "Sunset": 51.9,
-    "Haven": 51.5
-  },
   "lore": [
     {
       "label": "Origin",
@@ -143,8 +129,95 @@
   ],
   "uuid": "569fdd95-4d10-43ab-ca70-79becc718b46",
   "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 9.4933,
+  "pickRateRank": 15,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Sunset": 6.034,
+    "Split": 29.2948,
+    "Bind": 5.6118,
+    "Icebox": 7.7539,
+    "Summit": 17.0589,
+    "Ascent": 4.2482,
+    "Corrode": 5.1052,
+    "Abyss": 3.592,
+    "Pearl": 3.7887,
+    "Lotus": 2.9874,
+    "Breeze": 3.1125,
+    "Fracture": 4.1087,
+    "Haven": 3.8266
+  },
+  "mapWinRates": {
+    "Sunset": 53.4626,
+    "Split": 53.393,
+    "Bind": 53.0275,
+    "Icebox": 53.0242,
+    "Summit": 53.0049,
+    "Ascent": 52.8925,
+    "Corrode": 52.1761,
+    "Abyss": 51.6869,
+    "Pearl": 51.4937,
+    "Lotus": 51.3101,
+    "Breeze": 50.5005,
+    "Fracture": 49.8837,
+    "Haven": 48.596
+  },
+  "mapFitSources": {
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -152,7 +225,7 @@
     "entityName": "Sage",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -224,6 +297,40 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
     "pickRate": {
       "_tier": "synthesized",
       "_sources": [],
@@ -254,35 +361,7 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "lore": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "uuid": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "source": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "lastReviewed": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "patchVersion": {
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

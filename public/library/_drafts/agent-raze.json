@@ -40,7 +40,13 @@
       },
       "purpose": "Blast Pack applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Blast Pack needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/82028c5e9ae38b59660dbf9f57f341f1c20c5480.mp4?accountingTag=VAL",
+        "title": "BLAST PACK",
+        "source": "https://playvalorant.com/en-us/agents/raze/",
+        "provider": "riot"
+      }
     },
     {
       "id": "paint-shells",
@@ -55,7 +61,13 @@
       },
       "purpose": "Paint Shells applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Paint Shells must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/d75fd65435a84906bb3e8ad0b97c505e7359697b.mp4?accountingTag=VAL",
+        "title": "PAINT SHELLS",
+        "source": "https://playvalorant.com/en-us/agents/raze/",
+        "provider": "riot"
+      }
     },
     {
       "id": "boom-bot",
@@ -70,7 +82,13 @@
       },
       "purpose": "Boom Bot applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Boom Bot must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/c824fe8e08a4f36be2273aa456819d2c2b6cd6b0.mp4?accountingTag=VAL",
+        "title": "BOOM BOT",
+        "source": "https://playvalorant.com/en-us/agents/raze/",
+        "provider": "riot"
+      }
     },
     {
       "id": "showstopper",
@@ -85,7 +103,13 @@
       },
       "purpose": "Showstopper applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Showstopper must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/7281a34566f12d202dee3d43e0fa0bf0b4271d60.mp4?accountingTag=VAL",
+        "title": "SHOWSTOPPER",
+        "source": "https://playvalorant.com/en-us/agents/raze/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -101,22 +125,96 @@
     }
   ],
   "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
-  "pickRate": 4,
+  "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
+  "lastReviewed": "2026-07-28",
+  "patchVersion": "13.01",
+  "pickRate": 17.1142,
   "pickRateRank": 10,
-  "sampleLabel": "Legacy unverified draft - excluded from promotion",
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
   "mapPickRates": {
-    "Lotus": 6.5,
-    "Split": 5.9,
-    "Sunset": 4.4
+    "Icebox": 4.7888,
+    "Split": 41.079,
+    "Fracture": 20.8847,
+    "Bind": 44.7121,
+    "Corrode": 4.3977,
+    "Sunset": 21.9669,
+    "Lotus": 40.3145,
+    "Pearl": 5.4013,
+    "Summit": 7.5384,
+    "Ascent": 4.1932,
+    "Haven": 3.6033,
+    "Abyss": 2.5473,
+    "Breeze": 1.1922
   },
   "mapWinRates": {
-    "Lotus": 50.6,
-    "Split": 50.7,
-    "Sunset": 50.3
+    "Icebox": 51.0822,
+    "Split": 50.5101,
+    "Fracture": 50.3108,
+    "Bind": 50.0009,
+    "Corrode": 49.8298,
+    "Sunset": 49.7783,
+    "Lotus": 49.7418,
+    "Pearl": 49.6373,
+    "Summit": 49.5114,
+    "Ascent": 49.4038,
+    "Haven": 48.9472,
+    "Abyss": 48.8669,
+    "Breeze": 45.7006
   },
-  "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
-  "lastReviewed": "2026-07-27",
-  "patchVersion": "13.01",
+  "mapFitSources": {
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -124,7 +222,7 @@
     "entityName": "Raze",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -210,6 +308,26 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
     "pickRate": {
       "_tier": "synthesized",
       "_sources": [],
@@ -240,21 +358,7 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "uuid": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "lastReviewed": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "patchVersion": {
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

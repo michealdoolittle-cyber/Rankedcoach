@@ -2,7 +2,21 @@
   "id": "breach",
   "label": "Breach",
   "role": "Initiator",
-  "maps": [],
+  "maps": [
+    "Summit",
+    "Fracture",
+    "Split",
+    "Corrode",
+    "Abyss",
+    "Lotus",
+    "Sunset",
+    "Bind",
+    "Haven",
+    "Pearl",
+    "Ascent",
+    "Breeze",
+    "Icebox"
+  ],
   "icon": "https://media.valorant-api.com/agents/5f8d3a7f-467b-97f3-062c-13acf203c006/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/5f8d3a7f-467b-97f3-062c-13acf203c006/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Flashpoint is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Flashpoint must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ffa4695b83e2f959bc59f0393dfc74e533546a89.mp4?accountingTag=VAL",
+        "title": "FLASHPOINT",
+        "source": "https://playvalorant.com/en-us/agents/breach/",
+        "provider": "riot"
+      }
     },
     {
       "id": "fault-line",
@@ -51,7 +71,13 @@
       },
       "purpose": "Fault Line limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Fault Line must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/a4f24e1fe60879234be5da0f8a768feb8f379fdd.mp4?accountingTag=VAL",
+        "title": "FAULT LINE",
+        "source": "https://playvalorant.com/en-us/agents/breach/",
+        "provider": "riot"
+      }
     },
     {
       "id": "aftershock",
@@ -66,7 +92,13 @@
       },
       "purpose": "Aftershock applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Aftershock must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/592212ab60d09999d493c2099f9260d59fab917a.mp4?accountingTag=VAL",
+        "title": "AFTERSHOCK",
+        "source": "https://playvalorant.com/en-us/agents/breach/",
+        "provider": "riot"
+      }
     },
     {
       "id": "rolling-thunder",
@@ -81,7 +113,13 @@
       },
       "purpose": "Rolling Thunder limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Rolling Thunder must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/207b0ab21f8e27e98ca22f4b5546cc0963d94af6.mp4?accountingTag=VAL",
+        "title": "ROLLING THUNDER",
+        "source": "https://playvalorant.com/en-us/agents/breach/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
   "uuid": "5f8d3a7f-467b-97f3-062c-13acf203c006",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 3.3083,
+  "pickRateRank": 22,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Summit": 2.237,
+    "Fracture": 32.8117,
+    "Split": 5.681,
+    "Corrode": 2.6402,
+    "Abyss": 2.472,
+    "Lotus": 7.9684,
+    "Sunset": 4.1758,
+    "Bind": 2.0912,
+    "Haven": 1.7356,
+    "Pearl": 1.0966,
+    "Ascent": 1.0082,
+    "Breeze": 0.3556,
+    "Icebox": 0.4708
+  },
+  "mapWinRates": {
+    "Summit": 48.7136,
+    "Fracture": 48.3191,
+    "Split": 47.8424,
+    "Corrode": 47.7293,
+    "Abyss": 47.624,
+    "Lotus": 47.2875,
+    "Sunset": 46.9992,
+    "Bind": 46.8264,
+    "Haven": 45.4845,
+    "Pearl": 44.529,
+    "Ascent": 43.4382,
+    "Breeze": 43.0549,
+    "Icebox": 41.1957
+  },
+  "mapFitSources": {
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Breach",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

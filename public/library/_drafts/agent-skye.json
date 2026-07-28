@@ -2,7 +2,21 @@
   "id": "skye",
   "label": "Skye",
   "role": "Initiator",
-  "maps": [],
+  "maps": [
+    "Icebox",
+    "Fracture",
+    "Lotus",
+    "Bind",
+    "Split",
+    "Sunset",
+    "Corrode",
+    "Haven",
+    "Pearl",
+    "Breeze",
+    "Abyss",
+    "Summit",
+    "Ascent"
+  ],
   "icon": "https://media.valorant-api.com/agents/6f2a04ca-43e0-be17-7f36-b3908627744d/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/6f2a04ca-43e0-be17-7f36-b3908627744d/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Trailblazer applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Trailblazer must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/3256cb83ad3563516497864209ea585c595cd8df.mp4?accountingTag=VAL",
+        "title": "Q - Trailblazer",
+        "source": "https://playvalorant.com/en-us/agents/skye/",
+        "provider": "riot"
+      }
     },
     {
       "id": "guiding-light",
@@ -51,7 +71,13 @@
       },
       "purpose": "Guiding Light is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Guiding Light must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/64edfd7af8a7125dd9c981c52fdc60f9560b821b.mp4?accountingTag=VAL",
+        "title": "E - Guiding Light",
+        "source": "https://playvalorant.com/en-us/agents/skye/",
+        "provider": "riot"
+      }
     },
     {
       "id": "regrowth",
@@ -66,7 +92,13 @@
       },
       "purpose": "Regrowth preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Regrowth must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/d64273e31bf2c4d16c52acc2f461e9accdb7c7f9.mp4?accountingTag=VAL",
+        "title": "C - Regrowth",
+        "source": "https://playvalorant.com/en-us/agents/skye/",
+        "provider": "riot"
+      }
     },
     {
       "id": "seekers",
@@ -81,7 +113,13 @@
       },
       "purpose": "Seekers is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Seekers must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/82ab63d9255f9fbbea7c13e00cd46b09ff90d25b.mp4?accountingTag=VAL",
+        "title": "X - Seekers",
+        "source": "https://playvalorant.com/en-us/agents/skye/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
   "uuid": "6f2a04ca-43e0-be17-7f36-b3908627744d",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 12.2944,
+  "pickRateRank": 13,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Icebox": 0.8928,
+    "Fracture": 9.4274,
+    "Lotus": 8.0524,
+    "Bind": 51.2237,
+    "Split": 52.4446,
+    "Sunset": 5.9241,
+    "Corrode": 4.0765,
+    "Haven": 4.5798,
+    "Pearl": 5.9089,
+    "Breeze": 2.8461,
+    "Abyss": 2.4226,
+    "Summit": 9.5156,
+    "Ascent": 2.2518
+  },
+  "mapWinRates": {
+    "Icebox": 51.7169,
+    "Fracture": 51.4274,
+    "Lotus": 49.9665,
+    "Bind": 49.894,
+    "Split": 49.602,
+    "Sunset": 49.5452,
+    "Corrode": 49.5341,
+    "Haven": 49.3872,
+    "Pearl": 48.6692,
+    "Breeze": 48.455,
+    "Abyss": 48.036,
+    "Summit": 47.882,
+    "Ascent": 46.4897
+  },
+  "mapFitSources": {
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Skye",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

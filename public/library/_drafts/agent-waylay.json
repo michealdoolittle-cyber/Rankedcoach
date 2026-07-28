@@ -2,7 +2,21 @@
   "id": "waylay",
   "label": "Waylay",
   "role": "Duelist",
-  "maps": [],
+  "maps": [
+    "Lotus",
+    "Haven",
+    "Corrode",
+    "Bind",
+    "Abyss",
+    "Pearl",
+    "Icebox",
+    "Ascent",
+    "Summit",
+    "Split",
+    "Fracture",
+    "Sunset",
+    "Breeze"
+  ],
   "icon": "https://media.valorant-api.com/agents/df1cb487-4902-002e-5c17-d28e83e78588/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/df1cb487-4902-002e-5c17-d28e83e78588/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Refract changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Refract has a second activation in Riot's description. Decide what will trigger that follow-up before the first cast.",
-      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/189ff46acf7dd27b245631af9a6c51ef95013bb7.mp4?accountingTag=VAL",
+        "title": "Refract",
+        "source": "https://playvalorant.com/en-us/agents/waylay/",
+        "provider": "riot"
+      }
     },
     {
       "id": "saturate",
@@ -51,7 +71,13 @@
       },
       "purpose": "Saturate changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Saturate must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/705b3917c26e9e97c5343d57875cd3404537190b.mp4?accountingTag=VAL",
+        "title": "Saturate",
+        "source": "https://playvalorant.com/en-us/agents/waylay/",
+        "provider": "riot"
+      }
     },
     {
       "id": "lightspeed",
@@ -66,7 +92,13 @@
       },
       "purpose": "Lightspeed changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Lightspeed must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/e06f520d0e844b3c136623c2568137ac47bc54ff.mp4?accountingTag=VAL",
+        "title": "Lightspeed",
+        "source": "https://playvalorant.com/en-us/agents/waylay/",
+        "provider": "riot"
+      }
     },
     {
       "id": "convergent-paths",
@@ -81,7 +113,13 @@
       },
       "purpose": "Convergent Paths changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Convergent Paths must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news/b04a789382009e666cca021889586c6bc00bbaf5.mp4?accountingTag=VAL",
+        "title": "Convergent Paths",
+        "source": "https://playvalorant.com/en-us/agents/waylay/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/df1cb487-4902-002e-5c17-d28e83e78588?language=en-US",
   "uuid": "df1cb487-4902-002e-5c17-d28e83e78588",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 10.4245,
+  "pickRateRank": 14,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Lotus": 12.2658,
+    "Haven": 6.8288,
+    "Corrode": 43.9074,
+    "Bind": 16.6595,
+    "Abyss": 31.6635,
+    "Pearl": 12.6761,
+    "Icebox": 5.9568,
+    "Ascent": 8.1991,
+    "Summit": 15.9582,
+    "Split": 12.8384,
+    "Fracture": 14.5536,
+    "Sunset": 11.3686,
+    "Breeze": 5.7874
+  },
+  "mapWinRates": {
+    "Lotus": 49.891,
+    "Haven": 49.6475,
+    "Corrode": 49.3313,
+    "Bind": 49.1925,
+    "Abyss": 49.1375,
+    "Pearl": 48.9684,
+    "Icebox": 48.8434,
+    "Ascent": 48.7877,
+    "Summit": 48.7354,
+    "Split": 48.5784,
+    "Fracture": 48.4394,
+    "Sunset": 48.0438,
+    "Breeze": 45.7798
+  },
+  "mapFitSources": {
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "Waylay",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

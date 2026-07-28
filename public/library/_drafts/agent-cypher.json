@@ -3,9 +3,8 @@
   "label": "Cypher",
   "role": "Sentinel",
   "maps": [
-    "Split",
-    "Sunset",
-    "Haven"
+    "Bind",
+    "Split"
   ],
   "icon": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b/fullportrait.png",
@@ -42,10 +41,10 @@
       "purpose": "Break vision, isolate a choke, or trigger a swing from the crossing audio.",
       "setup": "One-way cages are possible on many ledges and are strong when the exposed feet line is consistent. Test the height from both sides.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/54a8dfaa9b82c7aaf994b0432bb25ef1e95c985c.mp4?accountingTag=VAL",
         "title": "Cypher Cyber Cage ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
     },
@@ -64,10 +63,10 @@
       "purpose": "Confirm an execute, watch a rotation, and force an enemy to turn away from the gunfight.",
       "setup": "Use a view that answers one question clearly. A hidden camera pointed at empty geometry is not information.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/825ba0643c74ad583350d1eb562bb7650ad78ae0.mp4?accountingTag=VAL",
         "title": "Cypher Spycam ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
     },
@@ -86,10 +85,10 @@
       "purpose": "Protect a flank, delay an entry, and create a guaranteed wallbang or swing timing.",
       "setup": "Change height and anchor position. A trip has little value if attackers can clear it without exposing themselves.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/aab21b75eb43f0e8cc9c0b816cb4877ae868b9fd.mp4?accountingTag=VAL",
         "title": "Cypher Trapwire ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
     },
@@ -108,27 +107,14 @@
       "purpose": "Call rotations, isolate lurkers, and time a swing between reveal pulses.",
       "setup": "Say which enemy position changes the plan. The second reveal can punish players who immediately reposition after the first.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ddeaad5ff2e4865351755b71fdc4fc97339fb334.mp4?accountingTag=VAL",
         "title": "Cypher Neural Theft ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
     }
   ],
-  "pickRate": 3.4,
-  "pickRateRank": 11,
-  "sampleLabel": "Legacy unverified draft - excluded from promotion",
-  "mapPickRates": {
-    "Split": 4.9,
-    "Sunset": 4.5,
-    "Haven": 3.8
-  },
-  "mapWinRates": {
-    "Split": 50.2,
-    "Sunset": 50.1,
-    "Haven": 50.6
-  },
   "lore": [
     {
       "label": "Origin",
@@ -143,8 +129,95 @@
   ],
   "uuid": "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
   "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 24.8149,
+  "pickRateRank": 8,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Summit": 30.2211,
+    "Ascent": 25.7892,
+    "Haven": 33.2468,
+    "Pearl": 5.8483,
+    "Lotus": 7.3735,
+    "Bind": 19.3711,
+    "Fracture": 16.8721,
+    "Split": 35.8487,
+    "Sunset": 36.3244,
+    "Abyss": 10.4689,
+    "Breeze": 6.3178,
+    "Corrode": 7.2808,
+    "Icebox": 0.6433
+  },
+  "mapWinRates": {
+    "Summit": 51.3012,
+    "Ascent": 51.122,
+    "Haven": 50.823,
+    "Pearl": 50.8136,
+    "Lotus": 50.654,
+    "Bind": 50.5038,
+    "Fracture": 50.4966,
+    "Split": 50.4559,
+    "Sunset": 50.2279,
+    "Abyss": 49.5483,
+    "Breeze": 49.2868,
+    "Corrode": 48.8219,
+    "Icebox": 45.7464
+  },
+  "mapFitSources": {
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -152,7 +225,7 @@
     "entityName": "Cypher",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -224,6 +297,40 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
     "pickRate": {
       "_tier": "synthesized",
       "_sources": [],
@@ -254,35 +361,7 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "lore": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "uuid": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "source": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "lastReviewed": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "patchVersion": {
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

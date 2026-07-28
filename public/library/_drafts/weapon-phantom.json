@@ -46,7 +46,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a",
   "source": "https://valorant-api.com/v1/weapons/ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a?language=en-US",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
   "_meta": {
     "schemaVersion": 1,
@@ -55,7 +55,7 @@
     "entityName": "Phantom",
     "operation": "merge",
     "groupId": "rifles",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"

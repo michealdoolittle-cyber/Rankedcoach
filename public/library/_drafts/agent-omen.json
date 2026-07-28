@@ -3,9 +3,8 @@
   "label": "Omen",
   "role": "Controller",
   "maps": [
-    "Haven",
-    "Ascent",
-    "Lotus"
+    "Split",
+    "Haven"
   ],
   "icon": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/8e253930-4c05-31dd-1b6c-968525494517/fullportrait.png",
@@ -42,10 +41,10 @@
       "purpose": "Start a coordinated swing through a narrow lane or disable a defender holding behind cover.",
       "setup": "Call the path before casting. It can hit teammates, so align the projectile beside their approach rather than through them.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/f401fc788f3182b6d5aa25af6056c842117b1b36.mp4?accountingTag=VAL",
         "title": "Omen Paranoia ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
     },
@@ -64,10 +63,10 @@
       "purpose": "Remove named angles, sell pressure across the map, and preserve a smoke for the late round.",
       "setup": "One-ways are possible on ledges and boxes, but require consistent placement. A complete execute smoke matters more than a fragile trick setup.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/ba0b035a5ff2bb8d9487ba461b3d15900ff50f6b.mp4?accountingTag=VAL",
         "title": "Omen Dark Cover ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
     },
@@ -86,10 +85,10 @@
       "purpose": "Reach elevation, escape utility, cross a watched gap, or reposition after making noise elsewhere.",
       "setup": "Hide the channel sound or force the enemy to watch multiple landing points. Unsupported open-ground teleports are a gamble.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/33550fee410c5a55ea8832f41827a12aaddb686f.mp4?accountingTag=VAL",
         "title": "Omen Shrouded Step ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
     },
@@ -108,27 +107,14 @@
       "purpose": "Recover the spike, force defenders to turn, sell a fake, or convert information into a fast rotation.",
       "setup": "Choose a landing with cover and a reason. A cancel can still create value if it forces the enemy to abandon position.",
       "video": {
-        "provider": "riot",
         "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/252cf8ad86b6aca6210ba93ea856f52708476eba.mp4?accountingTag=VAL",
         "title": "Omen From the Shadows ability demo",
-        "source": "https://playvalorant.com/en-us/agents/"
+        "source": "https://playvalorant.com/en-us/agents/",
+        "provider": "riot"
       },
       "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
     }
   ],
-  "pickRate": 4.9,
-  "pickRateRank": 7,
-  "sampleLabel": "Legacy unverified draft - excluded from promotion",
-  "mapPickRates": {
-    "Haven": 5.6,
-    "Ascent": 5.3,
-    "Lotus": 5.2
-  },
-  "mapWinRates": {
-    "Haven": 47.6,
-    "Ascent": 47.6,
-    "Lotus": 47.5
-  },
   "lore": [
     {
       "label": "Origin",
@@ -143,8 +129,95 @@
   ],
   "uuid": "8e253930-4c05-31dd-1b6c-968525494517",
   "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 15.8372,
+  "pickRateRank": 11,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Ascent": 20.7916,
+    "Haven": 18.1087,
+    "Sunset": 16.1808,
+    "Split": 14.4435,
+    "Pearl": 5.7527,
+    "Lotus": 18.5393,
+    "Corrode": 14.6633,
+    "Bind": 4.9323,
+    "Breeze": 7.1616,
+    "Summit": 15.371,
+    "Abyss": 14.0173,
+    "Fracture": 4.2213,
+    "Icebox": 6.2817
+  },
+  "mapWinRates": {
+    "Ascent": 46.298,
+    "Haven": 46.1751,
+    "Sunset": 46.017,
+    "Split": 45.7691,
+    "Pearl": 45.7545,
+    "Lotus": 45.4831,
+    "Corrode": 45.4036,
+    "Bind": 45.0267,
+    "Breeze": 44.9904,
+    "Summit": 44.819,
+    "Abyss": 44.7306,
+    "Fracture": 43.7855,
+    "Icebox": 43.7202
+  },
+  "mapFitSources": {
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -152,7 +225,7 @@
     "entityName": "Omen",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -224,6 +297,40 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "lore": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "uuid": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "source": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "n/a (auto-approved)"
+    },
+    "lastReviewed": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
     "pickRate": {
       "_tier": "synthesized",
       "_sources": [],
@@ -254,35 +361,7 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "lore": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "uuid": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "source": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "n/a (auto-approved)"
-    },
-    "lastReviewed": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "patchVersion": {
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

@@ -2,7 +2,21 @@
   "id": "vyse",
   "label": "Vyse",
   "role": "Sentinel",
-  "maps": [],
+  "maps": [
+    "Summit",
+    "Corrode",
+    "Pearl",
+    "Lotus",
+    "Split",
+    "Sunset",
+    "Abyss",
+    "Fracture",
+    "Breeze",
+    "Ascent",
+    "Haven",
+    "Icebox",
+    "Bind"
+  ],
   "icon": "https://media.valorant-api.com/agents/efba5359-4016-a1e5-7626-b1ae76895940/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/efba5359-4016-a1e5-7626-b1ae76895940/fullportrait.png",
   "fundamentals": [
@@ -31,7 +45,13 @@
       },
       "purpose": "Shear limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Shear must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/bacb07fdf5b13efeab5e24168f8e244257c1d0cb.mp4?accountingTag=VAL",
+        "title": "Shear",
+        "source": "https://playvalorant.com/en-us/agents/vyse/",
+        "provider": "riot"
+      }
     },
     {
       "id": "arc-rose",
@@ -46,7 +66,13 @@
       },
       "purpose": "Arc Rose is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Arc Rose must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/5cefca2b93f097285ce2cb4f20fec7184b555218.mp4?accountingTag=VAL",
+        "title": "Arc Rose",
+        "source": "https://playvalorant.com/en-us/agents/vyse/",
+        "provider": "riot"
+      }
     },
     {
       "id": "razorvine",
@@ -61,7 +87,13 @@
       },
       "purpose": "Razorvine applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Razorvine must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/84154b3401b08acad60d739616017a4fcd86710a.mp4?accountingTag=VAL",
+        "title": "Razorvine",
+        "source": "https://playvalorant.com/en-us/agents/vyse/",
+        "provider": "riot"
+      }
     },
     {
       "id": "steel-garden",
@@ -76,7 +108,13 @@
       },
       "purpose": "Steel Garden performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Steel Garden must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/f9d32afb39a3260b915ea6ef441054c904a69e91.mp4?accountingTag=VAL",
+        "title": "Steel Garden",
+        "source": "https://playvalorant.com/en-us/agents/vyse/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -93,8 +131,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/efba5359-4016-a1e5-7626-b1ae76895940?language=en-US",
   "uuid": "efba5359-4016-a1e5-7626-b1ae76895940",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 7.2132,
+  "pickRateRank": 16,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Summit": 7.3472,
+    "Corrode": 18.3253,
+    "Pearl": 9.555,
+    "Lotus": 19.8108,
+    "Split": 4.3753,
+    "Sunset": 12.0184,
+    "Abyss": 10.9066,
+    "Fracture": 3.0934,
+    "Breeze": 0.9246,
+    "Ascent": 5.4684,
+    "Haven": 0.8877,
+    "Icebox": 0.4402,
+    "Bind": 1.7425
+  },
+  "mapWinRates": {
+    "Summit": 51.7169,
+    "Corrode": 50.3722,
+    "Pearl": 50.1367,
+    "Lotus": 50.0678,
+    "Split": 50.0138,
+    "Sunset": 49.7803,
+    "Abyss": 49.6298,
+    "Fracture": 49.3238,
+    "Breeze": 48.6306,
+    "Ascent": 48.1812,
+    "Haven": 46.6406,
+    "Icebox": 44.8223,
+    "Bind": 44.605
+  },
+  "mapFitSources": {
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -102,7 +227,7 @@
     "entityName": "Vyse",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -203,6 +328,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

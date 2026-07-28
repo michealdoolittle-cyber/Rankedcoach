@@ -2,7 +2,21 @@
   "id": "astra",
   "label": "Astra",
   "role": "Controller",
-  "maps": [],
+  "maps": [
+    "Icebox",
+    "Bind",
+    "Haven",
+    "Pearl",
+    "Breeze",
+    "Sunset",
+    "Ascent",
+    "Abyss",
+    "Summit",
+    "Lotus",
+    "Split",
+    "Corrode",
+    "Fracture"
+  ],
   "icon": "https://media.valorant-api.com/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Nova Pulse applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Nova Pulse needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/e54ed10355d571c15ef2ee5a0897cca06851fd56.mp4?accountingTag=VAL",
+        "title": "NOVA PULSE",
+        "source": "https://playvalorant.com/en-us/agents/astra/",
+        "provider": "riot"
+      }
     },
     {
       "id": "nebula-dissipate",
@@ -51,7 +71,13 @@
       },
       "purpose": "Nebula  / Dissipate controls sightlines. Place it on the specific defender view the team needs removed, then move while that view is blocked.",
       "setup": "Nebula  / Dissipate needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/2aafadb8cef8c1ab2894a657c23988e921b006c8.mp4?accountingTag=VAL",
+        "title": "NEBULA",
+        "source": "https://playvalorant.com/en-us/agents/astra/",
+        "provider": "riot"
+      }
     },
     {
       "id": "gravity-well",
@@ -66,7 +92,13 @@
       },
       "purpose": "Gravity Well applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "Gravity Well needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/3439c939846214067561746668bfd96805efc225.mp4?accountingTag=VAL",
+        "title": "GRAVITY WELL",
+        "source": "https://playvalorant.com/en-us/agents/astra/",
+        "provider": "riot"
+      }
     },
     {
       "id": "astral-form-cosmic-divide",
@@ -81,7 +113,13 @@
       },
       "purpose": "Astral Form / Cosmic Divide performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Astral Form / Cosmic Divide needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/6bed3444d432f27cdac08f3be1dad2760be7052f.mp4?accountingTag=VAL",
+        "title": "ASTRAL FORM / COSMIC DIVIDE",
+        "source": "https://playvalorant.com/en-us/agents/astra/",
+        "provider": "riot"
+      }
     },
     {
       "id": "astral-form",
@@ -96,7 +134,13 @@
       },
       "purpose": "Astral Form performs the exact function in Riot's current description. Build the play around that stated effect instead of assuming an unlisted interaction.",
       "setup": "Astral Form needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/6bed3444d432f27cdac08f3be1dad2760be7052f.mp4?accountingTag=VAL",
+        "title": "ASTRAL FORM / COSMIC DIVIDE",
+        "source": "https://playvalorant.com/en-us/agents/astra/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -113,8 +157,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
   "uuid": "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 3.7901,
+  "pickRateRank": 21,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Icebox": 0.3772,
+    "Bind": 1.4498,
+    "Haven": 0.9742,
+    "Pearl": 18.4939,
+    "Breeze": 16.2375,
+    "Sunset": 0.982,
+    "Ascent": 0.9192,
+    "Abyss": 16.6561,
+    "Summit": 4.74,
+    "Lotus": 1.0102,
+    "Split": 1.6886,
+    "Corrode": 2.954,
+    "Fracture": 2.6784
+  },
+  "mapWinRates": {
+    "Icebox": 54.0703,
+    "Bind": 49.0987,
+    "Haven": 47.7827,
+    "Pearl": 46.6366,
+    "Breeze": 46.6217,
+    "Sunset": 46.3856,
+    "Ascent": 46.1157,
+    "Abyss": 46.0836,
+    "Summit": 45.9033,
+    "Lotus": 45.0389,
+    "Split": 44.7067,
+    "Corrode": 44.6318,
+    "Fracture": 44.5125
+  },
+  "mapFitSources": {
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -122,7 +253,7 @@
     "entityName": "Astra",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -223,6 +354,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

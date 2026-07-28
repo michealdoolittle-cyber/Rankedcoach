@@ -1,5 +1,151 @@
 {
-  "generatedAt": "2026-07-28T03:44:20.499Z",
+  "generatedAt": "2026-07-28T14:56:52.164Z",
   "baselineRequested": false,
-  "changedEntities": []
+  "changedEntities": [
+    {
+      "category": "agent",
+      "slug": "cypher",
+      "entityName": "Cypher",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "agent",
+      "slug": "jett",
+      "entityName": "Jett",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "agent",
+      "slug": "omen",
+      "entityName": "Omen",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "agent",
+      "slug": "sage",
+      "entityName": "Sage",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "agent",
+      "slug": "sova",
+      "entityName": "Sova",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "agent",
+      "slug": "viper",
+      "entityName": "Viper",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "abyss",
+      "entityName": "Abyss",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "ascent",
+      "entityName": "Ascent",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "corrode",
+      "entityName": "Corrode",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "fracture",
+      "entityName": "Fracture",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "haven",
+      "entityName": "Haven",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "icebox",
+      "entityName": "Icebox",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "lotus",
+      "entityName": "Lotus",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "pearl",
+      "entityName": "Pearl",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn",
+        "dataStatus"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "summit",
+      "entityName": "Summit",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn"
+      ]
+    },
+    {
+      "category": "map",
+      "slug": "sunset",
+      "entityName": "Sunset",
+      "changedFields": [
+        "layoutImage",
+        "calloutLabelsBakedIn"
+      ]
+    }
+  ]
 }

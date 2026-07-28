@@ -2,7 +2,21 @@
   "id": "kay-o",
   "label": "KAY/O",
   "role": "Initiator",
-  "maps": [],
+  "maps": [
+    "Split",
+    "Abyss",
+    "Sunset",
+    "Fracture",
+    "Haven",
+    "Corrode",
+    "Ascent",
+    "Breeze",
+    "Pearl",
+    "Bind",
+    "Lotus",
+    "Icebox",
+    "Summit"
+  ],
   "icon": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/601dbbe7-43ce-be57-2a40-4abd24953621/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "FRAG/ment applies direct pressure. Pair its verified damage effect with a confirmed position rather than spending it on an unchecked guess.",
       "setup": "FRAG/ment must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/292e5319f9cd0aa7eee01af47413f4009236f87e.mp4?accountingTag=VAL",
+        "title": "FRAG/MENT",
+        "source": "https://playvalorant.com/en-us/agents/kay-o/",
+        "provider": "riot"
+      }
     },
     {
       "id": "flash-drive",
@@ -51,7 +71,13 @@
       },
       "purpose": "FLASH/drive is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "FLASH/drive must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/9ad839fef2fd8d16d9608f8a6efd709091f0b74a.mp4?accountingTag=VAL",
+        "title": "FLASH/DRIVE",
+        "source": "https://playvalorant.com/en-us/agents/kay-o/",
+        "provider": "riot"
+      }
     },
     {
       "id": "zero-point",
@@ -66,7 +92,13 @@
       },
       "purpose": "ZERO/point limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "ZERO/point must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/dbccb81297a30a9ddc92ec1883c832298f014504.mp4?accountingTag=VAL",
+        "title": "ZERO/POINT",
+        "source": "https://playvalorant.com/en-us/agents/kay-o/",
+        "provider": "riot"
+      }
     },
     {
       "id": "null-cmd",
@@ -81,7 +113,13 @@
       },
       "purpose": "NULL/cmd limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "NULL/cmd should be prepared around the official description above; no extra range, duration, or interaction is assumed when Riot's public feed does not state it.",
-      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/d9e35cc5d68e533df2d6e15a93471a5c073b0471.mp4?accountingTag=VAL",
+        "title": "NULL/CMD",
+        "source": "https://playvalorant.com/en-us/agents/kay-o/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +136,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
   "uuid": "601dbbe7-43ce-be57-2a40-4abd24953621",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 2.0988,
+  "pickRateRank": 27,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Split": 1.4918,
+    "Abyss": 3.5946,
+    "Sunset": 2.2735,
+    "Fracture": 2.6611,
+    "Haven": 1.1871,
+    "Corrode": 2.9603,
+    "Ascent": 4.0527,
+    "Breeze": 2.3856,
+    "Pearl": 3.0628,
+    "Bind": 1.3488,
+    "Lotus": 1.0755,
+    "Icebox": 2.8325,
+    "Summit": 2.2566
+  },
+  "mapWinRates": {
+    "Split": 47.2417,
+    "Abyss": 46.9805,
+    "Sunset": 46.9071,
+    "Fracture": 46.8809,
+    "Haven": 45.811,
+    "Corrode": 45.1762,
+    "Ascent": 44.6402,
+    "Breeze": 44.2142,
+    "Pearl": 44.1731,
+    "Bind": 43.6434,
+    "Lotus": 43.0618,
+    "Icebox": 42.9048,
+    "Summit": 42.6913
+  },
+  "mapFitSources": {
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +232,7 @@
     "entityName": "KAY/O",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +333,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

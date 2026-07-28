@@ -2,7 +2,18 @@
   "id": "miks",
   "label": "Miks",
   "role": "Controller",
-  "maps": [],
+  "maps": [
+    "Ascent",
+    "Haven",
+    "Summit",
+    "Fracture",
+    "Sunset",
+    "Breeze",
+    "Bind",
+    "Split",
+    "Lotus",
+    "Pearl"
+  ],
   "icon": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72/fullportrait.png",
   "fundamentals": [
@@ -36,7 +47,13 @@
       },
       "purpose": "M-pulse preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "M-pulse must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/71696d85f7392dc2dbbefbf7d6d53b478dd50d1e.mp4?accountingTag=VAL",
+        "title": "M-pulse",
+        "source": "https://playvalorant.com/en-us/agents/miks/",
+        "provider": "riot"
+      }
     },
     {
       "id": "waveform",
@@ -51,7 +68,13 @@
       },
       "purpose": "Waveform controls sightlines. Place it on the specific defender view the team needs removed, then move while that view is blocked.",
       "setup": "Waveform must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/aba82134b8cf0f62eb0ba80daa9b6d86380e2348.mp4?accountingTag=VAL",
+        "title": "WAVEFORM",
+        "source": "https://playvalorant.com/en-us/agents/miks/",
+        "provider": "riot"
+      }
     },
     {
       "id": "harmonize",
@@ -66,7 +89,13 @@
       },
       "purpose": "Harmonize changes position. Choose the destination and nearby cover before activating the movement effect described by Riot.",
       "setup": "Harmonize must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/7fe1ccd5f450d0e4734c4452cedca5bf6fa818fc.mp4?accountingTag=VAL",
+        "title": "HARMONIZE",
+        "source": "https://playvalorant.com/en-us/agents/miks/",
+        "provider": "riot"
+      }
     },
     {
       "id": "bassquake",
@@ -81,7 +110,13 @@
       },
       "purpose": "Bassquake limits an opponent's options. Time its verified control effect for the moment an enemy must cross or fight.",
       "setup": "Bassquake must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/news_live/460f601d6928013be29591766945f2d6bd4759e2.mp4?accountingTag=VAL",
+        "title": "BASSQUAKE",
+        "source": "https://playvalorant.com/en-us/agents/miks/",
+        "provider": "riot"
+      }
     }
   ],
   "lore": [
@@ -98,8 +133,77 @@
   ],
   "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
   "uuid": "7c8a4701-4de6-9355-b254-e09bc2a34b72",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 4.211,
+  "pickRateRank": 19,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Ascent": 3.4977,
+    "Haven": 3.8769,
+    "Summit": 4.8172,
+    "Fracture": 18.5824,
+    "Sunset": 3.9842,
+    "Breeze": 4.2131,
+    "Bind": 30.7693,
+    "Split": 4.2918,
+    "Lotus": 4.7943,
+    "Pearl": 13.7093
+  },
+  "mapWinRates": {
+    "Ascent": 48.9154,
+    "Haven": 48.6551,
+    "Summit": 48.4247,
+    "Fracture": 48.3029,
+    "Sunset": 48.0878,
+    "Breeze": 48.0153,
+    "Bind": 47.7449,
+    "Split": 47.485,
+    "Lotus": 47.2507,
+    "Pearl": 47.21
+  },
+  "mapFitSources": {
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -107,7 +211,7 @@
     "entityName": "Miks",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -208,6 +312,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,

@@ -2,7 +2,21 @@
   "id": "phoenix",
   "label": "Phoenix",
   "role": "Duelist",
-  "maps": [],
+  "maps": [
+    "Abyss",
+    "Lotus",
+    "Corrode",
+    "Fracture",
+    "Pearl",
+    "Breeze",
+    "Ascent",
+    "Sunset",
+    "Haven",
+    "Summit",
+    "Split",
+    "Bind",
+    "Icebox"
+  ],
   "icon": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/displayicon.png",
   "portrait": "https://media.valorant-api.com/agents/eb93336a-449b-9c1b-0a54-a891f7921d69/fullportrait.png",
   "fundamentals": [
@@ -36,7 +50,13 @@
       },
       "purpose": "Blaze controls sightlines. Place it on the specific defender view the team needs removed, then move while that view is blocked.",
       "setup": "Blaze must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/8c5b0e23be0814583ad4601b4297d04dbaff79f7.mp4?accountingTag=VAL",
+        "title": "BLAZE",
+        "source": "https://playvalorant.com/en-us/agents/phoenix/",
+        "provider": "riot"
+      }
     },
     {
       "id": "hot-hands",
@@ -51,7 +71,13 @@
       },
       "purpose": "Hot Hands preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Hot Hands must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/b702ed368fd050e7cb77adf26bc55bb63c5936fb.mp4?accountingTag=VAL",
+        "title": "HOT HANDS",
+        "source": "https://playvalorant.com/en-us/agents/phoenix/",
+        "provider": "riot"
+      }
     },
     {
       "id": "curveball",
@@ -66,7 +92,13 @@
       },
       "purpose": "Curveball is the kit's vision-denial tool. Use its verified blind or Nearsight effect immediately before the team contests the affected angle.",
       "setup": "Curveball must be equipped before use. Prepare it behind cover, then return to the weapon as soon as the stated effect is active.",
-      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/c62125b1b5637b7b0e0881348502f7e8b8e93572.mp4?accountingTag=VAL",
+        "title": "CURVEBALL",
+        "source": "https://playvalorant.com/en-us/agents/phoenix/",
+        "provider": "riot"
+      }
     },
     {
       "id": "run-it-back",
@@ -81,7 +113,13 @@
       },
       "purpose": "Run it Back preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Run it Back needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/aa122a33b1ef0320174991b8ddee4e82dbc2b937.mp4?accountingTag=VAL",
+        "title": "RUN IT BACK",
+        "source": "https://playvalorant.com/en-us/agents/phoenix/",
+        "provider": "riot"
+      }
     },
     {
       "id": "heating-up",
@@ -96,7 +134,14 @@
       },
       "purpose": "Heating Up preserves team resources. Use its verified recovery effect only when the restored player can safely return to a useful fight.",
       "setup": "Heating Up needs a deliberate target or path. Confirm the landing area and the teammate timing before deploying it.",
-      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US"
+      "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
+      "video": {
+        "src": "https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/b702ed368fd050e7cb77adf26bc55bb63c5936fb.mp4?accountingTag=VAL",
+        "title": "Phoenix ability showcase",
+        "source": "https://playvalorant.com/en-us/agents/phoenix/",
+        "provider": "riot",
+        "contextualFallback": true
+      }
     }
   ],
   "lore": [
@@ -113,8 +158,95 @@
   ],
   "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
   "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
-  "lastReviewed": "2026-07-27",
+  "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
+  "pickRate": 24.8315,
+  "pickRateRank": 7,
+  "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
+  "mapPickRates": {
+    "Abyss": 4.2256,
+    "Lotus": 12.7943,
+    "Corrode": 8.6061,
+    "Fracture": 22.365,
+    "Pearl": 42.6522,
+    "Breeze": 9.4858,
+    "Ascent": 44.5293,
+    "Sunset": 29.1169,
+    "Haven": 37.3869,
+    "Summit": 25.5007,
+    "Split": 14.9896,
+    "Bind": 14.5448,
+    "Icebox": 1.8087
+  },
+  "mapWinRates": {
+    "Abyss": 53.1246,
+    "Lotus": 51.6865,
+    "Corrode": 51.6666,
+    "Fracture": 51.6434,
+    "Pearl": 51.6313,
+    "Breeze": 51.522,
+    "Ascent": 51.5197,
+    "Sunset": 51.4942,
+    "Haven": 51.3686,
+    "Summit": 50.5756,
+    "Split": 50.2837,
+    "Bind": 49.5555,
+    "Icebox": 48.7628
+  },
+  "mapFitSources": {
+    "Abyss": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Lotus": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Corrode": {
+      "actLabel": "V26 Act 1",
+      "patchLabel": "V26 Act 1"
+    },
+    "Fracture": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Pearl": {
+      "actLabel": "V26 Act 3",
+      "patchLabel": "V26 Act 3"
+    },
+    "Breeze": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Ascent": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Sunset": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Haven": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Summit": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Split": {
+      "actLabel": "V26 Act 4",
+      "patchLabel": "13.00"
+    },
+    "Bind": {
+      "actLabel": "V26 Act 2",
+      "patchLabel": "V26 Act 2"
+    },
+    "Icebox": {
+      "actLabel": "V25 Act 4",
+      "patchLabel": "V25 Act 4"
+    }
+  },
   "_meta": {
     "schemaVersion": 1,
     "category": "agent",
@@ -122,7 +254,7 @@
     "entityName": "Phoenix",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T03:44:11.853Z",
+    "generatedAt": "2026-07-28T14:55:35.869Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -223,6 +355,42 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "patchVersion": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRate": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "pickRateRank": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "sampleLabel": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapPickRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapWinRates": {
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+    },
+    "mapFitSources": {
       "_tier": "synthesized",
       "_sources": [],
       "approved": false,
