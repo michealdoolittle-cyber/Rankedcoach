@@ -235,7 +235,7 @@ function proposalFormState(proposal = {}) {
 
 function proposalDisplayEntity(proposal = {}) {
   const form = proposalFormState(proposal);
-  return String(form.entity || proposal.entities?.join(", ") || "General coaching").trim() || "General coaching";
+  return String(form.entity || "").trim() || "General coaching";
 }
 
 function syncProposalEntityDisplay(proposalId, entityValue) {
