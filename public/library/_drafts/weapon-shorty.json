@@ -61,10 +61,10 @@
     "entityName": "Shorty",
     "operation": "merge",
     "groupId": "shotguns",
-    "generatedAt": "2026-07-27T20:01:45.856Z",
+    "generatedAt": "2026-07-28T03:44:11.853Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
-    "lastReviewed": "2026-07-27"
+    "lastReviewed": "2026-07-28"
   },
   "_fieldMeta": {
     "id": {
