@@ -26,6 +26,7 @@ import {
   rejectKnowledgeProposal,
   registerKnowledgeSources,
   runKnowledgePipeline,
+  saveApprovedKnowledgeTarget,
   saveKnowledgeProposalDraft,
   splitTranscriptIntoSections
 } from "../worker/knowledge-pipeline.mjs";
@@ -1229,6 +1230,17 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   const approvedDashboard = await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" });
   assert.equal(approvedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "approved");
   assert.equal(approvedDashboard.review.page.bucketCounts.approved, 1);
+  const savedTarget = await saveApprovedKnowledgeTarget(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    category: "map",
+    entity: "Bind"
+  }, new Date("2026-07-24T00:02:30.000Z"));
+  assert.equal(savedTarget.category, "map");
+  assert.equal(savedTarget.entity, "Bind");
+  const retaggedProposal = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" })).review.proposals.find(item => item.id === proposal.id);
+  assert.equal(retaggedProposal.approvedCategory, "map");
+  assert.equal(retaggedProposal.approvedEntity, "Bind");
   assert.equal((await getPublishedKnowledge(kv)).items.length, 0);
   const published = await publishApprovedKnowledge(kv, {
     proposalId: proposal.id,

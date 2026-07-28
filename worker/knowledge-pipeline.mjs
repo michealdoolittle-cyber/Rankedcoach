@@ -2560,8 +2560,16 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
   const proposalId = String(approval.proposalId || "").trim();
   const owner = normalizeWhitespace(approval.owner);
   const rankedCoachWording = normalizeWhitespace(approval.rankedCoachWording);
+  const category = normalizeWhitespace(approval.category || "general").toLowerCase();
+  const entity = canonicalPublicationEntity(category, approval.entity);
   if (!proposalId || !owner || rankedCoachWording.length < 20) {
     throw new Error("Owner, proposalId, and at least 20 characters of original RankedCoach wording are required.");
+  }
+  if (!["general", "map", "agent", "weapon", "agent-map"].includes(category)) {
+    throw new Error("Choose a valid Library category before approval.");
+  }
+  if (category !== "general" && !entity) {
+    throw new Error("Choose a valid map, agent, weapon, or agent + map before approval.");
   }
   if (approval.confirmOriginalWording !== true) {
     throw new Error("Approval must confirm that the wording is original RankedCoach guidance, not copied transcript text.");
@@ -2588,6 +2596,8 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
     conceptId: proposal.conceptId,
     owner,
     rankedCoachWording,
+    category,
+    entity,
     approvedAt,
     status: "approved-for-manual-library-promotion",
     evidence: proposal.evidence
@@ -2599,6 +2609,8 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
     approvalStatus: "approved",
     approvedAt,
     approvedBy: owner,
+    approvedCategory: category,
+    approvedEntity: entity,
     rejectedAt: null,
     rejectedBy: null,
     rejectionReason: null
@@ -2606,6 +2618,44 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
   await kv.put(key, JSON.stringify(updatedProposal));
   await updateLatestReviewProposal(kv, updatedProposal);
   return record;
+}
+
+export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Date()) {
+  const proposalId = String(target.proposalId || "").trim();
+  const owner = normalizeWhitespace(target.owner);
+  const category = normalizeWhitespace(target.category || "general").toLowerCase();
+  const entity = canonicalPublicationEntity(category, target.entity);
+  if (!proposalId || !owner || !["general", "map", "agent", "weapon", "agent-map"].includes(category)) {
+    throw new Error("Proposal, owner, and a valid Library category are required.");
+  }
+  if (category !== "general" && !entity) {
+    throw new Error("Choose a valid map, agent, weapon, or agent + map for this approved insight.");
+  }
+  const key = `${PROPOSAL_PREFIX}${proposalId}`;
+  const proposal = await kv.get(key, "json");
+  if (!proposal || proposal.approvalStatus !== "approved") {
+    throw new Error("Only an owner-approved insight can have its Library tags saved.");
+  }
+  const approvalKey = `${APPROVAL_PREFIX}${proposalId}`;
+  const approval = await kv.get(approvalKey, "json");
+  const savedAt = nowIso(now);
+  await kv.put(approvalKey, JSON.stringify({
+    ...(approval || {}),
+    proposalId,
+    owner,
+    category,
+    entity,
+    targetSavedAt: savedAt
+  }));
+  const updatedProposal = {
+    ...proposal,
+    approvedCategory: category,
+    approvedEntity: entity,
+    approvedTargetSavedAt: savedAt
+  };
+  await kv.put(key, JSON.stringify(updatedProposal));
+  await updateLatestReviewProposal(kv, updatedProposal);
+  return Object.freeze({ proposalId, category, entity, savedAt, status: "approved-target-saved" });
 }
 
 export async function saveKnowledgeProposalDraft(kv, draft = {}, now = new Date()) {

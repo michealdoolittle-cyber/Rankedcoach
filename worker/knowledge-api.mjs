@@ -7,6 +7,7 @@ import {
   queueKnowledgeSourceRetry,
   rejectKnowledgeProposal,
   runKnowledgePipeline,
+  saveApprovedKnowledgeTarget,
   saveKnowledgeProposalDraft,
   unpublishKnowledge
 } from "./knowledge-pipeline.mjs";
@@ -145,6 +146,12 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
   }
   if (url.pathname === "/api/knowledge/approve") {
     return json(await approveKnowledgeProposal(kv, {
+      ...body,
+      owner: owner.displayName
+    }));
+  }
+  if (url.pathname === "/api/knowledge/approved-target") {
+    return json(await saveApprovedKnowledgeTarget(kv, {
       ...body,
       owner: owner.displayName
     }));

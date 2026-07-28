@@ -227,8 +227,8 @@ function proposalFormState(proposal = {}) {
   const saved = proposalFormDrafts.get(proposal.id) || {};
   return {
     wording: saved.wording ?? proposal.rankedCoachWording ?? proposal.suggestedWording ?? "",
-    category: saved.category ?? proposal.publishedCategory ?? inferCategory(proposal),
-    entity: saved.entity ?? proposal.publishedEntity ?? proposal.entities?.[0] ?? "",
+    category: saved.category ?? proposal.approvedCategory ?? proposal.publishedCategory ?? inferCategory(proposal),
+    entity: saved.entity ?? proposal.approvedEntity ?? proposal.publishedEntity ?? proposal.entities?.[0] ?? "",
     confirmed: saved.confirmed === true
   };
 }
@@ -311,8 +311,7 @@ function proposalCardMarkup(proposal) {
         </div>
         <button class="pd-item knowledge-unpublish" type="button" data-knowledge-action="unpublish" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Remove from Library</button>
       ` : `
-        ${approved ? `
-          <div class="knowledge-publication-targets">
+        <div class="knowledge-publication-targets">
             <label class="auth-field">
               <span>Library location</span>
               <select data-knowledge-category>
@@ -323,7 +322,9 @@ function proposalCardMarkup(proposal) {
               <span>Map, agent, weapon, or agent + map</span>
               <input data-knowledge-entity value="${escapeHtml(form.entity)}" placeholder="Jett · Breeze" />
             </label>
-          </div>
+        </div>
+        ${approved ? `
+          <p class="knowledge-target-help">Save tags keeps this approved insight private. Publish remains a separate action.</p>
         ` : `
           <label class="knowledge-original-confirm">
             <input type="checkbox" data-knowledge-original ${form.confirmed ? "checked" : ""} />
@@ -333,6 +334,7 @@ function proposalCardMarkup(proposal) {
         ${rejected ? `<p class="knowledge-rejection-reason">Rejected: ${escapeHtml(proposal.rejectionReason || "Not selected for publication.")}</p>` : ""}
         <div class="knowledge-proposal-actions">
           <button class="pd-item" type="button" data-knowledge-action="draft" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>${approved ? "Revise in Review" : "Save Draft"}</button>
+          ${approved ? `<button class="pd-item knowledge-save-target" type="button" data-knowledge-action="save-target" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Save tags</button>` : ""}
           <button class="pd-item auth-main-btn" type="button" data-knowledge-action="${primaryAction}" ${(primaryBlocked || busy) ? "disabled" : ""} ${primaryBlocked ? `title="${publishBlockedTitle}"` : ""} ${busy ? `data-knowledge-was-disabled="${primaryBlocked}"` : ""}>${primaryLabel}</button>
           <button class="pd-item knowledge-reject" type="button" data-knowledge-action="reject" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Reject</button>
         </div>
@@ -715,6 +717,7 @@ async function proposalAction(button) {
   const pendingMessages = {
     draft: "Saving this draft privately…",
     approve: "Moving this insight to Approved…",
+    "save-target": "Saving the approved Library tags…",
     publish: "Publishing the reviewed insight…",
     reject: "Moving this insight to Rejected…",
     unpublish: "Removing this guidance from the Library…"
@@ -748,24 +751,47 @@ async function proposalAction(button) {
       setStatus("Draft saved privately. Players cannot see it.", "ready");
     } else if (action === "approve") {
       const confirmed = card.querySelector("[data-knowledge-original]")?.checked === true;
+      const category = card.querySelector("[data-knowledge-category]")?.value || "general";
+      const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
       const approvalRecord = await request("/api/knowledge/approve", {
         method: "POST",
         body: JSON.stringify({
           proposalId,
           rankedCoachWording: wording,
-          confirmOriginalWording: confirmed
+          confirmOriginalWording: confirmed,
+          category,
+          entity
         })
       });
       const updated = updateLocalProposal(proposalId, {
         rankedCoachWording: wording,
         approvalStatus: "approved",
         approvedAt: approvalRecord.approvedAt || new Date().toISOString(),
+        approvedCategory: approvalRecord.category || category,
+        approvedEntity: approvalRecord.entity ?? entity,
         rejectionReason: null,
         rejectedAt: null,
         rejectedBy: null
       });
       if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Insight approved. It is waiting privately in Approved and is not visible to players.", "ready");
+    } else if (action === "save-target") {
+      const category = card.querySelector("[data-knowledge-category]")?.value || "general";
+      const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
+      const targetRecord = await request("/api/knowledge/approved-target", {
+        method: "POST",
+        body: JSON.stringify({ proposalId, category, entity })
+      });
+      proposalFeedback.set(proposalId, {
+        message: "Approved Library tags saved privately. Publish remains separate.",
+        tone: "ready"
+      });
+      const updated = updateLocalProposal(proposalId, {
+        approvedCategory: targetRecord.category || category,
+        approvedEntity: targetRecord.entity ?? entity
+      });
+      if (!updated) await load({ force: true, allowDuringProposalAction: true });
+      setStatus("Approved Library tags saved privately. This insight is still not visible to players.", "ready");
     } else if (action === "publish") {
       const category = card.querySelector("[data-knowledge-category]")?.value || "general";
       const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";

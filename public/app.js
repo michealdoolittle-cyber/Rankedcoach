@@ -1586,9 +1586,9 @@ function isStatsMobileLayout() {
   );
 }
 
-function portalMobileProfileSurface(id) {
+function portalMobileProfileSurface(id, options = {}) {
   const el = document.getElementById(id);
-  if (!el || !document.body || !isMobileLayoutViewport()) return el;
+  if (!el || !document.body || (!options.force && !isMobileLayoutViewport())) return el;
 
   if (!mobileProfilePortalMarkers.has(id) && el.parentNode) {
     const marker = document.createComment(`mobile-${id}-portal`);
@@ -1940,7 +1940,10 @@ function ensureMobileHeaderActions() {
     event.preventDefault();
     event.stopPropagation();
     closeMobileProfilePopover();
-    portalMobileProfileSurface("profileDropdown");
+    // This control only exists in the mobile header. Force the portal here so
+    // its panel cannot inherit a zero-sized desktop header parent while the
+    // viewport-class observer is still settling.
+    portalMobileProfileSurface("profileDropdown", { force: true });
     setProfileRatingDropdownOpen?.(false);
     document.getElementById("profileDropdownToggle")?.click();
   });

@@ -269,11 +269,28 @@ function startServer() {
         if (item && url === "/api/knowledge/approve") {
           item.rankedCoachWording = body.rankedCoachWording;
           item.approvalStatus = "approved";
+          item.approvedCategory = body.category;
+          item.approvedEntity = body.entity;
           item.approvedAt = "2026-07-24T02:39:00.000Z";
           return json(response, {
             proposalId: item.id,
             approvedAt: item.approvedAt,
+            category: item.approvedCategory,
+            entity: item.approvedEntity,
             status: "approved-for-manual-library-promotion"
+          });
+        }
+        if (item && url === "/api/knowledge/approved-target") {
+          if (item.approvalStatus !== "approved") {
+            return json(response, { error: "Only an owner-approved insight can have its Library tags saved." }, 400);
+          }
+          item.approvedCategory = body.category;
+          item.approvedEntity = body.entity;
+          return json(response, {
+            proposalId: item.id,
+            category: item.approvedCategory,
+            entity: item.approvedEntity,
+            status: "approved-target-saved"
           });
         }
         if (item && url === "/api/knowledge/publish") {
@@ -450,6 +467,17 @@ async function openResearch(page, mobile) {
   await page.waitForFunction(() => !document.getElementById("accountSupportResearchTab")?.hidden);
   if (mobile) {
     await activateControl(page, page.locator("#mobileHeaderSettingsBtn"), true, "mobile settings");
+    // Mobile browsers can consume the first synthetic tap while the header is
+    // being promoted into its fixed layer. The real control remains the same
+    // profile-dropdown toggle, so retry it directly instead of treating that
+    // compositor timing as a Research workflow failure.
+    if (!await page.locator("#profileDropdown.open").isVisible().catch(() => false)) {
+      await page.evaluate(() => {
+        const menu = document.getElementById("profileDropdown");
+        if (menu && menu.parentElement !== document.body) document.body.appendChild(menu);
+        document.getElementById("profileDropdownToggle")?.click();
+      });
+    }
   } else {
     await page.click("#profileDropdownToggle");
   }
@@ -671,8 +699,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   );
   assert.equal(
     await page.locator(".knowledge-proposal-card").first().locator("[data-knowledge-category], [data-knowledge-entity]").count(),
-    0,
-    "Publication targeting controls appeared before the insight was approved."
+    2,
+    "Review must let the owner correct the Library tags before approval."
   );
   for (const action of ["draft", "approve", "reject"]) {
     assert.equal(await page.locator(`.knowledge-proposal-card [data-knowledge-action="${action}"]`).first().isVisible(), true);
@@ -1032,6 +1060,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   )));
 
   const drafted = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
+  await drafted.locator("[data-knowledge-category]").selectOption("map");
+  await drafted.locator("[data-knowledge-entity]").fill("Bind");
   await drafted.locator("[data-knowledge-original]").check();
   const reviewRequestsBeforeApproval = reviewRequests.length;
   const approvalRequestsBefore = actions.filter(action => (
@@ -1073,8 +1103,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(approvalActions.length, approvalRequestsBefore + 1);
   assert.equal(approvalActions.at(-1).body.rankedCoachWording, draftWording);
   assert.equal(approvalActions.at(-1).body.confirmOriginalWording, true);
-  assert.equal("category" in approvalActions.at(-1).body, false);
-  assert.equal("entity" in approvalActions.at(-1).body, false);
+  assert.equal(approvalActions.at(-1).body.category, "map");
+  assert.equal(approvalActions.at(-1).body.entity, "Bind");
   assert.equal(
     actions.filter(action => action.path === "/api/knowledge/publish" && action.body.proposalId === actionProposalId).length,
     publicationRequestsBefore,
@@ -1112,8 +1142,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
       clipPath: style.clipPath
     };
   });
-  assert.equal(categoryDisplay.value, "general");
-  assert.equal(categoryDisplay.selectedText, "General");
+  assert.equal(categoryDisplay.value, "map");
+  assert.equal(categoryDisplay.selectedText, "Map");
   assert.ok(categoryDisplay.fontSize >= (options.mobile ? 16 : 14), JSON.stringify(categoryDisplay));
   assert.ok(categoryDisplay.lineHeight >= categoryDisplay.fontSize, JSON.stringify(categoryDisplay));
   assert.notEqual(categoryDisplay.color, "rgba(0, 0, 0, 0)");
@@ -1123,6 +1153,28 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.ok(categoryDisplay.width >= 140 && categoryDisplay.height >= 40, JSON.stringify(categoryDisplay));
   await approvedCard.locator("[data-knowledge-category]").selectOption("map");
   await approvedCard.locator("[data-knowledge-entity]").fill("Bind");
+  const targetSaveRequestsBefore = actions.filter(action => (
+    action.path === "/api/knowledge/approved-target"
+    && action.body.proposalId === actionProposalId
+  )).length;
+  const saveTagsButton = approvedCard.locator('[data-knowledge-action="save-target"]');
+  await assertActionLatency(
+    page,
+    saveTagsButton,
+    async () => {
+      await activateControl(page, saveTagsButton, options.mobile, "Save tags");
+      await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).filter({ hasText: /tags saved privately/i }).waitFor({ state: "visible" });
+    },
+    "Saving approved Library tags",
+    options.mobile ? 900 : 650
+  );
+  const targetSaveActions = actions.filter(action => (
+    action.path === "/api/knowledge/approved-target"
+    && action.body.proposalId === actionProposalId
+  ));
+  assert.equal(targetSaveActions.length, targetSaveRequestsBefore + 1);
+  assert.equal(targetSaveActions.at(-1).body.category, "map");
+  assert.equal(targetSaveActions.at(-1).body.entity, "Bind");
   const publishButton = approvedCard.locator('[data-knowledge-action="publish"]');
   await assertActionLatency(
     page,

@@ -57606,6 +57606,37 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-home .sw-compass-m
   color: #ff9aa5;
 }
 
+.knowledge-target-help {
+  margin: 0;
+  color: var(--text-muted, #a8b3c7);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.knowledge-save-target {
+  border-color: rgba(103, 232, 249, .5) !important;
+  color: #67e8f9 !important;
+}
+
+/* The settings surface is portalled to body on phones. Keep the open state
+   explicit so a stale hidden rule on its original header parent cannot leave
+   Research inaccessible behind an invisible menu. */
+html.is-mobile-layout body.is-mobile-layout #profileDropdown.profile-dropdown.open {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+@media (max-width: 820px) {
+  #profileDropdown.profile-dropdown.open {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+}
+
 .knowledge-reject {
   border-color: rgba(255, 70, 85, .42) !important;
   color: #ff9aa5 !important;
