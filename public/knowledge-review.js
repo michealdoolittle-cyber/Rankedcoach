@@ -233,6 +233,25 @@ function proposalFormState(proposal = {}) {
   };
 }
 
+function proposalDisplayEntity(proposal = {}) {
+  const form = proposalFormState(proposal);
+  return String(form.entity || proposal.entities?.join(", ") || "General coaching").trim() || "General coaching";
+}
+
+function syncProposalEntityDisplay(proposalId, entityValue) {
+  const display = String(entityValue || "").trim() || "General coaching";
+  const card = document.querySelector(`[data-knowledge-proposal="${proposalId}"]`);
+  if (card) {
+    const heading = card.querySelector("[data-knowledge-proposal-heading-entity]");
+    if (heading) heading.textContent = display;
+  }
+  const queueItem = document.querySelector(`[data-knowledge-select-proposal="${proposalId}"]`);
+  if (queueItem) {
+    const queueEntity = queueItem.querySelector("[data-knowledge-queue-entity]");
+    if (queueEntity) queueEntity.textContent = display;
+  }
+}
+
 function captureProposalDraft(card = document.querySelector("[data-knowledge-active-review] [data-knowledge-proposal]")) {
   const proposalId = card?.dataset.knowledgeProposal;
   if (!proposalId) return;
@@ -274,7 +293,7 @@ function proposalCardMarkup(proposal) {
       <div class="knowledge-proposal-heading">
         <div>
           <span>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</span>
-          <strong>${escapeHtml((proposal.entities || []).join(", ") || "General coaching")}</strong>
+          <strong data-knowledge-proposal-heading-entity>${escapeHtml(proposalDisplayEntity(proposal))}</strong>
         </div>
         <span class="knowledge-review-state is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml((proposal.approvalStatus || "pending").replaceAll("-", " "))}</span>
       </div>
@@ -344,14 +363,14 @@ function proposalCardMarkup(proposal) {
 }
 
 function queueItemMarkup(proposal, activeId) {
-  const entity = (proposal.entities || []).join(", ") || "General coaching";
+  const entity = proposalDisplayEntity(proposal);
   const status = (proposal.approvalStatus || "pending").replaceAll("-", " ");
   return `
     <button class="pd-item knowledge-review-queue-item${proposal.id === activeId ? " is-active" : ""}" type="button"
       data-knowledge-select-proposal="${escapeHtml(proposal.id)}"
       aria-pressed="${proposal.id === activeId}" ${pendingProposalIds.size ? "disabled" : ""}>
       <span>
-        <strong>${escapeHtml(entity)}</strong>
+        <strong data-knowledge-queue-entity>${escapeHtml(entity)}</strong>
         <small>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</small>
       </span>
       <b class="is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml(status)}</b>
@@ -922,8 +941,10 @@ const rememberProposalFormControl = event => {
   if (control.matches("[data-knowledge-entity]")) draft.entity = control.value;
   if (control.matches("[data-knowledge-original]")) draft.confirmed = control.checked;
   proposalFormDrafts.set(proposalId, draft);
+  if (control.matches("[data-knowledge-entity]")) syncProposalEntityDisplay(proposalId, control.value);
 };
 proposalList?.addEventListener("change", rememberProposalFormControl);
+proposalList?.addEventListener("input", rememberProposalFormControl);
 document.getElementById("knowledgeResearchPanel")?.addEventListener("click", event => {
   if (pendingProposalIds.size && event.target.closest("button, summary")) return;
   const bucketButton = event.target.closest("[data-knowledge-bucket]");

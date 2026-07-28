@@ -1062,6 +1062,16 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   const drafted = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
   await drafted.locator("[data-knowledge-category]").selectOption("map");
   await drafted.locator("[data-knowledge-entity]").fill("Bind");
+  assert.equal(
+    (await drafted.locator("[data-knowledge-proposal-heading-entity]").textContent()).trim(),
+    "Bind",
+    "Editing the entity tag did not immediately update the active proposal heading."
+  );
+  assert.equal(
+    (await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"] [data-knowledge-queue-entity]`).textContent()).trim(),
+    "Bind",
+    "Editing the entity tag did not immediately update the queue item heading."
+  );
   await drafted.locator("[data-knowledge-original]").check();
   const reviewRequestsBeforeApproval = reviewRequests.length;
   const approvalRequestsBefore = actions.filter(action => (
