@@ -50,6 +50,13 @@ function getRect(page, selector) {
   });
 }
 
+async function assertLoadingMotivationQuote(page) {
+  const quote = (await page.locator("#loginInitCopy").innerText()).trim();
+  const source = (await page.locator("#loginInitDetail").innerText()).trim();
+  assert.match(quote, /^“.+”$/, "loading overlay should show the motivational quote, not old progress copy");
+  assert.match(source, /^—\s+\S/, "loading overlay should keep the quote attribution directly under the quote");
+}
+
 async function seedAvatarProfile(page, profileBorder, profileBorderRotate) {
   await page.addInitScript(({ profileBorder, profileBorderRotate }) => {
     const profileId = "profile-avatar-layout";
@@ -126,7 +133,7 @@ async function run() {
     await desktopAuthPage.click("#authLoginBtn");
     await desktopAuthPage.locator("#loginInitOverlay.active").waitFor({ state: "visible" });
     await desktopAuthPage.waitForTimeout(280);
-    assert.match(await desktopAuthPage.locator("#loginInitCopy").innerText(), /Signing you in/i);
+    await assertLoadingMotivationQuote(desktopAuthPage);
     assert.equal(await desktopAuthPage.locator("#loginInitOverlay").getAttribute("aria-hidden"), "false");
     assert.equal(await desktopAuthPage.locator("#loginInitOverlay .login-init-card").evaluate(element => getComputedStyle(element).opacity), "1");
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
@@ -173,7 +180,7 @@ async function run() {
     await returningAuthPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await returningAuthPage.waitForTimeout(900);
     await returningAuthPage.locator("#loginInitOverlay.active").waitFor({ state: "visible" });
-    assert.match(await returningAuthPage.locator("#loginInitCopy").innerText(), /saved profiles|security settings/i);
+    await assertLoadingMotivationQuote(returningAuthPage);
     assert.equal(await returningAuthPage.locator("#loginInitOverlay").getAttribute("aria-hidden"), "false");
     const returningCardPaintState = await returningAuthPage.locator("#loginInitOverlay .login-init-card").evaluate(card => {
       const rect = card.getBoundingClientRect();
@@ -222,8 +229,8 @@ async function run() {
 
       assert.equal(button.width, 52);
       assert.equal(button.height, 52);
-      assert.equal(frame.width, 62);
-      assert.equal(frame.height, 62);
+      assert.ok(frame.width >= 68 && frame.width <= 72, `mobile profile frame should stay enlarged around the avatar: ${JSON.stringify(frame)}`);
+      assert.ok(frame.height >= 68 && frame.height <= 72, `mobile profile frame should stay enlarged around the avatar: ${JSON.stringify(frame)}`);
       assert.equal(image.width, 38);
       assert.equal(image.height, 38);
       assert.ok(frame.x < image.x && frame.y < image.y);

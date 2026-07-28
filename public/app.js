@@ -744,28 +744,9 @@ function setDailyWarmupPickerOpen(kind = "", shouldOpen = false) {
     const menu = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPickerMenu" : "dailyWarmupOneTrickPickerMenu");
     const trigger = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPicker" : "dailyWarmupOneTrickPicker");
     if (menu) {
-      // On phones the full roster is a sizeable scroll surface. Keep it in a
-      // fixed, contained popover while it is open instead of expanding the
-      // full-height training modal and forcing a costly reflow of every drill.
-      // This also keeps taps responsive after moving between Exclude and
-      // One-trick.
-      if (isOpen && isMobileLayoutViewport() && trigger) {
-        const rect = trigger.getBoundingClientRect();
-        const viewportWidth = window.visualViewport?.width || window.innerWidth || 390;
-        const viewportHeight = window.visualViewport?.height || window.innerHeight || 844;
-        const sideInset = 12;
-        const width = Math.max(180, Math.min(rect.width, viewportWidth - (sideInset * 2)));
-        const left = Math.max(sideInset, Math.min(rect.left, viewportWidth - width - sideInset));
-        const menuHeight = Math.min(430, Math.round(viewportHeight * 0.48));
-        const top = Math.max(72, Math.min(rect.bottom + 8, viewportHeight - menuHeight - 12));
-        menu.style.setProperty("--daily-warmup-picker-left", `${Math.round(left)}px`);
-        menu.style.setProperty("--daily-warmup-picker-top", `${Math.round(top)}px`);
-        menu.style.setProperty("--daily-warmup-picker-width", `${Math.round(width)}px`);
-      } else {
-        menu.style.removeProperty("--daily-warmup-picker-left");
-        menu.style.removeProperty("--daily-warmup-picker-top");
-        menu.style.removeProperty("--daily-warmup-picker-width");
-      }
+      menu.style.removeProperty("--daily-warmup-picker-left");
+      menu.style.removeProperty("--daily-warmup-picker-top");
+      menu.style.removeProperty("--daily-warmup-picker-width");
       menu.hidden = !isOpen;
     }
     if (trigger) trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
@@ -3444,6 +3425,17 @@ function ensureMobileSwipeAffordances() {
   }, {
     allowControls: true,
     bindKey: "bannerCategories",
+    maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
+    previewStartMaxDurationMs: 170,
+    previewTarget: getBannerCategorySwipeTarget
+  });
+
+  bindMobileSwipe(document.getElementById("editProfileBannerGallery"), (direction) => {
+    const current = activeProfileBannerCategory || "official";
+    setProfileBannerCategory(stepMobileValue(current, ["official", "unofficial", "geometric"], direction));
+  }, {
+    allowControls: true,
+    bindKey: "bannerGalleryCategories",
     maxDurationMs: MOBILE_LOCAL_SWIPE_MAX_DURATION,
     previewStartMaxDurationMs: 170,
     previewTarget: getBannerCategorySwipeTarget
@@ -43862,6 +43854,36 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
   })
 ];
 
+const PROFILE_THEME_TEXTURE_BY_MOTION = Object.freeze({
+  "star-drift": "astral-galaxy.svg",
+  "neon-rain": "neon-rain.svg",
+  "fractal-shift": "cryo-fractal.svg",
+  "solar-flow": "solar-magma.svg",
+  "ember-dragon": "ember-dragon.svg",
+  "water-flow": "abyssal-tide.svg",
+  "prism-turn": "prism-refraction.svg",
+  "aurora-rift": "aurora-rift.svg",
+  "wind-flow": "jetstream-wind.svg",
+  "confetti-pop": "victory-confetti.svg",
+  "sound-wave": "neon-eq.svg",
+  "toxic-sludge": "toxic-sludge.svg",
+  "data-stream": "data-stream.svg",
+  "eclipse-corona": "eclipse-corona.svg",
+  "lightning-strike": "storm-voltage.svg",
+  "fog-drift": "spectral-fog.svg",
+  "gravity-well": "gravity-well.svg",
+  "holo-grid": "holo-grid.svg",
+  "comet-trail": "comet-trail.svg",
+  "crystal-bloom": "crystal-bloom.svg",
+  "ink-bloom": "void-ink.svg",
+  "grid-drift": "tactical-matrix.svg"
+});
+
+function getProfileThemeTextureUrl(motion = "grid-drift") {
+  const file = PROFILE_THEME_TEXTURE_BY_MOTION[motion] || "tactical-matrix.svg";
+  return `url('/assets/themes/${file}')`;
+}
+
 PREMIUM_PROFILE_THEME_PRESETS.push(
   ...[
     ["omega-nebula", "Omega Nebula", "#040716", "#1b0f3a", "#0b1024", "#24174a", "#c084fc", "#22d3ee", "star-drift"],
@@ -43901,8 +43923,8 @@ PREMIUM_PROFILE_THEME_PRESETS.push(
     card2,
     accent,
     accent2,
-    pattern: `radial-gradient(circle at 18% 20%, ${accent}26, transparent 26%), radial-gradient(circle at 78% 72%, ${accent2}20, transparent 30%)`,
-    pattern2: `linear-gradient(125deg, transparent 16%, ${accent}18 42%, ${accent2}14 68%, transparent 90%)`,
+    pattern: getProfileThemeTextureUrl(motion),
+    pattern2: `radial-gradient(circle at 18% 20%, ${accent}26, transparent 26%), linear-gradient(125deg, transparent 16%, ${accent}18 42%, ${accent2}14 68%, transparent 90%), radial-gradient(circle at 78% 72%, ${accent2}20, transparent 30%)`,
     motion
   }))
 );
@@ -44092,7 +44114,22 @@ const PROFILE_LAYOUT_FONTS = [
 
 const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "sunburst", label: "Sunburst", note: "Radiant burst ring" },
-  { value: "eclipse", label: "Eclipse", note: "Omen shadow pass" }
+  { value: "eclipse", label: "Eclipse", note: "Omen shadow pass" },
+  { value: "bubble-drift", label: "Bubble Drift", note: "Floating orb halo" },
+  { value: "light-rays", label: "Light Rays", note: "Radiating borderless rays" },
+  { value: "vortex", label: "Vortex", note: "Swirling gravity pull" },
+  { value: "neon-orbit", label: "Neon Orbit", note: "Fast orbital tracer" },
+  { value: "stardust", label: "Stardust", note: "Twinkling star motes" },
+  { value: "water-ripple", label: "Water Ripple", note: "Soft expanding waves" },
+  { value: "smoke-wisp", label: "Smoke Wisp", note: "Omen-like drifting haze" },
+  { value: "ember-sparks", label: "Ember Sparks", note: "Rising fire flecks" },
+  { value: "frost-shards", label: "Frost Shards", note: "Cold shard glints" },
+  { value: "prism-loop", label: "Prism Loop", note: "Refracting color sweep" },
+  { value: "sonar-wave", label: "Sonar Wave", note: "Expanding tactical ping" },
+  { value: "glitch-scan", label: "Glitch Scan", note: "Digital scan frame" },
+  { value: "blossom-pulse", label: "Blossom Pulse", note: "Soft bloom petals" },
+  { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark orbit pass" },
+  { value: "comet-loop", label: "Comet Loop", note: "Comet tail frame" }
 ];
 
 const PROFILE_BANNER_STYLES = [
@@ -44272,7 +44309,36 @@ const VALORANT_PLAYER_CARD_VALUE_PREFIX = "valorant-card-";
 let dynamicProfileBannerStyles = [];
 let profileBannerCatalogPromise = null;
 let profileBannerCatalogAttempted = false;
+let profileBannerCatalogLoading = false;
 let activeProfileBannerCategory = "official";
+const PROFILE_BANNER_BATCH_LIMITS = Object.freeze({
+  mobileInitial: 48,
+  mobileStep: 48,
+  desktopInitial: 120,
+  desktopStep: 120
+});
+const profileBannerVisibleCounts = new Map();
+
+function getProfileBannerBatchLimit(kind = "initial") {
+  const isMobile = isMobileLayoutViewport();
+  if (kind === "step") {
+    return isMobile ? PROFILE_BANNER_BATCH_LIMITS.mobileStep : PROFILE_BANNER_BATCH_LIMITS.desktopStep;
+  }
+  return isMobile ? PROFILE_BANNER_BATCH_LIMITS.mobileInitial : PROFILE_BANNER_BATCH_LIMITS.desktopInitial;
+}
+
+function getProfileBannerVisibleCount(category = activeProfileBannerCategory) {
+  const key = String(category || "official");
+  if (!profileBannerVisibleCounts.has(key)) {
+    profileBannerVisibleCounts.set(key, getProfileBannerBatchLimit("initial"));
+  }
+  return profileBannerVisibleCounts.get(key);
+}
+
+function growProfileBannerVisibleCount(category = activeProfileBannerCategory) {
+  const key = String(category || "official");
+  profileBannerVisibleCounts.set(key, getProfileBannerVisibleCount(key) + getProfileBannerBatchLimit("step"));
+}
 
 function normalizeProfileBannerDisplayName(displayName = "") {
   return String(displayName || "")
@@ -44343,7 +44409,7 @@ function buildProfileBannerStyleList(user = currentAuthUser, extraStyles = []) {
 }
 
 function getAvailableProfileBorderStyles(user = currentAuthUser) {
-  return isPremiumThemeQaUser(user) && isMobileLayoutViewport()
+  return isPremiumThemeQaUser(user)
     ? PROFILE_BORDER_STYLES.concat(PREMIUM_PROFILE_BORDER_STYLES)
     : PROFILE_BORDER_STYLES;
 }
@@ -44352,12 +44418,64 @@ function getAvailableProfileBannerStyles(user = currentAuthUser, extraStyles = [
   return buildProfileBannerStyleList(user, extraStyles);
 }
 
+const PROFILE_AVATAR_ASSET_OPTIONS = Object.freeze([
+  { value: "asset-jett-tailwind", label: "Tailwind", url: "/assets/library/agents/jett/tailwind.png" },
+  { value: "asset-jett-updraft", label: "Updraft", url: "/assets/library/agents/jett/updraft.png" },
+  { value: "asset-jett-cloudburst", label: "Cloudburst", url: "/assets/library/agents/jett/cloudburst.png" },
+  { value: "asset-jett-blade-storm", label: "Blade Storm", url: "/assets/library/agents/jett/blade-storm.png" },
+  { value: "asset-sova-recon-bolt", label: "Recon Bolt", url: "/assets/library/agents/sova/recon-bolt.png" },
+  { value: "asset-sova-shock-bolt", label: "Shock Bolt", url: "/assets/library/agents/sova/shock-bolt.png" },
+  { value: "asset-sova-owl-drone", label: "Owl Drone", url: "/assets/library/agents/sova/owl-drone.png" },
+  { value: "asset-sova-hunters-fury", label: "Hunter's Fury", url: "/assets/library/agents/sova/hunter-s-fury.png" },
+  { value: "asset-omen-dark-cover", label: "Dark Cover", url: "/assets/library/agents/omen/dark-cover.png" },
+  { value: "asset-omen-paranoia", label: "Paranoia", url: "/assets/library/agents/omen/paranoia.png" },
+  { value: "asset-omen-shrouded-step", label: "Shrouded Step", url: "/assets/library/agents/omen/shrouded-step.png" },
+  { value: "asset-omen-shadows", label: "From the Shadows", url: "/assets/library/agents/omen/from-the-shadows.png" },
+  { value: "asset-viper-toxic-screen", label: "Toxic Screen", url: "/assets/library/agents/viper/toxic-screen.png" },
+  { value: "asset-viper-snake-bite", label: "Snake Bite", url: "/assets/library/agents/viper/snake-bite.png" },
+  { value: "asset-viper-poison-cloud", label: "Poison Cloud", url: "/assets/library/agents/viper/poison-cloud.png" },
+  { value: "asset-viper-pit", label: "Viper's Pit", url: "/assets/library/agents/viper/viper-s-pit.png" },
+  { value: "asset-cypher-spycam", label: "Spycam", url: "/assets/library/agents/cypher/spycam.png" },
+  { value: "asset-cypher-trapwire", label: "Trapwire", url: "/assets/library/agents/cypher/trapwire.png" },
+  { value: "asset-cypher-cyber-cage", label: "Cyber Cage", url: "/assets/library/agents/cypher/cyber-cage.png" },
+  { value: "asset-cypher-neural-theft", label: "Neural Theft", url: "/assets/library/agents/cypher/neural-theft.png" },
+  { value: "asset-sage-barrier-orb", label: "Barrier Orb", url: "/assets/library/agents/sage/barrier-orb.png" },
+  { value: "asset-sage-healing-orb", label: "Healing Orb", url: "/assets/library/agents/sage/healing-orb.png" },
+  { value: "asset-sage-slow-orb", label: "Slow Orb", url: "/assets/library/agents/sage/slow-orb.png" },
+  { value: "asset-sage-resurrection", label: "Resurrection", url: "/assets/library/agents/sage/resurrection.png" }
+]);
+
+function getProfileAvatarAsset(value = "") {
+  const key = String(value || "").trim().toLowerCase();
+  return PROFILE_AVATAR_ASSET_OPTIONS.find(option => option.value === key) || null;
+}
+
+function getProfileAvatarOptions() {
+  return [
+    ...allAgents.map(agent => ({
+      value: String(agent || "").toLowerCase(),
+      label: agent,
+      url: getAgentIconUrl(agent)
+    })),
+    ...PROFILE_AVATAR_ASSET_OPTIONS
+  ];
+}
+
+function getProfileAvatarLabel(value = getDefaultProfileAvatarAgent()) {
+  const key = String(value || "").trim().toLowerCase();
+  const asset = getProfileAvatarAsset(key);
+  if (asset) return asset.label;
+  return allAgents.find(agent => String(agent).toLowerCase() === key) || key || "Agent";
+}
+
 function getDefaultProfileAvatarAgent() {
   return "jett";
 }
 
 function getDefaultProfileAvatarUrl(agentName = getDefaultProfileAvatarAgent()) {
-  return getAgentIconUrl(String(agentName || "jett").toLowerCase());
+  const key = String(agentName || "jett").toLowerCase();
+  const asset = getProfileAvatarAsset(key);
+  return asset?.url || getAgentIconUrl(key);
 }
 
 function normalizeAccessibilityLayoutMode(value) {
@@ -45525,6 +45643,7 @@ function ensureProfileBannerCatalogLoad(selectedBanner = "theme", themeKey = "de
     return profileBannerCatalogPromise;
   }
   profileBannerCatalogAttempted = true;
+  profileBannerCatalogLoading = true;
   profileBannerCatalogPromise = (async () => {
     let lastError = null;
     for (const endpoint of VALORANT_PLAYER_CARDS_ENDPOINTS) {
@@ -45554,15 +45673,19 @@ function ensureProfileBannerCatalogLoad(selectedBanner = "theme", themeKey = "de
     .catch(error => {
       console.warn("Profile banner catalog unavailable", error);
       return [];
+    })
+    .finally(() => {
+      profileBannerCatalogLoading = false;
     });
   return profileBannerCatalogPromise;
 }
 
-function setProfileBannerCategory(category = "official") {
+function syncProfileBannerCategoryChrome(category = activeProfileBannerCategory) {
   const normalizedCategory = ["official", "unofficial", "geometric"].includes(String(category || ""))
     ? String(category)
     : "official";
   activeProfileBannerCategory = normalizedCategory;
+  getProfileBannerVisibleCount(activeProfileBannerCategory);
   const title = document.getElementById("profileBannerCategoryTitle");
   if (title) {
     title.textContent = activeProfileBannerCategory === "official"
@@ -45576,6 +45699,10 @@ function setProfileBannerCategory(category = "official") {
     button.classList.toggle("is-active", isActive);
     button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
+}
+
+function setProfileBannerCategory(category = "official") {
+  syncProfileBannerCategoryChrome(category);
   const currentBanner = document.getElementById("editProfileBannerStyle")?.value || "theme";
   renderBannerGallery(currentBanner, document.getElementById("editProfileTheme")?.value || getActiveProfile()?.themeKey || "default");
 }
@@ -45769,16 +45896,16 @@ function renderAvatarGallery(selectedAgent = getDefaultProfileAvatarAgent()) {
   const avatarSelect = document.getElementById("editProfileAvatarAgent");
   if (!gallery) return;
 
-  gallery.innerHTML = allAgents.map((agent) => {
-    const key = String(agent || "").toLowerCase();
+  gallery.innerHTML = getProfileAvatarOptions().map((option) => {
+    const key = String(option.value || "").toLowerCase();
     const isActive = key === String(selectedAgent || "").toLowerCase();
     return `
-      <button type="button" class="avatar-card ${isActive ? "is-active" : ""}" data-avatar-card="${escapeHtml(key)}" aria-pressed="${isActive ? "true" : "false"}">
+      <button type="button" class="avatar-card ${getProfileAvatarAsset(key) ? "avatar-card-asset" : ""} ${isActive ? "is-active" : ""}" data-avatar-card="${escapeHtml(key)}" aria-pressed="${isActive ? "true" : "false"}">
         <div class="avatar-card-shell">
           <div class="avatar-card-ring">
-            <img class="avatar-card-img" src="${escapeHtml(getAgentIconUrl(key))}" alt="${escapeHtml(agent)} icon">
+            <img class="avatar-card-img" src="${escapeHtml(option.url || getDefaultProfileAvatarUrl(key))}" alt="${escapeHtml(option.label)} icon" loading="lazy" decoding="async">
           </div>
-          <div class="avatar-card-name">${escapeHtml(agent)}</div>
+          <div class="avatar-card-name">${escapeHtml(option.label)}</div>
         </div>
       </button>
     `;
@@ -46084,7 +46211,18 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
     : (visibleBanners[0]?.value || selectedStyle?.value || "theme");
   if (bannerSelect && bannerSelect.value !== visibleActiveBanner) bannerSelect.value = visibleActiveBanner;
 
-  gallery.innerHTML = visibleBanners.map((style) => {
+  const visibleLimit = Math.max(1, getProfileBannerVisibleCount(activeProfileBannerCategory));
+  let renderedBanners = visibleBanners.slice(0, visibleLimit);
+  if (selectedVisible && !renderedBanners.some((style) => String(style.value) === activeBanner)) {
+    renderedBanners = [
+      ...visibleBanners.filter((style) => String(style.value) === activeBanner),
+      ...renderedBanners.filter((style) => String(style.value) !== activeBanner)
+    ].slice(0, visibleLimit);
+  }
+  const remainingCount = Math.max(0, visibleBanners.length - renderedBanners.length);
+  const catalogStillLoading = activeProfileBannerCategory === "official" && profileBannerCatalogLoading && !dynamicProfileBannerStyles.length;
+
+  gallery.innerHTML = `${catalogStillLoading ? `<div class="banner-gallery-status">Loading official player-card banners...</div>` : ""}${renderedBanners.map((style) => {
     const pattern = getBannerPattern(style.value, theme);
     const hasImage = Boolean(style.image);
     const previewBackground = style.pattern || `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`;
@@ -46104,7 +46242,7 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
         </div>
       </button>
     `;
-  }).join("");
+  }).join("")}${remainingCount ? `<button type="button" class="banner-gallery-load-more" data-banner-load-more>Load ${Math.min(remainingCount, getProfileBannerBatchLimit("step"))} more banners <span>${remainingCount} left</span></button>` : ""}`;
 
   gallery.querySelectorAll("[data-banner-card]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -46113,6 +46251,11 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
       renderBannerGallery(nextBanner, document.getElementById("editProfileTheme")?.value || themeKey);
       previewEditProfileVisuals();
     });
+  });
+
+  gallery.querySelector("[data-banner-load-more]")?.addEventListener("click", () => {
+    growProfileBannerVisibleCount(activeProfileBannerCategory);
+    renderBannerGallery(visibleActiveBanner, document.getElementById("editProfileTheme")?.value || themeKey);
   });
 }
 
@@ -46191,7 +46334,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
 
   if (avatarImg) {
     avatarImg.src = avatarUrl;
-    avatarImg.alt = `${profile?.avatarAgent || "Agent"} avatar`;
+    avatarImg.alt = `${getProfileAvatarLabel(profile?.avatarAgent)} avatar`;
   }
 
   if (rankIcon) {
@@ -47183,8 +47326,8 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   }
 
   if (avatarSelect && !avatarSelect.options.length) {
-    avatarSelect.innerHTML = allAgents
-      .map(agent => `<option value="${String(agent).toLowerCase()}">${agent}</option>`)
+    avatarSelect.innerHTML = getProfileAvatarOptions()
+      .map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
       .join("");
   }
 
@@ -47233,22 +47376,17 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   if (layoutFontSelect) layoutFontSelect.value = selectedLayoutFont;
   setProfileLayoutStyleFontToggle(profile?.layoutStyleCustomFont !== false);
   setLayoutStyleMobileSection("shapes");
-  renderLayoutStyleGalleries(selectedLayoutShape, selectedLayoutTexture);
   syncEditProfileCustomAccentInput(selectedThemeKey, profile?.customAccent || "");
   const freeThemeMotionEl = document.getElementById("editProfileFreeThemeMotion");
   if (freeThemeMotionEl) freeThemeMotionEl.value = normalizeFreeThemeMotionMode(profile?.freeThemeMotion);
   renderThemeGallery(selectedThemeKey);
   if (avatarSelect) avatarSelect.value = String(profile?.avatarAgent || getDefaultProfileAvatarAgent()).toLowerCase();
-  renderAvatarGallery(profile?.avatarAgent || getDefaultProfileAvatarAgent());
   if (borderColorSelect) borderColorSelect.value = selectedBorderColor;
-  renderBorderColorGallery(selectedBorderColor);
   if (borderSelect) borderSelect.value = selectedBorder;
-  renderBorderGallery(selectedBorder);
   setProfileBorderRotateToggle(!!profile?.profileBorderRotate);
   if (bannerSelect) bannerSelect.value = selectedBanner;
   activeProfileBannerCategory = getProfileBannerCategory(getProfileBannerStyle(selectedBanner));
-  setProfileBannerCategory(activeProfileBannerCategory);
-  renderBannerGallery(selectedBanner, selectedThemeKey);
+  syncProfileBannerCategoryChrome(activeProfileBannerCategory);
   const contrastModeEl = document.getElementById("editProfileContrastMode");
   const motionModeEl = document.getElementById("editProfileMotionMode");
   const layoutModeEl = document.getElementById("editProfileLayoutMode");
@@ -47409,12 +47547,29 @@ function previewEditProfileVisuals() {
   const activeBanner = normalizeProfileBannerStyle(document.getElementById("editProfileBannerStyle")?.value || profile.bannerStyle || "theme");
   const activeCustomAccent = getEditProfileCustomAccentValue(profile);
   const activeFreeThemeMotion = normalizeFreeThemeMotionMode(document.getElementById("editProfileFreeThemeMotion")?.value || profile.freeThemeMotion);
-  renderThemeGallery(activeThemeKey);
-  renderLayoutStyleGalleries(activeLayoutShape, activeLayoutTexture);
-  renderAvatarGallery(activeAvatar);
-  renderBorderColorGallery(activeBorderColor);
-  renderBorderGallery(activeBorder);
-  renderBannerGallery(activeBanner, activeThemeKey);
+  const activeTab = document.querySelector("#editProfileModal .profile-edit-tab.is-active")?.dataset?.profileTab || "theme";
+  switch (activeTab) {
+    case "theme":
+      renderThemeGallery(activeThemeKey);
+      break;
+    case "layoutStyle":
+      renderLayoutStyleGalleries(activeLayoutShape, activeLayoutTexture);
+      break;
+    case "icon":
+      renderAvatarGallery(activeAvatar);
+      break;
+    case "borderColor":
+      renderBorderColorGallery(activeBorderColor);
+      break;
+    case "border":
+      renderBorderGallery(activeBorder);
+      break;
+    case "banner":
+      renderBannerGallery(activeBanner, activeThemeKey);
+      break;
+    default:
+      break;
+  }
   applyProfileVisuals({
     ...profile,
     themeKey: activeThemeKey,

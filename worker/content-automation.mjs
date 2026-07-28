@@ -1340,9 +1340,42 @@ function extractRiotPatchSections(html = "") {
     const next = headingMatches.find((candidate, candidateIndex) => (
       candidateIndex > index && candidate.level <= heading.level
     ));
-    const text = stripHtml(body.slice(heading.end, next?.index || body.length));
-    return { title: heading.title, text };
+    const slice = body.slice(heading.end, next?.index || body.length);
+    const items = [...slice.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)]
+      .map(match => stripHtml(match[1]))
+      .filter(Boolean);
+    const text = stripHtml(slice);
+    return { title: heading.title, text, items };
   }).filter(section => section.text && !/^all platforms$/i.test(section.title));
+}
+
+function isActionableRiotPatchSection(section = {}) {
+  const title = String(section.title || "");
+  if (!title || /^table of contents$/i.test(title) || /^all platforms$/i.test(title)) return false;
+  return /agent|map|weapon|competitive|gameplay|system|bug|premier|esports|player behavior|social|performance|general updates|all platforms|pc/i.test(title);
+}
+
+function splitPatchSectionOutcomes(text = "") {
+  return String(text || "")
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map(item => item.trim())
+    .filter(item => item.length >= 28 && !/here(?:'|’)?s what|what(?:'|’)?s happening|welcome to|we(?:'|’)?re back/i.test(item));
+}
+
+function buildRiotPatchOutcomeBullets(sections = []) {
+  return sections
+    .filter(isActionableRiotPatchSection)
+    .flatMap(section => {
+      const outcomes = Array.isArray(section.items) && section.items.length
+        ? section.items
+        : splitPatchSectionOutcomes(section.text).slice(0, 2);
+      return outcomes
+        .map(item => trimPatchSummaryText(item, 180))
+        .filter(Boolean)
+        .map(item => `${section.title}: ${item}`);
+    })
+    .filter((item, index, list) => list.findIndex(candidate => candidate.toLowerCase() === item.toLowerCase()) === index)
+    .slice(0, 6);
 }
 
 function trimPatchSummaryText(value = "", maxLength = 240) {
@@ -1362,11 +1395,8 @@ function buildRiotPatchNotesPayload(patch = {}, html = "") {
     || "";
   const introBullets = extractRiotPatchIntroBullets(html);
   const sections = extractRiotPatchSections(html);
-  const fallbackBullets = sections
-    .filter(section => /agent|map|weapon|competitive|gameplay|system|bug|premier|esports|player behavior|console/i.test(section.title))
-    .slice(0, 6)
-    .map(section => `${section.title}: ${trimPatchSummaryText(section.text, 180)}`);
-  const bullets = (introBullets.length ? introBullets : fallbackBullets).slice(0, 6);
+  const outcomeBullets = buildRiotPatchOutcomeBullets(sections);
+  const bullets = (outcomeBullets.length ? outcomeBullets : introBullets).slice(0, 6);
   return Object.freeze({
     title,
     label: patch.label ? `Patch ${patch.label}` : title.replace(/^VALORANT\s+/i, ""),

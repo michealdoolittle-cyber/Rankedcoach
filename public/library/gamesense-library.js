@@ -1505,7 +1505,7 @@
     if (!riotPatchNotes) {
       return `
         <section class="gamesense-patch-notes-feed ${riotPatchNotesStatus === "failed" ? "is-error" : ""}">
-          <div class="gamesense-section-heading"><span>Latest Riot Patch Notes</span><strong>${riotPatchNotesStatus === "failed" ? "Feed unavailable" : "Official update feed"}</strong></div>
+          <div class="gamesense-section-heading"><span>Latest Riot Patch Notes</span><strong>${riotPatchNotesStatus === "failed" ? "Feed unavailable" : "Official change feed"}</strong></div>
           <p>${escapeHtml(riotPatchNotesError || "Patch notes will appear here once the official Riot feed finishes loading.")}</p>
         </section>`;
     }
@@ -2238,11 +2238,26 @@
     const isPlants = state.mapView === "plants";
     const heatmap = getMapHeatmap(map);
     const plantSpots = isPlants ? (Array.isArray(map.plantSpots) ? map.plantSpots : []) : [];
+    const showPlantHeatmapFallback = isPlants && !plantSpots.length && Boolean(heatmap?.image);
     const markers = isPlants
       ? plantSpots
       : map.calloutLabelsBakedIn
         ? []
         : map.callouts || [];
+    const plantFallbackNote = map.plantRateNote || `No source-verified named plant locations are available for ${map.label}.`;
+    const plantFallbackCopy = heatmap?.image
+      ? `${plantFallbackNote} Showing the verified aggregate plant-density heat map here until named plant pins are sourced.`
+      : plantFallbackNote;
+    const displayedMapImage = isHeatmap
+      ? heatmap.image
+      : showPlantHeatmapFallback
+        ? heatmap.image
+        : (isPlants ? map.plantLayoutImage || map.layoutImage : map.layoutImage);
+    const displayedMapAlt = isHeatmap || showPlantHeatmapFallback
+      ? `${map.label} plant heat map, ${heatmap?.actLabel || "verified archive"}`
+      : isPlants
+        ? `${map.label} plant-reference layout`
+        : `${map.label} tactical layout`;
     const markerOffsets = [[13, -18], [18, 2], [10, 20], [-22, 15], [-24, -10]];
     return `
       <section class="gamesense-tactical-card">
@@ -2258,10 +2273,10 @@
           <span data-gamesense-map-zoom-value>${Math.round(state.mapZoom * 100)}%</span>
           <button type="button" data-gamesense-map-zoom="in" aria-label="Zoom in">+</button>
         </div>
-        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}${isHeatmap ? " is-heatmap" : ""}">
-          ${isHeatmap && !heatmap?.image ? "" : `<div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} ${isHeatmap ? "plant heat map" : "tactical map"}">
-            <div class="gamesense-tactical-stage${isHeatmap ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
-              <img src="${escapeHtml(isHeatmap ? heatmap.image : (isPlants ? map.plantLayoutImage || map.layoutImage : map.layoutImage))}" alt="${escapeHtml(isHeatmap ? `${map.label} plant heat map, ${heatmap.actLabel || "verified archive"}` : isPlants ? `${map.label} plant-reference layout` : `${map.label} tactical layout`)}" loading="eager" draggable="false" referrerpolicy="${isHeatmap ? "no-referrer" : ""}">
+        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}${isHeatmap || showPlantHeatmapFallback ? " is-heatmap" : ""}">
+          ${isHeatmap && !heatmap?.image ? "" : `<div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} ${isHeatmap || showPlantHeatmapFallback ? "plant heat map" : "tactical map"}">
+            <div class="gamesense-tactical-stage${isHeatmap || showPlantHeatmapFallback ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
+              <img src="${escapeHtml(displayedMapImage)}" alt="${escapeHtml(displayedMapAlt)}" loading="eager" draggable="false" referrerpolicy="${isHeatmap || showPlantHeatmapFallback ? "no-referrer" : ""}">
               ${markers.map((callout, index) => {
                 if (!isPlants) return `<span class="gamesense-callout" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`;
                 const siteIndex = markers.slice(0, index).filter(item => item.site === callout.site).length;
@@ -2288,7 +2303,7 @@
                   <div><strong>${escapeHtml(spot.previewLabel || spot.label)}</strong></div>
                 </section>
               </div>`;
-            }).join("") : `<p>${escapeHtml(map.plantRateNote || `No source-verified named plant locations are available for ${map.label}.`)}</p>`}
+            }).join("") : `<p>${escapeHtml(plantFallbackCopy)}</p>`}
             ${plantSpots.length ? `<p>Select a marker or its + control to view the in-game location reference.</p>` : ""}
           </aside>` : ""}
           ${isHeatmap ? renderMapHeatmapMeta(map, heatmap) : ""}
