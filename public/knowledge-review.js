@@ -313,9 +313,6 @@ function proposalPublishBlockReason(proposal = {}, type = "coaching") {
   if (proposal.state === "conflicted" || proposal.libraryComparison?.relationship === "conflicts-with-library") {
     return "Resolve the evidence conflict before publication.";
   }
-  if (type === "statistical" && proposal.state !== "corroborated") {
-    return "Statistical insights need corroboration from independent sources before publication.";
-  }
   return "";
 }
 

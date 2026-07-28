@@ -1193,7 +1193,7 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     action.path === "/api/knowledge/approved-target"
     && action.body.proposalId === actionProposalId
   )).length;
-  await approvedCard.locator("[data-knowledge-type]").selectOption("coaching");
+  await approvedCard.locator("[data-knowledge-type]").selectOption("statistical");
   await approvedCard.locator("[data-knowledge-topic]").selectOption("mechanics");
   await approvedCard.locator("[data-knowledge-category]").selectOption("map");
   await approvedCard.locator("[data-knowledge-entity]").fill("Bind");
@@ -1210,12 +1210,13 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     && action.body.proposalId === actionProposalId
   ));
   assert.equal(targetSaveActions.length, targetSaveRequestsBefore + 1);
-  assert.equal(targetSaveActions.at(-1).body.type, "coaching");
+  assert.equal(targetSaveActions.at(-1).body.type, "statistical");
   assert.equal(targetSaveActions.at(-1).body.topic, "mechanics");
   assert.equal(targetSaveActions.at(-1).body.category, "map");
   assert.equal(targetSaveActions.at(-1).body.entity, "Bind");
   assert.equal(targetSaveActions.at(-1).body.rankedCoachWording, "Keep the approved Bind insight private until the owner publishes it.");
   const publishButton = approvedCard.locator('[data-knowledge-action="publish"]');
+  assert.equal(await publishButton.isEnabled(), true, "Statistical approved insight was still blocked from publishing.");
   await assertActionLatency(
     page,
     publishButton,
@@ -1233,7 +1234,7 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     && action.body.proposalId === actionProposalId
   ));
   assert.equal(publicationActions.length, publicationRequestsBefore + 1);
-  assert.equal(publicationActions.at(-1).body.type, "coaching");
+  assert.equal(publicationActions.at(-1).body.type, "statistical");
   assert.equal(publicationActions.at(-1).body.topic, "mechanics");
   assert.equal(publicationActions.at(-1).body.category, "map");
   assert.equal(publicationActions.at(-1).body.entity, "Bind");

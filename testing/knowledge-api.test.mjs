@@ -340,13 +340,13 @@ test("bulk publish processes every approved proposal and repairs stale approval 
   const archivedApprovedWithoutApprovalRecord = {
     id: "proposal-approved-archived",
     conceptId: "concept-approved-archived",
-    type: "coaching",
+    type: "statistical",
     topic: "map-control",
     entities: ["Bind"],
     state: "single-source",
     approvalStatus: "approved",
     rankedCoachWording: "Clear the first lane with paired utility before the team spends the spike plant on Bind.",
-    approvedType: "coaching",
+    approvedType: "statistical",
     approvedTopic: "map-control",
     approvedCategory: "map",
     approvedEntity: "Bind",
@@ -402,6 +402,7 @@ test("bulk publish processes every approved proposal and repairs stale approval 
     archivedApprovedWithoutApprovalRecord.id
   ]));
   const repairedApproval = await kv.get(`knowledge:approval:${archivedApprovedWithoutApprovalRecord.id}`, "json");
+  assert.equal(repairedApproval.type, "statistical");
   assert.equal(repairedApproval.category, "map");
   assert.equal(repairedApproval.entity, "Bind");
   assert.equal(repairedApproval.rankedCoachWording, archivedApprovedWithoutApprovalRecord.rankedCoachWording);

@@ -1931,7 +1931,7 @@ function proposalCanRemainPublished(proposal = {}) {
     proposal.state === "conflicted"
     || proposal.libraryComparison?.relationship === "conflicts-with-library"
   ) return false;
-  return proposal.type !== "statistical" || proposal.state === "corroborated";
+  return true;
 }
 
 function publicationHoldReason(proposal = {}) {
@@ -1940,9 +1940,6 @@ function publicationHoldReason(proposal = {}) {
   }
   if (proposal.state === "conflicted") return "source-conflict";
   if (proposal.libraryComparison?.relationship === "conflicts-with-library") return "library-conflict";
-  if (proposal.type === "statistical" && proposal.state !== "corroborated") {
-    return "statistical-corroboration-lost";
-  }
   return "";
 }
 
@@ -2942,9 +2939,6 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
     || proposal.libraryComparison?.relationship === "conflicts-with-library"
   ) {
     throw new Error("Resolve the source or Library conflict before publication.");
-  }
-  if (type === "statistical" && proposal.state !== "corroborated") {
-    throw new Error("A statistical insight needs corroboration from independent sources before publication.");
   }
   const publishedAt = nowIso(now);
   const repairedApproval = {
