@@ -46997,10 +46997,29 @@ let libraryPageActivationToken = 0;
 let desktopStatsPagePrewarmScheduled = false;
 let desktopStatsPagePrewarmFrame = 0;
 let desktopStatsPagePrewarmed = false;
+let desktopStatsPagePrewarmVisualSignature = "";
+
+function getDesktopStatsPrewarmVisualSignature() {
+  const body = document.body;
+  if (!body) return "";
+  const visualClasses = [...body.classList]
+    .filter(className => className.startsWith("theme-") || className.startsWith("layout-"))
+    .sort()
+    .join(" ");
+  const visualAttributes = [
+    "data-layout-style",
+    "data-layout-shape",
+    "data-layout-texture",
+    "data-layout-font"
+  ].map(name => `${name}:${body.getAttribute(name) || ""}`).join("|");
+  return `${visualClasses}|${visualAttributes}`;
+}
 
 function scheduleDesktopStatsPagePrewarm(options = {}) {
   const immediate = Boolean(options?.immediate);
-  if (desktopStatsPagePrewarmed || isMobileLayoutViewport()) return;
+  const visualSignature = getDesktopStatsPrewarmVisualSignature();
+  if (isMobileLayoutViewport()
+    || (desktopStatsPagePrewarmed && desktopStatsPagePrewarmVisualSignature === visualSignature)) return;
 
   // Inactive dashboards use `content-visibility:hidden` so they do not tax
   // normal navigation.  The first Stats click therefore needs its layout and
@@ -47010,7 +47029,9 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
   const warmStatsPage = () => {
     desktopStatsPagePrewarmFrame = 0;
     desktopStatsPagePrewarmScheduled = false;
-    if (desktopStatsPagePrewarmed || isMobileLayoutViewport()) return;
+    const currentVisualSignature = getDesktopStatsPrewarmVisualSignature();
+    if (isMobileLayoutViewport()
+      || (desktopStatsPagePrewarmed && desktopStatsPagePrewarmVisualSignature === currentVisualSignature)) return;
 
     const statsPage = document.getElementById("page-stats");
     if (!statsPage || statsPage.classList.contains("active")) return;
@@ -47042,6 +47063,7 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
     layoutRoots.forEach(root => { void root.getBoundingClientRect().height; });
     void statsPage.offsetHeight;
     desktopStatsPagePrewarmed = true;
+    desktopStatsPagePrewarmVisualSignature = currentVisualSignature;
 
     window.requestAnimationFrame(() => {
       if (!statsPage.isConnected) return;
@@ -47068,6 +47090,23 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
   desktopStatsPagePrewarmScheduled = true;
   desktopStatsPagePrewarmFrame = window.requestAnimationFrame(warmStatsPage);
 }
+
+function observeDesktopStatsVisualPrewarm() {
+  if (!document.body || typeof MutationObserver === "undefined") return;
+  let observedSignature = getDesktopStatsPrewarmVisualSignature();
+  const observer = new MutationObserver(() => {
+    const nextSignature = getDesktopStatsPrewarmVisualSignature();
+    if (nextSignature === observedSignature) return;
+    observedSignature = nextSignature;
+    scheduleDesktopStatsPagePrewarm();
+  });
+  observer.observe(document.body, {
+    attributes: true,
+    attributeFilter: ["class", "data-layout-style", "data-layout-shape", "data-layout-texture", "data-layout-font"]
+  });
+}
+
+observeDesktopStatsVisualPrewarm();
 
 function syncLibraryPageActivity(pageId = "") {
   const library = globalThis.RankedCoachGamesenseLibrary;

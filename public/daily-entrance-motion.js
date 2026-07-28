@@ -1137,6 +1137,17 @@
     }
   }
 
+  // Background page data is allowed to settle while an entrance plays, but it
+  // must not replace the held nodes before their sequence has finished. Pages
+  // that need a post-entrance refresh listen for this completion signal rather
+  // than guessing at a timeout from their own request lifecycle.
+  function announceRunFinished(run) {
+    if (!run?.pageId) return;
+    window.dispatchEvent(new CustomEvent("rankedcoach:daily-entrance-finished", {
+      detail: { pageId: run.pageId, sectionKey: run.sectionKey || "" }
+    }));
+  }
+
   function finishRun(run, { markSeen = true } = {}) {
     if (!run) return;
     run.cancelled = true;
@@ -1157,6 +1168,7 @@
     [...run.finalizers].forEach((finish) => finish());
     if (markSeen) markRunSeen(run);
     clearRunPresentation(run);
+    announceRunFinished(run);
   }
 
   async function executeRun(run) {
@@ -1172,6 +1184,7 @@
     [...run.finalizers].forEach((finish) => finish());
     markRunSeen(run);
     clearRunPresentation(run);
+    announceRunFinished(run);
   }
 
   function canAnimatePage(pageId) {

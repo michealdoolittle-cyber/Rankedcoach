@@ -13,6 +13,7 @@
   let featuredPlaylistRequest = null;
   let publishedKnowledge = [];
   let publishedKnowledgeRequest = null;
+  let overviewRefreshQueued = false;
   let activeMediaPlayer = null;
   let activeMediaPlayerCleanup = null;
   let mediaPlayerSequence = 0;
@@ -638,6 +639,7 @@
     const nextActive = Boolean(active);
     if (libraryPageActive === nextActive) {
       if (nextActive) {
+        if (overviewRefreshQueued) requestOverviewRefresh();
         hydrateFeaturedPlaylist();
         hydratePublishedKnowledge();
         scheduleTopicCollageHydration();
@@ -647,10 +649,37 @@
     libraryPageActive = nextActive;
     collageHydrationToken += 1;
     if (libraryPageActive) {
+      if (overviewRefreshQueued) requestOverviewRefresh();
       hydrateFeaturedPlaylist();
       hydratePublishedKnowledge();
       scheduleTopicCollageHydration();
     }
+  }
+
+  function isLibraryEntranceActive() {
+    return document.body?.classList.contains("daily-entrance-motion-active")
+      && document.body?.dataset?.dailyEntrancePage === "library";
+  }
+
+  function isLibraryPageCurrent() {
+    const root = document.getElementById("page-library");
+    if (!root) return false;
+    if (document.documentElement.classList.contains("is-mobile-layout")) {
+      return root.classList.contains("is-current-page")
+        || (root.classList.contains("active") && !document.querySelector(".page.is-current-page"));
+    }
+    return root.classList.contains("active");
+  }
+
+  function requestOverviewRefresh() {
+    if (!libraryPageActive || state.topic !== "overview" || !isLibraryPageCurrent()) return false;
+    if (isLibraryEntranceActive()) {
+      overviewRefreshQueued = true;
+      return false;
+    }
+    overviewRefreshQueued = false;
+    render({ direction: "replace" });
+    return true;
   }
 
   function getCrosshairAuthBridge() {
@@ -1319,7 +1348,7 @@
         // a replacement here detaches a player's map/agent controls mid-tap.
         // The overview can safely refresh its general feed; entity-specific
         // research is picked up on the next intentional dossier selection.
-        if (libraryPageActive && state.topic === "overview") render({ direction: "replace" });
+        requestOverviewRefresh();
         return publishedKnowledge;
       })
       .catch(error => {
@@ -4032,6 +4061,11 @@
 
   window.addEventListener("rankedcoach:knowledge-updated", () => {
     void hydratePublishedKnowledge({ force: true });
+  });
+
+  window.addEventListener("rankedcoach:daily-entrance-finished", (event) => {
+    if (event.detail?.pageId !== "library" || !overviewRefreshQueued) return;
+    window.requestAnimationFrame(() => requestOverviewRefresh());
   });
 
   window.addEventListener("rankedcoach:playlist-watch-history-updated", () => {
