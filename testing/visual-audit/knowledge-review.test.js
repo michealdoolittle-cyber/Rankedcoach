@@ -269,12 +269,16 @@ function startServer() {
         if (item && url === "/api/knowledge/approve") {
           item.rankedCoachWording = body.rankedCoachWording;
           item.approvalStatus = "approved";
+          item.approvedType = body.type;
+          item.approvedTopic = body.topic;
           item.approvedCategory = body.category;
           item.approvedEntity = body.entity;
           item.approvedAt = "2026-07-24T02:39:00.000Z";
           return json(response, {
             proposalId: item.id,
             approvedAt: item.approvedAt,
+            type: item.approvedType,
+            topic: item.approvedTopic,
             category: item.approvedCategory,
             entity: item.approvedEntity,
             status: "approved-for-manual-library-promotion"
@@ -284,10 +288,14 @@ function startServer() {
           if (item.approvalStatus !== "approved") {
             return json(response, { error: "Only an owner-approved insight can have its Library tags saved." }, 400);
           }
+          item.approvedType = body.type;
+          item.approvedTopic = body.topic;
           item.approvedCategory = body.category;
           item.approvedEntity = body.entity;
           return json(response, {
             proposalId: item.id,
+            type: item.approvedType,
+            topic: item.approvedTopic,
             category: item.approvedCategory,
             entity: item.approvedEntity,
             status: "approved-target-saved"
@@ -298,11 +306,15 @@ function startServer() {
             return json(response, { error: "Only an owner-approved proposal can be published." }, 400);
           }
           item.approvalStatus = "published";
+          item.publishedType = body.type;
+          item.publishedTopic = body.topic;
           item.publishedCategory = body.category;
           item.publishedEntity = body.entity;
           state.published.items = [{
             id: item.id,
             wording: item.rankedCoachWording,
+            type: body.type,
+            topic: body.topic,
             category: body.category,
             entity: body.entity,
             publishedAt: "2026-07-24T02:40:00.000Z",
@@ -1060,8 +1072,20 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   )));
 
   const drafted = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
+  await drafted.locator("[data-knowledge-type]").selectOption("coaching");
+  await drafted.locator("[data-knowledge-topic]").selectOption("general");
   await drafted.locator("[data-knowledge-category]").selectOption("map");
   await drafted.locator("[data-knowledge-entity]").fill("Bind");
+  assert.equal(
+    (await drafted.locator("[data-knowledge-proposal-heading-classification]").textContent()).trim(),
+    "coaching · general",
+    "Editing type/topic did not immediately update the active proposal heading."
+  );
+  assert.equal(
+    (await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"] [data-knowledge-queue-classification]`).textContent()).trim(),
+    "coaching · general",
+    "Editing type/topic did not immediately update the queue item classification."
+  );
   assert.equal(
     (await drafted.locator("[data-knowledge-proposal-heading-entity]").textContent()).trim(),
     "Bind",
@@ -1113,6 +1137,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(approvalActions.length, approvalRequestsBefore + 1);
   assert.equal(approvalActions.at(-1).body.rankedCoachWording, draftWording);
   assert.equal(approvalActions.at(-1).body.confirmOriginalWording, true);
+  assert.equal(approvalActions.at(-1).body.type, "coaching");
+  assert.equal(approvalActions.at(-1).body.topic, "general");
   assert.equal(approvalActions.at(-1).body.category, "map");
   assert.equal(approvalActions.at(-1).body.entity, "Bind");
   assert.equal(
@@ -1161,6 +1187,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(categoryDisplay.visibility, "visible");
   assert.equal(categoryDisplay.clipPath, "none");
   assert.ok(categoryDisplay.width >= 140 && categoryDisplay.height >= 40, JSON.stringify(categoryDisplay));
+  await approvedCard.locator("[data-knowledge-type]").selectOption("coaching");
+  await approvedCard.locator("[data-knowledge-topic]").selectOption("mechanics");
   await approvedCard.locator("[data-knowledge-category]").selectOption("map");
   await approvedCard.locator("[data-knowledge-entity]").fill("Bind");
   const targetSaveRequestsBefore = actions.filter(action => (
@@ -1183,6 +1211,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     && action.body.proposalId === actionProposalId
   ));
   assert.equal(targetSaveActions.length, targetSaveRequestsBefore + 1);
+  assert.equal(targetSaveActions.at(-1).body.type, "coaching");
+  assert.equal(targetSaveActions.at(-1).body.topic, "mechanics");
   assert.equal(targetSaveActions.at(-1).body.category, "map");
   assert.equal(targetSaveActions.at(-1).body.entity, "Bind");
   const publishButton = approvedCard.locator('[data-knowledge-action="publish"]');
@@ -1203,6 +1233,8 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     && action.body.proposalId === actionProposalId
   ));
   assert.equal(publicationActions.length, publicationRequestsBefore + 1);
+  assert.equal(publicationActions.at(-1).body.type, "coaching");
+  assert.equal(publicationActions.at(-1).body.topic, "mechanics");
   assert.equal(publicationActions.at(-1).body.category, "map");
   assert.equal(publicationActions.at(-1).body.entity, "Bind");
   assert.equal("rankedCoachWording" in publicationActions.at(-1).body, false);

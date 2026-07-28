@@ -66,6 +66,8 @@ const TOPIC_RULES = Object.freeze([
   Object.freeze({ id: "agent", pattern: /\b(?:agent|ability|ultimate|duelist|controller|initiator|sentinel|entry|anchor)\b/i }),
   Object.freeze({ id: "mentality", pattern: /\b(?:mental|tilt|confidence|focus|discipline|mindset|pressure|mistake)\b/i })
 ]);
+const KNOWLEDGE_TYPES = new Set(["coaching", "statistical"]);
+const KNOWLEDGE_TOPICS = new Set([...TOPIC_RULES.map(rule => rule.id), "general"]);
 
 const ENTITY_NAMES = Object.freeze([
   "Abyss", "Ascent", "Bind", "Breeze", "Corrode", "Fracture", "Haven", "Icebox", "Lotus", "Pearl",
@@ -151,6 +153,24 @@ function canonicalPublicationEntity(category, value = "") {
       : AGENT_ENTITY_NAMES;
   const normalized = normalizeWhitespace(value).toLowerCase();
   return [...allowed].find(entity => entity.toLowerCase() === normalized) || "";
+}
+
+function canonicalKnowledgeType(value = "coaching") {
+  const normalized = normalizeWhitespace(value || "coaching").toLowerCase();
+  return KNOWLEDGE_TYPES.has(normalized) ? normalized : "";
+}
+
+function canonicalKnowledgeTopic(value = "general") {
+  const normalized = normalizeWhitespace(value || "general").toLowerCase();
+  return KNOWLEDGE_TOPICS.has(normalized) ? normalized : "";
+}
+
+function resolveKnowledgeTypeTopic(source = {}, overrides = {}) {
+  const type = canonicalKnowledgeType(overrides.type ?? source.approvedType ?? source.publishedType ?? source.type ?? "coaching");
+  const topic = canonicalKnowledgeTopic(overrides.topic ?? source.approvedTopic ?? source.publishedTopic ?? source.topic ?? "general");
+  if (!type) throw new Error("Choose a valid insight type before saving.");
+  if (!topic) throw new Error("Choose a valid coaching topic before saving.");
+  return { type, topic };
 }
 
 function containsCopiedTranscriptPhrase(wording = "", excerpt = "", phraseLength = 7) {
@@ -2580,6 +2600,7 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
   if (proposal.approvalStatus === "published") {
     throw new Error("Remove the published guidance from the Library before approving it again.");
   }
+  const { type, topic } = resolveKnowledgeTypeTopic(proposal, approval);
   for (const evidence of proposal.evidence || []) {
     const document = await kv.get(`${PRIVATE_CLAIMS_PREFIX}${evidence.sourceId}`, "json");
     const claim = (document?.claims || []).find(item => (
@@ -2596,6 +2617,8 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
     conceptId: proposal.conceptId,
     owner,
     rankedCoachWording,
+    type,
+    topic,
     category,
     entity,
     approvedAt,
@@ -2609,6 +2632,8 @@ export async function approveKnowledgeProposal(kv, approval = {}, now = new Date
     approvalStatus: "approved",
     approvedAt,
     approvedBy: owner,
+    approvedType: type,
+    approvedTopic: topic,
     approvedCategory: category,
     approvedEntity: entity,
     rejectedAt: null,
@@ -2636,6 +2661,7 @@ export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Dat
   if (!proposal || proposal.approvalStatus !== "approved") {
     throw new Error("Only an owner-approved insight can have its Library tags saved.");
   }
+  const { type, topic } = resolveKnowledgeTypeTopic(proposal, target);
   const approvalKey = `${APPROVAL_PREFIX}${proposalId}`;
   const approval = await kv.get(approvalKey, "json");
   const savedAt = nowIso(now);
@@ -2643,19 +2669,23 @@ export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Dat
     ...(approval || {}),
     proposalId,
     owner,
+    type,
+    topic,
     category,
     entity,
     targetSavedAt: savedAt
   }));
   const updatedProposal = {
     ...proposal,
+    approvedType: type,
+    approvedTopic: topic,
     approvedCategory: category,
     approvedEntity: entity,
     approvedTargetSavedAt: savedAt
   };
   await kv.put(key, JSON.stringify(updatedProposal));
   await updateLatestReviewProposal(kv, updatedProposal);
-  return Object.freeze({ proposalId, category, entity, savedAt, status: "approved-target-saved" });
+  return Object.freeze({ proposalId, type, topic, category, entity, savedAt, status: "approved-target-saved" });
 }
 
 export async function saveKnowledgeProposalDraft(kv, draft = {}, now = new Date()) {
@@ -2745,13 +2775,18 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
   if (!proposal || !approval || proposal.approvalStatus !== "approved") {
     throw new Error("Only an owner-approved proposal can be published.");
   }
+  const { type, topic } = resolveKnowledgeTypeTopic({
+    ...proposal,
+    approvedType: approval.type ?? proposal.approvedType,
+    approvedTopic: approval.topic ?? proposal.approvedTopic
+  }, publication);
   if (
     proposal.state === "conflicted"
     || proposal.libraryComparison?.relationship === "conflicts-with-library"
   ) {
     throw new Error("Resolve the source or Library conflict before publication.");
   }
-  if (proposal.type === "statistical" && proposal.state !== "corroborated") {
+  if (type === "statistical" && proposal.state !== "corroborated") {
     throw new Error("A statistical insight needs corroboration from independent sources before publication.");
   }
   const publishedAt = nowIso(now);
@@ -2761,8 +2796,8 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
     proposalId,
     conceptId: proposal.conceptId,
     wording: approval.rankedCoachWording,
-    type: proposal.type,
-    topic: proposal.topic,
+    type,
+    topic,
     category,
     entity,
     entities: Object.freeze([...(proposal.entities || [])]),
@@ -2788,6 +2823,8 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
     ...proposal,
     approvalStatus: "published",
     publishedAt,
+    publishedType: type,
+    publishedTopic: topic,
     publishedCategory: category,
     publishedEntity: entity
   };

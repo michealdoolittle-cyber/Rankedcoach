@@ -13,6 +13,8 @@ const activeProposalIds = {
 const proposalFormDrafts = new Map();
 const proposalFeedback = new Map();
 const pendingProposalIds = new Set();
+const KNOWLEDGE_TYPES = Object.freeze(["coaching", "statistical"]);
+const KNOWLEDGE_TOPICS = Object.freeze(["economy", "mechanics", "teamplay", "map-control", "agent", "mentality", "general"]);
 
 function researchPageLimits() {
   const compact = document.documentElement.classList.contains("is-mobile-layout")
@@ -227,6 +229,8 @@ function proposalFormState(proposal = {}) {
   const saved = proposalFormDrafts.get(proposal.id) || {};
   return {
     wording: saved.wording ?? proposal.rankedCoachWording ?? proposal.suggestedWording ?? "",
+    type: saved.type ?? proposal.approvedType ?? proposal.publishedType ?? proposal.type ?? "coaching",
+    topic: saved.topic ?? proposal.approvedTopic ?? proposal.publishedTopic ?? proposal.topic ?? "general",
     category: saved.category ?? proposal.approvedCategory ?? proposal.publishedCategory ?? inferCategory(proposal),
     entity: saved.entity ?? proposal.approvedEntity ?? proposal.publishedEntity ?? proposal.entities?.[0] ?? "",
     confirmed: saved.confirmed === true
@@ -252,11 +256,49 @@ function syncProposalEntityDisplay(proposalId, entityValue) {
   }
 }
 
+function syncProposalClassificationDisplay(proposalId, typeValue, topicValue) {
+  const type = String(typeValue || "coaching").trim() || "coaching";
+  const topic = String(topicValue || "general").trim() || "general";
+  const display = `${type} · ${topic}`;
+  const card = document.querySelector(`[data-knowledge-proposal="${proposalId}"]`);
+  if (card) {
+    const heading = card.querySelector("[data-knowledge-proposal-heading-classification]");
+    if (heading) heading.textContent = display;
+  }
+  const queueItem = document.querySelector(`[data-knowledge-select-proposal="${proposalId}"]`);
+  if (queueItem) {
+    const queueClassification = queueItem.querySelector("[data-knowledge-queue-classification]");
+    if (queueClassification) queueClassification.textContent = display;
+  }
+}
+
+function proposalPublishBlockReason(proposal = {}, type = "coaching") {
+  if (proposal.state === "conflicted" || proposal.libraryComparison?.relationship === "conflicts-with-library") {
+    return "Resolve the evidence conflict before publication.";
+  }
+  if (type === "statistical" && proposal.state !== "corroborated") {
+    return "Statistical insights need corroboration from independent sources before publication.";
+  }
+  return "";
+}
+
+function syncProposalPublishGate(proposalId, typeValue) {
+  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  const button = document.querySelector(`[data-knowledge-proposal="${proposalId}"] [data-knowledge-action="publish"]`);
+  if (!proposal || !button || pendingProposalIds.has(proposalId)) return;
+  const blockReason = proposalPublishBlockReason(proposal, String(typeValue || "coaching").trim() || "coaching");
+  button.disabled = Boolean(blockReason);
+  if (blockReason) button.title = blockReason;
+  else button.removeAttribute("title");
+}
+
 function captureProposalDraft(card = document.querySelector("[data-knowledge-active-review] [data-knowledge-proposal]")) {
   const proposalId = card?.dataset.knowledgeProposal;
   if (!proposalId) return;
   proposalFormDrafts.set(proposalId, {
     wording: card.querySelector("[data-knowledge-wording]")?.value ?? "",
+    type: card.querySelector("[data-knowledge-type]")?.value ?? "coaching",
+    topic: card.querySelector("[data-knowledge-topic]")?.value ?? "general",
     category: card.querySelector("[data-knowledge-category]")?.value ?? "general",
     entity: card.querySelector("[data-knowledge-entity]")?.value ?? "",
     confirmed: card.querySelector("[data-knowledge-original]")?.checked === true
@@ -271,28 +313,23 @@ function ensureActiveProposal(proposals = []) {
 }
 
 function proposalCardMarkup(proposal) {
+  const form = proposalFormState(proposal);
   const published = proposal.approvalStatus === "published";
   const approved = proposal.approvalStatus === "approved";
   const rejected = proposal.approvalStatus === "rejected";
   const libraryRelationship = proposal.libraryComparison?.relationship || "new-opportunity";
-  const statisticalPublishBlocked = proposal.type === "statistical" && proposal.state !== "corroborated";
-  const publishBlocked = proposal.state === "conflicted"
-    || libraryRelationship === "conflicts-with-library"
-    || statisticalPublishBlocked;
-  const publishBlockedTitle = statisticalPublishBlocked
-    ? "Statistical insights need corroboration from independent sources before publication."
-    : "Resolve the evidence conflict before publication.";
+  const publishBlockedTitle = proposalPublishBlockReason(proposal, form.type);
+  const publishBlocked = Boolean(publishBlockedTitle);
   const primaryAction = approved ? "publish" : "approve";
   const primaryLabel = approved ? "Publish to Library" : "Approve";
   const primaryBlocked = approved && publishBlocked;
   const busy = pendingProposalIds.has(proposal.id);
-  const form = proposalFormState(proposal);
   const feedback = proposalFeedback.get(proposal.id);
   return `
     <article class="knowledge-proposal-card" data-knowledge-proposal="${escapeHtml(proposal.id)}" ${busy ? `aria-busy="true"` : ""}>
       <div class="knowledge-proposal-heading">
         <div>
-          <span>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</span>
+          <span data-knowledge-proposal-heading-classification>${escapeHtml(form.type || "coaching")} · ${escapeHtml(form.topic || "general")}</span>
           <strong data-knowledge-proposal-heading-entity>${escapeHtml(proposalDisplayEntity(proposal))}</strong>
         </div>
         <span class="knowledge-review-state is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml((proposal.approvalStatus || "pending").replaceAll("-", " "))}</span>
@@ -318,6 +355,18 @@ function proposalCardMarkup(proposal) {
       ${published ? `
         <div class="knowledge-publication-targets">
           <label class="auth-field">
+            <span>Insight type</span>
+            <select data-knowledge-type disabled>
+              ${KNOWLEDGE_TYPES.map(value => `<option value="${value}" ${form.type === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
+            </select>
+          </label>
+          <label class="auth-field">
+            <span>Coaching topic</span>
+            <select data-knowledge-topic disabled>
+              ${KNOWLEDGE_TOPICS.map(value => `<option value="${value}" ${form.topic === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
+            </select>
+          </label>
+          <label class="auth-field">
             <span>Library location</span>
             <select data-knowledge-category disabled>
               ${["general", "map", "agent", "weapon", "agent-map"].map(value => `<option value="${value}" ${form.category === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
@@ -331,6 +380,18 @@ function proposalCardMarkup(proposal) {
         <button class="pd-item knowledge-unpublish" type="button" data-knowledge-action="unpublish" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Remove from Library</button>
       ` : `
         <div class="knowledge-publication-targets">
+            <label class="auth-field">
+              <span>Insight type</span>
+              <select data-knowledge-type>
+                ${KNOWLEDGE_TYPES.map(value => `<option value="${value}" ${form.type === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
+              </select>
+            </label>
+            <label class="auth-field">
+              <span>Coaching topic</span>
+              <select data-knowledge-topic>
+                ${KNOWLEDGE_TOPICS.map(value => `<option value="${value}" ${form.topic === value ? "selected" : ""}>${publicationCategoryLabel(value)}</option>`).join("")}
+              </select>
+            </label>
             <label class="auth-field">
               <span>Library location</span>
               <select data-knowledge-category>
@@ -363,6 +424,7 @@ function proposalCardMarkup(proposal) {
 }
 
 function queueItemMarkup(proposal, activeId) {
+  const form = proposalFormState(proposal);
   const entity = proposalDisplayEntity(proposal);
   const status = (proposal.approvalStatus || "pending").replaceAll("-", " ");
   return `
@@ -371,7 +433,7 @@ function queueItemMarkup(proposal, activeId) {
       aria-pressed="${proposal.id === activeId}" ${pendingProposalIds.size ? "disabled" : ""}>
       <span>
         <strong data-knowledge-queue-entity>${escapeHtml(entity)}</strong>
-        <small>${escapeHtml(proposal.type || "coaching")} · ${escapeHtml(proposal.topic || "general")}</small>
+        <small data-knowledge-queue-classification>${escapeHtml(form.type || "coaching")} · ${escapeHtml(form.topic || "general")}</small>
       </span>
       <b class="is-${escapeHtml(proposal.approvalStatus || "pending")}">${escapeHtml(status)}</b>
     </button>
@@ -770,6 +832,8 @@ async function proposalAction(button) {
       setStatus("Draft saved privately. Players cannot see it.", "ready");
     } else if (action === "approve") {
       const confirmed = card.querySelector("[data-knowledge-original]")?.checked === true;
+      const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
+      const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
       const category = card.querySelector("[data-knowledge-category]")?.value || "general";
       const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
       const approvalRecord = await request("/api/knowledge/approve", {
@@ -778,6 +842,8 @@ async function proposalAction(button) {
           proposalId,
           rankedCoachWording: wording,
           confirmOriginalWording: confirmed,
+          type,
+          topic,
           category,
           entity
         })
@@ -786,6 +852,8 @@ async function proposalAction(button) {
         rankedCoachWording: wording,
         approvalStatus: "approved",
         approvedAt: approvalRecord.approvedAt || new Date().toISOString(),
+        approvedType: approvalRecord.type || type,
+        approvedTopic: approvalRecord.topic || topic,
         approvedCategory: approvalRecord.category || category,
         approvedEntity: approvalRecord.entity ?? entity,
         rejectionReason: null,
@@ -795,29 +863,37 @@ async function proposalAction(button) {
       if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Insight approved. It is waiting privately in Approved and is not visible to players.", "ready");
     } else if (action === "save-target") {
+      const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
+      const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
       const category = card.querySelector("[data-knowledge-category]")?.value || "general";
       const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
       const targetRecord = await request("/api/knowledge/approved-target", {
         method: "POST",
-        body: JSON.stringify({ proposalId, category, entity })
+        body: JSON.stringify({ proposalId, type, topic, category, entity })
       });
       proposalFeedback.set(proposalId, {
         message: "Approved Library tags saved privately. Publish remains separate.",
         tone: "ready"
       });
       const updated = updateLocalProposal(proposalId, {
+        approvedType: targetRecord.type || type,
+        approvedTopic: targetRecord.topic || topic,
         approvedCategory: targetRecord.category || category,
         approvedEntity: targetRecord.entity ?? entity
       });
       if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Approved Library tags saved privately. This insight is still not visible to players.", "ready");
     } else if (action === "publish") {
+      const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
+      const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
       const category = card.querySelector("[data-knowledge-category]")?.value || "general";
       const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
       const publishedRecord = await request("/api/knowledge/publish", {
         method: "POST",
         body: JSON.stringify({
           proposalId,
+          type,
+          topic,
           category,
           entity
         })
@@ -826,6 +902,8 @@ async function proposalAction(button) {
         rankedCoachWording: wording,
         approvalStatus: "published",
         publishedAt: publishedRecord.publishedAt || new Date().toISOString(),
+        publishedType: publishedRecord.type || type,
+        publishedTopic: publishedRecord.topic || topic,
         publishedCategory: category,
         publishedEntity: entity
       }, publishedRecord);
@@ -937,11 +1015,17 @@ const rememberProposalFormControl = event => {
   if (!proposal) return;
   const draft = proposalFormDrafts.get(proposalId) || proposalFormState(proposal);
   if (control.matches("[data-knowledge-wording]")) draft.wording = control.value;
+  if (control.matches("[data-knowledge-type]")) draft.type = control.value;
+  if (control.matches("[data-knowledge-topic]")) draft.topic = control.value;
   if (control.matches("[data-knowledge-category]")) draft.category = control.value;
   if (control.matches("[data-knowledge-entity]")) draft.entity = control.value;
   if (control.matches("[data-knowledge-original]")) draft.confirmed = control.checked;
   proposalFormDrafts.set(proposalId, draft);
   if (control.matches("[data-knowledge-entity]")) syncProposalEntityDisplay(proposalId, control.value);
+  if (control.matches("[data-knowledge-type], [data-knowledge-topic]")) {
+    syncProposalClassificationDisplay(proposalId, draft.type, draft.topic);
+    syncProposalPublishGate(proposalId, draft.type);
+  }
 };
 proposalList?.addEventListener("change", rememberProposalFormControl);
 proposalList?.addEventListener("input", rememberProposalFormControl);

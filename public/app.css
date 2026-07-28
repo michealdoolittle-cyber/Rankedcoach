@@ -57840,7 +57840,8 @@ html.is-mobile-layout body.is-mobile-layout #profileDropdown.profile-dropdown.op
 }
 
 .knowledge-proposal-feedback[hidden] {
-  display: none !important;
+  display: block !important;
+  visibility: hidden;
 }
 
 @media (max-width: 760px) {

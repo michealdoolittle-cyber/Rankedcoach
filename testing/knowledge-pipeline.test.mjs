@@ -1225,37 +1225,104 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
     proposalId: proposal.id,
     owner: "Michael",
     rankedCoachWording: "Keep one teammate close enough to trade before the team commits through Bind’s first choke.",
+    type: "coaching",
+    topic: "general",
     confirmOriginalWording: true
   }, new Date("2026-07-24T00:02:00.000Z"));
   const approvedDashboard = await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" });
-  assert.equal(approvedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "approved");
+  const approvedProposal = approvedDashboard.review.proposals.find(item => item.id === proposal.id);
+  assert.equal(approvedProposal.approvalStatus, "approved");
+  assert.equal(approvedProposal.approvedType, "coaching");
+  assert.equal(approvedProposal.approvedTopic, "general");
   assert.equal(approvedDashboard.review.page.bucketCounts.approved, 1);
   const savedTarget = await saveApprovedKnowledgeTarget(kv, {
     proposalId: proposal.id,
     owner: "Michael",
+    type: "coaching",
+    topic: "mechanics",
     category: "map",
     entity: "Bind"
   }, new Date("2026-07-24T00:02:30.000Z"));
+  assert.equal(savedTarget.type, "coaching");
+  assert.equal(savedTarget.topic, "mechanics");
   assert.equal(savedTarget.category, "map");
   assert.equal(savedTarget.entity, "Bind");
   const retaggedProposal = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" })).review.proposals.find(item => item.id === proposal.id);
+  assert.equal(retaggedProposal.approvedType, "coaching");
+  assert.equal(retaggedProposal.approvedTopic, "mechanics");
   assert.equal(retaggedProposal.approvedCategory, "map");
   assert.equal(retaggedProposal.approvedEntity, "Bind");
   assert.equal((await getPublishedKnowledge(kv)).items.length, 0);
   const published = await publishApprovedKnowledge(kv, {
     proposalId: proposal.id,
     owner: "Michael",
+    type: "coaching",
+    topic: "mechanics",
     category: "map",
     entity: "Bind"
   }, new Date("2026-07-24T00:03:00.000Z"));
   assert.equal(published.status, "published");
+  assert.equal(published.type, "coaching");
+  assert.equal(published.topic, "mechanics");
   assert.equal(published.entity, "Bind");
   const publishedDashboard = await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" });
   assert.equal(publishedDashboard.review.proposals.find(item => item.id === proposal.id).approvalStatus, "published");
   const publicIndex = await getPublishedKnowledge(kv);
   assert.equal(publicIndex.items.length, 1);
+  assert.equal(publicIndex.items[0].topic, "mechanics");
   assert.match(publicIndex.items[0].wording, /Keep one teammate/);
   assert.doesNotMatch(JSON.stringify(publicIndex), /hold the trade spacing before crossing/i);
+});
+
+test("owner-corrected type controls statistical publication gate", async () => {
+  const kv = new MemoryKv();
+  await ingestTimestampedKnowledgeTranscript(kv, {
+    source: {
+      platform: "youtube",
+      url: "https://www.youtube.com/watch?v=typegate123",
+      title: "Bind lane trading guide",
+      publisher: "Coach A",
+      entities: ["Bind"]
+    },
+    cues: parseTimestampedTranscript(`
+00:01 Pair your first utility with a teammate so the team can trade the opening lane safely.
+00:08 Keep one teammate close before the site hit so first contact can be recovered.
+00:15 The spacing idea works because the second player is close enough to convert the duel.
+    `)
+  }, {
+    now: new Date("2026-07-24T00:10:00.000Z"),
+    libraryKnowledgeIndex: []
+  });
+  const proposal = (await getKnowledgeOwnerDashboard(kv)).review.proposals.find(item => item.type === "coaching");
+  await approveKnowledgeProposal(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    rankedCoachWording: "Keep the second player close enough to trade before the team commits through the choke.",
+    type: "statistical",
+    topic: "teamplay",
+    confirmOriginalWording: true
+  }, new Date("2026-07-24T00:11:00.000Z"));
+  await assert.rejects(
+    publishApprovedKnowledge(kv, {
+      proposalId: proposal.id,
+      owner: "Michael",
+      type: "statistical",
+      topic: "teamplay",
+      category: "map",
+      entity: "Bind"
+    }),
+    /statistical insight needs corroboration/
+  );
+  const published = await publishApprovedKnowledge(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    type: "coaching",
+    topic: "teamplay",
+    category: "map",
+    entity: "Bind"
+  }, new Date("2026-07-24T00:12:00.000Z"));
+  assert.equal(published.type, "coaching");
+  assert.equal(published.topic, "teamplay");
 });
 
 test("agent-map publications require and preserve a canonical valid pair", async () => {
