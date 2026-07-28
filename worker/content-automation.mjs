@@ -1259,12 +1259,13 @@ export async function handlePlaylistRequest(env = {}) {
   if (
     cached?.cachedAt
     && Date.now() - Date.parse(cached.cachedAt) < PLAYLIST_CACHE_WINDOW_MS
-    && Array.isArray(cachedArchive?.items)
   ) {
-    // A deployment can encounter a still-valid cache written before the
-    // public archive field existed. Derive it from the verified manifest so
-    // the new Historical tab is immediately complete instead of waiting for
-    // the next feed refresh, while respecting the same suppression list.
+    // KV keys propagate independently. A fresh featured payload must remain
+    // usable if its companion source archive has not reached this edge yet;
+    // otherwise a harmless propagation gap turns into an upstream refresh and
+    // can surface as a 502. A deployment can also encounter a cache written
+    // before the public archive field existed, so derive that list from the
+    // verified manifest without guessing at any source data.
     const historicalItems = Array.isArray(cached.historicalItems)
       ? cached.historicalItems
       : buildHistoricalPlaylistArchive(

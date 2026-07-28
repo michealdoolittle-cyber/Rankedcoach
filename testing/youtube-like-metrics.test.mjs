@@ -85,14 +85,13 @@ test("Playlist shows an honest unavailable state without a YouTube Data API key"
   }
 });
 
-test("Playlist enriches both featured and Historical Archive cards with official YouTube metrics", async () => {
+test("Playlist serves a fresh cache before its companion archive key propagates and enriches official YouTube metrics", async () => {
   const kv = new MemoryKv();
   await kv.put("playlist:featured", JSON.stringify({
     cachedAt: new Date().toISOString(),
     items: [{ id: "featured001", platform: "youtube", title: "Featured guide" }],
     historicalItems: [{ id: "historic000", platform: "youtube", title: "Historical guide" }]
   }));
-  await kv.put("playlist:knowledge-sources", JSON.stringify({ items: [] }));
   const beforeFetch = globalThis.fetch;
   globalThis.fetch = async input => {
     const url = new URL(String(input));
