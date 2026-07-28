@@ -1,5 +1,7 @@
 import {
   approveKnowledgeProposal,
+  clearRejectedKnowledgeProposals,
+  discardApprovedKnowledge,
   getKnowledgeOwnerDashboard,
   getPublishedKnowledge,
   ingestTimestampedKnowledgeTranscript,
@@ -144,6 +146,15 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
       owner: owner.displayName
     }));
   }
+  if (url.pathname === "/api/knowledge/discard") {
+    return json(await discardApprovedKnowledge(kv, {
+      ...body,
+      owner: owner.displayName
+    }));
+  }
+  if (url.pathname === "/api/knowledge/clear-rejected") {
+    return json(await clearRejectedKnowledgeProposals(kv));
+  }
   if (url.pathname === "/api/knowledge/approve") {
     return json(await approveKnowledgeProposal(kv, {
       ...body,
@@ -174,7 +185,7 @@ export function knowledgeApiErrorResponse(error) {
     ? 401
     : /Owner access required/.test(message)
       ? 403
-      : /required|valid|large|Cross-origin|Rewrite|must confirm|corroboration|conflict before publication|owner-approved|before (?:approval|rejecting)|Remove .*before/.test(message)
+      : /required|valid|large|Cross-origin|Rewrite|must confirm|corroboration|conflict before publication|owner-approved|before (?:approval|rejecting)|Remove .*before|Discard .*before|Rejected insights|Only approved insights/.test(message)
         ? 400
         : 500;
   return json({ error: message }, { status });

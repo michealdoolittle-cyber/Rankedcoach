@@ -2661,6 +2661,10 @@ export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Dat
   if (!proposal || proposal.approvalStatus !== "approved") {
     throw new Error("Only an owner-approved insight can have its Library tags saved.");
   }
+  const rankedCoachWording = normalizeWhitespace(target.rankedCoachWording || proposal.rankedCoachWording);
+  if (rankedCoachWording.length < 20) {
+    throw new Error("At least 20 characters of RankedCoach wording are required.");
+  }
   const { type, topic } = resolveKnowledgeTypeTopic(proposal, target);
   const approvalKey = `${APPROVAL_PREFIX}${proposalId}`;
   const approval = await kv.get(approvalKey, "json");
@@ -2669,6 +2673,7 @@ export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Dat
     ...(approval || {}),
     proposalId,
     owner,
+    rankedCoachWording,
     type,
     topic,
     category,
@@ -2677,6 +2682,7 @@ export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Dat
   }));
   const updatedProposal = {
     ...proposal,
+    rankedCoachWording,
     approvedType: type,
     approvedTopic: topic,
     approvedCategory: category,
@@ -2685,7 +2691,7 @@ export async function saveApprovedKnowledgeTarget(kv, target = {}, now = new Dat
   };
   await kv.put(key, JSON.stringify(updatedProposal));
   await updateLatestReviewProposal(kv, updatedProposal);
-  return Object.freeze({ proposalId, type, topic, category, entity, savedAt, status: "approved-target-saved" });
+  return Object.freeze({ proposalId, rankedCoachWording, type, topic, category, entity, savedAt, status: "approved-target-saved" });
 }
 
 export async function saveKnowledgeProposalDraft(kv, draft = {}, now = new Date()) {
@@ -2700,6 +2706,12 @@ export async function saveKnowledgeProposalDraft(kv, draft = {}, now = new Date(
   if (!proposal) throw new Error(`Knowledge proposal not found: ${proposalId}`);
   if (proposal.approvalStatus === "published") {
     throw new Error("Remove this guidance from the Library before changing its draft.");
+  }
+  if (proposal.approvalStatus === "approved") {
+    throw new Error("Discard this approved insight back to Review before changing its draft.");
+  }
+  if (proposal.approvalStatus === "rejected") {
+    throw new Error("Rejected insights cannot be drafted. Reprocess the source if it should return to Review.");
   }
   const updatedProposal = {
     ...proposal,
@@ -2737,6 +2749,91 @@ export async function rejectKnowledgeProposal(kv, rejection = {}, now = new Date
   await kv.put(key, JSON.stringify(updatedProposal));
   await updateLatestReviewProposal(kv, updatedProposal);
   return Object.freeze({ proposalId, status: "rejected" });
+}
+
+export async function discardApprovedKnowledge(kv, discard = {}, now = new Date()) {
+  const proposalId = String(discard.proposalId || "").trim();
+  const owner = normalizeWhitespace(discard.owner);
+  const rankedCoachWording = normalizeWhitespace(discard.rankedCoachWording);
+  if (!proposalId || !owner) throw new Error("Owner and proposal ID are required.");
+  const key = `${PROPOSAL_PREFIX}${proposalId}`;
+  const proposal = await kv.get(key, "json");
+  if (!proposal) throw new Error(`Knowledge proposal not found: ${proposalId}`);
+  if (proposal.approvalStatus !== "approved") {
+    throw new Error("Only approved insights can be discarded back to Review.");
+  }
+  const nextWording = rankedCoachWording || normalizeWhitespace(proposal.rankedCoachWording);
+  if (nextWording.length < 20) {
+    throw new Error("At least 20 characters of RankedCoach wording are required.");
+  }
+  const approvalKey = `${APPROVAL_PREFIX}${proposalId}`;
+  if (typeof kv.delete === "function") {
+    await kv.delete(approvalKey);
+  } else {
+    await kv.put(approvalKey, JSON.stringify({
+      proposalId,
+      owner,
+      status: "discarded-back-to-review",
+      discardedAt: nowIso(now)
+    }));
+  }
+  const discardedAt = nowIso(now);
+  const updatedProposal = {
+    ...proposal,
+    rankedCoachWording: nextWording,
+    approvalStatus: "draft",
+    draftSavedAt: discardedAt,
+    draftSavedBy: owner,
+    discardedAt,
+    discardedBy: owner,
+    approvedAt: null,
+    approvedBy: null,
+    approvedType: null,
+    approvedTopic: null,
+    approvedCategory: null,
+    approvedEntity: null,
+    approvedTargetSavedAt: null,
+    rejectedAt: null,
+    rejectedBy: null,
+    rejectionReason: null
+  };
+  await kv.put(key, JSON.stringify(updatedProposal));
+  await updateLatestReviewProposal(kv, updatedProposal);
+  return Object.freeze({ proposalId, status: "discarded-to-review" });
+}
+
+export async function clearRejectedKnowledgeProposals(kv, now = new Date()) {
+  const review = await kv.get(LATEST_REVIEW_KEY, "json");
+  const index = reviewProposalIndex(review);
+  const rejected = index.filter(item => item.approvalStatus === "rejected");
+  if (!review || !rejected.length) return Object.freeze({ removed: 0, status: "empty" });
+  const rejectedIds = new Set(rejected.map(item => item.id));
+  if (typeof kv.delete === "function") {
+    await Promise.all([...rejectedIds].map(id => kv.delete(`${PROPOSAL_PREFIX}${id}`)));
+  } else {
+    await Promise.all([...rejectedIds].map(id => kv.put(`${PROPOSAL_PREFIX}${id}`, JSON.stringify({
+      id,
+      approvalStatus: "rejected-cleared",
+      clearedAt: nowIso(now)
+    }))));
+  }
+  const updatedIndex = index.filter(item => !rejectedIds.has(item.id));
+  const { proposals: _proposals, ...reviewWithoutProposals } = review;
+  const updated = {
+    ...reviewWithoutProposals,
+    summary: {
+      ...review.summary,
+      pendingApproval: updatedIndex.filter(item => item.approvalStatus === "pending-owner-approval" || item.approvalStatus === "draft").length,
+      rejected: 0,
+      published: updatedIndex.filter(item => item.approvalStatus === "published").length
+    },
+    proposalCount: updatedIndex.length,
+    proposalIndex: updatedIndex,
+    rejectedClearedAt: nowIso(now)
+  };
+  await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(updated));
+  await kv.put(LATEST_REVIEW_KEY, JSON.stringify(updated));
+  return Object.freeze({ removed: rejectedIds.size, status: "rejected-cleared" });
 }
 
 export async function queueKnowledgeSourceRetry(kv, input = {}, now = new Date()) {

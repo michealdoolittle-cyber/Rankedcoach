@@ -12,6 +12,8 @@ import {
   approveKnowledgeProposal,
   buildKnowledgeConsensus,
   buildKnowledgeReview,
+  clearRejectedKnowledgeProposals,
+  discardApprovedKnowledge,
   extractStructuredClaims,
   extractYouTubeCaptionTracks,
   getKnowledgeOwnerDashboard,
@@ -1238,6 +1240,7 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   const savedTarget = await saveApprovedKnowledgeTarget(kv, {
     proposalId: proposal.id,
     owner: "Michael",
+    rankedCoachWording: "Keep one teammate close enough to trade before committing through Bind A control.",
     type: "coaching",
     topic: "mechanics",
     category: "map",
@@ -1247,7 +1250,9 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   assert.equal(savedTarget.topic, "mechanics");
   assert.equal(savedTarget.category, "map");
   assert.equal(savedTarget.entity, "Bind");
+  assert.match(savedTarget.rankedCoachWording, /Bind A control/);
   const retaggedProposal = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" })).review.proposals.find(item => item.id === proposal.id);
+  assert.match(retaggedProposal.rankedCoachWording, /Bind A control/);
   assert.equal(retaggedProposal.approvedType, "coaching");
   assert.equal(retaggedProposal.approvedTopic, "mechanics");
   assert.equal(retaggedProposal.approvedCategory, "map");
@@ -1270,7 +1275,7 @@ test("owner-imported timestamped transcripts create reviewable claims and only a
   const publicIndex = await getPublishedKnowledge(kv);
   assert.equal(publicIndex.items.length, 1);
   assert.equal(publicIndex.items[0].topic, "mechanics");
-  assert.match(publicIndex.items[0].wording, /Keep one teammate/);
+  assert.match(publicIndex.items[0].wording, /Bind A control/);
   assert.doesNotMatch(JSON.stringify(publicIndex), /hold the trade spacing before crossing/i);
 });
 
@@ -1457,7 +1462,59 @@ test("draft and reject decisions persist without publishing", async () => {
   });
   const rejected = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "rejected" })).review.proposals[0];
   assert.equal(rejected.approvalStatus, "rejected");
+  const cleared = await clearRejectedKnowledgeProposals(kv, new Date("2026-07-24T01:10:00.000Z"));
+  assert.equal(cleared.removed, 1);
+  assert.equal((await getKnowledgeOwnerDashboard(kv, { proposalBucket: "rejected" })).review.proposals.length, 0);
   assert.equal((await getPublishedKnowledge(kv)).items.length, 0);
+});
+
+test("approved insights are edited or discarded, not drafted or rejected", async () => {
+  const kv = new MemoryKv();
+  await ingestTimestampedKnowledgeTranscript(kv, {
+    source: {
+      platform: "youtube",
+      url: "https://www.youtube.com/watch?v=approvedflw",
+      title: "Approved flow guide",
+      publisher: "Coach A"
+    },
+    transcript: "00:12 Keep one teammate close enough to trade the opening lane before the team commits."
+  }, { now: new Date("2026-07-24T01:20:00.000Z") });
+  const proposal = (await getKnowledgeOwnerDashboard(kv)).review.proposals[0];
+  await approveKnowledgeProposal(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    rankedCoachWording: "Assign a buddy before first contact so the opener has immediate support.",
+    category: "general",
+    confirmOriginalWording: true
+  }, new Date("2026-07-24T01:21:00.000Z"));
+  await assert.rejects(
+    saveKnowledgeProposalDraft(kv, {
+      proposalId: proposal.id,
+      owner: "Michael",
+      rankedCoachWording: "Trying to demote an approved item through draft should fail."
+    }),
+    /Discard this approved insight back to Review/
+  );
+  const saved = await saveApprovedKnowledgeTarget(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    rankedCoachWording: "Keep the second player close enough to trade the first lane before committing.",
+    type: "coaching",
+    topic: "teamplay",
+    category: "general"
+  }, new Date("2026-07-24T01:22:00.000Z"));
+  assert.match(saved.rankedCoachWording, /second player/);
+  const discarded = await discardApprovedKnowledge(kv, {
+    proposalId: proposal.id,
+    owner: "Michael",
+    rankedCoachWording: "Keep the second player close enough to trade the first lane before committing."
+  }, new Date("2026-07-24T01:23:00.000Z"));
+  assert.equal(discarded.status, "discarded-to-review");
+  assert.equal((await getKnowledgeOwnerDashboard(kv, { proposalBucket: "approved" })).review.proposals.length, 0);
+  const reviewProposal = (await getKnowledgeOwnerDashboard(kv, { proposalBucket: "review" })).review.proposals.find(item => item.id === proposal.id);
+  assert.equal(reviewProposal.approvalStatus, "draft");
+  assert.match(reviewProposal.rankedCoachWording, /second player/);
+  assert.equal(await kv.get(`${KNOWLEDGE_STORAGE_KEYS.approvalPrefix}${proposal.id}`, "json"), null);
 });
 
 test("new videos and owner-requested retries are not starved by older failures", async () => {

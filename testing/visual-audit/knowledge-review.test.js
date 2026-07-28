@@ -288,18 +288,32 @@ function startServer() {
           if (item.approvalStatus !== "approved") {
             return json(response, { error: "Only an owner-approved insight can have its Library tags saved." }, 400);
           }
+          item.rankedCoachWording = body.rankedCoachWording || item.rankedCoachWording;
           item.approvedType = body.type;
           item.approvedTopic = body.topic;
           item.approvedCategory = body.category;
           item.approvedEntity = body.entity;
           return json(response, {
             proposalId: item.id,
+            rankedCoachWording: item.rankedCoachWording,
             type: item.approvedType,
             topic: item.approvedTopic,
             category: item.approvedCategory,
             entity: item.approvedEntity,
             status: "approved-target-saved"
           });
+        }
+        if (item && url === "/api/knowledge/discard") {
+          if (item.approvalStatus !== "approved") {
+            return json(response, { error: "Only approved insights can be discarded back to Review." }, 400);
+          }
+          item.rankedCoachWording = body.rankedCoachWording || item.rankedCoachWording;
+          item.approvalStatus = "draft";
+          item.approvedType = null;
+          item.approvedTopic = null;
+          item.approvedCategory = null;
+          item.approvedEntity = null;
+          return json(response, { proposalId: item.id, status: "discarded-to-review" });
         }
         if (item && url === "/api/knowledge/publish") {
           if (item.approvalStatus !== "approved") {
@@ -331,6 +345,11 @@ function startServer() {
           item.approvalStatus = "approved";
           state.published.items = state.published.items.filter(entry => entry.id !== item.id);
           return json(response, { proposalId: item.id, status: "unpublished" });
+        }
+        if (url === "/api/knowledge/clear-rejected") {
+          const before = state.review.proposals.length;
+          state.review.proposals = state.review.proposals.filter(proposal => proposal.approvalStatus !== "rejected");
+          return json(response, { removed: before - state.review.proposals.length, status: "rejected-cleared" });
         }
         return json(response, { ok: true });
       }
@@ -950,6 +969,12 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   });
   assert.ok(typingLatency.max <= (options.mobile ? 350 : 300), `Typing had an extreme delayed frame: ${JSON.stringify(typingLatency)}`);
   const draftWording = await activeWording.inputValue();
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-draft`).waitFor({ state: "visible" });
+  assert.equal(
+    (await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"] b`).textContent()).trim(),
+    "draft",
+    "Editing a review proposal did not immediately tag it as a draft."
+  );
 
   const sourceIdentity = `source-queue-${options.mobile ? "mobile" : "desktop"}`;
   await sourceQueue.evaluate((element, identity) => {
@@ -1156,8 +1181,14 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     "true"
   );
   const approvedCard = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
-  assert.equal(await approvedCard.locator("[data-knowledge-wording]").getAttribute("readonly"), "");
+  assert.equal(await approvedCard.locator("[data-knowledge-wording]").getAttribute("readonly"), null);
   assert.equal(await approvedCard.locator('[data-knowledge-action="approve"]').count(), 0);
+  assert.equal(await approvedCard.locator('[data-knowledge-action="draft"]').count(), 0);
+  assert.equal(await approvedCard.locator('[data-knowledge-action="reject"]').count(), 0);
+  assert.equal(
+    (await approvedCard.locator('[data-knowledge-action="save-target"]').textContent()).trim(),
+    "Save changes"
+  );
   assert.equal(
     (await approvedCard.locator('[data-knowledge-action="publish"]').textContent()).trim(),
     "Publish to Library"
@@ -1191,6 +1222,7 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   await approvedCard.locator("[data-knowledge-topic]").selectOption("mechanics");
   await approvedCard.locator("[data-knowledge-category]").selectOption("map");
   await approvedCard.locator("[data-knowledge-entity]").fill("Bind");
+  await approvedCard.locator("[data-knowledge-wording]").fill("Keep the approved Bind insight private until the owner publishes it.");
   const targetSaveRequestsBefore = actions.filter(action => (
     action.path === "/api/knowledge/approved-target"
     && action.body.proposalId === actionProposalId
@@ -1200,10 +1232,10 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     page,
     saveTagsButton,
     async () => {
-      await activateControl(page, saveTagsButton, options.mobile, "Save tags");
-      await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).filter({ hasText: /tags saved privately/i }).waitFor({ state: "visible" });
+      await activateControl(page, saveTagsButton, options.mobile, "Save changes");
+      await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).filter({ hasText: /changes saved privately/i }).waitFor({ state: "visible" });
     },
-    "Saving approved Library tags",
+    "Saving approved changes",
     options.mobile ? 900 : 650
   );
   const targetSaveActions = actions.filter(action => (
@@ -1215,6 +1247,7 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(targetSaveActions.at(-1).body.topic, "mechanics");
   assert.equal(targetSaveActions.at(-1).body.category, "map");
   assert.equal(targetSaveActions.at(-1).body.entity, "Bind");
+  assert.equal(targetSaveActions.at(-1).body.rankedCoachWording, "Keep the approved Bind insight private until the owner publishes it.");
   const publishButton = approvedCard.locator('[data-knowledge-action="publish"]');
   await assertActionLatency(
     page,
@@ -1272,6 +1305,9 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.ok(actions.some(action => action.path === "/api/knowledge/reject" && action.body.proposalId === "proposal-two"));
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
   assert.equal(await page.locator(".knowledge-review-queue-item").count(), 1);
+  await activateControl(page, page.locator("#knowledgeResearchRefresh"), options.mobile, "Refresh rejected bin");
+  await page.locator(".knowledge-empty-state").filter({ hasText: /No rejected insights/ }).waitFor({ state: "visible" });
+  assert.ok(actions.some(action => action.path === "/api/knowledge/clear-rejected"));
 
   await activateControl(page, page.locator('[data-knowledge-bucket="approved"]'), options.mobile, "Approved bin");
   await page.locator(`[data-knowledge-proposal="${actionProposalId}"]`).waitFor({ state: "visible" });
@@ -1298,6 +1334,23 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     "Unpublishing did not return the item to its approved, separately publishable state."
   );
   assert.ok(actions.some(action => action.path === "/api/knowledge/unpublish" && action.body.proposalId === actionProposalId));
+
+  const discardButton = page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action="discard"]`);
+  await assertActionLatency(
+    page,
+    discardButton,
+    async () => {
+      await activateControl(page, discardButton, options.mobile, "Discard");
+      await page.locator(`[data-knowledge-proposal="${nextProposalId}"], .knowledge-empty-state`).first().waitFor({ state: "visible" });
+    },
+    "Discarding an approved insight",
+    options.mobile ? 900 : 650
+  );
+  assert.ok(actions.some(action => action.path === "/api/knowledge/discard" && action.body.proposalId === actionProposalId));
+  await activateControl(page, page.locator('[data-knowledge-bucket="review"]'), options.mobile, "To Review bin after discard");
+  await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"]`).waitFor({ state: "visible" });
+  await activateControl(page, page.locator(`[data-knowledge-select-proposal="${actionProposalId}"]`), options.mobile, "Select discarded draft");
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-draft`).waitFor({ state: "visible" });
 
   await assertNoOverflow(page, options.mobile);
   const rootOverflow = await page.evaluate(() => ({
