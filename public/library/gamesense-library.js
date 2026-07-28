@@ -19,6 +19,8 @@
   let libraryPageActive = false;
   let collageHydrationToken = 0;
   let crosshairCopyResetTimer = 0;
+  const PLAYLIST_LIVE_FILTER = "Live";
+  const PLAYLIST_AUTOPLAY_STORAGE_PREFIX = "rankedcoach:playlist-autoplay:";
   const topicCollageShuffleSalt = Math.random().toString(36).slice(2);
   const COLLECTION_ARCHIVE_BATCH_SIZE = 24;
   const topicMeta = {
@@ -494,13 +496,32 @@
 
   function buildMapShell(label = "") {
     const id = assetSlug(label);
+    const reference = globalThis.RankedCoachGamesenseVStatsReference?.maps?.[id];
+    const metaComps = Array.isArray(reference?.metaComps) ? reference.metaComps.map(comp => ({
+      label: comp.label,
+      agents: Array.isArray(comp.agents) ? comp.agents.slice() : [],
+      composition: comp.composition
+    })) : [];
     return {
       id,
       label,
       cardImage: getMapApiArtwork(label),
       inCompetitivePool: canonicalMapSeason[id] !== false,
-      isOverviewShell: true,
-      metaComp: { patch: "Current" },
+      isOverviewShell: !reference,
+      metaComp: metaComps[0] ? { ...metaComps[0], patch: reference.source?.patchLabel || "Current" } : { patch: "Current" },
+      metaComps,
+      highRankPickRates: reference ? { ...reference.highRankPickRates } : {},
+      rolePickRates: reference?.rolePickRates?.map(item => ({ ...item })) || [],
+      dataStatus: reference ? "verified" : "in-review",
+      compSample: reference ? {
+        rankLabel: reference.source?.rankLabel || "Ascendant to Radiant",
+        patchLabel: reference.source?.patchLabel || "Current",
+        currentPatchAgentSelections: reference.sample?.agentSelections || 0,
+        combinedAgentSelections: reference.sample?.agentSelections || 0,
+        source: reference.source?.provider || "",
+        note: "High-rank Competitive selection reference. Map and global pick shares use the same rank window; each role layout is an observed five-agent structure.",
+        sourceUrl: reference.source?.agentUrl || ""
+      } : null,
       lineupLinks: []
     };
   }
@@ -1257,17 +1278,18 @@
     return Array.isArray(getReference()[topic]) ? getReference()[topic] : [];
   }
 
-  function renderPublishedKnowledge(category = "general", entity = "") {
+  function renderPublishedKnowledge(category = "general", entity = "", options = {}) {
     const normalizedEntity = String(entity || "").trim().toLowerCase();
+    const includeGeneral = options.includeGeneral !== false;
     const items = publishedKnowledge.filter(item => (
-      item.category === "general"
+      (includeGeneral && item.category === "general")
       || (item.category === category && String(item.entity || "").trim().toLowerCase() === normalizedEntity)
       || (item.category === "agent-map" && String(item.entity || "").split("\u00b7").map(value => value.trim().toLowerCase()).includes(normalizedEntity))
     ));
     if (!items.length) return "";
     return `
       <section class="gamesense-knowledge-updates">
-        <div class="gamesense-section-heading"><span>RankedCoach Research</span><strong>Approved coaching updates</strong></div>
+        <div class="gamesense-section-heading"><span>RankedCoach Research</span></div>
         <div class="gamesense-knowledge-update-grid">${items.map(item => `
           <article>
             <span>${escapeHtml(item.topic || "Coaching principle")}</span>
@@ -1293,7 +1315,11 @@
       .then(payload => {
         publishedKnowledge = Array.isArray(payload?.items) ? payload.items : [];
         window.dispatchEvent(new CustomEvent("rankedcoach:published-knowledge-ready"));
-        if (libraryPageActive) render({ direction: "replace" });
+        // Background research must not replace an actively opened dossier:
+        // a replacement here detaches a player's map/agent controls mid-tap.
+        // The overview can safely refresh its general feed; entity-specific
+        // research is picked up on the next intentional dossier selection.
+        if (libraryPageActive && state.topic === "overview") render({ direction: "replace" });
         return publishedKnowledge;
       })
       .catch(error => {
@@ -1376,7 +1402,47 @@
   }
 
   function getPlaylistFilters() {
-    return ["All", "Home", "Historical Archive", "News", "Live/Streaming", "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"];
+    return ["All", "Home", "Historical Archive", "News", PLAYLIST_LIVE_FILTER, "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"];
+  }
+
+  function normalizePlaylistFilter(value = "") {
+    const candidate = String(value || "").trim();
+    if (candidate === "Live/Streaming" || candidate === "Live 🔴") return PLAYLIST_LIVE_FILTER;
+    return getPlaylistFilters().includes(candidate) ? candidate : "Home";
+  }
+
+  function getPlaylistFilterLabel(filter = "") {
+    return normalizePlaylistFilter(filter) === PLAYLIST_LIVE_FILTER ? "Live 🔴" : normalizePlaylistFilter(filter);
+  }
+
+  function isPlaylistAutoplayCategory(filter = "") {
+    return !["Home", "Historical Archive", PLAYLIST_LIVE_FILTER].includes(normalizePlaylistFilter(filter));
+  }
+
+  function getPlaylistAutoplayStorageKey(filter = "") {
+    const normalized = normalizePlaylistFilter(filter).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return normalized ? `${PLAYLIST_AUTOPLAY_STORAGE_PREFIX}${normalized}` : "";
+  }
+
+  function getPlaylistAutoplayEnabled(filter = "") {
+    const key = getPlaylistAutoplayStorageKey(filter);
+    if (!key || !isPlaylistAutoplayCategory(filter)) return false;
+    try {
+      return window.localStorage.getItem(key) === "true";
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function setPlaylistAutoplayEnabled(filter = "", enabled = false) {
+    const key = getPlaylistAutoplayStorageKey(filter);
+    if (!key || !isPlaylistAutoplayCategory(filter)) return false;
+    try {
+      window.localStorage.setItem(key, enabled ? "true" : "false");
+      return true;
+    } catch (_error) {
+      return false;
+    }
   }
 
   function isPlaylistVod(item = {}) {
@@ -1424,6 +1490,33 @@
       seen.add(identity);
       return true;
     });
+  }
+
+  function getYouTubePlaylistVideoId(video = {}) {
+    if (String(video?.platform || "youtube").toLowerCase() !== "youtube") return "";
+    const id = String(video?.id || video?.upstreamId || "").trim();
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : "";
+  }
+
+  function getPlaylistAutoplayQueue(filter = "") {
+    const normalized = normalizePlaylistFilter(filter);
+    if (!isPlaylistAutoplayCategory(normalized)) return [];
+    const catalog = getPlaylistCatalogItems();
+    const matching = normalized === "All"
+      ? catalog
+      : normalized === "VOD's"
+        ? catalog.filter(isPlaylistVod)
+        : catalog.filter(video => String(video?.topicType || "") === normalized);
+    return matching.filter(video => getYouTubePlaylistVideoId(video));
+  }
+
+  function renderPlaylistAutoplayControl(filter = "") {
+    const normalized = normalizePlaylistFilter(filter);
+    const queue = getPlaylistAutoplayQueue(normalized);
+    if (queue.length < 2) return "";
+    const enabled = getPlaylistAutoplayEnabled(normalized);
+    const status = enabled ? "On" : "Off";
+    return `<button class="gamesense-playlist-autoplay${enabled ? " is-active" : ""}" type="button" data-gamesense-playlist-autoplay="${escapeHtml(normalized)}" aria-pressed="${enabled}" aria-label="Autoplay ${escapeHtml(getPlaylistFilterLabel(normalized))}: ${status}. Continue to the next video in this category when a video finishes."><span>Autoplay this category</span><strong>${status}</strong></button>`;
   }
 
   function normalizePlaylistVideoWatchKey(value = "") {
@@ -1511,7 +1604,10 @@
       : /^\d+$/.test(twitchVideoId)
         ? `data-gamesense-play-twitch-video="${escapeHtml(twitchVideoId)}"`
         : `data-gamesense-open-live="${escapeHtml(video.url)}"`;
-    return `<article class="gamesense-video-card${historical ? " gamesense-historical-video-card" : ""}${watched ? " is-watched" : ""}" data-video-id="${escapeHtml(video.id)}"${watchKey ? ` data-video-watch-key="${escapeHtml(watchKey)}"` : ""}>
+    const autoplayCategory = options.autoplayCategory && getYouTubePlaylistVideoId(video)
+      ? normalizePlaylistFilter(options.autoplayCategory)
+      : "";
+    return `<article class="gamesense-video-card${historical ? " gamesense-historical-video-card" : ""}${watched ? " is-watched" : ""}" data-video-id="${escapeHtml(video.id)}"${watchKey ? ` data-video-watch-key="${escapeHtml(watchKey)}"` : ""}${autoplayCategory ? ` data-gamesense-playlist-category="${escapeHtml(autoplayCategory)}"` : ""}>
       <button class="gamesense-video-thumb" type="button" ${thumbAction} aria-label="Play ${escapeHtml(video.title)}">${renderMediaThumbnail(video.thumbnail)}<i aria-hidden="true"></i></button>
       <div><span>${escapeHtml(sourceLabel)}</span><h3>${escapeHtml(video.title)}</h3><p>${escapeHtml(video.channel)}${metadata ? ` | ${escapeHtml(metadata)}` : ""}</p>${renderYouTubeLikeMetric(video)}<a href="${escapeHtml(watchUrl)}" target="_blank" rel="noopener noreferrer">${isYouTube ? "Watch &amp; like on YouTube" : "Watch on Twitch"}</a></div>
       ${renderPlaylistWatchedPill(video)}
@@ -1521,7 +1617,7 @@
   function renderYouTubePlayer(videoId, title = "Featured VALORANT video", options = {}) {
     const origin = window.location.origin;
     const params = new URLSearchParams({
-      autoplay: "0",
+      autoplay: options.autoplay === true ? "1" : "0",
       controls: "1",
       fs: "1",
       playsinline: "1",
@@ -1565,11 +1661,13 @@
     window.setTimeout(() => overlay.remove(), 180);
   }
 
-  function bindYouTubePlaybackWatch(frame, watchKey = "") {
+  function bindYouTubePlaybackWatch(frame, watchKey = "", onEnded = null) {
     const normalizedWatchKey = normalizePlaylistVideoWatchKey(watchKey);
-    if (!frame || !normalizedWatchKey) return () => {};
+    if (!frame) return () => {};
 
     let reported = false;
+    let hasStarted = false;
+    let endedReported = false;
     const postToPlayer = payload => {
       try {
         frame.contentWindow?.postMessage(JSON.stringify({
@@ -1596,9 +1694,19 @@
         }
       }
       const state = Number(payload?.info?.playerState ?? payload?.info);
-      if (reported || payload?.event !== "onStateChange" || state !== 1) return;
-      reported = true;
-      globalThis.RankedCoachPlaylistWatchHistory?.markWatched?.(normalizedWatchKey);
+      if (payload?.event !== "onStateChange") return;
+      if (state === 1) {
+        hasStarted = true;
+        if (!reported && normalizedWatchKey) {
+          reported = true;
+          globalThis.RankedCoachPlaylistWatchHistory?.markWatched?.(normalizedWatchKey);
+        }
+        return;
+      }
+      if (state === 0 && hasStarted && !endedReported && typeof onEnded === "function") {
+        endedReported = true;
+        onEnded();
+      }
     };
     frame.addEventListener("load", subscribe, { once: true });
     window.addEventListener("message", onMessage);
@@ -1609,7 +1717,7 @@
     };
   }
 
-  function openMediaPlayer({ platform = "youtube", id = "", channel = "", videoId = "", title = "VALORANT video", url = "", startSeconds = 0, sourceLabel = "Featured Video", watchKey = "" } = {}) {
+  function openMediaPlayer({ platform = "youtube", id = "", channel = "", videoId = "", title = "VALORANT video", url = "", startSeconds = 0, sourceLabel = "Featured Video", watchKey = "", autoplay = false, autoplayCategory = "", autoplayQueue = [] } = {}) {
     closeMediaPlayer();
     document.querySelectorAll("#gamesenseMediaOverlay").forEach(overlay => overlay.remove());
     const isTwitch = platform === "twitch";
@@ -1618,7 +1726,7 @@
       : "";
     const player = isTwitch
       ? renderTwitchPlayer(channel, videoId)
-      : renderYouTubePlayer(id, title, { startSeconds, enableJsApi: Boolean(playerId), playerId });
+      : renderYouTubePlayer(id, title, { startSeconds, enableJsApi: Boolean(playerId), playerId, autoplay });
     const externalLabel = isTwitch ? "Open on Twitch" : "Open & like on YouTube";
     const overlay = document.createElement("div");
     overlay.id = "gamesenseMediaOverlay";
@@ -1644,11 +1752,48 @@
     if (playerId) {
       activeMediaPlayerCleanup = bindYouTubePlaybackWatch(
         overlay.querySelector("[data-gamesense-youtube-player]"),
-        watchKey
+        watchKey,
+        () => {
+          const category = normalizePlaylistFilter(autoplayCategory);
+          const queue = Array.isArray(autoplayQueue) ? autoplayQueue : [];
+          if (!getPlaylistAutoplayEnabled(category) || queue.length < 2) return;
+          const currentIndex = queue.findIndex(video => getYouTubePlaylistVideoId(video) === id);
+          const nextVideo = currentIndex >= 0 ? queue[currentIndex + 1] : null;
+          if (!nextVideo) return;
+          window.setTimeout(() => {
+            if (!activeMediaPlayer?.isConnected) return;
+            openPlaylistVideo(nextVideo, {
+              autoplay: true,
+              autoplayCategory: category,
+              autoplayQueue: queue
+            });
+          }, 120);
+        }
       );
     }
     window.requestAnimationFrame(() => overlay.classList.add("is-open"));
     overlay.querySelector("[data-gamesense-close-media]")?.focus({ preventScroll: true });
+  }
+
+  function openPlaylistVideo(video = {}, options = {}) {
+    const id = getYouTubePlaylistVideoId(video);
+    if (!id) return;
+    const category = normalizePlaylistFilter(options.autoplayCategory || "");
+    const queue = Array.isArray(options.autoplayQueue) && options.autoplayQueue.length
+      ? options.autoplayQueue
+      : getPlaylistAutoplayQueue(category);
+    openMediaPlayer({
+      platform: "youtube",
+      id,
+      title: video.title || "Featured VALORANT video",
+      url: getPlaylistVideoWatchUrl(video) || `https://www.youtube.com/watch?v=${id}`,
+      startSeconds: video.startSeconds,
+      sourceLabel: video.archiveOnly ? "Historical Guide" : "Featured Video",
+      watchKey: getPlaylistVideoWatchKey(video),
+      autoplay: options.autoplay === true,
+      autoplayCategory: category,
+      autoplayQueue: queue
+    });
   }
 
   function renderPlaylistLiveCard(stream) {
@@ -1694,7 +1839,7 @@
     return `<section class="gamesense-playlist-catalog-section${historical ? " is-historical" : ""}">
       <div class="gamesense-playlist-section-head"><span>${escapeHtml(title)}</span><strong>${items.length}</strong></div>
       ${copy ? `<p class="gamesense-playlist-section-copy">${escapeHtml(copy)}</p>` : ""}
-      <div class="gamesense-playlist-grid">${items.map(video => renderPlaylistVideoCard(video, { historical })).join("")}</div>
+      <div class="gamesense-playlist-grid">${items.map(video => renderPlaylistVideoCard(video, { historical, autoplayCategory: options.autoplayCategory })).join("")}</div>
     </section>`;
   }
 
@@ -1728,7 +1873,7 @@
   function renderPlaylist() {
     const items = featuredPlaylist?.items || [];
     const historicalItems = featuredPlaylist?.historicalItems || [];
-    const activeFilter = getPlaylistFilters().includes(state.playlistFilter) ? state.playlistFilter : "Home";
+    const activeFilter = normalizePlaylistFilter(state.playlistFilter);
     const liveStreams = featuredPlaylist?.liveStreams || [];
     const visible = activeFilter === "All"
       ? items
@@ -1736,7 +1881,7 @@
         ? []
         : activeFilter === "Historical Archive"
           ? []
-        : activeFilter === "Live/Streaming"
+        : activeFilter === PLAYLIST_LIVE_FILTER
           ? liveStreams
         : activeFilter === "VOD's"
           ? items.filter(isPlaylistVod)
@@ -1749,18 +1894,22 @@
         <div><strong>Featured Playlist</strong><small>Recent trusted releases and a separately preserved historical guide archive, credited to their original creators.</small></div>
         <button class="gamesense-back" type="button" data-gamesense-back="overview">Back to topics</button>
       </div>
-      <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
-        ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}">${filter === "Home" ? renderPlaylistHomeIcon() : ""}<span>${escapeHtml(filter)}</span></button>`).join("")}
+      <div class="gamesense-playlist-controls">
+        <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
+          ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}"${filter === PLAYLIST_LIVE_FILTER ? ` aria-label="Live streams"` : ""}>${filter === "Home" ? renderPlaylistHomeIcon() : ""}<span>${filter === PLAYLIST_LIVE_FILTER ? `Live <span aria-hidden="true">🔴</span>` : escapeHtml(filter)}</span></button>`).join("")}
+        </div>
+        ${renderPlaylistAutoplayControl(activeFilter)}
       </div>
       ${activeFilter === "Home"
         ? renderPlaylistHome(items)
         : activeFilter === "Historical Archive"
           ? renderHistoricalPlaylistArchive(historicalItems)
-        : activeFilter === "Live/Streaming"
+          : activeFilter === PLAYLIST_LIVE_FILTER
           ? `<div class="gamesense-playlist-grid gamesense-live-grid">${visible.length ? visible.map(renderPlaylistLiveCard).join("") : `<p class="gamesense-playlist-empty">No verified VALORANT streams are live right now.</p>`}</div>`
-          : `${renderPlaylistSection("Featured videos", visible)}
+          : `${renderPlaylistSection("Featured videos", visible, { autoplayCategory: activeFilter })}
               ${renderPlaylistSection("Historical guides", historicalVisible, {
                 historical: true,
+                autoplayCategory: activeFilter,
                 copy: "These verified guides are preserved for historical context and filed under the same coaching category."
               })}
               ${!visible.length && !historicalVisible.length ? `<p class="gamesense-playlist-empty">No trusted video is currently filed in this category.</p>` : ""}
@@ -1812,8 +1961,22 @@
       </section>`;
   }
 
+  function getMapHeatmap(map) {
+    const catalog = globalThis.RankedCoachGamesenseHeatmaps;
+    return map && catalog && typeof catalog === "object" ? catalog[map.id] || null : null;
+  }
+
+  function renderMapHeatmapMeta(map, heatmap) {
+    if (!heatmap?.image) {
+      return `<aside class="gamesense-heatmap-meta gamesense-heatmap-meta--unavailable"><strong>Plant Heat Map</strong><p>${escapeHtml(heatmap?.unavailableReason || `No verified plant heat-map image is available for ${map.label}.`)}</p></aside>`;
+    }
+    return `<aside class="gamesense-heatmap-meta"><strong>Plant Heat Map</strong><span>${escapeHtml(heatmap.actLabel || "Verified archive")}</span><p>Published aggregate plant-location reference for this map.</p></aside>`;
+  }
+
   function renderMarkedMap(map) {
+    const isHeatmap = state.mapView === "heatmap";
     const isPlants = state.mapView === "plants";
+    const heatmap = getMapHeatmap(map);
     const markers = isPlants
       ? map.plantSpots || []
       : map.calloutLabelsBakedIn
@@ -1824,8 +1987,9 @@
       <section class="gamesense-tactical-card">
         <div class="gamesense-section-heading gamesense-map-heading"><span>Marked Tactical Map</span><strong>Map Location Info</strong></div>
         <div class="gamesense-map-view-tabs" role="tablist" aria-label="${escapeHtml(map.label)} tactical map layer">
-          <button type="button" data-gamesense-map-view="locations" class="${isPlants ? "" : "active"}" aria-selected="${isPlants ? "false" : "true"}">Map Locations</button>
+          <button type="button" data-gamesense-map-view="locations" class="${isPlants || isHeatmap ? "" : "active"}" aria-selected="${isPlants || isHeatmap ? "false" : "true"}">Map Locations</button>
           <button type="button" data-gamesense-map-view="plants" class="${isPlants ? "active" : ""}" aria-selected="${isPlants ? "true" : "false"}">Spike Plant Hot Spots</button>
+          <button type="button" data-gamesense-map-view="heatmap" class="${isHeatmap ? "active" : ""}" aria-selected="${isHeatmap ? "true" : "false"}">Heat Map</button>
         </div>
         <div class="gamesense-map-tools" aria-label="Map zoom controls">
           <button type="button" data-gamesense-map-zoom="out" aria-label="Zoom out">-</button>
@@ -1833,35 +1997,40 @@
           <span data-gamesense-map-zoom-value>${Math.round(state.mapZoom * 100)}%</span>
           <button type="button" data-gamesense-map-zoom="in" aria-label="Zoom in">+</button>
         </div>
-        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}">
-          <div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} tactical map">
-            <div class="gamesense-tactical-stage" data-gamesense-map-stage style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
-              <img src="${escapeHtml(map.layoutImage)}" alt="${escapeHtml(map.label)} tactical layout" loading="eager" draggable="false">
+        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}${isHeatmap ? " is-heatmap" : ""}">
+          ${isHeatmap && !heatmap?.image ? "" : `<div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} ${isHeatmap ? "plant heat map" : "tactical map"}">
+            <div class="gamesense-tactical-stage${isHeatmap ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
+              <img src="${escapeHtml(isHeatmap ? heatmap.image : (isPlants ? map.plantLayoutImage || map.layoutImage : map.layoutImage))}" alt="${escapeHtml(isHeatmap ? `${map.label} plant heat map, ${heatmap.actLabel || "verified archive"}` : isPlants ? `${map.label} plant-reference layout` : `${map.label} tactical layout`)}" loading="eager" draggable="false" referrerpolicy="${isHeatmap ? "no-referrer" : ""}">
               ${markers.map((callout, index) => {
                 if (!isPlants) return `<span class="gamesense-callout" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`;
                 const siteIndex = markers.slice(0, index).filter(item => item.site === callout.site).length;
                 const offset = markerOffsets[siteIndex % markerOffsets.length];
                 const direction = callout.site === "B" ? -1 : 1;
                 const plantKey = `${callout.site}${callout.number}`;
-                return `<button type="button" class="gamesense-callout gamesense-plant-marker" data-gamesense-plant-key="${escapeHtml(plantKey)}" aria-label="Highlight ${escapeHtml(plantKey)} ${escapeHtml(callout.label)}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%;--marker-label-x:${offset[0] * direction}px;--marker-label-y:${offset[1]}px"><i></i><b>${escapeHtml(plantKey)}</b></button>`;
+                // The tactical image stays uncluttered: plant locations are
+                // represented by the spike marker alone. Their names/rates are
+                // available in the adjacent accessible legend instead of being
+                // repeated over the map art.
+                return `<button type="button" class="gamesense-callout gamesense-plant-marker" data-gamesense-plant-key="${escapeHtml(plantKey)}" aria-label="Highlight ${escapeHtml(plantKey)} ${escapeHtml(callout.label)}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%"><i></i></button>`;
               }).join("")}
             </div>
-          </div>
-          ${isPlants ? `<aside class="gamesense-plant-legend" aria-label="${escapeHtml(map.label)} plant location rates">
-            <strong>Active-season plant share</strong>
+          </div>`}
+          ${isPlants ? `<aside class="gamesense-plant-legend" aria-label="${escapeHtml(map.label)} plant location reference">
+            <strong>Plant location reference</strong>
             ${(map.plantSpots || []).map(spot => {
               const plantKey = `${spot.site}${spot.number}`;
               return `<div class="gamesense-plant-row" data-gamesense-plant-key="${escapeHtml(plantKey)}">
-                <i></i><b>${escapeHtml(plantKey)}</b><em>${spot.rate != null && Number.isFinite(Number(spot.rate)) ? `${Number(spot.rate).toFixed(2)}%` : "N/A"}</em><span>${escapeHtml(spot.label)}</span>
+                <i></i><b>${escapeHtml(plantKey)}</b><span>${escapeHtml(spot.label)}</span>
                 <button type="button" class="gamesense-plant-preview-toggle" data-gamesense-plant-preview="${escapeHtml(plantKey)}" aria-expanded="false" aria-label="Show ${escapeHtml(plantKey)} in-game plant reference">+</button>
                 <section class="gamesense-plant-preview" hidden>
                   ${spot.previewImage ? `<img src="${escapeHtml(spot.previewImage)}" alt="${escapeHtml(spot.previewLabel || spot.label)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="gamesense-plant-preview-unavailable">No verified in-game image is available for this spot.</div>`}
-                  <div><strong>${escapeHtml(spot.previewLabel || spot.label)}</strong>${spot.previewSource ? `<a href="${escapeHtml(spot.previewSource)}" target="_blank" rel="noopener noreferrer">Image source</a>` : ""}</div>
+                  <div><strong>${escapeHtml(spot.previewLabel || spot.label)}</strong></div>
                 </section>
               </div>`;
             }).join("")}
-            <p>${escapeHtml(map.plantRateNote || "Plant share is unavailable for this map.")}</p>
+            <p>Select a marker or its + control to view the in-game location reference.</p>
           </aside>` : ""}
+          ${isHeatmap ? renderMapHeatmapMeta(map, heatmap) : ""}
         </div>
       </section>`;
   }
@@ -1890,11 +2059,24 @@
       const tipRoles = Array.isArray(item?.roles) ? item.roles : [];
       return !activeRole || !tipRoles.length || tipRoles.includes(activeRole);
     });
-    return { roles, activeRole, categories, activeCategory, roleTips, tips };
+    return {
+      roles,
+      activeRole,
+      categories,
+      activeCategory,
+      roleTips,
+      tips,
+      // A map with a verified high-rank reference must never look like its
+      // dossier is awaiting data just because this particular coaching tab
+      // has no authored recommendation. Keep the absence honest without
+      // inventing a tactical claim.
+      hasVerifiedReference: map?.dataStatus === "verified",
+      mapLabel: map?.label || "this map"
+    };
   }
 
   function renderMapTipsPanel(model) {
-    const { activeRole, activeCategory, categories, roleTips, tips } = model;
+    const { activeRole, activeCategory, categories, roleTips, tips, hasVerifiedReference, mapLabel } = model;
     return `
       <div class="gamesense-tips-panel" role="tabpanel">
         <div><span>${escapeHtml(categories.find(category => category.id === activeCategory)?.label || "Tips")}</span><strong>${activeRole ? `${escapeHtml(activeRole)} lens` : "All-role read"}</strong></div>
@@ -1904,7 +2086,9 @@
             const label = typeof item === "string" ? "Round read" : item.label || "Round read";
             const isRoleTip = Boolean(activeRole && roleTips.includes(item));
             return `<article class="gamesense-tip${isRoleTip ? " is-role-tip" : ""}"><span>${escapeHtml(isRoleTip ? activeRole : label)}</span><p>${escapeHtml(text)}</p></article>`;
-          }).join("") : `<article class="gamesense-tip gamesense-tip-review-hold"><span>Data still in review</span><p>No tactical recommendation is published for this view until its sources clear the Library corroboration gate.</p></article>`}
+          }).join("") : hasVerifiedReference
+            ? `<article class="gamesense-tip gamesense-tip-reference"><span>High-rank map reference</span><p>Competitive role layouts and map-specific weapon reads are available below for ${escapeHtml(mapLabel)}. No extra generic tip is shown for this view.</p></article>`
+            : `<article class="gamesense-tip gamesense-tip-review-hold"><span>Data still in review</span><p>No tactical recommendation is published for this view until its sources clear the Library corroboration gate.</p></article>`}
         </div>
       </div>`;
   }
@@ -1929,19 +2113,39 @@
       </section>`;
   }
 
+  function getGeometryWeaponSuggestions(map) {
+    const geometry = {
+      abyss: ["long exterior lanes and vertical crossings", "compact site entrances after the first lane is cleared"],
+      ascent: ["mid-linked rifle lanes and open site crossings", "tight site pockets once utility creates a close fight"],
+      bind: ["long approaches and teleporter-adjacent lanes", "compact chokes where a team deliberately holds contact"],
+      breeze: ["open sightlines and long cross-map lanes", "protected close pockets after the long lane has been denied"],
+      corrode: ["mixed-distance lanes that reward a stable rifle", "site entrances that become close only after utility commits"],
+      fracture: ["split-entry lanes and multiple simultaneous approaches", "the short contact created by a coordinated pinch"],
+      haven: ["three-site rotations with mixed rifle distances", "site corners once a defender is isolated"],
+      icebox: ["vertical lanes and repeated long first contacts", "site boxes and plant cover after an opening angle is cleared"],
+      lotus: ["three-site rotations and varied approach distance", "doorways and compact retake contact"],
+      pearl: ["long mid and open site approaches", "the close post-plant pocket a team has already chosen"],
+      split: ["mid control and narrow-but-repeatable rifle lanes", "vertical site entries and close defender pockets"],
+      summit: ["wide exterior lanes and rotating sightlines", "site approaches after the first long contest"],
+      sunset: ["mid pressure and mixed-range site fights", "site entry chokes when the route is called in advance"]
+    }[map.id] || ["mixed-distance lanes", "a protected close-range pocket"];
+    const unavailable = "No verified map conversion percentage is published for this reference.";
+    return [
+      { weapon: "Vandal", image: "/assets/weapons/vandal.png", category: "rifle", fit: "Rifle baseline", roundConversionUnavailable: unavailable, evidence: "The Vandal is the all-range baseline: its first-shot lethality keeps a rifle viable when a round moves from space-taking into a long retake.", note: `${map.label} repeatedly creates ${geometry[0]}; take the rifle when your plan may need a clean opening duel and a later reposition.` },
+      { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Opening-angle tool", side: "DEF", roundConversionUnavailable: unavailable, conversion: "Map-geometry read: choose the Operator only when the team can protect the first angle and recover after contact.", evidence: "The Operator earns its value through one protected opening pick, not by forcing every later fight at sniper range.", note: `Use it on ${map.label} only while the round still gives you ${geometry[0]}; swap or save when the fight is likely to collapse into ${geometry[1]}.` },
+      { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Close-contact conversion", side: "DEF", roundConversionUnavailable: unavailable, conversion: "Map-geometry read: the Judge is strongest when the team intentionally forces a close first contact.", evidence: "The Judge is a commitment weapon: it needs a held choke, a trade plan, and a rifle recovery route after the first conversion.", note: `On ${map.label}, buy it for ${geometry[1]}, not as a replacement for a rifle across the map's open routes.` },
+      { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Pistol-round control", roundConversionUnavailable: unavailable, evidence: "The Ghost rewards a disciplined first shot while preserving credits for the utility that makes the round plan work.", note: `Use cover and a called trade on ${map.label}; the pistol is a precision choice, not an invitation to take an unsupported long duel.` }
+    ];
+  }
+
   function renderWeaponSuggestions(map) {
-    const suggestions = Array.isArray(map.weaponSuggestions) ? map.weaponSuggestions : [];
-    if (!suggestions.length) {
-      return `
-        <section class="gamesense-weapon-suggestions gamesense-weapon-suggestions-unavailable">
-          <div><span>Weapon Suggestions</span><strong>Verified active-season sample unavailable</strong></div>
-          <p class="gamesense-weapon-source">${escapeHtml(map.weaponSuggestionNote || "No verified active-season weapon conversion sample is attached to this map dossier.")}</p>
-        </section>`;
-    }
+    const publishedSuggestions = Array.isArray(map.weaponSuggestions) ? map.weaponSuggestions : [];
+    const usesGeometryReference = !publishedSuggestions.length;
+    const suggestions = usesGeometryReference ? getGeometryWeaponSuggestions(map) : publishedSuggestions;
     return `
-      <section class="gamesense-weapon-suggestions">
-        <div><span>Weapon Suggestions</span><strong>Highest-value choices by buy type</strong></div>
-        <p class="gamesense-weapon-source">Round conversion percent uses the vstats active-season Competitive map and economy sample. Kills-per-round and average-damage context uses Blitz Competitive weapon stats.</p>
+      <section class="gamesense-weapon-suggestions${usesGeometryReference ? " gamesense-weapon-suggestions-reference" : ""}">
+        <div><span>Weapon Suggestions</span><strong>${usesGeometryReference ? "Map-geometry choices by buy type" : "Highest-value choices by buy type"}</strong></div>
+        <p class="gamesense-weapon-source">${usesGeometryReference ? "These choices are map-geometry coaching references. No conversion percentage is shown until a verified public sample is available." : "Round conversion percent uses the retained Competitive map and economy sample. Other displayed weapon context uses the verified static weapon reference."}</p>
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
             <summary>
@@ -1963,14 +2167,15 @@
   function renderCompRolePickList(map, role = state.compRole) {
     const normalizedRole = ["Controller", "Duelist", "Initiator", "Sentinel"].includes(role) ? role : "Controller";
     const rows = (Array.isArray(map.rolePickRates) ? map.rolePickRates : [])
-      .filter(item => item.role === normalizedRole)
+      .filter(item => item.role === normalizedRole && item.mapSampleAvailable !== false && Number.isFinite(Number(item.mapRate)))
       .sort((left, right) => Number(right.mapRate) - Number(left.mapRate));
     return `
       <div class="gamesense-comp-pick-list" data-role-tone="${normalizedRole.toLowerCase()}" role="tabpanel">
         ${rows.map((item, index) => {
-          const difference = Number(item.mapRate) - Number(item.globalRate);
+          const hasGlobalRate = item.globalSampleAvailable !== false && Number.isFinite(Number(item.globalRate));
+          const difference = hasGlobalRate ? Number(item.mapRate) - Number(item.globalRate) : null;
           const differenceClass = difference > .005 ? "is-above" : difference < -.005 ? "is-below" : "is-even";
-          const differenceLabel = `${difference > 0 ? "+" : ""}${difference.toFixed(2)} pts vs global`;
+          const differenceLabel = difference === null ? "Global comparison unavailable" : `${difference > 0 ? "+" : ""}${difference.toFixed(2)} pts vs global`;
           return `<article class="gamesense-comp-pick-row">
             <div class="gamesense-comp-pick-identity">
               <img class="gamesense-comp-pick-art" src="${escapeHtml(getAgentIcon(item.agent))}" data-agent-fallback="${escapeHtml(getAgentFallbackIcon(item.agent))}" alt="" loading="lazy">
@@ -1979,7 +2184,7 @@
             <span class="gamesense-comp-pick-rank">${String(index + 1).padStart(2, "0")}</span>
             <div class="gamesense-comp-pick-rates">
               <span><b>${Number(item.mapRate).toFixed(2)}%</b><small>${escapeHtml(map.label)} pick</small></span>
-              <span><b>${Number(item.globalRate).toFixed(2)}%</b><small>Global pick</small></span>
+              <span><b>${hasGlobalRate ? `${Number(item.globalRate).toFixed(2)}%` : "—"}</b><small>Global pick</small></span>
             </div>
             <em class="${differenceClass}">${escapeHtml(differenceLabel)}</em>
           </article>`;
@@ -2095,10 +2300,18 @@
           <p>This map is now listed in the Library index and overview collage. Full coaching callouts, comps, weapon suggestions, and lineup references are not authored yet, so RankedCoach is not filling that gap with guessed strategy.</p>
         </section>`;
     }
+    const mapDataPeriod = String(map.metaComp?.patch || map.patchVersion || "Current").trim() || "Current";
+    const mapDataPeriodLabel = /^v\d+\s+act\s+\d+$/i.test(mapDataPeriod)
+      ? `As of ${mapDataPeriod}`
+      : /^patch\s+/i.test(mapDataPeriod)
+        ? `As of ${mapDataPeriod}`
+        : mapDataPeriod === "Current"
+          ? "Current reference"
+          : `As of Patch ${mapDataPeriod}`;
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.dataStatus === "in-review" ? `<small class="gamesense-map-data-status gamesense-map-data-status--caution">Data Still In Review</small>` : ""}${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
-        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(map.metaComp?.patch || map.patchVersion || "Current")}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
+        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">${escapeHtml(mapDataPeriodLabel)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
       <div class="gamesense-detail-grid">
         ${renderMapTips(map)}
@@ -2120,9 +2333,16 @@
 
   function renderAbilityVideo(video = null) {
     const videoSrc = String(video?.src || "").trim();
-    if (/^https:\/\/cmsassets\.rgpub\.io\/sanity\/files\/dsfx7636\/game_data\/[^"'<>]+\.mp4\?accountingTag=VAL$/i.test(videoSrc)) {
-      const sourceUrl = String(video?.source || "https://playvalorant.com/en-us/agents/").trim();
-      return `<div class="gamesense-ability-video"><span>Ability demo</span><video class="gamesense-ability-video-player" controls preload="metadata" playsinline aria-label="${escapeHtml(video.title || "VALORANT ability demo")}"><source src="${escapeHtml(videoSrc)}" type="video/mp4"></video>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">Official Riot agent page</a>` : ""}</div>`;
+    // The official agent pages currently publish their exact ability clips in
+    // three Riot CMS collections.  Older agents use `game_data`, while newer
+    // releases such as Harbor, Tejo, Veto, Waylay, and Miks use `news` or
+    // `news_live`.  They are all first-party Riot assets with the same
+    // accounting tag; rejecting the latter two left those valid demos blank.
+    if (/^https:\/\/cmsassets\.rgpub\.io\/sanity\/files\/dsfx7636\/(?:game_data|news|news_live)\/[^"'<>]+\.mp4\?accountingTag=VAL$/i.test(videoSrc)) {
+      // Provenance stays in the maintainer source audit.  The player-facing
+      // ability surface is deliberately the demonstration itself, without a
+      // redundant external-source label below every selected ability.
+      return `<div class="gamesense-ability-video"><span>Ability demo</span><video class="gamesense-ability-video-player" controls preload="metadata" playsinline aria-label="${escapeHtml(video.title || "VALORANT ability demo")}"><source src="${escapeHtml(videoSrc)}" type="video/mp4"></video></div>`;
     }
     const videoId = String(video?.videoId || "").trim();
     if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return "";
@@ -2167,6 +2387,15 @@
     const selected = abilities.find(ability => ability.id === state.detailId) || abilities[0];
     const hasPublishedPickRate = Number.isFinite(Number(agent.pickRate));
     const usageSource = agent.sampleLabel || "No verified current Competitive usage sample";
+    const hasPublishedMapFit = Array.isArray(agent.maps) && agent.maps.length > 0;
+    // A dossier should never collapse to an empty map-fit area merely because
+    // a public pick/win table has not been published for an agent.  The
+    // rotation reference is explicitly labeled as such and carries no made-up
+    // rate; once an approved sample exists, the real map fit replaces it.
+    const mapFitNames = hasPublishedMapFit
+      ? agent.maps.slice()
+      : getMaps().filter(map => map.inCompetitivePool !== false).map(map => map.label);
+    const mapFitSource = hasPublishedMapFit ? usageSource : "Current competitive rotation reference";
     return `
       <div class="gamesense-detail-head gamesense-agent-detail-head">
         <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
@@ -2195,8 +2424,8 @@
         ${renderAbilityDetail(agent, selected, { includeVideo: false })}
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
-        <div><span>Map Fit</span><strong>${escapeHtml(usageSource)}</strong></div>
-        <div class="gamesense-map-fit-grid">${agent.maps.length ? agent.maps.slice().sort((leftName, rightName) => {
+        <div><span>Map Fit</span><strong>${escapeHtml(mapFitSource)}</strong></div>
+        <div class="gamesense-map-fit-grid">${mapFitNames.length ? mapFitNames.sort((leftName, rightName) => {
           const leftWin = Number(agent.mapWinRates?.[leftName]);
           const rightWin = Number(agent.mapWinRates?.[rightName]);
           const leftHasWin = Number.isFinite(leftWin);
@@ -2215,11 +2444,12 @@
           const thumbnailArtwork = getOverviewMapThumbnail(map || { label: mapName });
           const mapArtwork = thumbnailArtwork || fullArtwork;
           const fallback = thumbnailArtwork && fullArtwork ? ` data-gamesense-overview-fallback-src="${escapeHtml(fullArtwork)}"` : "";
-          return `<${tagName} class="gamesense-map-fit-item"${action}><img src="${escapeHtml(mapArtwork)}" alt="" loading="lazy" decoding="async"${fallback}><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : "Pick pending"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : "Win pending"}</strong></div></${tagName}>`;
+          const hasMapRates = Number.isFinite(Number(pickRate)) || Number.isFinite(Number(winRate));
+          return `<${tagName} class="gamesense-map-fit-item${hasPublishedMapFit ? "" : " is-reference-fit"}"${action}><img src="${escapeHtml(mapArtwork)}" alt="" loading="lazy" decoding="async"${fallback}><span>${escapeHtml(mapName)}</span><div><strong>${Number.isFinite(Number(pickRate)) ? `${Number(pickRate).toFixed(2)}% pick` : hasMapRates ? "Pick pending" : "Role fit"}</strong><strong>${Number.isFinite(Number(winRate)) ? `${Number(winRate).toFixed(2)}% win` : hasMapRates ? "Win pending" : "Map reference"}</strong></div></${tagName}>`;
         }).join("") : `<p class="gamesense-map-fit-unavailable">No verified current-season map-fit sample is attached to this agent dossier.</p>`}</div>
       </section>
       ${renderRelatedVideo(agent)}
-      ${renderPublishedKnowledge("agent", agent.label)}`;
+      ${renderPublishedKnowledge("agent", agent.label, { includeGeneral: false })}`;
   }
 
   function safePercent(value) {
@@ -2243,7 +2473,7 @@
         ${ranges.map((range, index) => `<article class="gamesense-damage-target-row${index === 0 ? " is-mobile-range-active" : ""}" data-gamesense-damage-range-panel="${index}" role="tabpanel" aria-label="${escapeHtml(range.range)}: ${formatDamageValue(range.head)} head, ${formatDamageValue(range.body)} body, ${formatDamageValue(range.legs)} legs">
           <strong class="gamesense-damage-range">${escapeHtml(range.range)}</strong>
           <div class="gamesense-damage-target">
-            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260720-weapon-damage-04" alt="Front-facing generic target dummy with head, torso, and legs">
+            <img class="gamesense-target-dummy" src="assets/library/target-dummy.svg?v=20260727-library-coverage-01" alt="Front-facing generic target dummy with head, torso, and legs">
             <i class="gamesense-damage-line is-head" aria-hidden="true"></i>
             <i class="gamesense-damage-line is-body" aria-hidden="true"></i>
             <i class="gamesense-damage-line is-legs" aria-hidden="true"></i>
@@ -2380,7 +2610,7 @@
       </section>
       ${renderWeaponCollectionArchive(selected, getWeaponCollectionProvider()?.getCached(selected?.label), collectionLoadErrors.get(selected?.label) || "")}
       ${renderRelatedVideo(selected)}
-      ${renderPublishedKnowledge("weapon", selected?.label)}`;
+      ${renderPublishedKnowledge("weapon", selected?.label, { includeGeneral: false })}`;
   }
 
   function getSelectedWeapon() {
@@ -3547,9 +3777,16 @@
     }
     const playlistFilter = event.target.closest?.("[data-gamesense-playlist-filter]");
     if (playlistFilter) {
-      state.playlistFilter = getPlaylistFilters().includes(playlistFilter.dataset.gamesensePlaylistFilter)
-        ? playlistFilter.dataset.gamesensePlaylistFilter
-        : "Home";
+      state.playlistFilter = normalizePlaylistFilter(playlistFilter.dataset.gamesensePlaylistFilter);
+      render({ direction: "replace" });
+      return;
+    }
+    const playlistAutoplay = event.target.closest?.("[data-gamesense-playlist-autoplay]");
+    if (playlistAutoplay) {
+      event.preventDefault();
+      const category = normalizePlaylistFilter(playlistAutoplay.dataset.gamesensePlaylistAutoplay);
+      const enabled = !getPlaylistAutoplayEnabled(category);
+      setPlaylistAutoplayEnabled(category, enabled);
       render({ direction: "replace" });
       return;
     }
@@ -3605,14 +3842,10 @@
         ...getPlaylistCatalogItems(),
         ...(featuredPlaylist?.liveStreams || [])
       ].find(item => String(item?.id || "") === videoId) || {};
-      openMediaPlayer({
-        platform: "youtube",
-        id: videoId,
-        title: video.title || "Featured VALORANT video",
-        url: getPlaylistVideoWatchUrl(video) || `https://www.youtube.com/watch?v=${videoId}`,
-        startSeconds: video.startSeconds,
-        sourceLabel: video.archiveOnly ? "Historical Guide" : "Featured Video",
-        watchKey: getPlaylistVideoWatchKey(video)
+      const category = normalizePlaylistFilter(playlistVideo.closest("[data-gamesense-playlist-category]")?.dataset.gamesensePlaylistCategory || "");
+      openPlaylistVideo(video, {
+        autoplayCategory: category,
+        autoplayQueue: getPlaylistAutoplayQueue(category)
       });
       return;
     }
@@ -3648,7 +3881,9 @@
     }
     const mapView = event.target.closest?.("[data-gamesense-map-view]");
     if (mapView) {
-      state.mapView = mapView.dataset.gamesenseMapView === "plants" ? "plants" : "locations";
+      state.mapView = ["locations", "plants", "heatmap"].includes(mapView.dataset.gamesenseMapView)
+        ? mapView.dataset.gamesenseMapView
+        : "locations";
       render({ direction: "replace" });
       return;
     }

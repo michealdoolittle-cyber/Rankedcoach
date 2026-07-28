@@ -126,7 +126,7 @@
   ],
   "pickRate": 0.9,
   "pickRateRank": 25,
-  "sampleLabel": "Tracker Network | Past two weeks",
+  "sampleLabel": "Legacy unverified draft - excluded from promotion",
   "mapPickRates": {
     "Breeze": 3.9,
     "Split": 0.6,

@@ -103,7 +103,7 @@
   "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
   "pickRate": 4,
   "pickRateRank": 10,
-  "sampleLabel": "Tracker Network | Past two weeks",
+  "sampleLabel": "Legacy unverified draft - excluded from promotion",
   "mapPickRates": {
     "Lotus": 6.5,
     "Split": 5.9,

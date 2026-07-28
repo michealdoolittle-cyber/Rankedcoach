@@ -7,7 +7,7 @@ const { chromium } = require("playwright");
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41791;
 const missingRequests = [];
-const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog", "scopevignette", "spearhead", "cargocrate", "battleplate", "steelrivetframe", "prismrim", "hazardrim"];
+const allLayoutStyles = ["honeycomb", "chevronscan", "aperturecut", "hazardedge", "diamondfacet", "bladewedge", "ribbonbanner", "monolithslab", "pixeldialog", "spearhead", "cargocrate", "battleplate", "steelrivetframe", "prismrim", "hazardrim"];
 const allLayoutTextures = ["carbonweave", "circuitplate", "topocontour", "frostfracture", "blueprintgrid", "brushedplate", "hexarmor", "chainmesh", "thermalvision", "wovencable", "rustpatina", "frostedglass"];
 const requestedLayoutStyles = String(process.env.LAYOUT_STYLE_FILTER || "")
   .split(",")
@@ -1108,7 +1108,7 @@ async function run() {
     await page.waitForTimeout(250);
     assert.equal(await page.locator("[data-layout-shape-card]").count(), allLayoutStyles.length + 1);
     assert.equal(await page.locator("[data-layout-texture-card]").count(), allLayoutTextures.length + 1);
-    assert.equal(await page.locator('[data-layout-shape-card="scopevignette"]').count(), 1);
+    assert.equal(await page.locator('[data-layout-shape-card="scopevignette"]').count(), 0);
     await page.click('[data-layout-shape-card="default"]');
     await page.click('[data-layout-texture-card="default"]');
     assert.equal(await page.locator("body").getAttribute("data-layout-shape"), null);

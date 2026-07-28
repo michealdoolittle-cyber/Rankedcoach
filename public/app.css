@@ -20714,8 +20714,6 @@ SUMMARY BAR
 
 .daily-warmup-session-note textarea{min-height:62px}
 
-.logging-intent-tag{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,200px);align-items:center;gap:10px;margin:0 0 9px;color:var(--text-muted,#a8b3c7);font:800 11px/1.2 var(--font-display,"Rajdhani",sans-serif);letter-spacing:.05em;text-transform:uppercase}
-.logging-intent-tag select{min-width:0;min-height:34px;padding:6px 8px;border:1px solid var(--border-soft,rgba(148,163,184,.28));border-radius:8px;background:var(--surface-raised,#111827);color:var(--text-main,#f8fafc);font:700 12px/1 var(--font-body,"Rajdhani",sans-serif)}
 
 .daily-warmup-count{
   display:flex;
@@ -21252,6 +21250,19 @@ SUMMARY BAR
     padding:8px;
   }
 
+  html.is-mobile-layout body.is-mobile-layout .daily-warmup-loadout-picker-menu:not([hidden]){
+    position:fixed;
+    z-index:21010;
+    top:var(--daily-warmup-picker-top,72px);
+    left:var(--daily-warmup-picker-left,12px);
+    width:var(--daily-warmup-picker-width,calc(100vw - 24px));
+    max-height:min(430px,48dvh);
+    overflow:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    contain:layout paint style;
+  }
+
   html.is-mobile-layout body.is-mobile-layout .daily-warmup-picker-role-grid{
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
@@ -21265,7 +21276,6 @@ SUMMARY BAR
     font-size:8px;
   }
 
-  html.is-mobile-layout body.is-mobile-layout .logging-intent-tag{grid-template-columns:1fr;gap:6px}
 
   html.is-mobile-layout body.is-mobile-layout .daily-warmup-drill{
     min-height:68px;
@@ -56088,14 +56098,17 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #page-stats .stats-summa
 }
 
 /* Premium scene themes stay visible through the dense app pages and replace Library's fixed grid. */
-body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop) :is(#page-home,#page-logging,#page-insights) :is(.card,.logging-live-card,.home-loadout-card,.loadout-card,.impact-card,.chart-card,.compass-card,.weekly-focus-card,.timeline-card,.insight-card,.trend-signal-card){
+body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) :is(#page-home > .home-layout > .card,#page-logging > .logging-layout > .card,#page-insights > .insights-layout > .card){
   background:
     radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 34%),
     linear-gradient(145deg,color-mix(in srgb,var(--surface-card) 78%,transparent),color-mix(in srgb,var(--surface-card-2) 84%,transparent)) !important;
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
+  /* Keep the premium scene perceptible through coaching surfaces without
+     assigning animation work to individual cards.  The scene itself remains
+     the only moving layer, while this modest blur preserves legibility. */
+  backdrop-filter:blur(5px) !important;
+  -webkit-backdrop-filter:blur(5px) !important;
 }
-body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop) #page-library.gamesense-page{
+body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) #page-library.gamesense-page{
   background:none !important;
   background-image:none !important;
 }

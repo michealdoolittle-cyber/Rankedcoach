@@ -1,6 +1,6 @@
 // Static gameplay reference reviewed 2026-07-17. Agent and weapon history is
-// sourced from Riot patch notes; current rolling usage rates are disclosed in
-// the Library as Tracker Network (agents) and Blitz (weapons) samples.
+// sourced from Riot patch notes. Aggregate Competitive rates are injected by
+// the separately generated, source-audited VStats reference at runtime.
 (function () {
   "use strict";
 
@@ -151,43 +151,10 @@
     return { id, label, image: weaponAsset(id), cost, magazine, fireRate, penetration, damageRanges, focus };
   }
 
-  const currentAgentRates = {
-    jett: {
-      pickRate: 10.3, pickRateRank: 1, sampleLabel: "Tracker Network | Past two weeks", maps: ["Breeze", "Ascent", "Haven"],
-      mapPickRates: { Breeze: 11.7, Ascent: 11.3, Haven: 11.3 },
-      mapWinRates: { Breeze: 50.4, Ascent: 49.9, Haven: 50.0 }
-    },
-    sova: {
-      pickRate: 4.9, pickRateRank: 7, sampleLabel: "Tracker Network | Past two weeks", maps: ["Ascent", "Haven", "Breeze"],
-      mapPickRates: { Ascent: 8.4, Haven: 7.9, Breeze: 7.7 },
-      mapWinRates: { Ascent: 51.3, Haven: 50.8, Breeze: 50.8 }
-    },
-    omen: {
-      pickRate: 4.9, pickRateRank: 7, sampleLabel: "Tracker Network | Past two weeks", maps: ["Haven", "Ascent", "Lotus"],
-      mapPickRates: { Haven: 5.6, Ascent: 5.3, Lotus: 5.2 },
-      mapWinRates: { Haven: 47.6, Ascent: 47.6, Lotus: 47.5 }
-    },
-    viper: {
-      pickRate: 0.9, pickRateRank: 25, sampleLabel: "Tracker Network | Past two weeks", maps: ["Breeze", "Split", "Lotus"],
-      mapPickRates: { Breeze: 3.9, Split: 0.6, Lotus: 0.5 },
-      mapWinRates: { Breeze: 50.4, Split: 47.9, Lotus: 48.2 }
-    },
-    cypher: {
-      pickRate: 3.4, pickRateRank: 11, sampleLabel: "Tracker Network | Past two weeks", maps: ["Split", "Sunset", "Haven"],
-      mapPickRates: { Split: 4.9, Sunset: 4.5, Haven: 3.8 },
-      mapWinRates: { Split: 50.2, Sunset: 50.1, Haven: 50.6 }
-    },
-    sage: {
-      pickRate: 6.8, pickRateRank: 5, sampleLabel: "Tracker Network | Past two weeks", maps: ["Split", "Sunset", "Haven"],
-      mapPickRates: { Split: 8.9, Sunset: 6.7, Haven: 6.5 },
-      mapWinRates: { Split: 52.3, Sunset: 51.9, Haven: 51.5 }
-    },
-    raze: {
-      pickRate: 4.0, pickRateRank: 10, sampleLabel: "Tracker Network | Past two weeks", maps: ["Lotus", "Split", "Sunset"],
-      mapPickRates: { Lotus: 6.5, Split: 5.9, Sunset: 4.4 },
-      mapWinRates: { Lotus: 50.6, Split: 50.7, Sunset: 50.3 }
-    }
-  };
+  // No stale third-party sample is retained as a fallback. If the generated
+  // aggregate is unavailable, the player-facing dossier explicitly shows no
+  // verified usage sample instead of silently showing an old estimate.
+  const currentAgentRates = {};
   const officialAgentLore = {
     jett: [
       { label: "Origin", value: "South Korea", note: "Jett represents her home country with an agile, evasive fighting style built around speed and calculated risk." },

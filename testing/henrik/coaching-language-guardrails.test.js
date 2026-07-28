@@ -27,12 +27,12 @@ assert.match(roundMetrics, /aliveAllies\.size === 1/);
 assert.match(roundMetrics, /clutchKills >= 2/);
 assert.doesNotMatch(roundMetrics, /ceremony\.toLowerCase\(\)\.includes\("closer"\)/);
 
-assert.match(html, /id="lensModalStatsTitle">What Moved This Score<\/h3>[\s\S]*id="impactOpportunityTab"/);
+assert.match(html, /id="lensModalStatsTitle">Score Values<\/h3>[\s\S]*id="impactOpportunityTab"/);
 assert.match(app, /weightingTitle\.textContent = "Why This Score Changed"/);
 assert.match(app, /statsTitle\.textContent = "What Moved This Score"/);
 
-assert.match(app, /value: "scopevignette"/);
-assert.match(layoutCss, /scopevignette/);
+assert.doesNotMatch(app, /scopevignette/);
+assert.doesNotMatch(layoutCss, /scopevignette/);
 assert.match(app, /available: Boolean\(weeklyMapLossStreak\)/);
 assert.match(app, /gamesUsed: weeklyMapLossStreak/);
 assert.match(app, /COACHING_COPY_STRUCTURAL_KEYS/);

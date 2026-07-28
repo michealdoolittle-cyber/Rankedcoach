@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260727-home-runtime-01">
+  <link rel="stylesheet" href="app.css?v=20260727-library-coverage-performance-02">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -64,8 +64,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260727-home-runtime-01">
-  <link rel="stylesheet" href="layout-styles.css?v=20260727-home-runtime-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260727-library-coverage-performance-02">
+  <link rel="stylesheet" href="layout-styles.css?v=20260727-library-coverage-performance-02">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -2076,6 +2076,7 @@ stroke-linejoin="round"/>
           <div class="logging-live-card" id="loggingLiveCard">
             <div class="logging-live-pill" id="loggingLiveTone">Waiting For Reflection</div>
             <div class="logging-live-focus" id="loggingLiveFocus">Pick an agent and focus category to build the debrief.</div>
+            <div class="logging-live-meta" id="loggingLiveMeta">Add a rating, mood, or map to see it here.</div>
           </div>
         </div>
 
@@ -2314,13 +2315,7 @@ stroke-linejoin="round"/>
         <button type="button" class="logging-quick-chip" data-log-quick="Cheater.">Cheater</button>
       </div>
     </div>
-    <label class="logging-intent-tag">
-      <span>What were you mainly trying to do?</span>
-      <select id="logIntentTag" aria-label="Post-match intent">
-        <option value="">No intent tag</option><option value="lurker">Lurk</option><option value="flanker">Flank</option><option value="anchor">Anchor</option><option value="rotator">Rotate</option><option value="saver">Save</option><option value="entry">Entry</option><option value="trader">Trade</option><option value="spike-carrier">Carry spike</option>
-      </select>
-    </label>
-    <textarea id="logNotes" class="logging-notes" placeholder="What actually happened in the match? Which focus category should the next review block target?"></textarea>
+    <textarea id="logNotes" class="logging-notes" placeholder="What actually happened in the match? What was your playstyle? Add it here if it matters for your next review."></textarea>
   </div>
 </div>
 
@@ -2457,16 +2452,20 @@ stroke-linejoin="round"/>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260714-placement-account-ui-01"></script>
   <script src="data/persistence-policy.js?v=20260727-playlist-history-01"></script>
-  <script src="library/gamesense-maps.js?v=20260724-promotion-sequence-01"></script>
-  <script src="library/gamesense-reference.js?v=20260724-promotion-sequence-01"></script>
+  <script src="library/gamesense-maps.js?v=20260727-library-coverage-performance-02"></script>
+  <script src="library/gamesense-reference.js?v=20260727-library-coverage-performance-02"></script>
   <script src="library/gamesense-encyclopedia.js?v=20260723-library-pipeline-ui-01"></script>
-  <script src="library/gamesense-promoted.js?v=20260724-promotion-sequence-01"></script>
+  <script src="library/gamesense-promoted.js?v=20260727-library-coverage-performance-02"></script>
+  <script src="library/gamesense-map-layout-overrides.js?v=20260727-library-coverage-performance-02"></script>
+  <script src="library/gamesense-official-media.js?v=20260727-library-coverage-performance-02"></script>
+  <script src="library/gamesense-vstats-reference.js?v=20260727-library-coverage-performance-02"></script>
+  <script src="library/gamesense-heatmaps.js?v=20260727-library-coverage-performance-02"></script>
   <script src="library/gamesense-collections.js?v=20260718-content-automation-01"></script>
 <script>window.RankedCoachCrosshairBackendEnabled = true;</script>
-  <script src="library/gamesense-library.js?v=20260727-home-runtime-01"></script>
+  <script src="library/gamesense-library.js?v=20260727-library-coverage-performance-02"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
-  <script src="daily-entrance-motion.js?v=20260727-home-runtime-01"></script>
-  <script type="module" src="app.js?v=20260727-home-runtime-01"></script>
+  <script src="daily-entrance-motion.js?v=20260727-library-coverage-performance-02"></script>
+  <script type="module" src="app.js?v=20260727-library-coverage-performance-02"></script>
   <script type="module" src="knowledge-review.js?v=20260726-situational-callouts-01"></script>
 </body>
 </html>

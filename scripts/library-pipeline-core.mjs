@@ -162,6 +162,21 @@ export async function loadLibraryState({ includePromoted = true } = {}) {
     } catch (error) {
       if (error?.code !== "ENOENT") throw error;
     }
+    try {
+      await runLibrarySource(context, "library/gamesense-official-media.js");
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+    try {
+      await runLibrarySource(context, "library/gamesense-map-layout-overrides.js");
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+    try {
+      await runLibrarySource(context, "library/gamesense-vstats-reference.js");
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+    }
   }
   return {
     authoredReference,

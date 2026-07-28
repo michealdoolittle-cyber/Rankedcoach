@@ -671,7 +671,7 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
         : `Show only ${meta.label} agents`);
     return `
       <button class="daily-warmup-picker-tile daily-warmup-picker-role role-${role}${selected ? " is-selected" : ""}${isActiveFilter ? " is-filter-active" : ""}" type="button" data-loadout-picker-item="${kind === "exclude" ? "role" : "role-filter"}" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${role}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : ""}${filtersOneTrick ? ` aria-pressed="${isActiveFilter ? "true" : "false"}"` : ""} aria-label="${escapeHtml(roleTitle)}" title="${escapeHtml(roleTitle)}">
-        <img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true">
+        <img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         <span>${escapeHtml(meta.label)}</span>
       </button>
     `;
@@ -683,7 +683,7 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
     const title = kind === "exclude" ? `Exclude ${agent}` : `One-trick ${agent}`;
     return `
       <button class="daily-warmup-picker-tile daily-warmup-picker-agent role-${role}${selected ? " is-selected" : ""}" type="button" data-loadout-picker-item="agent" data-loadout-picker-kind="${kind}" data-loadout-picker-value="${escapeHtml(agent)}" style="--loadout-role-color:${meta.color}" ${selected ? "disabled aria-disabled=\"true\"" : ""} aria-label="${escapeHtml(title)}" title="${escapeHtml(title)}">
-        <img src="${escapeHtml(getAgentIconUrl(agent))}" alt="" aria-hidden="true">
+        <img src="${escapeHtml(getAgentIconUrl(agent))}" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         <span>${escapeHtml(agent)}</span>
       </button>
     `;
@@ -694,7 +694,7 @@ function renderDailyWarmupPickerItems(kind = "exclude", preferences = getLoadout
     const agents = allAgents.filter((agent) => agentRoles[agent] === role);
     return `
       <section class="daily-warmup-picker-agent-group role-${role}" style="--loadout-role-color:${meta.color}">
-        <div class="daily-warmup-picker-agent-group-head"><img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true"><span>${escapeHtml(meta.label)}</span></div>
+        <div class="daily-warmup-picker-agent-group-head"><img src="${escapeHtml(ROLE_ICON_MAP[role] || "")}" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low"><span>${escapeHtml(meta.label)}</span></div>
         <div class="daily-warmup-picker-agent-grid">${agents.map(renderAgentTile).join("")}</div>
       </section>
     `;
@@ -743,7 +743,31 @@ function setDailyWarmupPickerOpen(kind = "", shouldOpen = false) {
     const isOpen = candidate === kind && shouldOpen;
     const menu = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPickerMenu" : "dailyWarmupOneTrickPickerMenu");
     const trigger = document.getElementById(candidate === "exclude" ? "dailyWarmupExclusionPicker" : "dailyWarmupOneTrickPicker");
-    if (menu) menu.hidden = !isOpen;
+    if (menu) {
+      // On phones the full roster is a sizeable scroll surface. Keep it in a
+      // fixed, contained popover while it is open instead of expanding the
+      // full-height training modal and forcing a costly reflow of every drill.
+      // This also keeps taps responsive after moving between Exclude and
+      // One-trick.
+      if (isOpen && isMobileLayoutViewport() && trigger) {
+        const rect = trigger.getBoundingClientRect();
+        const viewportWidth = window.visualViewport?.width || window.innerWidth || 390;
+        const viewportHeight = window.visualViewport?.height || window.innerHeight || 844;
+        const sideInset = 12;
+        const width = Math.max(180, Math.min(rect.width, viewportWidth - (sideInset * 2)));
+        const left = Math.max(sideInset, Math.min(rect.left, viewportWidth - width - sideInset));
+        const menuHeight = Math.min(430, Math.round(viewportHeight * 0.48));
+        const top = Math.max(72, Math.min(rect.bottom + 8, viewportHeight - menuHeight - 12));
+        menu.style.setProperty("--daily-warmup-picker-left", `${Math.round(left)}px`);
+        menu.style.setProperty("--daily-warmup-picker-top", `${Math.round(top)}px`);
+        menu.style.setProperty("--daily-warmup-picker-width", `${Math.round(width)}px`);
+      } else {
+        menu.style.removeProperty("--daily-warmup-picker-left");
+        menu.style.removeProperty("--daily-warmup-picker-top");
+        menu.style.removeProperty("--daily-warmup-picker-width");
+      }
+      menu.hidden = !isOpen;
+    }
     if (trigger) trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
   });
 }
@@ -1848,7 +1872,10 @@ function ensureMobileBottomShell() {
     const pageButton = event.target.closest("[data-mobile-page]");
     if (pageButton) {
       event.preventDefault();
-      if (Date.now() >= suppressPageClickUntil) selectMobileBottomPage(pageButton);
+      // `touchend` owns its companion synthetic click. Do not let that small
+      // touch-only guard discard a real mouse or keyboard tab activation.
+      const firesTouchEvents = Boolean(event.sourceCapabilities?.firesTouchEvents);
+      if (Date.now() >= suppressPageClickUntil || !firesTouchEvents) selectMobileBottomPage(pageButton);
       return;
     }
 
@@ -2640,7 +2667,10 @@ function ensureMobileSwipeClickGuard() {
   mobileSwipeClickGuardInstalled = true;
   document.addEventListener("click", (event) => {
     if (!isMobileLayoutViewport()) return;
-    if (Date.now() >= mobileSwipeSuppressClickUntil) return;
+    // Only suppress the synthetic click that follows a touch swipe. A genuine
+    // mouse/keyboard activation must not inherit a stale touch guard.
+    const firesTouchEvents = Boolean(event.sourceCapabilities?.firesTouchEvents);
+    if (Date.now() >= mobileSwipeSuppressClickUntil || !firesTouchEvents) return;
     event.preventDefault();
     event.stopPropagation();
   }, true);
@@ -13431,6 +13461,10 @@ function notifyDailyEntranceMotionReady() {
 }
 
 function releaseInitialAppBootGuard() {
+  // Complete the one desktop-only Stats warm-up while the boot overlay still
+  // covers the application.  Releasing the guard first lets a fast tab click
+  // race the queued prewarm and makes the first Stats visit feel stuck.
+  scheduleDesktopStatsPagePrewarm({ immediate: true });
   document.documentElement?.classList.remove("app-booting");
   document.getElementById("loginInitOverlay")?.classList.remove("app-boot-overlay");
 }
@@ -15043,7 +15077,6 @@ const SESSION_ROLE_KEYS = ["any", "duelist", "controller", "initiator", "sentine
 const SESSION_AGENT_MODES = ["any", "specific", "main-only", "comfort", "secondary", "challenge"];
 const SESSION_QUEUE_MODES = ["main", "growth", "comfort", "challenge", "mechanics", "decision"];
 const SESSION_INTENSITIES = ["light", "steady", "focused", "high"];
-const SESSION_INTENT_TAGS = ["", "lurker", "flanker", "anchor", "rotator", "saver", "entry", "trader", "spike-carrier"];
 
 function normalizeSessionAgentNames(value) {
   const knownByLower = new Map(allAgents.map(agent => [agent.toLowerCase(), agent]));
@@ -15117,7 +15150,6 @@ function normalizeSessionCoachingProfile(value = {}) {
   const agentMode = String(profile.agentMode || "any").toLowerCase();
   const mode = String(profile.mode || "main").toLowerCase();
   const intensity = String(profile.intensity || "steady").toLowerCase();
-  const intentTag = String(profile.intentTag || "").toLowerCase();
   return {
     role: SESSION_ROLE_KEYS.includes(role) ? role : "any",
     agentMode: SESSION_AGENT_MODES.includes(agentMode) ? agentMode : "any",
@@ -15126,14 +15158,13 @@ function normalizeSessionCoachingProfile(value = {}) {
     mode: SESSION_QUEUE_MODES.includes(mode) ? mode : "main",
     intensity: SESSION_INTENSITIES.includes(intensity) ? intensity : "steady",
     focusPreference: profile.focusPreference === "random" ? "random" : "weekly",
-    note: String(profile.note || "").trim().slice(0, 360),
-    intentTag: SESSION_INTENT_TAGS.includes(intentTag) ? intentTag : ""
+    note: String(profile.note || "").trim().slice(0, 360)
   };
 }
 
 let sessionCoachingProfile = {
   role: "any", agentMode: "any", agents: [], exclusions: [], mode: "main",
-  intensity: "steady", focusPreference: "weekly", note: "", intentTag: ""
+  intensity: "steady", focusPreference: "weekly", note: ""
 };
 
 function getSessionCoachingProfile() {
@@ -19289,6 +19320,26 @@ function getLoggingDebriefTone(rating, mood) {
   };
 }
 
+// Playstyle is deliberately free-text.  This lightweight classifier only
+// recognizes a player's own clear wording; it never guesses a role from a
+// stat line or silently reintroduces the retired fixed intent selector.
+function deriveLoggingPlaystyleTags(notes = "") {
+  const source = String(notes || "").toLowerCase();
+  if (!source.trim()) return [];
+  const signals = [
+    ["Entry", /\b(entry|first[ -]?in|first contact|take space|space taking)\b/i],
+    ["Trader", /\b(trade|trading|second in|follow[- ]?up)\b/i],
+    ["Lurk", /\b(lurk|lurking|late flank|late[- ]?round flank)\b/i],
+    ["Flank", /\b(flank|flanking|wrap around)\b/i],
+    ["Anchor", /\b(anchor|anchoring|site hold|held [abc] site)\b/i],
+    ["Rotate", /\b(rotate|rotating|rotation)\b/i],
+    ["Support", /\b(support|supporting|set up|setup utility|played for team)\b/i],
+    ["Aggressive", /\b(aggressive|aggression|pushed|pressured|took fights)\b/i],
+    ["Patient", /\b(patient|passive|held|waited|slow play)\b/i]
+  ];
+  return signals.filter(([, pattern]) => pattern.test(source)).map(([label]) => label);
+}
+
 function updateLoggingDebriefPreview() {
   const toneEl = document.getElementById("loggingLiveTone");
   const focusEl = document.getElementById("loggingLiveFocus");
@@ -19332,6 +19383,8 @@ function updateLoggingDebriefPreview() {
   if (hasSelectedNumber(selectedLogTeamComms)) metaParts.push(`Team Comms ${selectedLogTeamComms}/5`);
   if (hasSelectedNumber(selectedLogSelfComms)) metaParts.push(`Self Comms ${selectedLogSelfComms}/5`);
   if (map) metaParts.push(map);
+  const playstyleTags = deriveLoggingPlaystyleTags(notes);
+  if (playstyleTags.length) metaParts.push(`Playstyle: ${playstyleTags.join(", ")}`);
   if (notes) metaParts.push(`${Math.min(notes.length, 140)} chars captured`);
   if (metaEl) {
     metaEl.textContent = metaParts.length
@@ -42269,6 +42322,7 @@ let selectedLogSelfComms = null;
 let loggingFeedRendered = false;
 let loggingFeedDirty = true;
 let loggingFeedRenderRaf = 0;
+let loggingFeedRenderTimer = 0;
 const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 3";
 
 function isLoggingPageActive() {
@@ -42276,6 +42330,10 @@ function isLoggingPageActive() {
 }
 
 function cancelScheduledLoggingFeedRender() {
+  if (loggingFeedRenderTimer) {
+    window.clearTimeout(loggingFeedRenderTimer);
+    loggingFeedRenderTimer = 0;
+  }
   if (loggingFeedRenderRaf) {
     cancelAnimationFrame(loggingFeedRenderRaf);
     loggingFeedRenderRaf = 0;
@@ -42305,10 +42363,36 @@ function scheduleLoggingFeedRender(options = {}) {
   if (!force && loggingFeedRendered && !loggingFeedDirty) return;
 
   cancelScheduledLoggingFeedRender();
-  loggingFeedRenderRaf = requestAnimationFrame(() => {
-    loggingFeedRenderRaf = 0;
-    renderLogFeed({ force });
-  });
+  const renderWhenStillRelevant = () => {
+    // A tab can be changed while this non-critical history rebuild is waiting.
+    // Re-checking here keeps that work out of the destination page's first
+    // frame instead of merely cancelling its animation-frame handle.
+    if (shouldDeferLoggingFeedForMobileForm() || (!force && !isLoggingPageActive())) {
+      markLoggingFeedDirty();
+      return;
+    }
+    loggingFeedRenderRaf = requestAnimationFrame(() => {
+      loggingFeedRenderRaf = 0;
+      if (shouldDeferLoggingFeedForMobileForm() || (!force && !isLoggingPageActive())) {
+        markLoggingFeedDirty();
+        return;
+      }
+      renderLogFeed({ force });
+    });
+  };
+
+  // The current form remains interactive while the retained feed catches up.
+  // Give the Logging page one settled paint before rebuilding a potentially
+  // large history DOM; explicit feed requests continue to render immediately.
+  const deferMs = force || options.immediate ? 0 : 140;
+  if (deferMs > 0) {
+    loggingFeedRenderTimer = window.setTimeout(() => {
+      loggingFeedRenderTimer = 0;
+      renderWhenStillRelevant();
+    }, deferMs);
+    return;
+  }
+  renderWhenStillRelevant();
 }
 
 function shouldDeferLoggingFeedForMobileForm() {
@@ -42440,9 +42524,13 @@ function getLogFormValues(){
     ? (logEntries.find(entry => entry.id === editingLogEntryId) || editingLogEntrySnapshot)
     : null;
   const baseEntry = editingEntry && typeof editingEntry === "object" ? editingEntry : {};
+  // Intent was previously a fixed dropdown. Keep legacy logs readable, but do
+  // not carry that retired field into new or edited entries; free-text notes
+  // now carry the player's own playstyle context instead.
+  const { intentTag: _legacyIntentTag, ...entryWithoutIntentTag } = baseEntry;
 
   return {
-    ...baseEntry,
+    ...entryWithoutIntentTag,
     id: baseEntry.id || uuid(),
     createdAt: baseEntry.createdAt || nowISO(),
     agent: logAgentDisplay?.dataset.agent || "",
@@ -42452,10 +42540,8 @@ function getLogFormValues(){
     mood: selectedLogMood,
     teamComms: selectedLogTeamComms,
     selfComms: selectedLogSelfComms,
-    intentTag: SESSION_INTENT_TAGS.includes(String(document.getElementById("logIntentTag")?.value || ""))
-      ? String(document.getElementById("logIntentTag")?.value || "")
-      : "",
     notes: logNotes?.value?.trim() || "",
+    playstyleTags: deriveLoggingPlaystyleTags(logNotes?.value || ""),
     role: activeRole || "",
     manualMode: isManualEntryModeEnabled(),
     manualReport: getManualReportValues(),
@@ -42681,13 +42767,11 @@ if(entry.focus){
   const focusOtherWrap = document.getElementById("focusOtherWrap");
   const preview = document.getElementById("focusPreviewText");
   const logAgentImg = document.getElementById("logAgentImg");
-  const logIntentTag = document.getElementById("logIntentTag");
 
   if(logMap) logMap.value = "";
   if(logNotes) logNotes.value = "";
   if(logFocusSelect) logFocusSelect.value = "";
   if(logFocusOther) logFocusOther.value = "";
-  if(logIntentTag) logIntentTag.value = "";
   if(focusOtherWrap){
     focusOtherWrap.style.display = "none";
     focusOtherWrap.hidden = true;
@@ -42737,7 +42821,6 @@ function editLogEntry(id, options = {}){
   const preview = document.getElementById("focusPreviewText");
   const logMapEl = document.getElementById("logMap");
   const notesEl = document.getElementById("logNotes");
-  const intentTagEl = document.getElementById("logIntentTag");
 
   activeAgent = entry.agent || activeAgent;
   if(entry.agent && agentRoles?.[entry.agent]){
@@ -42766,7 +42849,6 @@ function editLogEntry(id, options = {}){
 
   if(logMapEl) logMapEl.value = entry.map || "";
   if(notesEl) notesEl.value = entry.notes;
-  if(intentTagEl) intentTagEl.value = SESSION_INTENT_TAGS.includes(String(entry.intentTag || "")) ? entry.intentTag : "";
   setManualReportFormValues(entry.manualReport || entry.manual || null);
 
   selectedLogRating = Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null;
@@ -43791,7 +43873,6 @@ const PROFILE_LAYOUT_SHAPES = [
   { value: "ribbonbanner", label: "Ribbon Banner", note: "Priority corner ribbon", font: "silkscreen" },
   { value: "monolithslab", label: "Monolith Slab", note: "Heavy offset block", font: "ibmplexmono" },
   { value: "pixeldialog", label: "Pixel Dialogue", note: "Retro dialogue frame", font: "pressstart2p" },
-  { value: "scopevignette", label: "Scope Vignette", note: "Focused lens edge", font: "ibmplexmono" },
   { value: "spearhead", label: "Spearhead", note: "Single-point arrow silhouette", font: "orbitron" },
   { value: "cargocrate", label: "Cargo Crate", note: "Octagonal riveted frame", font: "ibmplexmono" },
   { value: "battleplate", label: "Battle-Worn Plate", note: "Chipped tactical armor", font: "silkscreen" },
@@ -46911,6 +46992,109 @@ function scheduleNavUnderlineUpdate() {
 let pageTransitionToken = 0;
 let pageTransitionTimer = 0;
 let mobilePageHydrationTimer = 0;
+let libraryPageActivationTimer = 0;
+let libraryPageActivationToken = 0;
+let desktopStatsPagePrewarmScheduled = false;
+let desktopStatsPagePrewarmFrame = 0;
+let desktopStatsPagePrewarmed = false;
+
+function scheduleDesktopStatsPagePrewarm(options = {}) {
+  const immediate = Boolean(options?.immediate);
+  if (desktopStatsPagePrewarmed || isMobileLayoutViewport()) return;
+
+  // Inactive dashboards use `content-visibility:hidden` so they do not tax
+  // normal navigation.  The first Stats click therefore needs its layout and
+  // composited surface ready before interaction starts.  Do that while the
+  // loading overlay owns the screen, rather than hoping a later rAF finishes
+  // before a player makes a fast first tab change.
+  const warmStatsPage = () => {
+    desktopStatsPagePrewarmFrame = 0;
+    desktopStatsPagePrewarmScheduled = false;
+    if (desktopStatsPagePrewarmed || isMobileLayoutViewport()) return;
+
+    const statsPage = document.getElementById("page-stats");
+    if (!statsPage || statsPage.classList.contains("active")) return;
+
+    const previous = {
+      visibility: statsPage.style.visibility,
+      opacity: statsPage.style.opacity,
+      pointerEvents: statsPage.style.pointerEvents,
+      transform: statsPage.style.transform,
+      willChange: statsPage.style.willChange
+    };
+    statsPage.style.contentVisibility = "visible";
+    statsPage.style.visibility = "visible";
+    // A near-transparent, composited page can be painted under the boot
+    // overlay.  `opacity:0` permits layout but lets Chromium defer the first
+    // raster until the click that reveals Stats.
+    statsPage.style.opacity = "0.001";
+    statsPage.style.pointerEvents = "none";
+    statsPage.style.transform = "translate3d(0,0,0) scale(1)";
+    statsPage.style.willChange = "opacity, transform";
+
+    // Materialize both the outer page and the real Stats surfaces.  Keeping
+    // these reads together after all writes avoids layout thrash, and makes
+    // the first Stats activation a simple visibility transition.
+    const layoutRoots = statsPage.querySelectorAll(
+      ".stats-layout, .stats-summary-card, .stats-main-grid, .stats-performance-card, .stats-breakdown-card, .stats-maps-card, .stats-agents-card, .stats-weapons-card"
+    );
+    void statsPage.getBoundingClientRect().height;
+    layoutRoots.forEach(root => { void root.getBoundingClientRect().height; });
+    void statsPage.offsetHeight;
+    desktopStatsPagePrewarmed = true;
+
+    window.requestAnimationFrame(() => {
+      if (!statsPage.isConnected) return;
+      statsPage.style.visibility = previous.visibility;
+      statsPage.style.opacity = previous.opacity;
+      statsPage.style.pointerEvents = previous.pointerEvents;
+      statsPage.style.transform = previous.transform;
+      statsPage.style.willChange = previous.willChange;
+      // Keep `content-visibility:visible` for the first visit so Chrome can
+      // reuse the materialized layout; inactive-page visibility and pointer
+      // rules continue to keep the surface out of sight and noninteractive.
+    });
+  };
+
+  if (immediate) {
+    if (desktopStatsPagePrewarmFrame) {
+      window.cancelAnimationFrame(desktopStatsPagePrewarmFrame);
+      desktopStatsPagePrewarmFrame = 0;
+    }
+    warmStatsPage();
+    return;
+  }
+  if (desktopStatsPagePrewarmScheduled) return;
+  desktopStatsPagePrewarmScheduled = true;
+  desktopStatsPagePrewarmFrame = window.requestAnimationFrame(warmStatsPage);
+}
+
+function syncLibraryPageActivity(pageId = "") {
+  const library = globalThis.RankedCoachGamesenseLibrary;
+  if (!library?.setPageActive) return;
+
+  const token = ++libraryPageActivationToken;
+  if (libraryPageActivationTimer) {
+    window.clearTimeout(libraryPageActivationTimer);
+    libraryPageActivationTimer = 0;
+  }
+
+  if (pageId !== "library") {
+    library.setPageActive(false);
+    return;
+  }
+
+  // The overview is already rendered locally. Its optional Playlist and
+  // approved-knowledge refreshes can fetch, parse, and replace a large DOM,
+  // so wait until the Library tab has had a stable first paint before asking
+  // it to hydrate. A quick tab pass cancels this altogether.
+  libraryPageActivationTimer = window.setTimeout(() => {
+    libraryPageActivationTimer = 0;
+    if (token !== libraryPageActivationToken) return;
+    if (getActivePageElement()?.id !== "page-library") return;
+    library.setPageActive(true);
+  }, 180);
+}
 
 function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
   if (!isMobileLayoutViewport()) return;
@@ -47038,6 +47222,7 @@ function activatePage(pageId, options = {}){
   const mobileFastHandoff = mobileSwipeHandoff || mobileNavHandoff;
   if (pageId === "home" && !mobileFastHandoff) {
     scheduleLoadoutValueTextFit();
+    scheduleDesktopStatsPagePrewarm();
   }
 
   document
@@ -47242,7 +47427,7 @@ function activatePage(pageId, options = {}){
 
   runPageActivationWork();
   window.RankedCoachDailyEntrance?.activatePage(pageId, getDailyEntranceMotionContext());
-  globalThis.RankedCoachGamesenseLibrary?.setPageActive?.(pageId === "library");
+  syncLibraryPageActivity(pageId);
   if (["home", "logging"].includes(pageId)) scheduleDailyWarmupCheck(700);
 }
 

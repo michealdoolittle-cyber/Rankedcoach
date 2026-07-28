@@ -38,8 +38,16 @@
   // click against the newly revealed page. Consume that one click so skipping
   // the animation never also opens a card underneath it.
   function consumeEntranceSkipClick(event) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
+    // Page navigation is an explicit destination choice, not an accidental
+    // card activation. Let it through even if it happens to be the first tap
+    // after a warm-up/modal or entrance transition.
+    const navigationTarget = event.target?.closest?.(
+      ".nav-btn[data-page], .mobile-bottom-page-btn[data-mobile-page]"
+    );
+    if (!navigationTarget) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
     document.removeEventListener("click", consumeEntranceSkipClick, true);
     if (entranceSkipClickTimer) {
       window.clearTimeout(entranceSkipClickTimer);
@@ -1349,6 +1357,12 @@
 
   document.addEventListener("pointerdown", (event) => {
     if (!runtime.ready || !event.isTrusted || (!runtime.activeRun && !runtime.scheduleTimer && !runtime.pendingPages.size)) return;
+    // A visible modal owns its own interaction.  In particular, a daily
+    // warm-up Skip pointer must not arm the entrance's "consume next click"
+    // guard, otherwise the player's next mobile tab tap is silently eaten.
+    if (event.target?.closest?.(
+      ".lens-modal-overlay.active, .lens-modal-overlay.is-opening, .lens-modal-overlay.is-closing, .agent-modal.active, .profile-edit-overlay.active, .auth-modal-overlay.active"
+    )) return;
     armEntranceSkipClickGuard();
     skipAll();
   }, true);

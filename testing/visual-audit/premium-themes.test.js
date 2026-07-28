@@ -129,6 +129,10 @@ function startServer() {
         response.writeHead(200, { "Content-Type": "application/json" });
         return response.end(JSON.stringify({ items: [], liveStreams: [], newIn24Hours: 0 }));
       }
+      if (url === "/api/content/knowledge") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        return response.end(JSON.stringify({ updatedAt: null, items: [] }));
+      }
       if (url === "/") url = "/index.html";
       const file = path.join(publicRoot, url);
       fs.readFile(file, (error, data) => {
