@@ -849,15 +849,21 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     await page.waitForTimeout(25);
   }
   await page.locator("#knowledgeResearchStatus").filter({ hasText: "Private review review-browser" }).waitFor();
-  assert.ok(actions.slice(runCount).some(action => (
+  const processActions = actions.slice(runCount);
+  const firstPublishIndex = processActions.findIndex(action => action.path === "/api/knowledge/publish-approved");
+  const runIndex = processActions.findIndex(action => action.path === "/api/knowledge/run");
+  assert.ok(processActions.some(action => (
     action.path === "/api/knowledge/run" && action.body.batchSize === 24
   )), "Process Playlist Now did not call the automatic pipeline.");
-  assert.ok(actions.slice(runCount).some(action => (
+  assert.ok(processActions.some(action => (
     action.path === "/api/knowledge/clear-rejected"
   )), "Process Playlist Now did not clear the rejected queue.");
-  assert.ok(actions.slice(runCount).some(action => (
-    action.path === "/api/knowledge/publish-approved"
-  )), "Process Playlist Now did not publish the approved queue.");
+  assert.ok(firstPublishIndex >= 0, "Process Playlist Now did not publish the approved queue.");
+  assert.ok(runIndex >= 0 && firstPublishIndex < runIndex, "Process Playlist Now must publish approved insights before transcript processing.");
+  assert.ok(
+    processActions.filter(action => action.path === "/api/knowledge/publish-approved").length >= 2,
+    "Process Playlist Now did not retry approved publishing after processing."
+  );
 
   const refreshRequestCount = reviewRequests.length;
   const refreshResponse = page.waitForResponse(response => (

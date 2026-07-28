@@ -43903,7 +43903,13 @@ const PROFILE_BORDER_COLORS = [
   { value: "amber", label: "Amber", color: "#f59e0b" },
   { value: "obsidian", label: "Obsidian", color: "#050505" },
   { value: "ion-surge", label: "Ion Surge", color: "#22d3ee", color2: "#8b5cf6" },
-  { value: "radiant-flare", label: "Radiant Flare", color: "#facc15", color2: "#ff4655" }
+  { value: "radiant-flare", label: "Radiant Flare", color: "#facc15", color2: "#ff4655" },
+  { value: "reyna-glow", label: "Reyna Glow", color: "#c026d3", color2: "#fb7185" },
+  { value: "sage-rift", label: "Sage Rift", color: "#2dd4bf", color2: "#f8fafc" },
+  { value: "omen-veil", label: "Omen Veil", color: "#6366f1", color2: "#111827" },
+  { value: "viper-bloom", label: "Viper Bloom", color: "#22c55e", color2: "#eab308" },
+  { value: "neon-pulse", label: "Neon Pulse", color: "#38bdf8", color2: "#facc15" },
+  { value: "prime-gold", label: "Prime Gold", color: "#f8e08e", color2: "#7c3aed" }
 ];
 
 const PROFILE_BORDER_STYLES = [
@@ -44037,7 +44043,78 @@ const PREMIUM_PROFILE_BANNER_STYLES = [
   }
 ];
 
+const VALORANT_PLAYER_CARDS_ENDPOINT = "https://valorant-api.com/v1/playercards?language=en-US";
+const VALORANT_PLAYER_CARD_VALUE_PREFIX = "valorant-card-";
+let dynamicProfileBannerStyles = [];
+let profileBannerCatalogPromise = null;
+let profileBannerCatalogAttempted = false;
 let activeProfileBannerCategory = "official";
+
+function normalizeProfileBannerDisplayName(displayName = "") {
+  return normalizeWhitespace(displayName)
+    .replace(/\s+Card$/i, "")
+    .replace(/^V(\d+):\s*/i, "V$1 · ")
+    || "Valorant Player Card";
+}
+
+function getValorantPlayerCardUuid(value = "") {
+  const raw = String(value || "").trim().toLowerCase();
+  const candidate = raw.startsWith(VALORANT_PLAYER_CARD_VALUE_PREFIX)
+    ? raw.slice(VALORANT_PLAYER_CARD_VALUE_PREFIX.length)
+    : raw;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)
+    ? candidate
+    : "";
+}
+
+function getValorantPlayerCardValue(uuid = "") {
+  const normalizedUuid = getValorantPlayerCardUuid(uuid);
+  return normalizedUuid ? `${VALORANT_PLAYER_CARD_VALUE_PREFIX}${normalizedUuid}` : "";
+}
+
+function getValorantPlayerCardWideArtUrl(uuid = "") {
+  const normalizedUuid = getValorantPlayerCardUuid(uuid);
+  return normalizedUuid ? `https://media.valorant-api.com/playercards/${normalizedUuid}/wideart.png` : "";
+}
+
+function profileBannerStyleFromValorantCard(card = {}) {
+  const uuid = getValorantPlayerCardUuid(card.uuid);
+  if (!uuid) return null;
+  const image = String(card.wideArt || getValorantPlayerCardWideArtUrl(uuid) || "").trim();
+  if (!image) return null;
+  return {
+    value: getValorantPlayerCardValue(uuid),
+    label: normalizeProfileBannerDisplayName(card.displayName || card.displayIcon || "Valorant Player Card"),
+    image,
+    category: "official",
+    source: "valorant-api",
+    uuid
+  };
+}
+
+function addUniqueProfileBannerStyle(list, style, seenValues, seenImages, options = {}) {
+  if (!style?.value) return;
+  const valueKey = String(style.value);
+  const imageKey = String(style.image || "").trim().toLowerCase();
+  if (seenValues.has(valueKey)) return;
+  if (imageKey && seenImages.has(imageKey) && !options.allowDuplicateImage) return;
+  seenValues.add(valueKey);
+  if (imageKey) seenImages.add(imageKey);
+  list.push(style);
+}
+
+function buildProfileBannerStyleList(user = currentAuthUser, extraStyles = []) {
+  const list = [];
+  const seenValues = new Set();
+  const seenImages = new Set();
+  [
+    ...PROFILE_BANNER_STYLES,
+    ...dynamicProfileBannerStyles,
+    ...(isPremiumThemeQaUser(user) && isMobileLayoutViewport() ? PREMIUM_PROFILE_BANNER_STYLES : [])
+  ].forEach(style => addUniqueProfileBannerStyle(list, style, seenValues, seenImages));
+  extraStyles.forEach(style => addUniqueProfileBannerStyle(list, style, seenValues, seenImages, { allowDuplicateImage: true }));
+  return list;
+}
 
 function getAvailableProfileBorderStyles(user = currentAuthUser) {
   return isPremiumThemeQaUser(user) && isMobileLayoutViewport()
@@ -44045,10 +44122,8 @@ function getAvailableProfileBorderStyles(user = currentAuthUser) {
     : PROFILE_BORDER_STYLES;
 }
 
-function getAvailableProfileBannerStyles(user = currentAuthUser) {
-  return isPremiumThemeQaUser(user) && isMobileLayoutViewport()
-    ? PROFILE_BANNER_STYLES.concat(PREMIUM_PROFILE_BANNER_STYLES)
-    : PROFILE_BANNER_STYLES;
+function getAvailableProfileBannerStyles(user = currentAuthUser, extraStyles = []) {
+  return buildProfileBannerStyleList(user, extraStyles);
 }
 
 function getDefaultProfileAvatarAgent() {
@@ -45163,12 +45238,26 @@ function getResolvedProfileBorderColor(borderColor = "theme", theme = getThemePr
 }
 
 function getProfileBannerStyle(bannerStyle = "theme") {
+  const requestedValue = String(bannerStyle || "theme");
   const availableStyles = getAvailableProfileBannerStyles();
-  return availableStyles.find(style => style.value === String(bannerStyle || "theme")) || availableStyles[0] || PROFILE_BANNER_STYLES[0];
+  const found = availableStyles.find(style => style.value === requestedValue);
+  if (found) return found;
+  const uuid = getValorantPlayerCardUuid(requestedValue);
+  if (uuid) {
+    return profileBannerStyleFromValorantCard({
+      uuid,
+      displayName: "Valorant Player Card",
+      wideArt: getValorantPlayerCardWideArtUrl(uuid)
+    });
+  }
+  return availableStyles[0] || PROFILE_BANNER_STYLES[0];
 }
 
 function normalizeProfileBannerStyle(bannerStyle = "theme") {
-  return getProfileBannerStyle(bannerStyle).value;
+  const requestedValue = String(bannerStyle || "theme");
+  const valorantCardValue = getValorantPlayerCardValue(requestedValue);
+  if (valorantCardValue) return valorantCardValue;
+  return getProfileBannerStyle(requestedValue).value;
 }
 
 function getBannerImageUrl(bannerStyle = "theme") {
@@ -45178,6 +45267,52 @@ function getBannerImageUrl(bannerStyle = "theme") {
 function getProfileBannerCategory(style = getProfileBannerStyle()) {
   if (!style || style.value === "theme") return "official";
   return style.category === "unofficial" ? "unofficial" : "official";
+}
+
+function refreshProfileBannerSelectOptions(selectedBanner = "theme") {
+  const bannerSelect = document.getElementById("editProfileBannerStyle");
+  if (!bannerSelect) return;
+  const activeBanner = normalizeProfileBannerStyle(selectedBanner);
+  const selectedStyle = getProfileBannerStyle(activeBanner);
+  const availableStyles = getAvailableProfileBannerStyles(currentAuthUser, selectedStyle ? [selectedStyle] : []);
+  bannerSelect.innerHTML = availableStyles
+    .map(style => `<option value="${escapeHtml(style.value)}">${escapeHtml(style.label)}</option>`)
+    .join("");
+  bannerSelect.value = availableStyles.some(style => String(style.value) === activeBanner)
+    ? activeBanner
+    : (availableStyles[0]?.value || "theme");
+}
+
+function ensureProfileBannerCatalogLoad(selectedBanner = "theme", themeKey = "default") {
+  if (dynamicProfileBannerStyles.length || profileBannerCatalogPromise || profileBannerCatalogAttempted || typeof fetch !== "function") {
+    return profileBannerCatalogPromise;
+  }
+  profileBannerCatalogAttempted = true;
+  profileBannerCatalogPromise = fetch(VALORANT_PLAYER_CARDS_ENDPOINT, {
+    headers: { Accept: "application/json" }
+  })
+    .then(response => {
+      if (!response.ok) throw new Error(`Valorant banner catalog failed: ${response.status}`);
+      return response.json();
+    })
+    .then(payload => {
+      const cards = Array.isArray(payload?.data) ? payload.data : [];
+      dynamicProfileBannerStyles = cards
+        .map(profileBannerStyleFromValorantCard)
+        .filter(Boolean)
+        .sort((left, right) => left.label.localeCompare(right.label, undefined, { sensitivity: "base" }));
+      const currentBanner = document.getElementById("editProfileBannerStyle")?.value || selectedBanner || "theme";
+      refreshProfileBannerSelectOptions(currentBanner);
+      if (document.getElementById("editProfileBannerGallery")) {
+        renderBannerGallery(currentBanner, document.getElementById("editProfileTheme")?.value || themeKey || "default");
+      }
+      return dynamicProfileBannerStyles;
+    })
+    .catch(error => {
+      console.warn("Profile banner catalog unavailable", error);
+      return [];
+    });
+  return profileBannerCatalogPromise;
 }
 
 function setProfileBannerCategory(category = "official") {
@@ -45420,7 +45555,7 @@ function renderBorderColorGallery(selectedBorderColor = "theme") {
   const selectedThemeKey = document.getElementById("editProfileTheme")?.value || profile?.themeKey || "default";
   const selectedAgent = document.getElementById("editProfileAvatarAgent")?.value || profile?.avatarAgent || getDefaultProfileAvatarAgent();
   const theme = getThemePreset(selectedThemeKey);
-  const colors = theme?.colors || {};
+  const previewSurfaceColors = getThemePreset("default")?.colors || {};
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const activeColor = normalizeProfileBorderColor(selectedBorderColor);
 
@@ -45429,7 +45564,7 @@ function renderBorderColorGallery(selectedBorderColor = "theme") {
     const isActive = preset.value === activeColor;
     return `
       <button type="button" class="border-color-card ${tones.isTwoTone ? "is-two-tone" : ""} ${isActive ? "is-active" : ""}" data-border-color-card="${escapeHtml(preset.value)}" aria-pressed="${isActive ? "true" : "false"}">
-        <div class="border-color-preview" style="--border-color-accent:${tones.color}; --border-color-accent-2:${tones.color2}; --border-color-gradient:${tones.gradient}; --border-card-surface:${colors.card || "#0b1220"}; --border-card-surface-2:${colors.card2 || "#0f172a"}; --border-card-text:${colors.text || "#f8fafc"};">
+        <div class="border-color-preview" style="--border-color-accent:${tones.color}; --border-color-accent-2:${tones.color2}; --border-color-gradient:${tones.gradient}; --border-card-surface:${previewSurfaceColors.card || "#0b1220"}; --border-card-surface-2:${previewSurfaceColors.card2 || "#0f172a"}; --border-card-text:${previewSurfaceColors.text || "#f8fafc"};">
           <div class="border-color-avatar">
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(preset.label)} border color preview">
           </div>
@@ -45690,10 +45825,11 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
   const theme = getThemePreset(themeKey);
   const colors = theme?.colors || {};
   const activeBanner = normalizeProfileBannerStyle(selectedBanner);
-  const availableBannerStyles = getAvailableProfileBannerStyles();
+  ensureProfileBannerCatalogLoad(activeBanner, themeKey);
+  const selectedStyle = getProfileBannerStyle(activeBanner);
+  const availableBannerStyles = getAvailableProfileBannerStyles(currentAuthUser, selectedStyle ? [selectedStyle] : []);
 
   const visibleBanners = availableBannerStyles.filter((style) => getProfileBannerCategory(style) === activeProfileBannerCategory);
-  const selectedStyle = getProfileBannerStyle(activeBanner);
   const selectedVisible = visibleBanners.some((style) => String(style.value) === activeBanner);
   const visibleActiveBanner = selectedVisible
     ? activeBanner
@@ -45701,21 +45837,20 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
   if (bannerSelect && bannerSelect.value !== visibleActiveBanner) bannerSelect.value = visibleActiveBanner;
 
   gallery.innerHTML = visibleBanners.map((style) => {
-    const isActive = String(style.value) === activeBanner;
     const pattern = getBannerPattern(style.value, theme);
-    const previewBackground = style.image
-      ? `linear-gradient(90deg, rgba(2,6,23,.34), rgba(2,6,23,.08) 52%, rgba(2,6,23,.44)), url('${escapeHtml(style.image)}') center / cover no-repeat`
-      : (style.pattern || `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`);
+    const hasImage = Boolean(style.image);
+    const previewBackground = style.pattern || `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`;
     return `
       <button type="button" class="banner-card ${String(style.value) === visibleActiveBanner ? "is-active" : ""}" data-banner-card="${escapeHtml(style.value)}" aria-pressed="${String(style.value) === visibleActiveBanner ? "true" : "false"}">
         <div
-          class="banner-card-preview"
+          class="banner-card-preview ${hasImage ? "has-banner-image" : ""}"
           style="
             --banner-card-text:${colors.text || "#f8fafc"};
             --banner-card-accent:${colors.accent || "#ff4655"};
             --banner-card-pattern:${pattern};
             background:${previewBackground};
           ">
+          ${hasImage ? `<img class="banner-card-image" loading="lazy" decoding="async" src="${escapeHtml(style.image)}" alt="">` : ""}
           <div class="banner-card-name">${escapeHtml(style.label)}</div>
           <div class="banner-card-strip">${getProfileBannerCategory(style) === "official" ? "Official" : "RankedCoach"}</div>
         </div>
@@ -46771,7 +46906,6 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const bannerSelect = document.getElementById("editProfileBannerStyle");
   const availableThemes = getAvailableProfileThemePresets();
   const availableBorderStyles = getAvailableProfileBorderStyles();
-  const availableBannerStyles = getAvailableProfileBannerStyles();
 
   if (themeSelect) {
     themeSelect.innerHTML = availableThemes
@@ -46815,12 +46949,6 @@ function populateEditProfileModal(profile = getActiveProfile()) {
       .join("");
   }
 
-  if (bannerSelect) {
-    bannerSelect.innerHTML = availableBannerStyles
-      .map(style => `<option value="${style.value}">${style.label}</option>`)
-      .join("");
-  }
-
   const editNameEl = document.getElementById("editProfileName");
   const editRiotIdEl = document.getElementById("editProfileRiotId");
   const editRegionEl = document.getElementById("editProfileRegion");
@@ -46847,6 +46975,7 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const selectedBorderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const selectedBorder = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const selectedBanner = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
+  refreshProfileBannerSelectOptions(selectedBanner);
   if (themeSelect) themeSelect.value = selectedThemeKey;
   if (layoutShapeSelect) layoutShapeSelect.value = selectedLayoutShape;
   if (layoutTextureSelect) layoutTextureSelect.value = selectedLayoutTexture;

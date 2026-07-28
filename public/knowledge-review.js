@@ -1151,32 +1151,59 @@ async function proposalAction(button) {
 
 async function runAutomaticProcessing(button) {
   button.disabled = true;
-  setStatus("Refreshing the Playlist and processing transcript highlights…");
+  setStatus("Publishing approved insights, then refreshing the Playlist and processing transcript highlights...");
   try {
-    const result = await request("/api/knowledge/run", {
+    const publishApprovedQueue = () => request("/api/knowledge/publish-approved", {
       method: "POST",
-      body: JSON.stringify({ batchSize: 24 })
+      body: JSON.stringify({})
     });
+    const publishResults = [];
+    const issues = [];
+
+    try {
+      publishResults.push(await publishApprovedQueue());
+    } catch (error) {
+      issues.push(`approved publish: ${error.message}`);
+    }
+
+    let result = { processed: [] };
+    try {
+      result = await request("/api/knowledge/run", {
+        method: "POST",
+        body: JSON.stringify({ batchSize: 24 })
+      });
+    } catch (error) {
+      issues.push(`playlist processing: ${error.message}`);
+    }
+
     const acquired = (result.processed || []).filter(item => item.status === "acquired-private").length;
     const waiting = (result.processed || []).length - acquired;
-    await request("/api/knowledge/clear-rejected", {
-      method: "POST",
-      body: JSON.stringify({})
-    });
-    const publication = await request("/api/knowledge/publish-approved", {
-      method: "POST",
-      body: JSON.stringify({})
-    });
-    const published = Number(publication.publishedCount || 0);
-    const skipped = Number(publication.skippedCount || 0);
+
+    try {
+      await request("/api/knowledge/clear-rejected", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+    } catch (error) {
+      issues.push(`rejected cleanup: ${error.message}`);
+    }
+
+    try {
+      publishResults.push(await publishApprovedQueue());
+    } catch (error) {
+      issues.push(`post-process approved publish: ${error.message}`);
+    }
+
+    const published = publishResults.reduce((total, publication) => total + Number(publication?.publishedCount || 0), 0);
+    const skipped = publishResults.reduce((total, publication) => total + Number(publication?.skippedCount || 0), 0);
     if (published) {
       globalThis.dispatchEvent?.(new CustomEvent("rankedcoach:knowledge-updated", {
         detail: { publishedCount: published, source: "knowledge-review" }
       }));
     }
     setStatus(
-      `Automatic processing finished: ${acquired} video(s) processed${waiting ? `, ${waiting} waiting or unavailable` : ""}; ${published} approved insight(s) published${skipped ? `, ${skipped} held for review` : ""}.`,
-      skipped ? "pending" : "ready"
+      `Automatic processing finished: ${acquired} video(s) processed${waiting ? `, ${waiting} waiting or unavailable` : ""}; ${published} approved insight(s) published${skipped ? `, ${skipped} held for review` : ""}${issues.length ? `; ${issues.join("; ")}` : ""}.`,
+      issues.length || skipped ? "pending" : "ready"
     );
     await load({ force: true });
   } catch (error) {

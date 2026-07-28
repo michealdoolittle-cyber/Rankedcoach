@@ -8869,6 +8869,13 @@ body.theme-readable :is(
   pointer-events:none;
 }
 
+.banner-card-preview.has-banner-image::before{
+  background:
+    linear-gradient(90deg, rgba(2,6,23,.38), rgba(2,6,23,.08) 52%, rgba(2,6,23,.46)),
+    var(--banner-card-pattern, none);
+  opacity:1;
+}
+
 .banner-card-preview::after{
   content:"";
   position:absolute;
@@ -8877,10 +8884,23 @@ body.theme-readable :is(
   pointer-events:none;
 }
 
+.banner-card-image{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  opacity:.92;
+  filter:saturate(.96) contrast(1.05);
+  pointer-events:none;
+}
+
 .banner-card-name,
 .banner-card-strip{
   position:relative;
-  z-index:1;
+  z-index:2;
 }
 
 .banner-card-name{
@@ -34612,7 +34632,7 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   padding:14px 12px;
   display:flex;
   flex-direction:column;
-  align-items:stretch;
+  align-items:center;
   justify-content:space-between;
   gap:10px;
   border-radius:inherit;
@@ -34620,10 +34640,9 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   isolation:isolate;
   overflow:hidden;
   background:
-    radial-gradient(circle at 20% 16%, rgba(255,255,255,.34), transparent 18%),
-    radial-gradient(circle at 78% 82%, rgba(2,6,23,.38), transparent 28%),
-    var(--border-color-gradient, linear-gradient(135deg, var(--border-color-accent), var(--border-color-accent-2, var(--border-color-accent))));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--border-color-accent) 42%, rgba(255,255,255,.18));
+    radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--border-color-accent) 18%, transparent), transparent 42%),
+    linear-gradient(180deg, var(--border-card-surface, #0b1220), var(--border-card-surface-2, #0f172a));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--border-color-accent) 18%, rgba(255,255,255,.14));
 }
 
 .border-color-preview::before{
@@ -34633,8 +34652,8 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   z-index:0;
   pointer-events:none;
   background:
-    linear-gradient(180deg, rgba(2,6,23,.08), rgba(2,6,23,.62)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 1px, transparent 1px 18px);
+    linear-gradient(135deg, rgba(255,255,255,.08), transparent 38%, rgba(2,6,23,.24)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.045) 0 1px, transparent 1px 18px);
 }
 
 .border-color-preview > *{
@@ -34643,10 +34662,10 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
 }
 
 .border-color-avatar{
-  align-self:flex-start;
-  border:2px solid rgba(255,255,255,.72);
+  align-self:center;
+  border:3px solid transparent;
   background:
-    linear-gradient(135deg, var(--border-card-surface, #0b1220), color-mix(in srgb, var(--border-color-accent) 18%, var(--border-card-surface-2, #0f172a))) padding-box,
+    linear-gradient(135deg, var(--border-card-surface, #0b1220), color-mix(in srgb, var(--border-color-accent) 14%, var(--border-card-surface-2, #0f172a))) padding-box,
     var(--border-color-gradient, linear-gradient(135deg, var(--border-color-accent), var(--border-color-accent-2, var(--border-color-accent)))) border-box;
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--border-color-accent) 26%, transparent),
@@ -34937,8 +34956,24 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card-preview::before{
-  background:var(--banner-card-pattern, none) !important;
+  background:
+    linear-gradient(90deg, rgba(2,6,23,.38), rgba(2,6,23,.08) 52%, rgba(2,6,23,.46)),
+    var(--banner-card-pattern, none) !important;
   opacity:.52 !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card-preview:not(.has-banner-image)::before{
+  background:var(--banner-card-pattern, none) !important;
+}
+
+#editProfileModal #editProfileBannerGallery .banner-card-image{
+  position:absolute !important;
+  inset:0 !important;
+  z-index:0 !important;
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  object-position:center !important;
 }
 
 #editProfileModal #editProfileBannerGallery .banner-card-name{
