@@ -3634,10 +3634,11 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const theme = getThemePreset(requestedThemeKey);
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
-  const resolvedBorderColor = getResolvedProfileBorderColor(borderColor, theme);
+  const borderTones = getResolvedProfileBorderTones(borderColor, theme);
+  const resolvedBorderColor = borderTones.color;
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
-    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}))`,
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
@@ -3647,12 +3648,15 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   });
   button.classList.add(`border-${borderStyle}`);
   button.classList.toggle("border-animated", !!profile?.profileBorderRotate);
+  button.classList.toggle("border-two-tone", borderTones.isTwoTone);
   button.dataset.profileBorder = borderStyle;
   button.dataset.profileBorderColor = borderColor;
   button.style.setProperty("--profile-ring-border", resolvedBorderColor);
+  button.style.setProperty("--profile-ring-border-2", borderTones.color2);
+  button.style.setProperty("--profile-ring-gradient", borderTones.gradient);
   button.style.setProperty("--profile-ring-bg", ringBackground);
   button.style.setProperty("--profile-ring-glow", ringGlow);
-  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, !!profile?.profileBorderRotate);
+  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, !!profile?.profileBorderRotate, borderTones.color2);
 }
 
 function getMobileAvatarFramePath(borderStyle = "standard") {
@@ -3686,6 +3690,7 @@ function getMobileAvatarFrameMarkup(borderStyle = "standard") {
       <svg class="rc-mobile-avatar-frame-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
         <path class="rc-mobile-frame-fill" d="${path}"></path>
         <path class="rc-mobile-frame-main" d="${path}" pathLength="100"></path>
+        <path class="rc-mobile-frame-secondary" d="${path}" pathLength="100"></path>
         <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"></path>
         ${isArc ? `<path class="rc-mobile-frame-arc" d="${path}" pathLength="100"></path>` : ""}
         ${isCrosshair ? `
@@ -3703,7 +3708,7 @@ function getMobileAvatarFrameMarkup(borderStyle = "standard") {
 
 function setAvatarFrameAnimationState(target, enabled = true) {
   if (!target) return;
-  target.querySelectorAll(".rc-mobile-frame-fill, .rc-mobile-frame-main, .rc-mobile-frame-glint, .rc-mobile-frame-arc, .rc-mobile-frame-crosshair path").forEach((part) => {
+  target.querySelectorAll(".rc-mobile-frame-fill, .rc-mobile-frame-main, .rc-mobile-frame-secondary, .rc-mobile-frame-glint, .rc-mobile-frame-arc, .rc-mobile-frame-crosshair path").forEach((part) => {
     if (enabled) {
       part.style.removeProperty("animation");
       part.style.removeProperty("animation-name");
@@ -3718,7 +3723,7 @@ function setAvatarFrameAnimationState(target, enabled = true) {
   });
 }
 
-function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655", animationsEnabled = true) {
+function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655", animationsEnabled = true, resolvedBorderColor2 = "") {
   if (!button) return;
   const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
   let frame = button.querySelector(".rc-mobile-avatar-frame");
@@ -3739,6 +3744,7 @@ function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolve
   button.classList.add("has-rc-mobile-frame");
   button.dataset.mobileFrame = normalizedStyle;
   button.style.setProperty("--rc-mobile-frame-color", resolvedBorderColor);
+  button.style.setProperty("--rc-mobile-frame-color-2", resolvedBorderColor2 || resolvedBorderColor);
   setAvatarFrameAnimationState(button, !!animationsEnabled);
 }
 
@@ -6528,8 +6534,7 @@ function buildCoachingRuleContext({
   evidenceLayer = null,
   coachingContext = null,
   currentRole = "",
-  totalKills = 0,
-  loadoutWeaponStyle = ""
+  totalKills = 0
 } = {}) {
   const matchSummaries = orderedMatches.map(match => {
     const core = getMatchCore(match);
@@ -6570,8 +6575,7 @@ function buildCoachingRuleContext({
     weapons: {
       rounds: safeNumber(coachingContext?.weaponRounds),
       shares: coachingContext?.familyShares || {},
-      families: coachingContext?.familySummaries || [],
-      declaredStyle: normalizeLoadoutWeaponStyle(loadoutWeaponStyle)
+      families: coachingContext?.familySummaries || []
     },
     utility: {
       timingAvailable: false,
@@ -6938,8 +6942,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     evidenceLayer,
     coachingContext,
     currentRole: currentSignalRole,
-    totalKills,
-    loadoutWeaponStyle: getLoadoutPreferences(getActiveProfile?.()).weaponStyle
+    totalKills
   });
   const coachingRuleMatches = globalThis.RankedCoachCoachingRules?.matchRules?.(coachingRuleContext, { maxResults: 4 }) || [];
   insights.push(...coachingRuleMatches);
@@ -15104,7 +15107,6 @@ const LOADOUT_ROLE_META = Object.freeze({
   controller: { label: "Controller", color: "#c084fc" },
   sentinel: { label: "Sentinel", color: "#4ade80" }
 });
-const LOADOUT_WEAPON_STYLE_KEYS = Object.freeze(["", "aggressive-angles", "standard-rifle", "close-range"]);
 
 function normalizeLoadoutRole(value = "") {
   const role = String(value || "").trim().toLowerCase().replace(/^role:/, "");
@@ -15127,11 +15129,6 @@ function normalizeLoadoutExclusions(value = []) {
   return normalized.slice(0, LOADOUT_PICKER_ROLE_ORDER.length + allAgents.length);
 }
 
-function normalizeLoadoutWeaponStyle(value = "") {
-  const style = String(value || "").trim().toLowerCase();
-  return LOADOUT_WEAPON_STYLE_KEYS.includes(style) ? style : "";
-}
-
 function getLoadoutRoleMeta(role = "") {
   return LOADOUT_ROLE_META[normalizeLoadoutRole(role)] || { label: "Agent", color: "#94a3b8" };
 }
@@ -15140,8 +15137,7 @@ function getLoadoutPreferences(profile = getActiveProfile?.()) {
   const oneTrick = normalizeLoadoutAgent(profile?.loadoutOneTrick);
   return {
     exclusions: oneTrick ? [] : normalizeLoadoutExclusions(profile?.loadoutExclusions),
-    oneTrick,
-    weaponStyle: normalizeLoadoutWeaponStyle(profile?.loadoutWeaponStyle)
+    oneTrick
   };
 }
 
@@ -43905,7 +43901,9 @@ const PROFILE_BORDER_COLORS = [
   { value: "serpent-green", label: "Serpent Green", color: "#16a34a" },
   { value: "teal", label: "Teal", color: "#14b8a6" },
   { value: "amber", label: "Amber", color: "#f59e0b" },
-  { value: "obsidian", label: "Obsidian", color: "#050505" }
+  { value: "obsidian", label: "Obsidian", color: "#050505" },
+  { value: "ion-surge", label: "Ion Surge", color: "#22d3ee", color2: "#8b5cf6" },
+  { value: "radiant-flare", label: "Radiant Flare", color: "#facc15", color2: "#ff4655" }
 ];
 
 const PROFILE_BORDER_STYLES = [
@@ -43998,7 +43996,19 @@ const PROFILE_BANNER_STYLES = [
   { value: "vandal-schema", label: "Vandal Schema", image: "https://media.valorant-api.com/playercards/f951d97c-4abb-0775-2312-4db199cde6bf/wideart.png" },
   { value: "pigs-may-fly", label: "Pigs May Fly", image: "https://media.valorant-api.com/playercards/16939544-4f84-c889-545e-659e071ff3f8/wideart.png" },
   { value: "ancient-secrets", label: "Ancient Secrets", image: "https://media.valorant-api.com/playercards/475ce7c1-4ddc-63aa-7e22-54bb621d615b/wideart.png" },
-  { value: "holidaze", label: "Holidaze", image: "https://media.valorant-api.com/playercards/22888904-4274-c5fb-ac4f-0e8a39a9417e/wideart.png" }
+  { value: "holidaze", label: "Holidaze", image: "https://media.valorant-api.com/playercards/22888904-4274-c5fb-ac4f-0e8a39a9417e/wideart.png" },
+  { value: "bucky-schema", label: "Bucky Schema", image: "https://media.valorant-api.com/playercards/48ed2529-4295-c37a-eaa1-15a1c4137abe/wideart.png" },
+  { value: "ghost-schema", label: "Ghost Schema", image: "https://media.valorant-api.com/playercards/fe84218f-4338-0f85-62cd-dfa5596576a0/wideart.png" },
+  { value: "skye-id", label: "Skye ID", image: "https://media.valorant-api.com/playercards/9397e078-4140-cc2b-4fcd-b0afedb9ece8/wideart.png" },
+  { value: "memento-mori", label: "Memento Mori", image: "https://media.valorant-api.com/playercards/c0b560fc-4140-9bf1-daee-4da652b824c5/wideart.png" },
+  { value: "radianite-hazard", label: "Radianite Hazard", image: "https://media.valorant-api.com/playercards/b79b6dac-4d30-7a76-5710-c0873224f31b/wideart.png" },
+  { value: "versus-raze-killjoy", label: "Raze + Killjoy", image: "https://media.valorant-api.com/playercards/7aa1a5fb-4ae3-9a3b-ae04-05bd9fc02413/wideart.png" },
+  { value: "valor-ant", label: "VALOR-ANT", image: "https://media.valorant-api.com/playercards/a80d8898-464d-1b63-4b1b-149930c22b6b/wideart.png" },
+  { value: "versus-vandal-phantom", label: "Vandal + Phantom", image: "https://media.valorant-api.com/playercards/d14c070e-4f7a-8ab1-350e-199af481d32a/wideart.png" },
+  { value: "secret-lineage", label: "Secret Lineage", image: "https://media.valorant-api.com/playercards/f32eb1e5-4cd3-0520-88a3-0cafb7423002/wideart.png" },
+  { value: "arcane-mysteries", label: "Arcane Mysteries", image: "https://media.valorant-api.com/playercards/2ee6d025-4aac-3a67-0f6e-dba827acc75f/wideart.png" },
+  { value: "welcome-undercity", label: "Welcome to the Undercity", image: "https://media.valorant-api.com/playercards/acf37618-43de-2a3e-ccf9-ea9c3cb4dd33/wideart.png" },
+  { value: "epilogue-vandal-phantom", label: "Epilogue Vandal + Phantom", image: "https://media.valorant-api.com/playercards/f0196638-47a9-c2da-7665-f599e3d930ad/wideart.png" }
 ];
 
 PROFILE_BANNER_STYLES.push(
@@ -44100,6 +44110,9 @@ function normalizeFreeThemeMotionMode(value = "static") {
 }
 
 function normalizeProfileRecord(profile = {}) {
+  const profileBase = { ...(profile && typeof profile === "object" ? profile : {}) };
+  delete profileBase[["loadout", "WeaponStyle"].join("")];
+  profile = profileBase;
   const avatarAgent = String(profile.avatarAgent || "").trim() || getDefaultProfileAvatarAgent();
   const loadoutOneTrick = normalizeLoadoutAgent(profile.loadoutOneTrick);
   const loadoutExclusions = loadoutOneTrick ? [] : normalizeLoadoutExclusions(profile.loadoutExclusions);
@@ -44128,7 +44141,6 @@ function normalizeProfileRecord(profile = {}) {
     warmupLog: normalizeWarmupLog(profile.warmupLog),
     loadoutExclusions,
     loadoutOneTrick,
-    loadoutWeaponStyle: normalizeLoadoutWeaponStyle(profile.loadoutWeaponStyle),
     watchedPlaylistVideos: normalizeWatchedPlaylistVideos(profile.watchedPlaylistVideos),
     themeKey: profile.themeKey || "default",
     frameTheme: profile.frameTheme || profile.themeKey || "default",
@@ -44207,7 +44219,6 @@ function loadProfiles(){
       warmupLog: [],
       loadoutExclusions: [],
       loadoutOneTrick: "",
-      loadoutWeaponStyle: "",
       watchedPlaylistVideos: [],
       accessibility: {
         contrastMode: "standard",
@@ -44514,9 +44525,6 @@ function updateProfile(id, data){
     profile.loadoutExclusions = nextOneTrick
       ? []
       : normalizeLoadoutExclusions(data.loadoutExclusions != null ? data.loadoutExclusions : profile.loadoutExclusions);
-  }
-  if (data.loadoutWeaponStyle != null) {
-    profile.loadoutWeaponStyle = normalizeLoadoutWeaponStyle(data.loadoutWeaponStyle);
   }
   if (data.watchedPlaylistVideos != null) {
     profile.watchedPlaylistVideos = normalizeWatchedPlaylistVideos(data.watchedPlaylistVideos);
@@ -45131,9 +45139,27 @@ function normalizeProfileBorderColor(borderColor = "theme") {
   return getProfileBorderColor(borderColor).value;
 }
 
-function getResolvedProfileBorderColor(borderColor = "theme", theme = getThemePreset()) {
+function getResolvedProfileBorderTones(borderColor = "theme", theme = getThemePreset(), options = {}) {
   const preset = getProfileBorderColor(borderColor);
-  return preset?.color || theme?.colors?.accent || "#ff4655";
+  const themeColors = theme?.colors || {};
+  const primary = preset?.color || options.color || themeColors.accent || "#ff4655";
+  const fallbackSecondary = preset?.color
+    ? (preset.color2 || primary)
+    : (options.color2 || themeColors.accent2 || primary);
+  const secondary = fallbackSecondary || primary;
+  const isTwoTone = Boolean(secondary && secondary !== primary);
+  return {
+    color: primary,
+    color2: secondary,
+    isTwoTone,
+    gradient: isTwoTone
+      ? `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`
+      : primary
+  };
+}
+
+function getResolvedProfileBorderColor(borderColor = "theme", theme = getThemePreset()) {
+  return getResolvedProfileBorderTones(borderColor, theme).color;
 }
 
 function getProfileBannerStyle(bannerStyle = "theme") {
@@ -45399,12 +45425,12 @@ function renderBorderColorGallery(selectedBorderColor = "theme") {
   const activeColor = normalizeProfileBorderColor(selectedBorderColor);
 
   gallery.innerHTML = PROFILE_BORDER_COLORS.map((preset) => {
-    const swatch = preset.color || colors.accent || "#ff4655";
+    const tones = getResolvedProfileBorderTones(preset.value, theme);
     const isActive = preset.value === activeColor;
     return `
-      <button type="button" class="border-color-card ${isActive ? "is-active" : ""}" data-border-color-card="${escapeHtml(preset.value)}" aria-pressed="${isActive ? "true" : "false"}">
-        <div class="border-color-preview" style="--border-color-accent:${swatch}; --border-card-surface:${colors.card || "#0b1220"}; --border-card-surface-2:${colors.card2 || "#0f172a"}; --border-card-text:${colors.text || "#f8fafc"};">
-          <div class="border-color-avatar" style="border-color:${swatch}; box-shadow:0 0 0 2px color-mix(in srgb, ${swatch} 34%, transparent), 0 0 22px color-mix(in srgb, ${swatch} 42%, transparent);">
+      <button type="button" class="border-color-card ${tones.isTwoTone ? "is-two-tone" : ""} ${isActive ? "is-active" : ""}" data-border-color-card="${escapeHtml(preset.value)}" aria-pressed="${isActive ? "true" : "false"}">
+        <div class="border-color-preview" style="--border-color-accent:${tones.color}; --border-color-accent-2:${tones.color2}; --border-color-gradient:${tones.gradient}; --border-card-surface:${colors.card || "#0b1220"}; --border-card-surface-2:${colors.card2 || "#0f172a"}; --border-card-text:${colors.text || "#f8fafc"};">
+          <div class="border-color-avatar">
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(preset.label)} border color preview">
           </div>
           <div class="border-card-name">${escapeHtml(preset.label)}</div>
@@ -45435,9 +45461,13 @@ function renderBorderGallery(selectedBorder = "standard") {
   const selectedCustomAccent = getEditProfileCustomAccentValue(profile);
   const theme = getThemePreset(selectedThemeKey);
   const colors = theme?.colors || {};
-  const ringColor = selectedBorderColor === "theme" && selectedCustomAccent
-    ? selectedCustomAccent
-    : getResolvedProfileBorderColor(selectedBorderColor, theme);
+  const ringTones = selectedBorderColor === "theme" && selectedCustomAccent
+    ? getResolvedProfileBorderTones("theme", theme, {
+      color: selectedCustomAccent,
+      color2: blendHexColors(selectedCustomAccent, colors.accent2 || "#f97316", 0.42)
+    })
+    : getResolvedProfileBorderTones(selectedBorderColor, theme);
+  const ringColor = ringTones.color;
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
   const useMobileFramePreview = true;
@@ -45447,7 +45477,7 @@ function renderBorderGallery(selectedBorder = "standard") {
     const isActive = style.value === activeBorder;
     const avatarPreviewMarkup = useMobileFramePreview
       ? `
-          <div class="border-card-avatar has-rc-mobile-preview" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --profile-ring-border:${ringColor}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
+          <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
             ${getMobileAvatarFrameMarkup(style.value)}
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
           </div>
@@ -45465,6 +45495,8 @@ function renderBorderGallery(selectedBorder = "standard") {
             --border-card-accent:${colors.accent || "#ff4655"};
             --border-card-accent-2:${colors.accent2 || "#f97316"};
             --border-ring-color:${ringColor};
+            --border-ring-color-2:${ringTones.color2};
+            --border-ring-gradient:${ringTones.gradient};
             --border-card-text:${colors.text || "#f8fafc"};
             --border-card-muted:${colors.muted || "#94a3b8"};
             --border-card-surface:${colors.card || "#0b1220"};
@@ -45760,11 +45792,15 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const resolvedThemeMotion = theme.motion && theme.motion !== "static"
     ? theme.motion
     : (freeThemeMotion === "ambient" ? "ambient-lite" : "static");
-  const resolvedBorderColor = borderColor === "theme" && customAccent
-    ? highlightAccent
-    : getResolvedProfileBorderColor(borderColor, theme);
+  const borderTones = borderColor === "theme" && customAccent
+    ? getResolvedProfileBorderTones("theme", theme, {
+      color: highlightAccent,
+      color2: highlightAccent2
+    })
+    : getResolvedProfileBorderTones(borderColor, theme);
+  const resolvedBorderColor = borderTones.color;
   const ringBackground = colorMixOrFallback(
-    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}))`,
+    `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}))`,
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
@@ -45796,9 +45832,12 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     });
     target.classList.add(`border-${borderStyle}`);
     target.classList.toggle("border-animated", borderRotate);
+    target.classList.toggle("border-two-tone", borderTones.isTwoTone);
     target.dataset.profileBorder = borderStyle;
     target.dataset.profileBorderColor = borderColor;
     target.style.setProperty("--profile-ring-border", resolvedBorderColor);
+    target.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    target.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     target.style.setProperty("--profile-ring-bg", ringBackground);
     target.style.setProperty("--profile-ring-glow", ringGlow);
   });
@@ -45810,9 +45849,11 @@ function applyProfileVisuals(profile = getActiveProfile()) {
 
   if (ring) {
     ring.style.setProperty("--profile-ring-border", resolvedBorderColor);
+    ring.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    ring.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     ring.style.setProperty("--profile-ring-bg", ringBackground);
     ring.style.setProperty("--profile-ring-glow", ringGlow);
-    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor, borderRotate);
+    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor, borderRotate, borderTones.color2);
   }
 
   if (root) {
@@ -45840,6 +45881,8 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     root.style.setProperty("--button-hover", buttonHoverSurface);
     root.style.setProperty("--theme-glow", themeGlow);
     root.style.setProperty("--profile-ring-border", resolvedBorderColor);
+    root.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    root.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     root.style.setProperty("--profile-ring-bg", ringBackground);
     root.style.setProperty("--profile-ring-glow", ringGlow);
     root.style.setProperty("--theme-bg-gradient", `linear-gradient(180deg, ${baseSurface}, ${secondarySurface})`);
@@ -46722,7 +46765,6 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const layoutShapeSelect = document.getElementById("editProfileLayoutShape");
   const layoutTextureSelect = document.getElementById("editProfileLayoutTexture");
   const layoutFontSelect = document.getElementById("editProfileLayoutFont");
-  const loadoutWeaponStyleSelect = document.getElementById("editProfileLoadoutWeaponStyle");
   const avatarSelect = document.getElementById("editProfileAvatarAgent");
   const borderColorSelect = document.getElementById("editProfileBorderColor");
   const borderSelect = document.getElementById("editProfileBorderStyle");
@@ -46809,7 +46851,6 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   if (layoutShapeSelect) layoutShapeSelect.value = selectedLayoutShape;
   if (layoutTextureSelect) layoutTextureSelect.value = selectedLayoutTexture;
   if (layoutFontSelect) layoutFontSelect.value = selectedLayoutFont;
-  if (loadoutWeaponStyleSelect) loadoutWeaponStyleSelect.value = normalizeLoadoutWeaponStyle(profile?.loadoutWeaponStyle);
   setProfileLayoutStyleFontToggle(profile?.layoutStyleCustomFont !== false);
   setLayoutStyleMobileSection("shapes");
   renderLayoutStyleGalleries(selectedLayoutShape, selectedLayoutTexture);
@@ -46896,7 +46937,7 @@ function scheduleProfileEditTabPanelRefresh(tabKey = "theme") {
 function activateProfileEditTab(tabKey = "theme") {
   const shell = document.querySelector("#editProfileModal .profile-edit-shell");
   const previousTab = shell?.dataset.activeProfileTab || "";
-  const tabOrder = ["theme", "layoutStyle", "loadout", "icon", "borderColor", "border", "banner"];
+  const tabOrder = ["theme", "layoutStyle", "icon", "borderColor", "border", "banner"];
   const previousIndex = tabOrder.indexOf(previousTab);
   const nextIndex = tabOrder.indexOf(tabKey);
   const direction = previousIndex >= 0 && nextIndex >= 0 && nextIndex < previousIndex ? "back" : "forward";
@@ -46941,7 +46982,6 @@ function saveEditProfileModal() {
   const selectedLayoutShape = getProfileEditSelection("#editProfileLayoutShapeGallery [data-layout-shape-card].is-active", "data-layout-shape-card", document.getElementById("editProfileLayoutShape")?.value || profile.layoutShape || profile.layoutStyle || "default");
   const selectedLayoutTexture = getProfileEditSelection("#editProfileLayoutTextureGallery [data-layout-texture-card].is-active", "data-layout-texture-card", document.getElementById("editProfileLayoutTexture")?.value || profile.layoutTexture || "default");
   const selectedLayoutFont = normalizeProfileLayoutFont(document.getElementById("editProfileLayoutFont")?.value || profile.layoutFont);
-  const selectedLoadoutWeaponStyle = normalizeLoadoutWeaponStyle(document.getElementById("editProfileLoadoutWeaponStyle")?.value || profile.loadoutWeaponStyle);
   const selectedAvatar = getProfileEditSelection("#editProfileAvatarGallery [data-avatar-card].is-active", "data-avatar-card", document.getElementById("editProfileAvatarAgent")?.value || profile.avatarAgent);
   const selectedBorderColor = getProfileEditSelection("#editProfileBorderColorGallery [data-border-color-card].is-active", "data-border-color-card", document.getElementById("editProfileBorderColor")?.value || profile.profileBorderColor || "theme");
   const selectedBorder = getProfileEditSelection("#editProfileBorderGallery [data-border-card].is-active", "data-border-card", document.getElementById("editProfileBorderStyle")?.value || profile.profileBorder || "standard");
@@ -46960,7 +47000,6 @@ function saveEditProfileModal() {
     layoutTexture: normalizeProfileLayoutTexture(selectedLayoutTexture),
     layoutStyleCustomFont: getProfileLayoutStyleFontValue(profile),
     layoutFont: selectedLayoutFont,
-    loadoutWeaponStyle: selectedLoadoutWeaponStyle,
     avatarAgent: selectedAvatar,
     profileBorderColor: normalizeProfileBorderColor(selectedBorderColor),
     profileBorder: normalizeProfileBorderStyle(selectedBorder),

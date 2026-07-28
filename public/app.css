@@ -34612,13 +34612,59 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   padding:14px 12px;
   display:flex;
   flex-direction:column;
-  align-items:center;
-  justify-content:center;
+  align-items:stretch;
+  justify-content:space-between;
   gap:10px;
   border-radius:inherit;
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
   background:
-    radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--border-color-accent) 22%, transparent), transparent 42%),
-    linear-gradient(180deg, var(--border-card-surface), var(--border-card-surface-2));
+    radial-gradient(circle at 20% 16%, rgba(255,255,255,.34), transparent 18%),
+    radial-gradient(circle at 78% 82%, rgba(2,6,23,.38), transparent 28%),
+    var(--border-color-gradient, linear-gradient(135deg, var(--border-color-accent), var(--border-color-accent-2, var(--border-color-accent))));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--border-color-accent) 42%, rgba(255,255,255,.18));
+}
+
+.border-color-preview::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(2,6,23,.08), rgba(2,6,23,.62)),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 1px, transparent 1px 18px);
+}
+
+.border-color-preview > *{
+  position:relative;
+  z-index:1;
+}
+
+.border-color-avatar{
+  align-self:flex-start;
+  border:2px solid rgba(255,255,255,.72);
+  background:
+    linear-gradient(135deg, var(--border-card-surface, #0b1220), color-mix(in srgb, var(--border-color-accent) 18%, var(--border-card-surface-2, #0f172a))) padding-box,
+    var(--border-color-gradient, linear-gradient(135deg, var(--border-color-accent), var(--border-color-accent-2, var(--border-color-accent)))) border-box;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--border-color-accent) 26%, transparent),
+    0 0 24px color-mix(in srgb, var(--border-color-accent-2, var(--border-color-accent)) 36%, transparent);
+}
+
+.border-color-preview .border-card-name{
+  width:100%;
+  min-height:28px;
+  padding:7px 8px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:10px;
+  background:rgba(2,6,23,.58);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+  color:#f8fafc;
+  text-shadow:0 2px 10px rgba(0,0,0,.62);
 }
 
 .border-card-avatar{
@@ -34760,6 +34806,49 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::befor
   min-height:150px !important;
   height:150px !important;
   overflow:hidden !important;
+}
+
+.profile-avatar-ring.border-two-tone,
+.mobile-bottom-avatar-btn.border-two-tone,
+.border-card-avatar.border-two-tone{
+  border-color:transparent !important;
+  background:
+    linear-gradient(135deg, var(--profile-ring-bg, rgba(15,23,42,.94)), color-mix(in srgb, var(--profile-ring-border-2, var(--profile-ring-border, #ff4655)) 14%, rgba(15,23,42,.94))) padding-box,
+    var(--profile-ring-gradient, linear-gradient(135deg, var(--profile-ring-border, #ff4655), var(--profile-ring-border-2, var(--profile-ring-border, #ff4655)))) border-box !important;
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--profile-ring-border, #ff4655) 20%, transparent),
+    0 0 18px color-mix(in srgb, var(--profile-ring-border-2, var(--profile-ring-border, #ff4655)) 34%, transparent) !important;
+}
+
+.border-card-avatar.border-two-tone{
+  border:3px solid transparent !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn,.border-card-avatar).border-two-tone .rc-mobile-frame-main{
+  stroke:var(--rc-mobile-frame-color, var(--profile-ring-border, #ff4655)) !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn,.border-card-avatar).border-two-tone .rc-mobile-frame-secondary{
+  display:block !important;
+  fill:none !important;
+  stroke:var(--rc-mobile-frame-color-2, var(--profile-ring-border-2, var(--profile-ring-border, #ff4655))) !important;
+  stroke-width:7 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  stroke-dasharray:50 50 !important;
+  stroke-dashoffset:50 !important;
+  opacity:.96 !important;
+  filter:drop-shadow(0 0 7px color-mix(in srgb, var(--profile-ring-border-2, var(--profile-ring-border, #ff4655)) 54%, transparent)) !important;
+  transform-origin:50% 50% !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn,.border-card-avatar):not(.border-two-tone) .rc-mobile-frame-secondary{
+  display:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-two-tone:is(.border-hex,.border-shield,.border-spike)::before,
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-two-tone.border-diamond::before{
+  background:var(--profile-ring-gradient, linear-gradient(135deg, var(--profile-ring-border, #ff4655), var(--profile-ring-border-2, var(--profile-ring-border, #ff4655)))) !important;
 }
 
 #editProfileModal #editProfileBorderGallery .border-card-preview{

@@ -321,6 +321,93 @@ test("publish cannot implicitly approve a pending proposal", async () => {
   assert.equal((await handlePublicKnowledgeRequest({ CONTENT_AUTOMATION: kv }).then(response => response.json())).items.length, 0);
 });
 
+test("bulk publish processes every approved proposal and repairs stale approval metadata", async () => {
+  const approvedFromLatestReview = {
+    id: "proposal-approved-indexed",
+    conceptId: "concept-approved-indexed",
+    type: "coaching",
+    topic: "teamplay",
+    entities: ["Jett"],
+    state: "single-source",
+    approvalStatus: "approved",
+    rankedCoachWording: "Dash only after the first teammate can trade the defender who turns toward your entry path.",
+    approvedType: "coaching",
+    approvedTopic: "teamplay",
+    approvedCategory: "agent",
+    approvedEntity: "Jett",
+    evidence: []
+  };
+  const archivedApprovedWithoutApprovalRecord = {
+    id: "proposal-approved-archived",
+    conceptId: "concept-approved-archived",
+    type: "coaching",
+    topic: "map-control",
+    entities: ["Bind"],
+    state: "single-source",
+    approvalStatus: "approved",
+    rankedCoachWording: "Clear the first lane with paired utility before the team spends the spike plant on Bind.",
+    approvedType: "coaching",
+    approvedTopic: "map-control",
+    approvedCategory: "map",
+    approvedEntity: "Bind",
+    evidence: []
+  };
+  const kv = new MemoryKv({
+    "knowledge:review:latest": JSON.stringify({
+      id: "review-bulk-publish",
+      createdAt: "2026-07-28T00:00:00.000Z",
+      status: "review-required",
+      summary: { pendingApproval: 0, published: 0 },
+      proposalIndex: [{ id: approvedFromLatestReview.id, approvalStatus: "approved" }]
+    }),
+    [`knowledge:proposal:${approvedFromLatestReview.id}`]: JSON.stringify(approvedFromLatestReview),
+    [`knowledge:proposal:${archivedApprovedWithoutApprovalRecord.id}`]: JSON.stringify(archivedApprovedWithoutApprovalRecord),
+    [`knowledge:approval:${approvedFromLatestReview.id}`]: JSON.stringify({
+      proposalId: approvedFromLatestReview.id,
+      rankedCoachWording: approvedFromLatestReview.rankedCoachWording,
+      type: "coaching",
+      topic: "teamplay",
+      category: "agent",
+      entity: "Jett",
+      status: "approved-for-manual-library-promotion"
+    })
+  });
+  const request = new Request("https://www.rankedcoach.gg/api/knowledge/publish-approved", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer owner-token",
+      "Content-Type": "application/json",
+      Origin: "https://www.rankedcoach.gg"
+    },
+    body: JSON.stringify({})
+  });
+  const response = await handleKnowledgeOwnerRequest(request, {
+    CONTENT_AUTOMATION: kv
+  }, {
+    fetchImpl: async () => Response.json({
+      id: "owner-id",
+      email: "owner@example.com",
+      app_metadata: { role: "owner" },
+      user_metadata: { username: "Michael" }
+    })
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.status, "approved-publish-complete");
+  assert.equal(body.publishedCount, 2);
+  assert.equal(body.skippedCount, 0);
+  const published = await handlePublicKnowledgeRequest({ CONTENT_AUTOMATION: kv }).then(publicResponse => publicResponse.json());
+  assert.deepEqual(new Set(published.items.map(item => item.id)), new Set([
+    approvedFromLatestReview.id,
+    archivedApprovedWithoutApprovalRecord.id
+  ]));
+  const repairedApproval = await kv.get(`knowledge:approval:${archivedApprovedWithoutApprovalRecord.id}`, "json");
+  assert.equal(repairedApproval.category, "map");
+  assert.equal(repairedApproval.entity, "Bind");
+  assert.equal(repairedApproval.rankedCoachWording, archivedApprovedWithoutApprovalRecord.rankedCoachWording);
+  assert.equal((await kv.get(`knowledge:proposal:${archivedApprovedWithoutApprovalRecord.id}`, "json")).approvalStatus, "published");
+});
+
 test("owner processing continues from retained storage when Playlist refresh fails", async () => {
   const kv = new MemoryKv();
   const request = new Request("https://www.rankedcoach.gg/api/knowledge/run", {

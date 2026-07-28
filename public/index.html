@@ -458,7 +458,6 @@ RIOT PROFILE MODAL
         <aside class="profile-edit-nav">
           <button class="profile-edit-tab is-active" type="button" data-profile-tab="theme">Theme Selector</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="layoutStyle">Layout Style</button>
-          <button class="profile-edit-tab" type="button" data-profile-tab="loadout">Loadout Preference</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="icon">Agent Profile Icon</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="borderColor">Profile Border Color</button>
           <button class="profile-edit-tab" type="button" data-profile-tab="border">Profile Border</button>
@@ -552,26 +551,6 @@ RIOT PROFILE MODAL
                   <option value="pressstart2p">Press Start 2P</option>
                 </select>
                 <small class="profile-edit-field-note">This global choice overrides the style font and also works with the default layout.</small>
-              </label>
-            </div>
-          </section>
-
-          <section class="profile-edit-panel" data-profile-panel="loadout">
-            <div class="profile-edit-panel-head">
-              <div class="profile-edit-panel-title">Loadout Preference</div>
-              <div class="profile-edit-panel-copy">This optional style is compared with your retained round-by-round weapon data. It never replaces what the matches actually show.</div>
-            </div>
-
-            <div class="profile-edit-grid">
-              <label class="profile-edit-field profile-edit-field-full">
-                <span>Preferred Weapon Style</span>
-                <select id="editProfileLoadoutWeaponStyle" class="profile-edit-select" aria-label="Choose your preferred weapon style">
-                  <option value="">No stated preference</option>
-                  <option value="aggressive-angles">Aggressive angles — Operator, Marshal, or Judge</option>
-                  <option value="standard-rifle">Standard rifle economy — Vandal or Phantom</option>
-                  <option value="close-range">Close-range pressure — SMGs and shotguns</option>
-                </select>
-                <small class="profile-edit-field-note">RankedCoach only shows an alignment insight after enough retained weapon rounds are available.</small>
               </label>
             </div>
           </section>

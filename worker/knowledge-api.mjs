@@ -5,6 +5,7 @@ import {
   getKnowledgeOwnerDashboard,
   getPublishedKnowledge,
   ingestTimestampedKnowledgeTranscript,
+  publishAllApprovedKnowledge,
   publishApprovedKnowledge,
   queueKnowledgeSourceRetry,
   rejectKnowledgeProposal,
@@ -169,6 +170,12 @@ export async function handleKnowledgeOwnerRequest(request, env, options = {}) {
   }
   if (url.pathname === "/api/knowledge/publish") {
     return json(await publishApprovedKnowledge(kv, {
+      ...body,
+      owner: owner.displayName
+    }));
+  }
+  if (url.pathname === "/api/knowledge/publish-approved") {
+    return json(await publishAllApprovedKnowledge(kv, {
       ...body,
       owner: owner.displayName
     }));

@@ -173,6 +173,60 @@ function resolveKnowledgeTypeTopic(source = {}, overrides = {}) {
   return { type, topic };
 }
 
+function proposalEntityForCategory(proposal = {}, category = "general") {
+  const entities = (proposal.entities || []).map(normalizeWhitespace).filter(Boolean);
+  if (category === "agent-map") {
+    const agent = entities.find(entity => AGENT_ENTITY_NAMES.has(entity));
+    const map = entities.find(entity => MAP_ENTITY_NAMES.has(entity));
+    return agent && map ? `${agent} Â· ${map}` : "";
+  }
+  const allowed = category === "map"
+    ? MAP_ENTITY_NAMES
+    : category === "weapon"
+      ? WEAPON_ENTITY_NAMES
+      : category === "agent"
+        ? AGENT_ENTITY_NAMES
+        : null;
+  if (!allowed) return "";
+  return entities.find(entity => allowed.has(entity)) || "";
+}
+
+function inferPublicationCategory(proposal = {}, approval = {}) {
+  const existingCategory = normalizeWhitespace(approval.category ?? proposal.approvedCategory ?? proposal.publishedCategory).toLowerCase();
+  if (["general", "map", "agent", "weapon", "agent-map"].includes(existingCategory)) return existingCategory;
+  const entity = normalizeWhitespace(approval.entity ?? proposal.approvedEntity ?? proposal.publishedEntity ?? proposal.entities?.[0]);
+  if (!entity) return "general";
+  if (entity.includes("Â·")) return "agent-map";
+  if (MAP_ENTITY_NAMES.has(entity)) return "map";
+  if (WEAPON_ENTITY_NAMES.has(entity)) return "weapon";
+  if (AGENT_ENTITY_NAMES.has(entity)) return "agent";
+  return "general";
+}
+
+function resolvePublicationTarget(proposal = {}, approval = {}, publication = {}) {
+  const category = normalizeWhitespace(
+    publication.category
+    ?? approval.category
+    ?? proposal.approvedCategory
+    ?? proposal.publishedCategory
+    ?? inferPublicationCategory(proposal, approval)
+  ).toLowerCase();
+  if (!["general", "map", "agent", "weapon", "agent-map"].includes(category)) {
+    throw new Error("Proposal, owner, and a valid Library category are required.");
+  }
+  const rawEntity = publication.entity
+    ?? approval.entity
+    ?? proposal.approvedEntity
+    ?? proposal.publishedEntity
+    ?? proposalEntityForCategory(proposal, category)
+    ?? "";
+  const entity = canonicalPublicationEntity(category, rawEntity);
+  if (category !== "general" && !entity) {
+    throw new Error("Choose a valid map, agent, weapon, or agent-map pair for contextual Library publication.");
+  }
+  return { category, entity };
+}
+
 function containsCopiedTranscriptPhrase(wording = "", excerpt = "", phraseLength = 7) {
   const normalize = value => normalizeWhitespace(value)
     .toLowerCase()
@@ -2860,23 +2914,29 @@ export async function queueKnowledgeSourceRetry(kv, input = {}, now = new Date()
 export async function publishApprovedKnowledge(kv, publication = {}, now = new Date()) {
   const proposalId = String(publication.proposalId || "").trim();
   const owner = normalizeWhitespace(publication.owner);
-  const category = normalizeWhitespace(publication.category || "general").toLowerCase();
-  const entity = canonicalPublicationEntity(category, publication.entity);
-  if (!proposalId || !owner || !["general", "map", "agent", "weapon", "agent-map"].includes(category)) {
-    throw new Error("Proposal, owner, and a valid Library category are required.");
-  }
-  if (category !== "general" && !entity) throw new Error("Choose a valid map, agent, weapon, or agent-map pair for contextual Library publication.");
+  if (!proposalId || !owner) throw new Error("Proposal and owner are required.");
   const proposalKey = `${PROPOSAL_PREFIX}${proposalId}`;
   const proposal = await kv.get(proposalKey, "json");
-  const approval = await kv.get(`${APPROVAL_PREFIX}${proposalId}`, "json");
-  if (!proposal || !approval || proposal.approvalStatus !== "approved") {
+  const approvalKey = `${APPROVAL_PREFIX}${proposalId}`;
+  const approval = await kv.get(approvalKey, "json");
+  if (!proposal || proposal.approvalStatus !== "approved") {
     throw new Error("Only an owner-approved proposal can be published.");
   }
+  const { category, entity } = resolvePublicationTarget(proposal, approval || {}, publication);
   const { type, topic } = resolveKnowledgeTypeTopic({
     ...proposal,
-    approvedType: approval.type ?? proposal.approvedType,
-    approvedTopic: approval.topic ?? proposal.approvedTopic
+    approvedType: approval?.type ?? proposal.approvedType,
+    approvedTopic: approval?.topic ?? proposal.approvedTopic
   }, publication);
+  const rankedCoachWording = normalizeWhitespace(
+    publication.rankedCoachWording
+    || approval?.rankedCoachWording
+    || proposal.rankedCoachWording
+    || proposal.suggestedWording
+  );
+  if (rankedCoachWording.length < 20) {
+    throw new Error("At least 20 characters of RankedCoach wording are required before publishing.");
+  }
   if (
     proposal.state === "conflicted"
     || proposal.libraryComparison?.relationship === "conflicts-with-library"
@@ -2887,12 +2947,28 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
     throw new Error("A statistical insight needs corroboration from independent sources before publication.");
   }
   const publishedAt = nowIso(now);
+  const repairedApproval = {
+    ...(approval || {}),
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    proposalId,
+    conceptId: proposal.conceptId,
+    owner: approval?.owner || proposal.approvedBy || owner,
+    rankedCoachWording,
+    type,
+    topic,
+    category,
+    entity,
+    approvedAt: approval?.approvedAt || proposal.approvedAt || publishedAt,
+    status: approval?.status || "approved-for-manual-library-promotion",
+    evidence: approval?.evidence || proposal.evidence
+  };
+  await kv.put(approvalKey, JSON.stringify(repairedApproval));
   const record = Object.freeze({
     schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
     id: proposalId,
     proposalId,
     conceptId: proposal.conceptId,
-    wording: approval.rankedCoachWording,
+    wording: rankedCoachWording,
     type,
     topic,
     category,
@@ -2918,7 +2994,12 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
   }));
   const updatedProposal = {
     ...proposal,
+    rankedCoachWording,
     approvalStatus: "published",
+    approvedType: type,
+    approvedTopic: topic,
+    approvedCategory: category,
+    approvedEntity: entity,
     publishedAt,
     publishedType: type,
     publishedTopic: topic,
@@ -2928,6 +3009,57 @@ export async function publishApprovedKnowledge(kv, publication = {}, now = new D
   await kv.put(proposalKey, JSON.stringify(updatedProposal));
   await updateLatestReviewProposal(kv, updatedProposal);
   return record;
+}
+
+async function approvedKnowledgeProposalIds(kv) {
+  const ids = new Set();
+  const review = await kv.get(LATEST_REVIEW_KEY, "json");
+  for (const item of reviewProposalIndex(review)) {
+    if (item.approvalStatus === "approved" && item.id) ids.add(item.id);
+  }
+  if (typeof kv.list === "function") {
+    let cursor;
+    do {
+      const page = await kv.list({ prefix: PROPOSAL_PREFIX, cursor });
+      for (const key of page?.keys || []) {
+        const id = String(key.name || "").slice(PROPOSAL_PREFIX.length);
+        if (!id || ids.has(id)) continue;
+        const proposal = await kv.get(`${PROPOSAL_PREFIX}${id}`, "json");
+        if (proposal?.approvalStatus === "approved") ids.add(id);
+      }
+      cursor = page?.list_complete === false ? page.cursor : "";
+    } while (cursor);
+  }
+  return [...ids];
+}
+
+export async function publishAllApprovedKnowledge(kv, publication = {}, now = new Date()) {
+  const owner = normalizeWhitespace(publication.owner);
+  if (!owner) throw new Error("Owner is required to publish approved insights.");
+  const proposalIds = await approvedKnowledgeProposalIds(kv);
+  const published = [];
+  const skipped = [];
+  for (const proposalId of proposalIds) {
+    try {
+      const record = await publishApprovedKnowledge(kv, { proposalId, owner }, now);
+      published.push(record);
+    } catch (error) {
+      skipped.push(Object.freeze({
+        proposalId,
+        error: String(error?.message || error)
+      }));
+    }
+  }
+  return Object.freeze({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    status: "approved-publish-complete",
+    approvedCount: proposalIds.length,
+    publishedCount: published.length,
+    skippedCount: skipped.length,
+    published: Object.freeze(published),
+    skipped: Object.freeze(skipped),
+    publishedAt: nowIso(now)
+  });
 }
 
 export async function unpublishKnowledge(kv, publication = {}, now = new Date()) {

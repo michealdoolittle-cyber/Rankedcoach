@@ -13,6 +13,10 @@ const activeProposalIds = {
 const proposalFormDrafts = new Map();
 const proposalFeedback = new Map();
 const pendingProposalIds = new Set();
+const reviewAutosaveTimers = new Map();
+const reviewAutosaveRequests = new Map();
+const approvedAutosaveTimers = new Map();
+const approvedAutosaveRequests = new Map();
 const KNOWLEDGE_TYPES = Object.freeze(["coaching", "statistical"]);
 const KNOWLEDGE_TOPICS = Object.freeze(["economy", "mechanics", "teamplay", "map-control", "agent", "mentality", "general"]);
 
@@ -437,7 +441,7 @@ function proposalCardMarkup(proposal) {
             </label>
         </div>
         ${approved ? `
-          <p class="knowledge-target-help">Save changes keeps this approved insight private. Publish remains a separate action.</p>
+          <p class="knowledge-target-help">Changes in Approved auto-save privately. Publish remains a separate action.</p>
         ` : rejected ? "" : `
           <label class="knowledge-original-confirm">
             <input type="checkbox" data-knowledge-original ${form.confirmed ? "checked" : ""} />
@@ -447,11 +451,9 @@ function proposalCardMarkup(proposal) {
         ${rejected ? `<p class="knowledge-rejection-reason">Rejected: ${escapeHtml(proposal.rejectionReason || "Not selected for publication.")}</p>` : ""}
         <div class="knowledge-proposal-actions">
           ${approved ? `
-            <button class="pd-item knowledge-save-target" type="button" data-knowledge-action="save-target" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Save changes</button>
             <button class="pd-item auth-main-btn" type="button" data-knowledge-action="publish" ${(publishBlocked || busy) ? "disabled" : ""} ${publishBlocked ? `title="${publishBlockedTitle}"` : ""} ${busy ? `data-knowledge-was-disabled="${publishBlocked}"` : ""}>Publish to Library</button>
             <button class="pd-item knowledge-discard" type="button" data-knowledge-action="discard" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Discard</button>
           ` : rejected ? "" : `
-            <button class="pd-item" type="button" data-knowledge-action="draft" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Save Draft</button>
             <button class="pd-item auth-main-btn" type="button" data-knowledge-action="approve" ${busy ? "disabled" : ""} ${busy ? `data-knowledge-was-disabled="false"` : ""}>Approve</button>
             <button class="pd-item knowledge-reject" type="button" data-knowledge-action="reject" ${busy ? `disabled data-knowledge-was-disabled="false"` : ""}>Reject</button>
           `}
@@ -518,13 +520,13 @@ function renderProposals(options = {}) {
     review: {
       active: "Active review",
       queue: "Review queue",
-      help: "Draft keeps this item here. Approve moves it to Approved; Reject moves it to Rejected.",
+      help: "Edits autosave as Draft. Approve moves it to Approved; Reject moves it to Rejected.",
       empty: "No transcript-derived proposals are waiting for review. Process the Playlist queue now, or use manual recovery for a video without accessible captions."
     },
     approved: {
       active: "Approved insight",
       queue: "Approved archive",
-      help: "Edit freely here, save approved changes, publish one insight, or discard it back to Review.",
+      help: "Edit freely here; changes autosave privately. Publish one insight, or discard it back to Review.",
       empty: "No approved insights are in this bin yet."
     },
     rejected: {
@@ -827,16 +829,180 @@ function setProposalNavigationBusy(busy) {
   });
 }
 
+function proposalTargetPayload(card, proposalId) {
+  return {
+    proposalId,
+    rankedCoachWording: card.querySelector("[data-knowledge-wording]")?.value.trim() || "",
+    type: card.querySelector("[data-knowledge-type]")?.value || "coaching",
+    topic: card.querySelector("[data-knowledge-topic]")?.value || "general",
+    category: card.querySelector("[data-knowledge-category]")?.value || "general",
+    entity: card.querySelector("[data-knowledge-entity]")?.value.trim() || ""
+  };
+}
+
+function clearApprovedAutosave(proposalId = "") {
+  if (!proposalId) return;
+  const timer = approvedAutosaveTimers.get(proposalId);
+  if (timer) window.clearTimeout(timer);
+  approvedAutosaveTimers.delete(proposalId);
+}
+
+function clearReviewAutosave(proposalId = "") {
+  if (!proposalId) return;
+  const timer = reviewAutosaveTimers.get(proposalId);
+  if (timer) window.clearTimeout(timer);
+  reviewAutosaveTimers.delete(proposalId);
+}
+
+async function saveReviewProposalDraft(card, options = {}) {
+  const proposalId = card?.dataset?.knowledgeProposal || "";
+  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  if (!proposalId || ["approved", "published", "rejected"].includes(proposal?.approvalStatus || "")) return null;
+  const wording = card.querySelector("[data-knowledge-wording]")?.value.trim() || "";
+  if (wording.length < 20) return null;
+
+  const priorRequest = reviewAutosaveRequests.get(proposalId);
+  if (priorRequest) {
+    if (!options.waitForExisting) return priorRequest;
+    await priorRequest.catch(() => null);
+  }
+
+  const requestPromise = request("/api/knowledge/draft", {
+    method: "POST",
+    body: JSON.stringify({ proposalId, rankedCoachWording: wording })
+  }).then(record => {
+    Object.assign(proposal, {
+      rankedCoachWording: wording,
+      approvalStatus: "draft",
+      draftSavedAt: record.savedAt || new Date().toISOString()
+    });
+    proposalFeedback.set(proposalId, {
+      message: "Draft autosaved privately.",
+      tone: "ready"
+    });
+    syncProposalDraftState(proposalId);
+    const activeCard = document.querySelector(`[data-knowledge-proposal="${proposalId}"]`);
+    const feedback = activeCard?.querySelector("[data-knowledge-action-feedback]");
+    if (feedback && activeCard === card) {
+      feedback.textContent = "Draft autosaved privately.";
+      feedback.dataset.tone = "ready";
+      feedback.hidden = false;
+    }
+    return record;
+  }).catch(error => {
+    proposalFeedback.set(proposalId, {
+      message: error.message,
+      tone: "error"
+    });
+    const activeCard = document.querySelector(`[data-knowledge-proposal="${proposalId}"]`);
+    const feedback = activeCard?.querySelector("[data-knowledge-action-feedback]");
+    if (feedback && activeCard === card) {
+      feedback.textContent = error.message;
+      feedback.dataset.tone = "error";
+      feedback.hidden = false;
+    }
+    throw error;
+  }).finally(() => {
+    if (reviewAutosaveRequests.get(proposalId) === requestPromise) {
+      reviewAutosaveRequests.delete(proposalId);
+    }
+  });
+  reviewAutosaveRequests.set(proposalId, requestPromise);
+  return requestPromise;
+}
+
+function scheduleReviewAutosave(card) {
+  const proposalId = card?.dataset?.knowledgeProposal || "";
+  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  if (!proposalId || ["approved", "published", "rejected"].includes(proposal?.approvalStatus || "")) return;
+  clearReviewAutosave(proposalId);
+  reviewAutosaveTimers.set(proposalId, window.setTimeout(() => {
+    reviewAutosaveTimers.delete(proposalId);
+    void saveReviewProposalDraft(card).catch(() => null);
+  }, 760));
+}
+
+async function saveApprovedProposalTarget(card, options = {}) {
+  const proposalId = card?.dataset?.knowledgeProposal || "";
+  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  if (!proposalId || proposal?.approvalStatus !== "approved") return null;
+  const payload = proposalTargetPayload(card, proposalId);
+  if (payload.rankedCoachWording.length < 20) return null;
+  if (payload.category !== "general" && !payload.entity) return null;
+
+  const priorRequest = approvedAutosaveRequests.get(proposalId);
+  if (priorRequest) {
+    if (!options.waitForExisting) return priorRequest;
+    await priorRequest.catch(() => null);
+  }
+
+  const requestPromise = request("/api/knowledge/approved-target", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  }).then(targetRecord => {
+    Object.assign(proposal, {
+      rankedCoachWording: targetRecord.rankedCoachWording || payload.rankedCoachWording,
+      approvedType: targetRecord.type || payload.type,
+      approvedTopic: targetRecord.topic || payload.topic,
+      approvedCategory: targetRecord.category || payload.category,
+      approvedEntity: targetRecord.entity ?? payload.entity,
+      approvedTargetSavedAt: targetRecord.savedAt || new Date().toISOString()
+    });
+    proposalFeedback.set(proposalId, {
+      message: "Approved changes autosaved privately.",
+      tone: "ready"
+    });
+    const activeCard = document.querySelector(`[data-knowledge-proposal="${proposalId}"]`);
+    const feedback = activeCard?.querySelector("[data-knowledge-action-feedback]");
+    if (feedback && activeCard === card) {
+      feedback.textContent = "Approved changes autosaved privately.";
+      feedback.dataset.tone = "ready";
+      feedback.hidden = false;
+    }
+    return targetRecord;
+  }).catch(error => {
+    proposalFeedback.set(proposalId, {
+      message: error.message,
+      tone: "error"
+    });
+    const activeCard = document.querySelector(`[data-knowledge-proposal="${proposalId}"]`);
+    const feedback = activeCard?.querySelector("[data-knowledge-action-feedback]");
+    if (feedback && activeCard === card) {
+      feedback.textContent = error.message;
+      feedback.dataset.tone = "error";
+      feedback.hidden = false;
+    }
+    throw error;
+  }).finally(() => {
+    if (approvedAutosaveRequests.get(proposalId) === requestPromise) {
+      approvedAutosaveRequests.delete(proposalId);
+    }
+  });
+  approvedAutosaveRequests.set(proposalId, requestPromise);
+  return requestPromise;
+}
+
+function scheduleApprovedAutosave(card) {
+  const proposalId = card?.dataset?.knowledgeProposal || "";
+  const proposal = dashboard?.review?.proposals?.find(item => item.id === proposalId);
+  if (!proposalId || proposal?.approvalStatus !== "approved") return;
+  clearApprovedAutosave(proposalId);
+  approvedAutosaveTimers.set(proposalId, window.setTimeout(() => {
+    approvedAutosaveTimers.delete(proposalId);
+    void saveApprovedProposalTarget(card).catch(() => null);
+  }, 760));
+}
+
 async function proposalAction(button) {
   const card = button.closest("[data-knowledge-proposal]");
   const proposalId = card?.dataset.knowledgeProposal;
   if (!proposalId || pendingProposalIds.has(proposalId)) return;
   const action = button.dataset.knowledgeAction;
+  clearReviewAutosave(proposalId);
+  clearApprovedAutosave(proposalId);
   captureProposalDraft(card);
   const pendingMessages = {
-    draft: "Saving this draft privately…",
     approve: "Moving this insight to Approved…",
-    "save-target": "Saving the approved insight privately…",
     publish: "Publishing the reviewed insight…",
     discard: "Discarding this approval back to Review…",
     reject: "Moving this insight to Rejected…",
@@ -852,24 +1018,14 @@ async function proposalAction(button) {
   setProposalNavigationBusy(true);
   setProposalActionState(card, pendingMessages[action] || "Saving…", "pending", true);
   try {
+    if (["approve", "reject"].includes(action)) {
+      await reviewAutosaveRequests.get(proposalId)?.catch(() => null);
+    }
+    if (["publish", "discard"].includes(action)) {
+      await approvedAutosaveRequests.get(proposalId)?.catch(() => null);
+    }
     const wording = card.querySelector("[data-knowledge-wording]")?.value.trim() || "";
-    if (action === "draft") {
-      await request("/api/knowledge/draft", {
-        method: "POST",
-        body: JSON.stringify({ proposalId, rankedCoachWording: wording })
-      });
-      proposalFeedback.set(proposalId, {
-        message: "Draft saved privately. It remains in To Review.",
-        tone: "ready"
-      });
-      const updated = updateLocalProposal(proposalId, {
-        rankedCoachWording: wording,
-        approvalStatus: "draft",
-        rejectionReason: null
-      });
-      if (!updated) await load({ force: true, allowDuringProposalAction: true });
-      setStatus("Draft saved privately. Players cannot see it.", "ready");
-    } else if (action === "approve") {
+    if (action === "approve") {
       const confirmed = card.querySelector("[data-knowledge-original]")?.checked === true;
       const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
       const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
@@ -901,51 +1057,33 @@ async function proposalAction(button) {
       });
       if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("Insight approved. It is waiting privately in Approved and is not visible to players.", "ready");
-    } else if (action === "save-target") {
-      const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
-      const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
-      const category = card.querySelector("[data-knowledge-category]")?.value || "general";
-      const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
-      const targetRecord = await request("/api/knowledge/approved-target", {
-        method: "POST",
-        body: JSON.stringify({ proposalId, rankedCoachWording: wording, type, topic, category, entity })
-      });
-      proposalFeedback.set(proposalId, {
-        message: "Approved changes saved privately. Publish remains separate.",
-        tone: "ready"
-      });
-      const updated = updateLocalProposal(proposalId, {
-        rankedCoachWording: targetRecord.rankedCoachWording || wording,
-        approvedType: targetRecord.type || type,
-        approvedTopic: targetRecord.topic || topic,
-        approvedCategory: targetRecord.category || category,
-        approvedEntity: targetRecord.entity ?? entity
-      });
-      if (!updated) await load({ force: true, allowDuringProposalAction: true });
-      setStatus("Approved changes saved privately. This insight is still not visible to players.", "ready");
     } else if (action === "publish") {
-      const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
-      const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
-      const category = card.querySelector("[data-knowledge-category]")?.value || "general";
-      const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
+      const targetPayload = proposalTargetPayload(card, proposalId);
+      if (targetPayload.rankedCoachWording.length < 20) {
+        throw new Error("At least 20 characters of RankedCoach wording are required before publishing.");
+      }
+      if (targetPayload.category !== "general" && !targetPayload.entity) {
+        throw new Error("Choose a valid map, agent, weapon, or agent-map pair before publishing.");
+      }
+      await saveApprovedProposalTarget(card, { waitForExisting: true });
       const publishedRecord = await request("/api/knowledge/publish", {
         method: "POST",
         body: JSON.stringify({
           proposalId,
-          type,
-          topic,
-          category,
-          entity
+          type: targetPayload.type,
+          topic: targetPayload.topic,
+          category: targetPayload.category,
+          entity: targetPayload.entity
         })
       });
       const updated = updateLocalProposal(proposalId, {
         rankedCoachWording: wording,
         approvalStatus: "published",
         publishedAt: publishedRecord.publishedAt || new Date().toISOString(),
-        publishedType: publishedRecord.type || type,
-        publishedTopic: publishedRecord.topic || topic,
-        publishedCategory: category,
-        publishedEntity: entity
+        publishedType: publishedRecord.type || targetPayload.type,
+        publishedTopic: publishedRecord.topic || targetPayload.topic,
+        publishedCategory: targetPayload.category,
+        publishedEntity: targetPayload.entity
       }, publishedRecord);
       if (!updated) await load({ force: true, allowDuringProposalAction: true });
       setStatus("The reviewed insight is now visible in the Library.", "ready");
@@ -1028,7 +1166,21 @@ async function runAutomaticProcessing(button) {
       method: "POST",
       body: JSON.stringify({})
     });
-    setStatus(`Automatic processing finished: ${acquired} video(s) processed${waiting ? `, ${waiting} waiting or unavailable` : ""}.`, "ready");
+    const publication = await request("/api/knowledge/publish-approved", {
+      method: "POST",
+      body: JSON.stringify({})
+    });
+    const published = Number(publication.publishedCount || 0);
+    const skipped = Number(publication.skippedCount || 0);
+    if (published) {
+      globalThis.dispatchEvent?.(new CustomEvent("rankedcoach:knowledge-updated", {
+        detail: { publishedCount: published, source: "knowledge-review" }
+      }));
+    }
+    setStatus(
+      `Automatic processing finished: ${acquired} video(s) processed${waiting ? `, ${waiting} waiting or unavailable` : ""}; ${published} approved insight(s) published${skipped ? `, ${skipped} held for review` : ""}.`,
+      skipped ? "pending" : "ready"
+    );
     await load({ force: true });
   } catch (error) {
     setStatus(error.message, "error");
@@ -1099,6 +1251,11 @@ const rememberProposalFormControl = event => {
   if (control.matches("[data-knowledge-type], [data-knowledge-topic]")) {
     syncProposalClassificationDisplay(proposalId, draft.type, draft.topic);
     syncProposalPublishGate(proposalId, draft.type);
+  }
+  if (proposal.approvalStatus === "approved") {
+    scheduleApprovedAutosave(card);
+  } else if (!["published", "rejected"].includes(proposal.approvalStatus || "")) {
+    scheduleReviewAutosave(card);
   }
 };
 proposalList?.addEventListener("change", rememberProposalFormControl);

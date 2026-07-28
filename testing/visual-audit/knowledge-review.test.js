@@ -258,6 +258,39 @@ function startServer() {
             processed: [{ sourceId: "youtube-source-one", status: "acquired-private", claims: 12 }]
           });
         }
+        if (url === "/api/knowledge/publish-approved") {
+          const approvedItems = state.review.proposals.filter(candidate => candidate.approvalStatus === "approved");
+          const records = approvedItems.map(candidate => {
+            candidate.approvalStatus = "published";
+            candidate.publishedType = candidate.approvedType || candidate.type || "coaching";
+            candidate.publishedTopic = candidate.approvedTopic || candidate.topic || "general";
+            candidate.publishedCategory = candidate.approvedCategory || "general";
+            candidate.publishedEntity = candidate.approvedEntity || "";
+            return {
+              id: candidate.id,
+              proposalId: candidate.id,
+              wording: candidate.rankedCoachWording,
+              type: candidate.publishedType,
+              topic: candidate.publishedTopic,
+              category: candidate.publishedCategory,
+              entity: candidate.publishedEntity,
+              publishedAt: "2026-07-24T02:40:00.000Z",
+              status: "published"
+            };
+          });
+          state.published.items = [
+            ...state.published.items.filter(entry => !records.some(record => record.id === entry.id)),
+            ...records
+          ];
+          return json(response, {
+            status: "approved-publish-complete",
+            approvedCount: approvedItems.length,
+            publishedCount: records.length,
+            skippedCount: 0,
+            published: records,
+            skipped: []
+          });
+        }
         if (item && url === "/api/knowledge/draft") {
           if (item.id === "proposal-page-10") {
             await new Promise(resolve => setTimeout(resolve, 350));
@@ -729,13 +762,14 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     "Pair the first Showers utility with a teammate who can immediately trade the space you create."
   );
   assert.equal(
-    await page.locator(".knowledge-proposal-card").first().locator("[data-knowledge-category], [data-knowledge-entity]").count(),
-    2,
-    "Review must let the owner correct the Library tags before approval."
+    await page.locator(".knowledge-proposal-card").first().locator("[data-knowledge-type], [data-knowledge-topic], [data-knowledge-category], [data-knowledge-entity]").count(),
+    4,
+    "Review must let the owner correct the type, topic, and Library tags before approval."
   );
-  for (const action of ["draft", "approve", "reject"]) {
+  for (const action of ["approve", "reject"]) {
     assert.equal(await page.locator(`.knowledge-proposal-card [data-knowledge-action="${action}"]`).first().isVisible(), true);
   }
+  assert.equal(await page.locator('.knowledge-proposal-card [data-knowledge-action="draft"]').count(), 0);
   assert.equal(await page.locator('.knowledge-proposal-card [data-knowledge-action="publish"]').count(), 0);
   assert.equal(
     (await page.locator('.knowledge-proposal-card [data-knowledge-action="approve"]').textContent()).trim(),
@@ -744,7 +778,6 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
 
   const unsavedProposalId = await page.locator(".knowledge-proposal-card").getAttribute("data-knowledge-proposal");
   const unsavedWording = "Unsaved owner wording must survive leaving this bin and returning before any draft request is sent.";
-  const unsavedActionCount = actions.length;
   await page.locator(`[data-knowledge-proposal="${unsavedProposalId}"] [data-knowledge-wording]`).fill(unsavedWording);
   await activateControl(page, page.locator('[data-knowledge-bucket="approved"]'), options.mobile, "Approved bin for unsaved wording check");
   await page.locator("#knowledgeActiveProposal .knowledge-empty-state").waitFor({ state: "visible" });
@@ -760,7 +793,6 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     "true",
     "The active proposal was not restored with its unsaved wording."
   );
-  assert.equal(actions.length, unsavedActionCount, "Switching bins unexpectedly saved unsaved wording.");
 
   if (options.mobile) {
     const mobileSurfaces = await page.evaluate(() => {
@@ -820,6 +852,12 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.ok(actions.slice(runCount).some(action => (
     action.path === "/api/knowledge/run" && action.body.batchSize === 24
   )), "Process Playlist Now did not call the automatic pipeline.");
+  assert.ok(actions.slice(runCount).some(action => (
+    action.path === "/api/knowledge/clear-rejected"
+  )), "Process Playlist Now did not clear the rejected queue.");
+  assert.ok(actions.slice(runCount).some(action => (
+    action.path === "/api/knowledge/publish-approved"
+  )), "Process Playlist Now did not publish the approved queue.");
 
   const refreshRequestCount = reviewRequests.length;
   const refreshResponse = page.waitForResponse(response => (
@@ -981,114 +1019,46 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
     element.dataset.knowledgeTestIdentity = identity;
   }, sourceIdentity);
   const late = page.locator(`[data-knowledge-proposal="${actionProposalId}"]`);
-  const draftButton = late.locator('[data-knowledge-action="draft"]');
-  await draftButton.scrollIntoViewIfNeeded();
-  const beforeDraftScroll = await researchScrollState(page);
   const draftRequestsBefore = actions.filter(action => (
     action.path === "/api/knowledge/draft" && action.body.proposalId === actionProposalId
   )).length;
-  const navigationControlSelectors = [
-    ".knowledge-review-queue-item",
-    "[data-knowledge-bucket]",
-    "[data-account-support-tab]",
-    "#knowledgeResearchRefresh",
-    "#knowledgeResearchRun",
-    "[data-knowledge-load-proposals]",
-    "[data-knowledge-load-sources]"
-  ];
-  await assertActionLatency(
-    page,
-    draftButton,
-    async () => {
-      await draftButton.evaluate(button => {
-        button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-      });
-      for (let attempt = 0; attempt < 100 && actions.filter(action => (
-        action.path === "/api/knowledge/draft" && action.body.proposalId === actionProposalId
-      )).length === draftRequestsBefore; attempt += 1) {
-        await page.waitForTimeout(10);
-      }
-      const busyState = await page.evaluate(() => {
-        const panel = document.getElementById("knowledgeResearchPanel");
-        const card = document.querySelector("[data-knowledge-active-review] [data-knowledge-proposal]");
-        return {
-          panelAriaBusy: panel?.getAttribute("aria-busy"),
-          cardAriaBusy: card?.getAttribute("aria-busy"),
-          feedback: card?.querySelector("[data-knowledge-action-feedback]")?.textContent || "",
-          disabledActions: card?.querySelectorAll("[data-knowledge-action]:disabled").length || 0
-        };
-      });
-      assert.equal(busyState.panelAriaBusy, "", `Research navigation was not marked busy: ${JSON.stringify(busyState)}`);
-      assert.equal(await late.getAttribute("aria-busy"), "");
-      assert.equal(
-        await late.locator("[data-knowledge-action]:not(:disabled)").count(),
-        0,
-        "A proposal action remained enabled while Draft was in flight."
-      );
-      for (const selector of navigationControlSelectors) {
-        const controls = page.locator(selector);
-        const count = await controls.count();
-        if (!count) continue;
-        assert.equal(
-          await controls.evaluateAll(elements => elements.every(element => element.disabled)),
-          true,
-          `${selector} remained interactive while Draft was in flight.`
-        );
-      }
-      assert.equal(
-        actions.filter(action => action.path === "/api/knowledge/draft" && action.body.proposalId === actionProposalId).length,
-        draftRequestsBefore + 1,
-        "The delayed Draft request did not begin."
-      );
-      await draftButton.evaluate(button => {
-        button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-      });
-      await page.waitForTimeout(40);
-      assert.equal(
-        actions.filter(action => action.path === "/api/knowledge/draft" && action.body.proposalId === actionProposalId).length,
-        draftRequestsBefore + 1,
-        "A duplicate Draft request fired while the first request was pending."
-      );
-      await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-draft`).waitFor({ state: "visible" });
-    },
-    "Saving a draft",
-    options.mobile ? 1100 : 850
-  );
-  await page.waitForFunction(() => !document.getElementById("knowledgeResearchPanel")?.hasAttribute("aria-busy"));
-  for (const selector of navigationControlSelectors) {
-    const controls = page.locator(selector);
-    const count = await controls.count();
-    if (!count) continue;
-    assert.equal(
-      await controls.evaluateAll(elements => elements.every(element => !element.disabled)),
-      true,
-      `${selector} did not re-enable after Draft succeeded.`
-    );
+  const beforeDraftScroll = await researchScrollState(page);
+  for (let attempt = 0; attempt < 180 && actions.filter(action => (
+    action.path === "/api/knowledge/draft" && action.body.proposalId === actionProposalId
+  )).length === draftRequestsBefore; attempt += 1) {
+    await page.waitForTimeout(25);
   }
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] .knowledge-review-state.is-draft`).waitFor({ state: "visible" });
   assert.equal(
     await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action]:not(:disabled)`).count(),
-    3,
-    "Proposal actions did not re-enable after Draft succeeded."
+    2,
+    "Review proposals should only expose Approve and Reject after autosave."
   );
-  assertScrollPreserved(beforeDraftScroll, await researchScrollState(page), "Saving a draft");
+  assertScrollPreserved(beforeDraftScroll, await researchScrollState(page), "Autosaving a draft");
   assert.equal(await page.locator(".knowledge-proposal-card").count(), 1);
   assert.equal(await page.locator(".knowledge-review-queue-item").count(), loadedProposalCount);
   assert.equal(await page.locator(".knowledge-source-queue article").count(), loadedSourceCount);
   assert.equal(await sourceQueue.getAttribute("open"), "");
-  assert.equal(await sourceQueue.getAttribute("data-knowledge-test-identity"), sourceIdentity, "Saving a draft rebuilt the full source queue.");
+  assert.equal(await sourceQueue.getAttribute("data-knowledge-test-identity"), sourceIdentity, "Autosaving a draft rebuilt the full source queue.");
   assert.equal(
     await page.locator(`[data-knowledge-select-proposal="${actionProposalId}"]`).getAttribute("aria-pressed"),
     "true",
-    "Saving a draft did not retain the active review."
+    "Autosaving a draft did not retain the active review."
   );
   assert.equal(
     await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-wording]`).inputValue(),
     draftWording,
-    "Saving a draft lost the edited wording."
+    "Autosaving a draft lost the edited wording."
   );
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).filter({ hasText: /autosaved privately/i }).waitFor({ state: "visible" });
   assert.match(
     await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).textContent(),
-    /remains in To Review/i
+    /autosaved privately/i
+  );
+  assert.equal(
+    actions.filter(action => action.path === "/api/knowledge/draft" && action.body.proposalId === actionProposalId).length,
+    draftRequestsBefore + 1,
+    "Review wording did not autosave exactly once."
   );
   assert.ok(actions.some(action => (
     action.path === "/api/knowledge/draft"
@@ -1185,13 +1155,14 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(await approvedCard.locator('[data-knowledge-action="approve"]').count(), 0);
   assert.equal(await approvedCard.locator('[data-knowledge-action="draft"]').count(), 0);
   assert.equal(await approvedCard.locator('[data-knowledge-action="reject"]').count(), 0);
-  assert.equal(
-    (await approvedCard.locator('[data-knowledge-action="save-target"]').textContent()).trim(),
-    "Save changes"
-  );
+  assert.equal(await approvedCard.locator('[data-knowledge-action="save-target"]').count(), 0);
   assert.equal(
     (await approvedCard.locator('[data-knowledge-action="publish"]').textContent()).trim(),
     "Publish to Library"
+  );
+  assert.equal(
+    (await approvedCard.locator('[data-knowledge-action="discard"]').textContent()).trim(),
+    "Discard"
   );
   const categoryDisplay = await approvedCard.locator("[data-knowledge-category]").evaluate(select => {
     const style = getComputedStyle(select);
@@ -1218,26 +1189,22 @@ async function runViewport(browser, actions, reviewRequests, state, options) {
   assert.equal(categoryDisplay.visibility, "visible");
   assert.equal(categoryDisplay.clipPath, "none");
   assert.ok(categoryDisplay.width >= 140 && categoryDisplay.height >= 40, JSON.stringify(categoryDisplay));
+  const targetSaveRequestsBefore = actions.filter(action => (
+    action.path === "/api/knowledge/approved-target"
+    && action.body.proposalId === actionProposalId
+  )).length;
   await approvedCard.locator("[data-knowledge-type]").selectOption("coaching");
   await approvedCard.locator("[data-knowledge-topic]").selectOption("mechanics");
   await approvedCard.locator("[data-knowledge-category]").selectOption("map");
   await approvedCard.locator("[data-knowledge-entity]").fill("Bind");
   await approvedCard.locator("[data-knowledge-wording]").fill("Keep the approved Bind insight private until the owner publishes it.");
-  const targetSaveRequestsBefore = actions.filter(action => (
+  for (let attempt = 0; attempt < 180 && actions.filter(action => (
     action.path === "/api/knowledge/approved-target"
     && action.body.proposalId === actionProposalId
-  )).length;
-  const saveTagsButton = approvedCard.locator('[data-knowledge-action="save-target"]');
-  await assertActionLatency(
-    page,
-    saveTagsButton,
-    async () => {
-      await activateControl(page, saveTagsButton, options.mobile, "Save changes");
-      await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).filter({ hasText: /changes saved privately/i }).waitFor({ state: "visible" });
-    },
-    "Saving approved changes",
-    options.mobile ? 900 : 650
-  );
+  )).length === targetSaveRequestsBefore; attempt += 1) {
+    await page.waitForTimeout(25);
+  }
+  await page.locator(`[data-knowledge-proposal="${actionProposalId}"] [data-knowledge-action-feedback]`).filter({ hasText: /autosaved privately/i }).waitFor({ state: "visible" });
   const targetSaveActions = actions.filter(action => (
     action.path === "/api/knowledge/approved-target"
     && action.body.proposalId === actionProposalId
