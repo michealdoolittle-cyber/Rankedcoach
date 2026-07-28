@@ -6761,12 +6761,13 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     firstBloodRoundRate: safeNumber(importedAnalytics?.overview?.firstBloodRoundRate),
     firstDeathAvoidRate: safeNumber(importedAnalytics?.overview?.firstDeathAvoidRate)
   };
-  const currentRankLabel = getProfileCurrentRankSnapshot()?.rankLabel || getTierRank(computeCurrentRRAbsolute())?.tierLabel || "";
-  const rankComparison = globalThis.RankedCoachRankBenchmarks?.compareRankMetrics?.(currentRankLabel, {
+  const rankDisplayStatus = getRankDisplayStatus();
+  const currentRankLabel = rankDisplayStatus.isRanked ? rankDisplayStatus.rankLabel : "";
+  const rankComparison = currentRankLabel ? globalThis.RankedCoachRankBenchmarks?.compareRankMetrics?.(currentRankLabel, {
     hsPercent: overview.hs,
     acs: averageAcs,
     kd: overview.kd
-  }) || null;
+  }) || null : null;
   const hasMatchData = safeNumber(overview.matchesPlayed) > 0;
 
   const ratingValues = logs.map((entry) => safeNumber(entry.rating)).filter((value) => value > 0);
@@ -8711,8 +8712,9 @@ function buildAskCoachContext() {
 function buildAskCoachAIContext() {
   const { model, agentMap, feedback, weaponSummary } = buildAskCoachContext();
   const scoped = getScopedStatsData();
-  const currentTier = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "Iron 1";
-  const rankExpectation = getCompassRankExpectation(currentTier);
+  const rankDisplayStatus = getRankDisplayStatus();
+  const currentTier = rankDisplayStatus.displayLabel;
+  const rankExpectation = rankDisplayStatus.isRanked ? getCompassRankExpectation(rankDisplayStatus.rankLabel) : null;
   const insightSummary = (model?.insights || []).slice(0, 5).map((insight) => ({
     title: insight?.title || "",
     focus: insight?.focus || "",
@@ -11253,7 +11255,7 @@ function renderTrendBreakdownCard(item = {}) {
 
 function getTrendBreakdownFallbackItems(key = "", model = {}) {
   const matchesPlayed = safeNumber(model?.overview?.matchesPlayed || matches.length);
-  const focusLabel = model?.focus || getLockedWeeklyFocus() || "Weekly Focus";
+  const focusLabel = model?.focus || getLockedWeeklyFocus()?.label || "Weekly Focus";
   const roleLabel = model?.role || activeRole || "Primary Role";
   const mapLabel = model?.topMap || model?.maps?.[0]?.map || "Current Map Pool";
 
@@ -11542,6 +11544,7 @@ function getNextFocusFromInsight(ins) {
 
 const WEEKLY_FOCUS_KEY = "valtracker_weekly_focus_v1";
 const WEEKLY_FOCUS_WEEK_KEY = "valtracker_weekly_focus_week_v1";
+const WEEKLY_FOCUS_CONFIDENCE_KEY = "valtracker_weekly_focus_confidence_v1";
 const APP_ENTRY_CHOICE_KEY = "valtracker_entry_choice_v1";
 const RIOT_PROFILE_PROMPT_DISMISS_KEY = "rankedcoach_riot_profile_prompt_dismissed_v1";
 let loginInitializationInFlight = false;
@@ -11554,20 +11557,25 @@ function getCurrentWeekKey() {
 function getLockedWeeklyFocus() {
   const savedFocus = localStorage.getItem(WEEKLY_FOCUS_KEY);
   const savedWeek = localStorage.getItem(WEEKLY_FOCUS_WEEK_KEY);
+  const savedConfidence = localStorage.getItem(WEEKLY_FOCUS_CONFIDENCE_KEY) || "";
   const currentWeek = getCurrentWeekKey();
 
   if (savedFocus && savedWeek === currentWeek) {
-    return savedFocus;
+    return {
+      label: savedFocus,
+      confidence: savedConfidence || "Low"
+    };
   }
 
   return null;
 }
 
-function setLockedWeeklyFocus(focus) {
+function setLockedWeeklyFocus(focus, confidence = "Low") {
   if (!focus) return;
 
   localStorage.setItem(WEEKLY_FOCUS_KEY, focus);
   localStorage.setItem(WEEKLY_FOCUS_WEEK_KEY, getCurrentWeekKey());
+  localStorage.setItem(WEEKLY_FOCUS_CONFIDENCE_KEY, confidence || "Low");
 }
 
 // ========================
@@ -12156,7 +12164,7 @@ function renderInsights() {
   const lockedFocus = getLockedWeeklyFocus();
 
   if (lockedFocus) {
-    activeInsightFocus = lockedFocus;
+    activeInsightFocus = lockedFocus.label;
   } else {
     activeInsightFocus = topInsight
       ? getNextFocusFromInsight(topInsight)
@@ -15147,6 +15155,10 @@ function selectWeeklyFocusCandidate(candidates = []) {
   })[0];
 }
 
+function weeklyFocusConfidenceRank(confidence = "") {
+  return { High: 3, Medium: 2, Low: 1 }[confidence] || 0;
+}
+
 function normalizeSessionCoachingProfile(value = {}) {
   const profile = value && typeof value === "object" ? value : {};
   const role = String(profile.role || profile.allowedRole || "any").toLowerCase();
@@ -16966,7 +16978,7 @@ function getLoadoutAgentPool() {
 
 function getLoadoutFocusPool() {
   const locked = getLockedWeeklyFocus();
-  return locked && focusesList.includes(locked) ? [locked] : focusesList;
+  return locked?.label && focusesList.includes(locked.label) ? [locked.label] : focusesList;
 }
 
 const agentRoles = {
@@ -17226,7 +17238,15 @@ function buildCompassProfileDescription(values = {}, model = null) {
     safeNumber(values?.teamplay),
     safeNumber(values?.discipline)
   ]));
-  const currentRank = getTierRank(computeCurrentRRAbsolute())?.tierLabel || "Iron 1";
+  const rankDisplayStatus = getRankDisplayStatus();
+  const currentRank = rankDisplayStatus.rankLabel || rankDisplayStatus.displayLabel;
+  if (!rankDisplayStatus.isRanked) {
+    return [
+      `${rankDisplayStatus.detailLabel || "Complete placements"} before RankedCoach compares this Compass read to a real rank benchmark.`,
+      `${COMPASS_LENS_META[strongestLens]?.label || "Core"} is currently the strongest lens, while ${COMPASS_LENS_META[weakestLens]?.label || "another lens"} has the most room to improve.`,
+      "Once a real rank snapshot exists, the Compass description will add rank-specific benchmark context."
+    ].filter(Boolean).join(" ");
+  }
   const rankExpectation = getCompassRankExpectation(currentRank);
   const roleName = String(model?.scoring?.activeRoleName || model?.roles?.[0]?.role || "").trim();
   const agentName = String(model?.scoring?.activeAgentName || model?.agents?.[0]?.agent || "").trim();
@@ -18388,6 +18408,38 @@ function getProfileCurrentRankSnapshot(profile = getActiveProfile?.(), matchList
     .map(getMatchRankSnapshot)
     .filter(snapshot => isMeaningfulRankLabel(snapshot.rankLabel));
   return snapshots[0] || null;
+}
+
+function getRankDisplayStatus(profile = getActiveProfile?.(), matchList = null) {
+  const sourceMatches = Array.isArray(matchList)
+    ? matchList
+    : Array.isArray(profile?.matches)
+      ? profile.matches
+      : (matches || []);
+  const snapshot = getProfileCurrentRankSnapshot(profile, sourceMatches);
+  if (snapshot) {
+    return {
+      state: "ranked",
+      isRanked: true,
+      rankLabel: snapshot.rankLabel,
+      displayLabel: snapshot.rankLabel,
+      detailLabel: "",
+      nextRankText: "",
+      goalText: "",
+      snapshot
+    };
+  }
+  const hasPlacementMatches = sourceMatches.some(match => isPlacementRankedMatch(match));
+  return {
+    state: hasPlacementMatches ? "placements" : "unranked",
+    isRanked: false,
+    rankLabel: "",
+    displayLabel: hasPlacementMatches ? "Placements" : "Unranked",
+    detailLabel: hasPlacementMatches ? "Placements in progress" : "Not yet placed",
+    nextRankText: hasPlacementMatches ? "Complete placements" : "Sync ranked history",
+    goalText: hasPlacementMatches ? "Complete placements" : "Not yet placed",
+    snapshot: null
+  };
 }
 
 function getRankSnapshotAbsoluteRR(snapshot = null) {
@@ -45724,10 +45776,18 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   }
 
   if (rankIcon) {
-    const rankLabel = currentRankSnapshot?.rankLabel || getTierRank(computeCurrentRRAbsolute())?.tierLabel || peak.tierLabel;
-    rankIcon.src = getRankIconUrl(rankLabel);
-    rankIcon.alt = rankLabel;
-    rankIcon.hidden = !isMeaningfulRankLabel(rankLabel);
+    const rankDisplayStatus = getRankDisplayStatus(profile);
+    const rankLabel = rankDisplayStatus.isRanked
+      ? rankDisplayStatus.rankLabel
+      : (currentRankSnapshot?.rankLabel || peak.tierLabel);
+    rankIcon.hidden = !rankDisplayStatus.isRanked || !isMeaningfulRankLabel(rankLabel);
+    if (rankDisplayStatus.isRanked) {
+      rankIcon.src = getRankIconUrl(rankLabel);
+      rankIcon.alt = rankLabel;
+    } else {
+      rankIcon.removeAttribute("src");
+      rankIcon.alt = rankDisplayStatus.displayLabel;
+    }
   }
 
   borderTargets.forEach((target) => {
@@ -47749,6 +47809,7 @@ function undoLastMatch(){
 // ========================
 
 function updateNavRRToRank(){
+  const rankDisplayStatus = getRankDisplayStatus();
   const abs = computeCurrentRRAbsolute();
   const current = getTierRank(abs);
   const next = getNextTierRank(abs);
@@ -47762,9 +47823,28 @@ function updateNavRRToRank(){
 
   if(!current || !currentText || !nextText || !bar) return;
 
+  if(!rankDisplayStatus.isRanked){
+    currentText.textContent = rankDisplayStatus.displayLabel;
+    nextText.textContent = rankDisplayStatus.nextRankText;
+    if(currentIcon){
+      currentIcon.hidden = true;
+      currentIcon.removeAttribute("src");
+      currentIcon.alt = rankDisplayStatus.displayLabel;
+    }
+    if(nextIcon){
+      nextIcon.hidden = true;
+      nextIcon.removeAttribute("src");
+      nextIcon.alt = "";
+    }
+    bar.style.width = "100%";
+    applyStaticTrackGradient(bar, 0, "horizontal");
+    return;
+  }
+
   currentText.textContent = current.tierLabel;
 
   if(currentIcon){
+    currentIcon.hidden = false;
     currentIcon.src = getRankIconUrl(current.tierLabel);
     currentIcon.alt = current.tierLabel;
   }
@@ -47772,6 +47852,7 @@ function updateNavRRToRank(){
   if(next && next.tierLabel !== current.tierLabel){
     nextText.textContent = `${progress.rrToNext} RR`;
     if(nextIcon){
+      nextIcon.hidden = false;
       nextIcon.src = getRankIconUrl(next.tierLabel);
       nextIcon.alt = next.tierLabel;
     }
@@ -47783,6 +47864,7 @@ function updateNavRRToRank(){
       : null;
     nextText.textContent = radiantRR === null ? "Max Rank" : `Radiant ${radiantRR}`;
     if(nextIcon){
+      nextIcon.hidden = false;
       nextIcon.src = getRankIconUrl(current.tierLabel);
       nextIcon.alt = current.tierLabel;
     }
@@ -47797,6 +47879,7 @@ function updateNavRRToRank(){
 
 function updateNavRRToGoalRank(){
   const profile = getActiveProfile();
+  const rankDisplayStatus = getRankDisplayStatus(profile);
   const abs = computeCurrentRRAbsolute();
   const current = getTierRank(abs);
   const currentIcon = document.getElementById("navGoalCurrentIcon");
@@ -47813,8 +47896,26 @@ function updateNavRRToGoalRank(){
   }
 
   if(currentIcon){
+    currentIcon.hidden = false;
     currentIcon.src = getRankIconUrl(current.tierLabel);
     currentIcon.alt = current.tierLabel;
+  }
+
+  if(profile && !rankDisplayStatus.isRanked){
+    if(currentIcon){
+      currentIcon.hidden = true;
+      currentIcon.removeAttribute("src");
+      currentIcon.alt = rankDisplayStatus.displayLabel;
+    }
+    if(targetIcon){
+      targetIcon.hidden = true;
+      targetIcon.removeAttribute("src");
+      targetIcon.alt = "";
+    }
+    label.textContent = rankDisplayStatus.goalText;
+    bar.style.width = "100%";
+    applyStaticTrackGradient(bar, 0, "horizontal");
+    return;
   }
 
   if(!profile){
@@ -47841,6 +47942,7 @@ function updateNavRRToGoalRank(){
     : Math.max(0, Math.min(100, ((comparableCurrentRR - current.min) / span) * 100));
 
   if(targetIcon){
+    targetIcon.hidden = false;
     targetIcon.src = getRankIconUrl(bounds.tierLabel);
     targetIcon.alt = bounds.tierLabel;
   }
@@ -51432,11 +51534,21 @@ function renderInsightsModel() {
   cachedInsights = insightDisplayPool.slice();
 
   if (lockedFocus) {
-    activeInsightFocus = lockedFocus;
+    const lockedConfidence = lockedFocus.confidence || "Low";
+    const freshConfidence = topWeeklyCandidate?.confidence || "";
+    const shouldUpgradeLock = lockedConfidence === "Low"
+      && topWeeklyCandidate?.label
+      && weeklyFocusConfidenceRank(freshConfidence) > weeklyFocusConfidenceRank(lockedConfidence);
+    if (shouldUpgradeLock) {
+      activeInsightFocus = topWeeklyCandidate.label;
+      setLockedWeeklyFocus(activeInsightFocus, freshConfidence);
+    } else {
+      activeInsightFocus = lockedFocus.label;
+    }
   } else {
     activeInsightFocus = topWeeklyCandidate?.label || model?.focus || topInsights[0]?.focus || null;
     if (activeInsightFocus) {
-      setLockedWeeklyFocus(activeInsightFocus);
+      setLockedWeeklyFocus(activeInsightFocus, topWeeklyCandidate?.confidence || "Low");
     }
   }
 
