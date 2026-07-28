@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import vm from "node:vm";
 import {
   DRAFT_ROOT,
   ROOT,
@@ -84,11 +85,15 @@ test("corrected baseline reset is logged, locked, and tied to one final batch", 
   assert.match(`${retry.stdout}\n${retry.stderr}`, /one-time baseline auto-promotion has already been used/i);
 });
 
-test("promotion cache keys identify the corrected baseline", async () => {
+test("governed Library source scripts share a current cache key", async () => {
   const index = await readFile(path.join(ROOT, "public", "index.html"), "utf8");
-  assert.match(index, /gamesense-maps\.js\?v=20260724-promotion-sequence-01/);
-  assert.match(index, /gamesense-reference\.js\?v=20260724-promotion-sequence-01/);
-  assert.match(index, /gamesense-promoted\.js\?v=20260724-promotion-sequence-01/);
+  const files = ["gamesense-maps", "gamesense-reference", "gamesense-promoted", "gamesense-vstats-reference"];
+  const versions = files.map(file => {
+    const match = index.match(new RegExp(`library/${file}\\.js\\?v=([^"']+)`));
+    assert.ok(match?.[1], `${file} needs a cache key`);
+    return match[1];
+  });
+  assert.equal(new Set(versions).size, 1, `Library source cache keys drifted: ${versions.join(", ")}`);
 });
 
 test("baked label maps suppress the second dynamic label layer", async () => {
@@ -99,6 +104,45 @@ test("baked label maps suppress the second dynamic label layer", async () => {
     assert.equal((svg.match(/<circle /g) || []).length, count);
     assert.equal((svg.match(/<text /g) || []).length, count);
   }
+});
+
+test("plant guidance never presents a site-centre placeholder as a named plant", async () => {
+  const state = await loadLibraryState();
+  const genericLabels = state.maps.flatMap(map => (map.plantSpots || [])
+    .filter(spot => /^[ABC]\s+Site$/i.test(String(spot?.label || "")))
+    .map(spot => `${map.id}:${spot.label}`));
+  assert.deepEqual(genericLabels, []);
+
+  const sourceLimitedMaps = ["abyss", "ascent", "corrode", "fracture", "haven", "icebox", "lotus", "pearl", "summit", "sunset"];
+  for (const id of sourceLimitedMaps) {
+    const map = state.maps.find(item => item.id === id);
+    assert.deepEqual(map?.plantSpots || [], [], `${id} must not draw an unsourced marker`);
+    assert.match(String(map?.plantRateNote || ""), /source-verified|Dignitas/i, `${id} must explain the honest plant-location state`);
+  }
+  assert.match(state.maps.find(map => map.id === "ascent")?.plantRateNote || "", /A Dice.*B Market/i);
+  assert.match(state.maps.find(map => map.id === "haven")?.plantRateNote || "", /A Default.*C Long/i);
+  assert.match(state.maps.find(map => map.id === "icebox")?.plantRateNote || "", /A Generator.*B Top/i);
+});
+
+test("a reviewed flat map layout survives the generated layout override", async () => {
+  const [mapsSource, promotedSource, overrideSource, generatorSource] = await Promise.all([
+    readFile(path.join(ROOT, "public", "library", "gamesense-maps.js"), "utf8"),
+    readFile(path.join(ROOT, "public", "library", "gamesense-promoted.js"), "utf8"),
+    readFile(path.join(ROOT, "public", "library", "gamesense-map-layout-overrides.js"), "utf8"),
+    readFile(path.join(ROOT, "scripts", "build-official-map-layouts.mjs"), "utf8")
+  ]);
+  const sandbox = {};
+  sandbox.globalThis = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(mapsSource, sandbox, { filename: "gamesense-maps.js" });
+  vm.runInContext(promotedSource, sandbox, { filename: "gamesense-promoted.js" });
+  vm.runInContext(overrideSource, sandbox, { filename: "gamesense-map-layout-overrides.js" });
+
+  const split = sandbox.RankedCoachGamesenseMaps.find(map => map.id === "split");
+  assert.equal(split.layoutImage, "/assets/library/maps/split-layout-trn.png");
+  assert.match(generatorSource, /function isHandVerifiedFlatLayout\(/);
+  assert.match(generatorSource, /if \(!preserveFlatLayout\) \{/);
+  assert.match(generatorSource, /preserveFlatLayout \? \{\} : \{ layoutImage:/);
 });
 
 test("new weapon entities append once, then merge after promotion", async () => {

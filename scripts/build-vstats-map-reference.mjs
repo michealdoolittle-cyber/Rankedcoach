@@ -49,6 +49,17 @@ const MAPS = Object.freeze([
   { id: "sunset", label: "Sunset", code: "Juliett" }
 ]);
 
+// These are VStats' published economy buckets. They stay as provider keys in
+// the generated manifest; the Library maps them to player-facing labels rather
+// than inferring a buy state from weapon price.
+const WEAPON_ECONOMY_BUCKETS = Object.freeze([
+  "pistol",
+  "2nd_lost",
+  "2nd_won",
+  "full_eco",
+  "unknown"
+]);
+
 function endpoint(actId, mapCode, resource) {
   return `${SOURCE_BASE}/${actId}/ALL/${encodeURIComponent(mapCode)}/${resource}.json.gz`;
 }
@@ -109,6 +120,57 @@ function aggregateAgentRows(rows, agentsById, label) {
     rates,
     winRates
   };
+}
+
+function aggregateWeaponRows(rows, weaponsById, label) {
+  const totals = new Map();
+  for (const row of highRankRows(rows, label)) {
+    const weapon = weaponsById.get(String(row?.w || "").toLowerCase());
+    const economy = String(row?.p || "").trim();
+    if (!weapon || !WEAPON_ECONOMY_BUCKETS.includes(economy)) continue;
+    const attackRounds = Number(row?.a_ro);
+    const defenseRounds = Number(row?.d_ro);
+    const attackRate = Number(row?.a_wr);
+    const defenseRate = Number(row?.d_wr);
+    if (!Number.isFinite(attackRounds) || !Number.isFinite(defenseRounds)
+      || !Number.isFinite(attackRate) || !Number.isFinite(defenseRate)
+      || attackRounds < 0 || defenseRounds < 0) {
+      throw new Error(`${label} contained invalid weapon conversion data for ${weapon.label}.`);
+    }
+    const weaponTotals = totals.get(weapon.label) || new Map();
+    const entry = weaponTotals.get(economy) || {
+      attackRounds: 0,
+      defenseRounds: 0,
+      attackWins: 0,
+      defenseWins: 0
+    };
+    entry.attackRounds += attackRounds;
+    entry.defenseRounds += defenseRounds;
+    entry.attackWins += attackRate * attackRounds;
+    entry.defenseWins += defenseRate * defenseRounds;
+    weaponTotals.set(economy, entry);
+    totals.set(weapon.label, weaponTotals);
+  }
+
+  const output = {};
+  for (const [weapon, economies] of [...totals.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+    const values = {};
+    for (const [economy, entry] of economies) {
+      const rounds = entry.attackRounds + entry.defenseRounds;
+      if (!rounds) continue;
+      values[economy] = {
+        value: Number(((entry.attackWins + entry.defenseWins) / rounds).toFixed(4)),
+        attackValue: entry.attackRounds ? Number((entry.attackWins / entry.attackRounds).toFixed(4)) : null,
+        defenseValue: entry.defenseRounds ? Number((entry.defenseWins / entry.defenseRounds).toFixed(4)) : null,
+        attackRounds: entry.attackRounds,
+        defenseRounds: entry.defenseRounds,
+        rounds
+      };
+    }
+    if (Object.keys(values).length) output[weapon] = values;
+  }
+  if (!Object.keys(output).length) throw new Error(`${label} had no usable high-rank weapon conversion rows.`);
+  return output;
 }
 
 function getRoleComposition(agentNames, agentsByName) {
@@ -198,21 +260,26 @@ function serialise(value) {
     .replace(/<\//g, "<\\/");
 }
 
-async function fetchMapActData(map, act, agentsById) {
+async function fetchMapActData(map, act, agentsById, weaponsById) {
   const agentUrl = endpoint(act.id, map.code, "agent");
   const compUrl = endpoint(act.id, map.code, "comp");
+  const weaponUrl = endpoint(act.id, map.code, "weapon");
   try {
-    const [agentRows, compRows] = await Promise.all([
+    const [agentRows, compRows, weaponRows] = await Promise.all([
       fetchJson(agentUrl),
-      fetchJson(compUrl)
+      fetchJson(compUrl),
+      fetchJson(weaponUrl)
     ]);
     return {
       act,
       agentUrl,
       compUrl,
+      weaponUrl,
       agentRows,
       compRows,
-      agent: aggregateAgentRows(agentRows, agentsById, `${map.id} ${act.label} agent data`)
+      weaponRows,
+      agent: aggregateAgentRows(agentRows, agentsById, `${map.id} ${act.label} agent data`),
+      weapons: aggregateWeaponRows(weaponRows, weaponsById, `${map.id} ${act.label} weapon data`)
     };
   } catch (error) {
     const message = String(error?.message || error);
@@ -308,6 +375,16 @@ function buildRuntimeOutput(manifest) {
     "        agentUrl: reference.source.agentUrl,",
     "        compUrl: reference.source.compUrl",
     "      };",
+    "      map.weaponConversionReference = {",
+    "        source: {",
+    "          provider: reference.source.provider,",
+    "          actLabel: reference.source.actLabel,",
+    "          patchLabel: reference.source.patchLabel,",
+    "          rankLabel: reference.source.rankLabel,",
+    "          weaponUrl: reference.source.weaponUrl",
+    "        },",
+    "        metrics: reference.weaponConversions",
+    "      };",
     "    });",
     "    return true;",
     "  }",
@@ -352,6 +429,11 @@ async function main() {
   if (!officialAgents.length) throw new Error("The official agent endpoint returned no playable agents.");
   const agentsById = new Map(officialAgents.map(agent => [agent.id, agent]));
   const agentsByName = new Map(officialAgents.map(agent => [agent.label, agent]));
+  const officialWeaponsPayload = await fetchJson("https://valorant-api.com/v1/weapons?language=en-US");
+  const weaponsById = new Map((officialWeaponsPayload?.data || [])
+    .filter(weapon => weapon?.uuid && weapon?.displayName)
+    .map(weapon => [String(weapon.uuid).toLowerCase(), { label: weapon.displayName }]));
+  if (!weaponsById.size) throw new Error("The official weapon endpoint returned no weapons.");
 
   const globalByAct = new Map();
   async function getGlobalForAct(act) {
@@ -371,7 +453,7 @@ async function main() {
   for (const map of MAPS) {
     let source = null;
     for (const act of ACTS_NEWEST_FIRST) {
-      source = await fetchMapActData(map, act, agentsById);
+      source = await fetchMapActData(map, act, agentsById, weaponsById);
       if (source) break;
     }
     if (!source) {
@@ -385,6 +467,7 @@ async function main() {
       highRankPickRates: source.agent.rates,
       highRankWinRates: source.agent.winRates,
       rolePickRates: makeRolePickRates(source.agent.rates, global.rates, officialAgents),
+      weaponConversions: source.weapons,
       unavailableAgents: officialAgents
         .filter(agent => !Object.hasOwn(source.agent.rates, agent.label))
         .map(agent => agent.label),
@@ -403,6 +486,7 @@ async function main() {
         rankBuckets: HIGH_RANK_BUCKETS,
         agentUrl: source.agentUrl,
         compUrl: source.compUrl,
+        weaponUrl: source.weaponUrl,
         globalAgentUrl: global.agentUrl
       }
     };

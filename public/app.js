@@ -20183,8 +20183,6 @@ function getImpactOpportunityAction(componentKey = "", roleKey = "unknown") {
 
 function renderImpactOpportunityPullout({ roleWeightEntries = [], componentMap = {}, roleKey = "unknown" } = {}) {
   const list = document.getElementById("impactOpportunityList");
-  const pullout = document.getElementById("impactOpportunityPullout");
-  const tab = document.getElementById("impactOpportunityTab");
   if (!list) return;
 
   const opportunities = roleWeightEntries
@@ -20217,12 +20215,23 @@ function renderImpactOpportunityPullout({ roleWeightEntries = [], componentMap =
     </article>
   `).join("") : `<p class="impact-opportunity-empty">This match does not contain enough component data to calculate a score opportunity yet.</p>`;
 
-  pullout?.classList.remove("is-open");
-  tab?.setAttribute("aria-expanded", "false");
-  const symbol = tab?.querySelector("span");
-  if (symbol) symbol.textContent = "+";
-  const labelNode = [...(tab?.childNodes || [])].find(node => node.nodeType === Node.TEXT_NODE);
-  if (labelNode) labelNode.textContent = "Score Opportunities ";
+  setImpactOpportunityPulloutOpen(false);
+}
+
+function setImpactOpportunityPulloutOpen(shouldOpen) {
+  const pullout = document.getElementById("impactOpportunityPullout");
+  const tab = document.getElementById("impactOpportunityTab");
+  const close = document.getElementById("impactOpportunityClose");
+  if (!pullout || !tab) return;
+
+  pullout.classList.toggle("is-open", Boolean(shouldOpen));
+  tab.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+  close?.toggleAttribute("hidden", !shouldOpen);
+
+  const symbol = tab.querySelector("span");
+  if (symbol) symbol.textContent = shouldOpen ? "−" : "+";
+  const labelNode = [...tab.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
+  if (labelNode) labelNode.textContent = shouldOpen ? "Close " : "Score Opportunities ";
 }
 
 function openImpactModal() {
@@ -40186,14 +40195,14 @@ function bindEvents(){
     e.preventDefault();
     e.stopPropagation();
     const pullout = document.getElementById("impactOpportunityPullout");
-    const tab = document.getElementById("impactOpportunityTab");
     const shouldOpen = !pullout?.classList.contains("is-open");
-    pullout?.classList.toggle("is-open", shouldOpen);
-    tab?.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
-    const symbol = tab?.querySelector("span");
-    if (symbol) symbol.textContent = shouldOpen ? "−" : "+";
-    const labelNode = [...(tab?.childNodes || [])].find(node => node.nodeType === Node.TEXT_NODE);
-    if (labelNode) labelNode.textContent = shouldOpen ? "Close " : "Score Opportunities ";
+    setImpactOpportunityPulloutOpen(shouldOpen);
+  });
+
+  document.getElementById("impactOpportunityClose")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImpactOpportunityPulloutOpen(false);
   });
 
   document.getElementById("logSaveBtn")?.addEventListener("click", (e) => {
@@ -46997,29 +47006,15 @@ let libraryPageActivationToken = 0;
 let desktopStatsPagePrewarmScheduled = false;
 let desktopStatsPagePrewarmFrame = 0;
 let desktopStatsPagePrewarmed = false;
-let desktopStatsPagePrewarmVisualSignature = "";
-
-function getDesktopStatsPrewarmVisualSignature() {
-  const body = document.body;
-  if (!body) return "";
-  const visualClasses = [...body.classList]
-    .filter(className => className.startsWith("theme-") || className.startsWith("layout-"))
-    .sort()
-    .join(" ");
-  const visualAttributes = [
-    "data-layout-style",
-    "data-layout-shape",
-    "data-layout-texture",
-    "data-layout-font"
-  ].map(name => `${name}:${body.getAttribute(name) || ""}`).join("|");
-  return `${visualClasses}|${visualAttributes}`;
-}
 
 function scheduleDesktopStatsPagePrewarm(options = {}) {
   const immediate = Boolean(options?.immediate);
-  const visualSignature = getDesktopStatsPrewarmVisualSignature();
-  if (isMobileLayoutViewport()
-    || (desktopStatsPagePrewarmed && desktopStatsPagePrewarmVisualSignature === visualSignature)) return;
+  // The initial warm-up leaves an inline `content-visibility:visible` on the
+  // page, so Stats remains laid out after that first pass.  Repeating the
+  // expensive forced-layout read on every theme or Layout Style change only
+  // races a normal navigation (especially the first Stats click) without
+  // making a later visit any more ready.
+  if (isMobileLayoutViewport() || desktopStatsPagePrewarmed) return;
 
   // Inactive dashboards use `content-visibility:hidden` so they do not tax
   // normal navigation.  The first Stats click therefore needs its layout and
@@ -47029,9 +47024,7 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
   const warmStatsPage = () => {
     desktopStatsPagePrewarmFrame = 0;
     desktopStatsPagePrewarmScheduled = false;
-    const currentVisualSignature = getDesktopStatsPrewarmVisualSignature();
-    if (isMobileLayoutViewport()
-      || (desktopStatsPagePrewarmed && desktopStatsPagePrewarmVisualSignature === currentVisualSignature)) return;
+    if (isMobileLayoutViewport() || desktopStatsPagePrewarmed) return;
 
     const statsPage = document.getElementById("page-stats");
     if (!statsPage || statsPage.classList.contains("active")) return;
@@ -47063,18 +47056,24 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
     layoutRoots.forEach(root => { void root.getBoundingClientRect().height; });
     void statsPage.offsetHeight;
     desktopStatsPagePrewarmed = true;
-    desktopStatsPagePrewarmVisualSignature = currentVisualSignature;
 
+    // A single rAF runs before the browser paints. Restoring in that callback
+    // therefore warmed layout but still left the first real Stats visit to
+    // pay its full raster cost. Keep the near-transparent surface through one
+    // paint, then restore it on the following frame while the boot overlay is
+    // still covering the application.
     window.requestAnimationFrame(() => {
-      if (!statsPage.isConnected) return;
-      statsPage.style.visibility = previous.visibility;
-      statsPage.style.opacity = previous.opacity;
-      statsPage.style.pointerEvents = previous.pointerEvents;
-      statsPage.style.transform = previous.transform;
-      statsPage.style.willChange = previous.willChange;
-      // Keep `content-visibility:visible` for the first visit so Chrome can
-      // reuse the materialized layout; inactive-page visibility and pointer
-      // rules continue to keep the surface out of sight and noninteractive.
+      window.requestAnimationFrame(() => {
+        if (!statsPage.isConnected) return;
+        statsPage.style.visibility = previous.visibility;
+        statsPage.style.opacity = previous.opacity;
+        statsPage.style.pointerEvents = previous.pointerEvents;
+        statsPage.style.transform = previous.transform;
+        statsPage.style.willChange = previous.willChange;
+        // Keep `content-visibility:visible` for the first visit so Chrome can
+        // reuse the materialized layout; inactive-page visibility and pointer
+        // rules continue to keep the surface out of sight and noninteractive.
+      });
     });
   };
 
@@ -47090,23 +47089,6 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
   desktopStatsPagePrewarmScheduled = true;
   desktopStatsPagePrewarmFrame = window.requestAnimationFrame(warmStatsPage);
 }
-
-function observeDesktopStatsVisualPrewarm() {
-  if (!document.body || typeof MutationObserver === "undefined") return;
-  let observedSignature = getDesktopStatsPrewarmVisualSignature();
-  const observer = new MutationObserver(() => {
-    const nextSignature = getDesktopStatsPrewarmVisualSignature();
-    if (nextSignature === observedSignature) return;
-    observedSignature = nextSignature;
-    scheduleDesktopStatsPagePrewarm();
-  });
-  observer.observe(document.body, {
-    attributes: true,
-    attributeFilter: ["class", "data-layout-style", "data-layout-shape", "data-layout-texture", "data-layout-font"]
-  });
-}
-
-observeDesktopStatsVisualPrewarm();
 
 function syncLibraryPageActivity(pageId = "") {
   const library = globalThis.RankedCoachGamesenseLibrary;
@@ -51920,7 +51902,7 @@ function renderStatsAgentsModel() {
       column.dataset.agentRole = roleMeta.key;
       column.innerHTML = `
         <div class="stats-agent-desktop-heading role-${escapeHtml(roleMeta.key)}" data-role="${escapeHtml(roleMeta.key)}">
-          <img src="${escapeHtml(ROLE_ICON_MAP[roleMeta.key] || "")}" alt="">
+          <img src="${escapeHtml(ROLE_ICON_MAP[roleMeta.key] || "")}" alt="" loading="lazy" decoding="async">
           <span>${escapeHtml(roleMeta.label)}</span>
         </div>
       `;
@@ -51940,7 +51922,7 @@ function renderStatsAgentsModel() {
         button.setAttribute("aria-label", hasData ? `Open ${agent.agent} agent insights` : `${agent.agent} has no data`);
         button.innerHTML = `
           <span class="stats-agent-mini-name">${escapeHtml(agent.agent)}</span>
-          <img class="stats-agent-mini-image" src="${escapeHtml(getAgentIconUrl(agent.agent))}" alt="${escapeHtml(agent.agent)}">
+          <img class="stats-agent-mini-image" src="${escapeHtml(getAgentIconUrl(agent.agent))}" alt="${escapeHtml(agent.agent)}" loading="lazy" decoding="async">
           <span class="stats-card-meta stats-agent-mini-meta">
             <span class="stats-sub-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}% WR` : "No Data"}</span>
             <span class="stats-sub-text">${hasData ? `${kdValue.toFixed(2)} K/D` : escapeHtml(roleMeta.label)}</span>
@@ -51964,7 +51946,7 @@ function renderStatsAgentsModel() {
     filter.setAttribute("aria-label", "Filter agents by role");
     filter.innerHTML = roleFilters.map((role) => `
       <button type="button" class="stats-mobile-role-filter-btn ${role.key === mobileStatsAgentRole ? "active" : ""}" data-stats-agent-role="${escapeHtml(role.key)}" aria-pressed="${role.key === mobileStatsAgentRole ? "true" : "false"}">
-        <img src="${escapeHtml(ROLE_ICON_MAP[role.key] || "")}" alt="">
+        <img src="${escapeHtml(ROLE_ICON_MAP[role.key] || "")}" alt="" loading="lazy" decoding="async">
         <span>${escapeHtml(role.label)}</span>
       </button>
     `).join("");
@@ -52016,7 +51998,7 @@ function renderStatsAgentsModel() {
         row.setAttribute("aria-disabled", hasData ? "false" : "true");
         row.innerHTML = `
           <div class="stats-primary-cell">
-            <img src="${getAgentIconUrl(agent.agent)}" class="stats-cell-icon stats-agent-tile-icon" />
+            <img src="${getAgentIconUrl(agent.agent)}" class="stats-cell-icon stats-agent-tile-icon" loading="lazy" decoding="async" />
             <div class="stats-agent-metrics-stack">
               <span class="stats-metric-line"><span class="stats-metric-label">${escapeHtml(agent.agent)}</span></span>
               <span class="stats-metric-line"><span class="stats-metric-label">W/R</span><span class="stats-metric-text ${winrateTone}">${hasData ? `${Math.round(winrateValue)}%` : "No Data"}</span></span>
@@ -52087,7 +52069,7 @@ function renderStatsMapsModel() {
     card.className = `stats-map-card ${canOpen ? (winrateValue >= 50 ? "is-positive" : "is-negative") : "is-empty is-locked"}${!isActivePool ? " is-excluded is-out-of-season" : " is-active-pool"}${isActivePool && !hasData ? " is-no-data" : ""}`;
     card.innerHTML = `
       ${!isActivePool ? `<span class="stats-map-excluded-x" aria-hidden="true"></span>` : ""}
-      <img class="stats-map-image stats-map-photo-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)} map artwork">
+      <img class="stats-map-image stats-map-photo-image" src="${getMapIconUrl(mapName)}" alt="${escapeHtml(mapName)} map artwork" loading="lazy" decoding="async">
       <div class="stats-map-meta">
         <span class="stats-main-text">${escapeHtml(mapName)}</span>
         <span class="stats-map-result-line">

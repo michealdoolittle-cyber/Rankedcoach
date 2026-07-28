@@ -56102,11 +56102,11 @@ body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.
   background:
     radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 34%),
     linear-gradient(145deg,color-mix(in srgb,var(--surface-card) 78%,transparent),color-mix(in srgb,var(--surface-card-2) 84%,transparent)) !important;
-  /* Keep the premium scene perceptible through coaching surfaces without
-     assigning animation work to individual cards.  The scene itself remains
-     the only moving layer, while this modest blur preserves legibility. */
-  backdrop-filter:blur(5px) !important;
-  -webkit-backdrop-filter:blur(5px) !important;
+  /* The animated scene remains visible through these translucent surfaces.
+     Do not blur it per card: backdrop filters force each large card to be
+     re-rasterized every frame while a premium theme moves behind it. */
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
 }
 body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) #page-library.gamesense-page{
   background:none !important;

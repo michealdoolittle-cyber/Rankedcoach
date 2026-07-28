@@ -11,6 +11,14 @@ import {
 const MAP_DIR = path.join(ROOT, "public", "assets", "library", "maps");
 const OVERRIDE_FILE = path.join(ROOT, "public", "library", "gamesense-map-layout-overrides.js");
 
+// A hand-reviewed flat tactical layout has its own geometry, zone fills, and
+// baked labels.  Riot's public displayIcon + callout-coordinate feed does not
+// contain those room polygons, so the automatic minimap renderer must never
+// overwrite an approved flat layout with a different visual treatment.
+function isHandVerifiedFlatLayout(layoutImage = "") {
+  return /-layout-trn\.(?:png|webp|svg)(?:\?.*)?$/i.test(String(layoutImage));
+}
+
 function xml(value = "") {
   return String(value).replace(/[&<>"']/g, character => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;"
@@ -88,17 +96,6 @@ function zoneColor(callout, callouts) {
   return distance(callout, attacker) < distance(callout, defender) ? "#55ddd4" : "#ff6675";
 }
 
-function siteMarkers(callouts = []) {
-  return callouts
-    .map(item => {
-      const match = String(item.label || item.sourceLabel || "").match(/^([ABC])\s+Site$/i);
-      if (!match) return null;
-      return { number: 1, site: match[1].toUpperCase(), label: `${match[1].toUpperCase()} Site`, rate: null, x: Number(item.x), y: Number(item.y), source: "Riot map callout" };
-    })
-    .filter(Boolean)
-    .sort((left, right) => left.site.localeCompare(right.site));
-}
-
 async function fetchAsset(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(25_000) });
   if (!response.ok) throw new Error(`map display icon HTTP ${response.status}`);
@@ -140,19 +137,32 @@ for (const map of state.maps || []) {
   const image = await fetchAsset(apiMap.displayIcon);
   const output = path.join(MAP_DIR, `${id}-layout-labeled.svg`);
   const plantOutput = path.join(MAP_DIR, `${id}-layout-plants.svg`);
-  await Promise.all([
-    writeFile(output, buildSvg(map, image, angle, { labels: true }), "utf8"),
+  const preserveFlatLayout = isHandVerifiedFlatLayout(map.layoutImage);
+  const writes = [
     writeFile(plantOutput, buildSvg(map, image, angle, { labels: false }), "utf8")
-  ]);
-  const originalPlantSpots = (map.plantSpots || []).length ? map.plantSpots : siteMarkers(map.callouts);
+  ];
+  // Do not even regenerate the alternate labeled SVG for an approved flat
+  // layout.  Leaving its last generated file alone is harmless, but producing
+  // a fresh, visibly different replacement makes accidental reuse too easy.
+  if (!preserveFlatLayout) {
+    writes.unshift(writeFile(output, buildSvg(map, image, angle, { labels: true }), "utf8"));
+  }
+  await Promise.all(writes);
+  // A Riot callout centre identifies a site, not an exact spike location.
+  // Never turn one into a plant marker: only retain authored spots whose
+  // source actually publishes a named plant location and its placement.
+  const originalPlantSpots = Array.isArray(map.plantSpots) ? map.plantSpots : [];
   layouts[id] = {
-    layoutImage: `/assets/library/maps/${id}-layout-labeled.svg`,
+    // Keep the base-map layout image when it is a reviewed flat zone asset.
+    // The generated plant image is deliberately separate: its marker
+    // coordinate system follows the normalized Riot minimap layer.
+    ...(preserveFlatLayout ? {} : { layoutImage: `/assets/library/maps/${id}-layout-labeled.svg` }),
     plantLayoutImage: `/assets/library/maps/${id}-layout-plants.svg`,
     calloutLabelsBakedIn: true,
     plantSpots: originalPlantSpots.map(spot => transformedPoint(spot, angle)),
-    plantRateNote: (map.plantSpots || []).length
+    plantRateNote: originalPlantSpots.length
       ? map.plantRateNote
-      : "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+      : map.plantRateNote || "No source-verified named spike-plant locations are published for this map. The map is shown without fabricated site-centroid markers.",
     tacticalMapSource: `${VALORANT_API_ROOT}/maps/${apiMap.uuid}?language=en-US`
   };
 }

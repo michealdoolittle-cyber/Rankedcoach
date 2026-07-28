@@ -1431,7 +1431,10 @@
   }
 
   function getPlaylistFilters() {
-    return ["All", "Home", "Historical Archive", "News", PLAYLIST_LIVE_FILTER, "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear"];
+    // Keep the archival view at the end of the horizontally scrollable tab
+    // strip. It remains a first-class filter, but no longer interrupts the
+    // current-category flow on either desktop or touch layouts.
+    return ["All", "Home", "News", PLAYLIST_LIVE_FILTER, "VOD's", "YT Shorts", "General", "Role", "Agent", "Map Knowledge", "Mechanics", "Mentality", "Settings/Gear", "Historical Archive"];
   }
 
   function normalizePlaylistFilter(value = "") {
@@ -2006,8 +2009,9 @@
     const isHeatmap = state.mapView === "heatmap";
     const isPlants = state.mapView === "plants";
     const heatmap = getMapHeatmap(map);
+    const plantSpots = isPlants ? (Array.isArray(map.plantSpots) ? map.plantSpots : []) : [];
     const markers = isPlants
-      ? map.plantSpots || []
+      ? plantSpots
       : map.calloutLabelsBakedIn
         ? []
         : map.callouts || [];
@@ -2046,7 +2050,7 @@
           </div>`}
           ${isPlants ? `<aside class="gamesense-plant-legend" aria-label="${escapeHtml(map.label)} plant location reference">
             <strong>Plant location reference</strong>
-            ${(map.plantSpots || []).map(spot => {
+            ${plantSpots.length ? plantSpots.map(spot => {
               const plantKey = `${spot.site}${spot.number}`;
               return `<div class="gamesense-plant-row" data-gamesense-plant-key="${escapeHtml(plantKey)}">
                 <i></i><b>${escapeHtml(plantKey)}</b><span>${escapeHtml(spot.label)}</span>
@@ -2056,8 +2060,8 @@
                   <div><strong>${escapeHtml(spot.previewLabel || spot.label)}</strong></div>
                 </section>
               </div>`;
-            }).join("")}
-            <p>Select a marker or its + control to view the in-game location reference.</p>
+            }).join("") : `<p>${escapeHtml(map.plantRateNote || `No source-verified named plant locations are available for ${map.label}.`)}</p>`}
+            ${plantSpots.length ? `<p>Select a marker or its + control to view the in-game location reference.</p>` : ""}
           </aside>` : ""}
           ${isHeatmap ? renderMapHeatmapMeta(map, heatmap) : ""}
         </div>
@@ -2142,6 +2146,66 @@
       </section>`;
   }
 
+  const weaponConversionEconomyByCategory = Object.freeze({
+    rifle: "full_eco",
+    sniper: "full_eco",
+    shotgun: "full_eco",
+    pistol: "pistol",
+    eco: "2nd_lost"
+  });
+  const weaponComparisonGroups = Object.freeze({
+    rifle: ["Vandal", "Phantom", "Guardian", "Bulldog"],
+    sniper: ["Operator", "Outlaw", "Marshal"],
+    shotgun: ["Judge", "Bucky", "Shorty"],
+    pistol: ["Ghost", "Sheriff", "Frenzy", "Classic"],
+    eco: ["Spectre", "Stinger", "Ares", "Bulldog"]
+  });
+  const weaponConversionEconomyLabels = Object.freeze({
+    pistol: "Pistol-round",
+    "2nd_lost": "Second-round loss",
+    "2nd_won": "Second-round win",
+    full_eco: "Full-buy",
+    unknown: "All-round"
+  });
+
+  function getVerifiedMapWeaponConversion(map, item) {
+    const reference = map?.weaponConversionReference;
+    const requestedEconomy = item?.conversionEconomy || weaponConversionEconomyByCategory[item?.category];
+    const metrics = reference?.metrics || {};
+    // Older retained acts can lack VStats' full-buy bucket for a weapon while
+    // still carrying its measured all-round aggregate. Use that explicit
+    // provider bucket rather than manufacturing a full-buy value or hiding a
+    // legitimate conversion read.
+    const economy = metrics?.[item?.weapon]?.[requestedEconomy]
+      ? requestedEconomy
+      : metrics?.[item?.weapon]?.unknown ? "unknown" : requestedEconomy;
+    const metric = metrics?.[item?.weapon]?.[economy];
+    if (!economy || !Number.isFinite(Number(metric?.value)) || !Number.isFinite(Number(metric?.rounds))) return null;
+    const contenders = (weaponComparisonGroups[item?.category] || [])
+      .map(weapon => ({ weapon, metric: metrics?.[weapon]?.[economy] }))
+      .filter(entry => Number.isFinite(Number(entry.metric?.value)) && Number.isFinite(Number(entry.metric?.rounds)))
+      .sort((left, right) => Number(right.metric.value) - Number(left.metric.value) || right.metric.rounds - left.metric.rounds);
+    const comparison = contenders.find(entry => entry.weapon !== item.weapon) || null;
+    const economyLabel = weaponConversionEconomyLabels[economy] || economy;
+    const source = reference?.source || {};
+    const roundedRounds = Math.round(Number(metric.rounds));
+    return {
+      scope: `${economyLabel} combined`,
+      value: Number(metric.value),
+      sample: `${roundedRounds.toLocaleString("en-US")} Ascendant-to-Radiant ${source.actLabel || "retained"} ${economyLabel.toLowerCase()} rounds · ${source.provider || "Verified public aggregate"}`,
+      comparisonLabel: comparison ? `Comparable ${item.category}` : "Same sample",
+      comparisonWeapon: comparison?.weapon || item.weapon,
+      comparisonValue: Number(comparison?.metric?.value ?? metric.value)
+    };
+  }
+
+  function attachVerifiedWeaponConversions(map, suggestions = []) {
+    return suggestions.map(item => {
+      const roundConversion = getVerifiedMapWeaponConversion(map, item);
+      return roundConversion ? { ...item, roundConversion, roundConversionUnavailable: "" } : item;
+    });
+  }
+
   function getGeometryWeaponSuggestions(map) {
     const geometry = {
       abyss: ["long exterior lanes and vertical crossings", "compact site entrances after the first lane is cleared"],
@@ -2158,23 +2222,23 @@
       summit: ["wide exterior lanes and rotating sightlines", "site approaches after the first long contest"],
       sunset: ["mid pressure and mixed-range site fights", "site entry chokes when the route is called in advance"]
     }[map.id] || ["mixed-distance lanes", "a protected close-range pocket"];
-    const unavailable = "No verified map conversion percentage is published for this reference.";
     return [
-      { weapon: "Vandal", image: "/assets/weapons/vandal.png", category: "rifle", fit: "Rifle baseline", roundConversionUnavailable: unavailable, evidence: "The Vandal is the all-range baseline: its first-shot lethality keeps a rifle viable when a round moves from space-taking into a long retake.", note: `${map.label} repeatedly creates ${geometry[0]}; take the rifle when your plan may need a clean opening duel and a later reposition.` },
-      { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Opening-angle tool", side: "DEF", roundConversionUnavailable: unavailable, conversion: "Map-geometry read: choose the Operator only when the team can protect the first angle and recover after contact.", evidence: "The Operator earns its value through one protected opening pick, not by forcing every later fight at sniper range.", note: `Use it on ${map.label} only while the round still gives you ${geometry[0]}; swap or save when the fight is likely to collapse into ${geometry[1]}.` },
-      { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Close-contact conversion", side: "DEF", roundConversionUnavailable: unavailable, conversion: "Map-geometry read: the Judge is strongest when the team intentionally forces a close first contact.", evidence: "The Judge is a commitment weapon: it needs a held choke, a trade plan, and a rifle recovery route after the first conversion.", note: `On ${map.label}, buy it for ${geometry[1]}, not as a replacement for a rifle across the map's open routes.` },
-      { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Pistol-round control", roundConversionUnavailable: unavailable, evidence: "The Ghost rewards a disciplined first shot while preserving credits for the utility that makes the round plan work.", note: `Use cover and a called trade on ${map.label}; the pistol is a precision choice, not an invitation to take an unsupported long duel.` }
+      { weapon: "Vandal", image: "/assets/weapons/vandal.png", category: "rifle", fit: "Rifle baseline", evidence: "The Vandal is the all-range baseline: its first-shot lethality keeps a rifle viable when a round moves from space-taking into a long retake.", note: `${map.label} repeatedly creates ${geometry[0]}; take the rifle when your plan may need a clean opening duel and a later reposition.` },
+      { weapon: "Operator", image: "/assets/weapons/operator.png", category: "sniper", fit: "Opening-angle tool", side: "DEF", conversion: "Map-geometry read: choose the Operator only when the team can protect the first angle and recover after contact.", evidence: "The Operator earns its value through one protected opening pick, not by forcing every later fight at sniper range.", note: `Use it on ${map.label} only while the round still gives you ${geometry[0]}; swap or save when the fight is likely to collapse into ${geometry[1]}.` },
+      { weapon: "Judge", image: "/assets/weapons/judge.png", category: "shotgun", fit: "Close-contact conversion", side: "DEF", conversion: "Map-geometry read: the Judge is strongest when the team intentionally forces a close first contact.", evidence: "The Judge is a commitment weapon: it needs a held choke, a trade plan, and a rifle recovery route after the first conversion.", note: `On ${map.label}, buy it for ${geometry[1]}, not as a replacement for a rifle across the map's open routes.` },
+      { weapon: "Ghost", image: "/assets/weapons/ghost.png", category: "pistol", fit: "Pistol-round control", evidence: "The Ghost rewards a disciplined first shot while preserving credits for the utility that makes the round plan work.", note: `Use cover and a called trade on ${map.label}; the pistol is a precision choice, not an invitation to take an unsupported long duel.` }
     ];
   }
 
   function renderWeaponSuggestions(map) {
     const publishedSuggestions = Array.isArray(map.weaponSuggestions) ? map.weaponSuggestions : [];
     const usesGeometryReference = !publishedSuggestions.length;
-    const suggestions = usesGeometryReference ? getGeometryWeaponSuggestions(map) : publishedSuggestions;
+    const suggestions = attachVerifiedWeaponConversions(map, usesGeometryReference ? getGeometryWeaponSuggestions(map) : publishedSuggestions);
+    const conversionSource = map?.weaponConversionReference?.source;
     return `
       <section class="gamesense-weapon-suggestions${usesGeometryReference ? " gamesense-weapon-suggestions-reference" : ""}">
         <div><span>Weapon Suggestions</span><strong>${usesGeometryReference ? "Map-geometry choices by buy type" : "Highest-value choices by buy type"}</strong></div>
-        <p class="gamesense-weapon-source">${usesGeometryReference ? "These choices are map-geometry coaching references. No conversion percentage is shown until a verified public sample is available." : "Round conversion percent uses the retained Competitive map and economy sample. Other displayed weapon context uses the verified static weapon reference."}</p>
+        <p class="gamesense-weapon-source">${conversionSource ? `Round conversion percent uses ${escapeHtml(conversionSource.provider || "the verified public")} Ascendant-to-Radiant ${escapeHtml(conversionSource.actLabel || "retained")} map and economy sample (${escapeHtml(conversionSource.patchLabel || "current patch")}).` : "Round conversion percent is shown only when a verified retained Competitive map sample is available."}</p>
         <div class="gamesense-weapon-suggestion-grid">${suggestions.map(item => `
           <details class="gamesense-weapon-suggestion">
             <summary>

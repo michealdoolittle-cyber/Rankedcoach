@@ -68,7 +68,7 @@
     ],
     "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz",
     "officialAgentsUrl": "https://valorant-api.com/v1/agents?isPlayableCharacter=true",
-    "generatedAt": "2026-07-28T02:25:37.739Z",
+    "generatedAt": "2026-07-28T11:24:06.384Z",
     "methodology": "Agent pick share = high-rank agent selections divided by high-rank matches, using the provider's r=22, r=25, and r=27 buckets. Map/global comparisons use the same retained act. Role-layout frequency aggregates full five-agent compositions before selecting a representative composition for each distinct role structure."
   },
   "global": {
@@ -437,6 +437,646 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 23.6283,
+            "attackValue": 27.8983,
+            "defenseValue": 21.4658,
+            "attackRounds": 276,
+            "defenseRounds": 545,
+            "rounds": 821
+          },
+          "2nd_won": {
+            "value": 80.2206,
+            "attackValue": 81.2954,
+            "defenseValue": 79.811,
+            "attackRounds": 1716,
+            "defenseRounds": 4502,
+            "rounds": 6218
+          },
+          "full_eco": {
+            "value": 41.6059,
+            "attackValue": 47.7273,
+            "defenseValue": 38.7098,
+            "attackRounds": 44,
+            "defenseRounds": 93,
+            "rounds": 137
+          },
+          "unknown": {
+            "value": 42.8401,
+            "attackValue": 45.4657,
+            "defenseValue": 41.8694,
+            "attackRounds": 4410,
+            "defenseRounds": 11928,
+            "rounds": 16338
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 20.0262,
+            "attackValue": 20.3205,
+            "defenseValue": 19.7488,
+            "attackRounds": 57955,
+            "defenseRounds": 61491,
+            "rounds": 119446
+          },
+          "2nd_won": {
+            "value": 78.4321,
+            "attackValue": 79.9247,
+            "defenseValue": 76.9912,
+            "attackRounds": 18824,
+            "defenseRounds": 19501,
+            "rounds": 38325
+          },
+          "pistol": {
+            "value": 49.5737,
+            "attackValue": 48.8105,
+            "defenseValue": 50.2743,
+            "attackRounds": 92095,
+            "defenseRounds": 100309,
+            "rounds": 192404
+          },
+          "unknown": {
+            "value": 31.7016,
+            "attackValue": 33.1757,
+            "defenseValue": 30.5252,
+            "attackRounds": 61445,
+            "defenseRounds": 76997,
+            "rounds": 138442
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 22.9415,
+            "attackValue": 27.314,
+            "defenseValue": 20.6668,
+            "attackRounds": 11378,
+            "defenseRounds": 21871,
+            "rounds": 33249
+          },
+          "2nd_won": {
+            "value": 79.1879,
+            "attackValue": 80.9683,
+            "defenseValue": 76.9701,
+            "attackRounds": 13251,
+            "defenseRounds": 10638,
+            "rounds": 23889
+          },
+          "full_eco": {
+            "value": 47.2063,
+            "attackValue": 44.9995,
+            "defenseValue": 50.2679,
+            "attackRounds": 1300,
+            "defenseRounds": 937,
+            "rounds": 2237
+          },
+          "unknown": {
+            "value": 39.6195,
+            "attackValue": 43.186,
+            "defenseValue": 37.195,
+            "attackRounds": 110741,
+            "defenseRounds": 162900,
+            "rounds": 273641
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 31.2184,
+            "attackValue": 37.9055,
+            "defenseValue": 15.6755,
+            "attackRounds": 430,
+            "defenseRounds": 185,
+            "rounds": 615
+          },
+          "2nd_won": {
+            "value": 81.6158,
+            "attackValue": 83.0144,
+            "defenseValue": 80.0997,
+            "attackRounds": 50294,
+            "defenseRounds": 46401,
+            "rounds": 96695
+          },
+          "full_eco": {
+            "value": 45.6386,
+            "attackValue": 45.3604,
+            "defenseValue": 46.0107,
+            "attackRounds": 1358,
+            "defenseRounds": 1015,
+            "rounds": 2373
+          },
+          "unknown": {
+            "value": 44.4334,
+            "attackValue": 45.1597,
+            "defenseValue": 43.7274,
+            "attackRounds": 84906,
+            "defenseRounds": 87345,
+            "rounds": 172251
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.5942,
+            "attackValue": 18.3953,
+            "defenseValue": 16.6945,
+            "attackRounds": 218082,
+            "defenseRounds": 194147,
+            "rounds": 412229
+          },
+          "2nd_won": {
+            "value": 77.0859,
+            "attackValue": 78.9878,
+            "defenseValue": 75.0831,
+            "attackRounds": 9408,
+            "defenseRounds": 8934,
+            "rounds": 18342
+          },
+          "pistol": {
+            "value": 49.8065,
+            "attackValue": 48.947,
+            "defenseValue": 50.9996,
+            "attackRounds": 385583,
+            "defenseRounds": 277771,
+            "rounds": 663354
+          },
+          "unknown": {
+            "value": 38.7013,
+            "attackValue": 40.0241,
+            "defenseValue": 37.4067,
+            "attackRounds": 314718,
+            "defenseRounds": 321579,
+            "rounds": 636297
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 17.0551,
+            "attackValue": 16.7487,
+            "defenseValue": 17.2944,
+            "attackRounds": 1409,
+            "defenseRounds": 1804,
+            "rounds": 3213
+          },
+          "2nd_won": {
+            "value": 82.1265,
+            "attackValue": 83.3329,
+            "defenseValue": 80.6932,
+            "attackRounds": 240,
+            "defenseRounds": 202,
+            "rounds": 442
+          },
+          "pistol": {
+            "value": 49.8129,
+            "attackValue": 49.698,
+            "defenseValue": 49.9884,
+            "attackRounds": 11809,
+            "defenseRounds": 7730,
+            "rounds": 19539
+          },
+          "unknown": {
+            "value": 32.6686,
+            "attackValue": 34.7897,
+            "defenseValue": 31.2355,
+            "attackRounds": 1739,
+            "defenseRounds": 2574,
+            "rounds": 4313
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.3619,
+            "attackValue": 18.8173,
+            "defenseValue": 17.7802,
+            "attackRounds": 5086,
+            "defenseRounds": 3982,
+            "rounds": 9068
+          },
+          "2nd_won": {
+            "value": 79.0236,
+            "attackValue": 80.388,
+            "defenseValue": 77.6561,
+            "attackRounds": 31526,
+            "defenseRounds": 31453,
+            "rounds": 62979
+          },
+          "pistol": {
+            "value": 50.1056,
+            "attackValue": 48.7098,
+            "defenseValue": 51.4692,
+            "attackRounds": 382156,
+            "defenseRounds": 391197,
+            "rounds": 773353
+          },
+          "unknown": {
+            "value": 34.4076,
+            "attackValue": 36.697,
+            "defenseValue": 32.3154,
+            "attackRounds": 8671,
+            "defenseRounds": 9488,
+            "rounds": 18159
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 28.7873,
+            "attackValue": 30.3583,
+            "defenseValue": 24.7626,
+            "attackRounds": 807,
+            "defenseRounds": 315,
+            "rounds": 1122
+          },
+          "2nd_won": {
+            "value": 80.3309,
+            "attackValue": 81.2134,
+            "defenseValue": 79.4642,
+            "attackRounds": 65683,
+            "defenseRounds": 66876,
+            "rounds": 132559
+          },
+          "full_eco": {
+            "value": 47.6392,
+            "attackValue": 46.0936,
+            "defenseValue": 49.1312,
+            "attackRounds": 3558,
+            "defenseRounds": 3686,
+            "rounds": 7244
+          },
+          "unknown": {
+            "value": 44.2969,
+            "attackValue": 44.9129,
+            "defenseValue": 43.7073,
+            "attackRounds": 320172,
+            "defenseRounds": 334527,
+            "rounds": 654699
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 24.3571,
+            "attackValue": 29.1919,
+            "defenseValue": 23.6383,
+            "attackRounds": 161,
+            "defenseRounds": 1083,
+            "rounds": 1244
+          },
+          "2nd_won": {
+            "value": 80.897,
+            "attackValue": 83.1393,
+            "defenseValue": 78.8529,
+            "attackRounds": 7087,
+            "defenseRounds": 7774,
+            "rounds": 14861
+          },
+          "full_eco": {
+            "value": 50.1292,
+            "attackValue": 45.8515,
+            "defenseValue": 53.8702,
+            "attackRounds": 2000,
+            "defenseRounds": 2287,
+            "rounds": 4287
+          },
+          "unknown": {
+            "value": 48.1368,
+            "attackValue": 51.5729,
+            "defenseValue": 45.7611,
+            "attackRounds": 84141,
+            "defenseRounds": 121695,
+            "rounds": 205836
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 21.3593,
+            "attackValue": 22.1891,
+            "defenseValue": 19.8969,
+            "attackRounds": 16900,
+            "defenseRounds": 9590,
+            "rounds": 26490
+          },
+          "2nd_won": {
+            "value": 80.6455,
+            "attackValue": 81.6954,
+            "defenseValue": 80.0939,
+            "attackRounds": 27905,
+            "defenseRounds": 53106,
+            "rounds": 81011
+          },
+          "full_eco": {
+            "value": 38.301,
+            "attackValue": 33.5462,
+            "defenseValue": 44.0729,
+            "attackRounds": 471,
+            "defenseRounds": 388,
+            "rounds": 859
+          },
+          "unknown": {
+            "value": 35.5561,
+            "attackValue": 36.3388,
+            "defenseValue": 34.7725,
+            "attackRounds": 61912,
+            "defenseRounds": 61843,
+            "rounds": 123755
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 82.4224,
+            "attackValue": 82.7477,
+            "defenseValue": 82.1999,
+            "attackRounds": 342,
+            "defenseRounds": 500,
+            "rounds": 842
+          },
+          "full_eco": {
+            "value": 52.1264,
+            "attackValue": 51.1557,
+            "defenseValue": 52.5268,
+            "attackRounds": 563,
+            "defenseRounds": 1365,
+            "rounds": 1928
+          },
+          "unknown": {
+            "value": 55.018,
+            "attackValue": 56.2918,
+            "defenseValue": 54.4359,
+            "attackRounds": 25988,
+            "defenseRounds": 56872,
+            "rounds": 82860
+          },
+          "2nd_lost": {
+            "value": 0,
+            "attackValue": 0,
+            "defenseValue": null,
+            "attackRounds": 1,
+            "defenseRounds": 0,
+            "rounds": 1
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 50.7091,
+            "attackValue": 48.5153,
+            "defenseValue": 51.7599,
+            "attackRounds": 4683,
+            "defenseRounds": 9776,
+            "rounds": 14459
+          },
+          "unknown": {
+            "value": 55.1983,
+            "attackValue": 55.8346,
+            "defenseValue": 54.8891,
+            "attackRounds": 229408,
+            "defenseRounds": 472142,
+            "rounds": 701550
+          },
+          "2nd_won": {
+            "value": 100,
+            "attackValue": 100,
+            "defenseValue": null,
+            "attackRounds": 1,
+            "defenseRounds": 0,
+            "rounds": 1
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 31.5701,
+            "attackValue": 32.6054,
+            "defenseValue": 26.2225,
+            "attackRounds": 9710,
+            "defenseRounds": 1880,
+            "rounds": 11590
+          },
+          "2nd_won": {
+            "value": 80.4269,
+            "attackValue": 81.9564,
+            "defenseValue": 79.7604,
+            "attackRounds": 37516,
+            "defenseRounds": 86085,
+            "rounds": 123601
+          },
+          "full_eco": {
+            "value": 45.4492,
+            "attackValue": 45.9604,
+            "defenseValue": 45.064,
+            "attackRounds": 1473,
+            "defenseRounds": 1955,
+            "rounds": 3428
+          },
+          "unknown": {
+            "value": 56.2782,
+            "attackValue": 60.017,
+            "defenseValue": 53.1047,
+            "attackRounds": 132281,
+            "defenseRounds": 155842,
+            "rounds": 288123
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 81.0798,
+            "attackValue": 82.4588,
+            "defenseValue": 77.4035,
+            "attackRounds": 18334,
+            "defenseRounds": 6877,
+            "rounds": 25211
+          },
+          "full_eco": {
+            "value": 50.6768,
+            "attackValue": 49.9575,
+            "defenseValue": 51.3143,
+            "attackRounds": 23802,
+            "defenseRounds": 26854,
+            "rounds": 50656
+          },
+          "unknown": {
+            "value": 54.4947,
+            "attackValue": 55.3998,
+            "defenseValue": 53.62,
+            "attackRounds": 1020652,
+            "defenseRounds": 1056114,
+            "rounds": 2076766
+          },
+          "2nd_lost": {
+            "value": 73.3333,
+            "attackValue": 70,
+            "defenseValue": 80,
+            "attackRounds": 10,
+            "defenseRounds": 5,
+            "rounds": 15
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 20.5332,
+            "attackValue": 21.5048,
+            "defenseValue": 19.5518,
+            "attackRounds": 133809,
+            "defenseRounds": 132463,
+            "rounds": 266272
+          },
+          "2nd_won": {
+            "value": 78.6421,
+            "attackValue": 79.8614,
+            "defenseValue": 77.568,
+            "attackRounds": 39289,
+            "defenseRounds": 44601,
+            "rounds": 83890
+          },
+          "pistol": {
+            "value": 50.5761,
+            "attackValue": 49.6335,
+            "defenseValue": 50.9258,
+            "attackRounds": 56119,
+            "defenseRounds": 151300,
+            "rounds": 207419
+          },
+          "unknown": {
+            "value": 32.0282,
+            "attackValue": 33.1547,
+            "defenseValue": 31.0651,
+            "attackRounds": 551436,
+            "defenseRounds": 644994,
+            "rounds": 1196430
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 16.9037,
+            "attackValue": 18.9566,
+            "defenseValue": 16.2664,
+            "attackRounds": 4273,
+            "defenseRounds": 13764,
+            "rounds": 18037
+          },
+          "pistol": {
+            "value": 50.8611,
+            "attackValue": 50.9695,
+            "defenseValue": 50.7439,
+            "attackRounds": 7338,
+            "defenseRounds": 6793,
+            "rounds": 14131
+          },
+          "unknown": {
+            "value": 45.9787,
+            "attackValue": 47.9481,
+            "defenseValue": 44.1217,
+            "attackRounds": 47263,
+            "defenseRounds": 50126,
+            "rounds": 97389
+          },
+          "2nd_won": {
+            "value": 77.0193,
+            "attackValue": 77.7131,
+            "defenseValue": 76.7015,
+            "attackRounds": 175,
+            "defenseRounds": 382,
+            "rounds": 557
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 33.2377,
+            "attackValue": 37.1356,
+            "defenseValue": 26.378,
+            "attackRounds": 2235,
+            "defenseRounds": 1270,
+            "rounds": 3505
+          },
+          "2nd_won": {
+            "value": 82.4044,
+            "attackValue": 83.8966,
+            "defenseValue": 80.8194,
+            "attackRounds": 56987,
+            "defenseRounds": 53648,
+            "rounds": 110635
+          },
+          "full_eco": {
+            "value": 43.337,
+            "attackValue": 43.2008,
+            "defenseValue": 43.5334,
+            "attackRounds": 1037,
+            "defenseRounds": 719,
+            "rounds": 1756
+          },
+          "unknown": {
+            "value": 43.8435,
+            "attackValue": 45.1743,
+            "defenseValue": 42.5633,
+            "attackRounds": 65072,
+            "defenseRounds": 67644,
+            "rounds": 132716
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.8943,
+            "attackValue": 36.5128,
+            "defenseValue": 25.3789,
+            "attackRounds": 12341,
+            "defenseRounds": 5942,
+            "rounds": 18283
+          },
+          "2nd_won": {
+            "value": 79.3629,
+            "attackValue": 79.5835,
+            "defenseValue": 79.0887,
+            "attackRounds": 18024,
+            "defenseRounds": 14494,
+            "rounds": 32518
+          },
+          "full_eco": {
+            "value": 47.8616,
+            "attackValue": 50.4467,
+            "defenseValue": 43.7934,
+            "attackRounds": 672,
+            "defenseRounds": 427,
+            "rounds": 1099
+          },
+          "unknown": {
+            "value": 39.1912,
+            "attackValue": 41.1634,
+            "defenseValue": 36.9284,
+            "attackRounds": 88414,
+            "defenseRounds": 77060,
+            "rounds": 165474
+          }
+        },
+        "Vandal": {
+          "2nd_lost": {
+            "value": 42.8575,
+            "attackValue": 46.7159,
+            "defenseValue": 28.9468,
+            "attackRounds": 137,
+            "defenseRounds": 38,
+            "rounds": 175
+          },
+          "2nd_won": {
+            "value": 80.8484,
+            "attackValue": 81.1967,
+            "defenseValue": 79.8638,
+            "attackRounds": 53773,
+            "defenseRounds": 19026,
+            "rounds": 72799
+          },
+          "full_eco": {
+            "value": 50.1331,
+            "attackValue": 49.0696,
+            "defenseValue": 51.2968,
+            "attackRounds": 99169,
+            "defenseRounds": 90628,
+            "rounds": 189797
+          },
+          "unknown": {
+            "value": 53.5093,
+            "attackValue": 53.9147,
+            "defenseValue": 53.0456,
+            "attackRounds": 4439026,
+            "defenseRounds": 3880725,
+            "rounds": 8319751
+          }
+        }
+      },
       "unavailableAgents": [
         "Miks"
       ],
@@ -499,6 +1139,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Infinity/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Infinity/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Infinity/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/ALL/agent.json.gz"
       }
     },
@@ -801,6 +1442,678 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 26.8399,
+            "attackValue": 24.5622,
+            "defenseValue": 27.3624,
+            "attackRounds": 114,
+            "defenseRounds": 497,
+            "rounds": 611
+          },
+          "2nd_won": {
+            "value": 82.7689,
+            "attackValue": 76.799,
+            "defenseValue": 84.2773,
+            "attackRounds": 1112,
+            "defenseRounds": 4401,
+            "rounds": 5513
+          },
+          "full_eco": {
+            "value": 46.9247,
+            "attackValue": 41.1859,
+            "defenseValue": 48.4094,
+            "attackRounds": 675,
+            "defenseRounds": 2609,
+            "rounds": 3284
+          },
+          "unknown": {
+            "value": 43.4297,
+            "attackValue": 40.7681,
+            "defenseValue": 44.2997,
+            "attackRounds": 2188,
+            "defenseRounds": 6693,
+            "rounds": 8881
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 19.2013,
+            "attackValue": 17.4895,
+            "defenseValue": 21.1859,
+            "attackRounds": 40081,
+            "defenseRounds": 34570,
+            "rounds": 74651
+          },
+          "2nd_won": {
+            "value": 78.9981,
+            "attackValue": 76.9602,
+            "defenseValue": 80.593,
+            "attackRounds": 7912,
+            "defenseRounds": 10109,
+            "rounds": 18021
+          },
+          "full_eco": {
+            "value": 42.8594,
+            "attackValue": 39.4327,
+            "defenseValue": 46.1987,
+            "attackRounds": 2333,
+            "defenseRounds": 2394,
+            "rounds": 4727
+          },
+          "pistol": {
+            "value": 50.2627,
+            "attackValue": 45.8121,
+            "defenseValue": 54.5999,
+            "attackRounds": 46684,
+            "defenseRounds": 47904,
+            "rounds": 94588
+          },
+          "unknown": {
+            "value": 29.8534,
+            "attackValue": 26.8134,
+            "defenseValue": 32.8537,
+            "attackRounds": 35467,
+            "defenseRounds": 35936,
+            "rounds": 71403
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 23.0622,
+            "attackValue": 21.6264,
+            "defenseValue": 23.5311,
+            "attackRounds": 1156,
+            "defenseRounds": 3540,
+            "rounds": 4696
+          },
+          "2nd_won": {
+            "value": 78.8123,
+            "attackValue": 75.4269,
+            "defenseValue": 81.3237,
+            "attackRounds": 997,
+            "defenseRounds": 1344,
+            "rounds": 2341
+          },
+          "full_eco": {
+            "value": 47.3367,
+            "attackValue": 43.6018,
+            "defenseValue": 49.87,
+            "attackRounds": 2610,
+            "defenseRounds": 3848,
+            "rounds": 6458
+          },
+          "unknown": {
+            "value": 36.241,
+            "attackValue": 34.5919,
+            "defenseValue": 37.0326,
+            "attackRounds": 8418,
+            "defenseRounds": 17538,
+            "rounds": 25956
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 31.0069,
+            "attackValue": 34.999,
+            "defenseValue": 26.2705,
+            "attackRounds": 140,
+            "defenseRounds": 118,
+            "rounds": 258
+          },
+          "2nd_won": {
+            "value": 80.8587,
+            "attackValue": 79.711,
+            "defenseValue": 81.9323,
+            "attackRounds": 20001,
+            "defenseRounds": 21381,
+            "rounds": 41382
+          },
+          "full_eco": {
+            "value": 45.3833,
+            "attackValue": 41.2776,
+            "defenseValue": 48.8369,
+            "attackRounds": 9470,
+            "defenseRounds": 11258,
+            "rounds": 20728
+          },
+          "unknown": {
+            "value": 44.9783,
+            "attackValue": 40.548,
+            "defenseValue": 49.9556,
+            "attackRounds": 27824,
+            "defenseRounds": 24766,
+            "rounds": 52590
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 16.79,
+            "attackValue": 15.5177,
+            "defenseValue": 18.536,
+            "attackRounds": 95323,
+            "defenseRounds": 69458,
+            "rounds": 164781
+          },
+          "2nd_won": {
+            "value": 76.0523,
+            "attackValue": 72.1745,
+            "defenseValue": 80.1535,
+            "attackRounds": 2185,
+            "defenseRounds": 2066,
+            "rounds": 4251
+          },
+          "full_eco": {
+            "value": 47.2622,
+            "attackValue": 43.8401,
+            "defenseValue": 51.7238,
+            "attackRounds": 20586,
+            "defenseRounds": 15790,
+            "rounds": 36376
+          },
+          "pistol": {
+            "value": 49.257,
+            "attackValue": 45.1806,
+            "defenseValue": 54.6169,
+            "attackRounds": 154756,
+            "defenseRounds": 117699,
+            "rounds": 272455
+          },
+          "unknown": {
+            "value": 35.5341,
+            "attackValue": 32.8389,
+            "defenseValue": 38.7832,
+            "attackRounds": 91115,
+            "defenseRounds": 75582,
+            "rounds": 166697
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 15.6764,
+            "attackValue": 14.8071,
+            "defenseValue": 16.4795,
+            "attackRounds": 824,
+            "defenseRounds": 892,
+            "rounds": 1716
+          },
+          "2nd_won": {
+            "value": 77.0278,
+            "attackValue": 71.0352,
+            "defenseValue": 82.7823,
+            "attackRounds": 145,
+            "defenseRounds": 151,
+            "rounds": 296
+          },
+          "full_eco": {
+            "value": 49.222,
+            "attackValue": 50.4571,
+            "defenseValue": 47.6194,
+            "attackRounds": 109,
+            "defenseRounds": 84,
+            "rounds": 193
+          },
+          "pistol": {
+            "value": 49.9794,
+            "attackValue": 46.268,
+            "defenseValue": 55.6321,
+            "attackRounds": 7329,
+            "defenseRounds": 4812,
+            "rounds": 12141
+          },
+          "unknown": {
+            "value": 31.2313,
+            "attackValue": 31.6591,
+            "defenseValue": 30.8464,
+            "attackRounds": 916,
+            "defenseRounds": 1018,
+            "rounds": 1934
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 17.8424,
+            "attackValue": 16.8336,
+            "defenseValue": 19.2851,
+            "attackRounds": 2002,
+            "defenseRounds": 1400,
+            "rounds": 3402
+          },
+          "2nd_won": {
+            "value": 79.4936,
+            "attackValue": 77.3787,
+            "defenseValue": 81.2258,
+            "attackRounds": 11688,
+            "defenseRounds": 14270,
+            "rounds": 25958
+          },
+          "full_eco": {
+            "value": 38.6414,
+            "attackValue": 38.1863,
+            "defenseValue": 38.9794,
+            "attackRounds": 364,
+            "defenseRounds": 490,
+            "rounds": 854
+          },
+          "pistol": {
+            "value": 49.9281,
+            "attackValue": 45.1815,
+            "defenseValue": 54.7002,
+            "attackRounds": 171788,
+            "defenseRounds": 170875,
+            "rounds": 342663
+          },
+          "unknown": {
+            "value": 33.4796,
+            "attackValue": 31.3254,
+            "defenseValue": 35.4964,
+            "attackRounds": 2656,
+            "defenseRounds": 2837,
+            "rounds": 5493
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 33.1428,
+            "attackValue": 25.7923,
+            "defenseValue": 45.7355,
+            "attackRounds": 221,
+            "defenseRounds": 129,
+            "rounds": 350
+          },
+          "2nd_won": {
+            "value": 80.3103,
+            "attackValue": 78.3342,
+            "defenseValue": 81.9917,
+            "attackRounds": 27228,
+            "defenseRounds": 31997,
+            "rounds": 59225
+          },
+          "full_eco": {
+            "value": 46.2071,
+            "attackValue": 43.2751,
+            "defenseValue": 49.4465,
+            "attackRounds": 38849,
+            "defenseRounds": 35162,
+            "rounds": 74011
+          },
+          "unknown": {
+            "value": 43.3746,
+            "attackValue": 39.1041,
+            "defenseValue": 48.3979,
+            "attackRounds": 122398,
+            "defenseRounds": 104056,
+            "rounds": 226454
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 22.5071,
+            "attackValue": 25.0011,
+            "defenseValue": 22.2391,
+            "attackRounds": 72,
+            "defenseRounds": 670,
+            "rounds": 742
+          },
+          "2nd_won": {
+            "value": 81.7633,
+            "attackValue": 81.2655,
+            "defenseValue": 82.0049,
+            "attackRounds": 2199,
+            "defenseRounds": 4529,
+            "rounds": 6728
+          },
+          "full_eco": {
+            "value": 49.0843,
+            "attackValue": 44.8384,
+            "defenseValue": 51.8268,
+            "attackRounds": 8368,
+            "defenseRounds": 12955,
+            "rounds": 21323
+          },
+          "unknown": {
+            "value": 47.2823,
+            "attackValue": 44.7785,
+            "defenseValue": 48.4666,
+            "attackRounds": 14098,
+            "defenseRounds": 29804,
+            "rounds": 43902
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 20.97,
+            "attackValue": 19.7737,
+            "defenseValue": 22.7478,
+            "attackRounds": 5998,
+            "defenseRounds": 4036,
+            "rounds": 10034
+          },
+          "2nd_won": {
+            "value": 81.9975,
+            "attackValue": 79.6392,
+            "defenseValue": 83.1126,
+            "attackRounds": 12200,
+            "defenseRounds": 25800,
+            "rounds": 38000
+          },
+          "full_eco": {
+            "value": 42.1957,
+            "attackValue": 39.0356,
+            "defenseValue": 43.46,
+            "attackRounds": 2841,
+            "defenseRounds": 7101,
+            "rounds": 9942
+          },
+          "unknown": {
+            "value": 34.9903,
+            "attackValue": 31.6703,
+            "defenseValue": 39.0848,
+            "attackRounds": 19944,
+            "defenseRounds": 16172,
+            "rounds": 36116
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 80.3007,
+            "attackValue": 78.3349,
+            "defenseValue": 81.1432,
+            "attackRounds": 300,
+            "defenseRounds": 700,
+            "rounds": 1000
+          },
+          "full_eco": {
+            "value": 54.7761,
+            "attackValue": 47.2239,
+            "defenseValue": 56.7952,
+            "attackRounds": 10306,
+            "defenseRounds": 38550,
+            "rounds": 48856
+          },
+          "unknown": {
+            "value": 63.7827,
+            "attackValue": 56.7013,
+            "defenseValue": 65.7511,
+            "attackRounds": 11051,
+            "defenseRounds": 39756,
+            "rounds": 50807
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 54.1888,
+            "attackValue": 46.2979,
+            "defenseValue": 56.3882,
+            "attackRounds": 31121,
+            "defenseRounds": 111653,
+            "rounds": 142774
+          },
+          "unknown": {
+            "value": 62.8443,
+            "attackValue": 55.7877,
+            "defenseValue": 64.7019,
+            "attackRounds": 26125,
+            "defenseRounds": 99242,
+            "rounds": 125367
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 29.105,
+            "attackValue": 28.6129,
+            "defenseValue": 31.1332,
+            "attackRounds": 2436,
+            "defenseRounds": 591,
+            "rounds": 3027
+          },
+          "2nd_won": {
+            "value": 81.8496,
+            "attackValue": 79.3913,
+            "defenseValue": 82.6042,
+            "attackRounds": 7089,
+            "defenseRounds": 23094,
+            "rounds": 30183
+          },
+          "full_eco": {
+            "value": 47.5835,
+            "attackValue": 45.4886,
+            "defenseValue": 48.4144,
+            "attackRounds": 5276,
+            "defenseRounds": 13302,
+            "rounds": 18578
+          },
+          "unknown": {
+            "value": 62.7334,
+            "attackValue": 60.7488,
+            "defenseValue": 64.0756,
+            "attackRounds": 28589,
+            "defenseRounds": 42271,
+            "rounds": 70860
+          }
+        },
+        "Phantom": {
+          "2nd_lost": {
+            "value": 22.2222,
+            "attackValue": 15.3846,
+            "defenseValue": 40,
+            "attackRounds": 13,
+            "defenseRounds": 5,
+            "rounds": 18
+          },
+          "2nd_won": {
+            "value": 81.3319,
+            "attackValue": 80.98,
+            "defenseValue": 81.956,
+            "attackRounds": 10510,
+            "defenseRounds": 5924,
+            "rounds": 16434
+          },
+          "full_eco": {
+            "value": 51.1415,
+            "attackValue": 45.95,
+            "defenseValue": 55.9154,
+            "attackRounds": 312208,
+            "defenseRounds": 339526,
+            "rounds": 651734
+          },
+          "unknown": {
+            "value": 58.8466,
+            "attackValue": 54.4792,
+            "defenseValue": 62.6393,
+            "attackRounds": 304408,
+            "defenseRounds": 350529,
+            "rounds": 654937
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 20.7976,
+            "attackValue": 19.1984,
+            "defenseValue": 22.5659,
+            "attackRounds": 69061,
+            "defenseRounds": 62459,
+            "rounds": 131520
+          },
+          "2nd_won": {
+            "value": 79.6166,
+            "attackValue": 78.2145,
+            "defenseValue": 80.7863,
+            "attackRounds": 22521,
+            "defenseRounds": 26997,
+            "rounds": 49518
+          },
+          "full_eco": {
+            "value": 44.1353,
+            "attackValue": 40.8246,
+            "defenseValue": 47.7682,
+            "attackRounds": 20845,
+            "defenseRounds": 18996,
+            "rounds": 39841
+          },
+          "pistol": {
+            "value": 51.864,
+            "attackValue": 46.1309,
+            "defenseValue": 54.5837,
+            "attackRounds": 35536,
+            "defenseRounds": 74909,
+            "rounds": 110445
+          },
+          "unknown": {
+            "value": 30.6651,
+            "attackValue": 28.0623,
+            "defenseValue": 33.7881,
+            "attackRounds": 331816,
+            "defenseRounds": 276536,
+            "rounds": 608352
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 17.9257,
+            "attackValue": 16.2661,
+            "defenseValue": 18.6265,
+            "attackRounds": 959,
+            "defenseRounds": 2271,
+            "rounds": 3230
+          },
+          "full_eco": {
+            "value": 47.9616,
+            "attackValue": 44.362,
+            "defenseValue": 53.3884,
+            "attackRounds": 5340,
+            "defenseRounds": 3542,
+            "rounds": 8882
+          },
+          "unknown": {
+            "value": 43.5084,
+            "attackValue": 40.9176,
+            "defenseValue": 46.5475,
+            "attackRounds": 10352,
+            "defenseRounds": 8825,
+            "rounds": 19177
+          },
+          "pistol": {
+            "value": 47.9076,
+            "attackValue": 41.8362,
+            "defenseValue": 54.7536,
+            "attackRounds": 937,
+            "defenseRounds": 831,
+            "rounds": 1768
+          },
+          "2nd_won": {
+            "value": 61.1113,
+            "attackValue": 60,
+            "defenseValue": 61.5387,
+            "attackRounds": 15,
+            "defenseRounds": 39,
+            "rounds": 54
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 31.8261,
+            "attackValue": 33.9038,
+            "defenseValue": 29.7559,
+            "attackRounds": 817,
+            "defenseRounds": 820,
+            "rounds": 1637
+          },
+          "2nd_won": {
+            "value": 81.9986,
+            "attackValue": 80.6817,
+            "defenseValue": 83.1293,
+            "attackRounds": 29267,
+            "defenseRounds": 34090,
+            "rounds": 63357
+          },
+          "full_eco": {
+            "value": 44.2935,
+            "attackValue": 41.0788,
+            "defenseValue": 46.6916,
+            "attackRounds": 9954,
+            "defenseRounds": 13343,
+            "rounds": 23297
+          },
+          "unknown": {
+            "value": 45.2304,
+            "attackValue": 42.5337,
+            "defenseValue": 48.1276,
+            "attackRounds": 27561,
+            "defenseRounds": 25653,
+            "rounds": 53214
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.4644,
+            "attackValue": 31.5351,
+            "defenseValue": 33.7877,
+            "attackRounds": 7097,
+            "defenseRounds": 4984,
+            "rounds": 12081
+          },
+          "2nd_won": {
+            "value": 80.2773,
+            "attackValue": 78.4131,
+            "defenseValue": 82.1363,
+            "attackRounds": 9306,
+            "defenseRounds": 9332,
+            "rounds": 18638
+          },
+          "full_eco": {
+            "value": 44.6044,
+            "attackValue": 41.791,
+            "defenseValue": 48.4228,
+            "attackRounds": 10536,
+            "defenseRounds": 7763,
+            "rounds": 18299
+          },
+          "unknown": {
+            "value": 36.972,
+            "attackValue": 34.3797,
+            "defenseValue": 40.7612,
+            "attackRounds": 52838,
+            "defenseRounds": 36149,
+            "rounds": 88987
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 79.2108,
+            "attackValue": 77.9289,
+            "defenseValue": 81.9627,
+            "attackRounds": 21780,
+            "defenseRounds": 10146,
+            "rounds": 31926
+          },
+          "full_eco": {
+            "value": 49.7759,
+            "attackValue": 45.4297,
+            "defenseValue": 54.8939,
+            "attackRounds": 972014,
+            "defenseRounds": 825439,
+            "rounds": 1797453
+          },
+          "unknown": {
+            "value": 56.1452,
+            "attackValue": 51.8344,
+            "defenseValue": 60.8323,
+            "attackRounds": 941941,
+            "defenseRounds": 866342,
+            "rounds": 1808283
+          },
+          "2nd_lost": {
+            "value": 23.9437,
+            "attackValue": 16.0714,
+            "defenseValue": 53.3333,
+            "attackRounds": 56,
+            "defenseRounds": 15,
+            "rounds": 71
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -861,6 +2174,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Ascent/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Ascent/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Ascent/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     },
@@ -1163,6 +2477,638 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 33.1761,
+            "attackValue": 25.6947,
+            "defenseValue": 35.3658,
+            "attackRounds": 144,
+            "defenseRounds": 492,
+            "rounds": 636
+          },
+          "2nd_won": {
+            "value": 83.9928,
+            "attackValue": 79.7947,
+            "defenseValue": 85.4504,
+            "attackRounds": 1069,
+            "defenseRounds": 3079,
+            "rounds": 4148
+          },
+          "full_eco": {
+            "value": 43.1884,
+            "attackValue": 35.6166,
+            "defenseValue": 46.7091,
+            "attackRounds": 219,
+            "defenseRounds": 471,
+            "rounds": 690
+          },
+          "unknown": {
+            "value": 44.3115,
+            "attackValue": 41.2699,
+            "defenseValue": 45.7379,
+            "attackRounds": 3477,
+            "defenseRounds": 7414,
+            "rounds": 10891
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 19.4762,
+            "attackValue": 17.9452,
+            "defenseValue": 21.3478,
+            "attackRounds": 36696,
+            "defenseRounds": 30017,
+            "rounds": 66713
+          },
+          "2nd_won": {
+            "value": 77.366,
+            "attackValue": 76.3413,
+            "defenseValue": 78.3587,
+            "attackRounds": 7118,
+            "defenseRounds": 7347,
+            "rounds": 14465
+          },
+          "pistol": {
+            "value": 49.6377,
+            "attackValue": 47.163,
+            "defenseValue": 51.4894,
+            "attackRounds": 32824,
+            "defenseRounds": 43869,
+            "rounds": 76693
+          },
+          "unknown": {
+            "value": 30.9328,
+            "attackValue": 29.3919,
+            "defenseValue": 32.6911,
+            "attackRounds": 36722,
+            "defenseRounds": 32180,
+            "rounds": 68902
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 23.7222,
+            "attackValue": 22.8857,
+            "defenseValue": 24.2015,
+            "attackRounds": 24083,
+            "defenseRounds": 42037,
+            "rounds": 66120
+          },
+          "2nd_won": {
+            "value": 79.2759,
+            "attackValue": 78.1458,
+            "defenseValue": 80.1761,
+            "attackRounds": 18311,
+            "defenseRounds": 22987,
+            "rounds": 41298
+          },
+          "full_eco": {
+            "value": 49.2552,
+            "attackValue": 47.0816,
+            "defenseValue": 51.4095,
+            "attackRounds": 7245,
+            "defenseRounds": 7310,
+            "rounds": 14555
+          },
+          "unknown": {
+            "value": 39.331,
+            "attackValue": 38.0606,
+            "defenseValue": 40.2298,
+            "attackRounds": 171300,
+            "defenseRounds": 242103,
+            "rounds": 413403
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 31.3601,
+            "attackValue": 34.9742,
+            "defenseValue": 25.9256,
+            "attackRounds": 203,
+            "defenseRounds": 135,
+            "rounds": 338
+          },
+          "2nd_won": {
+            "value": 80.4191,
+            "attackValue": 79.2147,
+            "defenseValue": 81.7302,
+            "attackRounds": 37407,
+            "defenseRounds": 34363,
+            "rounds": 71770
+          },
+          "full_eco": {
+            "value": 46.2236,
+            "attackValue": 42.9139,
+            "defenseValue": 50.0578,
+            "attackRounds": 5052,
+            "defenseRounds": 4361,
+            "rounds": 9413
+          },
+          "unknown": {
+            "value": 44.8635,
+            "attackValue": 42.6983,
+            "defenseValue": 47.2419,
+            "attackRounds": 66117,
+            "defenseRounds": 60189,
+            "rounds": 126306
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.7225,
+            "attackValue": 16.6837,
+            "defenseValue": 19.0738,
+            "attackRounds": 195561,
+            "defenseRounds": 150323,
+            "rounds": 345884
+          },
+          "2nd_won": {
+            "value": 77.0268,
+            "attackValue": 76.5634,
+            "defenseValue": 77.6178,
+            "attackRounds": 7318,
+            "defenseRounds": 5737,
+            "rounds": 13055
+          },
+          "pistol": {
+            "value": 49.5866,
+            "attackValue": 46.951,
+            "defenseValue": 52.9285,
+            "attackRounds": 350752,
+            "defenseRounds": 276614,
+            "rounds": 627366
+          },
+          "unknown": {
+            "value": 37.8291,
+            "attackValue": 35.3699,
+            "defenseValue": 40.7698,
+            "attackRounds": 252892,
+            "defenseRounds": 211488,
+            "rounds": 464380
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.0073,
+            "attackValue": 15.0119,
+            "defenseValue": 20.9533,
+            "attackRounds": 2145,
+            "defenseRounds": 2181,
+            "rounds": 4326
+          },
+          "2nd_won": {
+            "value": 77.9897,
+            "attackValue": 76.0208,
+            "defenseValue": 79.9486,
+            "attackRounds": 392,
+            "defenseRounds": 394,
+            "rounds": 786
+          },
+          "pistol": {
+            "value": 49.898,
+            "attackValue": 47.1162,
+            "defenseValue": 52.8067,
+            "attackRounds": 14793,
+            "defenseRounds": 14148,
+            "rounds": 28941
+          },
+          "unknown": {
+            "value": 30.9417,
+            "attackValue": 31.0495,
+            "defenseValue": 30.8352,
+            "attackRounds": 2554,
+            "defenseRounds": 2588,
+            "rounds": 5142
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 17.8552,
+            "attackValue": 17.1709,
+            "defenseValue": 18.9555,
+            "attackRounds": 4496,
+            "defenseRounds": 2796,
+            "rounds": 7292
+          },
+          "2nd_won": {
+            "value": 79.2756,
+            "attackValue": 77.6862,
+            "defenseValue": 80.8471,
+            "attackRounds": 30018,
+            "defenseRounds": 30360,
+            "rounds": 60378
+          },
+          "pistol": {
+            "value": 50.3286,
+            "attackValue": 47.3988,
+            "defenseValue": 53.1422,
+            "attackRounds": 310952,
+            "defenseRounds": 323794,
+            "rounds": 634746
+          },
+          "unknown": {
+            "value": 35.3902,
+            "attackValue": 33.7898,
+            "defenseValue": 37.1136,
+            "attackRounds": 8899,
+            "defenseRounds": 8264,
+            "rounds": 17163
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 26.9643,
+            "attackValue": 32.2582,
+            "defenseValue": 20.3998,
+            "attackRounds": 310,
+            "defenseRounds": 250,
+            "rounds": 560
+          },
+          "2nd_won": {
+            "value": 80.3257,
+            "attackValue": 79.3075,
+            "defenseValue": 81.282,
+            "attackRounds": 39546,
+            "defenseRounds": 42108,
+            "rounds": 81654
+          },
+          "full_eco": {
+            "value": 49.268,
+            "attackValue": 45.5302,
+            "defenseValue": 52.9372,
+            "attackRounds": 12684,
+            "defenseRounds": 12921,
+            "rounds": 25605
+          },
+          "unknown": {
+            "value": 44.1057,
+            "attackValue": 41.828,
+            "defenseValue": 46.794,
+            "attackRounds": 218746,
+            "defenseRounds": 185341,
+            "rounds": 404087
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 27.2773,
+            "attackValue": 28.7155,
+            "defenseValue": 26.9207,
+            "attackRounds": 397,
+            "defenseRounds": 1601,
+            "rounds": 1998
+          },
+          "2nd_won": {
+            "value": 81.0495,
+            "attackValue": 80.0531,
+            "defenseValue": 81.7614,
+            "attackRounds": 23017,
+            "defenseRounds": 32216,
+            "rounds": 55233
+          },
+          "full_eco": {
+            "value": 49.5447,
+            "attackValue": 46.2907,
+            "defenseValue": 52.4092,
+            "attackRounds": 23515,
+            "defenseRounds": 26711,
+            "rounds": 50226
+          },
+          "unknown": {
+            "value": 49.3726,
+            "attackValue": 47.5845,
+            "defenseValue": 50.8364,
+            "attackRounds": 223749,
+            "defenseRounds": 273333,
+            "rounds": 497082
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 20.683,
+            "attackValue": 20.3423,
+            "defenseValue": 21.1431,
+            "attackRounds": 5786,
+            "defenseRounds": 4285,
+            "rounds": 10071
+          },
+          "2nd_won": {
+            "value": 81.4788,
+            "attackValue": 79.8764,
+            "defenseValue": 82.2239,
+            "attackRounds": 15649,
+            "defenseRounds": 33654,
+            "rounds": 49303
+          },
+          "full_eco": {
+            "value": 47.6126,
+            "attackValue": 40.3453,
+            "defenseValue": 53.1428,
+            "attackRounds": 1041,
+            "defenseRounds": 1368,
+            "rounds": 2409
+          },
+          "unknown": {
+            "value": 36.1477,
+            "attackValue": 33.5311,
+            "defenseValue": 38.6111,
+            "attackRounds": 26664,
+            "defenseRounds": 28323,
+            "rounds": 54987
+          }
+        },
+        "Odin": {
+          "2nd_lost": {
+            "value": 75,
+            "attackValue": 50,
+            "defenseValue": 100,
+            "attackRounds": 2,
+            "defenseRounds": 2,
+            "rounds": 4
+          },
+          "2nd_won": {
+            "value": 85.0416,
+            "attackValue": 81.2747,
+            "defenseValue": 87.049,
+            "attackRounds": 251,
+            "defenseRounds": 471,
+            "rounds": 722
+          },
+          "full_eco": {
+            "value": 53.1585,
+            "attackValue": 47.9818,
+            "defenseValue": 54.9693,
+            "attackRounds": 2478,
+            "defenseRounds": 7084,
+            "rounds": 9562
+          },
+          "unknown": {
+            "value": 58.3557,
+            "attackValue": 53.8734,
+            "defenseValue": 59.8628,
+            "attackRounds": 19314,
+            "defenseRounds": 57445,
+            "rounds": 76759
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 51.407,
+            "attackValue": 46.3321,
+            "defenseValue": 53.6974,
+            "attackRounds": 15408,
+            "defenseRounds": 34139,
+            "rounds": 49547
+          },
+          "unknown": {
+            "value": 57.0835,
+            "attackValue": 52.381,
+            "defenseValue": 58.7279,
+            "attackRounds": 120347,
+            "defenseRounds": 344148,
+            "rounds": 464495
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 27.6139,
+            "attackValue": 28.5651,
+            "defenseValue": 24.6435,
+            "attackRounds": 4600,
+            "defenseRounds": 1473,
+            "rounds": 6073
+          },
+          "2nd_won": {
+            "value": 80.9347,
+            "attackValue": 78.4616,
+            "defenseValue": 81.7788,
+            "attackRounds": 18235,
+            "defenseRounds": 53424,
+            "rounds": 71659
+          },
+          "full_eco": {
+            "value": 48.9573,
+            "attackValue": 43.8098,
+            "defenseValue": 51.7645,
+            "attackRounds": 3602,
+            "defenseRounds": 6605,
+            "rounds": 10207
+          },
+          "unknown": {
+            "value": 57.201,
+            "attackValue": 56.7179,
+            "defenseValue": 57.4899,
+            "attackRounds": 63002,
+            "defenseRounds": 105342,
+            "rounds": 168344
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 81.1346,
+            "attackValue": 80.3745,
+            "defenseValue": 82.5393,
+            "attackRounds": 16372,
+            "defenseRounds": 8860,
+            "rounds": 25232
+          },
+          "full_eco": {
+            "value": 50.5575,
+            "attackValue": 46.7394,
+            "defenseValue": 53.9736,
+            "attackRounds": 130247,
+            "defenseRounds": 145573,
+            "rounds": 275820
+          },
+          "unknown": {
+            "value": 55.2876,
+            "attackValue": 51.9045,
+            "defenseValue": 58.3204,
+            "attackRounds": 1004768,
+            "defenseRounds": 1120815,
+            "rounds": 2125583
+          },
+          "2nd_lost": {
+            "value": 76.4706,
+            "attackValue": 80,
+            "defenseValue": 50,
+            "attackRounds": 30,
+            "defenseRounds": 4,
+            "rounds": 34
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 20.606,
+            "attackValue": 19.4248,
+            "defenseValue": 22.0297,
+            "attackRounds": 106877,
+            "defenseRounds": 88673,
+            "rounds": 195550
+          },
+          "2nd_won": {
+            "value": 78.6613,
+            "attackValue": 78.1733,
+            "defenseValue": 79.0934,
+            "attackRounds": 25002,
+            "defenseRounds": 28240,
+            "rounds": 53242
+          },
+          "pistol": {
+            "value": 50.9426,
+            "attackValue": 46.7632,
+            "defenseValue": 52.3753,
+            "attackRounds": 30364,
+            "defenseRounds": 88579,
+            "rounds": 118943
+          },
+          "unknown": {
+            "value": 32.3872,
+            "attackValue": 30.5945,
+            "defenseValue": 34.6796,
+            "attackRounds": 517910,
+            "defenseRounds": 404999,
+            "rounds": 922909
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 17.7853,
+            "attackValue": 16.2937,
+            "defenseValue": 18.5201,
+            "attackRounds": 9489,
+            "defenseRounds": 19261,
+            "rounds": 28750
+          },
+          "2nd_won": {
+            "value": 76.2986,
+            "attackValue": 75.3515,
+            "defenseValue": 76.9377,
+            "attackRounds": 357,
+            "defenseRounds": 529,
+            "rounds": 886
+          },
+          "pistol": {
+            "value": 48.9862,
+            "attackValue": 46.1614,
+            "defenseValue": 53.6445,
+            "attackRounds": 18595,
+            "defenseRounds": 11276,
+            "rounds": 29871
+          },
+          "unknown": {
+            "value": 44.2748,
+            "attackValue": 43.2971,
+            "defenseValue": 45.1499,
+            "attackRounds": 37411,
+            "defenseRounds": 41791,
+            "rounds": 79202
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 31.1862,
+            "attackValue": 33.2135,
+            "defenseValue": 29.016,
+            "attackRounds": 1686,
+            "defenseRounds": 1575,
+            "rounds": 3261
+          },
+          "2nd_won": {
+            "value": 81.5342,
+            "attackValue": 80.2524,
+            "defenseValue": 82.7647,
+            "attackRounds": 62312,
+            "defenseRounds": 64912,
+            "rounds": 127224
+          },
+          "full_eco": {
+            "value": 45.6156,
+            "attackValue": 41.9123,
+            "defenseValue": 49.9685,
+            "attackRounds": 5502,
+            "defenseRounds": 4681,
+            "rounds": 10183
+          },
+          "unknown": {
+            "value": 44.3372,
+            "attackValue": 42.1192,
+            "defenseValue": 46.6066,
+            "attackRounds": 72340,
+            "defenseRounds": 70700,
+            "rounds": 143040
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 31.1019,
+            "attackValue": 32.0869,
+            "defenseValue": 29.8699,
+            "attackRounds": 9016,
+            "defenseRounds": 7208,
+            "rounds": 16224
+          },
+          "2nd_won": {
+            "value": 79.7797,
+            "attackValue": 77.6473,
+            "defenseValue": 81.9275,
+            "attackRounds": 17756,
+            "defenseRounds": 17629,
+            "rounds": 35385
+          },
+          "full_eco": {
+            "value": 48.147,
+            "attackValue": 44.9018,
+            "defenseValue": 52.6631,
+            "attackRounds": 3031,
+            "defenseRounds": 2178,
+            "rounds": 5209
+          },
+          "unknown": {
+            "value": 37.8668,
+            "attackValue": 35.3484,
+            "defenseValue": 41.3845,
+            "attackRounds": 97503,
+            "defenseRounds": 69807,
+            "rounds": 167310
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 79.5541,
+            "attackValue": 78.8396,
+            "defenseValue": 81.0616,
+            "attackRounds": 32210,
+            "defenseRounds": 15265,
+            "rounds": 47475
+          },
+          "full_eco": {
+            "value": 49.8745,
+            "attackValue": 46.8684,
+            "defenseValue": 53.2656,
+            "attackRounds": 382071,
+            "defenseRounds": 338693,
+            "rounds": 720764
+          },
+          "unknown": {
+            "value": 53.405,
+            "attackValue": 50.3063,
+            "defenseValue": 56.8827,
+            "attackRounds": 2959645,
+            "defenseRounds": 2637090,
+            "rounds": 5596735
+          },
+          "2nd_lost": {
+            "value": 30.8638,
+            "attackValue": 20.3698,
+            "defenseValue": 51.8519,
+            "attackRounds": 54,
+            "defenseRounds": 27,
+            "rounds": 81
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -1223,6 +3169,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/9d85c932-4820-c060-09c3-668636d4df1b/ALL/Duality/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/9d85c932-4820-c060-09c3-668636d4df1b/ALL/Duality/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/9d85c932-4820-c060-09c3-668636d4df1b/ALL/Duality/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/9d85c932-4820-c060-09c3-668636d4df1b/ALL/ALL/agent.json.gz"
       }
     },
@@ -1525,6 +3472,686 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 23.6304,
+            "attackValue": 26.3156,
+            "defenseValue": 22.3356,
+            "attackRounds": 95,
+            "defenseRounds": 197,
+            "rounds": 292
+          },
+          "2nd_won": {
+            "value": 80.1134,
+            "attackValue": 80.5976,
+            "defenseValue": 79.853,
+            "attackRounds": 737,
+            "defenseRounds": 1370,
+            "rounds": 2107
+          },
+          "full_eco": {
+            "value": 46.1479,
+            "attackValue": 51.0952,
+            "defenseValue": 43.8214,
+            "attackRounds": 411,
+            "defenseRounds": 874,
+            "rounds": 1285
+          },
+          "unknown": {
+            "value": 42.5923,
+            "attackValue": 45.0337,
+            "defenseValue": 41.5246,
+            "attackRounds": 1148,
+            "defenseRounds": 2625,
+            "rounds": 3773
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 20.5453,
+            "attackValue": 21.078,
+            "defenseValue": 20.0656,
+            "attackRounds": 29072,
+            "defenseRounds": 32294,
+            "rounds": 61366
+          },
+          "2nd_won": {
+            "value": 78.6496,
+            "attackValue": 78.5738,
+            "defenseValue": 78.7196,
+            "attackRounds": 7500,
+            "defenseRounds": 8111,
+            "rounds": 15611
+          },
+          "full_eco": {
+            "value": 46.8084,
+            "attackValue": 46.7091,
+            "defenseValue": 46.9083,
+            "attackRounds": 2021,
+            "defenseRounds": 2006,
+            "rounds": 4027
+          },
+          "pistol": {
+            "value": 49.9743,
+            "attackValue": 49.7914,
+            "defenseValue": 50.1484,
+            "attackRounds": 46596,
+            "defenseRounds": 48925,
+            "rounds": 95521
+          },
+          "unknown": {
+            "value": 30.6718,
+            "attackValue": 31.6796,
+            "defenseValue": 29.8507,
+            "attackRounds": 24006,
+            "defenseRounds": 29470,
+            "rounds": 53476
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 19.5334,
+            "attackValue": 21.7616,
+            "defenseValue": 18.935,
+            "attackRounds": 841,
+            "defenseRounds": 3132,
+            "rounds": 3973
+          },
+          "2nd_won": {
+            "value": 78.0362,
+            "attackValue": 82.0254,
+            "defenseValue": 75.2946,
+            "attackRounds": 701,
+            "defenseRounds": 1020,
+            "rounds": 1721
+          },
+          "full_eco": {
+            "value": 46.1788,
+            "attackValue": 46.1497,
+            "defenseValue": 46.1943,
+            "attackRounds": 2195,
+            "defenseRounds": 4113,
+            "rounds": 6308
+          },
+          "unknown": {
+            "value": 36.6005,
+            "attackValue": 39.8433,
+            "defenseValue": 35.4903,
+            "attackRounds": 6503,
+            "defenseRounds": 18994,
+            "rounds": 25497
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 42.0113,
+            "attackValue": 39.9994,
+            "defenseValue": 46.296,
+            "attackRounds": 230,
+            "defenseRounds": 108,
+            "rounds": 338
+          },
+          "2nd_won": {
+            "value": 80.2605,
+            "attackValue": 81.3925,
+            "defenseValue": 79.0287,
+            "attackRounds": 20551,
+            "defenseRounds": 18888,
+            "rounds": 39439
+          },
+          "full_eco": {
+            "value": 44.7131,
+            "attackValue": 44.7006,
+            "defenseValue": 44.7249,
+            "attackRounds": 9275,
+            "defenseRounds": 9831,
+            "rounds": 19106
+          },
+          "unknown": {
+            "value": 45.0854,
+            "attackValue": 45.6426,
+            "defenseValue": 44.5092,
+            "attackRounds": 23399,
+            "defenseRounds": 22627,
+            "rounds": 46026
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 18.4343,
+            "attackValue": 19.2013,
+            "defenseValue": 17.6294,
+            "attackRounds": 92760,
+            "defenseRounds": 88386,
+            "rounds": 181146
+          },
+          "2nd_won": {
+            "value": 76.3798,
+            "attackValue": 78.7827,
+            "defenseValue": 73.6202,
+            "attackRounds": 4449,
+            "defenseRounds": 3874,
+            "rounds": 8323
+          },
+          "full_eco": {
+            "value": 49.9281,
+            "attackValue": 48.6737,
+            "defenseValue": 51.347,
+            "attackRounds": 33036,
+            "defenseRounds": 29206,
+            "rounds": 62242
+          },
+          "pistol": {
+            "value": 50.1273,
+            "attackValue": 50.3086,
+            "defenseValue": 49.8716,
+            "attackRounds": 152619,
+            "defenseRounds": 108184,
+            "rounds": 260803
+          },
+          "unknown": {
+            "value": 37.808,
+            "attackValue": 37.9439,
+            "defenseValue": 37.6716,
+            "attackRounds": 137264,
+            "defenseRounds": 136768,
+            "rounds": 274032
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 16.3619,
+            "attackValue": 17.9657,
+            "defenseValue": 15.3633,
+            "attackRounds": 462,
+            "defenseRounds": 742,
+            "rounds": 1204
+          },
+          "2nd_won": {
+            "value": 81.1772,
+            "attackValue": 78.5724,
+            "defenseValue": 83.7214,
+            "attackRounds": 42,
+            "defenseRounds": 43,
+            "rounds": 85
+          },
+          "full_eco": {
+            "value": 44.1874,
+            "attackValue": 35.5289,
+            "defenseValue": 56.6034,
+            "attackRounds": 76,
+            "defenseRounds": 53,
+            "rounds": 129
+          },
+          "pistol": {
+            "value": 47.817,
+            "attackValue": 48.0214,
+            "defenseValue": 47.5446,
+            "attackRounds": 2551,
+            "defenseRounds": 1914,
+            "rounds": 4465
+          },
+          "unknown": {
+            "value": 32.2777,
+            "attackValue": 33.0484,
+            "defenseValue": 31.8401,
+            "attackRounds": 469,
+            "defenseRounds": 826,
+            "rounds": 1295
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 17.6302,
+            "attackValue": 19.1526,
+            "defenseValue": 15.8969,
+            "attackRounds": 1676,
+            "defenseRounds": 1472,
+            "rounds": 3148
+          },
+          "2nd_won": {
+            "value": 79.4578,
+            "attackValue": 80.1684,
+            "defenseValue": 78.7097,
+            "attackRounds": 10287,
+            "defenseRounds": 9770,
+            "rounds": 20057
+          },
+          "full_eco": {
+            "value": 40.7596,
+            "attackValue": 40.7242,
+            "defenseValue": 40.7961,
+            "attackRounds": 415,
+            "defenseRounds": 402,
+            "rounds": 817
+          },
+          "pistol": {
+            "value": 50.1728,
+            "attackValue": 50.2342,
+            "defenseValue": 50.107,
+            "attackRounds": 162549,
+            "defenseRounds": 151397,
+            "rounds": 313946
+          },
+          "unknown": {
+            "value": 34.1432,
+            "attackValue": 35.0801,
+            "defenseValue": 33.2395,
+            "attackRounds": 2423,
+            "defenseRounds": 2512,
+            "rounds": 4935
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 29.2145,
+            "attackValue": 29.619,
+            "defenseValue": 28.4311,
+            "attackRounds": 395,
+            "defenseRounds": 204,
+            "rounds": 599
+          },
+          "2nd_won": {
+            "value": 79.9003,
+            "attackValue": 80.751,
+            "defenseValue": 78.9669,
+            "attackRounds": 37050,
+            "defenseRounds": 33770,
+            "rounds": 70820
+          },
+          "full_eco": {
+            "value": 46.6439,
+            "attackValue": 45.9574,
+            "defenseValue": 47.3781,
+            "attackRounds": 41382,
+            "defenseRounds": 38691,
+            "rounds": 80073
+          },
+          "unknown": {
+            "value": 43.5906,
+            "attackValue": 43.0253,
+            "defenseValue": 44.1546,
+            "attackRounds": 115196,
+            "defenseRounds": 115461,
+            "rounds": 230657
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 20.2745,
+            "attackValue": 16.6644,
+            "defenseValue": 20.7039,
+            "attackRounds": 54,
+            "defenseRounds": 454,
+            "rounds": 508
+          },
+          "2nd_won": {
+            "value": 78.5567,
+            "attackValue": 81.4141,
+            "defenseValue": 76.9671,
+            "attackRounds": 1442,
+            "defenseRounds": 2592,
+            "rounds": 4034
+          },
+          "full_eco": {
+            "value": 48.8043,
+            "attackValue": 48.9253,
+            "defenseValue": 48.7444,
+            "attackRounds": 6003,
+            "defenseRounds": 12143,
+            "rounds": 18146
+          },
+          "unknown": {
+            "value": 46.152,
+            "attackValue": 48.9582,
+            "defenseValue": 45.0941,
+            "attackRounds": 10019,
+            "defenseRounds": 26578,
+            "rounds": 36597
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 23.1864,
+            "attackValue": 22.8658,
+            "defenseValue": 23.6074,
+            "attackRounds": 7063,
+            "defenseRounds": 5380,
+            "rounds": 12443
+          },
+          "2nd_won": {
+            "value": 80.1702,
+            "attackValue": 81.0265,
+            "defenseValue": 79.623,
+            "attackRounds": 19034,
+            "defenseRounds": 29780,
+            "rounds": 48814
+          },
+          "full_eco": {
+            "value": 41.3684,
+            "attackValue": 42.5753,
+            "defenseValue": 40.7214,
+            "attackRounds": 4815,
+            "defenseRounds": 8983,
+            "rounds": 13798
+          },
+          "unknown": {
+            "value": 36.1421,
+            "attackValue": 36.0238,
+            "defenseValue": 36.2697,
+            "attackRounds": 21275,
+            "defenseRounds": 19707,
+            "rounds": 40982
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 76.8297,
+            "attackValue": 74.511,
+            "defenseValue": 78.4721,
+            "attackRounds": 102,
+            "defenseRounds": 144,
+            "rounds": 246
+          },
+          "full_eco": {
+            "value": 52.2054,
+            "attackValue": 49.6708,
+            "defenseValue": 53.1231,
+            "attackRounds": 3946,
+            "defenseRounds": 10899,
+            "rounds": 14845
+          },
+          "unknown": {
+            "value": 58.9226,
+            "attackValue": 57.2515,
+            "defenseValue": 59.6405,
+            "attackRounds": 4323,
+            "defenseRounds": 10062,
+            "rounds": 14385
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 51.5173,
+            "attackValue": 50.3482,
+            "defenseValue": 52.0867,
+            "attackRounds": 68142,
+            "defenseRounds": 139905,
+            "rounds": 208047
+          },
+          "unknown": {
+            "value": 58.6844,
+            "attackValue": 58.5907,
+            "defenseValue": 58.7345,
+            "attackRounds": 62155,
+            "defenseRounds": 116302,
+            "rounds": 178457
+          },
+          "2nd_won": {
+            "value": 100,
+            "attackValue": 100,
+            "defenseValue": null,
+            "attackRounds": 1,
+            "defenseRounds": 0,
+            "rounds": 1
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 29.9651,
+            "attackValue": 30.6933,
+            "defenseValue": 26.4826,
+            "attackRounds": 3955,
+            "defenseRounds": 827,
+            "rounds": 4782
+          },
+          "2nd_won": {
+            "value": 80.2306,
+            "attackValue": 81.2127,
+            "defenseValue": 79.7206,
+            "attackRounds": 15824,
+            "defenseRounds": 30475,
+            "rounds": 46299
+          },
+          "full_eco": {
+            "value": 45.6043,
+            "attackValue": 47.0902,
+            "defenseValue": 44.712,
+            "attackRounds": 9656,
+            "defenseRounds": 16079,
+            "rounds": 25735
+          },
+          "unknown": {
+            "value": 60.5229,
+            "attackValue": 62.5255,
+            "defenseValue": 58.6817,
+            "attackRounds": 41400,
+            "defenseRounds": 45027,
+            "rounds": 86427
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 80.3351,
+            "attackValue": 80.7448,
+            "defenseValue": 79.1359,
+            "attackRounds": 7255,
+            "defenseRounds": 2478,
+            "rounds": 9733
+          },
+          "full_eco": {
+            "value": 50.7734,
+            "attackValue": 49.5385,
+            "defenseValue": 51.8715,
+            "attackRounds": 188938,
+            "defenseRounds": 212474,
+            "rounds": 401412
+          },
+          "unknown": {
+            "value": 57.5132,
+            "attackValue": 57.9001,
+            "defenseValue": 57.148,
+            "attackRounds": 189800,
+            "defenseRounds": 201070,
+            "rounds": 390870
+          },
+          "2nd_lost": {
+            "value": 22.2222,
+            "attackValue": 0,
+            "defenseValue": 66.6667,
+            "attackRounds": 6,
+            "defenseRounds": 3,
+            "rounds": 9
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 21.2991,
+            "attackValue": 22.2493,
+            "defenseValue": 20.411,
+            "attackRounds": 57282,
+            "defenseRounds": 61284,
+            "rounds": 118566
+          },
+          "2nd_won": {
+            "value": 78.2795,
+            "attackValue": 79.5329,
+            "defenseValue": 77.0888,
+            "attackRounds": 26316,
+            "defenseRounds": 27702,
+            "rounds": 54018
+          },
+          "full_eco": {
+            "value": 44.9666,
+            "attackValue": 45.8351,
+            "defenseValue": 44.0834,
+            "attackRounds": 18056,
+            "defenseRounds": 17753,
+            "rounds": 35809
+          },
+          "pistol": {
+            "value": 49.4454,
+            "attackValue": 49.7869,
+            "defenseValue": 49.3038,
+            "attackRounds": 37785,
+            "defenseRounds": 91157,
+            "rounds": 128942
+          },
+          "unknown": {
+            "value": 32.348,
+            "attackValue": 32.3387,
+            "defenseValue": 32.3568,
+            "attackRounds": 239492,
+            "defenseRounds": 250157,
+            "rounds": 489649
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 17.5125,
+            "attackValue": 16.5838,
+            "defenseValue": 17.6667,
+            "attackRounds": 404,
+            "defenseRounds": 2434,
+            "rounds": 2838
+          },
+          "full_eco": {
+            "value": 51.1335,
+            "attackValue": 50.4337,
+            "defenseValue": 52.0145,
+            "attackRounds": 7249,
+            "defenseRounds": 5758,
+            "rounds": 13007
+          },
+          "unknown": {
+            "value": 46.389,
+            "attackValue": 48.3215,
+            "defenseValue": 44.5547,
+            "attackRounds": 12570,
+            "defenseRounds": 13243,
+            "rounds": 25813
+          },
+          "pistol": {
+            "value": 47.6312,
+            "attackValue": 44.1497,
+            "defenseValue": 49.3836,
+            "attackRounds": 530,
+            "defenseRounds": 1053,
+            "rounds": 1583
+          },
+          "2nd_won": {
+            "value": 89.6921,
+            "attackValue": 95.2393,
+            "defenseValue": 85.456,
+            "attackRounds": 42,
+            "defenseRounds": 55,
+            "rounds": 97
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 31.0638,
+            "attackValue": 35.286,
+            "defenseValue": 25.2025,
+            "attackRounds": 683,
+            "defenseRounds": 492,
+            "rounds": 1175
+          },
+          "2nd_won": {
+            "value": 81.5651,
+            "attackValue": 82.7996,
+            "defenseValue": 80.2934,
+            "attackRounds": 16580,
+            "defenseRounds": 16096,
+            "rounds": 32676
+          },
+          "full_eco": {
+            "value": 43.3105,
+            "attackValue": 43.0321,
+            "defenseValue": 43.5735,
+            "attackRounds": 6228,
+            "defenseRounds": 6591,
+            "rounds": 12819
+          },
+          "unknown": {
+            "value": 44.7965,
+            "attackValue": 45.1396,
+            "defenseValue": 44.4568,
+            "attackRounds": 14539,
+            "defenseRounds": 14686,
+            "rounds": 29225
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.3555,
+            "attackValue": 35.1738,
+            "defenseValue": 27.3922,
+            "attackRounds": 4327,
+            "defenseRounds": 2457,
+            "rounds": 6784
+          },
+          "2nd_won": {
+            "value": 79.7858,
+            "attackValue": 81.088,
+            "defenseValue": 78.2228,
+            "attackRounds": 4944,
+            "defenseRounds": 4119,
+            "rounds": 9063
+          },
+          "full_eco": {
+            "value": 45.1283,
+            "attackValue": 45.0129,
+            "defenseValue": 45.2844,
+            "attackRounds": 6658,
+            "defenseRounds": 4920,
+            "rounds": 11578
+          },
+          "unknown": {
+            "value": 38.8972,
+            "attackValue": 39.4677,
+            "defenseValue": 38.2915,
+            "attackRounds": 26905,
+            "defenseRounds": 25340,
+            "rounds": 52245
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 80.1999,
+            "attackValue": 80.7272,
+            "defenseValue": 78.6265,
+            "attackRounds": 27033,
+            "defenseRounds": 9058,
+            "rounds": 36091
+          },
+          "full_eco": {
+            "value": 50.1657,
+            "attackValue": 49.1004,
+            "defenseValue": 51.3591,
+            "attackRounds": 1045853,
+            "defenseRounds": 933674,
+            "rounds": 1979527
+          },
+          "unknown": {
+            "value": 55.7343,
+            "attackValue": 55.498,
+            "defenseValue": 56.001,
+            "attackRounds": 1036204,
+            "defenseRounds": 917635,
+            "rounds": 1953839
+          },
+          "2nd_lost": {
+            "value": 23.4375,
+            "attackValue": 14.9998,
+            "defenseValue": 37.5004,
+            "attackRounds": 40,
+            "defenseRounds": 24,
+            "rounds": 64
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -1585,6 +4212,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Foxtrot/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Foxtrot/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Foxtrot/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     },
@@ -1885,6 +4513,638 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 28.4074,
+            "attackValue": 34.8378,
+            "defenseValue": 25.9969,
+            "attackRounds": 310,
+            "defenseRounds": 827,
+            "rounds": 1137
+          },
+          "2nd_won": {
+            "value": 79.4665,
+            "attackValue": 80.3156,
+            "defenseValue": 79.228,
+            "attackRounds": 2037,
+            "defenseRounds": 7255,
+            "rounds": 9292
+          },
+          "full_eco": {
+            "value": 43.6575,
+            "attackValue": 36.765,
+            "defenseValue": 46.0009,
+            "attackRounds": 68,
+            "defenseRounds": 200,
+            "rounds": 268
+          },
+          "unknown": {
+            "value": 44.9518,
+            "attackValue": 46.0583,
+            "defenseValue": 44.5555,
+            "attackRounds": 5391,
+            "defenseRounds": 15053,
+            "rounds": 20444
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 20.4211,
+            "attackValue": 20.949,
+            "defenseValue": 19.8829,
+            "attackRounds": 67092,
+            "defenseRounds": 65799,
+            "rounds": 132891
+          },
+          "2nd_won": {
+            "value": 77.7503,
+            "attackValue": 78.5337,
+            "defenseValue": 77.032,
+            "attackRounds": 21127,
+            "defenseRounds": 23040,
+            "rounds": 44167
+          },
+          "pistol": {
+            "value": 49.5703,
+            "attackValue": 48.215,
+            "defenseValue": 50.6564,
+            "attackRounds": 85442,
+            "defenseRounds": 106616,
+            "rounds": 192058
+          },
+          "unknown": {
+            "value": 32.1158,
+            "attackValue": 32.5646,
+            "defenseValue": 31.6923,
+            "attackRounds": 77009,
+            "defenseRounds": 81600,
+            "rounds": 158609
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 24.0933,
+            "attackValue": 25.7562,
+            "defenseValue": 23.178,
+            "attackRounds": 19996,
+            "defenseRounds": 36327,
+            "rounds": 56323
+          },
+          "2nd_won": {
+            "value": 79.4736,
+            "attackValue": 80.134,
+            "defenseValue": 78.8188,
+            "attackRounds": 19834,
+            "defenseRounds": 20004,
+            "rounds": 39838
+          },
+          "full_eco": {
+            "value": 49.4943,
+            "attackValue": 46.8302,
+            "defenseValue": 52.4642,
+            "attackRounds": 1719,
+            "defenseRounds": 1542,
+            "rounds": 3261
+          },
+          "unknown": {
+            "value": 39.4795,
+            "attackValue": 40.4849,
+            "defenseValue": 38.7443,
+            "attackRounds": 163647,
+            "defenseRounds": 223771,
+            "rounds": 387418
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 35.6872,
+            "attackValue": 39.1063,
+            "defenseValue": 28.3135,
+            "attackRounds": 358,
+            "defenseRounds": 166,
+            "rounds": 524
+          },
+          "2nd_won": {
+            "value": 80.0965,
+            "attackValue": 80.7506,
+            "defenseValue": 79.4072,
+            "attackRounds": 48829,
+            "defenseRounds": 46337,
+            "rounds": 95166
+          },
+          "full_eco": {
+            "value": 45.8923,
+            "attackValue": 44.0529,
+            "defenseValue": 47.969,
+            "attackRounds": 1278,
+            "defenseRounds": 1132,
+            "rounds": 2410
+          },
+          "unknown": {
+            "value": 44.1422,
+            "attackValue": 43.4084,
+            "defenseValue": 44.8937,
+            "attackRounds": 86657,
+            "defenseRounds": 84618,
+            "rounds": 171275
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.8317,
+            "attackValue": 18.08,
+            "defenseValue": 17.5426,
+            "attackRounds": 209470,
+            "defenseRounds": 179917,
+            "rounds": 389387
+          },
+          "2nd_won": {
+            "value": 77.2304,
+            "attackValue": 77.362,
+            "defenseValue": 77.0751,
+            "attackRounds": 8358,
+            "defenseRounds": 7088,
+            "rounds": 15446
+          },
+          "pistol": {
+            "value": 49.7865,
+            "attackValue": 48.7698,
+            "defenseValue": 51.0356,
+            "attackRounds": 360181,
+            "defenseRounds": 293152,
+            "rounds": 653333
+          },
+          "unknown": {
+            "value": 38.0442,
+            "attackValue": 37.8029,
+            "defenseValue": 38.3153,
+            "attackRounds": 276222,
+            "defenseRounds": 245927,
+            "rounds": 522149
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.282,
+            "attackValue": 17.9087,
+            "defenseValue": 18.6572,
+            "attackRounds": 2440,
+            "defenseRounds": 2428,
+            "rounds": 4868
+          },
+          "2nd_won": {
+            "value": 72.1464,
+            "attackValue": 73.3017,
+            "defenseValue": 70.9101,
+            "attackRounds": 412,
+            "defenseRounds": 385,
+            "rounds": 797
+          },
+          "pistol": {
+            "value": 49.4727,
+            "attackValue": 48.7454,
+            "defenseValue": 50.4289,
+            "attackRounds": 18566,
+            "defenseRounds": 14121,
+            "rounds": 32687
+          },
+          "unknown": {
+            "value": 31.3209,
+            "attackValue": 32.7929,
+            "defenseValue": 30.0023,
+            "attackRounds": 2717,
+            "defenseRounds": 3033,
+            "rounds": 5750
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.4474,
+            "attackValue": 18.6135,
+            "defenseValue": 18.2245,
+            "attackRounds": 4851,
+            "defenseRounds": 3616,
+            "rounds": 8467
+          },
+          "2nd_won": {
+            "value": 79.2647,
+            "attackValue": 79.9467,
+            "defenseValue": 78.5538,
+            "attackRounds": 38023,
+            "defenseRounds": 36476,
+            "rounds": 74499
+          },
+          "pistol": {
+            "value": 50.2891,
+            "attackValue": 48.9248,
+            "defenseValue": 51.6846,
+            "attackRounds": 421627,
+            "defenseRounds": 412180,
+            "rounds": 833807
+          },
+          "unknown": {
+            "value": 35.848,
+            "attackValue": 37.0893,
+            "defenseValue": 34.5838,
+            "attackRounds": 9345,
+            "defenseRounds": 9175,
+            "rounds": 18520
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 40.0339,
+            "attackValue": 42.9561,
+            "defenseValue": 32.0758,
+            "attackRounds": 433,
+            "defenseRounds": 159,
+            "rounds": 592
+          },
+          "2nd_won": {
+            "value": 79.6075,
+            "attackValue": 80.6376,
+            "defenseValue": 78.7004,
+            "attackRounds": 52617,
+            "defenseRounds": 59758,
+            "rounds": 112375
+          },
+          "full_eco": {
+            "value": 47.2881,
+            "attackValue": 44.3522,
+            "defenseValue": 50.1542,
+            "attackRounds": 3161,
+            "defenseRounds": 3238,
+            "rounds": 6399
+          },
+          "unknown": {
+            "value": 44.0651,
+            "attackValue": 43.0287,
+            "defenseValue": 45.1032,
+            "attackRounds": 278674,
+            "defenseRounds": 278245,
+            "rounds": 556919
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 26.5014,
+            "attackValue": 40.6254,
+            "defenseValue": 23.994,
+            "attackRounds": 256,
+            "defenseRounds": 1442,
+            "rounds": 1698
+          },
+          "2nd_won": {
+            "value": 80.7002,
+            "attackValue": 81.5217,
+            "defenseValue": 80.107,
+            "attackRounds": 13064,
+            "defenseRounds": 18093,
+            "rounds": 31157
+          },
+          "full_eco": {
+            "value": 50.591,
+            "attackValue": 47.8289,
+            "defenseValue": 52.8083,
+            "attackRounds": 3387,
+            "defenseRounds": 4219,
+            "rounds": 7606
+          },
+          "unknown": {
+            "value": 49.4249,
+            "attackValue": 49.8277,
+            "defenseValue": 49.1486,
+            "attackRounds": 140043,
+            "defenseRounds": 204182,
+            "rounds": 344225
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 22.1007,
+            "attackValue": 21.7865,
+            "defenseValue": 22.5517,
+            "attackRounds": 7670,
+            "defenseRounds": 5343,
+            "rounds": 13013
+          },
+          "2nd_won": {
+            "value": 80.1709,
+            "attackValue": 79.907,
+            "defenseValue": 80.3102,
+            "attackRounds": 20111,
+            "defenseRounds": 38126,
+            "rounds": 58237
+          },
+          "unknown": {
+            "value": 36.5938,
+            "attackValue": 36.2172,
+            "defenseValue": 36.9273,
+            "attackRounds": 32131,
+            "defenseRounds": 36280,
+            "rounds": 68411
+          },
+          "full_eco": {
+            "value": 39.4696,
+            "attackValue": 37.7548,
+            "defenseValue": 40.9224,
+            "attackRounds": 294,
+            "defenseRounds": 347,
+            "rounds": 641
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 81.2992,
+            "attackValue": 83.9084,
+            "defenseValue": 80.046,
+            "attackRounds": 609,
+            "defenseRounds": 1268,
+            "rounds": 1877
+          },
+          "full_eco": {
+            "value": 49.1573,
+            "attackValue": 45.6108,
+            "defenseValue": 50.401,
+            "attackRounds": 1219,
+            "defenseRounds": 3476,
+            "rounds": 4695
+          },
+          "unknown": {
+            "value": 57.1167,
+            "attackValue": 55.2287,
+            "defenseValue": 57.7725,
+            "attackRounds": 51701,
+            "defenseRounds": 148849,
+            "rounds": 200550
+          },
+          "2nd_lost": {
+            "value": 0,
+            "attackValue": 0,
+            "defenseValue": 0,
+            "attackRounds": 1,
+            "defenseRounds": 1,
+            "rounds": 2
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 50.0834,
+            "attackValue": 50.7595,
+            "defenseValue": 49.7852,
+            "attackRounds": 3349,
+            "defenseRounds": 7595,
+            "rounds": 10944
+          },
+          "unknown": {
+            "value": 56.2288,
+            "attackValue": 54.5798,
+            "defenseValue": 56.9266,
+            "attackRounds": 164589,
+            "defenseRounds": 388938,
+            "rounds": 553527
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 28.0647,
+            "attackValue": 29.5336,
+            "defenseValue": 22.9731,
+            "attackRounds": 5387,
+            "defenseRounds": 1554,
+            "rounds": 6941
+          },
+          "2nd_won": {
+            "value": 80.3995,
+            "attackValue": 81.4047,
+            "defenseValue": 79.9616,
+            "attackRounds": 27439,
+            "defenseRounds": 62982,
+            "rounds": 90421
+          },
+          "full_eco": {
+            "value": 47.9039,
+            "attackValue": 44.9635,
+            "defenseValue": 50.2827,
+            "attackRounds": 1152,
+            "defenseRounds": 1424,
+            "rounds": 2576
+          },
+          "unknown": {
+            "value": 57.2567,
+            "attackValue": 59.3822,
+            "defenseValue": 55.5733,
+            "attackRounds": 93127,
+            "defenseRounds": 117581,
+            "rounds": 210708
+          }
+        },
+        "Phantom": {
+          "2nd_lost": {
+            "value": 26.9231,
+            "attackValue": 35,
+            "defenseValue": 0,
+            "attackRounds": 20,
+            "defenseRounds": 6,
+            "rounds": 26
+          },
+          "2nd_won": {
+            "value": 80.4912,
+            "attackValue": 80.5324,
+            "defenseValue": 80.4113,
+            "attackRounds": 22437,
+            "defenseRounds": 11553,
+            "rounds": 33990
+          },
+          "full_eco": {
+            "value": 50.4625,
+            "attackValue": 48.5298,
+            "defenseValue": 52.2537,
+            "attackRounds": 34793,
+            "defenseRounds": 37543,
+            "rounds": 72336
+          },
+          "unknown": {
+            "value": 54.6138,
+            "attackValue": 53.4106,
+            "defenseValue": 55.7481,
+            "attackRounds": 1352649,
+            "defenseRounds": 1434772,
+            "rounds": 2787421
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 21.2576,
+            "attackValue": 21.1972,
+            "defenseValue": 21.3207,
+            "attackRounds": 130963,
+            "defenseRounds": 125369,
+            "rounds": 256332
+          },
+          "2nd_won": {
+            "value": 77.7585,
+            "attackValue": 77.7718,
+            "defenseValue": 77.7464,
+            "attackRounds": 30239,
+            "defenseRounds": 33244,
+            "rounds": 63483
+          },
+          "pistol": {
+            "value": 50.0459,
+            "attackValue": 48.1282,
+            "defenseValue": 50.7227,
+            "attackRounds": 34375,
+            "defenseRounds": 97397,
+            "rounds": 131772
+          },
+          "unknown": {
+            "value": 32.2983,
+            "attackValue": 32.1027,
+            "defenseValue": 32.4985,
+            "attackRounds": 611355,
+            "defenseRounds": 597186,
+            "rounds": 1208541
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 18.1562,
+            "attackValue": 18.5987,
+            "defenseValue": 17.961,
+            "attackRounds": 7216,
+            "defenseRounds": 16353,
+            "rounds": 23569
+          },
+          "pistol": {
+            "value": 49.6457,
+            "attackValue": 49.6989,
+            "defenseValue": 49.5728,
+            "attackRounds": 12139,
+            "defenseRounds": 8864,
+            "rounds": 21003
+          },
+          "unknown": {
+            "value": 44.4775,
+            "attackValue": 45.4494,
+            "defenseValue": 43.5594,
+            "attackRounds": 38884,
+            "defenseRounds": 41166,
+            "rounds": 80050
+          },
+          "2nd_won": {
+            "value": 77.1156,
+            "attackValue": 79.3779,
+            "defenseValue": 75.5896,
+            "attackRounds": 257,
+            "defenseRounds": 381,
+            "rounds": 638
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 31.8497,
+            "attackValue": 34.7592,
+            "defenseValue": 27.7016,
+            "attackRounds": 2244,
+            "defenseRounds": 1574,
+            "rounds": 3818
+          },
+          "2nd_won": {
+            "value": 81.4482,
+            "attackValue": 81.5664,
+            "defenseValue": 81.3218,
+            "attackRounds": 73509,
+            "defenseRounds": 68688,
+            "rounds": 142197
+          },
+          "full_eco": {
+            "value": 46.753,
+            "attackValue": 43.9649,
+            "defenseValue": 50.7939,
+            "attackRounds": 1458,
+            "defenseRounds": 1006,
+            "rounds": 2464
+          },
+          "unknown": {
+            "value": 44.3434,
+            "attackValue": 43.928,
+            "defenseValue": 44.7973,
+            "attackRounds": 89290,
+            "defenseRounds": 81706,
+            "rounds": 170996
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 33.0857,
+            "attackValue": 35.7693,
+            "defenseValue": 27.9723,
+            "attackRounds": 14904,
+            "defenseRounds": 7822,
+            "rounds": 22726
+          },
+          "2nd_won": {
+            "value": 80.2432,
+            "attackValue": 80.5097,
+            "defenseValue": 79.9219,
+            "attackRounds": 24063,
+            "defenseRounds": 19963,
+            "rounds": 44026
+          },
+          "full_eco": {
+            "value": 47.4954,
+            "attackValue": 44.4889,
+            "defenseValue": 53.2076,
+            "attackRounds": 1007,
+            "defenseRounds": 530,
+            "rounds": 1537
+          },
+          "unknown": {
+            "value": 38.2927,
+            "attackValue": 38.0148,
+            "defenseValue": 38.6834,
+            "attackRounds": 128827,
+            "defenseRounds": 91658,
+            "rounds": 220485
+          }
+        },
+        "Vandal": {
+          "2nd_lost": {
+            "value": 19.8409,
+            "attackValue": 29.6869,
+            "defenseValue": 9.6773,
+            "attackRounds": 64,
+            "defenseRounds": 62,
+            "rounds": 126
+          },
+          "2nd_won": {
+            "value": 79.0463,
+            "attackValue": 79.113,
+            "defenseValue": 78.8859,
+            "attackRounds": 45800,
+            "defenseRounds": 19034,
+            "rounds": 64834
+          },
+          "full_eco": {
+            "value": 50.1068,
+            "attackValue": 48.203,
+            "defenseValue": 52.2144,
+            "attackRounds": 96875,
+            "defenseRounds": 87508,
+            "rounds": 184383
+          },
+          "unknown": {
+            "value": 53.3082,
+            "attackValue": 52.1335,
+            "defenseValue": 54.6415,
+            "attackRounds": 4044232,
+            "defenseRounds": 3562750,
+            "rounds": 7606982
+          }
+        }
+      },
       "unavailableAgents": [
         "Miks"
       ],
@@ -1947,6 +5207,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/Rook/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/3ea2b318-423b-cf86-25da-7cbb0eefbe2d/ALL/ALL/agent.json.gz"
       }
     },
@@ -2249,6 +5510,686 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 28.995,
+            "attackValue": 27.273,
+            "defenseValue": 29.6982,
+            "attackRounds": 176,
+            "defenseRounds": 431,
+            "rounds": 607
+          },
+          "2nd_won": {
+            "value": 81.4988,
+            "attackValue": 82.0651,
+            "defenseValue": 81.2582,
+            "attackRounds": 1249,
+            "defenseRounds": 2940,
+            "rounds": 4189
+          },
+          "full_eco": {
+            "value": 45.3155,
+            "attackValue": 26.9998,
+            "defenseValue": 54.781,
+            "attackRounds": 200,
+            "defenseRounds": 387,
+            "rounds": 587
+          },
+          "unknown": {
+            "value": 42.0112,
+            "attackValue": 39.1469,
+            "defenseValue": 43.4756,
+            "attackRounds": 3796,
+            "defenseRounds": 7425,
+            "rounds": 11221
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 18.9878,
+            "attackValue": 18.7664,
+            "defenseValue": 19.2254,
+            "attackRounds": 44539,
+            "defenseRounds": 41496,
+            "rounds": 86035
+          },
+          "2nd_won": {
+            "value": 79.7339,
+            "attackValue": 79.053,
+            "defenseValue": 80.3747,
+            "attackRounds": 9963,
+            "defenseRounds": 10588,
+            "rounds": 20551
+          },
+          "full_eco": {
+            "value": 46.0069,
+            "attackValue": 45.375,
+            "defenseValue": 46.5933,
+            "attackRounds": 681,
+            "defenseRounds": 734,
+            "rounds": 1415
+          },
+          "pistol": {
+            "value": 49.4831,
+            "attackValue": 48.6887,
+            "defenseValue": 50.1618,
+            "attackRounds": 47366,
+            "defenseRounds": 55442,
+            "rounds": 102808
+          },
+          "unknown": {
+            "value": 31.3023,
+            "attackValue": 31.0828,
+            "defenseValue": 31.498,
+            "attackRounds": 45756,
+            "defenseRounds": 51305,
+            "rounds": 97061
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 21.5168,
+            "attackValue": 22.8351,
+            "defenseValue": 20.9858,
+            "attackRounds": 6967,
+            "defenseRounds": 17293,
+            "rounds": 24260
+          },
+          "2nd_won": {
+            "value": 80.6671,
+            "attackValue": 80.5627,
+            "defenseValue": 80.7471,
+            "attackRounds": 5824,
+            "defenseRounds": 7594,
+            "rounds": 13418
+          },
+          "full_eco": {
+            "value": 46.7833,
+            "attackValue": 41.6469,
+            "defenseValue": 49.88,
+            "attackRounds": 1251,
+            "defenseRounds": 2075,
+            "rounds": 3326
+          },
+          "unknown": {
+            "value": 38.0832,
+            "attackValue": 38.709,
+            "defenseValue": 37.7825,
+            "attackRounds": 54349,
+            "defenseRounds": 113141,
+            "rounds": 167490
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 30.0722,
+            "attackValue": 32.8982,
+            "defenseValue": 23.6678,
+            "attackRounds": 383,
+            "defenseRounds": 169,
+            "rounds": 552
+          },
+          "2nd_won": {
+            "value": 82.1743,
+            "attackValue": 82.5129,
+            "defenseValue": 81.8037,
+            "attackRounds": 48016,
+            "defenseRounds": 43868,
+            "rounds": 91884
+          },
+          "full_eco": {
+            "value": 44.241,
+            "attackValue": 42.606,
+            "defenseValue": 45.7725,
+            "attackRounds": 4443,
+            "defenseRounds": 4743,
+            "rounds": 9186
+          },
+          "unknown": {
+            "value": 44.5669,
+            "attackValue": 43.2593,
+            "defenseValue": 45.8824,
+            "attackRounds": 78225,
+            "defenseRounds": 77747,
+            "rounds": 155972
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 16.6875,
+            "attackValue": 16.532,
+            "defenseValue": 16.8573,
+            "attackRounds": 214404,
+            "defenseRounds": 196444,
+            "rounds": 410848
+          },
+          "2nd_won": {
+            "value": 78.6401,
+            "attackValue": 78.7771,
+            "defenseValue": 78.462,
+            "attackRounds": 9047,
+            "defenseRounds": 6960,
+            "rounds": 16007
+          },
+          "full_eco": {
+            "value": 48.401,
+            "attackValue": 45.9733,
+            "defenseValue": 51.1466,
+            "attackRounds": 10443,
+            "defenseRounds": 9234,
+            "rounds": 19677
+          },
+          "pistol": {
+            "value": 49.7835,
+            "attackValue": 48.8274,
+            "defenseValue": 50.954,
+            "attackRounds": 373957,
+            "defenseRounds": 305488,
+            "rounds": 679445
+          },
+          "unknown": {
+            "value": 37.7716,
+            "attackValue": 36.8757,
+            "defenseValue": 38.7047,
+            "attackRounds": 298573,
+            "defenseRounds": 286628,
+            "rounds": 585201
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.8565,
+            "attackValue": 20.3317,
+            "defenseValue": 17.7428,
+            "attackRounds": 1987,
+            "defenseRounds": 2632,
+            "rounds": 4619
+          },
+          "2nd_won": {
+            "value": 79.4949,
+            "attackValue": 81.8183,
+            "defenseValue": 76.5833,
+            "attackRounds": 396,
+            "defenseRounds": 316,
+            "rounds": 712
+          },
+          "full_eco": {
+            "value": 56.5783,
+            "attackValue": 45.4534,
+            "defenseValue": 71.875,
+            "attackRounds": 44,
+            "defenseRounds": 32,
+            "rounds": 76
+          },
+          "pistol": {
+            "value": 49.9495,
+            "attackValue": 49.0921,
+            "defenseValue": 50.9416,
+            "attackRounds": 13267,
+            "defenseRounds": 11466,
+            "rounds": 24733
+          },
+          "unknown": {
+            "value": 31.854,
+            "attackValue": 32.3221,
+            "defenseValue": 31.5267,
+            "attackRounds": 2438,
+            "defenseRounds": 3486,
+            "rounds": 5924
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 17.101,
+            "attackValue": 16.8102,
+            "defenseValue": 17.5264,
+            "attackRounds": 6044,
+            "defenseRounds": 4131,
+            "rounds": 10175
+          },
+          "2nd_won": {
+            "value": 80.2625,
+            "attackValue": 80.2131,
+            "defenseValue": 80.3148,
+            "attackRounds": 32890,
+            "defenseRounds": 31115,
+            "rounds": 64005
+          },
+          "full_eco": {
+            "value": 41.0481,
+            "attackValue": 40.0673,
+            "defenseValue": 42.0696,
+            "attackRounds": 302,
+            "defenseRounds": 290,
+            "rounds": 592
+          },
+          "pistol": {
+            "value": 50.254,
+            "attackValue": 49.1523,
+            "defenseValue": 51.3989,
+            "attackRounds": 359556,
+            "defenseRounds": 345996,
+            "rounds": 705552
+          },
+          "unknown": {
+            "value": 33.9071,
+            "attackValue": 33.41,
+            "defenseValue": 34.4069,
+            "attackRounds": 10892,
+            "defenseRounds": 10835,
+            "rounds": 21727
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 29.3453,
+            "attackValue": 32.3197,
+            "defenseValue": 23.5076,
+            "attackRounds": 526,
+            "defenseRounds": 268,
+            "rounds": 794
+          },
+          "2nd_won": {
+            "value": 80.6532,
+            "attackValue": 80.9573,
+            "defenseValue": 80.3444,
+            "attackRounds": 54207,
+            "defenseRounds": 53359,
+            "rounds": 107566
+          },
+          "full_eco": {
+            "value": 46.7167,
+            "attackValue": 45.8884,
+            "defenseValue": 47.6168,
+            "attackRounds": 13801,
+            "defenseRounds": 12699,
+            "rounds": 26500
+          },
+          "unknown": {
+            "value": 43.6164,
+            "attackValue": 42.1474,
+            "defenseValue": 45.1488,
+            "attackRounds": 250467,
+            "defenseRounds": 240089,
+            "rounds": 490556
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 26.0657,
+            "attackValue": 42.8587,
+            "defenseValue": 23.1213,
+            "attackRounds": 182,
+            "defenseRounds": 1038,
+            "rounds": 1220
+          },
+          "2nd_won": {
+            "value": 81.3673,
+            "attackValue": 82.1429,
+            "defenseValue": 80.8025,
+            "attackRounds": 7985,
+            "defenseRounds": 10965,
+            "rounds": 18950
+          },
+          "full_eco": {
+            "value": 48.2657,
+            "attackValue": 47.6021,
+            "defenseValue": 48.6308,
+            "attackRounds": 2813,
+            "defenseRounds": 5112,
+            "rounds": 7925
+          },
+          "unknown": {
+            "value": 47.8663,
+            "attackValue": 47.9642,
+            "defenseValue": 47.8122,
+            "attackRounds": 66457,
+            "defenseRounds": 120385,
+            "rounds": 186842
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 20.767,
+            "attackValue": 20.5285,
+            "defenseValue": 20.9979,
+            "attackRounds": 7107,
+            "defenseRounds": 7343,
+            "rounds": 14450
+          },
+          "2nd_won": {
+            "value": 81.9528,
+            "attackValue": 81.4943,
+            "defenseValue": 82.1987,
+            "attackRounds": 23037,
+            "defenseRounds": 42944,
+            "rounds": 65981
+          },
+          "full_eco": {
+            "value": 39.8657,
+            "attackValue": 41.6412,
+            "defenseValue": 39.0168,
+            "attackRounds": 1256,
+            "defenseRounds": 2627,
+            "rounds": 3883
+          },
+          "unknown": {
+            "value": 36.2772,
+            "attackValue": 35.5954,
+            "defenseValue": 36.8377,
+            "attackRounds": 31468,
+            "defenseRounds": 38284,
+            "rounds": 69752
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 78.165,
+            "attackValue": 67.5102,
+            "defenseValue": 86.4787,
+            "attackRounds": 277,
+            "defenseRounds": 355,
+            "rounds": 632
+          },
+          "full_eco": {
+            "value": 53.6763,
+            "attackValue": 50.7475,
+            "defenseValue": 55.0353,
+            "attackRounds": 2004,
+            "defenseRounds": 4319,
+            "rounds": 6323
+          },
+          "unknown": {
+            "value": 57.3794,
+            "attackValue": 54.4656,
+            "defenseValue": 58.6397,
+            "attackRounds": 16695,
+            "defenseRounds": 38597,
+            "rounds": 55292
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 52.6586,
+            "attackValue": 49.1643,
+            "defenseValue": 54.1426,
+            "attackRounds": 18379,
+            "defenseRounds": 43278,
+            "rounds": 61657
+          },
+          "unknown": {
+            "value": 57.1171,
+            "attackValue": 54.4286,
+            "defenseValue": 58.2392,
+            "attackRounds": 154882,
+            "defenseRounds": 371087,
+            "rounds": 525969
+          },
+          "2nd_won": {
+            "value": 100,
+            "attackValue": 100,
+            "defenseValue": 100,
+            "attackRounds": 2,
+            "defenseRounds": 1,
+            "rounds": 3
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 26.1011,
+            "attackValue": 26.4683,
+            "defenseValue": 24.9558,
+            "attackRounds": 5448,
+            "defenseRounds": 1747,
+            "rounds": 7195
+          },
+          "2nd_won": {
+            "value": 82.1147,
+            "attackValue": 82.0289,
+            "defenseValue": 82.1464,
+            "attackRounds": 22435,
+            "defenseRounds": 60601,
+            "rounds": 83036
+          },
+          "full_eco": {
+            "value": 45.6142,
+            "attackValue": 47.8933,
+            "defenseValue": 44.5388,
+            "attackRounds": 2963,
+            "defenseRounds": 6280,
+            "rounds": 9243
+          },
+          "unknown": {
+            "value": 57.6649,
+            "attackValue": 60.2137,
+            "defenseValue": 55.9279,
+            "attackRounds": 71791,
+            "defenseRounds": 105347,
+            "rounds": 177138
+          }
+        },
+        "Phantom": {
+          "2nd_lost": {
+            "value": 33.3333,
+            "attackValue": 50,
+            "defenseValue": 25,
+            "attackRounds": 6,
+            "defenseRounds": 12,
+            "rounds": 18
+          },
+          "2nd_won": {
+            "value": 81.7017,
+            "attackValue": 81.7731,
+            "defenseValue": 81.5388,
+            "attackRounds": 19439,
+            "defenseRounds": 8515,
+            "rounds": 27954
+          },
+          "full_eco": {
+            "value": 50.8602,
+            "attackValue": 48.0095,
+            "defenseValue": 53.4915,
+            "attackRounds": 97020,
+            "defenseRounds": 105111,
+            "rounds": 202131
+          },
+          "unknown": {
+            "value": 55.5091,
+            "attackValue": 54.0499,
+            "defenseValue": 56.905,
+            "attackRounds": 931711,
+            "defenseRounds": 973961,
+            "rounds": 1905672
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 20.1195,
+            "attackValue": 19.8946,
+            "defenseValue": 20.3651,
+            "attackRounds": 122282,
+            "defenseRounds": 111952,
+            "rounds": 234234
+          },
+          "2nd_won": {
+            "value": 79.9473,
+            "attackValue": 80.0896,
+            "defenseValue": 79.8089,
+            "attackRounds": 37124,
+            "defenseRounds": 38145,
+            "rounds": 75269
+          },
+          "full_eco": {
+            "value": 45.0973,
+            "attackValue": 43.9085,
+            "defenseValue": 46.3328,
+            "attackRounds": 7411,
+            "defenseRounds": 7131,
+            "rounds": 14542
+          },
+          "pistol": {
+            "value": 50.2113,
+            "attackValue": 49.3042,
+            "defenseValue": 50.5412,
+            "attackRounds": 42275,
+            "defenseRounds": 116239,
+            "rounds": 158514
+          },
+          "unknown": {
+            "value": 32.048,
+            "attackValue": 31.2931,
+            "defenseValue": 32.8308,
+            "attackRounds": 586900,
+            "defenseRounds": 565901,
+            "rounds": 1152801
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 15.9718,
+            "attackValue": 16.6459,
+            "defenseValue": 15.8212,
+            "attackRounds": 2337,
+            "defenseRounds": 10467,
+            "rounds": 12804
+          },
+          "2nd_won": {
+            "value": 83.3343,
+            "attackValue": 84.4458,
+            "defenseValue": 82.6674,
+            "attackRounds": 135,
+            "defenseRounds": 225,
+            "rounds": 360
+          },
+          "full_eco": {
+            "value": 51.9202,
+            "attackValue": 50.5072,
+            "defenseValue": 53.5469,
+            "attackRounds": 1980,
+            "defenseRounds": 1720,
+            "rounds": 3700
+          },
+          "pistol": {
+            "value": 48.7394,
+            "attackValue": 46.298,
+            "defenseValue": 50.3237,
+            "attackRounds": 3309,
+            "defenseRounds": 5099,
+            "rounds": 8408
+          },
+          "unknown": {
+            "value": 45.8316,
+            "attackValue": 46.809,
+            "defenseValue": 44.9763,
+            "attackRounds": 33147,
+            "defenseRounds": 37878,
+            "rounds": 71025
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 31.7687,
+            "attackValue": 33.3607,
+            "defenseValue": 29.7129,
+            "attackRounds": 2425,
+            "defenseRounds": 1878,
+            "rounds": 4303
+          },
+          "2nd_won": {
+            "value": 82.7143,
+            "attackValue": 82.5044,
+            "defenseValue": 82.9228,
+            "attackRounds": 71081,
+            "defenseRounds": 71522,
+            "rounds": 142603
+          },
+          "full_eco": {
+            "value": 43.9893,
+            "attackValue": 42.5963,
+            "defenseValue": 45.1567,
+            "attackRounds": 4775,
+            "defenseRounds": 5698,
+            "rounds": 10473
+          },
+          "unknown": {
+            "value": 43.7932,
+            "attackValue": 42.8932,
+            "defenseValue": 44.6412,
+            "attackRounds": 78639,
+            "defenseRounds": 83459,
+            "rounds": 162098
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 30.945,
+            "attackValue": 33.4965,
+            "defenseValue": 27.6483,
+            "attackRounds": 10613,
+            "defenseRounds": 8214,
+            "rounds": 18827
+          },
+          "2nd_won": {
+            "value": 81.4785,
+            "attackValue": 81.913,
+            "defenseValue": 81.0498,
+            "attackRounds": 18124,
+            "defenseRounds": 18369,
+            "rounds": 36493
+          },
+          "full_eco": {
+            "value": 44.8547,
+            "attackValue": 42.3889,
+            "defenseValue": 47.9046,
+            "attackRounds": 3718,
+            "defenseRounds": 3006,
+            "rounds": 6724
+          },
+          "unknown": {
+            "value": 38.1612,
+            "attackValue": 37.3205,
+            "defenseValue": 39.0655,
+            "attackRounds": 93039,
+            "defenseRounds": 86496,
+            "rounds": 179535
+          }
+        },
+        "Vandal": {
+          "2nd_lost": {
+            "value": 20.1609,
+            "attackValue": 23.5948,
+            "defenseValue": 11.4289,
+            "attackRounds": 89,
+            "defenseRounds": 35,
+            "rounds": 124
+          },
+          "2nd_won": {
+            "value": 80.6874,
+            "attackValue": 80.7937,
+            "defenseValue": 80.4125,
+            "attackRounds": 44319,
+            "defenseRounds": 17133,
+            "rounds": 61452
+          },
+          "full_eco": {
+            "value": 50.1331,
+            "attackValue": 47.8854,
+            "defenseValue": 52.6724,
+            "attackRounds": 357091,
+            "defenseRounds": 316099,
+            "rounds": 673190
+          },
+          "unknown": {
+            "value": 54.0598,
+            "attackValue": 52.4164,
+            "defenseValue": 55.9335,
+            "attackRounds": 3276065,
+            "defenseRounds": 2873239,
+            "rounds": 6149304
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -2309,6 +6250,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/Canyon/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/Canyon/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/Canyon/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/ALL/agent.json.gz"
       }
     },
@@ -2611,6 +6553,678 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 25.5886,
+            "attackValue": 18.4209,
+            "defenseValue": 28.649,
+            "attackRounds": 152,
+            "defenseRounds": 356,
+            "rounds": 508
+          },
+          "2nd_won": {
+            "value": 80.4454,
+            "attackValue": 78.7326,
+            "defenseValue": 81.125,
+            "attackRounds": 1072,
+            "defenseRounds": 2702,
+            "rounds": 3774
+          },
+          "full_eco": {
+            "value": 46.7675,
+            "attackValue": 45.4689,
+            "defenseValue": 47.2406,
+            "attackRounds": 607,
+            "defenseRounds": 1666,
+            "rounds": 2273
+          },
+          "unknown": {
+            "value": 43.099,
+            "attackValue": 42.2159,
+            "defenseValue": 43.4719,
+            "attackRounds": 1824,
+            "defenseRounds": 4320,
+            "rounds": 6144
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 20.4144,
+            "attackValue": 20.0631,
+            "defenseValue": 20.7776,
+            "attackRounds": 38299,
+            "defenseRounds": 37044,
+            "rounds": 75343
+          },
+          "2nd_won": {
+            "value": 78.3763,
+            "attackValue": 78.0798,
+            "defenseValue": 78.6597,
+            "attackRounds": 8992,
+            "defenseRounds": 9405,
+            "rounds": 18397
+          },
+          "full_eco": {
+            "value": 44.8927,
+            "attackValue": 40.9467,
+            "defenseValue": 49.0383,
+            "attackRounds": 2513,
+            "defenseRounds": 2392,
+            "rounds": 4905
+          },
+          "pistol": {
+            "value": 49.849,
+            "attackValue": 48.1972,
+            "defenseValue": 51.4369,
+            "attackRounds": 46708,
+            "defenseRounds": 48590,
+            "rounds": 95298
+          },
+          "unknown": {
+            "value": 30.2479,
+            "attackValue": 29.7496,
+            "defenseValue": 30.7025,
+            "attackRounds": 32948,
+            "defenseRounds": 36111,
+            "rounds": 69059
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 21.9215,
+            "attackValue": 23.995,
+            "defenseValue": 21.1456,
+            "attackRounds": 1713,
+            "defenseRounds": 4578,
+            "rounds": 6291
+          },
+          "2nd_won": {
+            "value": 80.0688,
+            "attackValue": 80.7868,
+            "defenseValue": 79.5767,
+            "attackRounds": 1067,
+            "defenseRounds": 1557,
+            "rounds": 2624
+          },
+          "full_eco": {
+            "value": 44.8783,
+            "attackValue": 44.9548,
+            "defenseValue": 44.8256,
+            "attackRounds": 3092,
+            "defenseRounds": 4484,
+            "rounds": 7576
+          },
+          "unknown": {
+            "value": 36.7021,
+            "attackValue": 37.2061,
+            "defenseValue": 36.4901,
+            "attackRounds": 9372,
+            "defenseRounds": 22274,
+            "rounds": 31646
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 37.5554,
+            "attackValue": 31.6136,
+            "defenseValue": 50.0009,
+            "attackRounds": 155,
+            "defenseRounds": 74,
+            "rounds": 229
+          },
+          "2nd_won": {
+            "value": 80.6535,
+            "attackValue": 81.0729,
+            "defenseValue": 80.1945,
+            "attackRounds": 21159,
+            "defenseRounds": 19334,
+            "rounds": 40493
+          },
+          "full_eco": {
+            "value": 44.0182,
+            "attackValue": 43.3324,
+            "defenseValue": 44.6917,
+            "attackRounds": 9794,
+            "defenseRounds": 9973,
+            "rounds": 19767
+          },
+          "unknown": {
+            "value": 45.3813,
+            "attackValue": 44.1635,
+            "defenseValue": 46.7157,
+            "attackRounds": 25476,
+            "defenseRounds": 23251,
+            "rounds": 48727
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.7321,
+            "attackValue": 17.8135,
+            "defenseValue": 17.6395,
+            "attackRounds": 88745,
+            "defenseRounds": 77962,
+            "rounds": 166707
+          },
+          "2nd_won": {
+            "value": 77.3301,
+            "attackValue": 77.6243,
+            "defenseValue": 76.9711,
+            "attackRounds": 3003,
+            "defenseRounds": 2462,
+            "rounds": 5465
+          },
+          "full_eco": {
+            "value": 47.95,
+            "attackValue": 45.493,
+            "defenseValue": 50.7296,
+            "attackRounds": 23194,
+            "defenseRounds": 20502,
+            "rounds": 43696
+          },
+          "pistol": {
+            "value": 49.7065,
+            "attackValue": 48.3669,
+            "defenseValue": 51.4384,
+            "attackRounds": 155253,
+            "defenseRounds": 120091,
+            "rounds": 275344
+          },
+          "unknown": {
+            "value": 36.3983,
+            "attackValue": 36.0121,
+            "defenseValue": 36.7885,
+            "attackRounds": 96194,
+            "defenseRounds": 95197,
+            "rounds": 191391
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.3671,
+            "attackValue": 18.493,
+            "defenseValue": 18.2477,
+            "attackRounds": 1049,
+            "defenseRounds": 1107,
+            "rounds": 2156
+          },
+          "2nd_won": {
+            "value": 77.0552,
+            "attackValue": 72.6197,
+            "defenseValue": 83.0645,
+            "attackRounds": 168,
+            "defenseRounds": 124,
+            "rounds": 292
+          },
+          "pistol": {
+            "value": 51.3849,
+            "attackValue": 49.8225,
+            "defenseValue": 53.7217,
+            "attackRounds": 8199,
+            "defenseRounds": 5482,
+            "rounds": 13681
+          },
+          "unknown": {
+            "value": 29.1804,
+            "attackValue": 27.8481,
+            "defenseValue": 30.4711,
+            "attackRounds": 1027,
+            "defenseRounds": 1060,
+            "rounds": 2087
+          },
+          "full_eco": {
+            "value": 56.4993,
+            "attackValue": 53.9056,
+            "defenseValue": 61.1104,
+            "attackRounds": 128,
+            "defenseRounds": 72,
+            "rounds": 200
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.7074,
+            "attackValue": 20.0432,
+            "defenseValue": 17.0116,
+            "attackRounds": 1776,
+            "defenseRounds": 1399,
+            "rounds": 3175
+          },
+          "2nd_won": {
+            "value": 79.1604,
+            "attackValue": 79.2069,
+            "defenseValue": 79.1095,
+            "attackRounds": 13658,
+            "defenseRounds": 12450,
+            "rounds": 26108
+          },
+          "full_eco": {
+            "value": 41.1548,
+            "attackValue": 44.3882,
+            "defenseValue": 38.0152,
+            "attackRounds": 401,
+            "defenseRounds": 413,
+            "rounds": 814
+          },
+          "pistol": {
+            "value": 50.0226,
+            "attackValue": 48.6401,
+            "defenseValue": 51.5378,
+            "attackRounds": 179865,
+            "defenseRounds": 164122,
+            "rounds": 343987
+          },
+          "unknown": {
+            "value": 33.6514,
+            "attackValue": 33.9788,
+            "defenseValue": 33.3207,
+            "attackRounds": 2731,
+            "defenseRounds": 2704,
+            "rounds": 5435
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 33.4071,
+            "attackValue": 36.0131,
+            "defenseValue": 27.7788,
+            "attackRounds": 311,
+            "defenseRounds": 144,
+            "rounds": 455
+          },
+          "2nd_won": {
+            "value": 79.602,
+            "attackValue": 80.0537,
+            "defenseValue": 79.1874,
+            "attackRounds": 28270,
+            "defenseRounds": 30795,
+            "rounds": 59065
+          },
+          "full_eco": {
+            "value": 46.8427,
+            "attackValue": 45.315,
+            "defenseValue": 48.3836,
+            "attackRounds": 36132,
+            "defenseRounds": 35825,
+            "rounds": 71957
+          },
+          "unknown": {
+            "value": 42.7137,
+            "attackValue": 40.95,
+            "defenseValue": 44.433,
+            "attackRounds": 105197,
+            "defenseRounds": 107915,
+            "rounds": 213112
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 27.9288,
+            "attackValue": 34.3457,
+            "defenseValue": 26.8084,
+            "attackRounds": 99,
+            "defenseRounds": 567,
+            "rounds": 666
+          },
+          "2nd_won": {
+            "value": 79.2339,
+            "attackValue": 78.6582,
+            "defenseValue": 79.5579,
+            "attackRounds": 2858,
+            "defenseRounds": 5078,
+            "rounds": 7936
+          },
+          "full_eco": {
+            "value": 48.9371,
+            "attackValue": 46.0675,
+            "defenseValue": 50.8415,
+            "attackRounds": 10502,
+            "defenseRounds": 15824,
+            "rounds": 26326
+          },
+          "unknown": {
+            "value": 47.4237,
+            "attackValue": 48.1157,
+            "defenseValue": 47.047,
+            "attackRounds": 17737,
+            "defenseRounds": 32578,
+            "rounds": 50315
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 21.8534,
+            "attackValue": 21.9351,
+            "defenseValue": 21.7979,
+            "attackRounds": 3173,
+            "defenseRounds": 4670,
+            "rounds": 7843
+          },
+          "2nd_won": {
+            "value": 80.4889,
+            "attackValue": 81.4544,
+            "defenseValue": 80.0303,
+            "attackRounds": 12031,
+            "defenseRounds": 25328,
+            "rounds": 37359
+          },
+          "full_eco": {
+            "value": 42.2825,
+            "attackValue": 41.765,
+            "defenseValue": 42.4741,
+            "attackRounds": 2562,
+            "defenseRounds": 6922,
+            "rounds": 9484
+          },
+          "unknown": {
+            "value": 35.3122,
+            "attackValue": 35.3832,
+            "defenseValue": 35.2625,
+            "attackRounds": 11548,
+            "defenseRounds": 16468,
+            "rounds": 28016
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 80.1763,
+            "attackValue": 80.3097,
+            "defenseValue": 80.0945,
+            "attackRounds": 259,
+            "defenseRounds": 422,
+            "rounds": 681
+          },
+          "full_eco": {
+            "value": 53.1041,
+            "attackValue": 48.0603,
+            "defenseValue": 54.9119,
+            "attackRounds": 9432,
+            "defenseRounds": 26316,
+            "rounds": 35748
+          },
+          "unknown": {
+            "value": 61.8301,
+            "attackValue": 58.6002,
+            "defenseValue": 63.0352,
+            "attackRounds": 9768,
+            "defenseRounds": 26182,
+            "rounds": 35950
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 53.03,
+            "attackValue": 49.1572,
+            "defenseValue": 54.2213,
+            "attackRounds": 37572,
+            "defenseRounds": 122151,
+            "rounds": 159723
+          },
+          "unknown": {
+            "value": 61.1294,
+            "attackValue": 57.8989,
+            "defenseValue": 62.1568,
+            "attackRounds": 32287,
+            "defenseRounds": 101527,
+            "rounds": 133814
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 28.9442,
+            "attackValue": 29.9522,
+            "defenseValue": 25.4727,
+            "attackRounds": 2731,
+            "defenseRounds": 793,
+            "rounds": 3524
+          },
+          "2nd_won": {
+            "value": 80.0881,
+            "attackValue": 81.263,
+            "defenseValue": 79.7022,
+            "attackRounds": 8230,
+            "defenseRounds": 25063,
+            "rounds": 33293
+          },
+          "full_eco": {
+            "value": 46.9985,
+            "attackValue": 46.6604,
+            "defenseValue": 47.1326,
+            "attackRounds": 5716,
+            "defenseRounds": 14421,
+            "rounds": 20137
+          },
+          "unknown": {
+            "value": 61.5473,
+            "attackValue": 62.3783,
+            "defenseValue": 60.9697,
+            "attackRounds": 28978,
+            "defenseRounds": 41691,
+            "rounds": 70669
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 79.3995,
+            "attackValue": 79.681,
+            "defenseValue": 78.7344,
+            "attackRounds": 11802,
+            "defenseRounds": 4994,
+            "rounds": 16796
+          },
+          "full_eco": {
+            "value": 50.8886,
+            "attackValue": 47.9712,
+            "defenseValue": 53.7741,
+            "attackRounds": 316544,
+            "defenseRounds": 320041,
+            "rounds": 636585
+          },
+          "unknown": {
+            "value": 58.5693,
+            "attackValue": 57.424,
+            "defenseValue": 59.7426,
+            "attackRounds": 317474,
+            "defenseRounds": 309879,
+            "rounds": 627353
+          },
+          "2nd_lost": {
+            "value": 42.8571,
+            "attackValue": 60,
+            "defenseValue": 0,
+            "attackRounds": 5,
+            "defenseRounds": 2,
+            "rounds": 7
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 21.2968,
+            "attackValue": 21.0704,
+            "defenseValue": 21.5311,
+            "attackRounds": 64403,
+            "defenseRounds": 62256,
+            "rounds": 126659
+          },
+          "2nd_won": {
+            "value": 78.6758,
+            "attackValue": 79.0968,
+            "defenseValue": 78.2864,
+            "attackRounds": 23125,
+            "defenseRounds": 25008,
+            "rounds": 48133
+          },
+          "full_eco": {
+            "value": 44.6601,
+            "attackValue": 43.2654,
+            "defenseValue": 46.1662,
+            "attackRounds": 19840,
+            "defenseRounds": 18373,
+            "rounds": 38213
+          },
+          "pistol": {
+            "value": 50.6245,
+            "attackValue": 48.5466,
+            "defenseValue": 51.3243,
+            "attackRounds": 26140,
+            "defenseRounds": 77617,
+            "rounds": 103757
+          },
+          "unknown": {
+            "value": 31.2512,
+            "attackValue": 30.3035,
+            "defenseValue": 32.1922,
+            "attackRounds": 281096,
+            "defenseRounds": 283110,
+            "rounds": 564206
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 18.2819,
+            "attackValue": 21.5579,
+            "defenseValue": 17.5191,
+            "attackRounds": 719,
+            "defenseRounds": 3088,
+            "rounds": 3807
+          },
+          "full_eco": {
+            "value": 50.0869,
+            "attackValue": 46.7922,
+            "defenseValue": 54.6112,
+            "attackRounds": 5597,
+            "defenseRounds": 4076,
+            "rounds": 9673
+          },
+          "unknown": {
+            "value": 44.315,
+            "attackValue": 44.7114,
+            "defenseValue": 43.9163,
+            "attackRounds": 10532,
+            "defenseRounds": 10470,
+            "rounds": 21002
+          },
+          "pistol": {
+            "value": 51.5005,
+            "attackValue": 48.2231,
+            "defenseValue": 54.0873,
+            "attackRounds": 985,
+            "defenseRounds": 1248,
+            "rounds": 2233
+          },
+          "2nd_won": {
+            "value": 52.7774,
+            "attackValue": 71.4293,
+            "defenseValue": 48.2752,
+            "attackRounds": 14,
+            "defenseRounds": 58,
+            "rounds": 72
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 34.1464,
+            "attackValue": 36.22,
+            "defenseValue": 31.1623,
+            "attackRounds": 1016,
+            "defenseRounds": 706,
+            "rounds": 1722
+          },
+          "2nd_won": {
+            "value": 81.0092,
+            "attackValue": 81.3328,
+            "defenseValue": 80.6924,
+            "attackRounds": 29559,
+            "defenseRounds": 30201,
+            "rounds": 59760
+          },
+          "full_eco": {
+            "value": 44.0488,
+            "attackValue": 43.2524,
+            "defenseValue": 44.7509,
+            "attackRounds": 10286,
+            "defenseRounds": 11669,
+            "rounds": 21955
+          },
+          "unknown": {
+            "value": 44.8162,
+            "attackValue": 43.2248,
+            "defenseValue": 46.6533,
+            "attackRounds": 26486,
+            "defenseRounds": 22944,
+            "rounds": 49430
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 34.3092,
+            "attackValue": 36.8789,
+            "defenseValue": 29.1864,
+            "attackRounds": 8989,
+            "defenseRounds": 4509,
+            "rounds": 13498
+          },
+          "2nd_won": {
+            "value": 79.4003,
+            "attackValue": 78.9877,
+            "defenseValue": 79.8572,
+            "attackRounds": 9632,
+            "defenseRounds": 8698,
+            "rounds": 18330
+          },
+          "full_eco": {
+            "value": 45.1687,
+            "attackValue": 43.4534,
+            "defenseValue": 47.7043,
+            "attackRounds": 11044,
+            "defenseRounds": 7471,
+            "rounds": 18515
+          },
+          "unknown": {
+            "value": 37.048,
+            "attackValue": 35.609,
+            "defenseValue": 39.15,
+            "attackRounds": 54326,
+            "defenseRounds": 37193,
+            "rounds": 91519
+          }
+        },
+        "Vandal": {
+          "2nd_lost": {
+            "value": 48.0005,
+            "attackValue": 50.0007,
+            "defenseValue": 40,
+            "attackRounds": 60,
+            "defenseRounds": 15,
+            "rounds": 75
+          },
+          "2nd_won": {
+            "value": 79.2499,
+            "attackValue": 79.1668,
+            "defenseValue": 79.4581,
+            "attackRounds": 24371,
+            "defenseRounds": 9716,
+            "rounds": 34087
+          },
+          "full_eco": {
+            "value": 49.9661,
+            "attackValue": 47.437,
+            "defenseValue": 52.8361,
+            "attackRounds": 990189,
+            "defenseRounds": 872554,
+            "rounds": 1862743
+          },
+          "unknown": {
+            "value": 56.0103,
+            "attackValue": 54.584,
+            "defenseValue": 57.6202,
+            "attackRounds": 962854,
+            "defenseRounds": 852981,
+            "rounds": 1815835
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -2671,6 +7285,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Triad/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Triad/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Triad/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     },
@@ -2969,6 +7584,492 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 24.5445,
+            "attackValue": 31.1371,
+            "defenseValue": 20.5116,
+            "attackRounds": 167,
+            "defenseRounds": 273,
+            "rounds": 440
+          },
+          "2nd_won": {
+            "value": 76.2183,
+            "attackValue": 80.0635,
+            "defenseValue": 74.6562,
+            "attackRounds": 622,
+            "defenseRounds": 1531,
+            "rounds": 2153
+          },
+          "unknown": {
+            "value": 43.0794,
+            "attackValue": 39.8911,
+            "defenseValue": 44.9974,
+            "attackRounds": 2369,
+            "defenseRounds": 3938,
+            "rounds": 6307
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 22.1824,
+            "attackValue": 22.1102,
+            "defenseValue": 22.2142,
+            "attackRounds": 2881,
+            "defenseRounds": 6523,
+            "rounds": 9404
+          },
+          "2nd_won": {
+            "value": 80.0611,
+            "attackValue": 78.7904,
+            "defenseValue": 81.1943,
+            "attackRounds": 2480,
+            "defenseRounds": 2781,
+            "rounds": 5261
+          },
+          "unknown": {
+            "value": 40.5899,
+            "attackValue": 42.2431,
+            "defenseValue": 39.5898,
+            "attackRounds": 24489,
+            "defenseRounds": 40479,
+            "rounds": 64968
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 28.7742,
+            "attackValue": 33.255,
+            "defenseValue": 19.8124,
+            "attackRounds": 424,
+            "defenseRounds": 212,
+            "rounds": 636
+          },
+          "2nd_won": {
+            "value": 81.2883,
+            "attackValue": 81.786,
+            "defenseValue": 80.8255,
+            "attackRounds": 32860,
+            "defenseRounds": 35340,
+            "rounds": 68200
+          },
+          "unknown": {
+            "value": 44.602,
+            "attackValue": 43.7082,
+            "defenseValue": 45.4603,
+            "attackRounds": 58775,
+            "defenseRounds": 61207,
+            "rounds": 119982
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.5741,
+            "attackValue": 17.8904,
+            "defenseValue": 17.1799,
+            "attackRounds": 116980,
+            "defenseRounds": 93863,
+            "rounds": 210843
+          },
+          "2nd_won": {
+            "value": 76.6881,
+            "attackValue": 77.2819,
+            "defenseValue": 76.0595,
+            "attackRounds": 3900,
+            "defenseRounds": 3684,
+            "rounds": 7584
+          },
+          "pistol": {
+            "value": 49.2393,
+            "attackValue": 47.3548,
+            "defenseValue": 51.8426,
+            "attackRounds": 152228,
+            "defenseRounds": 110195,
+            "rounds": 262423
+          },
+          "unknown": {
+            "value": 38.7809,
+            "attackValue": 37.6464,
+            "defenseValue": 39.9683,
+            "attackRounds": 152156,
+            "defenseRounds": 145381,
+            "rounds": 297537
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 21.8793,
+            "attackValue": 23.9783,
+            "defenseValue": 19.9503,
+            "attackRounds": 1101,
+            "defenseRounds": 1198,
+            "rounds": 2299
+          },
+          "2nd_won": {
+            "value": 77.3592,
+            "attackValue": 84.5249,
+            "defenseValue": 69.3336,
+            "attackRounds": 84,
+            "defenseRounds": 75,
+            "rounds": 159
+          },
+          "pistol": {
+            "value": 50.6092,
+            "attackValue": 48.365,
+            "defenseValue": 53.8665,
+            "attackRounds": 4524,
+            "defenseRounds": 3117,
+            "rounds": 7641
+          },
+          "unknown": {
+            "value": 27.8297,
+            "attackValue": 26.2279,
+            "defenseValue": 29.1475,
+            "attackRounds": 1304,
+            "defenseRounds": 1585,
+            "rounds": 2889
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 20.1792,
+            "attackValue": 19.0413,
+            "defenseValue": 21.7122,
+            "attackRounds": 4989,
+            "defenseRounds": 3703,
+            "rounds": 8692
+          },
+          "2nd_won": {
+            "value": 79.6634,
+            "attackValue": 79.5467,
+            "defenseValue": 79.778,
+            "attackRounds": 21777,
+            "defenseRounds": 22199,
+            "rounds": 43976
+          },
+          "pistol": {
+            "value": 49.9654,
+            "attackValue": 48.3465,
+            "defenseValue": 51.6176,
+            "attackRounds": 325893,
+            "defenseRounds": 319312,
+            "rounds": 645205
+          },
+          "unknown": {
+            "value": 33.4048,
+            "attackValue": 32.6762,
+            "defenseValue": 34.173,
+            "attackRounds": 6454,
+            "defenseRounds": 6122,
+            "rounds": 12576
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 36.9158,
+            "attackValue": 36.7118,
+            "defenseValue": 37.3537,
+            "attackRounds": 730,
+            "defenseRounds": 340,
+            "rounds": 1070
+          },
+          "2nd_won": {
+            "value": 79.4587,
+            "attackValue": 80.236,
+            "defenseValue": 78.684,
+            "attackRounds": 46956,
+            "defenseRounds": 47107,
+            "rounds": 94063
+          },
+          "unknown": {
+            "value": 44.2756,
+            "attackValue": 42.6911,
+            "defenseValue": 45.8693,
+            "attackRounds": 247948,
+            "defenseRounds": 246540,
+            "rounds": 494488
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 24.1915,
+            "attackValue": 36.5852,
+            "defenseValue": 22.5758,
+            "attackRounds": 82,
+            "defenseRounds": 629,
+            "rounds": 711
+          },
+          "2nd_won": {
+            "value": 80.2893,
+            "attackValue": 79.4475,
+            "defenseValue": 80.9362,
+            "attackRounds": 2068,
+            "defenseRounds": 2691,
+            "rounds": 4759
+          },
+          "unknown": {
+            "value": 48.1173,
+            "attackValue": 46.9699,
+            "defenseValue": 48.8709,
+            "attackRounds": 33602,
+            "defenseRounds": 51159,
+            "rounds": 84761
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 20.9966,
+            "attackValue": 20.7754,
+            "defenseValue": 21.1328,
+            "attackRounds": 11778,
+            "defenseRounds": 19123,
+            "rounds": 30901
+          },
+          "2nd_won": {
+            "value": 80.9385,
+            "attackValue": 81.4246,
+            "defenseValue": 80.6953,
+            "attackRounds": 13986,
+            "defenseRounds": 27948,
+            "rounds": 41934
+          },
+          "unknown": {
+            "value": 35.8753,
+            "attackValue": 34.8454,
+            "defenseValue": 36.5648,
+            "attackRounds": 37711,
+            "defenseRounds": 56327,
+            "rounds": 94038
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 81.132,
+            "attackValue": 82.7582,
+            "defenseValue": 79.167,
+            "attackRounds": 116,
+            "defenseRounds": 96,
+            "rounds": 212
+          },
+          "unknown": {
+            "value": 53.8074,
+            "attackValue": 48.5809,
+            "defenseValue": 56.6236,
+            "attackRounds": 6980,
+            "defenseRounds": 12954,
+            "rounds": 19934
+          }
+        },
+        "Operator": {
+          "unknown": {
+            "value": 56.5181,
+            "attackValue": 53.4523,
+            "defenseValue": 57.5277,
+            "attackRounds": 99429,
+            "defenseRounds": 301933,
+            "rounds": 401362
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 29.1277,
+            "attackValue": 30.356,
+            "defenseValue": 25.5984,
+            "attackRounds": 4928,
+            "defenseRounds": 1715,
+            "rounds": 6643
+          },
+          "2nd_won": {
+            "value": 80.7991,
+            "attackValue": 81.5771,
+            "defenseValue": 80.481,
+            "attackRounds": 21570,
+            "defenseRounds": 52768,
+            "rounds": 74338
+          },
+          "unknown": {
+            "value": 56.3309,
+            "attackValue": 57.2394,
+            "defenseValue": 55.7068,
+            "attackRounds": 78041,
+            "defenseRounds": 113595,
+            "rounds": 191636
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 81.643,
+            "attackValue": 82.8384,
+            "defenseValue": 78.7853,
+            "attackRounds": 10244,
+            "defenseRounds": 4285,
+            "rounds": 14529
+          },
+          "unknown": {
+            "value": 53.9165,
+            "attackValue": 51.7582,
+            "defenseValue": 56.043,
+            "attackRounds": 544653,
+            "defenseRounds": 552781,
+            "rounds": 1097434
+          },
+          "2nd_lost": {
+            "value": 40,
+            "attackValue": 33.3333,
+            "defenseValue": 50,
+            "attackRounds": 3,
+            "defenseRounds": 2,
+            "rounds": 5
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 20.1067,
+            "attackValue": 20.6012,
+            "defenseValue": 19.6027,
+            "attackRounds": 143265,
+            "defenseRounds": 140540,
+            "rounds": 283805
+          },
+          "2nd_won": {
+            "value": 78.9252,
+            "attackValue": 79.4452,
+            "defenseValue": 78.4695,
+            "attackRounds": 45288,
+            "defenseRounds": 51661,
+            "rounds": 96949
+          },
+          "pistol": {
+            "value": 50.861,
+            "attackValue": 48.1984,
+            "defenseValue": 52.6549,
+            "attackRounds": 104059,
+            "defenseRounds": 154443,
+            "rounds": 258502
+          },
+          "unknown": {
+            "value": 32.4111,
+            "attackValue": 31.5361,
+            "defenseValue": 33.2536,
+            "attackRounds": 434362,
+            "defenseRounds": 451146,
+            "rounds": 885508
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 17.3993,
+            "attackValue": 19.567,
+            "defenseValue": 16.8279,
+            "attackRounds": 1109,
+            "defenseRounds": 4207,
+            "rounds": 5316
+          },
+          "pistol": {
+            "value": 48.3321,
+            "attackValue": 46.4614,
+            "defenseValue": 50.7122,
+            "attackRounds": 1696,
+            "defenseRounds": 1333,
+            "rounds": 3029
+          },
+          "unknown": {
+            "value": 45.2875,
+            "attackValue": 45.6584,
+            "defenseValue": 44.8645,
+            "attackRounds": 22545,
+            "defenseRounds": 19775,
+            "rounds": 42320
+          },
+          "2nd_won": {
+            "value": 77.5278,
+            "attackValue": 75.6088,
+            "defenseValue": 79.1669,
+            "attackRounds": 41,
+            "defenseRounds": 48,
+            "rounds": 89
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 30.7184,
+            "attackValue": 34.631,
+            "defenseValue": 25.2551,
+            "attackRounds": 1233,
+            "defenseRounds": 883,
+            "rounds": 2116
+          },
+          "2nd_won": {
+            "value": 81.5027,
+            "attackValue": 81.4253,
+            "defenseValue": 81.5754,
+            "attackRounds": 20996,
+            "defenseRounds": 22327,
+            "rounds": 43323
+          },
+          "unknown": {
+            "value": 43.7945,
+            "attackValue": 43.2102,
+            "defenseValue": 44.3654,
+            "attackRounds": 26797,
+            "defenseRounds": 27431,
+            "rounds": 54228
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.267,
+            "attackValue": 33.5484,
+            "defenseValue": 29.14,
+            "attackRounds": 11774,
+            "defenseRounds": 4825,
+            "rounds": 16599
+          },
+          "2nd_won": {
+            "value": 79.873,
+            "attackValue": 81.3393,
+            "defenseValue": 78.4001,
+            "attackRounds": 9314,
+            "defenseRounds": 9273,
+            "rounds": 18587
+          },
+          "unknown": {
+            "value": 39.5486,
+            "attackValue": 38.4862,
+            "defenseValue": 40.9527,
+            "attackRounds": 70559,
+            "defenseRounds": 53388,
+            "rounds": 123947
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 80.7022,
+            "attackValue": 81.6842,
+            "defenseValue": 78.1712,
+            "attackRounds": 45778,
+            "defenseRounds": 17761,
+            "rounds": 63539
+          },
+          "unknown": {
+            "value": 53.1082,
+            "attackValue": 51.1419,
+            "defenseValue": 55.2822,
+            "attackRounds": 3114436,
+            "defenseRounds": 2816869,
+            "rounds": 5931305
+          },
+          "2nd_lost": {
+            "value": 54.2854,
+            "attackValue": 48.0915,
+            "defenseValue": 72.7264,
+            "attackRounds": 131,
+            "defenseRounds": 44,
+            "rounds": 175
+          }
+        }
+      },
       "unavailableAgents": [
         "Miks",
         "Veto"
@@ -3032,6 +8133,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/ac12e9b3-47e6-9599-8fa1-0bb473e5efc7/ALL/Port/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/ac12e9b3-47e6-9599-8fa1-0bb473e5efc7/ALL/Port/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/ac12e9b3-47e6-9599-8fa1-0bb473e5efc7/ALL/Port/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/ac12e9b3-47e6-9599-8fa1-0bb473e5efc7/ALL/ALL/agent.json.gz"
       }
     },
@@ -3334,6 +8436,678 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 24.4542,
+            "attackValue": 25.489,
+            "defenseValue": 23.9351,
+            "attackRounds": 153,
+            "defenseRounds": 305,
+            "rounds": 458
+          },
+          "2nd_won": {
+            "value": 80.3888,
+            "attackValue": 84.3055,
+            "defenseValue": 78.5996,
+            "attackRounds": 841,
+            "defenseRounds": 1841,
+            "rounds": 2682
+          },
+          "full_eco": {
+            "value": 43.7763,
+            "attackValue": 47.8172,
+            "defenseValue": 42.1543,
+            "attackRounds": 458,
+            "defenseRounds": 1141,
+            "rounds": 1599
+          },
+          "unknown": {
+            "value": 42.1384,
+            "attackValue": 44.7768,
+            "defenseValue": 40.8658,
+            "attackRounds": 1637,
+            "defenseRounds": 3394,
+            "rounds": 5031
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 19.5894,
+            "attackValue": 20.5248,
+            "defenseValue": 18.7438,
+            "attackRounds": 33223,
+            "defenseRounds": 36749,
+            "rounds": 69972
+          },
+          "2nd_won": {
+            "value": 79.232,
+            "attackValue": 79.7712,
+            "defenseValue": 78.6939,
+            "attackRounds": 9516,
+            "defenseRounds": 9537,
+            "rounds": 19053
+          },
+          "full_eco": {
+            "value": 43.8144,
+            "attackValue": 46.2523,
+            "defenseValue": 41.4531,
+            "attackRounds": 2374,
+            "defenseRounds": 2451,
+            "rounds": 4825
+          },
+          "pistol": {
+            "value": 50.1078,
+            "attackValue": 50.3675,
+            "defenseValue": 49.8891,
+            "attackRounds": 41981,
+            "defenseRounds": 49853,
+            "rounds": 91834
+          },
+          "unknown": {
+            "value": 30.5058,
+            "attackValue": 31.4798,
+            "defenseValue": 29.7822,
+            "attackRounds": 29959,
+            "defenseRounds": 40320,
+            "rounds": 70279
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 22.954,
+            "attackValue": 27.0022,
+            "defenseValue": 20.743,
+            "attackRounds": 2059,
+            "defenseRounds": 3770,
+            "rounds": 5829
+          },
+          "2nd_won": {
+            "value": 79.6901,
+            "attackValue": 81.5384,
+            "defenseValue": 77.9652,
+            "attackRounds": 1495,
+            "defenseRounds": 1602,
+            "rounds": 3097
+          },
+          "full_eco": {
+            "value": 45.1816,
+            "attackValue": 45.879,
+            "defenseValue": 44.6088,
+            "attackRounds": 3481,
+            "defenseRounds": 4239,
+            "rounds": 7720
+          },
+          "unknown": {
+            "value": 35.1998,
+            "attackValue": 36.529,
+            "defenseValue": 34.4163,
+            "attackRounds": 12439,
+            "defenseRounds": 21103,
+            "rounds": 33542
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 31.6204,
+            "attackValue": 33.8458,
+            "defenseValue": 24.1384,
+            "attackRounds": 195,
+            "defenseRounds": 58,
+            "rounds": 253
+          },
+          "2nd_won": {
+            "value": 80.6347,
+            "attackValue": 82.0503,
+            "defenseValue": 79.1624,
+            "attackRounds": 21299,
+            "defenseRounds": 20478,
+            "rounds": 41777
+          },
+          "full_eco": {
+            "value": 44.2868,
+            "attackValue": 44.9578,
+            "defenseValue": 43.6419,
+            "attackRounds": 9658,
+            "defenseRounds": 10050,
+            "rounds": 19708
+          },
+          "unknown": {
+            "value": 44.3825,
+            "attackValue": 45.1986,
+            "defenseValue": 43.6216,
+            "attackRounds": 24107,
+            "defenseRounds": 25852,
+            "rounds": 49959
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.6657,
+            "attackValue": 18.5765,
+            "defenseValue": 16.7227,
+            "attackRounds": 92492,
+            "defenseRounds": 89332,
+            "rounds": 181824
+          },
+          "2nd_won": {
+            "value": 77.0175,
+            "attackValue": 78.3779,
+            "defenseValue": 75.4722,
+            "attackRounds": 3728,
+            "defenseRounds": 3282,
+            "rounds": 7010
+          },
+          "full_eco": {
+            "value": 49.2016,
+            "attackValue": 48.1695,
+            "defenseValue": 50.3358,
+            "attackRounds": 25683,
+            "defenseRounds": 23368,
+            "rounds": 49051
+          },
+          "pistol": {
+            "value": 49.7964,
+            "attackValue": 49.6242,
+            "defenseValue": 50.0022,
+            "attackRounds": 170556,
+            "defenseRounds": 142767,
+            "rounds": 313323
+          },
+          "unknown": {
+            "value": 35.9988,
+            "attackValue": 37.4138,
+            "defenseValue": 34.6996,
+            "attackRounds": 112309,
+            "defenseRounds": 122322,
+            "rounds": 234631
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.6338,
+            "attackValue": 18.3231,
+            "defenseValue": 18.8441,
+            "attackRounds": 715,
+            "defenseRounds": 1056,
+            "rounds": 1771
+          },
+          "full_eco": {
+            "value": 59.0367,
+            "attackValue": 67.0104,
+            "defenseValue": 47.8274,
+            "attackRounds": 97,
+            "defenseRounds": 69,
+            "rounds": 166
+          },
+          "pistol": {
+            "value": 50.8875,
+            "attackValue": 50.6876,
+            "defenseValue": 51.1357,
+            "attackRounds": 5524,
+            "defenseRounds": 4447,
+            "rounds": 9971
+          },
+          "unknown": {
+            "value": 30.8374,
+            "attackValue": 32.4134,
+            "defenseValue": 29.633,
+            "attackRounds": 833,
+            "defenseRounds": 1090,
+            "rounds": 1923
+          },
+          "2nd_won": {
+            "value": 74.1466,
+            "attackValue": 70.3391,
+            "defenseValue": 79.3109,
+            "attackRounds": 118,
+            "defenseRounds": 87,
+            "rounds": 205
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.5158,
+            "attackValue": 19.7308,
+            "defenseValue": 17.1004,
+            "attackRounds": 1703,
+            "defenseRounds": 1462,
+            "rounds": 3165
+          },
+          "2nd_won": {
+            "value": 79.7791,
+            "attackValue": 80.8616,
+            "defenseValue": 78.6295,
+            "attackRounds": 14750,
+            "defenseRounds": 13889,
+            "rounds": 28639
+          },
+          "full_eco": {
+            "value": 42.3467,
+            "attackValue": 45.0519,
+            "defenseValue": 39.2075,
+            "attackRounds": 586,
+            "defenseRounds": 505,
+            "rounds": 1091
+          },
+          "pistol": {
+            "value": 50.2216,
+            "attackValue": 49.8796,
+            "defenseValue": 50.588,
+            "attackRounds": 173192,
+            "defenseRounds": 161645,
+            "rounds": 334837
+          },
+          "unknown": {
+            "value": 33.2736,
+            "attackValue": 34.644,
+            "defenseValue": 31.897,
+            "attackRounds": 3077,
+            "defenseRounds": 3063,
+            "rounds": 6140
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 34.261,
+            "attackValue": 38.2551,
+            "defenseValue": 20.3129,
+            "attackRounds": 447,
+            "defenseRounds": 128,
+            "rounds": 575
+          },
+          "2nd_won": {
+            "value": 79.4319,
+            "attackValue": 81.1792,
+            "defenseValue": 77.6794,
+            "attackRounds": 31616,
+            "defenseRounds": 31522,
+            "rounds": 63138
+          },
+          "full_eco": {
+            "value": 46.9041,
+            "attackValue": 47.0247,
+            "defenseValue": 46.7869,
+            "attackRounds": 35867,
+            "defenseRounds": 36900,
+            "rounds": 72767
+          },
+          "unknown": {
+            "value": 43.2179,
+            "attackValue": 43.9893,
+            "defenseValue": 42.5181,
+            "attackRounds": 106018,
+            "defenseRounds": 116888,
+            "rounds": 222906
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 31.654,
+            "attackValue": 40.3118,
+            "defenseValue": 29.0385,
+            "attackRounds": 129,
+            "defenseRounds": 427,
+            "rounds": 556
+          },
+          "2nd_won": {
+            "value": 79.6326,
+            "attackValue": 82.5497,
+            "defenseValue": 77.3121,
+            "attackRounds": 4092,
+            "defenseRounds": 5144,
+            "rounds": 9236
+          },
+          "full_eco": {
+            "value": 48.3493,
+            "attackValue": 47.766,
+            "defenseValue": 48.8936,
+            "attackRounds": 13101,
+            "defenseRounds": 14041,
+            "rounds": 27142
+          },
+          "unknown": {
+            "value": 47.1233,
+            "attackValue": 51.1955,
+            "defenseValue": 44.3686,
+            "attackRounds": 22317,
+            "defenseRounds": 32990,
+            "rounds": 55307
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 21.8315,
+            "attackValue": 23.3553,
+            "defenseValue": 20.5975,
+            "attackRounds": 4667,
+            "defenseRounds": 5763,
+            "rounds": 10430
+          },
+          "2nd_won": {
+            "value": 80.32,
+            "attackValue": 81.4107,
+            "defenseValue": 79.6705,
+            "attackRounds": 14391,
+            "defenseRounds": 24166,
+            "rounds": 38557
+          },
+          "full_eco": {
+            "value": 41.3931,
+            "attackValue": 41.9256,
+            "defenseValue": 41.099,
+            "attackRounds": 3678,
+            "defenseRounds": 6657,
+            "rounds": 10335
+          },
+          "unknown": {
+            "value": 35.7389,
+            "attackValue": 38.3758,
+            "defenseValue": 33.4996,
+            "attackRounds": 14827,
+            "defenseRounds": 17460,
+            "rounds": 32287
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 80.4643,
+            "attackValue": 79.9182,
+            "defenseValue": 80.9525,
+            "attackRounds": 244,
+            "defenseRounds": 273,
+            "rounds": 517
+          },
+          "full_eco": {
+            "value": 52.7391,
+            "attackValue": 52.6032,
+            "defenseValue": 52.7985,
+            "attackRounds": 7992,
+            "defenseRounds": 18271,
+            "rounds": 26263
+          },
+          "unknown": {
+            "value": 61.3352,
+            "attackValue": 60.9525,
+            "defenseValue": 61.5246,
+            "attackRounds": 8971,
+            "defenseRounds": 18123,
+            "rounds": 27094
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 51.5837,
+            "attackValue": 49.6284,
+            "defenseValue": 52.464,
+            "attackRounds": 46308,
+            "defenseRounds": 102867,
+            "rounds": 149175
+          },
+          "unknown": {
+            "value": 59.9823,
+            "attackValue": 61.4329,
+            "defenseValue": 59.2628,
+            "attackRounds": 44548,
+            "defenseRounds": 89820,
+            "rounds": 134368
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 27.9806,
+            "attackValue": 28.3869,
+            "defenseValue": 26.4703,
+            "attackRounds": 3160,
+            "defenseRounds": 850,
+            "rounds": 4010
+          },
+          "2nd_won": {
+            "value": 79.8927,
+            "attackValue": 82.3682,
+            "defenseValue": 78.7087,
+            "attackRounds": 11671,
+            "defenseRounds": 24400,
+            "rounds": 36071
+          },
+          "full_eco": {
+            "value": 46.0831,
+            "attackValue": 49.3293,
+            "defenseValue": 44.1439,
+            "attackRounds": 7756,
+            "defenseRounds": 12983,
+            "rounds": 20739
+          },
+          "unknown": {
+            "value": 61.9845,
+            "attackValue": 65.2921,
+            "defenseValue": 58.9103,
+            "attackRounds": 34937,
+            "defenseRounds": 37590,
+            "rounds": 72527
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 81.1115,
+            "attackValue": 82.0902,
+            "defenseValue": 78.9198,
+            "attackRounds": 11569,
+            "defenseRounds": 5166,
+            "rounds": 16735
+          },
+          "full_eco": {
+            "value": 50.7898,
+            "attackValue": 50.0036,
+            "defenseValue": 51.5353,
+            "attackRounds": 292726,
+            "defenseRounds": 308641,
+            "rounds": 601367
+          },
+          "unknown": {
+            "value": 58.4714,
+            "attackValue": 59.4678,
+            "defenseValue": 57.4312,
+            "attackRounds": 315045,
+            "defenseRounds": 301758,
+            "rounds": 616803
+          },
+          "2nd_lost": {
+            "value": 57.1429,
+            "attackValue": 50,
+            "defenseValue": 66.6667,
+            "attackRounds": 4,
+            "defenseRounds": 3,
+            "rounds": 7
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 21.3598,
+            "attackValue": 22.6546,
+            "defenseValue": 20.0289,
+            "attackRounds": 60394,
+            "defenseRounds": 58759,
+            "rounds": 119153
+          },
+          "2nd_won": {
+            "value": 78.501,
+            "attackValue": 80.2406,
+            "defenseValue": 76.8735,
+            "attackRounds": 18872,
+            "defenseRounds": 20171,
+            "rounds": 39043
+          },
+          "full_eco": {
+            "value": 44.8725,
+            "attackValue": 44.5554,
+            "defenseValue": 45.1951,
+            "attackRounds": 18191,
+            "defenseRounds": 17878,
+            "rounds": 36069
+          },
+          "pistol": {
+            "value": 49.6808,
+            "attackValue": 47.9618,
+            "defenseValue": 50.4318,
+            "attackRounds": 25181,
+            "defenseRounds": 57633,
+            "rounds": 82814
+          },
+          "unknown": {
+            "value": 31.2483,
+            "attackValue": 32.2789,
+            "defenseValue": 30.3757,
+            "attackRounds": 256021,
+            "defenseRounds": 302378,
+            "rounds": 558399
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 15.2817,
+            "attackValue": 16.33,
+            "defenseValue": 14.9116,
+            "attackRounds": 741,
+            "defenseRounds": 2099,
+            "rounds": 2840
+          },
+          "full_eco": {
+            "value": 51.7742,
+            "attackValue": 51.745,
+            "defenseValue": 51.8093,
+            "attackRounds": 5330,
+            "defenseRounds": 4447,
+            "rounds": 9777
+          },
+          "unknown": {
+            "value": 45.427,
+            "attackValue": 47.5582,
+            "defenseValue": 43.3377,
+            "attackRounds": 10030,
+            "defenseRounds": 10231,
+            "rounds": 20261
+          },
+          "pistol": {
+            "value": 48.5829,
+            "attackValue": 46.9881,
+            "defenseValue": 50.047,
+            "attackRounds": 996,
+            "defenseRounds": 1085,
+            "rounds": 2081
+          },
+          "2nd_won": {
+            "value": 87.8789,
+            "attackValue": 90.9073,
+            "defenseValue": 86.3648,
+            "attackRounds": 22,
+            "defenseRounds": 44,
+            "rounds": 66
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 32.9197,
+            "attackValue": 35.1241,
+            "defenseValue": 29.4992,
+            "attackRounds": 931,
+            "defenseRounds": 600,
+            "rounds": 1531
+          },
+          "2nd_won": {
+            "value": 81.5709,
+            "attackValue": 83.0744,
+            "defenseValue": 80.1654,
+            "attackRounds": 27018,
+            "defenseRounds": 28903,
+            "rounds": 55921
+          },
+          "full_eco": {
+            "value": 43.1117,
+            "attackValue": 44.635,
+            "defenseValue": 41.7892,
+            "attackRounds": 9665,
+            "defenseRounds": 11132,
+            "rounds": 20797
+          },
+          "unknown": {
+            "value": 44.0771,
+            "attackValue": 45.1359,
+            "defenseValue": 43.0319,
+            "attackRounds": 22419,
+            "defenseRounds": 22713,
+            "rounds": 45132
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 34.1278,
+            "attackValue": 36.5062,
+            "defenseValue": 29.3492,
+            "attackRounds": 7818,
+            "defenseRounds": 3891,
+            "rounds": 11709
+          },
+          "2nd_won": {
+            "value": 81.1635,
+            "attackValue": 81.3651,
+            "defenseValue": 80.9678,
+            "attackRounds": 8366,
+            "defenseRounds": 8622,
+            "rounds": 16988
+          },
+          "full_eco": {
+            "value": 46.4243,
+            "attackValue": 47.1124,
+            "defenseValue": 45.5856,
+            "attackRounds": 9401,
+            "defenseRounds": 7713,
+            "rounds": 17114
+          },
+          "unknown": {
+            "value": 37.4868,
+            "attackValue": 38.1396,
+            "defenseValue": 36.7716,
+            "attackRounds": 44992,
+            "defenseRounds": 41061,
+            "rounds": 86053
+          }
+        },
+        "Vandal": {
+          "2nd_lost": {
+            "value": 18.292,
+            "attackValue": 13.5127,
+            "defenseValue": 62.5,
+            "attackRounds": 74,
+            "defenseRounds": 8,
+            "rounds": 82
+          },
+          "2nd_won": {
+            "value": 80.4821,
+            "attackValue": 80.843,
+            "defenseValue": 79.5355,
+            "attackRounds": 25652,
+            "defenseRounds": 9778,
+            "rounds": 35430
+          },
+          "full_eco": {
+            "value": 50.1449,
+            "attackValue": 49.3935,
+            "defenseValue": 50.9751,
+            "attackRounds": 958063,
+            "defenseRounds": 867062,
+            "rounds": 1825125
+          },
+          "unknown": {
+            "value": 56.3049,
+            "attackValue": 57.2681,
+            "defenseValue": 55.1831,
+            "attackRounds": 1016149,
+            "defenseRounds": 872479,
+            "rounds": 1888628
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -3394,6 +9168,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Jam/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Jam/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Jam/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     },
@@ -3696,6 +9471,694 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 27.0062,
+            "attackValue": 34.1595,
+            "defenseValue": 24.8905,
+            "attackRounds": 202,
+            "defenseRounds": 683,
+            "rounds": 885
+          },
+          "2nd_won": {
+            "value": 78.8702,
+            "attackValue": 78.3348,
+            "defenseValue": 79.0483,
+            "attackRounds": 1417,
+            "defenseRounds": 4262,
+            "rounds": 5679
+          },
+          "full_eco": {
+            "value": 43.3889,
+            "attackValue": 35.6321,
+            "defenseValue": 45.8339,
+            "attackRounds": 174,
+            "defenseRounds": 552,
+            "rounds": 726
+          },
+          "unknown": {
+            "value": 43.2602,
+            "attackValue": 40.5405,
+            "defenseValue": 44.293,
+            "attackRounds": 4186,
+            "defenseRounds": 11022,
+            "rounds": 15208
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 20.6611,
+            "attackValue": 21.1331,
+            "defenseValue": 20.0951,
+            "attackRounds": 54559,
+            "defenseRounds": 45488,
+            "rounds": 100047
+          },
+          "2nd_won": {
+            "value": 78.4685,
+            "attackValue": 79.5729,
+            "defenseValue": 77.5213,
+            "attackRounds": 9375,
+            "defenseRounds": 10930,
+            "rounds": 20305
+          },
+          "full_eco": {
+            "value": 45.3372,
+            "attackValue": 45.0618,
+            "defenseValue": 45.6092,
+            "attackRounds": 810,
+            "defenseRounds": 820,
+            "rounds": 1630
+          },
+          "pistol": {
+            "value": 50.0424,
+            "attackValue": 47.6439,
+            "defenseValue": 52.071,
+            "attackRounds": 48213,
+            "defenseRounds": 57002,
+            "rounds": 105215
+          },
+          "unknown": {
+            "value": 31.4634,
+            "attackValue": 31.3693,
+            "defenseValue": 31.5532,
+            "attackRounds": 50853,
+            "defenseRounds": 53210,
+            "rounds": 104063
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 23.2963,
+            "attackValue": 23.5733,
+            "defenseValue": 23.1614,
+            "attackRounds": 7623,
+            "defenseRounds": 15651,
+            "rounds": 23274
+          },
+          "2nd_won": {
+            "value": 78.0288,
+            "attackValue": 78.5204,
+            "defenseValue": 77.6782,
+            "attackRounds": 6103,
+            "defenseRounds": 8557,
+            "rounds": 14660
+          },
+          "full_eco": {
+            "value": 45.2183,
+            "attackValue": 41.8738,
+            "defenseValue": 47.4875,
+            "attackRounds": 1323,
+            "defenseRounds": 1950,
+            "rounds": 3273
+          },
+          "unknown": {
+            "value": 38.3393,
+            "attackValue": 38.9766,
+            "defenseValue": 38.0052,
+            "attackRounds": 54405,
+            "defenseRounds": 103779,
+            "rounds": 158184
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 29.771,
+            "attackValue": 32.9116,
+            "defenseValue": 24.9997,
+            "attackRounds": 316,
+            "defenseRounds": 208,
+            "rounds": 524
+          },
+          "2nd_won": {
+            "value": 80.4207,
+            "attackValue": 81.0891,
+            "defenseValue": 79.6931,
+            "attackRounds": 45735,
+            "defenseRounds": 42010,
+            "rounds": 87745
+          },
+          "full_eco": {
+            "value": 45.9216,
+            "attackValue": 45.0408,
+            "defenseValue": 46.8874,
+            "attackRounds": 4527,
+            "defenseRounds": 4129,
+            "rounds": 8656
+          },
+          "unknown": {
+            "value": 44.5594,
+            "attackValue": 42.9125,
+            "defenseValue": 46.2764,
+            "attackRounds": 74727,
+            "defenseRounds": 71679,
+            "rounds": 146406
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 18.1793,
+            "attackValue": 18.7161,
+            "defenseValue": 17.5639,
+            "attackRounds": 216804,
+            "defenseRounds": 189116,
+            "rounds": 405920
+          },
+          "2nd_won": {
+            "value": 76.6079,
+            "attackValue": 76.8543,
+            "defenseValue": 76.3067,
+            "attackRounds": 9392,
+            "defenseRounds": 7681,
+            "rounds": 17073
+          },
+          "full_eco": {
+            "value": 48.9234,
+            "attackValue": 45.8348,
+            "defenseValue": 52.27,
+            "attackRounds": 10429,
+            "defenseRounds": 9625,
+            "rounds": 20054
+          },
+          "pistol": {
+            "value": 49.7158,
+            "attackValue": 47.8915,
+            "defenseValue": 51.8615,
+            "attackRounds": 329448,
+            "defenseRounds": 280103,
+            "rounds": 609551
+          },
+          "unknown": {
+            "value": 38.2115,
+            "attackValue": 37.4923,
+            "defenseValue": 38.9547,
+            "attackRounds": 309447,
+            "defenseRounds": 299461,
+            "rounds": 608908
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.4536,
+            "attackValue": 18.8444,
+            "defenseValue": 18.0214,
+            "attackRounds": 3253,
+            "defenseRounds": 2941,
+            "rounds": 6194
+          },
+          "2nd_won": {
+            "value": 80.4001,
+            "attackValue": 84.0209,
+            "defenseValue": 76.5194,
+            "attackRounds": 388,
+            "defenseRounds": 362,
+            "rounds": 750
+          },
+          "pistol": {
+            "value": 49.7127,
+            "attackValue": 47.9172,
+            "defenseValue": 51.8484,
+            "attackRounds": 15516,
+            "defenseRounds": 13044,
+            "rounds": 28560
+          },
+          "unknown": {
+            "value": 29.2135,
+            "attackValue": 28.6816,
+            "defenseValue": 29.6839,
+            "attackRounds": 3361,
+            "defenseRounds": 3800,
+            "rounds": 7161
+          },
+          "full_eco": {
+            "value": 46.6661,
+            "attackValue": 51.9225,
+            "defenseValue": 39.4732,
+            "attackRounds": 52,
+            "defenseRounds": 38,
+            "rounds": 90
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.6361,
+            "attackValue": 18.3446,
+            "defenseValue": 19.0487,
+            "attackRounds": 6160,
+            "defenseRounds": 4352,
+            "rounds": 10512
+          },
+          "2nd_won": {
+            "value": 78.875,
+            "attackValue": 79.8795,
+            "defenseValue": 77.841,
+            "attackRounds": 34593,
+            "defenseRounds": 33603,
+            "rounds": 68196
+          },
+          "full_eco": {
+            "value": 41.2367,
+            "attackValue": 36.4816,
+            "defenseValue": 46.5451,
+            "attackRounds": 307,
+            "defenseRounds": 275,
+            "rounds": 582
+          },
+          "pistol": {
+            "value": 50.0404,
+            "attackValue": 47.9352,
+            "defenseValue": 52.361,
+            "attackRounds": 416313,
+            "defenseRounds": 377672,
+            "rounds": 793985
+          },
+          "unknown": {
+            "value": 34.6866,
+            "attackValue": 34.3855,
+            "defenseValue": 34.9847,
+            "attackRounds": 10932,
+            "defenseRounds": 11042,
+            "rounds": 21974
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 36.2052,
+            "attackValue": 40.6378,
+            "defenseValue": 26.9723,
+            "attackRounds": 502,
+            "defenseRounds": 241,
+            "rounds": 743
+          },
+          "2nd_won": {
+            "value": 79.2376,
+            "attackValue": 79.8567,
+            "defenseValue": 78.5695,
+            "attackRounds": 55789,
+            "defenseRounds": 51686,
+            "rounds": 107475
+          },
+          "full_eco": {
+            "value": 46.2923,
+            "attackValue": 43.1485,
+            "defenseValue": 49.7459,
+            "attackRounds": 12740,
+            "defenseRounds": 11597,
+            "rounds": 24337
+          },
+          "unknown": {
+            "value": 44.0341,
+            "attackValue": 42.5472,
+            "defenseValue": 45.5367,
+            "attackRounds": 231856,
+            "defenseRounds": 229458,
+            "rounds": 461314
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 25.9363,
+            "attackValue": 24.7282,
+            "defenseValue": 26.1991,
+            "attackRounds": 186,
+            "defenseRounds": 855,
+            "rounds": 1041
+          },
+          "2nd_won": {
+            "value": 80.0235,
+            "attackValue": 80.6753,
+            "defenseValue": 79.6705,
+            "attackRounds": 7597,
+            "defenseRounds": 14029,
+            "rounds": 21626
+          },
+          "full_eco": {
+            "value": 48.4059,
+            "attackValue": 45.8772,
+            "defenseValue": 50.0665,
+            "attackRounds": 3468,
+            "defenseRounds": 5281,
+            "rounds": 8749
+          },
+          "unknown": {
+            "value": 48.4884,
+            "attackValue": 48.3131,
+            "defenseValue": 48.5955,
+            "attackRounds": 72356,
+            "defenseRounds": 118338,
+            "rounds": 190694
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 22.5497,
+            "attackValue": 23.7347,
+            "defenseValue": 22.1656,
+            "attackRounds": 3139,
+            "defenseRounds": 9686,
+            "rounds": 12825
+          },
+          "2nd_won": {
+            "value": 79.9101,
+            "attackValue": 80.516,
+            "defenseValue": 79.6118,
+            "attackRounds": 20956,
+            "defenseRounds": 42560,
+            "rounds": 63516
+          },
+          "full_eco": {
+            "value": 42.8296,
+            "attackValue": 38.3989,
+            "defenseValue": 44.6958,
+            "attackRounds": 1112,
+            "defenseRounds": 2640,
+            "rounds": 3752
+          },
+          "unknown": {
+            "value": 37.6428,
+            "attackValue": 37.2035,
+            "defenseValue": 37.8732,
+            "attackRounds": 22684,
+            "defenseRounds": 43247,
+            "rounds": 65931
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 80.3172,
+            "attackValue": 78.322,
+            "defenseValue": 81.6484,
+            "attackRounds": 429,
+            "defenseRounds": 643,
+            "rounds": 1072
+          },
+          "full_eco": {
+            "value": 54.1874,
+            "attackValue": 47.5578,
+            "defenseValue": 56.2773,
+            "attackRounds": 2416,
+            "defenseRounds": 7664,
+            "rounds": 10080
+          },
+          "unknown": {
+            "value": 57.8556,
+            "attackValue": 54.3863,
+            "defenseValue": 59.2346,
+            "attackRounds": 26361,
+            "defenseRounds": 66318,
+            "rounds": 92679
+          },
+          "2nd_lost": {
+            "value": 0,
+            "attackValue": 0,
+            "defenseValue": null,
+            "attackRounds": 1,
+            "defenseRounds": 0,
+            "rounds": 1
+          }
+        },
+        "Operator": {
+          "2nd_won": {
+            "value": 100,
+            "attackValue": 100,
+            "defenseValue": null,
+            "attackRounds": 3,
+            "defenseRounds": 0,
+            "rounds": 3
+          },
+          "full_eco": {
+            "value": 53.2512,
+            "attackValue": 46.6295,
+            "defenseValue": 55.2972,
+            "attackRounds": 14204,
+            "defenseRounds": 45968,
+            "rounds": 60172
+          },
+          "unknown": {
+            "value": 57.3912,
+            "attackValue": 53.7009,
+            "defenseValue": 58.5388,
+            "attackRounds": 120022,
+            "defenseRounds": 385974,
+            "rounds": 505996
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 29.1473,
+            "attackValue": 28.7463,
+            "defenseValue": 29.9895,
+            "attackRounds": 3684,
+            "defenseRounds": 1754,
+            "rounds": 5438
+          },
+          "2nd_won": {
+            "value": 79.6177,
+            "attackValue": 79.9273,
+            "defenseValue": 79.516,
+            "attackRounds": 19777,
+            "defenseRounds": 60238,
+            "rounds": 80015
+          },
+          "full_eco": {
+            "value": 47.3711,
+            "attackValue": 44.696,
+            "defenseValue": 48.4226,
+            "attackRounds": 2394,
+            "defenseRounds": 6090,
+            "rounds": 8484
+          },
+          "unknown": {
+            "value": 57.0435,
+            "attackValue": 59.3217,
+            "defenseValue": 55.7742,
+            "attackRounds": 59469,
+            "defenseRounds": 106739,
+            "rounds": 166208
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 80.3697,
+            "attackValue": 80.8305,
+            "defenseValue": 79.4158,
+            "attackRounds": 20346,
+            "defenseRounds": 9828,
+            "rounds": 30174
+          },
+          "full_eco": {
+            "value": 50.9088,
+            "attackValue": 47.9419,
+            "defenseValue": 53.7901,
+            "attackRounds": 110701,
+            "defenseRounds": 113992,
+            "rounds": 224693
+          },
+          "unknown": {
+            "value": 55.2095,
+            "attackValue": 53.4454,
+            "defenseValue": 56.9579,
+            "attackRounds": 1059518,
+            "defenseRounds": 1069013,
+            "rounds": 2128531
+          },
+          "2nd_lost": {
+            "value": 9.0909,
+            "attackValue": 20,
+            "defenseValue": 0,
+            "attackRounds": 10,
+            "defenseRounds": 12,
+            "rounds": 22
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 22.0308,
+            "attackValue": 22.455,
+            "defenseValue": 21.5457,
+            "attackRounds": 127400,
+            "defenseRounds": 111408,
+            "rounds": 238808
+          },
+          "2nd_won": {
+            "value": 78.0785,
+            "attackValue": 78.7344,
+            "defenseValue": 77.4831,
+            "attackRounds": 37234,
+            "defenseRounds": 41025,
+            "rounds": 78259
+          },
+          "full_eco": {
+            "value": 44.0046,
+            "attackValue": 41.7633,
+            "defenseValue": 46.3499,
+            "attackRounds": 7437,
+            "defenseRounds": 7107,
+            "rounds": 14544
+          },
+          "pistol": {
+            "value": 50.8576,
+            "attackValue": 47.695,
+            "defenseValue": 51.9166,
+            "attackRounds": 41134,
+            "defenseRounds": 122845,
+            "rounds": 163979
+          },
+          "unknown": {
+            "value": 32.7141,
+            "attackValue": 32.4541,
+            "defenseValue": 32.9846,
+            "attackRounds": 590239,
+            "defenseRounds": 567370,
+            "rounds": 1157609
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 18.0247,
+            "attackValue": 17.9739,
+            "defenseValue": 18.0392,
+            "attackRounds": 2743,
+            "defenseRounds": 9596,
+            "rounds": 12339
+          },
+          "pistol": {
+            "value": 50.4817,
+            "attackValue": 48.4895,
+            "defenseValue": 52.4957,
+            "attackRounds": 3871,
+            "defenseRounds": 3829,
+            "rounds": 7700
+          },
+          "unknown": {
+            "value": 45.6905,
+            "attackValue": 46.0839,
+            "defenseValue": 45.314,
+            "attackRounds": 37818,
+            "defenseRounds": 39514,
+            "rounds": 77332
+          },
+          "2nd_won": {
+            "value": 80.1892,
+            "attackValue": 82.7861,
+            "defenseValue": 78.5727,
+            "attackRounds": 122,
+            "defenseRounds": 196,
+            "rounds": 318
+          },
+          "full_eco": {
+            "value": 50.6016,
+            "attackValue": 45.8648,
+            "defenseValue": 56.6933,
+            "attackRounds": 2248,
+            "defenseRounds": 1748,
+            "rounds": 3996
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 32.2425,
+            "attackValue": 34.1202,
+            "defenseValue": 29.5363,
+            "attackRounds": 2796,
+            "defenseRounds": 1940,
+            "rounds": 4736
+          },
+          "2nd_won": {
+            "value": 81.2485,
+            "attackValue": 81.8754,
+            "defenseValue": 80.6819,
+            "attackRounds": 70402,
+            "defenseRounds": 77880,
+            "rounds": 148282
+          },
+          "full_eco": {
+            "value": 43.6206,
+            "attackValue": 43.7275,
+            "defenseValue": 43.5189,
+            "attackRounds": 5285,
+            "defenseRounds": 5554,
+            "rounds": 10839
+          },
+          "unknown": {
+            "value": 44.252,
+            "attackValue": 43.3772,
+            "defenseValue": 45.1377,
+            "attackRounds": 85391,
+            "defenseRounds": 84350,
+            "rounds": 169741
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 31.2103,
+            "attackValue": 32.7568,
+            "defenseValue": 28.8433,
+            "attackRounds": 13478,
+            "defenseRounds": 8806,
+            "rounds": 22284
+          },
+          "2nd_won": {
+            "value": 80.431,
+            "attackValue": 80.8274,
+            "defenseValue": 80.0419,
+            "attackRounds": 19382,
+            "defenseRounds": 19741,
+            "rounds": 39123
+          },
+          "full_eco": {
+            "value": 47.6957,
+            "attackValue": 47.016,
+            "defenseValue": 48.5886,
+            "attackRounds": 4188,
+            "defenseRounds": 3188,
+            "rounds": 7376
+          },
+          "unknown": {
+            "value": 38.2275,
+            "attackValue": 37.4065,
+            "defenseValue": 39.2801,
+            "attackRounds": 114941,
+            "defenseRounds": 89654,
+            "rounds": 204595
+          }
+        },
+        "Vandal": {
+          "2nd_lost": {
+            "value": 32.117,
+            "attackValue": 35.7802,
+            "defenseValue": 17.8568,
+            "attackRounds": 109,
+            "defenseRounds": 28,
+            "rounds": 137
+          },
+          "2nd_won": {
+            "value": 79.2971,
+            "attackValue": 79.8019,
+            "defenseValue": 78.0525,
+            "attackRounds": 43725,
+            "defenseRounds": 17734,
+            "rounds": 61459
+          },
+          "full_eco": {
+            "value": 49.9591,
+            "attackValue": 47.2774,
+            "defenseValue": 53.0213,
+            "attackRounds": 357390,
+            "defenseRounds": 312987,
+            "rounds": 670377
+          },
+          "unknown": {
+            "value": 53.795,
+            "attackValue": 52.0362,
+            "defenseValue": 55.817,
+            "attackRounds": 3269069,
+            "defenseRounds": 2843667,
+            "rounds": 6112736
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -3756,6 +10219,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/Pitt/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/Pitt/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/Pitt/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/ce2783e8-44fc-dd48-3da3-33b5ba6c4a22/ALL/ALL/agent.json.gz"
       }
     },
@@ -4058,6 +10522,678 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 23.9506,
+            "attackValue": 21.9178,
+            "defenseValue": 24.3976,
+            "attackRounds": 73,
+            "defenseRounds": 332,
+            "rounds": 405
+          },
+          "2nd_won": {
+            "value": 83.2664,
+            "attackValue": 81.7254,
+            "defenseValue": 83.7368,
+            "attackRounds": 580,
+            "defenseRounds": 1900,
+            "rounds": 2480
+          },
+          "full_eco": {
+            "value": 45.5181,
+            "attackValue": 43.9363,
+            "defenseValue": 46.0577,
+            "attackRounds": 437,
+            "defenseRounds": 1281,
+            "rounds": 1718
+          },
+          "unknown": {
+            "value": 41.7672,
+            "attackValue": 40.0479,
+            "defenseValue": 42.3533,
+            "attackRounds": 1266,
+            "defenseRounds": 3714,
+            "rounds": 4980
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 19.7274,
+            "attackValue": 18.8084,
+            "defenseValue": 20.6723,
+            "attackRounds": 38647,
+            "defenseRounds": 37586,
+            "rounds": 76233
+          },
+          "2nd_won": {
+            "value": 79.2822,
+            "attackValue": 78.96,
+            "defenseValue": 79.5787,
+            "attackRounds": 8603,
+            "defenseRounds": 9348,
+            "rounds": 17951
+          },
+          "full_eco": {
+            "value": 43.8963,
+            "attackValue": 44.4284,
+            "defenseValue": 43.3829,
+            "attackRounds": 2755,
+            "defenseRounds": 2856,
+            "rounds": 5611
+          },
+          "pistol": {
+            "value": 50.1592,
+            "attackValue": 47.9801,
+            "defenseValue": 51.9383,
+            "attackRounds": 36885,
+            "defenseRounds": 45179,
+            "rounds": 82064
+          },
+          "unknown": {
+            "value": 29.9994,
+            "attackValue": 28.4059,
+            "defenseValue": 31.6006,
+            "attackRounds": 38291,
+            "defenseRounds": 38107,
+            "rounds": 76398
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 22.3416,
+            "attackValue": 23.1119,
+            "defenseValue": 22.0107,
+            "attackRounds": 2120,
+            "defenseRounds": 4934,
+            "rounds": 7054
+          },
+          "2nd_won": {
+            "value": 78.8326,
+            "attackValue": 77.863,
+            "defenseValue": 79.5223,
+            "attackRounds": 1459,
+            "defenseRounds": 2051,
+            "rounds": 3510
+          },
+          "full_eco": {
+            "value": 45.2157,
+            "attackValue": 42.0646,
+            "defenseValue": 47.3528,
+            "attackRounds": 3459,
+            "defenseRounds": 5100,
+            "rounds": 8559
+          },
+          "unknown": {
+            "value": 34.229,
+            "attackValue": 33.8063,
+            "defenseValue": 34.458,
+            "attackRounds": 13574,
+            "defenseRounds": 25060,
+            "rounds": 38634
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 28.2523,
+            "attackValue": 27.6462,
+            "defenseValue": 29.2929,
+            "attackRounds": 170,
+            "defenseRounds": 99,
+            "rounds": 269
+          },
+          "2nd_won": {
+            "value": 81.4549,
+            "attackValue": 81.2418,
+            "defenseValue": 81.6851,
+            "attackRounds": 22570,
+            "defenseRounds": 20896,
+            "rounds": 43466
+          },
+          "full_eco": {
+            "value": 44.1258,
+            "attackValue": 41.8696,
+            "defenseValue": 46.3216,
+            "attackRounds": 11612,
+            "defenseRounds": 11932,
+            "rounds": 23544
+          },
+          "unknown": {
+            "value": 45.3304,
+            "attackValue": 43.2232,
+            "defenseValue": 47.5524,
+            "attackRounds": 27247,
+            "defenseRounds": 25839,
+            "rounds": 53086
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.0366,
+            "attackValue": 16.3709,
+            "defenseValue": 17.84,
+            "attackRounds": 93011,
+            "defenseRounds": 77075,
+            "rounds": 170086
+          },
+          "2nd_won": {
+            "value": 76.9345,
+            "attackValue": 77.9051,
+            "defenseValue": 75.8343,
+            "attackRounds": 2444,
+            "defenseRounds": 2156,
+            "rounds": 4600
+          },
+          "full_eco": {
+            "value": 47.2519,
+            "attackValue": 44.5621,
+            "defenseValue": 50.463,
+            "attackRounds": 18211,
+            "defenseRounds": 15255,
+            "rounds": 33466
+          },
+          "pistol": {
+            "value": 49.8386,
+            "attackValue": 48.0876,
+            "defenseValue": 52.083,
+            "attackRounds": 169790,
+            "defenseRounds": 132467,
+            "rounds": 302257
+          },
+          "unknown": {
+            "value": 34.5616,
+            "attackValue": 33.5399,
+            "defenseValue": 35.7047,
+            "attackRounds": 83606,
+            "defenseRounds": 74728,
+            "rounds": 158334
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.2912,
+            "attackValue": 18.0519,
+            "defenseValue": 18.5175,
+            "attackRounds": 1047,
+            "defenseRounds": 1107,
+            "rounds": 2154
+          },
+          "2nd_won": {
+            "value": 77.3233,
+            "attackValue": 75.3087,
+            "defenseValue": 80.3736,
+            "attackRounds": 162,
+            "defenseRounds": 107,
+            "rounds": 269
+          },
+          "pistol": {
+            "value": 49.5227,
+            "attackValue": 48.3245,
+            "defenseValue": 50.9772,
+            "attackRounds": 6084,
+            "defenseRounds": 5012,
+            "rounds": 11096
+          },
+          "unknown": {
+            "value": 31.4857,
+            "attackValue": 33.1211,
+            "defenseValue": 29.9926,
+            "attackRounds": 1102,
+            "defenseRounds": 1207,
+            "rounds": 2309
+          },
+          "full_eco": {
+            "value": 49.4569,
+            "attackValue": 45.1626,
+            "defenseValue": 53.8456,
+            "attackRounds": 93,
+            "defenseRounds": 91,
+            "rounds": 184
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.1827,
+            "attackValue": 18.2016,
+            "defenseValue": 18.1553,
+            "attackRounds": 1989,
+            "defenseRounds": 1377,
+            "rounds": 3366
+          },
+          "2nd_won": {
+            "value": 79.8271,
+            "attackValue": 79.3769,
+            "defenseValue": 80.2967,
+            "attackRounds": 16166,
+            "defenseRounds": 15499,
+            "rounds": 31665
+          },
+          "full_eco": {
+            "value": 37.5843,
+            "attackValue": 34.1054,
+            "defenseValue": 41.2072,
+            "attackRounds": 604,
+            "defenseRounds": 580,
+            "rounds": 1184
+          },
+          "pistol": {
+            "value": 49.9661,
+            "attackValue": 47.7814,
+            "defenseValue": 52.2835,
+            "attackRounds": 178508,
+            "defenseRounds": 168285,
+            "rounds": 346793
+          },
+          "unknown": {
+            "value": 31.9236,
+            "attackValue": 31.3883,
+            "defenseValue": 32.4572,
+            "attackRounds": 3068,
+            "defenseRounds": 3078,
+            "rounds": 6146
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 24.5988,
+            "attackValue": 24.6505,
+            "defenseValue": 24.5289,
+            "attackRounds": 215,
+            "defenseRounds": 159,
+            "rounds": 374
+          },
+          "2nd_won": {
+            "value": 80.5267,
+            "attackValue": 79.8807,
+            "defenseValue": 81.1363,
+            "attackRounds": 25846,
+            "defenseRounds": 27387,
+            "rounds": 53233
+          },
+          "full_eco": {
+            "value": 46.027,
+            "attackValue": 43.6643,
+            "defenseValue": 48.5623,
+            "attackRounds": 36648,
+            "defenseRounds": 34152,
+            "rounds": 70800
+          },
+          "unknown": {
+            "value": 42.8375,
+            "attackValue": 40.1193,
+            "defenseValue": 45.7274,
+            "attackRounds": 100006,
+            "defenseRounds": 94063,
+            "rounds": 194069
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 25.2038,
+            "attackValue": 22.0472,
+            "defenseValue": 25.7529,
+            "attackRounds": 127,
+            "defenseRounds": 730,
+            "rounds": 857
+          },
+          "2nd_won": {
+            "value": 81.343,
+            "attackValue": 79.7506,
+            "defenseValue": 82.1031,
+            "attackRounds": 3763,
+            "defenseRounds": 7884,
+            "rounds": 11647
+          },
+          "full_eco": {
+            "value": 48.5095,
+            "attackValue": 45.7883,
+            "defenseValue": 50.329,
+            "attackRounds": 13451,
+            "defenseRounds": 20116,
+            "rounds": 33567
+          },
+          "unknown": {
+            "value": 47.3077,
+            "attackValue": 46.9377,
+            "defenseValue": 47.4971,
+            "attackRounds": 22538,
+            "defenseRounds": 44039,
+            "rounds": 66577
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 22.8708,
+            "attackValue": 22.9653,
+            "defenseValue": 22.8129,
+            "attackRounds": 1855,
+            "defenseRounds": 3029,
+            "rounds": 4884
+          },
+          "2nd_won": {
+            "value": 81.025,
+            "attackValue": 79.8428,
+            "defenseValue": 81.5927,
+            "attackRounds": 10334,
+            "defenseRounds": 21520,
+            "rounds": 31854
+          },
+          "full_eco": {
+            "value": 40.715,
+            "attackValue": 40.2415,
+            "defenseValue": 40.8943,
+            "attackRounds": 2229,
+            "defenseRounds": 5886,
+            "rounds": 8115
+          },
+          "unknown": {
+            "value": 35.5739,
+            "attackValue": 33.2815,
+            "defenseValue": 37.2365,
+            "attackRounds": 7563,
+            "defenseRounds": 10428,
+            "rounds": 17991
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 83.3829,
+            "attackValue": 84.348,
+            "defenseValue": 82.883,
+            "attackRounds": 115,
+            "defenseRounds": 222,
+            "rounds": 337
+          },
+          "full_eco": {
+            "value": 52.9602,
+            "attackValue": 47.0528,
+            "defenseValue": 54.7884,
+            "attackRounds": 4886,
+            "defenseRounds": 15788,
+            "rounds": 20674
+          },
+          "unknown": {
+            "value": 63.7956,
+            "attackValue": 58.8038,
+            "defenseValue": 65.3762,
+            "attackRounds": 5015,
+            "defenseRounds": 15839,
+            "rounds": 20854
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 52.975,
+            "attackValue": 47.7439,
+            "defenseValue": 54.5981,
+            "attackRounds": 29978,
+            "defenseRounds": 96615,
+            "rounds": 126593
+          },
+          "unknown": {
+            "value": 61.3987,
+            "attackValue": 57.7449,
+            "defenseValue": 62.4957,
+            "attackRounds": 25076,
+            "defenseRounds": 83519,
+            "rounds": 108595
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 27.8046,
+            "attackValue": 30.2901,
+            "defenseValue": 19.8772,
+            "attackRounds": 2070,
+            "defenseRounds": 649,
+            "rounds": 2719
+          },
+          "2nd_won": {
+            "value": 80.1438,
+            "attackValue": 79.7366,
+            "defenseValue": 80.2628,
+            "attackRounds": 5877,
+            "defenseRounds": 20108,
+            "rounds": 25985
+          },
+          "full_eco": {
+            "value": 46.2537,
+            "attackValue": 45.0133,
+            "defenseValue": 46.7706,
+            "attackRounds": 4863,
+            "defenseRounds": 11670,
+            "rounds": 16533
+          },
+          "unknown": {
+            "value": 63.0241,
+            "attackValue": 63.239,
+            "defenseValue": 62.8777,
+            "attackRounds": 23452,
+            "defenseRounds": 34442,
+            "rounds": 57894
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 80.0005,
+            "attackValue": 79.4521,
+            "defenseValue": 81.0718,
+            "attackRounds": 12250,
+            "defenseRounds": 6271,
+            "rounds": 18521
+          },
+          "full_eco": {
+            "value": 51.0704,
+            "attackValue": 47.4928,
+            "defenseValue": 54.2821,
+            "attackRounds": 360138,
+            "defenseRounds": 401162,
+            "rounds": 761300
+          },
+          "unknown": {
+            "value": 59.0331,
+            "attackValue": 56.4934,
+            "defenseValue": 61.3036,
+            "attackRounds": 348873,
+            "defenseRounds": 390221,
+            "rounds": 739094
+          },
+          "2nd_lost": {
+            "value": 33.3333,
+            "attackValue": 50,
+            "defenseValue": 0,
+            "attackRounds": 4,
+            "defenseRounds": 2,
+            "rounds": 6
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 20.886,
+            "attackValue": 20.0275,
+            "defenseValue": 21.7811,
+            "attackRounds": 60622,
+            "defenseRounds": 58135,
+            "rounds": 118757
+          },
+          "2nd_won": {
+            "value": 79.0374,
+            "attackValue": 78.051,
+            "defenseValue": 79.9487,
+            "attackRounds": 16566,
+            "defenseRounds": 17930,
+            "rounds": 34496
+          },
+          "full_eco": {
+            "value": 44.4469,
+            "attackValue": 42.0047,
+            "defenseValue": 47.088,
+            "attackRounds": 20219,
+            "defenseRounds": 18697,
+            "rounds": 38916
+          },
+          "pistol": {
+            "value": 50.7385,
+            "attackValue": 46.7526,
+            "defenseValue": 51.8712,
+            "attackRounds": 16121,
+            "defenseRounds": 56731,
+            "rounds": 72852
+          },
+          "unknown": {
+            "value": 30.6176,
+            "attackValue": 29.1297,
+            "defenseValue": 32.3189,
+            "attackRounds": 307332,
+            "defenseRounds": 268762,
+            "rounds": 576094
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 18.3444,
+            "attackValue": 15.1598,
+            "defenseValue": 19.9767,
+            "attackRounds": 1306,
+            "defenseRounds": 2548,
+            "rounds": 3854
+          },
+          "pistol": {
+            "value": 49.5715,
+            "attackValue": 51.7517,
+            "defenseValue": 46.7837,
+            "attackRounds": 1312,
+            "defenseRounds": 1026,
+            "rounds": 2338
+          },
+          "unknown": {
+            "value": 43.1551,
+            "attackValue": 42.6788,
+            "defenseValue": 43.6815,
+            "attackRounds": 8864,
+            "defenseRounds": 8022,
+            "rounds": 16886
+          },
+          "2nd_won": {
+            "value": 84.4148,
+            "attackValue": 79.3079,
+            "defenseValue": 87.5002,
+            "attackRounds": 29,
+            "defenseRounds": 48,
+            "rounds": 77
+          },
+          "full_eco": {
+            "value": 48.5842,
+            "attackValue": 46.5285,
+            "defenseValue": 51.3752,
+            "attackRounds": 4395,
+            "defenseRounds": 3237,
+            "rounds": 7632
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 31.1149,
+            "attackValue": 33.7167,
+            "defenseValue": 28.3324,
+            "attackRounds": 955,
+            "defenseRounds": 893,
+            "rounds": 1848
+          },
+          "2nd_won": {
+            "value": 81.9285,
+            "attackValue": 81.1056,
+            "defenseValue": 82.6768,
+            "attackRounds": 35190,
+            "defenseRounds": 38700,
+            "rounds": 73890
+          },
+          "full_eco": {
+            "value": 43.8469,
+            "attackValue": 41.3177,
+            "defenseValue": 45.9244,
+            "attackRounds": 12806,
+            "defenseRounds": 15591,
+            "rounds": 28397
+          },
+          "unknown": {
+            "value": 44.8917,
+            "attackValue": 43.093,
+            "defenseValue": 46.7506,
+            "attackRounds": 30184,
+            "defenseRounds": 29206,
+            "rounds": 59390
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.5651,
+            "attackValue": 34.3135,
+            "defenseValue": 30.1689,
+            "attackRounds": 7105,
+            "defenseRounds": 5184,
+            "rounds": 12289
+          },
+          "2nd_won": {
+            "value": 79.9619,
+            "attackValue": 79.4814,
+            "defenseValue": 80.4789,
+            "attackRounds": 11126,
+            "defenseRounds": 10342,
+            "rounds": 21468
+          },
+          "full_eco": {
+            "value": 45.4439,
+            "attackValue": 43.8424,
+            "defenseValue": 47.6881,
+            "attackRounds": 12545,
+            "defenseRounds": 8952,
+            "rounds": 21497
+          },
+          "unknown": {
+            "value": 36.9454,
+            "attackValue": 35.4967,
+            "defenseValue": 38.8609,
+            "attackRounds": 58970,
+            "defenseRounds": 44601,
+            "rounds": 103571
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 79.1406,
+            "attackValue": 78.4448,
+            "defenseValue": 80.7466,
+            "attackRounds": 20775,
+            "defenseRounds": 9001,
+            "rounds": 29776
+          },
+          "full_eco": {
+            "value": 50.0258,
+            "attackValue": 47.0255,
+            "defenseValue": 53.5177,
+            "attackRounds": 920831,
+            "defenseRounds": 791199,
+            "rounds": 1712030
+          },
+          "unknown": {
+            "value": 56.5063,
+            "attackValue": 54.121,
+            "defenseValue": 59.1605,
+            "attackRounds": 877008,
+            "defenseRounds": 788160,
+            "rounds": 1665168
+          },
+          "2nd_lost": {
+            "value": 25.7141,
+            "attackValue": 25.9259,
+            "defenseValue": 24.9994,
+            "attackRounds": 54,
+            "defenseRounds": 16,
+            "rounds": 70
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -4118,6 +11254,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Bonsai/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Bonsai/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Bonsai/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     },
@@ -4420,6 +11557,686 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 27.554,
+            "attackValue": 34.0906,
+            "defenseValue": 25.1063,
+            "attackRounds": 88,
+            "defenseRounds": 235,
+            "rounds": 323
+          },
+          "2nd_won": {
+            "value": 81.2246,
+            "attackValue": 79.4396,
+            "defenseValue": 81.819,
+            "attackRounds": 608,
+            "defenseRounds": 1826,
+            "rounds": 2434
+          },
+          "full_eco": {
+            "value": 46.7425,
+            "attackValue": 48.387,
+            "defenseValue": 46.2021,
+            "attackRounds": 372,
+            "defenseRounds": 1132,
+            "rounds": 1504
+          },
+          "unknown": {
+            "value": 44.8699,
+            "attackValue": 44.2796,
+            "defenseValue": 45.113,
+            "attackRounds": 1285,
+            "defenseRounds": 3121,
+            "rounds": 4406
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 20.4836,
+            "attackValue": 19.8962,
+            "defenseValue": 21.1158,
+            "attackRounds": 38118,
+            "defenseRounds": 35419,
+            "rounds": 73537
+          },
+          "2nd_won": {
+            "value": 79.352,
+            "attackValue": 79.1852,
+            "defenseValue": 79.5016,
+            "attackRounds": 8989,
+            "defenseRounds": 10025,
+            "rounds": 19014
+          },
+          "full_eco": {
+            "value": 45.8458,
+            "attackValue": 45.2878,
+            "defenseValue": 46.3858,
+            "attackRounds": 2504,
+            "defenseRounds": 2587,
+            "rounds": 5091
+          },
+          "pistol": {
+            "value": 50.5133,
+            "attackValue": 48.1996,
+            "defenseValue": 52.483,
+            "attackRounds": 40853,
+            "defenseRounds": 47988,
+            "rounds": 88841
+          },
+          "unknown": {
+            "value": 30.6038,
+            "attackValue": 30.2293,
+            "defenseValue": 30.9581,
+            "attackRounds": 33594,
+            "defenseRounds": 35500,
+            "rounds": 69094
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 23.836,
+            "attackValue": 24.4797,
+            "defenseValue": 23.5809,
+            "attackRounds": 1634,
+            "defenseRounds": 4122,
+            "rounds": 5756
+          },
+          "2nd_won": {
+            "value": 77.808,
+            "attackValue": 77.5578,
+            "defenseValue": 78.0181,
+            "attackRounds": 1203,
+            "defenseRounds": 1433,
+            "rounds": 2636
+          },
+          "full_eco": {
+            "value": 46.8283,
+            "attackValue": 46.0156,
+            "defenseValue": 47.4093,
+            "attackRounds": 3062,
+            "defenseRounds": 4284,
+            "rounds": 7346
+          },
+          "unknown": {
+            "value": 37.1583,
+            "attackValue": 37.1355,
+            "defenseValue": 37.1693,
+            "attackRounds": 9821,
+            "defenseRounds": 20479,
+            "rounds": 30300
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 32.7067,
+            "attackValue": 33.3332,
+            "defenseValue": 31.2501,
+            "attackRounds": 186,
+            "defenseRounds": 80,
+            "rounds": 266
+          },
+          "2nd_won": {
+            "value": 80.1373,
+            "attackValue": 79.8814,
+            "defenseValue": 80.3865,
+            "attackRounds": 20846,
+            "defenseRounds": 21409,
+            "rounds": 42255
+          },
+          "full_eco": {
+            "value": 44.0575,
+            "attackValue": 42.0844,
+            "defenseValue": 45.7725,
+            "attackRounds": 9797,
+            "defenseRounds": 11271,
+            "rounds": 21068
+          },
+          "unknown": {
+            "value": 45.1422,
+            "attackValue": 43.2227,
+            "defenseValue": 47.1317,
+            "attackRounds": 26070,
+            "defenseRounds": 25153,
+            "rounds": 51223
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 18.2455,
+            "attackValue": 17.6598,
+            "defenseValue": 18.9327,
+            "attackRounds": 86912,
+            "defenseRounds": 74083,
+            "rounds": 160995
+          },
+          "2nd_won": {
+            "value": 74.8319,
+            "attackValue": 74.433,
+            "defenseValue": 75.2884,
+            "attackRounds": 2769,
+            "defenseRounds": 2420,
+            "rounds": 5189
+          },
+          "full_eco": {
+            "value": 48.7359,
+            "attackValue": 45.9743,
+            "defenseValue": 52.0001,
+            "attackRounds": 20935,
+            "defenseRounds": 17712,
+            "rounds": 38647
+          },
+          "pistol": {
+            "value": 49.7978,
+            "attackValue": 47.7634,
+            "defenseValue": 52.3044,
+            "attackRounds": 143733,
+            "defenseRounds": 116650,
+            "rounds": 260383
+          },
+          "unknown": {
+            "value": 36.1885,
+            "attackValue": 35.1628,
+            "defenseValue": 37.3126,
+            "attackRounds": 93572,
+            "defenseRounds": 85372,
+            "rounds": 178944
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 18.8388,
+            "attackValue": 15.295,
+            "defenseValue": 21.6551,
+            "attackRounds": 778,
+            "defenseRounds": 979,
+            "rounds": 1757
+          },
+          "full_eco": {
+            "value": 43.6781,
+            "attackValue": 35.8695,
+            "defenseValue": 52.439,
+            "attackRounds": 92,
+            "defenseRounds": 82,
+            "rounds": 174
+          },
+          "pistol": {
+            "value": 49.0088,
+            "attackValue": 47.0289,
+            "defenseValue": 51.564,
+            "attackRounds": 5486,
+            "defenseRounds": 4251,
+            "rounds": 9737
+          },
+          "unknown": {
+            "value": 30.9054,
+            "attackValue": 31.8352,
+            "defenseValue": 30.2068,
+            "attackRounds": 801,
+            "defenseRounds": 1066,
+            "rounds": 1867
+          },
+          "2nd_won": {
+            "value": 77.8327,
+            "attackValue": 77.778,
+            "defenseValue": 77.8847,
+            "attackRounds": 99,
+            "defenseRounds": 104,
+            "rounds": 203
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 20.1293,
+            "attackValue": 18.5255,
+            "defenseValue": 22.4682,
+            "attackRounds": 2116,
+            "defenseRounds": 1451,
+            "rounds": 3567
+          },
+          "2nd_won": {
+            "value": 78.9263,
+            "attackValue": 77.9084,
+            "defenseValue": 79.9423,
+            "attackRounds": 15332,
+            "defenseRounds": 15361,
+            "rounds": 30693
+          },
+          "full_eco": {
+            "value": 42.3992,
+            "attackValue": 42.5091,
+            "defenseValue": 42.2919,
+            "attackRounds": 494,
+            "defenseRounds": 506,
+            "rounds": 1000
+          },
+          "pistol": {
+            "value": 49.8858,
+            "attackValue": 47.4163,
+            "defenseValue": 52.5717,
+            "attackRounds": 187805,
+            "defenseRounds": 172674,
+            "rounds": 360479
+          },
+          "unknown": {
+            "value": 34.5263,
+            "attackValue": 33.2634,
+            "defenseValue": 35.7479,
+            "attackRounds": 2871,
+            "defenseRounds": 2968,
+            "rounds": 5839
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 26.3953,
+            "attackValue": 27.0914,
+            "defenseValue": 25.1735,
+            "attackRounds": 251,
+            "defenseRounds": 143,
+            "rounds": 394
+          },
+          "2nd_won": {
+            "value": 79.0522,
+            "attackValue": 78.726,
+            "defenseValue": 79.3342,
+            "attackRounds": 26375,
+            "defenseRounds": 30515,
+            "rounds": 56890
+          },
+          "full_eco": {
+            "value": 46.3537,
+            "attackValue": 43.9908,
+            "defenseValue": 48.7911,
+            "attackRounds": 35535,
+            "defenseRounds": 34449,
+            "rounds": 69984
+          },
+          "unknown": {
+            "value": 43.0984,
+            "attackValue": 41.4291,
+            "defenseValue": 44.8039,
+            "attackRounds": 102216,
+            "defenseRounds": 100040,
+            "rounds": 202256
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 25.5848,
+            "attackValue": 15.2927,
+            "defenseValue": 27.0453,
+            "attackRounds": 85,
+            "defenseRounds": 599,
+            "rounds": 684
+          },
+          "2nd_won": {
+            "value": 79.2725,
+            "attackValue": 79.4452,
+            "defenseValue": 79.1469,
+            "attackRounds": 2851,
+            "defenseRounds": 3918,
+            "rounds": 6769
+          },
+          "full_eco": {
+            "value": 49.2185,
+            "attackValue": 46.3853,
+            "defenseValue": 51.1778,
+            "attackRounds": 9544,
+            "defenseRounds": 13801,
+            "rounds": 23345
+          },
+          "unknown": {
+            "value": 46.941,
+            "attackValue": 47.9904,
+            "defenseValue": 46.3996,
+            "attackRounds": 16230,
+            "defenseRounds": 31457,
+            "rounds": 47687
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 21.6935,
+            "attackValue": 19.6681,
+            "defenseValue": 23.3207,
+            "attackRounds": 2522,
+            "defenseRounds": 3139,
+            "rounds": 5661
+          },
+          "2nd_won": {
+            "value": 80.7959,
+            "attackValue": 79.7747,
+            "defenseValue": 81.2796,
+            "attackRounds": 11065,
+            "defenseRounds": 23360,
+            "rounds": 34425
+          },
+          "full_eco": {
+            "value": 42.79,
+            "attackValue": 42.3561,
+            "defenseValue": 42.9415,
+            "attackRounds": 2198,
+            "defenseRounds": 6297,
+            "rounds": 8495
+          },
+          "unknown": {
+            "value": 36.1222,
+            "attackValue": 34.9784,
+            "defenseValue": 37.0097,
+            "attackRounds": 10309,
+            "defenseRounds": 13286,
+            "rounds": 23595
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 81.1687,
+            "attackValue": 78.8131,
+            "defenseValue": 82.6316,
+            "attackRounds": 118,
+            "defenseRounds": 190,
+            "rounds": 308
+          },
+          "full_eco": {
+            "value": 53.3676,
+            "attackValue": 47.6829,
+            "defenseValue": 55.2624,
+            "attackRounds": 4941,
+            "defenseRounds": 14824,
+            "rounds": 19765
+          },
+          "unknown": {
+            "value": 60.9148,
+            "attackValue": 56.5861,
+            "defenseValue": 62.4768,
+            "attackRounds": 5162,
+            "defenseRounds": 14306,
+            "rounds": 19468
+          },
+          "2nd_lost": {
+            "value": 0,
+            "attackValue": 0,
+            "defenseValue": null,
+            "attackRounds": 1,
+            "defenseRounds": 0,
+            "rounds": 1
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 53.325,
+            "attackValue": 48.0368,
+            "defenseValue": 55.0379,
+            "attackRounds": 32232,
+            "defenseRounds": 99509,
+            "rounds": 131741
+          },
+          "unknown": {
+            "value": 61.1887,
+            "attackValue": 57.7186,
+            "defenseValue": 62.2751,
+            "attackRounds": 27546,
+            "defenseRounds": 87978,
+            "rounds": 115524
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 28.9002,
+            "attackValue": 28.6693,
+            "defenseValue": 29.7199,
+            "attackRounds": 2030,
+            "defenseRounds": 572,
+            "rounds": 2602
+          },
+          "2nd_won": {
+            "value": 80.9689,
+            "attackValue": 79.8657,
+            "defenseValue": 81.3249,
+            "attackRounds": 6908,
+            "defenseRounds": 21403,
+            "rounds": 28311
+          },
+          "full_eco": {
+            "value": 46.9324,
+            "attackValue": 45.4459,
+            "defenseValue": 47.5719,
+            "attackRounds": 4830,
+            "defenseRounds": 11227,
+            "rounds": 16057
+          },
+          "unknown": {
+            "value": 62.2376,
+            "attackValue": 62.891,
+            "defenseValue": 61.8024,
+            "attackRounds": 23601,
+            "defenseRounds": 35440,
+            "rounds": 59041
+          }
+        },
+        "Phantom": {
+          "2nd_won": {
+            "value": 78.7069,
+            "attackValue": 78.0457,
+            "defenseValue": 80.2139,
+            "attackRounds": 11278,
+            "defenseRounds": 4948,
+            "rounds": 16226
+          },
+          "full_eco": {
+            "value": 50.8987,
+            "attackValue": 47.4418,
+            "defenseValue": 54.1506,
+            "attackRounds": 302481,
+            "defenseRounds": 321547,
+            "rounds": 624028
+          },
+          "unknown": {
+            "value": 58.2669,
+            "attackValue": 56.4681,
+            "defenseValue": 59.963,
+            "attackRounds": 301740,
+            "defenseRounds": 320013,
+            "rounds": 621753
+          },
+          "2nd_lost": {
+            "value": 33.3333,
+            "attackValue": 45.4545,
+            "defenseValue": 0,
+            "attackRounds": 11,
+            "defenseRounds": 4,
+            "rounds": 15
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 22.0834,
+            "attackValue": 21.2193,
+            "defenseValue": 23.0103,
+            "attackRounds": 62978,
+            "defenseRounds": 58707,
+            "rounds": 121685
+          },
+          "2nd_won": {
+            "value": 77.519,
+            "attackValue": 77.1585,
+            "defenseValue": 77.8412,
+            "attackRounds": 16593,
+            "defenseRounds": 18566,
+            "rounds": 35159
+          },
+          "full_eco": {
+            "value": 45.2397,
+            "attackValue": 43.3893,
+            "defenseValue": 47.2272,
+            "attackRounds": 19442,
+            "defenseRounds": 18102,
+            "rounds": 37544
+          },
+          "pistol": {
+            "value": 50.791,
+            "attackValue": 46.3763,
+            "defenseValue": 52.264,
+            "attackRounds": 18184,
+            "defenseRounds": 54498,
+            "rounds": 72682
+          },
+          "unknown": {
+            "value": 31.7778,
+            "attackValue": 30.5381,
+            "defenseValue": 33.1498,
+            "attackRounds": 292038,
+            "defenseRounds": 263864,
+            "rounds": 555902
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 17.6722,
+            "attackValue": 15.3855,
+            "defenseValue": 18.1675,
+            "attackRounds": 546,
+            "defenseRounds": 2521,
+            "rounds": 3067
+          },
+          "full_eco": {
+            "value": 51.7026,
+            "attackValue": 48.9312,
+            "defenseValue": 55.3818,
+            "attackRounds": 4588,
+            "defenseRounds": 3456,
+            "rounds": 8044
+          },
+          "unknown": {
+            "value": 46.0374,
+            "attackValue": 46.6063,
+            "defenseValue": 45.4517,
+            "attackRounds": 8977,
+            "defenseRounds": 8719,
+            "rounds": 17696
+          },
+          "pistol": {
+            "value": 50.06,
+            "attackValue": 48.225,
+            "defenseValue": 51.8951,
+            "attackRounds": 844,
+            "defenseRounds": 844,
+            "rounds": 1688
+          },
+          "2nd_won": {
+            "value": 66.0387,
+            "attackValue": 75,
+            "defenseValue": 63.4159,
+            "attackRounds": 12,
+            "defenseRounds": 41,
+            "rounds": 53
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 33.275,
+            "attackValue": 33.4637,
+            "defenseValue": 32.9923,
+            "attackRounds": 1022,
+            "defenseRounds": 682,
+            "rounds": 1704
+          },
+          "2nd_won": {
+            "value": 80.4092,
+            "attackValue": 79.764,
+            "defenseValue": 81.0142,
+            "attackRounds": 30460,
+            "defenseRounds": 32483,
+            "rounds": 62943
+          },
+          "full_eco": {
+            "value": 43.4049,
+            "attackValue": 41.6897,
+            "defenseValue": 44.7729,
+            "attackRounds": 10583,
+            "defenseRounds": 13269,
+            "rounds": 23852
+          },
+          "unknown": {
+            "value": 44.8804,
+            "attackValue": 42.8173,
+            "defenseValue": 47.0255,
+            "attackRounds": 26195,
+            "defenseRounds": 25193,
+            "rounds": 51388
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.8602,
+            "attackValue": 34.5799,
+            "defenseValue": 30.14,
+            "attackRounds": 6738,
+            "defenseRounds": 4260,
+            "rounds": 10998
+          },
+          "2nd_won": {
+            "value": 79.3251,
+            "attackValue": 79.3369,
+            "defenseValue": 79.312,
+            "attackRounds": 9263,
+            "defenseRounds": 8314,
+            "rounds": 17577
+          },
+          "full_eco": {
+            "value": 43.6364,
+            "attackValue": 41.8127,
+            "defenseValue": 45.9581,
+            "attackRounds": 9557,
+            "defenseRounds": 7507,
+            "rounds": 17064
+          },
+          "unknown": {
+            "value": 37.1421,
+            "attackValue": 36.3233,
+            "defenseValue": 38.1819,
+            "attackRounds": 44696,
+            "defenseRounds": 35200,
+            "rounds": 79896
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 78.0118,
+            "attackValue": 77.9278,
+            "defenseValue": 78.2034,
+            "attackRounds": 22246,
+            "defenseRounds": 9754,
+            "rounds": 32000
+          },
+          "full_eco": {
+            "value": 49.9892,
+            "attackValue": 47.0749,
+            "defenseValue": 53.2846,
+            "attackRounds": 937188,
+            "defenseRounds": 828813,
+            "rounds": 1766001
+          },
+          "unknown": {
+            "value": 56.0129,
+            "attackValue": 54.1071,
+            "defenseValue": 58.1058,
+            "attackRounds": 921786,
+            "defenseRounds": 839355,
+            "rounds": 1761141
+          },
+          "2nd_lost": {
+            "value": 54.7944,
+            "attackValue": 55.5554,
+            "defenseValue": 52.6316,
+            "attackRounds": 54,
+            "defenseRounds": 19,
+            "rounds": 73
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -4480,6 +12297,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Plummet/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Plummet/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Plummet/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     },
@@ -4782,6 +12600,686 @@
           "globalSampleAvailable": true
         }
       ],
+      "weaponConversions": {
+        "Ares": {
+          "2nd_lost": {
+            "value": 27.6271,
+            "attackValue": 34.2603,
+            "defenseValue": 24.4432,
+            "attackRounds": 108,
+            "defenseRounds": 225,
+            "rounds": 333
+          },
+          "2nd_won": {
+            "value": 80.0918,
+            "attackValue": 79.529,
+            "defenseValue": 80.2815,
+            "attackRounds": 552,
+            "defenseRounds": 1638,
+            "rounds": 2190
+          },
+          "full_eco": {
+            "value": 44.8034,
+            "attackValue": 44.8551,
+            "defenseValue": 44.7846,
+            "attackRounds": 379,
+            "defenseRounds": 1045,
+            "rounds": 1424
+          },
+          "unknown": {
+            "value": 42.8393,
+            "attackValue": 42.134,
+            "defenseValue": 43.189,
+            "attackRounds": 1303,
+            "defenseRounds": 2628,
+            "rounds": 3931
+          }
+        },
+        "Bandit": {
+          "2nd_lost": {
+            "value": 19.8273,
+            "attackValue": 19.9653,
+            "defenseValue": 19.6921,
+            "attackRounds": 32592,
+            "defenseRounds": 33257,
+            "rounds": 65849
+          },
+          "2nd_won": {
+            "value": 78.0531,
+            "attackValue": 78.3171,
+            "defenseValue": 77.8004,
+            "attackRounds": 8043,
+            "defenseRounds": 8401,
+            "rounds": 16444
+          },
+          "full_eco": {
+            "value": 44.6235,
+            "attackValue": 42.2957,
+            "defenseValue": 46.9566,
+            "attackRounds": 2239,
+            "defenseRounds": 2234,
+            "rounds": 4473
+          },
+          "pistol": {
+            "value": 50.2641,
+            "attackValue": 49.1664,
+            "defenseValue": 51.2634,
+            "attackRounds": 35408,
+            "defenseRounds": 38896,
+            "rounds": 74304
+          },
+          "unknown": {
+            "value": 30.8497,
+            "attackValue": 30.3988,
+            "defenseValue": 31.2497,
+            "attackRounds": 29389,
+            "defenseRounds": 33120,
+            "rounds": 62509
+          }
+        },
+        "Bucky": {
+          "2nd_lost": {
+            "value": 21.4136,
+            "attackValue": 25.8182,
+            "defenseValue": 19.819,
+            "attackRounds": 1677,
+            "defenseRounds": 4632,
+            "rounds": 6309
+          },
+          "2nd_won": {
+            "value": 76.6301,
+            "attackValue": 77.062,
+            "defenseValue": 76.3126,
+            "attackRounds": 1260,
+            "defenseRounds": 1714,
+            "rounds": 2974
+          },
+          "full_eco": {
+            "value": 44.619,
+            "attackValue": 43.3766,
+            "defenseValue": 45.5633,
+            "attackRounds": 3126,
+            "defenseRounds": 4113,
+            "rounds": 7239
+          },
+          "unknown": {
+            "value": 35.9058,
+            "attackValue": 36.1922,
+            "defenseValue": 35.762,
+            "attackRounds": 10218,
+            "defenseRounds": 20357,
+            "rounds": 30575
+          }
+        },
+        "Bulldog": {
+          "2nd_lost": {
+            "value": 40.3586,
+            "attackValue": 42.2817,
+            "defenseValue": 36.4865,
+            "attackRounds": 149,
+            "defenseRounds": 74,
+            "rounds": 223
+          },
+          "2nd_won": {
+            "value": 80.7752,
+            "attackValue": 81.3172,
+            "defenseValue": 80.2521,
+            "attackRounds": 19467,
+            "defenseRounds": 20175,
+            "rounds": 39642
+          },
+          "full_eco": {
+            "value": 45.2684,
+            "attackValue": 43.984,
+            "defenseValue": 46.3815,
+            "attackRounds": 9351,
+            "defenseRounds": 10791,
+            "rounds": 20142
+          },
+          "unknown": {
+            "value": 45.4341,
+            "attackValue": 44.1802,
+            "defenseValue": 46.7192,
+            "attackRounds": 24373,
+            "defenseRounds": 23780,
+            "rounds": 48153
+          }
+        },
+        "Classic": {
+          "2nd_lost": {
+            "value": 17.3959,
+            "attackValue": 17.4916,
+            "defenseValue": 17.2887,
+            "attackRounds": 79077,
+            "defenseRounds": 70601,
+            "rounds": 149678
+          },
+          "2nd_won": {
+            "value": 77.1974,
+            "attackValue": 79.6488,
+            "defenseValue": 74.6895,
+            "attackRounds": 2393,
+            "defenseRounds": 2339,
+            "rounds": 4732
+          },
+          "full_eco": {
+            "value": 48.4253,
+            "attackValue": 45.9409,
+            "defenseValue": 51.3261,
+            "attackRounds": 18481,
+            "defenseRounds": 15828,
+            "rounds": 34309
+          },
+          "pistol": {
+            "value": 49.8897,
+            "attackValue": 48.9073,
+            "defenseValue": 51.182,
+            "attackRounds": 142022,
+            "defenseRounds": 107961,
+            "rounds": 249983
+          },
+          "unknown": {
+            "value": 36.0503,
+            "attackValue": 34.7964,
+            "defenseValue": 37.3365,
+            "attackRounds": 80379,
+            "defenseRounds": 78360,
+            "rounds": 158739
+          }
+        },
+        "Frenzy": {
+          "2nd_lost": {
+            "value": 17.4379,
+            "attackValue": 17.5485,
+            "defenseValue": 17.352,
+            "attackRounds": 775,
+            "defenseRounds": 997,
+            "rounds": 1772
+          },
+          "2nd_won": {
+            "value": 78.022,
+            "attackValue": 79.4521,
+            "defenseValue": 76.378,
+            "attackRounds": 146,
+            "defenseRounds": 127,
+            "rounds": 273
+          },
+          "pistol": {
+            "value": 49.1033,
+            "attackValue": 48.2025,
+            "defenseValue": 50.2898,
+            "attackRounds": 6153,
+            "defenseRounds": 4671,
+            "rounds": 10824
+          },
+          "unknown": {
+            "value": 28.8186,
+            "attackValue": 27.4213,
+            "defenseValue": 29.8686,
+            "attackRounds": 795,
+            "defenseRounds": 1058,
+            "rounds": 1853
+          },
+          "full_eco": {
+            "value": 41.0258,
+            "attackValue": 38.5536,
+            "defenseValue": 43.8367,
+            "attackRounds": 83,
+            "defenseRounds": 73,
+            "rounds": 156
+          }
+        },
+        "Ghost": {
+          "2nd_lost": {
+            "value": 18.2625,
+            "attackValue": 18.1516,
+            "defenseValue": 18.4168,
+            "attackRounds": 1829,
+            "defenseRounds": 1314,
+            "rounds": 3143
+          },
+          "2nd_won": {
+            "value": 79.855,
+            "attackValue": 80.1135,
+            "defenseValue": 79.5908,
+            "attackRounds": 14562,
+            "defenseRounds": 14249,
+            "rounds": 28811
+          },
+          "full_eco": {
+            "value": 37.584,
+            "attackValue": 35.162,
+            "defenseValue": 39.7786,
+            "attackRounds": 492,
+            "defenseRounds": 543,
+            "rounds": 1035
+          },
+          "pistol": {
+            "value": 49.9109,
+            "attackValue": 48.7039,
+            "defenseValue": 51.1208,
+            "attackRounds": 163622,
+            "defenseRounds": 163225,
+            "rounds": 326847
+          },
+          "unknown": {
+            "value": 33.6067,
+            "attackValue": 31.3652,
+            "defenseValue": 35.7164,
+            "attackRounds": 2659,
+            "defenseRounds": 2825,
+            "rounds": 5484
+          }
+        },
+        "Guardian": {
+          "2nd_lost": {
+            "value": 28.7504,
+            "attackValue": 28.3724,
+            "defenseValue": 29.5245,
+            "attackRounds": 215,
+            "defenseRounds": 105,
+            "rounds": 320
+          },
+          "2nd_won": {
+            "value": 80.2654,
+            "attackValue": 81.484,
+            "defenseValue": 79.1587,
+            "attackRounds": 24158,
+            "defenseRounds": 26601,
+            "rounds": 50759
+          },
+          "full_eco": {
+            "value": 45.9787,
+            "attackValue": 44.2373,
+            "defenseValue": 47.7142,
+            "attackRounds": 30052,
+            "defenseRounds": 30153,
+            "rounds": 60205
+          },
+          "unknown": {
+            "value": 43.2562,
+            "attackValue": 41.5465,
+            "defenseValue": 44.9666,
+            "attackRounds": 89796,
+            "defenseRounds": 89757,
+            "rounds": 179553
+          }
+        },
+        "Judge": {
+          "2nd_lost": {
+            "value": 21.1783,
+            "attackValue": 27.1625,
+            "defenseValue": 20.4113,
+            "attackRounds": 81,
+            "defenseRounds": 632,
+            "rounds": 713
+          },
+          "2nd_won": {
+            "value": 79.3733,
+            "attackValue": 82.8797,
+            "defenseValue": 76.7999,
+            "attackRounds": 3271,
+            "defenseRounds": 4457,
+            "rounds": 7728
+          },
+          "full_eco": {
+            "value": 48.0895,
+            "attackValue": 46.0205,
+            "defenseValue": 49.6547,
+            "attackRounds": 10061,
+            "defenseRounds": 13300,
+            "rounds": 23361
+          },
+          "unknown": {
+            "value": 47.3148,
+            "attackValue": 47.5856,
+            "defenseValue": 47.1661,
+            "attackRounds": 17049,
+            "defenseRounds": 31056,
+            "rounds": 48105
+          }
+        },
+        "Marshal": {
+          "2nd_lost": {
+            "value": 19.6322,
+            "attackValue": 19.7515,
+            "defenseValue": 19.4938,
+            "attackRounds": 1929,
+            "defenseRounds": 1662,
+            "rounds": 3591
+          },
+          "2nd_won": {
+            "value": 80.2655,
+            "attackValue": 80.613,
+            "defenseValue": 80.0807,
+            "attackRounds": 9486,
+            "defenseRounds": 17831,
+            "rounds": 27317
+          },
+          "full_eco": {
+            "value": 41.4202,
+            "attackValue": 39.8277,
+            "defenseValue": 42.0836,
+            "attackRounds": 1863,
+            "defenseRounds": 4472,
+            "rounds": 6335
+          },
+          "unknown": {
+            "value": 35.9193,
+            "attackValue": 34.3226,
+            "defenseValue": 37.3813,
+            "attackRounds": 7383,
+            "defenseRounds": 8063,
+            "rounds": 15446
+          }
+        },
+        "Odin": {
+          "2nd_won": {
+            "value": 87.2136,
+            "attackValue": 89.2312,
+            "defenseValue": 85.7148,
+            "attackRounds": 130,
+            "defenseRounds": 175,
+            "rounds": 305
+          },
+          "full_eco": {
+            "value": 52.6025,
+            "attackValue": 48.7602,
+            "defenseValue": 54.1487,
+            "attackRounds": 4922,
+            "defenseRounds": 12231,
+            "rounds": 17153
+          },
+          "unknown": {
+            "value": 61.5861,
+            "attackValue": 59.5756,
+            "defenseValue": 62.4739,
+            "attackRounds": 5086,
+            "defenseRounds": 11517,
+            "rounds": 16603
+          },
+          "2nd_lost": {
+            "value": 0,
+            "attackValue": 0,
+            "defenseValue": null,
+            "attackRounds": 1,
+            "defenseRounds": 0,
+            "rounds": 1
+          }
+        },
+        "Operator": {
+          "full_eco": {
+            "value": 52.8888,
+            "attackValue": 48.1786,
+            "defenseValue": 54.4807,
+            "attackRounds": 26185,
+            "defenseRounds": 77480,
+            "rounds": 103665
+          },
+          "unknown": {
+            "value": 61.1046,
+            "attackValue": 57.8583,
+            "defenseValue": 62.2086,
+            "attackRounds": 22659,
+            "defenseRounds": 66630,
+            "rounds": 89289
+          }
+        },
+        "Outlaw": {
+          "2nd_lost": {
+            "value": 28.4707,
+            "attackValue": 30.5062,
+            "defenseValue": 21.5569,
+            "attackRounds": 1875,
+            "defenseRounds": 552,
+            "rounds": 2427
+          },
+          "2nd_won": {
+            "value": 80.1682,
+            "attackValue": 81.8498,
+            "defenseValue": 79.5546,
+            "attackRounds": 6050,
+            "defenseRounds": 16581,
+            "rounds": 22631
+          },
+          "full_eco": {
+            "value": 46.0493,
+            "attackValue": 48.5237,
+            "defenseValue": 44.8527,
+            "attackRounds": 4237,
+            "defenseRounds": 8762,
+            "rounds": 12999
+          },
+          "unknown": {
+            "value": 62.3544,
+            "attackValue": 63.3149,
+            "defenseValue": 61.5706,
+            "attackRounds": 21854,
+            "defenseRounds": 26781,
+            "rounds": 48635
+          }
+        },
+        "Phantom": {
+          "2nd_lost": {
+            "value": 17.6471,
+            "attackValue": 12.5,
+            "defenseValue": 100,
+            "attackRounds": 16,
+            "defenseRounds": 1,
+            "rounds": 17
+          },
+          "2nd_won": {
+            "value": 81.343,
+            "attackValue": 81.7381,
+            "defenseValue": 80.4374,
+            "attackRounds": 11527,
+            "defenseRounds": 5030,
+            "rounds": 16557
+          },
+          "full_eco": {
+            "value": 50.7497,
+            "attackValue": 48.2211,
+            "defenseValue": 53.1691,
+            "attackRounds": 298982,
+            "defenseRounds": 312485,
+            "rounds": 611467
+          },
+          "unknown": {
+            "value": 58.258,
+            "attackValue": 56.7216,
+            "defenseValue": 59.7876,
+            "attackRounds": 304058,
+            "defenseRounds": 305396,
+            "rounds": 609454
+          }
+        },
+        "Sheriff": {
+          "2nd_lost": {
+            "value": 21.258,
+            "attackValue": 21.7806,
+            "defenseValue": 20.7247,
+            "attackRounds": 55750,
+            "defenseRounds": 54624,
+            "rounds": 110374
+          },
+          "2nd_won": {
+            "value": 78.8821,
+            "attackValue": 79.2801,
+            "defenseValue": 78.5142,
+            "attackRounds": 15082,
+            "defenseRounds": 16318,
+            "rounds": 31400
+          },
+          "full_eco": {
+            "value": 44.659,
+            "attackValue": 42.9784,
+            "defenseValue": 46.4046,
+            "attackRounds": 17188,
+            "defenseRounds": 16548,
+            "rounds": 33736
+          },
+          "pistol": {
+            "value": 50.7613,
+            "attackValue": 50.1104,
+            "defenseValue": 50.9707,
+            "attackRounds": 15476,
+            "defenseRounds": 48120,
+            "rounds": 63596
+          },
+          "unknown": {
+            "value": 31.3846,
+            "attackValue": 30.0582,
+            "defenseValue": 32.7038,
+            "attackRounds": 256146,
+            "defenseRounds": 257570,
+            "rounds": 513716
+          }
+        },
+        "Shorty": {
+          "2nd_lost": {
+            "value": 15.1902,
+            "attackValue": 10.6082,
+            "defenseValue": 16.4383,
+            "attackRounds": 575,
+            "defenseRounds": 2111,
+            "rounds": 2686
+          },
+          "full_eco": {
+            "value": 51.343,
+            "attackValue": 47.1936,
+            "defenseValue": 56.8011,
+            "attackRounds": 4062,
+            "defenseRounds": 3088,
+            "rounds": 7150
+          },
+          "pistol": {
+            "value": 48.9748,
+            "attackValue": 51.4363,
+            "defenseValue": 45.9088,
+            "attackRounds": 974,
+            "defenseRounds": 782,
+            "rounds": 1756
+          },
+          "unknown": {
+            "value": 44.6726,
+            "attackValue": 45.2397,
+            "defenseValue": 44.105,
+            "attackRounds": 7564,
+            "defenseRounds": 7557,
+            "rounds": 15121
+          },
+          "2nd_won": {
+            "value": 80.0011,
+            "attackValue": 91.6667,
+            "defenseValue": 75.7591,
+            "attackRounds": 12,
+            "defenseRounds": 33,
+            "rounds": 45
+          }
+        },
+        "Spectre": {
+          "2nd_lost": {
+            "value": 33.1176,
+            "attackValue": 35.3917,
+            "defenseValue": 29.7064,
+            "attackRounds": 1020,
+            "defenseRounds": 680,
+            "rounds": 1700
+          },
+          "2nd_won": {
+            "value": 81.6673,
+            "attackValue": 81.967,
+            "defenseValue": 81.3836,
+            "attackRounds": 29877,
+            "defenseRounds": 31563,
+            "rounds": 61440
+          },
+          "full_eco": {
+            "value": 42.9754,
+            "attackValue": 41.4704,
+            "defenseValue": 44.2445,
+            "attackRounds": 10364,
+            "defenseRounds": 12291,
+            "rounds": 22655
+          },
+          "unknown": {
+            "value": 44.819,
+            "attackValue": 43.2275,
+            "defenseValue": 46.4972,
+            "attackRounds": 25456,
+            "defenseRounds": 24143,
+            "rounds": 49599
+          }
+        },
+        "Stinger": {
+          "2nd_lost": {
+            "value": 32.8122,
+            "attackValue": 36.9719,
+            "defenseValue": 25.7296,
+            "attackRounds": 6889,
+            "defenseRounds": 4046,
+            "rounds": 10935
+          },
+          "2nd_won": {
+            "value": 79.8911,
+            "attackValue": 79.8108,
+            "defenseValue": 79.9793,
+            "attackRounds": 9297,
+            "defenseRounds": 8471,
+            "rounds": 17768
+          },
+          "full_eco": {
+            "value": 44.3607,
+            "attackValue": 43.6764,
+            "defenseValue": 45.3123,
+            "attackRounds": 9790,
+            "defenseRounds": 7040,
+            "rounds": 16830
+          },
+          "unknown": {
+            "value": 37.7528,
+            "attackValue": 36.6669,
+            "defenseValue": 39.0607,
+            "attackRounds": 43696,
+            "defenseRounds": 36279,
+            "rounds": 79975
+          }
+        },
+        "Vandal": {
+          "2nd_won": {
+            "value": 80.0953,
+            "attackValue": 80.1657,
+            "defenseValue": 79.9356,
+            "attackRounds": 20212,
+            "defenseRounds": 8907,
+            "rounds": 29119
+          },
+          "full_eco": {
+            "value": 50.155,
+            "attackValue": 47.4963,
+            "defenseValue": 53.0948,
+            "attackRounds": 842858,
+            "defenseRounds": 762238,
+            "rounds": 1605096
+          },
+          "unknown": {
+            "value": 56.1714,
+            "attackValue": 54.3254,
+            "defenseValue": 58.2047,
+            "attackRounds": 835697,
+            "defenseRounds": 758683,
+            "rounds": 1594380
+          },
+          "2nd_lost": {
+            "value": 32.8125,
+            "attackValue": 38.4615,
+            "defenseValue": 8.3333,
+            "attackRounds": 52,
+            "defenseRounds": 12,
+            "rounds": 64
+          }
+        }
+      },
       "unavailableAgents": [],
       "metaComps": [
         {
@@ -4842,6 +13340,7 @@
         ],
         "agentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Juliett/agent.json.gz",
         "compUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Juliett/comp.json.gz",
+        "weaponUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/Juliett/weapon.json.gz",
         "globalAgentUrl": "https://www.vstats.gg/statistics/4f0864e2-40af-28a4-de2c-0e9e64e75f23/ALL/ALL/agent.json.gz"
       }
     }
@@ -7870,6 +16369,16 @@
         rankLabel: reference.source.rankLabel,
         agentUrl: reference.source.agentUrl,
         compUrl: reference.source.compUrl
+      };
+      map.weaponConversionReference = {
+        source: {
+          provider: reference.source.provider,
+          actLabel: reference.source.actLabel,
+          patchLabel: reference.source.patchLabel,
+          rankLabel: reference.source.rankLabel,
+          weaponUrl: reference.source.weaponUrl
+        },
+        metrics: reference.weaponConversions
       };
     });
     return true;

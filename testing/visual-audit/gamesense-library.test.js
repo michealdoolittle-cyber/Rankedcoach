@@ -463,6 +463,7 @@ async function run() {
     assert.doesNotMatch(await desktop.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
     assert.equal(await desktop.locator(".gamesense-playlist-filters button").count(), 14);
     assert.equal(await desktop.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
+    assert.equal(await desktop.locator(".gamesense-playlist-filters button").last().getAttribute("data-gamesense-playlist-filter"), "Historical Archive");
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     const playlistFilterThemeState = await desktop.locator(".gamesense-playlist-filters").evaluate(filters => {
       const active = getComputedStyle(filters.querySelector("button.active"));
@@ -555,6 +556,7 @@ async function run() {
     await desktop.locator('[data-gamesense-playlist-filter="Role"]').click();
     assert.match(await desktop.locator(".gamesense-playlist-catalog-section.is-historical").innerText(), /Historical Controller guide/i);
     await desktop.locator('[data-gamesense-playlist-filter="Historical Archive"]').click();
+    assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Historical Archive"]').getAttribute("aria-selected"), "true");
     assert.equal(await desktop.locator(".gamesense-playlist-historical-group").count(), 4, "Historical guides must remain grouped by their original category and target.");
     await desktop.locator(".gamesense-playlist-historical-group", { hasText: "Corrode" }).locator("summary").click();
     await desktop.locator('[data-video-id="histmap0001"] [data-gamesense-play-video]').click();
@@ -626,8 +628,8 @@ async function run() {
     assert.doesNotMatch(await desktop.locator(".gamesense-comp-card").innerText(), /Tracker Network|Data Still In Review/i);
     assert.match(await desktop.locator(".gamesense-map-detail-head").innerText(), /Bind.*Out of Season/is);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").count(), 5);
-    assert.equal(await desktop.locator(".gamesense-round-conversion.is-unavailable").count(), 5);
-    assert.match(await desktop.locator(".gamesense-weapon-suggestions").textContent(), /Round conversion percent: unavailable.*outside the active-season Competitive sample/is);
+    assert.equal(await desktop.locator(".gamesense-round-conversion.is-unavailable").count(), 0);
+    assert.match(await desktop.locator(".gamesense-weapon-suggestions").textContent(), /Round conversion percent uses VStats\.gg Ascendant-to-Radiant V26 Act 2 map and economy sample/i);
     assert.equal(await desktop.locator(".gamesense-role-result").count(), 0);
     assert.equal(await desktop.locator(".gamesense-map-view-tabs button").count(), 3);
     assert.equal(await desktop.locator(".gamesense-map-view-tabs button").evaluateAll(buttons => buttons.every(button => getComputedStyle(button).textAlign === "center")), true);
@@ -921,8 +923,8 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion summary img").count(), 5);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion[open]").count(), 0);
     await desktop.locator(".gamesense-weapon-suggestion").first().locator("summary").click();
-    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /active-season full-buy rounds/i);
-    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Combined round conversion percent: 50\.87%.*Second rifle Vandal: 50\.41% round conversion percent/is);
+    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Full-buy combined round conversion percent: \d+\.\d+%/i);
+    assert.match(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Comparable rifle \w+: \d+\.\d+% round conversion percent/i);
     assert.doesNotMatch(await desktop.locator(".gamesense-weapon-suggestion").first().innerText(), /Best locations/i);
     assert.equal(await desktop.locator(".gamesense-weapon-suggestion").first().locator(".gamesense-weapon-suggestion-detail > :first-child").getAttribute("class"), "gamesense-round-conversion");
     await desktop.locator(".gamesense-weapon-suggestion").nth(1).locator("summary").click();
@@ -939,7 +941,7 @@ async function run() {
     });
     assert.ok(desktopWeaponSuggestion.fit.bottom <= desktopWeaponSuggestion.image.top + 1, JSON.stringify(desktopWeaponSuggestion));
     assert.ok(Math.abs((desktopWeaponSuggestion.toggle.top + desktopWeaponSuggestion.toggle.height / 2) - (desktopWeaponSuggestion.image.top + desktopWeaponSuggestion.image.height / 2)) <= 3, JSON.stringify(desktopWeaponSuggestion));
-    assert.match(await desktop.locator(".gamesense-weapon-source").innerText(), /retained Competitive map and economy sample.*verified static weapon reference/is);
+    assert.match(await desktop.locator(".gamesense-weapon-source").innerText(), /VStats\.gg Ascendant-to-Radiant V26 Act 4 map and economy sample/i);
     const sideSpecificWeapons = await desktop.evaluate(() => globalThis.RankedCoachGamesenseMaps.find(map => map.id === "breeze").weaponSuggestions.filter(item => item.side));
     assert.ok(sideSpecificWeapons.every(item => item.side === "DEF" && /^On defense,/i.test(item.note)), JSON.stringify(sideSpecificWeapons));
     await desktop.locator(".gamesense-weapon-suggestions").screenshot({ path: path.join(__dirname, "tmp", "gamesense-map-weapons-desktop.png") });
@@ -976,7 +978,7 @@ async function run() {
     assert.equal(mapSeasonStatuses.sunset, "");
     await desktop.click('[data-gamesense-item="split"]');
     await desktop.locator(".gamesense-tactical-stage img").waitFor({ state: "visible" });
-    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /split-layout-labeled\.svg/);
+    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /split-layout-trn\.png/);
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3);
     assert.deepEqual(await desktop.locator(".gamesense-comp-reference-label").allInnerTexts(), ["PRIMARY ROLE LAYOUT", "SECONDARY ROLE LAYOUT", "ALTERNATE ROLE LAYOUT"]);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 0);
@@ -1650,6 +1652,7 @@ async function run() {
     assert.doesNotMatch(await mobile.locator(".gamesense-playlist-home > .gamesense-playlist-grid:not(.gamesense-live-grid)").innerText(), /Ranked coaching VOD/i);
     assert.equal(await mobile.locator(".gamesense-playlist-filters button").count(), 14);
     assert.equal(await mobile.locator(".gamesense-playlist-filters button").first().getAttribute("data-gamesense-playlist-filter"), "All");
+    assert.equal(await mobile.locator(".gamesense-playlist-filters button").last().getAttribute("data-gamesense-playlist-filter"), "Historical Archive");
     assert.equal(await mobile.locator('[data-gamesense-playlist-filter="Home"] .gamesense-playlist-home-icon').count(), 1);
     assert.match(await mobile.locator(".gamesense-live-card").innerText(), /Charla7an.*412 watching/is);
     const mobileFilterStrip = mobile.locator(".gamesense-playlist-filters");

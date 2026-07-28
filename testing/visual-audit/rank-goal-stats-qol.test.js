@@ -238,11 +238,17 @@ async function run() {
     const opportunityGeometry = await page.locator("#impactOpportunityPullout").evaluate(pullout => {
       const panel = pullout.querySelector(".impact-opportunity-panel").getBoundingClientRect();
       const modal = pullout.closest(".impact-report-modal").getBoundingClientRect();
-      return { panel: panel.toJSON(), modal: modal.toJSON(), viewport: { width: innerWidth, height: innerHeight } };
+      const header = pullout.querySelector(".impact-opportunity-head").getBoundingClientRect();
+      const close = pullout.querySelector("#impactOpportunityClose").getBoundingClientRect();
+      return { panel: panel.toJSON(), modal: modal.toJSON(), header: header.toJSON(), close: close.toJSON(), viewport: { width: innerWidth, height: innerHeight } };
     });
     assert.ok(opportunityGeometry.panel.left >= 0 && opportunityGeometry.panel.right <= opportunityGeometry.viewport.width && opportunityGeometry.panel.top >= 0 && opportunityGeometry.panel.bottom <= opportunityGeometry.viewport.height, JSON.stringify(opportunityGeometry));
+    assert.ok(Math.abs((opportunityGeometry.close.top + opportunityGeometry.close.bottom) / 2 - (opportunityGeometry.header.top + opportunityGeometry.header.bottom) / 2) <= 1, JSON.stringify(opportunityGeometry));
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await page.locator("#lensModalOverlay .impact-report-modal").screenshot({ path: path.join(__dirname, "tmp", "qol-impact-score-opportunities.png") });
+    await page.locator("#impactOpportunityClose").click();
+    assert.equal(await page.locator("#impactOpportunityTab").getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator("#impactOpportunityClose").isHidden(), true);
     await page.locator("#lensModalOverlay").click({ position: { x: 2, y: 2 } });
     await page.locator("#lensModalOverlay").waitFor({ state: "hidden" });
 

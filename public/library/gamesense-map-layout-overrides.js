@@ -154,7 +154,7 @@
     "tacticalMapSource": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
   },
   "split": {
-    "layoutImage": "/assets/library/maps/split-layout-labeled.svg",
+    "layoutImage": "/assets/library/maps/split-layout-trn.png",
     "plantLayoutImage": "/assets/library/maps/split-layout-plants.svg",
     "calloutLabelsBakedIn": true,
     "plantSpots": [
@@ -221,288 +221,80 @@
     "layoutImage": "/assets/library/maps/abyss-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/abyss-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 51.620000000000005,
-        "y": 84.83,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 59.52,
-        "y": 14.159999999999991,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Abyss in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US"
   },
   "ascent": {
     "layoutImage": "/assets/library/maps/ascent-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/ascent-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 64.99000000000001,
-        "y": 85.75,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 71.45,
-        "y": 26.269999999999992,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "Dignitas names A Dice, A Tree, B Corner, B Back, and B Market as Ascent plant recommendations. Its guide does not publish map-coordinate markers, so the map is shown without approximated site-centroid pins.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US"
   },
   "corrode": {
     "layoutImage": "/assets/library/maps/corrode-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/corrode-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 60.15999999999999,
-        "y": 74.21000000000001,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 55.61,
-        "y": 30.980000000000008,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Corrode in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115?language=en-US"
   },
   "fracture": {
     "layoutImage": "/assets/library/maps/fracture-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/fracture-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 82.01,
-        "y": 52.21,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 9.35,
-        "y": 51.8,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Fracture in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
   },
   "haven": {
     "layoutImage": "/assets/library/maps/haven-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/haven-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 59.85,
-        "y": 83.05,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 59.89,
-        "y": 49.86,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "C",
-        "label": "C Site",
-        "rate": null,
-        "x": 58.23,
-        "y": 17.889999999999997,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "Dignitas names A Default, A Long, B Middle, B Left, C Garage, and C Long as Haven plant recommendations. Its guide does not publish map-coordinate markers, so the map is shown without approximated site-centroid pins.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/2bee0dc9-4ffe-519b-1cbd-7fbe763a6047?language=en-US"
   },
   "lotus": {
     "layoutImage": "/assets/library/maps/lotus-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/lotus-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 85.49,
-        "y": 36.08,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 50.29,
-        "y": 45.92999999999999,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "C",
-        "label": "C Site",
-        "rate": null,
-        "x": 14.760000000000002,
-        "y": 43.7,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Lotus in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
   },
   "pearl": {
     "layoutImage": "/assets/library/maps/pearl-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/pearl-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 91.49,
-        "y": 40.00999999999999,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 25.820000000000004,
-        "y": 46.36,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Pearl in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/fd267378-4d1d-484f-ff52-77821ed10dc2?language=en-US"
   },
   "icebox": {
     "layoutImage": "/assets/library/maps/icebox-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/icebox-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 30.939999999999998,
-        "y": 23.45,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 35.44,
-        "y": 81.95,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "Dignitas names A Generator, A Belt, A Top, B Corner, B Mid, and B Top as Icebox plant recommendations. Its guide does not publish map-coordinate markers, so the map is shown without approximated site-centroid pins.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
   },
   "summit": {
     "layoutImage": "/assets/library/maps/summit-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/summit-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 91.74,
-        "y": 40.33,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 15.05,
-        "y": 33.75999999999999,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Summit in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US"
   },
   "sunset": {
     "layoutImage": "/assets/library/maps/sunset-layout-labeled.svg",
     "plantLayoutImage": "/assets/library/maps/sunset-layout-plants.svg",
     "calloutLabelsBakedIn": true,
-    "plantSpots": [
-      {
-        "number": 1,
-        "site": "A",
-        "label": "A Site",
-        "rate": null,
-        "x": 74.96,
-        "y": 43.75999999999999,
-        "source": "Riot map callout"
-      },
-      {
-        "number": 1,
-        "site": "B",
-        "label": "B Site",
-        "rate": null,
-        "x": 4.3700000000000045,
-        "y": 56.239999999999995,
-        "source": "Riot map callout"
-      }
-    ],
-    "plantRateNote": "Site reference points use official Riot callouts. Riot does not publish a plant-share distribution for this map.",
+    "plantSpots": [],
+    "plantRateNote": "No source-verified named spike-plant locations are published for Sunset in the retained Library sources. The map is shown without fabricated site-centroid markers.",
     "tacticalMapSource": "https://valorant-api.com/v1/maps/92584fbe-486a-b1b2-9faa-39b0f486b498?language=en-US"
   }
 });

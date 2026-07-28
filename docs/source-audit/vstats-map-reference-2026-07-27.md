@@ -8,8 +8,10 @@ This internal audit accompanies `public/library/gamesense-vstats-reference.js`. 
 
 - VStats map agent aggregates: `https://www.vstats.gg/statistics/{act-id}/ALL/{map-code}/agent.json.gz`
 - VStats map composition aggregates: `https://www.vstats.gg/statistics/{act-id}/ALL/{map-code}/comp.json.gz`
+- VStats map weapon/economy aggregates: `https://www.vstats.gg/statistics/{act-id}/ALL/{map-code}/weapon.json.gz`
 - VStats all-map agent aggregate: `https://www.vstats.gg/statistics/{act-id}/ALL/ALL/agent.json.gz`
 - Official agent identity and role metadata: `https://valorant-api.com/v1/agents?isPlayableCharacter=true`
+- Official weapon identity metadata: `https://valorant-api.com/v1/weapons?language=en-US`
 
 ## Method
 
@@ -18,6 +20,7 @@ This internal audit accompanies `public/library/gamesense-vstats-reference.js`. 
 - Win rate is a match-count-weighted aggregate of VStats' published rank-bucket win rates.
 - Map/global pick comparisons use the same retained act for that map.
 - The three suggested composition layouts are the three most frequent distinct role structures. Each uses the highest-volume observed five-agent composition inside that structure; no lineup win rate is claimed.
+- Weapon conversion is the VStats published round-win percentage for the shown weapon and map, weighted across the same Ascendant/Immortal/Radiant rank buckets by the provider's attack and defense round totals. A weapon suggestion requests the explicit provider economy bucket (full-buy, pistol, or second-round loss); if an older retained act genuinely lacks that bucket, the UI labels VStats' measured `unknown`/all-round aggregate instead of calling it a full-buy value.
 
 ## Retained source coverage
 
