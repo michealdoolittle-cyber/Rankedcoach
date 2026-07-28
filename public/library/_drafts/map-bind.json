@@ -543,6 +543,7 @@
   "uuid": "2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba",
   "coordinates": "34°2'A'N,6°51'Z'W",
   "source": "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
+  "dataStatus": "verified",
   "lastReviewed": "2026-07-28",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/bind-layout-plants.svg",
@@ -812,7 +813,6 @@
       "globalSampleAvailable": true
     }
   ],
-  "dataStatus": "verified",
   "compSample": {
     "rankLabel": "Ascendant to Radiant",
     "patchLabel": "V26 Act 2",
@@ -1478,7 +1478,7 @@
     "entityName": "Bind",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-28T14:55:35.869Z",
+    "generatedAt": "2026-07-28T19:58:21.911Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-28"
@@ -1650,6 +1650,14 @@
       "approved": true,
       "confidence": "n/a (auto-approved)"
     },
+    "dataStatus": {
+      "_tier": "canonical",
+      "_sources": [
+        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
+      ],
+      "approved": true,
+      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
+    },
     "lastReviewed": {
       "_tier": "synthesized",
       "_sources": [],
@@ -1685,14 +1693,6 @@
       "_sources": [],
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
-    "dataStatus": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US"
-      ],
-      "approved": true,
-      "confidence": "Pipeline status: canonical facts exist while synthesized guidance remains under review"
     },
     "compSample": {
       "_tier": "synthesized",
