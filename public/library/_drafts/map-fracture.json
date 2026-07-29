@@ -292,7 +292,7 @@
   "coordinates": "35°48'BI\"N 106°08'YQ\"W",
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-28",
+  "lastReviewed": "2026-07-29",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/fracture-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US",
@@ -1274,7 +1274,7 @@
     "entityName": "Fracture",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T03:47:50.246Z",
+    "generatedAt": "2026-07-29T09:19:19.680Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-29"

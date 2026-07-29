@@ -867,7 +867,7 @@
   "coordinates": "26°11'AG\"N 71°10'WY\"W",
   "source": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-07-28",
+  "lastReviewed": "2026-07-29",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/breeze-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
@@ -1575,7 +1575,7 @@
     "entityName": "Breeze",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T03:47:50.246Z",
+    "generatedAt": "2026-07-29T09:19:19.680Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-29"

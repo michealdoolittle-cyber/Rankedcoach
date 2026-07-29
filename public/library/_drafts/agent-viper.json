@@ -137,7 +137,7 @@
   ],
   "uuid": "707eab51-4836-f488-046a-cda6bf494859",
   "source": "https://valorant-api.com/v1/agents/707eab51-4836-f488-046a-cda6bf494859?language=en-US",
-  "lastReviewed": "2026-07-28",
+  "lastReviewed": "2026-07-29",
   "patchVersion": "13.01",
   "pickRate": 7.0643,
   "pickRateRank": 17,
@@ -233,7 +233,7 @@
     "entityName": "Viper",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T03:47:50.246Z",
+    "generatedAt": "2026-07-29T09:19:19.680Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-29"

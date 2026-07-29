@@ -129,7 +129,7 @@
   ],
   "uuid": "117ed9e3-49f3-6512-3ccf-0cada7e3823b",
   "source": "https://valorant-api.com/v1/agents/117ed9e3-49f3-6512-3ccf-0cada7e3823b?language=en-US",
-  "lastReviewed": "2026-07-28",
+  "lastReviewed": "2026-07-29",
   "patchVersion": "13.01",
   "pickRate": 24.8149,
   "pickRateRank": 8,
@@ -225,7 +225,7 @@
     "entityName": "Cypher",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T03:47:50.246Z",
+    "generatedAt": "2026-07-29T09:19:19.680Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-29"

@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/6f2a04ca-43e0-be17-7f36-b3908627744d?language=en-US",
   "uuid": "6f2a04ca-43e0-be17-7f36-b3908627744d",
-  "lastReviewed": "2026-07-28",
+  "lastReviewed": "2026-07-29",
   "patchVersion": "13.01",
   "pickRate": 12.2944,
   "pickRateRank": 13,
@@ -232,7 +232,7 @@
     "entityName": "Skye",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T03:47:50.246Z",
+    "generatedAt": "2026-07-29T09:19:19.680Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-29"

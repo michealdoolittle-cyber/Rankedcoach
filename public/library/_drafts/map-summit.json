@@ -251,7 +251,7 @@
   ],
   "source": "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-07-28",
+  "lastReviewed": "2026-07-29",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/summit-layout-plants.svg",
   "plantSpots": [],
@@ -1282,7 +1282,7 @@
     "entityName": "Summit",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T03:47:50.246Z",
+    "generatedAt": "2026-07-29T09:19:19.680Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-29"
