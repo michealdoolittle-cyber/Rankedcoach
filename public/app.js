@@ -3741,6 +3741,10 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
           <feMergeNode in="SourceGraphic"></feMergeNode>
         </feMerge>
       </filter>
+      <filter id="rcProfileSmokeBlur">
+        <feGaussianBlur stdDeviation="2.4" result="blur"></feGaussianBlur>
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .72 0"></feColorMatrix>
+      </filter>
     </defs>
   `;
   const effects = {
@@ -3753,9 +3757,7 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     eclipse: `
       <g class="rc-profile-effect rc-profile-effect-eclipse">
-        <circle class="rc-profile-effect-orb rc-effect-shadow-fill" cx="38" cy="36" r="18"></circle>
-        <circle class="rc-profile-effect-orb rc-effect-primary" cx="56" cy="50" r="28"></circle>
-        <path class="rc-profile-effect-wisp rc-effect-secondary" d="M21 72C35 58 58 58 76 70"></path>
+        <circle class="rc-profile-eclipse-vignette rc-effect-shadow-fill" cx="50" cy="50" r="47"></circle>
       </g>
     `,
     "bubble-drift": `
@@ -3769,8 +3771,14 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     "light-rays": `
       <g class="rc-profile-effect rc-profile-effect-rays">
-        <path class="rc-profile-effect-ray rc-profile-ray-push rc-effect-primary" d="M50 0V24M50 76V100M0 50H24M76 50H100M12 12L30 30M70 70L88 88M88 12L70 30M30 70L12 88"></path>
-        <path class="rc-profile-effect-ray rc-profile-ray-pull rc-effect-secondary" d="M50 12V27M50 73V88M12 50H27M73 50H88M22 22L33 33M67 67L78 78M78 22L67 33M33 67L22 78"></path>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-push rc-effect-primary" x1="50" y1="5" x2="50" y2="28"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-pull rc-effect-secondary" x1="78" y1="22" x2="63" y2="37"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-push rc-effect-primary" x1="95" y1="50" x2="72" y2="50"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-pull rc-effect-secondary" x1="78" y1="78" x2="63" y2="63"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-push rc-effect-primary" x1="50" y1="95" x2="50" y2="72"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-pull rc-effect-secondary" x1="22" y1="78" x2="37" y2="63"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-push rc-effect-primary" x1="5" y1="50" x2="28" y2="50"></line>
+        <line class="rc-profile-effect-ray rc-profile-ray-spoke rc-profile-ray-pull rc-effect-secondary" x1="22" y1="22" x2="37" y2="37"></line>
       </g>
     `,
     vortex: `
@@ -3797,14 +3805,16 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     "water-ripple": `
       <g class="rc-profile-effect rc-profile-effect-ripple">
-        <circle class="rc-profile-effect-wave rc-profile-ripple-1 rc-effect-primary" cx="50" cy="50" r="21"></circle>
-        <circle class="rc-profile-effect-wave rc-profile-ripple-2 rc-effect-secondary" cx="50" cy="50" r="31"></circle>
-        <circle class="rc-profile-effect-wave rc-profile-ripple-3 rc-effect-primary" cx="50" cy="50" r="41"></circle>
+        <circle class="rc-profile-effect-wave rc-profile-ripple-1 rc-effect-primary" cx="50" cy="50" r="16"></circle>
+        <circle class="rc-profile-effect-wave rc-profile-ripple-2 rc-effect-secondary" cx="50" cy="50" r="16"></circle>
+        <circle class="rc-profile-effect-wave rc-profile-ripple-3 rc-effect-primary" cx="50" cy="50" r="16"></circle>
       </g>
     `,
     "smoke-wisp": `
       <g class="rc-profile-effect rc-profile-effect-smoke">
-        <path class="rc-profile-effect-cloud rc-effect-shadow-fill" d="M18 68C10 49 24 30 45 32C49 15 78 19 75 41C93 43 93 72 72 75C57 88 31 84 18 68Z"></path>
+        <path class="rc-profile-effect-cloud rc-profile-smoke-1 rc-effect-shadow-fill" d="M15 70C9 50 24 31 43 33C49 16 78 20 76 42C94 45 91 73 70 76C55 88 27 84 15 70Z"></path>
+        <path class="rc-profile-effect-cloud rc-profile-smoke-2 rc-effect-primary-fill" d="M25 63C20 48 33 36 49 38C54 26 72 29 73 44C85 47 82 66 66 69C53 77 34 74 25 63Z"></path>
+        <ellipse class="rc-profile-effect-cloud rc-profile-smoke-3 rc-effect-secondary-fill" cx="52" cy="56" rx="30" ry="18"></ellipse>
       </g>
     `,
     "ember-sparks": `
@@ -3823,8 +3833,56 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
       </g>
     `,
     "shadow-eclipse": `
-      <g class="rc-profile-effect rc-profile-effect-eclipse">
-        <path class="rc-profile-effect-shadow rc-effect-shadow-fill" d="M18 50C18 27 36 10 59 12C43 27 42 72 61 88C36 91 18 73 18 50Z"></path>
+      <g class="rc-profile-effect rc-profile-effect-shadow-eclipse">
+        <path class="rc-profile-effect-shadow rc-profile-shadow-eclipse-main rc-effect-shadow-fill" d="M17 50C17 27 35 10 59 12C43 27 42 72 61 88C36 91 17 73 17 50Z"></path>
+        <path class="rc-profile-effect-shadow rc-profile-shadow-eclipse-reflect rc-effect-shadow-fill" d="M83 50C83 27 65 10 41 12C57 27 58 72 39 88C64 91 83 73 83 50Z"></path>
+      </g>
+    `,
+    "lightning-bolts": `
+      <g class="rc-profile-effect rc-profile-effect-lightning">
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-1 rc-effect-primary" d="M24 -4L15 27H27L18 61L48 18H35L42 -4"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-2 rc-effect-secondary" d="M74 -10L62 22H77L66 58L94 14H82L88 -10"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-3 rc-effect-glint" d="M50 -14L43 13H54L46 41L69 5H58L63 -14"></path>
+      </g>
+    `,
+    "agent-trace": `
+      <g class="rc-profile-effect rc-profile-effect-agent-trace">
+        <path class="rc-profile-agent-outline rc-effect-primary" d="M50 12C58 12 64 19 64 28C64 34 61 39 57 42C68 47 76 60 78 79C70 87 61 91 50 91C39 91 30 87 22 79C24 60 32 47 43 42C39 39 36 34 36 28C36 19 42 12 50 12Z" pathLength="100"></path>
+        <path class="rc-profile-agent-outline rc-profile-agent-outline-glow rc-effect-secondary" d="M50 12C58 12 64 19 64 28C64 34 61 39 57 42C68 47 76 60 78 79C70 87 61 91 50 91C39 91 30 87 22 79C24 60 32 47 43 42C39 39 36 34 36 28C36 19 42 12 50 12Z" pathLength="100"></path>
+      </g>
+    `,
+    "chamber-bullets": `
+      <g class="rc-profile-effect rc-profile-effect-bullets">
+        <circle class="rc-profile-bullet-hole rc-profile-bullet-hole-1 rc-effect-shadow-fill" cx="25" cy="28" r="5"></circle>
+        <circle class="rc-profile-bullet-hole rc-profile-bullet-hole-2 rc-effect-shadow-fill" cx="74" cy="35" r="4.2"></circle>
+        <circle class="rc-profile-bullet-hole rc-profile-bullet-hole-3 rc-effect-shadow-fill" cx="35" cy="76" r="4.6"></circle>
+        <path class="rc-profile-bullet-trace rc-profile-bullet-trace-1 rc-effect-primary" d="M-5 68H44"></path>
+        <path class="rc-profile-bullet-trace rc-profile-bullet-trace-2 rc-effect-secondary" d="M60 18H108"></path>
+      </g>
+    `,
+    snowfall: `
+      <g class="rc-profile-effect rc-profile-effect-snow">
+        <circle class="rc-profile-snowflake rc-profile-snow-1 rc-effect-glint-fill" cx="18" cy="-8" r="1.7"></circle>
+        <circle class="rc-profile-snowflake rc-profile-snow-2 rc-effect-primary-fill" cx="39" cy="-12" r="1.3"></circle>
+        <circle class="rc-profile-snowflake rc-profile-snow-3 rc-effect-glint-fill" cx="58" cy="-7" r="2"></circle>
+        <circle class="rc-profile-snowflake rc-profile-snow-4 rc-effect-secondary-fill" cx="80" cy="-14" r="1.5"></circle>
+        <path class="rc-profile-snowflake rc-profile-snow-5 rc-effect-glint" d="M31 -9v6M28 -6h6M29 -8l4 4M33 -8l-4 4"></path>
+      </g>
+    `,
+    "confetti-burst": `
+      <g class="rc-profile-effect rc-profile-effect-confetti">
+        <rect class="rc-profile-confetti rc-profile-confetti-1 rc-effect-primary-fill" x="48" y="48" width="3" height="9" rx="1"></rect>
+        <rect class="rc-profile-confetti rc-profile-confetti-2 rc-effect-secondary-fill" x="49" y="48" width="3" height="8" rx="1"></rect>
+        <rect class="rc-profile-confetti rc-profile-confetti-3 rc-effect-glint-fill" x="49" y="48" width="2.5" height="7" rx="1"></rect>
+        <rect class="rc-profile-confetti rc-profile-confetti-4 rc-effect-primary-fill" x="48" y="49" width="3" height="8" rx="1"></rect>
+        <rect class="rc-profile-confetti rc-profile-confetti-5 rc-effect-secondary-fill" x="49" y="49" width="2.5" height="7" rx="1"></rect>
+      </g>
+    `,
+    "prism-offset": `
+      <g class="rc-profile-effect rc-profile-effect-prism-offset">
+        <path class="rc-profile-prism-offset rc-profile-prism-red" d="M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80"></path>
+        <path class="rc-profile-prism-offset rc-profile-prism-green" d="M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80"></path>
+        <path class="rc-profile-prism-offset rc-profile-prism-blue" d="M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80"></path>
       </g>
     `,
     "fade-pulse": `
@@ -44423,7 +44481,13 @@ const PROFILE_BORDER_STYLES = [
   { value: "arc", label: "Arc", note: "Controller arc frame" },
   { value: "spike", label: "Spike", note: "Spike lock frame" },
   { value: "crosshair", label: "Crosshair", note: "Aim marker frame" },
-  { value: "vanguard", label: "Vanguard", note: "Heavy launch frame" }
+  { value: "vanguard", label: "Vanguard", note: "Heavy launch frame" },
+  { value: "element-ice", label: "Ice Shell", note: "Solid icy circle texture" },
+  { value: "element-fire", label: "Fire Core", note: "Solid fire circle texture" },
+  { value: "element-sand", label: "Sandstone", note: "Solid sand circle texture" },
+  { value: "element-bark", label: "Bark Vein", note: "Solid bark circle texture" },
+  { value: "element-storm", label: "Storm Glass", note: "Solid storm circle texture" },
+  { value: "element-water", label: "Tide Glass", note: "Solid water circle texture" }
 ];
 
 const PROFILE_LAYOUT_SHAPES = [
@@ -44484,7 +44548,13 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "ember-sparks", label: "Ember Sparks", note: "Rising fire flecks" },
   { value: "glitch-scan", label: "Glitch Scan", note: "Digital scan frame" },
   { value: "fade-pulse", label: "Fade Pulse", note: "Soft glow fades in and out" },
-  { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark orbit pass" }
+  { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark mirrored orbit pass" },
+  { value: "lightning-bolts", label: "Lightning Bolts", note: "Downward electric border hits" },
+  { value: "agent-trace", label: "Agent Trace", note: "Silhouette outline redraw" },
+  { value: "chamber-bullets", label: "Chamber Bullet Holes", note: "Bullet holes and tracer cuts" },
+  { value: "snowfall", label: "Snowfall", note: "Falling snow particles" },
+  { value: "confetti-burst", label: "Confetti Burst", note: "Celebration burst particles" },
+  { value: "prism-offset", label: "Prism Offset", note: "Three-color offset shimmer" }
 ];
 
 const PROFILE_AMBIENT_BORDER_STYLE_VALUES = Object.freeze(PREMIUM_PROFILE_BORDER_STYLES.map(style => style.value));
