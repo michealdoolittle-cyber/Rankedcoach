@@ -1451,10 +1451,17 @@
       .filter(Boolean);
   }
 
+  function escapeRegExp(value = "") {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
   function textMentionsAsset(text = "", label = "") {
     const slug = assetSlug(label);
     if (!slug) return false;
-    return assetSlug(text).split("-").join(" ").includes(slug.split("-").join(" "));
+    const normalizedText = ` ${assetSlug(text).split("-").join(" ")} `;
+    const normalizedLabel = slug.split("-").join(" ").trim();
+    if (!normalizedLabel) return false;
+    return new RegExp(`\\s${escapeRegExp(normalizedLabel).replace(/\\s+/g, "\\s+")}\\s`, "i").test(normalizedText);
   }
 
   function getKnowledgeAssetPreviews(item = {}) {
@@ -1473,7 +1480,8 @@
     maps.forEach(map => {
       const label = map.label || map.id;
       const exact = entitySlugs.includes(assetSlug(label));
-      if (!exact && !(category === "map" || category === "agent-map")) return;
+      const allowMapTextMatch = ["map", "agent-map", "patch", "patch-notes"].includes(category);
+      if (!exact && !allowMapTextMatch) return;
       if (exact || textMentionsAsset(combined, label)) {
         addKnowledgeAssetPreview(previews, {
           kind: "map",
@@ -1628,10 +1636,19 @@
           ${patchItems.map((item) => {
             const [label, ...rest] = String(item || "").split(":");
             const hasLabel = rest.length > 0 && label.trim().length <= 36;
+            const bodyText = (hasLabel ? rest.join(":") : item).trim();
+            const patchAssetPreviews = renderKnowledgeAssetPreviews({
+              category: "patch-notes",
+              topic: hasLabel ? label.trim() : "Patch note",
+              wording: `${hasLabel ? label.trim() : ""} ${bodyText}`.trim()
+            });
             return `
               <li>
                 <span aria-hidden="true"></span>
-                <p>${hasLabel ? `<strong>${escapeHtml(label.trim())}</strong> ` : ""}${escapeHtml((hasLabel ? rest.join(":") : item).trim())}</p>
+                <div class="gamesense-patch-note-body">
+                  ${patchAssetPreviews}
+                  <p>${hasLabel ? `<strong>${escapeHtml(label.trim())}</strong> ` : ""}${escapeHtml(bodyText)}</p>
+                </div>
               </li>
             `;
           }).join("")}

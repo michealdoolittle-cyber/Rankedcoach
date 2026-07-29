@@ -60408,3 +60408,21 @@ body:not(.access-reduced-motion) .nav-right .profile-avatar-ring.border-lightnin
 body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-lightning-bolts .rc-profile-lightning-3{
   animation-delay:-.86s !important;
 }
+
+/* Regression guard: keep avatar effects clipped at the avatar, but do not clip
+   the settings menu inside the compact profile panel. */
+html body .nav-right #profilePanel.profile-panel,
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right #profilePanel.profile-panel{
+  overflow:visible !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor,
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap,
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
+  overflow:hidden !important;
+}
+
+html body .profile-dropdown.profile-dropdown-pills,
+html body .profile-dropdown.profile-dropdown-pills.open{
+  z-index:10050 !important;
+}

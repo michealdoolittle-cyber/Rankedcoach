@@ -4546,6 +4546,27 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage
   align-items:start;
 }
 
+.gamesense-patch-note-body{
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+
+.gamesense-patch-note-body .gamesense-knowledge-asset-strip{
+  gap:6px;
+}
+
+.gamesense-patch-note-body .gamesense-knowledge-asset{
+  padding:4px 7px;
+  background:rgba(2,6,23,.64);
+}
+
+.gamesense-patch-note-body .gamesense-knowledge-asset img{
+  width:24px;
+  height:24px;
+  flex-basis:24px;
+}
+
 .gamesense-patch-note-list li > span{
   width:8px;
   height:8px;
