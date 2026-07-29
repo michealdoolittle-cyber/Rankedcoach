@@ -164,6 +164,7 @@ function publicationCategoryLabel(value = "") {
 }
 
 function proposalBucketForStatus(status = "") {
+  if (status === "rejected-cleared") return "";
   if (status === "rejected") return "rejected";
   if (status === "published" || status === "approved") return "approved";
   return "review";

@@ -3850,8 +3850,8 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     "agent-trace": `
       <g class="rc-profile-effect rc-profile-effect-agent-trace">
-        <path class="rc-profile-agent-outline rc-effect-primary" d="M50 12C58 12 64 19 64 28C64 34 61 39 57 42C68 47 76 60 78 79C70 87 61 91 50 91C39 91 30 87 22 79C24 60 32 47 43 42C39 39 36 34 36 28C36 19 42 12 50 12Z" pathLength="100"></path>
-        <path class="rc-profile-agent-outline rc-profile-agent-outline-glow rc-effect-secondary" d="M50 12C58 12 64 19 64 28C64 34 61 39 57 42C68 47 76 60 78 79C70 87 61 91 50 91C39 91 30 87 22 79C24 60 32 47 43 42C39 39 36 34 36 28C36 19 42 12 50 12Z" pathLength="100"></path>
+        <path class="rc-profile-agent-outline rc-effect-primary" d="M51 7L58 12L62 22L60 32L66 39L73 54L80 76L70 88L56 94L43 93L30 87L21 76L27 55L34 40L40 33L38 22L43 12Z" pathLength="100"></path>
+        <path class="rc-profile-agent-outline rc-profile-agent-outline-glow rc-effect-secondary" d="M51 7L58 12L62 22L60 32L66 39L73 54L80 76L70 88L56 94L43 93L30 87L21 76L27 55L34 40L40 33L38 22L43 12Z" pathLength="100"></path>
       </g>
     `,
     snowfall: `
@@ -44793,15 +44793,22 @@ function getValorantPlayerCardWideArtUrl(uuid = "") {
   return normalizedUuid ? `https://media.valorant-api.com/playercards/${normalizedUuid}/wideart.png` : "";
 }
 
+function getValorantPlayerCardLargeArtUrl(uuid = "") {
+  const normalizedUuid = getValorantPlayerCardUuid(uuid);
+  return normalizedUuid ? `https://media.valorant-api.com/playercards/${normalizedUuid}/largeart.png` : "";
+}
+
 function profileBannerStyleFromValorantCard(card = {}) {
   const uuid = getValorantPlayerCardUuid(card.uuid);
   if (!uuid) return null;
   const image = String(card.wideArt || getValorantPlayerCardWideArtUrl(uuid) || "").trim();
+  const highResImage = String(card.largeArt || getValorantPlayerCardLargeArtUrl(uuid) || "").trim();
   if (!image) return null;
   return {
     value: getValorantPlayerCardValue(uuid),
     label: normalizeProfileBannerDisplayName(card.displayName || card.displayIcon || "Valorant Player Card"),
     image,
+    highResImage,
     category: "official",
     source: "valorant-api",
     uuid
@@ -46008,6 +46015,18 @@ function getProfileBannerStyle(bannerStyle = "theme") {
   return availableStyles[0] || PROFILE_BANNER_STYLES[0];
 }
 
+function getProfileBannerHighResImageUrl(style = {}) {
+  const explicit = String(style?.highResImage || "").trim();
+  if (explicit) return explicit;
+  const uuid = getValorantPlayerCardUuid(style?.uuid || style?.image || style?.value || "");
+  return uuid ? getValorantPlayerCardLargeArtUrl(uuid) : "";
+}
+
+function isHighResolutionBannerViewport() {
+  if (typeof window === "undefined") return false;
+  return Number(window.innerWidth || 0) >= 1080;
+}
+
 function normalizeProfileBannerStyle(bannerStyle = "theme") {
   const requestedValue = String(bannerStyle || "theme");
   const valorantCardValue = getValorantPlayerCardValue(requestedValue);
@@ -46015,8 +46034,13 @@ function normalizeProfileBannerStyle(bannerStyle = "theme") {
   return getProfileBannerStyle(requestedValue).value;
 }
 
-function getBannerImageUrl(bannerStyle = "theme") {
-  return getProfileBannerStyle(bannerStyle)?.image || "";
+function getBannerImageUrl(bannerStyle = "theme", options = {}) {
+  const style = getProfileBannerStyle(bannerStyle);
+  const standardImage = String(style?.image || "").trim();
+  if (options.highResolution) {
+    return getProfileBannerHighResImageUrl(style) || standardImage;
+  }
+  return standardImage;
 }
 
 function getProfileBannerCategory(style = getProfileBannerStyle()) {
@@ -46639,6 +46663,7 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
   gallery.innerHTML = `${catalogStillLoading ? `<div class="banner-gallery-status">Loading official player-card banners...</div>` : ""}${renderedBanners.map((style) => {
     const pattern = getBannerPattern(style.value, theme);
     const hasImage = Boolean(style.image);
+    const highResImage = getProfileBannerHighResImageUrl(style);
     const previewBackground = style.pattern || `linear-gradient(180deg, ${colors.nav || colors.base || "#071029"}, ${colors.card || "#0b1220"})`;
     return `
       <button type="button" class="banner-card ${String(style.value) === visibleActiveBanner ? "is-active" : ""}" data-banner-card="${escapeHtml(style.value)}" aria-pressed="${String(style.value) === visibleActiveBanner ? "true" : "false"}">
@@ -46650,7 +46675,12 @@ function renderBannerGallery(selectedBanner = "theme", themeKey = "default") {
             --banner-card-pattern:${pattern};
             background:${previewBackground};
           ">
-          ${hasImage ? `<img class="banner-card-image" loading="lazy" decoding="async" src="${escapeHtml(style.image)}" alt="">` : ""}
+          ${hasImage ? `
+            <picture class="banner-card-picture">
+              ${highResImage ? `<source media="(min-width: 1080px)" srcset="${escapeHtml(highResImage)}">` : ""}
+              <img class="banner-card-image" loading="lazy" decoding="async" src="${escapeHtml(style.image)}" alt="">
+            </picture>
+          ` : ""}
           <div class="banner-card-name">${escapeHtml(style.label)}</div>
           <div class="banner-card-strip">${getProfileBannerCategory(style) === "official" ? "Official" : getProfileBannerCategory(style) === "geometric" ? "Geometric" : "RankedCoach"}</div>
         </div>
@@ -46878,7 +46908,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
 
   if (header) {
     const hasBannerOverride = bannerStyle !== "theme";
-    const selectedBannerUrl = getBannerImageUrl(bannerStyle);
+    const selectedBannerUrl = getBannerImageUrl(bannerStyle, { highResolution: isHighResolutionBannerViewport() });
     const activeBannerUrl = selectedBannerUrl;
     const bannerPattern = getBannerPattern(bannerStyle, theme);
     const imageLayer = activeBannerUrl

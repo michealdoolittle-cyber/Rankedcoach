@@ -8,6 +8,7 @@ const APPROVAL_PREFIX = "knowledge:approval:";
 const REVIEW_PREFIX = "knowledge:review:";
 const LATEST_REVIEW_KEY = "knowledge:review:latest";
 const REVIEW_DIRTY_KEY = "knowledge:review:dirty";
+const REJECTED_ARCHIVE_KEY = "knowledge:rejected:index";
 const LAST_RUN_KEY = "knowledge:run:last";
 const RUN_LEASE_KEY = "knowledge:run:lease";
 const PUBLISHED_PREFIX = "knowledge:published:";
@@ -1925,6 +1926,85 @@ function proposalAnalysisFingerprint(proposal = {}) {
   }));
 }
 
+async function readRejectedProposalArchive(kv) {
+  const archive = await kv.get(REJECTED_ARCHIVE_KEY, "json");
+  return Array.isArray(archive?.items) ? archive.items : [];
+}
+
+function rejectedArchiveRecordFromProposal(proposal = {}, meta = {}) {
+  const proposalId = String(proposal.id || proposal.proposalId || "").trim();
+  const ids = unique([
+    proposalId,
+    ...(proposal.legacyProposalIds || [])
+  ].map(id => String(id || "").trim()).filter(Boolean));
+  const analysisFingerprint = String(
+    meta.analysisFingerprint
+    || proposal.analysisFingerprint
+    || proposalAnalysisFingerprint(proposal)
+    || ""
+  ).trim();
+  if (!proposalId && !ids.length && !analysisFingerprint) return null;
+  return {
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    proposalId,
+    conceptId: String(proposal.conceptId || proposalId.replace(/^proposal-/, "") || ""),
+    ids,
+    analysisFingerprint,
+    rejectedAt: meta.rejectedAt || proposal.rejectedAt || nowIso(),
+    rejectedBy: normalizeWhitespace(meta.rejectedBy || proposal.rejectedBy || "owner"),
+    rejectionReason: normalizeWhitespace(meta.rejectionReason || proposal.rejectionReason || "Owner rejected this transcript-derived insight."),
+    clearedAt: meta.clearedAt || proposal.clearedAt || null
+  };
+}
+
+function rejectedArchiveRecordsOverlap(left = {}, right = {}) {
+  if (left.analysisFingerprint && right.analysisFingerprint && left.analysisFingerprint === right.analysisFingerprint) return true;
+  const leftIds = new Set([left.proposalId, ...(left.ids || [])].filter(Boolean));
+  return [right.proposalId, ...(right.ids || [])].some(id => leftIds.has(id));
+}
+
+async function rememberRejectedKnowledgeProposals(kv, proposals = [], meta = {}) {
+  const records = proposals
+    .map(proposal => rejectedArchiveRecordFromProposal(proposal, meta))
+    .filter(Boolean);
+  if (!records.length) return Object.freeze({ archived: 0, status: "empty" });
+  const existing = await readRejectedProposalArchive(kv);
+  const deduped = [];
+  for (const record of [...records, ...existing]) {
+    if (deduped.some(item => rejectedArchiveRecordsOverlap(item, record))) continue;
+    deduped.push(record);
+  }
+  await kv.put(REJECTED_ARCHIVE_KEY, JSON.stringify({
+    schemaVersion: KNOWLEDGE_SCHEMA_VERSION,
+    updatedAt: meta.clearedAt || meta.rejectedAt || nowIso(),
+    items: deduped.slice(0, 5_000)
+  }));
+  return Object.freeze({ archived: records.length, status: "archived" });
+}
+
+function rejectedArchiveLookup(items = []) {
+  const byId = new Map();
+  const byFingerprint = new Map();
+  for (const item of items) {
+    for (const id of unique([item.proposalId, ...(item.ids || [])].filter(Boolean))) {
+      if (!byId.has(id)) byId.set(id, item);
+    }
+    if (item.analysisFingerprint && !byFingerprint.has(item.analysisFingerprint)) {
+      byFingerprint.set(item.analysisFingerprint, item);
+    }
+  }
+  return { byId, byFingerprint };
+}
+
+function archivedRejectionForProposal(proposal = {}, analysisFingerprint = "", archive = {}) {
+  const candidateIds = unique([proposal.id, ...(proposal.legacyProposalIds || [])].filter(Boolean));
+  for (const id of candidateIds) {
+    const archived = archive.byId?.get(id);
+    if (archived) return archived;
+  }
+  return analysisFingerprint ? archive.byFingerprint?.get(analysisFingerprint) || null : null;
+}
+
 function proposalCanRemainPublished(proposal = {}) {
   if (proposal.orphanedPublication === true || proposal.state === "evidence-removed") return false;
   if (
@@ -2011,10 +2091,12 @@ async function persistKnowledgeReview(kv, review, consensus, options = {}) {
     coachingConcepts: consensus.coaching?.length || 0,
     storedAs: "per-proposal-private-records"
   }));
-  const [previousReview, publishedIndex] = await Promise.all([
+  const [previousReview, publishedIndex, rejectedArchive] = await Promise.all([
     kv.get(LATEST_REVIEW_KEY, "json"),
-    kv.get(PUBLISHED_INDEX_KEY, "json")
+    kv.get(PUBLISHED_INDEX_KEY, "json"),
+    readRejectedProposalArchive(kv)
   ]);
+  const archivedRejections = rejectedArchiveLookup(rejectedArchive);
   const previousIndex = new Map();
   for (const item of reviewProposalIndex(previousReview)) {
     previousIndex.set(item.id, item);
@@ -2067,6 +2149,27 @@ async function persistKnowledgeReview(kv, review, consensus, options = {}) {
       const key = `${PROPOSAL_PREFIX}${proposal.id}`;
       const previousId = previousEntry?.id || proposal.id;
       const previous = await kv.get(`${PROPOSAL_PREFIX}${previousId}`, "json");
+      const archivedRejection = archivedRejectionForProposal(proposal, analysisFingerprint, archivedRejections);
+      const previousStatus = previous?.approvalStatus || previousEntry?.approvalStatus || "";
+      const shouldStayClearedRejected = Boolean(
+        archivedRejection
+        && previousStatus !== "rejected"
+        && !["draft", "approved", "published"].includes(previousStatus)
+      );
+      if (shouldStayClearedRejected) {
+        await kv.put(key, JSON.stringify({
+          ...proposal,
+          approvalStatus: "rejected-cleared",
+          rejectedAt: archivedRejection.rejectedAt || null,
+          rejectedBy: archivedRejection.rejectedBy || null,
+          rejectionReason: archivedRejection.rejectionReason || null,
+          clearedAt: archivedRejection.clearedAt || null,
+          analysisUpdatedAt: review.createdAt,
+          hiddenByRejectedArchive: true
+        }));
+        proposalIndex[index] = null;
+        continue;
+      }
       const merged = mergeProposalDecision(proposal, previous, review.createdAt);
       await kv.put(key, JSON.stringify(merged));
       if (previousId !== proposal.id) {
@@ -2134,17 +2237,18 @@ async function persistKnowledgeReview(kv, review, consensus, options = {}) {
       items: [...reconciledPublished.values()]
     }));
   }
+  const visibleProposalIndex = proposalIndex.filter(Boolean);
   const { proposals: _proposals, ...reviewWithoutProposals } = review;
   const persistedReview = {
     ...reviewWithoutProposals,
     summary: {
       ...review.summary,
-      pendingApproval: proposalIndex.filter(item => item.approvalStatus === "pending-owner-approval").length,
-      rejected: proposalIndex.filter(item => item.approvalStatus === "rejected").length,
-      published: proposalIndex.filter(item => item.approvalStatus === "published").length
+      pendingApproval: visibleProposalIndex.filter(item => item.approvalStatus === "pending-owner-approval").length,
+      rejected: visibleProposalIndex.filter(item => item.approvalStatus === "rejected").length,
+      published: visibleProposalIndex.filter(item => item.approvalStatus === "published").length
     },
-    proposalCount: proposalIndex.length,
-    proposalIndex
+    proposalCount: visibleProposalIndex.length,
+    proposalIndex: visibleProposalIndex
   };
   await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(persistedReview));
   await kv.put(LATEST_REVIEW_KEY, JSON.stringify(persistedReview));
@@ -2790,14 +2894,20 @@ export async function rejectKnowledgeProposal(kv, rejection = {}, now = new Date
   if (proposal.approvalStatus === "published") {
     throw new Error("Remove the published guidance from the Library before rejecting it.");
   }
+  const rejectedAt = nowIso(now);
   const updatedProposal = {
     ...proposal,
     approvalStatus: "rejected",
-    rejectedAt: nowIso(now),
+    rejectedAt,
     rejectedBy: owner,
     rejectionReason: reason
   };
   await kv.put(key, JSON.stringify(updatedProposal));
+  await rememberRejectedKnowledgeProposals(kv, [updatedProposal], {
+    rejectedAt,
+    rejectedBy: owner,
+    rejectionReason: reason
+  });
   await updateLatestReviewProposal(kv, updatedProposal);
   return Object.freeze({ proposalId, status: "rejected" });
 }
@@ -2859,13 +2969,24 @@ export async function clearRejectedKnowledgeProposals(kv, now = new Date()) {
   const rejected = index.filter(item => item.approvalStatus === "rejected");
   if (!review || !rejected.length) return Object.freeze({ removed: 0, status: "empty" });
   const rejectedIds = new Set(rejected.map(item => item.id));
+  const clearedAt = nowIso(now);
+  const rejectedDocuments = await Promise.all(rejected.map(item => kv.get(`${PROPOSAL_PREFIX}${item.id}`, "json")));
+  await rememberRejectedKnowledgeProposals(kv, rejected.map((item, index) => (
+    rejectedDocuments[index] || {
+      id: item.id,
+      proposalId: item.id,
+      legacyProposalIds: item.legacyProposalIds || [],
+      analysisFingerprint: item.analysisFingerprint,
+      approvalStatus: "rejected"
+    }
+  )), { clearedAt });
   if (typeof kv.delete === "function") {
     await Promise.all([...rejectedIds].map(id => kv.delete(`${PROPOSAL_PREFIX}${id}`)));
   } else {
     await Promise.all([...rejectedIds].map(id => kv.put(`${PROPOSAL_PREFIX}${id}`, JSON.stringify({
       id,
       approvalStatus: "rejected-cleared",
-      clearedAt: nowIso(now)
+      clearedAt
     }))));
   }
   const updatedIndex = index.filter(item => !rejectedIds.has(item.id));
@@ -2880,7 +3001,7 @@ export async function clearRejectedKnowledgeProposals(kv, now = new Date()) {
     },
     proposalCount: updatedIndex.length,
     proposalIndex: updatedIndex,
-    rejectedClearedAt: nowIso(now)
+    rejectedClearedAt: clearedAt
   };
   await kv.put(`${REVIEW_PREFIX}${review.id}`, JSON.stringify(updated));
   await kv.put(LATEST_REVIEW_KEY, JSON.stringify(updated));
@@ -3316,6 +3437,7 @@ export const KNOWLEDGE_STORAGE_KEYS = Object.freeze({
   reviewPrefix: REVIEW_PREFIX,
   latestReview: LATEST_REVIEW_KEY,
   reviewDirty: REVIEW_DIRTY_KEY,
+  rejectedArchive: REJECTED_ARCHIVE_KEY,
   lastRun: LAST_RUN_KEY,
   runLease: RUN_LEASE_KEY,
   publishedPrefix: PUBLISHED_PREFIX,
