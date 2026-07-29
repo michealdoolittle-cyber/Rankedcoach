@@ -3840,24 +3840,18 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     "lightning-bolts": `
       <g class="rc-profile-effect rc-profile-effect-lightning">
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-1 rc-effect-primary" d="M24 -4L15 27H27L18 61L48 18H35L42 -4"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-2 rc-effect-secondary" d="M74 -10L62 22H77L66 58L94 14H82L88 -10"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-3 rc-effect-glint" d="M50 -14L43 13H54L46 41L69 5H58L63 -14"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-core rc-profile-lightning-1 rc-effect-primary" pathLength="100" d="M28 -8L20 14L31 24L22 39L36 50L25 72"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-branch rc-profile-lightning-1 rc-effect-glint" pathLength="100" d="M31 24L46 22L35 36M36 50L50 55L39 65"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-core rc-profile-lightning-2 rc-effect-secondary" pathLength="100" d="M72 -12L61 10L74 23L64 42L79 53L68 78"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-branch rc-profile-lightning-2 rc-effect-glint" pathLength="100" d="M74 23L91 20L78 35M79 53L92 61L76 68"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-core rc-profile-lightning-3 rc-effect-primary" pathLength="100" d="M51 -18L45 3L56 16L48 31L60 43L52 62"></path>
+        <path class="rc-profile-lightning-bolt rc-profile-lightning-branch rc-profile-lightning-3 rc-effect-secondary" pathLength="100" d="M56 16L66 13L58 27M60 43L72 48L61 55"></path>
       </g>
     `,
     "agent-trace": `
       <g class="rc-profile-effect rc-profile-effect-agent-trace">
         <path class="rc-profile-agent-outline rc-effect-primary" d="M50 12C58 12 64 19 64 28C64 34 61 39 57 42C68 47 76 60 78 79C70 87 61 91 50 91C39 91 30 87 22 79C24 60 32 47 43 42C39 39 36 34 36 28C36 19 42 12 50 12Z" pathLength="100"></path>
         <path class="rc-profile-agent-outline rc-profile-agent-outline-glow rc-effect-secondary" d="M50 12C58 12 64 19 64 28C64 34 61 39 57 42C68 47 76 60 78 79C70 87 61 91 50 91C39 91 30 87 22 79C24 60 32 47 43 42C39 39 36 34 36 28C36 19 42 12 50 12Z" pathLength="100"></path>
-      </g>
-    `,
-    "chamber-bullets": `
-      <g class="rc-profile-effect rc-profile-effect-bullets">
-        <circle class="rc-profile-bullet-hole rc-profile-bullet-hole-1 rc-effect-shadow-fill" cx="25" cy="28" r="5"></circle>
-        <circle class="rc-profile-bullet-hole rc-profile-bullet-hole-2 rc-effect-shadow-fill" cx="74" cy="35" r="4.2"></circle>
-        <circle class="rc-profile-bullet-hole rc-profile-bullet-hole-3 rc-effect-shadow-fill" cx="35" cy="76" r="4.6"></circle>
-        <path class="rc-profile-bullet-trace rc-profile-bullet-trace-1 rc-effect-primary" d="M-5 68H44"></path>
-        <path class="rc-profile-bullet-trace rc-profile-bullet-trace-2 rc-effect-secondary" d="M60 18H108"></path>
       </g>
     `,
     snowfall: `
@@ -44551,7 +44545,6 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark mirrored orbit pass" },
   { value: "lightning-bolts", label: "Lightning Bolts", note: "Downward electric border hits" },
   { value: "agent-trace", label: "Agent Trace", note: "Silhouette outline redraw" },
-  { value: "chamber-bullets", label: "Chamber Bullet Holes", note: "Bullet holes and tracer cuts" },
   { value: "snowfall", label: "Snowfall", note: "Falling snow particles" },
   { value: "confetti-burst", label: "Confetti Burst", note: "Celebration burst particles" },
   { value: "prism-offset", label: "Prism Offset", note: "Three-color offset shimmer" }
@@ -46399,6 +46392,7 @@ function renderBorderGallery(selectedBorder = "standard") {
     : getResolvedProfileBorderTones(selectedBorderColor, theme);
   const ringColor = ringTones.color;
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
+  const avatarCssImage = `url("${escapeCssString(avatarUrl)}")`;
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
   const useMobileFramePreview = true;
   const availableBorderStyles = getAvailableProfileBorderStyles();
@@ -46407,7 +46401,7 @@ function renderBorderGallery(selectedBorder = "standard") {
     const isActive = style.value === activeBorder;
     const avatarPreviewMarkup = useMobileFramePreview
       ? `
-          <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-border-3:${ringTones.color3}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent);">
+          <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-border-3:${ringTones.color3}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent); --rc-profile-avatar-url:${escapeHtml(avatarCssImage)};">
             ${getMobileAvatarFrameMarkup(style.value)}
             <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(style.label)} border preview">
           </div>
@@ -46748,6 +46742,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     })
     : getResolvedProfileBorderTones(borderColor, theme);
   const resolvedBorderColor = borderTones.color;
+  const avatarCssImage = `url("${escapeCssString(avatarUrl)}")`;
   const ringBackground = colorMixOrFallback(
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}), color-mix(in srgb, ${borderTones.color3} 10%, ${colors.card2 || "#0f172a"}))`,
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
@@ -46793,6 +46788,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     target.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     target.style.setProperty("--profile-ring-bg", ringBackground);
     target.style.setProperty("--profile-ring-glow", ringGlow);
+    target.style.setProperty("--rc-profile-avatar-url", avatarCssImage);
   });
 
   if (panel) {
@@ -46840,6 +46836,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     root.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     root.style.setProperty("--profile-ring-bg", ringBackground);
     root.style.setProperty("--profile-ring-glow", ringGlow);
+    root.style.setProperty("--rc-profile-avatar-url", avatarCssImage);
     root.style.setProperty("--theme-bg-gradient", `linear-gradient(180deg, ${baseSurface}, ${secondarySurface})`);
     root.style.setProperty("--theme-bg-pattern", colors.pattern || "radial-gradient(circle at 20% 20%, rgba(255,255,255,.06), transparent 36%)");
     root.style.setProperty("--theme-bg-pattern-2", colors.pattern2 || "radial-gradient(circle at 78% 12%, rgba(255,70,85,.14), transparent 30%)");

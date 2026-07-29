@@ -58887,7 +58887,9 @@ html body .nav-right :is(#profileAvatarWrap,.profile-avatar-ring):is(.border-sun
 .rc-profile-effect-frame[data-mobile-frame="water-ripple"] .rc-profile-effect,
 .rc-profile-effect-frame[data-mobile-frame="ember-sparks"] .rc-profile-effect,
 .rc-profile-effect-frame[data-mobile-frame="light-rays"] .rc-profile-effect{
-  animation:none !important;
+  animation:rcProfileLightRaySlowSpin 9.5s linear infinite !important;
+  transform-box:view-box;
+  transform-origin:50% 50%;
 }
 
 .rc-profile-effect-frame[data-mobile-frame="bubble-drift"] .rc-profile-effect-bubble{
@@ -59087,8 +59089,18 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
 
 html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-glitch-scan,.border-fade-pulse,.border-shadow-eclipse,.border-lightning-bolts,.border-agent-trace,.border-chamber-bullets,.border-snowfall,.border-confetti-burst,.border-prism-offset) .rc-profile-effect-frame,
 html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-glitch-scan,.border-card-fade-pulse,.border-card-shadow-eclipse,.border-card-lightning-bolts,.border-card-agent-trace,.border-card-chamber-bullets,.border-card-snowfall,.border-card-confetti-burst,.border-card-prism-offset) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
   width:calc(100% + 34px) !important;
   height:calc(100% + 34px) !important;
+  transform:translate(-50%,-50%) !important;
+  pointer-events:none !important;
+  z-index:1 !important;
+  color:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) !important;
   overflow:visible !important;
 }
 
@@ -59222,10 +59234,18 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
 }
 
 .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-bolt{
-  stroke-width:2.1 !important;
+  stroke-width:2.35 !important;
   opacity:0;
+  stroke-dasharray:100 !important;
+  stroke-dashoffset:100 !important;
   transform-box:view-box;
   transform-origin:50% 0;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--rc-effect-primary) 72%,transparent));
+}
+
+.rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-branch{
+  stroke-width:1.45 !important;
+  opacity:0;
 }
 
 .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-1{animation:rcProfileLightningDropA 1.65s linear infinite !important;}
@@ -59323,6 +59343,40 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
 .rc-profile-effect-frame[data-mobile-frame="prism-offset"] .rc-profile-prism-blue{
   stroke:#38bdf8 !important;
   animation:rcProfilePrismOffsetBlue 2.6s ease-in-out infinite !important;
+}
+
+.rc-profile-effect-frame[data-mobile-frame="prism-offset"] .rc-profile-effect-svg{
+  display:none !important;
+}
+
+.rc-profile-effect-frame[data-mobile-frame="prism-offset"]::before,
+.rc-profile-effect-frame[data-mobile-frame="prism-offset"]::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:min(60%,56px);
+  aspect-ratio:1;
+  border-radius:999px;
+  background-image:var(--rc-profile-avatar-url);
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  opacity:.62;
+  pointer-events:none;
+  z-index:1;
+  mix-blend-mode:screen;
+  filter:saturate(1.35) brightness(1.1);
+}
+
+.rc-profile-effect-frame[data-mobile-frame="prism-offset"]::before{
+  animation:rcProfilePrismAvatarLeft 2.7s ease-in-out infinite !important;
+  filter:hue-rotate(312deg) saturate(1.75) brightness(1.12) drop-shadow(0 0 7px color-mix(in srgb,var(--rc-effect-primary) 70%,transparent));
+}
+
+.rc-profile-effect-frame[data-mobile-frame="prism-offset"]::after{
+  animation:rcProfilePrismAvatarRight 2.7s ease-in-out infinite !important;
+  filter:hue-rotate(178deg) saturate(1.85) brightness(1.14) drop-shadow(0 0 7px color-mix(in srgb,var(--rc-effect-secondary) 70%,transparent));
 }
 
 :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-element-ice,
@@ -59437,6 +59491,11 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   50%{transform:scale(.46);opacity:.28;}
 }
 
+@keyframes rcProfileLightRaySlowSpin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
 @keyframes rcProfileCenteredRipple{
   0%{opacity:0;transform:scale(.12);}
   12%{opacity:.9;transform:scale(.34);}
@@ -59445,16 +59504,17 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
 }
 
 @keyframes rcProfileShadowEclipseMain{
-  0%{opacity:.08;transform:translate3d(-4px,0,0) scale(.94);}
-  42%{opacity:.86;transform:translate3d(0,0,0) scale(1.03);}
-  64%{opacity:.26;transform:translate3d(4px,0,0) scale(.98);}
-  100%{opacity:0;transform:translate3d(8px,0,0) scale(.96);}
+  0%{opacity:0;transform:translate3d(-8px,0,0) scale(.94);}
+  10%{opacity:.84;transform:translate3d(-2px,0,0) scale(1.02);}
+  32%{opacity:.84;transform:translate3d(0,0,0) scale(1.04);}
+  46%,100%{opacity:0;transform:translate3d(7px,0,0) scale(.96);}
 }
 
 @keyframes rcProfileShadowEclipseReflect{
-  0%,42%{opacity:0;transform:translate3d(-8px,0,0) scale(.96);}
-  66%{opacity:.64;transform:translate3d(0,0,0) scale(1.02);}
-  100%{opacity:0;transform:translate3d(5px,0,0) scale(.94);}
+  0%,48%{opacity:0;transform:translate3d(8px,0,0) scale(.96);}
+  58%{opacity:.74;transform:translate3d(2px,0,0) scale(1.02);}
+  82%{opacity:.74;transform:translate3d(0,0,0) scale(1.04);}
+  100%{opacity:0;transform:translate3d(-7px,0,0) scale(.94);}
 }
 
 @keyframes rcProfileSmokeHazeA{
@@ -59473,21 +59533,26 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
 }
 
 @keyframes rcProfileLightningDropA{
-  0%{opacity:0;transform:translate3d(0,-42px,0) scaleY(.72);}
-  15%,32%{opacity:1;}
-  100%{opacity:0;transform:translate3d(5px,92px,0) scaleY(1.12);}
+  0%,72%,100%{opacity:0;stroke-dashoffset:100;transform:translate3d(0,-12px,0) scaleY(.96);filter:brightness(.9);}
+  76%{opacity:.25;stroke-dashoffset:72;filter:brightness(1.1);}
+  80%,86%{opacity:1;stroke-dashoffset:0;filter:brightness(2.4);}
+  89%{opacity:.3;stroke-dashoffset:0;filter:brightness(1.2);}
+  92%{opacity:.92;stroke-dashoffset:0;filter:brightness(2);}
 }
 
 @keyframes rcProfileLightningDropB{
-  0%{opacity:0;transform:translate3d(0,-54px,0) scaleY(.7);}
-  18%,36%{opacity:.92;}
-  100%{opacity:0;transform:translate3d(-4px,88px,0) scaleY(1.08);}
+  0%,58%,100%{opacity:0;stroke-dashoffset:100;transform:translate3d(0,-15px,0) scaleY(.94);filter:brightness(.88);}
+  62%{opacity:.22;stroke-dashoffset:78;filter:brightness(1.08);}
+  66%,72%{opacity:.96;stroke-dashoffset:0;filter:brightness(2.25);}
+  75%{opacity:.26;stroke-dashoffset:0;filter:brightness(1.05);}
+  79%{opacity:.82;stroke-dashoffset:0;filter:brightness(1.9);}
 }
 
 @keyframes rcProfileLightningDropC{
-  0%{opacity:0;transform:translate3d(0,-48px,0) scaleY(.62);}
-  12%,28%{opacity:.98;}
-  100%{opacity:0;transform:translate3d(2px,82px,0) scaleY(1.18);}
+  0%,82%,100%{opacity:0;stroke-dashoffset:100;transform:translate3d(0,-18px,0) scaleY(.92);filter:brightness(.85);}
+  85%{opacity:.28;stroke-dashoffset:70;filter:brightness(1.15);}
+  88%,93%{opacity:1;stroke-dashoffset:0;filter:brightness(2.5);}
+  96%{opacity:.2;stroke-dashoffset:0;filter:brightness(1.1);}
 }
 
 @keyframes rcProfileAgentTraceDraw{
@@ -59558,6 +59623,18 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
 @keyframes rcProfilePrismOffsetBlue{
   0%,100%{transform:translate3d(1px,0,0) scale(.99);opacity:.34;}
   50%{transform:translate3d(4px,-1px,0) scale(1.02);opacity:.7;}
+}
+
+@keyframes rcProfilePrismAvatarLeft{
+  0%,100%{transform:translate(-50%,-50%) translateX(0) scale(.985);opacity:.18;}
+  36%{transform:translate(-50%,-50%) translateX(-9px) scale(1.01);opacity:.72;}
+  62%{transform:translate(-50%,-50%) translateX(-6px) scale(1);opacity:.58;}
+}
+
+@keyframes rcProfilePrismAvatarRight{
+  0%,100%{transform:translate(-50%,-50%) translateX(0) scale(.985);opacity:.18;}
+  36%{transform:translate(-50%,-50%) translateX(9px) scale(1.01);opacity:.72;}
+  62%{transform:translate(-50%,-50%) translateX(6px) scale(1);opacity:.58;}
 }
 
 body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-glitch-scan,.border-fade-pulse,.border-shadow-eclipse,.border-lightning-bolts,.border-agent-trace,.border-chamber-bullets,.border-snowfall,.border-confetti-burst,.border-prism-offset) :is(.rc-profile-effect,.rc-profile-effect *,.profile-avatar-img,.mobile-bottom-avatar-img),
