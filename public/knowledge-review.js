@@ -19,6 +19,55 @@ const approvedAutosaveTimers = new Map();
 const approvedAutosaveRequests = new Map();
 const KNOWLEDGE_TYPES = Object.freeze(["coaching", "statistical"]);
 const KNOWLEDGE_TOPICS = Object.freeze(["economy", "mechanics", "teamplay", "map-control", "agent", "mentality", "general"]);
+const KNOWLEDGE_MAP_ENTITIES = Object.freeze([
+  "Abyss", "Ascent", "Bind", "Breeze", "Corrode", "Fracture", "Haven", "Icebox", "Lotus", "Pearl",
+  "Split", "Summit", "Sunset"
+]);
+const KNOWLEDGE_AGENT_ENTITIES = Object.freeze([
+  "Astra", "Breach", "Brimstone", "Chamber", "Clove", "Cypher", "Deadlock", "Fade", "Gekko",
+  "Harbor", "Iso", "Jett", "KAY/O", "Killjoy", "Miks", "Neon", "Omen", "Phoenix", "Raze",
+  "Reyna", "Sage", "Skye", "Sova", "Tejo", "Veto", "Viper", "Vyse", "Waylay", "Yoru"
+]);
+
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function canonicalKnowledgeEntity(entities = [], value = "") {
+  const normalized = String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  return entities.find(entity => entity.toLowerCase() === normalized) || "";
+}
+
+function entityMentionPattern(entity = "") {
+  const escaped = escapeRegExp(entity.toLowerCase()).replace(/\\\//g, "[\\s/]*");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
+}
+
+function findMentionedKnowledgeEntity(entities = [], value = "") {
+  const text = String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  if (!text) return "";
+  return entities.find(entity => entityMentionPattern(entity).test(text)) || "";
+}
+
+function normalizeKnowledgeEntityInput(category = "general", value = "") {
+  const raw = String(value || "").trim().replace(/\s+/g, " ");
+  if (category !== "agent-map") return raw;
+  const separated = raw
+    .replace(/\s*(?:·|•|\+|,|&|;)\s*/g, " · ")
+    .replace(/\s+(?:on|at|for|in)\s+/i, " · ");
+  const parts = separated.split("·").map(part => part.trim().replace(/\s+/g, " ")).filter(Boolean);
+  if (parts.length === 2) {
+    const firstAgent = canonicalKnowledgeEntity(KNOWLEDGE_AGENT_ENTITIES, parts[0]);
+    const firstMap = canonicalKnowledgeEntity(KNOWLEDGE_MAP_ENTITIES, parts[0]);
+    const secondAgent = canonicalKnowledgeEntity(KNOWLEDGE_AGENT_ENTITIES, parts[1]);
+    const secondMap = canonicalKnowledgeEntity(KNOWLEDGE_MAP_ENTITIES, parts[1]);
+    if (firstAgent && secondMap) return `${firstAgent} · ${secondMap}`;
+    if (secondAgent && firstMap) return `${secondAgent} · ${firstMap}`;
+  }
+  const agent = findMentionedKnowledgeEntity(KNOWLEDGE_AGENT_ENTITIES, raw);
+  const map = findMentionedKnowledgeEntity(KNOWLEDGE_MAP_ENTITIES, raw);
+  return agent && map ? `${agent} · ${map}` : raw;
+}
 
 function researchPageLimits() {
   const compact = document.documentElement.classList.contains("is-mobile-layout")
@@ -828,13 +877,17 @@ function setProposalNavigationBusy(busy) {
 }
 
 function proposalTargetPayload(card, proposalId) {
+  const category = card.querySelector("[data-knowledge-category]")?.value || "general";
+  const entityInput = card.querySelector("[data-knowledge-entity]");
+  const entity = normalizeKnowledgeEntityInput(category, entityInput?.value || "");
+  if (entityInput && entity && entity !== entityInput.value.trim()) entityInput.value = entity;
   return {
     proposalId,
     rankedCoachWording: card.querySelector("[data-knowledge-wording]")?.value.trim() || "",
     type: card.querySelector("[data-knowledge-type]")?.value || "coaching",
     topic: card.querySelector("[data-knowledge-topic]")?.value || "general",
-    category: card.querySelector("[data-knowledge-category]")?.value || "general",
-    entity: card.querySelector("[data-knowledge-entity]")?.value.trim() || ""
+    category,
+    entity
   };
 }
 
@@ -1028,7 +1081,9 @@ async function proposalAction(button) {
       const type = card.querySelector("[data-knowledge-type]")?.value || "coaching";
       const topic = card.querySelector("[data-knowledge-topic]")?.value || "general";
       const category = card.querySelector("[data-knowledge-category]")?.value || "general";
-      const entity = card.querySelector("[data-knowledge-entity]")?.value.trim() || "";
+      const entityInput = card.querySelector("[data-knowledge-entity]");
+      const entity = normalizeKnowledgeEntityInput(category, entityInput?.value || "");
+      if (entityInput && entity && entity !== entityInput.value.trim()) entityInput.value = entity;
       const approvalRecord = await request("/api/knowledge/approve", {
         method: "POST",
         body: JSON.stringify({

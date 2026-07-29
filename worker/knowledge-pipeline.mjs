@@ -94,6 +94,46 @@ function normalizeWhitespace(value = "") {
   return String(value).replace(/\s+/g, " ").trim();
 }
 
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function canonicalEntityFromSet(allowed, value = "") {
+  const normalized = normalizeWhitespace(value).toLowerCase();
+  return [...allowed].find(entity => entity.toLowerCase() === normalized) || "";
+}
+
+function entityMentionPattern(entity = "") {
+  const escaped = escapeRegExp(entity.toLowerCase()).replace(/\\\//g, "[\\s/]*");
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
+}
+
+function findMentionedEntity(allowed, value = "") {
+  const text = normalizeWhitespace(value).toLowerCase();
+  if (!text) return "";
+  return [...allowed].find(entity => entityMentionPattern(entity).test(text)) || "";
+}
+
+function canonicalAgentMapEntity(value = "") {
+  const raw = normalizeWhitespace(value);
+  if (!raw) return "";
+  const separated = raw
+    .replace(/\s*(?:·|•|\+|,|&|;)\s*/g, " · ")
+    .replace(/\s+(?:on|at|for|in)\s+/i, " · ");
+  const parts = separated.split("·").map(normalizeWhitespace).filter(Boolean);
+  if (parts.length === 2) {
+    const firstAgent = canonicalEntityFromSet(AGENT_ENTITY_NAMES, parts[0]);
+    const firstMap = canonicalEntityFromSet(MAP_ENTITY_NAMES, parts[0]);
+    const secondAgent = canonicalEntityFromSet(AGENT_ENTITY_NAMES, parts[1]);
+    const secondMap = canonicalEntityFromSet(MAP_ENTITY_NAMES, parts[1]);
+    if (firstAgent && secondMap) return `${firstAgent} · ${secondMap}`;
+    if (secondAgent && firstMap) return `${secondAgent} · ${firstMap}`;
+  }
+  const agent = findMentionedEntity(AGENT_ENTITY_NAMES, raw);
+  const map = findMentionedEntity(MAP_ENTITY_NAMES, raw);
+  return agent && map ? `${agent} · ${map}` : "";
+}
+
 function decodeHtml(value = "") {
   return String(value)
     .replace(/&#(\d+);/g, (_match, code) => String.fromCodePoint(Number(code)))
@@ -141,19 +181,14 @@ function unique(items = []) {
 function canonicalPublicationEntity(category, value = "") {
   if (category === "general") return "";
   if (category === "agent-map") {
-    const [agentValue = "", mapValue = "", ...extra] = String(value).split("·");
-    if (extra.length) return "";
-    const agent = [...AGENT_ENTITY_NAMES].find(entity => entity.toLowerCase() === normalizeWhitespace(agentValue).toLowerCase());
-    const map = [...MAP_ENTITY_NAMES].find(entity => entity.toLowerCase() === normalizeWhitespace(mapValue).toLowerCase());
-    return agent && map ? `${agent} · ${map}` : "";
+    return canonicalAgentMapEntity(value);
   }
   const allowed = category === "map"
     ? MAP_ENTITY_NAMES
     : category === "weapon"
       ? WEAPON_ENTITY_NAMES
       : AGENT_ENTITY_NAMES;
-  const normalized = normalizeWhitespace(value).toLowerCase();
-  return [...allowed].find(entity => entity.toLowerCase() === normalized) || "";
+  return canonicalEntityFromSet(allowed, value);
 }
 
 function canonicalKnowledgeType(value = "coaching") {

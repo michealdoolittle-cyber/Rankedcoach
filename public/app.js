@@ -3695,7 +3695,6 @@ function getMobileAvatarFramePath(borderStyle = "standard") {
     "sonar-wave": "M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80",
     "glitch-scan": "M14 18H86V34H68V48H88V82H14V64H32V50H12V18Z",
     "blossom-pulse": "M50 10C58 24 82 20 86 42C72 46 80 72 58 82C52 66 30 88 16 66C30 58 12 34 34 26C38 40 46 20 50 10Z",
-    "shadow-eclipse": "M50 8a42 42 0 1 1 0 84a28 42 0 1 0 0-84",
     "comet-loop": "M50 8a42 42 0 1 1-18 80C52 78 80 58 92 18"
   };
   return framePaths[borderStyle] || framePaths.standard;
@@ -3830,12 +3829,6 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
       <g class="rc-profile-effect rc-profile-effect-glitch">
         <path class="rc-profile-effect-scan rc-effect-primary" d="M11 24H57M32 39H91M7 55H68M25 72H87"></path>
         <path class="rc-profile-effect-scan rc-effect-secondary" d="M18 30H83M6 62H51M48 80H94"></path>
-      </g>
-    `,
-    "shadow-eclipse": `
-      <g class="rc-profile-effect rc-profile-effect-shadow-eclipse">
-        <path class="rc-profile-effect-shadow rc-profile-shadow-eclipse-main rc-effect-shadow-fill" d="M17 50C17 27 35 10 59 12C43 27 42 72 61 88C36 91 17 73 17 50Z"></path>
-        <path class="rc-profile-effect-shadow rc-profile-shadow-eclipse-reflect rc-effect-shadow-fill" d="M83 50C83 27 65 10 41 12C57 27 58 72 39 88C64 91 83 73 83 50Z"></path>
       </g>
     `,
     "lightning-bolts": `
@@ -44481,7 +44474,17 @@ const PROFILE_BORDER_STYLES = [
   { value: "element-sand", label: "Sandstone", note: "Solid sand circle texture" },
   { value: "element-bark", label: "Bark Vein", note: "Solid bark circle texture" },
   { value: "element-storm", label: "Storm Glass", note: "Solid storm circle texture" },
-  { value: "element-water", label: "Tide Glass", note: "Solid water circle texture" }
+  { value: "element-water", label: "Tide Glass", note: "Solid water circle texture" },
+  { value: "solid-ruby", label: "Ruby Core", note: "Solid red glass circle" },
+  { value: "solid-cyan", label: "Cyan Core", note: "Solid cyan glass circle" },
+  { value: "solid-violet", label: "Violet Core", note: "Solid purple glass circle" },
+  { value: "solid-jade", label: "Jade Core", note: "Solid green glass circle" },
+  { value: "solid-amber", label: "Amber Core", note: "Solid gold glass circle" },
+  { value: "solid-rose", label: "Rose Core", note: "Solid pink glass circle" },
+  { value: "solid-cobalt", label: "Cobalt Core", note: "Solid blue glass circle" },
+  { value: "solid-mint", label: "Mint Core", note: "Solid mint glass circle" },
+  { value: "solid-opal", label: "Opal Core", note: "Solid pale glass circle" },
+  { value: "solid-onyx", label: "Onyx Core", note: "Solid dark gold circle" }
 ];
 
 const PROFILE_LAYOUT_SHAPES = [
@@ -44542,7 +44545,6 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "ember-sparks", label: "Ember Sparks", note: "Rising fire flecks" },
   { value: "glitch-scan", label: "Glitch Scan", note: "Digital scan frame" },
   { value: "fade-pulse", label: "Fade Pulse", note: "Soft glow fades in and out" },
-  { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark mirrored orbit pass" },
   { value: "lightning-bolts", label: "Lightning Bolts", note: "Downward electric border hits" },
   { value: "agent-trace", label: "Agent Trace", note: "Silhouette outline redraw" },
   { value: "snowfall", label: "Snowfall", note: "Falling snow particles" },

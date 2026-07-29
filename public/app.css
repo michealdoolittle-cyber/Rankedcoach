@@ -60017,3 +60017,389 @@ html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profi
   object-fit:contain !important;
   z-index:9 !important;
 }
+
+/* Profile border effects v22: compact live nav avatar, old-size previews, solid-core borders, and repaired scan/lightning motion. */
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor{
+  flex:0 0 58px !important;
+  width:58px !important;
+  min-width:58px !important;
+  max-width:58px !important;
+  height:58px !important;
+  min-height:58px !important;
+  max-height:58px !important;
+  align-self:center !important;
+  display:grid !important;
+  place-items:center !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap{
+  width:54px !important;
+  min-width:54px !important;
+  max-width:54px !important;
+  height:54px !important;
+  min-height:54px !important;
+  max-height:54px !important;
+  display:grid !important;
+  place-items:center !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
+  width:50px !important;
+  min-width:50px !important;
+  max-width:50px !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  display:grid !important;
+  place-items:center !important;
+  position:relative !important;
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > .profile-avatar-img{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:42px !important;
+  min-width:42px !important;
+  max-width:42px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+  transform:translate(-50%,-50%) !important;
+  object-fit:cover !important;
+  z-index:5 !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring .rc-profile-effect-frame{
+  width:50px !important;
+  min-width:50px !important;
+  max-width:50px !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > #profileRankIcon.profile-rank-icon{
+  right:1px !important;
+  bottom:1px !important;
+  width:18px !important;
+  min-width:18px !important;
+  max-width:18px !important;
+  height:18px !important;
+  min-height:18px !important;
+  max-height:18px !important;
+  padding:1px !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview{
+  width:50px !important;
+  min-width:50px !important;
+  max-width:50px !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  flex:0 0 50px !important;
+  margin:0 auto 1px !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview > img{
+  width:46px !important;
+  min-width:46px !important;
+  max-width:46px !important;
+  height:46px !important;
+  min-height:46px !important;
+  max-height:46px !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame{
+  width:58px !important;
+  min-width:58px !important;
+  max-width:58px !important;
+  height:58px !important;
+  min-height:58px !important;
+  max-height:58px !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-ruby,
+#profileAvatarWrap.border-solid-ruby .profile-avatar-ring,
+.profile-panel.border-solid-ruby .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-ruby .border-card-avatar{
+  --rc-solid-border:#fb7185;
+  --rc-solid-glow:rgba(251,113,133,.5);
+  --rc-solid-bg:radial-gradient(circle at 34% 24%, rgba(255,255,255,.24), transparent 22%), linear-gradient(145deg, #2a0610, #9f1239 48%, #fb7185);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-cyan,
+#profileAvatarWrap.border-solid-cyan .profile-avatar-ring,
+.profile-panel.border-solid-cyan .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-cyan .border-card-avatar{
+  --rc-solid-border:#22d3ee;
+  --rc-solid-glow:rgba(34,211,238,.5);
+  --rc-solid-bg:radial-gradient(circle at 62% 28%, rgba(255,255,255,.26), transparent 20%), linear-gradient(145deg, #06202a, #0e7490 50%, #67e8f9);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-violet,
+#profileAvatarWrap.border-solid-violet .profile-avatar-ring,
+.profile-panel.border-solid-violet .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-violet .border-card-avatar{
+  --rc-solid-border:#c084fc;
+  --rc-solid-glow:rgba(192,132,252,.48);
+  --rc-solid-bg:radial-gradient(circle at 30% 30%, rgba(255,255,255,.22), transparent 20%), linear-gradient(145deg, #1e103f, #6d28d9 50%, #c084fc);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-jade,
+#profileAvatarWrap.border-solid-jade .profile-avatar-ring,
+.profile-panel.border-solid-jade .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-jade .border-card-avatar{
+  --rc-solid-border:#34d399;
+  --rc-solid-glow:rgba(52,211,153,.46);
+  --rc-solid-bg:radial-gradient(circle at 36% 22%, rgba(255,255,255,.2), transparent 19%), linear-gradient(145deg, #052e1b, #047857 50%, #6ee7b7);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-amber,
+#profileAvatarWrap.border-solid-amber .profile-avatar-ring,
+.profile-panel.border-solid-amber .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-amber .border-card-avatar{
+  --rc-solid-border:#facc15;
+  --rc-solid-glow:rgba(250,204,21,.48);
+  --rc-solid-bg:radial-gradient(circle at 58% 24%, rgba(255,255,255,.3), transparent 20%), linear-gradient(145deg, #3b1f03, #b45309 50%, #fde047);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-rose,
+#profileAvatarWrap.border-solid-rose .profile-avatar-ring,
+.profile-panel.border-solid-rose .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-rose .border-card-avatar{
+  --rc-solid-border:#f9a8d4;
+  --rc-solid-glow:rgba(249,168,212,.48);
+  --rc-solid-bg:radial-gradient(circle at 42% 28%, rgba(255,255,255,.3), transparent 20%), linear-gradient(145deg, #3b0821, #be185d 50%, #f9a8d4);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-cobalt,
+#profileAvatarWrap.border-solid-cobalt .profile-avatar-ring,
+.profile-panel.border-solid-cobalt .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-cobalt .border-card-avatar{
+  --rc-solid-border:#60a5fa;
+  --rc-solid-glow:rgba(96,165,250,.48);
+  --rc-solid-bg:radial-gradient(circle at 62% 32%, rgba(255,255,255,.24), transparent 20%), linear-gradient(145deg, #071a3a, #1d4ed8 52%, #93c5fd);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-mint,
+#profileAvatarWrap.border-solid-mint .profile-avatar-ring,
+.profile-panel.border-solid-mint .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-mint .border-card-avatar{
+  --rc-solid-border:#a7f3d0;
+  --rc-solid-glow:rgba(167,243,208,.46);
+  --rc-solid-bg:radial-gradient(circle at 38% 24%, rgba(255,255,255,.3), transparent 21%), linear-gradient(145deg, #05241d, #0f766e 50%, #a7f3d0);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-opal,
+#profileAvatarWrap.border-solid-opal .profile-avatar-ring,
+.profile-panel.border-solid-opal .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-opal .border-card-avatar{
+  --rc-solid-border:#f8fafc;
+  --rc-solid-glow:rgba(226,232,240,.48);
+  --rc-solid-bg:radial-gradient(circle at 34% 26%, rgba(255,255,255,.46), transparent 22%), linear-gradient(145deg, #64748b, #cbd5e1 50%, #f8fafc);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-solid-onyx,
+#profileAvatarWrap.border-solid-onyx .profile-avatar-ring,
+.profile-panel.border-solid-onyx .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card-solid-onyx .border-card-avatar{
+  --rc-solid-border:#f8e08e;
+  --rc-solid-glow:rgba(248,224,142,.42);
+  --rc-solid-bg:radial-gradient(circle at 64% 30%, rgba(248,224,142,.24), transparent 18%), linear-gradient(145deg, #020617, #111827 48%, #4a3412);
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-solid-ruby,.border-solid-cyan,.border-solid-violet,.border-solid-jade,.border-solid-amber,.border-solid-rose,.border-solid-cobalt,.border-solid-mint,.border-solid-opal,.border-solid-onyx),
+#profileAvatarWrap:is(.border-solid-ruby,.border-solid-cyan,.border-solid-violet,.border-solid-jade,.border-solid-amber,.border-solid-rose,.border-solid-cobalt,.border-solid-mint,.border-solid-opal,.border-solid-onyx) .profile-avatar-ring,
+.profile-panel:is(.border-solid-ruby,.border-solid-cyan,.border-solid-violet,.border-solid-jade,.border-solid-amber,.border-solid-rose,.border-solid-cobalt,.border-solid-mint,.border-solid-opal,.border-solid-onyx) .profile-avatar-ring,
+#editProfileModal #editProfileBorderGallery .border-card:is(.border-card-solid-ruby,.border-card-solid-cyan,.border-card-solid-violet,.border-card-solid-jade,.border-card-solid-amber,.border-card-solid-rose,.border-card-solid-cobalt,.border-card-solid-mint,.border-card-solid-opal,.border-card-solid-onyx) .border-card-avatar{
+  --profile-ring-border:var(--rc-solid-border) !important;
+  --profile-ring-border-2:var(--rc-solid-border) !important;
+  --profile-ring-bg:var(--rc-solid-bg) !important;
+  --profile-ring-glow:var(--rc-solid-glow) !important;
+  --rc-mobile-frame-color:var(--rc-solid-border) !important;
+  border:3px solid var(--rc-solid-border) !important;
+  border-radius:999px !important;
+  background:
+    var(--rc-solid-bg),
+    linear-gradient(135deg, rgba(15,23,42,.92), rgba(255,255,255,.06)) !important;
+  box-shadow:
+    inset 0 0 18px rgba(2,6,23,.46),
+    0 0 0 1px color-mix(in srgb,var(--rc-solid-border) 44%,transparent),
+    0 0 18px var(--rc-solid-glow) !important;
+}
+
+body:not(.access-reduced-motion) .rc-profile-effect-frame[data-mobile-frame="glitch-scan"] .rc-profile-effect{
+  animation:rcProfileGlitchConveyorV22 1.15s linear infinite !important;
+  transform-box:view-box !important;
+  transform-origin:50% 50% !important;
+}
+
+.rc-profile-effect-frame[data-mobile-frame="glitch-scan"] .rc-profile-effect-scan{
+  stroke-width:2.4 !important;
+  opacity:.92 !important;
+}
+
+body:not(.access-reduced-motion) .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-bolt{
+  animation:rcProfileLightningVisibleDropV22 1.35s linear infinite !important;
+  stroke-dasharray:100 !important;
+  stroke-dashoffset:100 !important;
+  opacity:0;
+}
+
+body:not(.access-reduced-motion) .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-2{
+  animation-delay:-.42s !important;
+}
+
+body:not(.access-reduced-motion) .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-3{
+  animation-delay:-.86s !important;
+}
+
+@keyframes rcProfileGlitchConveyorV22{
+  0%{transform:translate3d(0,-44px,0);opacity:0;}
+  7%{opacity:.95;}
+  92%{opacity:.95;}
+  100%{transform:translate3d(0,44px,0);opacity:0;}
+}
+
+@keyframes rcProfileLightningVisibleDropV22{
+  0%,100%{opacity:0;stroke-dashoffset:100;transform:translate3d(0,-30px,0) scaleY(.94);}
+  8%{opacity:.45;stroke-dashoffset:72;transform:translate3d(0,-16px,0) scaleY(1);}
+  14%,24%{opacity:1;stroke-dashoffset:0;transform:translate3d(0,0,0) scaleY(1.08);}
+  29%{opacity:.24;stroke-dashoffset:0;transform:translate3d(0,10px,0) scaleY(1);}
+  34%{opacity:.85;stroke-dashoffset:0;transform:translate3d(0,14px,0) scaleY(1);}
+  42%{opacity:0;stroke-dashoffset:0;transform:translate3d(0,24px,0) scaleY(.98);}
+}
+
+/* Profile border effects v23: final cascade lock for compact nav, solid rings, and active previews. */
+html body .nav-right #profilePanel.profile-panel{
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor{
+  width:58px !important;
+  min-width:58px !important;
+  max-width:58px !important;
+  height:58px !important;
+  min-height:58px !important;
+  max-height:58px !important;
+  display:grid !important;
+  place-items:center !important;
+  overflow:hidden !important;
+  border-radius:14px !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap{
+  width:54px !important;
+  min-width:54px !important;
+  max-width:54px !important;
+  height:54px !important;
+  min-height:54px !important;
+  max-height:54px !important;
+  display:grid !important;
+  place-items:center !important;
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
+  width:50px !important;
+  min-width:50px !important;
+  max-width:50px !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  transform:none !important;
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > .profile-avatar-img{
+  width:42px !important;
+  min-width:42px !important;
+  max-width:42px !important;
+  height:42px !important;
+  min-height:42px !important;
+  max-height:42px !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > #profileRankIcon.profile-rank-icon{
+  width:18px !important;
+  min-width:18px !important;
+  max-width:18px !important;
+  height:18px !important;
+  min-height:18px !important;
+  max-height:18px !important;
+  right:1px !important;
+  bottom:1px !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview{
+  width:50px !important;
+  min-width:50px !important;
+  max-width:50px !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  flex-basis:50px !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview > img{
+  width:46px !important;
+  min-width:46px !important;
+  max-width:46px !important;
+  height:46px !important;
+  min-height:46px !important;
+  max-height:46px !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-solid-ruby,.border-solid-cyan,.border-solid-violet,.border-solid-jade,.border-solid-amber,.border-solid-rose,.border-solid-cobalt,.border-solid-mint,.border-solid-opal,.border-solid-onyx),
+html body #profileAvatarWrap:is(.border-solid-ruby,.border-solid-cyan,.border-solid-violet,.border-solid-jade,.border-solid-amber,.border-solid-rose,.border-solid-cobalt,.border-solid-mint,.border-solid-opal,.border-solid-onyx) .profile-avatar-ring,
+html body .profile-panel:is(.border-solid-ruby,.border-solid-cyan,.border-solid-violet,.border-solid-jade,.border-solid-amber,.border-solid-rose,.border-solid-cobalt,.border-solid-mint,.border-solid-opal,.border-solid-onyx) .profile-avatar-ring,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-solid-ruby,.border-card-solid-cyan,.border-card-solid-violet,.border-card-solid-jade,.border-card-solid-amber,.border-card-solid-rose,.border-card-solid-cobalt,.border-card-solid-mint,.border-card-solid-opal,.border-card-solid-onyx) .border-card-avatar{
+  border:3px solid var(--rc-solid-border) !important;
+  border-color:var(--rc-solid-border) !important;
+  background-color:#0f172a !important;
+  background-image:var(--rc-solid-bg) !important;
+  background-size:cover !important;
+  box-shadow:
+    inset 0 0 18px rgba(2,6,23,.46),
+    0 0 0 1px color-mix(in srgb,var(--rc-solid-border) 44%,transparent),
+    0 0 18px var(--rc-solid-glow) !important;
+}
+
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-previewing.border-card-glitch-scan .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="glitch-scan"] .rc-profile-effect,
+body:not(.access-reduced-motion) .nav-right .profile-avatar-ring.border-glitch-scan .rc-profile-effect-frame[data-mobile-frame="glitch-scan"] .rc-profile-effect,
+body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-glitch-scan .rc-profile-effect-frame[data-mobile-frame="glitch-scan"] .rc-profile-effect{
+  animation:rcProfileGlitchConveyorV22 1.15s linear infinite !important;
+  transform-box:view-box !important;
+  transform-origin:50% 50% !important;
+  opacity:.95 !important;
+}
+
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-previewing.border-card-lightning-bolts .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-bolt,
+body:not(.access-reduced-motion) .nav-right .profile-avatar-ring.border-lightning-bolts .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-bolt,
+body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-lightning-bolts .rc-profile-effect-frame[data-mobile-frame="lightning-bolts"] .rc-profile-lightning-bolt{
+  animation:rcProfileLightningVisibleDropV22 1.35s linear infinite !important;
+  opacity:0;
+  stroke-dasharray:100 !important;
+  stroke-dashoffset:100 !important;
+}
+
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-previewing.border-card-lightning-bolts .border-card-avatar.has-rc-mobile-preview .rc-profile-lightning-2,
+body:not(.access-reduced-motion) .nav-right .profile-avatar-ring.border-lightning-bolts .rc-profile-lightning-2,
+body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-lightning-bolts .rc-profile-lightning-2{
+  animation-delay:-.42s !important;
+}
+
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-previewing.border-card-lightning-bolts .border-card-avatar.has-rc-mobile-preview .rc-profile-lightning-3,
+body:not(.access-reduced-motion) .nav-right .profile-avatar-ring.border-lightning-bolts .rc-profile-lightning-3,
+body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-lightning-bolts .rc-profile-lightning-3{
+  animation-delay:-.86s !important;
+}
