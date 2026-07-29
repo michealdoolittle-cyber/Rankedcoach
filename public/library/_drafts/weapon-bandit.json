@@ -37,10 +37,10 @@
     "entityName": "Bandit",
     "operation": "merge",
     "groupId": "sidearms",
-    "generatedAt": "2026-07-28T19:58:21.911Z",
+    "generatedAt": "2026-07-29T03:47:50.246Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
-    "lastReviewed": "2026-07-28"
+    "lastReviewed": "2026-07-29"
   },
   "_fieldMeta": {
     "id": {
