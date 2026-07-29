@@ -1511,6 +1511,10 @@
     }
     const bullets = Array.isArray(riotPatchNotes.bullets) ? riotPatchNotes.bullets : [];
     const sections = Array.isArray(riotPatchNotes.sections) ? riotPatchNotes.sections : [];
+    const patchItems = (bullets.length
+      ? bullets
+      : sections.slice(0, 6).map(section => `${section.title}: ${section.text}`))
+      .slice(0, 8);
     return `
       <section class="gamesense-patch-notes-feed">
         <div class="gamesense-section-heading">
@@ -1523,14 +1527,18 @@
           ${riotPatchNotes.sourceUrl ? `<a href="${escapeHtml(riotPatchNotes.sourceUrl)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}
         </div>
         ${riotPatchNotes.tagline ? `<p>${escapeHtml(riotPatchNotes.tagline)}</p>` : ""}
-        <div class="gamesense-patch-note-grid">
-          ${(bullets.length ? bullets : sections.slice(0, 4).map(section => `${section.title}: ${section.text}`)).slice(0, 6).map((item, index) => `
-            <article>
-              <span>${String(index + 1).padStart(2, "0")}</span>
-              <p>${escapeHtml(item)}</p>
-            </article>
-          `).join("")}
-        </div>
+        <ul class="gamesense-patch-note-list">
+          ${patchItems.map((item) => {
+            const [label, ...rest] = String(item || "").split(":");
+            const hasLabel = rest.length > 0 && label.trim().length <= 36;
+            return `
+              <li>
+                <span aria-hidden="true"></span>
+                <p>${hasLabel ? `<strong>${escapeHtml(label.trim())}</strong> ` : ""}${escapeHtml((hasLabel ? rest.join(":") : item).trim())}</p>
+              </li>
+            `;
+          }).join("")}
+        </ul>
       </section>`;
   }
 

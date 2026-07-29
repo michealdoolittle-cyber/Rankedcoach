@@ -4473,33 +4473,42 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage
   text-decoration:none;
 }
 
-.gamesense-patch-note-grid{
+.gamesense-patch-note-list{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
-  gap:10px;
+  gap:8px;
+  margin:0;
+  padding:0;
+  list-style:none;
 }
 
-.gamesense-patch-note-grid article{
+.gamesense-patch-note-list li{
   display:grid;
-  grid-template-columns:auto minmax(0,1fr);
+  grid-template-columns:14px minmax(0,1fr);
   gap:10px;
   align-items:start;
-  padding:12px;
-  border:1px solid rgba(103,232,249,.18);
-  border-radius:10px;
-  background:rgba(2,8,23,.7);
 }
 
-.gamesense-patch-note-grid article > span{
-  color:var(--gamesense-cool,#67e8f9);
-  font:900 12px/1 var(--font-display,"Rajdhani",sans-serif);
-  letter-spacing:.08em;
+.gamesense-patch-note-list li > span{
+  width:8px;
+  height:8px;
+  margin-top:.38em;
+  border-radius:2px;
+  background:var(--gamesense-warm,#facc15);
+  box-shadow:0 0 12px color-mix(in srgb,var(--gamesense-warm,#facc15) 52%,transparent);
+  transform:rotate(45deg);
 }
 
-.gamesense-patch-note-grid p{
+.gamesense-patch-note-list p{
   margin:0;
   color:var(--text-main,#f8fafc);
-  line-height:1.35;
+  line-height:1.42;
+}
+
+.gamesense-patch-note-list strong{
+  color:var(--gamesense-cool,#67e8f9);
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
 }
 
 /* Final mobile interaction lock: the zoomed tactical map pans on both axes

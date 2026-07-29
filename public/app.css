@@ -8840,6 +8840,93 @@ body.theme-readable :is(
   contain-intrinsic-size:180px 104px;
 }
 
+/* 2026-07-28 profile customization correction:
+   asset avatars are now 2D map/weapon art, and animated border styles are
+   actual ambient profile effects instead of hidden preview-only rings. */
+#editProfileModal #editProfileAvatarGallery .avatar-card.avatar-card-asset .avatar-card-ring{
+  overflow:hidden !important;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb,var(--accent) 16%,transparent), transparent 64%),
+    linear-gradient(145deg, color-mix(in srgb,var(--surface-card) 88%,white 8%), color-mix(in srgb,var(--surface-card-2) 88%,var(--accent-2) 12%)) !important;
+}
+
+#editProfileModal #editProfileAvatarGallery .avatar-card.avatar-card-asset-cover .avatar-card-ring{
+  border-radius:18px !important;
+}
+
+#editProfileModal #editProfileAvatarGallery .avatar-card.avatar-card-asset-contain .avatar-card-img{
+  width:86% !important;
+  height:72% !important;
+  object-fit:contain !important;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--accent) 34%,transparent));
+}
+
+#editProfileModal #editProfileAvatarGallery .avatar-card.avatar-card-asset-cover .avatar-card-img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:cover !important;
+  filter:saturate(.9) contrast(1.04);
+}
+
+:is(.profile-avatar-img,.mobile-bottom-avatar-img).profile-avatar-img-asset-contain{
+  object-fit:contain !important;
+  padding:6px !important;
+  border-radius:18px !important;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.08),transparent 66%) !important;
+}
+
+:is(.profile-avatar-img,.mobile-bottom-avatar-img).profile-avatar-img-asset-cover{
+  object-fit:cover !important;
+  padding:0 !important;
+  border-radius:inherit !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop),
+.border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar{
+  isolation:isolate !important;
+  overflow:visible !important;
+  border-color:transparent !important;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb,var(--profile-ring-border,#ff4655) 14%,transparent), transparent 60%),
+    var(--profile-ring-bg,linear-gradient(135deg,rgba(15,23,42,.94),rgba(255,255,255,.06))) !important;
+  box-shadow:0 0 18px color-mix(in srgb,var(--profile-ring-border,#ff4655) 22%,transparent) !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-avatar-frame,
+.border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .rc-mobile-avatar-frame{
+  display:none !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop)::after,
+.border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:-18px !important;
+  border-radius:inherit !important;
+  opacity:.9 !important;
+  background:var(--profile-frame-fx) !important;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--profile-ring-border,#ff4655) 48%,transparent));
+  pointer-events:none !important;
+  z-index:0 !important;
+  animation:var(--profile-frame-animation) !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-light-rays,.border-vortex,.border-water-ripple,.border-sonar-wave)::after,
+.border-card:is(.border-card-light-rays,.border-card-vortex,.border-card-water-ripple,.border-card-sonar-wave) .border-card-avatar::after{
+  inset:-24px !important;
+}
+
+:is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) > :is(img,.mobile-bottom-avatar-img,.profile-avatar-img,.rc-mobile-avatar-frame),
+.border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar > :is(img,.rc-mobile-avatar-frame){
+  position:relative !important;
+  z-index:2 !important;
+}
+
+body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop)::after,
+body.access-reduced-motion .border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar::after{
+  animation:none !important;
+}
+
 .banner-card:hover{
   transform:translateY(-2px);
 }
@@ -58314,4 +58401,15 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::after
     margin: 0 !important;
     padding: 0 !important;
   }
+}
+
+/* Final profile effect lock: these are ambient effects, not circular SVG
+   frame shapes, so the fallback standard frame must stay hidden in previews
+   and on the live avatar. */
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-avatar-frame,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame]{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  animation:none !important;
 }

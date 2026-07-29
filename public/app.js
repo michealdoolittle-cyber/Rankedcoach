@@ -2116,7 +2116,12 @@ function syncMobileHeaderActionsState() {
   const rankIcon = actions.querySelector(".mobile-header-rank-icon");
   const sourceAvatar = document.getElementById("profileAvatarImg");
   const sourceRank = document.getElementById("profileRankIcon");
-  if (avatarImg && sourceAvatar?.getAttribute("src")) avatarImg.src = sourceAvatar.getAttribute("src");
+  if (avatarImg && sourceAvatar?.getAttribute("src")) {
+    avatarImg.src = sourceAvatar.getAttribute("src");
+    avatarImg.classList.toggle("profile-avatar-img-asset", sourceAvatar.classList.contains("profile-avatar-img-asset"));
+    avatarImg.classList.toggle("profile-avatar-img-asset-cover", sourceAvatar.classList.contains("profile-avatar-img-asset-cover"));
+    avatarImg.classList.toggle("profile-avatar-img-asset-contain", sourceAvatar.classList.contains("profile-avatar-img-asset-contain"));
+  }
   if (rankIcon && sourceRank?.getAttribute("src")) {
     rankIcon.src = sourceRank.getAttribute("src");
     rankIcon.alt = sourceRank.alt || "Rank";
@@ -3627,6 +3632,8 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const borderTones = getResolvedProfileBorderTones(borderColor, theme);
+  const avatarAsset = profile?.avatarUrl ? null : getProfileAvatarAsset(profile?.avatarAgent);
+  const avatarAssetFit = avatarAsset?.fit === "cover" ? "cover" : avatarAsset ? "contain" : "";
   const resolvedBorderColor = borderTones.color;
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
@@ -3641,6 +3648,9 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   button.classList.add(`border-${borderStyle}`);
   button.classList.toggle("border-animated", !!profile?.profileBorderRotate);
   button.classList.toggle("border-two-tone", borderTones.isTwoTone);
+  button.classList.toggle("has-profile-avatar-asset", !!avatarAsset);
+  button.classList.toggle("has-profile-avatar-asset-cover", avatarAssetFit === "cover");
+  button.classList.toggle("has-profile-avatar-asset-contain", avatarAssetFit === "contain");
   button.dataset.profileBorder = borderStyle;
   button.dataset.profileBorderColor = borderColor;
   button.style.setProperty("--profile-ring-border", resolvedBorderColor);
@@ -43854,80 +43864,9 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
   })
 ];
 
-const PROFILE_THEME_TEXTURE_BY_MOTION = Object.freeze({
-  "star-drift": "astral-galaxy.svg",
-  "neon-rain": "neon-rain.svg",
-  "fractal-shift": "cryo-fractal.svg",
-  "solar-flow": "solar-magma.svg",
-  "ember-dragon": "ember-dragon.svg",
-  "water-flow": "abyssal-tide.svg",
-  "prism-turn": "prism-refraction.svg",
-  "aurora-rift": "aurora-rift.svg",
-  "wind-flow": "jetstream-wind.svg",
-  "confetti-pop": "victory-confetti.svg",
-  "sound-wave": "neon-eq.svg",
-  "toxic-sludge": "toxic-sludge.svg",
-  "data-stream": "data-stream.svg",
-  "eclipse-corona": "eclipse-corona.svg",
-  "lightning-strike": "storm-voltage.svg",
-  "fog-drift": "spectral-fog.svg",
-  "gravity-well": "gravity-well.svg",
-  "holo-grid": "holo-grid.svg",
-  "comet-trail": "comet-trail.svg",
-  "crystal-bloom": "crystal-bloom.svg",
-  "ink-bloom": "void-ink.svg",
-  "grid-drift": "tactical-matrix.svg"
-});
-
-function getProfileThemeTextureUrl(motion = "grid-drift") {
-  const file = PROFILE_THEME_TEXTURE_BY_MOTION[motion] || "tactical-matrix.svg";
-  return `url('/assets/themes/${file}')`;
-}
-
-PREMIUM_PROFILE_THEME_PRESETS.push(
-  ...[
-    ["omega-nebula", "Omega Nebula", "#040716", "#1b0f3a", "#0b1024", "#24174a", "#c084fc", "#22d3ee", "star-drift"],
-    ["ion-snowfall", "Ion Snowfall", "#02111c", "#0d2a3d", "#071826", "#14344a", "#e0f2fe", "#38bdf8", "neon-rain"],
-    ["midnight-blizzard", "Midnight Blizzard", "#020617", "#0b1f36", "#06111f", "#132d47", "#bfdbfe", "#93c5fd", "fractal-shift"],
-    ["radiant-afterburn", "Radiant Afterburn", "#120403", "#3b0b07", "#1b0705", "#4a130a", "#fb923c", "#facc15", "solar-flow"],
-    ["fracture-emberfield", "Fracture Emberfield", "#110506", "#30100a", "#19080a", "#3c1710", "#ef4444", "#f97316", "ember-dragon"],
-    ["abyss-whirlpool", "Abyss Whirlpool", "#00121a", "#043041", "#031c29", "#0b4454", "#2dd4bf", "#38bdf8", "water-flow"],
-    ["pearl-undercurrent", "Pearl Undercurrent", "#01171d", "#08343f", "#06232d", "#124a55", "#67e8f9", "#14b8a6", "water-flow"],
-    ["split-kaleidoscope", "Split Kaleidoscope", "#090616", "#25123f", "#100d24", "#321a56", "#f472b6", "#22d3ee", "prism-turn"],
-    ["haven-aurora", "Haven Aurora", "#021014", "#10213e", "#071820", "#1a2f4f", "#5eead4", "#a78bfa", "aurora-rift"],
-    ["bind-sandstorm", "Bind Sandstorm", "#120b03", "#2d1a07", "#1b1007", "#3a220a", "#facc15", "#fb923c", "wind-flow"],
-    ["breeze-squall", "Breeze Squall", "#03131c", "#0b3545", "#061f2b", "#12485a", "#a7f3d0", "#38bdf8", "wind-flow"],
-    ["lotus-pollen", "Lotus Pollen", "#090816", "#1f1836", "#120d23", "#2d2444", "#f9a8d4", "#a3e635", "confetti-pop"],
-    ["sunset-neon", "Sunset Neon", "#110414", "#33102a", "#1b091f", "#441835", "#fb7185", "#facc15", "sound-wave"],
-    ["corrode-foundry", "Corrode Foundry", "#100602", "#2f1708", "#190b05", "#3f210d", "#fb923c", "#94a3b8", "toxic-sludge"],
-    ["summit-whiteout", "Summit Whiteout", "#06101a", "#17243a", "#0a1625", "#24324d", "#f8fafc", "#60a5fa", "fog-drift"],
-    ["vandal-signal", "Vandal Signal", "#020b08", "#082119", "#04120e", "#0f2e24", "#10b981", "#38bdf8", "data-stream"],
-    ["phantom-haze", "Phantom Haze", "#080b13", "#171526", "#101421", "#2a2439", "#c4b5fd", "#64748b", "fog-drift"],
-    ["operator-eclipse", "Operator Eclipse", "#030304", "#17130c", "#090908", "#1f1a12", "#f59e0b", "#7dd3fc", "eclipse-corona"],
-    ["judge-quake", "Judge Quake", "#0b0302", "#231006", "#130806", "#2f1709", "#ef4444", "#facc15", "solar-flow"],
-    ["sheriff-prism", "Sheriff Prism", "#070814", "#1c1030", "#111127", "#28204a", "#22d3ee", "#f472b6", "prism-turn"],
-    ["stinger-holo", "Stinger Holo", "#021018", "#042b35", "#041520", "#082735", "#34d399", "#38bdf8", "holo-grid"],
-    ["marshal-comet", "Marshal Comet", "#020816", "#0d1930", "#050b19", "#111d33", "#93c5fd", "#facc15", "comet-trail"],
-    ["classic-pulse", "Classic Pulse", "#090312", "#280b38", "#16071f", "#3a0d43", "#22d3ee", "#f472b6", "sound-wave"],
-    ["ghost-singularity", "Ghost Singularity", "#03030c", "#0d1030", "#070716", "#151538", "#a78bfa", "#60a5fa", "gravity-well"],
-    ["guardian-crystal", "Guardian Crystal", "#080714", "#181226", "#0c0a18", "#211832", "#f0abfc", "#67e8f9", "crystal-bloom"],
-    ["odin-railgun", "Odin Railgun", "#020713", "#0b1d3a", "#071426", "#10294a", "#60a5fa", "#f8fafc", "lightning-strike"],
-    ["ares-hazard", "Ares Hazard", "#030b02", "#102007", "#071006", "#17260b", "#a3e635", "#22c55e", "toxic-sludge"],
-    ["bulldog-byte", "Bulldog Byte", "#020b08", "#071f19", "#04110e", "#09251f", "#38bdf8", "#10b981", "data-stream"],
-    ["spectre-inkwell", "Spectre Inkwell", "#03050b", "#171026", "#090d17", "#24153a", "#818cf8", "#c084fc", "ink-bloom"],
-    ["shorty-party", "Shorty Party", "#0c0818", "#24113b", "#171029", "#38204b", "#facc15", "#fb7185", "confetti-pop"]
-  ].map(([value, label, base, base2, card, card2, accent, accent2, motion]) => createProfileTheme(value, label, "dark", {
-    base,
-    base2,
-    card,
-    card2,
-    accent,
-    accent2,
-    pattern: getProfileThemeTextureUrl(motion),
-    pattern2: `radial-gradient(circle at 18% 20%, ${accent}26, transparent 26%), linear-gradient(125deg, transparent 16%, ${accent}18 42%, ${accent2}14 68%, transparent 90%), radial-gradient(circle at 78% 72%, ${accent2}20, transparent 30%)`,
-    motion
-  }))
-);
+// Extra animated themes must be authored as unique texture/motion systems.
+// The previous generated pack reused the same few SVG/motion pairs under
+// different names, so it has been removed from the picker.
 
 // Keep the runtime class cleanup derived from the presets.  New animated
 // themes are added regularly; a handwritten remove list silently left the
@@ -44419,30 +44358,31 @@ function getAvailableProfileBannerStyles(user = currentAuthUser, extraStyles = [
 }
 
 const PROFILE_AVATAR_ASSET_OPTIONS = Object.freeze([
-  { value: "asset-jett-tailwind", label: "Tailwind", url: "/assets/library/agents/jett/tailwind.png" },
-  { value: "asset-jett-updraft", label: "Updraft", url: "/assets/library/agents/jett/updraft.png" },
-  { value: "asset-jett-cloudburst", label: "Cloudburst", url: "/assets/library/agents/jett/cloudburst.png" },
-  { value: "asset-jett-blade-storm", label: "Blade Storm", url: "/assets/library/agents/jett/blade-storm.png" },
-  { value: "asset-sova-recon-bolt", label: "Recon Bolt", url: "/assets/library/agents/sova/recon-bolt.png" },
-  { value: "asset-sova-shock-bolt", label: "Shock Bolt", url: "/assets/library/agents/sova/shock-bolt.png" },
-  { value: "asset-sova-owl-drone", label: "Owl Drone", url: "/assets/library/agents/sova/owl-drone.png" },
-  { value: "asset-sova-hunters-fury", label: "Hunter's Fury", url: "/assets/library/agents/sova/hunter-s-fury.png" },
-  { value: "asset-omen-dark-cover", label: "Dark Cover", url: "/assets/library/agents/omen/dark-cover.png" },
-  { value: "asset-omen-paranoia", label: "Paranoia", url: "/assets/library/agents/omen/paranoia.png" },
-  { value: "asset-omen-shrouded-step", label: "Shrouded Step", url: "/assets/library/agents/omen/shrouded-step.png" },
-  { value: "asset-omen-shadows", label: "From the Shadows", url: "/assets/library/agents/omen/from-the-shadows.png" },
-  { value: "asset-viper-toxic-screen", label: "Toxic Screen", url: "/assets/library/agents/viper/toxic-screen.png" },
-  { value: "asset-viper-snake-bite", label: "Snake Bite", url: "/assets/library/agents/viper/snake-bite.png" },
-  { value: "asset-viper-poison-cloud", label: "Poison Cloud", url: "/assets/library/agents/viper/poison-cloud.png" },
-  { value: "asset-viper-pit", label: "Viper's Pit", url: "/assets/library/agents/viper/viper-s-pit.png" },
-  { value: "asset-cypher-spycam", label: "Spycam", url: "/assets/library/agents/cypher/spycam.png" },
-  { value: "asset-cypher-trapwire", label: "Trapwire", url: "/assets/library/agents/cypher/trapwire.png" },
-  { value: "asset-cypher-cyber-cage", label: "Cyber Cage", url: "/assets/library/agents/cypher/cyber-cage.png" },
-  { value: "asset-cypher-neural-theft", label: "Neural Theft", url: "/assets/library/agents/cypher/neural-theft.png" },
-  { value: "asset-sage-barrier-orb", label: "Barrier Orb", url: "/assets/library/agents/sage/barrier-orb.png" },
-  { value: "asset-sage-healing-orb", label: "Healing Orb", url: "/assets/library/agents/sage/healing-orb.png" },
-  { value: "asset-sage-slow-orb", label: "Slow Orb", url: "/assets/library/agents/sage/slow-orb.png" },
-  { value: "asset-sage-resurrection", label: "Resurrection", url: "/assets/library/agents/sage/resurrection.png" }
+  { value: "asset-weapon-vandal", label: "Vandal", url: "/assets/weapons/vandal.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-phantom", label: "Phantom", url: "/assets/weapons/phantom.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-operator", label: "Operator", url: "/assets/weapons/operator.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-outlaw", label: "Outlaw", url: "/assets/weapons/outlaw.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-guardian", label: "Guardian", url: "/assets/weapons/guardian.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-bulldog", label: "Bulldog", url: "/assets/weapons/bulldog.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-sheriff", label: "Sheriff", url: "/assets/weapons/sheriff.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-ghost", label: "Ghost", url: "/assets/weapons/ghost.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-spectre", label: "Spectre", url: "/assets/weapons/spectre.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-stinger", label: "Stinger", url: "/assets/weapons/stinger.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-judge", label: "Judge", url: "/assets/weapons/judge.png", kind: "weapon", fit: "contain" },
+  { value: "asset-weapon-bucky", label: "Bucky", url: "/assets/weapons/bucky.png", kind: "weapon", fit: "contain" },
+  { value: "asset-map-ascent", label: "Ascent Vista", url: "/assets/library/maps/thumbs/ascent.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-bind", label: "Bind Vista", url: "/assets/library/maps/thumbs/bind.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-breeze", label: "Breeze Vista", url: "/assets/library/maps/thumbs/breeze.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-haven", label: "Haven Vista", url: "/assets/library/maps/thumbs/haven.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-split", label: "Split Vista", url: "/assets/library/maps/thumbs/split.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-sunset", label: "Sunset Vista", url: "/assets/library/maps/thumbs/sunset.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-lotus", label: "Lotus Vista", url: "/assets/library/maps/thumbs/lotus.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-icebox", label: "Icebox Vista", url: "/assets/library/maps/thumbs/icebox.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-pearl", label: "Pearl Vista", url: "/assets/library/maps/thumbs/pearl.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-fracture", label: "Fracture Vista", url: "/assets/library/maps/thumbs/fracture.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-abyss", label: "Abyss Vista", url: "/assets/library/maps/thumbs/abyss.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-corrode", label: "Corrode Vista", url: "/assets/library/maps/thumbs/corrode.jpg", kind: "map", fit: "cover" },
+  { value: "asset-map-summit", label: "Summit Vista", url: "/assets/library/maps/thumbs/summit.jpg", kind: "map", fit: "cover" }
 ]);
 
 function getProfileAvatarAsset(value = "") {
@@ -45898,9 +45838,12 @@ function renderAvatarGallery(selectedAgent = getDefaultProfileAvatarAgent()) {
 
   gallery.innerHTML = getProfileAvatarOptions().map((option) => {
     const key = String(option.value || "").toLowerCase();
+    const asset = getProfileAvatarAsset(key);
+    const assetFit = asset?.fit === "cover" ? "cover" : asset ? "contain" : "";
+    const assetKind = asset?.kind || "";
     const isActive = key === String(selectedAgent || "").toLowerCase();
     return `
-      <button type="button" class="avatar-card ${getProfileAvatarAsset(key) ? "avatar-card-asset" : ""} ${isActive ? "is-active" : ""}" data-avatar-card="${escapeHtml(key)}" aria-pressed="${isActive ? "true" : "false"}">
+      <button type="button" class="avatar-card ${asset ? "avatar-card-asset" : ""} ${assetFit ? `avatar-card-asset-${assetFit}` : ""} ${assetKind ? `avatar-card-${assetKind}` : ""} ${isActive ? "is-active" : ""}" data-avatar-card="${escapeHtml(key)}" data-avatar-fit="${escapeHtml(assetFit)}" data-avatar-kind="${escapeHtml(assetKind)}" aria-pressed="${isActive ? "true" : "false"}">
         <div class="avatar-card-shell">
           <div class="avatar-card-ring">
             <img class="avatar-card-img" src="${escapeHtml(option.url || getDefaultProfileAvatarUrl(key))}" alt="${escapeHtml(option.label)} icon" loading="lazy" decoding="async">
@@ -46270,6 +46213,8 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const peak = computePeakProfileProgress(profile);
   const currentRankSnapshot = getProfileCurrentRankSnapshot(profile);
   const avatarUrl = profile?.avatarUrl || getDefaultProfileAvatarUrl(profile?.avatarAgent);
+  const avatarAsset = profile?.avatarUrl ? null : getProfileAvatarAsset(profile?.avatarAgent);
+  const avatarAssetFit = avatarAsset?.fit === "cover" ? "cover" : avatarAsset ? "contain" : "";
   const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
   const theme = getThemePreset(requestedThemeKey);
   const themeKey = theme.value;
@@ -46335,6 +46280,9 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   if (avatarImg) {
     avatarImg.src = avatarUrl;
     avatarImg.alt = `${getProfileAvatarLabel(profile?.avatarAgent)} avatar`;
+    avatarImg.classList.toggle("profile-avatar-img-asset", !!avatarAsset);
+    avatarImg.classList.toggle("profile-avatar-img-asset-cover", avatarAssetFit === "cover");
+    avatarImg.classList.toggle("profile-avatar-img-asset-contain", avatarAssetFit === "contain");
   }
 
   if (rankIcon) {
