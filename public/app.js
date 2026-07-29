@@ -1262,6 +1262,15 @@ function shouldIgnoreGlobalErrorMessage(message = "") {
   );
 }
 
+function prefersReducedMotion() {
+  try {
+    return document.body?.classList.contains("access-reduced-motion") === true
+      || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+  } catch (_error) {
+    return false;
+  }
+}
+
 window.addEventListener("error", (e) => {
   if (shouldIgnoreGlobalErrorMessage(e?.message)) {
     e.preventDefault?.();
@@ -40628,6 +40637,8 @@ function bindEvents(){
     setLogCalendarOpen(false);
     setLogCountBadge(activeLogSessionFilter);
   });
+  window.addEventListener("resize", positionLogCalendarPopover, { passive: true });
+  document.addEventListener("scroll", positionLogCalendarPopover, { capture: true, passive: true });
   document.getElementById("logQuickToggleBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -43286,13 +43297,45 @@ function formatCurrentSessionLabel(dateKey = activeLogSessionFilter) {
   return dateKey === todayKey ? `Today / ${label}` : label;
 }
 
+function positionLogCalendarPopover() {
+  const popover = document.getElementById("logCalendarPopover");
+  const trigger = document.getElementById("logCalendarTrigger");
+  if (!popover || !trigger || popover.hidden) return;
+  const rect = trigger.getBoundingClientRect();
+  const viewportWidth = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 0);
+  const viewportHeight = Math.max(320, window.innerHeight || document.documentElement.clientHeight || 0);
+  const width = Math.min(320, Math.max(280, viewportWidth - 24));
+  popover.style.position = "fixed";
+  popover.style.width = `${width}px`;
+  popover.style.right = "auto";
+  popover.style.left = `${Math.max(12, Math.min(viewportWidth - width - 12, rect.right - width))}px`;
+  const measuredHeight = popover.offsetHeight || 360;
+  const preferredTop = rect.bottom + 8;
+  const top = preferredTop + measuredHeight > viewportHeight - 12
+    ? Math.max(12, rect.top - measuredHeight - 8)
+    : preferredTop;
+  popover.style.top = `${top}px`;
+  popover.style.bottom = "auto";
+  popover.style.zIndex = "2147483646";
+}
+
+function ensureLogCalendarTopLayer(popover = document.getElementById("logCalendarPopover")) {
+  if (!popover || popover.parentElement === document.body) return;
+  document.body?.appendChild(popover);
+}
+
 function setLogCalendarOpen(isOpen = false) {
   const popover = document.getElementById("logCalendarPopover");
   const trigger = document.getElementById("logCalendarTrigger");
-  const feedCard = popover?.closest?.(".logging-feed-card");
+  const feedCard = document.querySelector("#page-logging .logging-feed-card");
+  if (isOpen) ensureLogCalendarTopLayer(popover);
   if (popover) popover.hidden = !isOpen;
   trigger?.setAttribute("aria-expanded", String(Boolean(isOpen)));
   feedCard?.classList.toggle("is-calendar-open", Boolean(isOpen));
+  if (isOpen) {
+    positionLogCalendarPopover();
+    window.requestAnimationFrame?.(positionLogCalendarPopover);
+  }
 }
 
 function renderLogCalendarPopover(countMap = getLogCountByDate()) {
@@ -43345,6 +43388,7 @@ function renderLogCalendarPopover(countMap = getLogCountByDate()) {
   const nextMonthButton = popover.querySelector('[data-calendar-nav="1"]');
   if (previousMonthButton) previousMonthButton.textContent = "<";
   if (nextMonthButton) nextMonthButton.textContent = ">";
+  positionLogCalendarPopover();
 }
 
 function renderLogSessionSelector() {

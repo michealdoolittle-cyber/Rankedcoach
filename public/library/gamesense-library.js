@@ -1425,6 +1425,113 @@
     return Array.isArray(getReference()[topic]) ? getReference()[topic] : [];
   }
 
+  function addKnowledgeAssetPreview(previews, preview) {
+    if (!preview?.image || !preview?.label) return;
+    const key = `${preview.kind || "asset"}:${assetSlug(preview.label)}`;
+    if (previews.some(item => item.key === key)) return;
+    previews.push({ key, ...preview });
+  }
+
+  function getWeaponPreviewItems() {
+    const referenceWeapons = (getReference().weapons || []).flatMap(group => Array.isArray(group.weapons) ? group.weapons : []);
+    const merged = new Map();
+    referenceWeapons.forEach(weapon => {
+      const label = weapon?.label || weapon?.name || weapon?.id;
+      const key = assetSlug(label);
+      if (!key || merged.has(key)) return;
+      merged.set(key, { label, image: weapon?.image || weapon?.icon || "" });
+    });
+    return [...merged.values()];
+  }
+
+  function knowledgeEntityParts(entity = "") {
+    return String(entity || "")
+      .split(/\s*(?:\u00b7|\+|,|\|)\s*/g)
+      .map(value => value.trim())
+      .filter(Boolean);
+  }
+
+  function textMentionsAsset(text = "", label = "") {
+    const slug = assetSlug(label);
+    if (!slug) return false;
+    return assetSlug(text).split("-").join(" ").includes(slug.split("-").join(" "));
+  }
+
+  function getKnowledgeAssetPreviews(item = {}) {
+    const previews = [];
+    const category = String(item.category || "general");
+    const entitySlugs = knowledgeEntityParts(item.entity).map(assetSlug).filter(Boolean);
+    const combined = `${item.topic || ""} ${item.entity || ""} ${item.wording || ""}`;
+    const agents = Array.isArray(getReference().agents) ? getReference().agents : [];
+    const maps = getMaps();
+    const weapons = getWeaponPreviewItems();
+    const abilities = agents.flatMap(agent => (agent.abilities || []).map(ability => ({
+      label: ability.name,
+      image: ability.icon
+    })));
+
+    maps.forEach(map => {
+      const label = map.label || map.id;
+      const exact = entitySlugs.includes(assetSlug(label));
+      if (!exact && !(category === "map" || category === "agent-map")) return;
+      if (exact || textMentionsAsset(combined, label)) {
+        addKnowledgeAssetPreview(previews, {
+          kind: "map",
+          label,
+          image: getOverviewMapThumbnail(map) || getMapArtwork(label)
+        });
+      }
+    });
+
+    agents.forEach(agent => {
+      const label = agent.label || agent.name || agent.id;
+      if (entitySlugs.includes(assetSlug(label)) || textMentionsAsset(combined, label)) {
+        addKnowledgeAssetPreview(previews, {
+          kind: "agent",
+          label,
+          image: getAgentIcon(label),
+          fallback: getAgentFallbackIcon(label)
+        });
+      }
+    });
+
+    weapons.forEach(weapon => {
+      if (entitySlugs.includes(assetSlug(weapon.label)) || textMentionsAsset(combined, weapon.label)) {
+        addKnowledgeAssetPreview(previews, {
+          kind: "weapon",
+          label: weapon.label,
+          image: weapon.image
+        });
+      }
+    });
+
+    abilities.forEach(ability => {
+      if (textMentionsAsset(combined, ability.label)) {
+        addKnowledgeAssetPreview(previews, {
+          kind: "ability",
+          label: ability.label,
+          image: ability.image
+        });
+      }
+    });
+
+    return previews.slice(0, 3);
+  }
+
+  function renderKnowledgeAssetPreviews(item = {}) {
+    const previews = getKnowledgeAssetPreviews(item);
+    if (!previews.length) return "";
+    return `
+      <div class="gamesense-knowledge-asset-strip" aria-label="Mentioned VALORANT assets">
+        ${previews.map(preview => `
+          <span class="gamesense-knowledge-asset gamesense-knowledge-asset-${escapeHtml(preview.kind || "asset")}">
+            <img src="${escapeHtml(preview.image)}"${preview.fallback ? ` data-agent-fallback="${escapeHtml(preview.fallback)}"` : ""} alt="${escapeHtml(preview.label)}" loading="lazy" decoding="async">
+            <b>${escapeHtml(preview.label)}</b>
+          </span>
+        `).join("")}
+      </div>`;
+  }
+
   function renderPublishedKnowledge(category = "general", entity = "", options = {}) {
     const normalizedEntity = String(entity || "").trim().toLowerCase();
     const includeGeneral = options.includeGeneral !== false;
@@ -1439,6 +1546,7 @@
         <div class="gamesense-knowledge-update-grid">${items.map(item => `
           <article>
             <span>${escapeHtml(item.topic || "Coaching principle")}</span>
+            ${renderKnowledgeAssetPreviews(item)}
             <p>${escapeHtml(item.wording)}</p>
             <div>${(item.evidence || []).slice(0, 4).map((evidence, index) => `
               <a href="${escapeHtml(evidence.url)}" target="_blank" rel="noopener noreferrer">Video evidence ${index + 1} · ${Math.floor(Number(evidence.startSeconds || 0) / 60)}:${String(Math.floor(Number(evidence.startSeconds || 0) % 60)).padStart(2, "0")}</a>
@@ -4336,6 +4444,8 @@
     }
     const back = event.target.closest?.("[data-gamesense-back]");
     if (back) {
+      event.preventDefault();
+      event.stopPropagation();
       state.topic = back.dataset.gamesenseBack;
       state.itemId = "";
       state.role = "";
@@ -4346,6 +4456,7 @@
       state.compAgent = "";
       state.compRole = "Controller";
       render({ direction: "backward" });
+      return;
     }
   }, true);
 

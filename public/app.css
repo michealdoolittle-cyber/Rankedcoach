@@ -55740,6 +55740,11 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .stats-act-mobile-option
 }
 
 html body .lens-modal-close{display:none !important;}
+html body #editProfileClose{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
 html body .lens-modal-overlay > .lens-modal,
 html body .agent-modal .agent-modal-inner{transform:translate3d(0,38px,0) scale(.975) !important;transition:opacity 240ms ease,transform 320ms cubic-bezier(.2,.84,.24,1) !important;}
 html body .lens-modal-overlay.active > .lens-modal,

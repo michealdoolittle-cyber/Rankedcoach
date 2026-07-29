@@ -38,13 +38,16 @@
   // click against the newly revealed page. Consume that one click so skipping
   // the animation never also opens a card underneath it.
   function consumeEntranceSkipClick(event) {
-    // Page navigation is an explicit destination choice, not an accidental
-    // card activation. Let it through even if it happens to be the first tap
-    // after a warm-up/modal or entrance transition.
+    // Page navigation and actual controls are explicit destination choices,
+    // not accidental card activations. Let them through even if they happen to
+    // be the first tap after a warm-up/modal or entrance transition.
     const navigationTarget = event.target?.closest?.(
       ".nav-btn[data-page], .mobile-bottom-page-btn[data-mobile-page]"
     );
-    if (!navigationTarget) {
+    const explicitControl = event.target?.closest?.(
+      "button, a[href], input, textarea, select, summary, [role='button'], [tabindex]:not([tabindex='-1'])"
+    );
+    if (!navigationTarget && !explicitControl) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
@@ -1180,7 +1183,10 @@
     } catch (error) {
       console.warn("Daily entrance motion could not finish cleanly", error);
     }
-    if (run.cancelled || runtime.activeRun !== run) return;
+    if (run.cancelled || runtime.activeRun !== run) {
+      if (!runtime.activeRun) clearRunPresentation(run);
+      return;
+    }
     [...run.finalizers].forEach((finish) => finish());
     markRunSeen(run);
     clearRunPresentation(run);

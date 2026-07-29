@@ -4419,6 +4419,47 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage
   text-transform: uppercase;
 }
 
+.gamesense-knowledge-asset-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gamesense-knowledge-asset {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid rgba(103, 232, 249, .22);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .78);
+  color: var(--gamesense-cool, #67e8f9);
+}
+
+.gamesense-knowledge-asset img {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, .58);
+}
+
+.gamesense-knowledge-asset-map img {
+  object-fit: cover;
+}
+
+.gamesense-knowledge-asset b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 .gamesense-knowledge-update-grid p {
   margin: 0;
   color: var(--text-main, #f8fafc);
