@@ -58672,3 +58672,149 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 body.access-reduced-motion #editProfileModal #editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc){
   animation:none !important;
 }
+
+/* Borderless ambient profile effects v18.
+   These premium selections are not frame shapes. The visible treatment is the
+   effect layer only, so every old ring outline/pseudo-border is suppressed on
+   both the live profile avatar and the customization previews. */
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn,#profileAvatarWrap):is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-fade-pulse,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop),
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-fade-pulse,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview{
+  border:0 !important;
+  border-color:transparent !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+  animation:none !important;
+  overflow:visible !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn,#profileAvatarWrap):is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-fade-pulse,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop)::before,
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn,#profileAvatarWrap):is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-fade-pulse,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop)::after,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-fade-pulse,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview::before,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-fade-pulse,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview::after{
+  content:"" !important;
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  border:0 !important;
+  background:none !important;
+  box-shadow:none !important;
+  animation:none !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-fade-pulse,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-profile-effect-frame,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-fade-pulse,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  width:calc(100% + 34px) !important;
+  height:calc(100% + 34px) !important;
+  transform:translate(-50%,-50%) !important;
+  pointer-events:none !important;
+  z-index:1 !important;
+  color:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-fade-pulse,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-profile-effect-frame :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-fade-pulse,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc){
+  display:none !important;
+  opacity:0 !important;
+  stroke:transparent !important;
+  fill:transparent !important;
+  animation:none !important;
+}
+
+.rc-profile-effect-svg{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:visible !important;
+}
+
+.rc-profile-effect-frame .rc-profile-effect{
+  filter:url(#rcProfileEffectGlow);
+  transform-box:fill-box;
+  transform-origin:50% 50%;
+}
+
+.rc-profile-effect-frame :is(.rc-profile-effect-ray,.rc-profile-effect-spiral,.rc-profile-effect-comet,.rc-profile-effect-wisp,.rc-profile-effect-wave,.rc-profile-effect-shard,.rc-profile-effect-prism-line,.rc-profile-effect-sweep,.rc-profile-effect-scan){
+  fill:none !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  vector-effect:non-scaling-stroke;
+}
+
+.rc-profile-effect-frame .rc-effect-primary{
+  stroke:color-mix(in srgb,var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) 88%,white 10%) !important;
+  stroke-width:4 !important;
+  opacity:.88 !important;
+}
+
+.rc-profile-effect-frame .rc-effect-secondary{
+  stroke:color-mix(in srgb,var(--rc-mobile-frame-color-2,var(--profile-ring-border-2,var(--profile-ring-border,#38bdf8))) 82%,white 10%) !important;
+  stroke-width:3 !important;
+  opacity:.72 !important;
+}
+
+.rc-profile-effect-frame .rc-effect-glint{
+  stroke:rgba(255,255,255,.9) !important;
+  stroke-width:2.5 !important;
+  opacity:.82 !important;
+}
+
+.rc-profile-effect-frame .rc-effect-primary-fill{
+  fill:color-mix(in srgb,var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) 84%,white 10%) !important;
+  opacity:.82 !important;
+}
+
+.rc-profile-effect-frame .rc-effect-secondary-fill{
+  fill:color-mix(in srgb,var(--rc-mobile-frame-color-2,var(--profile-ring-border-2,var(--profile-ring-border,#38bdf8))) 78%,white 12%) !important;
+  opacity:.72 !important;
+}
+
+.rc-profile-effect-frame .rc-effect-glint-fill{
+  fill:rgba(255,255,255,.94) !important;
+  opacity:.86 !important;
+}
+
+.rc-profile-effect-frame .rc-effect-shadow-fill{
+  fill:rgba(2,6,23,.72) !important;
+  opacity:.74 !important;
+}
+
+.rc-profile-effect-frame[data-mobile-frame="sunburst"] .rc-profile-effect,
+.rc-profile-effect-frame[data-mobile-frame="light-rays"] .rc-profile-effect{animation:profileFrameRaySpin 5.2s linear infinite;}
+.rc-profile-effect-frame[data-mobile-frame="eclipse"] .rc-profile-effect,
+.rc-profile-effect-frame[data-mobile-frame="shadow-eclipse"] .rc-profile-effect{animation:profileFrameEclipse 4.2s ease-in-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="bubble-drift"] .rc-profile-effect{animation:rcProfileEffectBubbleRise 3.8s ease-in-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="vortex"] .rc-profile-effect{animation:profileFrameVortex 3.8s linear infinite;}
+.rc-profile-effect-frame[data-mobile-frame="neon-orbit"] .rc-profile-effect{animation:profileFrameOrbit 2.35s linear infinite;}
+.rc-profile-effect-frame[data-mobile-frame="stardust"] .rc-profile-effect{animation:profileFrameTwinkle 2.7s ease-in-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="water-ripple"] .rc-profile-effect{animation:profileFrameRipple 2.8s ease-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="smoke-wisp"] .rc-profile-effect{animation:profileFrameSmoke 4.4s ease-in-out infinite alternate;}
+.rc-profile-effect-frame[data-mobile-frame="ember-sparks"] .rc-profile-effect{animation:profileFrameSparks 2.9s ease-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="frost-shards"] .rc-profile-effect{animation:profileFrameFrost 3.2s ease-in-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="prism-loop"] .rc-profile-effect{animation:profileFrameOrbit 4.8s linear infinite;}
+.rc-profile-effect-frame[data-mobile-frame="sonar-wave"] .rc-profile-effect{animation:profileFrameSonar 2.6s ease-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="glitch-scan"] .rc-profile-effect{animation:profileFrameScan 1.45s steps(8) infinite;}
+.rc-profile-effect-frame[data-mobile-frame="fade-pulse"] .rc-profile-effect{animation:rcProfileEffectFadePulse 2.8s ease-in-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="blossom-pulse"] .rc-profile-effect{animation:profileFrameBlossom 3.4s ease-in-out infinite;}
+.rc-profile-effect-frame[data-mobile-frame="comet-loop"] .rc-profile-effect{animation:profileFrameComet 2.9s linear infinite;}
+
+@keyframes rcProfileEffectBubbleRise{
+  0%,100%{transform:translate3d(0,8px,0) scale(.92);opacity:.28;}
+  45%{opacity:.95;}
+  68%{transform:translate3d(1px,-7px,0) scale(1.06);opacity:.78;}
+}
+
+@keyframes rcProfileEffectFadePulse{
+  0%,100%{transform:scale(.82);opacity:.2;filter:blur(.4px);}
+  45%,58%{transform:scale(1.05);opacity:.9;filter:blur(0);}
+}
+
+body.access-reduced-motion .rc-profile-effect-frame .rc-profile-effect{
+  animation:none !important;
+}

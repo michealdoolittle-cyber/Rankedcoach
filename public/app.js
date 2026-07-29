@@ -3635,6 +3635,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const avatarAsset = profile?.avatarUrl ? null : getProfileAvatarAsset(profile?.avatarAgent);
   const avatarAssetFit = avatarAsset?.fit === "cover" ? "cover" : avatarAsset ? "contain" : "";
   const resolvedBorderColor = borderTones.color;
+  const borderAnimationEnabled = !!profile?.profileBorderRotate || isProfileAmbientBorderStyle(borderStyle);
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}), color-mix(in srgb, ${borderTones.color3} 10%, ${colors.card2 || "#0f172a"}))`,
@@ -3646,7 +3647,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
     if (className.startsWith("border-")) button.classList.remove(className);
   });
   button.classList.add(`border-${borderStyle}`);
-  button.classList.toggle("border-animated", !!profile?.profileBorderRotate);
+  button.classList.toggle("border-animated", borderAnimationEnabled);
   button.classList.toggle("border-two-tone", borderTones.isTwoTone);
   button.classList.toggle("has-profile-avatar-asset", !!avatarAsset);
   button.classList.toggle("has-profile-avatar-asset-cover", avatarAssetFit === "cover");
@@ -3659,7 +3660,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   button.style.setProperty("--profile-ring-gradient", borderTones.gradient);
   button.style.setProperty("--profile-ring-bg", ringBackground);
   button.style.setProperty("--profile-ring-glow", ringGlow);
-  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, !!profile?.profileBorderRotate, borderTones.color2);
+  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, borderAnimationEnabled, borderTones.color2);
 }
 
 function getMobileAvatarFramePath(borderStyle = "standard") {
@@ -3702,29 +3703,19 @@ function getMobileAvatarFramePath(borderStyle = "standard") {
 
 function getMobileAvatarFrameMarkup(borderStyle = "standard") {
   const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
+  if (isProfileAmbientBorderStyle(normalizedStyle)) {
+    return getAmbientProfileEffectFrameMarkup(normalizedStyle);
+  }
   const path = getMobileAvatarFramePath(normalizedStyle);
-  const isAmbient = isProfileAmbientBorderStyle(normalizedStyle);
   const isArc = normalizedStyle === "arc";
   const isCrosshair = normalizedStyle === "crosshair";
-  const ambientFrameStyle = isAmbient
-    ? ` style="display:block!important;visibility:visible!important;opacity:1!important;"`
-    : "";
-  const ambientMainStyle = isAmbient
-    ? ` style="fill:none!important;stroke:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655))!important;stroke-width:6!important;stroke-linecap:round!important;stroke-linejoin:round!important;stroke-dasharray:42 8 18 12!important;animation:rcMobileSvgFrameSweep 2.8s linear infinite,rcMobileSvgFrameGlowBeat 2.4s ease-in-out infinite!important;transform-origin:50% 50%!important;"`
-    : "";
-  const ambientSecondaryStyle = isAmbient
-    ? ` style="fill:none!important;stroke:var(--rc-mobile-frame-color-2,var(--profile-ring-border-2,var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655))))!important;stroke-width:3!important;stroke-linecap:round!important;stroke-linejoin:round!important;stroke-dasharray:10 16!important;opacity:.82!important;animation:rcMobileSvgFrameReverseSweep 3.4s linear infinite!important;transform-origin:50% 50%!important;"`
-    : "";
-  const ambientGlintStyle = isAmbient
-    ? ` style="fill:none!important;stroke:rgba(255,255,255,.92)!important;stroke-width:3!important;stroke-linecap:round!important;stroke-linejoin:round!important;stroke-dasharray:7 93!important;opacity:.92!important;animation:rcMobileSvgFrameTrace 1.45s linear infinite!important;transform-origin:50% 50%!important;"`
-    : "";
   return `
-    <span class="rc-mobile-avatar-frame" data-mobile-frame="${escapeHtml(normalizedStyle)}" aria-hidden="true"${ambientFrameStyle}>
+    <span class="rc-mobile-avatar-frame" data-mobile-frame="${escapeHtml(normalizedStyle)}" aria-hidden="true">
       <svg class="rc-mobile-avatar-frame-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
         <path class="rc-mobile-frame-fill" d="${path}"></path>
-        <path class="rc-mobile-frame-main" d="${path}" pathLength="100"${ambientMainStyle}></path>
-        <path class="rc-mobile-frame-secondary" d="${path}" pathLength="100"${ambientSecondaryStyle}></path>
-        <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"${ambientGlintStyle}></path>
+        <path class="rc-mobile-frame-main" d="${path}" pathLength="100"></path>
+        <path class="rc-mobile-frame-secondary" d="${path}" pathLength="100"></path>
+        <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"></path>
         ${isArc ? `<path class="rc-mobile-frame-arc" d="${path}" pathLength="100"></path>` : ""}
         ${isCrosshair ? `
           <g class="rc-mobile-frame-crosshair">
@@ -3734,6 +3725,160 @@ function getMobileAvatarFrameMarkup(borderStyle = "standard") {
             <path d="M78 50H100"></path>
           </g>
         ` : ""}
+      </svg>
+    </span>
+  `;
+}
+
+function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
+  const normalizedStyle = String(borderStyle || "stardust").trim().toLowerCase();
+  const commonDefs = `
+    <defs>
+      <filter id="rcProfileEffectGlow">
+        <feGaussianBlur stdDeviation="1.4" result="blur"></feGaussianBlur>
+        <feMerge>
+          <feMergeNode in="blur"></feMergeNode>
+          <feMergeNode in="SourceGraphic"></feMergeNode>
+        </feMerge>
+      </filter>
+    </defs>
+  `;
+  const effects = {
+    sunburst: `
+      <g class="rc-profile-effect rc-profile-effect-rays">
+        <path class="rc-profile-effect-ray rc-effect-primary" d="M50 2V17M50 83V98M2 50H17M83 50H98M16 16L27 27M73 73L84 84M84 16L73 27M27 73L16 84"></path>
+        <circle class="rc-profile-effect-dot rc-effect-secondary-fill" cx="50" cy="7" r="2.2"></circle>
+        <circle class="rc-profile-effect-dot rc-effect-primary-fill" cx="93" cy="50" r="1.8"></circle>
+      </g>
+    `,
+    eclipse: `
+      <g class="rc-profile-effect rc-profile-effect-eclipse">
+        <circle class="rc-profile-effect-orb rc-effect-shadow-fill" cx="38" cy="36" r="18"></circle>
+        <circle class="rc-profile-effect-orb rc-effect-primary" cx="56" cy="50" r="28"></circle>
+        <path class="rc-profile-effect-wisp rc-effect-secondary" d="M21 72C35 58 58 58 76 70"></path>
+      </g>
+    `,
+    "bubble-drift": `
+      <g class="rc-profile-effect rc-profile-effect-bubbles">
+        <circle class="rc-profile-effect-bubble rc-effect-primary" cx="20" cy="72" r="5"></circle>
+        <circle class="rc-profile-effect-bubble rc-effect-secondary" cx="80" cy="28" r="4"></circle>
+        <circle class="rc-profile-effect-bubble rc-effect-primary" cx="73" cy="78" r="7"></circle>
+        <circle class="rc-profile-effect-bubble rc-effect-secondary" cx="28" cy="22" r="3.5"></circle>
+        <circle class="rc-profile-effect-bubble rc-effect-glint-fill" cx="88" cy="60" r="2"></circle>
+      </g>
+    `,
+    "light-rays": `
+      <g class="rc-profile-effect rc-profile-effect-rays">
+        <path class="rc-profile-effect-ray rc-effect-primary" d="M50 -4V18M50 82V104M-4 50H18M82 50H104M11 11L27 27M73 73L89 89M89 11L73 27M27 73L11 89M28 0L35 20M72 0L65 20M28 100L35 80M72 100L65 80"></path>
+        <path class="rc-profile-effect-ray rc-effect-secondary" d="M50 8V18M50 82V92M8 50H18M82 50H92M20 20L28 28M72 72L80 80M80 20L72 28M28 72L20 80"></path>
+      </g>
+    `,
+    vortex: `
+      <g class="rc-profile-effect rc-profile-effect-vortex">
+        <path class="rc-profile-effect-spiral rc-effect-primary" d="M54 14C76 18 90 37 84 58C78 80 52 91 31 78C13 67 12 40 29 27C43 16 65 22 72 38C80 56 63 73 45 68C30 64 28 44 41 37C51 31 64 38 63 50"></path>
+        <path class="rc-profile-effect-spiral rc-effect-secondary" d="M34 22C51 9 78 17 88 40C99 65 79 90 53 92C30 94 10 76 12 52"></path>
+      </g>
+    `,
+    "neon-orbit": `
+      <g class="rc-profile-effect rc-profile-effect-orbit">
+        <path class="rc-profile-effect-comet rc-effect-primary" d="M52 6C70 7 85 18 92 34"></path>
+        <path class="rc-profile-effect-comet rc-effect-secondary" d="M12 67C20 84 37 94 56 92"></path>
+        <circle class="rc-profile-effect-dot rc-effect-glint-fill" cx="92" cy="34" r="3"></circle>
+      </g>
+    `,
+    stardust: `
+      <g class="rc-profile-effect rc-profile-effect-stardust">
+        <circle class="rc-profile-effect-star rc-effect-glint-fill" cx="18" cy="30" r="1.8"></circle>
+        <circle class="rc-profile-effect-star rc-effect-primary-fill" cx="74" cy="20" r="2.2"></circle>
+        <circle class="rc-profile-effect-star rc-effect-secondary-fill" cx="86" cy="74" r="1.8"></circle>
+        <circle class="rc-profile-effect-star rc-effect-glint-fill" cx="30" cy="84" r="1.5"></circle>
+        <path class="rc-profile-effect-star rc-effect-primary" d="M47 9l2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"></path>
+      </g>
+    `,
+    "water-ripple": `
+      <g class="rc-profile-effect rc-profile-effect-ripple">
+        <circle class="rc-profile-effect-wave rc-effect-primary" cx="50" cy="50" r="28"></circle>
+        <circle class="rc-profile-effect-wave rc-effect-secondary" cx="50" cy="50" r="39"></circle>
+        <path class="rc-profile-effect-wisp rc-effect-primary" d="M13 63C28 54 39 69 52 60C65 51 75 63 88 54"></path>
+      </g>
+    `,
+    "smoke-wisp": `
+      <g class="rc-profile-effect rc-profile-effect-smoke">
+        <path class="rc-profile-effect-cloud rc-effect-shadow-fill" d="M18 68C10 49 24 30 45 32C49 15 78 19 75 41C93 43 93 72 72 75C57 88 31 84 18 68Z"></path>
+        <path class="rc-profile-effect-wisp rc-effect-secondary" d="M24 68C38 55 62 61 76 46"></path>
+      </g>
+    `,
+    "ember-sparks": `
+      <g class="rc-profile-effect rc-profile-effect-sparks">
+        <path class="rc-profile-effect-flame rc-effect-primary-fill" d="M27 84C20 74 26 62 36 55C34 67 48 68 44 84Z"></path>
+        <path class="rc-profile-effect-flame rc-effect-secondary-fill" d="M70 21C79 30 77 42 66 50C70 39 56 34 70 21Z"></path>
+        <circle class="rc-profile-effect-spark rc-effect-primary-fill" cx="80" cy="76" r="2.6"></circle>
+        <circle class="rc-profile-effect-spark rc-effect-secondary-fill" cx="21" cy="25" r="2"></circle>
+        <circle class="rc-profile-effect-spark rc-effect-glint-fill" cx="58" cy="12" r="1.6"></circle>
+      </g>
+    `,
+    "frost-shards": `
+      <g class="rc-profile-effect rc-profile-effect-frost">
+        <path class="rc-profile-effect-shard rc-effect-primary-fill" d="M16 54 32 46 25 72Z"></path>
+        <path class="rc-profile-effect-shard rc-effect-secondary-fill" d="M78 13 91 36 69 28Z"></path>
+        <path class="rc-profile-effect-shard rc-effect-primary" d="M40 12 56 31M44 88 59 70M13 24 31 37M86 78 69 65"></path>
+      </g>
+    `,
+    "prism-loop": `
+      <g class="rc-profile-effect rc-profile-effect-prism">
+        <path class="rc-profile-effect-prism-line rc-effect-primary" d="M16 30 50 10 84 30M84 70 50 90 16 70"></path>
+        <path class="rc-profile-effect-prism-line rc-effect-secondary" d="M16 30 16 70M84 30 84 70M50 10 50 90"></path>
+        <circle class="rc-profile-effect-dot rc-effect-glint-fill" cx="50" cy="10" r="2"></circle>
+      </g>
+    `,
+    "sonar-wave": `
+      <g class="rc-profile-effect rc-profile-effect-sonar">
+        <circle class="rc-profile-effect-wave rc-effect-primary" cx="50" cy="50" r="18"></circle>
+        <circle class="rc-profile-effect-wave rc-effect-secondary" cx="50" cy="50" r="34"></circle>
+        <path class="rc-profile-effect-sweep rc-effect-glint" d="M50 50 86 34"></path>
+      </g>
+    `,
+    "glitch-scan": `
+      <g class="rc-profile-effect rc-profile-effect-glitch">
+        <path class="rc-profile-effect-scan rc-effect-primary" d="M11 24H57M32 39H91M7 55H68M25 72H87"></path>
+        <path class="rc-profile-effect-scan rc-effect-secondary" d="M18 30H83M6 62H51M48 80H94"></path>
+      </g>
+    `,
+    "blossom-pulse": `
+      <g class="rc-profile-effect rc-profile-effect-blossom">
+        <ellipse class="rc-profile-effect-petal rc-effect-primary-fill" cx="50" cy="12" rx="5" ry="12"></ellipse>
+        <ellipse class="rc-profile-effect-petal rc-effect-secondary-fill" cx="88" cy="50" rx="12" ry="5"></ellipse>
+        <ellipse class="rc-profile-effect-petal rc-effect-primary-fill" cx="50" cy="88" rx="5" ry="12"></ellipse>
+        <ellipse class="rc-profile-effect-petal rc-effect-secondary-fill" cx="12" cy="50" rx="12" ry="5"></ellipse>
+      </g>
+    `,
+    "shadow-eclipse": `
+      <g class="rc-profile-effect rc-profile-effect-eclipse">
+        <path class="rc-profile-effect-shadow rc-effect-shadow-fill" d="M18 50C18 27 36 10 59 12C43 27 42 72 61 88C36 91 18 73 18 50Z"></path>
+        <path class="rc-profile-effect-wisp rc-effect-primary" d="M70 17C91 39 89 64 70 83"></path>
+      </g>
+    `,
+    "comet-loop": `
+      <g class="rc-profile-effect rc-profile-effect-comet-loop">
+        <path class="rc-profile-effect-comet rc-effect-primary" d="M17 76C35 92 66 91 83 70"></path>
+        <path class="rc-profile-effect-comet rc-effect-secondary" d="M83 70C92 58 93 39 85 25"></path>
+        <circle class="rc-profile-effect-dot rc-effect-glint-fill" cx="83" cy="70" r="3.5"></circle>
+      </g>
+    `,
+    "fade-pulse": `
+      <g class="rc-profile-effect rc-profile-effect-fade">
+        <circle class="rc-profile-effect-haze rc-effect-primary-fill" cx="50" cy="50" r="38"></circle>
+        <circle class="rc-profile-effect-haze rc-effect-secondary" cx="50" cy="50" r="31"></circle>
+        <circle class="rc-profile-effect-haze rc-effect-glint-fill" cx="71" cy="28" r="3"></circle>
+      </g>
+    `
+  };
+
+  return `
+    <span class="rc-mobile-avatar-frame rc-profile-effect-frame" data-mobile-frame="${escapeHtml(normalizedStyle)}" aria-hidden="true" style="display:block!important;visibility:visible!important;opacity:1!important;">
+      <svg class="rc-mobile-avatar-frame-svg rc-profile-effect-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+        ${commonDefs}
+        ${effects[normalizedStyle] || effects.stardust}
       </svg>
     </span>
   `;
@@ -44104,6 +44249,79 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
   })
 ];
 
+const PREMIUM_PROFILE_THEME_STRUCTURE_ORDER = Object.freeze([
+  // Grid, circuit, code, scanline, and pixel structures.
+  "tactical-matrix",
+  "holo-grid",
+  "runic-circuit",
+  "shadow-circuit",
+  "data-stream",
+  "quantum-static",
+  "arcade-scanline",
+  "pixel-burst",
+  // Static or directional linework.
+  "synthwave-road",
+  "comet-trail",
+  "glacial-comet",
+  "neon-rain",
+  "moonlit-rain",
+  "storm-voltage",
+  "thunderhead",
+  // Fog, stars, sky, frost, and soft airborne motion.
+  "astral-galaxy",
+  "meteor-garden",
+  "starlit-sakura",
+  "radiant-snowfall",
+  "spectral-fog",
+  "jetstream-wind",
+  "origami-sky",
+  "cryo-fractal",
+  "crystal-bloom",
+  // Water, lagoon, reef, biology, and nature textures.
+  "abyssal-tide",
+  "pearl-lagoon",
+  "coral-reef",
+  "deep-sea-radar",
+  "neon-koi",
+  "bio-lumina",
+  "garden-firefly",
+  "bonsai-neon",
+  "toxic-sludge",
+  // Radial rings, portals, gravity wells, eclipses, and refractive loops.
+  "echo-sonar",
+  "rift-portal",
+  "gravity-well",
+  "eclipse-corona",
+  "lunar-eclipse",
+  "aurora-rift",
+  "prism-refraction",
+  "chrome-liquid",
+  "plasma-bloom",
+  // Heat, magma, ember, forge, and desert shimmer.
+  "solar-magma",
+  "volcanic-glass",
+  "pulse-foundry",
+  "ember-dragon",
+  "desert-mirage",
+  "auric-topography",
+  // Kinetic specials and neutral cinematic themes.
+  "radiant-focus",
+  "omen-night",
+  "void-ink",
+  "cyber-dragonfly",
+  "neon-eq",
+  "neon-carnival",
+  "victory-confetti"
+]);
+
+PREMIUM_PROFILE_THEME_PRESETS.sort((left, right) => {
+  const leftIndex = PREMIUM_PROFILE_THEME_STRUCTURE_ORDER.indexOf(left?.value);
+  const rightIndex = PREMIUM_PROFILE_THEME_STRUCTURE_ORDER.indexOf(right?.value);
+  const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+  const normalizedRight = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+  return normalizedLeft - normalizedRight;
+});
+
 // Extra animated themes must be authored as unique texture/motion systems.
 // The previous generated pack reused the same few SVG/motion pairs under
 // different names, so it has been removed from the picker.
@@ -44306,6 +44524,7 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "prism-loop", label: "Prism Loop", note: "Refracting color sweep" },
   { value: "sonar-wave", label: "Sonar Wave", note: "Expanding tactical ping" },
   { value: "glitch-scan", label: "Glitch Scan", note: "Digital scan frame" },
+  { value: "fade-pulse", label: "Fade Pulse", note: "Soft glow fades in and out" },
   { value: "blossom-pulse", label: "Blossom Pulse", note: "Soft bloom petals" },
   { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark orbit pass" },
   { value: "comet-loop", label: "Comet Loop", note: "Comet tail frame" }
