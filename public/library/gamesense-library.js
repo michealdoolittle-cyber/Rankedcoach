@@ -943,13 +943,7 @@
       : "";
     return `
       <svg class="gamesense-crosshair-svg" viewBox="0 0 128 128" role="img" aria-label="${escapeHtml(entry.player)} crosshair preview">
-        <defs>
-          <filter id="crosshairGlow-${escapeHtml(entry.id)}" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.4" result="blur"></feGaussianBlur>
-            <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-          </filter>
-        </defs>
-        <g filter="url(#crosshairGlow-${escapeHtml(entry.id)})">
+        <g class="gamesense-crosshair-shape">
           ${renderCrosshairLineSet(inner, color, outline)}
           ${dotMarkup}
           ${renderCrosshairLineSet(outer, color, outline)}
@@ -1442,7 +1436,6 @@
     if (!items.length) return "";
     return `
       <section class="gamesense-knowledge-updates">
-        <div class="gamesense-section-heading"><span>RankedCoach Research</span></div>
         <div class="gamesense-knowledge-update-grid">${items.map(item => `
           <article>
             <span>${escapeHtml(item.topic || "Coaching principle")}</span>
@@ -1498,14 +1491,13 @@
     if (riotPatchNotesStatus === "loading" && !riotPatchNotes) {
       return `
         <section class="gamesense-patch-notes-feed is-loading" aria-live="polite">
-          <div class="gamesense-section-heading"><span>Latest Riot Patch Notes</span><strong>Checking official update feed</strong></div>
           <p>Loading the newest official VALORANT patch breakdown...</p>
         </section>`;
     }
     if (!riotPatchNotes) {
       return `
         <section class="gamesense-patch-notes-feed ${riotPatchNotesStatus === "failed" ? "is-error" : ""}">
-          <div class="gamesense-section-heading"><span>Latest Riot Patch Notes</span><strong>${riotPatchNotesStatus === "failed" ? "Feed unavailable" : "Official change feed"}</strong></div>
+          <strong class="gamesense-patch-note-title">${riotPatchNotesStatus === "failed" ? "Feed unavailable" : "Official change feed"}</strong>
           <p>${escapeHtml(riotPatchNotesError || "Patch notes will appear here once the official Riot feed finishes loading.")}</p>
         </section>`;
     }
@@ -1517,10 +1509,7 @@
       .slice(0, 8);
     return `
       <section class="gamesense-patch-notes-feed">
-        <div class="gamesense-section-heading">
-          <span>Latest Riot Patch Notes</span>
-          <strong>${escapeHtml(riotPatchNotes.title || riotPatchNotes.label || "VALORANT Patch Notes")}</strong>
-        </div>
+        <strong class="gamesense-patch-note-title">${escapeHtml(riotPatchNotes.title || riotPatchNotes.label || "VALORANT Patch Notes")}</strong>
         <div class="gamesense-patch-note-meta">
           <span>${escapeHtml(riotPatchNotes.label || "Current Patch")}</span>
           <span>Effective ${escapeHtml(formatPatchDate(riotPatchNotes.effectiveDate))}</span>

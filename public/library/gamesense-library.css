@@ -3709,19 +3709,28 @@ html.is-mobile-layout .gamesense-tactical-scroll{
   height:50px;
   min-width:50px;
   min-height:50px;
-  image-rendering:pixelated;
+  image-rendering:auto;
 }
 .gamesense-crosshair-preview .gamesense-crosshair-svg{
   width:72px;
   height:72px;
   min-width:72px;
   min-height:72px;
-  image-rendering:pixelated;
+  image-rendering:auto;
 }
 .gamesense-crosshair-svg{
   display:block;
   width:100%;
   min-height:50px;
+  filter:none !important;
+  shape-rendering:crispEdges;
+}
+.gamesense-crosshair-preview :is(svg,g,path,rect,line,circle,polygon,polyline){
+  filter:none !important;
+  text-shadow:none !important;
+}
+.gamesense-crosshair-preview :is(rect,line,path,polygon,polyline){
+  shape-rendering:crispEdges;
 }
 .gamesense-crosshair-code-box{
   position:relative;
@@ -4449,6 +4458,14 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .gamesense-ability-stage
   margin:0;
   color:var(--text-main,#f8fafc);
   line-height:1.45;
+}
+
+.gamesense-patch-note-title{
+  display:block;
+  color:var(--gamesense-warm,#facc15);
+  font:900 clamp(18px,2.1vw,28px)/.95 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.04em;
+  text-transform:uppercase;
 }
 
 .gamesense-patch-note-meta{

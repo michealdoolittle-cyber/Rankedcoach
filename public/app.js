@@ -3678,7 +3678,24 @@ function getMobileAvatarFramePath(borderStyle = "standard") {
     arc: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
     spike: "M50 4 94 34 80 94H20L6 34Z",
     crosshair: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
-    vanguard: "M16 16H84V66L50 92 16 66Z"
+    vanguard: "M16 16H84V66L50 92 16 66Z",
+    sunburst: "M50 6 58 28 82 18 72 42 94 50 72 58 82 82 58 72 50 94 42 72 18 82 28 58 6 50 28 42 18 18 42 28Z",
+    eclipse: "M50 8a42 42 0 1 1 0 84a30 42 0 1 0 0-84",
+    "bubble-drift": "M50 12a38 38 0 1 1 0 76a38 38 0 1 1 0-76",
+    "light-rays": "M50 5 58 30 84 16 70 42 96 50 70 58 84 84 58 70 50 95 42 70 16 84 30 58 4 50 30 42 16 16 42 30Z",
+    vortex: "M50 8C74 8 92 26 92 50C92 70 78 84 58 84C38 84 20 70 20 50C20 34 32 22 50 22C66 22 78 34 78 50C78 62 68 70 56 70",
+    "neon-orbit": "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    stardust: "M50 8a42 42 0 1 1 0 84a42 42 0 1 1 0-84",
+    "water-ripple": "M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80",
+    "smoke-wisp": "M20 70C8 44 30 14 58 16C86 18 98 48 78 72C60 94 30 92 20 70Z",
+    "ember-sparks": "M50 6C72 22 86 42 82 66C78 88 56 96 38 86C18 74 16 50 26 32C34 18 42 12 50 6Z",
+    "frost-shards": "M50 4 62 30 90 24 72 48 96 64 66 66 58 94 42 68 12 76 30 52 6 36 38 32Z",
+    "prism-loop": "M50 6 92 30 92 70 50 94 8 70 8 30Z",
+    "sonar-wave": "M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80",
+    "glitch-scan": "M14 18H86V34H68V48H88V82H14V64H32V50H12V18Z",
+    "blossom-pulse": "M50 10C58 24 82 20 86 42C72 46 80 72 58 82C52 66 30 88 16 66C30 58 12 34 34 26C38 40 46 20 50 10Z",
+    "shadow-eclipse": "M50 8a42 42 0 1 1 0 84a28 42 0 1 0 0-84",
+    "comet-loop": "M50 8a42 42 0 1 1-18 80C52 78 80 58 92 18"
   };
   return framePaths[borderStyle] || framePaths.standard;
 }
@@ -3686,15 +3703,28 @@ function getMobileAvatarFramePath(borderStyle = "standard") {
 function getMobileAvatarFrameMarkup(borderStyle = "standard") {
   const normalizedStyle = normalizeProfileBorderStyle(borderStyle || "standard");
   const path = getMobileAvatarFramePath(normalizedStyle);
+  const isAmbient = isProfileAmbientBorderStyle(normalizedStyle);
   const isArc = normalizedStyle === "arc";
   const isCrosshair = normalizedStyle === "crosshair";
+  const ambientFrameStyle = isAmbient
+    ? ` style="display:block!important;visibility:visible!important;opacity:1!important;"`
+    : "";
+  const ambientMainStyle = isAmbient
+    ? ` style="fill:none!important;stroke:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655))!important;stroke-width:6!important;stroke-linecap:round!important;stroke-linejoin:round!important;stroke-dasharray:42 8 18 12!important;animation:rcMobileSvgFrameSweep 2.8s linear infinite,rcMobileSvgFrameGlowBeat 2.4s ease-in-out infinite!important;transform-origin:50% 50%!important;"`
+    : "";
+  const ambientSecondaryStyle = isAmbient
+    ? ` style="fill:none!important;stroke:var(--rc-mobile-frame-color-2,var(--profile-ring-border-2,var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655))))!important;stroke-width:3!important;stroke-linecap:round!important;stroke-linejoin:round!important;stroke-dasharray:10 16!important;opacity:.82!important;animation:rcMobileSvgFrameReverseSweep 3.4s linear infinite!important;transform-origin:50% 50%!important;"`
+    : "";
+  const ambientGlintStyle = isAmbient
+    ? ` style="fill:none!important;stroke:rgba(255,255,255,.92)!important;stroke-width:3!important;stroke-linecap:round!important;stroke-linejoin:round!important;stroke-dasharray:7 93!important;opacity:.92!important;animation:rcMobileSvgFrameTrace 1.45s linear infinite!important;transform-origin:50% 50%!important;"`
+    : "";
   return `
-    <span class="rc-mobile-avatar-frame" data-mobile-frame="${escapeHtml(normalizedStyle)}" aria-hidden="true">
+    <span class="rc-mobile-avatar-frame" data-mobile-frame="${escapeHtml(normalizedStyle)}" aria-hidden="true"${ambientFrameStyle}>
       <svg class="rc-mobile-avatar-frame-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
         <path class="rc-mobile-frame-fill" d="${path}"></path>
-        <path class="rc-mobile-frame-main" d="${path}" pathLength="100"></path>
-        <path class="rc-mobile-frame-secondary" d="${path}" pathLength="100"></path>
-        <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"></path>
+        <path class="rc-mobile-frame-main" d="${path}" pathLength="100"${ambientMainStyle}></path>
+        <path class="rc-mobile-frame-secondary" d="${path}" pathLength="100"${ambientSecondaryStyle}></path>
+        <path class="rc-mobile-frame-glint" d="${path}" pathLength="100"${ambientGlintStyle}></path>
         ${isArc ? `<path class="rc-mobile-frame-arc" d="${path}" pathLength="100"></path>` : ""}
         ${isCrosshair ? `
           <g class="rc-mobile-frame-crosshair">
@@ -43861,6 +43891,216 @@ const PREMIUM_PROFILE_THEME_PRESETS = [
     pattern: "url('/assets/themes/comet-trail.svg')",
     pattern2: "linear-gradient(112deg, transparent 22%, rgba(147,197,253,.14) 46%, rgba(250,204,21,.12) 54%, transparent 78%)",
     motion: "comet-trail"
+  }),
+  createProfileTheme("runic-circuit", "Runic Circuit", "dark", {
+    base: "#020611", base2: "#051a22", card: "#07121d", card2: "#0b2430",
+    accent: "#67e8f9", accent2: "#facc15",
+    pattern: "repeating-linear-gradient(90deg, transparent 0 34px, rgba(103,232,249,.16) 35px 36px), repeating-linear-gradient(0deg, transparent 0 28px, rgba(250,204,21,.09) 29px 30px), radial-gradient(circle at 24% 28%, rgba(103,232,249,.2), transparent 22%)",
+    pattern2: "linear-gradient(115deg, transparent 18%, rgba(103,232,249,.16) 34%, transparent 38% 58%, rgba(250,204,21,.13) 70%, transparent 78%)",
+    motion: "runic-circuit"
+  }),
+  createProfileTheme("neon-koi", "Neon Koi", "dark", {
+    base: "#021116", base2: "#062436", card: "#061620", card2: "#102d3d",
+    accent: "#fb7185", accent2: "#2dd4bf",
+    pattern: "radial-gradient(ellipse at 18% 36%, rgba(251,113,133,.28), transparent 28%), radial-gradient(ellipse at 78% 66%, rgba(45,212,191,.26), transparent 32%), conic-gradient(from 120deg at 50% 50%, transparent, rgba(45,212,191,.12), transparent 30%, rgba(251,113,133,.12), transparent 62%)",
+    pattern2: "repeating-radial-gradient(ellipse at 50% 50%, rgba(125,211,252,.08) 0 2px, transparent 3px 34px)",
+    motion: "koi-current"
+  }),
+  createProfileTheme("meteor-garden", "Meteor Garden", "dark", {
+    base: "#060514", base2: "#1b1022", card: "#0b0a1f", card2: "#28162e",
+    accent: "#f0abfc", accent2: "#facc15",
+    pattern: "linear-gradient(125deg, transparent 8%, rgba(240,171,252,.22) 11%, transparent 15% 38%, rgba(250,204,21,.16) 41%, transparent 45% 72%, rgba(103,232,249,.13) 76%, transparent 80%)",
+    pattern2: "radial-gradient(circle at 18% 24%, rgba(255,255,255,.7) 0 1px, transparent 2px), radial-gradient(circle at 72% 36%, rgba(250,204,21,.75) 0 1px, transparent 2px), radial-gradient(circle at 48% 82%, rgba(240,171,252,.7) 0 1px, transparent 2px)",
+    motion: "meteor-garden"
+  }),
+  createProfileTheme("arcade-scanline", "Arcade Scanline", "dark", {
+    base: "#05070f", base2: "#101129", card: "#090d18", card2: "#181a35",
+    accent: "#22d3ee", accent2: "#84cc16",
+    pattern: "repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, transparent 2px 8px), repeating-linear-gradient(90deg, transparent 0 26px, rgba(34,211,238,.1) 27px 28px), radial-gradient(circle at 74% 18%, rgba(132,204,22,.18), transparent 24%)",
+    pattern2: "linear-gradient(180deg, transparent 0 46%, rgba(34,211,238,.22) 48%, transparent 52%)",
+    motion: "arcade-scanline"
+  }),
+  createProfileTheme("bio-lumina", "Bio Lumina", "dark", {
+    base: "#020b07", base2: "#0b2312", card: "#06120b", card2: "#12311b",
+    accent: "#a3e635", accent2: "#2dd4bf",
+    pattern: "radial-gradient(circle at 18% 82%, rgba(163,230,53,.26) 0 3%, transparent 8%), radial-gradient(circle at 68% 24%, rgba(45,212,191,.24) 0 2.4%, transparent 7%), radial-gradient(circle at 84% 76%, rgba(255,255,255,.12) 0 1.4%, transparent 5%)",
+    pattern2: "radial-gradient(ellipse at 48% 48%, rgba(163,230,53,.12), transparent 42%), linear-gradient(135deg, transparent, rgba(45,212,191,.1), transparent)",
+    motion: "bio-lumina"
+  }),
+  createProfileTheme("rift-portal", "Rift Portal", "dark", {
+    base: "#040411", base2: "#171032", card: "#0b0b1f", card2: "#251744",
+    accent: "#8b5cf6", accent2: "#60a5fa",
+    pattern: "conic-gradient(from 0deg at 50% 50%, transparent 0 15%, rgba(139,92,246,.22) 18%, transparent 26% 42%, rgba(96,165,250,.18) 46%, transparent 58% 74%, rgba(192,132,252,.16) 78%, transparent 88%), radial-gradient(circle at 50% 50%, rgba(139,92,246,.22), transparent 42%)",
+    pattern2: "repeating-radial-gradient(circle at 50% 50%, rgba(96,165,250,.12) 0 2px, transparent 3px 38px)",
+    motion: "rift-portal"
+  }),
+  createProfileTheme("desert-mirage", "Desert Mirage", "dark", {
+    base: "#120a03", base2: "#2c1c07", card: "#1b1208", card2: "#38240c",
+    accent: "#f59e0b", accent2: "#67e8f9",
+    pattern: "repeating-linear-gradient(172deg, rgba(245,158,11,.16) 0 3px, transparent 4px 32px), radial-gradient(ellipse at 54% 72%, rgba(103,232,249,.16), transparent 34%), linear-gradient(180deg, rgba(245,158,11,.08), transparent)",
+    pattern2: "linear-gradient(92deg, transparent 12%, rgba(255,255,255,.12) 34%, transparent 48% 68%, rgba(103,232,249,.1) 80%, transparent 92%)",
+    motion: "desert-mirage"
+  }),
+  createProfileTheme("glacial-comet", "Glacial Comet", "dark", {
+    base: "#020b15", base2: "#0b2638", card: "#061525", card2: "#123047",
+    accent: "#bfdbfe", accent2: "#22d3ee",
+    pattern: "linear-gradient(135deg, transparent 0 28%, rgba(191,219,254,.28) 29% 30%, transparent 31% 56%, rgba(34,211,238,.18) 57% 58%, transparent 59%), radial-gradient(ellipse at 72% 20%, rgba(255,255,255,.16), transparent 28%)",
+    pattern2: "linear-gradient(112deg, transparent 24%, rgba(191,219,254,.24) 42%, rgba(34,211,238,.14) 48%, transparent 70%)",
+    motion: "glacial-comet"
+  }),
+  createProfileTheme("bonsai-neon", "Bonsai Neon", "dark", {
+    base: "#020b08", base2: "#112018", card: "#06120e", card2: "#1b2d21",
+    accent: "#4ade80", accent2: "#f472b6",
+    pattern: "repeating-radial-gradient(ellipse at 42% 62%, rgba(74,222,128,.16) 0 2px, transparent 3px 26px), radial-gradient(circle at 68% 24%, rgba(244,114,182,.2) 0 2.8%, transparent 10%), radial-gradient(circle at 26% 34%, rgba(74,222,128,.2) 0 2.4%, transparent 9%)",
+    pattern2: "linear-gradient(124deg, transparent 16%, rgba(74,222,128,.13) 32%, transparent 46%, rgba(244,114,182,.12) 76%, transparent 88%)",
+    motion: "bonsai-neon"
+  }),
+  createProfileTheme("cyber-dragonfly", "Cyber Dragonfly", "dark", {
+    base: "#020916", base2: "#091e2a", card: "#07121d", card2: "#102b36",
+    accent: "#22d3ee", accent2: "#c084fc",
+    pattern: "radial-gradient(ellipse at 42% 42%, rgba(34,211,238,.22), transparent 24%), radial-gradient(ellipse at 58% 42%, rgba(192,132,252,.18), transparent 24%), linear-gradient(90deg, transparent 48%, rgba(255,255,255,.12) 49% 51%, transparent 52%)",
+    pattern2: "repeating-linear-gradient(70deg, transparent 0 48px, rgba(34,211,238,.12) 49px 50px, transparent 51px 96px)",
+    motion: "cyber-dragonfly"
+  }),
+  createProfileTheme("pulse-foundry", "Pulse Foundry", "dark", {
+    base: "#090605", base2: "#25110b", card: "#110c09", card2: "#32190f",
+    accent: "#fb923c", accent2: "#facc15",
+    pattern: "repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 3px 34px), radial-gradient(circle at 20% 80%, rgba(251,146,60,.26), transparent 26%), radial-gradient(circle at 78% 24%, rgba(250,204,21,.18), transparent 24%)",
+    pattern2: "linear-gradient(180deg, transparent 24%, rgba(251,146,60,.16) 54%, transparent 78%)",
+    motion: "pulse-foundry"
+  }),
+  createProfileTheme("moonlit-rain", "Moonlit Rain", "dark", {
+    base: "#020713", base2: "#0b1630", card: "#07101f", card2: "#111d36",
+    accent: "#93c5fd", accent2: "#c4b5fd",
+    pattern: "repeating-linear-gradient(96deg, transparent 0 38px, rgba(147,197,253,.22) 39px 41px, transparent 42px 82px), radial-gradient(circle at 78% 18%, rgba(255,255,255,.18), transparent 22%)",
+    pattern2: "linear-gradient(180deg, rgba(147,197,253,.2), transparent 30% 72%, rgba(196,181,253,.12))",
+    motion: "moonlit-rain"
+  }),
+  createProfileTheme("plasma-bloom", "Plasma Bloom", "dark", {
+    base: "#090313", base2: "#230733", card: "#10071e", card2: "#301044",
+    accent: "#fb7185", accent2: "#a78bfa",
+    pattern: "radial-gradient(circle at 22% 72%, rgba(251,113,133,.34), transparent 26%), radial-gradient(circle at 78% 28%, rgba(167,139,250,.3), transparent 30%), conic-gradient(from 42deg at 50% 50%, rgba(251,113,133,.16), transparent 24%, rgba(167,139,250,.18), transparent 58%)",
+    pattern2: "radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.1), transparent 42%)",
+    motion: "plasma-bloom"
+  }),
+  createProfileTheme("origami-sky", "Origami Sky", "dark", {
+    base: "#06101f", base2: "#122b45", card: "#071726", card2: "#183650",
+    accent: "#7dd3fc", accent2: "#f9a8d4",
+    pattern: "linear-gradient(135deg, rgba(125,211,252,.18) 0 12%, transparent 12% 36%, rgba(249,168,212,.14) 36% 48%, transparent 48%), linear-gradient(45deg, transparent 0 44%, rgba(255,255,255,.12) 45% 46%, transparent 47%)",
+    pattern2: "linear-gradient(112deg, transparent 18%, rgba(125,211,252,.18) 36%, transparent 46%, rgba(249,168,212,.16) 74%, transparent 86%)",
+    motion: "origami-sky"
+  }),
+  createProfileTheme("neon-carnival", "Neon Carnival", "dark", {
+    base: "#070510", base2: "#1a102a", card: "#0c0918", card2: "#251439",
+    accent: "#22d3ee", accent2: "#f97316",
+    pattern: "radial-gradient(circle at 16% 24%, rgba(34,211,238,.32) 0 2.5%, transparent 9%), radial-gradient(circle at 72% 34%, rgba(249,115,22,.3) 0 2.2%, transparent 8%), radial-gradient(circle at 44% 82%, rgba(250,204,21,.28) 0 2%, transparent 7%), repeating-conic-gradient(from 0deg at 50% 50%, rgba(34,211,238,.08) 0 8deg, transparent 9deg 22deg)",
+    pattern2: "linear-gradient(90deg, transparent 18%, rgba(34,211,238,.12) 34%, transparent 48%, rgba(249,115,22,.14) 72%, transparent 88%)",
+    motion: "neon-carnival"
+  }),
+  createProfileTheme("shadow-circuit", "Shadow Circuit", "dark", {
+    base: "#020308", base2: "#0b1220", card: "#050913", card2: "#111827",
+    accent: "#64748b", accent2: "#38bdf8",
+    pattern: "repeating-linear-gradient(0deg, transparent 0 22px, rgba(56,189,248,.1) 23px 24px), repeating-linear-gradient(90deg, transparent 0 54px, rgba(100,116,139,.14) 55px 56px), radial-gradient(circle at 70% 20%, rgba(56,189,248,.18), transparent 24%)",
+    pattern2: "linear-gradient(135deg, rgba(15,23,42,.08), rgba(56,189,248,.14), transparent 58%)",
+    motion: "shadow-circuit"
+  }),
+  createProfileTheme("pearl-lagoon", "Pearl Lagoon", "dark", {
+    base: "#02100f", base2: "#092b2c", card: "#061817", card2: "#123838",
+    accent: "#5eead4", accent2: "#fef3c7",
+    pattern: "radial-gradient(ellipse at 28% 64%, rgba(94,234,212,.28), transparent 30%), radial-gradient(circle at 72% 34%, rgba(254,243,199,.18), transparent 20%), repeating-radial-gradient(ellipse at 50% 50%, rgba(94,234,212,.1) 0 2px, transparent 3px 44px)",
+    pattern2: "linear-gradient(172deg, transparent 12%, rgba(254,243,199,.12) 36%, transparent 48%, rgba(94,234,212,.16) 76%, transparent 92%)",
+    motion: "pearl-lagoon"
+  }),
+  createProfileTheme("volcanic-glass", "Volcanic Glass", "dark", {
+    base: "#0d0402", base2: "#2b0b05", card: "#130705", card2: "#38100a",
+    accent: "#ef4444", accent2: "#fbbf24",
+    pattern: "linear-gradient(38deg, transparent 0 28%, rgba(239,68,68,.36) 29% 31%, transparent 32% 54%, rgba(251,191,36,.22) 55% 56%, transparent 57%), radial-gradient(circle at 34% 72%, rgba(239,68,68,.26), transparent 24%)",
+    pattern2: "radial-gradient(circle at 50% 50%, rgba(251,191,36,.16), transparent 38%)",
+    motion: "volcanic-glass"
+  }),
+  createProfileTheme("auric-topography", "Auric Topography", "dark", {
+    base: "#090806", base2: "#20170a", card: "#100d08", card2: "#2b1d0d",
+    accent: "#facc15", accent2: "#fb923c",
+    pattern: "repeating-radial-gradient(ellipse at 42% 48%, transparent 0 20px, rgba(250,204,21,.16) 21px 23px, transparent 24px 42px), radial-gradient(circle at 78% 22%, rgba(251,146,60,.2), transparent 26%)",
+    pattern2: "linear-gradient(100deg, transparent 18%, rgba(250,204,21,.14) 42%, transparent 50%, rgba(251,146,60,.12) 72%, transparent 88%)",
+    motion: "auric-topography"
+  }),
+  createProfileTheme("synthwave-road", "Synthwave Road", "dark", {
+    base: "#060517", base2: "#1d1236", card: "#090821", card2: "#271747",
+    accent: "#f472b6", accent2: "#22d3ee",
+    pattern: "linear-gradient(180deg, transparent 0 54%, rgba(244,114,182,.18) 55% 56%, transparent 57%), repeating-linear-gradient(90deg, transparent 0 52px, rgba(34,211,238,.14) 53px 54px), repeating-linear-gradient(0deg, transparent 0 34px, rgba(244,114,182,.11) 35px 36px)",
+    pattern2: "radial-gradient(ellipse at 50% 8%, rgba(244,114,182,.26), transparent 24%)",
+    motion: "synthwave-road"
+  }),
+  createProfileTheme("lunar-eclipse", "Lunar Eclipse", "dark", {
+    base: "#02040a", base2: "#101827", card: "#060a12", card2: "#172033",
+    accent: "#e5e7eb", accent2: "#f43f5e",
+    pattern: "radial-gradient(circle at 50% 50%, rgba(229,231,235,.24) 0 12%, rgba(244,63,94,.18) 13% 17%, transparent 18% 46%), radial-gradient(circle at 54% 46%, rgba(2,4,10,.92) 0 16%, transparent 17%)",
+    pattern2: "conic-gradient(from 0deg at 50% 50%, transparent, rgba(244,63,94,.18), transparent 38%, rgba(229,231,235,.12), transparent 76%)",
+    motion: "lunar-eclipse"
+  }),
+  createProfileTheme("garden-firefly", "Garden Firefly", "dark", {
+    base: "#030c07", base2: "#0f2614", card: "#06120a", card2: "#18321e",
+    accent: "#bef264", accent2: "#fef08a",
+    pattern: "radial-gradient(circle at 18% 82%, rgba(190,242,100,.24), transparent 18%), radial-gradient(circle at 82% 20%, rgba(254,240,138,.2), transparent 22%), linear-gradient(135deg, rgba(74,222,128,.08), transparent 50%)",
+    pattern2: "radial-gradient(circle at 24% 40%, rgba(254,240,138,.8) 0 1px, transparent 3px), radial-gradient(circle at 72% 62%, rgba(190,242,100,.78) 0 1px, transparent 3px), radial-gradient(circle at 44% 76%, rgba(254,240,138,.74) 0 1px, transparent 3px)",
+    motion: "garden-firefly"
+  }),
+  createProfileTheme("quantum-static", "Quantum Static", "dark", {
+    base: "#030512", base2: "#11172e", card: "#070b1a", card2: "#1a2140",
+    accent: "#a78bfa", accent2: "#2dd4bf",
+    pattern: "repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 2px 5px), repeating-linear-gradient(90deg, rgba(167,139,250,.08) 0 2px, transparent 3px 11px), radial-gradient(circle at 66% 32%, rgba(45,212,191,.18), transparent 24%)",
+    pattern2: "linear-gradient(90deg, transparent 20%, rgba(167,139,250,.18) 44%, transparent 52%, rgba(45,212,191,.16) 74%, transparent 88%)",
+    motion: "quantum-static"
+  }),
+  createProfileTheme("coral-reef", "Coral Reef", "dark", {
+    base: "#031014", base2: "#12313a", card: "#07191f", card2: "#1c3c45",
+    accent: "#fb7185", accent2: "#2dd4bf",
+    pattern: "radial-gradient(ellipse at 24% 72%, rgba(251,113,133,.25), transparent 24%), radial-gradient(ellipse at 70% 34%, rgba(45,212,191,.22), transparent 26%), repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.08) 0 2px, transparent 3px 30px)",
+    pattern2: "linear-gradient(145deg, transparent 14%, rgba(251,113,133,.14) 28%, transparent 42%, rgba(45,212,191,.14) 70%, transparent 86%)",
+    motion: "coral-reef"
+  }),
+  createProfileTheme("thunderhead", "Thunderhead", "dark", {
+    base: "#030613", base2: "#162033", card: "#080d1a", card2: "#202a3e",
+    accent: "#60a5fa", accent2: "#facc15",
+    pattern: "radial-gradient(ellipse at 24% 28%, rgba(96,165,250,.22), transparent 28%), radial-gradient(ellipse at 76% 58%, rgba(15,23,42,.62), transparent 34%), linear-gradient(118deg, transparent 42%, rgba(250,204,21,.32) 43% 44%, transparent 45%)",
+    pattern2: "linear-gradient(180deg, rgba(96,165,250,.14), transparent 60%)",
+    motion: "thunderhead"
+  }),
+  createProfileTheme("chrome-liquid", "Chrome Liquid", "dark", {
+    base: "#06080d", base2: "#151a24", card: "#090d14", card2: "#202635",
+    accent: "#cbd5e1", accent2: "#22d3ee",
+    pattern: "linear-gradient(110deg, rgba(203,213,225,.18), transparent 18% 36%, rgba(34,211,238,.18) 46%, transparent 60%, rgba(255,255,255,.16) 78%, transparent 90%), radial-gradient(ellipse at 50% 55%, rgba(203,213,225,.12), transparent 38%)",
+    pattern2: "conic-gradient(from 0deg at 50% 50%, rgba(203,213,225,.12), transparent 18%, rgba(34,211,238,.14), transparent 56%, rgba(255,255,255,.1), transparent 84%)",
+    motion: "chrome-liquid"
+  }),
+  createProfileTheme("pixel-burst", "Pixel Burst", "dark", {
+    base: "#050611", base2: "#15142c", card: "#090a1b", card2: "#1f1c3c",
+    accent: "#22c55e", accent2: "#f43f5e",
+    pattern: "repeating-linear-gradient(0deg, transparent 0 18px, rgba(34,197,94,.12) 19px 20px), repeating-linear-gradient(90deg, transparent 0 18px, rgba(244,63,94,.12) 19px 20px), radial-gradient(circle at 76% 26%, rgba(34,197,94,.22), transparent 18%)",
+    pattern2: "linear-gradient(90deg, rgba(34,197,94,.14), transparent 28% 58%, rgba(244,63,94,.16))",
+    motion: "pixel-burst"
+  }),
+  createProfileTheme("starlit-sakura", "Starlit Sakura", "dark", {
+    base: "#090512", base2: "#201226", card: "#10091a", card2: "#2a1830",
+    accent: "#f9a8d4", accent2: "#c4b5fd",
+    pattern: "radial-gradient(circle at 24% 30%, rgba(249,168,212,.28), transparent 18%), radial-gradient(circle at 72% 70%, rgba(196,181,253,.22), transparent 24%), linear-gradient(135deg, transparent, rgba(249,168,212,.08), transparent)",
+    pattern2: "radial-gradient(circle at 18% 42%, rgba(249,168,212,.72) 0 1px, transparent 3px), radial-gradient(circle at 62% 24%, rgba(196,181,253,.7) 0 1px, transparent 3px), radial-gradient(circle at 82% 76%, rgba(249,168,212,.7) 0 1px, transparent 3px)",
+    motion: "starlit-sakura"
+  }),
+  createProfileTheme("deep-sea-radar", "Deep Sea Radar", "dark", {
+    base: "#020a12", base2: "#062137", card: "#06131f", card2: "#0e2d47",
+    accent: "#38bdf8", accent2: "#14b8a6",
+    pattern: "radial-gradient(circle at 50% 50%, transparent 0 16%, rgba(56,189,248,.16) 17% 18%, transparent 19% 32%, rgba(20,184,166,.14) 33% 34%, transparent 35%), linear-gradient(38deg, transparent 49%, rgba(56,189,248,.2) 50%, transparent 51%)",
+    pattern2: "radial-gradient(circle at 28% 68%, rgba(20,184,166,.24), transparent 22%)",
+    motion: "deep-sea-radar"
+  }),
+  createProfileTheme("radiant-snowfall", "Radiant Snowfall", "dark", {
+    base: "#06101b", base2: "#13283d", card: "#0a1624", card2: "#1c344b",
+    accent: "#e0f2fe", accent2: "#facc15",
+    pattern: "radial-gradient(circle at 20% 16%, rgba(224,242,254,.84) 0 1px, transparent 3px), radial-gradient(circle at 64% 42%, rgba(250,204,21,.72) 0 1px, transparent 3px), radial-gradient(circle at 82% 78%, rgba(224,242,254,.76) 0 1px, transparent 3px), linear-gradient(180deg, rgba(224,242,254,.1), transparent)",
+    pattern2: "linear-gradient(110deg, transparent 16%, rgba(224,242,254,.18) 34%, transparent 46%, rgba(250,204,21,.1) 78%, transparent 90%)",
+    motion: "radiant-snowfall"
   })
 ];
 
@@ -44070,6 +44310,12 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark orbit pass" },
   { value: "comet-loop", label: "Comet Loop", note: "Comet tail frame" }
 ];
+
+const PROFILE_AMBIENT_BORDER_STYLE_VALUES = Object.freeze(PREMIUM_PROFILE_BORDER_STYLES.map(style => style.value));
+
+function isProfileAmbientBorderStyle(borderStyle = "standard") {
+  return PROFILE_AMBIENT_BORDER_STYLE_VALUES.includes(String(borderStyle || "").trim().toLowerCase());
+}
 
 const PROFILE_BANNER_STYLES = [
   { value: "theme", label: "Default Theme", type: "default" },
@@ -44357,33 +44603,7 @@ function getAvailableProfileBannerStyles(user = currentAuthUser, extraStyles = [
   return buildProfileBannerStyleList(user, extraStyles);
 }
 
-const PROFILE_AVATAR_ASSET_OPTIONS = Object.freeze([
-  { value: "asset-weapon-vandal", label: "Vandal", url: "/assets/weapons/vandal.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-phantom", label: "Phantom", url: "/assets/weapons/phantom.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-operator", label: "Operator", url: "/assets/weapons/operator.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-outlaw", label: "Outlaw", url: "/assets/weapons/outlaw.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-guardian", label: "Guardian", url: "/assets/weapons/guardian.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-bulldog", label: "Bulldog", url: "/assets/weapons/bulldog.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-sheriff", label: "Sheriff", url: "/assets/weapons/sheriff.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-ghost", label: "Ghost", url: "/assets/weapons/ghost.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-spectre", label: "Spectre", url: "/assets/weapons/spectre.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-stinger", label: "Stinger", url: "/assets/weapons/stinger.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-judge", label: "Judge", url: "/assets/weapons/judge.png", kind: "weapon", fit: "contain" },
-  { value: "asset-weapon-bucky", label: "Bucky", url: "/assets/weapons/bucky.png", kind: "weapon", fit: "contain" },
-  { value: "asset-map-ascent", label: "Ascent Vista", url: "/assets/library/maps/thumbs/ascent.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-bind", label: "Bind Vista", url: "/assets/library/maps/thumbs/bind.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-breeze", label: "Breeze Vista", url: "/assets/library/maps/thumbs/breeze.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-haven", label: "Haven Vista", url: "/assets/library/maps/thumbs/haven.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-split", label: "Split Vista", url: "/assets/library/maps/thumbs/split.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-sunset", label: "Sunset Vista", url: "/assets/library/maps/thumbs/sunset.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-lotus", label: "Lotus Vista", url: "/assets/library/maps/thumbs/lotus.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-icebox", label: "Icebox Vista", url: "/assets/library/maps/thumbs/icebox.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-pearl", label: "Pearl Vista", url: "/assets/library/maps/thumbs/pearl.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-fracture", label: "Fracture Vista", url: "/assets/library/maps/thumbs/fracture.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-abyss", label: "Abyss Vista", url: "/assets/library/maps/thumbs/abyss.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-corrode", label: "Corrode Vista", url: "/assets/library/maps/thumbs/corrode.jpg", kind: "map", fit: "cover" },
-  { value: "asset-map-summit", label: "Summit Vista", url: "/assets/library/maps/thumbs/summit.jpg", kind: "map", fit: "cover" }
-]);
+const PROFILE_AVATAR_ASSET_OPTIONS = Object.freeze([]);
 
 function getProfileAvatarAsset(value = "") {
   const key = String(value || "").trim().toLowerCase();
@@ -44405,7 +44625,9 @@ function getProfileAvatarLabel(value = getDefaultProfileAvatarAgent()) {
   const key = String(value || "").trim().toLowerCase();
   const asset = getProfileAvatarAsset(key);
   if (asset) return asset.label;
-  return allAgents.find(agent => String(agent).toLowerCase() === key) || key || "Agent";
+  return allAgents.find(agent => String(agent).toLowerCase() === key)
+    || allAgents.find(agent => String(agent).toLowerCase() === getDefaultProfileAvatarAgent())
+    || "Jett";
 }
 
 function getDefaultProfileAvatarAgent() {
@@ -44415,7 +44637,10 @@ function getDefaultProfileAvatarAgent() {
 function getDefaultProfileAvatarUrl(agentName = getDefaultProfileAvatarAgent()) {
   const key = String(agentName || "jett").toLowerCase();
   const asset = getProfileAvatarAsset(key);
-  return asset?.url || getAgentIconUrl(key);
+  const agent = allAgents.find(option => String(option).toLowerCase() === key)
+    || allAgents.find(option => String(option).toLowerCase() === getDefaultProfileAvatarAgent())
+    || getDefaultProfileAvatarAgent();
+  return asset?.url || getAgentIconUrl(agent);
 }
 
 function normalizeAccessibilityLayoutMode(value) {
@@ -45835,13 +46060,19 @@ function renderAvatarGallery(selectedAgent = getDefaultProfileAvatarAgent()) {
   const gallery = document.getElementById("editProfileAvatarGallery");
   const avatarSelect = document.getElementById("editProfileAvatarAgent");
   if (!gallery) return;
+  const avatarOptions = getProfileAvatarOptions();
+  const requestedKey = String(selectedAgent || "").trim().toLowerCase();
+  const activeKey = avatarOptions.some(option => String(option.value || "").toLowerCase() === requestedKey)
+    ? requestedKey
+    : getDefaultProfileAvatarAgent();
+  if (avatarSelect) avatarSelect.value = activeKey;
 
-  gallery.innerHTML = getProfileAvatarOptions().map((option) => {
+  gallery.innerHTML = avatarOptions.map((option) => {
     const key = String(option.value || "").toLowerCase();
     const asset = getProfileAvatarAsset(key);
     const assetFit = asset?.fit === "cover" ? "cover" : asset ? "contain" : "";
     const assetKind = asset?.kind || "";
-    const isActive = key === String(selectedAgent || "").toLowerCase();
+    const isActive = key === activeKey;
     return `
       <button type="button" class="avatar-card ${asset ? "avatar-card-asset" : ""} ${assetFit ? `avatar-card-asset-${assetFit}` : ""} ${assetKind ? `avatar-card-${assetKind}` : ""} ${isActive ? "is-active" : ""}" data-avatar-card="${escapeHtml(key)}" data-avatar-fit="${escapeHtml(assetFit)}" data-avatar-kind="${escapeHtml(assetKind)}" aria-pressed="${isActive ? "true" : "false"}">
         <div class="avatar-card-shell">
@@ -46221,6 +46452,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const borderRotate = !!profile?.profileBorderRotate;
+  const borderAnimationEnabled = borderRotate || isProfileAmbientBorderStyle(borderStyle);
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
@@ -46302,10 +46534,10 @@ function applyProfileVisuals(profile = getActiveProfile()) {
 
   borderTargets.forEach((target) => {
     Array.from(target.classList).forEach((className) => {
-      if (className.startsWith("border-")) target.classList.remove(className);
+    if (className.startsWith("border-")) target.classList.remove(className);
     });
     target.classList.add(`border-${borderStyle}`);
-    target.classList.toggle("border-animated", borderRotate);
+    target.classList.toggle("border-animated", borderAnimationEnabled);
     target.classList.toggle("border-two-tone", borderTones.isTwoTone);
     target.dataset.profileBorder = borderStyle;
     target.dataset.profileBorderColor = borderColor;
@@ -46329,7 +46561,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     ring.style.setProperty("--profile-ring-gradient", borderTones.gradient);
     ring.style.setProperty("--profile-ring-bg", ringBackground);
     ring.style.setProperty("--profile-ring-glow", ringGlow);
-    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor, borderRotate, borderTones.color2);
+    renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor, borderAnimationEnabled, borderTones.color2);
   }
 
   if (root) {
@@ -47273,7 +47505,7 @@ function populateEditProfileModal(profile = getActiveProfile()) {
       .join("");
   }
 
-  if (avatarSelect && !avatarSelect.options.length) {
+  if (avatarSelect) {
     avatarSelect.innerHTML = getProfileAvatarOptions()
       .map(option => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
       .join("");
@@ -47328,7 +47560,12 @@ function populateEditProfileModal(profile = getActiveProfile()) {
   const freeThemeMotionEl = document.getElementById("editProfileFreeThemeMotion");
   if (freeThemeMotionEl) freeThemeMotionEl.value = normalizeFreeThemeMotionMode(profile?.freeThemeMotion);
   renderThemeGallery(selectedThemeKey);
-  if (avatarSelect) avatarSelect.value = String(profile?.avatarAgent || getDefaultProfileAvatarAgent()).toLowerCase();
+  if (avatarSelect) {
+    const selectedAvatarKey = String(profile?.avatarAgent || getDefaultProfileAvatarAgent()).toLowerCase();
+    avatarSelect.value = Array.from(avatarSelect.options).some(option => option.value === selectedAvatarKey)
+      ? selectedAvatarKey
+      : getDefaultProfileAvatarAgent();
+  }
   if (borderColorSelect) borderColorSelect.value = selectedBorderColor;
   if (borderSelect) borderSelect.value = selectedBorder;
   setProfileBorderRotateToggle(!!profile?.profileBorderRotate);

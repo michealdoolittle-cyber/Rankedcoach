@@ -24073,6 +24073,67 @@ body.theme-crystal-bloom .app-root::after{animation:themeCrystalGlint calc(var(-
 body.theme-comet-trail .app-root::before{background-size:138% 118%;opacity:.88;animation:themeCometTrail calc(var(--theme-motion-duration) * .46) ease-in-out infinite;}
 body.theme-comet-trail .app-root::after{animation:themeCometSpark calc(var(--theme-motion-duration) * .28) linear infinite;}
 
+body.theme-runic-circuit .app-root::before{background-size:360px 360px;opacity:.9;animation:themeRunicCircuit calc(var(--theme-motion-duration) * .52) linear infinite;}
+body.theme-runic-circuit .app-root::after{background-size:180% 180%;opacity:.62;animation:themeRunicPulse calc(var(--theme-motion-duration) * .28) ease-in-out infinite alternate;}
+body.theme-koi-current .app-root::before{background-position:center;background-size:140% 140%;opacity:.88;transform-origin:center;animation:themeKoiCurrent calc(var(--theme-motion-duration) * .86) ease-in-out infinite;}
+body.theme-koi-current .app-root::after{background-size:max(100vw,900px) max(100vh,700px);opacity:.58;animation:themeKoiRipples calc(var(--theme-motion-duration) * .5) ease-in-out infinite alternate;}
+body.theme-meteor-garden .app-root::before{background-size:150% 150%;opacity:.82;animation:themeMeteorGarden calc(var(--theme-motion-duration) * .34) linear infinite;}
+body.theme-meteor-garden .app-root::after{background-size:720px 520px;opacity:.76;animation:themeMeteorSparkle calc(var(--theme-motion-duration) * .4) ease-in-out infinite;}
+body.theme-arcade-scanline .app-root::before{background-size:180px 180px;opacity:.86;animation:themeArcadeScanline calc(var(--theme-motion-duration) * .26) steps(10) infinite;}
+body.theme-arcade-scanline .app-root::after{background-size:100% 220%;opacity:.54;animation:themeArcadeSweep calc(var(--theme-motion-duration) * .22) linear infinite;}
+body.theme-bio-lumina .app-root::before{background-size:125% 125%;opacity:.84;animation:themeBioLumina calc(var(--theme-motion-duration) * .62) ease-in-out infinite alternate;}
+body.theme-bio-lumina .app-root::after{background-size:150% 150%;opacity:.5;animation:themeBioBreath calc(var(--theme-motion-duration) * .42) ease-in-out infinite;}
+body.theme-rift-portal .app-root::before{background-position:center;background-size:max(112vw,112vh) max(112vw,112vh);opacity:.86;transform-origin:center;animation:themeRiftPortal calc(var(--theme-motion-duration) * 1.05) linear infinite;}
+body.theme-rift-portal .app-root::after{background-size:max(105vw,105vh) max(105vw,105vh);opacity:.56;animation:themeRiftPulse calc(var(--theme-motion-duration) * .38) ease-in-out infinite alternate;}
+body.theme-desert-mirage .app-root::before{background-size:150% 150%;opacity:.86;animation:themeDesertMirage calc(var(--theme-motion-duration) * .48) ease-in-out infinite alternate;}
+body.theme-desert-mirage .app-root::after{background-size:180% 100%;opacity:.46;animation:themeMirageHeat calc(var(--theme-motion-duration) * .22) ease-in-out infinite;}
+body.theme-glacial-comet .app-root::before{background-size:150% 150%;opacity:.9;animation:themeGlacialFracture calc(var(--theme-motion-duration) * .72) ease-in-out infinite alternate;}
+body.theme-glacial-comet .app-root::after{background-size:160% 160%;opacity:.62;animation:themeGlacialComet calc(var(--theme-motion-duration) * .38) linear infinite;}
+body.theme-bonsai-neon .app-root::before{background-size:140% 140%;opacity:.84;animation:themeBonsaiGrow calc(var(--theme-motion-duration) * .74) ease-in-out infinite alternate;}
+body.theme-bonsai-neon .app-root::after{background-size:120% 120%;opacity:.5;animation:themeBonsaiPetals calc(var(--theme-motion-duration) * .5) ease-in-out infinite;}
+body.theme-cyber-dragonfly .app-root::before{background-size:max(100vw,900px) max(100vh,700px);opacity:.82;animation:themeDragonflyWing calc(var(--theme-motion-duration) * .42) ease-in-out infinite alternate;}
+body.theme-cyber-dragonfly .app-root::after{background-size:260px 260px;opacity:.48;animation:themeDragonflyTrace calc(var(--theme-motion-duration) * .36) linear infinite;}
+body.theme-pulse-foundry .app-root::before{background-size:360px 360px;opacity:.86;animation:themePulseFoundry calc(var(--theme-motion-duration) * .46) ease-in-out infinite;}
+body.theme-pulse-foundry .app-root::after{background-size:100% 180%;opacity:.56;animation:themeFoundryHeat calc(var(--theme-motion-duration) * .24) ease-in-out infinite alternate;}
+body.theme-moonlit-rain .app-root::before{background-size:420px 620px;opacity:.82;animation:themeMoonlitRain calc(var(--theme-motion-duration) * .26) linear infinite;}
+body.theme-moonlit-rain .app-root::after{background-size:120% 120%;opacity:.5;animation:themeMoonGlow calc(var(--theme-motion-duration) * .5) ease-in-out infinite alternate;}
+body.theme-plasma-bloom .app-root::before{background-size:128% 128%;opacity:.86;transform-origin:center;animation:themePlasmaBloom calc(var(--theme-motion-duration) * .58) ease-in-out infinite alternate;}
+body.theme-plasma-bloom .app-root::after{background-size:150% 150%;opacity:.54;animation:themePlasmaVeil calc(var(--theme-motion-duration) * .38) ease-in-out infinite;}
+body.theme-origami-sky .app-root::before{background-size:360px 360px;opacity:.84;animation:themeOrigamiFold calc(var(--theme-motion-duration) * .66) ease-in-out infinite alternate;}
+body.theme-origami-sky .app-root::after{background-size:140% 140%;opacity:.52;animation:themeOrigamiGlide calc(var(--theme-motion-duration) * .42) linear infinite;}
+body.theme-neon-carnival .app-root::before{background-size:480px 480px;opacity:.86;animation:themeCarnivalOrbit calc(var(--theme-motion-duration) * .52) linear infinite;}
+body.theme-neon-carnival .app-root::after{background-size:150% 150%;opacity:.5;animation:themeCarnivalLights calc(var(--theme-motion-duration) * .26) steps(6,end) infinite;}
+body.theme-shadow-circuit .app-root::before{background-size:420px 420px;opacity:.82;animation:themeShadowCircuit calc(var(--theme-motion-duration) * .42) linear infinite;}
+body.theme-shadow-circuit .app-root::after{background-size:150% 150%;opacity:.44;animation:themeShadowNode calc(var(--theme-motion-duration) * .34) ease-in-out infinite alternate;}
+body.theme-pearl-lagoon .app-root::before{background-size:135% 135%;opacity:.86;animation:themePearlLagoon calc(var(--theme-motion-duration) * .74) ease-in-out infinite;}
+body.theme-pearl-lagoon .app-root::after{background-size:180% 180%;opacity:.48;animation:themePearlShimmer calc(var(--theme-motion-duration) * .4) ease-in-out infinite alternate;}
+body.theme-volcanic-glass .app-root::before{background-size:150% 150%;opacity:.88;animation:themeVolcanicCrack calc(var(--theme-motion-duration) * .44) ease-in-out infinite alternate;}
+body.theme-volcanic-glass .app-root::after{background-size:120% 120%;opacity:.5;animation:themeVolcanicGlow calc(var(--theme-motion-duration) * .28) ease-in-out infinite;}
+body.theme-auric-topography .app-root::before{background-size:520px 520px;opacity:.82;animation:themeAuricTopography calc(var(--theme-motion-duration) * .64) linear infinite;}
+body.theme-auric-topography .app-root::after{background-size:160% 160%;opacity:.44;animation:themeAuricSweep calc(var(--theme-motion-duration) * .36) ease-in-out infinite alternate;}
+body.theme-synthwave-road .app-root::before{background-size:420px 420px;opacity:.86;animation:themeSynthRoad calc(var(--theme-motion-duration) * .34) linear infinite;}
+body.theme-synthwave-road .app-root::after{background-size:120% 120%;opacity:.52;animation:themeSynthSun calc(var(--theme-motion-duration) * .48) ease-in-out infinite alternate;}
+body.theme-lunar-eclipse .app-root::before{background-size:max(110vw,110vh) max(110vw,110vh);opacity:.84;transform-origin:center;animation:themeLunarEclipse calc(var(--theme-motion-duration) * .9) ease-in-out infinite;}
+body.theme-lunar-eclipse .app-root::after{background-size:max(100vw,100vh) max(100vw,100vh);opacity:.48;animation:themeLunarCorona calc(var(--theme-motion-duration) * .5) linear infinite;}
+body.theme-garden-firefly .app-root::before{background-size:130% 130%;opacity:.84;animation:themeGardenDrift calc(var(--theme-motion-duration) * .72) ease-in-out infinite alternate;}
+body.theme-garden-firefly .app-root::after{background-size:620px 460px;opacity:.72;animation:themeFireflies calc(var(--theme-motion-duration) * .38) ease-in-out infinite;}
+body.theme-quantum-static .app-root::before{background-size:160px 160px;opacity:.78;animation:themeQuantumStatic calc(var(--theme-motion-duration) * .22) steps(8,end) infinite;}
+body.theme-quantum-static .app-root::after{background-size:180% 120%;opacity:.48;animation:themeQuantumTear calc(var(--theme-motion-duration) * .32) linear infinite;}
+body.theme-coral-reef .app-root::before{background-size:140% 140%;opacity:.84;animation:themeCoralReef calc(var(--theme-motion-duration) * .68) ease-in-out infinite;}
+body.theme-coral-reef .app-root::after{background-size:170% 170%;opacity:.5;animation:themeCoralCurrent calc(var(--theme-motion-duration) * .44) ease-in-out infinite alternate;}
+body.theme-thunderhead .app-root::before{background-size:145% 145%;opacity:.82;animation:themeThunderhead calc(var(--theme-motion-duration) * .46) ease-in-out infinite alternate;}
+body.theme-thunderhead .app-root::after{background-size:120% 160%;opacity:.55;animation:themeThunderFlash calc(var(--theme-motion-duration) * .24) ease-in-out infinite;}
+body.theme-chrome-liquid .app-root::before{background-size:150% 150%;opacity:.84;animation:themeChromeLiquid calc(var(--theme-motion-duration) * .56) ease-in-out infinite;}
+body.theme-chrome-liquid .app-root::after{background-size:max(105vw,105vh) max(105vw,105vh);opacity:.45;animation:themeChromeTurn calc(var(--theme-motion-duration) * .62) linear infinite;}
+body.theme-pixel-burst .app-root::before{background-size:220px 220px;opacity:.82;animation:themePixelBurst calc(var(--theme-motion-duration) * .24) steps(7,end) infinite;}
+body.theme-pixel-burst .app-root::after{background-size:160% 160%;opacity:.48;animation:themePixelPulse calc(var(--theme-motion-duration) * .32) ease-in-out infinite alternate;}
+body.theme-starlit-sakura .app-root::before{background-size:130% 130%;opacity:.84;animation:themeSakuraDrift calc(var(--theme-motion-duration) * .7) ease-in-out infinite alternate;}
+body.theme-starlit-sakura .app-root::after{background-size:680px 520px;opacity:.68;animation:themeSakuraFall calc(var(--theme-motion-duration) * .42) linear infinite;}
+body.theme-deep-sea-radar .app-root::before{background-size:max(105vw,105vh) max(105vw,105vh);opacity:.82;animation:themeSeaRadar calc(var(--theme-motion-duration) * .72) linear infinite;}
+body.theme-deep-sea-radar .app-root::after{background-size:140% 140%;opacity:.46;animation:themeSeaDrift calc(var(--theme-motion-duration) * .48) ease-in-out infinite alternate;}
+body.theme-radiant-snowfall .app-root::before{background-size:720px 620px;opacity:.78;animation:themeRadiantSnowfall calc(var(--theme-motion-duration) * .42) linear infinite;}
+body.theme-radiant-snowfall .app-root::after{background-size:160% 160%;opacity:.48;animation:themeRadiantSnowGlow calc(var(--theme-motion-duration) * .4) ease-in-out infinite alternate;}
+
 body.theme-solar-flow .app-root::after{
   background-image:
     radial-gradient(circle at 12% 92%,rgba(254,240,138,.92) 0 1.2%,rgba(251,146,60,.64) 1.8%,transparent 4.6%),
@@ -24427,6 +24488,89 @@ body:is(
 @keyframes themeCrystalGlint{from{background-position:-18vw 0;opacity:.28;}to{background-position:18vw 0;opacity:.84;}}
 @keyframes themeCometTrail{0%{background-position:-35vw 18vh;transform:translate3d(-3%,1%,0) scale(1.03);opacity:.36;}42%{opacity:.95;}100%{background-position:42vw -18vh;transform:translate3d(3%,-1%,0) scale(1.09);opacity:.58;}}
 @keyframes themeCometSpark{from{background-position:0 0;opacity:.3;}to{background-position:260px -160px;opacity:.78;}}
+@keyframes themeRunicCircuit{from{background-position:0 0,0 0,center;transform:translate3d(0,0,0) scale(1.01);}to{background-position:360px 180px,180px 360px,center;transform:translate3d(-1%,1%,0) scale(1.035);}}
+@keyframes themeRunicPulse{0%,100%{opacity:.28;filter:brightness(.9);}48%{opacity:.76;filter:brightness(1.24);}}
+@keyframes themeKoiCurrent{0%{transform:rotate(-3deg) scale(1.02);background-position:42% 48%;}48%{transform:rotate(2deg) scale(1.08);background-position:58% 54%;}100%{transform:rotate(-3deg) scale(1.03);background-position:42% 48%;}}
+@keyframes themeKoiRipples{from{opacity:.28;transform:scale(.98) rotate(-1deg);}to{opacity:.68;transform:scale(1.07) rotate(2deg);}}
+@keyframes themeMeteorGarden{from{background-position:-42vw 34vh;transform:translate3d(-2%,1%,0) scale(1.02);}to{background-position:42vw -30vh;transform:translate3d(2%,-1%,0) scale(1.06);}}
+@keyframes themeMeteorSparkle{0%,100%{opacity:.32;}18%{opacity:.86;}44%{opacity:.48;}72%{opacity:.94;}}
+@keyframes themeArcadeScanline{from{background-position:0 0;opacity:.72;}to{background-position:180px 80px;opacity:.9;}}
+@keyframes themeArcadeSweep{from{background-position:0 -120%;}to{background-position:0 120%;}}
+@keyframes themeBioLumina{0%{background-position:40% 58%;opacity:.58;transform:scale(1.01);}50%{opacity:.95;transform:scale(1.08);}100%{background-position:58% 42%;opacity:.72;transform:scale(1.04);}}
+@keyframes themeBioBreath{0%,100%{opacity:.22;transform:scale(.98);}50%{opacity:.66;transform:scale(1.06);}}
+@keyframes themeRiftPortal{from{transform:rotate(0deg) scale(1.04);}to{transform:rotate(360deg) scale(1.1);}}
+@keyframes themeRiftPulse{from{opacity:.22;transform:scale(.9);}to{opacity:.72;transform:scale(1.08);}}
+@keyframes themeDesertMirage{0%{background-position:0 0;transform:skewX(-1deg) translate3d(-1%,0,0) scale(1.02);}100%{background-position:220px 48px;transform:skewX(1deg) translate3d(1%,0,0) scale(1.06);}}
+@keyframes themeMirageHeat{0%,100%{opacity:.24;transform:translateX(-2%) skewY(-.6deg);}50%{opacity:.62;transform:translateX(2%) skewY(.8deg);}}
+@keyframes themeGlacialFracture{from{filter:brightness(.88) contrast(1.06);transform:translate3d(-1%,0,0) scale(1.02);}to{filter:brightness(1.2) contrast(1.18);transform:translate3d(1%,-1%,0) scale(1.07);}}
+@keyframes themeGlacialComet{from{background-position:-50vw 22vh;opacity:.24;}42%{opacity:.86;}to{background-position:55vw -18vh;opacity:.5;}}
+@keyframes themeBonsaiGrow{0%{background-position:50% 64%;transform:scale(1.01);opacity:.58;}55%{opacity:.92;}100%{background-position:44% 48%;transform:scale(1.08);opacity:.74;}}
+@keyframes themeBonsaiPetals{from{background-position:12vw 18vh;opacity:.26;}50%{opacity:.7;}to{background-position:-12vw -10vh;opacity:.44;}}
+@keyframes themeDragonflyWing{0%,100%{opacity:.42;transform:scale(1.01) rotate(-1deg);}50%{opacity:.92;transform:scale(1.07) rotate(1deg);}}
+@keyframes themeDragonflyTrace{from{background-position:0 0;}to{background-position:260px -180px;}}
+@keyframes themePulseFoundry{0%,100%{opacity:.56;filter:brightness(.92);}45%{opacity:.96;filter:brightness(1.32);}70%{opacity:.68;filter:brightness(1.05);}}
+@keyframes themeFoundryHeat{from{background-position:0 40%;opacity:.22;}to{background-position:0 74%;opacity:.72;}}
+@keyframes themeMoonlitRain{from{background-position:0 -620px;transform:translate3d(0,0,0);}to{background-position:-80px 0;transform:translate3d(.5%,0,0);}}
+@keyframes themeMoonGlow{from{opacity:.22;transform:scale(1);}to{opacity:.62;transform:scale(1.05);}}
+@keyframes themePlasmaBloom{0%{transform:scale(1.01) rotate(-2deg);background-position:40% 62%;opacity:.62;}48%{transform:scale(1.09) rotate(2deg);background-position:58% 42%;opacity:.94;}100%{transform:scale(1.04) rotate(-1deg);background-position:44% 54%;opacity:.78;}}
+@keyframes themePlasmaVeil{0%,100%{opacity:.24;transform:scale(.98);}50%{opacity:.62;transform:scale(1.08);}}
+@keyframes themeOrigamiFold{0%{background-position:0 0;transform:skewX(-1deg) scale(1.01);}100%{background-position:180px -120px;transform:skewX(1deg) scale(1.05);}}
+@keyframes themeOrigamiGlide{from{background-position:-30vw 0;opacity:.22;}to{background-position:30vw 0;opacity:.58;}}
+@keyframes themeCarnivalOrbit{from{transform:rotate(0deg) scale(1.02);background-position:0 0;}to{transform:rotate(360deg) scale(1.06);background-position:120px -120px;}}
+@keyframes themeCarnivalLights{0%,100%{opacity:.28;}20%{opacity:.82;}42%{opacity:.38;}66%{opacity:.92;}86%{opacity:.5;}}
+@keyframes themeShadowCircuit{from{background-position:0 0;transform:translate3d(0,0,0) scale(1.01);}to{background-position:420px 210px;transform:translate3d(-1%,1%,0) scale(1.04);}}
+@keyframes themeShadowNode{from{opacity:.16;transform:translate3d(-2%,1%,0);}to{opacity:.54;transform:translate3d(2%,-1%,0);}}
+@keyframes themePearlLagoon{0%,100%{background-position:42% 58%;transform:scale(1.01) rotate(-1deg);}50%{background-position:58% 42%;transform:scale(1.07) rotate(1deg);}}
+@keyframes themePearlShimmer{from{opacity:.18;transform:translateX(-2%) skewX(-1deg);}to{opacity:.6;transform:translateX(2%) skewX(1deg);}}
+@keyframes themeVolcanicCrack{0%{background-position:0 0;transform:scale(1.01);}48%{opacity:.98;transform:scale(1.06);}100%{background-position:120px -80px;transform:scale(1.03);}}
+@keyframes themeVolcanicGlow{0%,100%{opacity:.18;transform:scale(.98);}42%{opacity:.68;transform:scale(1.08);}68%{opacity:.34;}}
+@keyframes themeAuricTopography{from{background-position:0 0;transform:scale(1.01);}to{background-position:260px -180px;transform:scale(1.04);}}
+@keyframes themeAuricSweep{from{opacity:.18;transform:translateX(-3%);}to{opacity:.54;transform:translateX(3%);}}
+@keyframes themeSynthRoad{from{background-position:0 0;transform:perspective(900px) rotateX(0deg) scale(1.02);}to{background-position:0 420px;transform:perspective(900px) rotateX(5deg) scale(1.06);}}
+@keyframes themeSynthSun{from{opacity:.24;transform:scale(.96);}to{opacity:.64;transform:scale(1.08);}}
+@keyframes themeLunarEclipse{0%,100%{transform:translate3d(-1%,0,0) scale(1.02);}50%{transform:translate3d(1%,0,0) scale(1.08);opacity:.96;}}
+@keyframes themeLunarCorona{from{transform:rotate(0deg) scale(1.02);opacity:.22;}to{transform:rotate(360deg) scale(1.06);opacity:.58;}}
+@keyframes themeGardenDrift{0%{background-position:40% 62%;transform:scale(1.01);}100%{background-position:54% 46%;transform:scale(1.06);}}
+@keyframes themeFireflies{0%,100%{background-position:0 0;opacity:.32;}28%{opacity:.88;}54%{background-position:120px -90px;opacity:.48;}76%{opacity:.92;}100%{background-position:220px -160px;}}
+@keyframes themeQuantumStatic{0%{background-position:0 0;opacity:.56;}20%{background-position:24px -18px;opacity:.84;}40%{background-position:-32px 28px;opacity:.62;}64%{background-position:44px 12px;opacity:.9;}100%{background-position:0 0;opacity:.68;}}
+@keyframes themeQuantumTear{from{background-position:-40vw 0;transform:skewX(-2deg);}to{background-position:40vw 0;transform:skewX(2deg);}}
+@keyframes themeCoralReef{0%,100%{background-position:42% 58%;transform:scale(1.01);}45%{background-position:58% 46%;transform:scale(1.07);}70%{background-position:48% 64%;}}
+@keyframes themeCoralCurrent{from{opacity:.2;transform:translate3d(-2%,1%,0) rotate(-1deg);}to{opacity:.58;transform:translate3d(2%,-1%,0) rotate(1deg);}}
+@keyframes themeThunderhead{from{background-position:42% 56%;transform:scale(1.02);opacity:.48;}to{background-position:56% 42%;transform:scale(1.08);opacity:.82;}}
+@keyframes themeThunderFlash{0%,100%{opacity:.16;transform:translateY(-4%);}14%{opacity:.78;transform:translateY(2%);}22%{opacity:.24;}58%{opacity:.62;transform:translateY(6%);}70%{opacity:.2;}}
+@keyframes themeChromeLiquid{0%,100%{background-position:38% 52%;transform:skewX(-1deg) scale(1.02);}50%{background-position:62% 46%;transform:skewX(1deg) scale(1.08);}}
+@keyframes themeChromeTurn{from{transform:rotate(0deg) scale(1.04);opacity:.18;}to{transform:rotate(360deg) scale(1.08);opacity:.5;}}
+@keyframes themePixelBurst{0%{background-position:0 0;opacity:.52;}24%{background-position:40px 20px;opacity:.88;}50%{background-position:-20px 60px;opacity:.62;}78%{background-position:80px -30px;opacity:.94;}100%{background-position:0 0;opacity:.66;}}
+@keyframes themePixelPulse{from{opacity:.2;transform:scale(.98);}to{opacity:.58;transform:scale(1.08);}}
+@keyframes themeSakuraDrift{from{background-position:42% 58%;transform:scale(1.01) rotate(-1deg);}to{background-position:58% 42%;transform:scale(1.05) rotate(1deg);}}
+@keyframes themeSakuraFall{from{background-position:0 -520px;opacity:.24;}50%{opacity:.78;}to{background-position:140px 0;opacity:.48;}}
+@keyframes themeSeaRadar{from{transform:rotate(0deg) scale(1.03);background-position:center;}to{transform:rotate(360deg) scale(1.07);background-position:center;}}
+@keyframes themeSeaDrift{from{opacity:.18;transform:translate3d(-2%,1%,0) scale(.98);}to{opacity:.58;transform:translate3d(2%,-1%,0) scale(1.06);}}
+@keyframes themeRadiantSnowfall{from{background-position:0 -620px;opacity:.34;}45%{opacity:.82;}to{background-position:80px 0;opacity:.58;}}
+@keyframes themeRadiantSnowGlow{from{opacity:.16;transform:scale(.98);}to{opacity:.56;transform:scale(1.08);}}
+
+body:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::before,
+body:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::after{
+  will-change:transform,opacity !important;
+  filter:none !important;
+}
+
+body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::before,
+body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::after{
+  will-change:transform,opacity !important;
+  filter:none !important;
+}
+
+@media (prefers-reduced-motion:reduce){
+  body:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::before,
+  body:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::after{
+    animation:none !important;
+  }
+  body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::before,
+  body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::after{
+    animation:none !important;
+  }
+}
 
 @media (prefers-reduced-motion:reduce){
   body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) .app-root::before,
@@ -58411,5 +58555,120 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   display:none !important;
   visibility:hidden !important;
   opacity:0 !important;
+  animation:none !important;
+}
+
+/* Ambient profile-border effects are themselves the selected style. They should
+   be visible immediately in the picker and on the live avatar, even when the
+   separate legacy "rotate" toggle is off. */
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop),
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview{
+  position:relative !important;
+  isolation:isolate !important;
+  overflow:visible !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop)::after,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview::after{
+  content:"" !important;
+  position:absolute !important;
+  inset:-18px !important;
+  border-radius:inherit !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:.96 !important;
+  background:var(--profile-frame-fx) !important;
+  filter:drop-shadow(0 0 12px color-mix(in srgb,var(--profile-ring-border,#ff4655) 54%,transparent)) !important;
+  pointer-events:none !important;
+  z-index:1 !important;
+  animation:var(--profile-frame-animation) !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) > :is(img,.profile-avatar-img,.mobile-bottom-avatar-img,.profile-rank-icon),
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview > img{
+  position:relative !important;
+  z-index:2 !important;
+}
+
+body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn):is(.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop)::after,
+body.access-reduced-motion #editProfileModal #editProfileBorderGallery .border-card:is(.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview::after{
+  animation:none !important;
+}
+
+/* Premium ambient border frames: the active frame is the SVG child, because
+   the legacy avatar ring reserves pseudo-elements for older frame locks. */
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-avatar-frame,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  width:calc(100% + 28px) !important;
+  height:calc(100% + 28px) !important;
+  transform:translate(-50%,-50%) !important;
+  color:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) !important;
+  pointer-events:none !important;
+  z-index:1 !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-avatar-frame-svg,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame-svg{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:visible !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc){
+  transform-origin:50% 50% !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-frame-fill,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-fill{
+  fill:var(--profile-ring-bg,#152238) !important;
+  opacity:.2 !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-frame-main,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main{
+  fill:none !important;
+  stroke:var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)) !important;
+  stroke-width:6 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  stroke-dasharray:42 8 18 12 !important;
+  filter:drop-shadow(0 0 8px var(--profile-ring-glow,rgba(255,70,85,.45))) !important;
+  animation:rcMobileSvgFrameSweep 2.8s linear infinite,rcMobileSvgFrameGlowBeat 2.4s ease-in-out infinite !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-frame-secondary,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-secondary{
+  fill:none !important;
+  stroke:var(--rc-mobile-frame-color-2,var(--profile-ring-border-2,var(--rc-mobile-frame-color,var(--profile-ring-border,#ff4655)))) !important;
+  stroke-width:3 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  stroke-dasharray:10 16 !important;
+  opacity:.82 !important;
+  animation:rcMobileSvgFrameReverseSweep 3.4s linear infinite !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-frame-glint,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint{
+  fill:none !important;
+  stroke:rgba(255,255,255,.92) !important;
+  stroke-width:3 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+  stroke-dasharray:7 93 !important;
+  opacity:.92 !important;
+  animation:rcMobileSvgFrameTrace 1.45s linear infinite !important;
+}
+
+body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-frost-shards,.border-prism-loop,.border-sonar-wave,.border-glitch-scan,.border-blossom-pulse,.border-shadow-eclipse,.border-comet-loop) .rc-mobile-avatar-frame :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+body.access-reduced-motion #editProfileModal #editProfileBorderGallery .border-card:is(.border-card-sunburst,.border-card-eclipse,.border-card-bubble-drift,.border-card-light-rays,.border-card-vortex,.border-card-neon-orbit,.border-card-stardust,.border-card-water-ripple,.border-card-smoke-wisp,.border-card-ember-sparks,.border-card-frost-shards,.border-card-prism-loop,.border-card-sonar-wave,.border-card-glitch-scan,.border-card-blossom-pulse,.border-card-shadow-eclipse,.border-card-comet-loop) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc){
   animation:none !important;
 }
