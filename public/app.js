@@ -3746,7 +3746,7 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
   const effects = {
     sunburst: `
       <g class="rc-profile-effect rc-profile-effect-rays">
-        <path class="rc-profile-effect-ray rc-effect-primary" d="M50 2V17M50 83V98M2 50H17M83 50H98M16 16L27 27M73 73L84 84M84 16L73 27M27 73L16 84"></path>
+        <path class="rc-profile-effect-ray rc-effect-primary" d="M50 5V14M50 86V95M5 50H14M86 50H95M18 18L25 25M75 75L82 82M82 18L75 25M25 75L18 82M32 8L36 18M68 8L64 18M32 92L36 82M68 92L64 82"></path>
         <circle class="rc-profile-effect-dot rc-effect-secondary-fill" cx="50" cy="7" r="2.2"></circle>
         <circle class="rc-profile-effect-dot rc-effect-primary-fill" cx="93" cy="50" r="1.8"></circle>
       </g>
@@ -3760,17 +3760,17 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     "bubble-drift": `
       <g class="rc-profile-effect rc-profile-effect-bubbles">
-        <circle class="rc-profile-effect-bubble rc-effect-primary" cx="20" cy="72" r="5"></circle>
-        <circle class="rc-profile-effect-bubble rc-effect-secondary" cx="80" cy="28" r="4"></circle>
-        <circle class="rc-profile-effect-bubble rc-effect-primary" cx="73" cy="78" r="7"></circle>
-        <circle class="rc-profile-effect-bubble rc-effect-secondary" cx="28" cy="22" r="3.5"></circle>
-        <circle class="rc-profile-effect-bubble rc-effect-glint-fill" cx="88" cy="60" r="2"></circle>
+        <circle class="rc-profile-effect-bubble rc-profile-bubble-1 rc-effect-primary" cx="18" cy="91" r="3.2"></circle>
+        <circle class="rc-profile-effect-bubble rc-profile-bubble-2 rc-effect-secondary" cx="38" cy="96" r="2.3"></circle>
+        <circle class="rc-profile-effect-bubble rc-profile-bubble-3 rc-effect-primary" cx="57" cy="93" r="4"></circle>
+        <circle class="rc-profile-effect-bubble rc-profile-bubble-4 rc-effect-secondary" cx="77" cy="98" r="2.8"></circle>
+        <circle class="rc-profile-effect-bubble rc-profile-bubble-5 rc-effect-glint-fill" cx="88" cy="94" r="1.8"></circle>
       </g>
     `,
     "light-rays": `
       <g class="rc-profile-effect rc-profile-effect-rays">
-        <path class="rc-profile-effect-ray rc-effect-primary" d="M50 -4V18M50 82V104M-4 50H18M82 50H104M11 11L27 27M73 73L89 89M89 11L73 27M27 73L11 89M28 0L35 20M72 0L65 20M28 100L35 80M72 100L65 80"></path>
-        <path class="rc-profile-effect-ray rc-effect-secondary" d="M50 8V18M50 82V92M8 50H18M82 50H92M20 20L28 28M72 72L80 80M80 20L72 28M28 72L20 80"></path>
+        <path class="rc-profile-effect-ray rc-profile-ray-push rc-effect-primary" d="M50 0V24M50 76V100M0 50H24M76 50H100M12 12L30 30M70 70L88 88M88 12L70 30M30 70L12 88"></path>
+        <path class="rc-profile-effect-ray rc-profile-ray-pull rc-effect-secondary" d="M50 12V27M50 73V88M12 50H27M73 50H88M22 22L33 33M67 67L78 78M78 22L67 33M33 67L22 78"></path>
       </g>
     `,
     vortex: `
@@ -3788,54 +3788,32 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
     `,
     stardust: `
       <g class="rc-profile-effect rc-profile-effect-stardust">
-        <circle class="rc-profile-effect-star rc-effect-glint-fill" cx="18" cy="30" r="1.8"></circle>
-        <circle class="rc-profile-effect-star rc-effect-primary-fill" cx="74" cy="20" r="2.2"></circle>
-        <circle class="rc-profile-effect-star rc-effect-secondary-fill" cx="86" cy="74" r="1.8"></circle>
-        <circle class="rc-profile-effect-star rc-effect-glint-fill" cx="30" cy="84" r="1.5"></circle>
-        <path class="rc-profile-effect-star rc-effect-primary" d="M47 9l2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"></path>
+        <circle class="rc-profile-effect-star rc-profile-star-1 rc-effect-glint-fill" cx="18" cy="30" r="1.8"></circle>
+        <circle class="rc-profile-effect-star rc-profile-star-2 rc-effect-primary-fill" cx="74" cy="20" r="2.2"></circle>
+        <circle class="rc-profile-effect-star rc-profile-star-3 rc-effect-secondary-fill" cx="86" cy="74" r="1.8"></circle>
+        <circle class="rc-profile-effect-star rc-profile-star-4 rc-effect-glint-fill" cx="30" cy="84" r="1.5"></circle>
+        <path class="rc-profile-effect-star rc-profile-star-5 rc-effect-primary" d="M47 9l2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"></path>
       </g>
     `,
     "water-ripple": `
       <g class="rc-profile-effect rc-profile-effect-ripple">
-        <circle class="rc-profile-effect-wave rc-effect-primary" cx="50" cy="50" r="28"></circle>
-        <circle class="rc-profile-effect-wave rc-effect-secondary" cx="50" cy="50" r="39"></circle>
-        <path class="rc-profile-effect-wisp rc-effect-primary" d="M13 63C28 54 39 69 52 60C65 51 75 63 88 54"></path>
+        <circle class="rc-profile-effect-wave rc-profile-ripple-1 rc-effect-primary" cx="50" cy="50" r="21"></circle>
+        <circle class="rc-profile-effect-wave rc-profile-ripple-2 rc-effect-secondary" cx="50" cy="50" r="31"></circle>
+        <circle class="rc-profile-effect-wave rc-profile-ripple-3 rc-effect-primary" cx="50" cy="50" r="41"></circle>
       </g>
     `,
     "smoke-wisp": `
       <g class="rc-profile-effect rc-profile-effect-smoke">
         <path class="rc-profile-effect-cloud rc-effect-shadow-fill" d="M18 68C10 49 24 30 45 32C49 15 78 19 75 41C93 43 93 72 72 75C57 88 31 84 18 68Z"></path>
-        <path class="rc-profile-effect-wisp rc-effect-secondary" d="M24 68C38 55 62 61 76 46"></path>
       </g>
     `,
     "ember-sparks": `
       <g class="rc-profile-effect rc-profile-effect-sparks">
-        <path class="rc-profile-effect-flame rc-effect-primary-fill" d="M27 84C20 74 26 62 36 55C34 67 48 68 44 84Z"></path>
-        <path class="rc-profile-effect-flame rc-effect-secondary-fill" d="M70 21C79 30 77 42 66 50C70 39 56 34 70 21Z"></path>
-        <circle class="rc-profile-effect-spark rc-effect-primary-fill" cx="80" cy="76" r="2.6"></circle>
-        <circle class="rc-profile-effect-spark rc-effect-secondary-fill" cx="21" cy="25" r="2"></circle>
-        <circle class="rc-profile-effect-spark rc-effect-glint-fill" cx="58" cy="12" r="1.6"></circle>
-      </g>
-    `,
-    "frost-shards": `
-      <g class="rc-profile-effect rc-profile-effect-frost">
-        <path class="rc-profile-effect-shard rc-effect-primary-fill" d="M16 54 32 46 25 72Z"></path>
-        <path class="rc-profile-effect-shard rc-effect-secondary-fill" d="M78 13 91 36 69 28Z"></path>
-        <path class="rc-profile-effect-shard rc-effect-primary" d="M40 12 56 31M44 88 59 70M13 24 31 37M86 78 69 65"></path>
-      </g>
-    `,
-    "prism-loop": `
-      <g class="rc-profile-effect rc-profile-effect-prism">
-        <path class="rc-profile-effect-prism-line rc-effect-primary" d="M16 30 50 10 84 30M84 70 50 90 16 70"></path>
-        <path class="rc-profile-effect-prism-line rc-effect-secondary" d="M16 30 16 70M84 30 84 70M50 10 50 90"></path>
-        <circle class="rc-profile-effect-dot rc-effect-glint-fill" cx="50" cy="10" r="2"></circle>
-      </g>
-    `,
-    "sonar-wave": `
-      <g class="rc-profile-effect rc-profile-effect-sonar">
-        <circle class="rc-profile-effect-wave rc-effect-primary" cx="50" cy="50" r="18"></circle>
-        <circle class="rc-profile-effect-wave rc-effect-secondary" cx="50" cy="50" r="34"></circle>
-        <path class="rc-profile-effect-sweep rc-effect-glint" d="M50 50 86 34"></path>
+        <circle class="rc-profile-effect-spark rc-profile-spark-1 rc-effect-primary-fill" cx="18" cy="76" r="1.4"></circle>
+        <circle class="rc-profile-effect-spark rc-profile-spark-2 rc-effect-secondary-fill" cx="36" cy="88" r="1.1"></circle>
+        <circle class="rc-profile-effect-spark rc-profile-spark-3 rc-effect-primary-fill" cx="58" cy="82" r="1.7"></circle>
+        <circle class="rc-profile-effect-spark rc-profile-spark-4 rc-effect-secondary-fill" cx="80" cy="90" r="1.2"></circle>
+        <circle class="rc-profile-effect-spark rc-profile-spark-5 rc-effect-glint-fill" cx="70" cy="74" r="1"></circle>
       </g>
     `,
     "glitch-scan": `
@@ -3844,25 +3822,9 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
         <path class="rc-profile-effect-scan rc-effect-secondary" d="M18 30H83M6 62H51M48 80H94"></path>
       </g>
     `,
-    "blossom-pulse": `
-      <g class="rc-profile-effect rc-profile-effect-blossom">
-        <ellipse class="rc-profile-effect-petal rc-effect-primary-fill" cx="50" cy="12" rx="5" ry="12"></ellipse>
-        <ellipse class="rc-profile-effect-petal rc-effect-secondary-fill" cx="88" cy="50" rx="12" ry="5"></ellipse>
-        <ellipse class="rc-profile-effect-petal rc-effect-primary-fill" cx="50" cy="88" rx="5" ry="12"></ellipse>
-        <ellipse class="rc-profile-effect-petal rc-effect-secondary-fill" cx="12" cy="50" rx="12" ry="5"></ellipse>
-      </g>
-    `,
     "shadow-eclipse": `
       <g class="rc-profile-effect rc-profile-effect-eclipse">
         <path class="rc-profile-effect-shadow rc-effect-shadow-fill" d="M18 50C18 27 36 10 59 12C43 27 42 72 61 88C36 91 18 73 18 50Z"></path>
-        <path class="rc-profile-effect-wisp rc-effect-primary" d="M70 17C91 39 89 64 70 83"></path>
-      </g>
-    `,
-    "comet-loop": `
-      <g class="rc-profile-effect rc-profile-effect-comet-loop">
-        <path class="rc-profile-effect-comet rc-effect-primary" d="M17 76C35 92 66 91 83 70"></path>
-        <path class="rc-profile-effect-comet rc-effect-secondary" d="M83 70C92 58 93 39 85 25"></path>
-        <circle class="rc-profile-effect-dot rc-effect-glint-fill" cx="83" cy="70" r="3.5"></circle>
       </g>
     `,
     "fade-pulse": `
@@ -44520,14 +44482,9 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "water-ripple", label: "Water Ripple", note: "Soft expanding waves" },
   { value: "smoke-wisp", label: "Smoke Wisp", note: "Omen-like drifting haze" },
   { value: "ember-sparks", label: "Ember Sparks", note: "Rising fire flecks" },
-  { value: "frost-shards", label: "Frost Shards", note: "Cold shard glints" },
-  { value: "prism-loop", label: "Prism Loop", note: "Refracting color sweep" },
-  { value: "sonar-wave", label: "Sonar Wave", note: "Expanding tactical ping" },
   { value: "glitch-scan", label: "Glitch Scan", note: "Digital scan frame" },
   { value: "fade-pulse", label: "Fade Pulse", note: "Soft glow fades in and out" },
-  { value: "blossom-pulse", label: "Blossom Pulse", note: "Soft bloom petals" },
-  { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark orbit pass" },
-  { value: "comet-loop", label: "Comet Loop", note: "Comet tail frame" }
+  { value: "shadow-eclipse", label: "Shadow Eclipse", note: "Dark orbit pass" }
 ];
 
 const PROFILE_AMBIENT_BORDER_STYLE_VALUES = Object.freeze(PREMIUM_PROFILE_BORDER_STYLES.map(style => style.value));
