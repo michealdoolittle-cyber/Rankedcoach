@@ -13332,7 +13332,8 @@ function statStamp(text = "", options = {}) {
     showToast?.(copy, { title: "RankedCoach Live", durationMs: 1800 });
     return;
   }
-  const overlay = primeBroadcastOverlay(1150);
+  const durationMs = Math.max(1500, Number(options.durationMs) || 1900);
+  const overlay = primeBroadcastOverlay(durationMs + 220);
   if (!overlay) return;
   const stamp = document.createElement("div");
   stamp.className = "broadcast-stamp";
@@ -13340,7 +13341,7 @@ function statStamp(text = "", options = {}) {
   stamp.textContent = copy;
   if (options.bottom) stamp.style.bottom = String(options.bottom);
   overlay.appendChild(stamp);
-  window.setTimeout(() => stamp.remove(), Math.max(760, Number(options.durationMs) || 840));
+  window.setTimeout(() => stamp.remove(), durationMs + 80);
 }
 
 function parseBroadcastNumber(value) {
@@ -13426,6 +13427,124 @@ async function playBroadcastRollReveal(options = {}) {
   await broadcastWait(210);
   statStamp("Locked in", { tone: "positive" });
   return true;
+}
+
+function chooseBroadcastPreviewLoadout(options = {}) {
+  const agentPool = typeof getLoadoutAgentPool === "function"
+    ? getLoadoutAgentPool()
+    : Array.isArray(allAgents) ? allAgents.slice() : [];
+  const focusPool = typeof getLoadoutFocusPool === "function"
+    ? getLoadoutFocusPool()
+    : ["Positioning", "Duel Discipline", "Utility Usage", "Trading"];
+  const currentAgent = String(agentName?.textContent || "").trim();
+  const currentFocus = String(focusDisplay?.textContent || "").trim();
+  const agents = agentPool.length ? agentPool : ["Jett"];
+  const focuses = focusPool.length ? focusPool : ["Positioning"];
+  let agent = String(options.agent || "").trim();
+  if (!agent) {
+    do {
+      agent = agents[Math.floor(Math.random() * agents.length)] || "Jett";
+    } while (agents.length > 1 && agent === currentAgent);
+  }
+  let focus = String(options.focus || "").trim();
+  if (!focus) {
+    do {
+      focus = focuses[Math.floor(Math.random() * focuses.length)] || "Positioning";
+    } while (focuses.length > 1 && focus === currentFocus);
+  }
+  return { agent, focus, role: String(agentRoles?.[agent] || "").toLowerCase() };
+}
+
+function applyBroadcastPreviewRoleVisuals(agent = "", focus = "") {
+  const role = String(agentRoles?.[agent] || "").toLowerCase();
+  const frame = document.getElementById("agentFrame");
+  if (agentName) {
+    agentName.classList.remove("agent-neutral", "role-duelist", "role-controller", "role-initiator", "role-sentinel");
+    if (role) agentName.classList.add(`role-${role}`);
+  }
+  if (focusDisplay) {
+    focusDisplay.classList.remove("focus-neutral", "role-duelist", "role-controller", "role-initiator", "role-sentinel");
+    if (role) focusDisplay.classList.add(`role-${role}`);
+  }
+  if (frame) {
+    frame.classList.remove("duelist", "controller", "initiator", "sentinel");
+    if (role) frame.classList.add(role);
+    frame.classList.add("agent-glow-flash", "agent-pulse", "agent-frame-anim");
+    window.setTimeout(() => frame.classList.add("agent-glow-fadeout"), 320);
+  }
+  if (role && typeof applyAgentRoleFrame === "function") applyAgentRoleFrame(role);
+  if (agent) {
+    try { applyAgentFx?.(agent.toLowerCase()); } catch {}
+    try { applyAgentSilhouette?.(agent.toLowerCase()); } catch {}
+  }
+  if (agentName) animateText?.(agentName, agent);
+  if (focusDisplay) animateText?.(focusDisplay, focus);
+  triggerStatGlow?.(agentName);
+  triggerStatGlow?.(focusDisplay);
+}
+
+function playBroadcastPreviewLoadoutRoll(options = {}) {
+  const selected = chooseBroadcastPreviewLoadout(options);
+  const reel = document.getElementById("agentReel");
+  const strip = reel?.querySelector(".reel-strip");
+  const frame = document.getElementById("agentFrame");
+  const previewSpinDuration = Math.max(900, Math.min(1600, Number(options.spinMs) || spinDuration || 1300));
+
+  if (!reel || !strip || !frame) {
+    if (agentName) animateText?.(agentName, selected.agent);
+    if (focusDisplay) animateText?.(focusDisplay, selected.focus);
+    return Promise.resolve(selected);
+  }
+
+  resetPlaceholder?.();
+  runPlaceholderExitAnimation?.();
+  clearAgentFxRuntime?.();
+  reel.classList.remove("reel-placeholder");
+  reel.classList.add("reel-spinning");
+  frame.classList.add("reel-active");
+  document.getElementById("agentPlaceholder")?.style?.setProperty("display", "none");
+  frame.classList.remove(
+    "duelist", "controller", "initiator", "sentinel",
+    "agent-glow-flash", "agent-pulse", "agent-frame-anim", "agent-glow-fadeout"
+  );
+
+  strip.innerHTML = "";
+  const spinFrames = 22;
+  const sourceAgents = Array.isArray(allAgents) && allAgents.length ? allAgents : [selected.agent];
+  for (let i = 0; i < spinFrames; i += 1) {
+    const fake = sourceAgents[Math.floor(Math.random() * sourceAgents.length)] || selected.agent;
+    const img = document.createElement("img");
+    img.src = getAgentIconUrl?.(fake) || "";
+    img.className = "reel-icon";
+    strip.appendChild(img);
+  }
+  const finalImg = document.createElement("img");
+  finalImg.src = getAgentIconUrl?.(selected.agent) || "";
+  finalImg.className = "reel-icon";
+  strip.appendChild(finalImg);
+
+  const frameHeight = syncAgentReelGeometry?.(reel, strip, frame) || 120;
+  const finalY = -(frameHeight * spinFrames);
+  strip.style.transition = "none";
+  strip.style.transform = "translateY(0px)";
+  void strip.offsetWidth;
+  strip.style.transition = `transform ${previewSpinDuration}ms cubic-bezier(.23,1,.32,1)`;
+  strip.style.transform = `translateY(${finalY}px)`;
+
+  window.setTimeout(() => {
+    applyBroadcastPreviewRoleVisuals(selected.agent, selected.focus);
+  }, Math.max(120, previewSpinDuration - 360));
+
+  return new Promise(resolve => {
+    window.setTimeout(() => {
+      syncAgentReelGeometry?.(reel, strip, frame);
+      settleReelVisualState?.(reel);
+      document.querySelector("#spinAgentBtn svg")?.classList?.add("flip");
+      window.setTimeout(() => document.querySelector("#spinAgentBtn svg")?.classList?.remove("flip"), 380);
+      applyBroadcastPreviewRoleVisuals(selected.agent, selected.focus);
+      resolve(selected);
+    }, previewSpinDuration + 80);
+  });
 }
 
 function getLatestBroadcastMatch() {
@@ -13567,19 +13686,19 @@ async function playBroadcastPostgamePackage(options = {}) {
   primeBroadcastOverlay(2200);
   flashHit(document.body);
   impactShake(document.querySelector(".app") || document.body, "low");
-  await broadcastWait(110);
-  statStamp(getBroadcastRollHonoredLabel(match), { tone: "neutral" });
-  await broadcastWait(210);
+  await broadcastWait(160);
+  statStamp(getBroadcastRollHonoredLabel(match), { tone: "neutral", durationMs: 2100 });
+  await broadcastWait(1380);
   if (headline.el) {
     snapIn(headline.el);
     particleBurst(headline.el, { count: headline.type === "rr" ? 20 : 14, radius: headline.type === "rr" ? 128 : 88 });
   }
-  statStamp(headline.label, { tone: headline.tone || "neutral" });
-  await broadcastWait(260);
+  statStamp(headline.label, { tone: headline.tone || "neutral", durationMs: 2200 });
+  await broadcastWait(1500);
   for (const candidate of remainingPills) {
     snapIn(candidate.el);
     particleBurst(candidate.el, { count: 9, radius: 68 });
-    await broadcastWait(115);
+    await broadcastWait(160);
   }
   await animateBroadcastCompassPackage();
   if (rrEl) {
@@ -13606,7 +13725,7 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
   }
 
   closeProfileDropdown?.();
-  setBroadcastPreviewForceMotion(4200);
+  setBroadcastPreviewForceMotion(kind === "postgame" ? 7200 : 5200);
   showToast?.(kind === "postgame" ? "Previewing postgame package." : "Previewing roll reveal.", {
     title: "Broadcast preview",
     durationMs: 1400
@@ -13615,7 +13734,8 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
   try {
     const played = kind === "postgame"
       ? await playBroadcastPostgamePackage({ source: "preview", bypassGate: true, forceMotion: true })
-      : await playBroadcastRollReveal({ source: "preview", bypassGate: true, forceMotion: true });
+      : await playBroadcastPreviewLoadoutRoll({ source: "preview" })
+        .then(roll => playBroadcastRollReveal({ ...roll, source: "preview", bypassGate: true, forceMotion: true }));
     if (!played) {
       statStamp(kind === "postgame" ? "Postgame preview ready" : "Roll preview ready", { tone: "warn" });
     }

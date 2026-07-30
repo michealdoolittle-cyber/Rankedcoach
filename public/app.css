@@ -54744,7 +54744,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   letter-spacing:.08em;
   text-transform:uppercase;
   text-align:left;
-  animation:broadcastStatStamp 760ms cubic-bezier(.18,1.08,.24,1) forwards;
+  animation:broadcastStatStamp 1900ms cubic-bezier(.18,1.08,.24,1) forwards;
 }
 
 .broadcast-stamp::before{
@@ -54810,9 +54810,9 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
 
 @keyframes broadcastStatStamp{
   0%{ opacity:0; transform:translate3d(-76vw, 0, 0) skewX(-10deg); clip-path:inset(0 100% 0 0); }
-  16%{ opacity:1; }
-  42%{ transform:translate3d(-50%, 0, 0) skewX(0deg); clip-path:inset(0 0 0 0); }
-  76%{ opacity:1; transform:translate3d(-50%, 0, 0); }
+  10%{ opacity:1; }
+  22%{ transform:translate3d(-50%, 0, 0) skewX(0deg); clip-path:inset(0 0 0 0); }
+  82%{ opacity:1; transform:translate3d(-50%, 0, 0); }
   100%{ opacity:0; transform:translate3d(-50%, -8px, 0); }
 }
 
@@ -54870,7 +54870,7 @@ body.broadcast-preview-force-motion .broadcast-motion-flash{
 }
 
 body.broadcast-preview-force-motion .broadcast-stamp{
-  animation:broadcastStatStamp 760ms cubic-bezier(.18,1.08,.24,1) forwards !important;
+  animation:broadcastStatStamp 1900ms cubic-bezier(.18,1.08,.24,1) forwards !important;
 }
 
 body.broadcast-preview-force-motion .broadcast-particle{
