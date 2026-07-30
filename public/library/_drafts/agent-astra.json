@@ -253,10 +253,10 @@
     "entityName": "Astra",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-29T19:50:15.153Z",
+    "generatedAt": "2026-07-30T03:39:31.969Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
-    "lastReviewed": "2026-07-29"
+    "lastReviewed": "2026-07-30"
   },
   "_fieldMeta": {
     "id": {
