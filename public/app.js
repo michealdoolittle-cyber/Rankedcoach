@@ -13360,6 +13360,16 @@ function tickCounter(el, value, options = {}) {
     : (next) => String(Math.round(next));
   if (shouldSkipBroadcastMotion() || start === target) {
     el.textContent = formatter(target);
+    if (el.id === "totalRRDisplay") {
+      el.dataset.value = String(Math.round(target));
+      el.classList.remove("rr-total-rolling", "rr-total-settle", "rr-total-positive", "rr-total-negative", "rr-total-neutral");
+      el.classList.add(
+        target > start ? "rr-total-positive" :
+        target < start ? "rr-total-negative" :
+        "rr-total-neutral"
+      );
+      el.classList.add("rr-total-settle");
+    }
     snapIn(el);
     return Promise.resolve();
   }
@@ -13383,8 +13393,20 @@ function tickCounter(el, value, options = {}) {
         el.textContent = formatter(target);
         el.classList.remove("rr-total-rolling");
         el.classList.remove("broadcast-motion-count-final");
+        if (el.id === "totalRRDisplay") {
+          el.dataset.value = String(Math.round(target));
+          el.classList.remove("rr-total-settle", "rr-total-positive", "rr-total-negative", "rr-total-neutral");
+          el.classList.add(
+            target > start ? "rr-total-positive" :
+            target < start ? "rr-total-negative" :
+            "rr-total-neutral"
+          );
+        }
         void el.offsetWidth;
         el.classList.add("broadcast-motion-count-final");
+        if (el.id === "totalRRDisplay") {
+          el.classList.add("rr-total-settle");
+        }
         window.setTimeout(() => {
           el.classList.remove("broadcast-motion-count-final");
           resolve();
@@ -13584,9 +13606,10 @@ function getBroadcastMatchRRDelta(match = null, options = {}) {
   return 0;
 }
 
-function getBroadcastTimelineCandidates() {
+function getBroadcastTimelineCandidates(options = {}) {
+  const includeDisabled = options.includeDisabled === true;
   return Array.from(document.querySelectorAll(".timeline-pill"))
-    .filter(pill => !pill.disabled && !pill.classList.contains("is-disabled"))
+    .filter(pill => includeDisabled || (!pill.disabled && !pill.classList.contains("is-disabled")))
     .map((pill, index) => {
       const label = pill.querySelector(".timeline-pill-label")?.textContent?.trim() || `Stat ${index + 1}`;
       const value = pill.querySelector(".timeline-pill-value")?.textContent?.trim() || "";
@@ -13600,6 +13623,37 @@ function getBroadcastTimelineCandidates() {
         positive: /^\+/.test(delta) || pill.classList.contains("is-positive")
       };
     });
+}
+
+function selectBroadcastTopImprovementCandidate(options = {}) {
+  const candidates = getBroadcastTimelineCandidates();
+  const fallbackCandidates = options.includeDisabledFallback && !candidates.length
+    ? getBroadcastTimelineCandidates({ includeDisabled: true })
+    : [];
+  return (candidates.length ? candidates : fallbackCandidates)
+    .sort((a, b) => Number(b.positive) - Number(a.positive) || b.magnitude - a.magnitude)[0] || null;
+}
+
+function setBroadcastImprovementSpotlight(candidate = null) {
+  document.querySelectorAll(".timeline-pill.broadcast-improvement-spotlight, .timeline-pill.broadcast-improvement-release")
+    .forEach(el => el.classList.remove("broadcast-improvement-spotlight", "broadcast-improvement-release"));
+  const el = candidate?.el || candidate;
+  if (!el) return null;
+  el.classList.remove("broadcast-improvement-release");
+  el.classList.add("broadcast-improvement-spotlight");
+  return el;
+}
+
+function releaseBroadcastImprovementSpotlight(el = null) {
+  const targets = el
+    ? [el]
+    : Array.from(document.querySelectorAll(".timeline-pill.broadcast-improvement-spotlight"));
+  targets.filter(Boolean).forEach(target => {
+    target.classList.add("broadcast-improvement-release");
+    window.setTimeout(() => {
+      target.classList.remove("broadcast-improvement-spotlight", "broadcast-improvement-release");
+    }, 520);
+  });
 }
 
 function selectBroadcastHeadlineStatCandidate(match = null, options = {}) {
@@ -13619,10 +13673,8 @@ function selectBroadcastHeadlineStatCandidate(match = null, options = {}) {
     };
   }
 
-  const timelineCandidates = getBroadcastTimelineCandidates()
-    .sort((a, b) => Number(b.positive) - Number(a.positive) || b.magnitude - a.magnitude);
-  if (timelineCandidates.length) {
-    const top = timelineCandidates[0];
+  const top = selectBroadcastTopImprovementCandidate();
+  if (top) {
     return {
       type: "timeline",
       el: top.el,
@@ -13652,25 +13704,147 @@ function getBroadcastRollHonoredLabel(match = null) {
   return "Postgame package ready";
 }
 
-async function animateBroadcastCompassPackage() {
-  const compassWrap = document.querySelector(".compass-summary-body") || document.querySelector(".compass-panel");
-  const compassSvg = document.getElementById("compassSvg");
+function getBroadcastCompassScoreTargets() {
+  return {
+    aim: parseBroadcastNumber(document.getElementById("compassScoreAim")?.textContent),
+    gamesense: parseBroadcastNumber(document.getElementById("compassScoreSense")?.textContent),
+    teamplay: parseBroadcastNumber(document.getElementById("compassScoreTeam")?.textContent),
+    discipline: parseBroadcastNumber(document.getElementById("compassScoreDiscipline")?.textContent)
+  };
+}
+
+function setBroadcastCompassScoreVisual(values = {}) {
+  [
+    { key: "aim", suffix: "Aim" },
+    { key: "gamesense", suffix: "Sense" },
+    { key: "teamplay", suffix: "Team" },
+    { key: "discipline", suffix: "Discipline" }
+  ].forEach(({ key, suffix }) => {
+    const value = Math.round(clampPercent(safeNumber(values?.[key])));
+    const scoreEl = document.getElementById(`compassScore${suffix}`);
+    const barEl = document.getElementById(`compassBar${suffix}`);
+    if (scoreEl) scoreEl.textContent = String(value);
+    if (barEl) barEl.style.width = `${value}%`;
+  });
+  updateCompassPercentages(
+    safeNumber(values?.aim),
+    safeNumber(values?.gamesense),
+    safeNumber(values?.teamplay),
+    safeNumber(values?.discipline)
+  );
+  updateBuildCoreVisual(
+    safeNumber(values?.aim),
+    safeNumber(values?.gamesense),
+    safeNumber(values?.teamplay),
+    safeNumber(values?.discipline)
+  );
+}
+
+function getBroadcastCompassMotionStart(targets = {}, match = null, options = {}) {
+  const rrDelta = getBroadcastMatchRRDelta(match, options);
+  let direction = rrDelta > 0 ? 1 : rrDelta < 0 ? -1 : 0;
+  if (!direction && options.forceMotion) direction = 1;
+  const baseMagnitude = direction
+    ? Math.max(2, Math.min(8, Math.round(Math.abs(rrDelta || 12) / 4)))
+    : 0;
+  const offsets = { aim: 0, gamesense: 1, teamplay: -1, discipline: 2 };
+  return Object.fromEntries(Object.entries(targets).map(([key, target]) => {
+    const n = Math.round(clampPercent(safeNumber(target)));
+    const offset = Math.max(1, baseMagnitude + (offsets[key] || 0));
+    return [key, direction ? clampPercent(n - (direction * offset)) : n];
+  }));
+}
+
+function animateBroadcastCompassResultMotion(match = null, options = {}) {
+  const target = getBroadcastCompassScoreTargets();
+  const hasAnyScore = Object.values(target).some(value => safeNumber(value) > 0);
+  if (!hasAnyScore) {
+    setBroadcastCompassScoreVisual(target);
+    return Promise.resolve();
+  }
+
+  const start = getBroadcastCompassMotionStart(target, match, options);
+  const keys = ["aim", "gamesense", "teamplay", "discipline"];
+  const scoreCards = [
+    document.getElementById("compassCardAim"),
+    document.getElementById("compassCardSense"),
+    document.getElementById("compassCardTeam"),
+    document.getElementById("compassCardDiscipline")
+  ].filter(Boolean);
   const scoreEls = [
     document.getElementById("compassScoreAim"),
     document.getElementById("compassScoreSense"),
     document.getElementById("compassScoreTeam"),
     document.getElementById("compassScoreDiscipline")
   ].filter(Boolean);
-  if (!compassWrap && !scoreEls.length) return;
+  const compassSvg = document.getElementById("compassSvg");
+  const direction = Object.values(target).reduce((sum, value, index) => (
+    sum + (safeNumber(value) - safeNumber(start[keys[index]]))
+  ), 0);
+  const directionClass = direction >= 0 ? "broadcast-compass-up" : "broadcast-compass-down";
+
+  scoreCards.forEach(card => {
+    card.classList.remove("broadcast-compass-up", "broadcast-compass-down", "broadcast-compass-settle");
+    card.classList.add(directionClass);
+  });
+  scoreEls.forEach(el => {
+    el.classList.remove("broadcast-compass-up", "broadcast-compass-down", "broadcast-compass-settle");
+    el.classList.add(directionClass);
+  });
+  compassSvg?.classList?.remove("broadcast-compass-result");
+  void compassSvg?.offsetWidth;
+  compassSvg?.classList?.add("broadcast-compass-result");
+
+  if (shouldSkipBroadcastMotion()) {
+    setBroadcastCompassScoreVisual(target);
+    return Promise.resolve();
+  }
+
+  const duration = Math.max(620, Math.min(1200, Number(options.durationMs) || 920));
+  const startedAt = performance.now();
+  setBroadcastCompassScoreVisual(start);
+
+  return new Promise(resolve => {
+    const frame = (now) => {
+      const t = Math.max(0, Math.min(1, (now - startedAt) / duration));
+      const eased = 1 - Math.pow(1 - t, 3);
+      const next = {};
+      keys.forEach(key => {
+        next[key] = safeNumber(start[key]) + ((safeNumber(target[key]) - safeNumber(start[key])) * eased);
+      });
+      setBroadcastCompassScoreVisual(next);
+      if (t < 1) {
+        requestAnimationFrame(frame);
+        return;
+      }
+      setBroadcastCompassScoreVisual(target);
+      scoreCards.forEach(card => {
+        card.classList.remove("broadcast-compass-up", "broadcast-compass-down");
+        card.classList.add("broadcast-compass-settle");
+      });
+      scoreEls.forEach(el => {
+        el.classList.remove("broadcast-compass-up", "broadcast-compass-down");
+        el.classList.add("broadcast-compass-settle");
+      });
+      window.setTimeout(() => {
+        scoreCards.forEach(card => card.classList.remove("broadcast-compass-settle"));
+        scoreEls.forEach(el => el.classList.remove("broadcast-compass-settle"));
+        compassSvg?.classList?.remove("broadcast-compass-result");
+      }, 640);
+      resolve();
+    };
+    requestAnimationFrame(frame);
+  });
+}
+
+async function animateBroadcastCompassPackage(match = null, options = {}) {
+  const compassWrap = document.querySelector(".compass-summary-body") || document.querySelector(".compass-panel");
+  const compassSvg = document.getElementById("compassSvg");
+  if (!compassWrap && !compassSvg) return;
   snapIn(compassWrap);
   snapIn(compassSvg);
   particleBurst(compassSvg || compassWrap, { count: 12, radius: 82 });
-  await Promise.all(scoreEls.map((el, index) => (
-    broadcastWait(index * 60).then(() => tickCounter(el, parseBroadcastNumber(el.textContent), {
-      start: 0,
-      durationMs: 460
-    }))
-  )));
+  await animateBroadcastCompassResultMotion(match, options);
 }
 
 async function playBroadcastPostgamePackage(options = {}) {
@@ -13678,6 +13852,8 @@ async function playBroadcastPostgamePackage(options = {}) {
   if (!options.forceMotion && shouldSkipBroadcastMotion()) return false;
   const match = options.match || options.record || getLatestBroadcastMatch();
   const headline = selectBroadcastHeadlineStatCandidate(match, options);
+  const spotlightCandidate = selectBroadcastTopImprovementCandidate({ includeDisabledFallback: true });
+  const spotlightEl = setBroadcastImprovementSpotlight(spotlightCandidate);
   const rrDelta = getBroadcastMatchRRDelta(match, options);
   const rrEl = totalRRDisplay || document.getElementById("totalRRDisplay");
   const remainingPills = getBroadcastTimelineCandidates()
@@ -13700,16 +13876,18 @@ async function playBroadcastPostgamePackage(options = {}) {
     particleBurst(candidate.el, { count: 9, radius: 68 });
     await broadcastWait(160);
   }
-  await animateBroadcastCompassPackage();
+  await animateBroadcastCompassPackage(match, options);
   if (rrEl) {
     const target = parseBroadcastNumber(rrEl.dataset?.value || rrEl.textContent);
+    const effectiveDelta = rrDelta || (options.forceMotion ? 7 : 0);
     const start = Number.isFinite(Number(options.rrStart))
       ? Number(options.rrStart)
-      : target - Math.max(-35, Math.min(35, rrDelta || 0));
+      : target - Math.max(-35, Math.min(35, effectiveDelta));
     await tickCounter(rrEl, target, { start, durationMs: 680 });
     impactShake(document.querySelector(".rr-card") || document.querySelector(".app") || document.body, Math.abs(rrDelta) >= 18 ? "high" : "low");
     particleBurst(rrEl, { count: Math.abs(rrDelta) >= 18 ? 22 : 12, radius: Math.abs(rrDelta) >= 18 ? 132 : 74 });
   }
+  releaseBroadcastImprovementSpotlight(spotlightEl);
   return true;
 }
 
