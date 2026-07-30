@@ -55,7 +55,7 @@ function supabaseStub() {
     createdAt: "2026-07-13T14:00:00.000Z",
     agent: "Sova",
     map: "Haven",
-    focus: "Information Gathering",
+    focus: "Map Awareness",
     rating: 4,
     notes: "Cloud reflection"
   };

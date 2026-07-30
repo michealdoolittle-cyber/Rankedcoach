@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260730-logging-field-motion-02">
+  <link rel="stylesheet" href="app.css?v=20260730-broadcast-focus-final-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -65,7 +65,7 @@
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
   <link rel="stylesheet" href="library/gamesense-library.css?v=20260729-border-patch-notes-01">
-  <link rel="stylesheet" href="layout-styles.css?v=20260730-logging-field-motion-02">
+  <link rel="stylesheet" href="layout-styles.css?v=20260730-broadcast-focus-final-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1190,32 +1190,25 @@ RIOT PROFILE MODAL
             <div class="profile-menu-section profile-quick-menu">
               <button class="pd-item" id="pdLogoutBtn" type="button">Log out</button>
               <button class="pd-item" id="pdAccountSupportBtn" type="button">
-                <span class="manual-mode-toggle-copy">
+                <span class="profile-menu-item-copy">
                   <span>Account &amp; Support</span>
                   <small>Security, support, legal</small>
                 </span>
               </button>
-              <button class="pd-item manual-mode-toggle" id="manualEntryModeToggle" type="button" aria-pressed="false">
-                <span class="manual-mode-toggle-copy">
-                  <span>Manual Entry Mode</span>
-                  <small>Offline match reports</small>
-                </span>
-                <span class="manual-mode-switch" aria-hidden="true"><span></span></span>
-              </button>
               <button class="pd-item broadcast-preview-btn" id="previewRollRevealBtn" type="button" hidden>
-                <span class="manual-mode-toggle-copy">
+                <span class="profile-menu-item-copy">
                   <span>Preview Roll Reveal</span>
                   <small>Premium motion test</small>
                 </span>
               </button>
               <button class="pd-item broadcast-preview-btn" id="previewPostgamePackageBtn" type="button" hidden>
-                <span class="manual-mode-toggle-copy">
+                <span class="profile-menu-item-copy">
                   <span>Preview Postgame Package</span>
                   <small>Premium motion test</small>
                 </span>
               </button>
               <button class="pd-item broadcast-preview-btn" id="previewLoggingRevealBtn" type="button" hidden>
-                <span class="manual-mode-toggle-copy">
+                <span class="profile-menu-item-copy">
                   <span>Preview Logging Reveal</span>
                   <small>Premium motion test</small>
                 </span>
@@ -2022,31 +2015,17 @@ stroke-linejoin="round"/>
     </span>
     <select id="logFocusSelect" class="ui-interactive logging-input pill-value" aria-label="Focus category">
       <option value="">Focus Category</option>
-      <option value="Crosshair Discipline">Crosshair Discipline</option>
-      <option value="Duel Discipline">Discipline</option>
-      <option value="Positioning">Positioning</option>
+      <option value="Crosshair Placement">Crosshair Placement</option>
       <option value="Trading">Trading</option>
-      <option value="Entry">Entry</option>
-      <option value="Timing">Lurking</option>
-      <option value="Information Gathering">Information Gathering</option>
+      <option value="Movement">Movement</option>
       <option value="Utility Usage">Utility Usage</option>
-      <option value="Utility Timing">Utility Timing</option>
-      <option value="Post-Plant Control">Post-Plant Control</option>
-      <option value="Round Survivability">Round Survivability</option>
-      <option value="Eco Conversion">Eco Conversion</option>
-      <option value="Awareness Check">Map Awareness</option>
-      <option value="Retake Timing">Retake</option>
-      <option value="Comms Discipline">Comms</option>
-      <option value="Weapon Category Use">Economy</option>
-      <option value="Mental Reset">Mental Reset</option>
-      <option value="Other">Other</option>
+      <option value="Map Awareness">Map Awareness</option>
+      <option value="Credit/Ult Economy">Credit/Ult Economy</option>
+      <option value="Communication">Communication</option>
+      <option value="Discipline">Discipline</option>
+      <option value="Map Strategy">Map Strategy</option>
+      <option value="Behavior Composure">Behavior Composure</option>
     </select>
-  </div>
-
-  <div class="focus-other-wrap" id="focusOtherWrap" hidden aria-hidden="true">
-    <input id="logFocusOther" placeholder="">
-    <button id="confirmFocusOther">OK</button>
-    <button id="clearFocusOther">X</button>
   </div>
 
 </div>
@@ -2072,74 +2051,6 @@ stroke-linejoin="round"/>
             </span>
             <span class="logging-training-menu-arrow" aria-hidden="true">&gt;</span>
           </button>
-        </div>
-
-        <div id="manualMatchPanel" class="manual-match-panel" hidden>
-          <div class="manual-match-head">
-            <div>
-              <div class="manual-match-kicker">Offline Match Report</div>
-              <div class="manual-match-title">Add match stats when offline.</div>
-            </div>
-            <div class="manual-match-status">Live sync uses your Riot ID. Use this report when a match cannot be pulled.</div>
-          </div>
-
-          <div class="manual-match-grid">
-            <label class="manual-field manual-field-select">
-              <span>Result</span>
-              <select id="manualResult">
-                <option value="win">Win</option>
-                <option value="loss">Loss</option>
-                <option value="draw">Draw</option>
-              </select>
-            </label>
-            <label class="manual-field">
-              <span>RR</span>
-              <input id="manualRR" type="number" inputmode="numeric" placeholder="+/-">
-            </label>
-            <label class="manual-field">
-              <span>Rounds Won</span>
-              <input id="manualRoundsWon" type="number" min="0" max="25" inputmode="numeric" placeholder="13">
-            </label>
-            <label class="manual-field">
-              <span>Rounds Lost</span>
-              <input id="manualRoundsLost" type="number" min="0" max="25" inputmode="numeric" placeholder="10">
-            </label>
-            <label class="manual-field">
-              <span>Kills</span>
-              <input id="manualKills" type="number" min="0" inputmode="numeric" placeholder="18">
-            </label>
-            <label class="manual-field">
-              <span>Deaths</span>
-              <input id="manualDeaths" type="number" min="0" inputmode="numeric" placeholder="14">
-            </label>
-            <label class="manual-field">
-              <span>Assists</span>
-              <input id="manualAssists" type="number" min="0" inputmode="numeric" placeholder="5">
-            </label>
-            <label class="manual-field">
-              <span>ACS Range</span>
-              <select id="manualACS">
-                <option value="">Choose rough ACS</option>
-                <option value="100">Under 125</option>
-                <option value="150">125-174</option>
-                <option value="200">175-224</option>
-                <option value="250">225-274</option>
-                <option value="300">275-324</option>
-                <option value="350">325+</option>
-              </select>
-            </label>
-            <label class="manual-field">
-              <span>ADR Range</span>
-              <select id="manualADR">
-                <option value="">Choose rough ADR</option>
-                <option value="90">Under 100</option>
-                <option value="115">100-129</option>
-                <option value="145">130-159</option>
-                <option value="175">160-189</option>
-                <option value="205">190+</option>
-              </select>
-            </label>
-          </div>
         </div>
 
 <div class="logging-score-grid">
@@ -2359,7 +2270,7 @@ stroke-linejoin="round"/>
   <script src="schema/match-record.js?v=20260726-situational-callouts-01"></script>
   <script src="analytics/round-metrics.js?v=20260726-situational-callouts-01"></script>
   <script src="analytics/warmup-correlation.js?v=20260711-training-feed-02"></script>
-  <script src="analytics/coaching-rules.js?v=20260727-loadout-layout-repair-01"></script>
+  <script src="analytics/coaching-rules.js?v=20260730-broadcast-focus-final-01"></script>
   <script src="language/valorant-vocabulary.js?v=20260717-coaching-language-29"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260714-placement-account-ui-01"></script>
@@ -2377,7 +2288,7 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-library.js?v=20260729-border-patch-notes-01"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
   <script src="daily-entrance-motion.js?v=20260729-border-patch-notes-01"></script>
-  <script type="module" src="app.js?v=20260730-logging-field-motion-02"></script>
+  <script type="module" src="app.js?v=20260730-broadcast-focus-final-01"></script>
   <script type="module" src="knowledge-review.js?v=20260729-border-patch-notes-01"></script>
 </body>
 </html>

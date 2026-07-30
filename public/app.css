@@ -664,7 +664,7 @@
     object-fit:cover !important;
   }
 
-  /* #39-#43: profile menus, manual-report visibility, and modal reachability. */
+  /* #39-#43: overlays, menus, and modal visibility. */
   html body.is-mobile-layout #profileAddBtn{
     width:100% !important;
     max-width:100% !important;
@@ -702,14 +702,6 @@
     overflow:auto !important;
     transform:none !important;
     z-index:26000 !important;
-  }
-
-  html body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel,.manual-match-panel,.manual-report-panel,.offline-match-report){
-    display:none !important;
-  }
-
-  html body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
   }
 
   html body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay,.tutorial-overlay,.security-modal-overlay).active,
@@ -918,55 +910,6 @@
     appearance:none !important;
     -webkit-appearance:none !important;
     cursor:pointer !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging #focusOtherWrap[hidden]{
-    display:none !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper:has(#focusOtherWrap:not([hidden])){
-    grid-template-columns:1fr !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper:has(#focusOtherWrap:not([hidden])) #focusPreviewText,
-  html.is-mobile-layout body.is-mobile-layout #page-logging .focus-wrapper:has(#focusOtherWrap:not([hidden])) .focus-select-shell{
-    display:none !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging #focusOtherWrap:not([hidden]){
-    grid-column:1 !important;
-    display:grid !important;
-    grid-template-columns:minmax(0,1fr) 52px 52px !important;
-    align-items:center !important;
-    gap:6px !important;
-    width:100% !important;
-    max-width:100% !important;
-    height:42px !important;
-    min-height:42px !important;
-    margin:0 !important;
-    overflow:hidden !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging #focusOtherInput{
-    min-width:0 !important;
-    width:100% !important;
-    height:40px !important;
-    min-height:40px !important;
-    padding:0 10px !important;
-    font-size:clamp(12px, 3.65vw, 15px) !important;
-    line-height:1 !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging :is(#focusOtherConfirm,#focusOtherCancel){
-    width:52px !important;
-    min-width:52px !important;
-    height:40px !important;
-    min-height:40px !important;
-    padding:0 !important;
-    display:grid !important;
-    place-items:center !important;
-    font-size:clamp(12px, 3.5vw, 14px) !important;
-    line-height:1 !important;
   }
 }
 
@@ -1511,14 +1454,6 @@
     z-index:26000 !important;
   }
 
-  html body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel,.manual-match-panel,.manual-report-panel,.offline-match-report){
-    display:none !important;
-  }
-
-  html body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
-  }
-
   html body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay,.tutorial-overlay,.security-modal-overlay).active,
   html body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay,.tutorial-overlay,.security-modal-overlay).is-open{
     position:fixed !important;
@@ -2054,10 +1989,6 @@
     overflow:auto !important;
     z-index:26000 !important;
     transform:none !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel,.manual-match-panel,.manual-report-panel,.offline-match-report){
-    display:none !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay,.tutorial-overlay,.security-modal-overlay).active,
@@ -2714,13 +2645,6 @@
     white-space: normal !important;
     font-size: 13px !important;
   }
-
-  html body.is-mobile-layout body:not(.manual-entry-enabled) #mobileManualReportToggle,
-  html body.is-mobile-layout body:not(.manual-entry-enabled) #manualMatchPanel,
-  html body.is-mobile-layout:not(.manual-entry-enabled) #mobileManualReportToggle,
-  html body.is-mobile-layout:not(.manual-entry-enabled) #manualMatchPanel {
-    display: none !important;
-}
 
 /* Mobile QA 43 verification pass 02.
    This final layer fixes measured mobile container issues rather than only
@@ -4125,11 +4049,6 @@
     white-space: normal !important;
     font-size: 13px !important;
   }
-
-  html body.is-mobile-layout:not(.manual-entry-enabled) #mobileManualReportToggle,
-  html body.is-mobile-layout:not(.manual-entry-enabled) #manualMatchPanel {
-    display: none !important;
-  }
 }
 
 /* Mobile composition rebuild -------------------------------------------------
@@ -4975,39 +4894,6 @@
     line-height:1.25 !important;
   }
 
-  body.is-mobile-layout #page-logging .manual-match-panel:not(.mobile-manual-open){
-    display:none !important;
-  }
-
-  body.is-mobile-layout #page-logging .manual-match-panel.mobile-manual-open{
-    display:grid !important;
-    gap:8px !important;
-    padding:10px !important;
-  }
-
-  body.is-mobile-layout .mobile-manual-report-toggle,
-  body.is-mobile-layout .mobile-manual-report-done{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:100% !important;
-    min-height:44px !important;
-    border:1px solid color-mix(in srgb, var(--accent) 42%, rgba(148,163,184,.36)) !important;
-    border-radius:10px !important;
-    background:linear-gradient(135deg, rgba(255,70,85,.92), rgba(249,115,22,.68)) !important;
-    color:#fff !important;
-    font-size:12px !important;
-    font-weight:900 !important;
-    letter-spacing:.06em !important;
-    text-transform:uppercase !important;
-  }
-
-  body.is-mobile-layout #page-logging .manual-match-panel input,
-  body.is-mobile-layout #page-logging .manual-match-panel select,
-  body.is-mobile-layout #page-logging .manual-match-panel textarea{
-    border-radius:10px !important;
-  }
-
   body.is-mobile-layout #page-logging .focus-select-shell.has-custom-focus-select{
     width:112px !important;
     min-width:112px !important;
@@ -5161,8 +5047,6 @@
 @media (min-width:821px){
   .mobile-logging-tabs,
   .mobile-stats-tabs,
-  .mobile-manual-report-toggle,
-  .mobile-manual-report-done,
   #mobileHeaderSyncBtn{
     display:none !important;
   }
@@ -6457,33 +6341,6 @@
     line-height:1.26 !important;
   }
 
-  body.is-mobile-layout #page-logging .manual-match-panel:not(.mobile-manual-open){
-    display:none !important;
-  }
-
-  body.is-mobile-layout #page-logging .manual-match-panel.mobile-manual-open{
-    display:grid !important;
-    gap:8px !important;
-    padding:10px !important;
-  }
-
-  body.is-mobile-layout .mobile-manual-report-toggle,
-  body.is-mobile-layout .mobile-manual-report-done{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:100% !important;
-    min-height:44px !important;
-    border-radius:9px !important;
-    font-size:12px !important;
-    font-weight:900 !important;
-    text-transform:uppercase !important;
-  }
-
-  body.is-mobile-layout #page-logging :is(.manual-match-panel input,.manual-match-panel select,.manual-match-panel textarea){
-    border-radius:9px !important;
-  }
-
   body.is-mobile-layout #page-logging .focus-select-shell.has-custom-focus-select{
     width:112px !important;
     min-width:112px !important;
@@ -7427,10 +7284,6 @@ html body .app-root .page#page-logging:is(:not(.active),.exiting) #logFocusCusto
     height:220px !important;
   }
 
-  body.is-mobile-layout #page-logging .manual-match-grid{
-    grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-  }
-
   body.is-mobile-layout #page-stats .stats-summary-layout,
   body.is-mobile-layout #page-stats .stats-main-grid{
     display:flex !important;
@@ -7571,11 +7424,10 @@ html body .app-root .page#page-logging:is(:not(.active),.exiting) #logFocusCusto
 
   body.is-mobile-layout .scoreboard,
   body.is-mobile-layout #page-logging .logging-score-grid,
-  body.is-mobile-layout #page-logging .manual-match-grid,
   body.is-mobile-layout #page-stats .stats-summary-grid,
   body.is-mobile-layout #page-stats .stats-role-progress-row,
   body.is-mobile-layout #page-stats .stats-agent-list,
-  body.is-mobile-layout #page-stats .stats-map-grid{
+  body.is-mobile-layout #page-stats .stats-map-grid {
     grid-template-columns:1fr !important;
   }
 
@@ -11636,18 +11488,6 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
   text-align:left;
   color:inherit;
 }
-
-.focus-wrapper.custom-focus-committed #focusOtherWrap{
-  display:flex;
-  order:2;
-  flex:0 0 auto;
-  min-width:auto;
-}
-
-.focus-wrapper.custom-focus-committed #logFocusOther{
-  display:none;
-}
-
 .focus-wrapper.custom-focus-committed .focus-preview-text.role-duelist{
   color:#ff4d5a !important;
 }
@@ -11663,17 +11503,6 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 .focus-wrapper.custom-focus-committed .focus-preview-text.role-sentinel{
   color:#4ade80 !important;
 }
-
-.focus-wrapper.custom-focus-committed #clearFocusOther{
-  display:inline-flex;
-  order:2;
-  margin-left:0;
-}
-
-.focus-wrapper.custom-focus-committed #confirmFocusOther{
-  display:none;
-}
-
 #logFocusSelect option{
   background:#020617;
   color:#e5e7eb;
@@ -17836,14 +17665,6 @@ min-height:0;
   border-radius:6px;
   padding:4px 8px;
 }
-
-#clearFocusOther{
-  background:transparent;
-  border:none;
-  color:#ef4444;
-  cursor:pointer;
-}
-
 .modal-exit-btn{
   position:static;
   margin-left:auto;
@@ -17911,15 +17732,6 @@ min-height:0;
   border-radius:8px;
   padding:6px 10px;
 }
-
-#confirmFocusOther{
-  background:transparent;
-  border:none;
-  color:#22c55e; /* green */
-  cursor:pointer;
-  font-size:16px;
-}
-
 .log-actions{
   position:absolute;
   top:10px;
@@ -28156,20 +27968,6 @@ body.has-active-modal .compass-panel:is(:hover, :focus-within) .compass-main{
   overflow:hidden !important;
   text-overflow:ellipsis !important;
 }
-
-#page-logging .focus-wrapper.custom-focus-committed #focusOtherWrap{
-  flex:0 0 auto !important;
-  width:auto !important;
-  max-width:32px !important;
-  overflow:visible !important;
-}
-
-#page-logging .focus-wrapper.custom-focus-committed #clearFocusOther{
-  width:28px !important;
-  min-width:28px !important;
-  height:28px !important;
-}
-
 .trend-content{
   display:block !important;
   overflow:hidden !important;
@@ -34121,30 +33919,6 @@ body[data-theme="reaver"] .border-card{
   margin-right:auto !important;
   padding-left:0 !important;
 }
-
-#page-logging .focus-wrapper.custom-focus-committed #focusOtherWrap{
-  order:2 !important;
-  flex:0 0 36px !important;
-  width:36px !important;
-  max-width:36px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-}
-
-#page-logging .focus-wrapper.custom-focus-committed #clearFocusOther{
-  width:32px !important;
-  min-width:32px !important;
-  height:32px !important;
-  min-height:32px !important;
-  padding:0 !important;
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-  line-height:1 !important;
-}
-
 #page-logging #logAgentDisplay{
   border:none !important;
   background:transparent !important;
@@ -34313,29 +34087,6 @@ body[data-theme="reaver"] .border-card{
   display:none !important;
 }
 
-#page-logging .focus-wrapper.is-custom-focus-editing #focusOtherWrap{
-  display:flex !important;
-  flex:0 1 min(620px, 100%) !important;
-  width:min(620px, 100%) !important;
-  max-width:min(620px, 100%) !important;
-  margin:0 auto !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:8px !important;
-}
-
-#page-logging .focus-wrapper.is-custom-focus-editing #logFocusOther{
-  flex:1 1 auto !important;
-  min-width:0 !important;
-  max-width:480px !important;
-  height:40px !important;
-  text-align:left !important;
-}
-
-#page-logging .focus-wrapper.is-custom-focus-editing #logFocusOther::placeholder{
-  color:transparent !important;
-}
-
 #page-logging .focus-wrapper.custom-focus-committed.is-custom-focus-editing{
   justify-content:space-between !important;
 }
@@ -34343,40 +34094,11 @@ body[data-theme="reaver"] .border-card{
 #page-logging .focus-wrapper.custom-focus-committed.is-custom-focus-editing .focus-preview-text{
   display:block !important;
 }
-
-#page-logging .focus-wrapper.custom-focus-committed.is-custom-focus-editing #focusOtherWrap{
-  flex:0 0 36px !important;
-  width:36px !important;
-  max-width:36px !important;
-  margin:0 !important;
-}
-
-#page-logging .focus-wrapper.custom-focus-committed #logFocusOther,
-#page-logging .focus-wrapper.custom-focus-committed #confirmFocusOther{
-  display:none !important;
-}
-
 #page-logging .log-agent-img.is-silhouette{
   object-fit:contain !important;
   padding:4px !important;
   filter:grayscale(.4) opacity(.72) drop-shadow(0 0 10px rgba(148,163,184,.16)) !important;
   background:linear-gradient(180deg, rgba(30,41,59,.82), rgba(2,6,23,.9)) !important;
-}
-
-#page-logging :is(#logFocusSelect,#logFocusOther,#focusPreviewText,.log-agent-text).role-duelist{
-  color:#ff4d5a !important;
-}
-
-#page-logging :is(#logFocusSelect,#logFocusOther,#focusPreviewText,.log-agent-text).role-initiator{
-  color:#6dd6ff !important;
-}
-
-#page-logging :is(#logFocusSelect,#logFocusOther,#focusPreviewText,.log-agent-text).role-controller{
-  color:#c084fc !important;
-}
-
-#page-logging :is(#logFocusSelect,#logFocusOther,#focusPreviewText,.log-agent-text).role-sentinel{
-  color:#4ade80 !important;
 }
 
 #page-stats :is(.stats-map-card,.stats-weapon-family-row.has-data,.stats-weapon-tile.has-data):not(.is-empty):not(.is-locked):not(:disabled):hover,
@@ -36095,14 +35817,8 @@ body[data-theme] :is(
   color:#94a3b8 !important;
 }
 
-/* Manual/offline match reports ------------------------------------------------ */
-.manual-mode-toggle{
-  align-items:center !important;
-  justify-content:space-between !important;
-  gap:12px !important;
-}
-
-.manual-mode-toggle-copy{
+/* Profile menu item copy ----------------------------------------------------- */
+.profile-menu-item-copy{
   display:flex;
   min-width:0;
   flex-direction:column;
@@ -36111,139 +35827,11 @@ body[data-theme] :is(
   line-height:1;
 }
 
-.manual-mode-toggle-copy small{
+.profile-menu-item-copy small{
   color:var(--muted);
   font-size:10px;
   font-weight:800;
   letter-spacing:.02em;
-}
-
-.manual-mode-switch{
-  position:relative;
-  flex:0 0 40px;
-  width:40px;
-  height:22px;
-  border:1px solid rgba(148,163,184,.42);
-  border-radius:999px;
-  background:rgba(15,23,42,.72);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
-}
-
-.manual-mode-switch span{
-  position:absolute;
-  top:3px;
-  left:3px;
-  width:14px;
-  height:14px;
-  border-radius:50%;
-  background:#cbd5e1;
-  transition:transform .18s ease, background .18s ease, box-shadow .18s ease;
-}
-
-.manual-mode-toggle.is-active .manual-mode-switch{
-  border-color:color-mix(in srgb, var(--accent) 65%, white);
-  background:color-mix(in srgb, var(--accent) 38%, #0f172a);
-}
-
-.manual-mode-toggle.is-active .manual-mode-switch span{
-  transform:translateX(18px);
-  background:#fff;
-  box-shadow:0 0 14px color-mix(in srgb, var(--accent) 70%, transparent);
-}
-
-.manual-match-panel{
-  display:grid;
-  gap:8px;
-  min-height:0;
-  padding:10px;
-  border:1px solid color-mix(in srgb, var(--accent) 42%, rgba(148,163,184,.3));
-  border-radius:var(--radius-sm);
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--accent) 18%, var(--panel)) 0%,
-      color-mix(in srgb, var(--surface) 88%, transparent) 58%,
-      color-mix(in srgb, var(--accent-2, var(--accent)) 16%, var(--panel)) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
-}
-
-.manual-match-panel[hidden]{
-  display:none !important;
-}
-
-.manual-match-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-
-.manual-match-kicker,
-.manual-match-status,
-.manual-field span{
-  color:var(--muted);
-  font-size:10px;
-  font-weight:950;
-  letter-spacing:.12em;
-  text-transform:uppercase;
-}
-
-.manual-match-title{
-  margin-top:3px;
-  color:var(--text);
-  font-size:13px;
-  font-weight:950;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-
-.manual-match-status{
-  flex:0 0 auto;
-  padding:6px 10px;
-  border:1px solid color-mix(in srgb, var(--accent) 48%, rgba(148,163,184,.34));
-  border-radius:var(--radius-pill);
-  background:rgba(2,6,23,.26);
-  color:color-mix(in srgb, var(--accent) 72%, var(--text));
-  text-align:center;
-  height:auto;
-  min-width:0;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-
-.manual-match-grid{
-  display:grid;
-  grid-template-columns:repeat(5, minmax(0, 1fr));
-  gap:8px;
-}
-
-.manual-field{
-  display:grid;
-  gap:4px;
-  min-width:0;
-}
-
-.manual-field input,
-.manual-field select{
-  width:100%;
-  min-width:0;
-  height:34px;
-  border:1px solid rgba(148,163,184,.38);
-  border-radius:var(--radius-xs);
-  background:color-mix(in srgb, var(--surface) 80%, #0b1220);
-  color:var(--text);
-  font:900 12px/1 var(--font-display);
-  outline:none;
-  padding:0 9px;
-}
-
-.manual-field input:focus,
-.manual-field select:focus{
-  border-color:color-mix(in srgb, var(--accent) 68%, white);
-  box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
-}
-
-.logging-form.manual-entry-enabled{
-  grid-template-rows:auto auto auto auto auto auto minmax(0, 1fr) auto;
 }
 
 /* Mobile shell and page ordering -------------------------------------------- */
@@ -36526,8 +36114,7 @@ body[data-theme] :is(
   }
 
   .logging-hero,
-  .logging-score-grid,
-  .manual-match-grid{
+  .logging-score-grid {
     display:grid !important;
     grid-template-columns:1fr !important;
   }
@@ -36643,15 +36230,6 @@ body[data-theme] :is(
     transform:none !important;
     min-height:52px !important;
   }
-}
-
-/* Mobile reconstruction layer -------------------------------------------------
-   Phone layout is intentionally isolated behind the JS-added body class so the
-   1080p/1440p desktop layouts keep their current sizing and behavior. */
-.manual-field input,
-.manual-field select,
-.manual-field textarea{
-  border-radius:var(--rc-control-radius, 12px) !important;
 }
 
 html.is-mobile-layout,
@@ -37491,24 +37069,6 @@ body.is-mobile-layout #page-logging .logging-submit{
   border-radius:12px !important;
 }
 
-body.is-mobile-layout #page-logging .manual-match-panel{
-  padding:10px !important;
-  border-radius:14px !important;
-}
-
-body.is-mobile-layout #page-logging .manual-match-grid{
-  display:grid !important;
-  grid-template-columns:repeat(2, minmax(0, 1fr)) !important;
-  gap:8px !important;
-}
-
-body.is-mobile-layout #page-logging .manual-field input,
-body.is-mobile-layout #page-logging .manual-field select{
-  height:42px !important;
-  border-radius:12px !important;
-  font-size:13px !important;
-}
-
 body.is-mobile-layout #page-logging .logging-feed{
   max-height:none !important;
   height:auto !important;
@@ -38317,13 +37877,11 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     transform:none !important;
     min-height:56px !important;
   }
-
-  body.is-mobile-layout #page-logging .manual-match-grid,
   body.is-mobile-layout #page-logging .logging-score-grid,
   body.is-mobile-layout #page-stats .stats-summary-grid,
   body.is-mobile-layout #page-stats .stats-role-progress-row,
   body.is-mobile-layout #page-stats .stats-agent-list,
-  body.is-mobile-layout #page-stats .stats-map-grid{
+  body.is-mobile-layout #page-stats .stats-map-grid {
     grid-template-columns:1fr !important;
   }
 }
@@ -40189,35 +39747,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     line-height:1.25 !important;
   }
 
-  body.is-mobile-layout #page-logging .manual-match-panel:not(.mobile-manual-open){
-    display:none !important;
-  }
-
-  body.is-mobile-layout #page-logging .manual-match-panel.mobile-manual-open{
-    display:grid !important;
-    gap:8px !important;
-    padding:10px !important;
-  }
-
-  body.is-mobile-layout .mobile-manual-report-toggle,
-  body.is-mobile-layout .mobile-manual-report-done{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:center !important;
-    width:100% !important;
-    min-height:44px !important;
-    border-radius:10px !important;
-    font-size:12px !important;
-    font-weight:900 !important;
-    text-transform:uppercase !important;
-  }
-
-  body.is-mobile-layout #page-logging .manual-match-panel input,
-  body.is-mobile-layout #page-logging .manual-match-panel select,
-  body.is-mobile-layout #page-logging .manual-match-panel textarea{
-    border-radius:10px !important;
-  }
-
   body.is-mobile-layout #page-logging .focus-select-shell.has-custom-focus-select{
     width:112px !important;
     min-width:112px !important;
@@ -40469,14 +39998,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
 }
 
 @media (min-width:821px){
-  .mobile-logging-tabs,
-  .mobile-stats-tabs,
-  .mobile-manual-report-toggle,
-  .mobile-manual-report-done,
-  #mobileHeaderSyncBtn,
-  .mobile-scroll-sentinel{
-    display:none !important;
-  }
 }
 
 /* Mobile shell final pass: keep the phone chrome intentional, reachable, and
@@ -41545,15 +41066,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     width:auto !important;
   }
 
-  body.is-mobile-layout:not(.is-manual-entry-mode) #mobileManualReportToggle,
-  body.is-mobile-layout:not(.is-manual-entry-mode) #manualMatchPanel{
-    display:none !important;
-  }
-
-  body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
-  }
-
   body.is-mobile-layout :is(.lens-modal-overlay,.agent-modal,.auth-modal-overlay,.profile-edit-overlay).open,
   body.is-mobile-layout :is(.lens-modal-overlay,.agent-modal,.auth-modal-overlay,.profile-edit-overlay).active,
   body.is-mobile-layout :is(.lens-modal-overlay,.agent-modal,.auth-modal-overlay,.profile-edit-overlay):not([hidden])[aria-hidden="false"]{
@@ -41740,8 +41252,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     .profile-menu-link,
     .profile-menu-donate,
     .profile-menu-identity,
-    .manual-mode-toggle,
-    .manual-mode-switch,
     .mobile-bottom-page-btn,
     .mobile-bottom-avatar-btn,
     .mobile-bottom-icon-btn,
@@ -41807,14 +41317,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     overflow:auto !important;
     transform:none !important;
     z-index:24000 !important;
-  }
-
-  body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel){
-    display:none !important;
-  }
-
-  body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
   }
 
   body.is-mobile-layout .ask-coach-panel.open{
@@ -42862,14 +42364,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     overflow:auto !important;
     transform:none !important;
     z-index:24000 !important;
-  }
-
-  body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel){
-    display:none !important;
-  }
-
-  body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
   }
 
   body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay).active,
@@ -45140,7 +44634,7 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     object-fit:cover !important;
   }
 
-  /* #39-#43: overlays, menus, manual mode, and modal visibility */
+  /* #39-#43: overlays, menus, and modal visibility. */
   html body.is-mobile-layout #profileAddBtn{
     width:100% !important;
     min-height:42px !important;
@@ -45176,14 +44670,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     overflow:auto !important;
     transform:none !important;
     z-index:24000 !important;
-  }
-
-  html body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel,.manual-match-panel,.manual-report-panel){
-    display:none !important;
-  }
-
-  html body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
   }
 
   html body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay,.tutorial-overlay,.security-modal-overlay).active,
@@ -46024,7 +45510,7 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     object-fit:cover !important;
   }
 
-  /* #39-#43: menus, manual mode visibility, modal reachability. */
+  /* #39-#43: overlays, menus, and modal visibility. */
   body.is-mobile-layout #profileAddBtn{
     width:100% !important;
     min-height:42px !important;
@@ -46059,14 +45545,6 @@ body:not(.is-mobile-layout) #page-stats :is(.stats-agent-mini-card, .stats-deskt
     overflow:auto !important;
     z-index:27000 !important;
     transform:none !important;
-  }
-
-  body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel,.manual-match-panel,.manual-report-panel,.offline-match-report){
-    display:none !important;
-  }
-
-  body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
   }
 
   body.is-mobile-layout :is(
@@ -46804,7 +46282,7 @@ html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-
     object-fit: cover !important;
   }
 
-  /* #39-#43: profile menus, manual-report visibility, modal reachability. */
+  /* #39-#43: overlays, menus, and modal visibility. */
   html.is-mobile-layout body.is-mobile-layout #profileAddBtn {
     width: 100% !important;
     min-height: 42px !important;
@@ -46841,14 +46319,6 @@ html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-
     overflow: auto !important;
     z-index: 27000 !important;
     transform: none !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle, #manualMatchPanel, .manual-match-panel, .manual-report-panel, .offline-match-report) {
-    display: none !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle {
-    display: flex !important;
   }
 
   html.is-mobile-layout body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal), .agent-modal, .agent-modal-overlay, .auth-modal-overlay, .profile-edit-overlay, .tutorial-overlay, .security-modal-overlay).active,
@@ -47827,7 +47297,7 @@ html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-
     object-fit:cover !important;
   }
 
-  /* #39-#43: profile menus, manual-report visibility, and modal reachability. */
+  /* #39-#43: overlays, menus, and modal visibility. */
   html body.is-mobile-layout #profileAddBtn{
     width:100% !important;
     max-width:100% !important;
@@ -47865,14 +47335,6 @@ html.is-mobile-layout body.is-mobile-layout #page-stats :is(.stats-row-progress-
     overflow:auto !important;
     transform:none !important;
     z-index:26000 !important;
-  }
-
-  html body.is-mobile-layout:not(.is-manual-entry-mode) :is(#mobileManualReportToggle,#manualMatchPanel,.manual-match-panel,.manual-report-panel){
-    display:none !important;
-  }
-
-  html body.is-mobile-layout.is-manual-entry-mode #mobileManualReportToggle{
-    display:flex !important;
   }
 
   html body.is-mobile-layout :is(.lens-modal-overlay:not(#goalRankModal),.agent-modal,.agent-modal-overlay,.auth-modal-overlay,.profile-edit-overlay,.tutorial-overlay,.security-modal-overlay).active,
@@ -53070,34 +52532,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
     transition:none !important;
     transform:none !important;
   }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .manual-match-panel{
-    gap:10px !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .manual-match-head{
-    display:grid !important;
-    grid-template-columns:minmax(0, 1fr) !important;
-    align-items:start !important;
-    gap:8px !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .manual-match-head > div:first-child{
-    min-width:0 !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .manual-match-title,
-  html.is-mobile-layout body.is-mobile-layout #page-logging .manual-match-status{
-    white-space:normal !important;
-    overflow-wrap:anywhere !important;
-  }
-
-  html.is-mobile-layout body.is-mobile-layout #page-logging .manual-match-status{
-    width:100% !important;
-    padding:8px 10px !important;
-    line-height:1.25 !important;
-    text-align:left !important;
-  }
 }
 
 /* Premium feel + QoL expansion v1: shared toasts, profile controls, and mobile-only premium moments. */
@@ -53263,16 +52697,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   opacity:1;
 }
 
-.broadcast-motion-flash{
-  position:fixed;
-  inset:0;
-  z-index:2352;
-  pointer-events:none;
-  background:rgba(255,255,255,.92);
-  mix-blend-mode:screen;
-  animation:broadcastFlashHit 110ms steps(2, end) forwards;
-}
-
 .broadcast-stamp{
   position:fixed;
   left:50%;
@@ -53390,12 +52814,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   animation:broadcastShakeHigh 320ms cubic-bezier(.36,.07,.19,.97) both;
 }
 
-@keyframes broadcastFlashHit{
-  0%{ opacity:0; }
-  18%{ opacity:.98; }
-  100%{ opacity:0; }
-}
-
 @keyframes broadcastStatStamp{
   0%{ opacity:0; transform:translate3d(-76vw, 0, 0) skewX(-10deg); clip-path:inset(0 100% 0 0); }
   10%{ opacity:1; }
@@ -53478,7 +52896,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
 }
 
 body.access-reduced-motion :is(
-  .broadcast-motion-flash,
   .broadcast-stamp,
   .broadcast-particle,
   .broadcast-motion-snap,
@@ -53490,10 +52907,6 @@ body.access-reduced-motion :is(
 ){
   animation:none !important;
   transition:none !important;
-}
-
-body.broadcast-preview-force-motion .broadcast-motion-flash{
-  animation:broadcastFlashHit 110ms steps(2, end) forwards !important;
 }
 
 body.broadcast-preview-force-motion .broadcast-stamp{

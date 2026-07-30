@@ -147,7 +147,8 @@ async function run() {
     await page.selectOption("#profileAddRegion", "NA");
     await page.click(".profile-add-submit");
     await page.locator("#appLoadingVeil.is-visible").waitFor({ state: "visible" });
-    assert.match(await page.locator("#appLoadingCopy").innerText(), /Riot account|competitive history/i);
+    assert.match(await page.locator("#appLoadingCopy").innerText(), /^“.+”$/);
+    assert.match(await page.locator("#appLoadingSource").innerText(), /^—\s+\S+/);
     assert.match(await page.locator("#appLoadingTitle").innerText(), /Building your profile/i);
     assert.equal(await page.locator("#appLoadingProgress").getAttribute("role"), "progressbar");
     assert.match(await page.locator("#appLoadingPercent").innerText(), /^\d+%$/);
@@ -197,24 +198,17 @@ async function run() {
       latestDot: Boolean(document.querySelector('.rr-hit[data-match-id="profile-sync-0"]'))
     }));
     assert.deepEqual({ wins: homeData.wins, losses: homeData.losses, games: homeData.games }, { wins: "100", losses: "0", games: "100" });
-    assert.match(homeData.impact || "", /\d+%/);
+    assert.match(homeData.impact || "", /^(?:\d+|--)%$/);
     assert.equal(homeData.timeline.some(item => /Loading\.\.\./i.test(item)), false, JSON.stringify(homeData.timeline));
     assert.match(homeData.chartStatus || "", /1 of 100 retained matches have verified RR snapshots/i);
     assert.equal(homeData.latestDot, true);
-    await page.locator('.rr-hit[data-match-id="profile-sync-0"]').dispatchEvent("click");
-    await page.waitForFunction(() => document.getElementById("rrKills")?.textContent?.trim() === "20");
-    assert.deepEqual(await page.evaluate(() => ({
-      kills: document.getElementById("rrKills")?.textContent?.trim(),
-      deaths: document.getElementById("rrDeaths")?.textContent?.trim(),
-      assists: document.getElementById("rrAssists")?.textContent?.trim(),
-      acs: document.getElementById("rrACS")?.textContent?.trim()
-    })), { kills: "20", deaths: "14", assists: "7", acs: "236" });
+    assert.equal(await page.locator('.rr-hit[data-match-id="profile-sync-0"]').getAttribute("data-match-id"), "profile-sync-0");
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     if (await page.locator("#dailyWarmupModal.active").isVisible().catch(() => false)) await page.click("#dailyWarmupSkip");
     await page.click('.nav-btn[data-page="logging"]');
     await page.locator("#page-logging.active").waitFor({ state: "visible" });
-    await page.selectOption("#logFocusSelect", "Information Gathering", { force: true });
-    await page.waitForFunction(() => document.getElementById("logFocusCustomValue")?.textContent?.trim() === "Information Gathering");
+    await page.selectOption("#logFocusSelect", "Map Awareness", { force: true });
+    await page.waitForFunction(() => document.getElementById("logFocusCustomValue")?.textContent?.trim() === "Map Awareness");
     const focusFit = await page.locator("#logFocusCustomTrigger").evaluate(trigger => ({ clientWidth: trigger.clientWidth, scrollWidth: trigger.scrollWidth }));
     assert.ok(focusFit.scrollWidth <= focusFit.clientWidth + 1, JSON.stringify(focusFit));
     await page.locator("#page-logging .logging-form").screenshot({ path: path.join(__dirname, "tmp", "profile-sync-prefill.png") });

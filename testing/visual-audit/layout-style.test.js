@@ -99,7 +99,7 @@ const realContentExtremes = Object.freeze({
   logging: {
     ".manual-match-panel": { short: "RR", long: "Rounds Lost" },
     shortLabel: "Saved",
-    longLabel: "Crosshair Discipline",
+    longLabel: "Crosshair Placement",
     shortTitle: "Match Reflection",
     longTitle: "Post-Game Competitive Reflection",
     shortBody: "Review the opening duel.",
@@ -142,7 +142,7 @@ const surfaceContentExtremes = Object.freeze({
     ".insight-card": { short: "Hold the trade.", long: "Your retained rounds keep pointing back to the same late-fight choice." },
     ".insight-filter-btn": { short: "All", long: "Needs Work" },
     ".insight-tag": { short: "Good", long: "Needs Work" },
-    ".insight-meta-pill": { short: "High", long: "Focus Category: Crosshair Discipline" },
+    ".insight-meta-pill": { short: "High", long: "Focus Category: Crosshair Placement" },
     ".insight-source": { short: "Riot", long: "Henrik Round History" },
     ".trend-signal-tone": { short: "Watch", long: "Strength" }
   },

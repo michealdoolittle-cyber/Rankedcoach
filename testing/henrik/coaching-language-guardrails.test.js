@@ -14,12 +14,13 @@ const layoutCss = fs.readFileSync(path.join(root, "public", "layout-styles.css")
 const focusBlock = app.match(/const focusesList = \[([\s\S]*?)\n\];/)?.[1] || "";
 const focusCategories = [...focusBlock.matchAll(/"([^"]+)"/g)].map(match => match[1]);
 for (const required of [
-  "First Contact", "Angle Discipline", "Spacing", "Pacing", "Objective Play",
-  "Map Preparation", "Role Teamwork", "Damage Output", "Multi-Kill Conversion",
-  "Clutch Discipline", "Self Comms", "Weapon Pattern"
+  "Crosshair Placement", "Trading", "Movement", "Utility Usage", "Map Awareness",
+  "Credit/Ult Economy", "Communication", "Discipline", "Map Strategy",
+  "Behavior Composure"
 ]) {
   assert.ok(focusCategories.includes(required), `${required} must be in the shared Logging focus list`);
 }
+assert.equal(focusCategories.length, 10, "shared Logging focus list must stay fixed at 10 categories");
 assert.match(app, /syncLogFocusSelectOptions\(\);\s*setupLogFocusCustomDropdown\(\);/);
 
 assert.match(schema, /opponentPuuids/);

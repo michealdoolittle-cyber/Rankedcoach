@@ -94,7 +94,7 @@ function seedProfile() {
     matchId: match.matchId,
     agent: match.agent,
     map: match.map,
-    focusCategory: index % 2 ? "Positioning" : "Aim",
+    focusCategory: index % 2 ? "Movement" : "Crosshair Placement",
     selfRating: 3 + (index % 2),
     teamComms: 3,
     selfComms: 3,

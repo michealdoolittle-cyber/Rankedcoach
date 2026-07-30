@@ -334,7 +334,7 @@ async function run() {
     assert.equal(await page.locator("#loggingTrainingMenuTitle").innerText(), "POST-GAME AIM TRAINING");
     const warmupGameId = await submitManualReflection(page, {
       agent: "Jett",
-      focus: "Crosshair Discipline",
+      focus: "Crosshair Placement",
       map: "Ascent",
       rating: 4,
       mood: "Fun",
@@ -342,7 +342,7 @@ async function run() {
     });
     const aimTrainingGameId = await submitManualReflection(page, {
       agent: "Sova",
-      focus: "Positioning",
+      focus: "Movement",
       map: "Haven",
       rating: 5,
       mood: "Focused",
@@ -492,7 +492,7 @@ async function run() {
     await mobile.click("#dailyWarmupSave");
     const mobileTrainingGameId = await submitManualReflection(mobile, {
       agent: "Jett",
-      focus: "Crosshair Discipline",
+      focus: "Crosshair Placement",
       map: "Ascent",
       rating: 4,
       mood: "Focused",

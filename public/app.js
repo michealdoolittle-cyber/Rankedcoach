@@ -1143,7 +1143,7 @@ function buildWarmupCorrelationInsight(profile = getActiveProfile?.()) {
       why: `This is correlation, not proof that warm-up caused the change${kastDelta !== null ? `; KAST is ${kastDelta >= 0 ? "+" : ""}${kastDelta} points different` : ""}${acsDelta !== null ? ` and ACS is ${acsDelta >= 0 ? "+" : ""}${acsDelta}` : ""}.`,
       action: "Keep the routine short and repeatable, then carry the same crosshair and fight discipline into the first ranked rounds.",
       sources: ["Daily Warm-Up Check", "Henrik Match History"],
-      focus: "Session Preparation",
+      focus: "Behavior Composure",
       category: "discipline",
       priority: 72
     };
@@ -1156,7 +1156,7 @@ function buildWarmupCorrelationInsight(profile = getActiveProfile?.()) {
     why: "Range and DM mechanics do not automatically transfer into live-round decisions, utility timing, or trade spacing.",
     action: "Keep one drill, then name the exact match habit it should change before queueing.",
     sources: ["Daily Warm-Up Check", "Henrik Match History"],
-    focus: "Practice Transfer",
+    focus: "Discipline",
     category: "discipline",
     priority: 64
   };
@@ -1742,7 +1742,6 @@ function syncMobileViewportState() {
       renderStatsWeapons?.();
     });
   }
-  syncManualEntryModeBodyClass();
   if (isMobile) installMobileTouchScrollGuard();
 
   if (!isMobile) {
@@ -1774,7 +1773,6 @@ function syncMobileViewportState() {
       ensureMobileStatsBreakdownCarousel();
       ensureMobileInsightCardCarousel();
       ensureMobileInsightTrendCarousel();
-      ensureMobileManualReportControls();
       ensureMobileSwipeAffordances();
       installMobileHomePullToRefresh();
       scheduleMobileScrollExtentSync();
@@ -2425,11 +2423,6 @@ function ensureMobileTrendCarousel() {
   if (counter) counter.textContent = visibleCards.length ? `${mobileStatsTrendIndex + 1} / ${visibleCards.length}` : "0 / 0";
   nav.hidden = !cards.length;
   tabs.hidden = !cards.length;
-}
-
-function syncManualEntryModeBodyClass() {
-  const enabled = typeof isManualEntryModeEnabled === "function" ? isManualEntryModeEnabled() : false;
-  document.body?.classList.toggle("is-manual-entry-mode", Boolean(enabled));
 }
 
 function ensureMobileStatsBreakdownCarousel() {
@@ -3584,51 +3577,6 @@ function ensureMobileSwipeAffordances() {
     previewTarget: () => document.querySelector("#page-insights .trend-signal-card.is-mobile-insight-trend-active")
       || document.querySelector("#page-insights .trend-content.is-mobile-trend-content-active .trend-signal-card")
   });
-}
-
-function ensureMobileManualReportControls() {
-  const panel = document.getElementById("manualMatchPanel");
-  if (!panel) return;
-  syncManualEntryModeBodyClass();
-
-  let openButton = document.getElementById("mobileManualReportToggle");
-  if (!openButton) {
-    openButton = document.createElement("button");
-    openButton.id = "mobileManualReportToggle";
-    openButton.type = "button";
-    openButton.className = "mobile-manual-report-toggle";
-    openButton.textContent = "Create Match Report";
-    panel.insertAdjacentElement("beforebegin", openButton);
-    openButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      setManualEntryMode(true);
-      syncManualEntryModeBodyClass();
-      panel.hidden = false;
-      panel.classList.add("mobile-manual-open");
-    });
-  }
-
-  let doneButton = document.getElementById("mobileManualReportDone");
-  if (!doneButton) {
-    doneButton = document.createElement("button");
-    doneButton.id = "mobileManualReportDone";
-    doneButton.type = "button";
-    doneButton.className = "mobile-manual-report-done";
-    doneButton.textContent = "Done";
-    panel.appendChild(doneButton);
-    doneButton.addEventListener("click", (event) => {
-      event.preventDefault();
-      panel.classList.remove("mobile-manual-open");
-      panel.hidden = true;
-    });
-  }
-
-  const enabled = isManualEntryModeEnabled();
-  openButton.hidden = !enabled;
-  if (!enabled) {
-    panel.hidden = true;
-    panel.classList.remove("mobile-manual-open");
-  }
 }
 
 function syncMobileBottomShellState(options = {}) {
@@ -6977,7 +6925,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const focusCounts = {};
   const moodCounts = {};
   logs.forEach((entry) => {
-    const focus = String(entry.focus || "").trim();
+    const focus = normalizeFocusCategoryValue(entry.focus || "", "");
     const mood = String(entry.mood || "").trim();
     if (focus) focusCounts[focus] = (focusCounts[focus] || 0) + 1;
     if (mood) moodCounts[mood] = (moodCounts[mood] || 0) + 1;
@@ -6998,7 +6946,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const weeklyFocusCounts = {};
   const weeklyMoodCounts = {};
   weeklyLogs.forEach((entry) => {
-    const focus = String(entry.focus || "").trim();
+    const focus = normalizeFocusCategoryValue(entry.focus || "", "");
     const mood = String(entry.mood || "").trim();
     if (focus) weeklyFocusCounts[focus] = (weeklyFocusCounts[focus] || 0) + 1;
     if (mood) weeklyMoodCounts[mood] = (weeklyMoodCounts[mood] || 0) + 1;
@@ -7154,7 +7102,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "All primary insight systems are derived from retained Henrik match data and your reflection logs.",
       action: "Import matches, then add 2-3 reflection logs so your first coaching read has more to work with.",
       sources: ["System"],
-      focus: "Match Import",
+      focus: "Discipline",
       category: "performance",
       priority: 100
     });
@@ -7197,7 +7145,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "This usually means your decisions, utility, and comfort are more consistent on that agent.",
       action: `Use ${bestAgent.agent} as your main ranked pick for now, and only swap when the map or team comp clearly needs it.`,
       sources: ["Henrik Match History"],
-      focus: "Agent Mastery",
+      focus: "Discipline",
       category: "role",
       priority: 82
     });
@@ -7242,7 +7190,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "Multi-kills usually mean your spacing, timing, or follow-up fights are creating real round impact.",
       action: "When you get the first advantage, look for safe ways to turn it into a round snowball while maintaining discipline.",
       sources: ["Henrik Match History", "Performance"],
-      focus: "Snowball Potential",
+      focus: "Credit/Ult Economy",
       category: "performance",
       priority: 86
     });
@@ -7259,7 +7207,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         ? "Keep choosing the highest-percentage finish: isolate one opponent, use the spike clock, and avoid giving the remaining players a shared fight."
         : "Slow the last decision down and choose the highest-percentage fight: isolate one opponent, use the spike clock, and avoid a shared swing.",
       sources: ["Henrik Round History", "Verified 1vX State"],
-      focus: "Clutch Conversion",
+      focus: "Discipline",
       category: "performance",
       priority: overview.clutchConversionRate >= 50 ? 78 : 88
     });
@@ -7282,7 +7230,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         ? "Keep your spacing connected enough that this role-specific trade pattern remains repeatable."
         : "Close the spacing gap before first contact so the next death can be answered inside the five-second trade window.",
       sources: ["Henrik Kill Timeline", `${currentSignalRole || "Role"} Context`],
-      focus: "Trade Timing",
+      focus: "Trading",
       category: "teamplay",
       priority: expectedRate >= counterpartRate ? 74 : 90
     });
@@ -7300,7 +7248,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         ? "Keep creating useful damage before the round becomes chaotic; the output is arriving consistently enough to trust."
         : "Build one repeatable early-round damage plan so more rounds contribute before the occasional high-damage spike.",
       sources: ["Henrik Round Damage", "Recent Match Window"],
-      focus: "Damage Reliability",
+      focus: "Crosshair Placement",
       category: "performance",
       priority: consistencyPct >= 40 ? 70 : 84
     });
@@ -7315,7 +7263,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "RankedCoach only surfaces this after four affected matches so a disconnect or one unusual round is not treated as a player habit.",
       action: "Protect the next queue window: resolve the interruption first, then only queue when the full match is available.",
       sources: ["Henrik Behavior Factors", "Last 10 Matches"],
-      focus: "Queue Readiness",
+      focus: "Behavior Composure",
       category: "discipline",
       priority: 96
     });
@@ -7331,7 +7279,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "Some maps are easier on attack or defense, so the app compares your results by side instead of treating the map as even.",
       action: `When reviewing ${mapBias.map}, spend more time on the side that is costing you rounds.`,
       sources: ["Henrik Match History", "Map Context"],
-      focus: "Side Context",
+      focus: "Map Strategy",
       category: "performance",
       priority: 82
     });
@@ -7349,7 +7297,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
         ? "Use your damaging abilities more effectively to gain an advantageous fight."
         : "Review rounds where your ability damage landed, but did not lead to an easier fight or round advantage.",
       sources: ["Henrik Match History", "Agent Context"],
-      focus: "Damage Output",
+      focus: "Crosshair Placement",
       category: "performance",
       priority: expectationMet ? 74 : 84
     });
@@ -7364,7 +7312,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: evidenceLayer.metricWeights.headshot.presumption,
       action: "Review fight conversion, damage timing, positioning, and round impact before blaming aim alone.",
       sources: ["Henrik Match History", "Weapon Context"],
-      focus: "Fight Conversion",
+      focus: "Trading",
       category: "performance",
       priority: 83
     });
@@ -7379,7 +7327,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "This can come from crosshair placement, overpeeking, poor spacing, or taking low-percentage fights too early.",
       action: "Pick one duel focus category for the week: cleaner crosshair placement, better trade positioning, or fewer ego peeks.",
       sources: ["Henrik Match History"],
-      focus: "Fight Selection",
+      focus: "Discipline",
       category: "performance",
       priority: 98
     });
@@ -7392,7 +7340,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "You are consistently finding more value in your fights than you are giving away.",
       action: "Take initiative on your strongest agents and maps, but maintain awareness and general discipline.",
       sources: ["Henrik Match History"],
-      focus: "Aim",
+      focus: "Crosshair Placement",
       category: "performance",
       priority: 70
     });
@@ -7407,7 +7355,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: recentContinuity?.sentence || "This can happen when confidence drops, decisions get rushed, or the match quality gets more competitive.",
       action: "RankedCoach will use your recent losses to find the pattern most likely causing the dip, such as aim issues, repeated focus category tags, teammate issues, or map-specific problems.",
       sources: ["Henrik Match History", "Recent Trend"],
-      focus: "Consistency",
+      focus: "Discipline",
       category: "consistency",
       priority: 96
     });
@@ -7420,7 +7368,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: recentContinuity?.sentence || "Your current playstyle is leading to more consistent rounds with cleaner results and match wins.",
       action: "Keep the same agent pool, ranked discipline, and focus category for the next set of matches.",
       sources: ["Henrik Match History", "Recent Trend"],
-      focus: "Consistency",
+      focus: "Discipline",
       category: "consistency",
       priority: 72
     });
@@ -7450,7 +7398,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: "Low confidence can lead to hesitation, frustration, or trying to overfix every mistake.",
       action: "For the next match block, keep it simple: one agent, one map plan, and one thing to review.",
       sources: ["Reflection Logs"],
-      focus: "Mental Reset",
+      focus: "Behavior Composure",
       category: "behavior",
       priority: 74
     });
@@ -7465,7 +7413,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       why: `Your current playstyle is showing better results on ${bestRole.role} than ${weakestRole.role}.`,
       action: `To retain more competitive queue consistency, play more ${bestRole.role} for now while RankedCoach builds a clearer plan for ${weakestRole.role}.`,
       sources: ["Henrik Match History"],
-      focus: "Role Discipline",
+      focus: "Discipline",
       category: "role",
       priority: 79
     });
@@ -7513,16 +7461,19 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   let coachDiagnosis = primaryInsight?.what || "Log a few more matches and we'll sharpen this diagnosis.";
   let coachRecommendation = primaryInsight?.action || "Import another block of matches and keep one weekly focus category active until the trend changes.";
 
-  const focus = primaryInsight?.focus
-    || weeklyTopFocusEntry?.[0]
-    || topFocusEntry?.[0]
-    || (weakestMap ? "Map Awareness" : null)
-    || (hasMatchData ? (overview.kd < 1 ? "Fight Selection" : "Consistency") : "Log More Matches");
+  const focus = normalizeFocusCategoryValue(
+    primaryInsight?.focus
+      || weeklyTopFocusEntry?.[0]
+      || topFocusEntry?.[0]
+      || (weakestMap ? "Map Awareness" : null)
+      || (hasMatchData ? (overview.kd < 1 ? "Discipline" : "Behavior Composure") : "Discipline"),
+    "Discipline"
+  );
 
   const weekly = {
     mostPracticed: weeklyTopFocusEntry ? `${weeklyTopFocusEntry[0]} (${weeklyTopFocusEntry[1]} logs)` : "No repeated focus category yet",
     weakestTheme: weeklyLowRatedLogs.length
-      ? `${(weeklyLowRatedLogs[0]?.focus || "General")} (${weeklyLowRatedLogs.length} low-rated logs)`
+      ? `${normalizeFocusCategoryValue(weeklyLowRatedLogs[0]?.focus || "", "Discipline")} (${weeklyLowRatedLogs.length} low-rated logs)`
       : "No low-rating pattern yet",
     topMood: weeklyTopMoodEntry ? `${weeklyTopMoodEntry[0]} (${weeklyTopMoodEntry[1]} mentions)` : "No mood trend yet",
     why: primaryInsight?.preview || "Add more matches and logs to sharpen the weekly coaching recommendation.",
@@ -11456,7 +11407,7 @@ function renderTrendBreakdownCard(item = {}) {
 
 function getTrendBreakdownFallbackItems(key = "", model = {}) {
   const matchesPlayed = safeNumber(model?.overview?.matchesPlayed || matches.length);
-  const focusLabel = model?.focus || getLockedWeeklyFocus()?.label || "Weekly Focus";
+  const focusLabel = normalizeFocusCategoryValue(model?.focus || getLockedWeeklyFocus()?.label || "", "Discipline");
   const roleLabel = model?.role || activeRole || "Primary Role";
   const mapLabel = model?.topMap || model?.maps?.[0]?.map || "Current Map Pool";
 
@@ -11713,15 +11664,15 @@ function getNextFocusFromInsight(ins) {
   const t = ins.title.toLowerCase();
 
   if (t.includes("tilt") || t.includes("loss")) {
-    return "Mental Reset";
+    return "Behavior Composure";
   }
 
   if (t.includes("duel") || t.includes("kd")) {
-    return "Aim";
+    return "Crosshair Placement";
   }
 
   if (t.includes("role")) {
-    return "Role Discipline";
+    return "Discipline";
   }
 
   if (t.includes("map")) {
@@ -11729,14 +11680,14 @@ function getNextFocusFromInsight(ins) {
   }
 
   if (t.includes("agent")) {
-    return "Agent Mastery";
+    return "Discipline";
   }
 
   if (t.includes("performance")) {
-    return "Consistency";
+    return "Discipline";
   }
 
-  return "Game Sense";
+  return "Discipline";
 }
 
 // ========================
@@ -11762,8 +11713,10 @@ function getLockedWeeklyFocus() {
   const currentWeek = getCurrentWeekKey();
 
   if (savedFocus && savedWeek === currentWeek) {
+    const normalizedSavedFocus = normalizeFocusCategoryValue(savedFocus, "");
+    if (!normalizedSavedFocus) return null;
     return {
-      label: savedFocus,
+      label: normalizedSavedFocus,
       confidence: savedConfidence || "Low"
     };
   }
@@ -11772,9 +11725,10 @@ function getLockedWeeklyFocus() {
 }
 
 function setLockedWeeklyFocus(focus, confidence = "Low") {
-  if (!focus) return;
+  const normalizedFocus = normalizeFocusCategoryValue(focus, "");
+  if (!normalizedFocus) return;
 
-  localStorage.setItem(WEEKLY_FOCUS_KEY, focus);
+  localStorage.setItem(WEEKLY_FOCUS_KEY, normalizedFocus);
   localStorage.setItem(WEEKLY_FOCUS_WEEK_KEY, getCurrentWeekKey());
   localStorage.setItem(WEEKLY_FOCUS_CONFIDENCE_KEY, confidence || "Low");
 }
@@ -12566,80 +12520,19 @@ function updateProfileDropdownMenu() {
   const signedIn = Boolean(currentAuthUser);
   const identityEl = document.getElementById("profileDropdownIdentity");
   const logoutBtn = document.getElementById("pdLogoutBtn");
-  const manualToggle = document.getElementById("manualEntryModeToggle");
 
   const displayName = signedIn
     ? getUserAccountName(currentAuthUser)
     : "Guest User";
 
   if (identityEl) identityEl.textContent = displayName;
-  if (manualToggle) {
-    manualToggle.hidden = false;
-  }
 
   if (logoutBtn) {
     logoutBtn.hidden = false;
     logoutBtn.textContent = signedIn ? "Log out" : "Log in / Sign up";
   }
-  syncManualEntryModeUI?.();
   syncAccountSupportUI?.(active);
   syncBroadcastPreviewControls?.();
-}
-
-function isManualEntryModeEnabled() {
-  return Boolean(getActiveProfile?.()?.manualEntryMode);
-}
-
-function syncManualEntryModeUI() {
-  const enabled = isManualEntryModeEnabled();
-  const toggles = [
-    document.getElementById("manualEntryModeToggle"),
-    document.getElementById("accountSupportManualEntryToggle")
-  ].filter(Boolean);
-  const panel = document.getElementById("manualMatchPanel");
-  const loggingForm = document.querySelector(".logging-form");
-
-  toggles.forEach((toggle) => {
-    toggle.classList.toggle("is-active", enabled);
-    toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
-  });
-
-  if (panel) panel.hidden = !enabled;
-  loggingForm?.classList.toggle("manual-entry-enabled", enabled);
-}
-
-function setManualEntryMode(nextEnabled = false) {
-  const profile = getActiveProfile?.();
-  if (!profile) return;
-
-  profile.manualEntryMode = Boolean(nextEnabled);
-  saveProfiles?.();
-  syncManualEntryModeUI();
-  syncManualEntryModeBodyClass();
-  ensureMobileManualReportControls();
-}
-
-async function toggleManualEntryModeFromUI() {
-  const nextEnabled = !isManualEntryModeEnabled();
-  if (nextEnabled) {
-    const accountSupportWasOpen = Boolean(document.getElementById("accountSupportModal")?.classList.contains("active"));
-    if (accountSupportWasOpen) {
-      closeAccountSupportModal?.();
-      await new Promise((resolve) => window.setTimeout(resolve, 300));
-    }
-    if (isMobileLayoutViewport()) {
-      closeMobileProfilePopover?.();
-      closeProfileDropdown?.();
-      profileSwitcher?.classList.remove("open");
-      setProfileRatingDropdownOpen?.(false);
-    }
-    const confirmed = await openManualSessionStartPrompt();
-    if (!confirmed) return false;
-  }
-  setManualEntryMode(nextEnabled);
-  updateLoggingDebriefPreview?.();
-  syncAccountSupportUI?.();
-  return true;
 }
 
 function syncAccountSupportUI(profile = getActiveProfile()) {
@@ -12655,7 +12548,6 @@ function syncAccountSupportUI(profile = getActiveProfile()) {
     resetSecuritySettingsFormForGuest();
   }
   syncAccountSupportAccessibilityControls(profile);
-  syncManualEntryModeUI?.();
   globalThis.RankedCoachKnowledgeReview?.syncAccess?.(currentAuthUser);
 }
 
@@ -12937,168 +12829,6 @@ function openManualSessionStartPrompt() {
   });
 }
 
-function readManualNumber(id, fallback = null) {
-  const raw = document.getElementById(id)?.value;
-  if (raw == null || String(raw).trim() === "") return fallback;
-  const value = Number(raw);
-  return Number.isFinite(value) ? value : fallback;
-}
-
-function getManualReportValues() {
-  if (!isManualEntryModeEnabled()) return null;
-
-  const result = String(document.getElementById("manualResult")?.value || "draw").toLowerCase();
-  const rr = readManualNumber("manualRR", 0);
-
-  return {
-    result: ["win", "loss", "draw"].includes(result) ? result : "draw",
-    rr: safeNumber(rr),
-    roundsWon: readManualNumber("manualRoundsWon", null),
-    roundsLost: readManualNumber("manualRoundsLost", null),
-    kills: readManualNumber("manualKills", 0),
-    deaths: readManualNumber("manualDeaths", 0),
-    assists: readManualNumber("manualAssists", 0),
-    acs: readManualNumber("manualACS", 0),
-    adr: readManualNumber("manualADR", 0),
-    pendingVerification: true
-  };
-}
-
-function setManualReportFormValues(report = null) {
-  const values = report || {};
-  const assign = (id, value) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.value = value == null ? "" : String(value);
-  };
-
-  assign("manualResult", values.result || "win");
-  assign("manualRR", values.rr);
-  assign("manualRoundsWon", values.roundsWon);
-  assign("manualRoundsLost", values.roundsLost);
-  assign("manualKills", values.kills);
-  assign("manualDeaths", values.deaths);
-  assign("manualAssists", values.assists);
-  assign("manualACS", values.acs);
-  assign("manualADR", values.adr);
-}
-
-function resetManualReportForm() {
-  setManualReportFormValues({
-    result: "win",
-    rr: "",
-    roundsWon: "",
-    roundsLost: "",
-    kills: "",
-    deaths: "",
-    assists: "",
-    acs: "",
-    adr: ""
-  });
-}
-
-function buildManualMatchFromLogEntry(entry = {}) {
-  const schemaAdapter = window.RankedCoachMatchRecord;
-  if (schemaAdapter?.fromManualLogEntry && schemaAdapter?.toLegacyMatch) {
-    const record = schemaAdapter.fromManualLogEntry(entry);
-    const legacyMatch = schemaAdapter.toLegacyMatch(record);
-    return {
-      ...legacyMatch,
-      manualReport: {
-        ...(legacyMatch.manualReport || {}),
-        ...(entry.manualReport || entry.manual || {})
-      },
-      advanced: {
-        ...(legacyMatch.advanced || {}),
-        manual: true
-      }
-    };
-  }
-
-  const manual = entry.manualReport || entry.manual || {};
-  const createdAt = entry.createdAt || nowISO();
-  const result = ["win", "loss", "draw"].includes(String(manual.result || "").toLowerCase())
-    ? String(manual.result).toLowerCase()
-    : "draw";
-  const rr = safeNumber(manual.rr, result === "win" ? 18 : result === "loss" ? -16 : 0);
-  const agent = String(entry.agent || "").trim() || "Unknown";
-  const mapName = String(entry.map || "").trim() || "Unknown";
-  const matchId = entry.matchId || `manual-${entry.id || uuid()}`;
-  const manualStats = {
-    kills: { value: safeNumber(manual.kills) },
-    deaths: { value: safeNumber(manual.deaths) },
-    assists: { value: safeNumber(manual.assists) },
-    scorePerRound: { value: safeNumber(manual.acs) },
-    damagePerRound: { value: safeNumber(manual.adr) }
-  };
-  if (manual.hs !== null && manual.hs !== undefined && String(manual.hs).trim() !== "") {
-    manualStats.headshotsPercentage = { value: safeNumber(manual.hs) };
-  }
-
-  return {
-    id: matchId,
-    matchId,
-    source: "manual",
-    manual: true,
-    pendingVerification: true,
-    rr,
-    result,
-    createdAt,
-    agent,
-    map: mapName,
-    metadata: {
-      id: matchId,
-      matchId,
-      manualLogId: entry.id,
-      agent,
-      mapName,
-      result,
-      playedAt: createdAt,
-      source: "manual"
-    },
-    segments: [{
-      type: "overview",
-      stats: manualStats
-    }],
-    manualReport: {
-      ...manual,
-      result,
-      rr,
-      roundsWon: manual.roundsWon == null ? null : safeNumber(manual.roundsWon),
-      roundsLost: manual.roundsLost == null ? null : safeNumber(manual.roundsLost)
-    },
-    advanced: {
-      manual: true,
-      roundsWon: manual.roundsWon == null ? null : safeNumber(manual.roundsWon),
-      roundsLost: manual.roundsLost == null ? null : safeNumber(manual.roundsLost)
-    }
-  };
-}
-
-function upsertManualMatchForLogEntry(entry = {}) {
-  if (!entry?.manualReport && !entry?.manual) return null;
-
-  const profile = getActiveProfile?.();
-  if (!profile) return null;
-
-  const manualMatch = buildManualMatchFromLogEntry(entry);
-  entry.matchId = manualMatch.matchId;
-  entry.manualMatchId = manualMatch.matchId;
-
-  const existing = Array.isArray(matches) ? matches : [];
-  matches = existing
-    .filter(match => String(match?.metadata?.manualLogId || match?.manualLogId || "") !== String(entry.id))
-    .concat(manualMatch)
-    .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
-
-  profile.matches = matches.slice();
-  profile.importSource = profile.importSource || "manual";
-  profile.lastManualEntryAt = nowISO();
-  saveProfiles?.();
-  recomputeFromMatches?.();
-  return manualMatch.matchId;
-}
-
 let appToastCounter = 0;
 let premiumMomentTimer = 0;
 let premiumAvatarCelebrateTimer = 0;
@@ -13271,27 +13001,6 @@ function getBroadcastTargetRect(target = null) {
   return rect;
 }
 
-function flashHit(target = document.body, options = {}) {
-  if (shouldSkipBroadcastMotion()) return;
-  const flash = document.createElement("div");
-  flash.className = "broadcast-motion-flash";
-  if (target && target !== document.body && target !== document.documentElement && target.getBoundingClientRect) {
-    const rect = getBroadcastTargetRect(target);
-    Object.assign(flash.style, {
-      left: `${rect.left}px`,
-      top: `${rect.top}px`,
-      right: "auto",
-      bottom: "auto",
-      width: `${rect.width}px`,
-      height: `${rect.height}px`,
-      borderRadius: getComputedStyle(target).borderRadius || "18px"
-    });
-  }
-  flash.style.opacity = String(Math.max(0.2, Math.min(1, Number(options.opacity) || 0.92)));
-  document.body.appendChild(flash);
-  window.setTimeout(() => flash.remove(), Math.max(120, Number(options.durationMs) || 150));
-}
-
 function impactShake(target = document.querySelector(".app") || document.body, intensity = "low") {
   if (shouldSkipBroadcastMotion() || !target?.classList) return;
   const className = intensity === "high" ? "broadcast-motion-shake-high" : "broadcast-motion-shake-low";
@@ -13400,11 +13109,11 @@ function animatePostgameAutofillFields(match = null, options = {}) {
 function buildLoggingRevealPreviewData(options = {}) {
   const roll = getBroadcastRollData(options);
   const agent = String(options.agent || roll.agent || "Jett").trim();
-  const focus = String(options.focus || roll.focus || "Positioning").trim();
+  const focus = normalizeFocusCategoryValue(options.focus || roll.focus || "Map Awareness", "Map Awareness");
   const map = String(options.map || getCurrentLoggingFormMap() || "Ascent").trim();
   return {
     agent: agent && agent !== "-" ? agent : "Jett",
-    focus: focus && focus !== "-" ? focus : "Positioning",
+    focus: focus && focus !== "-" ? focus : "Map Awareness",
     map: map && map !== "-" ? map : "Ascent",
     rrDelta: Number.isFinite(Number(options.rrDelta)) ? Number(options.rrDelta) : 18
   };
@@ -13412,31 +13121,25 @@ function buildLoggingRevealPreviewData(options = {}) {
 
 function applyLoggingPreviewAutofillFields(entry = {}) {
   const agent = String(entry.agent || "").trim();
-  const focus = String(entry.focus || "").trim();
+  const focus = normalizeFocusCategoryValue(entry.focus || "", "");
   const map = String(entry.map || "").trim();
   if (agent && typeof updateLogAgentDisplay === "function") {
     updateLogAgentDisplay(agent);
   }
 
   const focusSelect = document.getElementById("logFocusSelect");
-  const focusOther = document.getElementById("logFocusOther");
   const focusPreview = document.getElementById("focusPreviewText");
   if (focus) {
     const matchingOption = Array.from(focusSelect?.options || [])
       .find(option => option.value === focus || option.textContent?.trim() === focus);
     if (focusSelect) {
-      focusSelect.value = matchingOption?.value || "Other";
-    }
-    if (focusOther) {
-      focusOther.value = matchingOption ? "" : focus;
+      focusSelect.value = matchingOption?.value || "";
     }
     if (focusPreview) {
       focusPreview.textContent = focus;
       focusPreview.classList.remove("is-placeholder");
     }
-    if (!matchingOption && typeof setCustomFocusCommitted === "function") {
-      setCustomFocusCommitted(focus);
-    }
+    setCustomFocusCommitted?.("");
   }
 
   const mapInput = document.getElementById("logMap");
@@ -13571,17 +13274,16 @@ function tickCounter(el, value, options = {}) {
 
 function getBroadcastRollData(options = {}) {
   const agent = String(options.agent || agentName?.textContent || activeAgent || "Jett").trim();
-  const focus = String(options.focus || focusDisplay?.textContent || "Positioning").trim();
+  const focus = normalizeFocusCategoryValue(options.focus || focusDisplay?.textContent || "Map Awareness", "Map Awareness");
   const role = String(agentRoles?.[agent] || activeRole || "").toLowerCase();
   return {
     agent: agent && agent !== "-" ? agent : "Jett",
-    focus: focus && focus !== "-" ? focus : "Positioning",
+    focus: focus && focus !== "-" ? focus : "Map Awareness",
     role
   };
 }
 
 async function playBroadcastRollReveal(options = {}) {
-  if (!options.bypassGate && !canUseBroadcastPreviewMode()) return false;
   if (!options.forceMotion && shouldSkipBroadcastMotion()) return false;
   const { agent, focus } = getBroadcastRollData(options);
   const frame = document.getElementById("agentFrame") || document.querySelector(".loadout-card");
@@ -13589,7 +13291,6 @@ async function playBroadcastRollReveal(options = {}) {
   const focusEl = focusDisplay || document.getElementById("focusDisplay");
   const artEl = document.getElementById("agentFrameArt") || document.getElementById("agentRevealArt") || frame;
   primeBroadcastOverlay(1800);
-  flashHit(document.body);
   await broadcastWait(90);
   [frame, artEl, nameEl].filter(Boolean).forEach(snapIn);
   impactShake(document.querySelector(".home-middle-row") || document.querySelector(".app") || document.body, "low");
@@ -13607,11 +13308,11 @@ function chooseBroadcastPreviewLoadout(options = {}) {
     : Array.isArray(allAgents) ? allAgents.slice() : [];
   const focusPool = typeof getLoadoutFocusPool === "function"
     ? getLoadoutFocusPool()
-    : ["Positioning", "Duel Discipline", "Utility Usage", "Trading"];
+    : focusesList;
   const currentAgent = String(agentName?.textContent || "").trim();
   const currentFocus = String(focusDisplay?.textContent || "").trim();
   const agents = agentPool.length ? agentPool : ["Jett"];
-  const focuses = focusPool.length ? focusPool : ["Positioning"];
+  const focuses = focusPool.length ? focusPool : ["Map Awareness"];
   let agent = String(options.agent || "").trim();
   if (!agent) {
     do {
@@ -13621,7 +13322,7 @@ function chooseBroadcastPreviewLoadout(options = {}) {
   let focus = String(options.focus || "").trim();
   if (!focus) {
     do {
-      focus = focuses[Math.floor(Math.random() * focuses.length)] || "Positioning";
+      focus = focuses[Math.floor(Math.random() * focuses.length)] || "Map Awareness";
     } while (focuses.length > 1 && focus === currentFocus);
   }
   return { agent, focus, role: String(agentRoles?.[agent] || "").toLowerCase() };
@@ -13747,13 +13448,10 @@ function getCurrentLoggingFormAgent() {
 }
 
 function getCurrentLoggingFormFocus() {
-  const other = String(document.getElementById("logFocusOther")?.value || "").trim();
   const select = String(document.getElementById("logFocusSelect")?.value || "").trim();
   const preview = String(document.getElementById("focusPreviewText")?.textContent || "").trim();
-  if (select === "Other" && other) return other;
-  if (select && select !== "Other" && !/^focus category$/i.test(select)) return select;
-  if (other) return other;
-  if (preview && !/^focus category$/i.test(preview)) return preview;
+  if (select && !/^focus category$/i.test(select)) return normalizeFocusCategoryValue(select, "");
+  if (preview && !/^focus category$/i.test(preview)) return normalizeFocusCategoryValue(preview, "");
   return "";
 }
 
@@ -14047,7 +13745,6 @@ async function animateBroadcastCompassPackage(match = null, options = {}) {
 }
 
 async function playBroadcastPostgamePackage(options = {}) {
-  if (!options.bypassGate && !canUseBroadcastPreviewMode()) return false;
   if (!options.forceMotion && shouldSkipBroadcastMotion()) return false;
   const match = options.match || options.record || getLatestBroadcastMatch();
   const headline = selectBroadcastHeadlineStatCandidate(match, options);
@@ -14065,7 +13762,6 @@ async function playBroadcastPostgamePackage(options = {}) {
     .filter(candidate => candidate.el !== headline.el)
     .slice(0, 4);
   primeBroadcastOverlay(2200);
-  flashHit(document.body);
   snapIn(postgameAnchor);
   await broadcastWait(160);
   statStamp(getBroadcastRollHonoredLabel(match, options), { tone: "neutral", durationMs: 2100 });
@@ -14259,7 +13955,6 @@ async function runLoggingRevealPreview(sourceButton = null) {
 }
 
 function queueBroadcastRollReveal(options = {}) {
-  if (!canUseBroadcastPreviewMode()) return;
   window.clearTimeout(broadcastPreviewTimer);
   broadcastPreviewTimer = window.setTimeout(() => {
     playBroadcastRollReveal(options).catch(error => console.warn("Broadcast roll preview failed", error));
@@ -14267,7 +13962,6 @@ function queueBroadcastRollReveal(options = {}) {
 }
 
 function queueBroadcastPostgamePackage(record = null, options = {}) {
-  if (!canUseBroadcastPreviewMode()) return;
   window.clearTimeout(broadcastPreviewTimer);
   broadcastPreviewTimer = window.setTimeout(() => {
     playBroadcastPostgamePackage({ ...options, record, match: record }).catch(error => console.warn("Broadcast postgame preview failed", error));
@@ -15260,7 +14954,6 @@ function createGuestProfileRecord() {
     region: "NA",
     startingRR: 0,
     matches: [],
-    manualEntryMode: false,
     themeKey: getActiveProfile?.()?.themeKey || "default",
     frameTheme: getActiveProfile?.()?.frameTheme || "default",
     layoutShape: normalizeProfileLayoutShape(getActiveProfile?.()?.layoutShape ?? getActiveProfile?.()?.layoutStyle),
@@ -15761,10 +15454,10 @@ function buildClientTutorialDemoMatches(count = 750) {
       mapPool: DEMO_ACT_MAP_POOLS["Season 2025 Act 5"],
       maps: { Ascent: -2, Bind: 0, Breeze: -6, Corrode: -4, Haven: 3, Lotus: -5, Abyss: -8 },
       profiles: [
-        { agent: "Reyna", weapon: "Vandal", focus: "Duel Discipline", kill: 5, death: 4, assist: -2, hs: 2 },
-        { agent: "Phoenix", weapon: "Spectre", focus: "Self Comms", kill: 2, death: 3, assist: 0, hs: -2 },
-        { agent: "Sage", weapon: "Phantom", focus: "Team Comms", kill: -3, death: 1, assist: 5, hs: -1 },
-        { agent: "Cypher", weapon: "Judge", focus: "Awareness Check", kill: 0, death: 2, assist: 2, hs: -7 }
+        { agent: "Reyna", weapon: "Vandal", focus: "Discipline", kill: 5, death: 4, assist: -2, hs: 2 },
+        { agent: "Phoenix", weapon: "Spectre", focus: "Communication", kill: 2, death: 3, assist: 0, hs: -2 },
+        { agent: "Sage", weapon: "Phantom", focus: "Communication", kill: -3, death: 1, assist: 5, hs: -1 },
+        { agent: "Cypher", weapon: "Judge", focus: "Map Awareness", kill: 0, death: 2, assist: 2, hs: -7 }
       ]
     },
     {
@@ -15781,10 +15474,10 @@ function buildClientTutorialDemoMatches(count = 750) {
       mapPool: DEMO_ACT_MAP_POOLS["Season 2025 Act 6"],
       maps: { Abyss: -7, Bind: 3, Breeze: -2, Corrode: 1, Haven: 4, Pearl: 2, Split: -5 },
       profiles: [
-        { agent: "Cypher", weapon: "Guardian", focus: "Round Survivability", kill: -1, death: -2, assist: 4, hs: 5 },
-        { agent: "Killjoy", weapon: "Vandal", focus: "Awareness Check", kill: 0, death: -1, assist: 5, hs: 2 },
-        { agent: "Sage", weapon: "Phantom", focus: "Support Value", kill: -3, death: -1, assist: 8, hs: -1 },
-        { agent: "Deadlock", weapon: "Spectre", focus: "Retake Timing", kill: -2, death: 0, assist: 4, hs: -3 }
+        { agent: "Cypher", weapon: "Guardian", focus: "Discipline", kill: -1, death: -2, assist: 4, hs: 5 },
+        { agent: "Killjoy", weapon: "Vandal", focus: "Map Awareness", kill: 0, death: -1, assist: 5, hs: 2 },
+        { agent: "Sage", weapon: "Phantom", focus: "Utility Usage", kill: -3, death: -1, assist: 8, hs: -1 },
+        { agent: "Deadlock", weapon: "Spectre", focus: "Map Strategy", kill: -2, death: 0, assist: 4, hs: -3 }
       ]
     },
     {
@@ -15802,9 +15495,9 @@ function buildClientTutorialDemoMatches(count = 750) {
       maps: { Abyss: -4, Bind: 5, Breeze: 1, Corrode: 2, Haven: 6, Pearl: 6, Split: -2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 1, death: -1, assist: 6, hs: 1 },
-        { agent: "Brimstone", weapon: "Phantom", focus: "Team Utility", kill: -2, death: -1, assist: 8, hs: -1 },
-        { agent: "Clove", weapon: "Vandal", focus: "Post-Plant Control", kill: 2, death: 0, assist: 5, hs: 3 },
-        { agent: "Harbor", weapon: "Spectre", focus: "Utility Timing", kill: -3, death: -2, assist: 9, hs: -2 }
+        { agent: "Brimstone", weapon: "Phantom", focus: "Utility Usage", kill: -2, death: -1, assist: 8, hs: -1 },
+        { agent: "Clove", weapon: "Vandal", focus: "Map Strategy", kill: 2, death: 0, assist: 5, hs: 3 },
+        { agent: "Harbor", weapon: "Spectre", focus: "Utility Usage", kill: -3, death: -2, assist: 9, hs: -2 }
       ]
     },
     {
@@ -15821,10 +15514,10 @@ function buildClientTutorialDemoMatches(count = 750) {
       mapPool: DEMO_ACT_MAP_POOLS["Season 2026 Act 2"],
       maps: { Bind: 1, Breeze: -3, Fracture: -4, Haven: 7, Lotus: -6, Pearl: 3, Split: -8 },
       profiles: [
-        { agent: "Omen", weapon: "Judge", focus: "Eco Conversion", kill: 4, death: 1, assist: 4, hs: -8 },
-        { agent: "Raze", weapon: "Judge", focus: "Positioning", kill: 5, death: 4, assist: 0, hs: -7 },
-        { agent: "Neon", weapon: "Vandal", focus: "Trade Conversion", kill: 4, death: 5, assist: -1, hs: 1 },
-        { agent: "Sova", weapon: "Phantom", focus: "Utility Timing", kill: 0, death: 0, assist: 5, hs: 1 }
+        { agent: "Omen", weapon: "Judge", focus: "Credit/Ult Economy", kill: 4, death: 1, assist: 4, hs: -8 },
+        { agent: "Raze", weapon: "Judge", focus: "Movement", kill: 5, death: 4, assist: 0, hs: -7 },
+        { agent: "Neon", weapon: "Vandal", focus: "Trading", kill: 4, death: 5, assist: -1, hs: 1 },
+        { agent: "Sova", weapon: "Phantom", focus: "Utility Usage", kill: 0, death: 0, assist: 5, hs: 1 }
       ]
     },
     {
@@ -15842,9 +15535,9 @@ function buildClientTutorialDemoMatches(count = 750) {
       maps: { Ascent: 3, Breeze: 1, Fracture: -2, Haven: 8, Lotus: -4, Pearl: 7, Split: 2 },
       profiles: [
         { agent: "Omen", weapon: "Phantom", focus: "Map Awareness", kill: 2, death: -1, assist: 6, hs: 2 },
-        { agent: "Sova", weapon: "Vandal", focus: "Utility Timing", kill: 1, death: -1, assist: 8, hs: 4 },
-        { agent: "Jett", weapon: "Vandal", focus: "Trade Conversion", kill: 5, death: 1, assist: 1, hs: 6 },
-        { agent: "Killjoy", weapon: "Phantom", focus: "Round Survivability", kill: 0, death: -3, assist: 5, hs: 2 }
+        { agent: "Sova", weapon: "Vandal", focus: "Utility Usage", kill: 1, death: -1, assist: 8, hs: 4 },
+        { agent: "Jett", weapon: "Vandal", focus: "Trading", kill: 5, death: 1, assist: 1, hs: 6 },
+        { agent: "Killjoy", weapon: "Phantom", focus: "Discipline", kill: 0, death: -3, assist: 5, hs: 2 }
       ]
     }
   ];
@@ -17484,8 +17177,7 @@ function hasPlayerReflectionDraft() {
   if (selectedLogRating != null || selectedLogMood || selectedLogTeamComms != null || selectedLogSelfComms != null) return true;
   const values = [
     document.getElementById("logNotes")?.value,
-    document.getElementById("logFocusSelect")?.value,
-    document.getElementById("logFocusOther")?.value
+    document.getElementById("logFocusSelect")?.value
   ];
   return values.some(value => {
     const cleaned = String(value || "").trim();
@@ -18222,44 +17914,91 @@ const allAgents = [
 ];
 
 const focusesList = [
-  "Crosshair Discipline",
-  "Duel Discipline",
-  "Positioning",
+  "Crosshair Placement",
   "Trading",
-  "Entry",
-  "Timing",
-  "Information Gathering",
+  "Movement",
   "Utility Usage",
-  "Utility Timing",
-  "Post-Plant Control",
-  "Round Survivability",
-  "Eco Conversion",
-  "Awareness Check",
-  "Retake Timing",
-  "Comms Discipline",
-  "Weapon Category Use",
-  "Mental Reset",
-  "First Contact",
-  "Angle Discipline",
-  "Spacing",
-  "Pacing",
-  "Objective Play",
-  "Map Preparation",
-  "Role Teamwork",
-  "Damage Output",
-  "Multi-Kill Conversion",
-  "Clutch Discipline",
-  "Self Comms",
-  "Weapon Pattern"
+  "Map Awareness",
+  "Credit/Ult Economy",
+  "Communication",
+  "Discipline",
+  "Map Strategy",
+  "Behavior Composure"
 ];
 
-const LOADOUT_FOCUS_BY_MODE = {
-  mechanics: ["Crosshair Discipline", "Duel Discipline", "Weapon Category Use", "Round Survivability"],
-  decision: ["Positioning", "Trading", "Timing", "Information Gathering", "Post-Plant Control", "Awareness Check", "Retake Timing", "Comms Discipline"],
-  growth: ["Duel Discipline", "Positioning", "Trading", "Timing", "Utility Usage", "Utility Timing", "Entry", "Round Survivability"],
-  comfort: ["Crosshair Discipline", "Positioning", "Information Gathering", "Post-Plant Control", "Comms Discipline"],
-  challenge: ["Entry", "Trading", "Utility Timing", "Retake Timing", "Eco Conversion", "Mental Reset"]
-};
+const RETIRED_FOCUS_CATEGORY_MAP = Object.freeze({
+  "Crosshair Discipline": "Crosshair Placement",
+  "Duel Discipline": "Discipline",
+  "Positioning": "Movement",
+  "Entry": "Movement",
+  "Timing": "Map Strategy",
+  "Information Gathering": "Map Awareness",
+  "Utility Timing": "Utility Usage",
+  "Post-Plant Control": "Map Strategy",
+  "Round Survivability": "Discipline",
+  "Eco Conversion": "Credit/Ult Economy",
+  "Awareness Check": "Map Awareness",
+  "Retake Timing": "Map Strategy",
+  "Comms Discipline": "Communication",
+  "Weapon Category Use": "Credit/Ult Economy",
+  "Mental Reset": "Behavior Composure",
+  "First Contact": "Movement",
+  "Angle Discipline": "Crosshair Placement",
+  "Spacing": "Movement",
+  "Pacing": "Discipline",
+  "Objective Play": "Map Strategy",
+  "Map Preparation": "Map Strategy",
+  "Role Teamwork": "Communication",
+  "Damage Output": "Crosshair Placement",
+  "Multi-Kill Conversion": "Trading",
+  "Clutch Discipline": "Discipline",
+  "Self Comms": "Communication",
+  "Weapon Pattern": "Crosshair Placement",
+  "Agent Mastery": "Discipline",
+  "Aim": "Crosshair Placement",
+  "Clutch Conversion": "Discipline",
+  "Consistency": "Discipline",
+  "Damage Reliability": "Crosshair Placement",
+  "Fight Conversion": "Trading",
+  "Fight Selection": "Discipline",
+  "Match Import": "Discipline",
+  "Practice Transfer": "Discipline",
+  "Queue Readiness": "Behavior Composure",
+  "Role Discipline": "Discipline",
+  "Session Preparation": "Behavior Composure",
+  "Side Context": "Map Strategy",
+  "Snowball Potential": "Credit/Ult Economy",
+  "Support Value": "Utility Usage",
+  "Team Comms": "Communication",
+  "Team Utility": "Utility Usage",
+  "Trade Conversion": "Trading",
+  "Trade Timing": "Trading",
+  "Map Fundamentals": "Map Strategy",
+  "Map Planning": "Map Strategy",
+  "Map Progress": "Map Strategy",
+  "Entry Timing": "Movement",
+  "Utility Follow-Through": "Utility Usage",
+  "Agent Pool": "Discipline",
+  "Role Fit": "Discipline",
+  "Entry Spacing": "Trading",
+  "Damage Consistency": "Crosshair Placement",
+  "Sniper Economy": "Credit/Ult Economy",
+  "Weapon Identity": "Crosshair Placement",
+  "Utility Coordination": "Utility Usage",
+  "Trade Spacing": "Trading",
+  "Round Conversion": "Map Strategy",
+  "Economy Coordination": "Credit/Ult Economy",
+  "Support Spacing": "Trading",
+  "Useful Calls": "Communication",
+  "general": "Discipline"
+});
+
+function normalizeFocusCategoryValue(value = "", fallback = "") {
+  const raw = String(value || "").trim();
+  if (!raw || /^focus category$/i.test(raw) || /^select focus$/i.test(raw)) return fallback;
+  if (focusesList.includes(raw)) return raw;
+  return RETIRED_FOCUS_CATEGORY_MAP[raw] || fallback;
+}
 
 function getLoadoutAgentPool() {
   const preferences = getLoadoutPreferences();
@@ -18277,7 +18016,8 @@ function getLoadoutAgentPool() {
 
 function getLoadoutFocusPool() {
   const locked = getLockedWeeklyFocus();
-  return locked?.label && focusesList.includes(locked.label) ? [locked.label] : focusesList;
+  const lockedFocus = normalizeFocusCategoryValue(locked?.label || "");
+  return lockedFocus ? [lockedFocus] : focusesList;
 }
 
 const agentRoles = {
@@ -19853,7 +19593,6 @@ function syncLoadoutRoleTextColors() {
     focusDisplay,
     document.getElementById("logAgentText"),
     document.getElementById("logFocusSelect"),
-    document.getElementById("logFocusOther"),
     document.getElementById("focusPreviewText"),
     document.getElementById("loggingLiveFocus"),
     document.getElementById("logFocusCustomTrigger"),
@@ -19870,7 +19609,6 @@ function syncLoggingRoleTone(roleName = activeRole) {
   [
     document.getElementById("logAgentText"),
     document.getElementById("logFocusSelect"),
-    document.getElementById("logFocusOther"),
     document.getElementById("focusPreviewText"),
     document.getElementById("loggingLiveFocus"),
     document.getElementById("logFocusCustomTrigger"),
@@ -20358,87 +20096,18 @@ function updateLogAgentDisplay(agent){
   updateLoggingDebriefPreview();
 }
 
-function setFocusOtherVisibility(show, value = ""){
-  const wrapper = document.getElementById("focusOtherWrap");
-  const input = document.getElementById("logFocusOther");
-  const confirm = document.getElementById("confirmFocusOther");
-  const focusWrapper = document.querySelector(".focus-wrapper");
-
-  if(wrapper){
-    wrapper.style.display = show ? "flex" : "none";
-    wrapper.hidden = !show;
-    wrapper.setAttribute("aria-hidden", String(!show));
-  }
-  focusWrapper?.classList.toggle("is-custom-focus-editing", Boolean(show));
-  focusWrapper?.classList.toggle("custom-focus-committed", false);
-
-  if(input){
-    if(show){
-      input.disabled = false;
-      input.style.display = "";
-      if(value) input.value = value;
-      requestAnimationFrame(() => input.focus());
-    } else {
-      input.value = "";
-      input.disabled = true;
-    }
-  }
-  if(confirm){
-    confirm.style.display = "";
-  }
+function resetFixedFocusEditState(){
+  document.querySelector(".focus-wrapper")?.classList.remove("is-custom-focus-editing", "custom-focus-committed");
 }
 
-function setCustomFocusCommitted(value = ""){
-  const wrapper = document.querySelector(".focus-wrapper");
-  const otherWrap = document.getElementById("focusOtherWrap");
-  const preview = document.getElementById("focusPreviewText");
-  const input = document.getElementById("logFocusOther");
-  const confirm = document.getElementById("confirmFocusOther");
-  const select = document.getElementById("logFocusSelect");
-  const isOtherFocus = select?.value === "Other";
-  const roleClasses = [
-    "role-duelist",
-    "role-controller",
-    "role-initiator",
-    "role-sentinel"
-  ];
-
-  if(preview){
-    preview.textContent = value || "";
-    preview.classList.remove(...roleClasses);
-    if(input){
-      const activeRoleClass = roleClasses.find(cls => input.classList.contains(cls));
-      if(activeRoleClass){
-        preview.classList.add(activeRoleClass);
-      }
-    }
-  }
-
-  if(input && value){
-    input.value = value;
-  }
-
-  wrapper?.classList.toggle("custom-focus-committed", !!value);
-  wrapper?.classList.toggle("is-custom-focus-editing", !value && isOtherFocus);
-  if(otherWrap){
-    const shouldShowOtherWrap = Boolean(value || isOtherFocus);
-    otherWrap.style.display = shouldShowOtherWrap ? "flex" : "none";
-    otherWrap.hidden = !shouldShowOtherWrap;
-    otherWrap.setAttribute("aria-hidden", String(!shouldShowOtherWrap));
-  }
-  if(input){
-    input.disabled = !!value;
-  }
-  if(confirm){
-    confirm.style.display = value ? "none" : "";
-  }
-  syncLogFocusCustomDropdown();
+function setCustomFocusCommitted(){
+  document.querySelector(".focus-wrapper")?.classList.remove("is-custom-focus-editing", "custom-focus-committed");
 }
 
 function resetCustomFocusUI(){
   const select = document.getElementById("logFocusSelect");
   setCustomFocusCommitted("");
-  setFocusOtherVisibility(false);
+  resetFixedFocusEditState(false);
   if(select){
     select.style.display = "";
   }
@@ -20492,7 +20161,7 @@ function syncLogFocusCustomDropdown() {
   const value = String(select.value || "").trim();
   const selectedLabel = select.selectedOptions?.[0]?.textContent?.trim() || value;
   const mobileBrowseLabel = isMobileLayoutViewport();
-  if (valueEl) valueEl.textContent = mobileBrowseLabel ? "Browse" : (value && value !== "Other" ? selectedLabel : "Browse");
+  if (valueEl) valueEl.textContent = mobileBrowseLabel ? "Browse" : (value ? selectedLabel : "Browse");
 
   const roleClasses = ["role-duelist", "role-controller", "role-initiator", "role-sentinel"];
   trigger?.classList.remove(...roleClasses);
@@ -20511,29 +20180,21 @@ function syncLogFocusSelectOptions() {
   const select = document.getElementById("logFocusSelect");
   if (!select) return;
 
-  const currentValue = String(select.value || "");
-  const optionValues = ["", ...focusesList, "Other"];
-  const optionLabels = new Map([
-    ["", "Focus Category"],
-    ["Duel Discipline", "Discipline"],
-    ["Timing", "Lurking"],
-    ["Awareness Check", "Map Awareness"],
-    ["Retake Timing", "Retake"],
-    ["Comms Discipline", "Comms"],
-    ["Weapon Category Use", "Economy"],
-    ["Other", "Other"]
-  ]);
+  const currentValue = normalizeFocusCategoryValue(select.value || "");
+  const optionValues = ["", ...focusesList];
 
   select.innerHTML = "";
   optionValues.forEach((value) => {
     const option = document.createElement("option");
     option.value = value;
-    option.textContent = optionLabels.get(value) || value;
+    option.textContent = value || "Focus Category";
     select.appendChild(option);
   });
 
   if (optionValues.includes(currentValue)) {
     select.value = currentValue;
+  } else {
+    select.value = "";
   }
 }
 
@@ -20654,7 +20315,7 @@ function syncLoggingFocusPreviewText(value = "") {
     preview.classList.add("is-placeholder");
     return;
   }
-  const resolved = String(value || "").trim();
+  const resolved = normalizeFocusCategoryValue(value || "", "");
   preview.textContent = resolved || "Focus Category";
   preview.classList.toggle("is-placeholder", !resolved);
 }
@@ -20707,16 +20368,9 @@ function updateLoggingDebriefPreview() {
 
   const agent = document.getElementById("logAgentDisplay")?.dataset?.agent || "";
   const focusSelect = document.getElementById("logFocusSelect");
-  const customFocus = document.getElementById("logFocusOther")?.value?.trim() || "";
   const map = document.getElementById("logMap")?.value?.trim() || "";
   const notes = document.getElementById("logNotes")?.value?.trim() || "";
-  let focus = focusSelect?.value || "";
-  if (focus === "Other") {
-    focus = customFocus || "";
-  }
-  if (!focus) {
-    focus = customFocus || "";
-  }
+  const focus = normalizeFocusCategoryValue(focusSelect?.value || "", "");
 
   syncLoggingFocusPreviewText(focus);
 
@@ -39034,7 +38688,7 @@ const LAYOUT_STYLE_AUTO_FIT_TEXT_SELECTORS = [
   "#page-home :is(.loadout-card,.compass-panel,.compass-main,.compass-score-card,.rr-card,.impact-card,.rr-chart-card,.weekly-focus-card,.improvement-card) :is(.card-title,.card-sub,.compass-title,.compass-profile-title,.compass-profile-kicker,.timeline-title,.timeline-sub,strong,p,small,span)",
   "#page-stats :is(.stats-summary-card,.stats-proof-card,.stats-role-progress-card,.stats-performance-card,.stats-breakdown-card,.stats-maps-card,.stats-agents-card,.stats-weapons-card) :is(.stats-season-title,strong,p,small,span)",
   "#page-insights :is(.insights-action-card,.insights-top-card,.insights-trends-card,.insight-action-hero,.insight-card,.trend-content.open) :is(.insight-action-kicker,.insight-title,.insight-preview,strong,p,small,span)",
-  "#page-logging :is(.logging-card,.logging-feed-card,.manual-match-panel,.logging-hero,.logging-live-card,.log-entry,.logging-pill,.logging-quick-menu,.logging-notes,.log-feed-footnote) :is(.logging-hero-title,.logging-hero-text,.logging-live-focus,.logging-live-meta,strong,p,small,span)",
+  "#page-logging :is(.logging-card,.logging-feed-card,.logging-hero,.logging-live-card,.log-entry,.logging-pill,.logging-quick-menu,.logging-notes,.log-feed-footnote) :is(.logging-hero-title,.logging-hero-text,.logging-live-focus,.logging-live-meta,strong,p,small,span)",
   "#page-library :is(.gamesense-season-scope,.gamesense-gallery-head,.gamesense-tips-hub,.gamesense-weapon-suggestions,.gamesense-selector-section,.gamesense-collection-archive,.gamesense-hero,.gamesense-topic-card,.gamesense-entry-card,.gamesense-map-entry-card,.gamesense-agent-entry-card,.gamesense-weapon-entry-card,.gamesense-tactical-card,.gamesense-agent-hero,.gamesense-weapon-panel,.gamesense-collection-card,.gamesense-detail-head,.gamesense-tip,.gamesense-comp-card,.gamesense-comp-option,.gamesense-comp-agent-read,.gamesense-comp-pick-explorer,.gamesense-comp-pick-row,.gamesense-weapon-suggestion,.gamesense-map-fit,.gamesense-lineups) :is(h1,h2,h3,h4,strong,p,small,span)",
   ".gamesense-skin-preview-card :is(h1,h2,h3,h4,strong,p,small,span)"
 ];
@@ -41579,12 +41233,6 @@ function bindEvents(){
     addLogEntry();
   });
 
-  document.getElementById("manualEntryModeToggle")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    await toggleManualEntryModeFromUI();
-  });
-
   document.addEventListener("click", (e) => {
     const previewButton = e.target?.closest?.("#previewRollRevealBtn,#previewPostgamePackageBtn,#previewLoggingRevealBtn");
     if (!previewButton) return;
@@ -41626,45 +41274,9 @@ function bindEvents(){
 
   document.getElementById("logFocusSelect")?.addEventListener("change", (e) => {
     setCustomFocusCommitted("");
-    setFocusOtherVisibility(e.target.value === "Other");
+    resetFixedFocusEditState(false);
     syncLogFocusCustomDropdown();
     updateLoggingDebriefPreview();
-  });
-
-  document.getElementById("confirmFocusOther")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const input = document.getElementById("logFocusOther");
-    const select = document.getElementById("logFocusSelect");
-    const customFocus = input?.value?.trim();
-
-    if(!customFocus) return;
-
-    if(select){
-      select.value = "Other";
-    }
-
-    setCustomFocusCommitted(customFocus);
-    updateLoggingDebriefPreview();
-
-    if(focusDisplay){
-      focusDisplay.textContent = customFocus;
-      focusDisplay.classList.remove("focus-neutral");
-    }
-    syncLoggingRoleTone(activeRole);
-  });
-
-  document.getElementById("clearFocusOther")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const select = document.getElementById("logFocusSelect");
-    if(select){
-      select.value = "";
-    }
-
-    resetCustomFocusUI();
   });
 
   document.querySelectorAll("[data-rating]").forEach(btn => {
@@ -41720,11 +41332,6 @@ function bindEvents(){
   document.getElementById("logNotes")?.addEventListener("input", () => {
     syncLoggingQuickChipStates();
     updateLoggingDebriefPreview();
-  });
-  document.getElementById("logFocusOther")?.addEventListener("input", updateLoggingDebriefPreview);
-  document.querySelectorAll("#manualMatchPanel input, #manualMatchPanel select").forEach(input => {
-    input.addEventListener("input", updateLoggingDebriefPreview);
-    input.addEventListener("change", updateLoggingDebriefPreview);
   });
   document.getElementById("logCalendarTrigger")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -42782,10 +42389,10 @@ function selectAgentFromModal(agent){
     if(focusDisplay && (!focusDisplay.textContent || focusDisplay.textContent === "-")){
 
       const defaultFocusMap = {
-        duelist: "Duel Discipline",
+        duelist: "Movement",
         initiator: "Utility Usage",
-        controller: "Timing",
-        sentinel: "Positioning"
+        controller: "Map Strategy",
+        sentinel: "Map Awareness"
       };
 
       const defaultFocus = defaultFocusMap[role];
@@ -42821,7 +42428,6 @@ function selectAgentFromModal(agent){
 
       const logAgentText = document.getElementById("logAgentText");
       const logFocusSelect = document.getElementById("logFocusSelect");
-      const logFocusOther = document.getElementById("logFocusOther");
       const focusPreviewText = document.getElementById("focusPreviewText");
 
       logAgentText?.classList.remove(
@@ -42830,16 +42436,12 @@ function selectAgentFromModal(agent){
       logFocusSelect?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
-      logFocusOther?.classList.remove(
-        "role-duelist","role-controller","role-initiator","role-sentinel"
-      );
       focusPreviewText?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
 
       logAgentText?.classList.add(`role-${role}`);
       logFocusSelect?.classList.add(`role-${role}`);
-      logFocusOther?.classList.add(`role-${role}`);
       focusPreviewText?.classList.add(`role-${role}`);
       syncLogFocusCustomDropdown();
       syncLoadoutRoleTextColors();
@@ -42876,10 +42478,7 @@ function selectAgentFromModal(agent){
     // PRESERVE FOCUS
     // ========================
 
-    const currentFocus =
-      document.getElementById("logFocusSelect")?.value === "Other"
-        ? document.getElementById("logFocusOther")?.value
-        : document.getElementById("logFocusSelect")?.value;
+    const currentFocus = normalizeFocusCategoryValue(document.getElementById("logFocusSelect")?.value || "", "");
 
     syncLogInputs();
 
@@ -44025,15 +43624,11 @@ function setExclusiveChipSelection(selector, nextValue, datasetKey){
 function getLogFormValues(){
 
   const focusSelect = document.getElementById("logFocusSelect");
-  const focusOther  = document.getElementById("logFocusOther");
   const logMap      = document.getElementById("logMap");
   const logNotes    = document.getElementById("logNotes");
   const logAgentDisplay = document.getElementById("logAgentDisplay");
 
-  let focus = focusSelect?.value || "";
-  if(focus === "Other"){
-    focus = focusOther?.value?.trim() || "Other";
-  }
+  const focus = normalizeFocusCategoryValue(focusSelect?.value || "", "");
 
   const editingEntry = editingLogEntryId
     ? (logEntries.find(entry => entry.id === editingLogEntryId) || editingLogEntrySnapshot)
@@ -44058,8 +43653,6 @@ function getLogFormValues(){
     notes: logNotes?.value?.trim() || "",
     playstyleTags: deriveLoggingPlaystyleTags(logNotes?.value || ""),
     role: activeRole || "",
-    manualMode: isManualEntryModeEnabled(),
-    manualReport: getManualReportValues(),
     warmup: Boolean((logNotes?.value || "").toLowerCase().includes("warmup")) && isFirstGameOfCurrentSession()
   };
 }
@@ -44108,10 +43701,6 @@ function isFiniteLogNumber(value) {
   return Number.isFinite(Number(value));
 }
 
-function isManualInputFilled(id) {
-  return String(document.getElementById(id)?.value ?? "").trim() !== "";
-}
-
 function snapLoggingFormToTarget(target = null) {
   const page = document.getElementById("page-logging");
   if (page?.dataset) page.dataset.mobileLoggingView = "form";
@@ -44131,28 +43720,13 @@ function snapLoggingFormToTarget(target = null) {
 function getLogFormMissingFields(entry = {}) {
   const missing = [];
   if (!String(entry.agent || "").trim()) missing.push("agent");
-  if (!String(entry.focus || "").trim() || entry.focus === "Other" || entry.focus === "Select Focus") missing.push("focus category");
+  if (!String(entry.focus || "").trim() || entry.focus === "Select Focus") missing.push("focus category");
   if (!String(entry.map || "").trim()) missing.push("map");
   if (!isFiniteLogNumber(entry.rating)) missing.push("performance");
   if (!String(entry.mood || "").trim()) missing.push("mood");
   if (!isFiniteLogNumber(entry.teamComms)) missing.push("team comms");
   if (!isFiniteLogNumber(entry.selfComms)) missing.push("self comms");
   if (!String(entry.notes || "").trim()) missing.push("notes");
-
-  if (isManualEntryModeEnabled()) {
-    [
-      ["manualRR", "RR"],
-      ["manualRoundsWon", "rounds won"],
-      ["manualRoundsLost", "rounds lost"],
-      ["manualKills", "kills"],
-      ["manualDeaths", "deaths"],
-      ["manualAssists", "assists"],
-      ["manualACS", "ACS"],
-      ["manualADR", "ADR"]
-    ].forEach(([id, label]) => {
-      if (!isManualInputFilled(id)) missing.push(label);
-    });
-  }
 
   return missing;
 }
@@ -44168,14 +43742,6 @@ function focusFirstMissingLogField(missing = []) {
     first === "team comms" ? document.querySelector("#logTeamCommsRow [data-team-comms], [data-team-comms]") :
     first === "self comms" ? document.querySelector("#logSelfCommsRow [data-self-comms], [data-self-comms]") :
     first === "notes" ? document.getElementById("logNotes") :
-    first === "RR" ? document.getElementById("manualRR") :
-    first === "rounds won" ? document.getElementById("manualRoundsWon") :
-    first === "rounds lost" ? document.getElementById("manualRoundsLost") :
-    first === "kills" ? document.getElementById("manualKills") :
-    first === "deaths" ? document.getElementById("manualDeaths") :
-    first === "assists" ? document.getElementById("manualAssists") :
-    first === "ACS" ? document.getElementById("manualACS") :
-    first === "ADR" ? document.getElementById("manualADR") :
     document.getElementById("logSaveBtn");
   snapLoggingFormToTarget(target);
 }
@@ -44209,8 +43775,9 @@ function addLogEntry(){
   entry.authoredAt = entry.authoredAt || nowISO();
 
 if(!entry.focus || entry.focus === "Select Focus"){
-  entry.focus = "general";
+  entry.focus = "Discipline";
 }
+entry.focus = normalizeFocusCategoryValue(entry.focus, "Discipline");
 
   if (isEditing) {
     let replaced = false;
@@ -44230,15 +43797,6 @@ if(!entry.focus || entry.focus === "Select Focus"){
     }
   } else {
     logEntries.unshift(entry);
-  }
-
-  const manualMatchId = upsertManualMatchForLogEntry(entry);
-  if (manualMatchId) {
-    logEntries = logEntries.map(existing => (
-      existing.id === entry.id
-        ? { ...existing, matchId: manualMatchId, manualMatchId }
-        : existing
-    ));
   }
 
   if (!isEditing) {
@@ -44269,38 +43827,20 @@ if(entry.focus){
   updateFocusProgressUI();
   updateInsightFocusUI();
   syncWeeklyFocus();
-  if (manualMatchId) {
-    const savedRecord = matches.find(match => String(match?.matchId || match?.id || "") === String(manualMatchId)) || null;
-    onMatchSaved(savedRecord, {
-      profile: getActiveProfile(),
-      source: "manual"
-    });
-  }
-
   // reset form
   const logMap = document.getElementById("logMap");
   const logNotes = document.getElementById("logNotes");
   const logFocusSelect = document.getElementById("logFocusSelect");
-  const logFocusOther = document.getElementById("logFocusOther");
-  const focusOtherWrap = document.getElementById("focusOtherWrap");
   const preview = document.getElementById("focusPreviewText");
   const logAgentImg = document.getElementById("logAgentImg");
 
   if(logMap) logMap.value = "";
   if(logNotes) logNotes.value = "";
   if(logFocusSelect) logFocusSelect.value = "";
-  if(logFocusOther) logFocusOther.value = "";
-  if(focusOtherWrap){
-    focusOtherWrap.style.display = "none";
-    focusOtherWrap.hidden = true;
-    focusOtherWrap.setAttribute("aria-hidden", "true");
-  }
   if(preview) preview.textContent = "Focus Category";
   preview?.classList?.add("is-placeholder");
   setCustomFocusCommitted("");
-  if(logFocusOther) logFocusOther.disabled = true;
   updateLogAgentDisplay("");
-  resetManualReportForm();
 
   selectedLogRating = null;
   selectedLogMood = null;
@@ -44329,13 +43869,12 @@ function editLogEntry(id, options = {}){
 
   const entry = logEntries.find(e => e.id === id);
   if(!entry) return;
+  const normalizedFocus = normalizeFocusCategoryValue(entry.focus || "", "");
 
   editingLogEntryId = entry.id;
   editingLogEntrySnapshot = { ...entry };
 
   const focusSelect = document.getElementById("logFocusSelect");
-  const focusOther = document.getElementById("logFocusOther");
-  const focusOtherWrap = document.getElementById("focusOtherWrap");
   const preview = document.getElementById("focusPreviewText");
   const logMapEl = document.getElementById("logMap");
   const notesEl = document.getElementById("logNotes");
@@ -44349,26 +43888,23 @@ function editLogEntry(id, options = {}){
   if(focusSelect){
 
     const exists = [...focusSelect.options]
-      .some(opt => opt.value === entry.focus);
+      .some(opt => opt.value === normalizedFocus);
 
     if(exists){
-      focusSelect.value = entry.focus;
-      setFocusOtherVisibility(false);
-      if(preview) preview.textContent = entry.focus || "Focus";
+      focusSelect.value = normalizedFocus;
+      resetFixedFocusEditState(false);
+      if(preview) preview.textContent = normalizedFocus || "Focus";
       setCustomFocusCommitted("");
     } else {
-      focusSelect.value = "Other";
-      if(focusOther) focusOther.value = entry.focus;
-      setFocusOtherVisibility(true, entry.focus);
-      setCustomFocusCommitted(entry.focus);
+      focusSelect.value = "";
+      resetFixedFocusEditState(false);
+      setCustomFocusCommitted("");
     }
 
   }
 
   if(logMapEl) logMapEl.value = entry.map || "";
   if(notesEl) notesEl.value = entry.notes;
-  setManualReportFormValues(entry.manualReport || entry.manual || null);
-
   selectedLogRating = Number.isFinite(Number(entry.rating)) ? Number(entry.rating) : null;
   selectedLogMood = entry.mood || null;
   selectedLogTeamComms = Number.isFinite(Number(entry.teamComms)) ? Number(entry.teamComms) : null;
@@ -44394,25 +43930,23 @@ function editLogEntry(id, options = {}){
 function syncLogInputs(){
 
   const focusSelect = document.getElementById("logFocusSelect");
-  const focusOther = document.getElementById("logFocusOther");
-  const focusOtherWrap = document.getElementById("focusOtherWrap");
 
-  if(!focusSelect || !focusOther) return;
+  if(!focusSelect) return;
 
   if(pendingFocusFromLog){
+    const normalizedPendingFocus = normalizeFocusCategoryValue(pendingFocusFromLog, "");
 
     const exists = [...focusSelect.options]
-      .some(opt => opt.value === pendingFocusFromLog);
+      .some(opt => opt.value === normalizedPendingFocus);
 
     if(exists){
-      focusSelect.value = pendingFocusFromLog;
-      setFocusOtherVisibility(false);
+      focusSelect.value = normalizedPendingFocus;
+      resetFixedFocusEditState(false);
       setCustomFocusCommitted("");
     } else {
-      focusSelect.value = "Other";
-      focusOther.value = pendingFocusFromLog;
-      setFocusOtherVisibility(true, pendingFocusFromLog);
-      setCustomFocusCommitted(pendingFocusFromLog);
+      focusSelect.value = "";
+      resetFixedFocusEditState(false);
+      setCustomFocusCommitted("");
     }
 
     pendingFocusFromLog = null;
@@ -44707,16 +44241,16 @@ function renderLogSessionSelector() {
 
 function buildDemoLogEntriesFromMatches(matchList = []) {
   const fallbackFocusOptions = [
-    "Duel Discipline",
-    "Positioning",
-    "Eco Conversion",
-    "Round Survivability",
-    "Utility Timing",
-    "Awareness Check",
-    "Retake Timing",
-    "Comms Discipline",
-    "Weapon Category Use",
-    "Mental Reset"
+    "Crosshair Placement",
+    "Trading",
+    "Movement",
+    "Utility Usage",
+    "Map Awareness",
+    "Credit/Ult Economy",
+    "Communication",
+    "Discipline",
+    "Map Strategy",
+    "Behavior Composure"
   ];
   const lossNotes = [
     "The loss was not just aim. Early deaths gave away too much map control before the team had a trade setup.",
@@ -46317,7 +45851,6 @@ function normalizeProfileRecord(profile = {}) {
     avatarAgent,
     avatarUrl: profile.avatarUrl || getDefaultProfileAvatarUrl(avatarAgent),
     navBackgroundUrl: profile.navBackgroundUrl || "",
-    manualEntryMode: !!profile.manualEntryMode,
     profileBorderColor: normalizeProfileBorderColor(profile.profileBorderColor || "theme"),
     profileBorder: normalizeProfileBorderStyle(profile.profileBorder || "standard"),
     profileBorderRotate: !!profile.profileBorderRotate,
@@ -46370,7 +45903,6 @@ function loadProfiles(){
       avatarAgent: getDefaultProfileAvatarAgent(),
       avatarUrl: getDefaultProfileAvatarUrl(),
       navBackgroundUrl: "",
-      manualEntryMode: false,
       profileBorderColor: "theme",
       profileBorder: "standard",
       profileBorderRotate: false,
@@ -46546,7 +46078,6 @@ function createFallbackProfileAfterDelete() {
     avatarAgent: getDefaultProfileAvatarAgent(),
     avatarUrl: getDefaultProfileAvatarUrl(),
     navBackgroundUrl: "",
-    manualEntryMode: false,
     profileBorderColor: "theme",
     profileBorder: "standard",
     profileBorderRotate: false,
@@ -46605,7 +46136,6 @@ function clearDeletedProfileLocalCache(deletedProfileId) {
   updateNavRRToRank?.();
   updateNavRRToGoalRank?.();
   renderChart?.(currentSize);
-  syncManualEntryModeUI?.();
 }
 
 async function requestDeleteProfile(id) {
@@ -46743,10 +46273,6 @@ function updateProfile(id, data){
 
   if (data.navBackgroundUrl != null) {
     profile.navBackgroundUrl = String(data.navBackgroundUrl || "").trim();
-  }
-
-  if (data.manualEntryMode != null) {
-    profile.manualEntryMode = !!data.manualEntryMode;
   }
 
   if (data.profileBorderColor != null) {
@@ -46943,7 +46469,6 @@ async function submitProfileAddForm(event) {
     avatarAgent: getDefaultProfileAvatarAgent(),
     avatarUrl: getDefaultProfileAvatarUrl(),
     navBackgroundUrl: "",
-    manualEntryMode: false,
     profileBorderColor: "theme",
     profileBorder: "standard",
     profileBorderRotate: false,
@@ -47026,7 +46551,6 @@ function renderProfilesUI(){
 
   if (!currentAuthUser) {
     updateProfileHeaderUI?.();
-    syncManualEntryModeUI?.();
     return;
   }
 
@@ -47097,7 +46621,6 @@ function renderProfilesUI(){
   }
 
   updateProfileDropdownMenu?.();
-  syncManualEntryModeUI?.();
 }
 
 function closeProfileDropdown(){
@@ -49555,7 +49078,6 @@ function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
       syncLogFocusCustomDropdown?.();
       syncLoggingQuickChipStates?.();
       updateLoggingDebriefPreview?.();
-      ensureMobileManualReportControls();
       const loggingPage = document.getElementById("page-logging");
       if ((loggingPage?.dataset.mobileLoggingView || "form") === "feed") {
         if (immediatePreview) {
@@ -51473,16 +50995,12 @@ function flipSpinIcon(){
       );
       const logAgentText = document.getElementById("logAgentText");
       const logFocusSelect = document.getElementById("logFocusSelect");
-      const logFocusOther = document.getElementById("logFocusOther");
       const focusPreviewText = document.getElementById("focusPreviewText");
 
       logAgentText?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
       logFocusSelect?.classList.remove(
-        "role-duelist","role-controller","role-initiator","role-sentinel"
-      );
-      logFocusOther?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
       focusPreviewText?.classList.remove(
@@ -51494,7 +51012,6 @@ function flipSpinIcon(){
         focusDisplay.classList.add(`role-${role}`);
         logAgentText?.classList.add(`role-${role}`);
         logFocusSelect?.classList.add(`role-${role}`);
-        logFocusOther?.classList.add(`role-${role}`);
         focusPreviewText?.classList.add(`role-${role}`);
         syncLogFocusCustomDropdown();
         syncLoadoutRoleTextColors();
@@ -51513,15 +51030,16 @@ function flipSpinIcon(){
       updateLogAgentDisplay(pick);
 
       if(logFocusSelect){
+        newFocus = normalizeFocusCategoryValue(newFocus, "Map Awareness");
         const exists = [...logFocusSelect.options].some(opt => opt.value === newFocus);
         if(exists){
           logFocusSelect.value = newFocus;
-          setFocusOtherVisibility(false);
+          resetFixedFocusEditState(false);
           setCustomFocusCommitted("");
         } else {
-          logFocusSelect.value = "Other";
-          setFocusOtherVisibility(true, newFocus);
-          setCustomFocusCommitted(newFocus);
+          logFocusSelect.value = "";
+          resetFixedFocusEditState(false);
+          setCustomFocusCommitted("");
         }
         syncLogFocusCustomDropdown();
       }
@@ -51623,7 +51141,6 @@ function spinLoadoutFromLogging(agent, focus){
     if(role){
       const logAgentText = document.getElementById("logAgentText");
       const logFocusSelect = document.getElementById("logFocusSelect");
-      const logFocusOther = document.getElementById("logFocusOther");
       const focusPreviewText = document.getElementById("focusPreviewText");
 
       frame?.classList.remove("duelist","controller","initiator","sentinel");
@@ -51641,9 +51158,6 @@ function spinLoadoutFromLogging(agent, focus){
       logFocusSelect?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
-      logFocusOther?.classList.remove(
-        "role-duelist","role-controller","role-initiator","role-sentinel"
-      );
       focusPreviewText?.classList.remove(
         "role-duelist","role-controller","role-initiator","role-sentinel"
       );
@@ -51652,7 +51166,6 @@ function spinLoadoutFromLogging(agent, focus){
       focusDisplay?.classList.add(`role-${role}`);
       logAgentText?.classList.add(`role-${role}`);
       logFocusSelect?.classList.add(`role-${role}`);
-      logFocusOther?.classList.add(`role-${role}`);
       focusPreviewText?.classList.add(`role-${role}`);
       syncLogFocusCustomDropdown();
       syncLoadoutRoleTextColors();
@@ -53909,13 +53422,13 @@ function renderInsightsModel() {
       && topWeeklyCandidate?.label
       && weeklyFocusConfidenceRank(freshConfidence) > weeklyFocusConfidenceRank(lockedConfidence);
     if (shouldUpgradeLock) {
-      activeInsightFocus = topWeeklyCandidate.label;
+      activeInsightFocus = normalizeFocusCategoryValue(topWeeklyCandidate.label, "Discipline");
       setLockedWeeklyFocus(activeInsightFocus, freshConfidence);
     } else {
-      activeInsightFocus = lockedFocus.label;
+      activeInsightFocus = normalizeFocusCategoryValue(lockedFocus.label, "Discipline");
     }
   } else {
-    activeInsightFocus = topWeeklyCandidate?.label || model?.focus || topInsights[0]?.focus || null;
+    activeInsightFocus = normalizeFocusCategoryValue(topWeeklyCandidate?.label || model?.focus || topInsights[0]?.focus || "", "");
     if (activeInsightFocus) {
       setLockedWeeklyFocus(activeInsightFocus, topWeeklyCandidate?.confidence || "Low");
     }
@@ -55103,20 +54616,21 @@ function renderInsightCardsModel() {
     const confidence = getConfidenceLabel((safeNumber(insight.priority) * 0.65) + (safeNumber(model?.confidenceScore) * 0.35));
     const priorityTone = getInsightMetaToneClass("priority", priority);
     const confidenceTone = getInsightMetaToneClass("confidence", confidence);
-    const focusTone = getInsightMetaToneClass("focus", insight.focus || model?.focus || "Build Sample", displayType);
+    const normalizedInsightFocus = normalizeFocusCategoryValue(insight.focus || model?.focus || "", "Discipline");
+    const focusTone = getInsightMetaToneClass("focus", normalizedInsightFocus, displayType);
     const showPriorityMeta = displayType !== "good";
     el.innerHTML = `
       <div class="insight-header">
         <div class="insight-header-main">
           <div class="insight-title">${escapeHtml(insight.title)}</div>
         </div>
-        ${getCoachingCategoryVisualMarkup(insight.focus || model?.focus || insight.title)}
+        ${getCoachingCategoryVisualMarkup(normalizedInsightFocus || insight.title)}
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
       <div class="insight-meta-row">
         ${showPriorityMeta ? `<span class="insight-meta-pill ${priorityTone}">${escapeHtml(priority)} Priority</span>` : ""}
         <span class="insight-meta-pill ${confidenceTone}">${escapeHtml(confidence)}</span>
-        <span class="insight-meta-pill ${focusTone}">Focus Category: ${escapeHtml(insight.focus || model?.focus || "Build Sample")}</span>
+        <span class="insight-meta-pill ${focusTone}">Focus Category: ${escapeHtml(normalizedInsightFocus)}</span>
       </div>
       <div class="insight-expand">
         <div class="insight-block">
