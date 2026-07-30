@@ -3314,10 +3314,7 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
   max-height:100% !important;
   object-fit:contain !important;
   object-position:center center !important;
-  transform:translate(
-    calc(-50% + var(--agent-art-x-scaled,0px)),
-    calc(-50% + var(--agent-art-y-scaled,0px))
-  ) scale(var(--agent-art-scale,1)) !important;
+  transform:translate(-50%,-50%) scale(1) !important;
   transform-origin:center center !important;
 }
 
