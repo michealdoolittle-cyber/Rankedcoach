@@ -59193,7 +59193,29 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right #profilePanel
 html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor,
 html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap,
 html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
+  overflow:visible !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > :not(#profileRankIcon.profile-rank-icon){
   overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring .rc-profile-effect-frame,
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring .rc-profile-effect-svg{
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > #profileRankIcon.profile-rank-icon{
+  right:-4px !important;
+  bottom:-4px !important;
+  width:24px !important;
+  min-width:24px !important;
+  max-width:24px !important;
+  height:24px !important;
+  min-height:24px !important;
+  max-height:24px !important;
+  z-index:20 !important;
+  overflow:visible !important;
 }
 
 html body .profile-dropdown.profile-dropdown-pills,

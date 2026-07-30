@@ -13323,15 +13323,30 @@ function dropInPop(el, options = {}) {
 function animatePostgameAutofillFields(match = null, options = {}) {
   if (shouldSkipBroadcastMotion()) return;
   const targetEntry = options.entry || null;
-  const agent = getBroadcastMatchAgent(match) || String(targetEntry?.agent || "").trim();
+  const agent = getBroadcastPostgameAgent(match, options);
   const core = match ? getMatchCore(match) : {};
-  const map = String(core?.map || match?.map || match?.metadata?.mapName || targetEntry?.map || "").trim();
-  const focus = String(targetEntry?.focus || document.getElementById("logFocusOther")?.value || document.getElementById("logFocusSelect")?.value || "").trim();
+  const preferUi = options.source === "preview" || options.preferAutofill === true;
+  const formMap = getCurrentLoggingFormMap();
+  const formFocus = getCurrentLoggingFormFocus();
+  const rolledFocus = String(focusDisplay?.textContent || "").trim();
+  const map = preferUi
+    ? String(targetEntry?.map || formMap || core?.map || match?.map || match?.metadata?.mapName || "").trim()
+    : String(targetEntry?.map || core?.map || match?.map || match?.metadata?.mapName || formMap || "").trim();
+  const focus = preferUi
+    ? String(targetEntry?.focus || formFocus || (rolledFocus && rolledFocus !== "-" ? rolledFocus : "") || "").trim()
+    : String(targetEntry?.focus || formFocus || "").trim();
+
+  if (agent && typeof updateLogAgentDisplay === "function" && !getCurrentLoggingFormAgent()) {
+    updateLogAgentDisplay(agent);
+  }
 
   const agentImg = document.getElementById("logAgentImg");
   const agentText = document.getElementById("logAgentText");
+  const agentField = document.getElementById("logAgentDisplay") || agentImg?.closest?.(".logging-pill");
   const focusText = document.getElementById("focusPreviewText") || document.getElementById("logFocusCustomValue");
+  const focusField = focusText?.closest?.(".logging-pill") || document.querySelector(".focus-wrapper");
   const mapInput = document.getElementById("logMap");
+  const mapField = mapInput?.closest?.(".logging-pill") || mapInput;
 
   if (agent && agentImg && !agentImg.classList.contains("is-silhouette")) {
     agentImg.alt = `${agent} selected agent`;
@@ -13348,10 +13363,13 @@ function animatePostgameAutofillFields(match = null, options = {}) {
   }
 
   [
-    [agentImg, 0],
-    [agentText, 70],
-    [focusText, 150],
-    [mapInput, 230]
+    [agentField, 0],
+    [agentImg, 55],
+    [agentText, 95],
+    [focusField, 155],
+    [focusText, 205],
+    [mapField, 265],
+    [mapInput, 315]
   ].forEach(([target, delay]) => dropInPop(target, { delayMs: delay }));
 }
 
@@ -13643,6 +13661,48 @@ function getBroadcastMatchAgent(match = null) {
   }
 }
 
+function getCurrentLoggingFormAgent() {
+  const candidates = [
+    document.getElementById("logAgentDisplay")?.dataset?.agent,
+    document.getElementById("logAgentText")?.textContent
+  ];
+  for (const candidate of candidates) {
+    const cleaned = String(candidate || "").trim();
+    if (cleaned && cleaned !== "-" && !/^choose agent$/i.test(cleaned)) return cleaned;
+  }
+  return "";
+}
+
+function getCurrentLoggingFormFocus() {
+  const other = String(document.getElementById("logFocusOther")?.value || "").trim();
+  const select = String(document.getElementById("logFocusSelect")?.value || "").trim();
+  const preview = String(document.getElementById("focusPreviewText")?.textContent || "").trim();
+  if (select === "Other" && other) return other;
+  if (select && select !== "Other" && !/^focus category$/i.test(select)) return select;
+  if (other) return other;
+  if (preview && !/^focus category$/i.test(preview)) return preview;
+  return "";
+}
+
+function getCurrentLoggingFormMap() {
+  return String(document.getElementById("logMap")?.value || "").trim();
+}
+
+function getBroadcastPostgameAgent(match = null, options = {}) {
+  const entryAgent = String(options.entry?.agent || "").trim();
+  const formAgent = getCurrentLoggingFormAgent();
+  const rolledAgent = String(agentName?.textContent || activeAgent || "").trim();
+  const matchAgent = getBroadcastMatchAgent(match);
+  const preferUi = options.source === "preview" || options.preferAutofill === true;
+  const candidates = preferUi
+    ? [entryAgent, formAgent, rolledAgent, matchAgent]
+    : [entryAgent, matchAgent, formAgent, rolledAgent];
+  return candidates.find(candidate => {
+    const cleaned = String(candidate || "").trim();
+    return cleaned && cleaned !== "-" && !/^choose agent$/i.test(cleaned);
+  }) || "";
+}
+
 function getBroadcastMatchRRDelta(match = null, options = {}) {
   const candidates = [
     options.rrDelta,
@@ -13752,9 +13812,16 @@ function selectBroadcastHeadlineStatCandidate(match = null, options = {}) {
   };
 }
 
-function getBroadcastRollHonoredLabel(match = null) {
+function getBroadcastRollHonoredLabel(match = null, options = {}) {
+  const displayAgent = getBroadcastPostgameAgent(match, options);
   const rolledAgent = String(agentName?.textContent || activeAgent || "").trim();
   const matchAgent = getBroadcastMatchAgent(match);
+  if (displayAgent) {
+    if (rolledAgent && displayAgent.toLowerCase() === rolledAgent.toLowerCase()) {
+      return `Roll honored: ${displayAgent}`;
+    }
+    return `Match reviewed: ${displayAgent}`;
+  }
   if (rolledAgent && matchAgent && rolledAgent.toLowerCase() === matchAgent.toLowerCase()) {
     return `Roll honored: ${rolledAgent}`;
   }
@@ -13920,10 +13987,10 @@ async function playBroadcastPostgamePackage(options = {}) {
     .slice(0, 4);
   primeBroadcastOverlay(2200);
   flashHit(document.body);
-  impactShake(document.querySelector(".app") || document.body, "low");
+  snapIn(document.getElementById("loggingLiveCard") || document.querySelector(".logging-card"));
   await broadcastWait(160);
-  statStamp(getBroadcastRollHonoredLabel(match), { tone: "neutral", durationMs: 2100 });
-  animatePostgameAutofillFields(match, { entry: options.entry || null });
+  statStamp(getBroadcastRollHonoredLabel(match, options), { tone: "neutral", durationMs: 2100 });
+  animatePostgameAutofillFields(match, { ...options, entry: options.entry || null });
   await broadcastWait(1380);
   if (headline.el) {
     snapIn(headline.el);
@@ -13949,7 +14016,8 @@ async function playBroadcastPostgamePackage(options = {}) {
       ? Number(options.rrStart)
       : target - Math.max(-35, Math.min(35, effectiveDelta));
     await tickCounter(rrEl, target, { start, durationMs: 680 });
-    impactShake(document.querySelector(".rr-card") || document.querySelector(".app") || document.body, Math.abs(rrDelta) >= 18 ? "high" : "low");
+    const rrShakeTarget = rrEl.closest?.(".rr-card") || document.querySelector(".rr-card");
+    if (rrShakeTarget) impactShake(rrShakeTarget, "low");
     particleBurst(rrEl, { count: Math.abs(rrDelta) >= 18 ? 22 : 12, radius: Math.abs(rrDelta) >= 18 ? 132 : 74 });
   }
   releaseBroadcastImprovementSpotlight(spotlightEl);
@@ -13978,6 +14046,10 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
   });
 
   try {
+    if (kind === "postgame" && typeof activatePage === "function") {
+      activatePage("logging");
+      await broadcastWait(180);
+    }
     const played = kind === "postgame"
       ? await playBroadcastPostgamePackage({ source: "preview", bypassGate: true, forceMotion: !reducedMotionActive })
       : await playBroadcastPreviewLoadoutRoll({ source: "preview" })
