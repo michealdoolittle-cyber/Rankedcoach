@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-30T09:10:24.440Z",
+  "generatedAt": "2026-07-30T14:40:49.149Z",
   "baselineRequested": false,
   "changedEntities": [
     {
@@ -14,6 +14,14 @@
       "category": "agent",
       "slug": "jett",
       "entityName": "Jett",
+      "changedFields": [
+        "abilities"
+      ]
+    },
+    {
+      "category": "agent",
+      "slug": "miks",
+      "entityName": "Miks",
       "changedFields": [
         "abilities"
       ]

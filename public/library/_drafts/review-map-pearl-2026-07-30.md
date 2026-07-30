@@ -2,7 +2,7 @@
 
 ## Summary
 
-Scheduled canonical refresh. 3 fields changed for Patch 13.01.
+Scheduled canonical refresh. 3 fields changed for Patch 13.02.
 
 ## Screenshot
 
