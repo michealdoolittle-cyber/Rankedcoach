@@ -1262,13 +1262,34 @@ function shouldIgnoreGlobalErrorMessage(message = "") {
   );
 }
 
-function prefersReducedMotion() {
+function getSystemReducedMotionPreference() {
   try {
-    return document.body?.classList.contains("access-reduced-motion") === true
-      || window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
   } catch (_error) {
     return false;
   }
+}
+
+function getRankedCoachMotionMode() {
+  try {
+    if (document.body?.classList.contains("access-reduced-motion") === true) return "reduced";
+    const profileMotion = typeof getActiveProfile === "function"
+      ? String(getActiveProfile()?.accessibility?.motionMode || "").trim().toLowerCase()
+      : "";
+    if (profileMotion === "standard" || profileMotion === "reduced") return profileMotion;
+  } catch (_error) {
+    // Fall back to the applied body class if profile state is not ready yet.
+  }
+  return document.body?.classList.contains("access-reduced-motion") === true ? "reduced" : "standard";
+}
+
+function isRankedCoachReducedMotionEnabled() {
+  return getRankedCoachMotionMode() === "reduced";
+}
+
+function prefersReducedMotion(options = {}) {
+  if (isRankedCoachReducedMotionEnabled()) return true;
+  return Boolean(options?.includeSystemPreference) && getSystemReducedMotionPreference();
 }
 
 window.addEventListener("error", (e) => {
@@ -13144,7 +13165,7 @@ function showToast(message, options = {}) {
 
 function triggerPremiumMoment(kind = "result", options = {}) {
   const overlay = document.getElementById("premiumMomentOverlay");
-  if (!overlay || document.body?.classList.contains("access-reduced-motion")) return;
+  if (!overlay || isRankedCoachReducedMotionEnabled()) return;
   const { variant } = getPremiumFeedbackTheme();
   if (!isMobileLayoutViewport() || variant === "default") return;
   clearTimeout(premiumMomentTimer);
@@ -13162,7 +13183,7 @@ function triggerPremiumMoment(kind = "result", options = {}) {
 }
 
 function pulsePremiumAvatarCelebration() {
-  if (document.body?.classList.contains("access-reduced-motion")) return;
+  if (isRankedCoachReducedMotionEnabled()) return;
   const targets = [
     document.getElementById("profileAvatarWrap"),
     document.querySelector(".profile-avatar-ring"),
@@ -13199,16 +13220,7 @@ function syncBroadcastPreviewControls() {
 }
 
 function shouldSkipBroadcastMotion() {
-  if (document.body?.classList.contains("access-reduced-motion")) return true;
-  try {
-    const reduced = Boolean(typeof prefersReducedMotion === "function"
-      ? prefersReducedMotion()
-      : window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
-    if (reduced) return true;
-  } catch {
-    // Fall through to the preview-force escape only if the OS/in-app check
-    // could not be evaluated.
-  }
+  if (isRankedCoachReducedMotionEnabled()) return true;
   if (document.body?.classList.contains("broadcast-preview-force-motion")) return false;
   return false;
 }
@@ -39751,9 +39763,8 @@ function renderThemeBuilderFxFrame(now) {
   ctx.clearRect(0, 0, rect.width, rect.height);
 
   const reduceMotion =
-    document.body?.classList.contains("access-reduced-motion") ||
-    isBrowserCompatibilityBasicMode() ||
-    window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    prefersReducedMotion() ||
+    isBrowserCompatibilityBasicMode();
   const speed = reduceMotion ? 0 : themeBuilderFxNumber(values.speed, 1);
   const time = ((now - themeBuilderFxEngine.startedAt) / 1000) * speed;
   const colors = {

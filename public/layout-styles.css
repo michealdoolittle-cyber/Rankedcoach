@@ -1454,7 +1454,7 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
 }
 
 @media (prefers-reduced-motion:reduce){
-  .layout-style-card{
+  body.access-reduced-motion .layout-style-card{
     transition:none !important;
   }
 }

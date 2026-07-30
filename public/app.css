@@ -8653,8 +8653,8 @@ body.theme-readable :is(
 }
 
 @media (prefers-reduced-motion:reduce){
-  body[data-page-slide-direction] .page.entering,
-  body[data-page-slide-direction] .page.exiting{transform:none !important;}
+  body.access-reduced-motion[data-page-slide-direction] .page.entering,
+  body.access-reduced-motion[data-page-slide-direction] .page.exiting{transform:none !important;}
 }
 
 .theme-card-head{
@@ -10074,7 +10074,7 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 }
 
 @media (prefers-reduced-motion: reduce){
-  .auth-modal-card{
+  body.access-reduced-motion .auth-modal-card{
     animation:none;
   }
 }
@@ -10931,7 +10931,7 @@ body.access-reduced-motion .profile-panel.border-animated .profile-avatar-ring::
 }
 
 @media (prefers-reduced-motion: reduce){
-  .riot-profile-prompt{
+  body.access-reduced-motion .riot-profile-prompt{
     animation:none;
   }
 }
@@ -19772,8 +19772,8 @@ SUMMARY BAR
 }
 
 @media (prefers-reduced-motion: reduce){
-  .log-training-fire-glyph,
-  .log-training-crosshair svg{
+  body.access-reduced-motion .log-training-fire-glyph,
+  body.access-reduced-motion .log-training-crosshair svg{
     animation:none !important;
   }
 }
@@ -21518,14 +21518,14 @@ body.access-reduced-motion .logging-streak-flame-glyph{
 }
 
 @media (prefers-reduced-motion:reduce){
-  .log-entry.log-entry-reveal,
-  .log-entry .logging-agent-glow-in,
-  .log-entry.log-entry-synced-reveal .log-result-rr,
-  .logging-live-card.is-synthesizing,
-  .logging-live-focus.is-synthesizing,
-  .logging-live-meta.is-synthesizing,
-  .logging-session-count-badge.is-rolling,
-  .logging-streak-flame-glyph{
+  body.access-reduced-motion .log-entry.log-entry-reveal,
+  body.access-reduced-motion .log-entry .logging-agent-glow-in,
+  body.access-reduced-motion .log-entry.log-entry-synced-reveal .log-result-rr,
+  body.access-reduced-motion .logging-live-card.is-synthesizing,
+  body.access-reduced-motion .logging-live-focus.is-synthesizing,
+  body.access-reduced-motion .logging-live-meta.is-synthesizing,
+  body.access-reduced-motion .logging-session-count-badge.is-rolling,
+  body.access-reduced-motion .logging-streak-flame-glyph{
     animation:none !important;
   }
 }
@@ -23120,19 +23120,19 @@ body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shado
 }
 
 @media (prefers-reduced-motion:reduce){
-  body:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::before,
-  body:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::after{
+  body.access-reduced-motion:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::before,
+  body.access-reduced-motion:is(.theme-runic-circuit,.theme-koi-current,.theme-meteor-garden,.theme-arcade-scanline,.theme-bio-lumina,.theme-rift-portal,.theme-desert-mirage,.theme-glacial-comet,.theme-bonsai-neon,.theme-cyber-dragonfly,.theme-pulse-foundry,.theme-moonlit-rain) .app-root::after{
     animation:none !important;
   }
-  body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::before,
-  body:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::after{
+  body.access-reduced-motion:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::before,
+  body.access-reduced-motion:is(.theme-plasma-bloom,.theme-origami-sky,.theme-neon-carnival,.theme-shadow-circuit,.theme-pearl-lagoon,.theme-volcanic-glass,.theme-auric-topography,.theme-synthwave-road,.theme-lunar-eclipse,.theme-garden-firefly,.theme-quantum-static,.theme-coral-reef,.theme-thunderhead,.theme-chrome-liquid,.theme-pixel-burst,.theme-starlit-sakura,.theme-deep-sea-radar,.theme-radiant-snowfall) .app-root::after{
     animation:none !important;
   }
 }
 
 @media (prefers-reduced-motion:reduce){
-  body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) .app-root::before,
-  body:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) .app-root::after{
+  body.access-reduced-motion:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) .app-root::before,
+  body.access-reduced-motion:is(.theme-grid-drift,.theme-star-drift,.theme-water-flow,.theme-fog-drift,.theme-fractal-shift,.theme-solar-flow,.theme-prism-turn,.theme-lightning-strike,.theme-wind-flow,.theme-ink-bloom,.theme-sonar-pulse,.theme-sound-wave,.theme-confetti-pop,.theme-aurora-rift,.theme-neon-rain,.theme-ember-dragon,.theme-gravity-well,.theme-holo-grid,.theme-toxic-sludge,.theme-eclipse-corona,.theme-data-stream,.theme-crystal-bloom,.theme-comet-trail) .app-root::after{
     animation:none !important;
   }
 }
@@ -48221,7 +48221,7 @@ body.has-profile-banner .app-header::before{
 }
 
 @media (prefers-reduced-motion: reduce){
-  :is(.lens-modal-overlay, .agent-modal, .lens-modal-overlay > .lens-modal, .agent-modal .agent-modal-inner, .profile-dropdown, .profile-switcher, .goal-rank-custom-menu, .log-focus-custom-menu, .focus-select-menu, .logging-select-menu, .ask-coach-panel-inner){
+  body.access-reduced-motion :is(.lens-modal-overlay, .agent-modal, .lens-modal-overlay > .lens-modal, .agent-modal .agent-modal-inner, .profile-dropdown, .profile-switcher, .goal-rank-custom-menu, .log-focus-custom-menu, .focus-select-menu, .logging-select-menu, .ask-coach-panel-inner){
     transition:none !important;
     animation:none !important;
   }
@@ -56115,7 +56115,7 @@ html.is-mobile-layout body.is-mobile-layout .ask-coach-panel:is(.open, .is-openi
 }
 
 @media (prefers-reduced-motion: reduce){
-  html body :is(.profile-dropdown, .profile-switcher, .ask-coach-panel-inner){
+  html body.access-reduced-motion :is(.profile-dropdown, .profile-switcher, .ask-coach-panel-inner){
     transition:none !important;
     animation:none !important;
     transform:none !important;
