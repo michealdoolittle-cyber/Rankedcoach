@@ -12562,6 +12562,7 @@ function updateProfileDropdownMenu() {
   }
   syncManualEntryModeUI?.();
   syncAccountSupportUI?.(active);
+  syncBroadcastPreviewControls?.();
 }
 
 function isManualEntryModeEnabled() {
@@ -13080,6 +13081,8 @@ function upsertManualMatchForLogEntry(entry = {}) {
 let appToastCounter = 0;
 let premiumMomentTimer = 0;
 let premiumAvatarCelebrateTimer = 0;
+let broadcastOverlayTimer = 0;
+let broadcastPreviewTimer = 0;
 
 function getPremiumFeedbackTheme(profile = getActiveProfile()) {
   const resolvedProfile = profile || getActiveProfile();
@@ -13172,6 +13175,417 @@ function pulsePremiumAvatarCelebration() {
   }, 920);
 }
 
+function canUseBroadcastPreviewMode(user = currentAuthUser) {
+  return Boolean(typeof isPremiumThemeQaUser === "function" && isPremiumThemeQaUser(user));
+}
+
+function syncBroadcastPreviewControls() {
+  const allowed = canUseBroadcastPreviewMode();
+  [
+    document.getElementById("previewRollRevealBtn"),
+    document.getElementById("previewPostgamePackageBtn")
+  ].filter(Boolean).forEach((button) => {
+    button.hidden = !allowed;
+    button.setAttribute("aria-hidden", allowed ? "false" : "true");
+  });
+}
+
+function shouldSkipBroadcastMotion() {
+  if (document.body?.classList.contains("access-reduced-motion")) return true;
+  try {
+    return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+  } catch {
+    return false;
+  }
+}
+
+function getBroadcastMotionStage() {
+  return document.getElementById("premiumMomentOverlay");
+}
+
+function primeBroadcastOverlay(durationMs = 1100) {
+  const overlay = getBroadcastMotionStage();
+  if (!overlay) return null;
+  overlay.hidden = false;
+  overlay.classList.add("has-broadcast");
+  window.clearTimeout(broadcastOverlayTimer);
+  broadcastOverlayTimer = window.setTimeout(() => {
+    overlay.classList.remove("has-broadcast");
+    if (!overlay.classList.contains("is-active")) {
+      overlay.hidden = true;
+    }
+  }, Math.max(320, durationMs));
+  return overlay;
+}
+
+function broadcastWait(ms = 0) {
+  return new Promise(resolve => window.setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+}
+
+function getBroadcastTargetRect(target = null) {
+  const fallback = {
+    left: window.innerWidth / 2,
+    top: window.innerHeight / 2,
+    width: 1,
+    height: 1
+  };
+  if (!target?.getBoundingClientRect) return fallback;
+  const rect = target.getBoundingClientRect();
+  if (!rect || !rect.width || !rect.height) return fallback;
+  return rect;
+}
+
+function flashHit(target = document.body, options = {}) {
+  if (shouldSkipBroadcastMotion()) return;
+  const flash = document.createElement("div");
+  flash.className = "broadcast-motion-flash";
+  if (target && target !== document.body && target !== document.documentElement && target.getBoundingClientRect) {
+    const rect = getBroadcastTargetRect(target);
+    Object.assign(flash.style, {
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      right: "auto",
+      bottom: "auto",
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      borderRadius: getComputedStyle(target).borderRadius || "18px"
+    });
+  }
+  flash.style.opacity = String(Math.max(0.2, Math.min(1, Number(options.opacity) || 0.92)));
+  document.body.appendChild(flash);
+  window.setTimeout(() => flash.remove(), Math.max(120, Number(options.durationMs) || 150));
+}
+
+function impactShake(target = document.querySelector(".app") || document.body, intensity = "low") {
+  if (shouldSkipBroadcastMotion() || !target?.classList) return;
+  const className = intensity === "high" ? "broadcast-motion-shake-high" : "broadcast-motion-shake-low";
+  target.classList.remove("broadcast-motion-shake-low", "broadcast-motion-shake-high");
+  void target.offsetWidth;
+  target.classList.add(className);
+  window.setTimeout(() => target.classList.remove(className), intensity === "high" ? 360 : 260);
+}
+
+function snapIn(el) {
+  if (shouldSkipBroadcastMotion() || !el?.classList) return;
+  el.classList.remove("broadcast-motion-snap");
+  void el.offsetWidth;
+  el.classList.add("broadcast-motion-snap");
+  window.setTimeout(() => el.classList.remove("broadcast-motion-snap"), 560);
+}
+
+function particleBurst(anchor = document.body, options = {}) {
+  if (shouldSkipBroadcastMotion()) return;
+  const overlay = primeBroadcastOverlay(900);
+  if (!overlay) return;
+  const rect = getBroadcastTargetRect(anchor);
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const count = Math.max(8, Math.min(24, Number(options.count) || 14));
+  const radius = Math.max(54, Math.min(150, Number(options.radius) || 92));
+  const theme = getPremiumFeedbackTheme?.()?.theme;
+  const palette = [
+    options.color,
+    theme?.colors?.accent,
+    theme?.colors?.accent2,
+    "#ffd43b",
+    "#2dd4bf"
+  ].filter(Boolean);
+  for (let i = 0; i < count; i += 1) {
+    const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.38);
+    const distance = radius * (0.62 + Math.random() * 0.48);
+    const particle = document.createElement("span");
+    particle.className = "broadcast-particle";
+    particle.style.setProperty("--broadcast-x", `${centerX}px`);
+    particle.style.setProperty("--broadcast-y", `${centerY}px`);
+    particle.style.setProperty("--burst-x", `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty("--burst-y", `${Math.sin(angle) * distance}px`);
+    particle.style.setProperty("--particle-color", palette[i % palette.length]);
+    overlay.appendChild(particle);
+    window.setTimeout(() => particle.remove(), 680);
+  }
+}
+
+function statStamp(text = "", options = {}) {
+  const copy = String(text || "").trim();
+  if (!copy) return;
+  if (shouldSkipBroadcastMotion()) {
+    showToast?.(copy, { title: "RankedCoach Live", durationMs: 1800 });
+    return;
+  }
+  const overlay = primeBroadcastOverlay(1150);
+  if (!overlay) return;
+  const stamp = document.createElement("div");
+  stamp.className = "broadcast-stamp";
+  stamp.dataset.tone = String(options.tone || "neutral");
+  stamp.textContent = copy;
+  if (options.bottom) stamp.style.bottom = String(options.bottom);
+  overlay.appendChild(stamp);
+  window.setTimeout(() => stamp.remove(), Math.max(760, Number(options.durationMs) || 840));
+}
+
+function parseBroadcastNumber(value) {
+  const match = String(value ?? "").replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
+  if (!match) return 0;
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function tickCounter(el, value, options = {}) {
+  if (!el) return Promise.resolve();
+  const target = Number.isFinite(Number(value)) ? Number(value) : parseBroadcastNumber(el.textContent);
+  const start = Number.isFinite(Number(options.start)) ? Number(options.start) : parseBroadcastNumber(el.dataset?.value || el.textContent);
+  const formatter = typeof options.format === "function"
+    ? options.format
+    : (next) => String(Math.round(next));
+  if (shouldSkipBroadcastMotion() || start === target) {
+    el.textContent = formatter(target);
+    snapIn(el);
+    return Promise.resolve();
+  }
+  const distance = Math.max(1, Math.abs(Math.round(target - start)));
+  const duration = Math.max(320, Math.min(1100, Number(options.durationMs) || 760));
+  const intervalMs = Math.max(24, Math.min(76, duration / distance));
+  const direction = target >= start ? 1 : -1;
+  let current = Math.round(start);
+  el.classList.add("rr-total-rolling");
+  return new Promise(resolve => {
+    const timer = window.setInterval(() => {
+      const remaining = Math.abs(Math.round(target) - current);
+      const step = Math.max(1, Math.ceil(remaining / 5));
+      current += direction * step;
+      if ((direction > 0 && current >= target) || (direction < 0 && current <= target)) {
+        current = Math.round(target);
+      }
+      el.textContent = formatter(current);
+      if (current === Math.round(target)) {
+        window.clearInterval(timer);
+        el.textContent = formatter(target);
+        el.classList.remove("rr-total-rolling");
+        el.classList.remove("broadcast-motion-count-final");
+        void el.offsetWidth;
+        el.classList.add("broadcast-motion-count-final");
+        window.setTimeout(() => {
+          el.classList.remove("broadcast-motion-count-final");
+          resolve();
+        }, 430);
+      }
+    }, intervalMs);
+  });
+}
+
+function getBroadcastRollData(options = {}) {
+  const agent = String(options.agent || agentName?.textContent || activeAgent || "Jett").trim();
+  const focus = String(options.focus || focusDisplay?.textContent || "Positioning").trim();
+  const role = String(agentRoles?.[agent] || activeRole || "").toLowerCase();
+  return {
+    agent: agent && agent !== "-" ? agent : "Jett",
+    focus: focus && focus !== "-" ? focus : "Positioning",
+    role
+  };
+}
+
+async function playBroadcastRollReveal(options = {}) {
+  if (!canUseBroadcastPreviewMode() || shouldSkipBroadcastMotion()) return;
+  const { agent, focus } = getBroadcastRollData(options);
+  const frame = document.getElementById("agentFrame") || document.querySelector(".loadout-card");
+  const nameEl = agentName || document.getElementById("agentName");
+  const focusEl = focusDisplay || document.getElementById("focusDisplay");
+  const artEl = document.getElementById("agentFrameArt") || document.getElementById("agentRevealArt") || frame;
+  primeBroadcastOverlay(1800);
+  flashHit(document.body);
+  await broadcastWait(90);
+  [frame, artEl, nameEl].filter(Boolean).forEach(snapIn);
+  impactShake(document.querySelector(".home-middle-row") || document.querySelector(".app") || document.body, "low");
+  particleBurst(frame, { count: 18, radius: 118 });
+  await broadcastWait(170);
+  statStamp(`${agent} locked`, { tone: "neutral" });
+  await broadcastWait(180);
+  snapIn(focusEl);
+  statStamp(`Focus: ${focus}`, { tone: "warn", bottom: "clamp(34px, 5vh, 76px)" });
+  await broadcastWait(210);
+  statStamp("Locked in", { tone: "positive" });
+}
+
+function getLatestBroadcastMatch() {
+  if (Array.isArray(matches) && matches.length) return matches[matches.length - 1];
+  const profileMatches = getActiveProfile?.()?.matches;
+  return Array.isArray(profileMatches) && profileMatches.length ? profileMatches[profileMatches.length - 1] : null;
+}
+
+function getBroadcastMatchAgent(match = null) {
+  try {
+    const core = match ? getMatchCore(match) : null;
+    return String(core?.agent || match?.agent || match?.metadata?.agent || "").trim();
+  } catch {
+    return String(match?.agent || match?.metadata?.agent || "").trim();
+  }
+}
+
+function getBroadcastMatchRRDelta(match = null, options = {}) {
+  const candidates = [
+    options.rrDelta,
+    options.delta,
+    match?.rrDelta,
+    match?.rrChange,
+    match?.metadata?.rrDelta,
+    match?.matchRecord?.rrDelta
+  ];
+  for (const candidate of candidates) {
+    const value = Number(candidate);
+    if (Number.isFinite(value)) return value;
+  }
+  try {
+    if (match && typeof getChartMatchRRDelta === "function") {
+      const value = Number(getChartMatchRRDelta(match));
+      if (Number.isFinite(value)) return value;
+    }
+  } catch {}
+  return 0;
+}
+
+function getBroadcastTimelineCandidates() {
+  return Array.from(document.querySelectorAll(".timeline-pill"))
+    .filter(pill => !pill.disabled && !pill.classList.contains("is-disabled"))
+    .map((pill, index) => {
+      const label = pill.querySelector(".timeline-pill-label")?.textContent?.trim() || `Stat ${index + 1}`;
+      const value = pill.querySelector(".timeline-pill-value")?.textContent?.trim() || "";
+      const delta = pill.querySelector(".timeline-pill-delta")?.textContent?.trim() || "";
+      return {
+        el: pill,
+        label,
+        value,
+        delta,
+        magnitude: Math.abs(parseBroadcastNumber(delta || value)),
+        positive: /^\+/.test(delta) || pill.classList.contains("is-positive")
+      };
+    });
+}
+
+function selectBroadcastHeadlineStatCandidate(match = null, options = {}) {
+  const rrDelta = getBroadcastMatchRRDelta(match, options);
+  const rrEl = totalRRDisplay || document.getElementById("totalRRDisplay");
+
+  // Broadcast headline rule: RR only leads when it is clearly match-defining;
+  // otherwise the best visible improvement pill leads, preferring positive deltas
+  // before falling back to the largest magnitude signal already rendered by RankedCoach.
+  if (Math.abs(rrDelta) >= 18 && rrEl) {
+    return {
+      type: "rr",
+      el: rrEl,
+      label: rrDelta > 0 ? `RR swing +${rrDelta}` : `RR swing ${rrDelta}`,
+      tone: rrDelta >= 0 ? "positive" : "warn",
+      magnitude: Math.abs(rrDelta)
+    };
+  }
+
+  const timelineCandidates = getBroadcastTimelineCandidates()
+    .sort((a, b) => Number(b.positive) - Number(a.positive) || b.magnitude - a.magnitude);
+  if (timelineCandidates.length) {
+    const top = timelineCandidates[0];
+    return {
+      type: "timeline",
+      el: top.el,
+      label: `${top.label} ${top.value}`.trim(),
+      tone: top.positive ? "positive" : "neutral",
+      magnitude: top.magnitude
+    };
+  }
+
+  return {
+    type: "fallback",
+    el: document.querySelector(".rr-card") || document.querySelector(".improvement-card"),
+    label: "Match package ready",
+    tone: "neutral",
+    magnitude: 0
+  };
+}
+
+function getBroadcastRollHonoredLabel(match = null) {
+  const rolledAgent = String(agentName?.textContent || activeAgent || "").trim();
+  const matchAgent = getBroadcastMatchAgent(match);
+  if (rolledAgent && matchAgent && rolledAgent.toLowerCase() === matchAgent.toLowerCase()) {
+    return `Roll honored: ${rolledAgent}`;
+  }
+  if (matchAgent) return `Match reviewed: ${matchAgent}`;
+  if (rolledAgent && rolledAgent !== "-") return `Loadout queued: ${rolledAgent}`;
+  return "Postgame package ready";
+}
+
+async function animateBroadcastCompassPackage() {
+  const compassWrap = document.querySelector(".compass-summary-body") || document.querySelector(".compass-panel");
+  const compassSvg = document.getElementById("compassSvg");
+  const scoreEls = [
+    document.getElementById("compassScoreAim"),
+    document.getElementById("compassScoreSense"),
+    document.getElementById("compassScoreTeam"),
+    document.getElementById("compassScoreDiscipline")
+  ].filter(Boolean);
+  if (!compassWrap && !scoreEls.length) return;
+  snapIn(compassWrap);
+  snapIn(compassSvg);
+  particleBurst(compassSvg || compassWrap, { count: 12, radius: 82 });
+  await Promise.all(scoreEls.map((el, index) => (
+    broadcastWait(index * 60).then(() => tickCounter(el, parseBroadcastNumber(el.textContent), {
+      start: 0,
+      durationMs: 460
+    }))
+  )));
+}
+
+async function playBroadcastPostgamePackage(options = {}) {
+  if (!canUseBroadcastPreviewMode() || shouldSkipBroadcastMotion()) return;
+  const match = options.match || options.record || getLatestBroadcastMatch();
+  const headline = selectBroadcastHeadlineStatCandidate(match, options);
+  const rrDelta = getBroadcastMatchRRDelta(match, options);
+  const rrEl = totalRRDisplay || document.getElementById("totalRRDisplay");
+  const remainingPills = getBroadcastTimelineCandidates()
+    .filter(candidate => candidate.el !== headline.el)
+    .slice(0, 4);
+  primeBroadcastOverlay(2200);
+  flashHit(document.body);
+  impactShake(document.querySelector(".app") || document.body, "low");
+  await broadcastWait(110);
+  statStamp(getBroadcastRollHonoredLabel(match), { tone: "neutral" });
+  await broadcastWait(210);
+  if (headline.el) {
+    snapIn(headline.el);
+    particleBurst(headline.el, { count: headline.type === "rr" ? 20 : 14, radius: headline.type === "rr" ? 128 : 88 });
+  }
+  statStamp(headline.label, { tone: headline.tone || "neutral" });
+  await broadcastWait(260);
+  for (const candidate of remainingPills) {
+    snapIn(candidate.el);
+    particleBurst(candidate.el, { count: 9, radius: 68 });
+    await broadcastWait(115);
+  }
+  await animateBroadcastCompassPackage();
+  if (rrEl) {
+    const target = parseBroadcastNumber(rrEl.dataset?.value || rrEl.textContent);
+    const start = Number.isFinite(Number(options.rrStart))
+      ? Number(options.rrStart)
+      : target - Math.max(-35, Math.min(35, rrDelta || 0));
+    await tickCounter(rrEl, target, { start, durationMs: 680 });
+    impactShake(document.querySelector(".rr-card") || document.querySelector(".app") || document.body, Math.abs(rrDelta) >= 18 ? "high" : "low");
+    particleBurst(rrEl, { count: Math.abs(rrDelta) >= 18 ? 22 : 12, radius: Math.abs(rrDelta) >= 18 ? 132 : 74 });
+  }
+}
+
+function queueBroadcastRollReveal(options = {}) {
+  if (!canUseBroadcastPreviewMode()) return;
+  window.clearTimeout(broadcastPreviewTimer);
+  broadcastPreviewTimer = window.setTimeout(() => {
+    playBroadcastRollReveal(options).catch(error => console.warn("Broadcast roll preview failed", error));
+  }, Math.max(0, Number(options.delayMs) || 0));
+}
+
+function queueBroadcastPostgamePackage(record = null, options = {}) {
+  if (!canUseBroadcastPreviewMode()) return;
+  window.clearTimeout(broadcastPreviewTimer);
+  broadcastPreviewTimer = window.setTimeout(() => {
+    playBroadcastPostgamePackage({ ...options, record, match: record }).catch(error => console.warn("Broadcast postgame preview failed", error));
+  }, Math.max(0, Number(options.delayMs) || 80));
+}
+
 function updatePeakRankAfterMatchSave(profile = getActiveProfile()) {
   const activeProfile = profile || getActiveProfile();
   if (!activeProfile?.id) {
@@ -13212,6 +13626,7 @@ function onMatchSaved(record, options = {}) {
       variant
     });
     triggerPremiumMoment("peak", { result });
+    queueBroadcastPostgamePackage(record, { ...options, isPeakEvent: true, delayMs: 40 });
     pulsePremiumAvatarCelebration();
     scheduleProfileStreakAnnouncement(1150);
     return;
@@ -13224,6 +13639,7 @@ function onMatchSaved(record, options = {}) {
   if (result === "win" || result === "loss") {
     triggerPremiumMoment("result", { result });
   }
+  queueBroadcastPostgamePackage(record, { ...options, delayMs: 40 });
   scheduleProfileStreakAnnouncement(1150);
 }
 
@@ -40445,6 +40861,20 @@ function bindEvents(){
     await toggleManualEntryModeFromUI();
   });
 
+  document.getElementById("previewRollRevealBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeProfileDropdown();
+    playBroadcastRollReveal({ source: "preview" }).catch(error => console.warn("Broadcast roll reveal preview failed", error));
+  });
+
+  document.getElementById("previewPostgamePackageBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeProfileDropdown();
+    playBroadcastPostgamePackage({ source: "preview" }).catch(error => console.warn("Broadcast postgame package preview failed", error));
+  });
+
   document.getElementById("profileRatingWidget")?.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -40768,6 +41198,7 @@ function bindEvents(){
   const openProfileSettingsMenu = (anchor = profileDropdownAnchor || profileDropdownToggle) => {
     profileSwitcher?.classList.remove("open");
     setProfileRatingDropdownOpen(false);
+    syncBroadcastPreviewControls?.();
     profileDropdownActiveAnchor = anchor || profileDropdownAnchor || profileDropdownToggle;
     profileDropdown?.classList.add("open");
     schedulePositionOpenProfileMenus();
@@ -50222,6 +50653,7 @@ function flipSpinIcon(){
       }
 
       syncLogInputs();
+      queueBroadcastRollReveal({ agent: pick, focus: newFocus, source: "roll", delayMs: 40 });
 
       const holoAgain = document.querySelector(".placeholder-holo");
       if (holoAgain) holoAgain.style.opacity = "0.15";
