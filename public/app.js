@@ -13320,10 +13320,27 @@ function dropInPop(el, options = {}) {
   }, delayMs);
 }
 
+function lockInField(el, options = {}) {
+  if (shouldSkipBroadcastMotion() || !el?.classList) return;
+  const delayMs = Math.max(0, Number(options.delayMs) || 0);
+  const label = String(options.label || "Locked in").trim();
+  window.setTimeout(() => {
+    el.dataset.lockinLabel = label;
+    el.classList.remove("broadcast-field-lockin", "broadcast-field-dropin");
+    void el.offsetWidth;
+    el.classList.add("broadcast-field-lockin");
+    window.setTimeout(() => {
+      el.classList.remove("broadcast-field-lockin");
+      delete el.dataset.lockinLabel;
+    }, 1040);
+  }, delayMs);
+}
+
 function animatePostgameAutofillFields(match = null, options = {}) {
   if (shouldSkipBroadcastMotion()) return;
   const targetEntry = options.entry || null;
   const forceAutofill = options.forceAutofill === true;
+  const useLockInMotion = options.fieldMotion === "lockin" || options.useLockInMotion === true;
   const agent = getBroadcastPostgameAgent(match, options);
   const core = match ? getMatchCore(match) : {};
   const preferUi = options.source === "preview" || options.preferAutofill === true;
@@ -13361,6 +13378,15 @@ function animatePostgameAutofillFields(match = null, options = {}) {
   }
   if (map && mapInput && (forceAutofill || !mapInput.value)) {
     mapInput.value = map;
+  }
+
+  if (useLockInMotion) {
+    [
+      [agentField, 0, "Agent locked in"],
+      [focusField, 150, "Focus locked in"],
+      [mapField, 300, "Map locked in"]
+    ].forEach(([target, delay, label]) => lockInField(target, { delayMs: delay, label }));
+    return;
   }
 
   [
@@ -14192,7 +14218,8 @@ function playLoggingRevealPreview(options = {}) {
         entry: previewData,
         preferAutofill: true,
         forceAutofill: true,
-        animateLoggingForm: true
+        animateLoggingForm: true,
+        fieldMotion: "lockin"
       });
     }, 80);
     animateSyncedLogEntryArrival(target, previewData.rrDelta);
