@@ -53344,6 +53344,12 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   transform-origin:center;
 }
 
+.broadcast-field-dropin{
+  animation:broadcastFieldDropPop 720ms cubic-bezier(.16,1.18,.26,1) both;
+  transform-origin:center top;
+  will-change:transform, opacity, filter;
+}
+
 .broadcast-motion-count-final{
   animation:broadcastFinalPulse 420ms cubic-bezier(.18,1.28,.26,1) both;
 }
@@ -53383,6 +53389,13 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   100%{ opacity:1; transform:scale(1) translateY(0); filter:none; }
 }
 
+@keyframes broadcastFieldDropPop{
+  0%{ opacity:0; transform:translate3d(0,-24px,0) scale(.9); filter:brightness(1.5) saturate(1.35) drop-shadow(0 0 16px var(--accent, #ff4655)); }
+  48%{ opacity:1; transform:translate3d(0,5px,0) scale(1.08); }
+  70%{ transform:translate3d(0,-2px,0) scale(.98); }
+  100%{ opacity:1; transform:translate3d(0,0,0) scale(1); filter:none; }
+}
+
 @keyframes broadcastFinalPulse{
   0%{ transform:scale(1); filter:none; }
   38%{ transform:scale(1.18); filter:brightness(1.35) drop-shadow(0 0 16px currentColor); }
@@ -53411,6 +53424,7 @@ body.access-reduced-motion :is(
   .broadcast-stamp,
   .broadcast-particle,
   .broadcast-motion-snap,
+  .broadcast-field-dropin,
   .broadcast-motion-count-final,
   .broadcast-motion-shake-low,
   .broadcast-motion-shake-high
@@ -53433,6 +53447,10 @@ body.broadcast-preview-force-motion .broadcast-particle{
 
 body.broadcast-preview-force-motion .broadcast-motion-snap{
   animation:broadcastSnapIn 520ms cubic-bezier(.15,1.22,.26,1) both !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-field-dropin{
+  animation:broadcastFieldDropPop 720ms cubic-bezier(.16,1.18,.26,1) both !important;
 }
 
 body.broadcast-preview-force-motion .broadcast-motion-count-final{

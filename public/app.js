@@ -13309,6 +13309,52 @@ function snapIn(el) {
   window.setTimeout(() => el.classList.remove("broadcast-motion-snap"), 560);
 }
 
+function dropInPop(el, options = {}) {
+  if (shouldSkipBroadcastMotion() || !el?.classList) return;
+  const delayMs = Math.max(0, Number(options.delayMs) || 0);
+  window.setTimeout(() => {
+    el.classList.remove("broadcast-field-dropin");
+    void el.offsetWidth;
+    el.classList.add("broadcast-field-dropin");
+    window.setTimeout(() => el.classList.remove("broadcast-field-dropin"), 780);
+  }, delayMs);
+}
+
+function animatePostgameAutofillFields(match = null, options = {}) {
+  if (shouldSkipBroadcastMotion()) return;
+  const targetEntry = options.entry || null;
+  const agent = getBroadcastMatchAgent(match) || String(targetEntry?.agent || "").trim();
+  const core = match ? getMatchCore(match) : {};
+  const map = String(core?.map || match?.map || match?.metadata?.mapName || targetEntry?.map || "").trim();
+  const focus = String(targetEntry?.focus || document.getElementById("logFocusOther")?.value || document.getElementById("logFocusSelect")?.value || "").trim();
+
+  const agentImg = document.getElementById("logAgentImg");
+  const agentText = document.getElementById("logAgentText");
+  const focusText = document.getElementById("focusPreviewText") || document.getElementById("logFocusCustomValue");
+  const mapInput = document.getElementById("logMap");
+
+  if (agent && agentImg && !agentImg.classList.contains("is-silhouette")) {
+    agentImg.alt = `${agent} selected agent`;
+  }
+  if (agent && agentText && (!agentText.textContent || agentText.textContent.trim().toLowerCase() === "choose agent")) {
+    agentText.textContent = agent;
+  }
+  if (focus && focusText) {
+    focusText.textContent = focus;
+    focusText.classList?.remove("is-placeholder");
+  }
+  if (map && mapInput && !mapInput.value) {
+    mapInput.value = map;
+  }
+
+  [
+    [agentImg, 0],
+    [agentText, 70],
+    [focusText, 150],
+    [mapInput, 230]
+  ].forEach(([target, delay]) => dropInPop(target, { delayMs: delay }));
+}
+
 function particleBurst(anchor = document.body, options = {}) {
   if (shouldSkipBroadcastMotion()) return;
   const overlay = primeBroadcastOverlay(900);
@@ -13457,12 +13503,9 @@ async function playBroadcastRollReveal(options = {}) {
   [frame, artEl, nameEl].filter(Boolean).forEach(snapIn);
   impactShake(document.querySelector(".home-middle-row") || document.querySelector(".app") || document.body, "low");
   particleBurst(frame, { count: 18, radius: 118 });
-  await broadcastWait(170);
-  statStamp(`${agent} locked`, { tone: "neutral" });
-  await broadcastWait(180);
+  await broadcastWait(190);
   snapIn(focusEl);
-  statStamp(`Focus: ${focus}`, { tone: "warn", bottom: "clamp(34px, 5vh, 76px)" });
-  await broadcastWait(210);
+  await broadcastWait(220);
   statStamp("Locked in", { tone: "positive" });
   return true;
 }
@@ -13880,6 +13923,7 @@ async function playBroadcastPostgamePackage(options = {}) {
   impactShake(document.querySelector(".app") || document.body, "low");
   await broadcastWait(160);
   statStamp(getBroadcastRollHonoredLabel(match), { tone: "neutral", durationMs: 2100 });
+  animatePostgameAutofillFields(match, { entry: options.entry || null });
   await broadcastWait(1380);
   if (headline.el) {
     snapIn(headline.el);
@@ -13888,7 +13932,9 @@ async function playBroadcastPostgamePackage(options = {}) {
   } else {
     spotlightEl = setBroadcastImprovementSpotlight(spotlightCandidate);
   }
-  statStamp(headline.label, { tone: headline.tone || "neutral", durationMs: 2200 });
+  if (headline.type !== "timeline") {
+    statStamp(headline.label, { tone: headline.tone || "neutral", durationMs: 2200 });
+  }
   await broadcastWait(1500);
   for (const candidate of remainingPills) {
     snapIn(candidate.el);
@@ -17292,6 +17338,9 @@ function prefillLatestImportedReflection(options = {}) {
   if (!latest) return null;
   activeLogSessionFilter = today;
   editLogEntry(latest.id, { scroll: false });
+  if (options.animate !== false) {
+    window.setTimeout(() => animatePostgameAutofillFields(null, { entry: latest }), 80);
+  }
   return latest;
 }
 
