@@ -352,7 +352,7 @@
   "coordinates": "14°07'AD.4\"N8 74°53'XY\"E8",
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-29",
+  "lastReviewed": "2026-07-30",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/lotus-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US",
@@ -1326,7 +1326,7 @@
     "entityName": "Lotus",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T03:39:31.969Z",
+    "generatedAt": "2026-07-30T09:09:06.850Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-30"

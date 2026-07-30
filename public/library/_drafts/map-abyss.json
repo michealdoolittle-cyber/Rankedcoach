@@ -302,7 +302,7 @@
   "coordinates": "70° 50' AJ\" N, 9° 00' VX\" W",
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-29",
+  "lastReviewed": "2026-07-30",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/abyss-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US",
@@ -1243,7 +1243,7 @@
     "entityName": "Abyss",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T03:39:31.969Z",
+    "generatedAt": "2026-07-30T09:09:06.850Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-30"

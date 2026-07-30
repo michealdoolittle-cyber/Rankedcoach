@@ -126,7 +126,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/f94c3b30-42be-e959-889c-5aa313dba261?language=en-US",
   "uuid": "f94c3b30-42be-e959-889c-5aa313dba261",
-  "lastReviewed": "2026-07-29",
+  "lastReviewed": "2026-07-30",
   "patchVersion": "13.01",
   "pickRate": 17.1142,
   "pickRateRank": 10,
@@ -222,7 +222,7 @@
     "entityName": "Raze",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T03:39:31.969Z",
+    "generatedAt": "2026-07-30T09:09:06.850Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-30"

@@ -282,7 +282,7 @@
   "coordinates": "48° 38' FH\" N8, 1° 33' YV\" W8",
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-29",
+  "lastReviewed": "2026-07-30",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/corrode-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/1c18ab1f-420d-0d8b-71d0-77ad3c439115?language=en-US",
@@ -1215,7 +1215,7 @@
     "entityName": "Corrode",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T03:39:31.969Z",
+    "generatedAt": "2026-07-30T09:09:06.850Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-30"

@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/22697a3d-45bf-8dd7-4fec-84a9e28c69d7?language=en-US",
   "uuid": "22697a3d-45bf-8dd7-4fec-84a9e28c69d7",
-  "lastReviewed": "2026-07-29",
+  "lastReviewed": "2026-07-30",
   "patchVersion": "13.01",
   "pickRate": 42.2037,
   "pickRateRank": 4,
@@ -232,7 +232,7 @@
     "entityName": "Chamber",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T03:39:31.969Z",
+    "generatedAt": "2026-07-30T09:09:06.850Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-30"

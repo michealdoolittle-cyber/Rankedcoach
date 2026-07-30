@@ -261,7 +261,7 @@
   ],
   "source": "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-07-29",
+  "lastReviewed": "2026-07-30",
   "patchVersion": "13.01",
   "plantLayoutImage": "/assets/library/maps/icebox-layout-plants.svg",
   "plantSpots": [],
@@ -1096,7 +1096,7 @@
     "entityName": "Icebox",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T03:39:31.969Z",
+    "generatedAt": "2026-07-30T09:09:06.850Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.01",
     "lastReviewed": "2026-07-30"
