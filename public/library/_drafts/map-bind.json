@@ -545,7 +545,7 @@
   "source": "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
   "dataStatus": "verified",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "plantLayoutImage": "/assets/library/maps/bind-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba?language=en-US",
   "highRankPickRates": {
@@ -1478,7 +1478,7 @@
     "entityName": "Bind",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

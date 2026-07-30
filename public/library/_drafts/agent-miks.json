@@ -113,7 +113,7 @@
   "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
   "uuid": "7c8a4701-4de6-9355-b254-e09bc2a34b72",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 4.211,
   "pickRateRank": 19,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -190,7 +190,7 @@
     "entityName": "Miks",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

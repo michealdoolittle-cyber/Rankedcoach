@@ -137,7 +137,7 @@
   "source": "https://valorant-api.com/v1/agents/1e58de9c-4950-5125-93e9-a0aee9f98746?language=en-US",
   "uuid": "1e58de9c-4950-5125-93e9-a0aee9f98746",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 12.4408,
   "pickRateRank": 12,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -232,7 +232,7 @@
     "entityName": "Killjoy",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

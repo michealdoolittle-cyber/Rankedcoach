@@ -303,7 +303,7 @@
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "plantLayoutImage": "/assets/library/maps/abyss-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/224b0a95-48b9-f703-1bd8-67aca101a61f?language=en-US",
   "highRankPickRates": {
@@ -1243,7 +1243,7 @@
     "entityName": "Abyss",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

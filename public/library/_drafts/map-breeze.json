@@ -868,7 +868,7 @@
   "source": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
   "dataStatus": "verified",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "plantLayoutImage": "/assets/library/maps/breeze-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
   "statsSource": {
@@ -1575,7 +1575,7 @@
     "entityName": "Breeze",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

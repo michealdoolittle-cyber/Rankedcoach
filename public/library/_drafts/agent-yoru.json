@@ -137,7 +137,7 @@
   "source": "https://valorant-api.com/v1/agents/7f94d92c-4234-0a36-9646-3a87eb8b5c89?language=en-US",
   "uuid": "7f94d92c-4234-0a36-9646-3a87eb8b5c89",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 4.1134,
   "pickRateRank": 20,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -232,7 +232,7 @@
     "entityName": "Yoru",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

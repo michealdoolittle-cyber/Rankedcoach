@@ -137,7 +137,7 @@
   "source": "https://valorant-api.com/v1/agents/a3bfb853-43b2-7238-a4f1-ad90e9e46bcc?language=en-US",
   "uuid": "a3bfb853-43b2-7238-a4f1-ad90e9e46bcc",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 42.0353,
   "pickRateRank": 5,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -232,7 +232,7 @@
     "entityName": "Reyna",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

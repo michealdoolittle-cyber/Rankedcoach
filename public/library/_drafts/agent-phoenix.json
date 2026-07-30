@@ -159,7 +159,7 @@
   "source": "https://valorant-api.com/v1/agents/eb93336a-449b-9c1b-0a54-a891f7921d69?language=en-US",
   "uuid": "eb93336a-449b-9c1b-0a54-a891f7921d69",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 24.8315,
   "pickRateRank": 7,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -254,7 +254,7 @@
     "entityName": "Phoenix",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

@@ -52,7 +52,7 @@
   "uuid": "f7e1b454-4ad4-1063-ec0a-159e56b58941",
   "source": "https://valorant-api.com/v1/weapons/f7e1b454-4ad4-1063-ec0a-159e56b58941?language=en-US",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
     "category": "weapon",
@@ -60,7 +60,7 @@
     "entityName": "Stinger",
     "operation": "merge",
     "groupId": "smgs",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

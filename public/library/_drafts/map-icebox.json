@@ -262,7 +262,7 @@
   "source": "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US",
   "dataStatus": "verified",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "plantLayoutImage": "/assets/library/maps/icebox-layout-plants.svg",
   "plantSpots": [],
   "plantRateNote": "Dignitas names A Generator, A Belt, A Top, B Corner, B Mid, and B Top as Icebox plant recommendations. Its guide does not publish map-coordinate markers, so the map is shown without approximated site-centroid pins.",
@@ -1096,7 +1096,7 @@
     "entityName": "Icebox",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

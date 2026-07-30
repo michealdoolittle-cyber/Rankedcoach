@@ -137,7 +137,7 @@
   "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
   "uuid": "1dbf2edd-4729-0984-3115-daa5eed44993",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 70.7628,
   "pickRateRank": 2,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -232,7 +232,7 @@
     "entityName": "Clove",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

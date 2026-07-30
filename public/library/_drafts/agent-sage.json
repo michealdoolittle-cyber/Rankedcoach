@@ -130,7 +130,7 @@
   "uuid": "569fdd95-4d10-43ab-ca70-79becc718b46",
   "source": "https://valorant-api.com/v1/agents/569fdd95-4d10-43ab-ca70-79becc718b46?language=en-US",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 9.4933,
   "pickRateRank": 15,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -225,7 +225,7 @@
     "entityName": "Sage",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

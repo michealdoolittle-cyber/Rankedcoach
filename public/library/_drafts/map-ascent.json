@@ -293,7 +293,7 @@
   "calloutLabelsBakedIn": false,
   "dataStatus": "in-review",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "plantLayoutImage": "/assets/library/maps/ascent-layout-plants.svg",
   "tacticalMapSource": "https://valorant-api.com/v1/maps/7eaecc1b-4337-bbf6-6ab9-04b8f06b3319?language=en-US",
   "highRankPickRates": {
@@ -1266,7 +1266,7 @@
     "entityName": "Ascent",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"

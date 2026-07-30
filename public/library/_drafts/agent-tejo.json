@@ -132,7 +132,7 @@
   "source": "https://valorant-api.com/v1/agents/b444168c-4e35-8076-db47-ef9bf368f384?language=en-US",
   "uuid": "b444168c-4e35-8076-db47-ef9bf368f384",
   "lastReviewed": "2026-07-30",
-  "patchVersion": "13.01",
+  "patchVersion": "13.02",
   "pickRate": 2.1868,
   "pickRateRank": 26,
   "sampleLabel": "VStats V26 Act 4 | Ascendant to Radiant",
@@ -227,7 +227,7 @@
     "entityName": "Tejo",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T14:39:37.289Z",
+    "generatedAt": "2026-07-30T19:58:41.569Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-07-30"
