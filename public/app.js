@@ -13982,15 +13982,23 @@ async function playBroadcastPostgamePackage(options = {}) {
   let spotlightEl = null;
   const rrDelta = getBroadcastMatchRRDelta(match, options);
   const rrEl = totalRRDisplay || document.getElementById("totalRRDisplay");
+  const postgameAnchor = headline.el?.closest?.(".card")
+    || spotlightCandidate?.el?.closest?.(".card")
+    || document.querySelector(".improvement-card")
+    || document.querySelector(".rr-card")
+    || document.querySelector(".compass-panel")
+    || document.querySelector(".home-layout");
   const remainingPills = getBroadcastTimelineCandidates()
     .filter(candidate => candidate.el !== headline.el)
     .slice(0, 4);
   primeBroadcastOverlay(2200);
   flashHit(document.body);
-  snapIn(document.getElementById("loggingLiveCard") || document.querySelector(".logging-card"));
+  snapIn(postgameAnchor);
   await broadcastWait(160);
   statStamp(getBroadcastRollHonoredLabel(match, options), { tone: "neutral", durationMs: 2100 });
-  animatePostgameAutofillFields(match, { ...options, entry: options.entry || null });
+  if (options.animateLoggingForm === true || (options.source !== "preview" && isLoggingPageActive())) {
+    animatePostgameAutofillFields(match, { ...options, entry: options.entry || null });
+  }
   await broadcastWait(1380);
   if (headline.el) {
     snapIn(headline.el);
@@ -14046,9 +14054,9 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
   });
 
   try {
-    if (kind === "postgame" && typeof activatePage === "function") {
-      activatePage("logging");
-      await broadcastWait(180);
+    if ((kind === "roll" || kind === "postgame") && typeof activatePage === "function") {
+      activatePage("home");
+      await broadcastWait(kind === "postgame" ? 180 : 120);
     }
     const played = kind === "postgame"
       ? await playBroadcastPostgamePackage({ source: "preview", bypassGate: true, forceMotion: !reducedMotionActive })
