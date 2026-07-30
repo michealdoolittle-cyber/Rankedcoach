@@ -13083,6 +13083,7 @@ let premiumMomentTimer = 0;
 let premiumAvatarCelebrateTimer = 0;
 let broadcastOverlayTimer = 0;
 let broadcastPreviewTimer = 0;
+let broadcastPreviewForceMotionTimer = 0;
 
 function getPremiumFeedbackTheme(profile = getActiveProfile()) {
   const resolvedProfile = profile || getActiveProfile();
@@ -13176,7 +13177,13 @@ function pulsePremiumAvatarCelebration() {
 }
 
 function canUseBroadcastPreviewMode(user = currentAuthUser) {
-  return Boolean(typeof isPremiumThemeQaUser === "function" && isPremiumThemeQaUser(user));
+  const email = String(user?.email || "").trim().toLowerCase();
+  const role = String(user?.app_metadata?.role || user?.user_metadata?.role || "").trim().toLowerCase();
+  return Boolean(
+    (typeof isPremiumThemeQaUser === "function" && isPremiumThemeQaUser(user)) ||
+    ["owner", "admin"].includes(role) ||
+    email === "michealdoolittle@gmail.com"
+  );
 }
 
 function syncBroadcastPreviewControls() {
@@ -13191,12 +13198,25 @@ function syncBroadcastPreviewControls() {
 }
 
 function shouldSkipBroadcastMotion() {
+  if (document.body?.classList.contains("broadcast-preview-force-motion")) return false;
   if (document.body?.classList.contains("access-reduced-motion")) return true;
   try {
-    return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+    return Boolean(typeof prefersReducedMotion === "function"
+      ? prefersReducedMotion()
+      : window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
   } catch {
     return false;
   }
+}
+
+function setBroadcastPreviewForceMotion(durationMs = 3200) {
+  const body = document.body;
+  if (!body) return;
+  body.classList.add("broadcast-preview-force-motion");
+  window.clearTimeout(broadcastPreviewForceMotionTimer);
+  broadcastPreviewForceMotionTimer = window.setTimeout(() => {
+    body.classList.remove("broadcast-preview-force-motion");
+  }, Math.max(1200, Number(durationMs) || 3200));
 }
 
 function getBroadcastMotionStage() {
@@ -13385,7 +13405,8 @@ function getBroadcastRollData(options = {}) {
 }
 
 async function playBroadcastRollReveal(options = {}) {
-  if (!canUseBroadcastPreviewMode() || shouldSkipBroadcastMotion()) return;
+  if (!options.bypassGate && !canUseBroadcastPreviewMode()) return false;
+  if (!options.forceMotion && shouldSkipBroadcastMotion()) return false;
   const { agent, focus } = getBroadcastRollData(options);
   const frame = document.getElementById("agentFrame") || document.querySelector(".loadout-card");
   const nameEl = agentName || document.getElementById("agentName");
@@ -13404,6 +13425,7 @@ async function playBroadcastRollReveal(options = {}) {
   statStamp(`Focus: ${focus}`, { tone: "warn", bottom: "clamp(34px, 5vh, 76px)" });
   await broadcastWait(210);
   statStamp("Locked in", { tone: "positive" });
+  return true;
 }
 
 function getLatestBroadcastMatch() {
@@ -13533,7 +13555,8 @@ async function animateBroadcastCompassPackage() {
 }
 
 async function playBroadcastPostgamePackage(options = {}) {
-  if (!canUseBroadcastPreviewMode() || shouldSkipBroadcastMotion()) return;
+  if (!options.bypassGate && !canUseBroadcastPreviewMode()) return false;
+  if (!options.forceMotion && shouldSkipBroadcastMotion()) return false;
   const match = options.match || options.record || getLatestBroadcastMatch();
   const headline = selectBroadcastHeadlineStatCandidate(match, options);
   const rrDelta = getBroadcastMatchRRDelta(match, options);
@@ -13568,6 +13591,44 @@ async function playBroadcastPostgamePackage(options = {}) {
     impactShake(document.querySelector(".rr-card") || document.querySelector(".app") || document.body, Math.abs(rrDelta) >= 18 ? "high" : "low");
     particleBurst(rrEl, { count: Math.abs(rrDelta) >= 18 ? 22 : 12, radius: Math.abs(rrDelta) >= 18 ? 132 : 74 });
   }
+  return true;
+}
+
+async function runBroadcastPreview(kind = "roll", sourceButton = null) {
+  const buttonWasVisible = Boolean(sourceButton && !sourceButton.hidden && sourceButton.getAttribute("aria-hidden") !== "true");
+  syncBroadcastPreviewControls?.();
+  if (!buttonWasVisible && !canUseBroadcastPreviewMode()) {
+    showToast?.("Broadcast previews are available only on the owner/dev account.", {
+      title: "Preview unavailable",
+      durationMs: 2600
+    });
+    return false;
+  }
+
+  closeProfileDropdown?.();
+  setBroadcastPreviewForceMotion(4200);
+  showToast?.(kind === "postgame" ? "Previewing postgame package." : "Previewing roll reveal.", {
+    title: "Broadcast preview",
+    durationMs: 1400
+  });
+
+  try {
+    const played = kind === "postgame"
+      ? await playBroadcastPostgamePackage({ source: "preview", bypassGate: true, forceMotion: true })
+      : await playBroadcastRollReveal({ source: "preview", bypassGate: true, forceMotion: true });
+    if (!played) {
+      statStamp(kind === "postgame" ? "Postgame preview ready" : "Roll preview ready", { tone: "warn" });
+    }
+    return Boolean(played);
+  } catch (error) {
+    console.warn("Broadcast preview failed", error);
+    showToast?.("Preview failed before the animation could start. Check console for details.", {
+      title: "Broadcast preview",
+      variant: "warn",
+      durationMs: 3200
+    });
+    return false;
+  }
 }
 
 function queueBroadcastRollReveal(options = {}) {
@@ -13585,6 +13646,12 @@ function queueBroadcastPostgamePackage(record = null, options = {}) {
     playBroadcastPostgamePackage({ ...options, record, match: record }).catch(error => console.warn("Broadcast postgame preview failed", error));
   }, Math.max(0, Number(options.delayMs) || 80));
 }
+
+globalThis.RankedCoachBroadcastPreview = Object.freeze({
+  playRoll: () => runBroadcastPreview("roll"),
+  playPostgame: () => runBroadcastPreview("postgame"),
+  syncControls: syncBroadcastPreviewControls
+});
 
 function updatePeakRankAfterMatchSave(profile = getActiveProfile()) {
   const activeProfile = profile || getActiveProfile();
@@ -40861,19 +40928,14 @@ function bindEvents(){
     await toggleManualEntryModeFromUI();
   });
 
-  document.getElementById("previewRollRevealBtn")?.addEventListener("click", (e) => {
+  document.addEventListener("click", (e) => {
+    const previewButton = e.target?.closest?.("#previewRollRevealBtn,#previewPostgamePackageBtn");
+    if (!previewButton) return;
     e.preventDefault();
     e.stopPropagation();
-    closeProfileDropdown();
-    playBroadcastRollReveal({ source: "preview" }).catch(error => console.warn("Broadcast roll reveal preview failed", error));
-  });
-
-  document.getElementById("previewPostgamePackageBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    closeProfileDropdown();
-    playBroadcastPostgamePackage({ source: "preview" }).catch(error => console.warn("Broadcast postgame package preview failed", error));
-  });
+    const kind = previewButton.id === "previewPostgamePackageBtn" ? "postgame" : "roll";
+    void runBroadcastPreview(kind, previewButton);
+  }, true);
 
   document.getElementById("profileRatingWidget")?.addEventListener("click", (event) => {
     event.preventDefault();

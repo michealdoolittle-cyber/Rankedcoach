@@ -54865,6 +54865,34 @@ body.access-reduced-motion :is(
   transition:none !important;
 }
 
+body.broadcast-preview-force-motion .broadcast-motion-flash{
+  animation:broadcastFlashHit 110ms steps(2, end) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-stamp{
+  animation:broadcastStatStamp 760ms cubic-bezier(.18,1.08,.24,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle{
+  animation:broadcastParticleBurst 620ms cubic-bezier(.18,.92,.24,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-motion-snap{
+  animation:broadcastSnapIn 520ms cubic-bezier(.15,1.22,.26,1) both !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-motion-count-final{
+  animation:broadcastFinalPulse 420ms cubic-bezier(.18,1.28,.26,1) both !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-motion-shake-low{
+  animation:broadcastShakeLow 220ms cubic-bezier(.36,.07,.19,.97) both !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-motion-shake-high{
+  animation:broadcastShakeHigh 320ms cubic-bezier(.36,.07,.19,.97) both !important;
+}
+
 .theme-accent-control{
   display:flex;
   align-items:center;
