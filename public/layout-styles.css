@@ -3240,3 +3240,84 @@ body:is([data-layout-style],[data-layout-shape],[data-layout-texture]) #page-hom
   }
 }
 
+/* Final cascade guard for the loadout roll frame. layout-styles.css loads after
+   the mobile lock files, so this is where layout-related preview/roll alignment
+   has to be normalized. */
+html body #page-home .loadout-card #agentFrame,
+html body #page-home .loadout-card #agentFrame.agent-frame{
+  display:grid !important;
+  place-items:center !important;
+  overflow:hidden !important;
+  isolation:isolate !important;
+}
+
+html body #page-home .loadout-card #agentFrame #agentReel{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+  overflow:hidden !important;
+  pointer-events:none !important;
+  z-index:3 !important;
+}
+
+html body #page-home .loadout-card #agentFrame.reel-active #agentReel{
+  opacity:.94 !important;
+}
+
+html body #page-home .loadout-card #agentFrame .reel-strip{
+  position:absolute !important;
+  left:0 !important;
+  top:0 !important;
+  width:100% !important;
+  min-height:100% !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  transform-origin:center top !important;
+  will-change:transform !important;
+}
+
+html body #page-home .loadout-card #agentFrame .reel-icon{
+  display:block !important;
+  flex:0 0 var(--agent-reel-step,var(--agent-frame-unit,100%)) !important;
+  width:100% !important;
+  height:var(--agent-reel-step,var(--agent-frame-unit,100%)) !important;
+  min-height:var(--agent-reel-step,var(--agent-frame-unit,100%)) !important;
+  max-width:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:none !important;
+  margin:0 auto !important;
+}
+
+html body #page-home .loadout-card #agentFrame .agent-reveal-art{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:hidden !important;
+  z-index:2 !important;
+}
+
+html body #page-home .loadout-card #agentFrame .agent-reveal-art img,
+html body #page-home .loadout-card #agentFrame .agent-frame-portrait,
+html body #page-home .loadout-card #agentFrame .frame-art-inner{
+  position:absolute !important;
+  left:50% !important;
+  top:50% !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+  object-position:center center !important;
+  transform:translate(
+    calc(-50% + var(--agent-art-x-scaled,0px)),
+    calc(-50% + var(--agent-art-y-scaled,0px))
+  ) scale(var(--agent-art-scale,1)) !important;
+  transform-origin:center center !important;
+}
+

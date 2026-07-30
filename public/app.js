@@ -14051,10 +14051,15 @@ function queueBroadcastPostgamePackage(record = null, options = {}) {
   }, Math.max(0, Number(options.delayMs) || 80));
 }
 
+const BROADCAST_CONSOLE_PREVIEW_BUTTON = Object.freeze({
+  hidden: false,
+  getAttribute: () => "false"
+});
+
 globalThis.RankedCoachBroadcastPreview = Object.freeze({
-  playRoll: () => runBroadcastPreview("roll"),
-  playPostgame: () => runBroadcastPreview("postgame"),
-  playLogging: () => runLoggingRevealPreview(),
+  playRoll: () => runBroadcastPreview("roll", BROADCAST_CONSOLE_PREVIEW_BUTTON),
+  playPostgame: () => runBroadcastPreview("postgame", BROADCAST_CONSOLE_PREVIEW_BUTTON),
+  playLogging: () => runLoggingRevealPreview(BROADCAST_CONSOLE_PREVIEW_BUTTON),
   syncControls: syncBroadcastPreviewControls
 });
 
@@ -19790,20 +19795,25 @@ function startSilhouetteShuffle() {
 }
 
 function resetPlaceholder() {
-  if (!agentPlaceholder) return;
-
   const frame = document.getElementById("agentFrame");
-  agentPlaceholder.classList.remove("placeholder-glitch", "placeholder-fadeout");
-  agentPlaceholder.style.display = "flex";
-  agentPlaceholder.style.opacity = "1";
+  if (agentPlaceholder) {
+    agentPlaceholder.classList.remove("placeholder-glitch", "placeholder-fadeout");
+    agentPlaceholder.style.display = "flex";
+    agentPlaceholder.style.opacity = "1";
+  }
   stopSilhouetteShuffle();
   clearAgentFxRuntime();
-  frame?.classList.remove("agent-selected");
+  frame?.classList.remove("agent-selected", "reel-active");
 
   const reel = document.getElementById("agentReel");
   if (reel) {
     reel.classList.remove("reel-spinning");
     reel.classList.add("reel-placeholder");
+    const strip = reel.querySelector(".reel-strip");
+    if (strip) {
+      strip.style.transition = "none";
+      strip.style.transform = "translateY(0px)";
+    }
   }
 
   const sil = document.getElementById("placeholderSilhouette");
@@ -42485,6 +42495,10 @@ function selectAgentFromModal(agent){
 
   hideModalById("agentModal");
 
+  resetPlaceholder();
+  runPlaceholderExitAnimation();
+  clearAgentFxRuntime();
+
   reel.classList.remove("reel-placeholder");
   reel.classList.add("reel-spinning");
   frame.classList.add("reel-active");
@@ -42492,11 +42506,6 @@ function selectAgentFromModal(agent){
   if(agentPlaceholder){
     agentPlaceholder.style.display = "none";
   }
-
-  resetPlaceholder();
-  runPlaceholderExitAnimation();
-
-  clearAgentFxRuntime();
 
   frame.classList.remove(
     "duelist","controller","initiator","sentinel",
@@ -51057,6 +51066,10 @@ function spinLoadout() {
   spinIconLocked = false;
   const PRE_SPIN_DELAY = 220;
 
+  resetPlaceholder();
+  runPlaceholderExitAnimation();
+  clearAgentFxRuntime();
+
   const reel = document.getElementById("agentReel");
   if (reel) {
     reel.classList.remove("reel-placeholder");
@@ -51079,11 +51092,6 @@ if(icon){
   if (placeholder) {
     placeholder.style.display = "none";
   }
-
-  resetPlaceholder();
-  runPlaceholderExitAnimation();
-
-  clearAgentFxRuntime();
 
   const frame = document.getElementById("agentFrame");
   if (frame) {
@@ -51316,6 +51324,10 @@ function spinLoadoutFromLogging(agent, focus){
   // ========================
   // PREP STATE
   // ========================
+
+  resetPlaceholder();
+  runPlaceholderExitAnimation();
+  clearAgentFxRuntime();
 
   reel.classList.remove("reel-placeholder");
   reel.classList.add("reel-spinning");
