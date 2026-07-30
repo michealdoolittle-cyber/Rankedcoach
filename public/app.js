@@ -13323,6 +13323,7 @@ function dropInPop(el, options = {}) {
 function animatePostgameAutofillFields(match = null, options = {}) {
   if (shouldSkipBroadcastMotion()) return;
   const targetEntry = options.entry || null;
+  const forceAutofill = options.forceAutofill === true;
   const agent = getBroadcastPostgameAgent(match, options);
   const core = match ? getMatchCore(match) : {};
   const preferUi = options.source === "preview" || options.preferAutofill === true;
@@ -13336,7 +13337,7 @@ function animatePostgameAutofillFields(match = null, options = {}) {
     ? String(targetEntry?.focus || formFocus || (rolledFocus && rolledFocus !== "-" ? rolledFocus : "") || "").trim()
     : String(targetEntry?.focus || formFocus || "").trim();
 
-  if (agent && typeof updateLogAgentDisplay === "function" && !getCurrentLoggingFormAgent()) {
+  if (agent && typeof updateLogAgentDisplay === "function" && (forceAutofill || !getCurrentLoggingFormAgent())) {
     updateLogAgentDisplay(agent);
   }
 
@@ -13351,14 +13352,14 @@ function animatePostgameAutofillFields(match = null, options = {}) {
   if (agent && agentImg && !agentImg.classList.contains("is-silhouette")) {
     agentImg.alt = `${agent} selected agent`;
   }
-  if (agent && agentText && (!agentText.textContent || agentText.textContent.trim().toLowerCase() === "choose agent")) {
+  if (agent && agentText && (forceAutofill || !agentText.textContent || agentText.textContent.trim().toLowerCase() === "choose agent")) {
     agentText.textContent = agent;
   }
   if (focus && focusText) {
     focusText.textContent = focus;
     focusText.classList?.remove("is-placeholder");
   }
-  if (map && mapInput && !mapInput.value) {
+  if (map && mapInput && (forceAutofill || !mapInput.value)) {
     mapInput.value = map;
   }
 
@@ -13371,6 +13372,55 @@ function animatePostgameAutofillFields(match = null, options = {}) {
     [mapField, 265],
     [mapInput, 315]
   ].forEach(([target, delay]) => dropInPop(target, { delayMs: delay }));
+}
+
+function buildLoggingRevealPreviewData(options = {}) {
+  const roll = getBroadcastRollData(options);
+  const agent = String(options.agent || roll.agent || "Jett").trim();
+  const focus = String(options.focus || roll.focus || "Positioning").trim();
+  const map = String(options.map || getCurrentLoggingFormMap() || "Ascent").trim();
+  return {
+    agent: agent && agent !== "-" ? agent : "Jett",
+    focus: focus && focus !== "-" ? focus : "Positioning",
+    map: map && map !== "-" ? map : "Ascent",
+    rrDelta: Number.isFinite(Number(options.rrDelta)) ? Number(options.rrDelta) : 18
+  };
+}
+
+function applyLoggingPreviewAutofillFields(entry = {}) {
+  const agent = String(entry.agent || "").trim();
+  const focus = String(entry.focus || "").trim();
+  const map = String(entry.map || "").trim();
+  if (agent && typeof updateLogAgentDisplay === "function") {
+    updateLogAgentDisplay(agent);
+  }
+
+  const focusSelect = document.getElementById("logFocusSelect");
+  const focusOther = document.getElementById("logFocusOther");
+  const focusPreview = document.getElementById("focusPreviewText");
+  if (focus) {
+    const matchingOption = Array.from(focusSelect?.options || [])
+      .find(option => option.value === focus || option.textContent?.trim() === focus);
+    if (focusSelect) {
+      focusSelect.value = matchingOption?.value || "Other";
+    }
+    if (focusOther) {
+      focusOther.value = matchingOption ? "" : focus;
+    }
+    if (focusPreview) {
+      focusPreview.textContent = focus;
+      focusPreview.classList.remove("is-placeholder");
+    }
+    if (!matchingOption && typeof setCustomFocusCommitted === "function") {
+      setCustomFocusCommitted(focus);
+    }
+  }
+
+  const mapInput = document.getElementById("logMap");
+  if (mapInput && map) {
+    mapInput.value = map;
+  }
+  updateLoggingDebriefPreview?.();
 }
 
 function particleBurst(anchor = document.body, options = {}) {
@@ -14077,10 +14127,11 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
   }
 }
 
-function buildLoggingRevealPreviewEntry() {
+function buildLoggingRevealPreviewEntry(entry = {}) {
   const group = document.createElement("div");
   group.className = "log-session-group logging-preview-group";
-  const agent = "Jett";
+  const preview = buildLoggingRevealPreviewData(entry);
+  const agent = preview.agent;
   group.innerHTML = `
     <div class="log-session-heading">
       <span class="log-session-date">Preview Session</span>
@@ -14094,11 +14145,11 @@ function buildLoggingRevealPreviewEntry() {
       <div class="log-body">
         <div class="log-tier-row">
           <span class="log-tier-label">Focus Category</span>
-          <span class="log-tier-value">Preview Reveal</span>
+          <span class="log-tier-value">${escapeHtml(preview.focus)}</span>
         </div>
         <div class="log-tier-row">
           <span class="log-tier-label">Map</span>
-          <span class="log-tier-value">Ascent</span>
+          <span class="log-tier-value">${escapeHtml(preview.map)}</span>
         </div>
         <div class="log-tier-row log-tier-notes">
           <span class="log-tier-label">Notes</span>
@@ -14110,16 +14161,18 @@ function buildLoggingRevealPreviewEntry() {
   return group;
 }
 
-function playLoggingRevealPreview() {
+function playLoggingRevealPreview(options = {}) {
   const container = document.getElementById("logFeed");
   if (!container) return false;
+  const previewData = buildLoggingRevealPreviewData(options);
+  applyLoggingPreviewAutofillFields(previewData);
   pulseLoggingDebriefPreview({ durationMs: 880 });
   setLogCountBadge(activeLogSessionFilter, getLogCountByDate(), { bump: true, forceStreak: true });
 
   let target = container.querySelector(".log-entry");
   let previewGroup = null;
   if (!target) {
-    previewGroup = buildLoggingRevealPreviewEntry();
+    previewGroup = buildLoggingRevealPreviewEntry(previewData);
     const footnote = container.querySelector(".log-feed-footnote");
     if (footnote) {
       container.insertBefore(previewGroup, footnote);
@@ -14134,7 +14187,15 @@ function playLoggingRevealPreview() {
   }
 
   if (!shouldSkipLoggingMotion()) {
-    animateSyncedLogEntryArrival(target, 18);
+    window.setTimeout(() => {
+      animatePostgameAutofillFields(null, {
+        entry: previewData,
+        preferAutofill: true,
+        forceAutofill: true,
+        animateLoggingForm: true
+      });
+    }, 80);
+    animateSyncedLogEntryArrival(target, previewData.rrDelta);
     window.setTimeout(() => {
       target?.classList?.remove("log-entry-reveal", "log-entry-synced-reveal");
       previewGroup?.remove();
