@@ -13190,7 +13190,8 @@ function syncBroadcastPreviewControls() {
   const allowed = canUseBroadcastPreviewMode();
   [
     document.getElementById("previewRollRevealBtn"),
-    document.getElementById("previewPostgamePackageBtn")
+    document.getElementById("previewPostgamePackageBtn"),
+    document.getElementById("previewLoggingRevealBtn")
   ].filter(Boolean).forEach((button) => {
     button.hidden = !allowed;
     button.setAttribute("aria-hidden", allowed ? "false" : "true");
@@ -13198,15 +13199,18 @@ function syncBroadcastPreviewControls() {
 }
 
 function shouldSkipBroadcastMotion() {
-  if (document.body?.classList.contains("broadcast-preview-force-motion")) return false;
   if (document.body?.classList.contains("access-reduced-motion")) return true;
   try {
-    return Boolean(typeof prefersReducedMotion === "function"
+    const reduced = Boolean(typeof prefersReducedMotion === "function"
       ? prefersReducedMotion()
       : window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+    if (reduced) return true;
   } catch {
-    return false;
+    // Fall through to the preview-force escape only if the OS/in-app check
+    // could not be evaluated.
   }
+  if (document.body?.classList.contains("broadcast-preview-force-motion")) return false;
+  return false;
 }
 
 function setBroadcastPreviewForceMotion(durationMs = 3200) {
@@ -13906,7 +13910,10 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
   }
 
   closeProfileDropdown?.();
-  setBroadcastPreviewForceMotion(kind === "postgame" ? 7200 : 5200);
+  const reducedMotionActive = shouldSkipBroadcastMotion();
+  if (!reducedMotionActive) {
+    setBroadcastPreviewForceMotion(kind === "postgame" ? 7200 : 5200);
+  }
   showToast?.(kind === "postgame" ? "Previewing postgame package." : "Previewing roll reveal.", {
     title: "Broadcast preview",
     durationMs: 1400
@@ -13914,9 +13921,9 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
 
   try {
     const played = kind === "postgame"
-      ? await playBroadcastPostgamePackage({ source: "preview", bypassGate: true, forceMotion: true })
+      ? await playBroadcastPostgamePackage({ source: "preview", bypassGate: true, forceMotion: !reducedMotionActive })
       : await playBroadcastPreviewLoadoutRoll({ source: "preview" })
-        .then(roll => playBroadcastRollReveal({ ...roll, source: "preview", bypassGate: true, forceMotion: true }));
+        .then(roll => playBroadcastRollReveal({ ...roll, source: "preview", bypassGate: true, forceMotion: !reducedMotionActive }));
     if (!played) {
       statStamp(kind === "postgame" ? "Postgame preview ready" : "Roll preview ready", { tone: "warn" });
     }
@@ -13930,6 +13937,102 @@ async function runBroadcastPreview(kind = "roll", sourceButton = null) {
     });
     return false;
   }
+}
+
+function buildLoggingRevealPreviewEntry() {
+  const group = document.createElement("div");
+  group.className = "log-session-group logging-preview-group";
+  const agent = "Jett";
+  group.innerHTML = `
+    <div class="log-session-heading">
+      <span class="log-session-date">Preview Session</span>
+      <span class="log-session-count">motion test</span>
+    </div>
+    <div class="log-entry log-entry-win log-entry-reveal log-entry-synced-reveal logging-preview-entry" data-log-entry-id="logging-preview-entry">
+      <div class="log-header">
+        <span class="log-meta-agent"><img src="${getAgentIconUrl(agent)}" alt="${agent}"></span>
+        <span class="log-result-rr log-result-rr-win">${formatLoggingRrBadge(18)}</span>
+      </div>
+      <div class="log-body">
+        <div class="log-tier-row">
+          <span class="log-tier-label">Focus Category</span>
+          <span class="log-tier-value">Preview Reveal</span>
+        </div>
+        <div class="log-tier-row">
+          <span class="log-tier-label">Map</span>
+          <span class="log-tier-value">Ascent</span>
+        </div>
+        <div class="log-tier-row log-tier-notes">
+          <span class="log-tier-label">Notes</span>
+          <div class="log-notes">This temporary entry previews save, sync, RR, portrait, debrief, and streak motion without storing a log.</div>
+        </div>
+      </div>
+    </div>
+  `;
+  return group;
+}
+
+function playLoggingRevealPreview() {
+  const container = document.getElementById("logFeed");
+  if (!container) return false;
+  pulseLoggingDebriefPreview({ durationMs: 880 });
+  setLogCountBadge(activeLogSessionFilter, getLogCountByDate(), { bump: true, forceStreak: true });
+
+  let target = container.querySelector(".log-entry");
+  let previewGroup = null;
+  if (!target) {
+    previewGroup = buildLoggingRevealPreviewEntry();
+    const footnote = container.querySelector(".log-feed-footnote");
+    if (footnote) {
+      container.insertBefore(previewGroup, footnote);
+    } else {
+      container.prepend(previewGroup);
+    }
+    target = previewGroup.querySelector(".log-entry");
+  } else {
+    target.classList.remove("log-entry-reveal", "log-entry-synced-reveal");
+    void target.offsetWidth;
+    target.classList.add("log-entry-reveal", "log-entry-synced-reveal");
+  }
+
+  if (!shouldSkipLoggingMotion()) {
+    animateSyncedLogEntryArrival(target, 18);
+    window.setTimeout(() => {
+      target?.classList?.remove("log-entry-reveal", "log-entry-synced-reveal");
+      previewGroup?.remove();
+    }, 2600);
+  } else {
+    previewGroup?.remove();
+    showToast?.("Logging reveal preview is skipped while reduced motion is on.", {
+      title: "Motion preview",
+      durationMs: 2200
+    });
+  }
+  return true;
+}
+
+async function runLoggingRevealPreview(sourceButton = null) {
+  const buttonWasVisible = Boolean(sourceButton && !sourceButton.hidden && sourceButton.getAttribute("aria-hidden") !== "true");
+  syncBroadcastPreviewControls?.();
+  if (!buttonWasVisible && !canUseBroadcastPreviewMode()) {
+    showToast?.("Logging previews are available only on the owner/dev account.", {
+      title: "Preview unavailable",
+      durationMs: 2600
+    });
+    return false;
+  }
+  closeProfileDropdown?.();
+  showToast?.("Previewing logging reveal.", {
+    title: "Logging preview",
+    durationMs: 1400
+  });
+  if (typeof activatePage === "function") {
+    activatePage("logging");
+    await broadcastWait(120);
+  }
+  renderLogFeed?.({ force: true });
+  await broadcastWait(40);
+  return playLoggingRevealPreview();
 }
 
 function queueBroadcastRollReveal(options = {}) {
@@ -13951,6 +14054,7 @@ function queueBroadcastPostgamePackage(record = null, options = {}) {
 globalThis.RankedCoachBroadcastPreview = Object.freeze({
   playRoll: () => runBroadcastPreview("roll"),
   playPostgame: () => runBroadcastPreview("postgame"),
+  playLogging: () => runLoggingRevealPreview(),
   syncControls: syncBroadcastPreviewControls
 });
 
@@ -17115,6 +17219,7 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
   const policy = globalThis.RankedCoachLogPolicy;
   const profileId = String(profile?.id || "").trim();
   if (!policy?.syncMatchPlaceholders || !profileId) return 0;
+  const existingEntryIds = new Set((logEntries || []).map(entry => String(entry?.id || "")).filter(Boolean));
 
   const placeholderMatches = (Array.isArray(matchList) ? matchList : []).map(match => {
     const core = getMatchCore(match);
@@ -17134,6 +17239,12 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     signedIn: Boolean(currentAuthUser),
     profileId
   });
+  if (!options.skipSave && options.animate !== false && synced.added > 0) {
+    logEntries
+      .filter(entry => String(entry?.profileId || "") === profileId)
+      .filter(entry => entry?.id && !existingEntryIds.has(String(entry.id)))
+      .forEach(entry => queueLoggingEntryReveal(entry.id, "sync"));
+  }
   if (!options.skipSave) {
     saveLogEntries({ skipBackend: options.skipBackend === true });
   }
@@ -20403,6 +20514,16 @@ function updateLoggingDebriefPreview() {
       ? metaParts.join(" | ")
       : "Add a rating, mood, or map to see it here.";
   }
+
+  const nextSignature = [
+    toneEl.textContent || "",
+    focusEl.textContent || "",
+    metaEl?.textContent || ""
+  ].join("\u241f");
+  if (lastLoggingDebriefSignature && nextSignature !== lastLoggingDebriefSignature) {
+    pulseLoggingDebriefPreview();
+  }
+  lastLoggingDebriefSignature = nextSignature;
 }
 
 function renderInsightCards() {
@@ -41230,10 +41351,14 @@ function bindEvents(){
   });
 
   document.addEventListener("click", (e) => {
-    const previewButton = e.target?.closest?.("#previewRollRevealBtn,#previewPostgamePackageBtn");
+    const previewButton = e.target?.closest?.("#previewRollRevealBtn,#previewPostgamePackageBtn,#previewLoggingRevealBtn");
     if (!previewButton) return;
     e.preventDefault();
     e.stopPropagation();
+    if (previewButton.id === "previewLoggingRevealBtn") {
+      void runLoggingRevealPreview(previewButton);
+      return;
+    }
     const kind = previewButton.id === "previewPostgamePackageBtn" ? "postgame" : "roll";
     void runBroadcastPreview(kind, previewButton);
   }, true);
@@ -43356,10 +43481,133 @@ let loggingFeedRendered = false;
 let loggingFeedDirty = true;
 let loggingFeedRenderRaf = 0;
 let loggingFeedRenderTimer = 0;
+let pendingLoggingCountBadgeBump = false;
+let loggingDebriefPulseTimer = 0;
+let lastLoggingDebriefSignature = "";
+const pendingLoggingEntryRevealIds = new Set();
+const pendingLoggingSyncedRevealIds = new Set();
 const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 3";
 
 function isLoggingPageActive() {
   return getActivePageElement()?.id === "page-logging";
+}
+
+function shouldSkipLoggingMotion() {
+  return Boolean(
+    typeof shouldSkipBroadcastMotion === "function"
+      ? shouldSkipBroadcastMotion()
+      : typeof prefersReducedMotion === "function" && prefersReducedMotion()
+  );
+}
+
+function queueLoggingCountBadgeBump() {
+  pendingLoggingCountBadgeBump = true;
+}
+
+function queueLoggingEntryReveal(entryId, mode = "save") {
+  const id = String(entryId || "").trim();
+  if (!id) return;
+  pendingLoggingEntryRevealIds.add(id);
+  if (mode === "sync") {
+    pendingLoggingSyncedRevealIds.add(id);
+  }
+  queueLoggingCountBadgeBump();
+}
+
+function getPendingLoggingEntryRevealMode(entryId) {
+  const id = String(entryId || "").trim();
+  if (!id || !pendingLoggingEntryRevealIds.has(id)) return "";
+  return pendingLoggingSyncedRevealIds.has(id) ? "sync" : "save";
+}
+
+function clearPendingLoggingEntryReveal(entryId) {
+  const id = String(entryId || "").trim();
+  if (!id) return;
+  pendingLoggingEntryRevealIds.delete(id);
+  pendingLoggingSyncedRevealIds.delete(id);
+}
+
+function pulseLoggingDebriefPreview(options = {}) {
+  if (shouldSkipLoggingMotion()) return;
+  const targets = [
+    document.getElementById("loggingLiveCard"),
+    document.getElementById("loggingLiveFocus"),
+    document.getElementById("loggingLiveMeta")
+  ].filter(Boolean);
+  if (!targets.length) return;
+  targets.forEach(target => target.classList.remove("is-synthesizing"));
+  window.clearTimeout(loggingDebriefPulseTimer);
+  targets.forEach(target => {
+    void target.offsetWidth;
+    target.classList.add("is-synthesizing");
+  });
+  loggingDebriefPulseTimer = window.setTimeout(() => {
+    targets.forEach(target => target.classList.remove("is-synthesizing"));
+  }, Math.max(520, Number(options.durationMs) || 780));
+}
+
+function getLoggingStreakDays(profileId = activeProfileId) {
+  const dates = new Set(
+    getProfileLogEntries(profileId)
+      .map(entry => getTrainingEntryDate(entry))
+      .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(String(key || "")))
+  );
+  if (!dates.size) return 0;
+  let streak = 0;
+  const cursor = new Date(`${formatLocalDateKey(new Date())}T12:00:00`);
+  for (let guard = 0; guard < 366; guard += 1) {
+    const key = formatLocalDateKey(cursor);
+    if (!dates.has(key)) break;
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function formatLoggingRrBadge(value) {
+  const rounded = Math.round(Number(value) || 0);
+  return `${rounded > 0 ? "+" : ""}${rounded} RR`;
+}
+
+function animateSyncedLogEntryArrival(entryEl, finalRr = null) {
+  if (!entryEl || shouldSkipLoggingMotion()) return;
+  const agentImg = entryEl.querySelector(".log-header .log-meta-agent img");
+  if (agentImg) {
+    agentImg.classList.remove("logging-agent-glow-in");
+    void agentImg.offsetWidth;
+    agentImg.classList.add("logging-agent-glow-in");
+    window.setTimeout(() => agentImg.classList.remove("logging-agent-glow-in"), 940);
+  }
+  const rrEl = entryEl.querySelector(".log-result-rr");
+  if (!rrEl || !Number.isFinite(Number(finalRr))) return;
+  const target = Number(finalRr);
+  rrEl.textContent = formatLoggingRrBadge(0);
+  tickCounter(rrEl, target, {
+    start: 0,
+    durationMs: 720,
+    format: formatLoggingRrBadge
+  });
+}
+
+function flushLoggingEntryRevealAnimations(container, jobs = []) {
+  const list = Array.isArray(jobs) ? jobs.filter(job => job?.id) : [];
+  if (!list.length) return;
+  const reduced = shouldSkipLoggingMotion();
+  window.requestAnimationFrame(() => {
+    list.forEach(job => {
+      const entryEl = Array.from(container.querySelectorAll(".log-entry"))
+        .find(candidate => String(candidate?.dataset?.logEntryId || "") === String(job.id));
+      if (entryEl && !reduced) {
+        if (job.mode === "sync") {
+          animateSyncedLogEntryArrival(entryEl, job.rr);
+        }
+        window.setTimeout(() => {
+          entryEl.classList.remove("log-entry-reveal", "log-entry-synced-reveal");
+        }, 1050);
+      }
+      clearPendingLoggingEntryReveal(job.id);
+    });
+  });
 }
 
 function cancelScheduledLoggingFeedRender() {
@@ -43778,6 +44026,9 @@ if(entry.focus){
   focusDisplay.textContent = entry.focus;
 }
 
+  if (!isEditing || completesPlaceholder) {
+    queueLoggingEntryReveal(entry.id, "save");
+  }
   renderLogFeed();
   renderInsights();
   calculateFocusProgress();
@@ -44057,15 +44308,32 @@ function getLogCountByDate() {
   return counts;
 }
 
-function setLogCountBadge(dateKey = activeLogSessionFilter, countMap = getLogCountByDate()) {
+function setLogCountBadge(dateKey = activeLogSessionFilter, countMap = getLogCountByDate(), options = {}) {
   const badge = document.getElementById("logSessionCountBadge");
   if (!badge) return;
   const count = countMap.get(dateKey) || 0;
+  const streakDays = Math.max(0, Number(options.forceStreak ? Math.max(2, getLoggingStreakDays()) : getLoggingStreakDays()) || 0);
   badge.hidden = false;
-  badge.textContent = `${count} log${count === 1 ? "" : "s"}`;
-  badge.classList.remove("is-rolling");
-  void badge.offsetWidth;
-  badge.classList.add("is-rolling");
+  badge.innerHTML = `
+    <span class="logging-session-count-copy">${count} log${count === 1 ? "" : "s"}</span>
+    ${streakDays >= 2 ? `
+      <span class="logging-streak-flame" title="${streakDays}-day logging streak" aria-label="${streakDays}-day logging streak">
+        <span class="logging-streak-flame-glyph" aria-hidden="true">&#128293;</span>
+        <span class="logging-streak-flame-count">${streakDays}d</span>
+      </span>
+    ` : ""}
+  `;
+  const shouldBump = options.bump === true || pendingLoggingCountBadgeBump;
+  if (shouldBump && !shouldSkipLoggingMotion()) {
+    badge.classList.remove("is-rolling");
+    void badge.offsetWidth;
+    badge.classList.add("is-rolling");
+  } else {
+    badge.classList.remove("is-rolling");
+  }
+  if (shouldBump) {
+    pendingLoggingCountBadgeBump = false;
+  }
 }
 
 function formatCurrentSessionLabel(dateKey = activeLogSessionFilter) {
@@ -44354,6 +44622,7 @@ function renderLogFeed(options = {}){
   }
 
   const fragment = document.createDocumentFragment();
+  const revealJobs = [];
   sessions.forEach(session => {
     const sessionWrap = document.createElement("div");
     sessionWrap.className = "log-session-group";
@@ -44395,12 +44664,20 @@ function renderLogFeed(options = {}){
       const isEditingEntry = entry.id === editingLogEntryId;
       const isPlaceholder = isMatchPlaceholderLogEntry(entry);
       const trainingMarker = trainingMarkers.get(entry.id) || null;
+      const revealMode = getPendingLoggingEntryRevealMode(entry.id);
       const notesCopy = isPlaceholder
         ? "Add your reflection for this ranked match."
         : (entry.notes || "-");
       const el = document.createElement("div");
-      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}${isEditingEntry ? " log-entry-editing" : ""}${isPlaceholder ? " log-entry-placeholder" : ""}`;
+      el.className = `log-entry${resultTone ? ` log-entry-${resultTone}` : ""}${isEditingEntry ? " log-entry-editing" : ""}${isPlaceholder ? " log-entry-placeholder" : ""}${revealMode ? " log-entry-reveal" : ""}${revealMode === "sync" ? " log-entry-synced-reveal" : ""}`;
       el.dataset.logEntryId = String(entry.id || "");
+      if (revealMode) {
+        revealJobs.push({
+          id: entry.id,
+          mode: revealMode,
+          rr: hasVerifiedRr ? matchContext.rr : null
+        });
+      }
 
       el.innerHTML = `
         <div class="log-header">
@@ -44514,6 +44791,7 @@ function renderLogFeed(options = {}){
 
   container.appendChild(fragment);
   container.insertAdjacentHTML("beforeend", renderLogFeedFootnote());
+  flushLoggingEntryRevealAnimations(container, revealJobs);
 
 }
 
