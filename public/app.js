@@ -13853,7 +13853,7 @@ async function playBroadcastPostgamePackage(options = {}) {
   const match = options.match || options.record || getLatestBroadcastMatch();
   const headline = selectBroadcastHeadlineStatCandidate(match, options);
   const spotlightCandidate = selectBroadcastTopImprovementCandidate({ includeDisabledFallback: true });
-  const spotlightEl = setBroadcastImprovementSpotlight(spotlightCandidate);
+  let spotlightEl = null;
   const rrDelta = getBroadcastMatchRRDelta(match, options);
   const rrEl = totalRRDisplay || document.getElementById("totalRRDisplay");
   const remainingPills = getBroadcastTimelineCandidates()
@@ -13867,7 +13867,10 @@ async function playBroadcastPostgamePackage(options = {}) {
   await broadcastWait(1380);
   if (headline.el) {
     snapIn(headline.el);
+    spotlightEl = setBroadcastImprovementSpotlight(spotlightCandidate);
     particleBurst(headline.el, { count: headline.type === "rr" ? 20 : 14, radius: headline.type === "rr" ? 128 : 88 });
+  } else {
+    spotlightEl = setBroadcastImprovementSpotlight(spotlightCandidate);
   }
   statStamp(headline.label, { tone: headline.tone || "neutral", durationMs: 2200 });
   await broadcastWait(1500);
