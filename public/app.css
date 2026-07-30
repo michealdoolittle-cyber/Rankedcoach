@@ -59388,6 +59388,13 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   filter:hue-rotate(178deg) saturate(1.85) brightness(1.14) drop-shadow(0 0 7px color-mix(in srgb,var(--rc-effect-secondary) 70%,transparent));
 }
 
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing).border-card-prism-offset .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="prism-offset"]::before,
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing).border-card-prism-offset .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="prism-offset"]::after{
+  animation:none !important;
+  transform:translate(-50%,-50%) !important;
+  opacity:.2 !important;
+}
+
 :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-element-ice,
 #profileAvatarWrap.border-element-ice .profile-avatar-ring,
 .profile-panel.border-element-ice .profile-avatar-ring,

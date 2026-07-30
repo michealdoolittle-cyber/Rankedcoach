@@ -18,7 +18,7 @@ const PLAYLIST_KNOWLEDGE_SOURCE_MAX_ITEMS = 5_000;
 const PLAYLIST_KNOWLEDGE_SOURCE_ARCHIVE_KEY = "playlist:knowledge-sources";
 const PLAYER_CARD_CATALOG_KEY = "profile:player-cards:v1";
 const PLAYER_CARD_CATALOG_TTL_SECONDS = 24 * 60 * 60;
-const RIOT_PATCH_NOTES_FEED_KEY = "riot:patch-notes:latest";
+const RIOT_PATCH_NOTES_FEED_KEY = "riot:patch-notes:latest:v2";
 const RIOT_PATCH_NOTES_FEED_TTL_SECONDS = 60 * 60;
 const LIBRARY_ENTITY_SNAPSHOT_KEY = "library:entities:v1";
 const LIBRARY_DAILY_RESEARCH_KEY = "library:research:last";
@@ -1352,7 +1352,7 @@ function extractRiotPatchSections(html = "") {
 function isActionableRiotPatchSection(section = {}) {
   const title = String(section.title || "");
   if (!title || /^table of contents$/i.test(title) || /^all platforms$/i.test(title)) return false;
-  return /agent|map|weapon|competitive|gameplay|system|bug|premier|esports|player behavior|social|performance|general updates|all platforms|pc/i.test(title);
+  return /agent|map|mode|weapon|competitive|gameplay|system|bug|premier|esports|player behavior|social|performance|general updates|all platforms|pc/i.test(title);
 }
 
 function splitPatchSectionOutcomes(text = "") {
@@ -1362,15 +1362,88 @@ function splitPatchSectionOutcomes(text = "") {
     .filter(item => item.length >= 28 && !/here(?:'|’)?s what|what(?:'|’)?s happening|welcome to|we(?:'|’)?re back/i.test(item));
 }
 
+function escapeRegExpLiteral(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function findPatchEntityBeforeSentence(text = "", sentence = "") {
+  const sourceText = stripHtml(text);
+  const sentenceIndex = sourceText.indexOf(sentence);
+  const scopedText = sentenceIndex >= 0
+    ? sourceText.slice(0, sentenceIndex + sentence.length)
+    : sourceText;
+  return [...AGENT_NAMES, ...WEAPON_NAMES, ...MAP_NAMES]
+    .map(name => {
+      const matcher = new RegExp(`(?:^|\\b)${escapeRegExpLiteral(name)}(?:\\b|$)`, "gi");
+      let index = -1;
+      let match = null;
+      while ((match = matcher.exec(scopedText))) index = match.index;
+      return { name, index };
+    })
+    .filter(entry => entry.index >= 0)
+    .sort((left, right) => right.index - left.index)[0]?.name || "";
+}
+
+function startsWithPatchEntity(sentence = "", entity = "") {
+  if (!entity) return false;
+  return new RegExp(`^${escapeRegExpLiteral(entity)}(?:\\b|\\s*:)`, "i").test(sentence.trim());
+}
+
+function lowercasePatchOutcomeLead(sentence = "") {
+  return sentence.replace(/^([A-Z])/, letter => letter.toLowerCase());
+}
+
+function formatNumericPatchOutcome(sectionText = "", sentence = "") {
+  const cleanSentence = stripHtml(sentence)
+    .replace(/\s*(?:>{2,}|→|->)\s*/g, " to ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const entity = findPatchEntityBeforeSentence(sectionText, cleanSentence);
+  if (!entity || startsWithPatchEntity(cleanSentence, entity)) return cleanSentence;
+  return `${entity} ${lowercasePatchOutcomeLead(cleanSentence)}`;
+}
+
+function extractNumericPatchOutcomes(section = {}) {
+  const text = stripHtml(section.text || "");
+  if (!text) return [];
+  return text
+    .split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+    .map(sentence => sentence.trim())
+    .filter(sentence => {
+      const numbers = sentence.match(/\b\d+(?:\.\d+)?%?\b/g) || [];
+      if (numbers.length < 2) return false;
+      return /\b(?:from|to|increased|decreased|reduced|raised|lowered|changed|points?|damage|range|duration|cooldown|cost|credits?|ammo|charges?|seconds?|health|speed)\b|>{2,}|→|->/i.test(sentence);
+    })
+    .map(sentence => formatNumericPatchOutcome(text, sentence))
+    .filter(Boolean)
+    .filter((item, index, list) => list.findIndex(candidate => candidate.toLowerCase() === item.toLowerCase()) === index);
+}
+
 function buildRiotPatchOutcomeBullets(sections = []) {
   return sections
     .filter(isActionableRiotPatchSection)
     .flatMap(section => {
-      const outcomes = Array.isArray(section.items) && section.items.length
+      const numericOutcomes = extractNumericPatchOutcomes(section);
+      const baseOutcomes = Array.isArray(section.items) && section.items.length
         ? section.items
         : splitPatchSectionOutcomes(section.text).slice(0, 2);
+      const numericEntities = new Set(
+        numericOutcomes
+          .map(outcome => findPatchEntityBeforeSentence(outcome, outcome))
+          .filter(Boolean)
+          .map(name => normalizeSearchText(name))
+      );
+      const outcomes = numericOutcomes.length
+        ? [
+          ...numericOutcomes,
+          ...baseOutcomes.filter(item => {
+            const normalizedItem = normalizeSearchText(item);
+            return ![...numericEntities].some(entity => normalizedItem.startsWith(entity));
+          })
+        ]
+        : baseOutcomes;
       return outcomes
-        .map(item => trimPatchSummaryText(item, 180))
+        .map(item => trimPatchSummaryText(item, numericOutcomes.includes(item) ? 240 : 180))
         .filter(Boolean)
         .map(item => `${section.title}: ${item}`);
     })

@@ -3702,7 +3702,6 @@ function getMobileAvatarFramePath(borderStyle = "standard") {
     "frost-shards": "M50 4 62 30 90 24 72 48 96 64 66 66 58 94 42 68 12 76 30 52 6 36 38 32Z",
     "prism-loop": "M50 6 92 30 92 70 50 94 8 70 8 30Z",
     "sonar-wave": "M50 10a40 40 0 1 1 0 80a40 40 0 1 1 0-80",
-    "glitch-scan": "M14 18H86V34H68V48H88V82H14V64H32V50H12V18Z",
     "blossom-pulse": "M50 10C58 24 82 20 86 42C72 46 80 72 58 82C52 66 30 88 16 66C30 58 12 34 34 26C38 40 46 20 50 10Z",
     "comet-loop": "M50 8a42 42 0 1 1-18 80C52 78 80 58 92 18"
   };
@@ -3832,22 +3831,6 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
         <circle class="rc-profile-effect-spark rc-profile-spark-3 rc-effect-primary-fill" cx="58" cy="82" r="1.7"></circle>
         <circle class="rc-profile-effect-spark rc-profile-spark-4 rc-effect-secondary-fill" cx="80" cy="90" r="1.2"></circle>
         <circle class="rc-profile-effect-spark rc-profile-spark-5 rc-effect-glint-fill" cx="70" cy="74" r="1"></circle>
-      </g>
-    `,
-    "glitch-scan": `
-      <g class="rc-profile-effect rc-profile-effect-glitch">
-        <path class="rc-profile-effect-scan rc-effect-primary" d="M11 24H57M32 39H91M7 55H68M25 72H87"></path>
-        <path class="rc-profile-effect-scan rc-effect-secondary" d="M18 30H83M6 62H51M48 80H94"></path>
-      </g>
-    `,
-    "lightning-bolts": `
-      <g class="rc-profile-effect rc-profile-effect-lightning">
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-core rc-profile-lightning-1 rc-effect-primary" pathLength="100" d="M28 -8L20 14L31 24L22 39L36 50L25 72"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-branch rc-profile-lightning-1 rc-effect-glint" pathLength="100" d="M31 24L46 22L35 36M36 50L50 55L39 65"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-core rc-profile-lightning-2 rc-effect-secondary" pathLength="100" d="M72 -12L61 10L74 23L64 42L79 53L68 78"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-branch rc-profile-lightning-2 rc-effect-glint" pathLength="100" d="M74 23L91 20L78 35M79 53L92 61L76 68"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-core rc-profile-lightning-3 rc-effect-primary" pathLength="100" d="M51 -18L45 3L56 16L48 31L60 43L52 62"></path>
-        <path class="rc-profile-lightning-bolt rc-profile-lightning-branch rc-profile-lightning-3 rc-effect-secondary" pathLength="100" d="M56 16L66 13L58 27M60 43L72 48L61 55"></path>
       </g>
     `,
     "agent-trace": `
@@ -44587,9 +44570,7 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "water-ripple", label: "Water Ripple", note: "Soft expanding waves" },
   { value: "smoke-wisp", label: "Smoke Wisp", note: "Omen-like drifting haze" },
   { value: "ember-sparks", label: "Ember Sparks", note: "Rising fire flecks" },
-  { value: "glitch-scan", label: "Glitch Scan", note: "Digital scan frame" },
   { value: "fade-pulse", label: "Fade Pulse", note: "Soft glow fades in and out" },
-  { value: "lightning-bolts", label: "Lightning Bolts", note: "Downward electric border hits" },
   { value: "agent-trace", label: "Agent Trace", note: "Silhouette outline redraw" },
   { value: "snowfall", label: "Snowfall", note: "Falling snow particles" },
   { value: "confetti-burst", label: "Confetti Burst", note: "Celebration burst particles" },
