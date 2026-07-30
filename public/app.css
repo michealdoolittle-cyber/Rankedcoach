@@ -53378,37 +53378,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   animation:broadcastFieldLockSweep 980ms cubic-bezier(.18,1.08,.24,1) both;
 }
 
-.broadcast-field-lockin::after{
-  content:attr(data-lockin-label);
-  position:absolute;
-  top:50%;
-  right:10px;
-  z-index:4;
-  pointer-events:none;
-  max-width:min(210px, 48%);
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  transform:translate3d(12px,-50%,0) skewX(-8deg);
-  padding:5px 8px 6px;
-  border:1px solid color-mix(in srgb, var(--gamesense-warm, #ffd43b) 70%, transparent);
-  border-left-width:4px;
-  border-radius:9px 2px 9px 2px;
-  background:
-    linear-gradient(90deg, rgba(2,6,23,.98), rgba(15,23,42,.92) 64%, rgba(255,212,59,.18)),
-    rgba(2,6,23,.95);
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.08) inset,
-    0 10px 24px rgba(0,0,0,.3),
-    0 0 18px color-mix(in srgb, var(--gamesense-warm, #ffd43b) 28%, transparent);
-  color:var(--gamesense-warm, #ffd43b);
-  font:900 clamp(8px, .72vw, 10px)/1 var(--font-display, "Rajdhani", sans-serif);
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  opacity:0;
-  animation:broadcastFieldLockBadge 980ms cubic-bezier(.18,1.08,.24,1) both;
-}
-
 .broadcast-motion-count-final{
   animation:broadcastFinalPulse 420ms cubic-bezier(.18,1.28,.26,1) both;
 }
@@ -53485,14 +53454,6 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   100%{ opacity:0; transform:translate3d(145%,0,0) skewX(-12deg); }
 }
 
-@keyframes broadcastFieldLockBadge{
-  0%{ opacity:0; transform:translate3d(-18px,-50%,0) skewX(-10deg); clip-path:inset(0 100% 0 0); }
-  18%{ opacity:1; }
-  36%{ transform:translate3d(0,-50%,0) skewX(0deg); clip-path:inset(0 0 0 0); }
-  76%{ opacity:1; transform:translate3d(0,-50%,0); }
-  100%{ opacity:0; transform:translate3d(10px,-50%,0); }
-}
-
 @keyframes broadcastFinalPulse{
   0%{ transform:scale(1); filter:none; }
   38%{ transform:scale(1.18); filter:brightness(1.35) drop-shadow(0 0 16px currentColor); }
@@ -53557,10 +53518,6 @@ body.broadcast-preview-force-motion .broadcast-field-lockin{
 
 body.broadcast-preview-force-motion .broadcast-field-lockin::before{
   animation:broadcastFieldLockSweep 980ms cubic-bezier(.18,1.08,.24,1) both !important;
-}
-
-body.broadcast-preview-force-motion .broadcast-field-lockin::after{
-  animation:broadcastFieldLockBadge 980ms cubic-bezier(.18,1.08,.24,1) both !important;
 }
 
 body.broadcast-preview-force-motion .broadcast-motion-count-final{

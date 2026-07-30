@@ -13323,15 +13323,12 @@ function dropInPop(el, options = {}) {
 function lockInField(el, options = {}) {
   if (shouldSkipBroadcastMotion() || !el?.classList) return;
   const delayMs = Math.max(0, Number(options.delayMs) || 0);
-  const label = String(options.label || "Locked in").trim();
   window.setTimeout(() => {
-    el.dataset.lockinLabel = label;
     el.classList.remove("broadcast-field-lockin", "broadcast-field-dropin");
     void el.offsetWidth;
     el.classList.add("broadcast-field-lockin");
     window.setTimeout(() => {
       el.classList.remove("broadcast-field-lockin");
-      delete el.dataset.lockinLabel;
     }, 1040);
   }, delayMs);
 }
@@ -13382,10 +13379,10 @@ function animatePostgameAutofillFields(match = null, options = {}) {
 
   if (useLockInMotion) {
     [
-      [agentField, 0, "Agent locked in"],
-      [focusField, 150, "Focus locked in"],
-      [mapField, 300, "Map locked in"]
-    ].forEach(([target, delay, label]) => lockInField(target, { delayMs: delay, label }));
+      [agentField, 0],
+      [focusField, 150],
+      [mapField, 300]
+    ].forEach(([target, delay]) => lockInField(target, { delayMs: delay }));
     return;
   }
 
