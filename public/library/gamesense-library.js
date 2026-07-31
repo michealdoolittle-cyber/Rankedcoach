@@ -797,17 +797,20 @@
     });
   }
 
+  const COLLAGE_PLACEHOLDER_SRC = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+
   function getDeferredCollageImageMarkup(src = "", className = "", options = {}) {
     if (!src) return "";
-    const classes = [className, "is-collage-loaded"].filter(Boolean).join(" ");
+    const defer = options?.defer !== false;
+    const classes = [className, defer ? "" : "is-collage-loaded"].filter(Boolean).join(" ");
     const fallbackSrc = String(options?.fallbackSrc || "").trim();
-    const loading = options?.loading === "lazy" ? "lazy" : "eager";
+    const loading = defer ? "lazy" : (options?.loading === "lazy" ? "lazy" : "eager");
     const fetchPriority = options?.fetchPriority === "low"
       ? "low"
       : options?.fetchPriority === "auto"
         ? "auto"
         : "high";
-    return `<img${classes ? ` class="${escapeHtml(classes)}"` : ""} src="${escapeHtml(src)}" alt="" loading="${loading}" decoding="async" fetchpriority="${fetchPriority}"${fallbackSrc ? ` data-gamesense-overview-fallback-src="${escapeHtml(fallbackSrc)}"` : ""}>`;
+    return `<img${classes ? ` class="${escapeHtml(classes)}"` : ""} src="${escapeHtml(defer ? COLLAGE_PLACEHOLDER_SRC : src)}" alt="" loading="${loading}" decoding="async" fetchpriority="${defer ? "low" : fetchPriority}"${defer ? ` data-gamesense-collage-src="${escapeHtml(src)}"` : ""}${fallbackSrc ? ` data-gamesense-overview-fallback-src="${escapeHtml(fallbackSrc)}"` : ""}>`;
   }
 
   function waitForCollageIdle(token) {
@@ -1079,6 +1082,14 @@
     return `<svg class="gamesense-copy-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="8" y="8" width="10" height="10" rx="2"></rect><rect x="5" y="5" width="10" height="10" rx="2"></rect></svg>`;
   }
 
+  function renderHeartIcon() {
+    return `<svg class="gamesense-heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20.2 10.7 19C6 14.8 3 12.1 3 8.7 3 6 5.1 4 7.8 4c1.5 0 3 .7 4.2 1.8C13.2 4.7 14.7 4 16.2 4 18.9 4 21 6 21 8.7c0 3.4-3 6.1-7.7 10.3L12 20.2Z"></path></svg>`;
+  }
+
+  function renderLiveIndicatorIcon() {
+    return `<span class="gamesense-live-indicator" aria-hidden="true"><i></i></span>`;
+  }
+
   function renderCrosshairPhoto(entry = {}) {
     const initials = getCrosshairInitials(entry.player);
     return `
@@ -1144,7 +1155,7 @@
           <button type="button" data-gamesense-crosshair-like="${escapeHtml(entry.id)}" class="${liked ? "active" : ""}" aria-pressed="${liked ? "true" : "false"}" ${pendingLike ? "disabled" : ""}>
             <span>Like</span><b>${likes}</b>
           </button>
-          <button type="button" data-gamesense-crosshair-favorite="${escapeHtml(entry.id)}" class="gamesense-crosshair-favorite ${favorite ? "active" : ""}" aria-pressed="${favorite ? "true" : "false"}" aria-label="${favorite ? "Remove favorite" : "Save favorite"}" ${pendingFavorite ? "disabled" : ""}>♥</button>
+          <button type="button" data-gamesense-crosshair-favorite="${escapeHtml(entry.id)}" class="gamesense-crosshair-favorite ${favorite ? "active" : ""}" aria-pressed="${favorite ? "true" : "false"}" aria-label="${favorite ? "Remove favorite" : "Save favorite"}" ${pendingFavorite ? "disabled" : ""}>${renderHeartIcon()}</button>
         </div>
       </article>`;
   }
@@ -1790,6 +1801,7 @@
     if (riotPatchNotes && !options.force) return Promise.resolve(riotPatchNotes);
     riotPatchNotesStatus = "loading";
     riotPatchNotesError = "";
+    globalThis.RankedCoachLoadingEvents?.show?.("patch");
     riotPatchNotesRequest = fetch("/api/content/patch-notes", {
       headers: { Accept: "application/json" },
       cache: options.force ? "reload" : "default"
@@ -1894,12 +1906,12 @@
 
   function normalizePlaylistFilter(value = "") {
     const candidate = String(value || "").trim();
-    if (candidate === "Live/Streaming" || candidate === "Live 🔴") return PLAYLIST_LIVE_FILTER;
+    if (candidate === "Live/Streaming" || /^Live\s*\u{1F534}$/u.test(candidate)) return PLAYLIST_LIVE_FILTER;
     return getPlaylistFilters().includes(candidate) ? candidate : "Home";
   }
 
   function getPlaylistFilterLabel(filter = "") {
-    return normalizePlaylistFilter(filter) === PLAYLIST_LIVE_FILTER ? "Live 🔴" : normalizePlaylistFilter(filter);
+    return normalizePlaylistFilter(filter) === PLAYLIST_LIVE_FILTER ? "Live" : normalizePlaylistFilter(filter);
   }
 
   function isPlaylistAutoplayCategory(filter = "") {
@@ -2420,7 +2432,7 @@
       </div>
       <div class="gamesense-playlist-controls">
         <div class="gamesense-playlist-filters" role="tablist" aria-label="Filter featured videos">
-          ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}"${filter === PLAYLIST_LIVE_FILTER ? ` aria-label="Live streams"` : ""}>${filter === "Home" ? renderPlaylistHomeIcon() : ""}<span>${filter === PLAYLIST_LIVE_FILTER ? `Live <span aria-hidden="true">🔴</span>` : escapeHtml(filter)}</span></button>`).join("")}
+          ${getPlaylistFilters().map(filter => `<button type="button" data-gamesense-playlist-filter="${escapeHtml(filter)}" class="${filter === activeFilter ? "active" : ""}" aria-selected="${filter === activeFilter}"${filter === PLAYLIST_LIVE_FILTER ? ` aria-label="Live streams"` : ""}>${filter === "Home" ? renderPlaylistHomeIcon() : ""}<span>${filter === PLAYLIST_LIVE_FILTER ? `Live ${renderLiveIndicatorIcon()}` : escapeHtml(filter)}</span></button>`).join("")}
         </div>
         ${renderPlaylistAutoplayControl(activeFilter)}
       </div>
@@ -2482,6 +2494,51 @@
       return `<aside class="gamesense-heatmap-meta gamesense-heatmap-meta--unavailable"><strong>Plant Heat Map</strong><p>${escapeHtml(heatmap?.unavailableReason || `No verified plant heat-map image is available for ${map.label}.`)}</p></aside>`;
     }
     return `<aside class="gamesense-heatmap-meta"><strong>Plant Heat Map</strong><span>${escapeHtml(heatmap.actLabel || "Verified archive")}</span><p>Published aggregate plant-location reference for this map.</p></aside>`;
+  }
+
+  function getDossierStickyNotes(topic = "") {
+    if (topic === "maps") {
+      return [
+        ["Overview", ".gamesense-detail-head"],
+        ["Callouts", ".gamesense-tips-hub"],
+        ["Comps", ".gamesense-comp-card"],
+        ["Weapons", ".gamesense-weapon-suggestions"],
+        ["Plant Spots", ".gamesense-tactical-card"],
+        ["Videos", ".gamesense-related-video"],
+        ["Updates", ".gamesense-knowledge-updates"]
+      ];
+    }
+    if (topic === "agents") {
+      return [
+        ["Overview", ".gamesense-detail-head"],
+        ["Lore", ".gamesense-agent-hero"],
+        ["Abilities", ".gamesense-selector-section"],
+        ["Map Fit", ".gamesense-map-fit"],
+        ["Videos", ".gamesense-related-video"],
+        ["Updates", ".gamesense-knowledge-updates"]
+      ];
+    }
+    return [
+      ["Overview", ".gamesense-detail-head"],
+      ["Arsenal", ".gamesense-selector-section"],
+      ["Skins", ".gamesense-collection-archive"],
+      ["Videos", ".gamesense-related-video"],
+      ["Updates", ".gamesense-knowledge-updates"]
+    ];
+  }
+
+  function renderDossierStickyNav(topic = "") {
+    const notes = getDossierStickyNotes(topic);
+    return `<nav class="gamesense-dossier-sticky-notes" aria-label="${escapeHtml(topic)} dossier sections">
+      ${notes.map((note, index) => `<button type="button" class="${index === 0 ? "active" : ""}" data-gamesense-sticky-target="${escapeHtml(note[1])}" aria-current="${index === 0 ? "true" : "false"}">${escapeHtml(note[0])}</button>`).join("")}
+    </nav>`;
+  }
+
+  function wrapDossierWithStickyNotes(topic = "", markup = "") {
+    return `<div class="gamesense-dossier-shell" data-gamesense-dossier="${escapeHtml(topic)}">
+      ${renderDossierStickyNav(topic)}
+      <div class="gamesense-dossier-content">${markup}</div>
+    </div>`;
   }
 
   function renderMarkedMap(map) {
@@ -3761,9 +3818,9 @@
   function renderDetail(topic, itemId) {
     const item = getTopicItems(topic).find(entry => entry.id === itemId);
     if (!item) return renderGallery(topic);
-    if (topic === "maps") return renderMapDetail(item);
-    if (topic === "agents") return renderAgentDetail(item);
-    return renderWeaponDetail(item);
+    if (topic === "maps") return wrapDossierWithStickyNotes(topic, renderMapDetail(item));
+    if (topic === "agents") return wrapDossierWithStickyNotes(topic, renderAgentDetail(item));
+    return wrapDossierWithStickyNotes(topic, renderWeaponDetail(item));
   }
 
   function applyMapZoom(nextZoom, anchor = null) {
@@ -4216,6 +4273,7 @@
     if (featuredPlaylist || featuredPlaylistRequest) return featuredPlaylistRequest || Promise.resolve(featuredPlaylist);
     featuredPlaylistStatus = "loading";
     featuredPlaylistError = "";
+    globalThis.RankedCoachLoadingEvents?.show?.("videos");
     featuredPlaylistRequest = fetch("/api/content/playlist", { headers: { Accept: "application/json" } })
       .then(response => {
         if (!response.ok) throw new Error(`Featured Playlist returned HTTP ${response.status}.`);
@@ -4453,10 +4511,19 @@
     document.querySelectorAll("[data-warmup-drill]").forEach(drill => {
       const id = drill.dataset.warmupDrill;
       const steps = details[id];
-      if (!Array.isArray(steps) || drill.querySelector("[data-warmup-info]")) return;
-      const toggle = document.createElement("button");
-      toggle.type = "button";
+      if (!Array.isArray(steps)) return;
+      let shell = drill.closest(".daily-warmup-drill-shell");
+      if (!shell || !shell.contains(drill)) {
+        shell = document.createElement("div");
+        shell.className = "daily-warmup-drill-shell";
+        drill.parentNode?.insertBefore(shell, drill);
+        shell.appendChild(drill);
+      }
+      if (shell.querySelector("[data-warmup-info]")) return;
+      const toggle = document.createElement("span");
       toggle.className = "daily-warmup-info-toggle";
+      toggle.tabIndex = 0;
+      toggle.setAttribute("role", "button");
       toggle.dataset.warmupInfo = id;
       toggle.setAttribute("aria-expanded", "false");
       toggle.setAttribute("aria-label", `Show ${id.replace(/-/g, " ")} instructions`);
@@ -4466,13 +4533,14 @@
       detail.dataset.warmupInfoDetail = id;
       detail.hidden = true;
       detail.innerHTML = `<strong>Run it like this</strong><ol>${steps.map(step => `<li>${escapeHtml(step)}</li>`).join("")}</ol>`;
-      drill.append(toggle, detail);
+      shell.append(toggle, detail);
     });
   }
 
   function toggleWarmupInfo(toggle) {
-    const card = toggle.closest("[data-warmup-drill]");
-    const detail = card?.querySelector(`[data-warmup-info-detail="${toggle.dataset.warmupInfo}"]`);
+    const shell = toggle.closest(".daily-warmup-drill-shell");
+    const card = shell?.querySelector("[data-warmup-drill]");
+    const detail = shell?.querySelector(`[data-warmup-info-detail="${toggle.dataset.warmupInfo}"]`);
     if (!detail) return;
     const open = detail.hidden;
     detail.hidden = !open;
@@ -4486,6 +4554,11 @@
       candidate.classList.remove("is-selected");
     });
     if (card) card.classList.add("is-selected");
+    if (card && usesTwoStepCollectionPreview()) {
+      window.requestAnimationFrame(() => {
+        if (card.isConnected) card.scrollIntoView({ behavior: "auto", block: "center", inline: "nearest" });
+      });
+    }
   }
 
   function usesTwoStepCollectionPreview() {
@@ -4495,10 +4568,12 @@
 
   document.addEventListener("touchstart", event => {
     const trigger = event.target.closest?.("[data-gamesense-collection-preview]");
+    const openControl = Boolean(event.target.closest?.("[data-gamesense-collection-open]"));
     const touch = event.touches?.[0];
     skinPreviewTouchActivation = trigger && event.touches?.length === 1 && touch
       ? {
           trigger,
+          openControl,
           identifier: touch.identifier,
           x: touch.clientX,
           y: touch.clientY,
@@ -4521,7 +4596,7 @@
     if (distance > 16 || elapsed > 800 || !endedInside) return;
     event.preventDefault();
     event.stopPropagation();
-    if (activation.trigger.classList.contains("is-selected")) {
+    if (activation.openControl || activation.trigger.classList.contains("is-selected")) {
       openSkinPreview(activation.trigger);
       return;
     }
@@ -4545,6 +4620,22 @@
       event.preventDefault();
       event.stopImmediatePropagation();
       toggleWarmupInfo(warmupToggle);
+      return;
+    }
+    const stickyNote = event.target.closest?.("[data-gamesense-sticky-target]");
+    if (stickyNote) {
+      event.preventDefault();
+      const shell = stickyNote.closest(".gamesense-dossier-shell");
+      const targetSelector = stickyNote.dataset.gamesenseStickyTarget || "";
+      const target = targetSelector ? shell?.querySelector(targetSelector) : null;
+      if (target) {
+        shell.querySelectorAll("[data-gamesense-sticky-target]").forEach(note => {
+          const active = note === stickyNote;
+          note.classList.toggle("active", active);
+          note.setAttribute("aria-current", active ? "true" : "false");
+        });
+        target.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+      }
       return;
     }
     const contextual = event.target.closest?.("[data-gamesense-open]");
@@ -4818,6 +4909,16 @@
         panel.classList.toggle("is-mobile-range-active", panel.dataset.gamesenseDamageRangePanel === activeIndex);
       });
       return;
+    }
+    const collectionOpen = event.target.closest?.("[data-gamesense-collection-open]");
+    if (collectionOpen) {
+      const collectionCard = collectionOpen.closest("[data-gamesense-collection-preview]");
+      if (collectionCard) {
+        event.preventDefault();
+        event.stopPropagation();
+        openSkinPreview(collectionCard);
+        return;
+      }
     }
     const collectionPreview = event.target.closest?.("[data-gamesense-collection-preview]");
     if (collectionPreview) {

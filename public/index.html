@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260731-broadcast-variants-04">
+  <link rel="stylesheet" href="app.css?v=20260731-verification-loading-02">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -64,7 +64,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260731-plant-map-editor-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260731-verification-loading-02">
   <link rel="stylesheet" href="layout-styles.css?v=20260730-melee-desktop-score-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -75,7 +75,7 @@
 <!-- =========================
 AUTH MODAL
 ========================= -->
-<div id="authModal" class="lens-modal-overlay">
+<div id="authModal" class="lens-modal-overlay modal-compact">
   <div class="lens-modal auth-modal-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title" id="authModalTitle" aria-live="polite"></div>
@@ -84,7 +84,7 @@ AUTH MODAL
     <form class="lens-modal-body auth-flow" id="authForm">
       <img class="auth-logo-backdrop" src="https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/val-logo.png" alt="" aria-hidden="true">
       <div class="auth-launch-copy auth-panel" data-auth-panel="login">
-        <div class="profile-edit-panel-title auth-welcome-title">Welcome back!</div>
+        <div class="profile-edit-panel-title auth-welcome-title">Choose how to start</div>
 
         <label class="auth-field">
           <span>Email</span>
@@ -246,7 +246,7 @@ AUTH MODAL
   </div>
 </div>
 
-<div id="loginInitOverlay" class="lens-modal-overlay login-init-overlay active app-boot-overlay" aria-live="polite" aria-hidden="false">
+<div id="loginInitOverlay" class="lens-modal-overlay login-init-overlay modal-compact active app-boot-overlay" aria-live="polite" aria-hidden="false">
   <div class="login-init-card">
     <div class="login-init-kicker">RankedCoach</div>
     <div class="login-init-title" id="loginInitTitle">Starting RankedCoach</div>
@@ -270,7 +270,7 @@ AUTH MODAL
 <div id="premiumMomentOverlay" class="premium-moment-overlay" aria-hidden="true"></div>
 <div id="appToastStack" class="app-toast-stack" aria-live="polite" aria-atomic="true"></div>
 
-<div id="dailyWarmupModal" class="lens-modal-overlay daily-warmup-overlay" aria-hidden="true" style="display:none;">
+<div id="dailyWarmupModal" class="lens-modal-overlay daily-warmup-overlay modal-full" aria-hidden="true" style="display:none;">
   <div class="lens-modal daily-warmup-card" role="dialog" aria-modal="true" aria-labelledby="dailyWarmupTitle">
     <div class="lens-modal-header daily-warmup-header">
       <div>
@@ -396,7 +396,7 @@ AUTH MODAL
   </div>
 </div>
 
-<div id="securitySettingsModal" class="lens-modal-overlay">
+<div id="securitySettingsModal" class="lens-modal-overlay modal-compact">
   <div class="lens-modal security-settings-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Security Settings</div>
@@ -413,7 +413,7 @@ AUTH MODAL
 <!-- =========================
 RIOT PROFILE MODAL
 ========================= -->
-<div id="riotModal" class="lens-modal-overlay">
+<div id="riotModal" class="lens-modal-overlay modal-compact">
   <div class="lens-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Set Riot Profile</div>
@@ -430,7 +430,7 @@ RIOT PROFILE MODAL
   </div>
 </div>
 
-<div id="riotProfileConfirmModal" class="lens-modal-overlay riot-profile-confirm-overlay">
+<div id="riotProfileConfirmModal" class="lens-modal-overlay riot-profile-confirm-overlay modal-compact">
   <div class="lens-modal riot-profile-confirm-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Add Riot Profile</div>
@@ -447,7 +447,7 @@ RIOT PROFILE MODAL
   </div>
 </div>
 
-<div id="editProfileModal" class="lens-modal-overlay">
+<div id="editProfileModal" class="lens-modal-overlay modal-full">
   <div class="lens-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Edit Profile</div>
@@ -640,7 +640,7 @@ RIOT PROFILE MODAL
   </div>
 </div>
 
-<div id="accountSupportModal" class="lens-modal-overlay" aria-hidden="true" style="display:none;">
+<div id="accountSupportModal" class="lens-modal-overlay modal-full" aria-hidden="true" style="display:none;">
   <div class="lens-modal account-support-modal-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Account &amp; Support</div>
@@ -886,7 +886,7 @@ RIOT PROFILE MODAL
 </template>
 
 
-<div id="bugReportModal" class="lens-modal-overlay" aria-hidden="true" style="display:none;">
+<div id="bugReportModal" class="lens-modal-overlay modal-compact" aria-hidden="true" style="display:none;">
   <div class="lens-modal bug-report-modal-card">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Report a Bug</div>
@@ -1499,7 +1499,7 @@ STATS PAGE
           </div>
           <div class="weekly-focus-pills" id="weeklyFocusSummary"></div>
         </div>
-        <div id="weeklyFocusModal" class="lens-modal-overlay">
+        <div id="weeklyFocusModal" class="lens-modal-overlay modal-compact">
           <div class="lens-modal">
             <div class="lens-modal-header">
               <div class="lens-modal-title">This Week's Focus</div>
@@ -1559,7 +1559,7 @@ STATS PAGE
 </div>
 
         </div>
-        <div id="timelineStatsModal" class="lens-modal-overlay">
+        <div id="timelineStatsModal" class="lens-modal-overlay modal-full">
           <div class="lens-modal timeline-shell">
             <aside class="timeline-pullout" id="timelinePullout">
               <button class="timeline-pullout-tab" id="timelinePulloutTab" type="button">Recent Events</button>
@@ -1926,7 +1926,7 @@ stroke-linejoin="round"/>
       </footer>
 
       <!-- Lens Modal Overlay -->
-      <div id="lensModalOverlay" class="lens-modal-overlay" style="display:none;">
+      <div id="lensModalOverlay" class="lens-modal-overlay modal-full" style="display:none;">
         <div class="lens-modal impact-report-modal">
           <div class="lens-modal-header">
             <div class="lens-modal-title" id="lensModalTitle">Lens</div>
@@ -2198,7 +2198,7 @@ stroke-linejoin="round"/>
   </div>
   </div>
 
-<div id="goalRankModal" class="lens-modal-overlay">
+<div id="goalRankModal" class="lens-modal-overlay modal-compact">
   <div class="lens-modal">
     <div class="lens-modal-header">
       <div class="lens-modal-title">Set Goal Rank</div>
@@ -2257,7 +2257,7 @@ stroke-linejoin="round"/>
   </div>
 </div>
 
-  <div id="lensModal" class="lens-modal-overlay">
+  <div id="lensModal" class="lens-modal-overlay modal-compact">
     <div class="lens-modal">
       <div class="lens-modal-header">
         <div class="lens-modal-title" id="lensModalTitleSecondary">Info</div>
@@ -2288,10 +2288,10 @@ stroke-linejoin="round"/>
   <script src="library/gamesense-heatmaps.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-collections.js?v=20260730-melee-desktop-score-01"></script>
 <script>window.RankedCoachCrosshairBackendEnabled = true;</script>
-  <script src="library/gamesense-library.js?v=20260731-plant-map-editor-01"></script>
+  <script src="library/gamesense-library.js?v=20260731-verification-loading-02"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
-  <script src="daily-entrance-motion.js?v=20260731-post-warmup-entrance-01"></script>
-  <script type="module" src="app.js?v=20260731-plant-map-editor-01"></script>
+  <script src="daily-entrance-motion.js?v=20260731-verification-loading-02"></script>
+  <script type="module" src="app.js?v=20260731-verification-loading-02"></script>
   <script type="module" src="knowledge-review.js?v=20260729-border-patch-notes-01"></script>
 </body>
 </html>

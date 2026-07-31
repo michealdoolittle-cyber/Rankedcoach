@@ -393,7 +393,7 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-playlist-loading").count(), 1);
     assert.equal(await desktop.locator(".gamesense-playlist-empty").count(), 0, "A pending Playlist request must not render an empty category.");
     await desktop.locator(".gamesense-playlist-grid .gamesense-video-card").first().waitFor({ state: "visible", timeout: 5000 });
-    assert.match(await desktop.locator(".gamesense-playlist-grid").first().innerText(), /Breeze map guide/i);
+    assert.match(await desktop.locator(".gamesense-playlist-grid:visible").first().innerText(), /Breeze map guide/i);
     await desktop.locator('[data-gamesense-playlist-filter="Home"]').click();
     await desktop.locator(".gamesense-back").click();
     await desktop.locator('[data-gamesense-topic="maps"]').waitFor({ state: "visible" });
@@ -411,7 +411,8 @@ async function run() {
     assert.equal(await desktop.locator(".gamesense-topic-collage").count(), 5);
     assert.ok(await desktop.locator('[data-gamesense-topic="crosshairs"] .gamesense-crosshair-svg').count() >= 5);
     assert.equal(await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').count(), 13);
-    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')].every(image => image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0));
+    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')]
+      .every(image => !image.hasAttribute("data-gamesense-collage-src") && image.complete && image.naturalWidth > 0));
     const mapOverviewImages = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => ({
       currentSrc: image.currentSrc,
       fallbackUsed: image.dataset.gamesenseOverviewFallbackUsed || "",
@@ -430,7 +431,7 @@ async function run() {
       naturalWidth: image.naturalWidth
     })));
     assert.equal(agentOverviewImages.length, 4, JSON.stringify(agentOverviewImages));
-    assert.ok(agentOverviewImages.every(image => /\/assets\/library\/agents\/[a-z-]+\/portrait-card\.png$/i.test(image.currentSrc) && image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0 && image.naturalWidth <= 400), JSON.stringify(agentOverviewImages));
+    assert.ok(agentOverviewImages.every(image => /\/assets\/library\/agents\/[a-z-]+\/portrait-card\.png$/i.test(image.currentSrc) && image.loading === "lazy" && image.fetchPriority === "low" && image.complete && image.naturalWidth > 0 && image.naturalWidth <= 400), JSON.stringify(agentOverviewImages));
     const mapTopicCollageState = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage').evaluate(collage => {
       const images = [...collage.querySelectorAll("img")];
       const wide = images[12];
@@ -448,7 +449,8 @@ async function run() {
     assert.match(mapTopicCollageState.wideRow, /^5(?: \/ auto)?$/, JSON.stringify(mapTopicCollageState));
     await desktop.locator('[data-gamesense-topic="maps"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-maps-topic-desktop.png") });
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 20);
-    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')]
+      .every(image => !image.hasAttribute("data-gamesense-collage-src") && image.complete && image.naturalWidth > 0));
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/") || image.src.includes("media.valorant-api.com/weapons/"))), true);
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] img[src*="weapons-dossier-v2"]').count(), 0);
     const weaponTopicArt = await desktop.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
@@ -580,7 +582,10 @@ async function run() {
     assert.match(desktopVodText, /Ranked coaching VOD/i);
     await desktop.locator('[data-gamesense-playlist-filter="Live"]').click();
     assert.equal(await desktop.locator('[data-gamesense-playlist-filter="Live"]').getAttribute("aria-label"), "Live streams");
-    assert.match(await desktop.locator('[data-gamesense-playlist-filter="Live"]').innerText(), /Live\s*🔴/u);
+    const desktopLiveFilter = desktop.locator('[data-gamesense-playlist-filter="Live"]');
+    assert.match(await desktopLiveFilter.innerText(), /\bLive\b/u);
+    assert.doesNotMatch(await desktopLiveFilter.innerText(), /\u{1F534}/u);
+    assert.equal(await desktopLiveFilter.locator(".gamesense-live-indicator").count(), 1);
     const desktopLiveGrid = desktop.locator(".gamesense-playlist-grid").first();
     await desktopLiveGrid.scrollIntoViewIfNeeded();
     const desktopLiveText = await desktopLiveGrid.innerText();
@@ -1683,17 +1688,20 @@ async function run() {
     await desktop.locator("#dailyWarmupModal.active").waitFor({ state: "visible" });
     assert.equal(await desktop.locator("[data-warmup-info]").count(), 11);
     const drill = desktop.locator('[data-warmup-drill="head-tracking"]');
-    await drill.locator("[data-warmup-info]").click();
-    assert.equal(await drill.locator(".daily-warmup-info-detail li").count(), 3);
+    const drillShell = desktop.locator('.daily-warmup-drill-shell:has([data-warmup-drill="head-tracking"])');
+    await drillShell.locator("[data-warmup-info]").click();
+    assert.equal(await drillShell.locator(".daily-warmup-info-detail li").count(), 3);
     assert.equal(await drill.getAttribute("aria-pressed"), "false");
     const drone = desktop.locator('[data-warmup-drill="drone-target-switching"]');
-    await drone.locator("[data-warmup-info]").click();
-    assert.match(await drone.locator(".daily-warmup-info-detail").innerText(), /infinite ammo off/i);
-    assert.match(await drone.locator(".daily-warmup-info-detail").innerText(), /without releasing/i);
+    const droneShell = desktop.locator('.daily-warmup-drill-shell:has([data-warmup-drill="drone-target-switching"])');
+    await droneShell.locator("[data-warmup-info]").click();
+    assert.match(await droneShell.locator(".daily-warmup-info-detail").innerText(), /infinite ammo off/i);
+    assert.match(await droneShell.locator(".daily-warmup-info-detail").innerText(), /without releasing/i);
     const spray = desktop.locator('[data-warmup-drill="spray-control-dummy"]');
-    await spray.locator("[data-warmup-info]").click();
-    assert.match(await spray.locator(".daily-warmup-info-detail").innerText(), /large range-finder target dummy/i);
-    assert.match(await spray.locator(".daily-warmup-info-detail").innerText(), /accuracy by bullets hitting/i);
+    const sprayShell = desktop.locator('.daily-warmup-drill-shell:has([data-warmup-drill="spray-control-dummy"])');
+    await sprayShell.locator("[data-warmup-info]").click();
+    assert.match(await sprayShell.locator(".daily-warmup-info-detail").innerText(), /large range-finder target dummy/i);
+    assert.match(await sprayShell.locator(".daily-warmup-info-detail").innerText(), /accuracy by bullets hitting/i);
     await desktop.close();
 
     const mobile = await browser.newPage({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true });
@@ -1721,7 +1729,8 @@ async function run() {
     await mobile.waitForTimeout(700);
     assert.equal(await mobile.locator(".gamesense-topic-card").count(), 5);
     assert.equal(await mobile.locator('[data-gamesense-topic="crosshairs"]').count(), 1);
-    await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="maps"] .gamesense-topic-collage img')]
+      .every(image => !image.hasAttribute("data-gamesense-collage-src") && image.complete && image.naturalWidth > 0));
     const mobileMapOverviewImages = await mobile.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage img').evaluateAll(images => images.map(image => ({
       currentSrc: image.currentSrc,
       fallbackUsed: image.dataset.gamesenseOverviewFallbackUsed || "",
@@ -1732,7 +1741,8 @@ async function run() {
     assert.equal(mobileMapOverviewImages.length, 13, JSON.stringify(mobileMapOverviewImages));
     assert.ok(mobileMapOverviewImages.every(image => /\/assets\/library\/maps\/thumbs\/[a-z-]+\.jpg$/i.test(image.currentSrc) && image.fallbackUsed === "" && image.filter === "none" && image.naturalWidth <= 400 && image.naturalHeight <= 240), JSON.stringify(mobileMapOverviewImages));
     await mobile.locator('[data-gamesense-topic="maps"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-maps-topic-mobile.png") });
-    await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
+    await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')]
+      .every(image => !image.hasAttribute("data-gamesense-collage-src") && image.complete && image.naturalWidth > 0));
     await mobile.locator('[data-gamesense-topic="agents"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-agents-topic-mobile.png") });
     assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 20);
     const mobileWeaponTopicArt = await mobile.locator('[data-gamesense-topic="weapons"]').evaluate(card => {

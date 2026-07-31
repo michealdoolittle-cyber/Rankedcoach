@@ -14430,6 +14430,14 @@ const LOADING_MOTIVATION_QUOTES = Object.freeze([
 const LOADING_QUOTE_ROTATE_MS = 4600;
 let loginInitializationQuoteTimer = 0;
 let appLoadingQuoteTimer = 0;
+let appLoadingEventToastTimer = 0;
+
+const APP_LOADING_EVENT_BANNERS = Object.freeze({
+  game: "New Game Data Detected",
+  patch: "New Patch Notes Uploading",
+  videos: "New Videos Released",
+  library: "Library Updates Loading"
+});
 
 function getRandomLoadingMotivationQuote(previousText = "") {
   const quotes = LOADING_MOTIVATION_QUOTES;
@@ -14496,6 +14504,77 @@ function stopAppLoadingQuoteRotation() {
   window.clearInterval(appLoadingQuoteTimer);
   appLoadingQuoteTimer = 0;
 }
+
+function normalizeAppLoadingEventMessage(value = "") {
+  const key = String(value || "").trim().toLowerCase();
+  if (!key) return "";
+  return APP_LOADING_EVENT_BANNERS[key] || String(value || "").trim();
+}
+
+function ensureAppLoadingEventToast() {
+  let toast = document.getElementById("appLoadingEventToast");
+  if (toast) return toast;
+  toast = document.createElement("div");
+  toast.id = "appLoadingEventToast";
+  toast.className = "app-loading-event-toast";
+  toast.setAttribute("role", "status");
+  toast.setAttribute("aria-live", "polite");
+  toast.setAttribute("aria-atomic", "true");
+  document.body?.appendChild(toast);
+  return toast;
+}
+
+function clearAppLoadingEventToast() {
+  if (appLoadingEventToastTimer) {
+    window.clearTimeout(appLoadingEventToastTimer);
+    appLoadingEventToastTimer = 0;
+  }
+  const toast = document.getElementById("appLoadingEventToast");
+  if (!toast) return;
+  toast.classList.remove("is-visible");
+  toast.textContent = "";
+}
+
+function showAppLoadingEventToast(message = "") {
+  const normalized = normalizeAppLoadingEventMessage(message);
+  if (!normalized) {
+    clearAppLoadingEventToast();
+    return;
+  }
+  const toast = ensureAppLoadingEventToast();
+  toast.textContent = normalized;
+  toast.classList.add("is-visible");
+  if (appLoadingEventToastTimer) window.clearTimeout(appLoadingEventToastTimer);
+  appLoadingEventToastTimer = window.setTimeout(() => {
+    appLoadingEventToastTimer = 0;
+    clearAppLoadingEventToast();
+  }, 3200);
+}
+
+function setAppLoadingEventBanner(message = "") {
+  const veil = document.getElementById("appLoadingVeil");
+  const banner = document.getElementById("appLoadingEventBanner");
+  const normalized = normalizeAppLoadingEventMessage(message);
+  if (banner) {
+    banner.hidden = !normalized;
+    banner.classList.toggle("is-visible", Boolean(normalized));
+    banner.textContent = normalized;
+  }
+  if (!normalized) {
+    clearAppLoadingEventToast();
+    return;
+  }
+  if (veil?.classList.contains("is-visible") && banner) {
+    clearAppLoadingEventToast();
+    return;
+  }
+  showAppLoadingEventToast(normalized);
+}
+
+window.RankedCoachLoadingEvents = Object.freeze({
+  show: setAppLoadingEventBanner,
+  clear: () => setAppLoadingEventBanner("")
+});
 
 function setLoginInitializationProgress(percent = 0, copy = "", activeStep = "", detail = "") {
   const overlay = document.getElementById("loginInitOverlay");
@@ -15163,6 +15242,7 @@ function ensureAppLoadingVeil() {
       <div class="app-loading-progress-meta"><span id="appLoadingProgressLabel">Loading</span><strong id="appLoadingPercent">0%</strong></div>
       <div class="app-loading-bar" id="appLoadingProgress" role="progressbar" aria-label="Loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="appLoadingProgressBar"></span></div>
     </div>
+    <div class="app-loading-event-banner" id="appLoadingEventBanner" hidden></div>
   `;
   document.body?.appendChild(veil);
   return veil;
@@ -15192,6 +15272,7 @@ function showAppLoadingVeil(message = "Preparing your dashboard...", options = {
   veil.setAttribute("aria-hidden", "false");
   veil.classList.add("is-visible");
   document.body?.classList.add("app-loading-active");
+  setAppLoadingEventBanner(options.eventBanner || options.event || "");
 }
 
 function setAppLoadingVeilMessage(message = "Preparing your dashboard...") {
@@ -15205,6 +15286,12 @@ function hideAppLoadingVeil({ force = false } = {}) {
   if (!veil) return;
   veil.classList.remove("is-visible");
   veil.setAttribute("aria-hidden", "true");
+  const banner = document.getElementById("appLoadingEventBanner");
+  if (banner) {
+    banner.hidden = true;
+    banner.classList.remove("is-visible");
+    banner.textContent = "";
+  }
   stopAppLoadingQuoteRotation();
   document.body?.classList.remove("app-loading-active");
   window.setTimeout(() => {
@@ -15212,8 +15299,8 @@ function hideAppLoadingVeil({ force = false } = {}) {
   }, 260);
 }
 
-async function withAppLoadingVeil(message = "Preparing your dashboard...", task = async () => {}) {
-  showAppLoadingVeil(message, { percent: 8 });
+async function withAppLoadingVeil(message = "Preparing your dashboard...", task = async () => {}, options = {}) {
+  showAppLoadingVeil(message, { percent: 8, ...options });
   const startedAt = Date.now();
   try {
     return await task();
@@ -15383,6 +15470,34 @@ function enterGuestModeAfterLogout() {
   renderChart?.(currentSize);
 }
 
+function refreshGuestTutorialDemoSurfaces(step = {}) {
+  const profile = getActiveProfile?.();
+  const profileMatches = Array.isArray(profile?.matches) ? profile.matches.slice() : [];
+  if (profileMatches.length) {
+    matches = profileMatches;
+  }
+  try {
+    recomputeFromMatches?.();
+    updateDisplays?.();
+    initStatsPage?.();
+    renderStatsAgents?.();
+    renderStatsMaps?.();
+    renderStatsWeapons?.();
+    renderInsights?.();
+    renderLogFeed?.({ force: true });
+    renderChart?.(currentSize);
+    if (step.page === "home" || step.selector === ".rr-card") {
+      const sessionEntries = typeof getSessionMatchEntries === "function" ? getSessionMatchEntries() : [];
+      const latestSessionEntry = sessionEntries[sessionEntries.length - 1] || null;
+      updateRRMatchStats?.(latestSessionEntry?.match || profileMatches[profileMatches.length - 1] || null, latestSessionEntry?.index ?? null, {
+        displayIndex: latestSessionEntry ? sessionEntries.length - 1 : null
+      });
+    }
+  } catch (error) {
+    console.warn("Guest tutorial demo surface refresh skipped", error);
+  }
+}
+
 const GUEST_TUTORIAL_STEPS = [
   {
     page: "home",
@@ -15528,7 +15643,7 @@ let guestTutorialPositionTimer = 0;
 function ensureGuestTutorialShells() {
   if (!document.getElementById("guestTutorialChoiceModal")) {
     document.body.insertAdjacentHTML("beforeend", `
-      <div id="guestTutorialChoiceModal" class="lens-modal-overlay guest-tutorial-choice-overlay">
+      <div id="guestTutorialChoiceModal" class="lens-modal-overlay guest-tutorial-choice-overlay modal-compact">
         <div class="lens-modal guest-tutorial-choice-card">
           <div class="lens-modal-header">
             <div class="lens-modal-title">Guest Tutorial</div>
@@ -15569,7 +15684,7 @@ function ensureGuestTutorialShells() {
 
   if (!document.getElementById("guestTutorialCompleteModal")) {
     document.body.insertAdjacentHTML("beforeend", `
-      <div id="guestTutorialCompleteModal" class="lens-modal-overlay guest-tutorial-choice-overlay">
+      <div id="guestTutorialCompleteModal" class="lens-modal-overlay guest-tutorial-choice-overlay modal-compact">
         <div class="lens-modal guest-tutorial-choice-card guest-tutorial-complete-card">
           <div class="lens-modal-header">
             <div class="lens-modal-title">Tutorial Complete</div>
@@ -16059,6 +16174,7 @@ function renderGuestTutorialStep(index = guestTutorialIndex) {
   guestTutorialPositionLocked = true;
   clearTutorialTarget();
   activatePage?.(step.page || "home");
+  refreshGuestTutorialDemoSurfaces(step);
 
   window.setTimeout(() => {
     const target = getTutorialTarget(step);
@@ -16112,9 +16228,13 @@ function stopGuestTutorial({ completed = false } = {}) {
   window.removeEventListener("scroll", positionGuestTutorialOverlay, true);
   if (completed) {
     dailyEntranceMotionTutorialPending = true;
+    activatePage?.("home");
+    refreshGuestTutorialDemoSurfaces({ page: "home" });
+    window.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
     window.setTimeout(() => {
       openGuestTutorialComplete();
       dailyEntranceMotionTutorialPending = false;
+      notifyDailyEntranceMotionReady?.();
     }, 120);
   }
 }
@@ -16149,6 +16269,9 @@ async function ensureGuestDemoMatches() {
 
 function maybeOpenInitialAuthGate() {
   if (currentAuthUser || hasCompletedAppEntryChoice()) return;
+  const authModal = document.getElementById("authModal");
+  if (authModal) authModal.dataset.entryContext = "first";
+  setAuthPanel?.("login");
   const closeBtn = document.getElementById("authModalClose");
   if (closeBtn) closeBtn.style.display = "none";
   showModalById("authModal");
@@ -17050,9 +17173,9 @@ function openLensModal(lens){
   const lensLabel = COMPASS_LENS_META?.[lens]?.label || lensDetail?.title || "Compass";
 
   title.textContent = lensDetail?.title || "Lens";
-  if (weightingTitle) weightingTitle.textContent = "Weighting";
+  if (weightingTitle) weightingTitle.textContent = "Score Category Weights";
   if (statsTitle) statsTitle.textContent = `${lensLabel} Category Scores`;
-  setLensWeightingCollapsed(false);
+  setLensWeightingCollapsed(true);
   weightingBlock.innerHTML = "";
   list.innerHTML = "";
 
@@ -21347,6 +21470,8 @@ document.addEventListener("keydown", event => {
 });
 
 function openAuthModal() {
+  const authModal = document.getElementById("authModal");
+  if (authModal) delete authModal.dataset.entryContext;
   const closeBtn = document.getElementById("authModalClose");
   if (closeBtn) closeBtn.style.display = "";
   setAuthPanel?.("login");
@@ -46715,7 +46840,8 @@ async function submitProfileAddForm(event) {
     showAppLoadingVeil("Resolving the Riot account...", {
       title: "Building your profile",
       progressLabel: "Profile sync",
-      percent: 6
+      percent: 6,
+      eventBanner: "game"
     });
     const syncResult = await syncProfileRetainedHistory({
       mode: "import",
@@ -49170,12 +49296,25 @@ function scheduleNavUnderlineUpdate() {
 
 let pageTransitionToken = 0;
 let pageTransitionTimer = 0;
+let pageMotionBudgetTimer = 0;
 let mobilePageHydrationTimer = 0;
 let libraryPageActivationTimer = 0;
+
+function pausePremiumSceneForPageSwitch(duration = 220) {
+  const body = document.body;
+  if (!body) return;
+  body.classList.add("page-motion-budget-active");
+  if (pageMotionBudgetTimer) window.clearTimeout(pageMotionBudgetTimer);
+  pageMotionBudgetTimer = window.setTimeout(() => {
+    pageMotionBudgetTimer = 0;
+    document.body?.classList.remove("page-motion-budget-active");
+  }, Math.max(80, Number(duration) || 220));
+}
 let libraryPageActivationToken = 0;
 let desktopStatsPagePrewarmScheduled = false;
 let desktopStatsPagePrewarmFrame = 0;
 let desktopStatsPagePrewarmed = false;
+const LIBRARY_STABLE_HYDRATION_DELAY_MS = 1800;
 
 function scheduleDesktopStatsPagePrewarm(options = {}) {
   const immediate = Boolean(options?.immediate);
@@ -49184,7 +49323,7 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
   // expensive forced-layout read on every theme or Layout Style change only
   // races a normal navigation (especially the first Stats click) without
   // making a later visit any more ready.
-  if (isMobileLayoutViewport() || desktopStatsPagePrewarmed) return;
+  if (desktopStatsPagePrewarmed) return;
 
   // Inactive dashboards use `content-visibility:hidden` so they do not tax
   // normal navigation.  The first Stats click therefore needs its layout and
@@ -49194,7 +49333,7 @@ function scheduleDesktopStatsPagePrewarm(options = {}) {
   const warmStatsPage = () => {
     desktopStatsPagePrewarmFrame = 0;
     desktopStatsPagePrewarmScheduled = false;
-    if (isMobileLayoutViewport() || desktopStatsPagePrewarmed) return;
+    if (desktopStatsPagePrewarmed) return;
 
     const statsPage = document.getElementById("page-stats");
     if (!statsPage || statsPage.classList.contains("active")) return;
@@ -49275,16 +49414,17 @@ function syncLibraryPageActivity(pageId = "") {
     return;
   }
 
-  // The overview is already rendered locally. Its optional Playlist and
-  // approved-knowledge refreshes can fetch, parse, and replace a large DOM,
-  // so wait until the Library tab has had a stable first paint before asking
-  // it to hydrate. A quick tab pass cancels this altogether.
+  // The overview is already rendered locally. Its optional Playlist,
+  // patch-note, approved-knowledge, and collage refreshes can fetch, decode,
+  // parse, and replace large DOM sections. Keep that work out of the immediate
+  // page-switch window so themes, scroll, and tab presses stay responsive; if
+  // the player leaves quickly, this scheduled hydration is cancelled.
   libraryPageActivationTimer = window.setTimeout(() => {
     libraryPageActivationTimer = 0;
     if (token !== libraryPageActivationToken) return;
     if (getActivePageElement()?.id !== "page-library") return;
     library.setPageActive(true);
-  }, 180);
+  }, LIBRARY_STABLE_HYDRATION_DELAY_MS);
 }
 
 function hydrateMobilePageForCurrentState(pageId = "", options = {}) {
@@ -49427,6 +49567,9 @@ function activatePage(pageId, options = {}){
   const targetId = "page-" + pageId;
   const nextPage = document.getElementById(targetId);
   const currentPage = getActivePageElement();
+  if (nextPage && currentPage && nextPage !== currentPage) {
+    pausePremiumSceneForPageSwitch(isMobileLayoutViewport() ? 260 : 180);
+  }
   const currentPageId = currentPage?.id?.replace("page-", "") || pageId;
   const pageOrder = Array.isArray(MOBILE_PAGE_SWIPE_ORDER)
     ? MOBILE_PAGE_SWIPE_ORDER
@@ -49477,9 +49620,9 @@ function activatePage(pageId, options = {}){
       page.classList.toggle("is-mobile-page-ready", isCurrent);
       page.classList.toggle("is-current-page", isCurrent);
       page.classList.remove("entering", "exiting");
-      setMobilePageCompositorReady(page, isCurrent);
+      setMobilePageCompositorReady(page, mobileSwipeHandoff && isCurrent);
     });
-    syncMobilePageWarmLayouts();
+    if (mobileSwipeHandoff) syncMobilePageWarmLayouts();
 
     // Direct tab taps reveal the destination immediately. The explicit
     // full-page Web Animation here was expensive on phones and did not add a
@@ -51935,6 +52078,12 @@ function setAuthPanel(panelName = "login") {
   document.querySelectorAll("[data-auth-panel]").forEach(panel => {
     panel.hidden = panel.dataset.authPanel !== panelName;
   });
+  const authModal = document.getElementById("authModal");
+  const loginTitle = document.querySelector('[data-auth-panel="login"] .auth-welcome-title');
+  const firstVisit = authModal?.dataset?.entryContext === "first" && !hasCompletedAppEntryChoice();
+  if (loginTitle) {
+    loginTitle.textContent = firstVisit ? "Choose how to start" : "Welcome back!";
+  }
   const title = document.getElementById("authModalTitle");
   if (title) {
     title.textContent = panelName === "signup"
@@ -51943,7 +52092,9 @@ function setAuthPanel(panelName = "login") {
         ? "Password recovery"
         : panelName === "mfa"
           ? "2-factor verification"
-          : "Welcome back";
+          : firstVisit
+            ? "Start RankedCoach"
+            : "Welcome back";
   }
 }
 
@@ -52651,6 +52802,9 @@ document.addEventListener("click", (e) => {
   }
 
   if (e.target?.id === "guestTutorialCompleteClose" || e.target?.id === "guestTutorialCompleteExplore") {
+    activatePage?.("home");
+    refreshGuestTutorialDemoSurfaces({ page: "home" });
+    window.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
     closeGuestTutorialComplete();
   }
 
@@ -53356,6 +53510,9 @@ async function performRiotSync(options = {}) {
       syncedProfile.lastSyncAt = result?.syncedAt || nowISO();
       saveProfiles();
       if (verifyWarmup) void refreshWarmupAutoVerification(syncedProfile, { announce: !silent });
+    }
+    if (safeNumber(result?.count) > 0) {
+      setAppLoadingEventBanner("game");
     }
     if (prefillReflection) prefillLatestImportedReflection();
 

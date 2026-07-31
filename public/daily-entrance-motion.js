@@ -38,16 +38,14 @@
   // click against the newly revealed page. Consume that one click so skipping
   // the animation never also opens a card underneath it.
   function consumeEntranceSkipClick(event) {
-    // Page navigation and actual controls are explicit destination choices,
-    // not accidental card activations. Let them through even if they happen to
-    // be the first tap after a warm-up/modal or entrance transition.
+    // Page navigation is an explicit destination choice, so let it both skip
+    // and navigate. Other controls may sit underneath the dismissal pointer
+    // after the overlay clears, so consume that first synthetic click instead
+    // of opening a modal/card by accident.
     const navigationTarget = event.target?.closest?.(
       ".nav-btn[data-page], .mobile-bottom-page-btn[data-mobile-page]"
     );
-    const explicitControl = event.target?.closest?.(
-      "button, a[href], input, textarea, select, summary, [role='button'], [tabindex]:not([tabindex='-1'])"
-    );
-    if (!navigationTarget && !explicitControl) {
+    if (!navigationTarget) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }

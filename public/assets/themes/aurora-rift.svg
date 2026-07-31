@@ -6,16 +6,8 @@
   </defs>
   <rect width="1200" height="800" fill="#020812"/>
   <g filter="url(#soft)" fill="none" stroke-linecap="round">
-    <path d="M-80 530 C180 250 340 620 620 320 C820 110 950 380 1280 140" stroke="url(#a1)" stroke-width="96">
-      <animate attributeName="d" values="M-80 530 C180 250 340 620 620 320 C820 110 950 380 1280 140;M-80 470 C210 180 380 590 648 272 C850 60 1010 350 1280 98;M-80 530 C180 250 340 620 620 320 C820 110 950 380 1280 140" dur="9s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values=".34;.7;.4" dur="6s" repeatCount="indefinite"/>
-    </path>
-    <path d="M-120 650 C160 360 390 690 660 390 C850 190 1050 520 1320 260" stroke="url(#a2)" stroke-width="78">
-      <animate attributeName="d" values="M-120 650 C160 360 390 690 660 390 C850 190 1050 520 1320 260;M-120 602 C180 300 430 722 680 338 C890 150 1080 478 1320 210;M-120 650 C160 360 390 690 660 390 C850 190 1050 520 1320 260" dur="10.4s" begin="-3s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values=".28;.62;.32" dur="7.2s" repeatCount="indefinite"/>
-    </path>
-    <path d="M-60 430 C210 210 420 500 710 250 C930 60 1040 280 1280 80" stroke="#ffffff" stroke-width="16" opacity=".16">
-      <animate attributeName="stroke-dasharray" values="0 900;220 680;0 900" dur="5.5s" repeatCount="indefinite"/>
-    </path>
+    <path d="M-80 530 C180 250 340 620 620 320 C820 110 950 380 1280 140" stroke="url(#a1)" stroke-width="96" opacity=".62"/>
+    <path d="M-120 650 C160 360 390 690 660 390 C850 190 1050 520 1320 260" stroke="url(#a2)" stroke-width="78" opacity=".54"/>
+    <path d="M-60 430 C210 210 420 500 710 250 C930 60 1040 280 1280 80" stroke="#ffffff" stroke-width="16" opacity=".16" stroke-dasharray="220 680"/>
   </g>
 </svg>

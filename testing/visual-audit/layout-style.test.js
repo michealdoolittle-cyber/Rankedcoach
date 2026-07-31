@@ -217,6 +217,18 @@ function startServer() {
         response.end(JSON.stringify({ items: [], liveStreams: [], newIn24Hours: 0 }));
         return;
       }
+      if (url === "/api/content/patch-notes") {
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({
+          title: "VALORANT Patch Notes 13.02",
+          label: "Patch 13.02",
+          effectiveDate: "2026-07-28T13:00:00.000Z",
+          sourceUrl: "https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-13-02/",
+          bullets: ["Bug fixes, agent tuning, and competitive updates from Riot's official patch feed."],
+          sections: []
+        }));
+        return;
+      }
       if (url === "/api/content/knowledge") {
         response.writeHead(200, { "Content-Type": "application/json" });
         response.end(JSON.stringify({ updatedAt: null, items: [] }));
