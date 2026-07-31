@@ -13189,6 +13189,77 @@ function applyLoggingPreviewAutofillFields(entry = {}) {
   updateLoggingDebriefPreview?.();
 }
 
+const BROADCAST_ROLL_STAMP_LINES = Object.freeze([
+  "Locked In",
+  "Locked N' Loaded",
+  "Match Ready",
+  "Loadout Locked",
+  "Zeroed In",
+  "Dialed In",
+  "Flow-State Prepped"
+]);
+const BROADCAST_BURST_VARIANTS = Object.freeze([
+  "confetti",
+  "ember",
+  "rank",
+  "lightning",
+  "bullet",
+  "smoke",
+  "bubble"
+]);
+const BROADCAST_BULLET_HOLE_ASSET = "assets/broadcast/bullet-hole.png";
+
+function chooseRandomItem(items = [], fallback = "") {
+  const list = Array.isArray(items) ? items.filter(Boolean) : [];
+  if (!list.length) return fallback;
+  return list[Math.floor(Math.random() * list.length)] || fallback;
+}
+
+function getBroadcastRollStampText() {
+  return chooseRandomItem(BROADCAST_ROLL_STAMP_LINES, "Locked In");
+}
+
+function getBroadcastRankIconUrl() {
+  const candidates = [
+    document.getElementById("profileRankIcon")?.getAttribute("src"),
+    document.querySelector("#mobileHeaderProfileBtn .mobile-header-rank-icon")?.getAttribute("src"),
+    document.querySelector(".nav-rank-icon")?.getAttribute("src"),
+    document.querySelector(".profile-rank-icon")?.getAttribute("src")
+  ];
+  return candidates.map(value => String(value || "").trim()).find(Boolean) || "";
+}
+
+function chooseBroadcastBurstVariant(options = {}) {
+  const requested = String(options.variant || "").trim().toLowerCase();
+  if (BROADCAST_BURST_VARIANTS.includes(requested)) return requested;
+  const rankIcon = getBroadcastRankIconUrl();
+  const pool = rankIcon
+    ? BROADCAST_BURST_VARIANTS
+    : BROADCAST_BURST_VARIANTS.filter(variant => variant !== "rank");
+  return chooseRandomItem(pool, "confetti");
+}
+
+function createBroadcastParticleElement(variant = "confetti") {
+  if (variant === "rank") {
+    const rankIcon = getBroadcastRankIconUrl();
+    if (rankIcon) {
+      const img = document.createElement("img");
+      img.src = rankIcon;
+      img.alt = "";
+      img.setAttribute("aria-hidden", "true");
+      return img;
+    }
+  }
+  if (variant === "bullet") {
+    const img = document.createElement("img");
+    img.src = BROADCAST_BULLET_HOLE_ASSET;
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+    return img;
+  }
+  return document.createElement("span");
+}
+
 function particleBurst(anchor = document.body, options = {}) {
   if (shouldSkipBroadcastMotion()) return;
   const overlay = primeBroadcastOverlay(900);
@@ -13196,7 +13267,10 @@ function particleBurst(anchor = document.body, options = {}) {
   const rect = getBroadcastTargetRect(anchor);
   const centerX = rect.left + rect.width / 2;
   const centerY = rect.top + rect.height / 2;
-  const count = Math.max(8, Math.min(24, Number(options.count) || 14));
+  const variant = chooseBroadcastBurstVariant(options);
+  const countCap = variant === "smoke" ? 12 : variant === "bullet" ? 10 : 24;
+  const countFloor = variant === "smoke" ? 5 : variant === "bullet" ? 4 : 8;
+  const count = Math.max(countFloor, Math.min(countCap, Number(options.count) || 14));
   const radius = Math.max(54, Math.min(150, Number(options.radius) || 92));
   const theme = getPremiumFeedbackTheme?.()?.theme;
   const palette = [
@@ -13207,17 +13281,20 @@ function particleBurst(anchor = document.body, options = {}) {
     "#2dd4bf"
   ].filter(Boolean);
   for (let i = 0; i < count; i += 1) {
-    const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.38);
-    const distance = radius * (0.62 + Math.random() * 0.48);
-    const particle = document.createElement("span");
-    particle.className = "broadcast-particle";
+    let angle = (Math.PI * 2 * i) / count + (Math.random() * 0.38);
+    if (variant === "bubble") angle = (-Math.PI / 2) + ((Math.random() - 0.5) * 1.22);
+    if (variant === "smoke") angle = (-Math.PI / 2) + ((Math.random() - 0.5) * 1.6);
+    const distance = radius * (0.62 + Math.random() * (variant === "bullet" ? 0.28 : 0.48));
+    const particle = createBroadcastParticleElement(variant);
+    particle.className = `broadcast-particle broadcast-particle--${variant}`;
     particle.style.setProperty("--broadcast-x", `${centerX}px`);
     particle.style.setProperty("--broadcast-y", `${centerY}px`);
     particle.style.setProperty("--burst-x", `${Math.cos(angle) * distance}px`);
     particle.style.setProperty("--burst-y", `${Math.sin(angle) * distance}px`);
     particle.style.setProperty("--particle-color", palette[i % palette.length]);
+    particle.style.setProperty("--particle-rotate", `${Math.round((Math.random() * 240) - 120)}deg`);
     overlay.appendChild(particle);
-    window.setTimeout(() => particle.remove(), 680);
+    window.setTimeout(() => particle.remove(), variant === "smoke" || variant === "bubble" ? 980 : 740);
   }
 }
 
@@ -13234,6 +13311,7 @@ function statStamp(text = "", options = {}) {
   const stamp = document.createElement("div");
   stamp.className = "broadcast-stamp";
   stamp.dataset.tone = String(options.tone || "neutral");
+  if (options.kind) stamp.dataset.kind = String(options.kind);
   stamp.textContent = copy;
   if (options.bottom) stamp.style.bottom = String(options.bottom);
   overlay.appendChild(stamp);
@@ -13338,7 +13416,7 @@ async function playBroadcastRollReveal(options = {}) {
   await broadcastWait(190);
   snapIn(focusEl);
   await broadcastWait(220);
-  statStamp("Locked in", { tone: "positive" });
+  statStamp(getBroadcastRollStampText(), { tone: "positive", kind: "roll" });
   return true;
 }
 

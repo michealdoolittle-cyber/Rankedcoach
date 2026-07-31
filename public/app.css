@@ -52748,7 +52748,8 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   z-index:2354;
   pointer-events:none;
   transform:translate3d(-50%, 0, 0);
-  min-width:min(680px, calc(100vw - 42px));
+  width:max-content;
+  min-width:min(420px, calc(100vw - 42px));
   max-width:calc(100vw - 42px);
   padding:12px 20px 13px;
   border:1px solid color-mix(in srgb, var(--accent, #ff4655) 58%, rgba(255,255,255,.28));
@@ -52766,6 +52767,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   letter-spacing:.08em;
   text-transform:uppercase;
   text-align:left;
+  white-space:normal;
   animation:broadcastStatStamp 1900ms cubic-bezier(.18,1.08,.24,1) forwards;
 }
 
@@ -52805,6 +52807,78 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   background:var(--particle-color, var(--accent, #ff4655));
   box-shadow:0 0 14px var(--particle-color, var(--accent, #ff4655));
   animation:broadcastParticleBurst 620ms cubic-bezier(.18,.92,.24,1) forwards;
+}
+
+.broadcast-particle--confetti{
+  border-radius:999px;
+}
+
+.broadcast-particle--ember{
+  width:9px;
+  height:15px;
+  border-radius:58% 58% 52% 52%;
+  background:
+    radial-gradient(circle at 48% 26%, rgba(255,245,180,.95), transparent 28%),
+    linear-gradient(180deg, #ffd43b 0%, #fb923c 42%, #ef4444 100%);
+  box-shadow:
+    0 0 10px rgba(251,146,60,.86),
+    0 0 22px rgba(239,68,68,.46);
+  animation:broadcastEmberBurst 720ms cubic-bezier(.14,.9,.24,1) forwards;
+}
+
+.broadcast-particle--rank{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 10px rgba(250,204,21,.82));
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  animation:broadcastRankBurst 720ms cubic-bezier(.16,1,.24,1) forwards;
+}
+
+.broadcast-particle--lightning{
+  width:36px;
+  height:4px;
+  border-radius:999px 2px 999px 2px;
+  background:linear-gradient(90deg, transparent, #e0f2fe 20%, #38bdf8 54%, #f472b6 100%);
+  box-shadow:
+    0 0 10px rgba(56,189,248,.95),
+    0 0 22px rgba(244,114,182,.5);
+  transform-origin:left center;
+  animation:broadcastLightningArc 660ms cubic-bezier(.16,.9,.24,1) forwards;
+}
+
+.broadcast-particle--bullet{
+  width:clamp(28px, 2.4vw, 44px);
+  height:auto;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  filter:drop-shadow(0 3px 10px rgba(0,0,0,.62));
+  animation:broadcastBulletHoleBurst 720ms cubic-bezier(.12,.84,.24,1) forwards;
+}
+
+.broadcast-particle--smoke{
+  width:28px;
+  height:20px;
+  border-radius:999px;
+  background:
+    radial-gradient(circle at 30% 45%, rgba(226,232,240,.64), transparent 44%),
+    radial-gradient(circle at 66% 55%, rgba(148,163,184,.48), transparent 50%);
+  box-shadow:0 0 18px rgba(148,163,184,.32);
+  filter:blur(3px);
+  animation:broadcastSmokeFlow 940ms ease-out forwards;
+}
+
+.broadcast-particle--bubble{
+  width:13px;
+  height:13px;
+  border:1px solid rgba(125,249,255,.92);
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 24%, rgba(255,255,255,.9), rgba(125,249,255,.2) 38%, rgba(45,212,191,.08) 72%, transparent);
+  box-shadow:0 0 14px rgba(45,212,191,.5);
+  animation:broadcastBubbleFloat 960ms ease-out forwards;
 }
 
 .broadcast-motion-snap{
@@ -52870,6 +52944,46 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   0%{ opacity:1; transform:translate3d(-50%, -50%, 0) scale(.78); }
   76%{ opacity:.92; }
   100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) scale(.18); }
+}
+
+@keyframes broadcastEmberBurst{
+  0%{ opacity:1; transform:translate3d(-50%, -50%, 0) rotate(var(--particle-rotate, 0deg)) scale(.72); }
+  62%{ opacity:.95; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) rotate(calc(var(--particle-rotate, 0deg) + 90deg)) scale(.2); }
+}
+
+@keyframes broadcastRankBurst{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) rotate(0deg) scale(.4); }
+  18%{ opacity:1; }
+  82%{ opacity:.92; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) rotate(var(--particle-rotate, 0deg)) scale(.72); }
+}
+
+@keyframes broadcastLightningArc{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) rotate(var(--particle-rotate, 0deg)) scaleX(.16); }
+  16%{ opacity:1; }
+  66%{ opacity:.95; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) rotate(var(--particle-rotate, 0deg)) scaleX(1.18); }
+}
+
+@keyframes broadcastBulletHoleBurst{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) rotate(var(--particle-rotate, 0deg)) scale(.08); }
+  18%{ opacity:.92; transform:translate3d(-50%, -50%, 0) rotate(var(--particle-rotate, 0deg)) scale(.82); }
+  74%{ opacity:.82; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) rotate(var(--particle-rotate, 0deg)) scale(.48); }
+}
+
+@keyframes broadcastSmokeFlow{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) rotate(0deg) scale(.52); }
+  20%{ opacity:.72; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) rotate(var(--particle-rotate, 0deg)) scale(2.45); }
+}
+
+@keyframes broadcastBubbleFloat{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) scale(.36); }
+  20%{ opacity:.94; }
+  72%{ opacity:.82; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--burst-x, 0px)), calc(-50% + var(--burst-y, 0px)), 0) scale(1.2); }
 }
 
 @keyframes broadcastSnapIn{

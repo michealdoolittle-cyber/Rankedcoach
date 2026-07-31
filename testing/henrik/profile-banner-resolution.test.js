@@ -38,8 +38,8 @@ for (const uuid of uniqueBannerUuids) {
     }
     offset += 2 + length;
   }
-  assert.ok(width >= 1808, `${assetPath} should be wide enough for 1080p+ banner strips.`);
-  assert.ok(height >= 512, `${assetPath} should be tall enough for 1080p+ banner strips.`);
+  assert.ok(width >= 3616, `${assetPath} should be wide enough for 1080p+ banner strips.`);
+  assert.ok(height >= 1024, `${assetPath} should be tall enough for 1080p+ banner strips.`);
   assert.ok(Math.abs((width / height) - (452 / 128)) < 0.02, `${assetPath} must retain Valorant wide-art banner aspect ratio.`);
 }
 

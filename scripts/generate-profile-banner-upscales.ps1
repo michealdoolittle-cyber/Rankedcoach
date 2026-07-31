@@ -1,6 +1,6 @@
 param(
-  [int]$Scale = 5,
-  [int]$JpegQuality = 92
+  [int]$Scale = 8,
+  [int]$JpegQuality = 96
 )
 
 $ErrorActionPreference = "Stop"
