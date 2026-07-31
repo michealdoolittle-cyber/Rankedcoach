@@ -52816,14 +52816,47 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
 .broadcast-particle--ember{
   width:var(--particle-size, 8px);
   height:var(--ember-height, 15px);
-  border-radius:58% 58% 52% 52%;
+  border-radius:46% 46% 58% 58%;
   background:
-    radial-gradient(circle at 48% 26%, rgba(255,245,180,.95), transparent 28%),
-    linear-gradient(180deg, #ffd43b 0%, #fb923c 42%, #ef4444 100%);
+    radial-gradient(ellipse at 50% 78%, rgba(255,245,180,.96), transparent 22%),
+    radial-gradient(ellipse at 50% 55%, rgba(251,146,60,.94), transparent 48%),
+    linear-gradient(0deg, #ffd43b 0%, #fb923c 34%, #ef4444 70%, transparent 100%);
   box-shadow:
     0 0 10px rgba(251,146,60,.86),
     0 0 22px rgba(239,68,68,.46);
-  animation:broadcastEmberBurst 920ms cubic-bezier(.17,.78,.28,1) forwards;
+  transform-origin:center bottom;
+  animation:broadcastEmberBurst 1220ms cubic-bezier(.18,.72,.26,1) forwards;
+}
+
+.broadcast-particle--ember-veil{
+  width:var(--burst-frame-width, 160px);
+  height:var(--burst-frame-height, 160px);
+  border-radius:22px;
+  overflow:hidden;
+  background:
+    linear-gradient(0deg, rgba(2,6,23,0) 0 8%, rgba(251,146,60,.24) 10%, rgba(2,6,23,.9) 15%, rgba(2,6,23,.96) 100%),
+    radial-gradient(ellipse at 50% 96%, rgba(251,146,60,.84), transparent 42%),
+    rgba(2,6,23,.92);
+  box-shadow:
+    inset 0 -12px 28px rgba(251,146,60,.34),
+    inset 0 0 30px rgba(0,0,0,.78),
+    0 0 24px rgba(251,146,60,.28);
+  animation:broadcastEmberAshReveal 1500ms cubic-bezier(.2,.78,.25,1) forwards;
+}
+
+.broadcast-particle--ember-veil::after{
+  content:"";
+  position:absolute;
+  left:-8%;
+  right:-8%;
+  bottom:-10%;
+  height:34%;
+  background:
+    radial-gradient(ellipse at 18% 92%, rgba(255,245,180,.9), transparent 36%),
+    radial-gradient(ellipse at 44% 82%, rgba(251,146,60,.9), transparent 42%),
+    radial-gradient(ellipse at 72% 88%, rgba(239,68,68,.78), transparent 42%);
+  filter:blur(7px);
+  animation:broadcastEmberBurnLine 1500ms cubic-bezier(.2,.78,.25,1) forwards;
 }
 
 .broadcast-particle--rank{
@@ -52842,7 +52875,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   height:var(--bolt-height, 44px);
   border-radius:0;
   overflow:visible;
-  color:var(--particle-color, #38bdf8);
+  color:var(--particle-color, #facc15);
   background:transparent;
   box-shadow:none;
   transform-origin:center;
@@ -52863,7 +52896,7 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
 }
 
 .broadcast-lightning-glow{
-  stroke:color-mix(in srgb, currentColor 46%, #fff 54%);
+  stroke:color-mix(in srgb, currentColor 64%, #fb923c 36%);
   stroke-width:10;
   opacity:.36;
   filter:blur(2px);
@@ -52901,6 +52934,46 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   background:radial-gradient(circle at 30% 24%, rgba(255,255,255,.9), rgba(125,249,255,.2) 38%, rgba(45,212,191,.08) 72%, transparent);
   box-shadow:0 0 14px rgba(45,212,191,.5);
   animation:broadcastBubbleFloat 1260ms cubic-bezier(.18,.74,.28,1) forwards;
+}
+
+.broadcast-particle--ice{
+  width:var(--burst-frame-width, 160px);
+  height:var(--burst-frame-height, 160px);
+  border:1px solid rgba(224,242,254,.76);
+  border-radius:22px;
+  overflow:hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.72), rgba(186,230,253,.38) 30%, rgba(59,130,246,.2) 58%, rgba(255,255,255,.45)),
+    repeating-linear-gradient(138deg, rgba(255,255,255,.18) 0 2px, transparent 3px 16px);
+  box-shadow:
+    inset 0 0 30px rgba(255,255,255,.38),
+    inset 0 0 60px rgba(14,165,233,.3),
+    0 0 26px rgba(186,230,253,.42);
+  backdrop-filter:blur(2px) saturate(1.3);
+  animation:broadcastIceSheetCrack 1320ms cubic-bezier(.18,.72,.26,1) forwards;
+}
+
+.broadcast-particle--ice::before{
+  content:"";
+  position:absolute;
+  inset:8%;
+  background:
+    linear-gradient(112deg, transparent 0 43%, rgba(2,6,23,.5) 44% 45%, rgba(255,255,255,.72) 46%, transparent 48%),
+    linear-gradient(32deg, transparent 0 48%, rgba(2,6,23,.38) 49% 50%, rgba(255,255,255,.78) 51%, transparent 54%),
+    linear-gradient(155deg, transparent 0 52%, rgba(2,6,23,.34) 53% 54%, rgba(255,255,255,.68) 55%, transparent 58%);
+  opacity:0;
+  filter:drop-shadow(0 0 6px rgba(224,242,254,.72));
+  animation:broadcastIceCrackLines 1320ms steps(3, end) forwards;
+}
+
+.broadcast-particle--ice-shard{
+  width:var(--shard-size, 16px);
+  height:var(--shard-height, 20px);
+  border-radius:2px 8px 3px 10px;
+  background:linear-gradient(135deg, rgba(255,255,255,.92), rgba(186,230,253,.72), rgba(59,130,246,.28));
+  box-shadow:0 0 14px rgba(186,230,253,.62);
+  clip-path:polygon(50% 0, 100% 76%, 58% 100%, 0 68%);
+  animation:broadcastIceShard 760ms cubic-bezier(.15,.86,.28,1) forwards;
 }
 
 .broadcast-burst-frame-flash{
@@ -52973,10 +53046,23 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
 }
 
 @keyframes broadcastEmberBurst{
-  0%{ opacity:0; transform:translate3d(-50%, calc(-50% + 12px), 0) rotate(var(--particle-rotate, 0deg)) scale(.42); filter:brightness(1.2); }
-  18%{ opacity:.96; filter:brightness(1.95) saturate(1.45); }
-  48%{ opacity:1; transform:translate3d(calc(-50% + var(--ember-x, 0px)), calc(-50% + var(--ember-y, -80px)), 0) rotate(calc(var(--particle-rotate, 0deg) + 16deg)) scale(1); }
-  100%{ opacity:0; transform:translate3d(calc(-50% + var(--ember-x, 0px)), calc(-50% + var(--ember-y, -96px)), 0) rotate(calc(var(--particle-rotate, 0deg) + 54deg)) scale(.12); filter:brightness(.7); }
+  0%{ opacity:0; transform:translate3d(-50%, calc(-50% + 6px), 0) rotate(var(--particle-rotate, 0deg)) scaleY(.28) scaleX(.7); filter:brightness(1.1); }
+  18%{ opacity:.98; filter:brightness(1.9) saturate(1.45); }
+  54%{ opacity:.92; transform:translate3d(calc(-50% + var(--ember-x, 0px)), calc(-50% + var(--ember-y, -80px)), 0) rotate(calc(var(--particle-rotate, 0deg) + 4deg)) scaleY(1.12) scaleX(.84); }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--ember-x, 0px)), calc(-50% + var(--ember-y, -96px)), 0) rotate(calc(var(--particle-rotate, 0deg) + 10deg)) scaleY(.18) scaleX(.36); filter:brightness(.62); }
+}
+
+@keyframes broadcastEmberAshReveal{
+  0%{ opacity:.98; clip-path:inset(0 0 0 0 round 22px); filter:brightness(.74) saturate(1.2); }
+  34%{ opacity:1; filter:brightness(.92) saturate(1.35); }
+  74%{ opacity:.92; clip-path:inset(0 0 64% 0 round 22px); }
+  100%{ opacity:0; clip-path:inset(0 0 100% 0 round 22px); filter:brightness(.48) saturate(.8); }
+}
+
+@keyframes broadcastEmberBurnLine{
+  0%{ opacity:.96; transform:translate3d(0,0,0) scaleX(1.02); }
+  72%{ opacity:.88; transform:translate3d(0,-260%,0) scaleX(.98); }
+  100%{ opacity:0; transform:translate3d(0,-330%,0) scaleX(.82); }
 }
 
 @keyframes broadcastRankBurst{
@@ -53015,6 +53101,28 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-row-guest.activ
   20%{ opacity:.94; }
   52%{ opacity:.86; transform:translate3d(calc(-50% + var(--bubble-x, 0px)), calc(-50% + var(--bubble-y, -78px)), 0) scale(1.08); }
   100%{ opacity:0; transform:translate3d(calc(-50% + var(--bubble-x, 0px)), calc(-50% + var(--bubble-y, -96px)), 0) scale(1.26); }
+}
+
+@keyframes broadcastIceSheetCrack{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) scale(.96); filter:brightness(1.35) saturate(.7); clip-path:inset(0 0 0 0 round 22px); }
+  18%{ opacity:.96; transform:translate3d(-50%, -50%, 0) scale(1); }
+  46%{ opacity:1; filter:brightness(1.72) saturate(.9); }
+  66%{ opacity:.9; clip-path:polygon(0 0, 46% 0, 52% 50%, 44% 100%, 0 100%); }
+  78%{ opacity:.68; clip-path:polygon(0 0, 100% 0, 90% 42%, 100% 100%, 0 100%, 12% 54%); }
+  100%{ opacity:0; transform:translate3d(-50%, -50%, 0) scale(1.08); clip-path:polygon(8% 0, 24% 36%, 0 52%, 22% 100%, 48% 64%, 76% 100%, 100% 62%, 72% 42%, 92% 0); filter:brightness(1.2) blur(1px); }
+}
+
+@keyframes broadcastIceCrackLines{
+  0%,34%{ opacity:0; }
+  48%{ opacity:.85; }
+  74%{ opacity:1; }
+  100%{ opacity:0; }
+}
+
+@keyframes broadcastIceShard{
+  0%{ opacity:0; transform:translate3d(-50%, -50%, 0) rotate(var(--particle-rotate, 0deg)) scale(.28); }
+  12%{ opacity:.96; }
+  100%{ opacity:0; transform:translate3d(calc(-50% + var(--shard-x, 0px)), calc(-50% + var(--shard-y, 0px)), 0) rotate(calc(var(--particle-rotate, 0deg) + 90deg)) scale(.84); }
 }
 
 @keyframes broadcastTargetFlash{
@@ -53111,6 +53219,46 @@ body.broadcast-preview-force-motion .broadcast-stamp{
 
 body.broadcast-preview-force-motion .broadcast-particle{
   animation:broadcastParticleBurst 620ms cubic-bezier(.18,.92,.24,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--ember{
+  animation:broadcastEmberBurst 1220ms cubic-bezier(.18,.72,.26,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--ember-veil{
+  animation:broadcastEmberAshReveal 1500ms cubic-bezier(.2,.78,.25,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--ember-veil::after{
+  animation:broadcastEmberBurnLine 1500ms cubic-bezier(.2,.78,.25,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--lightning{
+  animation:broadcastLightningArc 680ms steps(2, end) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--bullet{
+  animation:broadcastBulletHoleBurst 700ms cubic-bezier(.12,.84,.24,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--smoke{
+  animation:broadcastSmokeFlow 1450ms ease-out forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--bubble{
+  animation:broadcastBubbleFloat 1260ms cubic-bezier(.18,.74,.28,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--ice{
+  animation:broadcastIceSheetCrack 1320ms cubic-bezier(.18,.72,.26,1) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--ice::before{
+  animation:broadcastIceCrackLines 1320ms steps(3, end) forwards !important;
+}
+
+body.broadcast-preview-force-motion .broadcast-particle--ice-shard{
+  animation:broadcastIceShard 760ms cubic-bezier(.15,.86,.28,1) forwards !important;
 }
 
 body.broadcast-preview-force-motion .broadcast-motion-snap{

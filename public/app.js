@@ -13207,7 +13207,8 @@ const BROADCAST_BURST_VARIANTS = Object.freeze([
   "lightning",
   "bullet",
   "smoke",
-  "bubble"
+  "bubble",
+  "ice"
 ]);
 const BROADCAST_BULLET_HOLE_ASSET = "assets/broadcast/bullet-hole.png";
 
@@ -13291,8 +13292,36 @@ function setBroadcastParticlePosition(particle, x, y) {
   particle.style.setProperty("--broadcast-y", `${Math.round(y)}px`);
 }
 
+function setBroadcastParticleFrame(particle, rect, padding = 0) {
+  if (!particle?.style || !rect) return;
+  const pad = Math.max(0, Number(padding) || 0);
+  setBroadcastParticlePosition(particle, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  particle.style.setProperty("--burst-frame-width", `${Math.round(rect.width + pad * 2)}px`);
+  particle.style.setProperty("--burst-frame-height", `${Math.round(rect.height + pad * 2)}px`);
+}
+
 function scheduleBroadcastParticleRemoval(particle, durationMs = 900) {
   window.setTimeout(() => particle?.remove?.(), Math.max(120, Number(durationMs) || 900));
+}
+
+function getBroadcastCinematicTarget(anchor = null) {
+  const rect = getBroadcastTargetRect(anchor);
+  const isViewportScale = rect.width >= window.innerWidth * 0.66 || rect.height >= window.innerHeight * 0.5;
+  if (!isViewportScale) return anchor;
+  const target = document.getElementById("agentFrame")
+    || document.getElementById("agentFrameArt")
+    || document.querySelector(".loadout-card");
+  if (!target || target === anchor) return anchor;
+  const targetRect = getBroadcastTargetRect(target);
+  const validTarget = targetRect.width > 24
+    && targetRect.height > 24
+    && targetRect.width < window.innerWidth * 0.66
+    && targetRect.height < window.innerHeight * 0.5;
+  return validTarget ? target : anchor;
+}
+
+function getBroadcastCinematicTargetRect(anchor = null) {
+  return getBroadcastTargetRect(getBroadcastCinematicTarget(anchor) || anchor);
 }
 
 function flashBroadcastBurstAnchor(anchor, durationMs = 540) {
@@ -13354,74 +13383,83 @@ function renderBroadcastRadialParticles(overlay, rect, variant, options = {}, pa
 }
 
 function renderBroadcastEmberParticles(overlay, rect, options = {}, palette = []) {
-  const count = Math.max(16, Math.min(32, Number(options.count) || 22));
-  const baseY = rect.top + rect.height * 0.82;
+  const veil = document.createElement("span");
+  veil.className = "broadcast-particle broadcast-particle--ember-veil";
+  setBroadcastParticleFrame(veil, rect, 4);
+  overlay.appendChild(veil);
+  scheduleBroadcastParticleRemoval(veil, 1680);
+
+  const count = Math.max(10, Math.min(20, Number(options.count) || 14));
+  const baseY = rect.bottom - Math.max(6, rect.height * 0.08);
   for (let i = 0; i < count; i += 1) {
     const particle = createBroadcastParticleElement("ember");
     particle.className = "broadcast-particle broadcast-particle--ember";
     setBroadcastParticlePosition(
       particle,
-      clampBroadcastCoordinate(broadcastRandom(rect.left - 18, rect.right + 18), 4, window.innerWidth - 4),
-      clampBroadcastCoordinate(baseY + broadcastRandom(-10, rect.height * 0.32), 4, window.innerHeight - 4)
+      clampBroadcastCoordinate(broadcastRandom(rect.left + 8, rect.right - 8), 4, window.innerWidth - 4),
+      clampBroadcastCoordinate(baseY + broadcastRandom(-4, 10), 4, window.innerHeight - 4)
     );
     particle.style.setProperty("--particle-color", palette[i % palette.length] || "#fb923c");
-    particle.style.setProperty("--ember-x", `${Math.round(broadcastRandom(-26, 26))}px`);
-    particle.style.setProperty("--ember-y", `${Math.round(broadcastRandom(-118, -62))}px`);
-    const emberSize = Math.round(broadcastRandom(5, 11));
+    particle.style.setProperty("--ember-x", `${Math.round(broadcastRandom(-8, 8))}px`);
+    particle.style.setProperty("--ember-y", `${Math.round(-broadcastRandom(rect.height * 0.42, rect.height * 0.94))}px`);
+    const emberSize = Math.round(broadcastRandom(10, 22));
     particle.style.setProperty("--particle-size", `${emberSize}px`);
-    particle.style.setProperty("--ember-height", `${Math.round(emberSize * 1.7)}px`);
-    particle.style.setProperty("--particle-rotate", `${Math.round(broadcastRandom(-28, 28))}deg`);
-    particle.style.animationDelay = `${Math.round(i * 18 + broadcastRandom(0, 55))}ms`;
+    particle.style.setProperty("--ember-height", `${Math.round(emberSize * 1.9)}px`);
+    particle.style.setProperty("--particle-rotate", `${Math.round(broadcastRandom(-9, 9))}deg`);
+    const delay = Math.round(i * 30 + broadcastRandom(0, 90));
+    particle.style.animationDelay = `${delay}ms`;
     overlay.appendChild(particle);
-    scheduleBroadcastParticleRemoval(particle, 1120);
+    scheduleBroadcastParticleRemoval(particle, delay + 1320);
   }
 }
 
 function renderBroadcastBubbleParticles(overlay, rect, options = {}, palette = []) {
-  const count = Math.max(24, Math.min(44, Number(options.count) || 30));
+  const count = Math.max(16, Math.min(30, Number(options.count) || 22));
   for (let i = 0; i < count; i += 1) {
     const particle = createBroadcastParticleElement("bubble");
     particle.className = "broadcast-particle broadcast-particle--bubble";
     setBroadcastParticlePosition(
       particle,
-      clampBroadcastCoordinate(broadcastRandom(rect.left - 28, rect.right + 28), 5, window.innerWidth - 5),
-      clampBroadcastCoordinate(rect.top + rect.height * broadcastRandom(0.54, 1.18), 5, window.innerHeight - 5)
+      clampBroadcastCoordinate(broadcastRandom(rect.left + 8, rect.right - 8), 5, window.innerWidth - 5),
+      clampBroadcastCoordinate(rect.bottom - broadcastRandom(0, Math.max(18, rect.height * 0.22)), 5, window.innerHeight - 5)
     );
     particle.style.setProperty("--particle-color", palette[i % palette.length] || "#2dd4bf");
-    particle.style.setProperty("--bubble-x", `${Math.round(broadcastRandom(-34, 34))}px`);
-    particle.style.setProperty("--bubble-y", `${Math.round(broadcastRandom(-128, -54))}px`);
+    particle.style.setProperty("--bubble-x", "0px");
+    particle.style.setProperty("--bubble-y", `${Math.round(-broadcastRandom(rect.height * 0.62, rect.height * 1.08))}px`);
     particle.style.setProperty("--bubble-size", `${Math.round(broadcastRandom(8, 21))}px`);
-    particle.style.animationDelay = `${Math.round(i * 14 + broadcastRandom(0, 90))}ms`;
+    const delay = Math.round(i * 32 + broadcastRandom(0, 80));
+    particle.style.animationDelay = `${delay}ms`;
     overlay.appendChild(particle);
-    scheduleBroadcastParticleRemoval(particle, 1520);
+    scheduleBroadcastParticleRemoval(particle, delay + 1420);
   }
 }
 
 function renderBroadcastSmokeParticles(overlay, rect, options = {}, palette = []) {
-  const count = Math.max(7, Math.min(14, Number(options.count) || 9));
+  const count = Math.max(5, Math.min(10, Number(options.count) || 7));
   for (let i = 0; i < count; i += 1) {
     const particle = createBroadcastParticleElement("smoke");
     particle.className = "broadcast-particle broadcast-particle--smoke";
     setBroadcastParticlePosition(
       particle,
-      clampBroadcastCoordinate(broadcastRandom(rect.left + rect.width * 0.12, rect.right - rect.width * 0.12), 12, window.innerWidth - 12),
-      clampBroadcastCoordinate(rect.top + rect.height * broadcastRandom(0.38, 1.02), 12, window.innerHeight - 12)
+      clampBroadcastCoordinate(broadcastRandom(rect.left + rect.width * 0.18, rect.right - rect.width * 0.18), 12, window.innerWidth - 12),
+      clampBroadcastCoordinate(rect.bottom - broadcastRandom(0, Math.max(16, rect.height * 0.28)), 12, window.innerHeight - 12)
     );
     particle.style.setProperty("--particle-color", palette[i % palette.length] || "#94a3b8");
-    particle.style.setProperty("--smoke-x", `${Math.round(broadcastRandom(-54, 54))}px`);
-    particle.style.setProperty("--smoke-y", `${Math.round(broadcastRandom(-74, -22))}px`);
-    const smokeSize = Math.round(broadcastRandom(42, 82));
+    particle.style.setProperty("--smoke-x", "0px");
+    particle.style.setProperty("--smoke-y", `${Math.round(-broadcastRandom(rect.height * 0.52, rect.height * 1.08))}px`);
+    const smokeSize = Math.round(broadcastRandom(58, 104));
     particle.style.setProperty("--smoke-size", `${smokeSize}px`);
     particle.style.setProperty("--smoke-height", `${Math.round(smokeSize * 0.72)}px`);
-    particle.style.setProperty("--particle-rotate", `${Math.round(broadcastRandom(-24, 24))}deg`);
-    particle.style.animationDelay = `${Math.round(i * 42 + broadcastRandom(0, 110))}ms`;
+    particle.style.setProperty("--particle-rotate", `${Math.round(broadcastRandom(-10, 10))}deg`);
+    const delay = Math.round(i * 72 + broadcastRandom(0, 120));
+    particle.style.animationDelay = `${delay}ms`;
     overlay.appendChild(particle);
-    scheduleBroadcastParticleRemoval(particle, 1780);
+    scheduleBroadcastParticleRemoval(particle, delay + 1780);
   }
 }
 
 function renderBroadcastBulletImpacts(overlay, rect, options = {}) {
-  const count = Math.max(5, Math.min(12, Number(options.count) || 8));
+  const count = Math.max(3, Math.min(6, Number(options.count) || 5));
   for (let i = 0; i < count; i += 1) {
     const particle = createBroadcastParticleElement("bullet");
     particle.className = "broadcast-particle broadcast-particle--bullet";
@@ -13432,15 +13470,23 @@ function renderBroadcastBulletImpacts(overlay, rect, options = {}) {
     );
     particle.style.setProperty("--impact-scale", `${broadcastRandom(0.54, 1.02).toFixed(2)}`);
     particle.style.setProperty("--particle-rotate", `${Math.round(broadcastRandom(-34, 34))}deg`);
-    particle.style.animationDelay = `${Math.round(i * 46 + broadcastRandom(0, 48))}ms`;
+    const delay = Math.round(i * 185 + broadcastRandom(0, 44));
+    particle.style.animationDelay = `${delay}ms`;
     overlay.appendChild(particle);
-    scheduleBroadcastParticleRemoval(particle, 1040);
+    scheduleBroadcastParticleRemoval(particle, delay + 760);
   }
 }
 
 function renderBroadcastLightningBolts(overlay, rect, anchor, options = {}, palette = []) {
   flashBroadcastBurstAnchor(anchor, 560);
   const count = Math.max(2, Math.min(5, Number(options.count) || 3));
+  const lightningPalette = [
+    options.color,
+    "#facc15",
+    "#f97316",
+    "#ff4655",
+    "#fb7185"
+  ].filter(Boolean);
   for (let i = 0; i < count; i += 1) {
     const particle = createBroadcastLightningBoltElement();
     particle.classList.add("broadcast-particle", "broadcast-particle--lightning");
@@ -13449,7 +13495,7 @@ function renderBroadcastLightningBolts(overlay, rect, anchor, options = {}, pale
       clampBroadcastCoordinate(broadcastRandom(rect.left + rect.width * 0.22, rect.right - rect.width * 0.08), 35, window.innerWidth - 35),
       clampBroadcastCoordinate(broadcastRandom(rect.top + rect.height * 0.18, rect.bottom - rect.height * 0.12), 24, window.innerHeight - 24)
     );
-    particle.style.setProperty("--particle-color", palette[i % palette.length] || "#38bdf8");
+    particle.style.setProperty("--particle-color", lightningPalette[i % lightningPalette.length] || "#facc15");
     particle.style.setProperty("--bolt-width", `${Math.round(broadcastRandom(Math.max(116, rect.width * 0.54), Math.max(150, rect.width * 0.94)))}px`);
     particle.style.setProperty("--bolt-height", `${Math.round(broadcastRandom(34, 54))}px`);
     particle.style.setProperty("--bolt-slide-x", `${Math.round(broadcastRandom(-24, 28))}px`);
@@ -13461,11 +13507,42 @@ function renderBroadcastLightningBolts(overlay, rect, anchor, options = {}, pale
   }
 }
 
+function renderBroadcastIceShatter(overlay, rect, options = {}, palette = []) {
+  const sheet = document.createElement("span");
+  sheet.className = "broadcast-particle broadcast-particle--ice";
+  setBroadcastParticleFrame(sheet, rect, 5);
+  sheet.style.setProperty("--particle-color", palette[0] || "#bae6fd");
+  overlay.appendChild(sheet);
+  scheduleBroadcastParticleRemoval(sheet, 1420);
+
+  const count = Math.max(12, Math.min(24, Number(options.count) || 18));
+  for (let i = 0; i < count; i += 1) {
+    const shard = document.createElement("span");
+    shard.className = "broadcast-particle broadcast-particle--ice-shard";
+    setBroadcastParticlePosition(
+      shard,
+      clampBroadcastCoordinate(broadcastRandom(rect.left + 8, rect.right - 8), 6, window.innerWidth - 6),
+      clampBroadcastCoordinate(broadcastRandom(rect.top + 8, rect.bottom - 8), 6, window.innerHeight - 6)
+    );
+    shard.style.setProperty("--shard-x", `${Math.round(broadcastRandom(-90, 90))}px`);
+    shard.style.setProperty("--shard-y", `${Math.round(broadcastRandom(-90, 70))}px`);
+    const shardSize = Math.round(broadcastRandom(11, 26));
+    shard.style.setProperty("--shard-size", `${shardSize}px`);
+    shard.style.setProperty("--shard-height", `${Math.round(shardSize * 1.24)}px`);
+    shard.style.setProperty("--particle-rotate", `${Math.round(broadcastRandom(-110, 110))}deg`);
+    const delay = Math.round(520 + i * 12 + broadcastRandom(0, 80));
+    shard.style.animationDelay = `${delay}ms`;
+    overlay.appendChild(shard);
+    scheduleBroadcastParticleRemoval(shard, delay + 820);
+  }
+}
+
 function particleBurst(anchor = document.body, options = {}) {
   if (shouldSkipBroadcastMotion()) return;
-  const overlay = primeBroadcastOverlay(1500);
+  const overlay = primeBroadcastOverlay(2400);
   if (!overlay) return;
-  const rect = getBroadcastTargetRect(anchor);
+  const cinematicAnchor = getBroadcastCinematicTarget(anchor);
+  const rect = getBroadcastTargetRect(cinematicAnchor || anchor);
   const variant = chooseBroadcastBurstVariant(options);
   const palette = getBroadcastParticlePalette(options);
 
@@ -13473,7 +13550,8 @@ function particleBurst(anchor = document.body, options = {}) {
   if (variant === "bubble") return renderBroadcastBubbleParticles(overlay, rect, options, palette);
   if (variant === "smoke") return renderBroadcastSmokeParticles(overlay, rect, options, palette);
   if (variant === "bullet") return renderBroadcastBulletImpacts(overlay, rect, options);
-  if (variant === "lightning") return renderBroadcastLightningBolts(overlay, rect, anchor, options, palette);
+  if (variant === "lightning") return renderBroadcastLightningBolts(overlay, rect, cinematicAnchor || anchor, options, palette);
+  if (variant === "ice") return renderBroadcastIceShatter(overlay, rect, options, palette);
 
   renderBroadcastRadialParticles(overlay, rect, variant, options, palette);
 }
