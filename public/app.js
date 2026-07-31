@@ -1447,6 +1447,7 @@ let mobileBugReportButton = null;
 let mobileHeaderSyncButton = null;
 let mobileHeaderActions = null;
 let mobileProfilePopover = null;
+let mobileProfileLongPressTimer = 0;
 let mobilePullRefreshState = null;
 let mobileScrollSentinel = null;
 let mobileScrollExtentRaf = 0;
@@ -2060,9 +2061,22 @@ function renderMobileProfilePopover() {
   if (!popover || !list) return popover;
 
   const active = getActiveProfile?.();
+  const renderProfileRow = (profile, index) => `
+      <div class="profile-row ${profile.id === activeProfileId ? "active" : ""}" role="button" tabindex="0" data-mobile-profile-id="${escapeHtml(profile.id)}">
+        <span class="profile-info">
+          <span class="profile-name">${escapeHtml(getProfileDisplayName(profile, index))}</span>
+          <span class="profile-sub">${escapeHtml(getProfileSubtitle(profile))}</span>
+        </span>
+        <button class="mobile-profile-delete-btn" type="button" data-mobile-profile-delete="${escapeHtml(profile.id)}" aria-label="Delete ${escapeHtml(getProfileDisplayName(profile, index))}">×</button>
+      </div>
+    `;
   if (!currentAuthUser) {
     const hasDemoMatches = Array.isArray(active?.matches) && active.matches.length > 0;
+    const savedProfileRows = getRenderableProfiles()
+      .map(renderProfileRow)
+      .join("");
     list.innerHTML = `
+      ${savedProfileRows}
       <button class="profile-row ${hasDemoMatches ? "" : "active"} profile-row-guest" type="button" data-mobile-guest-profile="blank">
         <span class="profile-info">
           <span class="profile-name">Guest: Blank</span>
@@ -2079,14 +2093,7 @@ function renderMobileProfilePopover() {
     `;
   } else {
     const renderableProfiles = getRenderableProfiles();
-    list.innerHTML = renderableProfiles.map((profile, index) => `
-      <button class="profile-row ${profile.id === activeProfileId ? "active" : ""}" type="button" data-mobile-profile-id="${escapeHtml(profile.id)}">
-        <span class="profile-info">
-          <span class="profile-name">${escapeHtml(getProfileDisplayName(profile, index))}</span>
-          <span class="profile-sub">${escapeHtml(getProfileSubtitle(profile))}</span>
-        </span>
-      </button>
-    `).join("") + `<button class="pd-item mobile-profile-add" type="button" data-mobile-profile-add>+ Add Profile</button>`;
+    list.innerHTML = renderableProfiles.map(renderProfileRow).join("") + `<button class="pd-item mobile-profile-add" type="button" data-mobile-profile-add>+ Add Profile</button>`;
   }
 
   list.querySelector('[data-mobile-guest-profile="blank"]')?.addEventListener("click", () => {
@@ -2102,9 +2109,64 @@ function renderMobileProfilePopover() {
     renderCoachReadinessUI?.();
   });
   list.querySelectorAll("[data-mobile-profile-id]").forEach((button) => {
-    button.addEventListener("click", () => {
+    const clearPressTimer = () => {
+      if (mobileProfileLongPressTimer) {
+        window.clearTimeout(mobileProfileLongPressTimer);
+        mobileProfileLongPressTimer = 0;
+      }
+    };
+    const armDelete = () => {
+      list.querySelectorAll(".profile-row.is-delete-armed").forEach(row => {
+        if (row !== button) row.classList.remove("is-delete-armed");
+      });
+      button.classList.add("is-delete-armed");
+      button.dataset.deleteArmedAt = String(Date.now());
+    };
+
+    button.addEventListener("pointerdown", (event) => {
+      if (!isMobileLayoutViewport()) return;
+      if (event.target?.closest?.("[data-mobile-profile-delete]")) return;
+      clearPressTimer();
+      mobileProfileLongPressTimer = window.setTimeout(armDelete, 560);
+    }, { passive: true });
+    button.addEventListener("pointerup", clearPressTimer, { passive: true });
+    button.addEventListener("pointerleave", clearPressTimer, { passive: true });
+    button.addEventListener("pointercancel", clearPressTimer, { passive: true });
+    button.addEventListener("contextmenu", (event) => {
+      if (!isMobileLayoutViewport()) return;
+      event.preventDefault();
+      armDelete();
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        armDelete();
+        return;
+      }
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
       setActiveProfile(button.dataset.mobileProfileId);
       closeMobileProfilePopover();
+    });
+    button.addEventListener("click", (event) => {
+      if (event.target?.closest?.("[data-mobile-profile-delete]")) return;
+      const armedAt = Number(button.dataset.deleteArmedAt || 0);
+      if (button.classList.contains("is-delete-armed") && Date.now() - armedAt < 780) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      setActiveProfile(button.dataset.mobileProfileId);
+      closeMobileProfilePopover();
+    });
+  });
+  list.querySelectorAll("[data-mobile-profile-delete]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const profileId = button.dataset.mobileProfileDelete || "";
+      closeMobileProfilePopover();
+      void requestDeleteProfile(profileId);
     });
   });
   list.querySelector("[data-mobile-profile-add]")?.addEventListener("click", () => {
@@ -4308,12 +4370,12 @@ function getMatchCore(match = {}) {
       role: record.role || agentRoles?.[agent] || "Unknown",
       map: record.map || "Unknown",
       result: record.result || "draw",
-      kills: safeNumber(record.stats?.kills),
-      deaths: safeNumber(record.stats?.deaths),
-      assists: safeNumber(record.stats?.assists),
-      acs: safeNumber(record.stats?.acs),
-      adr: safeNumber(record.stats?.adr),
-      hs: safeNumber(record.stats?.hsPercent),
+      kills: safeNumber(record.stats?.kills, safeNumber(match?.kills)),
+      deaths: safeNumber(record.stats?.deaths, safeNumber(match?.deaths)),
+      assists: safeNumber(record.stats?.assists, safeNumber(match?.assists)),
+      acs: safeNumber(record.stats?.acs, safeNumber(match?.acs ?? match?.adr)),
+      adr: safeNumber(record.stats?.adr, safeNumber(match?.adr)),
+      hs: safeNumber(record.stats?.hsPercent, safeNumber(match?.hs ?? match?.hsPercent)),
       createdAt: record.playedAt || record.createdAt || nowISO()
     };
   }
@@ -4323,12 +4385,12 @@ function getMatchCore(match = {}) {
   const agent = metadata.agent || match.agent || "Unknown";
   const map = metadata.mapName || match.map || "Unknown";
   const result = metadata.result || match.result || "draw";
-  const kills = safeNumber(stats.kills?.value);
-  const deaths = safeNumber(stats.deaths?.value);
-  const assists = safeNumber(stats.assists?.value);
-  const acs = safeNumber(stats.scorePerRound?.value);
+  const kills = safeNumber(stats.kills?.value, safeNumber(match?.kills));
+  const deaths = safeNumber(stats.deaths?.value, safeNumber(match?.deaths));
+  const assists = safeNumber(stats.assists?.value, safeNumber(match?.assists));
+  const acs = safeNumber(stats.scorePerRound?.value, safeNumber(match?.acs ?? match?.adr));
   const adr = safeNumber(stats.damagePerRound?.value, safeNumber(match?.adr));
-  const hs = safeNumber(stats.headshotsPercentage?.value);
+  const hs = safeNumber(stats.headshotsPercentage?.value, safeNumber(match?.hs ?? match?.hsPercent));
 
   return {
     agent,
@@ -8801,7 +8863,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     ? options.logs
     : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
   const actMatches = (shouldFilterByAct
-    ? sourceMatches.filter((match) => getMatchSeasonLabel(match) === selectedAct)
+    ? sourceMatches.filter((match) => matchBelongsToSelectedStatsAct(match, selectedAct))
     : sourceMatches).map(hydrateMatchDerivedData);
   const actLogs = shouldFilterByAct
     ? sourceLogs.filter((entry) => normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedAct)
@@ -12682,11 +12744,44 @@ async function logoutOrOpenAuthFromUI() {
   enterGuestModeAfterLogout();
 }
 
+function refreshActiveProfileDataSurfaces(options = {}) {
+  const profile = getActiveProfile?.();
+  if (profile && Array.isArray(profile.matches)) {
+    matches = profile.matches.slice();
+  }
+
+  if (profile?.lastSyncSource === "henrik" || profile?.importSource === "henrik") {
+    syncRankedMatchPlaceholderLogs?.(matches, profile, {
+      animate: options.animatePlaceholders !== false,
+      skipBackend: true
+    });
+  }
+
+  recomputeFromMatches?.();
+  initStatsPage?.();
+  renderStatsAgents?.();
+  renderStatsMaps?.();
+  renderStatsWeapons?.();
+  renderInsights?.();
+  renderLogFeed?.({ force: true });
+  updateDisplays?.();
+  updateProfileHeaderUI?.();
+  applyPendingLoadoutRollToHome?.(profile);
+  renderCoachReadinessUI?.();
+  syncAccountSupportUI?.();
+  refreshLatestRRMatchPanel?.();
+
+  if (options.chartAnimationMode) {
+    queueChartAnimationMode?.(options.chartAnimationMode);
+  }
+  renderChart?.(currentSize);
+}
+
 async function forceRefreshActiveProfile(source = "manual") {
   const button = document.getElementById("accountSupportForceRefreshBtn");
   if (button) button.classList.add("is-syncing");
   try {
-    await performRiotSync?.({
+    const result = await performRiotSync?.({
       silent: true,
       mode: "refresh",
       allowDemoFallback: false
@@ -12697,9 +12792,9 @@ async function forceRefreshActiveProfile(source = "manual") {
       profile.lastSyncSource = source;
       saveProfiles?.();
     }
-    updateProfileHeaderUI?.();
-    renderCoachReadinessUI?.();
-    syncAccountSupportUI?.();
+    refreshActiveProfileDataSurfaces({
+      chartAnimationMode: result?.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null
+    });
   } finally {
     if (button) button.classList.remove("is-syncing");
   }
@@ -12765,6 +12860,18 @@ function installMobileHomePullToRefresh() {
   }, { passive: true });
 
   mobilePullRefreshState = { installed: true };
+}
+
+function playLoggingPageEntryAnimation() {
+  if (shouldSkipLoggingMotion?.()) return;
+  const page = document.getElementById("page-logging");
+  if (!page) return;
+  page.classList.remove("logging-page-entry-animate");
+  void page.offsetWidth;
+  page.classList.add("logging-page-entry-animate");
+  window.setTimeout(() => {
+    page.classList.remove("logging-page-entry-animate");
+  }, 980);
 }
 
 function ensureManualSessionStartModal() {
@@ -16487,7 +16594,7 @@ let activeProfileId = null;
 let activeInsightFilter = "all";
 let cachedInsights = [];
 let currentAuthUser = null;
-const ACCOUNT_STATE_RELOAD_SLEEP_MS = 5 * 60 * 1000;
+const ACCOUNT_STATE_RELOAD_SLEEP_MS = 30 * 1000;
 let lastAccountStateLoadAt = 0;
 const ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED = false;
 let accountSecurityPreferencesBackendAvailable = ACCOUNT_SECURITY_PREFERENCES_TABLE_ENABLED;
@@ -16631,6 +16738,84 @@ const HENRIK_HISTORY_MAX_BATCHES = 11;
 let crestPreviewTimer = null;
 let crestPreviewIndex = 0;
 let crestPreviewActive = false;
+
+function normalizePendingLoadoutRoll(value = {}) {
+  if (!value || typeof value !== "object") return null;
+  const agent = String(value.agent || "").trim();
+  const focus = normalizeFocusCategoryValue(value.focus || "", "");
+  if (!agent && !focus) return null;
+  const dateKey = String(value.dateKey || formatLocalDateKey(new Date())).trim();
+  return {
+    agent,
+    focus,
+    role: String(value.role || agentRoles?.[agent] || "").trim().toLowerCase(),
+    dateKey,
+    createdAt: value.createdAt || nowISO(),
+    source: value.source || "roll"
+  };
+}
+
+function getPendingLoadoutRoll(profile = getActiveProfile?.()) {
+  const roll = normalizePendingLoadoutRoll(profile?.pendingLoadoutRoll);
+  if (!roll) return null;
+  if (roll.dateKey && roll.dateKey !== formatLocalDateKey(new Date())) return null;
+  return roll;
+}
+
+function setPendingLoadoutRoll(agent = "", focus = "", options = {}) {
+  const profile = getActiveProfile?.();
+  if (!profile) return null;
+  const roll = normalizePendingLoadoutRoll({
+    agent,
+    focus,
+    role: options.role || agentRoles?.[agent] || "",
+    dateKey: options.dateKey || formatLocalDateKey(new Date()),
+    createdAt: options.createdAt || nowISO(),
+    source: options.source || "roll"
+  });
+  if (!roll) return null;
+  profile.pendingLoadoutRoll = roll;
+  if (options.save !== false) saveProfiles?.();
+  return roll;
+}
+
+function clearPendingLoadoutRoll(profile = getActiveProfile?.()) {
+  if (!profile?.pendingLoadoutRoll) return;
+  delete profile.pendingLoadoutRoll;
+  saveProfiles?.();
+}
+
+function isEntryOlderThanPendingLoadoutRoll(entry = {}, profile = getActiveProfile?.()) {
+  const roll = getPendingLoadoutRoll(profile);
+  if (!roll?.createdAt || !entry?.createdAt) return false;
+  const rollTime = new Date(roll.createdAt).getTime();
+  const entryTime = new Date(entry.createdAt).getTime();
+  return Number.isFinite(rollTime) && Number.isFinite(entryTime) && entryTime < rollTime - 1000;
+}
+
+function applyPendingLoadoutRollToHome(profile = getActiveProfile?.(), options = {}) {
+  const roll = getPendingLoadoutRoll(profile);
+  if (!roll) return false;
+  const currentAgent = String(agentName?.textContent || "").trim();
+  const currentFocus = String(focusDisplay?.textContent || "").trim();
+  const shouldApplyAgent = roll.agent && (options.force || !currentAgent || currentAgent === "-" || currentAgent !== roll.agent);
+  const shouldApplyFocus = roll.focus && (options.force || !currentFocus || currentFocus === "-" || currentFocus !== roll.focus);
+
+  if (shouldApplyAgent) {
+    applyAgentToHome?.(roll.agent);
+  }
+
+  if (shouldApplyFocus && focusDisplay) {
+    focusDisplay.textContent = roll.focus;
+    focusDisplay.classList.remove("focus-neutral", "role-duelist", "role-controller", "role-initiator", "role-sentinel");
+    const role = roll.role || agentRoles?.[roll.agent] || "";
+    if (role) focusDisplay.classList.add(`role-${role}`);
+  }
+
+  syncLoadoutRoleTextColors?.();
+  return Boolean(shouldApplyAgent || shouldApplyFocus);
+}
+
 const COMPASS_LENS_META = {
   aim: { label: "Aim", summary: "Mechanical duels and damage output." },
   gamesense: { label: "Game Sense", summary: "Round awareness, reads, and conversion choices." },
@@ -16826,6 +17011,58 @@ function getChartMatchRRDelta(match = {}) {
   return safeNumber(match?.rr);
 }
 
+function hasHenrikChartContext(profile = getActiveProfile?.()) {
+  return Boolean(
+    isHenrikProfileData(profile)
+    || ["henrik", "henrik_sync"].includes(String(profile?.importSource || "").toLowerCase())
+    || ["henrik", "henrik_sync"].includes(String(profile?.lastSyncSource || "").toLowerCase())
+  );
+}
+
+function hasVerifiedRrForChart(match = {}, profileHasHenrikContext = hasHenrikChartContext()) {
+  return Boolean(
+    isVerifiedHenrikRrMatch(match)
+    || (
+      profileHasHenrikContext
+      && Number.isFinite(getOptionalFiniteNumber(
+        match?.verifiedRrDelta
+        ?? match?.matchRecord?.rank?.rrDelta
+        ?? match?.rr
+      ))
+    )
+  );
+}
+
+function getVerifiedChartRRDelta(match = {}, profileHasHenrikContext = hasHenrikChartContext()) {
+  if (!hasVerifiedRrForChart(match, profileHasHenrikContext)) return getChartMatchRRDelta(match);
+  return safeNumber(
+    match?.verifiedRrDelta
+    ?? match?.matchRecord?.rank?.rrDelta
+    ?? match?.rr
+  );
+}
+
+function refreshRRChartDataStatusFromLiveMatches(matchList = matches, profile = getActiveProfile?.()) {
+  const liveMatches = Array.isArray(matchList) ? matchList : [];
+  const profileHasHenrikContext = hasHenrikChartContext(profile);
+  const hasHenrikMatches = liveMatches.some(match =>
+    isHenrikSyncMatch(match) || isVerifiedHenrikRrMatch(match)
+  ) || (profileHasHenrikContext && liveMatches.length > 0);
+  updateRRChartDataStatus({
+    entries: [],
+    scopeEntries: [],
+    totalMatchCount: liveMatches.length,
+    verifiedRrCount: liveMatches.filter(match => hasVerifiedRrForChart(match, profileHasHenrikContext)).length,
+    rankSnapshotCount: liveMatches.filter(match => {
+      const snapshot = getMatchRankSnapshot(match);
+      return hasVerifiedRrForChart(match, profileHasHenrikContext)
+        && Number.isFinite(getRankSnapshotAbsoluteRR(snapshot));
+    }).length,
+    isLifetimeRankTimeline: false,
+    hasHenrikMatches
+  });
+}
+
 function updateRRChartDataStatus(chartSource = {}) {
   const status = document.getElementById("rrChartDataStatus");
   if (!status) return;
@@ -16846,24 +17083,31 @@ function updateRRChartDataStatus(chartSource = {}) {
     return;
   }
   status.textContent = verified
-    ? `${verified} of ${total} retained matches have verified RR snapshots. Missing RR is not estimated.`
-    : `Match stats are available for ${total} retained matches, but Henrik has no verified RR snapshots for this selection.`;
+    ? `${verified} of ${total} retained matches have verified RR snapshots. Unranked or missing-RR games stay flat at 0 RR until Riot/Henrik supplies a rank snapshot.`
+    : `Match stats are available for ${total} retained matches. Unranked or missing-RR games stay flat at 0 RR until Riot/Henrik supplies a rank snapshot.`;
 }
 
 function getChartSourceEntries(size = currentSize) {
   const profile = getActiveProfile?.();
   const normalizedSize = normalizeChartWindowSize(size);
-  const sourceMatches = Array.isArray(profile?.matches)
-    ? profile.matches
-    : (matches || []);
+  const profileMatches = Array.isArray(profile?.matches) ? profile.matches : [];
+  const liveMatches = Array.isArray(matches) ? matches : [];
+  const sourceMatches = liveMatches.length > profileMatches.length
+    ? liveMatches
+    : profileMatches;
+  const profileHasHenrikContext = hasHenrikChartContext(profile);
   const selectedSeasonLabel = getChartSelectedSeasonLabel(profile);
   const canFilterBySeason = Boolean(selectedSeasonLabel && selectedSeasonLabel !== "Current Season");
 
   let runningRR = 0;
-  const allEntries = sourceMatches.map((match, index) => {
+  const orderedSourceMatches = sourceMatches
+    .map((match, index) => ({ match, index }))
+    .sort((a, b) => new Date(a?.match?.createdAt || a?.match?.metadata?.playedAt || 0).getTime() - new Date(b?.match?.createdAt || b?.match?.metadata?.playedAt || 0).getTime());
+
+  const allEntries = orderedSourceMatches.map(({ match, index }) => {
     const snapshot = getMatchRankSnapshot(match);
-    const snapshotAbsolute = isVerifiedHenrikRrMatch(match) ? getRankSnapshotAbsoluteRR(snapshot) : null;
-    const delta = getChartMatchRRDelta(match);
+    const snapshotAbsolute = hasVerifiedRrForChart(match, profileHasHenrikContext) ? getRankSnapshotAbsoluteRR(snapshot) : null;
+    const delta = getVerifiedChartRRDelta(match, profileHasHenrikContext);
     const absoluteBefore = Number.isFinite(snapshotAbsolute)
       ? snapshotAbsolute - delta
       : runningRR;
@@ -16877,26 +17121,28 @@ function getChartSourceEntries(size = currentSize) {
     };
   });
 
-  const seasonEntries = canFilterBySeason
-    ? allEntries.filter((entry) => getMatchSeasonLabel(entry.match) === selectedSeasonLabel)
+  let seasonEntries = canFilterBySeason
+    ? allEntries.filter((entry) => matchBelongsToSelectedStatsAct(entry.match, selectedSeasonLabel))
     : allEntries;
+  if (canFilterBySeason && !seasonEntries.length && allEntries.some(entry => (
+    isHenrikSyncMatch(entry?.match)
+    || isVerifiedHenrikRrMatch(entry?.match)
+    || profileHasHenrikContext
+  ))) {
+    seasonEntries = allEntries;
+  }
   const scopedEntries = normalizedSize === "all" ? allEntries : seasonEntries;
   const hasHenrikMatches = scopedEntries.some(entry =>
-    String(entry?.match?.source || entry?.match?.metadata?.source || "").toLowerCase() === "henrik_sync"
-  );
-  const verifiedRrCount = scopedEntries.filter(entry => isVerifiedHenrikRrMatch(entry.match)).length;
+    isHenrikSyncMatch(entry?.match) || isVerifiedHenrikRrMatch(entry?.match)
+  ) || (profileHasHenrikContext && scopedEntries.length > 0);
+  const verifiedRrCount = scopedEntries.filter(entry => hasVerifiedRrForChart(entry.match, profileHasHenrikContext)).length;
   const rankSnapshotEntries = scopedEntries.filter(entry => {
     const snapshot = getMatchRankSnapshot(entry.match);
     return Number.isFinite(getRankSnapshotAbsoluteRR(snapshot));
   });
   const chartEntries = normalizedSize === "all"
-    ? rankSnapshotEntries
-    : hasHenrikMatches
-      ? scopedEntries.filter(entry => {
-        const source = String(entry?.match?.source || entry?.match?.metadata?.source || "").toLowerCase();
-        return source !== "henrik_sync" || isVerifiedHenrikRrMatch(entry.match);
-      })
-      : scopedEntries;
+    ? (rankSnapshotEntries.length ? rankSnapshotEntries : scopedEntries)
+    : scopedEntries;
   const entries = chartEntries
     .map((entry, displayIndex) => ({ ...entry, displayIndex }));
   const scopeLabel = normalizedSize === "all" ? "Retained profile history" : selectedSeasonLabel;
@@ -17639,12 +17885,16 @@ function applyPersistentAccountState(state = {}) {
     rebuildProfileListUI?.();
     updateProfileHeaderUI?.();
     updateDisplays?.();
+    applyPendingLoadoutRollToHome?.(active);
     initStatsPage?.();
     renderStatsAgents?.();
     renderStatsMaps?.();
+    renderStatsWeapons?.();
     renderInsights?.();
     renderLogFeed?.();
+    refreshLatestRRMatchPanel?.();
     renderChart?.(currentSize);
+    syncAccountSupportUI?.();
     notifyPlaylistWatchHistoryChanged();
   } finally {
     backendSyncState.applyingRemote = false;
@@ -18063,6 +18313,7 @@ async function handleSignedInUser(user) {
   if (!user) {
     backendSyncState.hydratingUserId = "";
     lastAccountStateLoadAt = 0;
+    stopPersistentAccountAutoRefresh();
     refreshRiotProfilePrompt?.();
     return;
   }
@@ -18086,7 +18337,60 @@ async function handleSignedInUser(user) {
   updateProfileHeaderUI?.();
   refreshRiotProfilePrompt?.();
   markAccountStateLoadComplete();
+  startPersistentAccountAutoRefresh();
 }
+
+let accountStateFocusRefreshPromise = null;
+let accountStateAutoRefreshTimer = 0;
+
+function stopPersistentAccountAutoRefresh() {
+  if (!accountStateAutoRefreshTimer) return;
+  window.clearInterval(accountStateAutoRefreshTimer);
+  accountStateAutoRefreshTimer = 0;
+}
+
+function startPersistentAccountAutoRefresh() {
+  stopPersistentAccountAutoRefresh();
+  if (!currentAuthUser?.id || !supabaseClient?.auth) return;
+  accountStateAutoRefreshTimer = window.setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    void refreshPersistentAccountStateOnFocus("auto");
+  }, ACCOUNT_STATE_RELOAD_SLEEP_MS);
+}
+
+async function refreshPersistentAccountStateOnFocus(reason = "focus") {
+  if (!currentAuthUser?.id || !supabaseClient?.auth) return;
+  if (backendSyncState.hydratingUserId || backendSyncState.applyingRemote) return;
+  if (backendSyncState.saveTimer || backendSyncState.savePromise) return;
+  if (shouldSkipRecentAccountStateReload(currentAuthUser)) return;
+  if (accountStateFocusRefreshPromise) return accountStateFocusRefreshPromise;
+
+  accountStateFocusRefreshPromise = (async () => {
+    const user = await getSupabaseUser();
+    if (!user) return;
+    if (shouldSkipRecentAccountStateReload(user)) return;
+    await loadPersistentAccountState(user);
+    markAccountStateLoadComplete();
+    updateAuthUI?.(user);
+  })().catch(error => {
+    backendSyncState.lastError = error;
+    console.warn(`Supabase app-state ${reason} refresh failed`, error);
+  }).finally(() => {
+    accountStateFocusRefreshPromise = null;
+  });
+
+  return accountStateFocusRefreshPromise;
+}
+
+window.addEventListener("focus", () => {
+  void refreshPersistentAccountStateOnFocus("window-focus");
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    void refreshPersistentAccountStateOnFocus("visibility");
+  }
+});
 
 async function initializeSignedInAccount(user, options = {}) {
   if (!user) return;
@@ -19134,6 +19438,7 @@ function buildChartPoints(slice, y, visibleEntries = null) {
   const scopedEntries = Array.isArray(visibleEntries) ? visibleEntries : null;
   const startMatchIndex = Math.max(0, matches.length - visibleMatchCount);
   const impactSnapshots = getPlayerModel()?.scoring?.impactSnapshots || [];
+  const profileHasHenrikContext = hasHenrikChartContext(getActiveProfile?.());
 
   return slice.map((value, index) => {
     if (index === 0) {
@@ -19167,10 +19472,10 @@ function buildChartPoints(slice, y, visibleEntries = null) {
       match,
       snapshot,
       rankChange: getChartRankChange(scopedEntry),
-      rankRr: isVerifiedHenrikRrMatch(match)
+      rankRr: hasVerifiedRrForChart(match, profileHasHenrikContext)
         ? safeNumber(match?.rrTotal ?? match?.matchRecord?.rank?.rr)
         : null,
-      rankLabel: isVerifiedHenrikRrMatch(match)
+      rankLabel: hasVerifiedRrForChart(match, profileHasHenrikContext)
         ? String(match?.rank || match?.matchRecord?.rank?.rank || "").trim()
         : "",
       matchId: String((match?.id || match?.matchId || snapshot?.id || snapshot?.matchId || "")),
@@ -21182,7 +21487,135 @@ function updateRRMatchStats(match = null, matchIndex = null, options = {}) {
   updateImpactRolePill(match, matchIndex, { displayIndex });
   if (Number.isFinite(impactScore)) {
     updateImpactBar(Math.round(impactScore));
+  } else {
+    updateImpactBar(0);
   }
+}
+
+function hasExplicitMatchImpactStats(match = null) {
+  if (!match) return false;
+  const recordStats = match?.matchRecord?.stats || {};
+  const segmentStats = match?.segments?.[0]?.stats || {};
+  const statCandidates = [
+    match?.kills,
+    match?.deaths,
+    match?.assists,
+    match?.acs,
+    match?.adr,
+    match?.hs,
+    match?.hsPercent,
+    recordStats?.kills,
+    recordStats?.deaths,
+    recordStats?.assists,
+    recordStats?.acs,
+    recordStats?.adr,
+    recordStats?.hsPercent,
+    segmentStats?.kills?.value,
+    segmentStats?.deaths?.value,
+    segmentStats?.assists?.value,
+    segmentStats?.scorePerRound?.value,
+    segmentStats?.damagePerRound?.value,
+    segmentStats?.headshotsPercentage?.value
+  ];
+  return statCandidates.some(value => Number.isFinite(Number(value)));
+}
+
+function buildImpactPanelSnapshotFromMatch(match = null, matchIndex = null) {
+  if (!hasExplicitMatchImpactStats(match)) return null;
+  const core = getMatchCore(match || {});
+  const roleImpact = buildMatchRoleImpact(
+    match || {},
+    core.role || agentRoles?.[core.agent] || "Unknown",
+    getActiveProfile?.()?.trackerAnalytics || null
+  );
+  const impactScore = Math.round(clampScore(roleImpact?.score));
+  const tierMeta = getImpactTierMeta(impactScore);
+
+  return {
+    matchIndex: Number.isInteger(matchIndex) ? matchIndex : null,
+    id: match?.id || match?.matchId || `${core.agent}-${core.createdAt}`,
+    matchId: match?.matchId || match?.id || "",
+    map: core.map,
+    agent: core.agent,
+    role: core.role,
+    result: core.result,
+    rr: safeNumber(match?.rr),
+    kills: safeNumber(core.kills),
+    deaths: safeNumber(core.deaths),
+    assists: safeNumber(core.assists),
+    acs: safeNumber(core.acs),
+    impactScore,
+    impactTier: tierMeta.tier,
+    impactColor: tierMeta.color,
+    impactRoleKey: roleImpact?.roleKey || getCompassRoleKey(core.role),
+    impactWeights: roleImpact?.weights || [],
+    impactComponents: roleImpact?.components || {},
+    impactFormula: roleImpact?.formula || "",
+    createdAt: core.createdAt
+  };
+}
+
+function hydrateMatchForImpactPanel(match = null, matchIndex = null) {
+  if (!match) return null;
+  const model = getPlayerModel?.();
+  const impactSnapshots = model?.scoring?.impactSnapshots || [];
+  const snapshot = findImpactSnapshotForMatch(match, matchIndex, impactSnapshots)
+    || buildImpactPanelSnapshotFromMatch(match, matchIndex);
+  if (!snapshot) return match;
+
+  const hitStats = {
+    kills: snapshot?.kills,
+    deaths: snapshot?.deaths,
+    assists: snapshot?.assists,
+    acs: snapshot?.acs,
+    map: snapshot?.map,
+    agent: snapshot?.agent,
+    result: snapshot?.result || match?.result || match?.metadata?.result,
+    createdAt: snapshot?.createdAt || match?.createdAt || match?.metadata?.playedAt,
+    impactTier: snapshot?.impactTier,
+    impactScore: snapshot?.impactScore,
+    impactColor: snapshot?.impactColor
+  };
+
+  return {
+    ...(match || {}),
+    kills: Number.isFinite(Number(hitStats.kills)) ? Number(hitStats.kills) : match?.kills,
+    deaths: Number.isFinite(Number(hitStats.deaths)) ? Number(hitStats.deaths) : match?.deaths,
+    assists: Number.isFinite(Number(hitStats.assists)) ? Number(hitStats.assists) : match?.assists,
+    acs: Number.isFinite(Number(hitStats.acs)) ? Number(hitStats.acs) : match?.acs,
+    map: hitStats.map || match?.map,
+    agent: hitStats.agent || match?.agent,
+    result: hitStats.result || match?.result,
+    createdAt: hitStats.createdAt || match?.createdAt,
+    impactTier: hitStats.impactTier || match?.impactTier,
+    impactScore: Number.isFinite(Number(hitStats.impactScore)) ? Number(hitStats.impactScore) : match?.impactScore,
+    impactColor: hitStats.impactColor || match?.impactColor,
+    metadata: {
+      ...(match?.metadata || {}),
+      mapName: hitStats.map || match?.metadata?.mapName,
+      agent: hitStats.agent || match?.metadata?.agent
+    }
+  };
+}
+
+function refreshLatestRRMatchPanel(options = {}) {
+  const sessionEntries = getSessionMatchEntries();
+  const entries = sessionEntries.length
+    ? sessionEntries
+    : (matches || []).map((match, index) => ({ match, index }));
+  const latest = entries[entries.length - 1] || null;
+  if (!latest) {
+    updateRRMatchStats(null, null);
+    return null;
+  }
+  const displayIndex = sessionEntries.length
+    ? sessionEntries.length - 1
+    : latest.index;
+  const hydrated = hydrateMatchForImpactPanel(latest.match, latest.index);
+  updateRRMatchStats(hydrated, latest.index, {
+    displayIndex: Number.isInteger(options?.displayIndex) ? options.displayIndex : displayIndex
+  });
+  return latest;
 }
 
 function updateRRMatchStatsFromHit(hit) {
@@ -35112,6 +35545,7 @@ function initApp(){
   initStatsPage();
   renderStatsAgents();
   renderStatsMaps();
+  renderStatsWeapons();
   renderInsights();
   renderLogFeed();
   syncLoggingQuickChipStates();
@@ -35131,7 +35565,8 @@ function initApp(){
   setRandomSilhouette();
   resetPlaceholder();
   randomizeInitialReel();
-  updateImpactBar(75);
+  applyPendingLoadoutRollToHome?.(active);
+  refreshLatestRRMatchPanel?.();
   updateNavUnderline();
   const authStateListener = supabaseClient?.auth?.onAuthStateChange?.((event, session) => {
     if (authRecoveryInProgress || event === "PASSWORD_RECOVERY") {
@@ -44094,6 +44529,9 @@ function addLogEntry(){
     ? (logEntries.find(existing => existing.id === editingId) || editingLogEntrySnapshot)
     : null;
   const completesPlaceholder = isMatchPlaceholderLogEntry(previousEntry || {});
+  const shouldSyncSavedLogToHome =
+    !isEditing ||
+    (completesPlaceholder && !isEntryOlderThanPendingLoadoutRoll(previousEntry));
 
   entry.profileId = activeProfileId || entry.profileId || "";
   entry.isPlayerAuthored = true;
@@ -44133,17 +44571,21 @@ entry.focus = normalizeFocusCategoryValue(entry.focus, "Discipline");
   editingLogEntryId = null;
   editingLogEntrySnapshot = null;
 
-  pendingFocusFromLog = entry.focus;
-  pendingAgentFromLog = entry.agent;
+  if (shouldSyncSavedLogToHome) {
+    pendingFocusFromLog = entry.focus;
+    pendingAgentFromLog = entry.agent;
 
-  // SYNC HOME FOCUS + AGENT
-if(entry.agent){
-  applyAgentToHome(entry.agent);
-}
+    // SYNC HOME FOCUS + AGENT
+    if(entry.agent){
+      applyAgentToHome(entry.agent);
+    }
 
-if(entry.focus){
-  focusDisplay.textContent = entry.focus;
-}
+    if(entry.focus){
+      focusDisplay.textContent = entry.focus;
+    }
+  } else {
+    applyPendingLoadoutRollToHome(getActiveProfile?.(), { force: true });
+  }
 
   if (!isEditing || completesPlaceholder) {
     queueLoggingEntryReveal(entry.id, "save");
@@ -46648,6 +47090,9 @@ function updateProfile(id, data){
   renderProfilesUI();
   updateProfileHeaderUI();
   initStatsPage();
+  renderStatsAgents?.();
+  renderStatsMaps?.();
+  renderStatsWeapons?.();
   scheduleRiotAutoSync();
   if (data.watchedPlaylistVideos != null) notifyPlaylistWatchHistoryChanged(profile);
 
@@ -46688,6 +47133,12 @@ function setActiveProfile(id){
   renderProfilesUI();
   updateProfileHeaderUI();
   updateDisplays();
+  applyPendingLoadoutRollToHome(next);
+  initStatsPage?.();
+  renderStatsAgents?.();
+  renderStatsMaps?.();
+  renderStatsWeapons?.();
+  refreshLatestRRMatchPanel?.();
 
   renderChart(currentSize);
   renderInsights?.();
@@ -47016,6 +47467,25 @@ function getMatchSeasonLabel(match = {}) {
   return normalizeValorantSeasonLabel(value);
 }
 
+function isHenrikSyncMatch(match = {}) {
+  return String(
+    match?.source
+    || match?.metadata?.source
+    || match?.matchRecord?.source
+    || ""
+  ).trim().toLowerCase() === "henrik_sync";
+}
+
+function isCurrentValorantStatsLabel(label = "") {
+  return normalizeValorantSeasonLabel(label) === CURRENT_VALORANT_SEASON_LABEL;
+}
+
+function matchBelongsToSelectedStatsAct(match = {}, selectedAct = "") {
+  const matchSeason = getMatchSeasonLabel(match);
+  if (matchSeason) return matchSeason === selectedAct;
+  return isHenrikSyncMatch(match) && isCurrentValorantStatsLabel(selectedAct);
+}
+
 function getMatchSeasonLabels(matchList = []) {
   const newestFirst = getSortedMatches(matchList).slice().reverse();
   return [...new Set(newestFirst.map(getMatchSeasonLabel).filter(Boolean))];
@@ -47032,7 +47502,7 @@ function computePeakProfileProgress(profile = getActiveProfile(), options = {}) 
   ).trim();
   const selectedIndexes = selectedAct
     ? matchList
-        .map((match, index) => getMatchSeasonLabel(match) === selectedAct ? index : -1)
+        .map((match, index) => matchBelongsToSelectedStatsAct(match, selectedAct) ? index : -1)
         .filter(index => index >= 0)
     : [];
   const useSeasonScope = Boolean(selectedAct && selectedIndexes.length);
@@ -49694,6 +50164,7 @@ function activatePage(pageId, options = {}){
       if (activePageId !== pageId) return;
       if (pageId === "logging") {
         scheduleLoggingFeedRender();
+        playLoggingPageEntryAnimation();
       }
       if (pageId === "home" && pendingAgentFromLog) {
         const queuedAgent = pendingAgentFromLog;
@@ -49725,13 +50196,17 @@ function activatePage(pageId, options = {}){
 
     if (pageId === "home") {
       scheduleLoadoutValueTextFit();
+      const chartSource = getChartSourceEntries(currentSize);
+      updateRRChartDataStatus(chartSource);
+      refreshLatestRRMatchPanel?.();
       // The chart is already rendered from the live match state. Rebuilding its
       // full SVG (and replaying the intro) on every Home tab visit was enough to
-      // miss several frames on a simple page switch. Only recover it if an
-      // earlier render genuinely left no chart behind; data, scope, and resize
-      // paths still render immediately where they belong.
+      // miss several frames on a simple page switch. Recover it when an earlier
+      // render left no chart behind or when the underlying retained match count
+      // changed after a sync/pull refresh.
       const hasRenderedChart = Boolean(chartRow?.querySelector("svg"));
-      if (!hasRenderedChart) {
+      const chartNeedsDataRefresh = safeNumber(chartSource?.matchCount) !== safeNumber(lastMatchesLength);
+      if (!hasRenderedChart || chartNeedsDataRefresh) {
         forceChartIntroAnimation = true;
         requestAnimationFrame(() => {
           if (getActivePageElement()?.id === "page-home") renderChart(currentSize);
@@ -49749,6 +50224,7 @@ function activatePage(pageId, options = {}){
 
     if (pageId === "logging") {
       scheduleLoggingFeedRender();
+      playLoggingPageEntryAnimation();
     }
 
     // A page switch does not change a text node's baseline font. Reuse the
@@ -49897,6 +50373,7 @@ function updateDisplays(){
   renderCoachReadinessUI();
 
   const model = getPlayerModel();
+  refreshRRChartDataStatusFromLiveMatches?.(matches, getActiveProfile?.());
   updateCompass(model?.compass || {}, model);
   scheduleLoadoutValueTextFit();
 
@@ -50276,7 +50753,11 @@ if(chartHeight){
   const chartSource = resolvedSize === requestedSize
     ? initialChartSource
     : getChartSourceEntries(resolvedSize);
-  updateRRChartDataStatus(chartSource);
+  if (chartSource?.hasHenrikMatches || !(Array.isArray(matches) && matches.length)) {
+    updateRRChartDataStatus(chartSource);
+  } else {
+    refreshRRChartDataStatusFromLiveMatches(matches, getActiveProfile?.());
+  }
   const isLifetimeRankTimeline = String(resolvedSize).toLowerCase() === "all";
   chartRow.classList.toggle("is-lifetime-rank-chart", isLifetimeRankTimeline);
   const lifetimeRankSeries = isLifetimeRankTimeline ? buildLifetimeRankSeries(chartSource.entries) : null;
@@ -50975,7 +51456,8 @@ function autoSelectLatest(options = {}){
 
   if(!gold || !hit) {
     setSelectedTimelineContext(null, { animate: false });
-    updateRRMatchStats(null);
+    const fallback = refreshLatestRRMatchPanel?.();
+    if (!fallback) updateRRMatchStats(null);
     return;
   }
 
@@ -51002,13 +51484,8 @@ function autoSelectLatest(options = {}){
   } else {
     hideChartTooltip();
   }
-  if (updateStats) {
-    updateRRMatchStatsFromHit(hit);
-    setSelectedTimelineContext(Number(hit?.dataset?.matchIndex), { animate: true });
-  } else {
-    updateRRMatchStats(null);
-    setSelectedTimelineContext(null, { animate: false });
-  }
+  updateRRMatchStatsFromHit(hit);
+  setSelectedTimelineContext(Number(hit?.dataset?.matchIndex), { animate: Boolean(updateStats) });
 }
 
 // ==============================
@@ -51407,6 +51884,7 @@ function flipSpinIcon(){
       }
 
       syncLogInputs();
+      setPendingLoadoutRoll(pick, newFocus, { role, source: "roll" });
       queueBroadcastRollReveal({ agent: pick, focus: newFocus, source: "roll", delayMs: 40 });
 
       const holoAgain = document.querySelector(".placeholder-holo");
@@ -52918,6 +53396,8 @@ if (!window.__vt_riotImportBound) {
   document.addEventListener("click", async (e) => {
     const btn = e.target?.closest?.("#profileSyncBtn");
     if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
 
     clearRiotAutoSyncTimer();
 
@@ -52928,9 +53408,11 @@ if (!window.__vt_riotImportBound) {
     });
     profileDropdown?.classList.remove("open");
     if (result) {
-      window.setTimeout(() => window.location.reload(), 150);
+      refreshActiveProfileDataSurfaces({
+        chartAnimationMode: result.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null
+      });
     }
-  });
+  }, true);
 }
 
 function normalizeImportedMatchEntry(match = {}){
@@ -53034,10 +53516,13 @@ function applyImportedMatches(matchList = [], options = {}){
   initStatsPage();
   renderStatsAgents();
   renderStatsMaps();
+  renderStatsWeapons();
   renderInsights();
   renderLogFeed();
 
   updateDisplays();
+  applyPendingLoadoutRollToHome(profile);
+  refreshLatestRRMatchPanel();
   updateNavRRToRank();
   updateNavRRToGoalRank();
   if (hadNoMatchesBeforeImport && normalized.length > 0) {
@@ -53215,9 +53700,12 @@ async function importActiveProfileMatches(options = {}){
       initStatsPage();
       renderStatsAgents();
       renderStatsMaps();
+      renderStatsWeapons();
       renderInsights();
       renderLogFeed();
       updateDisplays();
+      applyPendingLoadoutRollToHome(profile);
+      refreshLatestRRMatchPanel();
       renderChart(currentSize);
       return {
         count: 0,
@@ -53269,11 +53757,7 @@ async function syncActiveProfileMatches(options = {}){
     allowDemoFallback: options.allowDemoFallback !== false,
     mode: options.mode || "sync"
   });
-  const currentSessionEntries = getSessionMatchEntries();
-  const latestSessionEntry = currentSessionEntries[currentSessionEntries.length - 1] || null;
-  updateRRMatchStats(latestSessionEntry?.match || null, latestSessionEntry?.index ?? null, {
-    displayIndex: latestSessionEntry ? currentSessionEntries.length - 1 : null
-  });
+  refreshLatestRRMatchPanel();
   return {
     ...result,
     syncedAt: nowISO(),
