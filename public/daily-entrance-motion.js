@@ -1193,18 +1193,20 @@
     announceRunFinished(run);
   }
 
-  function canAnimatePage(pageId) {
+  function canAnimatePage(pageId, options = {}) {
     const daily = ensureCurrentDay();
+    const forceOnce = options.forceOnce === true;
     return runtime.ready
       && PAGE_IDS.has(pageId)
-      && (runtime.forceReplay || (!daily.skipped && !daily.seenPages.includes(pageId)))
+      && (runtime.forceReplay || (forceOnce && !daily.skipped) || (!daily.skipped && !daily.seenPages.includes(pageId)))
       && !prefersReducedMotion();
   }
 
-  function canPreparePage(pageId) {
+  function canPreparePage(pageId, options = {}) {
     const daily = ensureCurrentDay();
+    const forceOnce = options.forceOnce === true;
     return PAGE_IDS.has(pageId)
-      && (runtime.forceReplay || (!daily.skipped && !daily.seenPages.includes(pageId)))
+      && (runtime.forceReplay || (forceOnce && !daily.skipped) || (!daily.skipped && !daily.seenPages.includes(pageId)))
       && !prefersReducedMotion();
   }
 
@@ -1219,8 +1221,9 @@
     return page.classList.contains("active") && !document.querySelector(".page.is-current-page");
   }
 
-  function schedulePage(pageId) {
-    if (!canAnimatePage(pageId)) {
+  function schedulePage(pageId, options = {}) {
+    const forceOnce = options.forceOnce === true;
+    if (!canAnimatePage(pageId, { forceOnce })) {
       releaseAllPendingPages();
       return;
     }
@@ -1237,7 +1240,7 @@
     const delay = isMobileLayout() ? 330 : 255;
     runtime.scheduleTimer = window.setTimeout(() => {
       runtime.scheduleTimer = 0;
-      if (generation !== runtime.generation || !canAnimatePage(pageId)) {
+      if (generation !== runtime.generation || !canAnimatePage(pageId, { forceOnce })) {
         releasePendingPage(root);
         return;
       }
@@ -1374,6 +1377,19 @@
     return runtime.forceReplay;
   }
 
+  function replayPage(pageId = runtime.queuedPage || "home", context = {}) {
+    if (!PAGE_IDS.has(pageId) || prefersReducedMotion()) return false;
+    if (context.userId && !runtime.prepared) prepareSession(context);
+    if (!runtime.ready) return false;
+    runtime.queuedPage = pageId;
+    if (runtime.scheduleTimer) clearTimeout(runtime.scheduleTimer);
+    runtime.scheduleTimer = 0;
+    runtime.generation += 1;
+    if (runtime.activeRun) finishRun(runtime.activeRun, { markSeen: false });
+    schedulePage(pageId, { forceOnce: true });
+    return true;
+  }
+
   document.addEventListener("pointerdown", (event) => {
     if (!runtime.ready || !event.isTrusted || (!runtime.activeRun && !runtime.scheduleTimer && !runtime.pendingPages.size)) return;
     // A visible modal owns its own interaction.  In particular, a daily
@@ -1408,6 +1424,7 @@
     activatePage,
     prepareSession,
     setSessionReady,
+    replayPage,
     skipAll,
     resetToday,
     setForceReplay,

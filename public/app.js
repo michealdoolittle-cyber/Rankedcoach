@@ -879,6 +879,7 @@ function skipDailyWarmupCheck() {
   }
   hideModalById?.("dailyWarmupModal");
   showToast?.("Warm-up skipped for today. Queue when you feel ready.", { tone: "neutral" });
+  queuePostWarmupEntranceReplay({ forceCurrentPage: false, delayMs: 90 });
 }
 
 function closeDailyTrainingMenu() {
@@ -943,7 +944,12 @@ async function refreshWarmupAutoVerification(profile = getActiveProfile?.(), opt
 function saveDailyWarmupCheck() {
   const profile = getActiveProfile?.();
   if (!profile) return;
-  const date = document.getElementById("dailyWarmupModal")?.dataset.trainingDate || formatLocalDateKey();
+  const modal = document.getElementById("dailyWarmupModal");
+  const date = modal?.dataset.trainingDate || formatLocalDateKey();
+  const existingRecord = getDailyWarmupRecord(profile, date);
+  const shouldReplayPostWarmupEntrance = modal?.dataset.dismissBehavior === "skip"
+    && modal?.dataset.trainingMode !== "postgame"
+    && !isDailyWarmupCompleted(existingRecord);
   const drillsSelected = [...document.querySelectorAll("[data-warmup-drill].is-selected")]
     .map(button => button.dataset.warmupDrill)
     .filter(Boolean)
@@ -992,6 +998,7 @@ function saveDailyWarmupCheck() {
   renderLoggingTrainingMenuState(getActiveProfile());
   renderLogFeed?.({ force: true });
   showToast?.(`Warm-up saved: ${record?.drillsSelected?.length || 0} drill${record?.drillsSelected?.length === 1 ? "" : "s"}${dmTdmSelfReported ? " plus DM/TDM" : ""}.`, { tone: "success" });
+  queuePostWarmupEntranceReplay({ forceCurrentPage: shouldReplayPostWarmupEntrance, delayMs: 90 });
   scheduleProfileStreakAnnouncement();
   void refreshWarmupAutoVerification(getActiveProfile(), { announce: true });
 }
@@ -14428,6 +14435,7 @@ function getDailyEntranceMotionContext() {
 
 let dailyEntranceMotionReadyTimer = 0;
 let dailyEntranceMotionTutorialPending = false;
+let postWarmupEntranceReplayTimer = 0;
 
 function prepareDailyEntranceMotion() {
   const controller = window.RankedCoachDailyEntrance;
@@ -14492,6 +14500,31 @@ function notifyDailyEntranceMotionReady() {
   dailyEntranceMotionReadyTimer = 0;
   controller.setSessionReady(context);
   controller.activatePage(pageId, context);
+}
+
+function queuePostWarmupEntranceReplay(options = {}) {
+  const controller = window.RankedCoachDailyEntrance;
+  const context = getDailyEntranceMotionContext();
+  if (!controller || !context.userId) return false;
+  const startedAt = Date.now();
+  const forceCurrentPage = options.forceCurrentPage === true;
+  const pageId = getActivePageElement?.()?.id?.replace("page-", "") || "home";
+  window.clearTimeout(postWarmupEntranceReplayTimer);
+  const runWhenClear = () => {
+    if (hasDailyEntranceBlockingSurface() && Date.now() - startedAt < 4200) {
+      postWarmupEntranceReplayTimer = window.setTimeout(runWhenClear, 90);
+      return;
+    }
+    postWarmupEntranceReplayTimer = 0;
+    notifyDailyEntranceMotionReady();
+    if (forceCurrentPage && typeof controller.replayPage === "function") {
+      window.setTimeout(() => {
+        controller.replayPage(pageId, getDailyEntranceMotionContext());
+      }, 130);
+    }
+  };
+  postWarmupEntranceReplayTimer = window.setTimeout(runWhenClear, Math.max(40, Number(options.delayMs) || 120));
+  return true;
 }
 
 function releaseInitialAppBootGuard() {
@@ -16900,10 +16933,11 @@ function openLensModal(lens){
 
   const model = getPlayerModel();
   const lensDetail = model?.compass?.detailTabs?.[lens];
+  const lensLabel = COMPASS_LENS_META?.[lens]?.label || lensDetail?.title || "Compass";
 
   title.textContent = lensDetail?.title || "Lens";
   if (weightingTitle) weightingTitle.textContent = "Weighting";
-  if (statsTitle) statsTitle.textContent = "Stats Behind This";
+  if (statsTitle) statsTitle.textContent = `${lensLabel} Category Scores`;
   setLensWeightingCollapsed(false);
   weightingBlock.innerHTML = "";
   list.innerHTML = "";
