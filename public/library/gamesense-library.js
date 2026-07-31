@@ -1375,6 +1375,14 @@
     ));
   }
 
+  function hasMeleeDamageRows(rows = []) {
+    return Array.isArray(rows) && rows.length && rows.every(row => (
+      row
+      && String(row.label || "").trim()
+      && Number.isFinite(Number(row.damage))
+    ));
+  }
+
   function completeWeapon(weapon = {}, fallbackId = "") {
     const id = assetSlug(weapon.id || fallbackId || weapon.label);
     const canonical = canonicalWeaponDetails[id] || {};
@@ -1384,7 +1392,8 @@
       id,
       label: weapon.label || canonical.label || id.replace(/-/g, " "),
       image: weapon.image || canonical.image || "",
-      damageRanges: hasCompleteDamageRanges(weapon.damageRanges) ? weapon.damageRanges : canonical.damageRanges || []
+      damageRanges: hasCompleteDamageRanges(weapon.damageRanges) ? weapon.damageRanges : canonical.damageRanges || [],
+      meleeDamage: hasMeleeDamageRows(weapon.meleeDamage) ? weapon.meleeDamage : canonical.meleeDamage || []
     };
   }
 
@@ -2914,6 +2923,11 @@
     return Number.isFinite(Number(value)) ? `${Number(value).toFixed(1)}%` : "Pending";
   }
 
+  function formatWeaponCost(weapon = {}) {
+    const cost = weapon?.cost;
+    return Number.isFinite(Number(cost)) ? `${Number(cost)} credits` : (String(cost || "").trim() || "No purchase cost");
+  }
+
   function formatDamageValue(value) {
     const number = Number(value);
     if (!Number.isFinite(number)) return "--";
@@ -2922,6 +2936,18 @@
 
   function renderDamageTable(weapon) {
     const complete = completeWeapon(weapon);
+    const meleeDamage = hasMeleeDamageRows(complete.meleeDamage) ? complete.meleeDamage : [];
+    if (meleeDamage.length) {
+      return `
+        <div class="gamesense-damage-table gamesense-melee-damage-table" role="table" aria-label="${escapeHtml(complete.label)} melee damage">
+          ${meleeDamage.map(row => `<article class="gamesense-melee-damage-row" role="row">
+            <div><strong>${escapeHtml(row.label)}</strong><span>${escapeHtml(row.range || "Melee contact")}</span></div>
+            <em>${formatDamageValue(row.damage)}</em>
+            <small>${escapeHtml(row.condition || "Contact hit")}</small>
+          </article>`).join("")}
+          ${complete.damageSource ? `<a class="gamesense-melee-source" href="${escapeHtml(complete.damageSource)}" target="_blank" rel="noopener noreferrer">Damage source</a>` : ""}
+        </div>`;
+    }
     const ranges = hasCompleteDamageRanges(complete.damageRanges) ? complete.damageRanges : [];
     return `
       <div class="gamesense-damage-table" role="table" aria-label="${escapeHtml(complete.label)} damage by range">
@@ -2962,11 +2988,23 @@
     const focus = weapon.focus || "Canonical weapon facts are available. Tactical guidance is still in review.";
     const whenToUse = (weapon.whenToUse || []).length ? weapon.whenToUse : ["No verified use-case guidance is published yet."];
     const howToUse = (weapon.howToUse || []).length ? weapon.howToUse : ["No verified handling guidance is published yet."];
+    const patchHistory = sortPatchHistoryNewestFirst(weapon.patchHistory || []);
+    const globalRateMarkup = weapon.libraryOnly ? `
+      <div class="gamesense-global-rate is-library-only">
+        <strong>Library preview only</strong>
+        <strong>No competitive pick-rate tracking</strong>
+        <strong>No round conversion tracking</strong>
+      </div>
+      <p class="gamesense-round-conversion-note">Melee is included here for cosmetic skin browsing and basic damage reference only.</p>
+    ` : `
+      <div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div>
+      <p class="gamesense-round-conversion-note">A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately.</p>
+    `;
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
         <div class="gamesense-weapon-panel-art"><img src="${escapeHtml(weapon.image)}" alt="${escapeHtml(weapon.label)}"></div>
-        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3><div class="gamesense-global-rate"><strong>Global usage ${safePercent(weapon.pickRate)}</strong><strong>Global kill conversion ${Number.isFinite(weapon.killConversion) ? `${weapon.killConversion.toFixed(2)} K/D` : "Unavailable"}</strong><strong>Round conversion ${escapeHtml(weapon.roundConversion || "Unavailable")}</strong></div><p class="gamesense-round-conversion-note">A single all-buy round conversion is not published. Compare eco, light, and full-buy results separately.</p><p>${escapeHtml(focus)}</p></div>
-        ${renderStatChips({ Cost: `${weapon.cost} credits`, Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
+        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3>${globalRateMarkup}<p>${escapeHtml(focus)}</p></div>
+        ${renderStatChips({ Cost: formatWeaponCost(weapon), Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
         <div class="gamesense-weapon-guidance">
           <section><span>When to use it</span><ul>${whenToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
@@ -2974,7 +3012,7 @@
         </div>
         <details class="gamesense-patch-history gamesense-weapon-history">
           <summary>Patch history</summary>
-          <ol>${sortPatchHistoryNewestFirst(weapon.patchHistory || []).map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("")}</ol>
+          <ol>${patchHistory.length ? patchHistory.map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("") : `<li><span>No melee-specific patch note attached</span><p>No sourced melee-specific balance patch is attached to this dossier yet.</p></li>`}</ol>
         </details>
       </article>`;
   }
@@ -3062,7 +3100,7 @@
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Arsenal</span><strong>Select a weapon</strong></div>
         <div class="gamesense-weapon-grid">${weapons.map(weapon => `
-          <button type="button" data-gamesense-weapon="${escapeHtml(weapon.id)}" class="${weapon.id === selected?.id ? "active" : ""}" aria-pressed="${weapon.id === selected?.id}"><img src="${escapeHtml(weapon.image)}" alt=""><span>${escapeHtml(weapon.label)}</span><small>${weapon.cost} credits</small></button>
+          <button type="button" data-gamesense-weapon="${escapeHtml(weapon.id)}" class="${weapon.id === selected?.id ? "active" : ""}" aria-pressed="${weapon.id === selected?.id}"><img src="${escapeHtml(weapon.image)}" alt=""><span>${escapeHtml(weapon.label)}</span><small>${escapeHtml(formatWeaponCost(weapon))}</small></button>
         `).join("")}</div>
         ${renderWeaponFact(selected)}
       </section>

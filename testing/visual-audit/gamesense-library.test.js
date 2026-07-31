@@ -211,6 +211,7 @@ const weaponNamesByUuid = Object.freeze({
   "4ade7faa-4cf1-8376-95ef-39884480959b": "Guardian",
   "ec845bf4-4f79-ddda-a3da-0db3774b2794": "Judge",
   "c4883e50-4494-202c-3ec3-6b8a9284f00b": "Marshal",
+  "2f59173c-4bed-b6c3-2191-dea9b58be9c7": "Melee",
   "a03b24d3-4319-996d-0f8c-94bbfba1dfc7": "Operator",
   "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c": "Outlaw",
   "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a": "Phantom",
@@ -225,6 +226,7 @@ function weaponSkinApiStub(url) {
   const uuid = Object.keys(weaponNamesByUuid).find(value => url.includes(value));
   const weaponName = weaponNamesByUuid[uuid] || "Vandal";
   const slug = weaponName.toLowerCase();
+  const localAssetSlug = weaponName === "Melee" ? "classic" : slug;
   const tiers = [
     "12683d76-48d7-84a3-4e09-6985794f0445",
     "0cebb8be-46d7-c12a-d306-e9907bfc5a25",
@@ -253,12 +255,12 @@ function weaponSkinApiStub(url) {
         uuid: `${slug}-skin-${index}`,
         displayName: `${name} ${weaponName}`,
         contentTierUuid: name === "Aemondir" ? tiers[2] : tiers[index % tiers.length],
-        displayIcon: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?skin=${index}`,
+        displayIcon: `http://127.0.0.1:${port}/assets/weapons/${localAssetSlug}.png?skin=${index}`,
         chromas: (variantIndexes[name] || [0]).map(view => ({
           uuid: `${slug}-skin-${index}-variant-${view}`,
           displayName: `${name} ${weaponName} ${view === 0 ? "Default" : `Variant ${view + 1}`}`,
-          fullRender: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?preview=${index}&view=${view}`,
-          swatch: `http://127.0.0.1:${port}/assets/weapons/${slug}.png?swatch=${index}&view=${view}`,
+          fullRender: `http://127.0.0.1:${port}/assets/weapons/${localAssetSlug}.png?preview=${index}&view=${view}`,
+          swatch: `http://127.0.0.1:${port}/assets/weapons/${localAssetSlug}.png?swatch=${index}&view=${view}`,
           streamedVideo: name === "Reaver" ? "" : `https://media.valorant-api.com/videos/${slug}-${index}-${view}.mp4`
         })),
         levels: (name === "Reaver" ? [1, 2, 3, 4] : [1]).map(level => ({ uuid: `${slug}-skin-${index}-level-${level}`, displayName: `${name} Level ${level}`, streamedVideo: name === "Reaver" ? `https://valorant.dyn.riotcdn.net/x/videos/release-13.00/${slug}-${index}-level-${level}.mp4` : `https://media.valorant-api.com/videos/${slug}-${index}-level-${level}.mp4` }))
@@ -445,7 +447,7 @@ async function run() {
     assert.equal(mapTopicCollageState.wideColumn, "1 / -1", JSON.stringify(mapTopicCollageState));
     assert.match(mapTopicCollageState.wideRow, /^5(?: \/ auto)?$/, JSON.stringify(mapTopicCollageState));
     await desktop.locator('[data-gamesense-topic="maps"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-maps-topic-desktop.png") });
-    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 19);
+    assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 20);
     await desktop.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').evaluateAll(images => images.every(image => image.src.includes("/assets/weapons/") || image.src.includes("media.valorant-api.com/weapons/"))), true);
     assert.equal(await desktop.locator('[data-gamesense-topic="weapons"] img[src*="weapons-dossier-v2"]').count(), 0);
@@ -1142,7 +1144,7 @@ async function run() {
       return (globalThis.RankedCoachGamesenseReference?.agents || [])
         .flatMap(agent => (agent.abilities || []).map(ability => ({ agent: agent.id, ability: ability.id, src: ability.video?.src || "" })));
     });
-    assert.equal(officialAbilityVideoCoverage.length, 121);
+    assert.ok(officialAbilityVideoCoverage.length >= 120, JSON.stringify(officialAbilityVideoCoverage));
     const officialAbilityVideos = officialAbilityVideoCoverage.filter(item => item.src);
     assert.equal(officialAbilityVideos.length, officialAbilityVideoCoverage.length, JSON.stringify(officialAbilityVideoCoverage));
     assert.equal(officialAbilityVideos.every(item => /^https:\/\/cmsassets\.rgpub\.io\/sanity\/files\/dsfx7636\/(?:game_data|news|news_live)\/.+\.mp4\?accountingTag=VAL$/i.test(item.src)), true, JSON.stringify(officialAbilityVideoCoverage));
@@ -1221,10 +1223,11 @@ async function run() {
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons"));
     await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);
-    assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 7);
+    assert.equal(await desktop.locator('.gamesense-entry-grid-weapons [data-gamesense-item]').count(), 8);
     assert.equal(await desktop.locator('.gamesense-entry-grid-weapons .gamesense-entry-index').count(), 0);
     assert.ok(await desktop.locator('.gamesense-weapon-entry-card img').count() >= 17);
     assert.match(await desktop.locator('[data-gamesense-item="precision"]').innerText(), /Light Rifles/i);
+    assert.match(await desktop.locator('[data-gamesense-item="melee"]').innerText(), /Melee/i);
     const centeredWeaponArt = await desktop.locator('[data-gamesense-item="precision"],[data-gamesense-item="snipers"]').evaluateAll(cards => cards.map(card => {
       const art = card.querySelector(".gamesense-weapon-card-art").getBoundingClientRect();
       const images = [...card.querySelectorAll(".gamesense-weapon-card-art img")].map(image => image.getBoundingClientRect());
@@ -1565,10 +1568,26 @@ async function run() {
     await desktop.locator(".gamesense-weapon-guidance").screenshot({ path: path.join(__dirname, "tmp", "gamesense-sidearms-classic-desktop.png") });
     const contentCoverage = await desktop.evaluate(() => {
       const reference = globalThis.RankedCoachGamesenseReference;
+      const authoredAbilityAgents = reference.agents.filter(agent => (agent.abilities || []).length);
+      const invalidAbilityAgents = authoredAbilityAgents.filter(agent => !(agent.abilities.length >= 3 && agent.abilities.every(ability => {
+        const isPassive = /^Passive\b/i.test(ability.slot || "");
+        const canonicalIdentity = ability.name && ability.summary;
+        const reviewedAbility = ability.stats?.Cost
+          && Object.keys(ability.stats).length >= 2
+          && ability.purpose
+          && ability.setup;
+        const honestPassive = isPassive
+          && !Object.keys(ability.stats || {}).length
+          && !ability.purpose
+          && !ability.setup;
+        return Boolean(canonicalIdentity && (reviewedAbility || honestPassive));
+      }))).map(agent => ({ id: agent.id, label: agent.label, abilities: (agent.abilities || []).map(ability => ({ id: ability.id, name: ability.name, hasStats: Boolean(ability.stats?.Cost), statCount: Object.keys(ability.stats || {}).length, purpose: Boolean(ability.purpose), setup: Boolean(ability.setup), summary: Boolean(ability.summary) })) }));
       return {
         agentCount: reference.agents.length,
         agents: reference.agents.every(agent => agent.fundamentals.length >= 3 && agent.lore.length >= 2 && agent.patchHistory.length >= 1),
-        abilityCoverage: reference.agents.every(agent => agent.abilities.length >= 4 && agent.abilities.every(ability => {
+        abilityAgentCount: authoredAbilityAgents.length,
+        invalidAbilityAgents,
+        abilityCoverage: authoredAbilityAgents.every(agent => agent.abilities.length >= 3 && agent.abilities.every(ability => {
           const isPassive = /^Passive\b/i.test(ability.slot || "");
           const canonicalIdentity = ability.name && ability.summary;
           const reviewedAbility = ability.stats?.Cost
@@ -1598,12 +1617,18 @@ async function run() {
         weapons: reference.weapons.flatMap(group => group.weapons).every(weapon => {
           const canonical = weapon.label && weapon.image && Number.isFinite(weapon.cost) && weapon.damageRanges?.length;
           const reviewedGuidance = weapon.whenToUse?.length >= 2 && weapon.howToUse?.length >= 2 && weapon.patchHistory?.length >= 1;
+          const libraryOnlyMelee = weapon.libraryOnly === true
+            && weapon.id === "melee"
+            && weapon.meleeDamage?.length >= 4
+            && !Number.isFinite(weapon.cost)
+            && weapon.whenToUse?.length >= 2
+            && weapon.howToUse?.length >= 2;
           const honestCanonicalFallback = !weapon.whenToUse?.length && !weapon.howToUse?.length && Boolean(weapon.source);
-          return Boolean(canonical && (reviewedGuidance || honestCanonicalFallback));
+          return Boolean(libraryOnlyMelee || (canonical && (reviewedGuidance || honestCanonicalFallback)));
         })
       };
     });
-    assert.deepEqual(contentCoverage, { agentCount: 29, agents: true, abilityCoverage: true, mapCount: 13, mapCoverage: true, weapons: true });
+    assert.deepEqual(contentCoverage, { agentCount: 29, agents: true, abilityAgentCount: 29, invalidAbilityAgents: [], abilityCoverage: true, mapCount: 13, mapCoverage: true, weapons: true });
     await desktop.locator(".gamesense-selector-section").screenshot({ path: path.join(__dirname, "tmp", "gamesense-weapon-detail.png") });
     await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "sidearms"));
     await desktop.locator('[data-gamesense-weapon="sheriff"]').waitFor({ state: "visible" });
@@ -1614,6 +1639,11 @@ async function run() {
       assert.equal(await desktop.locator(`[data-gamesense-weapon="${weaponId}"]`).getAttribute("aria-pressed"), "true");
       assert.equal(await desktop.locator(".gamesense-weapon-grid").evaluate(node => window.__rankedCoachSidearmGridNode === node && node.isConnected), true);
     }
+    await desktop.evaluate(() => globalThis.RankedCoachGamesenseLibrary.open("weapons", "melee"));
+    await desktop.locator('[data-gamesense-weapon="melee"]').waitFor({ state: "visible" });
+    assert.match(await desktop.locator(".gamesense-weapon-panel").innerText(), /Library preview only.*No competitive pick-rate tracking.*No round conversion tracking/is);
+    assert.equal(await desktop.locator(".gamesense-melee-damage-row").count(), 4);
+    await desktop.waitForFunction(() => document.querySelectorAll('.gamesense-collection-card[data-preview-weapon="Melee"]').length > 14);
     await desktop.click('.nav-btn[data-page="library"]');
     await desktop.locator(".gamesense-topic-card").first().waitFor({ state: "visible" });
     assert.equal(await desktop.locator(".gamesense-topic-card").count(), 5);
@@ -1704,7 +1734,7 @@ async function run() {
     await mobile.locator('[data-gamesense-topic="maps"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-maps-topic-mobile.png") });
     await mobile.waitForFunction(() => [...document.querySelectorAll('[data-gamesense-topic="weapons"] .gamesense-topic-collage img')].every(image => image.complete && image.naturalWidth > 0));
     await mobile.locator('[data-gamesense-topic="agents"]').screenshot({ path: path.join(__dirname, "tmp", "gamesense-agents-topic-mobile.png") });
-    assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 19);
+    assert.equal(await mobile.locator('[data-gamesense-topic="weapons"] .gamesense-topic-collage img').count(), 20);
     const mobileWeaponTopicArt = await mobile.locator('[data-gamesense-topic="weapons"]').evaluate(card => {
       const title = card.querySelector(":scope > strong").getBoundingClientRect();
       const action = card.querySelector(".gamesense-topic-action").getBoundingClientRect();

@@ -55,7 +55,7 @@
       transform:translate3d(0,0,0) scale(1) !important;
     }
   </style>
-  <link rel="stylesheet" href="app.css?v=20260730-broadcast-focus-final-01">
+  <link rel="stylesheet" href="app.css?v=20260730-melee-desktop-score-01">
   <link rel="stylesheet" href="mobile-qa-final.css?v=20260709-premium-qol-01">
   <link rel="stylesheet" href="mobile-user43-proof.css?v=20260709-premium-qol-01">
 <link rel="stylesheet" href="mobile-user43-final-lock.css?v=20260709-premium-qol-01">
@@ -64,8 +64,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://media.valorant-api.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@600;700&amp;family=Orbitron:wght@700;800&amp;family=Press+Start+2P&amp;family=Silkscreen:wght@400;700&amp;display=swap">
-  <link rel="stylesheet" href="library/gamesense-library.css?v=20260729-border-patch-notes-01">
-  <link rel="stylesheet" href="layout-styles.css?v=20260730-broadcast-focus-final-01">
+  <link rel="stylesheet" href="library/gamesense-library.css?v=20260730-melee-desktop-score-01">
+  <link rel="stylesheet" href="layout-styles.css?v=20260730-melee-desktop-score-01">
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -1280,7 +1280,7 @@ INSIGHTS PAGE
         <div class="card insights-top-card">
           <div class="insights-top-shell">
             <div class="insights-top-header">
-              <div class="card-sub">What To Watch First</div>
+              <div class="card-sub">Important Insights</div>
               <div class="insight-filter-bar" id="insightFilterBar">
                 <button class="insight-filter-btn active" data-filter="all">All</button>
                 <button class="insight-filter-btn" data-filter="bad">Needs Work</button>
@@ -1932,13 +1932,16 @@ stroke-linejoin="round"/>
             <div class="lens-modal-title" id="lensModalTitle">Lens</div>
           </div>
           <div class="lens-modal-body">
-            <div class="lens-modal-section">
-              <h3 class="lens-modal-subtitle" id="lensModalWeightingTitle">Score Weight</h3>
-              <div id="lensWeightingBlock">Loading...</div>
+            <div class="lens-modal-section lens-modal-section-collapsible is-collapsed" id="lensWeightingSection">
+              <button class="lens-modal-collapse-toggle" id="lensWeightingToggle" type="button" aria-expanded="false" aria-controls="lensWeightingBlock">
+                <h3 class="lens-modal-subtitle" id="lensModalWeightingTitle">Score Category Weights</h3>
+                <span data-lens-collapse-symbol aria-hidden="true">+</span>
+              </button>
+              <div id="lensWeightingBlock" hidden>Loading...</div>
             </div>
             <div class="lens-modal-section">
               <div class="lens-modal-subtitle-row">
-                <h3 class="lens-modal-subtitle" id="lensModalStatsTitle">Score Values</h3>
+                <h3 class="lens-modal-subtitle" id="lensModalStatsTitle">Impact Category Scores</h3>
                 <button class="impact-opportunity-tab" id="impactOpportunityTab" type="button" aria-expanded="false" aria-controls="impactOpportunityPanel">Score Opportunities <span aria-hidden="true">+</span></button>
               </div>
                <ul id="lensStatsList"></ul>
@@ -2271,24 +2274,24 @@ stroke-linejoin="round"/>
   <script src="analytics/round-metrics.js?v=20260726-situational-callouts-01"></script>
   <script src="analytics/warmup-correlation.js?v=20260711-training-feed-02"></script>
   <script src="analytics/coaching-rules.js?v=20260730-broadcast-focus-final-01"></script>
-  <script src="language/valorant-vocabulary.js?v=20260730-insights-tone-01"></script>
+  <script src="language/valorant-vocabulary.js?v=20260730-melee-desktop-score-01"></script>
   <script src="data/rank-benchmarks.js?v=20260710-henrik-formulas-01"></script>
   <script src="data/log-policy.js?v=20260714-placement-account-ui-01"></script>
   <script src="data/persistence-policy.js?v=20260727-playlist-history-01"></script>
   <script src="library/gamesense-maps.js?v=20260728-map-performance-01"></script>
-  <script src="library/gamesense-reference.js?v=20260728-map-performance-01"></script>
+  <script src="library/gamesense-reference.js?v=20260730-melee-desktop-score-01"></script>
   <script src="library/gamesense-encyclopedia.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-promoted.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-map-layout-overrides.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-official-media.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-vstats-reference.js?v=20260728-map-performance-01"></script>
   <script src="library/gamesense-heatmaps.js?v=20260728-map-performance-01"></script>
-  <script src="library/gamesense-collections.js?v=20260718-content-automation-01"></script>
+  <script src="library/gamesense-collections.js?v=20260730-melee-desktop-score-01"></script>
 <script>window.RankedCoachCrosshairBackendEnabled = true;</script>
-  <script src="library/gamesense-library.js?v=20260729-border-patch-notes-01"></script>
+  <script src="library/gamesense-library.js?v=20260730-melee-desktop-score-01"></script>
   <script src="integrations/riot-sync.js?v=20260726-situational-callouts-01"></script>
   <script src="daily-entrance-motion.js?v=20260729-border-patch-notes-01"></script>
-  <script type="module" src="app.js?v=20260730-insights-tone-01"></script>
+  <script type="module" src="app.js?v=20260730-melee-desktop-score-01"></script>
   <script type="module" src="knowledge-review.js?v=20260729-border-patch-notes-01"></script>
 </body>
 </html>

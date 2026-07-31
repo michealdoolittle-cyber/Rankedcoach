@@ -28,9 +28,13 @@ assert.match(roundMetrics, /aliveAllies\.size === 1/);
 assert.match(roundMetrics, /clutchKills >= 2/);
 assert.doesNotMatch(roundMetrics, /ceremony\.toLowerCase\(\)\.includes\("closer"\)/);
 
-assert.match(html, /id="lensModalStatsTitle">Score Values<\/h3>[\s\S]*id="impactOpportunityTab"/);
-assert.match(app, /weightingTitle\.textContent = "Why This Score Changed"/);
-assert.match(app, /statsTitle\.textContent = "What Moved This Score"/);
+assert.match(html, /id="lensWeightingSection"[\s\S]*id="lensWeightingToggle"[\s\S]*id="lensModalWeightingTitle">Score Category Weights<\/h3>[\s\S]*id="lensWeightingBlock" hidden/);
+assert.match(html, /id="lensModalStatsTitle">Impact Category Scores<\/h3>[\s\S]*id="impactOpportunityTab"/);
+assert.match(app, /weightingTitle\.textContent = "Score Category Weights"/);
+assert.match(app, /statsTitle\.textContent = "Impact Category Scores"/);
+assert.match(app, /setLensWeightingCollapsed\(true\)/);
+assert.match(app, /playercards\\\/\(\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\)\\\//);
+assert.match(app, /source media="\(min-width: 1080px\)" srcset="\$\{escapeHtml\(highResImage\)\}"/);
 
 assert.doesNotMatch(app, /scopevignette/);
 assert.doesNotMatch(layoutCss, /scopevignette/);

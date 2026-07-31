@@ -219,8 +219,13 @@ async function run() {
 
     await page.locator("#impactRolePill").click();
     await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
-    assert.equal((await page.locator("#lensModalWeightingTitle").textContent()).trim(), "Why This Score Changed");
-    assert.equal((await page.locator("#lensModalStatsTitle").textContent()).trim(), "What Moved This Score");
+    assert.equal((await page.locator("#lensModalWeightingTitle").textContent()).trim(), "Score Category Weights");
+    assert.equal((await page.locator("#lensModalStatsTitle").textContent()).trim(), "Impact Category Scores");
+    assert.equal(await page.locator("#lensWeightingToggle").getAttribute("aria-expanded"), "false");
+    assert.equal(await page.locator("#lensWeightingBlock").isHidden(), true);
+    await page.locator("#lensWeightingToggle").click();
+    assert.equal(await page.locator("#lensWeightingToggle").getAttribute("aria-expanded"), "true");
+    assert.equal(await page.locator("#lensWeightingBlock").isVisible(), true);
     assert.equal(await page.locator("#impactOpportunityTab").evaluate(button => button.parentElement?.classList.contains("lens-modal-subtitle-row")), true);
     assert.equal(await page.locator(".impact-opportunity-panel").isVisible(), false);
     assert.equal(await page.locator("#impactOpportunityList .impact-opportunity-item").count(), 3);

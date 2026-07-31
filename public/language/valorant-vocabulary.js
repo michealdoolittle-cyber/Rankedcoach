@@ -150,7 +150,7 @@
       actionCopy: "Start with the read most likely to help your next ranked block.",
       priorityWaiting: "Waiting on real data",
       confidenceWaiting: "Still checking",
-      priorityTrends: "What To Watch First",
+      priorityTrends: "Important Insights",
       trendGroups: "Supporting Reads",
       trendIntro: "Pick a group to see what backs up the read."
     }),

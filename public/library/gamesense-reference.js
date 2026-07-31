@@ -135,6 +135,8 @@
     },
     {
       id: "raze", label: "Raze", role: "Duelist", maps: ["Lotus", "Split", "Sunset"],
+      icon: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/displayicon.png",
+      portrait: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/fullportrait.png",
       fundamentals: [
         "Boom Bot and Paint Shells clear the close positions that stop your entry. Send the clear first, then move while the defender is displaced.",
         "Blast Pack creates fast space, but the landing still needs cover or teammate pressure. Use the second pack to finish the route or escape the trade.",
@@ -143,6 +145,52 @@
       patchHistory: [
         patchNote("12.02", "Boom Bot can now be concussed."),
         patchNote("11.08", "Slows now reduce Blast Pack movement while Raze is airborne.")
+      ],
+      abilities: [
+        {
+          id: "boom-bot",
+          name: "Boom Bot",
+          slot: "C - Basic",
+          icon: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/grenade/displayicon.png",
+          summary: "A ground bot that travels forward, bounces off walls, locks onto enemies in its frontal cone, and explodes if it reaches them.",
+          stats: { Cost: "Buy-menu utility", Charges: "1", Damage: "Explosive on contact", Tracking: "Frontal cone" },
+          purpose: "Clear close corners, force a defender to shoot, and create a safe entry timing through the noise and displacement.",
+          setup: "Send it into the first danger pocket your entry cannot safely face-check. Swing while the defender is dodging or breaking the bot.",
+          video: riotAbilityVideo("https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/c824fe8e08a4f36be2273aa456819d2c2b6cd6b0.mp4?accountingTag=VAL", "Raze Boom Bot ability demo")
+        },
+        {
+          id: "blast-pack",
+          name: "Blast Pack",
+          slot: "Q - Basic",
+          icon: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ability1/displayicon.png",
+          summary: "A sticky satchel that can be re-used after deployment to detonate, moving anything hit and dealing damage once armed.",
+          stats: { Cost: "Buy-menu utility", Charges: "2", Damage: "Armed satchel damage", Movement: "Self-launching displacement" },
+          purpose: "Create fast entry space, reposition through vertical routes, break utility, or escape the trade after first contact.",
+          setup: "Pick a landing before you satchel. The movement is powerful only when the destination has cover or teammate pressure attached.",
+          video: riotAbilityVideo("https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/82028c5e9ae38b59660dbf9f57f341f1c20c5480.mp4?accountingTag=VAL", "Raze Blast Pack ability demo")
+        },
+        {
+          id: "paint-shells",
+          name: "Paint Shells",
+          slot: "E - Signature",
+          icon: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ability2/displayicon.png",
+          summary: "A cluster grenade that bursts once, then creates smaller sub-munitions that damage anyone in their range.",
+          stats: { Cost: "Signature utility", Recharge: "Resets after two kills", Damage: "Cluster explosive damage", AltFire: "Lob throw" },
+          purpose: "Clear tight angles, deny a choke, punish trapped players, and force defenders out before the entry swing.",
+          setup: "Throw it where defenders still need to stand, not where they already escaped. Paint Shells is best when a teammate can punish the exit path.",
+          video: riotAbilityVideo("https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/d75fd65435a84906bb3e8ad0b97c505e7359697b.mp4?accountingTag=VAL", "Raze Paint Shells ability demo")
+        },
+        {
+          id: "showstopper",
+          name: "Showstopper",
+          slot: "X - Ultimate",
+          icon: "https://media.valorant-api.com/agents/f94c3b30-42be-e959-889c-5aa313dba261/abilities/ultimate/displayicon.png",
+          summary: "Equip a rocket launcher that fires a projectile with massive area damage on contact.",
+          stats: { Cost: "Ultimate points", Charges: "1 rocket", Damage: "Massive area damage", Range: "Projectile travel" },
+          purpose: "Break a stacked defense, punish a trapped opponent, or force a retake player away from the spike timer.",
+          setup: "Narrow the enemy's exits first with utility, contact, or teammate pressure. Fire at the space they must cross rather than at a guessed hiding spot.",
+          video: riotAbilityVideo("https://cmsassets.rgpub.io/sanity/files/dsfx7636/game_data/7281a34566f12d202dee3d43e0fa0bf0b4271d60.mp4?accountingTag=VAL", "Raze Showstopper ability demo")
+        }
       ]
     }
   ];
@@ -210,7 +258,19 @@
     classic: weapon("classic", "Classic", 0, 12, "6.75 rounds/sec", "Low", [{ range: "0-30m", head: 78, body: 26, legs: 22 }, { range: "30-50m", head: 66, body: 22, legs: 19 }], "Use controlled taps at range, and do not sleep on the alt-fire. Its three-round burst stays accurate while jumping or running, which makes it a real close-range movement option."),
     frenzy: weapon("frenzy", "Frenzy", 450, 15, "10 rounds/sec", "Low", [{ range: "0-20m", head: 78, body: 26, legs: 22 }, { range: "20-50m", head: 63, body: 21, legs: 18 }], "Treat it like a compact SMG: close distance, control the short magazine, and avoid long-range tap races."),
     ghost: weapon("ghost", "Ghost", 500, 13, "6.75 rounds/sec", "Medium", [{ range: "0-30m", head: 105, body: 30, legs: 26 }, { range: "30-50m", head: 88, body: 25, legs: 21 }], "Use the clean first shot and quiet profile for disciplined pistol-round picks; reset instead of panic-spamming."),
-    sheriff: weapon("sheriff", "Sheriff", 800, 6, "4 rounds/sec", "High", [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], "Protect the 0-30m one-shot headshot range and let recoil settle. This is a stop-and-shoot weapon, not a flick gun." )
+    sheriff: weapon("sheriff", "Sheriff", 800, 6, "4 rounds/sec", "High", [{ range: "0-30m", head: 160, body: 55, legs: 47 }, { range: "30-50m", head: 145, body: 50, legs: 43 }], "Protect the 0-30m one-shot headshot range and let recoil settle. This is a stop-and-shoot weapon, not a flick gun." ),
+    melee: {
+      ...weapon("melee", "Melee", "Always equipped", "No magazine", "Swing timing", "Not applicable", [], "Melee is shown here for skin previews and close-contact fundamentals. RankedCoach does not treat knife usage as a competitive weapon-stat category."),
+      image: "https://media.valorant-api.com/weapons/2f59173c-4bed-b6c3-2191-dea9b58be9c7/displayicon.png",
+      libraryOnly: true,
+      meleeDamage: [
+        { label: "Light attack", damage: 50, condition: "Front or side contact", range: "Melee contact" },
+        { label: "Light backstab", damage: 100, condition: "Behind the target", range: "Melee contact" },
+        { label: "Heavy attack", damage: 75, condition: "Front or side contact", range: "Melee contact" },
+        { label: "Heavy backstab", damage: 150, condition: "Behind the target", range: "Melee contact" }
+      ],
+      damageSource: "https://valorant.fandom.com/wiki/Melee"
+    }
   };
 
   const weaponGuides = {
@@ -293,6 +353,11 @@
       whenToUse: ["Buy it when an eco round needs one-shot headshot threat inside 30 meters.", "Its high penetration can punish a confirmed common wall position, but six rounds demand a planned exit."],
       howToUse: ["Stop moving before every shot and hold your crosshair at head height on likely angles before the enemy appears. The Sheriff punishes a late flick far more than it rewards one.", "If the target is moving or at range, two body shots beat forcing a low-percentage headshot. Do not spam after a miss; reset to cover and take the next deliberate shot."],
       patchHistory: [patchNote("3.00", "Walking inaccuracy rose from 0.25 to 1.2 and running inaccuracy from 2.0 to 3.0."), patchNote("6.11", "Minimum spread on ropes rose from 0.35 to 0.78 as rope combat was made less reliable.")]
+    },
+    melee: {
+      whenToUse: ["Use it for movement speed, rotating between safe areas, and last-resort close contact only.", "Use melee skin browsing here as a cosmetic reference; it should not influence ranked fight planning."],
+      howToUse: ["Do not plan normal rounds around melee damage. Swap back to a gun before contact unless the target is isolated and already forced into knife range.", "Backstab values are useful for understanding the weapon, not for building a repeatable competitive habit."],
+      patchHistory: []
     }
   };
   Object.entries(weaponGuides).forEach(([id, guide]) => {
@@ -326,7 +391,8 @@
     { id: "snipers", label: "Snipers", examples: "Operator, Outlaw, Marshal", range: "Long sightlines", weaponIds: ["operator", "outlaw", "marshal"] },
     { id: "smgs", label: "SMGs", examples: "Spectre, Stinger", range: "Close-range pressure", weaponIds: ["spectre", "stinger"] },
     { id: "shotguns", label: "Shotguns", examples: "Judge, Bucky, Shorty", range: "Close-range only", weaponIds: ["judge", "bucky", "shorty"] },
-    { id: "sidearms", label: "Sidearms", examples: "Classic, Frenzy, Ghost, Sheriff", range: "Pistol and save rounds", weaponIds: ["classic", "frenzy", "ghost", "sheriff"] }
+    { id: "sidearms", label: "Sidearms", examples: "Classic, Frenzy, Ghost, Sheriff", range: "Pistol and save rounds", weaponIds: ["classic", "frenzy", "ghost", "sheriff"] },
+    { id: "melee", label: "Melee", examples: "Knife", range: "Melee only", weaponIds: ["melee"] }
   ].map(group => ({ ...group, weapons: group.weaponIds.map(id => weaponCatalog[id]) }));
 
   const warmupDetails = {

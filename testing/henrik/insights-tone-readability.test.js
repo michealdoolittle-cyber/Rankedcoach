@@ -44,7 +44,7 @@ assert.match(appSource, /function getInsightConfidenceDisplay/);
 assert.match(appSource, /function getInsightPriorityDisplay/);
 assert.match(appSource, /Focus: \$\{escapeHtml\(normalizedInsightFocus\)\}/);
 assert.match(indexSource, /Start with the read most likely to help your next ranked block\./);
-assert.match(indexSource, /What To Watch First/);
+assert.match(indexSource, /Important Insights/);
 assert.match(indexSource, /Supporting Reads/);
 
 const userFacingToneCopy = flattenStrings(vocabulary.insightToneCopy);

@@ -2261,6 +2261,10 @@ function ensureMobileLoggingTabs() {
   const page = document.getElementById("page-logging");
   const layout = page?.querySelector(".logging-layout");
   if (!page || !layout) return;
+  if (!isMobileLayoutViewport()) {
+    document.getElementById("mobileLoggingTabs")?.remove();
+    return;
+  }
 
   let tabs = document.getElementById("mobileLoggingTabs");
   if (!tabs) {
@@ -2297,6 +2301,10 @@ function ensureMobileStatsTabs() {
   const page = document.getElementById("page-stats");
   const grid = page?.querySelector(".stats-main-grid");
   if (!page || !grid) return;
+  if (!isMobileLayoutViewport()) {
+    document.getElementById("mobileStatsTabs")?.remove();
+    return;
+  }
 
   let tabs = document.getElementById("mobileStatsTabs");
   if (!tabs) {
@@ -15350,7 +15358,7 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-top-card",
-    title: "What To Watch First",
+    title: "Important Insights",
     copy: "These reads are most likely to matter right now. Use the filters to split problems, watch items, and strengths."
   },
   {
@@ -16896,6 +16904,7 @@ function openLensModal(lens){
   title.textContent = lensDetail?.title || "Lens";
   if (weightingTitle) weightingTitle.textContent = "Weighting";
   if (statsTitle) statsTitle.textContent = "Stats Behind This";
+  setLensWeightingCollapsed(false);
   weightingBlock.innerHTML = "";
   list.innerHTML = "";
 
@@ -21266,6 +21275,18 @@ function renderImpactOpportunityPullout({ roleWeightEntries = [], componentMap =
   setImpactOpportunityPulloutOpen(false);
 }
 
+function setLensWeightingCollapsed(shouldCollapse = true) {
+  const section = document.getElementById("lensWeightingSection");
+  const toggle = document.getElementById("lensWeightingToggle");
+  const block = document.getElementById("lensWeightingBlock");
+  const symbol = toggle?.querySelector("[data-lens-collapse-symbol]");
+  const collapsed = Boolean(shouldCollapse);
+  section?.classList.toggle("is-collapsed", collapsed);
+  if (block) block.hidden = collapsed;
+  toggle?.setAttribute("aria-expanded", collapsed ? "false" : "true");
+  if (symbol) symbol.textContent = collapsed ? "+" : "−";
+}
+
 function setImpactOpportunityPulloutOpen(shouldOpen) {
   const pullout = document.getElementById("impactOpportunityPullout");
   const tab = document.getElementById("impactOpportunityTab");
@@ -21358,8 +21379,9 @@ function openImpactModal() {
   }
 
   if (title) title.textContent = "Selected Match Impact";
-  if (weightingTitle) weightingTitle.textContent = "Why This Score Changed";
-  if (statsTitle) statsTitle.textContent = "What Moved This Score";
+  if (weightingTitle) weightingTitle.textContent = "Score Category Weights";
+  if (statsTitle) statsTitle.textContent = "Impact Category Scores";
+  setLensWeightingCollapsed(true);
 
   list.innerHTML = "";
   if (weightingBlock) weightingBlock.innerHTML = "";
@@ -41252,6 +41274,13 @@ function bindEvents(){
     setImpactOpportunityPulloutOpen(false);
   });
 
+  document.getElementById("lensWeightingToggle")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const block = document.getElementById("lensWeightingBlock");
+    setLensWeightingCollapsed(block?.hidden !== true ? true : false);
+  });
+
   document.getElementById("logSaveBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -45667,6 +45696,8 @@ function normalizeProfileBannerDisplayName(displayName = "") {
 
 function getValorantPlayerCardUuid(value = "") {
   const raw = String(value || "").trim().toLowerCase();
+  const urlMatch = raw.match(/playercards\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\//i);
+  if (urlMatch?.[1]) return urlMatch[1];
   const candidate = raw.startsWith(VALORANT_PLAYER_CARD_VALUE_PREFIX)
     ? raw.slice(VALORANT_PLAYER_CARD_VALUE_PREFIX.length)
     : raw;
@@ -54596,7 +54627,7 @@ function renderInsightCardsModel() {
   const allInsights = getInsightDisplayPool(model);
   bindInsightFilters();
   const filterLabels = {
-    all: getInsightToneCopy("firstRender.priorityTrends", "What To Watch First"),
+    all: getInsightToneCopy("firstRender.priorityTrends", "Important Insights"),
     bad: getInsightToneCopy("filters.bad", "Needs Work"),
     warn: getInsightToneCopy("filters.warn", "Watch"),
     good: getInsightToneCopy("filters.good", "Strengths")
@@ -54607,7 +54638,7 @@ function renderInsightCardsModel() {
 
   if (!list.length) {
     const hasAnyInsights = allInsights.length > 0;
-    const filterLabel = filterLabels[activeInsightFilter] || getInsightToneCopy("firstRender.priorityTrends", "What To Watch First");
+    const filterLabel = filterLabels[activeInsightFilter] || getInsightToneCopy("firstRender.priorityTrends", "Important Insights");
     const emptyCard = document.createElement("div");
     emptyCard.className = "insight-card insight-empty";
     emptyCard.innerHTML = `

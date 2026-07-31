@@ -16837,7 +16837,7 @@ textarea {
 
 .lens-modal-section:first-of-type {
   border-top:none;
-  display:content;
+  display:block;
 }
 
 .lens-modal-subtitle {
@@ -16846,6 +16846,50 @@ textarea {
   letter-spacing:0.12em;
   color:#9ca3af;
   margin:0 0 10px;
+}
+
+.lens-modal-section-collapsible{
+  padding-top:0;
+}
+
+.lens-modal-collapse-toggle{
+  appearance:none;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 12px;
+  border:1px solid rgba(148,163,184,.22);
+  border-radius:12px;
+  background:linear-gradient(135deg, rgba(15,23,42,.88), rgba(30,41,59,.68));
+  color:#f8fafc;
+  cursor:pointer;
+}
+
+.lens-modal-collapse-toggle .lens-modal-subtitle{
+  margin:0;
+}
+
+.lens-modal-collapse-toggle > span{
+  min-width:30px;
+  height:26px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid color-mix(in srgb, var(--accent, #22d3ee) 55%, rgba(148,163,184,.28));
+  border-radius:8px;
+  color:var(--accent, #22d3ee);
+  font-weight:900;
+  line-height:1;
+}
+
+#lensWeightingBlock[hidden]{
+  display:none !important;
+}
+
+.lens-modal-section-collapsible:not(.is-collapsed) #lensWeightingBlock{
+  margin-top:10px;
 }
 
 /* ===========================
@@ -58668,6 +58712,20 @@ body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-lightning-bolt
 html body .nav-right #profilePanel.profile-panel,
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .nav-right #profilePanel.profile-panel{
   overflow:visible !important;
+}
+
+/* Desktop hard stop for controls that are generated only for mobile section switching. */
+html:not(.is-mobile-layout) body:not(.is-mobile-layout) :is(
+  #mobileLoggingTabs,
+  #mobileStatsTabs,
+  #mobileTrendTabs,
+  .mobile-logging-tabs,
+  .mobile-stats-tabs,
+  .mobile-trend-tabs
+){
+  display:none !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
 }
 
 html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor,
