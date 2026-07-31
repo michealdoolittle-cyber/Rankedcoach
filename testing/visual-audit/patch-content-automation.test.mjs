@@ -35,7 +35,9 @@ assert.equal(descriptor.notesUrl, "https://playvalorant.com/en-us/news/game-upda
 const liveVersionResponse = await fetch("https://valorant-api.com/v1/version");
 assert.equal(liveVersionResponse.ok, true, "The live Valorant version endpoint must resolve.");
 const liveVersionPayload = await liveVersionResponse.json();
-assert.equal(getPatchDescriptor(liveVersionPayload.data).label, "13.01", "The live wrapped version payload must expose the current patch.");
+const liveDescriptor = getPatchDescriptor(liveVersionPayload.data);
+assert.match(liveDescriptor.label, /^\d+\.\d{2}$/, "The live wrapped version payload must expose a current patch label.");
+assert.match(liveDescriptor.notesUrl, /valorant-patch-notes-\d{2}-\d{2}\/$/, "The live wrapped version payload must map to Riot's patch-note URL shape.");
 
 const patchUrls = ["13-01", "13-00", "12-11"].map(slug => `https://playvalorant.com/en-us/news/game-updates/valorant-patch-notes-${slug}/`);
 const patchResponses = await Promise.all(patchUrls.map(url => fetch(url)));
