@@ -66,8 +66,24 @@ assert.ok(fs.existsSync(bulletAsset), "Bullet-hole broadcast asset is missing.")
 assert.ok(app.includes("RankedCoachBroadcastDebug"), "A debug hook must exist so QA can force each burst variant.");
 assert.ok(css.includes(".broadcast-lightning-core"), "Lightning must render as an SVG bolt, not a plain bar.");
 assert.ok(css.includes("broadcastTargetFlash"), "Lightning must flash the target frame.");
+[
+  "#ffffff",
+  "#f0f9ff",
+  "#7dd3fc",
+  "#38bdf8",
+  "#0ea5e9"
+].forEach(color => {
+  assert.ok(app.includes(color) || css.includes(color), `Lightning must use blue/white electric color: ${color}`);
+});
+assert.ok(css.includes("color-mix(in srgb, currentColor 62%, #0ea5e9 38%)"), "Lightning glow must blend blue, not orange.");
 assert.ok(css.includes(".broadcast-particle--ice"), "Ice must render a sheet over the target.");
 assert.ok(css.includes(".broadcast-particle--ice-shard"), "Ice must shatter into shards.");
+assert.ok(app.includes("createBroadcastScatteredPoints"), "Bullet impacts must use scattered independent points.");
+assert.ok(app.includes("Math.min(5, Number(options.count) || 5)"), "Bullet impacts must be capped at five shots.");
+assert.ok(app.includes("i * 310"), "Bullet impacts must be staggered one after another.");
+assert.ok(extractBlock(css, ".broadcast-particle{").includes("opacity:0"), "Delayed burst particles must be hidden until their own animation begins.");
+assert.ok(css.includes("animation-name:broadcastBulletHoleBurst"), "Preview force-motion must preserve bullet animation delay by using longhand animation properties.");
+assert.ok(css.includes("mix-blend-mode:normal"), "Smoke must avoid the invisible screen-blend treatment.");
 assert.ok(css.includes("broadcastEmberAshReveal"), "Ember must include a burn/ash reveal over the target.");
 assert.ok(app.includes("getBroadcastCinematicTarget"), "Broad page targets must be redirected to the cinematic target.");
 
