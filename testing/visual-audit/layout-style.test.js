@@ -121,7 +121,7 @@ const surfaceContentExtremes = Object.freeze({
     "#compassDescriptionToggle.compass-description-toggle": { short: "Details", long: "Hide Coach Description" },
     ".graph-btn": { short: "Act", long: "Lifetime" },
     "#timelineCycleBtn.timeline-cycle-btn": { short: "Act", long: "All Seasons" },
-    ".weekly-focus-confidence": { short: "High", long: "Confidence: Medium" }
+    ".weekly-focus-confidence": { short: "High", long: "Some proof" }
   },
   stats: {
     ".stats-summary-card": { short: "Iron 1", long: "Ascendant 3" },
@@ -625,14 +625,14 @@ async function ensureLayoutTagFixtures(page, pageKey) {
   await page.evaluate(key => {
     const definitions = {
       home: [
-        { selector: ".weekly-focus-confidence", className: "weekly-focus-confidence confidence-high", text: "Confidence: High" }
+        { selector: ".weekly-focus-confidence", className: "weekly-focus-confidence confidence-high", text: "Strong proof" }
       ],
       stats: [
         { selector: ".stats-trend-tone", className: "stats-trend-tone", text: "Watch", parentClass: "stats-trend-card stats-trend-warn" }
       ],
       insights: [
         { selector: ".insight-tag", className: "insight-tag", text: "GOOD", parentClass: "insight-card insight-good" },
-        { selector: ".insight-meta-pill", className: "insight-meta-pill tone-warn", text: "Confidence: High" },
+        { selector: ".insight-meta-pill", className: "insight-meta-pill tone-warn", text: "Strong proof" },
         { selector: ".insight-source", className: "insight-source", text: "Henrik Round History" },
         { selector: ".trend-signal-tone", className: "trend-signal-tone", text: "Watch", parentClass: "trend-signal-card tone-warn" }
       ]

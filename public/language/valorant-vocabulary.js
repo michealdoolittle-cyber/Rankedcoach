@@ -144,6 +144,152 @@
     ]
   });
 
+  const insightToneCopy = Object.freeze({
+    firstRender: Object.freeze({
+      mainFocusKicker: "Main Focus",
+      actionCopy: "Start with the read most likely to help your next ranked block.",
+      priorityWaiting: "Waiting on real data",
+      confidenceWaiting: "Still checking",
+      priorityTrends: "What To Watch First",
+      trendGroups: "Supporting Reads",
+      trendIntro: "Pick a group to see what backs up the read."
+    }),
+    filters: Object.freeze({
+      all: "All",
+      bad: "Needs Work",
+      warn: "Watch",
+      good: "Strengths"
+    }),
+    confidence: Object.freeze({
+      high: "Strong proof",
+      medium: "Some proof",
+      low: "Still checking",
+      default: "Still checking"
+    }),
+    priority: Object.freeze({
+      immediate: "Fix first",
+      high: "High priority",
+      moderate: "Worth watching",
+      watch: "Keep watching",
+      default: "Keep watching"
+    }),
+    empty: Object.freeze({
+      noGroupTitle: "Nothing here yet",
+      noDataTitle: "RankedCoach needs more games",
+      noGroupPreview: "This group has no reads in the current window.",
+      noDataPreview: "This panel fills after you import matches or save reflections.",
+      nextMoveLabel: "NEXT MOVE",
+      noGroupNextMove: "Open All to see the reads you have, or keep importing matches and logs.",
+      noDataNextMove: "Import a few matches or save reflections so RankedCoach can find a real pattern."
+    }),
+    fallbackRead: Object.freeze({
+      title: "Waiting for a read",
+      detail: "Import more matches or logs to make this specific.",
+      defaultMediaLabel: "Coaching read"
+    }),
+    trendFallbacks: Object.freeze({
+      performance: Object.freeze({
+        title: "Match Reads",
+        waitingValue: "Need matches",
+        activeDetail: "These reads use your imported match results and stat trends.",
+        waitingDetail: "Import matches or save logs to unlock K/D, win rate, and map reads."
+      }),
+      behavior: Object.freeze({
+        title: "Log Reads",
+        detail: "Your logs connect focus, mood, rating, comms, and notes."
+      }),
+      role: Object.freeze({
+        title: "Role Reads",
+        detail: "Role reads compare fights, utility, and round impact."
+      }),
+      consistency: Object.freeze({
+        title: "Repeat Patterns",
+        activeValue: "Pattern building",
+        waitingValue: "Need more games",
+        detail: "These reads look for repeat swings in matches, logs, focus, and form."
+      }),
+      default: Object.freeze({
+        kicker: "Coaching",
+        title: "Coaching Read",
+        value: "Need more games",
+        detail: "This fills as RankedCoach gets more profile context."
+      })
+    })
+  });
+
+  const insightToneSourceLog = Object.freeze({
+    directive: "rankedcoach-insights-tone-directive-2026-07-22",
+    standards: "rankedcoach-language-standards-riot-lens-2026-07-22",
+    lastReviewed: "2026-07-30",
+    approvedExcerptCorpus: Object.freeze({
+      availableInClientBundle: false,
+      status: "gap-flagged",
+      note: "Owner-approved transcript excerpts live in the private knowledge pipeline, not in this public wording bundle. This pass uses internal vetted RankedCoach copy as the fallback source and records the gap instead of pretending the approved corpus was available."
+    }),
+    fallbackSources: Object.freeze([
+      Object.freeze({
+        id: "home-main-focus-why-how-source",
+        approvalStatus: "internal-vetted",
+        momentTypes: Object.freeze(["next-action", "why-how-source"]),
+        vocabulary: Object.freeze(["what", "why", "action", "next block", "real pattern", "review"])
+      }),
+      Object.freeze({
+        id: "warmup-drill-copy",
+        approvalStatus: "internal-vetted",
+        momentTypes: Object.freeze(["prep", "simple-action"]),
+        vocabulary: Object.freeze(["before playing", "keep", "choose", "ready"])
+      }),
+      Object.freeze({
+        id: "session-debrief-tags",
+        approvalStatus: "internal-vetted",
+        momentTypes: Object.freeze(["short-tag", "post-game"]),
+        vocabulary: Object.freeze(["good", "watch", "needs work", "reset", "saved"])
+      })
+    ]),
+    momentVocabulary: Object.freeze({
+      nextAction: Object.freeze(["next block", "next game", "one rule", "keep testing", "reset"]),
+      evidence: Object.freeze(["match history", "logs", "rounds", "read", "proof", "still checking"]),
+      tactical: Object.freeze(["peek", "trade", "entry", "rotate", "econ", "retake", "post-plant", "default", "execute"]),
+      avoid: Object.freeze(["utilize", "facilitate", "optimal", "leverage", "regarding", "additionally", "furthermore", "adjustment", "metric", "indicates", "demonstrates"])
+    }),
+    rewriteAudit: Object.freeze({
+      insightsFirstRender: Object.freeze({
+        sourceIds: Object.freeze(["home-main-focus-why-how-source"]),
+        sourceStatus: "internal-vetted",
+        change: "Replaced formal placeholder copy with direct next-block coaching language."
+      }),
+      insightMetaPills: Object.freeze({
+        sourceIds: Object.freeze(["session-debrief-tags"]),
+        sourceStatus: "internal-vetted",
+        change: "Replaced status-like Confidence/Priority phrasing with short player-facing read labels."
+      }),
+      trendFallbacks: Object.freeze({
+        sourceIds: Object.freeze(["home-main-focus-why-how-source", "warmup-drill-copy"]),
+        sourceStatus: "internal-vetted",
+        change: "Kept tactical terms while shortening fallback reads into one idea per sentence."
+      })
+    }),
+    conflictTieBreak: "If approved language sources conflict later, prefer the most recently owner-approved excerpt and log the source id before adapting templates.",
+    rollbackTrail: "Visible Insights copy is centralized in insightToneCopy and helper-based render calls so old wording can be restored from one source."
+  });
+
+  function getPathValue(source, path) {
+    return String(path || "")
+      .split(".")
+      .filter(Boolean)
+      .reduce((value, key) => (value && Object.prototype.hasOwnProperty.call(value, key) ? value[key] : undefined), source);
+  }
+
+  function getInsightToneCopy(path, fallback = "") {
+    const value = getPathValue(insightToneCopy, path);
+    return typeof value === "string" ? value : fallback;
+  }
+
+  function getInsightToneAudit(key = "") {
+    if (!key) return insightToneSourceLog;
+    return getPathValue(insightToneSourceLog.rewriteAudit, key) || null;
+  }
+
   function hash(value) {
     return Array.from(String(value || "")).reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 2166136261);
   }
@@ -163,5 +309,14 @@
     return Object.values(terms).flat().join(", ");
   }
 
-  global.RankedCoachValorantVocabulary = Object.freeze({ terms, cardVariants, selectCardVariant, getPromptTerminology });
+  global.RankedCoachValorantVocabulary = Object.freeze({
+    terms,
+    cardVariants,
+    insightToneCopy,
+    insightToneSourceLog,
+    selectCardVariant,
+    getPromptTerminology,
+    getInsightToneCopy,
+    getInsightToneAudit
+  });
 })(globalThis);

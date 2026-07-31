@@ -4596,7 +4596,11 @@ const COACHING_LANGUAGE_RULES = Object.freeze([
   "For weapon and economy reads, name the weapon, its win rate, and its share of wins in that buy class.",
   "Use the actual role name instead of saying this role or role sample.",
   "Describe what a 100-point score means before asking the player to interpret its gap.",
-  "Keep stats factual; reserve coaching language for the consequence and the next action."
+  "Keep stats factual; reserve coaching language for the consequence and the next action.",
+  "Every coaching sentence should tell the player what the read means or what to do next.",
+  "Keep real Valorant terms when they make the action clearer; simplify the sentence around the term.",
+  "Match confidence language to the evidence and say plainly when the data is still thin.",
+  "Keep agent, map, weapon, and ability facts dry unless the source proves the coaching claim."
 ]);
 
 function getCoachingSampleTone(evidenceLayer = {}) {
@@ -11182,6 +11186,27 @@ function getInsightMetaToneClass(kind = "", label = "", fallbackTone = "neutral"
   return "tone-neutral";
 }
 
+function getInsightToneCopy(path = "", fallback = "") {
+  return globalThis.RankedCoachValorantVocabulary?.getInsightToneCopy?.(path, fallback) || fallback;
+}
+
+function getInsightConfidenceDisplay(label = "") {
+  const normalized = String(label || "").trim().toLowerCase();
+  if (normalized.includes("high")) return getInsightToneCopy("confidence.high", "Strong proof");
+  if (normalized.includes("medium")) return getInsightToneCopy("confidence.medium", "Some proof");
+  if (normalized.includes("low")) return getInsightToneCopy("confidence.low", "Still checking");
+  return getInsightToneCopy("confidence.default", "Still checking");
+}
+
+function getInsightPriorityDisplay(label = "") {
+  const normalized = String(label || "").trim().toLowerCase();
+  if (normalized.includes("immediate")) return getInsightToneCopy("priority.immediate", "Fix first");
+  if (normalized.includes("high")) return getInsightToneCopy("priority.high", "High priority");
+  if (normalized.includes("moderate")) return getInsightToneCopy("priority.moderate", "Worth watching");
+  if (normalized.includes("watch")) return getInsightToneCopy("priority.watch", "Keep watching");
+  return getInsightToneCopy("priority.default", "Keep watching");
+}
+
 function normalizeInsightFilterType(insight = {}) {
   const rawType = String(insight?.type || "").trim().toLowerCase();
   if (["bad", "needs", "needs-work", "need-work", "down", "negative"].includes(rawType)) return "bad";
@@ -11250,7 +11275,7 @@ function getTrendSignalMediaLabel(item = {}) {
   const kicker = String(item?.kicker || "").trim();
   if (kicker) return kicker;
 
-  return "Insight";
+  return getInsightToneCopy("fallbackRead.defaultMediaLabel", "Coaching read");
 }
 
 function getTrendSignalSvgIcon(kind = "general", tone = "neutral") {
@@ -11398,9 +11423,9 @@ function renderTrendBreakdownCard(item = {}) {
         <span class="trend-signal-tone">${toneMeta.label}</span>
       </div>
       <div class="trend-signal-kicker">${escapeHtml(item?.kicker || "Insight")}</div>
-      <div class="trend-signal-title">${escapeHtml(item?.title || "Waiting for insight")}</div>
+      <div class="trend-signal-title">${escapeHtml(item?.title || getInsightToneCopy("fallbackRead.title", "Waiting for a read"))}</div>
       <div class="trend-signal-value">${escapeHtml(item?.value || "--")}</div>
-      <div class="trend-signal-detail">${escapeHtml(item?.detail || "No additional read available yet.")}</div>
+      <div class="trend-signal-detail">${escapeHtml(item?.detail || getInsightToneCopy("fallbackRead.detail", "Import more matches or logs to make this specific."))}</div>
     </article>
   `;
 }
@@ -11418,9 +11443,9 @@ function getTrendBreakdownFallbackItems(key = "", model = {}) {
         mediaType: "map",
         mediaValue: mapLabel,
         kicker: "Performance",
-        title: "Match Insights",
-        value: matchesPlayed ? `${matchesPlayed} matches tracked` : "Waiting for matches",
-        detail: matchesPlayed ? "Current performance reads are built from imported match outcomes and stat trends." : "Import or log matches to unlock KD, win-rate, and map-performance reads."
+        title: getInsightToneCopy("trendFallbacks.performance.title", "Match Reads"),
+        value: matchesPlayed ? `${matchesPlayed} matches tracked` : getInsightToneCopy("trendFallbacks.performance.waitingValue", "Need matches"),
+        detail: matchesPlayed ? getInsightToneCopy("trendFallbacks.performance.activeDetail", "These reads use your imported match results and stat trends.") : getInsightToneCopy("trendFallbacks.performance.waitingDetail", "Import matches or save logs to unlock K/D, win rate, and map reads.")
       }
     ],
     behavior: [
@@ -11429,9 +11454,9 @@ function getTrendBreakdownFallbackItems(key = "", model = {}) {
         mediaType: "text",
         mediaText: "Logs",
         kicker: "Session Habits",
-        title: "Log Reads",
+        title: getInsightToneCopy("trendFallbacks.behavior.title", "Log Reads"),
         value: focusLabel,
-        detail: "Log reads connect your focus category, mood, rating, comms, and notes into coaching patterns."
+        detail: getInsightToneCopy("trendFallbacks.behavior.detail", "Your logs connect focus, mood, rating, comms, and notes.")
       }
     ],
     role: [
@@ -11440,9 +11465,9 @@ function getTrendBreakdownFallbackItems(key = "", model = {}) {
         mediaType: "role",
         mediaValue: roleLabel,
         kicker: "Role Results",
-        title: "Role Reads",
+        title: getInsightToneCopy("trendFallbacks.role.title", "Role Reads"),
         value: String(roleLabel || "Role").replace(/^\w/, char => char.toUpperCase()),
-        detail: "Role reads compare how your current role is converting fights, utility, and round impact."
+        detail: getInsightToneCopy("trendFallbacks.role.detail", "Role reads compare fights, utility, and round impact.")
       }
     ],
     consistency: [
@@ -11451,9 +11476,9 @@ function getTrendBreakdownFallbackItems(key = "", model = {}) {
         mediaType: "text",
         mediaText: "Flow",
         kicker: "Consistency",
-        title: "Consistency Reads",
-        value: matchesPlayed ? "Pattern building" : "Needs more samples",
-        detail: "Consistency reads look for repeated swings across matches, logs, focus categories, and recent form."
+        title: getInsightToneCopy("trendFallbacks.consistency.title", "Repeat Patterns"),
+        value: matchesPlayed ? getInsightToneCopy("trendFallbacks.consistency.activeValue", "Pattern building") : getInsightToneCopy("trendFallbacks.consistency.waitingValue", "Need more games"),
+        detail: getInsightToneCopy("trendFallbacks.consistency.detail", "These reads look for repeat swings in matches, logs, focus, and form.")
       }
     ]
   };
@@ -11461,10 +11486,10 @@ function getTrendBreakdownFallbackItems(key = "", model = {}) {
   return fallbacks[String(key || "").toLowerCase()] || [{
     tone: "neutral",
     mediaText: "Read",
-    kicker: "Coaching",
-    title: "Coaching Read",
-    value: "Needs more games",
-    detail: "This section fills as RankedCoach collects more profile context."
+    kicker: getInsightToneCopy("trendFallbacks.default.kicker", "Coaching"),
+    title: getInsightToneCopy("trendFallbacks.default.title", "Coaching Read"),
+    value: getInsightToneCopy("trendFallbacks.default.value", "Need more games"),
+    detail: getInsightToneCopy("trendFallbacks.default.detail", "This fills as RankedCoach gets more profile context.")
   }];
 }
 
@@ -15325,8 +15350,8 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-top-card",
-    title: "Priority Trends",
-    copy: "These are the reads most likely to matter right now. Use the filters to separate problems, watch items, and strengths."
+    title: "What To Watch First",
+    copy: "These reads are most likely to matter right now. Use the filters to split problems, watch items, and strengths."
   },
   {
     page: "insights",
@@ -15337,8 +15362,8 @@ const GUEST_TUTORIAL_STEPS = [
   {
     page: "insights",
     selector: ".insights-trends-card",
-    title: "Trend Groups",
-    copy: "These reads show supporting patterns from matches, logs, roles, and consistency."
+    title: "Supporting Reads",
+    copy: "These reads show what backs up the main read: matches, logs, roles, and repeat patterns."
   }
 ];
 
@@ -53766,7 +53791,7 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
         <button class="weekly-focus-pill${isAvailable ? "" : " is-disabled"}" type="button" data-weekly-key="${escapeHtml(candidate?.key || "")}" title="${escapeHtml(candidate?.sourceLabel || confidenceConfig.detail)}" ${isAvailable ? "" : "disabled aria-disabled=\"true\""}>
           <div class="weekly-focus-pill-head">
             <span class="weekly-focus-key">${escapeHtml(meta.title)}</span>
-            <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">Confidence: ${escapeHtml(confidenceConfig.label)}</span>
+            <span class="weekly-focus-confidence ${confidenceClassName}" title="${escapeHtml(confidenceConfig.detail)}">${escapeHtml(getInsightConfidenceDisplay(confidenceConfig.label))}</span>
           </div>
           <span class="weekly-focus-text">${escapeHtml(pillBody)}</span>
         </button>
@@ -53779,27 +53804,27 @@ function updateWeeklyFocusDetailsModel(topInsights = []) {
       || primaryCandidate?.read
       || leadInsight?.preview
       || weekly.why
-      || "Add more matches and logs to sharpen the weekly focus category.";
+      || "Import more matches and logs so this weekly focus can get sharper.";
   }
   if (howEl) {
     howEl.textContent = model?.coachRecommendation
       || primaryCandidate?.read
       || leadInsight?.action
       || weekly.how
-      || "Use one coaching focus category for the week and review whether the next match block improved it.";
+      || "Pick one focus for the week and check it after your next match block.";
   }
   if (sourceEl) {
     sourceEl.textContent = primaryCandidate?.sourceLabel
       || weekly.source
-      || "Waiting for profile data";
+      || "Waiting on profile data";
   }
   if (priorityEl) {
-    priorityEl.textContent = `Priority: ${model?.priorityLabel || "Watch"}`;
+    priorityEl.textContent = getInsightPriorityDisplay(model?.priorityLabel || "Watch");
     applyInsightMetaPillTone(priorityEl, getInsightMetaToneClass("priority", model?.priorityLabel || "Watch"));
   }
   if (confidenceEl) {
     const confidenceLabel = String(model?.confidenceLabel || "Low Confidence").replace(/\s*Confidence$/i, "") || "Low";
-    confidenceEl.textContent = `Confidence: ${confidenceLabel}`;
+    confidenceEl.textContent = getInsightConfidenceDisplay(confidenceLabel);
     applyInsightMetaPillTone(confidenceEl, getInsightMetaToneClass("confidence", model?.confidenceLabel || "Low Confidence"));
   }
 }
@@ -54571,10 +54596,10 @@ function renderInsightCardsModel() {
   const allInsights = getInsightDisplayPool(model);
   bindInsightFilters();
   const filterLabels = {
-    all: "Priority Trends",
-    bad: "Needs Work",
-    warn: "Watch",
-    good: "Strengths"
+    all: getInsightToneCopy("firstRender.priorityTrends", "What To Watch First"),
+    bad: getInsightToneCopy("filters.bad", "Needs Work"),
+    warn: getInsightToneCopy("filters.warn", "Watch"),
+    good: getInsightToneCopy("filters.good", "Strengths")
   };
   const list = getFilteredInsightDisplayList(activeInsightFilter, model);
 
@@ -54582,19 +54607,19 @@ function renderInsightCardsModel() {
 
   if (!list.length) {
     const hasAnyInsights = allInsights.length > 0;
-    const filterLabel = filterLabels[activeInsightFilter] || "Priority Trends";
+    const filterLabel = filterLabels[activeInsightFilter] || getInsightToneCopy("firstRender.priorityTrends", "What To Watch First");
     const emptyCard = document.createElement("div");
     emptyCard.className = "insight-card insight-empty";
     emptyCard.innerHTML = `
       <div class="insight-header">
         <div class="insight-header-main">
-          <div class="insight-title">${hasAnyInsights ? `No ${escapeHtml(filterLabel)} Insights Yet` : "RankedCoach Needs More Games"}</div>
+          <div class="insight-title">${hasAnyInsights ? `${escapeHtml(getInsightToneCopy("empty.noGroupTitle", "Nothing here yet"))}: ${escapeHtml(filterLabel)}` : escapeHtml(getInsightToneCopy("empty.noDataTitle", "RankedCoach needs more games"))}</div>
         </div>
       </div>
-      <div class="insight-preview">${hasAnyInsights ? "This filter is empty for the current profile window." : "This panel fills with ranked coaching reads after you import a few matches or save a few reflections."}</div>
+      <div class="insight-preview">${hasAnyInsights ? escapeHtml(getInsightToneCopy("empty.noGroupPreview", "This group has no reads in the current window.")) : escapeHtml(getInsightToneCopy("empty.noDataPreview", "This panel fills after you import matches or save reflections."))}</div>
       <div class="insight-block">
-        <div class="insight-label">NEXT STEP</div>
-        ${hasAnyInsights ? "Use All to review the available reads, or keep importing matches and logs until this group has enough signal." : "Import a few more matches or save a few reflections so RankedCoach can find a real pattern."}
+        <div class="insight-label">${escapeHtml(getInsightToneCopy("empty.nextMoveLabel", "NEXT MOVE"))}</div>
+        ${escapeHtml(hasAnyInsights ? getInsightToneCopy("empty.noGroupNextMove", "Open All to see the reads you have, or keep importing matches and logs.") : getInsightToneCopy("empty.noDataNextMove", "Import a few matches or save reflections so RankedCoach can find a real pattern."))}
       </div>
     `;
     container.appendChild(emptyCard);
@@ -54628,9 +54653,9 @@ function renderInsightCardsModel() {
       </div>
       <div class="insight-preview">${escapeHtml(insight.preview || "")}</div>
       <div class="insight-meta-row">
-        ${showPriorityMeta ? `<span class="insight-meta-pill ${priorityTone}">${escapeHtml(priority)} Priority</span>` : ""}
-        <span class="insight-meta-pill ${confidenceTone}">${escapeHtml(confidence)}</span>
-        <span class="insight-meta-pill ${focusTone}">Focus Category: ${escapeHtml(normalizedInsightFocus)}</span>
+        ${showPriorityMeta ? `<span class="insight-meta-pill ${priorityTone}">${escapeHtml(getInsightPriorityDisplay(priority))}</span>` : ""}
+        <span class="insight-meta-pill ${confidenceTone}">${escapeHtml(getInsightConfidenceDisplay(confidence))}</span>
+        <span class="insight-meta-pill ${focusTone}">Focus: ${escapeHtml(normalizedInsightFocus)}</span>
       </div>
       <div class="insight-expand">
         <div class="insight-block">
