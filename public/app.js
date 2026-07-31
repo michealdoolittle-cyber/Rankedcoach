@@ -45716,16 +45716,32 @@ function getValorantPlayerCardWideArtUrl(uuid = "") {
   return normalizedUuid ? `https://media.valorant-api.com/playercards/${normalizedUuid}/wideart.png` : "";
 }
 
-function getValorantPlayerCardLargeArtUrl(uuid = "") {
-  const normalizedUuid = getValorantPlayerCardUuid(uuid);
-  return normalizedUuid ? `https://media.valorant-api.com/playercards/${normalizedUuid}/largeart.png` : "";
+const PROFILE_BANNER_UPSCALED_ASSET_BASE = "assets/profile-banners/upscaled";
+let profileBannerUpscaledUuidSet = null;
+
+function getProfileBannerUpscaledUuidSet() {
+  if (!profileBannerUpscaledUuidSet) {
+    profileBannerUpscaledUuidSet = new Set(
+      PROFILE_BANNER_STYLES
+        .map(style => getValorantPlayerCardUuid(style?.image || style?.value || ""))
+        .filter(Boolean)
+    );
+  }
+  return profileBannerUpscaledUuidSet;
+}
+
+function getProfileBannerUpscaledWideArtUrl(style = {}) {
+  const uuid = getValorantPlayerCardUuid(style?.uuid || style?.image || style?.value || "");
+  return uuid && getProfileBannerUpscaledUuidSet().has(uuid)
+    ? `${PROFILE_BANNER_UPSCALED_ASSET_BASE}/${uuid}.jpg`
+    : "";
 }
 
 function profileBannerStyleFromValorantCard(card = {}) {
   const uuid = getValorantPlayerCardUuid(card.uuid);
   if (!uuid) return null;
   const image = String(card.wideArt || getValorantPlayerCardWideArtUrl(uuid) || "").trim();
-  const highResImage = String(card.largeArt || getValorantPlayerCardLargeArtUrl(uuid) || "").trim();
+  const highResImage = String(card.highResWideArt || card.upscaledWideArt || "").trim();
   if (!image) return null;
   return {
     value: getValorantPlayerCardValue(uuid),
@@ -46929,9 +46945,8 @@ function getProfileBannerStyle(bannerStyle = "theme") {
 
 function getProfileBannerHighResImageUrl(style = {}) {
   const explicit = String(style?.highResImage || "").trim();
-  if (explicit) return explicit;
-  const uuid = getValorantPlayerCardUuid(style?.uuid || style?.image || style?.value || "");
-  return uuid ? getValorantPlayerCardLargeArtUrl(uuid) : "";
+  if (explicit && !/\/largeart\.png(?:$|\?)/i.test(explicit)) return explicit;
+  return getProfileBannerUpscaledWideArtUrl(style);
 }
 
 function isHighResolutionBannerViewport() {
