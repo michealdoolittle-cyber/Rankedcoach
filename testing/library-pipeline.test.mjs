@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import vm from "node:vm";
 import {
+  COMPETITIVE_MAP_IDS,
   DRAFT_ROOT,
   ROOT,
   canPromote,
@@ -21,10 +22,10 @@ test("full current roster is represented by governed drafts", async () => {
   const weapons = (state.reference.weapons || []).flatMap(group => group.weapons || []);
   assert.equal(state.reference.agents.length, 29);
   assert.equal(state.maps.length, 13);
-  assert.equal(weapons.length, 19);
+  assert.equal(weapons.length, 20);
   assert.equal(new Set(state.reference.agents.map(agent => agent.id)).size, 29);
   assert.equal(new Set(state.maps.map(map => map.id)).size, 13);
-  assert.equal(new Set(weapons.map(weapon => weapon.id)).size, 19);
+  assert.equal(new Set(weapons.map(weapon => weapon.id)).size, 20);
 });
 
 test("Raze is one authored entity with canonical abilities", async () => {
@@ -96,13 +97,17 @@ test("governed Library source scripts share a current cache key", async () => {
   assert.equal(new Set(versions).size, 1, `Library source cache keys drifted: ${versions.join(", ")}`);
 });
 
-test("baked label maps suppress the second dynamic label layer", async () => {
+test("TRN-style baked label maps suppress the second dynamic label layer", async () => {
   const source = await readFile(path.join(ROOT, "public", "library", "gamesense-library.js"), "utf8");
   assert.match(source, /map\.calloutLabelsBakedIn\s*\?\s*\[\]/);
-  for (const [slug, count] of Object.entries({ bind: 24, breeze: 23 })) {
-    const svg = await readFile(path.join(ROOT, "public", "assets", "library", "maps", `${slug}-layout-labeled.svg`), "utf8");
-    assert.equal((svg.match(/<circle /g) || []).length, count);
-    assert.equal((svg.match(/<text /g) || []).length, count);
+  const state = await loadLibraryState();
+  for (const map of state.maps) {
+    const expected = `/assets/library/maps/${map.id}-layout-trn.png`;
+    assert.equal(map.layoutImage, expected);
+    assert.equal(map.calloutLabelsBakedIn, true);
+    assert.equal(map.plantLayoutImage, undefined);
+    const asset = await stat(path.join(ROOT, "public", "assets", "library", "maps", `${map.id}-layout-trn.png`));
+    assert.ok(asset.size > 20_000, `${map.id} TRN layout should be a real local image`);
   }
 });
 
@@ -124,7 +129,7 @@ test("plant guidance never presents a site-centre placeholder as a named plant",
   assert.match(state.maps.find(map => map.id === "icebox")?.plantRateNote || "", /A Generator.*B Top/i);
 });
 
-test("a reviewed flat map layout survives the generated layout override", async () => {
+test("static TRN map layouts are validated, not regenerated", async () => {
   const [mapsSource, promotedSource, overrideSource, generatorSource] = await Promise.all([
     readFile(path.join(ROOT, "public", "library", "gamesense-maps.js"), "utf8"),
     readFile(path.join(ROOT, "public", "library", "gamesense-promoted.js"), "utf8"),
@@ -138,11 +143,14 @@ test("a reviewed flat map layout survives the generated layout override", async 
   vm.runInContext(promotedSource, sandbox, { filename: "gamesense-promoted.js" });
   vm.runInContext(overrideSource, sandbox, { filename: "gamesense-map-layout-overrides.js" });
 
-  const split = sandbox.RankedCoachGamesenseMaps.find(map => map.id === "split");
-  assert.equal(split.layoutImage, "/assets/library/maps/split-layout-trn.png");
-  assert.match(generatorSource, /function isHandVerifiedFlatLayout\(/);
-  assert.match(generatorSource, /if \(!preserveFlatLayout\) \{/);
-  assert.match(generatorSource, /preserveFlatLayout \? \{\} : \{ layoutImage:/);
+  for (const id of COMPETITIVE_MAP_IDS) {
+    const map = sandbox.RankedCoachGamesenseMaps.find(item => item.id === id);
+    assert.equal(map.layoutImage, `/assets/library/maps/${id}-layout-trn.png`);
+    assert.equal(map.calloutLabelsBakedIn, true);
+  }
+  assert.match(generatorSource, /Generation is retired/);
+  assert.doesNotMatch(generatorSource, /layout-labeled\.svg/);
+  assert.doesNotMatch(generatorSource, /layout-plants\.svg/);
 });
 
 test("new weapon entities append once, then merge after promotion", async () => {

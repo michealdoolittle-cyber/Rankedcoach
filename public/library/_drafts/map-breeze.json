@@ -3,7 +3,7 @@
   "label": "Breeze",
   "inCompetitivePool": true,
   "cardImage": "https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/splash.png",
-  "layoutImage": "/assets/library/maps/breeze-layout-labeled.svg",
+  "layoutImage": "/assets/library/maps/breeze-layout-trn.png",
   "calloutLabelsBakedIn": true,
   "callouts": [
     {
@@ -869,8 +869,7 @@
   "dataStatus": "verified",
   "lastReviewed": "2026-07-30",
   "patchVersion": "13.02",
-  "plantLayoutImage": "/assets/library/maps/breeze-layout-plants.svg",
-  "tacticalMapSource": "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US",
+  "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "statsSource": {
     "provider": "VStats.gg",
     "actLabel": "V26 Act 4",
@@ -1616,18 +1615,18 @@
     "layoutImage": {
       "_tier": "canonical",
       "_sources": [
-        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+        "https://overgear.com/guides/valorant/maps-list/"
       ],
       "approved": true,
-      "confidence": "n/a (auto-approved)"
+      "confidence": "Static TRN-style tactical layout sourced for the local Library asset."
     },
     "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
-        "https://valorant-api.com/v1/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53?language=en-US"
+        "https://overgear.com/guides/valorant/maps-list/"
       ],
       "approved": true,
-      "confidence": "n/a (auto-approved)"
+      "confidence": "Source image includes baked-in callout labels."
     },
     "callouts": {
       "_tier": "mixed",
@@ -1779,17 +1778,13 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "plantLayoutImage": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
     "tacticalMapSource": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+      "_tier": "canonical",
+      "_sources": [
+        "https://overgear.com/guides/valorant/maps-list/"
+      ],
+      "approved": true,
+      "confidence": "Source page for the checked-in tactical map image."
     },
     "statsSource": {
       "_tier": "synthesized",

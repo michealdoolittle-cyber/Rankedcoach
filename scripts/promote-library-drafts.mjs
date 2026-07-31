@@ -270,103 +270,6 @@ async function notifyReview(review) {
   }
 }
 
-function xmlEscape(value = "") {
-  return String(value).replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&apos;"
-  })[character]);
-}
-
-function rectsOverlap(left, right, padding = 7) {
-  return !(
-    left.x + left.width + padding < right.x
-    || right.x + right.width + padding < left.x
-    || left.y + left.height + padding < right.y
-    || right.y + right.height + padding < left.y
-  );
-}
-
-function placeCalloutLabels(callouts = []) {
-  const placed = [];
-  const directions = [
-    [1, 0], [-1, 0], [0, -1], [0, 1],
-    [1, -1], [-1, -1], [1, 1], [-1, 1]
-  ];
-  const radii = [24, 48, 72, 102, 136, 174];
-  for (const callout of callouts) {
-    const anchorX = Number(callout.x) * 10;
-    const anchorY = Number(callout.y) * 10;
-    const width = Math.min(205, Math.max(88, String(callout.label).length * 8.1 + 24));
-    const height = 32;
-    let selected = null;
-    for (const radius of radii) {
-      for (const [directionX, directionY] of directions) {
-        const candidate = {
-          x: Math.max(8, Math.min(992 - width, anchorX + directionX * radius - (directionX <= 0 ? width : 0))),
-          y: Math.max(8, Math.min(960, anchorY + directionY * radius - (directionY <= 0 ? height : 0))),
-          width,
-          height
-        };
-        if (!placed.some(item => rectsOverlap(item, candidate, 10))) {
-          selected = candidate;
-          break;
-        }
-      }
-      if (selected) break;
-    }
-    selected ||= {
-      x: Math.max(8, Math.min(992 - width, anchorX + 18)),
-      y: Math.max(8, Math.min(962, anchorY + 12)),
-      width,
-      height
-    };
-    placed.push({ ...selected, anchorX, anchorY, callout });
-  }
-  return placed;
-}
-
-function zoneColor(callout, callouts) {
-  const attack = callouts.find(item => item.superRegionName === "Attacker Side" && item.regionName === "Spawn");
-  const defense = callouts.find(item => item.superRegionName === "Defender Side" && item.regionName === "Spawn");
-  if (!attack || !defense) return "#94a3b8";
-  const distance = (left, right) => Math.hypot(Number(left.x) - Number(right.x), Number(left.y) - Number(right.y));
-  const attackDistance = distance(callout, attack);
-  const defenseDistance = distance(callout, defense);
-  const delta = Math.abs(attackDistance - defenseDistance);
-  if (delta < 9 || /^(Mid)\b/i.test(callout.label)) return "#a8b3c7";
-  return attackDistance < defenseDistance ? "#55ddd4" : "#ff6675";
-}
-
-async function writeBakedMapLayout(mapPatch) {
-  if (!["bind", "breeze"].includes(mapPatch.id) || !Array.isArray(mapPatch.callouts)) return;
-  const basePath = path.join(ROOT, "public", "assets", "library", "maps", `${mapPatch.id}-layout.png`);
-  const base = await readFile(basePath);
-  const placements = placeCalloutLabels(mapPatch.callouts);
-  const labelMarkup = placements.map(item => {
-    const color = zoneColor(item.callout, mapPatch.callouts);
-    const centerX = item.x + item.width / 2;
-    const centerY = item.y + item.height / 2;
-    return `<g>
-      <path d="M ${item.anchorX.toFixed(1)} ${item.anchorY.toFixed(1)} L ${centerX.toFixed(1)} ${centerY.toFixed(1)}" stroke="${color}" stroke-width="2" opacity=".72"/>
-      <circle cx="${item.anchorX.toFixed(1)}" cy="${item.anchorY.toFixed(1)}" r="5" fill="#08111f" stroke="${color}" stroke-width="3"/>
-      <rect x="${item.x.toFixed(1)}" y="${item.y.toFixed(1)}" width="${item.width.toFixed(1)}" height="${item.height}" rx="8" fill="#07101ee8" stroke="${color}" stroke-width="2"/>
-      <text x="${centerX.toFixed(1)}" y="${(item.y + 20).toFixed(1)}" text-anchor="middle" fill="#f8fafc" font-family="Rajdhani,Arial,sans-serif" font-size="15" font-weight="800">${xmlEscape(item.callout.label)}</text>
-    </g>`;
-  }).join("\n");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000" role="img" aria-labelledby="title desc">
-  <title id="title">${xmlEscape(mapPatch.label)} complete callout map</title>
-  <desc id="desc">Riot tactical map with ${mapPatch.callouts.length} source-verified callouts. Teal labels are closer to attacker spawn, red labels are closer to defender spawn, and gray labels are central.</desc>
-  <image href="data:image/png;base64,${base.toString("base64")}" width="1000" height="1000" preserveAspectRatio="xMidYMid meet"/>
-  <rect width="1000" height="1000" fill="#030712" opacity=".08"/>
-  ${labelMarkup}
-</svg>
-`;
-  await writeFile(path.join(ROOT, "public", "assets", "library", "maps", `${mapPatch.id}-layout-labeled.svg`), svg, "utf8");
-}
-
 function buildPromotedSource(promoted) {
   return `// Generated only by scripts/promote-library-drafts.mjs.
 // Canonical fields auto-promote; synthesized fields require approval and three logged sources.
@@ -482,7 +385,6 @@ if (planOnly) {
   process.exit(0);
 }
 
-for (const mapPatch of promoted.maps) await writeBakedMapLayout(mapPatch);
 await writeFile(PROMOTED_OUTPUT, buildPromotedSource(promoted), "utf8");
 checkJavaScript(PROMOTED_OUTPUT);
 

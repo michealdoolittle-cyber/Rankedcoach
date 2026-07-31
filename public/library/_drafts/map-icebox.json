@@ -5,8 +5,8 @@
   "coordinates": "76°44' A\"N 149°30' Z\"E",
   "inCompetitivePool": false,
   "cardImage": "https://media.valorant-api.com/maps/e2ad5c54-4114-a870-9641-8ea21279579a/splash.png",
-  "layoutImage": "https://media.valorant-api.com/maps/e2ad5c54-4114-a870-9641-8ea21279579a/displayicon.png",
-  "calloutLabelsBakedIn": false,
+  "layoutImage": "/assets/library/maps/icebox-layout-trn.png",
+  "calloutLabelsBakedIn": true,
   "callouts": [
     {
       "id": "icebox-1",
@@ -263,10 +263,9 @@
   "dataStatus": "verified",
   "lastReviewed": "2026-07-30",
   "patchVersion": "13.02",
-  "plantLayoutImage": "/assets/library/maps/icebox-layout-plants.svg",
   "plantSpots": [],
   "plantRateNote": "Dignitas names A Generator, A Belt, A Top, B Corner, B Mid, and B Top as Icebox plant recommendations. Its guide does not publish map-coordinate markers, so the map is shown without approximated site-centroid pins.",
-  "tacticalMapSource": "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US",
+  "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
     "Astra": 0.3772,
     "Breach": 0.4708,
@@ -1153,18 +1152,18 @@
     "layoutImage": {
       "_tier": "canonical",
       "_sources": [
-        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+        "https://overgear.com/guides/valorant/maps-list/"
       ],
       "approved": true,
-      "confidence": "n/a (auto-approved)"
+      "confidence": "Static TRN-style tactical layout sourced for the local Library asset."
     },
     "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
-        "https://valorant-api.com/v1/maps/e2ad5c54-4114-a870-9641-8ea21279579a?language=en-US"
+        "https://overgear.com/guides/valorant/maps-list/"
       ],
       "approved": true,
-      "confidence": "n/a (auto-approved)"
+      "confidence": "Source image includes baked-in callout labels."
     },
     "callouts": {
       "_tier": "mixed",
@@ -1216,12 +1215,6 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "plantLayoutImage": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
     "plantSpots": {
       "_tier": "synthesized",
       "_sources": [],
@@ -1235,10 +1228,12 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "tacticalMapSource": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+      "_tier": "canonical",
+      "_sources": [
+        "https://overgear.com/guides/valorant/maps-list/"
+      ],
+      "approved": true,
+      "confidence": "Source page for the checked-in tactical map image."
     },
     "highRankPickRates": {
       "_tier": "synthesized",

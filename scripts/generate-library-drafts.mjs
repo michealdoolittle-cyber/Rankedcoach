@@ -161,11 +161,7 @@ for (const map of competitiveMaps) {
     agentInsights: {},
     lineupLinks: []
   };
-  const bakedLayout = ["bind", "breeze"].includes(id)
-    ? `/assets/library/maps/${id}-layout-labeled.svg`
-    : id === "split"
-      ? (current.layoutImage || "/assets/library/maps/split-layout-trn.png")
-      : map.displayIcon;
+  const bakedLayout = `/assets/library/maps/${id}-layout-trn.png`;
   let entity = deepMerge(current, {
     id,
     uuid: map.uuid,
@@ -174,7 +170,7 @@ for (const map of competitiveMaps) {
     inCompetitivePool: ACTIVE_MAP_IDS.has(id),
     cardImage: map.splash || map.listViewIcon || "",
     layoutImage: bakedLayout || "",
-    calloutLabelsBakedIn: ["bind", "breeze", "split"].includes(id),
+    calloutLabelsBakedIn: true,
     callouts: buildCanonicalCallouts(map),
     source
   });

@@ -47,7 +47,7 @@
       label: "Bind",
       inCompetitivePool: false,
       cardImage: "/assets/library/maps/bind-card.png",
-      layoutImage: "/assets/library/maps/bind-layout-labeled.svg",
+      layoutImage: "/assets/library/maps/bind-layout-trn.png",
       calloutLabelsBakedIn: true,
       callouts: [
         { id: "bind-1", sourceKey: "A::Exit", sourceLabel: "A Exit", label: "A Exit", superRegionName: "A", regionName: "Exit", x: 92.35, y: 52.21 },
@@ -144,7 +144,7 @@
       label: "Breeze",
       inCompetitivePool: true,
       cardImage: "/assets/library/maps/breeze-card.png",
-      layoutImage: "/assets/library/maps/breeze-layout-labeled.svg",
+      layoutImage: "/assets/library/maps/breeze-layout-trn.png",
       calloutLabelsBakedIn: true,
       callouts: [
         { id: "breeze-1", sourceKey: "Mid::Hall", sourceLabel: "Mid Hall", label: "Mid Hall", superRegionName: "Mid", regionName: "Hall", x: 63.95, y: 53.51 },

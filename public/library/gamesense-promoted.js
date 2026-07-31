@@ -3390,7 +3390,7 @@
       "label": "Bind",
       "inCompetitivePool": false,
       "cardImage": "https://media.valorant-api.com/maps/2c9d57ec-4431-9c5e-2939-8f9ef6dd5cba/splash.png",
-      "layoutImage": "/assets/library/maps/bind-layout-labeled.svg",
+      "layoutImage": "/assets/library/maps/bind-layout-trn.png",
       "calloutLabelsBakedIn": true,
       "callouts": [
         {
@@ -3646,7 +3646,7 @@
       "label": "Breeze",
       "inCompetitivePool": true,
       "cardImage": "https://media.valorant-api.com/maps/2fb9a4fd-47b8-4e7d-a969-74b4046ebd53/splash.png",
-      "layoutImage": "/assets/library/maps/breeze-layout-labeled.svg",
+      "layoutImage": "/assets/library/maps/breeze-layout-trn.png",
       "calloutLabelsBakedIn": true,
       "callouts": [
         {

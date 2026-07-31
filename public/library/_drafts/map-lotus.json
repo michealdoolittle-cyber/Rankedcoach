@@ -3,7 +3,7 @@
   "label": "Lotus",
   "inCompetitivePool": true,
   "cardImage": "https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/splash.png",
-  "layoutImage": "https://media.valorant-api.com/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9/displayicon.png",
+  "layoutImage": "/assets/library/maps/lotus-layout-trn.png",
   "callouts": [
     {
       "id": "lotus-1",
@@ -350,12 +350,11 @@
   "source": "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US",
   "uuid": "2fe4ed3a-450a-948b-6d6b-e89a78e680a9",
   "coordinates": "14°07'AD.4\"N8 74°53'XY\"E8",
-  "calloutLabelsBakedIn": false,
+  "calloutLabelsBakedIn": true,
   "dataStatus": "in-review",
   "lastReviewed": "2026-07-30",
   "patchVersion": "13.02",
-  "plantLayoutImage": "/assets/library/maps/lotus-layout-plants.svg",
-  "tacticalMapSource": "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US",
+  "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
     "Astra": 1.0102,
     "Breach": 7.9684,
@@ -1367,10 +1366,10 @@
     "layoutImage": {
       "_tier": "canonical",
       "_sources": [
-        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+        "https://overgear.com/guides/valorant/maps-list/"
       ],
       "approved": true,
-      "confidence": "n/a (auto-approved)"
+      "confidence": "Static TRN-style tactical layout sourced for the local Library asset."
     },
     "callouts": {
       "_tier": "mixed",
@@ -1507,10 +1506,10 @@
     "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
-        "https://valorant-api.com/v1/maps/2fe4ed3a-450a-948b-6d6b-e89a78e680a9?language=en-US"
+        "https://overgear.com/guides/valorant/maps-list/"
       ],
       "approved": true,
-      "confidence": "n/a (auto-approved)"
+      "confidence": "Source image includes baked-in callout labels."
     },
     "dataStatus": {
       "_tier": "canonical",
@@ -1532,17 +1531,13 @@
       "approved": false,
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
-    "plantLayoutImage": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
-    },
     "tacticalMapSource": {
-      "_tier": "synthesized",
-      "_sources": [],
-      "approved": false,
-      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
+      "_tier": "canonical",
+      "_sources": [
+        "https://overgear.com/guides/valorant/maps-list/"
+      ],
+      "approved": true,
+      "confidence": "Source page for the checked-in tactical map image."
     },
     "highRankPickRates": {
       "_tier": "synthesized",

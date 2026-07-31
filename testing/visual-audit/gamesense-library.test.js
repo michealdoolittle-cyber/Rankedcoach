@@ -694,7 +694,7 @@ async function run() {
     assert.equal(await desktop.locator("[data-gamesense-role]").count(), 5);
     assert.equal(await desktop.locator('.gamesense-tip-grid .gamesense-tip').count(), 2);
     assert.equal(await desktop.locator(".gamesense-tactical-stage img").count(), 1);
-    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /bind-layout-labeled\.svg$/);
+    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /bind-layout-trn\.png$/);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 0);
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3, "Retained verified data should populate every map's composition reference.");
     assert.equal(await desktop.locator(".gamesense-comp-unavailable").count(), 0);
@@ -1059,7 +1059,7 @@ async function run() {
     await desktop.click('[data-gamesense-back="maps"]');
     await desktop.click('[data-gamesense-item="ascent"]');
     await desktop.locator(".gamesense-tactical-stage img").waitFor({ state: "visible" });
-    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /ascent-layout-labeled\.svg/);
+    assert.match(await desktop.locator(".gamesense-tactical-stage img").getAttribute("src"), /ascent-layout-trn\.png/);
     assert.equal(await desktop.locator(".gamesense-callout").count(), 0, "The standardized labeled tactical image must not duplicate callout text in DOM overlays.");
     assert.equal(await desktop.locator(".gamesense-comp-option").count(), 3, "Retained verified data should also populate Ascent.");
     assert.equal(await desktop.locator(".gamesense-comp-unavailable").count(), 0);
@@ -1830,7 +1830,7 @@ async function run() {
     await mobile.click('[data-gamesense-item="bind"]');
     await mobile.waitForTimeout(360);
     assert.equal(await mobile.locator(".gamesense-tactical-stage img").isVisible(), true);
-    assert.match(await mobile.locator(".gamesense-tactical-stage img").getAttribute("src"), /bind-layout-labeled\.svg$/);
+    assert.match(await mobile.locator(".gamesense-tactical-stage img").getAttribute("src"), /bind-layout-trn\.png$/);
     assert.equal(await mobile.locator(".gamesense-callout").count(), 0);
     assert.equal(await mobile.locator(".gamesense-tips-hub").count(), 1);
     assert.equal(await mobile.locator("[data-gamesense-tip-view]").count(), 4);

@@ -26,6 +26,14 @@
   let libraryPageActive = false;
   let collageHydrationToken = 0;
   let crosshairCopyResetTimer = 0;
+  let activePlantSpotDrag = null;
+  const plantSpotEditor = {
+    activeMapId: "",
+    selectedIndex: -1,
+    pendingAdd: false,
+    exportText: "",
+    drafts: new Map()
+  };
   const PLAYLIST_LIVE_FILTER = "Live";
   const PLAYLIST_AUTOPLAY_STORAGE_PREFIX = "rankedcoach:playlist-autoplay:";
   const topicCollageShuffleSalt = Math.random().toString(36).slice(2);
@@ -552,6 +560,118 @@
 
   function assetSlug(value = "") {
     return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function clampPercent(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return 50;
+    return Math.max(0, Math.min(100, number));
+  }
+
+  function roundPlantCoordinate(value) {
+    return Math.round(clampPercent(value) * 10) / 10;
+  }
+
+  function canUsePlantSpotEditor() {
+    const user = globalThis.RankedCoachAuthBridge?.getUser?.() || null;
+    if (globalThis.RankedCoachAuthBridge?.canUseOwnerTools?.(user)) return true;
+    const role = String(user?.app_metadata?.role || user?.user_metadata?.role || "").trim().toLowerCase();
+    const email = String(user?.email || "").trim().toLowerCase();
+    return Boolean(["owner", "admin"].includes(role) || email === "michealdoolittle@gmail.com");
+  }
+
+  function isPlantSpotEditorActive(map) {
+    return Boolean(map?.id && plantSpotEditor.activeMapId === map.id && canUsePlantSpotEditor());
+  }
+
+  function clonePlantSpot(spot = {}, fallbackIndex = 0) {
+    const site = String(spot.site || "A").trim().toUpperCase().slice(0, 1) || "A";
+    const number = Number.isFinite(Number(spot.number)) ? Number(spot.number) : fallbackIndex + 1;
+    return {
+      number,
+      site,
+      label: String(spot.label || `${site} Plant ${number}`).trim(),
+      rate: spot.rate ?? null,
+      x: roundPlantCoordinate(spot.x ?? 50),
+      y: roundPlantCoordinate(spot.y ?? 50),
+      previewLabel: spot.previewLabel || "",
+      previewImage: spot.previewImage || "",
+      previewSource: spot.previewSource || ""
+    };
+  }
+
+  function clonePlantSpots(spots = []) {
+    return (Array.isArray(spots) ? spots : []).map((spot, index) => clonePlantSpot(spot, index));
+  }
+
+  function getPlantEditorDraft(map) {
+    if (!map?.id) return [];
+    if (!plantSpotEditor.drafts.has(map.id)) {
+      plantSpotEditor.drafts.set(map.id, clonePlantSpots(map.plantSpots || []));
+    }
+    return plantSpotEditor.drafts.get(map.id);
+  }
+
+  function getPlantSpotsForRender(map) {
+    return isPlantSpotEditorActive(map)
+      ? getPlantEditorDraft(map)
+      : (Array.isArray(map?.plantSpots) ? map.plantSpots : []);
+  }
+
+  function getPlantSpotKey(spot = {}, index = 0) {
+    const site = String(spot.site || "A").trim().toUpperCase().slice(0, 1) || "A";
+    const number = Number.isFinite(Number(spot.number)) ? Number(spot.number) : index + 1;
+    return `${site}${number}`;
+  }
+
+  function normalizePlantRate(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return null;
+    const numeric = Number(raw);
+    return Number.isFinite(numeric) ? Math.round(numeric * 100) / 100 : raw;
+  }
+
+  function normalizePlantSpotsForExport(spots = []) {
+    return clonePlantSpots(spots).map(spot => ({
+      number: spot.number,
+      site: spot.site,
+      label: spot.label,
+      rate: normalizePlantRate(spot.rate),
+      x: roundPlantCoordinate(spot.x),
+      y: roundPlantCoordinate(spot.y),
+      previewLabel: spot.previewLabel || "",
+      previewImage: spot.previewImage || "",
+      previewSource: spot.previewSource || ""
+    }));
+  }
+
+  function renderPlantSpotEditorControls(map, active) {
+    if (!map?.id || !canUsePlantSpotEditor() || state.mapView !== "plants") return "";
+    return `<div class="gamesense-plant-editor-bar" data-gamesense-plant-editor-map="${escapeHtml(map.id)}">
+      <button type="button" data-gamesense-plant-editor-toggle="${escapeHtml(map.id)}" class="${active ? "active" : ""}" aria-pressed="${active ? "true" : "false"}">${active ? "Exit Plant Edit" : "Edit Plant Spots"}</button>
+      ${active ? `<button type="button" data-gamesense-plant-editor-add="${escapeHtml(map.id)}" class="${plantSpotEditor.pendingAdd ? "active" : ""}" aria-pressed="${plantSpotEditor.pendingAdd ? "true" : "false"}">${plantSpotEditor.pendingAdd ? "Click map to place" : "Add marker"}</button>
+      <button type="button" data-gamesense-plant-editor-export="${escapeHtml(map.id)}">Export Corrections</button>` : ""}
+    </div>`;
+  }
+
+  function renderPlantSpotEditorFields(spot, index) {
+    const plantKey = getPlantSpotKey(spot, index);
+    return `<section class="gamesense-plant-inline-editor" data-gamesense-plant-editor-row="${index}">
+      <label><span>Site</span><input data-gamesense-plant-editor-field="site" data-gamesense-plant-index="${index}" value="${escapeHtml(spot.site)}" maxlength="1" inputmode="text"></label>
+      <label><span>No.</span><input data-gamesense-plant-editor-field="number" data-gamesense-plant-index="${index}" value="${escapeHtml(spot.number)}" type="number" min="1" step="1"></label>
+      <label class="is-wide"><span>Label</span><input data-gamesense-plant-editor-field="label" data-gamesense-plant-index="${index}" value="${escapeHtml(spot.label)}"></label>
+      <label><span>Rate</span><input data-gamesense-plant-editor-field="rate" data-gamesense-plant-index="${index}" value="${escapeHtml(spot.rate ?? "")}" inputmode="decimal" placeholder="-"></label>
+      <button type="button" data-gamesense-plant-editor-delete="${index}" aria-label="Delete ${escapeHtml(plantKey)} ${escapeHtml(spot.label)}">Delete</button>
+    </section>`;
+  }
+
+  function renderPlantSpotEditorExport(map, spots) {
+    if (!isPlantSpotEditorActive(map)) return "";
+    const text = plantSpotEditor.exportText || "";
+    return `<section class="gamesense-plant-export" ${text ? "" : "hidden"}>
+      <strong>Copyable plantSpots JSON</strong>
+      <textarea readonly data-gamesense-plant-export-output rows="9">${escapeHtml(text || JSON.stringify(normalizePlantSpotsForExport(spots), null, 2))}</textarea>
+    </section>`;
   }
 
   function sortPatchHistoryNewestFirst(history = []) {
@@ -2368,7 +2488,8 @@
     const isHeatmap = state.mapView === "heatmap";
     const isPlants = state.mapView === "plants";
     const heatmap = getMapHeatmap(map);
-    const plantSpots = isPlants ? (Array.isArray(map.plantSpots) ? map.plantSpots : []) : [];
+    const editorActive = isPlantSpotEditorActive(map);
+    const plantSpots = isPlants ? getPlantSpotsForRender(map) : [];
     const showPlantHeatmapFallback = isPlants && !plantSpots.length && Boolean(heatmap?.image);
     const markers = isPlants
       ? plantSpots
@@ -2383,7 +2504,7 @@
       ? heatmap.image
       : showPlantHeatmapFallback
         ? heatmap.image
-        : (isPlants ? map.plantLayoutImage || map.layoutImage : map.layoutImage);
+        : map.layoutImage;
     const displayedMapAlt = isHeatmap || showPlantHeatmapFallback
       ? `${map.label} plant heat map, ${heatmap?.actLabel || "verified archive"}`
       : isPlants
@@ -2398,37 +2519,39 @@
           <button type="button" data-gamesense-map-view="plants" class="${isPlants ? "active" : ""}" aria-selected="${isPlants ? "true" : "false"}">Spike Plant Hot Spots</button>
           <button type="button" data-gamesense-map-view="heatmap" class="${isHeatmap ? "active" : ""}" aria-selected="${isHeatmap ? "true" : "false"}">Heat Map</button>
         </div>
+        ${renderPlantSpotEditorControls(map, editorActive)}
         <div class="gamesense-map-tools" aria-label="Map zoom controls">
           <button type="button" data-gamesense-map-zoom="out" aria-label="Zoom out">-</button>
           <button type="button" data-gamesense-map-zoom="reset">Fit</button>
           <span data-gamesense-map-zoom-value>${Math.round(state.mapZoom * 100)}%</span>
           <button type="button" data-gamesense-map-zoom="in" aria-label="Zoom in">+</button>
         </div>
-        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}${isHeatmap || showPlantHeatmapFallback ? " is-heatmap" : ""}">
+        <div class="gamesense-map-canvas-row ${isPlants ? "has-plant-legend" : ""}${isHeatmap || showPlantHeatmapFallback ? " is-heatmap" : ""}${editorActive ? " is-plant-editing" : ""}${editorActive && plantSpotEditor.pendingAdd ? " is-plant-add-pending" : ""}" data-gamesense-map-id="${escapeHtml(map.id)}">
           ${isHeatmap && !heatmap?.image ? "" : `<div class="gamesense-tactical-scroll ${state.mapZoom > 1 ? "is-zoomed" : ""}" data-gamesense-map-viewport tabindex="0" aria-label="Zoomable ${escapeHtml(map.label)} ${isHeatmap || showPlantHeatmapFallback ? "plant heat map" : "tactical map"}">
-            <div class="gamesense-tactical-stage${isHeatmap || showPlantHeatmapFallback ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
+            <div class="gamesense-tactical-stage${isHeatmap || showPlantHeatmapFallback ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage data-gamesense-map-id="${escapeHtml(map.id)}" style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
               <img src="${escapeHtml(displayedMapImage)}" alt="${escapeHtml(displayedMapAlt)}" loading="eager" draggable="false" referrerpolicy="${isHeatmap || showPlantHeatmapFallback ? "no-referrer" : ""}">
               ${markers.map((callout, index) => {
                 if (!isPlants) return `<span class="gamesense-callout" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`;
                 const siteIndex = markers.slice(0, index).filter(item => item.site === callout.site).length;
                 const offset = markerOffsets[siteIndex % markerOffsets.length];
                 const direction = callout.site === "B" ? -1 : 1;
-                const plantKey = `${callout.site}${callout.number}`;
+                const plantKey = getPlantSpotKey(callout, index);
                 // The tactical image stays uncluttered: plant locations are
                 // represented by the spike marker alone. Their names/rates are
                 // available in the adjacent accessible legend instead of being
                 // repeated over the map art.
-                return `<button type="button" class="gamesense-callout gamesense-plant-marker" data-gamesense-plant-key="${escapeHtml(plantKey)}" aria-label="Highlight ${escapeHtml(plantKey)} ${escapeHtml(callout.label)}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%"><i></i></button>`;
+                return `<button type="button" class="gamesense-callout gamesense-plant-marker${editorActive && plantSpotEditor.selectedIndex === index ? " is-editor-selected" : ""}" data-gamesense-plant-key="${escapeHtml(plantKey)}" data-gamesense-plant-index="${index}" aria-label="${editorActive ? "Edit" : "Highlight"} ${escapeHtml(plantKey)} ${escapeHtml(callout.label)}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%;--marker-label-x:${offset[0] * direction}px;--marker-label-y:${offset[1]}px"><i></i></button>`;
               }).join("")}
             </div>
           </div>`}
           ${isPlants ? `<aside class="gamesense-plant-legend" aria-label="${escapeHtml(map.label)} plant location reference">
             <strong>Plant location reference</strong>
-            ${plantSpots.length ? plantSpots.map(spot => {
-              const plantKey = `${spot.site}${spot.number}`;
-              return `<div class="gamesense-plant-row" data-gamesense-plant-key="${escapeHtml(plantKey)}">
+            ${plantSpots.length ? plantSpots.map((spot, index) => {
+              const plantKey = getPlantSpotKey(spot, index);
+              return `<div class="gamesense-plant-row${editorActive && plantSpotEditor.selectedIndex === index ? " is-editor-selected" : ""}" data-gamesense-plant-key="${escapeHtml(plantKey)}" data-gamesense-plant-index="${index}">
                 <i></i><b>${escapeHtml(plantKey)}</b><span>${escapeHtml(spot.label)}</span>
                 <button type="button" class="gamesense-plant-preview-toggle" data-gamesense-plant-preview="${escapeHtml(plantKey)}" aria-expanded="false" aria-label="Show ${escapeHtml(plantKey)} in-game plant reference">+</button>
+                ${editorActive ? renderPlantSpotEditorFields(spot, index) : ""}
                 <section class="gamesense-plant-preview" hidden>
                   ${spot.previewImage ? `<img src="${escapeHtml(spot.previewImage)}" alt="${escapeHtml(spot.previewLabel || spot.label)}" loading="lazy" referrerpolicy="no-referrer">` : `<div class="gamesense-plant-preview-unavailable">No verified in-game image is available for this spot.</div>`}
                   <div><strong>${escapeHtml(spot.previewLabel || spot.label)}</strong></div>
@@ -2436,6 +2559,7 @@
               </div>`;
             }).join("") : `<p>${escapeHtml(plantFallbackCopy)}</p>`}
             ${plantSpots.length ? `<p>Select a marker or its + control to view the in-game location reference.</p>` : ""}
+            ${editorActive ? `<p class="gamesense-plant-editor-help">${plantSpotEditor.pendingAdd ? "Click the tactical map to place a new marker." : "Drag markers to reposition, edit fields directly, then export corrections for commit."}</p>${renderPlantSpotEditorExport(map, plantSpots)}` : ""}
           </aside>` : ""}
           ${isHeatmap ? renderMapHeatmapMeta(map, heatmap) : ""}
         </div>
@@ -3806,6 +3930,187 @@
     }
   }
 
+  function getPlantEditorMap(mapId = plantSpotEditor.activeMapId) {
+    return getMaps().find(item => item.id === mapId) || null;
+  }
+
+  function clearPlantEditorExport() {
+    plantSpotEditor.exportText = "";
+  }
+
+  function selectPlantEditorIndex(index, container = document) {
+    const safeIndex = Number.isFinite(Number(index)) ? Number(index) : -1;
+    plantSpotEditor.selectedIndex = safeIndex;
+    container.querySelectorAll?.(".gamesense-plant-marker[data-gamesense-plant-index], .gamesense-plant-row[data-gamesense-plant-index]").forEach(item => {
+      item.classList.toggle("is-editor-selected", Number(item.dataset.gamesensePlantIndex) === safeIndex);
+    });
+  }
+
+  function getPlantPointerCoordinates(stage, event) {
+    const rect = stage?.getBoundingClientRect?.();
+    if (!rect?.width || !rect?.height) return null;
+    return {
+      x: roundPlantCoordinate(((event.clientX - rect.left) / rect.width) * 100),
+      y: roundPlantCoordinate(((event.clientY - rect.top) / rect.height) * 100)
+    };
+  }
+
+  function togglePlantSpotEditor(mapId) {
+    if (!canUsePlantSpotEditor()) return;
+    if (plantSpotEditor.activeMapId === mapId) {
+      plantSpotEditor.activeMapId = "";
+      plantSpotEditor.selectedIndex = -1;
+      plantSpotEditor.pendingAdd = false;
+      clearPlantEditorExport();
+    } else {
+      const map = getPlantEditorMap(mapId);
+      if (!map) return;
+      plantSpotEditor.activeMapId = map.id;
+      plantSpotEditor.selectedIndex = -1;
+      plantSpotEditor.pendingAdd = false;
+      clearPlantEditorExport();
+      getPlantEditorDraft(map);
+      state.mapView = "plants";
+    }
+    render({ direction: "replace" });
+  }
+
+  function setPlantSpotAddPending(mapId) {
+    if (!canUsePlantSpotEditor() || plantSpotEditor.activeMapId !== mapId) return;
+    plantSpotEditor.pendingAdd = !plantSpotEditor.pendingAdd;
+    clearPlantEditorExport();
+    render({ direction: "replace" });
+  }
+
+  function addPlantSpotAtPointer(stage, event) {
+    if (!canUsePlantSpotEditor() || !plantSpotEditor.pendingAdd) return false;
+    const mapId = stage?.dataset?.gamesenseMapId || "";
+    const map = getPlantEditorMap(mapId);
+    if (!map || plantSpotEditor.activeMapId !== map.id) return false;
+    const point = getPlantPointerCoordinates(stage, event);
+    if (!point) return false;
+    const draft = getPlantEditorDraft(map);
+    const number = draft.filter(spot => String(spot.site || "").toUpperCase() === "A").length + 1;
+    draft.push(clonePlantSpot({
+      number,
+      site: "A",
+      label: "New plant spot",
+      rate: null,
+      x: point.x,
+      y: point.y,
+      previewLabel: "",
+      previewImage: "",
+      previewSource: ""
+    }, draft.length));
+    plantSpotEditor.pendingAdd = false;
+    plantSpotEditor.selectedIndex = draft.length - 1;
+    clearPlantEditorExport();
+    render({ direction: "replace" });
+    return true;
+  }
+
+  function deletePlantSpot(deleteButton) {
+    if (!canUsePlantSpotEditor()) return;
+    const map = getPlantEditorMap();
+    const index = Number(deleteButton?.dataset?.gamesensePlantEditorDelete);
+    if (!map || !Number.isInteger(index)) return;
+    const draft = getPlantEditorDraft(map);
+    if (index < 0 || index >= draft.length) return;
+    draft.splice(index, 1);
+    plantSpotEditor.selectedIndex = Math.min(index, draft.length - 1);
+    clearPlantEditorExport();
+    render({ direction: "replace" });
+  }
+
+  function updatePlantEditorField(field) {
+    if (!canUsePlantSpotEditor()) return;
+    const map = getPlantEditorMap();
+    const index = Number(field?.dataset?.gamesensePlantIndex);
+    const key = field?.dataset?.gamesensePlantEditorField || "";
+    const draft = map ? getPlantEditorDraft(map) : [];
+    const spot = draft[index];
+    if (!spot || !["site", "number", "label", "rate"].includes(key)) return;
+    const raw = field.value;
+    if (key === "site") spot.site = String(raw || "A").trim().toUpperCase().slice(0, 1) || "A";
+    else if (key === "number") spot.number = Math.max(1, Math.round(Number(raw) || index + 1));
+    else if (key === "rate") spot.rate = normalizePlantRate(raw);
+    else spot.label = String(raw || "New plant spot").trim();
+    clearPlantEditorExport();
+    selectPlantEditorIndex(index, field.closest(".gamesense-map-canvas-row") || document);
+    const row = field.closest(".gamesense-plant-row");
+    if (row) {
+      const plantKey = getPlantSpotKey(spot, index);
+      row.dataset.gamesensePlantKey = plantKey;
+      const keyNode = row.querySelector("b");
+      const labelNode = row.querySelector(":scope > span");
+      if (keyNode) keyNode.textContent = plantKey;
+      if (labelNode) labelNode.textContent = spot.label;
+    }
+  }
+
+  function exportPlantSpotCorrections(mapId) {
+    if (!canUsePlantSpotEditor() || plantSpotEditor.activeMapId !== mapId) return;
+    const map = getPlantEditorMap(mapId);
+    if (!map) return;
+    const draft = getPlantEditorDraft(map);
+    plantSpotEditor.exportText = JSON.stringify(normalizePlantSpotsForExport(draft), null, 2);
+    render({ direction: "replace" });
+    window.requestAnimationFrame(() => {
+      const textarea = document.querySelector("[data-gamesense-plant-export-output]");
+      textarea?.focus?.();
+      textarea?.select?.();
+      navigator.clipboard?.writeText?.(plantSpotEditor.exportText).catch(() => {});
+    });
+  }
+
+  function startPlantSpotDrag(marker, event) {
+    if (!canUsePlantSpotEditor() || !marker?.closest(".gamesense-map-canvas-row.is-plant-editing")) return false;
+    const map = getPlantEditorMap(marker.closest("[data-gamesense-map-id]")?.dataset?.gamesenseMapId || "");
+    const index = Number(marker.dataset.gamesensePlantIndex);
+    const stage = marker.closest("[data-gamesense-map-stage]");
+    if (!map || !stage || !Number.isInteger(index)) return false;
+    activePlantSpotDrag = { mapId: map.id, index, marker, stage, pointerId: event.pointerId };
+    marker.classList.add("is-dragging");
+    selectPlantEditorIndex(index, marker.closest(".gamesense-map-canvas-row") || document);
+    try {
+      marker.setPointerCapture?.(event.pointerId);
+    } catch (_error) {
+      // Pointer capture is not guaranteed in all embedded/mobile WebViews.
+    }
+    updatePlantSpotDrag(event);
+    return true;
+  }
+
+  function updatePlantSpotDrag(event) {
+    if (!activePlantSpotDrag || activePlantSpotDrag.pointerId !== event.pointerId) return false;
+    const map = getPlantEditorMap(activePlantSpotDrag.mapId);
+    const draft = map ? getPlantEditorDraft(map) : [];
+    const spot = draft[activePlantSpotDrag.index];
+    const point = getPlantPointerCoordinates(activePlantSpotDrag.stage, event);
+    if (!spot || !point) return false;
+    spot.x = point.x;
+    spot.y = point.y;
+    activePlantSpotDrag.marker.style.setProperty("--callout-x", `${point.x}%`);
+    activePlantSpotDrag.marker.style.setProperty("--callout-y", `${point.y}%`);
+    clearPlantEditorExport();
+    return true;
+  }
+
+  function finishPlantSpotDrag(event) {
+    if (!activePlantSpotDrag || activePlantSpotDrag.pointerId !== event.pointerId) return false;
+    updatePlantSpotDrag(event);
+    activePlantSpotDrag.marker?.classList.remove("is-dragging");
+    try {
+      if (activePlantSpotDrag.marker?.hasPointerCapture?.(event.pointerId)) {
+        activePlantSpotDrag.marker.releasePointerCapture(event.pointerId);
+      }
+    } catch (_error) {
+      // Capture may already be released by the browser.
+    }
+    activePlantSpotDrag = null;
+    return true;
+  }
+
   function replaceTargetedElement(element, markup) {
     if (!element || !markup) return null;
     const template = document.createElement("template");
@@ -3896,6 +4201,10 @@
       marker.addEventListener("click", event => {
         event.preventDefault();
         event.stopPropagation();
+        if (marker.closest(".gamesense-map-canvas-row.is-plant-editing")) {
+          selectPlantEditorIndex(Number(marker.dataset.gamesensePlantIndex), marker.closest(".gamesense-map-canvas-row") || document);
+          return;
+        }
         const shouldActivate = !marker.classList.contains("active");
         markers.forEach(item => setPlantHotspotHighlight(item, false, true));
         if (shouldActivate) setPlantHotspotHighlight(marker, true, true);
@@ -4430,11 +4739,60 @@
       selectCompRole(compRole);
       return;
     }
+    const plantEditorToggle = event.target.closest?.("[data-gamesense-plant-editor-toggle]");
+    if (plantEditorToggle) {
+      event.preventDefault();
+      event.stopPropagation();
+      togglePlantSpotEditor(plantEditorToggle.dataset.gamesensePlantEditorToggle || "");
+      return;
+    }
+    const plantEditorAdd = event.target.closest?.("[data-gamesense-plant-editor-add]");
+    if (plantEditorAdd) {
+      event.preventDefault();
+      event.stopPropagation();
+      setPlantSpotAddPending(plantEditorAdd.dataset.gamesensePlantEditorAdd || "");
+      return;
+    }
+    const plantEditorExport = event.target.closest?.("[data-gamesense-plant-editor-export]");
+    if (plantEditorExport) {
+      event.preventDefault();
+      event.stopPropagation();
+      exportPlantSpotCorrections(plantEditorExport.dataset.gamesensePlantEditorExport || "");
+      return;
+    }
+    const plantEditorDelete = event.target.closest?.("[data-gamesense-plant-editor-delete]");
+    if (plantEditorDelete) {
+      event.preventDefault();
+      event.stopPropagation();
+      deletePlantSpot(plantEditorDelete);
+      return;
+    }
+    let plantEditorStage = event.target.closest?.("[data-gamesense-map-stage]");
+    if (!plantEditorStage && plantSpotEditor.pendingAdd) {
+      const activeStage = document.querySelector(".gamesense-map-canvas-row.is-plant-editing [data-gamesense-map-stage]");
+      const rect = activeStage?.getBoundingClientRect?.();
+      if (rect && event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom) {
+        plantEditorStage = activeStage;
+      }
+    }
+    if (plantEditorStage && plantEditorStage.closest(".gamesense-map-canvas-row.is-plant-editing") && plantSpotEditor.pendingAdd) {
+      event.preventDefault();
+      event.stopPropagation();
+      addPlantSpotAtPointer(plantEditorStage, event);
+      return;
+    }
     const plantPreview = event.target.closest?.("[data-gamesense-plant-preview]");
     if (plantPreview) {
       event.preventDefault();
       event.stopPropagation();
       togglePlantPreview(plantPreview);
+      return;
+    }
+    const plantEditorRow = event.target.closest?.(".gamesense-map-canvas-row.is-plant-editing .gamesense-plant-row[data-gamesense-plant-index]");
+    if (plantEditorRow && !event.target.closest?.("button,input,textarea,select")) {
+      event.preventDefault();
+      event.stopPropagation();
+      selectPlantEditorIndex(Number(plantEditorRow.dataset.gamesensePlantIndex), plantEditorRow.closest(".gamesense-map-canvas-row") || document);
       return;
     }
     const role = event.target.closest?.("[data-gamesense-role]");
@@ -4513,6 +4871,49 @@
       render({ direction: "backward" });
       return;
     }
+  }, true);
+
+  document.addEventListener("input", event => {
+    const field = event.target.closest?.("[data-gamesense-plant-editor-field]");
+    if (!field) return;
+    updatePlantEditorField(field);
+  });
+
+  document.addEventListener("change", event => {
+    const field = event.target.closest?.("[data-gamesense-plant-editor-field]");
+    if (!field) return;
+    updatePlantEditorField(field);
+    render({ direction: "replace" });
+  });
+
+  document.addEventListener("pointerdown", event => {
+    const marker = event.target.closest?.(".gamesense-plant-marker[data-gamesense-plant-index]");
+    if (!marker || !marker.closest(".gamesense-map-canvas-row.is-plant-editing")) return;
+    if (startPlantSpotDrag(marker, event)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+
+  document.addEventListener("pointermove", event => {
+    if (!activePlantSpotDrag) return;
+    if (updatePlantSpotDrag(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+
+  document.addEventListener("pointerup", event => {
+    if (!activePlantSpotDrag) return;
+    if (finishPlantSpotDrag(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+
+  document.addEventListener("pointercancel", event => {
+    if (!activePlantSpotDrag) return;
+    finishPlantSpotDrag(event);
   }, true);
 
   document.addEventListener("keydown", event => {

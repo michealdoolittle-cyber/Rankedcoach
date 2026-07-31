@@ -16375,6 +16375,10 @@ let activeLogCalendarMonth = new Date();
 globalThis.RankedCoachAuthBridge = Object.freeze({
   getClient: () => supabaseClient,
   getUser: () => currentAuthUser || null,
+  canUseOwnerTools(user = currentAuthUser) {
+    const role = String(user?.app_metadata?.role || user?.user_metadata?.role || "").trim().toLowerCase();
+    return Boolean(["owner", "admin"].includes(role) || (typeof isPremiumThemeQaUser === "function" && isPremiumThemeQaUser(user)));
+  },
   async getFreshUser() {
     if (currentAuthUser) return currentAuthUser;
     if (!supabaseClient?.auth?.getUser) return null;
