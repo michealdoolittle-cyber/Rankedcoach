@@ -1273,10 +1273,10 @@
     "entityName": "Fracture",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-30T19:58:41.569Z",
+    "generatedAt": "2026-07-31T19:59:28.190Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-07-30"
+    "lastReviewed": "2026-07-31"
   },
   "_fieldMeta": {
     "id": {
@@ -1314,10 +1314,10 @@
     "layoutImage": {
       "_tier": "canonical",
       "_sources": [
-        "https://overgear.com/guides/valorant/maps-list/"
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
       ],
       "approved": true,
-      "confidence": "Static TRN-style tactical layout sourced for the local Library asset."
+      "confidence": "n/a (auto-approved)"
     },
     "callouts": {
       "_tier": "mixed",
@@ -1454,10 +1454,10 @@
     "calloutLabelsBakedIn": {
       "_tier": "canonical",
       "_sources": [
-        "https://overgear.com/guides/valorant/maps-list/"
+        "https://valorant-api.com/v1/maps/b529448b-4d60-346e-e89e-00a4c527a405?language=en-US"
       ],
       "approved": true,
-      "confidence": "Source image includes baked-in callout labels."
+      "confidence": "n/a (auto-approved)"
     },
     "dataStatus": {
       "_tier": "canonical",
@@ -1480,12 +1480,10 @@
       "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "tacticalMapSource": {
-      "_tier": "canonical",
-      "_sources": [
-        "https://overgear.com/guides/valorant/maps-list/"
-      ],
-      "approved": true,
-      "confidence": "Source page for the checked-in tactical map image."
+      "_tier": "synthesized",
+      "_sources": [],
+      "approved": false,
+      "confidence": "Existing authored field; fresh corroboration required before regeneration can replace it"
     },
     "highRankPickRates": {
       "_tier": "synthesized",
