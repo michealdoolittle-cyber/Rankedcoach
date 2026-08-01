@@ -14324,21 +14324,86 @@ function formatMatchSummaryDuration(match = {}, record = {}) {
   return `${minutes} min`;
 }
 
+function getMatchSummaryParticipantId(value = {}) {
+  if (typeof value === "string") return value.trim();
+  if (!value || typeof value !== "object") return "";
+  return String(
+    value.puuid
+    || value.player_puuid
+    || value.playerPuuid
+    || value.id
+    || value.uuid
+    || value.player_id
+    || value.playerId
+    || value.subject
+    || ""
+  ).trim();
+}
+
+function getMatchSummaryKillKillerId(kill = {}) {
+  return getMatchSummaryParticipantId(
+    kill.killer
+    || kill.killerPuuid
+    || kill.killer_puuid
+    || kill.killerId
+    || kill.killer_id
+    || kill.player
+  );
+}
+
+function getMatchSummaryKillVictimId(kill = {}) {
+  return getMatchSummaryParticipantId(
+    kill.victim
+    || kill.victimPuuid
+    || kill.victim_puuid
+    || kill.victimId
+    || kill.victim_id
+  );
+}
+
+function getMatchSummaryKillWeaponParts(kill = {}) {
+  const weapon = kill?.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
+  const damage = kill?.finishingDamage || kill?.finishing_damage || kill?.damage || {};
+  const rawName = [
+    kill?.weaponName,
+    weapon?.name,
+    weapon?.displayName,
+    damage?.damageItemName,
+    damage?.damage_item_name,
+    typeof kill?.weapon === "string" ? kill.weapon : ""
+  ].map(value => String(value || "").trim()).find(Boolean) || "";
+  const rawId = [
+    kill?.weaponId,
+    kill?.weapon_id,
+    weapon?.id,
+    weapon?.uuid,
+    damage?.damageItem,
+    damage?.damage_item,
+    /^[0-9a-f-]{24,}$/i.test(rawName) ? rawName : ""
+  ].map(value => String(value || "").trim()).find(Boolean) || "";
+  return { rawName, rawId };
+}
+
+function getMatchSummaryWeaponId(kill = {}) {
+  return getMatchSummaryKillWeaponParts(kill).rawId;
+}
+
 function formatMatchSummaryWeaponName(kill = {}) {
-  const name = String(kill?.weapon || kill?.weaponName || "").trim();
-  if (name) return name;
-  const id = String(kill?.weaponId || "").trim();
-  const meta = getMatchSummaryWeaponMeta(id);
-  if (meta?.label) return meta.label;
-  return id ? `Weapon ${id.slice(0, 8)}` : "Untracked weapon";
+  const { rawName, rawId } = getMatchSummaryKillWeaponParts(kill);
+  const idMeta = getMatchSummaryWeaponMeta(rawId);
+  if (idMeta?.label) return idMeta.label;
+  const nameMeta = getMatchSummaryWeaponMeta(rawName);
+  if (nameMeta?.label) return nameMeta.label;
+  if (rawName && !/^[0-9a-f-]{24,}$/i.test(rawName)) return rawName;
+  return rawId ? `Weapon ${rawId.slice(0, 8)}` : "Untracked weapon";
 }
 
 function getTrackedRoundEvents(round = {}, trackedPuuid = "") {
   const kills = Array.isArray(round?.kills) ? round.kills : [];
   const tracked = String(trackedPuuid || "").trim();
   return {
-    kills: tracked ? kills.filter(kill => String(kill?.killer || "").trim() === tracked) : kills,
-    deaths: tracked ? kills.filter(kill => String(kill?.victim || "").trim() === tracked) : []
+    kills: tracked ? kills.filter(kill => getMatchSummaryKillKillerId(kill) === tracked) : kills,
+    deaths: tracked ? kills.filter(kill => getMatchSummaryKillVictimId(kill) === tracked) : []
   };
 }
 
@@ -14409,7 +14474,8 @@ function buildMatchSummaryWeapons(record = {}) {
       };
       existing.kills += 1;
       existing.rounds.add(safeNumber(round?.roundNum));
-      if (kill?.weaponId) existing.weaponIds.add(String(kill.weaponId));
+      const weaponId = getMatchSummaryWeaponId(kill);
+      if (weaponId) existing.weaponIds.add(String(weaponId));
       buckets.set(label, existing);
     });
   });
@@ -14428,9 +14494,6 @@ function buildMatchSummaryStatItems(match = {}, record = getMatchSummaryRecord(m
   const core = getMatchCore(match || record || {});
   const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
   return [
-    { key: "kills", label: "Kills", value: Math.round(safeNumber(core.kills)) || 0, displayValue: String(Math.round(safeNumber(core.kills)) || 0), unit: "" },
-    { key: "deaths", label: "Deaths", value: Math.round(safeNumber(core.deaths)) || 0, displayValue: String(Math.round(safeNumber(core.deaths)) || 0), unit: "" },
-    { key: "assists", label: "Assists", value: Math.round(safeNumber(core.assists)) || 0, displayValue: String(Math.round(safeNumber(core.assists)) || 0), unit: "" },
     { key: "acs", label: "ACS", value: safeNumber(core.acs), displayValue: Math.round(safeNumber(core.acs)) || "--", unit: "" },
     { key: "adr", label: "ADR", value: safeNumber(core.adr), displayValue: Math.round(safeNumber(core.adr)) || "--", unit: "" },
     { key: "hs", label: "HS %", value: safeNumber(core.hs), displayValue: `${Math.round(safeNumber(core.hs)) || 0}%`, unit: "%" },
@@ -14472,19 +14535,67 @@ function getMatchSummaryPlayedAt(match = {}) {
   return Number.isFinite(time) ? time : 0;
 }
 
+function getMatchSummaryMatchId(match = {}) {
+  const record = getMatchSummaryRecord(match);
+  return String(record?.id || match?.id || match?.matchId || match?.metadata?.matchId || "").trim();
+}
+
+function getMatchSummaryChronology() {
+  const sourceMatches = Array.isArray(matches) && matches.length
+    ? matches
+    : (Array.isArray(getActiveProfile?.()?.matches) ? getActiveProfile().matches : []);
+  return sourceMatches
+    .map((item, sourceIndex) => ({
+      item,
+      record: getMatchSummaryRecord(item),
+      id: getMatchSummaryMatchId(item),
+      sourceIndex,
+      time: getMatchSummaryPlayedAt(item)
+    }))
+    .filter(entry => entry.record)
+    .sort((left, right) => {
+      if (left.time && right.time && left.time !== right.time) return left.time - right.time;
+      return left.sourceIndex - right.sourceIndex;
+    })
+    .map((entry, index) => ({ ...entry, matchNumber: index + 1 }));
+}
+
+function getMatchSummaryMatchNumber(match = {}) {
+  const id = getMatchSummaryMatchId(match);
+  const time = getMatchSummaryPlayedAt(match);
+  const chronology = getMatchSummaryChronology();
+  const byId = id ? chronology.find(entry => entry.id && entry.id === id) : null;
+  if (byId) return byId.matchNumber;
+  if (time) {
+    const byTime = chronology.find(entry => entry.time === time);
+    if (byTime) return byTime.matchNumber;
+    return chronology.filter(entry => entry.time && entry.time <= time).length || chronology.length + 1;
+  }
+  return chronology.length ? chronology.length + 1 : 1;
+}
+
+function getMatchSummaryStatScaleMax(key = "", points = [], averageValue = NaN) {
+  if (key === "hs" || key === "role-impact") return 100;
+  const observed = [
+    ...points.map(entry => Number(entry.value)),
+    Number(averageValue)
+  ].filter(Number.isFinite);
+  const maxObserved = Math.max(0, ...observed);
+  if (key === "acs") return Math.max(350, Math.ceil(maxObserved / 50) * 50);
+  if (key === "adr") return Math.max(200, Math.ceil(maxObserved / 25) * 25);
+  return Math.max(10, Math.ceil(maxObserved / 5) * 5);
+}
+
 function getMatchSummaryPreviousRoleMatches(match = {}, record = getMatchSummaryRecord(match), limit = 5) {
   const core = getMatchCore(match || record || {});
   const roleKey = getCompassRoleKey(core.role || record?.role || agentRoles?.[core.agent] || "");
   const currentId = String(record?.id || match?.id || match?.matchId || match?.metadata?.matchId || "").trim();
   const currentTime = getMatchSummaryPlayedAt(match || record || {});
-  const sourceMatches = Array.isArray(matches) && matches.length
-    ? matches
-    : (Array.isArray(getActiveProfile?.()?.matches) ? getActiveProfile().matches : []);
-  return sourceMatches
-    .map(item => ({ item, record: getMatchSummaryRecord(item), core: getMatchCore(item), time: getMatchSummaryPlayedAt(item) }))
+  return getMatchSummaryChronology()
+    .map(entry => ({ ...entry, core: getMatchCore(entry.item) }))
     .filter(entry => {
       if (!entry.record) return false;
-      const id = String(entry.record?.id || entry.item?.id || entry.item?.matchId || entry.item?.metadata?.matchId || "").trim();
+      const id = entry.id;
       if (currentId && id && id === currentId) return false;
       if (roleKey && getCompassRoleKey(entry.core?.role || entry.record?.role || "") !== roleKey) return false;
       return !currentTime || !entry.time || entry.time < currentTime;
@@ -14492,9 +14603,9 @@ function getMatchSummaryPreviousRoleMatches(match = {}, record = getMatchSummary
     .sort((left, right) => right.time - left.time)
     .slice(0, Math.max(1, Number(limit) || 5))
     .reverse()
-    .map((entry, index, list) => ({
+    .map((entry) => ({
       match: entry.item,
-      label: `-${list.length - index}`,
+      label: `Match ${entry.matchNumber}`,
       map: entry.core?.map || entry.record?.map || "Match",
       value: null
     }));
@@ -14505,20 +14616,22 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
     .map(entry => ({ ...entry, value: getMatchSummaryStatNumericValue(entry.match, item.key) }))
     .filter(entry => Number.isFinite(Number(entry.value)));
   const currentValue = getMatchSummaryStatNumericValue(match || record || {}, item.key);
+  const currentMatchNumber = getMatchSummaryMatchNumber(match || record || {});
   const points = [
     ...previous,
-    ...(Number.isFinite(Number(currentValue)) ? [{ label: "Now", map: record?.map || getMatchCore(match || record || {}).map || "Current", value: currentValue, current: true }] : [])
+    ...(Number.isFinite(Number(currentValue)) ? [{ label: `Now, Match #${currentMatchNumber}`, map: record?.map || getMatchCore(match || record || {}).map || "Current", value: currentValue, current: true }] : [])
   ];
   if (!points.length) {
     return `<div class="match-summary-stat-trend" data-match-summary-stat-panel="${escapeHtml(item.key)}" hidden><p class="match-summary-empty">No stored role matches have enough data for this ${escapeHtml(item.label)} trend yet.</p></div>`;
   }
   const previousValues = previous.map(entry => Number(entry.value)).filter(Number.isFinite);
   const averageValue = previousValues.length ? average(previousValues) : average(points.map(entry => Number(entry.value)));
-  const max = Math.max(1, ...points.map(entry => Number(entry.value)), averageValue);
+  const max = getMatchSummaryStatScaleMax(item.key, points, averageValue);
+  const midpoint = max / 2;
   const polyline = points.map((entry, index) => {
     const x = points.length <= 1 ? 50 : (index / (points.length - 1)) * 100;
-    const y = 52 - ((Number(entry.value) / max) * 45);
-    return `${x.toFixed(2)},${Math.max(4, Math.min(52, y)).toFixed(2)}`;
+    const y = 100 - ((Number(entry.value) / max) * 92);
+    return `${x.toFixed(2)},${Math.max(4, Math.min(98, y)).toFixed(2)}`;
   }).join(" ");
   return `
     <div class="match-summary-stat-trend" data-match-summary-stat-panel="${escapeHtml(item.key)}" hidden>
@@ -14527,11 +14640,14 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
         <span>Average ${escapeHtml(formatMatchSummaryStatValue(item.key, averageValue))}</span>
       </div>
       <div class="match-summary-stat-chart" style="--stat-count:${points.length}">
-        <svg viewBox="0 0 100 56" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
-        ${points.map(entry => {
+        <div class="match-summary-stat-y-axis" aria-hidden="true"><span>${escapeHtml(formatMatchSummaryStatValue(item.key, max))}</span><span>${escapeHtml(formatMatchSummaryStatValue(item.key, midpoint))}</span><span>0${item.key === "hs" || item.key === "role-impact" ? "%" : ""}</span></div>
+        <div class="match-summary-stat-plot">
+          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
+          ${points.map(entry => {
           const height = Math.max(8, Math.round((Number(entry.value) / max) * 100));
           return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
-        }).join("")}
+          }).join("")}
+        </div>
       </div>
     </div>`;
 }
@@ -14554,7 +14670,6 @@ function renderMatchSummaryStatsTab(match = {}, record = getMatchSummaryRecord(m
       `).join("")}
     </div>
     <div class="match-summary-stat-trends">${items.map(item => renderMatchSummaryStatTrendPanel(match, record, item)).join("")}</div>
-    <p class="match-summary-footnote">Tap a stat to compare it against the five previous stored games where you played this role.</p>
   `;
 }
 
@@ -14621,7 +14736,7 @@ function renderMatchSummaryEconomyTab(record = {}) {
 
 function renderMatchSummarySkullIcon(tone = "kill") {
   const className = tone === "death" ? "is-death" : "is-kill";
-  return `<span class="match-summary-skull ${className}" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 3C9.5 3 5.2 7.2 5.2 13.6c0 4.1 1.9 7.3 5 8.9v3.9c0 1.4 1.1 2.6 2.6 2.6h6.4c1.4 0 2.6-1.1 2.6-2.6v-3.9c3.1-1.6 5-4.8 5-8.9C26.8 7.2 22.5 3 16 3Z"></path><circle cx="11.8" cy="14.4" r="2.5"></circle><circle cx="20.2" cy="14.4" r="2.5"></circle><path d="M14 20.2h4M12.5 24.5v3.2M16 24.5v3.2M19.5 24.5v3.2"></path></svg></span>`;
+  return `<span class="match-summary-skull ${className}" aria-hidden="true"><svg viewBox="0 0 32 32"><path class="match-summary-skull-fill" d="M16 3C9.5 3 5.2 7.2 5.2 13.6c0 4.1 1.9 7.3 5 8.9v3.9c0 1.4 1.1 2.6 2.6 2.6h6.4c1.4 0 2.6-1.1 2.6-2.6v-3.9c3.1-1.6 5-4.8 5-8.9C26.8 7.2 22.5 3 16 3Z"></path><circle class="match-summary-skull-cut" cx="11.8" cy="14.4" r="2.65"></circle><circle class="match-summary-skull-cut" cx="20.2" cy="14.4" r="2.65"></circle><path class="match-summary-skull-line" d="M14 20.2h4M12.5 24.5v3.2M16 24.5v3.2M19.5 24.5v3.2"></path></svg></span>`;
 }
 
 function renderMatchSummaryTimeline(record = {}) {
@@ -14630,7 +14745,10 @@ function renderMatchSummaryTimeline(record = {}) {
   return `<div class="match-summary-rounds" aria-label="Round by round timeline">
     ${rounds.map(item => `
       <div class="match-summary-round ${item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}: ${item.won ? "Win" : "Loss"}">
-        <div class="match-summary-round-events">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : `<span class="match-summary-round-empty">-</span>`}${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
+        <div class="match-summary-round-events">
+          <div class="match-summary-round-kills">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : ""}</div>
+          <div class="match-summary-round-deaths">${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
+        </div>
         <em>${item.roundNum}</em>
       </div>
     `).join("")}

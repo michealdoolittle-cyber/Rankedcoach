@@ -59225,6 +59225,59 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   animation-play-state:running !important;
 }
 
+/* Live avatar ambient effects: picker previews and the nav avatar use the same
+   SVG frame. Keep the frame inside the compact avatar box, but never let late
+   legacy border locks hide or pause it on the real profile button. */
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset){
+  border-color:transparent !important;
+  box-shadow:none !important;
+  isolation:isolate !important;
+  background:radial-gradient(circle at 50% 50%, rgba(15,23,42,.92), rgba(2,6,23,.96)) !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset)::before,
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset)::after{
+  content:none !important;
+  display:none !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+  animation:none !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset) > .rc-mobile-avatar-frame.rc-profile-effect-frame{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:100% !important;
+  min-width:100% !important;
+  max-width:100% !important;
+  height:100% !important;
+  min-height:100% !important;
+  max-height:100% !important;
+  transform:translate(-50%,-50%) !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  pointer-events:none !important;
+  overflow:hidden !important;
+  z-index:2 !important;
+}
+
+html body :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset) > .rc-mobile-avatar-frame.rc-profile-effect-frame .rc-profile-effect-svg{
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  overflow:hidden !important;
+}
+
+html body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset) :is(.rc-profile-effect,.rc-profile-effect *){
+  animation-play-state:running !important;
+}
+
+body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).has-rc-mobile-frame:is(.border-sunburst,.border-eclipse,.border-bubble-drift,.border-light-rays,.border-vortex,.border-neon-orbit,.border-stardust,.border-water-ripple,.border-smoke-wisp,.border-ember-sparks,.border-fade-pulse,.border-agent-trace,.border-snowfall,.border-confetti-burst,.border-prism-offset) :is(.rc-profile-effect,.rc-profile-effect *){
+  animation:none !important;
+}
+
 /* 2026-08-01 match summary report modal */
 #matchSummaryModal.match-summary-overlay.active,
 #matchSummaryModal.match-summary-overlay.is-opening,
@@ -59405,7 +59458,7 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   grid-template-columns:repeat(auto-fit, minmax(34px, 1fr));
   gap:5px;
   margin-top:12px;
-  padding:8px 0 0;
+  padding:6px 0 0;
 }
 
 #matchSummaryModal .match-summary-rounds::before{
@@ -59413,18 +59466,19 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   position:absolute;
   left:1%;
   right:1%;
-  bottom:18px;
+  top:39px;
   height:2px;
   background:linear-gradient(90deg, transparent, rgba(148,163,184,.58), transparent);
+  z-index:1;
 }
 
 #matchSummaryModal .match-summary-round{
   position:relative;
   display:grid;
   justify-items:center;
-  align-content:end;
+  align-content:start;
   gap:5px;
-  min-height:58px;
+  min-height:72px;
   padding:7px 2px 0;
   border:0;
   border-radius:0;
@@ -59442,12 +59496,34 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
 }
 
 #matchSummaryModal .match-summary-round-events{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-rows:32px 24px;
+  justify-items:center;
+  align-items:center;
+  min-height:58px;
+  width:100%;
+}
+
+#matchSummaryModal .match-summary-round-kills,
+#matchSummaryModal .match-summary-round-deaths{
   display:flex;
   align-items:center;
-  justify-content:center;
-  flex-wrap:wrap;
-  gap:2px;
-  min-height:27px;
+  justify-content:flex-end;
+  gap:1px;
+  min-width:18px;
+}
+
+#matchSummaryModal .match-summary-round-kills{
+  align-self:end;
+  flex-direction:column-reverse;
+  padding-bottom:4px;
+}
+
+#matchSummaryModal .match-summary-round-deaths{
+  align-self:start;
+  padding-top:5px;
 }
 
 #matchSummaryModal .match-summary-round-empty,
@@ -59461,8 +59537,8 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
 #matchSummaryModal .match-summary-skull{
   display:inline-grid;
   place-items:center;
-  width:14px;
-  height:14px;
+  width:16px;
+  height:16px;
 }
 
 #matchSummaryModal .match-summary-skull svg{
@@ -59471,11 +59547,23 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   overflow:visible;
 }
 
-#matchSummaryModal .match-summary-skull path,
-#matchSummaryModal .match-summary-skull circle{
-  fill:none;
+#matchSummaryModal .match-summary-skull-fill{
+  fill:currentColor;
   stroke:currentColor;
-  stroke-width:2.1;
+  stroke-width:1.1;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+#matchSummaryModal .match-summary-skull-cut{
+  fill:rgba(2,6,23,.92);
+  stroke:none;
+}
+
+#matchSummaryModal .match-summary-skull-line{
+  fill:none;
+  stroke:rgba(2,6,23,.94);
+  stroke-width:2.25;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
@@ -59573,21 +59661,57 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   position:relative;
   min-height:145px;
   display:grid;
-  grid-template-columns:repeat(var(--stat-count, 6), minmax(0, 1fr));
-  align-items:end;
-  gap:9px;
-  padding:16px 10px 10px;
+  grid-template-columns:42px minmax(0, 1fr);
+  align-items:stretch;
+  gap:8px;
+  padding:12px 10px 10px;
   border:1px solid rgba(148,163,184,.14);
   border-radius:12px;
   background:rgba(2,6,23,.5);
   overflow:hidden;
 }
 
+#matchSummaryModal .match-summary-stat-y-axis{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding:5px 0 22px;
+  color:var(--text-muted, #a8b3c7);
+  font:900 9px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.04em;
+  pointer-events:none;
+}
+
+#matchSummaryModal .match-summary-stat-plot{
+  position:relative;
+  min-height:123px;
+  display:grid;
+  grid-template-columns:repeat(var(--stat-count, 6), minmax(0, 1fr));
+  align-items:end;
+  gap:9px;
+  overflow:hidden;
+}
+
+#matchSummaryModal .match-summary-stat-plot::before,
+#matchSummaryModal .match-summary-stat-plot::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  height:1px;
+  background:rgba(148,163,184,.12);
+  pointer-events:none;
+}
+
+#matchSummaryModal .match-summary-stat-plot::before{top:5px;}
+#matchSummaryModal .match-summary-stat-plot::after{top:50%;}
+
 #matchSummaryModal .match-summary-stat-chart svg{
   position:absolute;
-  inset:12px 10px 31px;
-  width:calc(100% - 20px);
-  height:calc(100% - 43px);
+  inset:5px 0 23px;
+  width:100%;
+  height:calc(100% - 28px);
   pointer-events:none;
   z-index:3;
 }
@@ -59607,7 +59731,7 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   justify-items:center;
   align-content:end;
   gap:4px;
-  height:108px;
+  height:100%;
   min-width:0;
 }
 
@@ -59731,6 +59855,7 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
 #matchSummaryModal .match-summary-economy-chart{
   position:relative;
   min-height:230px;
+  height:230px;
   display:flex;
   align-items:flex-end;
   gap:5px;
@@ -59799,6 +59924,8 @@ body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-
   width:100%;
   height:var(--bar-height, 8%);
   min-height:8px;
+  max-height:100%;
+  flex:0 0 var(--bar-height, 8%);
   border-radius:999px 999px 3px 3px;
   background:linear-gradient(180deg, rgba(34,197,94,.9), rgba(16,185,129,.38));
 }
