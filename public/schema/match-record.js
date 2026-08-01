@@ -76,11 +76,30 @@
   }
 
   function normalizeKillEvent(kill = {}) {
+    const weapon = kill.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
+    const finishingDamage = kill.finishingDamage && typeof kill.finishingDamage === "object" ? kill.finishingDamage : {};
+    const weaponName = cleanString(
+      kill.weaponName
+      || kill.damageWeapon
+      || weapon.name
+      || (finishingDamage.damageType === "Weapon" ? finishingDamage.damageItemName : "")
+    );
+    const weaponId = cleanString(
+      kill.weaponId
+      || weapon.id
+      || weapon.uuid
+      || (finishingDamage.damageType === "Weapon" ? finishingDamage.damageItem : "")
+    );
+    const weaponType = cleanString(kill.weaponType || weapon.type || finishingDamage.damageType);
     return {
       killer: cleanString(kill.killer),
       victim: cleanString(kill.victim),
       assistants: cleanStringArray(kill.assistants),
-      roundTime: readNumber(kill.roundTime)
+      roundTime: readNumber(kill.roundTime),
+      weapon: weaponName,
+      weaponId,
+      weaponType,
+      secondaryFireMode: Boolean(kill.secondaryFireMode ?? kill.secondary_fire_mode ?? finishingDamage.isSecondaryFireMode)
     };
   }
 
@@ -574,11 +593,16 @@
   }
 
   function normalizeV4Kill(kill = {}) {
+    const weapon = kill.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
     return {
       killer: getV4PlayerId(kill.killer),
       victim: getV4PlayerId(kill.victim),
       assistants: (Array.isArray(kill.assistants) ? kill.assistants : []).map(getV4PlayerId).filter(Boolean),
-      roundTime: readNumber(kill.time_in_round_in_ms)
+      roundTime: readNumber(kill.time_in_round_in_ms),
+      weapon: cleanString(weapon.name),
+      weaponId: cleanString(weapon.id || weapon.uuid),
+      weaponType: cleanString(weapon.type),
+      secondaryFireMode: Boolean(kill.secondary_fire_mode)
     };
   }
 

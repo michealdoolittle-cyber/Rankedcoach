@@ -3931,12 +3931,13 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
 
 function setAvatarFrameAnimationState(target, enabled = true) {
   if (!target) return;
-  target.querySelectorAll(".rc-mobile-frame-fill, .rc-mobile-frame-main, .rc-mobile-frame-secondary, .rc-mobile-frame-glint, .rc-mobile-frame-arc, .rc-mobile-frame-crosshair path").forEach((part) => {
+  target.querySelectorAll(".rc-mobile-frame-fill, .rc-mobile-frame-main, .rc-mobile-frame-secondary, .rc-mobile-frame-glint, .rc-mobile-frame-arc, .rc-mobile-frame-crosshair path, .rc-profile-effect, .rc-profile-effect *").forEach((part) => {
     if (enabled) {
       part.style.removeProperty("animation");
       part.style.removeProperty("animation-name");
       part.style.removeProperty("animation-duration");
       part.style.removeProperty("animation-play-state");
+      part.style.removeProperty("transition");
       return;
     }
     part.style.setProperty("animation", "none", "important");
@@ -4360,9 +4361,11 @@ function getSortedMatches(matchList = []) {
 }
 
 function getMatchCore(match = {}) {
-  const record = match?.matchRecord?.schemaVersion
-    ? match.matchRecord
-    : (window.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null);
+  const record = match?.schemaVersion
+    ? match
+    : match?.matchRecord?.schemaVersion
+      ? match.matchRecord
+      : (window.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null);
   if (record) {
     const agent = record.agent || "Unknown";
     return {
@@ -6573,6 +6576,18 @@ function buildMatchRoleImpact(match = {}, roleName = "Unknown", importedAnalytic
     weights,
     components,
     formula: `${roleLabel.charAt(0).toUpperCase()}${roleLabel.slice(1)} role impact blends ${weights.map(entry => `${entry.label} ${Math.round(entry.weight * 100)}%`).join(", ")}.`
+  };
+}
+
+function buildStoredRoleImpactSnapshot(match = {}, importedAnalytics = null) {
+  const core = getMatchCore(match || {});
+  const roleImpact = buildMatchRoleImpact(match || {}, core.role || match?.role || "Unknown", importedAnalytics);
+  const score = Number(roleImpact?.score);
+  if (!Number.isFinite(score)) return null;
+  return {
+    score: Math.round(clampScore(score)),
+    roleKey: roleImpact?.roleKey || getCompassRoleKey(core.role || match?.role || "Unknown"),
+    capturedAt: nowISO()
   };
 }
 
@@ -14225,6 +14240,370 @@ function queueBroadcastPostgamePackage(record = null, options = {}) {
   }, Math.max(0, Number(options.delayMs) || 80));
 }
 
+let pendingMatchSummaryDismiss = null;
+
+function getMatchSummaryRecord(match = {}) {
+  if (match?.schemaVersion) return match;
+  if (match?.matchRecord?.schemaVersion) return match.matchRecord;
+  return globalThis.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null;
+}
+
+function getMatchSummaryIdentity(match = {}) {
+  const record = getMatchSummaryRecord(match) || {};
+  const core = getMatchCore(match || record || {});
+  return {
+    record,
+    core,
+    matchId: String(record.id || match?.matchId || match?.id || match?.metadata?.matchId || "").trim(),
+    puuid: String(record.trackedPlayer?.puuid || match?.trackedPlayer?.puuid || "").trim()
+  };
+}
+
+function formatMatchSummaryDate(value = "") {
+  const date = new Date(value || Date.now());
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function formatMatchSummaryDuration(match = {}, record = {}) {
+  const raw = safeNumber(
+    match?.durationMs,
+    safeNumber(match?.metadata?.durationMs, safeNumber(record?.durationMs))
+  );
+  if (!Number.isFinite(raw) || raw <= 0) return "";
+  const minutes = Math.max(1, Math.round(raw / 60000));
+  return `${minutes} min`;
+}
+
+function formatMatchSummaryWeaponName(kill = {}) {
+  const name = String(kill?.weapon || kill?.weaponName || "").trim();
+  if (name) return name;
+  const id = String(kill?.weaponId || "").trim();
+  return id ? `Weapon ${id.slice(0, 8)}` : "Untracked weapon";
+}
+
+function getTrackedRoundEvents(round = {}, trackedPuuid = "") {
+  const kills = Array.isArray(round?.kills) ? round.kills : [];
+  const tracked = String(trackedPuuid || "").trim();
+  return {
+    kills: tracked ? kills.filter(kill => String(kill?.killer || "").trim() === tracked) : kills,
+    deaths: tracked ? kills.filter(kill => String(kill?.victim || "").trim() === tracked) : []
+  };
+}
+
+function buildMatchSummaryTimeline(record = {}) {
+  const trackedPuuid = String(record?.trackedPlayer?.puuid || "").trim();
+  return (Array.isArray(record?.roundByRound) ? record.roundByRound : []).map((round, index) => {
+    const events = getTrackedRoundEvents(round, trackedPuuid);
+    return {
+      round,
+      index,
+      roundNum: safeNumber(round?.roundNum, index + 1),
+      side: String(round?.side || "").toLowerCase(),
+      won: round?.won === true,
+      kills: events.kills,
+      deaths: events.deaths,
+      damage: safeNumber(round?.damageDealt)
+    };
+  });
+}
+
+function getEconomyPhaseForRound(round = {}, index = 0, rounds = []) {
+  const roundNum = safeNumber(round?.roundNum, index + 1);
+  if (roundNum === 1 || roundNum === 13) return "pistol";
+  if (/thrift/i.test(String(round?.roundCeremony || round?.roundResult || ""))) return "thrifty";
+  if (roundNum === 2 || roundNum === 14) return classifyPostPistolEconomy(round, rounds[index - 1]?.won ?? null) || "other";
+  if (roundNum === 3 || roundNum === 15) return classifyThirdRoundEconomy(round, rounds[index - 2]?.won ?? null, rounds[index - 1]?.won ?? null) || "other";
+  return classifyLabeledEconomyPhase(round) || classifyFullBuyEconomy(round, false) || "other";
+}
+
+function buildMatchSummaryEconomy(record = {}) {
+  const rounds = Array.isArray(record?.roundByRound) ? record.roundByRound : [];
+  const buckets = {
+    pistol: createEconomyPhaseBucket("Pistol"),
+    save: createEconomyPhaseBucket("Save / Eco"),
+    bonus: createEconomyPhaseBucket("Bonus"),
+    "full-buy": createEconomyPhaseBucket("Full Buy"),
+    "half-buy": createEconomyPhaseBucket("Half Buy"),
+    thrifty: createEconomyPhaseBucket("Thrifty"),
+    other: createEconomyPhaseBucket("Other")
+  };
+  const creditLine = rounds.map((round, index) => {
+    const phase = getEconomyPhaseForRound(round, index, rounds);
+    addEconomyPhaseResult(buckets[phase] || buckets.other, round?.won === true);
+    return {
+      roundNum: safeNumber(round?.roundNum, index + 1),
+      value: safeNumber(round?.playerEconomy?.loadoutValue),
+      remaining: safeNumber(round?.playerEconomy?.remaining),
+      won: round?.won === true,
+      phase
+    };
+  });
+  return { buckets, creditLine };
+}
+
+function buildMatchSummaryWeapons(record = {}) {
+  const trackedPuuid = String(record?.trackedPlayer?.puuid || "").trim();
+  const buckets = new Map();
+  (Array.isArray(record?.roundByRound) ? record.roundByRound : []).forEach((round) => {
+    const events = getTrackedRoundEvents(round, trackedPuuid);
+    events.kills.forEach((kill) => {
+      const label = formatMatchSummaryWeaponName(kill);
+      const existing = buckets.get(label) || {
+        weapon: label,
+        kills: 0,
+        rounds: new Set(),
+        weaponIds: new Set()
+      };
+      existing.kills += 1;
+      existing.rounds.add(safeNumber(round?.roundNum));
+      if (kill?.weaponId) existing.weaponIds.add(String(kill.weaponId));
+      buckets.set(label, existing);
+    });
+  });
+  return Array.from(buckets.values())
+    .map(entry => ({
+      weapon: entry.weapon,
+      kills: entry.kills,
+      rounds: Array.from(entry.rounds).filter(Number.isFinite).sort((a, b) => a - b),
+      weaponIds: Array.from(entry.weaponIds)
+    }))
+    .sort((a, b) => b.kills - a.kills || a.weapon.localeCompare(b.weapon));
+}
+
+function buildMatchSummaryStatItems(match = {}, record = getMatchSummaryRecord(match)) {
+  const core = getMatchCore(match || record || {});
+  const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
+  return [
+    { label: "K / D / A", value: `${Math.round(safeNumber(core.kills))} / ${Math.round(safeNumber(core.deaths))} / ${Math.round(safeNumber(core.assists))}`, roleKey: getCompassRoleKey(core.role) },
+    { label: "ACS", value: Math.round(safeNumber(core.acs)) || "--", roleKey: getCompassRoleKey(core.role) },
+    { label: "ADR", value: Math.round(safeNumber(core.adr)) || "--", roleKey: getCompassRoleKey(core.role) },
+    { label: "HS %", value: `${Math.round(safeNumber(core.hs)) || 0}%`, roleKey: getCompassRoleKey(core.role) },
+    { label: "Role Impact", value: `${Math.round(safeNumber(roleImpact?.score)) || 0}%`, roleKey: roleImpact?.roleKey || getCompassRoleKey(core.role) }
+  ];
+}
+
+function renderMatchSummaryRoleBadge(roleKey = "") {
+  const key = getCompassRoleKey(roleKey);
+  const icon = ROLE_ICON_MAP?.[key] || "";
+  return icon ? `<span class="match-summary-role-badge role-${escapeHtml(key)}"><img src="${escapeHtml(icon)}" alt="" aria-hidden="true"></span>` : "";
+}
+
+function renderMatchSummaryStatsTab(match = {}, record = getMatchSummaryRecord(match)) {
+  const items = buildMatchSummaryStatItems(match, record);
+  return `
+    <div class="match-summary-stat-grid">
+      ${items.map(item => `
+        <button type="button" class="timeline-pill match-summary-stat-pill" data-match-summary-timeline="${escapeHtml(item.label)}">
+          <span class="timeline-pill-label">${escapeHtml(item.label)}</span>
+          <span class="timeline-pill-value">${escapeHtml(item.value)}</span>
+          ${renderMatchSummaryRoleBadge(item.roleKey)}
+        </button>
+      `).join("")}
+    </div>
+    <p class="match-summary-footnote">These are the raw synced match values. Deeper coaching reads stay in Insights and Compass.</p>
+  `;
+}
+
+function renderMatchSummaryWeaponsTab(record = {}) {
+  const weapons = buildMatchSummaryWeapons(record);
+  const economy = buildMatchSummaryEconomy(record);
+  const bucketMarkup = Object.entries(economy.buckets)
+    .filter(([, bucket]) => bucket.total > 0)
+    .map(([key, bucket]) => {
+      const rate = bucket.total ? Math.round((bucket.wins / bucket.total) * 100) : 0;
+      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong>${bucket.wins}/${bucket.total} wins <em>${rate}%</em></span>`;
+    }).join("");
+  return `
+    <div class="match-summary-two-col">
+      <section class="match-summary-panel">
+        <h4>Weapon Kills</h4>
+        ${weapons.length ? `
+          <div class="match-summary-weapon-list">
+            ${weapons.map(item => `
+              <div class="match-summary-weapon-row">
+                <strong>${escapeHtml(item.weapon)}</strong>
+                <span>${item.kills} kill${item.kills === 1 ? "" : "s"}</span>
+                <small>Rounds ${escapeHtml(item.rounds.join(", ") || "--")}</small>
+              </div>
+            `).join("")}
+          </div>
+        ` : `<p class="match-summary-empty">No tracked-player weapon kills were present in this synced match record.</p>`}
+        <p class="match-summary-footnote">Henrik v4 exposes per-kill weapon identity. Per-weapon damage totals are not exposed, so they are not estimated here.</p>
+      </section>
+      <section class="match-summary-panel">
+        <h4>Round Outcomes</h4>
+        <div class="match-summary-eco-grid">${bucketMarkup || `<span class="match-summary-empty">No economy rounds available.</span>`}</div>
+      </section>
+    </div>
+  `;
+}
+
+function renderMatchSummaryEconomyTab(record = {}) {
+  const { creditLine } = buildMatchSummaryEconomy(record);
+  const values = creditLine.map(item => item.value).filter(Number.isFinite);
+  const max = Math.max(1, ...values);
+  return `
+    <section class="match-summary-panel">
+      <h4>Round Credit Flow</h4>
+      <div class="match-summary-economy-chart">
+        ${creditLine.map(item => {
+          const height = Number.isFinite(item.value) ? Math.max(8, Math.round((item.value / max) * 100)) : 8;
+          return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${Number.isFinite(item.value) ? Math.round(item.value) : "untracked"} credits"><i></i><em>${item.roundNum}</em></span>`;
+        }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
+      </div>
+      <p class="match-summary-footnote">Credit bars use each round's stored player loadout value. Missing values stay untracked.</p>
+    </section>
+  `;
+}
+
+function renderMatchSummaryTimeline(record = {}) {
+  const rounds = buildMatchSummaryTimeline(record);
+  if (!rounds.length) return `<div class="match-summary-empty">No round-by-round data is stored for this match.</div>`;
+  return `<div class="match-summary-rounds" aria-label="Round by round timeline">
+    ${rounds.map(item => `
+      <div class="match-summary-round ${item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}: ${item.won ? "Win" : "Loss"}">
+        <span>${item.roundNum}</span>
+        <strong>${item.kills.length}</strong>
+        <em>${item.deaths.length ? "D" : item.side ? item.side.charAt(0).toUpperCase() : "-"}</em>
+      </div>
+    `).join("")}
+  </div>`;
+}
+
+function ensureMatchSummaryModal() {
+  let modal = document.getElementById("matchSummaryModal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "matchSummaryModal";
+  modal.className = "lens-modal-overlay match-summary-overlay";
+  modal.setAttribute("aria-hidden", "true");
+  modal.style.display = "none";
+  modal.innerHTML = `
+    <div class="lens-modal match-summary-modal" role="dialog" aria-modal="true" aria-labelledby="matchSummaryTitle">
+      <div class="match-summary-content"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeMatchSummaryModal();
+  });
+  modal.addEventListener("click", (event) => {
+    const tab = event.target.closest?.("[data-match-summary-tab]");
+    if (tab) {
+      event.preventDefault();
+      setMatchSummaryTab(tab.dataset.matchSummaryTab || "stats");
+      return;
+    }
+    if (event.target.closest?.("[data-match-summary-close]")) {
+      event.preventDefault();
+      closeMatchSummaryModal();
+      return;
+    }
+    if (event.target.closest?.("[data-match-summary-timeline]")) {
+      event.preventDefault();
+      const scope = getTimelineContext();
+      const item = buildTimelineItemsFromModel(scope.model).find(candidate =>
+        String(candidate?.label || "").toLowerCase() === String(event.target.closest("[data-match-summary-timeline]")?.dataset.matchSummaryTimeline || "").toLowerCase()
+      );
+      if (item?.key && !item.disabled) openTimelineStatsModal(item.key);
+    }
+  });
+  return modal;
+}
+
+function setMatchSummaryTab(tabName = "stats") {
+  const modal = document.getElementById("matchSummaryModal");
+  if (!modal) return;
+  const next = ["stats", "weapons", "economy"].includes(tabName) ? tabName : "stats";
+  modal.querySelectorAll("[data-match-summary-tab]").forEach(button => {
+    const active = button.dataset.matchSummaryTab === next;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+  });
+  modal.querySelectorAll("[data-match-summary-panel]").forEach(panel => {
+    panel.hidden = panel.dataset.matchSummaryPanel !== next;
+  });
+}
+
+function renderMatchSummaryModal(match = {}, options = {}) {
+  const modal = ensureMatchSummaryModal();
+  const content = modal.querySelector(".match-summary-content");
+  if (!content) return null;
+  const { record, core } = getMatchSummaryIdentity(match);
+  if (!record) return null;
+  const result = String(record.result || core.result || "draw").toLowerCase();
+  const rankLabel = record.rank?.rank || match?.rank || match?.metadata?.rank || "";
+  const duration = formatMatchSummaryDuration(match, record);
+  const scoreline = [record.rounds?.won, record.rounds?.lost].every(Number.isFinite)
+    ? `${record.rounds.won} - ${record.rounds.lost}`
+    : (result ? result.toUpperCase() : "Score unavailable");
+  const agent = record.agent || core.agent || "Unknown";
+  const mapName = record.map || core.map || "Unknown";
+  content.innerHTML = `
+    <header class="match-summary-header is-${escapeHtml(result)}">
+      <div class="match-summary-agent-art"><img src="${escapeHtml(getAgentIconUrl(agent))}" alt="${escapeHtml(agent)}"></div>
+      <div class="match-summary-title-block">
+        <span class="match-summary-kicker">Match Report</span>
+        <h2 id="matchSummaryTitle">${escapeHtml(agent)} on ${escapeHtml(mapName)}</h2>
+        <p>${escapeHtml(formatMatchSummaryDate(record.playedAt || record.createdAt || core.createdAt))}${duration ? ` | ${escapeHtml(duration)}` : ""}</p>
+      </div>
+      <div class="match-summary-score-block">
+        ${rankLabel ? `<img src="${escapeHtml(getRankIconUrl(rankLabel))}" alt="${escapeHtml(rankLabel)} rank">` : ""}
+        <strong>${escapeHtml(scoreline)}</strong>
+        <span>${escapeHtml(result || "synced")}</span>
+      </div>
+      <button type="button" class="match-summary-close" data-match-summary-close aria-label="Close match report">Close</button>
+    </header>
+    <section class="match-summary-timeline-panel">
+      <h3>Round Timeline</h3>
+      ${renderMatchSummaryTimeline(record)}
+    </section>
+    <nav class="match-summary-tabs" aria-label="Match report tabs">
+      <button type="button" class="active" data-match-summary-tab="stats" aria-selected="true">Stats</button>
+      <button type="button" data-match-summary-tab="weapons" aria-selected="false">Weapons + Rounds</button>
+      <button type="button" data-match-summary-tab="economy" aria-selected="false">Economy</button>
+    </nav>
+    <section class="match-summary-tab-panel" data-match-summary-panel="stats">${renderMatchSummaryStatsTab(match, record)}</section>
+    <section class="match-summary-tab-panel" data-match-summary-panel="weapons" hidden>${renderMatchSummaryWeaponsTab(record)}</section>
+    <section class="match-summary-tab-panel" data-match-summary-panel="economy" hidden>${renderMatchSummaryEconomyTab(record)}</section>
+  `;
+  pendingMatchSummaryDismiss = typeof options.onDismiss === "function" ? options.onDismiss : null;
+  return modal;
+}
+
+function openMatchSummaryModal(match = {}, options = {}) {
+  const modal = renderMatchSummaryModal(match, options);
+  if (!modal) {
+    if (typeof options.onDismiss === "function") options.onDismiss();
+    return false;
+  }
+  showModalById(modal.id);
+  return true;
+}
+
+function closeMatchSummaryModal() {
+  const afterDismiss = pendingMatchSummaryDismiss;
+  pendingMatchSummaryDismiss = null;
+  hideModalById("matchSummaryModal");
+  if (typeof afterDismiss === "function") {
+    window.setTimeout(afterDismiss, 140);
+  }
+}
+
+function openMatchSummaryModalBeforeBroadcast(record = null, broadcastOptions = {}) {
+  const playBroadcast = () => queueBroadcastPostgamePackage(record, broadcastOptions);
+  if (!record || !openMatchSummaryModal(record, { onDismiss: playBroadcast })) {
+    playBroadcast();
+  }
+}
+
 const BROADCAST_CONSOLE_PREVIEW_BUTTON = Object.freeze({
   hidden: false,
   getAttribute: () => "false"
@@ -14277,7 +14656,7 @@ function onMatchSaved(record, options = {}) {
       variant
     });
     triggerPremiumMoment("peak", { result });
-    queueBroadcastPostgamePackage(record, { ...options, isPeakEvent: true, delayMs: 40 });
+    openMatchSummaryModalBeforeBroadcast(record, { ...options, isPeakEvent: true, delayMs: 40 });
     pulsePremiumAvatarCelebration();
     scheduleProfileStreakAnnouncement(1150);
     return;
@@ -14290,7 +14669,7 @@ function onMatchSaved(record, options = {}) {
   if (result === "win" || result === "loss") {
     triggerPremiumMoment("result", { result });
   }
-  queueBroadcastPostgamePackage(record, { ...options, delayMs: 40 });
+  openMatchSummaryModalBeforeBroadcast(record, { ...options, delayMs: 40 });
   scheduleProfileStreakAnnouncement(1150);
 }
 
@@ -17763,7 +18142,8 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
       isPlacementMatch: isPlacementRankedMatch(match),
       agent: core.agent,
       role: core.role,
-      map: core.map
+      map: core.map,
+      roleImpact: buildStoredRoleImpactSnapshot(match, profile?.trackerAnalytics || null)
     };
   });
   const synced = policy.syncMatchPlaceholders(logEntries, placeholderMatches, profileId);
@@ -21940,6 +22320,9 @@ function dismissLensModal(modal) {
     case "timelineStatsModal":
       setTimelinePulloutOpen(false);
       hideModalById(modal.id);
+      break;
+    case "matchSummaryModal":
+      closeMatchSummaryModal();
       break;
     case "guestTutorialChoiceModal":
       closeGuestTutorialChoice();
@@ -42563,6 +42946,7 @@ function bindEvents(){
   });
 
   document.getElementById("editProfileBorderRotate")?.addEventListener("change", () => {
+    renderBorderGallery(document.getElementById("editProfileBorderStyle")?.value || getActiveProfile()?.profileBorder || "standard");
     previewEditProfileVisuals();
   });
 
@@ -45240,6 +45624,8 @@ function renderLogFeed(options = {}){
       const moodLabel = entry.mood || entry.tilt || "-";
       const moodTone = getMoodTone(moodLabel);
       const matchContext = getLogEntryMatchContext(entry);
+      const storedRoleImpact = entry.roleImpact && typeof entry.roleImpact === "object" ? entry.roleImpact : null;
+      const hasReportMatch = Boolean(matchContext.match);
       const resultTone = matchContext.result === "win"
         ? "win"
         : matchContext.result === "loss"
@@ -45290,6 +45676,7 @@ function renderLogFeed(options = {}){
           ${rrLabel ? `<span class="log-result-rr ${rrClasses}">${escapeHtml(rrLabel)}</span>` : ""}
           ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit warm-up for this session" title="Edit"><span class="log-training-fire-glyph" aria-hidden="true">&#128293;</span></button>` : ""}
           ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit post-game aim training for this session" title="Edit">${getTrainingCrosshairMarkup()}</button>` : ""}
+          ${Number.isFinite(Number(storedRoleImpact?.score)) ? `<span class="log-role-impact-chip role-${escapeHtml(storedRoleImpact.roleKey || "unknown")}">${Math.round(Number(storedRoleImpact.score))}% Impact</span>` : ""}
           <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>
         </div>
 
@@ -45310,6 +45697,7 @@ function renderLogFeed(options = {}){
         </div>
 
         <div class="log-actions">
+          ${hasReportMatch ? `<button class="log-report-btn" type="button">View Report</button>` : ""}
           <button class="log-edit-btn">${isEditingEntry ? "Editing" : isPlaceholder ? "Add Reflection" : "Edit"}</button>
         </div>
       `;
@@ -45368,9 +45756,15 @@ function renderLogFeed(options = {}){
       }
 
       const editBtn = el.querySelector(".log-edit-btn");
+      const reportBtn = el.querySelector(".log-report-btn");
       const warmupBtn = el.querySelector(".log-training-fire");
       const postGameBtn = el.querySelector(".log-training-crosshair");
 
+      reportBtn?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openMatchSummaryModal(matchContext.match);
+      });
       editBtn?.addEventListener("click", () => editLogEntry(entry.id));
       warmupBtn?.addEventListener("click", (event) => {
         event.preventDefault();
@@ -48158,11 +48552,14 @@ function renderBorderGallery(selectedBorder = "standard") {
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const avatarCssImage = `url("${escapeCssString(avatarUrl)}")`;
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
+  const selectedBorderAnimationsEnabled = getProfileBorderRotateValue(profile) || isProfileAmbientBorderStyle(activeBorder);
   const useMobileFramePreview = true;
   const availableBorderStyles = getAvailableProfileBorderStyles();
+  gallery.classList.toggle("is-border-animation-enabled", selectedBorderAnimationsEnabled);
 
   gallery.innerHTML = availableBorderStyles.map((style) => {
     const isActive = style.value === activeBorder;
+    const isLiveAnimating = isActive && selectedBorderAnimationsEnabled;
     const avatarPreviewMarkup = useMobileFramePreview
       ? `
           <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-border-3:${ringTones.color3}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent); --rc-profile-avatar-url:${escapeHtml(avatarCssImage)};">
@@ -48176,7 +48573,7 @@ function renderBorderGallery(selectedBorder = "standard") {
           </div>
         `;
     return `
-      <div class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""}" data-border-card="${escapeHtml(style.value)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
+      <div class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""} ${isLiveAnimating ? "is-animation-enabled" : ""}" data-border-card="${escapeHtml(style.value)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
         <div
           class="border-card-preview"
           style="
@@ -53790,6 +54187,13 @@ async function importActiveProfileMatches(options = {}){
     const importedMatches = canonicalRecords.map(record =>
       globalThis.RankedCoachMatchRecord.toLegacyMatch(record)
     );
+    const existingMatchIds = new Set(existingMatches
+      .map(match => String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim())
+      .filter(Boolean));
+    const newlyImportedMatches = importedMatches.filter(match => {
+      const id = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim();
+      return id && !existingMatchIds.has(id);
+    });
     const mergedById = new Map(existingMatches.map(match => [String(match?.matchId || match?.id || ""), match]));
     importedMatches.forEach(match => mergedById.set(String(match?.matchId || match?.id || ""), match));
     const mergedMatches = Array.from(mergedById.values()).filter(Boolean);
@@ -53803,6 +54207,20 @@ async function importActiveProfileMatches(options = {}){
         ? CHART_ANIMATION_MODE_LATEST_ONLY
         : null
     });
+
+    if (!needsHistoryBackfill && newlyImportedMatches.length) {
+      const latestNewMatch = newlyImportedMatches.slice().sort((a, b) =>
+        new Date(a?.createdAt || a?.metadata?.playedAt || 0).getTime() -
+        new Date(b?.createdAt || b?.metadata?.playedAt || 0).getTime()
+      ).pop();
+      if (latestNewMatch) {
+        onMatchSaved(latestNewMatch, {
+          ...options,
+          importedCount: newlyImportedMatches.length,
+          profile: getActiveProfile()
+        });
+      }
+    }
 
     return {
       count: importedMatches.length,

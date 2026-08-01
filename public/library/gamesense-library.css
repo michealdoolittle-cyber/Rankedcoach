@@ -3766,6 +3766,26 @@ html.is-mobile-layout .gamesense-tactical-scroll{
   box-shadow:0 10px 24px color-mix(in srgb,var(--gamesense-warm,#f6c453) 24%,transparent);
 }
 
+.gamesense-dossier-sticky-notes button.gamesense-dossier-jump{
+  border-color:color-mix(in srgb,var(--gamesense-cool,#58d4c8) 38%,transparent);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--gamesense-cool,#58d4c8) 12%,rgba(15,23,42,.94)),rgba(15,23,42,.88));
+  color:#c7f9f5;
+}
+
+.gamesense-dossier-sticky-notes button.gamesense-dossier-jump::after{
+  content:">";
+  float:right;
+  color:var(--gamesense-warm,#f6c453);
+  font:900 9px/1 var(--font-display,"Rajdhani",sans-serif);
+  opacity:.72;
+}
+
+.gamesense-dossier-sticky-notes button.gamesense-dossier-jump.is-current-dossier{
+  border-color:color-mix(in srgb,var(--gamesense-warm,#f6c453) 54%,transparent);
+  color:var(--gamesense-warm,#f6c453);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--gamesense-warm,#f6c453) 16%,rgba(15,23,42,.96)),rgba(15,23,42,.9));
+}
+
 .gamesense-crosshair-panel{
   display:grid;
   gap:13px;

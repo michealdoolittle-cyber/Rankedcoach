@@ -50891,19 +50891,19 @@ html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-arc,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-crosshair path,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-fill,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-arc,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-crosshair path{
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-fill,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-arc,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-crosshair path{
   animation:none !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-main,
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-main,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-frame-glint,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main,
-#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint{
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-main,
+#editProfileModal #editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-frame-glint{
   stroke-dashoffset:0 !important;
 }
 
@@ -50912,13 +50912,13 @@ html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-pa
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path,
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path,
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path{
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc),
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path{
   animation:none !important;
 }
 html:not(.is-mobile-layout) body:not(.is-mobile-layout) #profilePanel.profile-panel .profile-avatar-wrap#profileAvatarWrap .profile-avatar-ring.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint),
 html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.has-rc-mobile-frame:not(.border-animated) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint),
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint){
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-main,.rc-mobile-frame-glint){
   stroke-dashoffset:0 !important;
 }
 
@@ -57594,13 +57594,13 @@ html body .nav-right :is(#profileAvatarWrap,.profile-avatar-ring):is(.border-sun
 .rc-profile-effect-frame[data-mobile-frame="ember-sparks"] .rc-profile-spark-4{animation:rcProfileSparkFlightD .88s linear infinite !important;animation-delay:-.26s !important;}
 .rc-profile-effect-frame[data-mobile-frame="ember-sparks"] .rc-profile-spark-5{animation:rcProfileSparkFlightB .75s linear infinite !important;animation-delay:-.62s !important;}
 
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect,
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect *{
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect,
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect *{
   animation:none !important;
   transition:none !important;
 }
 
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect{
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled) .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect{
   transform:none !important;
   opacity:.62 !important;
 }
@@ -57770,7 +57770,7 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   animation:rcProfileAvatarEclipseBlackout 3.2s ease-in-out infinite !important;
 }
 
-html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing).border-card-eclipse .border-card-avatar > img{
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled).border-card-eclipse .border-card-avatar > img{
   animation:none !important;
   filter:none !important;
   opacity:1 !important;
@@ -57893,7 +57893,7 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   animation:rcProfileAgentTraceImageGlow 3.4s ease-in-out infinite !important;
 }
 
-html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing).border-card-agent-trace .border-card-avatar > img{
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled).border-card-agent-trace .border-card-avatar > img{
   animation:none !important;
   filter:none !important;
 }
@@ -58000,8 +58000,8 @@ html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfi
   filter:hue-rotate(178deg) saturate(1.85) brightness(1.14) drop-shadow(0 0 7px color-mix(in srgb,var(--rc-effect-secondary) 70%,transparent));
 }
 
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing).border-card-prism-offset .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="prism-offset"]::before,
-#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing).border-card-prism-offset .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="prism-offset"]::after{
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled).border-card-prism-offset .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="prism-offset"]::before,
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing):not(.is-animation-enabled).border-card-prism-offset .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame[data-mobile-frame="prism-offset"]::after{
   animation:none !important;
   transform:translate(-50%,-50%) !important;
   opacity:.2 !important;
@@ -59179,4 +59179,455 @@ html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profi
   left:50% !important;
   transform:translate(-50%,-50%) !important;
   overflow:hidden !important;
+}
+
+/* Border picker regression guard: the preview action must remain visible, and
+   the active border should animate in-place when the saved animation slider is
+   enabled. */
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card{
+  min-height:168px !important;
+  height:auto !important;
+  overflow:visible !important;
+}
+
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-preview{
+  min-height:168px !important;
+  height:100% !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(34px,auto) 30px !important;
+  align-items:center !important;
+  justify-items:center !important;
+  overflow:visible !important;
+}
+
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-preview-toggle{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:100% !important;
+  min-height:28px !important;
+  height:28px !important;
+  margin-top:0 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
+  position:relative !important;
+  z-index:12 !important;
+}
+
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-animation-enabled .border-card-preview-toggle{
+  border-color:color-mix(in srgb, var(--border-ring-color, var(--accent)) 68%, white 12%) !important;
+  box-shadow:0 0 14px color-mix(in srgb, var(--border-ring-color, var(--accent)) 30%, transparent) !important;
+}
+
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-animation-enabled .border-card-avatar.has-rc-mobile-preview :is(.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc,.rc-mobile-frame-crosshair path,.rc-profile-effect,.rc-profile-effect *),
+body:not(.access-reduced-motion) :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.has-rc-mobile-frame :is(.rc-mobile-frame-main,.rc-mobile-frame-secondary,.rc-mobile-frame-glint,.rc-mobile-frame-arc,.rc-mobile-frame-crosshair path,.rc-profile-effect,.rc-profile-effect *){
+  animation-play-state:running !important;
+}
+
+/* 2026-08-01 match summary report modal */
+#matchSummaryModal.match-summary-overlay.active,
+#matchSummaryModal.match-summary-overlay.is-opening,
+#matchSummaryModal.match-summary-overlay.is-closing{
+  display:flex !important;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(2,6,23,.72);
+  backdrop-filter:blur(16px);
+  z-index:11050;
+}
+
+#matchSummaryModal .match-summary-modal{
+  width:min(1120px, calc(100vw - 28px));
+  max-width:min(1120px, calc(100vw - 28px));
+  max-height:min(86vh, 860px);
+  overflow:hidden;
+  border:1px solid color-mix(in srgb, var(--accent, #ff4655) 45%, rgba(148,163,184,.28));
+  border-radius:22px;
+  background:
+    linear-gradient(145deg, rgba(8,15,32,.96), rgba(15,23,42,.92)),
+    var(--card-bg, #0b1220);
+  box-shadow:0 28px 90px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04);
+}
+
+#matchSummaryModal .match-summary-content{
+  display:grid;
+  gap:14px;
+  max-height:min(86vh, 860px);
+  overflow:auto;
+  padding:18px;
+  scrollbar-width:thin;
+}
+
+#matchSummaryModal .match-summary-header{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto auto;
+  gap:14px;
+  align-items:center;
+  padding:14px;
+  border:1px solid rgba(148,163,184,.22);
+  border-radius:18px;
+  background:linear-gradient(135deg, rgba(15,23,42,.9), rgba(30,41,59,.62));
+}
+
+#matchSummaryModal .match-summary-header.is-win{
+  border-color:rgba(34,197,94,.45);
+  box-shadow:inset 0 0 30px rgba(34,197,94,.12);
+}
+
+#matchSummaryModal .match-summary-header.is-loss{
+  border-color:rgba(255,70,85,.45);
+  box-shadow:inset 0 0 30px rgba(255,70,85,.12);
+}
+
+#matchSummaryModal .match-summary-agent-art{
+  width:82px;
+  height:82px;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb, var(--accent, #ff4655) 46%, rgba(255,255,255,.12));
+  background:radial-gradient(circle at 50% 20%, rgba(94,234,212,.22), rgba(15,23,42,.78));
+}
+
+#matchSummaryModal .match-summary-agent-art img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center top;
+  display:block;
+}
+
+#matchSummaryModal .match-summary-title-block{
+  min-width:0;
+}
+
+#matchSummaryModal .match-summary-kicker,
+#matchSummaryModal h3,
+#matchSummaryModal h4{
+  color:var(--gamesense-warm, #ffd166);
+  font:900 11px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+#matchSummaryModal h2{
+  margin:4px 0 2px;
+  color:var(--text-main, #f8fafc);
+  font:900 clamp(24px, 3vw, 42px)/.9 var(--font-display, "Rajdhani", sans-serif);
+  text-transform:uppercase;
+}
+
+#matchSummaryModal p{
+  margin:0;
+  color:var(--text-muted, #a8b3c7);
+  font:800 12px/1.25 var(--font-body, "Rajdhani", sans-serif);
+}
+
+#matchSummaryModal .match-summary-score-block{
+  display:grid;
+  justify-items:center;
+  gap:3px;
+  min-width:108px;
+  padding:10px 12px;
+  border:1px solid rgba(148,163,184,.2);
+  border-radius:14px;
+  background:rgba(2,6,23,.46);
+}
+
+#matchSummaryModal .match-summary-score-block img{
+  width:34px;
+  height:34px;
+  object-fit:contain;
+}
+
+#matchSummaryModal .match-summary-score-block strong{
+  color:var(--text-main, #f8fafc);
+  font:900 22px/.9 var(--font-display, "Rajdhani", sans-serif);
+}
+
+#matchSummaryModal .match-summary-score-block span{
+  color:var(--text-muted, #a8b3c7);
+  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+#matchSummaryModal .match-summary-close{
+  min-height:38px;
+  padding:0 18px;
+  border:1px solid rgba(94,234,212,.48);
+  border-radius:12px;
+  background:linear-gradient(135deg, rgba(8,145,178,.28), rgba(30,41,59,.72));
+  color:var(--text-main, #f8fafc);
+  font:900 11px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+#matchSummaryModal .match-summary-timeline-panel,
+#matchSummaryModal .match-summary-panel,
+#matchSummaryModal .match-summary-tab-panel{
+  border:1px solid rgba(148,163,184,.18);
+  border-radius:16px;
+  background:rgba(2,6,23,.38);
+  padding:12px;
+}
+
+#matchSummaryModal .match-summary-rounds{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(38px, 1fr));
+  gap:6px;
+  margin-top:10px;
+}
+
+#matchSummaryModal .match-summary-round{
+  display:grid;
+  justify-items:center;
+  gap:2px;
+  min-height:54px;
+  padding:7px 4px;
+  border:1px solid rgba(148,163,184,.2);
+  border-radius:10px;
+  background:rgba(15,23,42,.74);
+}
+
+#matchSummaryModal .match-summary-round.is-win{
+  border-color:rgba(34,197,94,.5);
+  background:linear-gradient(180deg, rgba(22,101,52,.34), rgba(15,23,42,.74));
+}
+
+#matchSummaryModal .match-summary-round.is-loss{
+  border-color:rgba(255,70,85,.48);
+  background:linear-gradient(180deg, rgba(127,29,29,.3), rgba(15,23,42,.74));
+}
+
+#matchSummaryModal .match-summary-round span,
+#matchSummaryModal .match-summary-round em{
+  color:var(--text-muted, #a8b3c7);
+  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  text-transform:uppercase;
+  font-style:normal;
+}
+
+#matchSummaryModal .match-summary-round strong{
+  color:var(--text-main, #f8fafc);
+  font:900 18px/.9 var(--font-display, "Rajdhani", sans-serif);
+}
+
+#matchSummaryModal .match-summary-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+#matchSummaryModal .match-summary-tabs button{
+  min-height:38px;
+  padding:0 16px;
+  border:1px solid rgba(148,163,184,.24);
+  border-radius:12px;
+  background:rgba(15,23,42,.82);
+  color:var(--text-main, #f8fafc);
+  font:900 11px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+#matchSummaryModal .match-summary-tabs button.active{
+  border-color:rgba(94,234,212,.72);
+  background:linear-gradient(135deg, rgba(8,145,178,.52), rgba(15,23,42,.88));
+  box-shadow:0 0 18px rgba(34,211,238,.2);
+}
+
+#matchSummaryModal .match-summary-stat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:10px;
+}
+
+#matchSummaryModal .match-summary-stat-pill{
+  justify-content:space-between;
+  min-height:54px;
+  border-color:rgba(94,234,212,.28);
+  background:rgba(15,23,42,.76);
+}
+
+#matchSummaryModal .match-summary-role-badge img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+#matchSummaryModal .match-summary-two-col{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(0, 1fr);
+  gap:12px;
+}
+
+#matchSummaryModal .match-summary-weapon-list,
+#matchSummaryModal .match-summary-eco-grid{
+  display:grid;
+  gap:8px;
+  margin-top:10px;
+}
+
+#matchSummaryModal .match-summary-weapon-row,
+#matchSummaryModal .match-summary-eco-chip{
+  display:grid;
+  gap:3px;
+  padding:10px;
+  border:1px solid rgba(148,163,184,.18);
+  border-radius:12px;
+  background:rgba(15,23,42,.68);
+}
+
+#matchSummaryModal .match-summary-weapon-row strong,
+#matchSummaryModal .match-summary-eco-chip strong{
+  color:var(--text-main, #f8fafc);
+  font:900 15px/.95 var(--font-display, "Rajdhani", sans-serif);
+  text-transform:uppercase;
+}
+
+#matchSummaryModal .match-summary-weapon-row span,
+#matchSummaryModal .match-summary-eco-chip{
+  color:var(--text-main, #f8fafc);
+  font:800 12px/1.2 var(--font-body, "Rajdhani", sans-serif);
+}
+
+#matchSummaryModal .match-summary-weapon-row small,
+#matchSummaryModal .match-summary-footnote{
+  color:var(--text-muted, #a8b3c7);
+  font:800 11px/1.25 var(--font-body, "Rajdhani", sans-serif);
+}
+
+#matchSummaryModal .match-summary-eco-chip em{
+  color:var(--gamesense-warm, #ffd166);
+  font-style:normal;
+  font-weight:900;
+}
+
+#matchSummaryModal .match-summary-economy-chart{
+  min-height:230px;
+  display:flex;
+  align-items:flex-end;
+  gap:5px;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(148,163,184,.18);
+  border-radius:14px;
+  background:linear-gradient(180deg, rgba(15,23,42,.5), rgba(2,6,23,.72));
+}
+
+#matchSummaryModal .match-summary-credit-bar{
+  flex:1 1 0;
+  min-width:10px;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:center;
+  gap:4px;
+}
+
+#matchSummaryModal .match-summary-credit-bar i{
+  width:100%;
+  height:var(--bar-height, 8%);
+  min-height:8px;
+  border-radius:999px 999px 3px 3px;
+  background:linear-gradient(180deg, rgba(34,197,94,.9), rgba(16,185,129,.38));
+}
+
+#matchSummaryModal .match-summary-credit-bar.is-loss i{
+  background:linear-gradient(180deg, rgba(255,70,85,.92), rgba(127,29,29,.42));
+}
+
+#matchSummaryModal .match-summary-credit-bar em{
+  color:var(--text-muted, #a8b3c7);
+  font:900 9px/1 var(--font-display, "Rajdhani", sans-serif);
+  font-style:normal;
+}
+
+#matchSummaryModal .match-summary-empty{
+  color:var(--text-muted, #a8b3c7);
+  font:800 12px/1.35 var(--font-body, "Rajdhani", sans-serif);
+}
+
+.log-entry.log-entry-win{
+  background:
+    linear-gradient(135deg, rgba(20,83,45,.24), rgba(15,23,42,.88) 48%, rgba(20,83,45,.14)),
+    var(--card-bg, #0b1220);
+  border-color:rgba(34,197,94,.46) !important;
+  box-shadow:inset 4px 0 0 rgba(34,197,94,.82), 0 0 18px rgba(34,197,94,.08);
+}
+
+.log-report-btn,
+.log-role-impact-chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  padding:0 10px;
+  border:1px solid rgba(94,234,212,.34);
+  border-radius:999px;
+  background:rgba(8,145,178,.16);
+  color:var(--gamesense-cool, #5eead4);
+  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.log-report-btn{
+  border-radius:10px;
+  color:var(--text-main, #f8fafc);
+  background:linear-gradient(135deg, rgba(8,145,178,.28), rgba(15,23,42,.8));
+}
+
+.log-report-btn:hover,
+.log-report-btn:focus-visible{
+  border-color:rgba(94,234,212,.68);
+  box-shadow:0 0 14px rgba(34,211,238,.16);
+}
+
+.log-role-impact-chip.role-duelist{ border-color:rgba(255,70,85,.46); color:#ff6b7a; background:rgba(255,70,85,.14); }
+.log-role-impact-chip.role-controller{ border-color:rgba(168,85,247,.48); color:#c084fc; background:rgba(88,28,135,.22); }
+.log-role-impact-chip.role-initiator{ border-color:rgba(59,130,246,.5); color:#60a5fa; background:rgba(30,64,175,.18); }
+.log-role-impact-chip.role-sentinel{ border-color:rgba(34,197,94,.5); color:#4ade80; background:rgba(20,83,45,.2); }
+
+@media (max-width:760px){
+  #matchSummaryModal.match-summary-overlay.active,
+  #matchSummaryModal.match-summary-overlay.is-opening,
+  #matchSummaryModal.match-summary-overlay.is-closing{
+    align-items:stretch;
+    padding:10px;
+  }
+
+  #matchSummaryModal .match-summary-modal,
+  #matchSummaryModal .match-summary-content{
+    width:100%;
+    max-width:100%;
+    max-height:calc(100dvh - 20px);
+  }
+
+  #matchSummaryModal .match-summary-header{
+    grid-template-columns:62px minmax(0,1fr);
+  }
+
+  #matchSummaryModal .match-summary-agent-art{
+    width:62px;
+    height:62px;
+  }
+
+  #matchSummaryModal .match-summary-score-block,
+  #matchSummaryModal .match-summary-close{
+    grid-column:1 / -1;
+    width:100%;
+  }
+
+  #matchSummaryModal .match-summary-two-col{
+    grid-template-columns:1fr;
+  }
+
+  #matchSummaryModal .match-summary-tabs button{
+    flex:1 1 130px;
+  }
 }

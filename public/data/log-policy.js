@@ -63,6 +63,7 @@
       rr: match.rr !== null && match.rr !== undefined && match.rr !== "" && Number.isFinite(Number(match.rr))
         ? Number(match.rr)
         : null,
+      roleImpact: match.roleImpact && typeof match.roleImpact === "object" ? { ...match.roleImpact } : null,
       agent: clean(match.agent),
       role: clean(match.role),
       map: clean(match.map),
@@ -97,6 +98,7 @@
         result: clean(match.result).toLowerCase() || entry.result,
         isPlacementMatch: match.isPlacementMatch === true,
         rr: verifiedRr,
+        roleImpact: match.roleImpact && typeof match.roleImpact === "object" ? { ...match.roleImpact } : entry.roleImpact || null,
         agent: clean(match.agent) || entry.agent,
         role: clean(match.role) || entry.role,
         map: clean(match.map) || entry.map

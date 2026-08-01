@@ -2511,8 +2511,33 @@
     return {
       label,
       target,
+      openTopic: "",
       children: Array.isArray(children) ? children.filter(Boolean) : []
     };
+  }
+
+  function makeStickyDossierNode(label, openTopic = "", isCurrent = false) {
+    return {
+      label,
+      target: "",
+      openTopic,
+      isCurrent: !!isCurrent,
+      children: []
+    };
+  }
+
+  function getStickyDossierNavigationChildren(topic = "") {
+    const dossiers = [
+      ["Maps", "maps"],
+      ["Agents", "agents"],
+      ["Weapons", "weapons"],
+      ["Playlist", "playlist"],
+      ["Crosshairs", "crosshairs"]
+    ];
+    return [
+      makeStickyNode("Overview", ".gamesense-detail-head"),
+      ...dossiers.map(([label, dossierTopic]) => makeStickyDossierNode(label, dossierTopic, topic === dossierTopic))
+    ];
   }
 
   function getDossierStickyTree(topic = "", item = {}) {
@@ -2525,7 +2550,7 @@
       if (item?.isOverviewShell) {
         return [
           makeStickyNode("Main tile", "", [
-            makeStickyNode("Overview", ".gamesense-detail-head"),
+            ...getStickyDossierNavigationChildren(topic),
             makeStickyNode("Dossier Status", ".gamesense-map-shell-note")
           ])
         ];
@@ -2540,7 +2565,7 @@
         getPublishedKnowledgeItemsFor("map", item?.label).length ? makeStickyNode("Coaching Updates", ".gamesense-knowledge-updates") : null
       ].filter(Boolean);
       return [
-        makeStickyNode("Main tile", "", [makeStickyNode("Overview", ".gamesense-detail-head")]),
+        makeStickyNode("Main tile", "", getStickyDossierNavigationChildren(topic)),
         makeStickyNode(topicLabel, "", contentChildren)
       ];
     }
@@ -2548,7 +2573,7 @@
       const abilities = hasRenderableItems(item?.abilities);
       const hasLore = hasRenderableItems(item?.lore) || hasRenderableItems(item?.patchHistory);
       return [
-        makeStickyNode("Main tile", "", [makeStickyNode("Overview", ".gamesense-detail-head")]),
+        makeStickyNode("Main tile", "", getStickyDossierNavigationChildren(topic)),
         makeStickyNode(topicLabel, "", [
           hasLore ? makeStickyNode("Lore & History", ".gamesense-agent-lore-history") : null,
           abilities ? makeStickyNode("Ability Demos", ".gamesense-selector-section") : null,
@@ -2562,7 +2587,7 @@
       ? item.weapons.find(weapon => weapon.id === state.detailId) || item.weapons[0]
       : item;
     return [
-      makeStickyNode("Main tile", "", [makeStickyNode("Overview", ".gamesense-detail-head")]),
+      makeStickyNode("Main tile", "", getStickyDossierNavigationChildren(topic)),
       makeStickyNode(topicLabel, "", [
         makeStickyNode("Arsenal", ".gamesense-selector-section"),
         selectedWeapon ? makeStickyNode("Damage & Notes", ".gamesense-weapon-panel") : null,
@@ -2583,6 +2608,8 @@
             activeIndex += 1;
             return `<button type="button" class="${isActive ? "active" : ""}" data-gamesense-sticky-target="${escapeHtml(node.target)}" aria-current="${isActive ? "true" : "false"}" style="--sticky-depth:${depth}">${escapeHtml(node.label)}</button>`;
           })()
+        : node.openTopic
+          ? `<button type="button" class="gamesense-dossier-jump ${node.isCurrent ? "is-current-dossier" : ""}" data-gamesense-open="${escapeHtml(node.openTopic)}" aria-current="${node.isCurrent ? "page" : "false"}" style="--sticky-depth:${depth}">${escapeHtml(node.label)}</button>`
         : `<span class="gamesense-dossier-tree-label" style="--sticky-depth:${depth}">${escapeHtml(node.label)}</span>`;
       if (!children.length) return `<li>${button}</li>`;
       return `<li class="has-children">
