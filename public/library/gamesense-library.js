@@ -1890,7 +1890,7 @@
     return `
       <button class="gamesense-entry-card gamesense-agent-entry-card" type="button" data-gamesense-item="${escapeHtml(item.id)}" data-role-tone="${escapeHtml(roleTone)}" style="--entry-index:${index}">
         <span class="gamesense-entry-index">${String(index + 1).padStart(2, "0")}</span>
-        <img src="${escapeHtml(item.portrait)}" alt="" loading="${index < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${index < 8 ? "high" : "auto"}">
+        <img src="${escapeHtml(item.portrait)}" alt="" loading="eager" decoding="async" fetchpriority="${index < 12 ? "high" : "auto"}">
         <span class="gamesense-entry-copy"><strong class="${nameClass.trim()}">${escapeHtml(item.label)}</strong><small>${escapeHtml(item.role)}${escapeHtml(mapSummary)}</small><span>Inspect abilities</span></span>
       </button>`;
   }
@@ -2643,16 +2643,14 @@
     const heatmap = getMapHeatmap(map);
     const editorActive = isPlantSpotEditorActive(map);
     const plantSpots = isPlants ? getPlantSpotsForRender(map) : [];
-    const showPlantHeatmapFallback = isPlants && !plantSpots.length && Boolean(heatmap?.image);
+    const showPlantHeatmapFallback = false;
     const markers = isPlants
       ? plantSpots
       : map.calloutLabelsBakedIn
         ? []
         : map.callouts || [];
     const plantFallbackNote = map.plantRateNote || `No source-verified named plant locations are available for ${map.label}.`;
-    const plantFallbackCopy = heatmap?.image
-      ? `${plantFallbackNote} Showing the verified aggregate plant-density heat map here until named plant pins are sourced.`
-      : plantFallbackNote;
+    const plantFallbackCopy = plantFallbackNote;
     const displayedMapImage = isHeatmap
       ? heatmap.image
       : showPlantHeatmapFallback
@@ -3152,7 +3150,7 @@
             <span class="gamesense-agent-rate-value"><strong>${hasPublishedPickRate ? safePercent(agent.pickRate) : "--"}</strong>${hasPublishedPickRate && Number.isFinite(Number(agent.pickRateRank)) ? `<b>Rank #${Number(agent.pickRateRank)}</b>` : ""}</span>
             <small>${escapeHtml(usageSource)}</small>
           </div>
-          <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager">
+          <img src="${escapeHtml(agent.portrait)}" alt="${escapeHtml(agent.label)}" loading="eager" decoding="async" fetchpriority="high">
         </div>
         <div>${renderList("Agent Fundamentals", agent.fundamentals)}${renderAgentLoreHistory(agent)}</div>
       </section>

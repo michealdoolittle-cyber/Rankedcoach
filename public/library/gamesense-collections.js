@@ -4,6 +4,7 @@
   "use strict";
 
   const weaponUuids = Object.freeze({
+    Ares: "55d8a0f4-4274-ca67-fe2c-06ab45efdf58",
     Bucky: "910be174-449b-c412-ab22-d0873436b21b",
     Bulldog: "ae3de142-4d85-2547-dd26-4e90bed35cf7",
     Classic: "29a0cfab-485b-f5d5-779a-b59f85e204a8",
@@ -13,6 +14,7 @@
     Judge: "ec845bf4-4f79-ddda-a3da-0db3774b2794",
     Marshal: "c4883e50-4494-202c-3ec3-6b8a9284f00b",
     Melee: "2f59173c-4bed-b6c3-2191-dea9b58be9c7",
+    Odin: "63e6c2b6-4a8e-869c-3d4c-e38355226584",
     Operator: "a03b24d3-4319-996d-0f8c-94bbfba1dfc7",
     Outlaw: "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c",
     Phantom: "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a",

@@ -2222,6 +2222,7 @@ function syncMobileHeaderActionsState() {
   if (rankIcon && sourceRank?.getAttribute("src")) {
     rankIcon.src = sourceRank.getAttribute("src");
     rankIcon.alt = sourceRank.alt || "Rank";
+    rankIcon.classList.toggle("is-unrated-placeholder", sourceRank.classList.contains("is-unrated-placeholder"));
   }
   const askButton = actions.querySelector("#mobileAskCoachOpen");
   const sourceAsk = document.getElementById("askCoachOpen");
@@ -14242,6 +14243,48 @@ function queueBroadcastPostgamePackage(record = null, options = {}) {
 
 let pendingMatchSummaryDismiss = null;
 
+const MATCH_SUMMARY_WEAPON_META = Object.freeze({
+  classic: Object.freeze({ label: "Classic", cost: 0, uuid: "29a0cfab-485b-f5d5-779a-b59f85e204a8" }),
+  shorty: Object.freeze({ label: "Shorty", cost: 300, uuid: "42da8ccc-40d5-affc-beec-15aa47b42eda" }),
+  frenzy: Object.freeze({ label: "Frenzy", cost: 450, uuid: "44d4e95c-4157-0037-81b2-17841bf2e8e3" }),
+  ghost: Object.freeze({ label: "Ghost", cost: 500, uuid: "1baa85b4-4c70-1284-64bb-6481dfc3bb4e" }),
+  sheriff: Object.freeze({ label: "Sheriff", cost: 800, uuid: "e336c6b8-418d-9340-d77f-7a9e4cfe0702" }),
+  stinger: Object.freeze({ label: "Stinger", cost: 1100, uuid: "f7e1b454-4ad4-1063-ec0a-159e56b58941" }),
+  bucky: Object.freeze({ label: "Bucky", cost: 850, uuid: "910be174-449b-c412-ab22-d0873436b21b" }),
+  spectre: Object.freeze({ label: "Spectre", cost: 1600, uuid: "462080d1-4035-2937-7c09-27aa2a5c27a7" }),
+  ares: Object.freeze({ label: "Ares", cost: 1600, uuid: "55d8a0f4-4274-ca67-fe2c-06ab45efdf58" }),
+  judge: Object.freeze({ label: "Judge", cost: 1850, uuid: "ec845bf4-4f79-ddda-a3da-0db3774b2794" }),
+  bulldog: Object.freeze({ label: "Bulldog", cost: 2050, uuid: "ae3de142-4d85-2547-dd26-4e90bed35cf7" }),
+  guardian: Object.freeze({ label: "Guardian", cost: 2250, uuid: "4ade7faa-4cf1-8376-95ef-39884480959b" }),
+  outlaw: Object.freeze({ label: "Outlaw", cost: 2400, uuid: "5f0aaf7a-4289-3998-d5ff-eb9a5cf7ef5c" }),
+  phantom: Object.freeze({ label: "Phantom", cost: 2900, uuid: "ee8e8d15-496b-07ac-e5f6-8fae5d4c7b1a" }),
+  vandal: Object.freeze({ label: "Vandal", cost: 2900, uuid: "9c82e19d-4575-0200-1a81-3eacf00cf872" }),
+  odin: Object.freeze({ label: "Odin", cost: 3200, uuid: "63e6c2b6-4a8e-869c-3d4c-e38355226584" }),
+  marshal: Object.freeze({ label: "Marshal", cost: 950, uuid: "c4883e50-4494-202c-3ec3-6b8a9284f00b" }),
+  operator: Object.freeze({ label: "Operator", cost: 4700, uuid: "a03b24d3-4319-996d-0f8c-94bbfba1dfc7" })
+});
+
+const MATCH_SUMMARY_WEAPON_UUID_TO_KEY = Object.freeze(Object.fromEntries(
+  Object.entries(MATCH_SUMMARY_WEAPON_META).map(([key, meta]) => [meta.uuid.toLowerCase(), key])
+));
+
+function normalizeMatchSummaryKey(value = "") {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function getMatchSummaryWeaponMeta(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const uuidKey = MATCH_SUMMARY_WEAPON_UUID_TO_KEY[raw.toLowerCase()];
+  if (uuidKey) return MATCH_SUMMARY_WEAPON_META[uuidKey];
+  return MATCH_SUMMARY_WEAPON_META[normalizeMatchSummaryKey(raw)] || null;
+}
+
+function getMatchSummaryWeaponImageUrl(value = "") {
+  const meta = getMatchSummaryWeaponMeta(value);
+  return meta?.uuid ? `https://media.valorant-api.com/weapons/${meta.uuid}/displayicon.png` : "";
+}
+
 function getMatchSummaryRecord(match = {}) {
   if (match?.schemaVersion) return match;
   if (match?.matchRecord?.schemaVersion) return match.matchRecord;
@@ -14285,6 +14328,8 @@ function formatMatchSummaryWeaponName(kill = {}) {
   const name = String(kill?.weapon || kill?.weaponName || "").trim();
   if (name) return name;
   const id = String(kill?.weaponId || "").trim();
+  const meta = getMatchSummaryWeaponMeta(id);
+  if (meta?.label) return meta.label;
   return id ? `Weapon ${id.slice(0, 8)}` : "Untracked weapon";
 }
 
@@ -14339,7 +14384,8 @@ function buildMatchSummaryEconomy(record = {}) {
     addEconomyPhaseResult(buckets[phase] || buckets.other, round?.won === true);
     return {
       roundNum: safeNumber(round?.roundNum, index + 1),
-      value: safeNumber(round?.playerEconomy?.loadoutValue),
+      value: safeNumber(round?.playerEconomy?.remaining, safeNumber(round?.playerEconomy?.loadoutValue)),
+      loadoutValue: safeNumber(round?.playerEconomy?.loadoutValue),
       remaining: safeNumber(round?.playerEconomy?.remaining),
       won: round?.won === true,
       phase
@@ -14372,21 +14418,122 @@ function buildMatchSummaryWeapons(record = {}) {
       weapon: entry.weapon,
       kills: entry.kills,
       rounds: Array.from(entry.rounds).filter(Number.isFinite).sort((a, b) => a - b),
-      weaponIds: Array.from(entry.weaponIds)
+      weaponIds: Array.from(entry.weaponIds),
+      meta: getMatchSummaryWeaponMeta(entry.weapon) || getMatchSummaryWeaponMeta(Array.from(entry.weaponIds)[0] || "")
     }))
-    .sort((a, b) => b.kills - a.kills || a.weapon.localeCompare(b.weapon));
+    .sort((a, b) => safeNumber(b.meta?.cost, -1) - safeNumber(a.meta?.cost, -1) || b.kills - a.kills || a.weapon.localeCompare(b.weapon));
 }
 
 function buildMatchSummaryStatItems(match = {}, record = getMatchSummaryRecord(match)) {
   const core = getMatchCore(match || record || {});
   const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
   return [
-    { label: "K / D / A", value: `${Math.round(safeNumber(core.kills))} / ${Math.round(safeNumber(core.deaths))} / ${Math.round(safeNumber(core.assists))}`, roleKey: getCompassRoleKey(core.role) },
-    { label: "ACS", value: Math.round(safeNumber(core.acs)) || "--", roleKey: getCompassRoleKey(core.role) },
-    { label: "ADR", value: Math.round(safeNumber(core.adr)) || "--", roleKey: getCompassRoleKey(core.role) },
-    { label: "HS %", value: `${Math.round(safeNumber(core.hs)) || 0}%`, roleKey: getCompassRoleKey(core.role) },
-    { label: "Role Impact", value: `${Math.round(safeNumber(roleImpact?.score)) || 0}%`, roleKey: roleImpact?.roleKey || getCompassRoleKey(core.role) }
+    { key: "kills", label: "Kills", value: Math.round(safeNumber(core.kills)) || 0, displayValue: String(Math.round(safeNumber(core.kills)) || 0), unit: "" },
+    { key: "deaths", label: "Deaths", value: Math.round(safeNumber(core.deaths)) || 0, displayValue: String(Math.round(safeNumber(core.deaths)) || 0), unit: "" },
+    { key: "assists", label: "Assists", value: Math.round(safeNumber(core.assists)) || 0, displayValue: String(Math.round(safeNumber(core.assists)) || 0), unit: "" },
+    { key: "acs", label: "ACS", value: safeNumber(core.acs), displayValue: Math.round(safeNumber(core.acs)) || "--", unit: "" },
+    { key: "adr", label: "ADR", value: safeNumber(core.adr), displayValue: Math.round(safeNumber(core.adr)) || "--", unit: "" },
+    { key: "hs", label: "HS %", value: safeNumber(core.hs), displayValue: `${Math.round(safeNumber(core.hs)) || 0}%`, unit: "%" },
+    { key: "role-impact", label: "Role Impact", value: safeNumber(roleImpact?.score), displayValue: `${Math.round(safeNumber(roleImpact?.score)) || 0}%`, unit: "%" }
   ];
+}
+
+function getMatchSummaryKdaText(match = {}, record = getMatchSummaryRecord(match)) {
+  const core = getMatchCore(match || record || {});
+  return `${Math.round(safeNumber(core.kills)) || 0} / ${Math.round(safeNumber(core.deaths)) || 0} / ${Math.round(safeNumber(core.assists)) || 0}`;
+}
+
+function getMatchSummaryStatNumericValue(match = {}, key = "") {
+  const record = getMatchSummaryRecord(match);
+  const core = getMatchCore(match || record || {});
+  if (key === "kills") return safeNumber(core.kills);
+  if (key === "deaths") return safeNumber(core.deaths);
+  if (key === "assists") return safeNumber(core.assists);
+  if (key === "acs") return safeNumber(core.acs);
+  if (key === "adr") return safeNumber(core.adr);
+  if (key === "hs") return safeNumber(core.hs);
+  if (key === "role-impact") {
+    const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
+    return safeNumber(roleImpact?.score);
+  }
+  return NaN;
+}
+
+function formatMatchSummaryStatValue(key = "", value = NaN) {
+  if (!Number.isFinite(Number(value))) return "--";
+  const rounded = Math.round(Number(value));
+  return key === "hs" || key === "role-impact" ? `${rounded}%` : String(rounded);
+}
+
+function getMatchSummaryPlayedAt(match = {}) {
+  const record = getMatchSummaryRecord(match);
+  const raw = record?.playedAt || record?.createdAt || match?.createdAt || match?.metadata?.playedAt || "";
+  const time = new Date(raw).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function getMatchSummaryPreviousRoleMatches(match = {}, record = getMatchSummaryRecord(match), limit = 5) {
+  const core = getMatchCore(match || record || {});
+  const roleKey = getCompassRoleKey(core.role || record?.role || agentRoles?.[core.agent] || "");
+  const currentId = String(record?.id || match?.id || match?.matchId || match?.metadata?.matchId || "").trim();
+  const currentTime = getMatchSummaryPlayedAt(match || record || {});
+  const sourceMatches = Array.isArray(matches) && matches.length
+    ? matches
+    : (Array.isArray(getActiveProfile?.()?.matches) ? getActiveProfile().matches : []);
+  return sourceMatches
+    .map(item => ({ item, record: getMatchSummaryRecord(item), core: getMatchCore(item), time: getMatchSummaryPlayedAt(item) }))
+    .filter(entry => {
+      if (!entry.record) return false;
+      const id = String(entry.record?.id || entry.item?.id || entry.item?.matchId || entry.item?.metadata?.matchId || "").trim();
+      if (currentId && id && id === currentId) return false;
+      if (roleKey && getCompassRoleKey(entry.core?.role || entry.record?.role || "") !== roleKey) return false;
+      return !currentTime || !entry.time || entry.time < currentTime;
+    })
+    .sort((left, right) => right.time - left.time)
+    .slice(0, Math.max(1, Number(limit) || 5))
+    .reverse()
+    .map((entry, index, list) => ({
+      match: entry.item,
+      label: `-${list.length - index}`,
+      map: entry.core?.map || entry.record?.map || "Match",
+      value: null
+    }));
+}
+
+function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRecord(match), item = {}) {
+  const previous = getMatchSummaryPreviousRoleMatches(match, record, 5)
+    .map(entry => ({ ...entry, value: getMatchSummaryStatNumericValue(entry.match, item.key) }))
+    .filter(entry => Number.isFinite(Number(entry.value)));
+  const currentValue = getMatchSummaryStatNumericValue(match || record || {}, item.key);
+  const points = [
+    ...previous,
+    ...(Number.isFinite(Number(currentValue)) ? [{ label: "Now", map: record?.map || getMatchCore(match || record || {}).map || "Current", value: currentValue, current: true }] : [])
+  ];
+  if (!points.length) {
+    return `<div class="match-summary-stat-trend" data-match-summary-stat-panel="${escapeHtml(item.key)}" hidden><p class="match-summary-empty">No stored role matches have enough data for this ${escapeHtml(item.label)} trend yet.</p></div>`;
+  }
+  const previousValues = previous.map(entry => Number(entry.value)).filter(Number.isFinite);
+  const averageValue = previousValues.length ? average(previousValues) : average(points.map(entry => Number(entry.value)));
+  const max = Math.max(1, ...points.map(entry => Number(entry.value)), averageValue);
+  const polyline = points.map((entry, index) => {
+    const x = points.length <= 1 ? 50 : (index / (points.length - 1)) * 100;
+    const y = 52 - ((Number(entry.value) / max) * 45);
+    return `${x.toFixed(2)},${Math.max(4, Math.min(52, y)).toFixed(2)}`;
+  }).join(" ");
+  return `
+    <div class="match-summary-stat-trend" data-match-summary-stat-panel="${escapeHtml(item.key)}" hidden>
+      <div class="match-summary-stat-trend-head">
+        <strong>${escapeHtml(item.label)} trend</strong>
+        <span>Average ${escapeHtml(formatMatchSummaryStatValue(item.key, averageValue))}</span>
+      </div>
+      <div class="match-summary-stat-chart" style="--stat-count:${points.length}">
+        <svg viewBox="0 0 100 56" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
+        ${points.map(entry => {
+          const height = Math.max(8, Math.round((Number(entry.value) / max) * 100));
+          return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
+        }).join("")}
+      </div>
+    </div>`;
 }
 
 function renderMatchSummaryRoleBadge(roleKey = "") {
@@ -14400,14 +14547,14 @@ function renderMatchSummaryStatsTab(match = {}, record = getMatchSummaryRecord(m
   return `
     <div class="match-summary-stat-grid">
       ${items.map(item => `
-        <button type="button" class="timeline-pill match-summary-stat-pill" data-match-summary-timeline="${escapeHtml(item.label)}">
+        <button type="button" class="timeline-pill match-summary-stat-pill" data-match-summary-stat="${escapeHtml(item.key)}" aria-expanded="false">
           <span class="timeline-pill-label">${escapeHtml(item.label)}</span>
-          <span class="timeline-pill-value">${escapeHtml(item.value)}</span>
-          ${renderMatchSummaryRoleBadge(item.roleKey)}
+          <span class="timeline-pill-value">${escapeHtml(item.displayValue)}</span>
         </button>
       `).join("")}
     </div>
-    <p class="match-summary-footnote">These are the raw synced match values. Deeper coaching reads stay in Insights and Compass.</p>
+    <div class="match-summary-stat-trends">${items.map(item => renderMatchSummaryStatTrendPanel(match, record, item)).join("")}</div>
+    <p class="match-summary-footnote">Tap a stat to compare it against the five previous stored games where you played this role.</p>
   `;
 }
 
@@ -14415,10 +14562,10 @@ function renderMatchSummaryWeaponsTab(record = {}) {
   const weapons = buildMatchSummaryWeapons(record);
   const economy = buildMatchSummaryEconomy(record);
   const bucketMarkup = Object.entries(economy.buckets)
-    .filter(([, bucket]) => bucket.total > 0)
+    .filter(([, bucket]) => bucket.total > 0 && bucket.wins > 0)
     .map(([key, bucket]) => {
       const rate = bucket.total ? Math.round((bucket.wins / bucket.total) * 100) : 0;
-      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong>${bucket.wins}/${bucket.total} wins <em>${rate}%</em></span>`;
+      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong><em>${rate}%</em><small>${bucket.wins}/${bucket.total} wins</small></span>`;
     }).join("");
   return `
     <div class="match-summary-two-col">
@@ -14428,9 +14575,9 @@ function renderMatchSummaryWeaponsTab(record = {}) {
           <div class="match-summary-weapon-list">
             ${weapons.map(item => `
               <div class="match-summary-weapon-row">
-                <strong>${escapeHtml(item.weapon)}</strong>
-                <span>${item.kills} kill${item.kills === 1 ? "" : "s"}</span>
-                <small>Rounds ${escapeHtml(item.rounds.join(", ") || "--")}</small>
+                <div class="match-summary-weapon-art">${getMatchSummaryWeaponImageUrl(item.weapon) ? `<img src="${escapeHtml(getMatchSummaryWeaponImageUrl(item.weapon))}" alt="" loading="eager" decoding="async">` : ""}<strong>${escapeHtml(item.weapon)}</strong></div>
+                <i aria-hidden="true"></i>
+                <div class="match-summary-weapon-kills"><strong>${item.kills}</strong><span>Kill${item.kills === 1 ? "" : "s"}</span><small>Rounds ${escapeHtml(item.rounds.join(", ") || "--")}</small></div>
               </div>
             `).join("")}
           </div>
@@ -14448,19 +14595,33 @@ function renderMatchSummaryWeaponsTab(record = {}) {
 function renderMatchSummaryEconomyTab(record = {}) {
   const { creditLine } = buildMatchSummaryEconomy(record);
   const values = creditLine.map(item => item.value).filter(Number.isFinite);
-  const max = Math.max(1, ...values);
+  const max = 9000;
+  const averageCredits = values.length ? average(values) : 0;
+  const linePoints = creditLine
+    .filter(item => Number.isFinite(item.value))
+    .map((item, index, list) => {
+      const x = list.length <= 1 ? 50 : (index / (list.length - 1)) * 100;
+      const y = 100 - ((Math.min(max, Math.max(0, item.value)) / max) * 92);
+      return `${x.toFixed(2)},${Math.max(4, Math.min(98, y)).toFixed(2)}`;
+    }).join(" ");
   return `
     <section class="match-summary-panel">
-      <h4>Round Credit Flow</h4>
-      <div class="match-summary-economy-chart">
+      <div class="match-summary-economy-average">Average ${Math.round(averageCredits).toLocaleString()} credits</div>
+      <div class="match-summary-economy-chart" aria-label="Round economy chart">
+        <div class="match-summary-economy-y-axis" aria-hidden="true"><span>9,000</span><span>4,500</span><span>0</span></div>
+        ${linePoints ? `<svg class="match-summary-economy-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(linePoints)}"></polyline></svg>` : ""}
         ${creditLine.map(item => {
-          const height = Number.isFinite(item.value) ? Math.max(8, Math.round((item.value / max) * 100)) : 8;
+          const height = Number.isFinite(item.value) ? Math.max(3, Math.round((Math.min(max, Math.max(0, item.value)) / max) * 100)) : 3;
           return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${Number.isFinite(item.value) ? Math.round(item.value) : "untracked"} credits"><i></i><em>${item.roundNum}</em></span>`;
         }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
       </div>
-      <p class="match-summary-footnote">Credit bars use each round's stored player loadout value. Missing values stay untracked.</p>
     </section>
   `;
+}
+
+function renderMatchSummarySkullIcon(tone = "kill") {
+  const className = tone === "death" ? "is-death" : "is-kill";
+  return `<span class="match-summary-skull ${className}" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 3C9.5 3 5.2 7.2 5.2 13.6c0 4.1 1.9 7.3 5 8.9v3.9c0 1.4 1.1 2.6 2.6 2.6h6.4c1.4 0 2.6-1.1 2.6-2.6v-3.9c3.1-1.6 5-4.8 5-8.9C26.8 7.2 22.5 3 16 3Z"></path><circle cx="11.8" cy="14.4" r="2.5"></circle><circle cx="20.2" cy="14.4" r="2.5"></circle><path d="M14 20.2h4M12.5 24.5v3.2M16 24.5v3.2M19.5 24.5v3.2"></path></svg></span>`;
 }
 
 function renderMatchSummaryTimeline(record = {}) {
@@ -14469,9 +14630,8 @@ function renderMatchSummaryTimeline(record = {}) {
   return `<div class="match-summary-rounds" aria-label="Round by round timeline">
     ${rounds.map(item => `
       <div class="match-summary-round ${item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}: ${item.won ? "Win" : "Loss"}">
-        <span>${item.roundNum}</span>
-        <strong>${item.kills.length}</strong>
-        <em>${item.deaths.length ? "D" : item.side ? item.side.charAt(0).toUpperCase() : "-"}</em>
+        <div class="match-summary-round-events">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : `<span class="match-summary-round-empty">-</span>`}${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
+        <em>${item.roundNum}</em>
       </div>
     `).join("")}
   </div>`;
@@ -14498,21 +14658,21 @@ function ensureMatchSummaryModal() {
     const tab = event.target.closest?.("[data-match-summary-tab]");
     if (tab) {
       event.preventDefault();
+      event.stopPropagation();
       setMatchSummaryTab(tab.dataset.matchSummaryTab || "stats");
       return;
     }
     if (event.target.closest?.("[data-match-summary-close]")) {
       event.preventDefault();
+      event.stopPropagation();
       closeMatchSummaryModal();
       return;
     }
-    if (event.target.closest?.("[data-match-summary-timeline]")) {
+    const stat = event.target.closest?.("[data-match-summary-stat]");
+    if (stat) {
       event.preventDefault();
-      const scope = getTimelineContext();
-      const item = buildTimelineItemsFromModel(scope.model).find(candidate =>
-        String(candidate?.label || "").toLowerCase() === String(event.target.closest("[data-match-summary-timeline]")?.dataset.matchSummaryTimeline || "").toLowerCase()
-      );
-      if (item?.key && !item.disabled) openTimelineStatsModal(item.key);
+      event.stopPropagation();
+      setMatchSummaryStat(stat.dataset.matchSummaryStat || "");
     }
   });
   return modal;
@@ -14532,6 +14692,23 @@ function setMatchSummaryTab(tabName = "stats") {
   });
 }
 
+function setMatchSummaryStat(statKey = "") {
+  const modal = document.getElementById("matchSummaryModal");
+  if (!modal) return;
+  const key = String(statKey || "").trim();
+  const selectorKey = window.CSS?.escape ? window.CSS.escape(key) : key.replace(/"/g, '\\"');
+  const activeButton = modal.querySelector(`[data-match-summary-stat="${selectorKey}"]`);
+  const wasActive = Boolean(activeButton?.classList?.contains("is-active"));
+  modal.querySelectorAll("[data-match-summary-stat]").forEach(button => {
+    const active = !wasActive && button.dataset.matchSummaryStat === key;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-expanded", active ? "true" : "false");
+  });
+  modal.querySelectorAll("[data-match-summary-stat-panel]").forEach(panel => {
+    panel.hidden = wasActive || panel.dataset.matchSummaryStatPanel !== key;
+  });
+}
+
 function renderMatchSummaryModal(match = {}, options = {}) {
   const modal = ensureMatchSummaryModal();
   const content = modal.querySelector(".match-summary-content");
@@ -14546,16 +14723,19 @@ function renderMatchSummaryModal(match = {}, options = {}) {
     : (result ? result.toUpperCase() : "Score unavailable");
   const agent = record.agent || core.agent || "Unknown";
   const mapName = record.map || core.map || "Unknown";
+  const roleKey = getCompassRoleKey(record.role || core.role || agentRoles?.[agent] || "");
+  const roleIcon = ROLE_ICON_MAP?.[roleKey] || "";
   content.innerHTML = `
     <header class="match-summary-header is-${escapeHtml(result)}">
       <div class="match-summary-agent-art"><img src="${escapeHtml(getAgentIconUrl(agent))}" alt="${escapeHtml(agent)}"></div>
+      ${roleIcon ? `<div class="match-summary-role-art role-${escapeHtml(roleKey)}"><img src="${escapeHtml(roleIcon)}" alt="${escapeHtml(roleKey)} role"></div>` : ""}
       <div class="match-summary-title-block">
         <span class="match-summary-kicker">Match Report</span>
         <h2 id="matchSummaryTitle">${escapeHtml(agent)} on ${escapeHtml(mapName)}</h2>
         <p>${escapeHtml(formatMatchSummaryDate(record.playedAt || record.createdAt || core.createdAt))}${duration ? ` | ${escapeHtml(duration)}` : ""}</p>
       </div>
       <div class="match-summary-score-block">
-        ${rankLabel ? `<img src="${escapeHtml(getRankIconUrl(rankLabel))}" alt="${escapeHtml(rankLabel)} rank">` : ""}
+        <img class="${isMeaningfulRankLabel(rankLabel) ? "" : "is-unrated-placeholder"}" src="${escapeHtml(getRankIconUrl(rankLabel || "Unrated"))}" alt="${escapeHtml(rankLabel || "Unrated")} rank">
         <strong>${escapeHtml(scoreline)}</strong>
         <span>${escapeHtml(result || "synced")}</span>
       </div>
@@ -14564,6 +14744,7 @@ function renderMatchSummaryModal(match = {}, options = {}) {
     <section class="match-summary-timeline-panel">
       <h3>Round Timeline</h3>
       ${renderMatchSummaryTimeline(record)}
+      <p class="match-summary-kda-line">K / D / A&nbsp; <strong>${escapeHtml(getMatchSummaryKdaText(match, record))}</strong></p>
     </section>
     <nav class="match-summary-tabs" aria-label="Match report tabs">
       <button type="button" class="active" data-match-summary-tab="stats" aria-selected="true">Stats</button>
@@ -14573,6 +14754,7 @@ function renderMatchSummaryModal(match = {}, options = {}) {
     <section class="match-summary-tab-panel" data-match-summary-panel="stats">${renderMatchSummaryStatsTab(match, record)}</section>
     <section class="match-summary-tab-panel" data-match-summary-panel="weapons" hidden>${renderMatchSummaryWeaponsTab(record)}</section>
     <section class="match-summary-tab-panel" data-match-summary-panel="economy" hidden>${renderMatchSummaryEconomyTab(record)}</section>
+    <div class="match-summary-live-banner" aria-hidden="true">Match Report</div>
   `;
   pendingMatchSummaryDismiss = typeof options.onDismiss === "function" ? options.onDismiss : null;
   return modal;
@@ -14586,6 +14768,104 @@ function openMatchSummaryModal(match = {}, options = {}) {
   }
   showModalById(modal.id);
   return true;
+}
+
+function createMatchSummaryPreviewRecord() {
+  const loadout = chooseBroadcastPreviewLoadout?.() || getBroadcastRollData?.({}) || {};
+  const agent = String(loadout.agent || agentName?.textContent || activeAgent || "Jett").trim() || "Jett";
+  const role = String(agentRoles?.[agent] || loadout.role || "Duelist");
+  const tracked = "rankedcoach-preview-player";
+  const weaponPlan = [
+    { weapon: "Vandal", weaponId: MATCH_SUMMARY_WEAPON_META.vandal.uuid, count: 2 },
+    { weapon: "Phantom", weaponId: MATCH_SUMMARY_WEAPON_META.phantom.uuid, count: 1 },
+    { weapon: "Sheriff", weaponId: MATCH_SUMMARY_WEAPON_META.sheriff.uuid, count: 1 },
+    { weapon: "Ghost", weaponId: MATCH_SUMMARY_WEAPON_META.ghost.uuid, count: 1 }
+  ];
+  let weaponIndex = 0;
+  const roundWins = new Set([1, 2, 4, 5, 7, 8, 10, 12, 13]);
+  const deathRounds = new Set([3, 6, 9, 11]);
+  const killCounts = [2, 1, 0, 1, 2, 0, 1, 2, 0, 1, 0, 1, 1];
+  const roundByRound = Array.from({ length: 13 }, (_, index) => {
+    const roundNum = index + 1;
+    const kills = [];
+    for (let i = 0; i < killCounts[index]; i += 1) {
+      const weaponMeta = weaponPlan[weaponIndex % weaponPlan.length];
+      kills.push({
+        killer: tracked,
+        victim: `enemy-${roundNum}-${i}`,
+        weapon: weaponMeta.weapon,
+        weaponId: weaponMeta.weaponId,
+        weaponType: "Weapon",
+        roundTime: 21000 + (i * 3700)
+      });
+      weaponIndex += 1;
+    }
+    if (deathRounds.has(roundNum)) {
+      kills.push({
+        killer: `enemy-${roundNum}`,
+        victim: tracked,
+        weapon: "Vandal",
+        weaponId: MATCH_SUMMARY_WEAPON_META.vandal.uuid,
+        weaponType: "Weapon",
+        roundTime: 64000
+      });
+    }
+    return {
+      roundNum,
+      side: roundNum <= 12 ? "attack" : "defense",
+      won: roundWins.has(roundNum),
+      roundResult: roundNum === 1 || roundNum === 13 ? "pistol" : "",
+      roundCeremony: roundNum === 8 ? "Thrifty" : "",
+      playerEconomy: {
+        remaining: [800, 2300, 1100, 4200, 6100, 2600, 5200, 7400, 3900, 6400, 2800, 8100, 5500][index],
+        loadoutValue: [800, 3600, 2100, 4800, 5100, 2500, 4700, 5200, 2800, 4800, 2300, 5300, 4400][index],
+        weapon: roundNum <= 2 ? "Ghost" : "Vandal"
+      },
+      kills
+    };
+  });
+  return {
+    schemaVersion: 1,
+    id: `preview-match-summary-${Date.now()}`,
+    playedAt: nowISO(),
+    createdAt: nowISO(),
+    agent,
+    role,
+    map: "Sunset",
+    result: "win",
+    rounds: { won: 13, lost: 9 },
+    rank: { rank: "Diamond 2" },
+    trackedPlayer: { puuid: tracked, name: "Preview" },
+    stats: {
+      kills: killCounts.reduce((sum, value) => sum + value, 0),
+      deaths: deathRounds.size,
+      assists: 5,
+      acs: 247,
+      adr: 158,
+      hsPercent: 31
+    },
+    roundByRound
+  };
+}
+
+function openMatchSummaryPreviewModal(sourceButton = null) {
+  const buttonWasVisible = Boolean(sourceButton && !sourceButton.hidden && sourceButton.getAttribute("aria-hidden") !== "true");
+  syncBroadcastPreviewControls?.();
+  if (!buttonWasVisible && !canUseBroadcastPreviewMode()) {
+    showToast?.("Broadcast previews are available only on the owner/dev account.", {
+      title: "Preview unavailable",
+      durationMs: 2600
+    });
+    return false;
+  }
+  closeProfileDropdown?.();
+  showToast?.("Opening match report preview.", {
+    title: "Broadcast preview",
+    durationMs: 1400
+  });
+  return openMatchSummaryModal(createMatchSummaryPreviewRecord(), {
+    onDismiss: () => runBroadcastPreview("postgame", BROADCAST_CONSOLE_PREVIEW_BUTTON)
+  });
 }
 
 function closeMatchSummaryModal() {
@@ -14611,7 +14891,7 @@ const BROADCAST_CONSOLE_PREVIEW_BUTTON = Object.freeze({
 
 globalThis.RankedCoachBroadcastPreview = Object.freeze({
   playRoll: () => runBroadcastPreview("roll", BROADCAST_CONSOLE_PREVIEW_BUTTON),
-  playPostgame: () => runBroadcastPreview("postgame", BROADCAST_CONSOLE_PREVIEW_BUTTON),
+  playPostgame: () => openMatchSummaryPreviewModal(BROADCAST_CONSOLE_PREVIEW_BUTTON),
   playLogging: () => runLoggingRevealPreview(BROADCAST_CONSOLE_PREVIEW_BUTTON),
   syncControls: syncBroadcastPreviewControls
 });
@@ -21111,7 +21391,12 @@ function getRankIconUrl(label){
   const file = map[normalized];
   return file
     ? `https://raw.githubusercontent.com/michealdoolittle-cyber/images/main/icons/${file}`
-    : "";
+    : getUnratedRankIconUrl();
+}
+
+function getUnratedRankIconUrl() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><defs><radialGradient id="g" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#94a3b8"/><stop offset=".7" stop-color="#334155"/><stop offset="1" stop-color="#0f172a"/></radialGradient><filter id="b"><feGaussianBlur stdDeviation="1.2"/></filter></defs><circle cx="48" cy="48" r="40" fill="url(#g)" stroke="#cbd5e1" stroke-width="4" opacity=".72"/><g filter="url(#b)" opacity=".36"><path d="M27 31 48 17l21 14v34L48 79 27 65z" fill="none" stroke="#e5e7eb" stroke-width="5"/></g><text x="48" y="61" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="44" font-weight="900" fill="#f8fafc">?</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
 function updateLogAgentDisplay(agent){
@@ -42451,6 +42736,10 @@ function bindEvents(){
       void runLoggingRevealPreview(previewButton);
       return;
     }
+    if (previewButton.id === "previewPostgamePackageBtn") {
+      openMatchSummaryPreviewModal(previewButton);
+      return;
+    }
     const kind = previewButton.id === "previewPostgamePackageBtn" ? "postgame" : "roll";
     void runBroadcastPreview(kind, previewButton);
   }, true);
@@ -44281,6 +44570,7 @@ async function runImprovementTimelineAnimation() {
 document.addEventListener("click", (e)=>{
   const timelinePill = e.target.closest?.(".timeline-pill");
   if (timelinePill) {
+    if (timelinePill.closest?.("#matchSummaryModal")) return;
     if (timelinePill.classList.contains("is-disabled") || timelinePill.disabled) return;
     openTimelineStatsModal(timelinePill.dataset.timelineKey || "");
   }
@@ -48930,14 +49220,11 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     const rankLabel = rankDisplayStatus.isRanked
       ? rankDisplayStatus.rankLabel
       : (currentRankSnapshot?.rankLabel || peak.tierLabel);
-    rankIcon.hidden = !rankDisplayStatus.isRanked || !isMeaningfulRankLabel(rankLabel);
-    if (rankDisplayStatus.isRanked) {
-      rankIcon.src = getRankIconUrl(rankLabel);
-      rankIcon.alt = rankLabel;
-    } else {
-      rankIcon.removeAttribute("src");
-      rankIcon.alt = rankDisplayStatus.displayLabel;
-    }
+    const hasRankIcon = rankDisplayStatus.isRanked && isMeaningfulRankLabel(rankLabel);
+    rankIcon.hidden = false;
+    rankIcon.src = hasRankIcon ? getRankIconUrl(rankLabel) : getUnratedRankIconUrl();
+    rankIcon.alt = hasRankIcon ? rankLabel : (rankDisplayStatus.displayLabel || "Unrated rank");
+    rankIcon.classList.toggle("is-unrated-placeholder", !hasRankIcon);
   }
 
   borderTargets.forEach((target) => {
