@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/1e58de9c-4950-5125-93e9-a0aee9f98746?language=en-US",
   "uuid": "1e58de9c-4950-5125-93e9-a0aee9f98746",
-  "lastReviewed": "2026-07-30",
+  "lastReviewed": "2026-07-31",
   "patchVersion": "13.02",
   "pickRate": 12.4408,
   "pickRateRank": 12,
@@ -232,10 +232,10 @@
     "entityName": "Killjoy",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-31T19:59:28.190Z",
+    "generatedAt": "2026-08-01T03:58:41.522Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-07-31"
+    "lastReviewed": "2026-08-01"
   },
   "_fieldMeta": {
     "id": {

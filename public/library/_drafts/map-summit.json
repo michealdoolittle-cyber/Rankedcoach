@@ -251,7 +251,7 @@
   ],
   "source": "https://valorant-api.com/v1/maps/756da597-416b-c0f2-f47b-afbdf28670bc?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-07-30",
+  "lastReviewed": "2026-07-31",
   "patchVersion": "13.02",
   "plantSpots": [],
   "plantRateNote": "No source-verified named spike-plant locations are published for Summit in the retained Library sources. The map is shown without fabricated site-centroid markers.",
@@ -1281,10 +1281,10 @@
     "entityName": "Summit",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-31T19:59:28.190Z",
+    "generatedAt": "2026-08-01T03:58:41.522Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-07-31"
+    "lastReviewed": "2026-08-01"
   },
   "_fieldMeta": {
     "id": {

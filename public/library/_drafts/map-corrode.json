@@ -282,7 +282,7 @@
   "coordinates": "48° 38' FH\" N8, 1° 33' YV\" W8",
   "calloutLabelsBakedIn": true,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-30",
+  "lastReviewed": "2026-07-31",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
@@ -1214,10 +1214,10 @@
     "entityName": "Corrode",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-07-31T19:59:28.190Z",
+    "generatedAt": "2026-08-01T03:58:41.522Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-07-31"
+    "lastReviewed": "2026-08-01"
   },
   "_fieldMeta": {
     "id": {

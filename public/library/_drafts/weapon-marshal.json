@@ -40,7 +40,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "c4883e50-4494-202c-3ec3-6b8a9284f00b",
   "source": "https://valorant-api.com/v1/weapons/c4883e50-4494-202c-3ec3-6b8a9284f00b?language=en-US",
-  "lastReviewed": "2026-07-30",
+  "lastReviewed": "2026-07-31",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -49,10 +49,10 @@
     "entityName": "Marshal",
     "operation": "merge",
     "groupId": "snipers",
-    "generatedAt": "2026-07-31T19:59:28.190Z",
+    "generatedAt": "2026-08-01T03:58:41.522Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-07-31"
+    "lastReviewed": "2026-08-01"
   },
   "_fieldMeta": {
     "id": {
