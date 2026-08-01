@@ -1365,6 +1365,7 @@
   }
 
   function getTopicCollageMarkup(topic = "") {
+    const eagerCollageOptions = { defer: false, loading: "eager", fetchPriority: "high" };
     if (topic === "crosshairs") {
       return crosshairSeedEntries.filter(entry => entry.type === "Community").slice(0, 20).map(entry => `
         <span class="gamesense-topic-crosshair-sample">
@@ -1373,7 +1374,7 @@
     }
     if (topic === "weapons") {
       return getShuffledCollageItems(getTopicCollageImages(topic)).slice(0, 20)
-        .map(src => getDeferredCollageImageMarkup(src))
+        .map(src => getDeferredCollageImageMarkup(src, "", eagerCollageOptions))
         .join("");
     }
     if (topic === "playlist") {
@@ -1381,7 +1382,7 @@
         .map(video => getSafeMediaThumbnail(video.thumbnail))
         .filter(Boolean)
         .slice(0, 4)
-        .map(src => getDeferredCollageImageMarkup(src))
+        .map(src => getDeferredCollageImageMarkup(src, "", eagerCollageOptions))
         .join("");
     }
     if (topic === "agents") {
@@ -1402,6 +1403,7 @@
           <span class="gamesense-topic-role-agent role-${escapeHtml(role)}">
             <img class="gamesense-topic-role-icon" src="${escapeHtml(roleIconMap[role])}" alt="" loading="eager" decoding="async" fetchpriority="high">
             ${getDeferredCollageImageMarkup(thumbnail || fullPortrait, "gamesense-topic-agent-art", {
+              ...eagerCollageOptions,
               fallbackSrc: thumbnail ? fullPortrait : ""
             })}
           </span>`;
@@ -1413,12 +1415,13 @@
         const fullArtwork = map?.cardImage || getMapArtwork(map?.label);
         const thumbnail = getOverviewMapThumbnail(map);
         return getDeferredCollageImageMarkup(thumbnail || fullArtwork, index === 12 ? "gamesense-topic-collage-wide" : "", {
+          ...eagerCollageOptions,
           fallbackSrc: thumbnail ? fullArtwork : ""
         });
       }).join("");
     }
     return getTopicCollageImages(topic)
-      .map(src => getDeferredCollageImageMarkup(src))
+      .map(src => getDeferredCollageImageMarkup(src, "", eagerCollageOptions))
       .join("");
   }
 
@@ -1680,14 +1683,18 @@
       </div>`;
   }
 
-  function renderPublishedKnowledge(category = "general", entity = "", options = {}) {
+  function getPublishedKnowledgeItemsFor(category = "general", entity = "", options = {}) {
     const normalizedEntity = String(entity || "").trim().toLowerCase();
     const includeGeneral = options.includeGeneral !== false;
-    const items = publishedKnowledge.filter(item => (
+    return publishedKnowledge.filter(item => (
       (includeGeneral && item.category === "general")
       || (item.category === category && String(item.entity || "").trim().toLowerCase() === normalizedEntity)
       || (item.category === "agent-map" && String(item.entity || "").split("\u00b7").map(value => value.trim().toLowerCase()).includes(normalizedEntity))
     ));
+  }
+
+  function renderPublishedKnowledge(category = "general", entity = "", options = {}) {
+    const items = getPublishedKnowledgeItemsFor(category, entity, options);
     if (!items.length) return "";
     return `
       <section class="gamesense-knowledge-updates">
@@ -2496,47 +2503,109 @@
     return `<aside class="gamesense-heatmap-meta"><strong>Plant Heat Map</strong><span>${escapeHtml(heatmap.actLabel || "Verified archive")}</span><p>Published aggregate plant-location reference for this map.</p></aside>`;
   }
 
-  function getDossierStickyNotes(topic = "") {
+  function hasRenderableItems(value) {
+    return Array.isArray(value) && value.filter(Boolean).length > 0;
+  }
+
+  function makeStickyNode(label, target = "", children = []) {
+    return {
+      label,
+      target,
+      children: Array.isArray(children) ? children.filter(Boolean) : []
+    };
+  }
+
+  function getDossierStickyTree(topic = "", item = {}) {
+    const topicLabel = {
+      maps: "Maps",
+      agents: "Agents",
+      weapons: "Weapons"
+    }[topic] || "Dossier";
     if (topic === "maps") {
+      if (item?.isOverviewShell) {
+        return [
+          makeStickyNode("Main tile", "", [
+            makeStickyNode("Overview", ".gamesense-detail-head"),
+            makeStickyNode("Dossier Status", ".gamesense-map-shell-note")
+          ])
+        ];
+      }
+      const contentChildren = [
+        makeStickyNode("Round Plans", ".gamesense-tips-hub"),
+        makeStickyNode("Competitive Comps", ".gamesense-comp-card"),
+        makeStickyNode("Weapon Suggestions", ".gamesense-weapon-suggestions"),
+        hasRenderableItems(item?.lineupLinks) ? makeStickyNode("Lineups", ".gamesense-lineups") : null,
+        (item?.layoutImage || getMapHeatmap(item)?.image) ? makeStickyNode("Plant Map", ".gamesense-tactical-card") : null,
+        findRelatedVideo(item) ? makeStickyNode("Related Video", ".gamesense-related-video") : null,
+        getPublishedKnowledgeItemsFor("map", item?.label).length ? makeStickyNode("Coaching Updates", ".gamesense-knowledge-updates") : null
+      ].filter(Boolean);
       return [
-        ["Overview", ".gamesense-detail-head"],
-        ["Callouts", ".gamesense-tips-hub"],
-        ["Comps", ".gamesense-comp-card"],
-        ["Weapons", ".gamesense-weapon-suggestions"],
-        ["Plant Spots", ".gamesense-tactical-card"],
-        ["Videos", ".gamesense-related-video"],
-        ["Updates", ".gamesense-knowledge-updates"]
+        makeStickyNode("Main tile", "", [makeStickyNode("Overview", ".gamesense-detail-head")]),
+        makeStickyNode(topicLabel, "", contentChildren)
       ];
     }
     if (topic === "agents") {
+      const abilities = hasRenderableItems(item?.abilities);
+      const hasLore = hasRenderableItems(item?.lore) || hasRenderableItems(item?.patchHistory);
       return [
-        ["Overview", ".gamesense-detail-head"],
-        ["Lore", ".gamesense-agent-hero"],
-        ["Abilities", ".gamesense-selector-section"],
-        ["Map Fit", ".gamesense-map-fit"],
-        ["Videos", ".gamesense-related-video"],
-        ["Updates", ".gamesense-knowledge-updates"]
+        makeStickyNode("Main tile", "", [makeStickyNode("Overview", ".gamesense-detail-head")]),
+        makeStickyNode(topicLabel, "", [
+          hasLore ? makeStickyNode("Lore & History", ".gamesense-agent-lore-history") : null,
+          abilities ? makeStickyNode("Ability Demos", ".gamesense-selector-section") : null,
+          makeStickyNode("Map Fit", ".gamesense-map-fit"),
+          findRelatedVideo(item) ? makeStickyNode("Related Video", ".gamesense-related-video") : null,
+          getPublishedKnowledgeItemsFor("agent", item?.label, { includeGeneral: false }).length ? makeStickyNode("Agent Updates", ".gamesense-knowledge-updates") : null
+        ].filter(Boolean))
       ];
     }
+    const selectedWeapon = hasRenderableItems(item?.weapons)
+      ? item.weapons.find(weapon => weapon.id === state.detailId) || item.weapons[0]
+      : item;
     return [
-      ["Overview", ".gamesense-detail-head"],
-      ["Arsenal", ".gamesense-selector-section"],
-      ["Skins", ".gamesense-collection-archive"],
-      ["Videos", ".gamesense-related-video"],
-      ["Updates", ".gamesense-knowledge-updates"]
+      makeStickyNode("Main tile", "", [makeStickyNode("Overview", ".gamesense-detail-head")]),
+      makeStickyNode(topicLabel, "", [
+        makeStickyNode("Arsenal", ".gamesense-selector-section"),
+        selectedWeapon ? makeStickyNode("Damage & Notes", ".gamesense-weapon-panel") : null,
+        selectedWeapon ? makeStickyNode("Skin Archive", ".gamesense-collection-archive") : null,
+        selectedWeapon && findRelatedVideo(selectedWeapon) ? makeStickyNode("Related Video", ".gamesense-related-video") : null,
+        selectedWeapon && getPublishedKnowledgeItemsFor("weapon", selectedWeapon.label, { includeGeneral: false }).length ? makeStickyNode("Weapon Updates", ".gamesense-knowledge-updates") : null
+      ].filter(Boolean))
     ];
   }
 
-  function renderDossierStickyNav(topic = "") {
-    const notes = getDossierStickyNotes(topic);
+  function renderDossierStickyNodes(nodes = []) {
+    let activeIndex = 0;
+    const renderNode = (node, depth = 0) => {
+      const children = Array.isArray(node.children) ? node.children : [];
+      const button = node.target
+        ? (() => {
+            const isActive = activeIndex === 0;
+            activeIndex += 1;
+            return `<button type="button" class="${isActive ? "active" : ""}" data-gamesense-sticky-target="${escapeHtml(node.target)}" aria-current="${isActive ? "true" : "false"}" style="--sticky-depth:${depth}">${escapeHtml(node.label)}</button>`;
+          })()
+        : `<span class="gamesense-dossier-tree-label" style="--sticky-depth:${depth}">${escapeHtml(node.label)}</span>`;
+      if (!children.length) return `<li>${button}</li>`;
+      return `<li class="has-children">
+        <details class="gamesense-dossier-tree" open>
+          <summary>${button}</summary>
+          <ol>${children.map(child => renderNode(child, depth + 1)).join("")}</ol>
+        </details>
+      </li>`;
+    };
+    return `<ol class="gamesense-dossier-tree-root">${nodes.map(node => renderNode(node, 0)).join("")}</ol>`;
+  }
+
+  function renderDossierStickyNav(topic = "", item = {}) {
+    const tree = getDossierStickyTree(topic, item);
     return `<nav class="gamesense-dossier-sticky-notes" aria-label="${escapeHtml(topic)} dossier sections">
-      ${notes.map((note, index) => `<button type="button" class="${index === 0 ? "active" : ""}" data-gamesense-sticky-target="${escapeHtml(note[1])}" aria-current="${index === 0 ? "true" : "false"}">${escapeHtml(note[0])}</button>`).join("")}
+      <div class="gamesense-dossier-sticky-title">Contents</div>
+      ${renderDossierStickyNodes(tree)}
     </nav>`;
   }
 
-  function wrapDossierWithStickyNotes(topic = "", markup = "") {
+  function wrapDossierWithStickyNotes(topic = "", markup = "", item = {}) {
     return `<div class="gamesense-dossier-shell" data-gamesense-dossier="${escapeHtml(topic)}">
-      ${renderDossierStickyNav(topic)}
+      ${renderDossierStickyNav(topic, item)}
       <div class="gamesense-dossier-content">${markup}</div>
     </div>`;
   }
@@ -3818,9 +3887,9 @@
   function renderDetail(topic, itemId) {
     const item = getTopicItems(topic).find(entry => entry.id === itemId);
     if (!item) return renderGallery(topic);
-    if (topic === "maps") return wrapDossierWithStickyNotes(topic, renderMapDetail(item));
-    if (topic === "agents") return wrapDossierWithStickyNotes(topic, renderAgentDetail(item));
-    return wrapDossierWithStickyNotes(topic, renderWeaponDetail(item));
+    if (topic === "maps") return wrapDossierWithStickyNotes(topic, renderMapDetail(item), item);
+    if (topic === "agents") return wrapDossierWithStickyNotes(topic, renderAgentDetail(item), item);
+    return wrapDossierWithStickyNotes(topic, renderWeaponDetail(item), item);
   }
 
   function applyMapZoom(nextZoom, anchor = null) {

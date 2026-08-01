@@ -57113,6 +57113,61 @@ body.access-reduced-motion .border-card.is-previewing .border-card-avatar::after
   }
 }
 
+/* 2026-08-01: Impact fill label lock.  The label is appended inside
+   #impactBarFill, so its horizontal coordinate must be the fill box itself,
+   not the outer meter's old left/right gutter math. */
+html body #page-home #impactBarFill > #impactScoreLabel.impact-score-label,
+html body #page-home .impact-bar-fill > .impact-score-label {
+  position:absolute !important;
+  left:0 !important;
+  right:0 !important;
+  width:100% !important;
+  max-width:100% !important;
+  top:var(--impact-score-top,50%) !important;
+  transform:translateY(-50%) !important;
+  display:grid !important;
+  place-items:center !important;
+  justify-content:center !important;
+  align-items:center !important;
+  text-align:center !important;
+  text-align-last:center !important;
+  padding:0 3px !important;
+  box-sizing:border-box !important;
+}
+
+html body #page-home #impactBarFill > #impactScoreLabel.impact-score-label strong,
+html body #page-home .impact-bar-fill > .impact-score-label strong {
+  display:block !important;
+  margin:0 auto !important;
+  width:100% !important;
+  max-width:100% !important;
+  text-align:center !important;
+  letter-spacing:-.04em !important;
+}
+
+/* 2026-08-01: modal width-safety pass.  Desktop modals may scroll vertically,
+   but no RankedCoach modal should require a horizontal scrollbar. */
+html body :is(.lens-modal,.agent-modal-inner,.profile-delete-confirm-card,.gamesense-media-modal,.gamesense-skin-preview-card) {
+  max-width:min(calc(100vw - 24px), var(--modal-max-width, 1120px)) !important;
+  overflow-x:hidden !important;
+  box-sizing:border-box !important;
+}
+
+html body :is(.lens-modal-body,.profile-edit-modal-body,.account-support-modal-body,.timeline-modal-layout,.bug-report-modal-body,.daily-warmup-card,.gamesense-skin-media-pane,.gamesense-skin-model-pane) {
+  max-width:100% !important;
+  min-width:0 !important;
+  overflow-x:hidden !important;
+  box-sizing:border-box !important;
+}
+
+html body :is(.lens-modal,.agent-modal-inner,.profile-delete-confirm-card,.gamesense-media-modal,.gamesense-skin-preview-card) * {
+  min-width:0;
+}
+
+html body :is(.lens-modal,.agent-modal-inner,.profile-delete-confirm-card,.gamesense-media-modal,.gamesense-skin-preview-card) :is(img,video,iframe,svg,canvas,table,pre,code) {
+  max-width:100% !important;
+}
+
 /* Final profile effect lock: these are ambient effects, not circular SVG
    frame shapes, so the fallback standard frame must stay hidden in previews
    and on the live avatar. */
@@ -59025,4 +59080,103 @@ html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profi
 html body .profile-dropdown.profile-dropdown-pills,
 html body .profile-dropdown.profile-dropdown-pills.open{
   z-index:10050 !important;
+}
+
+/* 2026-08-01 profile-border polish:
+   keep nav effects inside the avatar box, but make picker previews large
+   enough that ambient/borderless effects are actually visible around the art. */
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-preview{
+  min-height:144px !important;
+  height:auto !important;
+  padding:12px 9px 9px !important;
+  justify-content:flex-start !important;
+  gap:7px !important;
+  overflow:hidden !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview{
+  width:86px !important;
+  min-width:86px !important;
+  max-width:86px !important;
+  height:86px !important;
+  min-height:86px !important;
+  max-height:86px !important;
+  flex:0 0 86px !important;
+  margin:0 auto 2px !important;
+  overflow:visible !important;
+  border-radius:999px !important;
+  isolation:isolate !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview > img{
+  width:54px !important;
+  min-width:54px !important;
+  max-width:54px !important;
+  height:54px !important;
+  min-height:54px !important;
+  max-height:54px !important;
+  object-fit:cover !important;
+  object-position:center !important;
+  border-radius:999px !important;
+  z-index:5 !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame{
+  position:absolute !important;
+  top:50% !important;
+  left:50% !important;
+  width:86px !important;
+  min-width:86px !important;
+  max-width:86px !important;
+  height:86px !important;
+  min-height:86px !important;
+  max-height:86px !important;
+  transform:translate(-50%,-50%) !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  overflow:visible !important;
+  pointer-events:none !important;
+  z-index:2 !important;
+}
+
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame-svg,
+html body #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-svg{
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+  overflow:visible !important;
+}
+
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-previewing .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect,
+body:not(.access-reduced-motion) #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card.is-previewing .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame .rc-profile-effect *,
+body:not(.access-reduced-motion) .profile-avatar-ring.border-animated .rc-profile-effect-frame .rc-profile-effect,
+body:not(.access-reduced-motion) .profile-avatar-ring.border-animated .rc-profile-effect-frame .rc-profile-effect *,
+body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-animated .rc-profile-effect-frame .rc-profile-effect,
+body:not(.access-reduced-motion) .mobile-bottom-avatar-btn.border-animated .rc-profile-effect-frame .rc-profile-effect *{
+  animation-play-state:running !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor,
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap,
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring{
+  overflow:visible !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring > :not(#profileRankIcon.profile-rank-icon){
+  overflow:hidden !important;
+}
+
+html body .nav-right #profilePanel.profile-panel > .profile-avatar-anchor #profileAvatarWrap.profile-avatar-wrap .profile-avatar-ring .rc-profile-effect-frame{
+  width:50px !important;
+  min-width:50px !important;
+  max-width:50px !important;
+  height:50px !important;
+  min-height:50px !important;
+  max-height:50px !important;
+  top:50% !important;
+  left:50% !important;
+  transform:translate(-50%,-50%) !important;
+  overflow:hidden !important;
 }

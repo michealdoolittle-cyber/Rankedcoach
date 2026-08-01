@@ -5387,13 +5387,13 @@ function polishBreakdownRead(card = {}, context = {}) {
 
   if (label === "mechanics") {
     output.detail = context.evidenceLayer?.metricWeights?.headshot?.label === "Down-weighted"
-      ? "Mechanics are being read through fights, damage timing, positioning, and weapon mix."
-      : "Mechanics are being read through fight value, damage, and precision together.";
+      ? "Mechanics is not just aim here. RankedCoach is checking whether your fights are clean, your damage arrives early enough to matter, and your weapon choices fit the round."
+      : "Mechanics is being judged by the whole duel: fight value, damage, precision, and whether those wins actually move the round.";
   }
 
   if (label === "average adr") {
     output.label = "Damage Pressure";
-    output.detail = `${Math.round(safeNumber(context.overview?.adr))} average damage per round shows how much health you remove; the next check is whether it arrives before the round is decided.`;
+    output.detail = `${Math.round(safeNumber(context.overview?.adr))} ADR shows how much pressure you created. The next check is whether that damage helped your team win fights while the round was still playable.`;
   }
 
   if (label === "agent selection" && bestAgent?.agent) {
@@ -16755,8 +16755,63 @@ function normalizePendingLoadoutRoll(value = {}) {
   };
 }
 
+function getPendingLoadoutStorageKey(profile = getActiveProfile?.()) {
+  const id = String(profile?.id || activeProfileId || "").trim();
+  return id || "active";
+}
+
+function readPendingLoadoutRollStore() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY_PENDING_LOADOUT_ROLLS) || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function writePendingLoadoutRollStore(store = {}) {
+  try {
+    localStorage.setItem(STORAGE_KEY_PENDING_LOADOUT_ROLLS, JSON.stringify(store && typeof store === "object" ? store : {}));
+  } catch (_error) {
+    // This is only a current-session backup; profile/cloud saves remain authoritative.
+  }
+}
+
+function getPendingLoadoutRollBackup(profile = getActiveProfile?.()) {
+  const key = getPendingLoadoutStorageKey(profile);
+  const roll = normalizePendingLoadoutRoll(readPendingLoadoutRollStore()[key]);
+  if (!roll) return null;
+  if (roll.dateKey && roll.dateKey !== formatLocalDateKey(new Date())) return null;
+  return roll;
+}
+
+function savePendingLoadoutRollBackup(profile = getActiveProfile?.(), roll = null) {
+  const key = getPendingLoadoutStorageKey(profile);
+  if (!key) return;
+  const store = readPendingLoadoutRollStore();
+  const normalized = normalizePendingLoadoutRoll(roll);
+  if (normalized) store[key] = normalized;
+  else delete store[key];
+  writePendingLoadoutRollStore(store);
+}
+
+function hydratePendingLoadoutRoll(profile = getActiveProfile?.()) {
+  if (!profile) return null;
+  const primary = normalizePendingLoadoutRoll(profile.pendingLoadoutRoll);
+  const backup = getPendingLoadoutRollBackup(profile);
+  const roll = primary || backup;
+  if (!roll) return null;
+  if (roll.dateKey && roll.dateKey !== formatLocalDateKey(new Date())) {
+    delete profile.pendingLoadoutRoll;
+    savePendingLoadoutRollBackup(profile, null);
+    return null;
+  }
+  profile.pendingLoadoutRoll = roll;
+  return roll;
+}
+
 function getPendingLoadoutRoll(profile = getActiveProfile?.()) {
-  const roll = normalizePendingLoadoutRoll(profile?.pendingLoadoutRoll);
+  const roll = hydratePendingLoadoutRoll(profile);
   if (!roll) return null;
   if (roll.dateKey && roll.dateKey !== formatLocalDateKey(new Date())) return null;
   return roll;
@@ -16775,13 +16830,17 @@ function setPendingLoadoutRoll(agent = "", focus = "", options = {}) {
   });
   if (!roll) return null;
   profile.pendingLoadoutRoll = roll;
+  savePendingLoadoutRollBackup(profile, roll);
   if (options.save !== false) saveProfiles?.();
   return roll;
 }
 
 function clearPendingLoadoutRoll(profile = getActiveProfile?.()) {
-  if (!profile?.pendingLoadoutRoll) return;
+  if (!profile) return;
+  const roll = hydratePendingLoadoutRoll(profile);
+  if (!roll && !profile.pendingLoadoutRoll) return;
   delete profile.pendingLoadoutRoll;
+  savePendingLoadoutRollBackup(profile, null);
   saveProfiles?.();
 }
 
@@ -17551,6 +17610,7 @@ const STORAGE_KEY_LOG_ENTRIES = "valtracker_log_entries_v2";
 const STORAGE_KEY_LOG_ENTRIES_LEGACY = "valtracker_log_entries_v1";
 const STORAGE_KEY_LAST_BACKEND_SYNC = "valtracker_last_backend_sync_v1";
 const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
+const STORAGE_KEY_PENDING_LOADOUT_ROLLS = "rankedcoach_pending_loadout_rolls_v1";
 
 const backendSyncState = {
   applyingRemote: false,
@@ -17819,7 +17879,11 @@ function applyPersistentAccountState(state = {}) {
         remoteProfiles,
         state.activeProfileId
       ) || { profiles: remoteProfiles, activeProfileId: state.activeProfileId, idMap: {} };
-      profiles = consolidated.profiles.map(normalizeProfileRecord);
+      profiles = consolidated.profiles.map(profile => {
+        const normalized = normalizeProfileRecord(profile);
+        hydratePendingLoadoutRoll(normalized);
+        return normalized;
+      });
       activeProfileId = consolidated.activeProfileId || profiles[0]?.id || activeProfileId;
       persistProfilesToLocalCache();
       if (Array.isArray(state.logEntries)) {
@@ -46621,6 +46685,7 @@ function normalizeProfileRecord(profile = {}) {
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
     peakRR: safeNumber(profile.peakRR),
     matches: Array.isArray(profile.matches) ? profile.matches : [],
+    pendingLoadoutRoll: normalizePendingLoadoutRoll(profile.pendingLoadoutRoll) || undefined,
     lastWarmupPromptDate: String(profile.lastWarmupPromptDate || ""),
     warmupLog: normalizeWarmupLog(profile.warmupLog),
     loadoutExclusions,
@@ -46659,7 +46724,11 @@ function loadProfiles(){
     profiles = [];
   }
 
-  profiles = (profiles || []).map(normalizeProfileRecord);
+  profiles = (profiles || []).map(profile => {
+    const normalized = normalizeProfileRecord(profile);
+    hydratePendingLoadoutRoll(normalized);
+    return normalized;
+  });
   activeProfileId =
     localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
 
