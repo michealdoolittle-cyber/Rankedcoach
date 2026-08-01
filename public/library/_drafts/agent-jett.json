@@ -137,7 +137,7 @@
   ],
   "uuid": "add6443a-41bd-e414-f6ad-e58d267f4e95",
   "source": "https://valorant-api.com/v1/agents/add6443a-41bd-e414-f6ad-e58d267f4e95?language=en-US",
-  "lastReviewed": "2026-07-31",
+  "lastReviewed": "2026-08-01",
   "patchVersion": "13.02",
   "pickRate": 73.6825,
   "pickRateRank": 1,
@@ -233,7 +233,7 @@
     "entityName": "Jett",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-01T03:58:41.522Z",
+    "generatedAt": "2026-08-01T08:37:48.657Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-01"

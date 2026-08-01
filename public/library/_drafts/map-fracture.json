@@ -292,7 +292,7 @@
   "coordinates": "35°48'BI\"N 106°08'YQ\"W",
   "calloutLabelsBakedIn": true,
   "dataStatus": "in-review",
-  "lastReviewed": "2026-07-31",
+  "lastReviewed": "2026-08-01",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "highRankPickRates": {
@@ -1273,7 +1273,7 @@
     "entityName": "Fracture",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-01T03:58:41.522Z",
+    "generatedAt": "2026-08-01T08:37:48.657Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-01"

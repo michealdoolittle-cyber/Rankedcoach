@@ -45,7 +45,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "ae3de142-4d85-2547-dd26-4e90bed35cf7",
   "source": "https://valorant-api.com/v1/weapons/ae3de142-4d85-2547-dd26-4e90bed35cf7?language=en-US",
-  "lastReviewed": "2026-07-31",
+  "lastReviewed": "2026-08-01",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -54,7 +54,7 @@
     "entityName": "Bulldog",
     "operation": "merge",
     "groupId": "precision",
-    "generatedAt": "2026-08-01T03:58:41.522Z",
+    "generatedAt": "2026-08-01T08:37:48.657Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-01"
