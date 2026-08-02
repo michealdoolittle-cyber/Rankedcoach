@@ -232,10 +232,10 @@
     "entityName": "Harbor",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-01T19:40:36.184Z",
+    "generatedAt": "2026-08-02T04:01:58.615Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-01"
+    "lastReviewed": "2026-08-02"
   },
   "_fieldMeta": {
     "id": {
