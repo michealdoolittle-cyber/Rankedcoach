@@ -59458,17 +59458,20 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   grid-template-columns:repeat(auto-fit, minmax(34px, 1fr));
   gap:5px;
   margin-top:12px;
-  padding:6px 0 0;
+  padding:6px 8px 0;
+  border-left:2px solid rgba(94,234,212,.88);
+  border-right:2px solid rgba(94,234,212,.88);
 }
 
 #matchSummaryModal .match-summary-rounds::before{
   content:"";
   position:absolute;
-  left:1%;
-  right:1%;
+  left:0;
+  right:0;
   top:39px;
-  height:2px;
-  background:linear-gradient(90deg, transparent, rgba(148,163,184,.58), transparent);
+  height:3px;
+  background:linear-gradient(90deg, rgba(94,234,212,.92), #67e8f9, rgba(94,234,212,.92));
+  box-shadow:0 0 12px rgba(34,211,238,.5);
   z-index:1;
 }
 
@@ -59604,9 +59607,10 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 
 #matchSummaryModal .match-summary-tabs button.active,
 #matchSummaryModal .match-summary-tabs button[aria-selected="true"]{
-  border-color:rgba(94,234,212,.72);
-  background:linear-gradient(135deg, rgba(8,145,178,.52), rgba(15,23,42,.88));
-  box-shadow:0 0 18px rgba(34,211,238,.2);
+  border-color:rgba(255,70,85,.9);
+  background:linear-gradient(135deg, rgba(255,70,85,.86), rgba(8,145,178,.62));
+  color:#fff;
+  box-shadow:0 0 18px rgba(255,70,85,.28), 0 0 20px rgba(34,211,238,.16);
 }
 
 #matchSummaryModal .match-summary-stat-grid{
@@ -59616,6 +59620,11 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 }
 
 #matchSummaryModal .match-summary-stat-pill{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto auto;
+  align-items:center;
+  gap:8px;
   justify-content:space-between;
   min-height:54px;
   border-color:rgba(94,234,212,.28);
@@ -59623,9 +59632,41 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 }
 
 #matchSummaryModal .match-summary-stat-pill.is-active{
-  border-color:rgba(250,204,21,.72);
-  background:linear-gradient(135deg, rgba(250,204,21,.18), rgba(15,23,42,.82));
-  box-shadow:0 0 16px rgba(250,204,21,.15);
+  border-color:rgba(255,70,85,.86);
+  background:linear-gradient(135deg, rgba(255,70,85,.24), rgba(15,23,42,.82));
+  box-shadow:0 0 16px rgba(255,70,85,.22);
+}
+
+#matchSummaryModal .match-summary-stat-info-tag{
+  display:inline-grid;
+  place-items:center;
+  width:20px;
+  height:20px;
+  border:1px solid rgba(94,234,212,.45);
+  border-radius:999px;
+  color:var(--gamesense-cool, #5eead4);
+  font:900 11px/1 var(--font-display, "Rajdhani", sans-serif);
+  text-transform:uppercase;
+}
+
+#matchSummaryModal .match-summary-stat-pill.is-active .match-summary-stat-info-tag{
+  border-color:rgba(250,204,21,.9);
+  color:var(--gamesense-warm, #ffd166);
+  box-shadow:0 0 12px rgba(250,204,21,.22);
+}
+
+#matchSummaryModal .match-summary-stat-info-copy{
+  grid-column:1 / -1;
+  display:none;
+  color:var(--text-muted, #a8b3c7);
+  font:800 11px/1.25 var(--font-body, "Rajdhani", sans-serif);
+  text-align:left;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+#matchSummaryModal .match-summary-stat-pill.is-active .match-summary-stat-info-copy{
+  display:block;
 }
 
 #matchSummaryModal .match-summary-stat-trends{
@@ -59659,7 +59700,7 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 
 #matchSummaryModal .match-summary-stat-chart{
   position:relative;
-  min-height:145px;
+  min-height:172px;
   display:grid;
   grid-template-columns:42px minmax(0, 1fr);
   align-items:stretch;
@@ -59685,7 +59726,8 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 
 #matchSummaryModal .match-summary-stat-plot{
   position:relative;
-  min-height:123px;
+  height:140px;
+  min-height:140px;
   display:grid;
   grid-template-columns:repeat(var(--stat-count, 6), minmax(0, 1fr));
   align-items:end;
@@ -59727,18 +59769,21 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 #matchSummaryModal .match-summary-stat-bar{
   position:relative;
   z-index:2;
-  display:grid;
-  justify-items:center;
-  align-content:end;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:stretch;
   gap:4px;
-  height:100%;
+  height:140px;
   min-width:0;
 }
 
 #matchSummaryModal .match-summary-stat-bar i{
+  display:block;
+  flex:0 0 var(--bar-height, 10%);
   width:100%;
   height:var(--bar-height, 10%);
-  min-height:7px;
+  min-height:8px;
   border-radius:8px 8px 3px 3px;
   background:linear-gradient(180deg, rgba(94,234,212,.9), rgba(8,145,178,.5));
 }
@@ -59749,6 +59794,7 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 
 #matchSummaryModal .match-summary-stat-bar b,
 #matchSummaryModal .match-summary-stat-bar em{
+  align-self:center;
   color:var(--text-main, #f8fafc);
   font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
   font-style:normal;
@@ -59862,8 +59908,13 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   margin-top:12px;
   padding:24px 12px 28px 42px;
   border:1px solid rgba(148,163,184,.18);
-  border-radius:14px;
-  background:linear-gradient(180deg, rgba(15,23,42,.5), rgba(2,6,23,.72));
+  border-radius:4px;
+  background:
+    linear-gradient(90deg, rgba(148,163,184,.1) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(148,163,184,.1) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(15,23,42,.5), rgba(2,6,23,.72));
+  background-size:calc((100% - 54px) / 6) 100%, 100% 33.333%, auto;
+  background-position:42px 0, 0 24px, 0 0;
 }
 
 #matchSummaryModal .match-summary-economy-average{
@@ -59921,12 +59972,14 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 }
 
 #matchSummaryModal .match-summary-credit-bar i{
+  position:relative;
+  display:block;
   width:100%;
   height:var(--bar-height, 8%);
   min-height:8px;
   max-height:100%;
   flex:0 0 var(--bar-height, 8%);
-  border-radius:999px 999px 3px 3px;
+  border-radius:2px 2px 0 0;
   background:linear-gradient(180deg, rgba(34,197,94,.9), rgba(16,185,129,.38));
 }
 
@@ -59938,6 +59991,46 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   color:var(--text-muted, #a8b3c7);
   font:900 9px/1 var(--font-display, "Rajdhani", sans-serif);
   font-style:normal;
+}
+
+#matchSummaryModal .match-summary-credit-diamond{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:12px;
+  height:12px;
+  border:1px solid rgba(250,204,21,.98);
+  border-radius:2px;
+  background:#ffd166;
+  transform:translate(-50%, -50%) rotate(45deg);
+  box-shadow:0 0 12px rgba(250,204,21,.42);
+  z-index:6;
+}
+
+#matchSummaryModal .match-summary-credit-diamond::after{
+  content:attr(data-credit-tooltip);
+  position:absolute;
+  left:50%;
+  bottom:18px;
+  min-width:max-content;
+  padding:6px 8px;
+  border:1px solid rgba(250,204,21,.5);
+  border-radius:8px;
+  background:rgba(2,6,23,.94);
+  color:var(--gamesense-warm, #ffd166);
+  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  opacity:0;
+  pointer-events:none;
+  transform:translateX(-50%) rotate(-45deg) translateY(4px);
+  transition:opacity .16s ease, transform .16s ease;
+}
+
+#matchSummaryModal .match-summary-credit-diamond:hover::after,
+#matchSummaryModal .match-summary-credit-diamond:focus-visible::after{
+  opacity:1;
+  transform:translateX(-50%) rotate(-45deg) translateY(0);
 }
 
 #matchSummaryModal .match-summary-empty{
@@ -59987,7 +60080,8 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-live-b
 }
 
 .log-report-btn,
-.log-role-impact-chip{
+.log-role-impact-chip,
+.log-weapon-chip{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -60000,6 +60094,12 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-live-b
   font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
   letter-spacing:.08em;
   text-transform:uppercase;
+}
+
+.log-weapon-chip{
+  border-color:rgba(250,204,21,.38);
+  background:rgba(250,204,21,.12);
+  color:var(--gamesense-warm, #ffd166);
 }
 
 .log-report-btn{
@@ -60098,4 +60198,107 @@ body:not(.access-reduced-motion) #matchSummaryModal .is-unrated-placeholder{
 @keyframes rank-unrated-placeholder-phase{
   0%,100%{filter:grayscale(1) blur(.2px) saturate(.45);opacity:.62;transform:scale(.98);}
   50%{filter:grayscale(1) blur(.65px) saturate(.28);opacity:.98;transform:scale(1.03);}
+}
+
+/* 2026-08-01 match summary + mobile profile border polish. */
+@media (max-width:760px){
+  #matchSummaryModal .match-summary-timeline-panel,
+  #matchSummaryModal .match-summary-stat-trend,
+  #matchSummaryModal .match-summary-panel{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  #matchSummaryModal .match-summary-rounds{
+    min-width:620px;
+    grid-template-columns:repeat(13, minmax(38px, 1fr));
+  }
+
+  #matchSummaryModal .match-summary-stat-chart,
+  #matchSummaryModal .match-summary-economy-chart{
+    min-width:640px;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card{
+    min-height:142px !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-preview,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-preview{
+    min-height:142px !important;
+    grid-template-rows:66px minmax(38px, auto) 30px !important;
+    align-content:start !important;
+    gap:5px !important;
+    padding:8px 7px !important;
+    overflow:hidden !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview,
+  html body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview{
+    width:66px !important;
+    height:66px !important;
+    min-width:66px !important;
+    min-height:66px !important;
+    max-width:66px !important;
+    max-height:66px !important;
+    flex:0 0 66px !important;
+    place-self:center !important;
+    margin:0 auto !important;
+    transform:none !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview img,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview img,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview > img,
+  html body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview > img{
+    width:38px !important;
+    min-width:38px !important;
+    max-width:38px !important;
+    height:38px !important;
+    min-height:38px !important;
+    max-height:38px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame,
+  html body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame,
+  html body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card-avatar.has-rc-mobile-preview .rc-profile-effect-frame{
+    width:64px !important;
+    height:64px !important;
+    min-width:64px !important;
+    max-width:64px !important;
+    min-height:64px !important;
+    max-height:64px !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-name,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-name{
+    font-size:13px !important;
+    line-height:1 !important;
+  }
+
+  html.is-mobile-layout body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-note,
+  body.is-mobile-layout #editProfileModal#editProfileModal #editProfileBorderGallery .border-card-note{
+    font-size:10px !important;
+    line-height:1.05 !important;
+  }
+}
+
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc,.rc-profile-effect,.rc-profile-effect *),
+#editProfileModal#editProfileModal #editProfileBorderGallery#editProfileBorderGallery .border-card:not(.is-previewing) .border-card-avatar.has-rc-mobile-preview .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path{
+  animation:none !important;
+  animation-name:none !important;
+  animation-duration:0s !important;
+  animation-play-state:paused !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout :is(#mobileHeaderProfileBtn.mobile-bottom-avatar-btn.border-animated.has-rc-mobile-frame,#mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.border-animated.has-rc-mobile-frame) .rc-mobile-avatar-frame[data-mobile-frame] :is(.rc-mobile-frame-fill,.rc-mobile-frame-main,.rc-mobile-frame-glint,.rc-mobile-frame-arc,.rc-profile-effect,.rc-profile-effect *),
+html.is-mobile-layout body.is-mobile-layout :is(#mobileHeaderProfileBtn.mobile-bottom-avatar-btn.border-animated.has-rc-mobile-frame,#mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.border-animated.has-rc-mobile-frame) .rc-mobile-avatar-frame[data-mobile-frame] .rc-mobile-frame-crosshair path{
+  animation-play-state:running !important;
 }

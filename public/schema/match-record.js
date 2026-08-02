@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const SCHEMA_VERSION = 2;
+  const SCHEMA_VERSION = 3;
   const SOURCE_VALUES = new Set(["manual", "tracker_screenshot", "riot_sync", "henrik_sync", "demo", "legacy"]);
   const RESULT_VALUES = new Set(["win", "loss", "draw", "unknown"]);
 

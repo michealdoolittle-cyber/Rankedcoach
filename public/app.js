@@ -14285,6 +14285,74 @@ function getMatchSummaryWeaponImageUrl(value = "") {
   return meta?.uuid ? `https://media.valorant-api.com/weapons/${meta.uuid}/displayicon.png` : "";
 }
 
+function matchSummaryKillHasWeaponIdentity(kill = {}) {
+  const parts = getMatchSummaryKillWeaponParts(kill);
+  return Boolean(String(parts.rawName || "").trim() || String(parts.rawId || "").trim());
+}
+
+function matchRecordNeedsWeaponBackfill(record = {}) {
+  const rounds = Array.isArray(record?.roundByRound) ? record.roundByRound : [];
+  return rounds.some(round => {
+    const kills = Array.isArray(round?.kills) ? round.kills : [];
+    return kills.length > 0 && !kills.some(matchSummaryKillHasWeaponIdentity);
+  });
+}
+
+function getMatchWeaponBackfillUnavailable(record = {}) {
+  return Boolean(
+    record?.weaponBackfillUnavailable === true
+    || record?.importMeta?.weaponBackfillUnavailable === true
+  );
+}
+
+function getMatchSummaryStableId(match = {}) {
+  return String(
+    match?.matchId
+    || match?.id
+    || match?.metadata?.matchId
+    || match?.metadata?.match_id
+    || match?.matchRecord?.id
+    || match?.matchRecord?.legacyMatchId
+    || ""
+  ).trim();
+}
+
+function getWeaponBackfillMatchIds(matchList = []) {
+  return [...new Set((Array.isArray(matchList) ? matchList : [])
+    .filter(match => matchRecordNeedsWeaponBackfill(getMatchSummaryRecord(match)))
+    .map(getMatchSummaryStableId)
+    .filter(Boolean))];
+}
+
+function markWeaponBackfillUnavailable(matchList = [], matchIds = []) {
+  const targets = new Set((Array.isArray(matchIds) ? matchIds : []).map(value => String(value || "").trim()).filter(Boolean));
+  if (!targets.size) return Array.isArray(matchList) ? matchList : [];
+  return (Array.isArray(matchList) ? matchList : []).map(match => {
+    const matchId = getMatchSummaryStableId(match);
+    if (!targets.has(matchId)) return match;
+    const record = getMatchSummaryRecord(match);
+    if (!record || !matchRecordNeedsWeaponBackfill(record)) return match;
+    const nextRecord = {
+      ...record,
+      weaponBackfillUnavailable: true,
+      weaponBackfillCheckedAt: nowISO(),
+      importMeta: {
+        ...(record.importMeta || {}),
+        weaponBackfillUnavailable: true,
+        weaponBackfillCheckedAt: nowISO()
+      }
+    };
+    return {
+      ...match,
+      matchRecord: nextRecord,
+      metadata: {
+        ...(match.metadata || {}),
+        weaponBackfillUnavailable: true
+      }
+    };
+  });
+}
+
 function getMatchSummaryRecord(match = {}) {
   if (match?.schemaVersion) return match;
   if (match?.matchRecord?.schemaVersion) return match.matchRecord;
@@ -14424,13 +14492,59 @@ function buildMatchSummaryTimeline(record = {}) {
   });
 }
 
+function getMatchSummaryRoundWeaponMeta(round = {}) {
+  const values = [
+    round?.playerEconomy?.weapon,
+    round?.weapon,
+    round?.loadoutWeapon,
+    round?.primaryWeapon,
+    round?.economy?.weapon?.name,
+    round?.economy?.weapon,
+    round?.playerEconomy?.weaponId,
+    round?.weaponId
+  ];
+  for (const value of values) {
+    const meta = getMatchSummaryWeaponMeta(value);
+    if (meta) return meta;
+  }
+  return null;
+}
+
+function getMatchSummaryRoundLoadoutValue(round = {}) {
+  return safeNumber(
+    round?.playerEconomy?.loadoutValue,
+    safeNumber(round?.loadoutValue, safeNumber(round?.equipmentValue, safeNumber(round?.buyValue)))
+  );
+}
+
+function classifyMatchSummaryEconomyByValue(round = {}) {
+  const label = classifyLabeledEconomyPhase(round);
+  if (label) return label;
+  const weaponMeta = getMatchSummaryRoundWeaponMeta(round);
+  const loadout = getMatchSummaryRoundLoadoutValue(round);
+  const spend = getRoundSpendValue({
+    ...round,
+    loadoutValue: Number.isFinite(loadout) ? loadout : undefined
+  });
+  const value = Math.max(
+    Number.isFinite(loadout) ? loadout : 0,
+    Number.isFinite(spend) ? spend : 0,
+    safeNumber(weaponMeta?.cost)
+  );
+  const weaponKey = normalizeMatchSummaryKey(weaponMeta?.label || round?.playerEconomy?.weapon || "");
+  if (["operator", "odin", "phantom", "vandal"].includes(weaponKey)) return "full-buy";
+  if (value >= 3300) return "full-buy";
+  if (value >= 1900) return "half-buy";
+  return "save";
+}
+
 function getEconomyPhaseForRound(round = {}, index = 0, rounds = []) {
   const roundNum = safeNumber(round?.roundNum, index + 1);
   if (roundNum === 1 || roundNum === 13) return "pistol";
   if (/thrift/i.test(String(round?.roundCeremony || round?.roundResult || ""))) return "thrifty";
-  if (roundNum === 2 || roundNum === 14) return classifyPostPistolEconomy(round, rounds[index - 1]?.won ?? null) || "other";
-  if (roundNum === 3 || roundNum === 15) return classifyThirdRoundEconomy(round, rounds[index - 2]?.won ?? null, rounds[index - 1]?.won ?? null) || "other";
-  return classifyLabeledEconomyPhase(round) || classifyFullBuyEconomy(round, false) || "other";
+  if (roundNum === 2 || roundNum === 14) return classifyPostPistolEconomy(round, rounds[index - 1]?.won ?? null) || classifyMatchSummaryEconomyByValue(round);
+  if (roundNum === 3 || roundNum === 15) return classifyThirdRoundEconomy(round, rounds[index - 2]?.won ?? null, rounds[index - 1]?.won ?? null) || classifyMatchSummaryEconomyByValue(round);
+  return classifyLabeledEconomyPhase(round) || classifyFullBuyEconomy(round, false) || classifyMatchSummaryEconomyByValue(round);
 }
 
 function buildMatchSummaryEconomy(record = {}) {
@@ -14441,12 +14555,11 @@ function buildMatchSummaryEconomy(record = {}) {
     bonus: createEconomyPhaseBucket("Bonus"),
     "full-buy": createEconomyPhaseBucket("Full Buy"),
     "half-buy": createEconomyPhaseBucket("Half Buy"),
-    thrifty: createEconomyPhaseBucket("Thrifty"),
-    other: createEconomyPhaseBucket("Other")
+    thrifty: createEconomyPhaseBucket("Thrifty")
   };
   const creditLine = rounds.map((round, index) => {
     const phase = getEconomyPhaseForRound(round, index, rounds);
-    addEconomyPhaseResult(buckets[phase] || buckets.other, round?.won === true);
+    addEconomyPhaseResult(buckets[phase] || buckets.save, round?.won === true);
     return {
       roundNum: safeNumber(round?.roundNum, index + 1),
       value: safeNumber(round?.playerEconomy?.remaining, safeNumber(round?.playerEconomy?.loadoutValue)),
@@ -14490,12 +14603,35 @@ function buildMatchSummaryWeapons(record = {}) {
     .sort((a, b) => safeNumber(b.meta?.cost, -1) - safeNumber(a.meta?.cost, -1) || b.kills - a.kills || a.weapon.localeCompare(b.weapon));
 }
 
+function getMatchSummaryKastValue(match = {}, record = getMatchSummaryRecord(match)) {
+  const source = record || getMatchSummaryRecord(match) || match || {};
+  const computed = globalThis.RankedCoachRoundMetrics?.computeMatchKast?.(source);
+  const candidates = [
+    computed?.overall?.percentage,
+    match?.roundMetrics?.kast?.overall?.percentage,
+    match?.roundMetrics?.kast,
+    match?.kast,
+    match?.stats?.kast,
+    record?.stats?.kast
+  ];
+  const value = candidates.map(Number).find(Number.isFinite);
+  return Number.isFinite(value) ? value : NaN;
+}
+
+const MATCH_SUMMARY_STAT_INFO = Object.freeze({
+  acs: "Average Combat Score blends kills, damage, assists, multikills, and round impact.",
+  kast: "KAST is the percent of rounds where you got a kill, assist, survived, or were traded.",
+  hs: "Headshot percentage shows how often your tracked shots finished as headshots.",
+  "role-impact": "Role Impact blends the stats that matter most for the role you played this match."
+});
+
 function buildMatchSummaryStatItems(match = {}, record = getMatchSummaryRecord(match)) {
   const core = getMatchCore(match || record || {});
   const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
+  const kastValue = getMatchSummaryKastValue(match, record);
   return [
     { key: "acs", label: "ACS", value: safeNumber(core.acs), displayValue: Math.round(safeNumber(core.acs)) || "--", unit: "" },
-    { key: "adr", label: "ADR", value: safeNumber(core.adr), displayValue: Math.round(safeNumber(core.adr)) || "--", unit: "" },
+    { key: "kast", label: "KAST", value: safeNumber(kastValue), displayValue: Number.isFinite(Number(kastValue)) ? `${Math.round(Number(kastValue))}%` : "--", unit: "%" },
     { key: "hs", label: "HS %", value: safeNumber(core.hs), displayValue: `${Math.round(safeNumber(core.hs)) || 0}%`, unit: "%" },
     { key: "role-impact", label: "Role Impact", value: safeNumber(roleImpact?.score), displayValue: `${Math.round(safeNumber(roleImpact?.score)) || 0}%`, unit: "%" }
   ];
@@ -14514,6 +14650,7 @@ function getMatchSummaryStatNumericValue(match = {}, key = "") {
   if (key === "assists") return safeNumber(core.assists);
   if (key === "acs") return safeNumber(core.acs);
   if (key === "adr") return safeNumber(core.adr);
+  if (key === "kast") return getMatchSummaryKastValue(match, record);
   if (key === "hs") return safeNumber(core.hs);
   if (key === "role-impact") {
     const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
@@ -14525,7 +14662,7 @@ function getMatchSummaryStatNumericValue(match = {}, key = "") {
 function formatMatchSummaryStatValue(key = "", value = NaN) {
   if (!Number.isFinite(Number(value))) return "--";
   const rounded = Math.round(Number(value));
-  return key === "hs" || key === "role-impact" ? `${rounded}%` : String(rounded);
+  return key === "hs" || key === "kast" || key === "role-impact" ? `${rounded}%` : String(rounded);
 }
 
 function getMatchSummaryPlayedAt(match = {}) {
@@ -14575,7 +14712,7 @@ function getMatchSummaryMatchNumber(match = {}) {
 }
 
 function getMatchSummaryStatScaleMax(key = "", points = [], averageValue = NaN) {
-  if (key === "hs" || key === "role-impact") return 100;
+  if (key === "hs" || key === "kast" || key === "role-impact") return 100;
   const observed = [
     ...points.map(entry => Number(entry.value)),
     Number(averageValue)
@@ -14665,7 +14802,9 @@ function renderMatchSummaryStatsTab(match = {}, record = getMatchSummaryRecord(m
       ${items.map(item => `
         <button type="button" class="timeline-pill match-summary-stat-pill" data-match-summary-stat="${escapeHtml(item.key)}" aria-expanded="false">
           <span class="timeline-pill-label">${escapeHtml(item.label)}</span>
+          <span class="match-summary-stat-info-tag" aria-hidden="true">i</span>
           <span class="timeline-pill-value">${escapeHtml(item.displayValue)}</span>
+          <span class="match-summary-stat-info-copy">${escapeHtml(MATCH_SUMMARY_STAT_INFO[item.key] || `${item.label} explains this match's impact.`)}</span>
         </button>
       `).join("")}
     </div>
@@ -14676,6 +14815,11 @@ function renderMatchSummaryStatsTab(match = {}, record = getMatchSummaryRecord(m
 function renderMatchSummaryWeaponsTab(record = {}) {
   const weapons = buildMatchSummaryWeapons(record);
   const economy = buildMatchSummaryEconomy(record);
+  const staleWeaponRecord = matchRecordNeedsWeaponBackfill(record);
+  const unavailableWeaponBackfill = getMatchWeaponBackfillUnavailable(record);
+  const emptyWeaponCopy = unavailableWeaponBackfill || staleWeaponRecord
+    ? "Weapon data isn't available for matches synced before this feature was added, and this match is outside Henrik's current history window to re-check."
+    : "No tracked-player weapon kills were present in this synced match record.";
   const bucketMarkup = Object.entries(economy.buckets)
     .filter(([, bucket]) => bucket.total > 0 && bucket.wins > 0)
     .map(([key, bucket]) => {
@@ -14696,8 +14840,7 @@ function renderMatchSummaryWeaponsTab(record = {}) {
               </div>
             `).join("")}
           </div>
-        ` : `<p class="match-summary-empty">No tracked-player weapon kills were present in this synced match record.</p>`}
-        <p class="match-summary-footnote">Henrik v4 exposes per-kill weapon identity. Per-weapon damage totals are not exposed, so they are not estimated here.</p>
+        ` : `<p class="match-summary-empty">${escapeHtml(emptyWeaponCopy)}</p>`}
       </section>
       <section class="match-summary-panel">
         <h4>Round Outcomes</h4>
@@ -14710,24 +14853,37 @@ function renderMatchSummaryWeaponsTab(record = {}) {
 function renderMatchSummaryEconomyTab(record = {}) {
   const { creditLine } = buildMatchSummaryEconomy(record);
   const values = creditLine.map(item => item.value).filter(Number.isFinite);
-  const max = 9000;
+  const highestCredit = Math.max(0, ...values);
+  const max = highestCredit <= 3300
+    ? 3300
+    : highestCredit <= 4500
+      ? 4500
+      : highestCredit <= 6500
+        ? 6500
+        : 9000;
+  const mid = Math.round(max / 2);
   const averageCredits = values.length ? average(values) : 0;
+  const trendBaseY = 68;
+  const trendRange = 62;
   const linePoints = creditLine
     .filter(item => Number.isFinite(item.value))
     .map((item, index, list) => {
       const x = list.length <= 1 ? 50 : (index / (list.length - 1)) * 100;
-      const y = 100 - ((Math.min(max, Math.max(0, item.value)) / max) * 92);
+      const ratio = Math.min(max, Math.max(0, item.value)) / max;
+      const y = trendBaseY - (ratio * trendRange);
       return `${x.toFixed(2)},${Math.max(4, Math.min(98, y)).toFixed(2)}`;
     }).join(" ");
   return `
     <section class="match-summary-panel">
       <div class="match-summary-economy-average">Average ${Math.round(averageCredits).toLocaleString()} credits</div>
-      <div class="match-summary-economy-chart" aria-label="Round economy chart">
-        <div class="match-summary-economy-y-axis" aria-hidden="true"><span>9,000</span><span>4,500</span><span>0</span></div>
+      <div class="match-summary-economy-chart" aria-label="Round economy chart" data-economy-scale="${max}">
+        <div class="match-summary-economy-y-axis" aria-hidden="true"><span>${max.toLocaleString()}</span><span>${mid.toLocaleString()}</span><span>0</span></div>
         ${linePoints ? `<svg class="match-summary-economy-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(linePoints)}"></polyline></svg>` : ""}
         ${creditLine.map(item => {
-          const height = Number.isFinite(item.value) ? Math.max(3, Math.round((Math.min(max, Math.max(0, item.value)) / max) * 100)) : 3;
-          return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${Number.isFinite(item.value) ? Math.round(item.value) : "untracked"} credits"><i></i><em>${item.roundNum}</em></span>`;
+          const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
+          const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
+          const creditLabel = Number.isFinite(item.value) ? `${Math.round(item.value).toLocaleString()} credits` : "untracked credits";
+          return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="Round ${item.roundNum}: ${escapeHtml(creditLabel)}" data-credit-tooltip="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
         }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
       </div>
     </section>
@@ -17923,6 +18079,11 @@ function updateRRChartDataStatus(chartSource = {}) {
     : `Match stats are available for ${total} retained matches. Unranked or missing-RR games stay flat at 0 RR until Riot/Henrik supplies a rank snapshot.`;
 }
 
+function getChartMatchLocalDateKey(match = {}) {
+  const date = getRetainedMatchDate(match);
+  return date ? formatLocalDateKey(date) : "";
+}
+
 function getChartSourceEntries(size = currentSize) {
   const profile = getActiveProfile?.();
   const normalizedSize = normalizeChartWindowSize(size);
@@ -17967,7 +18128,10 @@ function getChartSourceEntries(size = currentSize) {
   ))) {
     seasonEntries = allEntries;
   }
-  const scopedEntries = normalizedSize === "all" ? allEntries : seasonEntries;
+  const todayKey = formatLocalDateKey(new Date());
+  const todayEntries = seasonEntries.filter(entry => getChartMatchLocalDateKey(entry.match) === todayKey);
+  const currentSessionEntries = normalizedSize === "all" ? [] : todayEntries;
+  const scopedEntries = normalizedSize === "all" ? allEntries : currentSessionEntries;
   const hasHenrikMatches = scopedEntries.some(entry =>
     isHenrikSyncMatch(entry?.match) || isVerifiedHenrikRrMatch(entry?.match)
   ) || (profileHasHenrikContext && scopedEntries.length > 0);
@@ -17981,14 +18145,14 @@ function getChartSourceEntries(size = currentSize) {
     : scopedEntries;
   const entries = chartEntries
     .map((entry, displayIndex) => ({ ...entry, displayIndex }));
-  const scopeLabel = normalizedSize === "all" ? "Retained profile history" : selectedSeasonLabel;
+  const scopeLabel = normalizedSize === "all" ? "Retained profile history" : "Today's session";
 
   return {
     entries,
     scopeEntries: scopedEntries,
     scopeLabel,
     seasonLabel: selectedSeasonLabel,
-    isCurrentSessionScoped: false,
+    isCurrentSessionScoped: normalizedSize !== "all",
     isRecentAccountWindow: false,
     isSeasonScoped: normalizedSize !== "all",
     matchCount: entries.length,
@@ -45686,6 +45850,24 @@ function getLogEntryMatchContext(entry = {}) {
   return { match: linkedMatch, result, rr };
 }
 
+function getLogEntryRoleImpact(entry = {}, matchContext = {}) {
+  if (entry?.roleImpact && typeof entry.roleImpact === "object") return entry.roleImpact;
+  if (!matchContext?.match) return null;
+  return buildStoredRoleImpactSnapshot(matchContext.match, getActiveProfile?.()?.trackerAnalytics || null);
+}
+
+function getLogEntryWeaponSummary(match = {}) {
+  const record = getMatchSummaryRecord(match);
+  if (!record) return null;
+  const weapons = buildMatchSummaryWeapons(record);
+  const topWeapon = weapons.find(item => safeNumber(item?.kills) > 0);
+  if (!topWeapon) return null;
+  return {
+    label: topWeapon.weapon,
+    kills: safeNumber(topWeapon.kills)
+  };
+}
+
 function isPlacementRankedMatch(match = {}) {
   return match?.isPlacementMatch === true
     || match?.metadata?.isPlacementMatch === true
@@ -46032,7 +46214,8 @@ function renderLogFeed(options = {}){
       const moodLabel = entry.mood || entry.tilt || "-";
       const moodTone = getMoodTone(moodLabel);
       const matchContext = getLogEntryMatchContext(entry);
-      const storedRoleImpact = entry.roleImpact && typeof entry.roleImpact === "object" ? entry.roleImpact : null;
+      const storedRoleImpact = getLogEntryRoleImpact(entry, matchContext);
+      const weaponSummary = getLogEntryWeaponSummary(matchContext.match);
       const hasReportMatch = Boolean(matchContext.match);
       const resultTone = matchContext.result === "win"
         ? "win"
@@ -46085,6 +46268,7 @@ function renderLogFeed(options = {}){
           ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit warm-up for this session" title="Edit"><span class="log-training-fire-glyph" aria-hidden="true">&#128293;</span></button>` : ""}
           ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit post-game aim training for this session" title="Edit">${getTrainingCrosshairMarkup()}</button>` : ""}
           ${Number.isFinite(Number(storedRoleImpact?.score)) ? `<span class="log-role-impact-chip role-${escapeHtml(storedRoleImpact.roleKey || "unknown")}">${Math.round(Number(storedRoleImpact.score))}% Impact</span>` : ""}
+          ${weaponSummary ? `<span class="log-weapon-chip">${escapeHtml(weaponSummary.label)} ${Math.round(weaponSummary.kills)}K</span>` : ""}
           <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>
         </div>
 
@@ -48938,6 +49122,8 @@ function renderBorderColorGallery(selectedBorderColor = "theme") {
   });
 }
 
+let activeBorderPreviewStyle = "";
+
 function renderBorderGallery(selectedBorder = "standard") {
   const gallery = document.getElementById("editProfileBorderGallery");
   const borderSelect = document.getElementById("editProfileBorderStyle");
@@ -48967,7 +49153,8 @@ function renderBorderGallery(selectedBorder = "standard") {
 
   gallery.innerHTML = availableBorderStyles.map((style) => {
     const isActive = style.value === activeBorder;
-    const isLiveAnimating = isActive && selectedBorderAnimationsEnabled;
+    const isPreviewing = style.value === activeBorderPreviewStyle;
+    const isLiveAnimating = false;
     const avatarPreviewMarkup = useMobileFramePreview
       ? `
           <div class="border-card-avatar has-rc-mobile-preview ${ringTones.isTwoTone ? "border-two-tone" : ""}" data-mobile-frame="${escapeHtml(style.value)}" style="--rc-mobile-frame-color:${ringColor}; --rc-mobile-frame-color-2:${ringTones.color2}; --profile-ring-border:${ringColor}; --profile-ring-border-2:${ringTones.color2}; --profile-ring-border-3:${ringTones.color3}; --profile-ring-gradient:${ringTones.gradient}; --profile-ring-bg:linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"}); --profile-ring-glow:color-mix(in srgb, ${ringColor} 48%, transparent); --rc-profile-avatar-url:${escapeHtml(avatarCssImage)};">
@@ -48981,7 +49168,7 @@ function renderBorderGallery(selectedBorder = "standard") {
           </div>
         `;
     return `
-      <div class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""} ${isLiveAnimating ? "is-animation-enabled" : ""}" data-border-card="${escapeHtml(style.value)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
+      <div class="border-card border-card-${escapeHtml(style.value)} ${isActive ? "is-active" : ""} ${isLiveAnimating ? "is-animation-enabled" : ""} ${isPreviewing ? "is-previewing" : ""}" data-border-card="${escapeHtml(style.value)}" role="button" tabindex="0" aria-pressed="${isActive ? "true" : "false"}">
         <div
           class="border-card-preview"
           style="
@@ -49001,7 +49188,7 @@ function renderBorderGallery(selectedBorder = "standard") {
             <div class="border-card-name">${escapeHtml(style.label)}</div>
             <div class="border-card-note">${escapeHtml(style.note || "Profile ring")}</div>
           </div>
-          <button type="button" class="border-card-preview-toggle" data-border-preview-toggle="${escapeHtml(style.value)}" aria-pressed="false">Preview</button>
+          <button type="button" class="border-card-preview-toggle" data-border-preview-toggle="${escapeHtml(style.value)}" aria-pressed="${isPreviewing ? "true" : "false"}">${isPreviewing ? "Stop" : "Preview"}</button>
         </div>
       </div>
     `;
@@ -49009,6 +49196,7 @@ function renderBorderGallery(selectedBorder = "standard") {
 
   const selectBorderCard = (button) => {
     const nextBorder = normalizeProfileBorderStyle(button.getAttribute("data-border-card") || "standard");
+    activeBorderPreviewStyle = "";
     if (borderSelect) borderSelect.value = nextBorder;
     renderBorderGallery(nextBorder);
     previewEditProfileVisuals();
@@ -49044,9 +49232,12 @@ function renderBorderGallery(selectedBorder = "standard") {
       });
 
       if (shouldPreview) {
+        activeBorderPreviewStyle = normalizeProfileBorderStyle(card.getAttribute("data-border-card") || "");
         card.classList.add("is-previewing");
         toggle.textContent = "Stop";
         toggle.setAttribute("aria-pressed", "true");
+      } else {
+        activeBorderPreviewStyle = "";
       }
     });
   });
@@ -54496,10 +54687,12 @@ async function importActiveProfileMatches(options = {}){
     const knownMatchIds = existingMatches
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
-    const refreshMatchIds = existingMatches
+    const metadataRefreshMatchIds = existingMatches
       .filter(match => !getMatchSeasonLabel(match))
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
+    const weaponBackfillMatchIds = getWeaponBackfillMatchIds(existingMatches);
+    const refreshMatchIds = [...new Set([...metadataRefreshMatchIds, ...weaponBackfillMatchIds])];
     const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
     const beginsNewHistoryVersion = needsHistoryVersionUpgrade
       && safeNumber(profile.henrikHistoryBackfillTargetVersion) !== HENRIK_HISTORY_BACKFILL_VERSION;
@@ -54519,6 +54712,7 @@ async function importActiveProfileMatches(options = {}){
       historyStart,
       knownMatchIds,
       refreshMatchIds,
+      refreshSearchLimit: 1000,
       // Historical backfill remains aggregate-only. New matches after that
       // one-time import receive raw round detail for verified coaching signals.
       hydrateRoundData: !needsHistoryBackfill
@@ -54558,10 +54752,16 @@ async function importActiveProfileMatches(options = {}){
     const canonicalRecords = Array.isArray(pullResult?.records) ? pullResult.records : [];
     const mmrHistory = Array.isArray(pullResult?.mmrHistory) ? pullResult.mmrHistory : [];
     const enrichMmr = globalThis.RankedCoachRiotSync?.enrichLegacyMatchesWithMmr;
+    const unrecoveredWeaponBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
+      .map(value => String(value || "").trim())
+      .filter(value => weaponBackfillMatchIds.includes(value));
     if (!canonicalRecords.length) {
-      const enrichedExisting = typeof enrichMmr === "function"
+      let enrichedExisting = typeof enrichMmr === "function"
         ? enrichMmr(existingMatches, mmrHistory)
         : existingMatches;
+      if (unrecoveredWeaponBackfillIds.length && pullResult?.refreshSearchComplete) {
+        enrichedExisting = markWeaponBackfillUnavailable(enrichedExisting, unrecoveredWeaponBackfillIds);
+      }
       profile.matches = enrichedExisting.slice();
       matches = enrichedExisting.slice();
       profile.lastSyncAt = nowISO();
@@ -54602,9 +54802,12 @@ async function importActiveProfileMatches(options = {}){
     const mergedById = new Map(existingMatches.map(match => [String(match?.matchId || match?.id || ""), match]));
     importedMatches.forEach(match => mergedById.set(String(match?.matchId || match?.id || ""), match));
     const mergedMatches = Array.from(mergedById.values()).filter(Boolean);
-    const matchList = typeof enrichMmr === "function"
+    let matchList = typeof enrichMmr === "function"
       ? enrichMmr(mergedMatches, mmrHistory)
       : mergedMatches;
+    if (unrecoveredWeaponBackfillIds.length && pullResult?.refreshSearchComplete) {
+      matchList = markWeaponBackfillUnavailable(matchList, unrecoveredWeaponBackfillIds);
+    }
 
     applyImportedMatches(matchList, {
       source: "henrik",

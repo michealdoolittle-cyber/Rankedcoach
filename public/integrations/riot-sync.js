@@ -340,6 +340,8 @@
     const historyLimit = Math.min(100, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
     const historyStart = Math.min(1000, Math.max(0, Math.floor(Number(options.historyStart) || 0)));
     const pageSize = Math.min(10, historyLimit);
+    const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
+    const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     let puuid = String(options.puuid || "").trim();
     let account = null;
 
@@ -362,11 +364,14 @@
     ]);
 
     const parsedMatches = [];
+    const fetchedStarts = new Set();
+    const refreshSearchFailures = [];
     let historyExhausted = false;
     let matchSyncError = null;
     for (let offset = 0; offset < historyLimit; offset += pageSize) {
       const start = historyStart + offset;
       const count = Math.min(pageSize, historyLimit - offset);
+      fetchedStarts.add(start);
       let matchesPayload;
       try {
         matchesPayload = await requestJsonWithRetry("/api/henrik/matches", { puuid, region, count, start }, options);
@@ -389,6 +394,57 @@
         break;
       }
     }
+
+    const parsedMatchIds = () => new Set(parsedMatches.map(getParsedMatchId).filter(Boolean));
+    let unresolvedRefreshMatchIds = [...refreshMatchIds].filter(matchId => !parsedMatchIds().has(matchId));
+    let refreshSearchChecked = 0;
+    let refreshSearchComplete = unresolvedRefreshMatchIds.length === 0;
+    if (unresolvedRefreshMatchIds.length && options.searchRefreshMatchIds !== false) {
+      const targetIds = new Set(unresolvedRefreshMatchIds);
+      const refreshSearchLimit = Math.min(
+        1000,
+        Math.max(
+          historyStart + historyLimit,
+          Math.floor(Number(options.refreshSearchLimit) || 1000)
+        )
+      );
+      for (let start = 0; start < refreshSearchLimit && targetIds.size; start += pageSize) {
+        if (fetchedStarts.has(start)) continue;
+        fetchedStarts.add(start);
+        refreshSearchChecked += pageSize;
+        let matchesPayload;
+        try {
+          matchesPayload = await requestJsonWithRetry("/api/henrik/matches", { puuid, region, count: pageSize, start }, options);
+        } catch (error) {
+          refreshSearchFailures.push({
+            stage: "weapon-backfill-search",
+            code: String(error?.code || "henrik_request_failed"),
+            status: Number(error?.status) || 0,
+            error: error?.message || "Weapon backfill history search failed.",
+            retryable: isTransientSyncError(error),
+            start,
+            count: pageSize
+          });
+          break;
+        }
+        const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
+        pageMatches.forEach(match => {
+          const matchId = getParsedMatchId(match);
+          if (targetIds.has(matchId)) {
+            parsedMatches.push(match);
+            targetIds.delete(matchId);
+          }
+        });
+        if (pageMatches.length < pageSize) {
+          refreshSearchComplete = true;
+          break;
+        }
+      }
+      unresolvedRefreshMatchIds = [...targetIds];
+      refreshSearchComplete = refreshSearchComplete
+        || unresolvedRefreshMatchIds.length === 0
+        || (refreshSearchChecked > 0 && !refreshSearchFailures.length);
+    }
     const [liveMmrResult, storedMmrResult] = await mmrHistoryPromise;
     const liveMmrPayload = liveMmrResult.status === "fulfilled" ? liveMmrResult.value : { data: [] };
     const storedMmrPayload = storedMmrResult.status === "fulfilled" ? storedMmrResult.value : { data: [] };
@@ -402,15 +458,16 @@
         : ""
     };
     const mmrByMatchId = new Map(mmrHistory.map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot]));
-    const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
-    const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const hydrateRoundData = options.hydrateRoundData === true;
     const pendingMatches = parsedMatches.filter(match => {
       const matchId = getParsedMatchId(match);
       return matchId && (!knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
     });
     const records = [];
-    const failures = matchSyncError ? [{ stage: "matches", ...matchSyncError }] : [];
+    const failures = [
+      ...refreshSearchFailures,
+      ...(matchSyncError ? [{ stage: "matches", ...matchSyncError }] : [])
+    ];
 
     for (const parsedMatch of pendingMatches) {
       const matchId = getParsedMatchId(parsedMatch);
@@ -475,6 +532,10 @@
       historyStart,
       historyExhausted,
       historyWindowComplete: historyExhausted && !matchSyncError,
+      refreshMatchIds: [...refreshMatchIds],
+      unresolvedRefreshMatchIds,
+      refreshSearchChecked,
+      refreshSearchComplete,
       mmrHistory,
       mmrHistoryError: Object.entries(mmrHistoryErrors)
         .filter(([, message]) => message)

@@ -123,6 +123,8 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
   const historyLimit = Math.min(100, Math.max(1, Number(options.historyLimit) || Number(options.count) || 10));
   const historyStart = Math.min(1000, Math.max(0, Math.floor(Number(options.historyStart) || 0)));
   const pageSize = Math.min(10, historyLimit);
+  const known = new Set((options.knownMatchIds || []).map(String));
+  const refresh = new Set((options.refreshMatchIds || []).map(String));
   let puuid = String(options.puuid || "").trim();
   let account = null;
   if (!puuid) {
@@ -134,10 +136,12 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
   const mmrHistoryPromise = requestJson("/api/henrik/mmr-history", { puuid, region, size: 100, page: 1 })
     .catch(error => ({ data: [], error: error?.message || "MMR history unavailable." }));
   const parsedMatches = [];
+  const fetchedStarts = new Set();
   let historyExhausted = false;
   for (let offset = 0; offset < historyLimit; offset += pageSize) {
     const start = historyStart + offset;
     const count = Math.min(pageSize, historyLimit - offset);
+    fetchedStarts.add(start);
     const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count, start });
     const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
     parsedMatches.push(...pageMatches);
@@ -146,13 +150,57 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
       break;
     }
   }
+  const parsedMatchIds = () => new Set(parsedMatches
+    .map(match => String(match?.metadata?.match_id || match?.metadata?.matchid || ""))
+    .filter(Boolean));
+  let unresolvedRefreshMatchIds = [...refresh].filter(matchId => !parsedMatchIds().has(matchId));
+  let refreshSearchChecked = 0;
+  let refreshSearchComplete = unresolvedRefreshMatchIds.length === 0;
+  const refreshSearchFailures = [];
+  if (unresolvedRefreshMatchIds.length && options.searchRefreshMatchIds !== false) {
+    const targetIds = new Set(unresolvedRefreshMatchIds);
+    const refreshSearchLimit = Math.min(
+      1000,
+      Math.max(historyStart + historyLimit, Math.floor(Number(options.refreshSearchLimit) || 1000))
+    );
+    for (let start = 0; start < refreshSearchLimit && targetIds.size; start += pageSize) {
+      if (fetchedStarts.has(start)) continue;
+      fetchedStarts.add(start);
+      refreshSearchChecked += pageSize;
+      try {
+        const matchesPayload = await requestJson("/api/henrik/matches", { puuid, region, count: pageSize, start });
+        const pageMatches = Array.isArray(matchesPayload?.data) ? matchesPayload.data : [];
+        pageMatches.forEach(match => {
+          const matchId = String(match?.metadata?.match_id || match?.metadata?.matchid || "");
+          if (targetIds.has(matchId)) {
+            parsedMatches.push(match);
+            targetIds.delete(matchId);
+          }
+        });
+        if (pageMatches.length < pageSize) {
+          refreshSearchComplete = true;
+          break;
+        }
+      } catch (error) {
+        refreshSearchFailures.push({
+          stage: "weapon-backfill-search",
+          error: error?.message || "Weapon backfill history search failed.",
+          start,
+          count: pageSize
+        });
+        break;
+      }
+    }
+    unresolvedRefreshMatchIds = [...targetIds];
+    refreshSearchComplete = refreshSearchComplete
+      || unresolvedRefreshMatchIds.length === 0
+      || (refreshSearchChecked > 0 && !refreshSearchFailures.length);
+  }
   const mmrPayload = await mmrHistoryPromise;
   const mmrHistory = Array.isArray(mmrPayload?.data) ? mmrPayload.data : [];
   const mmrByMatchId = new Map(mmrHistory.map(snapshot => [getMmrSnapshotMatchId(snapshot), snapshot]));
-  const known = new Set((options.knownMatchIds || []).map(String));
-  const refresh = new Set((options.refreshMatchIds || []).map(String));
   const records = [];
-  const failures = [];
+  const failures = [...refreshSearchFailures];
   for (const parsedMatch of parsedMatches) {
     const matchId = String(parsedMatch?.metadata?.match_id || parsedMatch?.metadata?.matchid || "");
     if (!matchId || (known.has(matchId) && !refresh.has(matchId))) continue;
@@ -178,6 +226,10 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
     historyStart,
     historyExhausted,
     historyWindowComplete: historyExhausted,
+    refreshMatchIds: [...refresh],
+    unresolvedRefreshMatchIds,
+    refreshSearchChecked,
+    refreshSearchComplete,
     mmrHistory,
     mmrHistoryError: mmrPayload?.error || ""
   };
