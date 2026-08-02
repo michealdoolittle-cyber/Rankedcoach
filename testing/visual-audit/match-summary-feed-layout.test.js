@@ -253,25 +253,81 @@ async function verifyViewport(browser, viewport, name) {
 
   const ecoChipGrid = await page.locator("#matchSummaryModal .match-summary-eco-chip").first().evaluate(node => {
     const style = getComputedStyle(node);
-    return style.gridTemplateColumns.split(" ").length;
+    return {
+      columns: style.gridTemplateColumns.split(" ").length,
+      dividers: node.querySelectorAll(":scope > i").length,
+      percent: node.querySelector(":scope > em")?.textContent?.trim() || "",
+      fraction: node.querySelector(":scope > small")?.textContent?.trim() || ""
+    };
   });
-  assert.ok(ecoChipGrid >= 3, `${name}: round outcomes should split into left/divider/right columns`);
+  assert.equal(ecoChipGrid.columns, 5, `${name}: round outcomes should split into name/divider/percent/divider/fraction columns`);
+  assert.equal(ecoChipGrid.dividers, 2, `${name}: round outcomes should render two dividers`);
+  assert.match(ecoChipGrid.percent, /%$/, `${name}: round outcome percent should be its own section`);
+  assert.match(ecoChipGrid.fraction, /\d+\/\d+ wins?/, `${name}: round outcome fraction should be its own section`);
+
+  await page.locator('[data-match-summary-tab="stats"]').click({ force: true });
+  await page.evaluate(() => document.querySelector('[data-match-summary-tab="stats"]')?.click());
+  await page.locator(".match-summary-stat-pill").first().click({ force: true });
+  await page.waitForSelector(".match-summary-stat-trend:not([hidden]) .match-summary-stat-bar i", { timeout: 15000 });
+  const statChartLayout = await page.locator(".match-summary-stat-trend:not([hidden]) .match-summary-stat-plot").first().evaluate(plot => {
+    const bar = plot.querySelector(".match-summary-stat-bar i")?.getBoundingClientRect();
+    const label = plot.querySelector(".match-summary-stat-bar em")?.getBoundingClientRect();
+    const plotRect = plot.getBoundingClientRect();
+    const labelSpace = parseFloat(getComputedStyle(plot).getPropertyValue("--match-stat-label-space")) || 30;
+    const axisY = plotRect.bottom - labelSpace;
+    return {
+      barBottom: bar?.bottom || 0,
+      axisY,
+      labelTop: label?.top || 0
+    };
+  });
+  assert.ok(Math.abs(statChartLayout.barBottom - statChartLayout.axisY) <= 3, `${name}: stat bars should grow from the x-axis ${JSON.stringify(statChartLayout)}`);
+  assert.ok(statChartLayout.labelTop > statChartLayout.axisY + 3, `${name}: x-axis labels should sit below the x-axis ${JSON.stringify(statChartLayout)}`);
 
   await page.locator('[data-match-summary-tab="economy"]').click({ force: true });
   await page.evaluate(() => document.querySelector('[data-match-summary-tab="economy"]')?.click());
   await page.waitForSelector('[data-match-summary-panel="economy"]:not([hidden]) .match-summary-credit-diamond', { timeout: 15000 });
   await page.waitForTimeout(700);
-  const diamondBefore = await page.locator(".match-summary-credit-diamond").first().boundingBox();
+  const diamondBefore = await page.locator(".match-summary-credit-diamond").first().evaluate(node => {
+    const diamond = node.getBoundingClientRect();
+    const bar = node.closest(".match-summary-credit-bar")?.getBoundingClientRect();
+    return {
+      x: Math.round(diamond.left - (bar?.left || 0)),
+      y: Math.round(diamond.top - (bar?.top || 0)),
+      width: Math.round(diamond.width),
+      height: Math.round(diamond.height)
+    };
+  });
+  if (viewport.width > 760) {
+    await page.locator(".match-summary-credit-diamond").first().hover();
+  }
   await page.evaluate(() => document.querySelector(".match-summary-credit-diamond")?.click());
   await page.waitForTimeout(260);
-  const diamondAfter = await page.locator(".match-summary-credit-diamond").first().boundingBox();
-  assert.deepEqual(
-    [Math.round(diamondBefore.x), Math.round(diamondBefore.y), Math.round(diamondBefore.width), Math.round(diamondBefore.height)],
-    [Math.round(diamondAfter.x), Math.round(diamondAfter.y), Math.round(diamondAfter.width), Math.round(diamondAfter.height)],
-    `${name}: economy diamond should not move when selected`
-  );
-  const tooltipOpacity = await page.locator(".match-summary-credit-bar.is-tooltip-open").first().evaluate(node => Number(getComputedStyle(node, "::after").opacity));
+  const diamondAfter = await page.locator(".match-summary-credit-diamond").first().evaluate(node => {
+    const diamond = node.getBoundingClientRect();
+    const bar = node.closest(".match-summary-credit-bar")?.getBoundingClientRect();
+    return {
+      x: Math.round(diamond.left - (bar?.left || 0)),
+      y: Math.round(diamond.top - (bar?.top || 0)),
+      width: Math.round(diamond.width),
+      height: Math.round(diamond.height)
+    };
+  });
+  assert.deepEqual(diamondAfter, diamondBefore, `${name}: economy diamond should not move inside its bar when selected`);
+  const tooltipState = await page.locator(".match-summary-credit-bar.is-tooltip-open").first().evaluate(node => {
+    const tooltip = getComputedStyle(node, "::after");
+    const diamond = node.querySelector(".match-summary-credit-diamond");
+    const diamondBeforeStyle = diamond ? getComputedStyle(diamond, "::before") : null;
+    return {
+      opacity: Number(tooltip.opacity),
+      text: tooltip.content || "",
+      color: diamondBeforeStyle?.backgroundColor || ""
+    };
+  });
+  const tooltipOpacity = tooltipState.opacity;
   assert.ok(tooltipOpacity >= 0.9, `${name}: economy tooltip should open on click`);
+  assert.match(tooltipState.text, /Credits:/, `${name}: economy tooltip should show the credit count`);
+  assert.match(tooltipState.color, /168,\s*85,\s*247|a855f7/i, `${name}: selected economy diamond should become purple`);
 
   await page.screenshot({ path: path.resolve(__dirname, `match-summary-feed-layout-${name}.png`), fullPage: true });
   assert.deepEqual(issues, [], `${name}: console/page errors should be empty`);

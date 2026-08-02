@@ -1,6 +1,8 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
+const RANKEDCOACH_APP_BUILD_ID = "20260803-unified-sync-01";
+globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
 // CORE UTILITIES (EARLY LOAD FIX)
@@ -14922,8 +14924,9 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
           <div class="match-summary-stat-plot">
             <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
             ${points.map(entry => {
-            const height = Math.max(8, Math.round((Number(entry.value) / max) * 100));
-            return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
+            const ratio = Math.max(0.08, Math.min(1, Number(entry.value) / max));
+            const height = Math.round(ratio * 100);
+            return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%;--bar-ratio:${ratio.toFixed(4)}"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
             }).join("")}
           </div>
         </div>
@@ -14966,7 +14969,7 @@ function renderMatchSummaryWeaponsTab(record = {}) {
     .filter(([, bucket]) => bucket.total > 0 && bucket.wins > 0)
     .map(([key, bucket]) => {
       const rate = bucket.total ? Math.round((bucket.wins / bucket.total) * 100) : 0;
-      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong><i aria-hidden="true"></i><span class="match-summary-eco-chip-read"><em>${rate}%</em><small>${bucket.wins}/${bucket.total} wins</small></span></span>`;
+      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong><i aria-hidden="true"></i><em>${rate}%</em><i aria-hidden="true"></i><small>${bucket.wins}/${bucket.total} wins</small></span>`;
     }).join("");
   return `
     <div class="match-summary-report-stack">
@@ -15697,7 +15700,9 @@ const APP_LOADING_EVENT_BANNERS = Object.freeze({
   game: "New Game Data Detected",
   patch: "New Patch Notes Uploading",
   videos: "New Videos Released",
-  library: "Library Updates Loading"
+  library: "Library Updates Loading",
+  update: "App Update Available",
+  cloud: "Cloud Profile Updated"
 });
 
 function getRandomLoadingMotivationQuote(previousText = "") {
@@ -18777,6 +18782,8 @@ const STORAGE_KEY_LOG_ENTRIES_LEGACY = "valtracker_log_entries_v1";
 const STORAGE_KEY_LAST_BACKEND_SYNC = "valtracker_last_backend_sync_v1";
 const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 const STORAGE_KEY_PENDING_LOADOUT_ROLLS = "rankedcoach_pending_loadout_rolls_v1";
+const STORAGE_KEY_LAST_SEEN_APP_BUILD = "rankedcoach_last_seen_app_build_v1";
+const RIOT_SYNC_TIMEOUT_MS = 45 * 1000;
 
 const backendSyncState = {
   applyingRemote: false,
@@ -18785,8 +18792,18 @@ const backendSyncState = {
   savePromise: null,
   pendingSaveReason: "",
   lastSaveReason: "",
-  lastError: null
+  lastError: null,
+  lastLocalSaveAt: 0
 };
+
+let persistentAccountRealtimeChannel = null;
+let persistentAccountRealtimeUserId = "";
+let persistentAccountRealtimeReloadTimer = 0;
+let persistentAccountRealtimeNoticeShown = false;
+let rankedCoachAppUpdateCheckTimer = 0;
+let rankedCoachAppUpdateCheckInFlight = false;
+let rankedCoachAppUpdateNoticeShown = false;
+let rankedCoachLastAppUpdateCheckAt = 0;
 
 let insightFeedbackEntries = readInsightFeedbackEntries();
 
@@ -19145,6 +19162,178 @@ async function getSupabaseUser() {
   return user || null;
 }
 
+function getLoadedRankedCoachScriptVersion() {
+  const script = Array.from(document.scripts || [])
+    .map(item => item?.getAttribute?.("src") || item?.src || "")
+    .find(src => /(?:^|\/)app\.js(?:\?|$)/i.test(src));
+  if (!script) return RANKEDCOACH_APP_BUILD_ID;
+  try {
+    const url = new URL(script, window.location.href);
+    return url.searchParams.get("v") || RANKEDCOACH_APP_BUILD_ID;
+  } catch (_error) {
+    const match = String(script || "").match(/[?&]v=([^&]+)/i);
+    return match ? decodeURIComponent(match[1]) : RANKEDCOACH_APP_BUILD_ID;
+  }
+}
+
+function noteRankedCoachLoadedBuild() {
+  try {
+    const previous = localStorage.getItem(STORAGE_KEY_LAST_SEEN_APP_BUILD) || "";
+    if (previous && previous !== RANKEDCOACH_APP_BUILD_ID) {
+      showToast("The newest RankedCoach build is now loaded.", {
+        title: "App update applied",
+        variant: "success",
+        durationMs: 3200
+      });
+    }
+    localStorage.setItem(STORAGE_KEY_LAST_SEEN_APP_BUILD, RANKEDCOACH_APP_BUILD_ID);
+  } catch (_error) {
+    // Local build tracking is best-effort only.
+  }
+}
+
+async function checkRankedCoachAppUpdate(options = {}) {
+  if (rankedCoachAppUpdateCheckInFlight) return;
+  const minInterval = options.force ? 0 : 5 * 60 * 1000;
+  if (!options.force && rankedCoachLastAppUpdateCheckAt && Date.now() - rankedCoachLastAppUpdateCheckAt < minInterval) return;
+  rankedCoachAppUpdateCheckInFlight = true;
+  rankedCoachLastAppUpdateCheckAt = Date.now();
+  try {
+    const response = await fetch(`./?rankedcoach-update-check=${Date.now()}`, {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    const html = await response.text();
+    const match = html.match(/app\.js\?v=([^"'<>\s]+)/i);
+    const remoteVersion = match ? decodeURIComponent(match[1]) : "";
+    const loadedVersion = getLoadedRankedCoachScriptVersion();
+    if (remoteVersion && loadedVersion && remoteVersion !== loadedVersion && !rankedCoachAppUpdateNoticeShown) {
+      rankedCoachAppUpdateNoticeShown = true;
+      setAppLoadingEventBanner("update");
+      showToast("Refresh when ready to load the newest RankedCoach build.", {
+        title: "App update available",
+        variant: "warning",
+        durationMs: 4200
+      });
+    }
+  } catch (error) {
+    console.warn("RankedCoach update check failed", error);
+  } finally {
+    rankedCoachAppUpdateCheckInFlight = false;
+  }
+}
+
+function startRankedCoachAppUpdateChecks() {
+  if (rankedCoachAppUpdateCheckTimer) return;
+  rankedCoachAppUpdateCheckTimer = window.setInterval(() => {
+    if (document.visibilityState === "visible") void checkRankedCoachAppUpdate();
+  }, 5 * 60 * 1000);
+}
+
+function teardownPersistentAccountRealtime() {
+  if (persistentAccountRealtimeReloadTimer) {
+    window.clearTimeout(persistentAccountRealtimeReloadTimer);
+    persistentAccountRealtimeReloadTimer = 0;
+  }
+  const channel = persistentAccountRealtimeChannel;
+  persistentAccountRealtimeChannel = null;
+  persistentAccountRealtimeUserId = "";
+  if (channel && supabaseClient?.removeChannel) {
+    try {
+      void supabaseClient.removeChannel(channel);
+    } catch (error) {
+      console.warn("Supabase realtime unsubscribe failed", error);
+    }
+  } else if (channel?.unsubscribe) {
+    try {
+      void channel.unsubscribe();
+    } catch (error) {
+      console.warn("Supabase realtime unsubscribe failed", error);
+    }
+  }
+}
+
+function notifyPersistentAccountRealtimeIssue(status = "") {
+  if (persistentAccountRealtimeNoticeShown) return;
+  persistentAccountRealtimeNoticeShown = true;
+  console.warn("Supabase realtime subscription unavailable", status);
+  showToast("Live cross-device sync could not stay connected. RankedCoach will keep checking in the background.", {
+    title: "Live sync unavailable",
+    variant: "warning",
+    durationMs: 4200
+  });
+}
+
+function schedulePersistentAccountRealtimeReload(payload = {}) {
+  const userId = String(payload?.new?.user_id || payload?.old?.user_id || "").trim();
+  if (!currentAuthUser?.id || (userId && userId !== String(currentAuthUser.id))) return;
+  if (backendSyncState.hydratingUserId || backendSyncState.applyingRemote) return;
+  if (backendSyncState.savePromise || backendSyncState.saveTimer) {
+    window.clearTimeout(persistentAccountRealtimeReloadTimer);
+    persistentAccountRealtimeReloadTimer = window.setTimeout(() => schedulePersistentAccountRealtimeReload(payload), 900);
+    return;
+  }
+  if (backendSyncState.lastLocalSaveAt && Date.now() - backendSyncState.lastLocalSaveAt < 1800) return;
+
+  window.clearTimeout(persistentAccountRealtimeReloadTimer);
+  persistentAccountRealtimeReloadTimer = window.setTimeout(async () => {
+    persistentAccountRealtimeReloadTimer = 0;
+    if (!currentAuthUser?.id || backendSyncState.savePromise || backendSyncState.saveTimer) return;
+    const table = String(payload?.table || "").trim();
+    const isMatchUpdate = table === "match_snapshots";
+    setAppLoadingEventBanner(isMatchUpdate ? "game" : "cloud");
+    try {
+      await loadPersistentAccountState(currentAuthUser);
+      refreshActiveProfileDataSurfaces?.({
+        reason: "realtime-sync",
+        animate: false,
+        preserveActivePage: true
+      });
+      markAccountStateLoadComplete();
+      if (isMatchUpdate) {
+        showToast("New match data was pulled into this device.", {
+          title: "New Game Data Detected",
+          variant: "success",
+          durationMs: 3600
+        });
+      }
+    } catch (error) {
+      backendSyncState.lastError = error;
+      console.warn("Supabase realtime account refresh failed", error);
+    }
+  }, 650);
+}
+
+function subscribePersistentAccountRealtime(user = currentAuthUser) {
+  const userId = String(user?.id || "").trim();
+  if (!userId || !supabaseClient?.channel) return;
+  if (persistentAccountRealtimeChannel && persistentAccountRealtimeUserId === userId) return;
+  teardownPersistentAccountRealtime();
+  persistentAccountRealtimeUserId = userId;
+  const channel = supabaseClient.channel(`rankedcoach-account-sync-${userId}`);
+  ["vip_app_state", "users_profiles", "reflection_logs", "match_snapshots"].forEach(table => {
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table, filter: `user_id=eq.${userId}` },
+      payload => schedulePersistentAccountRealtimeReload(payload)
+    );
+  });
+  persistentAccountRealtimeChannel = channel;
+  try {
+    channel.subscribe(status => {
+      if (status === "SUBSCRIBED") {
+        persistentAccountRealtimeNoticeShown = false;
+      } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+        notifyPersistentAccountRealtimeIssue(status);
+      }
+    });
+  } catch (error) {
+    persistentAccountRealtimeChannel = null;
+    persistentAccountRealtimeUserId = "";
+    notifyPersistentAccountRealtimeIssue(error?.message || "subscribe-failed");
+  }
+}
+
 function queuePersistentAccountSave(reason = "state") {
   if (backendSyncState.applyingRemote || backendSyncState.hydratingUserId || !currentAuthUser?.id || !supabaseClient?.auth) return;
 
@@ -19321,6 +19510,8 @@ async function performPersistentAccountStateSave(reason = "state") {
 
   localStorage.setItem(STORAGE_KEY_LAST_BACKEND_SYNC, nowISO());
   backendSyncState.lastError = null;
+  backendSyncState.lastLocalSaveAt = Date.now();
+  markAccountStateLoadComplete();
 }
 
 async function deletePersistentLogEntry(id) {
@@ -19545,6 +19736,7 @@ async function handleSignedInUser(user) {
     backendSyncState.hydratingUserId = "";
     lastAccountStateLoadAt = 0;
     stopPersistentAccountAutoRefresh();
+    teardownPersistentAccountRealtime();
     refreshRiotProfilePrompt?.();
     return;
   }
@@ -19569,6 +19761,7 @@ async function handleSignedInUser(user) {
   refreshRiotProfilePrompt?.();
   markAccountStateLoadComplete();
   startPersistentAccountAutoRefresh();
+  subscribePersistentAccountRealtime(user);
 }
 
 let accountStateFocusRefreshPromise = null;
@@ -19615,11 +19808,13 @@ async function refreshPersistentAccountStateOnFocus(reason = "focus") {
 
 window.addEventListener("focus", () => {
   void refreshPersistentAccountStateOnFocus("window-focus");
+  void checkRankedCoachAppUpdate();
 });
 
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") {
     void refreshPersistentAccountStateOnFocus("visibility");
+    void checkRankedCoachAppUpdate();
   }
 });
 
@@ -36857,6 +37052,8 @@ function initApp(){
     }
   });
   if (!authStateListener) void initUserSession();
+  noteRankedCoachLoadedBuild();
+  startRankedCoachAppUpdateChecks();
   scheduleRiotAutoSync();
 
   updateWeeklyFocusDateLabel();
@@ -55317,6 +55514,23 @@ function getPlayerFacingRiotSyncError(error = {}) {
   };
 }
 
+function createRiotSyncTimeoutError(timeoutMs = RIOT_SYNC_TIMEOUT_MS) {
+  const error = new Error(`Riot match data did not respond within ${Math.round(timeoutMs / 1000)} seconds.`);
+  error.code = "henrik_timeout";
+  error.status = 408;
+  return error;
+}
+
+function withRiotSyncTimeout(promise, timeoutMs = RIOT_SYNC_TIMEOUT_MS) {
+  let timer = 0;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(createRiotSyncTimeoutError(timeoutMs)), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) window.clearTimeout(timer);
+  });
+}
+
 async function performRiotSync(options = {}) {
   const {
     silent = false,
@@ -55373,9 +55587,29 @@ async function performRiotSync(options = {}) {
   riotSyncInFlight = true;
   setProfileSyncStatus("", "syncing", "Syncing Riot data now", false);
   if (profileSyncBtn) profileSyncBtn.disabled = true;
+  const showSyncLoading = !silent && !loginInitializationInFlight;
+  let syncLoadingTimer = 0;
+  if (showSyncLoading) {
+    showAppLoadingVeil("Syncing Riot data now", {
+      title: "Syncing your profile",
+      progressLabel: "Riot sync",
+      percent: 8,
+      eventBanner: "game"
+    });
+    let progress = 14;
+    syncLoadingTimer = window.setInterval(() => {
+      progress = Math.min(86, progress + 8);
+      setAppLoadingVeilProgress(progress, "Checking retained competitive history...");
+    }, 900);
+  }
 
   try {
-    const result = await syncActiveProfileMatches({ mode, allowDemoFallback: canUseDemoFallback });
+    if (showSyncLoading) setAppLoadingVeilProgress(32, "Resolving Riot match data...");
+    const result = await withRiotSyncTimeout(
+      syncActiveProfileMatches({ mode, allowDemoFallback: canUseDemoFallback }),
+      RIOT_SYNC_TIMEOUT_MS
+    );
+    if (showSyncLoading) setAppLoadingVeilProgress(82, "Refreshing your coaching pages...");
     const syncedProfile = getActiveProfile();
     if (syncedProfile) {
       syncedProfile.lastSyncAt = result?.syncedAt || nowISO();
@@ -55386,6 +55620,11 @@ async function performRiotSync(options = {}) {
       setAppLoadingEventBanner("game");
     }
     if (prefillReflection) prefillLatestImportedReflection();
+    refreshActiveProfileDataSurfaces?.({
+      reason: "riot-sync",
+      animate: false,
+      preserveActivePage: true
+    });
 
     if (!silent) {
       if (result?.syncError) {
@@ -55419,6 +55658,14 @@ async function performRiotSync(options = {}) {
     }
     return null;
   } finally {
+    if (syncLoadingTimer) {
+      window.clearInterval(syncLoadingTimer);
+      syncLoadingTimer = 0;
+    }
+    if (showSyncLoading) {
+      setAppLoadingVeilProgress(100, "Sync complete.");
+      window.setTimeout(() => hideAppLoadingVeil(), 180);
+    }
     riotSyncInFlight = false;
     if (profileSyncBtn) profileSyncBtn.disabled = false;
     scheduleRiotAutoSync();
