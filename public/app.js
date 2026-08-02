@@ -3700,7 +3700,7 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   const avatarAsset = profile?.avatarUrl ? null : getProfileAvatarAsset(profile?.avatarAgent);
   const avatarAssetFit = avatarAsset?.fit === "cover" ? "cover" : avatarAsset ? "contain" : "";
   const resolvedBorderColor = borderTones.color;
-  const borderAnimationEnabled = !!profile?.profileBorderRotate || isProfileAmbientBorderStyle(borderStyle);
+  const borderAnimationEnabled = shouldAnimateProfileBorderStyle(borderStyle, profile);
   const colors = theme?.colors || {};
   const ringBackground = colorMixOrFallback(
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, color-mix(in srgb, ${resolvedBorderColor} 18%, ${colors.card2 || "#0f172a"}), color-mix(in srgb, ${borderTones.color2} 12%, ${colors.card || "#0b1220"}), color-mix(in srgb, ${borderTones.color3} 10%, ${colors.card2 || "#0f172a"}))`,
@@ -14742,6 +14742,21 @@ function getMatchSummaryKastValue(match = {}, record = getMatchSummaryRecord(mat
   return Number.isFinite(value) ? value : NaN;
 }
 
+function getMatchSummaryHsValue(match = {}, record = getMatchSummaryRecord(match)) {
+  const candidates = [
+    match?.segments?.[0]?.stats?.headshotsPercentage?.value,
+    record?.stats?.hsPercent,
+    record?.matchRecord?.stats?.hsPercent,
+    match?.matchRecord?.stats?.hsPercent,
+    match?.stats?.hsPercent,
+    match?.stats?.headshotsPercentage,
+    match?.hsPercent,
+    match?.hs
+  ];
+  const value = candidates.map(Number).find(Number.isFinite);
+  return Number.isFinite(value) ? value : NaN;
+}
+
 const MATCH_SUMMARY_STAT_INFO = Object.freeze({
   acs: "Average Combat Score blends kills, damage, assists, multikills, and round impact.",
   kast: "KAST is the percent of rounds where you got a kill, assist, survived, or were traded.",
@@ -14753,10 +14768,11 @@ function buildMatchSummaryStatItems(match = {}, record = getMatchSummaryRecord(m
   const core = getMatchCore(match || record || {});
   const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
   const kastValue = getMatchSummaryKastValue(match, record);
+  const hsValue = getMatchSummaryHsValue(match, record);
   return [
     { key: "acs", label: "ACS", value: safeNumber(core.acs), displayValue: Math.round(safeNumber(core.acs)) || "--", unit: "" },
     { key: "kast", label: "KAST", value: safeNumber(kastValue), displayValue: Number.isFinite(Number(kastValue)) ? `${Math.round(Number(kastValue))}%` : "--", unit: "%" },
-    { key: "hs", label: "HS %", value: safeNumber(core.hs), displayValue: `${Math.round(safeNumber(core.hs)) || 0}%`, unit: "%" },
+    { key: "hs", label: "HS %", value: Number.isFinite(Number(hsValue)) ? Number(hsValue) : NaN, displayValue: Number.isFinite(Number(hsValue)) ? `${Math.round(Number(hsValue))}%` : "--", unit: "%" },
     { key: "role-impact", label: "Role Impact", value: safeNumber(roleImpact?.score), displayValue: `${Math.round(safeNumber(roleImpact?.score)) || 0}%`, unit: "%" }
   ];
 }
@@ -14775,7 +14791,7 @@ function getMatchSummaryStatNumericValue(match = {}, key = "") {
   if (key === "acs") return safeNumber(core.acs);
   if (key === "adr") return safeNumber(core.adr);
   if (key === "kast") return getMatchSummaryKastValue(match, record);
-  if (key === "hs") return safeNumber(core.hs);
+  if (key === "hs") return getMatchSummaryHsValue(match, record);
   if (key === "role-impact") {
     const roleImpact = buildMatchRoleImpact(match || record || {}, core.role || record?.role || "Unknown", getActiveProfile()?.trackerAnalytics || null);
     return safeNumber(roleImpact?.score);
@@ -14950,7 +14966,7 @@ function renderMatchSummaryWeaponsTab(record = {}) {
     .filter(([, bucket]) => bucket.total > 0 && bucket.wins > 0)
     .map(([key, bucket]) => {
       const rate = bucket.total ? Math.round((bucket.wins / bucket.total) * 100) : 0;
-      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong><em>${rate}%</em><small>${bucket.wins}/${bucket.total} wins</small></span>`;
+      return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong><i aria-hidden="true"></i><span class="match-summary-eco-chip-read"><em>${rate}%</em><small>${bucket.wins}/${bucket.total} wins</small></span></span>`;
     }).join("");
   return `
     <div class="match-summary-report-stack">
@@ -15010,7 +15026,7 @@ function renderMatchSummaryEconomyTab(record = {}) {
             const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
             const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
             const creditLabel = Number.isFinite(item.value) ? `Credits: ${Math.round(item.value).toLocaleString()}` : "Credits: untracked";
-            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
+            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" data-credit-tooltip="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
           }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
         </div>
       </div>
@@ -15134,7 +15150,6 @@ function ensureMatchSummaryModal() {
       modal.querySelectorAll(".match-summary-credit-bar.is-tooltip-open").forEach(item => item.classList.remove("is-tooltip-open"));
       if (bar && !wasOpen) {
         bar.classList.add("is-tooltip-open");
-        creditDiamond.focus?.({ preventScroll: true });
       }
     }
   });
@@ -36751,6 +36766,7 @@ function initApp(){
   cacheDOM();
   scaleImpactCard();
   bindEvents();
+  bindPageNavigationEvents();
   bindDailyWarmupEvents();
 
   loadProfiles();
@@ -47453,6 +47469,16 @@ function isProfileAmbientBorderStyle(borderStyle = "standard") {
   return PROFILE_AMBIENT_BORDER_STYLE_VALUES.includes(String(borderStyle || "").trim().toLowerCase());
 }
 
+function isProfileBaseBorderStyle(borderStyle = "standard") {
+  const normalized = String(borderStyle || "standard").trim().toLowerCase();
+  return PROFILE_BORDER_STYLES.some(style => style.value === normalized);
+}
+
+function shouldAnimateProfileBorderStyle(borderStyle = "standard", profile = getActiveProfile()) {
+  const normalized = normalizeProfileBorderStyle(borderStyle);
+  return Boolean(profile?.profileBorderRotate) || isProfileAmbientBorderStyle(normalized) || isProfileBaseBorderStyle(normalized);
+}
+
 const PROFILE_BANNER_STYLES = [
   { value: "theme", label: "Default Theme", type: "default" },
   { value: "dayglo-duo", label: "Dayglo Duo", image: "https://media.valorant-api.com/playercards/1711d20d-4b1c-c64a-14be-d4ae58a457c6/wideart.png" },
@@ -48728,6 +48754,7 @@ function getDemoStatsActLabel(label = "") {
 }
 
 function isDemoFixtureMatch(match = {}) {
+  if (isHenrikSyncMatch(match)) return false;
   const source = String(
     match?.source
     || match?.metadata?.source
@@ -48737,8 +48764,7 @@ function isDemoFixtureMatch(match = {}) {
   const id = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim().toLowerCase();
   return source === "demo-fixture"
     || source === "demo"
-    || id.startsWith("tutorial_demo_")
-    || Boolean(match?.metadata?.demoAct || match?.demoAct);
+    || id.startsWith("tutorial_demo_");
 }
 
 function shouldSuppressDemoFixtureStats(match = {}, profile = getActiveProfile()) {
@@ -48752,10 +48778,10 @@ function purgeDemoFixtureMatches(matchList = []) {
 }
 
 function getMatchSeasonLabel(match = {}) {
+  const isDemo = isDemoFixtureMatch(match);
   const value = String(
-    match?.metadata?.demoAct
+    (isDemo ? (match?.metadata?.demoAct || match?.demoAct) : "")
     || match?.metadata?.act
-    || match?.demoAct
     || match?.act
     || match?.matchRecord?.act
     || ""
@@ -49391,7 +49417,7 @@ function renderBorderGallery(selectedBorder = "standard") {
   const avatarUrl = getDefaultProfileAvatarUrl(selectedAgent);
   const avatarCssImage = `url("${escapeCssString(avatarUrl)}")`;
   const activeBorder = normalizeProfileBorderStyle(selectedBorder);
-  const selectedBorderAnimationsEnabled = getProfileBorderRotateValue(profile) || isProfileAmbientBorderStyle(activeBorder);
+  const selectedBorderAnimationsEnabled = getProfileBorderRotateValue(profile) || shouldAnimateProfileBorderStyle(activeBorder, profile);
   const useMobileFramePreview = true;
   const availableBorderStyles = getAvailableProfileBorderStyles();
   gallery.classList.toggle("is-border-animation-enabled", selectedBorderAnimationsEnabled);
@@ -49703,7 +49729,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
   const borderColor = normalizeProfileBorderColor(profile?.profileBorderColor || "theme");
   const borderRotate = !!profile?.profileBorderRotate;
-  const borderAnimationEnabled = borderRotate || isProfileAmbientBorderStyle(borderStyle);
+  const borderAnimationEnabled = borderRotate || shouldAnimateProfileBorderStyle(borderStyle, profile);
   const bannerStyle = normalizeProfileBannerStyle(profile?.bannerStyle || "theme");
   const accessibility = profile?.accessibility || {};
   const root = document.documentElement;
@@ -51551,6 +51577,32 @@ function activatePage(pageId, options = {}){
   window.RankedCoachDailyEntrance?.activatePage(pageId, getDailyEntranceMotionContext());
   syncLibraryPageActivity(pageId);
   if (["home", "logging"].includes(pageId)) scheduleDailyWarmupCheck(700);
+}
+
+function bindPageNavigationEvents() {
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    if (btn.dataset.navBound === "1") return;
+    btn.dataset.navBound = "1";
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      const page = btn.dataset.page;
+      if (!page) return;
+
+      if (getActivePageElement()?.id !== `page-${page}`) {
+        activatePage(page);
+      }
+
+      if (page === "home" && pendingAgentFromLog) {
+        spinLoadoutFromLogging(
+          pendingAgentFromLog,
+          pendingFocusFromLog
+        );
+
+        pendingAgentFromLog = null;
+        pendingFocusFromLog = null;
+      }
+    });
+  });
 }
 
 
@@ -53457,33 +53509,7 @@ function hydrateMatchDerivedData(match = {}) {
 // ========================
 // NAV BUTTONS
 // ========================
-document.querySelectorAll(".nav-btn").forEach(btn => {
-
-  btn.addEventListener("click", () => {
-
-    const page = btn.dataset.page;
-
-    if (getActivePageElement()?.id !== `page-${page}`) {
-      activatePage(page);
-    }
-
-    // ========================
-    // TRIGGER HOME SPIN FROM LOGGING
-    // ========================
-    if (page === "home" && pendingAgentFromLog) {
-
-      spinLoadoutFromLogging(
-        pendingAgentFromLog,
-        pendingFocusFromLog
-      );
-
-      pendingAgentFromLog = null;
-      pendingFocusFromLog = null;
-    }
-
-  });
-
-});
+bindPageNavigationEvents();
 // ========================
 // STATS PAGE INIT (REAL DATA)
 // ========================
@@ -54741,11 +54767,23 @@ function normalizeImportedMatchEntry(match = {}){
     nowISO();
   const core = getMatchCore(match);
   const isHenrikMatch = String(match?.source || match?.metadata?.source || "").toLowerCase() === "henrik_sync";
+  const isDemoMatch = isDemoFixtureMatch(match);
   const importedRr = isHenrikMatch
     ? (isVerifiedHenrikRrMatch(match)
       ? getOptionalFiniteNumber(match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta)
       : null)
     : getOptionalFiniteNumber(match?.rr);
+
+  const metadata = {
+    ...(match?.metadata || {}),
+    result,
+    playedAt: match?.metadata?.playedAt || createdAt
+  };
+  if (isDemoMatch && (match?.metadata?.demoAct || match?.demoAct || match?.metadata?.act || match?.act)) {
+    metadata.demoAct = getDemoStatsActLabel(match?.metadata?.demoAct || match?.demoAct || match?.metadata?.act || match?.act);
+  } else {
+    delete metadata.demoAct;
+  }
 
   return hydrateMatchDerivedData({
     ...match,
@@ -54756,14 +54794,7 @@ function normalizeImportedMatchEntry(match = {}){
     acs: Number.isFinite(core?.acs) ? core.acs : safeNumber(match?.acs ?? match?.adr, 0),
     result,
     createdAt,
-    metadata: {
-      ...(match?.metadata || {}),
-      result,
-      playedAt: match?.metadata?.playedAt || createdAt,
-      demoAct: isDemoFixtureMatch(match) && (match?.metadata?.demoAct || match?.demoAct || match?.metadata?.act || match?.act)
-        ? getDemoStatsActLabel(match?.metadata?.demoAct || match?.demoAct || match?.metadata?.act || match?.act)
-        : match?.metadata?.demoAct
-    }
+    metadata
   });
 }
 

@@ -3323,11 +3323,6 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
    skins can clip or resize the actual controls, so mobile keeps the app's
    base geometry while desktop remains fully styled. */
 html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .compass-panel,
-  #page-home .compass-main,
-  #page-home .compass-summary-shell,
-  #page-home .compass-summary-body,
-  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3374,11 +3369,6 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 }
 
 html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .compass-panel,
-  #page-home .compass-main,
-  #page-home .compass-summary-shell,
-  #page-home .compass-summary-body,
-  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3406,11 +3396,6 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   #page-insights .insight-card
 )::before,
 html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
-  #page-home .compass-panel,
-  #page-home .compass-main,
-  #page-home .compass-summary-shell,
-  #page-home .compass-summary-body,
-  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3442,11 +3427,6 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 }
 
 html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
-  #page-home .compass-panel,
-  #page-home .compass-main,
-  #page-home .compass-summary-shell,
-  #page-home .compass-summary-body,
-  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3474,11 +3454,6 @@ html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
   #page-insights .insight-card
 ),
 html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
-  #page-home .compass-panel,
-  #page-home .compass-main,
-  #page-home .compass-summary-shell,
-  #page-home .compass-summary-body,
-  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3506,5 +3481,30 @@ html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
   #page-insights .insight-card
 ) *{
   font-family:var(--font-body,"Rajdhani",sans-serif) !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) #page-logging .logging-layout{
+  --accent:var(--layout-accent);
+  --accent-2:var(--layout-accent-2);
+  position:relative;
+  isolation:isolate;
+  clip-path:var(--layout-surface-clip) !important;
+  -webkit-clip-path:var(--layout-surface-clip) !important;
+  border:var(--layout-surface-border-width) solid var(--layout-surface-border-color) !important;
+  border-left-width:var(--layout-surface-border-left-width) !important;
+  border-left-color:var(--layout-surface-border-left-color) !important;
+  border-radius:var(--layout-surface-radius) !important;
+  background:var(--layout-surface-background) !important;
+  box-shadow:var(--layout-surface-shadow) !important;
+  box-sizing:border-box;
+  padding-top:var(--layout-surface-safe-top) !important;
+  padding-right:var(--layout-surface-safe-right) !important;
+  padding-bottom:var(--layout-surface-safe-bottom) !important;
+  padding-left:var(--layout-surface-safe-left) !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) #page-logging .logging-layout > *{
+  position:relative;
+  z-index:1;
 }
 
