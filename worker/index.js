@@ -227,7 +227,15 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       return handleApiRequest(request, env, executionContext);
     }
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    const contentType = response.headers.get("Content-Type") || "";
+    const isHtml = contentType.includes("text/html") || url.pathname === "/" || url.pathname.endsWith(".html");
+    if (!isHtml) return response;
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    headers.set("Pragma", "no-cache");
+    headers.set("Expires", "0");
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   },
 
   scheduled(controller, env, executionContext) {

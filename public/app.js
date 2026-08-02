@@ -11,6 +11,15 @@ function safeNumber(v, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function firstFiniteNumber(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined || String(value).trim?.() === "") continue;
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return NaN;
+}
+
 function safeDivide(numerator, denominator) {
   const num = Number(numerator);
   const den = Number(denominator);
@@ -23,7 +32,7 @@ function nowISO() {
 }
 
 function getCurrentDayKey() {
-  return nowISO().slice(0, 10);
+  return formatLocalDateKey(new Date());
 }
 
 function escapeHtml(value) {
@@ -3681,8 +3690,8 @@ function syncMobileBottomShellState(options = {}) {
 }
 
 function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
-  const button = document.querySelector(".mobile-bottom-avatar-btn");
-  if (!button || !profile) return;
+  const buttons = Array.from(document.querySelectorAll(".mobile-bottom-avatar-btn"));
+  if (!buttons.length || !profile) return;
   const requestedThemeKey = String(profile?.themeKey || profile?.frameTheme || "default").toLowerCase();
   const theme = getThemePreset(requestedThemeKey);
   const borderStyle = normalizeProfileBorderStyle(profile?.profileBorder || "standard");
@@ -3699,24 +3708,27 @@ function syncMobileBottomAvatarVisuals(profile = getActiveProfile()) {
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
 
-  Array.from(button.classList).forEach((className) => {
-    if (className.startsWith("border-")) button.classList.remove(className);
+  buttons.forEach((button) => {
+    Array.from(button.classList).forEach((className) => {
+      if (className.startsWith("border-")) button.classList.remove(className);
+    });
+    button.classList.add(`border-${borderStyle}`);
+    button.classList.toggle("border-animated", borderAnimationEnabled);
+    button.classList.toggle("border-two-tone", borderTones.isTwoTone);
+    button.classList.toggle("has-profile-avatar-asset", !!avatarAsset);
+    button.classList.toggle("has-profile-avatar-asset-cover", avatarAssetFit === "cover");
+    button.classList.toggle("has-profile-avatar-asset-contain", avatarAssetFit === "contain");
+    button.dataset.profileBorder = borderStyle;
+    button.dataset.profileBorderColor = borderColor;
+    button.style.setProperty("--profile-ring-border", resolvedBorderColor);
+    button.style.setProperty("--profile-ring-border-2", borderTones.color2);
+    button.style.setProperty("--profile-ring-border-3", borderTones.color3);
+    button.style.setProperty("--profile-ring-gradient", borderTones.gradient);
+    button.style.setProperty("--profile-ring-bg", ringBackground);
+    button.style.setProperty("--profile-ring-glow", ringGlow);
+    renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, borderAnimationEnabled, borderTones.color2);
+    restartMobileFrameAnimation(button);
   });
-  button.classList.add(`border-${borderStyle}`);
-  button.classList.toggle("border-animated", borderAnimationEnabled);
-  button.classList.toggle("border-two-tone", borderTones.isTwoTone);
-  button.classList.toggle("has-profile-avatar-asset", !!avatarAsset);
-  button.classList.toggle("has-profile-avatar-asset-cover", avatarAssetFit === "cover");
-  button.classList.toggle("has-profile-avatar-asset-contain", avatarAssetFit === "contain");
-  button.dataset.profileBorder = borderStyle;
-  button.dataset.profileBorderColor = borderColor;
-  button.style.setProperty("--profile-ring-border", resolvedBorderColor);
-  button.style.setProperty("--profile-ring-border-2", borderTones.color2);
-  button.style.setProperty("--profile-ring-border-3", borderTones.color3);
-  button.style.setProperty("--profile-ring-gradient", borderTones.gradient);
-  button.style.setProperty("--profile-ring-bg", ringBackground);
-  button.style.setProperty("--profile-ring-glow", ringGlow);
-  renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, borderAnimationEnabled, borderTones.color2);
 }
 
 function getMobileAvatarFramePath(borderStyle = "standard") {
@@ -3946,6 +3958,14 @@ function setAvatarFrameAnimationState(target, enabled = true) {
     part.style.setProperty("animation-duration", "0s", "important");
     part.style.setProperty("animation-play-state", "paused", "important");
   });
+}
+
+function restartMobileFrameAnimation(target) {
+  if (!target || document.body?.classList?.contains("access-reduced-motion")) return;
+  const parts = target.querySelectorAll(".rc-mobile-frame-fill, .rc-mobile-frame-main, .rc-mobile-frame-secondary, .rc-mobile-frame-glint, .rc-mobile-frame-arc, .rc-mobile-frame-crosshair path, .rc-profile-effect, .rc-profile-effect *");
+  parts.forEach((part) => part.style.setProperty("animation-name", "none", "important"));
+  target.getBoundingClientRect();
+  parts.forEach((part) => part.style.removeProperty("animation-name"));
 }
 
 function renderMobileBottomAvatarFrame(button, borderStyle = "standard", resolvedBorderColor = "#ff4655", animationsEnabled = true, resolvedBorderColor2 = "") {
@@ -4379,7 +4399,12 @@ function getMatchCore(match = {}) {
       assists: safeNumber(record.stats?.assists, safeNumber(match?.assists)),
       acs: safeNumber(record.stats?.acs, safeNumber(match?.acs ?? match?.adr)),
       adr: safeNumber(record.stats?.adr, safeNumber(match?.adr)),
-      hs: safeNumber(record.stats?.hsPercent, safeNumber(match?.hs ?? match?.hsPercent)),
+      hs: safeNumber(firstFiniteNumber(
+        match?.hsPercent,
+        match?.hs,
+        record.stats?.hsPercent,
+        match?.segments?.[0]?.stats?.headshotsPercentage?.value
+      )),
       createdAt: record.playedAt || record.createdAt || nowISO()
     };
   }
@@ -4394,7 +4419,7 @@ function getMatchCore(match = {}) {
   const assists = safeNumber(stats.assists?.value, safeNumber(match?.assists));
   const acs = safeNumber(stats.scorePerRound?.value, safeNumber(match?.acs ?? match?.adr));
   const adr = safeNumber(stats.damagePerRound?.value, safeNumber(match?.adr));
-  const hs = safeNumber(stats.headshotsPercentage?.value, safeNumber(match?.hs ?? match?.hsPercent));
+  const hs = safeNumber(firstFiniteNumber(stats.headshotsPercentage?.value, match?.hsPercent, match?.hs));
 
   return {
     agent,
@@ -14532,6 +14557,22 @@ function getMatchSummaryRoundLoadoutValue(round = {}) {
   );
 }
 
+function getMatchSummaryRoundCreditValue(round = {}, index = 0) {
+  const roundNum = safeNumber(round?.roundNum, index + 1);
+  if (roundNum > 24) return 5000;
+  const remaining = firstFiniteNumber(round?.playerEconomy?.remaining, round?.remaining);
+  const loadout = firstFiniteNumber(
+    round?.playerEconomy?.loadoutValue,
+    round?.loadoutValue,
+    round?.equipmentValue,
+    round?.buyValue
+  );
+  return firstFiniteNumber(Math.max(
+    Number.isFinite(remaining) ? remaining : 0,
+    Number.isFinite(loadout) ? loadout : 0
+  ));
+}
+
 function classifyMatchSummaryEconomyByValue(round = {}) {
   const label = classifyLabeledEconomyPhase(round);
   if (label) return label;
@@ -14577,9 +14618,10 @@ function buildMatchSummaryEconomy(record = {}) {
   const creditLine = rounds.map((round, index) => {
     const phase = getEconomyPhaseForRound(round, index, rounds);
     addEconomyPhaseResult(buckets[phase] || buckets.save, round?.won === true);
+    const creditValue = getMatchSummaryRoundCreditValue(round, index);
     return {
       roundNum: safeNumber(round?.roundNum, index + 1),
-      value: safeNumber(round?.playerEconomy?.remaining, safeNumber(round?.playerEconomy?.loadoutValue)),
+      value: Number.isFinite(creditValue) ? creditValue : NaN,
       loadoutValue: safeNumber(round?.playerEconomy?.loadoutValue),
       remaining: safeNumber(round?.playerEconomy?.remaining),
       won: round?.won === true,
@@ -14846,7 +14888,7 @@ function renderMatchSummaryWeaponsTab(record = {}) {
       return `<span class="match-summary-eco-chip" data-eco-phase="${escapeHtml(key)}"><strong>${escapeHtml(bucket.label)}</strong><em>${rate}%</em><small>${bucket.wins}/${bucket.total} wins</small></span>`;
     }).join("");
   return `
-    <div class="match-summary-two-col">
+    <div class="match-summary-report-stack">
       <section class="match-summary-panel">
         <h4>Weapon Kills</h4>
         ${weapons.length ? `
@@ -14898,8 +14940,8 @@ function renderMatchSummaryEconomyTab(record = {}) {
           ${creditLine.map(item => {
             const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
             const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
-            const creditLabel = Number.isFinite(item.value) ? `${Math.round(item.value).toLocaleString()} credits` : "untracked credits";
-            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="Round ${item.roundNum}: ${escapeHtml(creditLabel)}" data-credit-tooltip="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
+            const creditLabel = Number.isFinite(item.value) ? `Credits: ${Math.round(item.value).toLocaleString()}` : "Credits: untracked";
+            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
           }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
         </div>
       </div>
@@ -14926,13 +14968,30 @@ function renderMatchSummaryTimelineGroup(group = {}) {
   const groupRounds = Array.isArray(group?.rounds) ? group.rounds : [];
   if (!groupRounds.length) return "";
   const label = String(group?.label || "").trim();
+  const isRegulation = label.toLowerCase() === "regulation";
+  const startRound = isRegulation ? 1 : Math.min(...groupRounds.map(item => safeNumber(item?.roundNum)).filter(Number.isFinite));
+  const endRound = isRegulation ? 24 : Math.max(...groupRounds.map(item => safeNumber(item?.roundNum)).filter(Number.isFinite));
+  const roundsByNumber = new Map(groupRounds.map(item => [safeNumber(item?.roundNum), item]));
+  const timelineSlots = Array.from(
+    { length: Math.max(1, endRound - startRound + 1) },
+    (_unused, offset) => {
+      const roundNum = startRound + offset;
+      return roundsByNumber.get(roundNum) || {
+        roundNum,
+        won: false,
+        kills: [],
+        deaths: [],
+        empty: true
+      };
+    }
+  );
   return `
     <div class="match-summary-round-group">
       ${label ? `<span class="match-summary-round-group-label">${escapeHtml(label)}</span>` : ""}
       <div class="match-summary-scroll-frame match-summary-timeline-scroll">
-        <div class="match-summary-rounds" aria-label="${escapeHtml(label || "Round")} timeline" style="--round-count:${groupRounds.length}">
-          ${groupRounds.map(item => `
-            <div class="match-summary-round ${item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}: ${item.won ? "Win" : "Loss"}">
+        <div class="match-summary-rounds" aria-label="${escapeHtml(label || "Round")} timeline" style="--round-count:${timelineSlots.length}">
+          ${timelineSlots.map(item => `
+            <div class="match-summary-round ${item.empty ? "is-empty" : item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}${item.empty ? ": not played" : item.won ? ": Win" : ": Loss"}">
               <div class="match-summary-round-events">
                 <div class="match-summary-round-kills">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : ""}</div>
                 <div class="match-summary-round-deaths">${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
@@ -17638,7 +17697,11 @@ function getActiveSessionDateKey() {
     : formatLocalDateKey(new Date());
 }
 
-function getSessionMatchEntries(dateKey = getActiveSessionDateKey(), matchList = matches) {
+function getCurrentSessionDateKey() {
+  return formatLocalDateKey(new Date());
+}
+
+function getSessionMatchEntries(dateKey = getCurrentSessionDateKey(), matchList = matches) {
   return (matchList || [])
     .map((match, index) => ({ match, index }))
     .filter(({ match }) => getMatchSessionDateKey(match) === dateKey);
@@ -17648,7 +17711,7 @@ function sumRRForMatchEntries(entries = []) {
   return (entries || []).reduce((sum, entry) => sum + safeNumber(entry?.match?.rr), 0);
 }
 
-function sumRRForSession(matchList = matches, dateKey = getActiveSessionDateKey()) {
+function sumRRForSession(matchList = matches, dateKey = getCurrentSessionDateKey()) {
   return sumRRForMatchEntries(getSessionMatchEntries(dateKey, matchList));
 }
 
@@ -46259,7 +46322,6 @@ function renderLogFeed(options = {}){
       const moodTone = getMoodTone(moodLabel);
       const matchContext = getLogEntryMatchContext(entry);
       const storedRoleImpact = getLogEntryRoleImpact(entry, matchContext);
-      const weaponSummary = getLogEntryWeaponSummary(matchContext.match);
       const hasReportMatch = Boolean(matchContext.match);
       const resultTone = matchContext.result === "win"
         ? "win"
@@ -46283,6 +46345,10 @@ function renderLogFeed(options = {}){
         : isPlacementMatch
           ? "log-result-rr-neutral log-result-rr-placement"
           : "log-result-rr-neutral log-result-rr-unverified";
+      const rankSnapshot = getMatchRankSnapshot(matchContext.match || {});
+      const rankIconMarkup = isMeaningfulRankLabel(rankSnapshot?.rankLabel)
+        ? `<img class="log-result-rank-icon" src="${escapeHtml(getRankIconUrl(rankSnapshot.rankLabel))}" alt="${escapeHtml(rankSnapshot.rankLabel)}">`
+        : "";
       const isEditingEntry = entry.id === editingLogEntryId;
       const isPlaceholder = isMatchPlaceholderLogEntry(entry);
       const trainingMarker = trainingMarkers.get(entry.id) || null;
@@ -46308,11 +46374,10 @@ function renderLogFeed(options = {}){
               ? `<img src="${getAgentIconUrl(entry.agent)}" alt="${entry.agent}">`
               : "?"
           }</span>
-          ${rrLabel ? `<span class="log-result-rr ${rrClasses}">${escapeHtml(rrLabel)}</span>` : ""}
+          ${rrLabel ? `<span class="log-result-rr ${rrClasses}"><span>${escapeHtml(rrLabel)}</span>${rankIconMarkup}</span>` : ""}
           ${trainingMarker?.warmup ? `<button class="log-training-icon log-training-fire" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit warm-up for this session" title="Edit"><span class="log-training-fire-glyph" aria-hidden="true">&#128293;</span></button>` : ""}
           ${trainingMarker?.postGame ? `<button class="log-training-icon log-training-crosshair" type="button" data-training-date="${escapeHtml(trainingMarker.date)}" data-tooltip="Edit" aria-label="Edit post-game aim training for this session" title="Edit">${getTrainingCrosshairMarkup()}</button>` : ""}
           ${Number.isFinite(Number(storedRoleImpact?.score)) ? `<span class="log-role-impact-chip role-${escapeHtml(storedRoleImpact.roleKey || "unknown")}">${Math.round(Number(storedRoleImpact.score))}% Impact</span>` : ""}
-          ${weaponSummary ? `<span class="log-weapon-chip">${escapeHtml(weaponSummary.label)} ${Math.round(weaponSummary.kills)}K</span>` : ""}
           <span class="log-rating">â­ ${escapeHtml(entry.rating ?? "-")}</span>
         </div>
 
@@ -48638,7 +48703,7 @@ function computePeakProfileProgress(profile = getActiveProfile(), options = {}) 
         matchCount: scopedMatches.length
       };
     }
-    const fallbackSnapshot = getProfileCurrentRankSnapshot(profile, matchList);
+    const fallbackSnapshot = getProfileCurrentRankSnapshot(profile, useSeasonScope ? scopedMatches : matchList);
     const fallbackAbsoluteRR = getRankSnapshotAbsoluteRR(fallbackSnapshot);
     if (fallbackSnapshot && Number.isFinite(fallbackAbsoluteRR)) {
       return {
@@ -48682,8 +48747,8 @@ function getThemePreset(themeKey = "default") {
 }
 
 function getProfileBorderStyle(borderStyle = "standard") {
-  const availableStyles = getAvailableProfileBorderStyles();
-  return availableStyles.find(style => style.value === String(borderStyle || "standard")) || availableStyles[0] || PROFILE_BORDER_STYLES[0];
+  const allStyles = PROFILE_BORDER_STYLES.concat(PREMIUM_PROFILE_BORDER_STYLES);
+  return allStyles.find(style => style.value === String(borderStyle || "standard")) || PROFILE_BORDER_STYLES[0];
 }
 
 function normalizeProfileBorderStyle(borderStyle = "standard") {
@@ -49490,7 +49555,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
   const panel = document.getElementById("profilePanel");
   const avatarWrap = document.getElementById("profileAvatarWrap");
   const ring = document.querySelector(".profile-avatar-ring");
-  const mobileAvatarButton = document.querySelector(".mobile-bottom-avatar-btn");
+  const mobileAvatarButtons = Array.from(document.querySelectorAll(".mobile-bottom-avatar-btn"));
   const peak = computePeakProfileProgress(profile);
   const currentRankSnapshot = getProfileCurrentRankSnapshot(profile);
   const avatarUrl = profile?.avatarUrl || getDefaultProfileAvatarUrl(profile?.avatarAgent);
@@ -49558,7 +49623,7 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     `linear-gradient(135deg, ${colors.card || "#0b1220"}, ${colors.card2 || "#0f172a"})`
   );
   const ringGlow = colorMixOrFallback(`color-mix(in srgb, ${resolvedBorderColor} 52%, transparent)`, colors.glow || "rgba(255,70,85,0.55)");
-  const borderTargets = [panel, avatarWrap, ring, mobileAvatarButton].filter(Boolean);
+  const borderTargets = [panel, avatarWrap, ring, ...mobileAvatarButtons].filter(Boolean);
 
   if (avatarImg) {
     avatarImg.src = avatarUrl;
@@ -49611,7 +49676,13 @@ function applyProfileVisuals(profile = getActiveProfile()) {
     ring.style.setProperty("--profile-ring-bg", ringBackground);
     ring.style.setProperty("--profile-ring-glow", ringGlow);
     renderMobileBottomAvatarFrame(ring, borderStyle, resolvedBorderColor, borderAnimationEnabled, borderTones.color2);
+    restartMobileFrameAnimation(ring);
   }
+
+  mobileAvatarButtons.forEach((button) => {
+    renderMobileBottomAvatarFrame(button, borderStyle, resolvedBorderColor, borderAnimationEnabled, borderTones.color2);
+    restartMobileFrameAnimation(button);
+  });
 
   if (root) {
     root.style.setProperty("--surface-base", baseSurface);
@@ -54562,7 +54633,7 @@ function applyImportedMatches(matchList = [], options = {}){
   const profile = getActiveProfile();
   if(!profile) return;
   const hadNoMatchesBeforeImport = !Array.isArray(matches) || matches.length === 0;
-  const sessionDateKey = getActiveSessionDateKey();
+  const sessionDateKey = getCurrentSessionDateKey();
 
   const previousTotal = (matches || []).reduce((sum, match) => sum + safeNumber(match?.rr), 0);
   const previousSessionTotal = sumRRForSession(matches, sessionDateKey);
@@ -56427,10 +56498,12 @@ function renderStatsRoleProgress() {
   const container = document.getElementById("statsRoleProgressRow");
   if (!container) return;
 
+  const activeProfile = getActiveProfile();
   const model = getPlayerModel();
   const roles = (model?.roles || []).slice();
-  const importedRoles = getActiveProfile()?.trackerAnalytics?.roles || [];
+  const importedRoles = activeProfile?.trackerAnalytics?.roles || [];
   const roleSamples = new Map();
+  const sessionRoleSamples = new Map();
   const roleOrder = ["duelist", "controller", "initiator", "sentinel"];
   const roleDisplay = {
     duelist: "Duelist",
@@ -56456,42 +56529,37 @@ function renderStatsRoleProgress() {
     }
     return matchesPlayed ? safeDivide(getRoleMatchesWon(entry) * 100, matchesPlayed) : 0;
   };
-  getSortedMatches(matches || []).forEach((match) => {
+  const sessionDateKey = getCurrentSessionDateKey();
+  const selectedAct = getStatsSelectedActLabel(activeProfile);
+  const sourceMatches = (Array.isArray(matches) && matches.length)
+    ? matches
+    : (Array.isArray(activeProfile?.matches) ? activeProfile.matches : []);
+  getSortedMatches(sourceMatches)
+    .filter(match => !selectedAct || matchBelongsToSelectedStatsAct(match, selectedAct))
+    .forEach((match) => {
     const core = getMatchCore(match);
     const roleKey = getCompassRoleKey(core.role);
     const result = String(core.result || "").toLowerCase();
     if (!roleOrder.includes(roleKey) || (result !== "win" && result !== "loss")) return;
     if (!roleSamples.has(roleKey)) roleSamples.set(roleKey, []);
-    roleSamples.get(roleKey).push({ result });
+    const entry = { result };
+    roleSamples.get(roleKey).push(entry);
+    if (getMatchSessionDateKey(match) === sessionDateKey) {
+      if (!sessionRoleSamples.has(roleKey)) sessionRoleSamples.set(roleKey, []);
+      sessionRoleSamples.get(roleKey).push(entry);
+    }
   });
   const getRoleSampleWinRate = (entries = []) => {
     if (!entries.length) return 0;
     return safeDivide(entries.filter(entry => entry.result === "win").length * 100, entries.length);
   };
-  const getExplicitRoleDelta = (...entries) => {
-    for (const entry of entries) {
-      if (!entry) continue;
-      const raw = entry?.winRateDelta ?? entry?.deltaWinRate ?? entry?.wrDelta ?? entry?.delta;
-      const value = Number(raw);
-      if (Number.isFinite(value)) return value > -1 && value < 1 ? value * 100 : value;
-    }
-    return null;
-  };
-  const getRoleTrendDelta = (roleKey, currentWinRate, role = null, importedRole = null) => {
-    const explicitDelta = getExplicitRoleDelta(role, importedRole);
-    if (Number.isFinite(explicitDelta)) return explicitDelta;
-
-    const sample = roleSamples.get(roleKey) || [];
-    if (sample.length >= 2) {
-      const recentCount = Math.min(5, Math.max(1, Math.ceil(sample.length / 2)));
-      const recentSample = sample.slice(-recentCount);
-      const previousSample = sample.slice(0, -recentCount);
-      if (previousSample.length) {
-        return getRoleSampleWinRate(recentSample) - getRoleSampleWinRate(previousSample);
-      }
-    }
-
-    return currentWinRate - 50;
+  const getSessionRoleDelta = (roleKey, currentWinRate) => {
+    const sessionSample = sessionRoleSamples.get(roleKey) || [];
+    if (!sessionSample.length) return 0;
+    const allSample = roleSamples.get(roleKey) || [];
+    const previousSample = allSample.slice(0, Math.max(0, allSample.length - sessionSample.length));
+    const previousWinRate = previousSample.length ? getRoleSampleWinRate(previousSample) : 0;
+    return currentWinRate - previousWinRate;
   };
   const findRoleEntry = (roleKey) => (
     roles.find(entry => normalizeRoleProgressKey(entry) === roleKey)
@@ -56500,10 +56568,10 @@ function renderStatsRoleProgress() {
   );
   const roleCards = roleOrder.map((roleKey) => {
     const role = findRoleEntry(roleKey) || { role: roleKey, matchesPlayed: 0, matchesWon: 0, winrate: 0 };
-    const matchesPlayed = getRoleMatchesPlayed(role);
-    const currentWinRate = matchesPlayed ? getRoleWinRate(role, matchesPlayed) : 0;
-    const importedRole = importedRoles.find(entry => normalizeRoleProgressKey(entry) === roleKey);
-    const delta = matchesPlayed ? getRoleTrendDelta(roleKey, currentWinRate, role, importedRole) : 0;
+    const sample = roleSamples.get(roleKey) || [];
+    const matchesPlayed = sample.length || getRoleMatchesPlayed(role);
+    const currentWinRate = sample.length ? getRoleSampleWinRate(sample) : (matchesPlayed ? getRoleWinRate(role, matchesPlayed) : 0);
+    const delta = matchesPlayed ? getSessionRoleDelta(roleKey, currentWinRate) : 0;
     return {
       roleKey,
       label: roleDisplay[roleKey] || formatReadableLabel(roleKey),

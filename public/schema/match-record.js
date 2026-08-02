@@ -314,7 +314,7 @@
         assists: stats.assists?.value ?? match.assists,
         acs: stats.scorePerRound?.value ?? match.acs,
         adr: stats.damagePerRound?.value ?? match.adr,
-        hsPercent: stats.headshotsPercentage?.value ?? match.hs
+        hsPercent: stats.headshotsPercentage?.value ?? match.hsPercent ?? match.hs
       },
       rounds: {
         won: match.advanced?.roundsWon ?? match.manualReport?.roundsWon,

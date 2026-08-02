@@ -17978,6 +17978,10 @@ min-height:0;
 }
 
 .log-result-rr{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
   margin-left:8px;
   padding:4px 8px;
   border-radius:9px;
@@ -17987,6 +17991,14 @@ min-height:0;
   font-weight:900;
   line-height:1;
   letter-spacing:.02em;
+}
+
+.log-result-rank-icon{
+  display:block;
+  width:18px;
+  height:18px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 6px rgba(250,204,21,.24));
 }
 
 .log-result-rr-win{
@@ -59481,13 +59493,15 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 #matchSummaryModal .match-summary-rounds{
   position:relative;
   display:grid;
-  grid-template-columns:repeat(var(--round-count, 13), minmax(34px, 1fr));
-  gap:5px;
+  grid-template-columns:repeat(var(--round-count, 24), minmax(20px, 1fr));
+  gap:2px;
   margin-top:12px;
-  padding:4px 8px 0;
+  padding:4px 6px 0;
   border-left:2px solid rgba(94,234,212,.88);
   border-right:2px solid rgba(94,234,212,.88);
-  min-width:min(100%, calc(var(--round-count, 13) * 44px));
+  border-top:0 !important;
+  border-bottom:0 !important;
+  min-width:100%;
 }
 
 #matchSummaryModal .match-summary-rounds::before{
@@ -59534,6 +59548,13 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   align-items:center;
   min-height:72px;
   width:100%;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+#matchSummaryModal .match-summary-round.is-empty .match-summary-round-events{
+  opacity:.08;
 }
 
 #matchSummaryModal .match-summary-round-kills,
@@ -59845,6 +59866,12 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   gap:12px;
 }
 
+#matchSummaryModal .match-summary-report-stack{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+}
+
 #matchSummaryModal .match-summary-weapon-list,
 #matchSummaryModal .match-summary-eco-grid{
   display:grid;
@@ -60041,15 +60068,16 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   max-width:10px;
   max-height:10px;
   padding:0 !important;
-  border:1px solid rgba(250,204,21,.98);
-  border-radius:2px;
-  background:#ffd166;
-  color:#ffd166;
+  border:1px solid rgba(103,232,249,.98);
+  border-radius:0;
+  clip-path:polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background:#22d3ee;
+  color:#22d3ee;
   display:block;
   font-size:0;
   line-height:0;
-  transform:translate(-50%, -50%) rotate(45deg);
-  box-shadow:0 0 12px rgba(250,204,21,.42);
+  transform:translate(-50%, -50%);
+  box-shadow:0 0 12px rgba(34,211,238,.45);
   z-index:6;
 }
 
@@ -60060,23 +60088,24 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   bottom:18px;
   min-width:max-content;
   padding:6px 8px;
-  border:1px solid rgba(250,204,21,.5);
+  border:1px solid rgba(94,234,212,.55);
   border-radius:8px;
   background:rgba(2,6,23,.94);
-  color:var(--gamesense-warm, #ffd166);
+  color:#67e8f9;
   font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
   letter-spacing:.06em;
   text-transform:uppercase;
   opacity:0;
   pointer-events:none;
-  transform:translateX(-50%) rotate(-45deg) translateY(4px);
+  transform:translateX(-50%) translateY(4px);
   transition:opacity .16s ease, transform .16s ease;
+  box-shadow:0 10px 22px rgba(2,6,23,.38), 0 0 16px rgba(34,211,238,.18);
 }
 
 #matchSummaryModal .match-summary-credit-diamond:hover::after,
 #matchSummaryModal .match-summary-credit-diamond:focus-visible::after{
   opacity:1;
-  transform:translateX(-50%) rotate(-45deg) translateY(0);
+  transform:translateX(-50%) translateY(0);
 }
 
 #matchSummaryModal .match-summary-empty{
@@ -60126,8 +60155,7 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-live-b
 }
 
 .log-report-btn,
-.log-role-impact-chip,
-.log-weapon-chip{
+.log-role-impact-chip{
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -60140,12 +60168,6 @@ body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-live-b
   font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
   letter-spacing:.08em;
   text-transform:uppercase;
-}
-
-.log-weapon-chip{
-  border-color:rgba(250,204,21,.38);
-  background:rgba(250,204,21,.12);
-  color:var(--gamesense-warm, #ffd166);
 }
 
 .log-report-btn{
@@ -60249,8 +60271,9 @@ body:not(.access-reduced-motion) #matchSummaryModal .is-unrated-placeholder{
 /* 2026-08-01 match summary + mobile profile border polish. */
 @media (max-width:760px){
   #matchSummaryModal .match-summary-rounds{
-    min-width:calc(var(--round-count, 13) * 48px);
-    grid-template-columns:repeat(var(--round-count, 13), minmax(42px, 1fr));
+    min-width:calc(var(--round-count, 24) * 38px);
+    grid-template-columns:repeat(var(--round-count, 24), minmax(34px, 1fr));
+    gap:2px;
   }
 
   #matchSummaryModal .match-summary-stat-chart,
