@@ -14326,10 +14326,25 @@ function matchSummaryKillHasWeaponIdentity(kill = {}) {
 
 function matchRecordNeedsWeaponBackfill(record = {}) {
   const rounds = Array.isArray(record?.roundByRound) ? record.roundByRound : [];
+  const trackedPuuid = String(record?.trackedPlayer?.puuid || "").trim();
   return rounds.some(round => {
     const kills = Array.isArray(round?.kills) ? round.kills : [];
-    return kills.length > 0 && !kills.some(matchSummaryKillHasWeaponIdentity);
+    const trackedKills = trackedPuuid
+      ? kills.filter(kill => getMatchSummaryKillKillerId(kill) === trackedPuuid)
+      : kills;
+    return trackedKills.length > 0 && trackedKills.some(kill => !matchSummaryKillHasWeaponIdentity(kill));
   });
+}
+
+function matchRecordNeedsHsBackfill(record = {}) {
+  if (!record || typeof record !== "object") return false;
+  const hasCoreStats = ["kills", "deaths", "assists", "acs"].every(key =>
+    Number.isFinite(Number(record?.stats?.[key]))
+  );
+  const missingHs = record?.stats?.hsPercent === null
+    || record?.stats?.hsPercent === undefined
+    || Number.isNaN(Number(record?.stats?.hsPercent));
+  return hasCoreStats && missingHs;
 }
 
 function getMatchWeaponBackfillUnavailable(record = {}) {
@@ -14358,6 +14373,13 @@ function getWeaponBackfillMatchIds(matchList = []) {
     .filter(Boolean))];
 }
 
+function getHsBackfillMatchIds(matchList = []) {
+  return [...new Set((Array.isArray(matchList) ? matchList : [])
+    .filter(match => matchRecordNeedsHsBackfill(getMatchSummaryRecord(match)))
+    .map(getMatchSummaryStableId)
+    .filter(Boolean))];
+}
+
 function markWeaponBackfillUnavailable(matchList = [], matchIds = []) {
   const targets = new Set((Array.isArray(matchIds) ? matchIds : []).map(value => String(value || "").trim()).filter(Boolean));
   if (!targets.size) return Array.isArray(matchList) ? matchList : [];
@@ -14382,6 +14404,36 @@ function markWeaponBackfillUnavailable(matchList = [], matchIds = []) {
       metadata: {
         ...(match.metadata || {}),
         weaponBackfillUnavailable: true
+      }
+    };
+  });
+}
+
+function markHsBackfillUnavailable(matchList = [], matchIds = []) {
+  const targets = new Set((Array.isArray(matchIds) ? matchIds : []).map(value => String(value || "").trim()).filter(Boolean));
+  if (!targets.size) return Array.isArray(matchList) ? matchList : [];
+  return (Array.isArray(matchList) ? matchList : []).map(match => {
+    const matchId = getMatchSummaryStableId(match);
+    if (!targets.has(matchId)) return match;
+    const record = getMatchSummaryRecord(match);
+    if (!record || !matchRecordNeedsHsBackfill(record)) return match;
+    const checkedAt = nowISO();
+    const nextRecord = {
+      ...record,
+      hsBackfillUnavailable: true,
+      hsBackfillCheckedAt: checkedAt,
+      importMeta: {
+        ...(record.importMeta || {}),
+        hsBackfillUnavailable: true,
+        hsBackfillCheckedAt: checkedAt
+      }
+    };
+    return {
+      ...match,
+      matchRecord: nextRecord,
+      metadata: {
+        ...(match.metadata || {}),
+        hsBackfillUnavailable: true
       }
     };
   });
@@ -14910,7 +14962,7 @@ function renderMatchSummaryWeaponsTab(record = {}) {
               <div class="match-summary-weapon-row">
                 <div class="match-summary-weapon-art">${getMatchSummaryWeaponImageUrl(item.weapon) ? `<img src="${escapeHtml(getMatchSummaryWeaponImageUrl(item.weapon))}" alt="" loading="eager" decoding="async">` : ""}<strong>${escapeHtml(item.weapon)}</strong></div>
                 <i aria-hidden="true"></i>
-                <div class="match-summary-weapon-kills"><strong>${item.kills}</strong><span>Kill${item.kills === 1 ? "" : "s"}</span><small>Rounds ${escapeHtml(item.rounds.join(", ") || "--")}</small></div>
+                <div class="match-summary-weapon-kills"><strong>${item.kills}</strong><span>Kill${item.kills === 1 ? "" : "s"}</span></div>
               </div>
             `).join("")}
           </div>
@@ -14958,7 +15010,7 @@ function renderMatchSummaryEconomyTab(record = {}) {
             const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
             const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
             const creditLabel = Number.isFinite(item.value) ? `Credits: ${Math.round(item.value).toLocaleString()}` : "Credits: untracked";
-            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
+            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
           }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
         </div>
       </div>
@@ -15071,8 +15123,34 @@ function ensureMatchSummaryModal() {
       event.preventDefault();
       event.stopPropagation();
       setMatchSummaryStat(stat.dataset.matchSummaryStat || "");
+      return;
+    }
+    const creditDiamond = event.target.closest?.(".match-summary-credit-diamond");
+    if (creditDiamond) {
+      event.preventDefault();
+      event.stopPropagation();
+      const bar = creditDiamond.closest(".match-summary-credit-bar");
+      const wasOpen = Boolean(bar?.classList?.contains("is-tooltip-open"));
+      modal.querySelectorAll(".match-summary-credit-bar.is-tooltip-open").forEach(item => item.classList.remove("is-tooltip-open"));
+      if (bar && !wasOpen) {
+        bar.classList.add("is-tooltip-open");
+        creditDiamond.focus?.({ preventScroll: true });
+      }
     }
   });
+  let scrollbarRevealTimer = 0;
+  const revealTimelineScrollbar = (target) => {
+    const frame = target?.closest?.(".match-summary-timeline-scroll");
+    if (!frame) return;
+    frame.classList.add("is-scrollbar-revealed");
+    window.clearTimeout(scrollbarRevealTimer);
+    scrollbarRevealTimer = window.setTimeout(() => {
+      frame.classList.remove("is-scrollbar-revealed");
+    }, 2600);
+  };
+  modal.addEventListener("pointerdown", (event) => revealTimelineScrollbar(event.target), { passive: true });
+  modal.addEventListener("touchstart", (event) => revealTimelineScrollbar(event.target), { passive: true });
+  modal.addEventListener("scroll", (event) => revealTimelineScrollbar(event.target), true);
   return modal;
 }
 
@@ -15376,7 +15454,7 @@ function getCoachReadinessModel() {
   const authoredLogCount = getProfileLogEntries(activeProfileId, { authoredOnly: true }).length;
   const profileMatches = Array.isArray(profile?.matches) ? profile.matches : [];
   const currentSeasonLabel = normalizeValorantSeasonLabel(profile?.trackerAnalytics?.currentAct || CURRENT_VALORANT_SEASON_LABEL);
-  const currentSeasonMatchCount = profileMatches.filter(match => getMatchSeasonLabel(match) === currentSeasonLabel).length;
+  const currentSeasonMatchCount = profileMatches.filter(match => matchBelongsToSelectedStatsAct(match, currentSeasonLabel)).length;
   const recentMatches = getSortedMatches(profileMatches).slice(-20);
   const completeMatches = recentMatches.filter(match => {
     const core = getMatchCore(match);
@@ -17149,7 +17227,7 @@ function buildClientTutorialDemoMatches(count = 750) {
           mapName: map,
           playedAt,
           mode: "Competitive",
-          demoAct: act.label,
+          demoAct: getDemoStatsActLabel(act.label),
           demoFocus: profile.focus,
           demoScenario: act.noteTheme,
           demoWeapon: profile.weapon,
@@ -48620,7 +48698,7 @@ function closeProfileDropdown(){
 
 function getStatsSelectedActLabel(profile = getActiveProfile()) {
   const analytics = profile?.trackerAnalytics || null;
-  const derivedActs = getMatchSeasonLabels(profile?.matches || []);
+  const derivedActs = getMatchSeasonLabels(profile?.matches || [], profile);
   const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : [])
     .map(normalizeValorantSeasonLabel)
     .filter(label => !isPlaceholderStatsActLabel(label));
@@ -48641,6 +48719,36 @@ function isPlaceholderStatsActLabel(value = "") {
 function normalizeValorantSeasonLabel(value = "") {
   const label = String(value || "").trim();
   return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(label) || label;
+}
+
+function getDemoStatsActLabel(label = "") {
+  const normalized = normalizeValorantSeasonLabel(label);
+  if (/^demo\b/i.test(normalized)) return normalized;
+  return normalized ? `Demo ${normalized}` : "Demo Season";
+}
+
+function isDemoFixtureMatch(match = {}) {
+  const source = String(
+    match?.source
+    || match?.metadata?.source
+    || match?.matchRecord?.source
+    || ""
+  ).trim().toLowerCase();
+  const id = String(match?.matchId || match?.id || match?.metadata?.matchId || "").trim().toLowerCase();
+  return source === "demo-fixture"
+    || source === "demo"
+    || id.startsWith("tutorial_demo_")
+    || Boolean(match?.metadata?.demoAct || match?.demoAct);
+}
+
+function shouldSuppressDemoFixtureStats(match = {}, profile = getActiveProfile()) {
+  if (!isDemoFixtureMatch(match)) return false;
+  const source = String(profile?.importSource || profile?.lastSyncSource || "").trim().toLowerCase();
+  return Boolean(profile?.riotId || source === "henrik" || source === "riot" || source === "henrik_sync" || source === "riot_sync");
+}
+
+function purgeDemoFixtureMatches(matchList = []) {
+  return (Array.isArray(matchList) ? matchList : []).filter(match => !isDemoFixtureMatch(match));
 }
 
 function getMatchSeasonLabel(match = {}) {
@@ -48669,14 +48777,18 @@ function isCurrentValorantStatsLabel(label = "") {
 }
 
 function matchBelongsToSelectedStatsAct(match = {}, selectedAct = "") {
+  if (shouldSuppressDemoFixtureStats(match)) return false;
   const matchSeason = getMatchSeasonLabel(match);
   if (matchSeason) return matchSeason === selectedAct;
   return isHenrikSyncMatch(match) && isCurrentValorantStatsLabel(selectedAct);
 }
 
-function getMatchSeasonLabels(matchList = []) {
+function getMatchSeasonLabels(matchList = [], profile = getActiveProfile()) {
   const newestFirst = getSortedMatches(matchList).slice().reverse();
-  return [...new Set(newestFirst.map(getMatchSeasonLabel).filter(Boolean))];
+  return [...new Set(newestFirst
+    .filter(match => !shouldSuppressDemoFixtureStats(match, profile))
+    .map(getMatchSeasonLabel)
+    .filter(Boolean))];
 }
 
 function computePeakProfileProgress(profile = getActiveProfile(), options = {}) {
@@ -54647,7 +54759,10 @@ function normalizeImportedMatchEntry(match = {}){
     metadata: {
       ...(match?.metadata || {}),
       result,
-      playedAt: match?.metadata?.playedAt || createdAt
+      playedAt: match?.metadata?.playedAt || createdAt,
+      demoAct: isDemoFixtureMatch(match) && (match?.metadata?.demoAct || match?.demoAct || match?.metadata?.act || match?.act)
+        ? getDemoStatsActLabel(match?.metadata?.demoAct || match?.demoAct || match?.metadata?.act || match?.act)
+        : match?.metadata?.demoAct
     }
   });
 }
@@ -54658,11 +54773,14 @@ function applyImportedMatches(matchList = [], options = {}){
   if(!profile) return;
   const hadNoMatchesBeforeImport = !Array.isArray(matches) || matches.length === 0;
   const sessionDateKey = getCurrentSessionDateKey();
+  const importSource = options.source || "riot";
+  const isRealSyncImport = ["riot", "henrik"].includes(importSource);
+  const baselineMatches = isRealSyncImport ? purgeDemoFixtureMatches(matches || []) : (matches || []);
 
-  const previousTotal = (matches || []).reduce((sum, match) => sum + safeNumber(match?.rr), 0);
-  const previousSessionTotal = sumRRForSession(matches, sessionDateKey);
+  const previousTotal = baselineMatches.reduce((sum, match) => sum + safeNumber(match?.rr), 0);
+  const previousSessionTotal = sumRRForSession(baselineMatches, sessionDateKey);
 
-  const normalized = (matchList || [])
+  const normalized = (isRealSyncImport ? purgeDemoFixtureMatches(matchList) : (matchList || []))
     .filter(Boolean)
     .map(normalizeImportedMatchEntry);
   normalized.sort((a, b) =>
@@ -54671,7 +54789,6 @@ function applyImportedMatches(matchList = [], options = {}){
   );
   const nextTotal = normalized.reduce((sum, match) => sum + safeNumber(match?.rr), 0);
   const nextSessionTotal = sumRRForSession(normalized, sessionDateKey);
-  const importSource = options.source || "riot";
 
   if (["riot", "henrik"].includes(importSource)) {
     const todayKey = getCurrentDayKey();
@@ -54726,7 +54843,7 @@ function applyImportedMatches(matchList = [], options = {}){
 async function importDemoMatches(options = {}){
   if (options.preferBuiltIn) {
     const matchList = buildClientTutorialDemoMatches(750);
-    activeStatsActLabel = "Season 2026 Act 3";
+    activeStatsActLabel = getDemoStatsActLabel("Season 2026 Act 3");
     applyImportedMatches(matchList, {
       source: "demo-fixture",
       analytics: buildClientTutorialDemoAnalytics()
@@ -54763,7 +54880,7 @@ async function importDemoMatches(options = {}){
   } catch (error) {
     console.warn("Demo endpoint unavailable; using built-in tutorial fixture.", error);
     const matchList = buildClientTutorialDemoMatches(750);
-    activeStatsActLabel = "Season 2026 Act 3";
+    activeStatsActLabel = getDemoStatsActLabel("Season 2026 Act 3");
     applyImportedMatches(matchList, {
       source: "demo-fixture",
       analytics: buildClientTutorialDemoAnalytics()
@@ -54809,7 +54926,11 @@ async function importActiveProfileMatches(options = {}){
   }
 
   try {
-    const existingMatches = Array.isArray(profile.matches) ? profile.matches : [];
+    const existingMatches = purgeDemoFixtureMatches(Array.isArray(profile.matches) ? profile.matches : []);
+    if (existingMatches.length !== (Array.isArray(profile.matches) ? profile.matches.length : 0)) {
+      profile.matches = existingMatches.slice();
+      matches = existingMatches.slice();
+    }
     const knownMatchIds = existingMatches
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
@@ -54818,7 +54939,8 @@ async function importActiveProfileMatches(options = {}){
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
     const weaponBackfillMatchIds = getWeaponBackfillMatchIds(existingMatches);
-    const refreshMatchIds = [...new Set([...metadataRefreshMatchIds, ...weaponBackfillMatchIds])];
+    const hsBackfillMatchIds = getHsBackfillMatchIds(existingMatches);
+    const refreshMatchIds = [...new Set([...metadataRefreshMatchIds, ...weaponBackfillMatchIds, ...hsBackfillMatchIds])];
     const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
     const beginsNewHistoryVersion = needsHistoryVersionUpgrade
       && safeNumber(profile.henrikHistoryBackfillTargetVersion) !== HENRIK_HISTORY_BACKFILL_VERSION;
@@ -54881,12 +55003,18 @@ async function importActiveProfileMatches(options = {}){
     const unrecoveredWeaponBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => weaponBackfillMatchIds.includes(value));
+    const unrecoveredHsBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
+      .map(value => String(value || "").trim())
+      .filter(value => hsBackfillMatchIds.includes(value));
     if (!canonicalRecords.length) {
       let enrichedExisting = typeof enrichMmr === "function"
         ? enrichMmr(existingMatches, mmrHistory)
         : existingMatches;
       if (unrecoveredWeaponBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markWeaponBackfillUnavailable(enrichedExisting, unrecoveredWeaponBackfillIds);
+      }
+      if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
+        enrichedExisting = markHsBackfillUnavailable(enrichedExisting, unrecoveredHsBackfillIds);
       }
       profile.matches = enrichedExisting.slice();
       matches = enrichedExisting.slice();
@@ -54928,6 +55056,9 @@ async function importActiveProfileMatches(options = {}){
       : mergedMatches;
     if (unrecoveredWeaponBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markWeaponBackfillUnavailable(matchList, unrecoveredWeaponBackfillIds);
+    }
+    if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
+      matchList = markHsBackfillUnavailable(matchList, unrecoveredHsBackfillIds);
     }
 
     applyImportedMatches(matchList, {

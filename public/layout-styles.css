@@ -3323,6 +3323,11 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
    skins can clip or resize the actual controls, so mobile keeps the app's
    base geometry while desktop remains fully styled. */
 html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .compass-panel,
+  #page-home .compass-main,
+  #page-home .compass-summary-shell,
+  #page-home .compass-summary-body,
+  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3342,9 +3347,9 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   #page-logging .logging-feed-card .log-entry-card,
   #page-logging .logging-feed-card .log-feed-footnote,
   #page-stats .stats-proof-card,
+  #page-stats .stats-peak-card,
   #page-stats .stats-role-progress-card,
   #page-stats .stats-role-progress-row,
-  #page-insights .insights-action-card,
   #page-insights .insight-action-hero,
   #page-insights .insight-focus-detail,
   #page-insights .insight-card
@@ -3369,6 +3374,11 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 }
 
 html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .compass-panel,
+  #page-home .compass-main,
+  #page-home .compass-summary-shell,
+  #page-home .compass-summary-body,
+  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3388,14 +3398,19 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   #page-logging .logging-feed-card .log-entry-card,
   #page-logging .logging-feed-card .log-feed-footnote,
   #page-stats .stats-proof-card,
+  #page-stats .stats-peak-card,
   #page-stats .stats-role-progress-card,
   #page-stats .stats-role-progress-row,
-  #page-insights .insights-action-card,
   #page-insights .insight-action-hero,
   #page-insights .insight-focus-detail,
   #page-insights .insight-card
 )::before,
 html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .compass-panel,
+  #page-home .compass-main,
+  #page-home .compass-summary-shell,
+  #page-home .compass-summary-body,
+  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3415,9 +3430,9 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
   #page-logging .logging-feed-card .log-entry-card,
   #page-logging .logging-feed-card .log-feed-footnote,
   #page-stats .stats-proof-card,
+  #page-stats .stats-peak-card,
   #page-stats .stats-role-progress-card,
   #page-stats .stats-role-progress-row,
-  #page-insights .insights-action-card,
   #page-insights .insight-action-hero,
   #page-insights .insight-focus-detail,
   #page-insights .insight-card
@@ -3427,6 +3442,11 @@ html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-
 }
 
 html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
+  #page-home .compass-panel,
+  #page-home .compass-main,
+  #page-home .compass-summary-shell,
+  #page-home .compass-summary-body,
+  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3446,14 +3466,19 @@ html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
   #page-logging .logging-feed-card .log-entry-card,
   #page-logging .logging-feed-card .log-feed-footnote,
   #page-stats .stats-proof-card,
+  #page-stats .stats-peak-card,
   #page-stats .stats-role-progress-card,
   #page-stats .stats-role-progress-row,
-  #page-insights .insights-action-card,
   #page-insights .insight-action-hero,
   #page-insights .insight-focus-detail,
   #page-insights .insight-card
 ),
 html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
+  #page-home .compass-panel,
+  #page-home .compass-main,
+  #page-home .compass-summary-shell,
+  #page-home .compass-summary-body,
+  #page-home .compass-score-card,
   #page-home .rr-card .impact-card,
   #page-home .rr-card .impact-role-pill,
   #page-home .rr-card .impact-bar-outer,
@@ -3473,9 +3498,9 @@ html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
   #page-logging .logging-feed-card .log-entry-card,
   #page-logging .logging-feed-card .log-feed-footnote,
   #page-stats .stats-proof-card,
+  #page-stats .stats-peak-card,
   #page-stats .stats-role-progress-card,
   #page-stats .stats-role-progress-row,
-  #page-insights .insights-action-card,
   #page-insights .insight-action-hero,
   #page-insights .insight-focus-detail,
   #page-insights .insight-card

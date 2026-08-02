@@ -701,6 +701,9 @@
     const hasVerifiedRR = Boolean(snapshotTierId > 0 && snapshotRR !== null && snapshotDelta !== null);
     const snapshotSource = cleanString(mmrSnapshot?.rankedCoachSource) || "henrik-stored-mmr-v2";
     const playerTierId = readNumber(player.tier?.id);
+    // Completion here means the match can safely enter profile/stat flows.
+    // Shot-location/HS data may arrive later through the v3 stale-record
+    // backfill path, so do not block placement handling on hsPercent.
     const hasCompletedMatchData = (team.won === true || team.won === false)
       && rounds.length > 0
       && readNumber(stats.kills) !== null
