@@ -40,7 +40,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "a03b24d3-4319-996d-0f8c-94bbfba1dfc7",
   "source": "https://valorant-api.com/v1/weapons/a03b24d3-4319-996d-0f8c-94bbfba1dfc7?language=en-US",
-  "lastReviewed": "2026-08-01",
+  "lastReviewed": "2026-08-02",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -49,7 +49,7 @@
     "entityName": "Operator",
     "operation": "merge",
     "groupId": "snipers",
-    "generatedAt": "2026-08-02T04:01:58.615Z",
+    "generatedAt": "2026-08-02T08:41:56.966Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-02"

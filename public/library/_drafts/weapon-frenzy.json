@@ -51,7 +51,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "44d4e95c-4157-0037-81b2-17841bf2e8e3",
   "source": "https://valorant-api.com/v1/weapons/44d4e95c-4157-0037-81b2-17841bf2e8e3?language=en-US",
-  "lastReviewed": "2026-08-01",
+  "lastReviewed": "2026-08-02",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -60,7 +60,7 @@
     "entityName": "Frenzy",
     "operation": "merge",
     "groupId": "sidearms",
-    "generatedAt": "2026-08-02T04:01:58.615Z",
+    "generatedAt": "2026-08-02T08:41:56.966Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-02"

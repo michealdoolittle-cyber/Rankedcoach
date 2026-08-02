@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/5f8d3a7f-467b-97f3-062c-13acf203c006?language=en-US",
   "uuid": "5f8d3a7f-467b-97f3-062c-13acf203c006",
-  "lastReviewed": "2026-08-01",
+  "lastReviewed": "2026-08-02",
   "patchVersion": "13.02",
   "pickRate": 3.3083,
   "pickRateRank": 22,
@@ -232,7 +232,7 @@
     "entityName": "Breach",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-02T04:01:58.615Z",
+    "generatedAt": "2026-08-02T08:41:56.966Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-02"

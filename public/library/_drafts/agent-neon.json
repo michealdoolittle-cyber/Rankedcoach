@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/bb2a4828-46eb-8cd1-e765-15848195d751?language=en-US",
   "uuid": "bb2a4828-46eb-8cd1-e765-15848195d751",
-  "lastReviewed": "2026-08-01",
+  "lastReviewed": "2026-08-02",
   "patchVersion": "13.02",
   "pickRate": 18.2596,
   "pickRateRank": 9,
@@ -232,7 +232,7 @@
     "entityName": "Neon",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-02T04:01:58.615Z",
+    "generatedAt": "2026-08-02T08:41:56.966Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-02"

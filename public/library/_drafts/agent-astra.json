@@ -157,7 +157,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/41fb69c1-4189-7b37-f117-bcaf1e96f1bf?language=en-US",
   "uuid": "41fb69c1-4189-7b37-f117-bcaf1e96f1bf",
-  "lastReviewed": "2026-08-01",
+  "lastReviewed": "2026-08-02",
   "patchVersion": "13.02",
   "pickRate": 3.7901,
   "pickRateRank": 21,
@@ -253,7 +253,7 @@
     "entityName": "Astra",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-02T04:01:58.615Z",
+    "generatedAt": "2026-08-02T08:41:56.966Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-02"

@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/1dbf2edd-4729-0984-3115-daa5eed44993?language=en-US",
   "uuid": "1dbf2edd-4729-0984-3115-daa5eed44993",
-  "lastReviewed": "2026-08-01",
+  "lastReviewed": "2026-08-02",
   "patchVersion": "13.02",
   "pickRate": 70.7628,
   "pickRateRank": 2,
@@ -232,7 +232,7 @@
     "entityName": "Clove",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-02T04:01:58.615Z",
+    "generatedAt": "2026-08-02T08:41:56.966Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-02"
