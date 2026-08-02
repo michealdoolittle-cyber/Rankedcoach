@@ -6016,8 +6016,8 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
       defense_win_pct: "Defense Round Win Rate",
       attack_first_blood_rate: "Attack First-Blood Rate",
       defense_first_blood_rate: "Defensive First-Blood Rate",
-      attack_opening_survival: "Attack Side Survivability",
-      defense_opening_survival: "Defense Side Survivability",
+      attack_opening_survival: "Attack First-Death Avoidance",
+      defense_opening_survival: "Defense First-Death Avoidance",
       attack_kast: "Attack chain value",
       defense_kast: "Defense KAST",
       attack_adr: "Attack ADR",
@@ -6043,8 +6043,8 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
       defense_win_pct: "Defense Round Win Rate",
       attack_first_blood_rate: "Attack First-Blood Rate",
       defense_first_blood_rate: "Defense First-Blood Rate",
-      attack_opening_survival: "Attack Side Survivability",
-      defense_opening_survival: "Defense Side Survivability",
+      attack_opening_survival: "Attack First-Death Avoidance",
+      defense_opening_survival: "Defense First-Death Avoidance",
       attack_kast: "Attack KAST",
       defense_kast: "Defense KAST",
       attack_adr: "Attack ADR",
@@ -6065,8 +6065,8 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
       defense_win_pct: "Defense Round Win Rate",
       attack_first_blood_rate: "Attack First-Blood Rate",
       defense_first_blood_rate: "Defense First-Blood Rate",
-      attack_opening_survival: "Attack Side Survivability",
-      defense_opening_survival: "Defense Side Survivability",
+      attack_opening_survival: "Attack First-Death Avoidance",
+      defense_opening_survival: "Defense First-Death Avoidance",
       attack_kast: "Attack KAST",
       defense_kast: "Defense KAST",
       attack_adr: "Attack ADR",
@@ -6087,8 +6087,8 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
       defense_win_pct: "Defense Round Win Rate",
       attack_first_blood_rate: "Attack First-Blood Rate",
       defense_first_blood_rate: "Defense First-Blood Rate",
-      attack_opening_survival: "Attack Side Survivability",
-      defense_opening_survival: "Defense Side Survivability",
+      attack_opening_survival: "Attack First-Death Avoidance",
+      defense_opening_survival: "Defense First-Death Avoidance",
       attack_kast: "Attack KAST",
       defense_kast: "Defense KAST",
       attack_adr: "Attack ADR",
@@ -6111,8 +6111,8 @@ function getRoleImprovementPresentation(roleKey = "duelist", metricKey = "") {
     defense_win_pct: `Your defense rounds across recent ${formatReadableLabel(role)} matches are converting better.`,
     attack_first_blood_rate: "You are finding more opening picks on attack, but this alone does not prove that you survived or disengaged safely afterward.",
     defense_first_blood_rate: "You are finding more opening picks on defense, but this alone does not prove hold quality, fallback discipline, or whether the pick was traded.",
-    attack_opening_survival: "You are surviving the opening phase on attack more consistently.",
-    defense_opening_survival: "You are surviving the opening phase on defense more consistently.",
+    attack_opening_survival: "You are avoiding the first death on attack more consistently. This does not mean every attack round was deathless.",
+    defense_opening_survival: "You are avoiding the first death on defense more consistently. This does not mean every defense round was deathless.",
     attack_kast: "Attack-side participation and survival are trending up.",
     defense_kast: "Defense-side participation and survival are trending up.",
     attack_adr: "Attack-side damage output is trending up.",
@@ -6150,8 +6150,8 @@ function getImprovementFormulaText(metricKey = "", delta = 0, roleKey = "") {
     defense_win_pct: `Recent defense round win % minus earlier defense round win % = +${rounded}%`,
     attack_first_blood_rate: `Recent attack first-blood rate minus earlier attack first-blood rate = +${rounded}%`,
     defense_first_blood_rate: `Recent defense first-blood rate minus earlier defense first-blood rate = +${rounded}%`,
-    attack_opening_survival: `Recent attack opening survival minus earlier attack opening survival = +${rounded}%`,
-    defense_opening_survival: `Recent defense opening survival minus earlier defense opening survival = +${rounded}%`,
+    attack_opening_survival: `Recent attack first-death avoidance minus earlier attack first-death avoidance = +${rounded}%`,
+    defense_opening_survival: `Recent defense first-death avoidance minus earlier defense first-death avoidance = +${rounded}%`,
     attack_kast: `Recent attack KAST minus earlier attack KAST = +${rounded}%`,
     defense_kast: `Recent defense KAST minus earlier defense KAST = +${rounded}%`,
     attack_adr: `Recent attack ADR minus earlier attack ADR = +${rounded} ADR`,
@@ -10341,10 +10341,10 @@ function getRoundWonValue(round = {}) {
 
 function classifyPostPistolEconomy(round = {}, previousPistolWon = null) {
   const economy = getRoundEconomyLabel(round);
-  if (economy.includes("bonus")) return "bonus";
-  if (economy.includes("save") || economy.includes("eco")) return "save";
-  if (previousPistolWon === true) return "bonus";
+  if (previousPistolWon === true) return "buy";
   if (previousPistolWon === false) return "save";
+  if (economy.includes("buy") || economy.includes("force")) return "buy";
+  if (economy.includes("save") || economy.includes("eco")) return "save";
   if (economy.includes("light") || economy.includes("half")) return "save";
   return "";
 }
@@ -10368,11 +10368,17 @@ function classifyFullBuyEconomy(round = {}, allowInferredFullBuy = false) {
   return "";
 }
 
+function isMatchSummaryFullBuyWeapon(round = {}) {
+  const weaponMeta = getMatchSummaryRoundWeaponMeta(round);
+  const weaponKey = normalizeMatchSummaryKey(weaponMeta?.label || round?.playerEconomy?.weapon || round?.weapon || "");
+  return ["operator", "phantom", "vandal"].includes(weaponKey);
+}
+
 function classifyThirdRoundEconomy(round = {}, previousPistolWon = null, secondRoundWon = null) {
   const labeledPhase = classifyLabeledEconomyPhase(round);
-  if (labeledPhase === "bonus" || labeledPhase === "save") return labeledPhase;
   if (previousPistolWon === true && secondRoundWon === true) return "bonus";
-  if (classifyFullBuyEconomy(round, true) === "full-buy") return "full-buy";
+  if (labeledPhase === "save" || labeledPhase === "half-buy") return labeledPhase;
+  if (isMatchSummaryFullBuyWeapon(round) || classifyFullBuyEconomy(round, true) === "full-buy") return "full-buy";
   return "";
 }
 
@@ -11036,12 +11042,12 @@ function buildRoleSideMetrics(roleName, sideMetrics = {}, rounds = [], side = "a
   return side === "attack"
     ? [
         statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-        statItem("Attack Side Survivability", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`),
+        statItem("Attack First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`),
         statItem("Most Frequent First Blood Location", firstKillLane, "Most common first-blood location across imported rounds for this side.")
       ]
     : [
         statItem("First Blood Rate", formatPercent(firstBloodRate), `firstBloods / ${sideLabel} rounds = ${safeNumber(sideMetrics.firstBloods)} / ${sideRounds}`),
-        statItem("Defense Side Survivability", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`),
+        statItem("Defense First-Death Avoidance", formatPercent(100 - firstDeathRate), `1 - (firstDeaths / ${sideLabel} rounds) = 1 - (${safeNumber(sideMetrics.firstDeaths)} / ${sideRounds})`),
         statItem("Most Frequent First Death Location", firstDeathLane, "Most common first-death location across imported rounds for this side.")
       ];
 }
@@ -12786,11 +12792,20 @@ function refreshActiveProfileDataSurfaces(options = {}) {
   renderCoachReadinessUI?.();
   syncAccountSupportUI?.();
   refreshLatestRRMatchPanel?.();
+  updateNavRRToRank?.();
+  updateNavRRToGoalRank?.();
 
   if (options.chartAnimationMode) {
     queueChartAnimationMode?.(options.chartAnimationMode);
   }
   renderChart?.(currentSize);
+}
+
+function waitForActiveProfileSurfacePaint() {
+  return new Promise(resolve => {
+    const raf = window.requestAnimationFrame || ((callback) => window.setTimeout(callback, 16));
+    raf(() => raf(resolve));
+  });
 }
 
 async function forceRefreshActiveProfile(source = "manual") {
@@ -14544,7 +14559,8 @@ function getEconomyPhaseForRound(round = {}, index = 0, rounds = []) {
   if (/thrift/i.test(String(round?.roundCeremony || round?.roundResult || ""))) return "thrifty";
   if (roundNum === 2 || roundNum === 14) return classifyPostPistolEconomy(round, rounds[index - 1]?.won ?? null) || classifyMatchSummaryEconomyByValue(round);
   if (roundNum === 3 || roundNum === 15) return classifyThirdRoundEconomy(round, rounds[index - 2]?.won ?? null, rounds[index - 1]?.won ?? null) || classifyMatchSummaryEconomyByValue(round);
-  return classifyLabeledEconomyPhase(round) || classifyFullBuyEconomy(round, false) || classifyMatchSummaryEconomyByValue(round);
+  if (isMatchSummaryFullBuyWeapon(round)) return "full-buy";
+  return classifyLabeledEconomyPhase(round) || classifyFullBuyEconomy(round, false) || classifyMatchSummaryEconomyByValue(round) || "save";
 }
 
 function buildMatchSummaryEconomy(record = {}) {
@@ -14552,6 +14568,7 @@ function buildMatchSummaryEconomy(record = {}) {
   const buckets = {
     pistol: createEconomyPhaseBucket("Pistol"),
     save: createEconomyPhaseBucket("Save / Eco"),
+    buy: createEconomyPhaseBucket("Buy"),
     bonus: createEconomyPhaseBucket("Bonus"),
     "full-buy": createEconomyPhaseBucket("Full Buy"),
     "half-buy": createEconomyPhaseBucket("Half Buy"),
@@ -14776,14 +14793,16 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
         <strong>${escapeHtml(item.label)} trend</strong>
         <span>Average ${escapeHtml(formatMatchSummaryStatValue(item.key, averageValue))}</span>
       </div>
-      <div class="match-summary-stat-chart" style="--stat-count:${points.length}">
-        <div class="match-summary-stat-y-axis" aria-hidden="true"><span>${escapeHtml(formatMatchSummaryStatValue(item.key, max))}</span><span>${escapeHtml(formatMatchSummaryStatValue(item.key, midpoint))}</span><span>0${item.key === "hs" || item.key === "role-impact" ? "%" : ""}</span></div>
-        <div class="match-summary-stat-plot">
-          <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
-          ${points.map(entry => {
-          const height = Math.max(8, Math.round((Number(entry.value) / max) * 100));
-          return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
-          }).join("")}
+      <div class="match-summary-scroll-frame match-summary-stat-scroll">
+        <div class="match-summary-stat-chart" style="--stat-count:${points.length}">
+          <div class="match-summary-stat-y-axis" aria-hidden="true"><span>${escapeHtml(formatMatchSummaryStatValue(item.key, max))}</span><span>${escapeHtml(formatMatchSummaryStatValue(item.key, midpoint))}</span><span>0${["hs", "kast", "role-impact"].includes(item.key) ? "%" : ""}</span></div>
+          <div class="match-summary-stat-plot">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
+            ${points.map(entry => {
+            const height = Math.max(8, Math.round((Number(entry.value) / max) * 100));
+            return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
+            }).join("")}
+          </div>
         </div>
       </div>
     </div>`;
@@ -14854,17 +14873,13 @@ function renderMatchSummaryEconomyTab(record = {}) {
   const { creditLine } = buildMatchSummaryEconomy(record);
   const values = creditLine.map(item => item.value).filter(Number.isFinite);
   const highestCredit = Math.max(0, ...values);
-  const max = highestCredit <= 3300
-    ? 3300
-    : highestCredit <= 4500
-      ? 4500
-      : highestCredit <= 6500
-        ? 6500
-        : 9000;
+  const max = highestCredit > 0
+    ? Math.min(9000, Math.max(2500, Math.ceil((highestCredit * 1.18) / 500) * 500))
+    : 3300;
   const mid = Math.round(max / 2);
   const averageCredits = values.length ? average(values) : 0;
-  const trendBaseY = 68;
-  const trendRange = 62;
+  const trendBaseY = 66;
+  const trendRange = 58;
   const linePoints = creditLine
     .filter(item => Number.isFinite(item.value))
     .map((item, index, list) => {
@@ -14876,15 +14891,17 @@ function renderMatchSummaryEconomyTab(record = {}) {
   return `
     <section class="match-summary-panel">
       <div class="match-summary-economy-average">Average ${Math.round(averageCredits).toLocaleString()} credits</div>
-      <div class="match-summary-economy-chart" aria-label="Round economy chart" data-economy-scale="${max}">
-        <div class="match-summary-economy-y-axis" aria-hidden="true"><span>${max.toLocaleString()}</span><span>${mid.toLocaleString()}</span><span>0</span></div>
-        ${linePoints ? `<svg class="match-summary-economy-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(linePoints)}"></polyline></svg>` : ""}
-        ${creditLine.map(item => {
-          const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
-          const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
-          const creditLabel = Number.isFinite(item.value) ? `${Math.round(item.value).toLocaleString()} credits` : "untracked credits";
-          return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="Round ${item.roundNum}: ${escapeHtml(creditLabel)}" data-credit-tooltip="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
-        }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
+      <div class="match-summary-scroll-frame match-summary-economy-scroll">
+        <div class="match-summary-economy-chart" aria-label="Round economy chart" data-economy-scale="${max}" style="--economy-round-count:${Math.max(1, creditLine.length)}">
+          <div class="match-summary-economy-y-axis" aria-hidden="true"><span>${max.toLocaleString()}</span><span>${mid.toLocaleString()}</span><span>0</span></div>
+          ${linePoints ? `<svg class="match-summary-economy-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(linePoints)}"></polyline></svg>` : ""}
+          ${creditLine.map(item => {
+            const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
+            const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
+            const creditLabel = Number.isFinite(item.value) ? `${Math.round(item.value).toLocaleString()} credits` : "untracked credits";
+            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" title="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="Round ${item.roundNum}: ${escapeHtml(creditLabel)}" data-credit-tooltip="Round ${item.roundNum}: ${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
+          }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
+        </div>
       </div>
     </section>
   `;
@@ -14895,20 +14912,43 @@ function renderMatchSummarySkullIcon(tone = "kill") {
   return `<span class="match-summary-skull ${className}" aria-hidden="true"><svg viewBox="0 0 32 32"><path class="match-summary-skull-fill" d="M16 3C9.5 3 5.2 7.2 5.2 13.6c0 4.1 1.9 7.3 5 8.9v3.9c0 1.4 1.1 2.6 2.6 2.6h6.4c1.4 0 2.6-1.1 2.6-2.6v-3.9c3.1-1.6 5-4.8 5-8.9C26.8 7.2 22.5 3 16 3Z"></path><circle class="match-summary-skull-cut" cx="11.8" cy="14.4" r="2.65"></circle><circle class="match-summary-skull-cut" cx="20.2" cy="14.4" r="2.65"></circle><path class="match-summary-skull-line" d="M14 20.2h4M12.5 24.5v3.2M16 24.5v3.2M19.5 24.5v3.2"></path></svg></span>`;
 }
 
+function getMatchSummaryTimelineGroups(rounds = []) {
+  if (!Array.isArray(rounds) || !rounds.length) return [];
+  const regulation = rounds.filter(item => safeNumber(item?.roundNum) <= 24);
+  const overtime = rounds.filter(item => safeNumber(item?.roundNum) > 24);
+  const groups = [];
+  if (regulation.length) groups.push({ label: "Regulation", rounds: regulation });
+  if (overtime.length) groups.push({ label: "Overtime", rounds: overtime });
+  return groups;
+}
+
+function renderMatchSummaryTimelineGroup(group = {}) {
+  const groupRounds = Array.isArray(group?.rounds) ? group.rounds : [];
+  if (!groupRounds.length) return "";
+  const label = String(group?.label || "").trim();
+  return `
+    <div class="match-summary-round-group">
+      ${label ? `<span class="match-summary-round-group-label">${escapeHtml(label)}</span>` : ""}
+      <div class="match-summary-scroll-frame match-summary-timeline-scroll">
+        <div class="match-summary-rounds" aria-label="${escapeHtml(label || "Round")} timeline" style="--round-count:${groupRounds.length}">
+          ${groupRounds.map(item => `
+            <div class="match-summary-round ${item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}: ${item.won ? "Win" : "Loss"}">
+              <div class="match-summary-round-events">
+                <div class="match-summary-round-kills">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : ""}</div>
+                <div class="match-summary-round-deaths">${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
+              </div>
+              <em>${item.roundNum}</em>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
 function renderMatchSummaryTimeline(record = {}) {
   const rounds = buildMatchSummaryTimeline(record);
   if (!rounds.length) return `<div class="match-summary-empty">No round-by-round data is stored for this match.</div>`;
-  return `<div class="match-summary-rounds" aria-label="Round by round timeline">
-    ${rounds.map(item => `
-      <div class="match-summary-round ${item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}: ${item.won ? "Win" : "Loss"}">
-        <div class="match-summary-round-events">
-          <div class="match-summary-round-kills">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : ""}</div>
-          <div class="match-summary-round-deaths">${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
-        </div>
-        <em>${item.roundNum}</em>
-      </div>
-    `).join("")}
-  </div>`;
+  return `<div class="match-summary-round-groups">${getMatchSummaryTimelineGroups(rounds).map(renderMatchSummaryTimelineGroup).join("")}</div>`;
 }
 
 function ensureMatchSummaryModal() {
@@ -15194,6 +15234,10 @@ function updatePeakRankAfterMatchSave(profile = getActiveProfile()) {
 function onMatchSaved(record, options = {}) {
   const importedCount = Math.max(1, Math.round(safeNumber(options.importedCount) || 1));
   const { variant } = getPremiumFeedbackTheme();
+  refreshActiveProfileDataSurfaces?.({
+    chartAnimationMode: options.mode === "refresh" ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
+    animatePlaceholders: false
+  });
   const hasPeakEventOverride = Boolean(options.peakData) || options.isNewPeak != null;
   const peakEvent = hasPeakEventOverride
     ? {
@@ -54573,27 +54617,14 @@ function applyImportedMatches(matchList = [], options = {}){
   }
 
   saveProfiles();
-  recomputeFromMatches();
-
-  initStatsPage();
-  renderStatsAgents();
-  renderStatsMaps();
-  renderStatsWeapons();
-  renderInsights();
-  renderLogFeed();
-
-  updateDisplays();
-  applyPendingLoadoutRollToHome(profile);
-  refreshLatestRRMatchPanel();
-  updateNavRRToRank();
-  updateNavRRToGoalRank();
+  let chartAnimationMode = null;
   if (hadNoMatchesBeforeImport && normalized.length > 0) {
     forceChartIntroAnimation = true;
-    queueChartAnimationMode(CHART_ANIMATION_MODE_EMPHASIS);
+    chartAnimationMode = CHART_ANIMATION_MODE_EMPHASIS;
   } else if (options.animationMode) {
-    queueChartAnimationMode(options.animationMode);
+    chartAnimationMode = options.animationMode;
   }
-  renderChart(currentSize);
+  refreshActiveProfileDataSurfaces({ chartAnimationMode });
   scheduleRiotAutoSync();
 }
 
@@ -54767,17 +54798,12 @@ async function importActiveProfileMatches(options = {}){
       profile.lastSyncAt = nowISO();
       syncRankedMatchPlaceholderLogs(enrichedExisting, profile);
       saveProfiles();
-      recomputeFromMatches();
-      initStatsPage();
-      renderStatsAgents();
-      renderStatsMaps();
-      renderStatsWeapons();
-      renderInsights();
-      renderLogFeed();
-      updateDisplays();
-      applyPendingLoadoutRollToHome(profile);
-      refreshLatestRRMatchPanel();
-      renderChart(currentSize);
+      refreshActiveProfileDataSurfaces({
+        chartAnimationMode: options.mode === "refresh"
+          ? CHART_ANIMATION_MODE_LATEST_ONLY
+          : null
+      });
+      await waitForActiveProfileSurfacePaint();
       return {
         count: 0,
         checked: safeNumber(pullResult?.checked),
@@ -54817,6 +54843,12 @@ async function importActiveProfileMatches(options = {}){
     });
 
     if (!needsHistoryBackfill && newlyImportedMatches.length) {
+      refreshActiveProfileDataSurfaces({
+        chartAnimationMode: options.mode === "refresh"
+          ? CHART_ANIMATION_MODE_LATEST_ONLY
+          : null
+      });
+      await waitForActiveProfileSurfacePaint();
       const latestNewMatch = newlyImportedMatches.slice().sort((a, b) =>
         new Date(a?.createdAt || a?.metadata?.playedAt || 0).getTime() -
         new Date(b?.createdAt || b?.metadata?.playedAt || 0).getTime()
@@ -54852,7 +54884,10 @@ async function syncActiveProfileMatches(options = {}){
     allowDemoFallback: options.allowDemoFallback !== false,
     mode: options.mode || "sync"
   });
-  refreshLatestRRMatchPanel();
+  refreshActiveProfileDataSurfaces?.({
+    chartAnimationMode: result?.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
+    animatePlaceholders: false
+  });
   return {
     ...result,
     syncedAt: nowISO(),

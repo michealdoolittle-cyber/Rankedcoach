@@ -94,6 +94,17 @@ function startServer() {
   });
 }
 
+function getLatestMeaningfulRankLabel(matches = []) {
+  const ranked = matches
+    .slice()
+    .sort((left, right) => new Date(right?.createdAt || right?.metadata?.playedAt || 0).getTime() - new Date(left?.createdAt || left?.metadata?.playedAt || 0).getTime())
+    .find(match => {
+      const label = String(match?.rank || match?.metadata?.rank || "").trim();
+      return label && !/^unrated$/i.test(label);
+    });
+  return String(ranked?.rank || ranked?.metadata?.rank || "Unrated").trim() || "Unrated";
+}
+
 async function run() {
   loadBrowserScript("public/schema/match-record.js");
   loadBrowserScript("public/analytics/round-metrics.js");
@@ -102,6 +113,7 @@ async function run() {
   const matches = await loadRetainedProfileMatches();
   const acts = [...new Set(matches.map(match => match.act).filter(Boolean))];
   const allRoundMetrics = globalThis.RankedCoachRoundMetrics.aggregateMatchRoundMetrics(matches);
+  const expectedCurrentRankLabel = getLatestMeaningfulRankLabel(matches);
 
   // This is a live retained-history smoke test. The account can add matches over
   // time, so assert the known floor plus internal consistency instead of pinning
@@ -174,8 +186,8 @@ async function run() {
       await page.waitForTimeout(250);
     }
 
-    assert.equal(await page.locator("#navCurrentTierText").innerText(), "Diamond 2");
-    assert.equal(await page.locator("#profileRankIcon").getAttribute("alt"), "Diamond 2");
+    assert.equal(await page.locator("#navCurrentTierText").innerText(), expectedCurrentRankLabel);
+    assert.equal(await page.locator("#profileRankIcon").getAttribute("alt"), expectedCurrentRankLabel);
 
     await page.click('.nav-btn[data-page="stats"]');
     await page.waitForTimeout(500);
@@ -265,8 +277,8 @@ async function run() {
     const mobilePage = await mobileContext.newPage();
     await mobilePage.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await mobilePage.waitForTimeout(1400);
-    assert.equal(await mobilePage.locator("#navCurrentTierText").innerText(), "Diamond 2");
-    assert.equal(await mobilePage.locator("#mobileHeaderProfileBtn .mobile-header-rank-icon").getAttribute("alt"), "Diamond 2");
+    assert.equal(await mobilePage.locator("#navCurrentTierText").innerText(), expectedCurrentRankLabel);
+    assert.equal(await mobilePage.locator("#mobileHeaderProfileBtn .mobile-header-rank-icon").getAttribute("alt"), expectedCurrentRankLabel);
     const avatarRect = await mobilePage.locator("#mobileHeaderProfileBtn .mobile-header-avatar-img").boundingBox();
     const rankRect = await mobilePage.locator("#mobileHeaderProfileBtn .mobile-header-rank-icon").boundingBox();
     assert.ok(rankRect.x > avatarRect.x + (avatarRect.width / 2));
