@@ -3892,12 +3892,6 @@ function getAmbientProfileEffectFrameMarkup(borderStyle = "stardust") {
         <circle class="rc-profile-effect-spark rc-profile-spark-5 rc-effect-glint-fill" cx="70" cy="74" r="1"></circle>
       </g>
     `,
-    "agent-trace": `
-      <g class="rc-profile-effect rc-profile-effect-agent-trace">
-        <path class="rc-profile-agent-outline rc-effect-primary" d="M51 7L58 12L62 22L60 32L66 39L73 54L80 76L70 88L56 94L43 93L30 87L21 76L27 55L34 40L40 33L38 22L43 12Z" pathLength="100"></path>
-        <path class="rc-profile-agent-outline rc-profile-agent-outline-glow rc-effect-secondary" d="M51 7L58 12L62 22L60 32L66 39L73 54L80 76L70 88L56 94L43 93L30 87L21 76L27 55L34 40L40 33L38 22L43 12Z" pathLength="100"></path>
-      </g>
-    `,
     snowfall: `
       <g class="rc-profile-effect rc-profile-effect-snow">
         <circle class="rc-profile-snowflake rc-profile-snow-1 rc-effect-glint-fill" cx="18" cy="-8" r="1.7"></circle>
@@ -4400,10 +4394,10 @@ function getMatchCore(match = {}) {
       acs: safeNumber(record.stats?.acs, safeNumber(match?.acs ?? match?.adr)),
       adr: safeNumber(record.stats?.adr, safeNumber(match?.adr)),
       hs: safeNumber(firstFiniteNumber(
-        match?.hsPercent,
-        match?.hs,
+        match?.segments?.[0]?.stats?.headshotsPercentage?.value,
         record.stats?.hsPercent,
-        match?.segments?.[0]?.stats?.headshotsPercentage?.value
+        match?.hsPercent,
+        match?.hs
       )),
       createdAt: record.playedAt || record.createdAt || nowISO()
     };
@@ -14532,6 +14526,25 @@ function buildMatchSummaryTimeline(record = {}) {
   });
 }
 
+function getMatchSummaryTimelineStackMetrics(slots = []) {
+  const maxKills = Math.max(0, ...slots.map(item => Math.min(5, Array.isArray(item?.kills) ? item.kills.length : 0)));
+  const maxDeaths = Math.max(0, ...slots.map(item => Array.isArray(item?.deaths) ? item.deaths.length : (item?.deaths ? 1 : 0)));
+  const skullSize = 16;
+  const skullGap = 1;
+  const stackHeight = (count) => count > 0 ? (count * skullSize) + ((count - 1) * skullGap) : 0;
+  const killRowHeight = Math.max(34, stackHeight(maxKills) + 9);
+  const deathRowHeight = Math.max(34, stackHeight(maxDeaths) + 9);
+  const timelineGap = maxKills > 2 ? Math.min(28, 12 + ((maxKills - 2) * 5)) : 12;
+  return {
+    maxKills,
+    maxDeaths,
+    killRowHeight,
+    deathRowHeight,
+    timelineGap,
+    axisY: 9 + killRowHeight
+  };
+}
+
 function getMatchSummaryRoundWeaponMeta(round = {}) {
   const values = [
     round?.playerEconomy?.weapon,
@@ -14914,12 +14927,16 @@ function renderMatchSummaryWeaponsTab(record = {}) {
 function renderMatchSummaryEconomyTab(record = {}) {
   const { creditLine } = buildMatchSummaryEconomy(record);
   const values = creditLine.map(item => item.value).filter(Number.isFinite);
+  const regulationValues = creditLine
+    .filter(item => safeNumber(item?.roundNum) <= 24)
+    .map(item => item.value)
+    .filter(Number.isFinite);
   const highestCredit = Math.max(0, ...values);
   const max = highestCredit > 0
     ? Math.min(9000, Math.max(2500, Math.ceil((highestCredit * 1.18) / 500) * 500))
     : 3300;
   const mid = Math.round(max / 2);
-  const averageCredits = values.length ? average(values) : 0;
+  const averageCredits = regulationValues.length ? average(regulationValues) : (values.length ? average(values) : 0);
   const trendBaseY = 66;
   const trendRange = 58;
   const linePoints = creditLine
@@ -14985,11 +15002,19 @@ function renderMatchSummaryTimelineGroup(group = {}) {
       };
     }
   );
+  const stackMetrics = getMatchSummaryTimelineStackMetrics(timelineSlots);
+  const timelineStyle = [
+    `--round-count:${timelineSlots.length}`,
+    `--summary-kill-row-height:${stackMetrics.killRowHeight}px`,
+    `--summary-death-row-height:${stackMetrics.deathRowHeight}px`,
+    `--summary-timeline-gap:${stackMetrics.timelineGap}px`,
+    `--summary-axis-y:${stackMetrics.axisY}px`
+  ].join(";");
   return `
     <div class="match-summary-round-group">
       ${label ? `<span class="match-summary-round-group-label">${escapeHtml(label)}</span>` : ""}
       <div class="match-summary-scroll-frame match-summary-timeline-scroll">
-        <div class="match-summary-rounds" aria-label="${escapeHtml(label || "Round")} timeline" style="--round-count:${timelineSlots.length}">
+        <div class="match-summary-rounds" aria-label="${escapeHtml(label || "Round")} timeline" style="${timelineStyle}">
           ${timelineSlots.map(item => `
             <div class="match-summary-round ${item.empty ? "is-empty" : item.won ? "is-win" : "is-loss"}" title="Round ${item.roundNum}${item.empty ? ": not played" : item.won ? ": Win" : ": Loss"}">
               <div class="match-summary-round-events">
@@ -47339,7 +47364,6 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
   { value: "smoke-wisp", label: "Smoke Wisp", note: "Omen-like drifting haze" },
   { value: "ember-sparks", label: "Ember Sparks", note: "Rising fire flecks" },
   { value: "fade-pulse", label: "Fade Pulse", note: "Soft glow fades in and out" },
-  { value: "agent-trace", label: "Agent Trace", note: "Silhouette outline redraw" },
   { value: "snowfall", label: "Snowfall", note: "Falling snow particles" },
   { value: "confetti-burst", label: "Confetti Burst", note: "Celebration burst particles" },
   { value: "prism-offset", label: "Prism Offset", note: "Three-color offset shimmer" }

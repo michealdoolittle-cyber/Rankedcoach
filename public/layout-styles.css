@@ -3318,3 +3318,168 @@ html body #page-home .loadout-card #agentFrame .frame-art-inner{
   transform-origin:center center !important;
 }
 
+/* 2026-08-02 mobile layout-style opt-outs.
+   These sections have tight native mobile compositions; shape/texture/font
+   skins can clip or resize the actual controls, so mobile keeps the app's
+   base geometry while desktop remains fully styled. */
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .rr-card .impact-card,
+  #page-home .rr-card .impact-role-pill,
+  #page-home .rr-card .impact-bar-outer,
+  #page-home .rr-card .impact-scale,
+  #page-home .rr-card .impact-meter-caption,
+  #page-logging .logging-card,
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-logging .logging-row,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging .logging-input,
+  #page-logging .logging-map-pills,
+  #page-logging .logging-map-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .logging-feed-card .log-entry,
+  #page-logging .logging-feed-card .log-entry-card,
+  #page-logging .logging-feed-card .log-feed-footnote,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-stats .stats-role-progress-row,
+  #page-insights .insights-action-card,
+  #page-insights .insight-action-hero,
+  #page-insights .insight-focus-detail,
+  #page-insights .insight-card
+){
+  --layout-surface-clip:none;
+  --layout-surface-border-width: ;
+  --layout-surface-border-left-width: ;
+  --layout-surface-border-left-color: ;
+  --layout-surface-border-color: ;
+  --layout-surface-radius: ;
+  --layout-surface-background: ;
+  --layout-surface-shadow: ;
+  --layout-surface-safe-top: ;
+  --layout-surface-safe-right: ;
+  --layout-surface-safe-bottom: ;
+  --layout-surface-safe-left: ;
+  clip-path:none !important;
+  -webkit-clip-path:none !important;
+  transform:none !important;
+  writing-mode:horizontal-tb !important;
+  text-orientation:mixed !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .rr-card .impact-card,
+  #page-home .rr-card .impact-role-pill,
+  #page-home .rr-card .impact-bar-outer,
+  #page-home .rr-card .impact-scale,
+  #page-home .rr-card .impact-meter-caption,
+  #page-logging .logging-card,
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-logging .logging-row,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging .logging-input,
+  #page-logging .logging-map-pills,
+  #page-logging .logging-map-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .logging-feed-card .log-entry,
+  #page-logging .logging-feed-card .log-entry-card,
+  #page-logging .logging-feed-card .log-feed-footnote,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-stats .stats-role-progress-row,
+  #page-insights .insights-action-card,
+  #page-insights .insight-action-hero,
+  #page-insights .insight-focus-detail,
+  #page-insights .insight-card
+)::before,
+html.is-mobile-layout body.is-mobile-layout:is([data-layout-style],[data-layout-shape]) :is(
+  #page-home .rr-card .impact-card,
+  #page-home .rr-card .impact-role-pill,
+  #page-home .rr-card .impact-bar-outer,
+  #page-home .rr-card .impact-scale,
+  #page-home .rr-card .impact-meter-caption,
+  #page-logging .logging-card,
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-logging .logging-row,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging .logging-input,
+  #page-logging .logging-map-pills,
+  #page-logging .logging-map-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .logging-feed-card .log-entry,
+  #page-logging .logging-feed-card .log-entry-card,
+  #page-logging .logging-feed-card .log-feed-footnote,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-stats .stats-role-progress-row,
+  #page-insights .insights-action-card,
+  #page-insights .insight-action-hero,
+  #page-insights .insight-focus-detail,
+  #page-insights .insight-card
+)::after{
+  content:none !important;
+  display:none !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
+  #page-home .rr-card .impact-card,
+  #page-home .rr-card .impact-role-pill,
+  #page-home .rr-card .impact-bar-outer,
+  #page-home .rr-card .impact-scale,
+  #page-home .rr-card .impact-meter-caption,
+  #page-logging .logging-card,
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-logging .logging-row,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging .logging-input,
+  #page-logging .logging-map-pills,
+  #page-logging .logging-map-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .logging-feed-card .log-entry,
+  #page-logging .logging-feed-card .log-entry-card,
+  #page-logging .logging-feed-card .log-feed-footnote,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-stats .stats-role-progress-row,
+  #page-insights .insights-action-card,
+  #page-insights .insight-action-hero,
+  #page-insights .insight-focus-detail,
+  #page-insights .insight-card
+),
+html.is-mobile-layout body.is-mobile-layout[data-layout-font-active="true"] :is(
+  #page-home .rr-card .impact-card,
+  #page-home .rr-card .impact-role-pill,
+  #page-home .rr-card .impact-bar-outer,
+  #page-home .rr-card .impact-scale,
+  #page-home .rr-card .impact-meter-caption,
+  #page-logging .logging-card,
+  #page-logging .logging-hero,
+  #page-logging .logging-live-card,
+  #page-logging .logging-row,
+  #page-logging .logging-form > .logging-row > .logging-pill,
+  #page-logging .logging-input,
+  #page-logging .logging-map-pills,
+  #page-logging .logging-map-pill,
+  #page-logging #logQuickMenu,
+  #page-logging #logNotes,
+  #page-logging .logging-feed-card .log-entry,
+  #page-logging .logging-feed-card .log-entry-card,
+  #page-logging .logging-feed-card .log-feed-footnote,
+  #page-stats .stats-proof-card,
+  #page-stats .stats-role-progress-card,
+  #page-stats .stats-role-progress-row,
+  #page-insights .insights-action-card,
+  #page-insights .insight-action-hero,
+  #page-insights .insight-focus-detail,
+  #page-insights .insight-card
+) *{
+  font-family:var(--font-body,"Rajdhani",sans-serif) !important;
+}
+

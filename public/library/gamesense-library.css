@@ -4530,14 +4530,7 @@ body.gamesense-media-open{overflow:hidden !important;}
     gap:10px;
   }
   html.is-mobile-layout .gamesense-dossier-sticky-notes{
-    top:calc(var(--mobile-header-height, 60px) + 4px);
-    display:grid;
-    gap:8px;
-    overflow:visible;
-    padding:9px 8px;
-    scroll-snap-type:none;
-    scrollbar-width:auto;
-    -webkit-overflow-scrolling:auto;
+    display:none !important;
   }
   html.is-mobile-layout .gamesense-dossier-sticky-notes::-webkit-scrollbar{display:none;}
   html.is-mobile-layout .gamesense-dossier-sticky-notes button{
