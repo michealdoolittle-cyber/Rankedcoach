@@ -8,6 +8,7 @@ const { chromium } = require("playwright");
 
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41813;
+const progressLogPath = path.resolve(__dirname, "test-results", "match-summary-smoke-progress.log");
 const types = {
   ".css": "text/css",
   ".html": "text/html",
@@ -19,6 +20,17 @@ const types = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg"
 };
+
+function progress(message) {
+  const line = `${new Date().toISOString()} ${message}`;
+  console.log(message);
+  try {
+    fs.mkdirSync(path.dirname(progressLogPath), { recursive: true });
+    fs.appendFileSync(progressLogPath, `${line}\n`);
+  } catch (_error) {
+    // Progress logging must never affect the smoke result.
+  }
+}
 
 function startServer() {
   return new Promise(resolve => {
@@ -48,9 +60,15 @@ function startServer() {
   });
 }
 
-function buildMatch() {
+function buildMatch(overrides = {}) {
   const puuid = "feed-layout-player";
-  const rounds = Array.from({ length: 15 }, (_item, index) => {
+  const matchId = overrides.id || "feed-layout-match";
+  const playedAt = overrides.createdAt || "2026-08-02T20:15:00.000Z";
+  const acs = overrides.acs ?? 231;
+  const kast = overrides.kast ?? 73;
+  const roleImpact = overrides.roleImpact ?? 76;
+  const hsPercent = overrides.hsPercent ?? 22;
+  const rounds = Array.from({ length: overrides.roundsLength || 15 }, (_item, index) => {
     const roundNum = index + 1;
     const won = ![2, 5, 8, 11].includes(roundNum);
     const kills = [];
@@ -76,10 +94,10 @@ function buildMatch() {
     };
   });
   return {
-    id: "feed-layout-match",
-    matchId: "feed-layout-match",
+    id: matchId,
+    matchId,
     source: "henrik_sync",
-    createdAt: "2026-08-02T20:15:00.000Z",
+    createdAt: playedAt,
     result: "win",
     agent: "Sova",
     role: "Initiator",
@@ -87,14 +105,16 @@ function buildMatch() {
     kills: 9,
     deaths: 4,
     assists: 7,
-    acs: 231,
-    hsPercent: 22,
+    acs,
+    hsPercent,
+    kast,
+    roleImpact,
     rr: 18,
     rrVerified: true,
     metadata: {
       source: "henrik_sync",
-      matchId: "feed-layout-match",
-      playedAt: "2026-08-02T20:15:00.000Z",
+      matchId,
+      playedAt,
       agent: "Sova",
       role: "Initiator",
       mapName: "Lotus",
@@ -103,14 +123,14 @@ function buildMatch() {
     },
     matchRecord: {
       schemaVersion: 1,
-      id: "feed-layout-match",
-      playedAt: "2026-08-02T20:15:00.000Z",
+      id: matchId,
+      playedAt,
       result: "win",
       agent: "Sova",
       role: "Initiator",
       map: "Lotus",
       trackedPlayer: { puuid },
-      stats: { kills: 9, deaths: 4, assists: 7, acs: 231, adr: 152, hsPercent: 22 },
+      stats: { kills: 9, deaths: 4, assists: 7, acs, adr: overrides.adr ?? 152, hsPercent, kast, roleImpact },
       rank: { rankLabel: "Platinum 3", rrDelta: 18, rrTotal: 52 },
       roundByRound: rounds
     }
@@ -119,7 +139,42 @@ function buildMatch() {
 
 function seedState() {
   const profileId = "feed-layout-profile";
-  const match = buildMatch();
+  const previousLow = buildMatch({
+    id: "feed-layout-prev-low",
+    createdAt: "2026-07-25T20:15:00.000Z",
+    acs: 12,
+    adr: 24,
+    hsPercent: 4,
+    kast: 18,
+    roleImpact: 8
+  });
+  const previousMid = buildMatch({
+    id: "feed-layout-prev-mid",
+    createdAt: "2026-07-28T20:15:00.000Z",
+    acs: 178,
+    adr: 118,
+    hsPercent: 33,
+    kast: 54,
+    roleImpact: 51
+  });
+  const previousNearMax = buildMatch({
+    id: "feed-layout-prev-near-max",
+    createdAt: "2026-07-31T20:15:00.000Z",
+    acs: 338,
+    adr: 198,
+    hsPercent: 74,
+    kast: 92,
+    roleImpact: 88
+  });
+  const match = buildMatch({
+    id: "feed-layout-match",
+    createdAt: "2026-08-02T20:15:00.000Z",
+    acs: 244,
+    adr: 152,
+    hsPercent: 22,
+    kast: 66,
+    roleImpact: 76
+  });
   localStorage.clear();
   localStorage.setItem("valtracker_entry_choice_v1", "guest");
   localStorage.setItem("valtracker_active_profile_id", profileId);
@@ -137,7 +192,7 @@ function seedState() {
     layoutFont: "default",
     profileBorder: "notched",
     profileBorderColor: "theme",
-    matches: [match],
+    matches: [previousLow, previousMid, previousNearMax, match],
     trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 4"] }
   }]));
   const logEntries = [{
@@ -162,12 +217,16 @@ function seedState() {
 }
 
 async function dismissStartupUi(page) {
-  await page.locator("#loginInitializationOverlay").evaluate(node => node.remove()).catch(() => {});
-  await page.locator("#loadingOverlay").evaluate(node => node.remove()).catch(() => {});
+  await page.evaluate(() => {
+    document.getElementById("loginInitializationOverlay")?.remove();
+    document.getElementById("loadingOverlay")?.remove();
+  });
 }
 
 async function verifyViewport(browser, viewport, name) {
+  progress(`[match-summary-smoke] ${name}: starting`);
   const page = await browser.newPage({ viewport });
+  progress(`[match-summary-smoke] ${name}: page created`);
   const issues = [];
   const logs = [];
   let resolveInitComplete;
@@ -181,10 +240,36 @@ async function verifyViewport(browser, viewport, name) {
     if (message.text().includes("INIT COMPLETE")) resolveInitComplete();
   });
   await page.addInitScript({ content: `const buildMatch = ${buildMatch.toString()};(${seedState.toString()})();` });
+  progress(`[match-summary-smoke] ${name}: seed installed`);
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "domcontentloaded" });
+  progress(`[match-summary-smoke] ${name}: domcontentloaded`);
   await page.waitForSelector("#page-logging", { state: "attached", timeout: 15000 });
-  await Promise.race([initComplete, page.waitForTimeout(7000)]);
+  progress(`[match-summary-smoke] ${name}: logging page attached`);
+  // The full app init choreography can intentionally lag behind DOM readiness.
+  // This focused smoke removes startup overlays and verifies the target surfaces
+  // directly after #page-logging is attached.
   await dismissStartupUi(page);
+  progress(`[match-summary-smoke] ${name}: app loaded`);
+  await page.waitForFunction(() => Boolean(globalThis.RankedCoachSyncDiagnostics?.getMode), null, { timeout: 15000 });
+  const syncAndBorderState = await page.evaluate((isMobile) => {
+    const target = isMobile
+      ? (document.querySelector("#mobileHeaderProfileBtn.mobile-bottom-avatar-btn")
+        || document.querySelector("#mobileBottomShell .mobile-bottom-avatar-btn"))
+      : document.querySelector(".profile-avatar-ring");
+    return {
+      targetClassName: target?.className || "",
+      hasAnimatedClass: Boolean(target?.classList?.contains("border-animated")),
+      hasNotchedClass: Boolean(target?.classList?.contains("border-notched")),
+      frame: target?.querySelector?.(".rc-mobile-avatar-frame")?.getAttribute("data-mobile-frame") || "",
+      diagnostics: globalThis.RankedCoachSyncDiagnostics.getMode()
+    };
+  }, viewport.width <= 760);
+  assert.equal(syncAndBorderState.diagnostics.mode, "guest", `${name}: seeded session should report guest mode`);
+  assert.equal(syncAndBorderState.diagnostics.crossDeviceRealtimeAvailable, false, `${name}: guest mode should not claim cross-device realtime`);
+  assert.equal(syncAndBorderState.diagnostics.crossDeviceSyncRequiresSignIn, true, `${name}: guest Riot profile should disclose sign-in requirement`);
+  assert.ok(syncAndBorderState.hasAnimatedClass, `${name}: notched border should receive .border-animated in live DOM ${JSON.stringify(syncAndBorderState)}`);
+  assert.ok(syncAndBorderState.hasNotchedClass || syncAndBorderState.frame === "notched", `${name}: live profile border should be notched ${JSON.stringify(syncAndBorderState)}`);
+  progress(`[match-summary-smoke] ${name}: diagnostics and border checked`);
   const navSelector = viewport.width <= 760 ? '[data-mobile-page="logging"]' : '.nav-btn[data-page="logging"]';
   await page.locator(navSelector).first().click({ force: true });
   await page.evaluate(selector => document.querySelector(selector)?.click(), navSelector);
@@ -235,9 +320,16 @@ async function verifyViewport(browser, viewport, name) {
   assert.ok(feedLayout.actionsTop >= feedLayout.notesBottom + 8, `${name}: feed buttons should not cover notes ${JSON.stringify(feedLayout)}`);
   assert.ok(Math.abs(feedLayout.headerRight - feedLayout.actionsRight) <= 18, `${name}: feed buttons should sit bottom-right ${JSON.stringify(feedLayout)}`);
   assert.ok(Math.abs(feedLayout.headerRight - feedLayout.chipRight) <= 28, `${name}: impact chip should be end aligned ${JSON.stringify(feedLayout)}`);
+  progress(`[match-summary-smoke] ${name}: feed layout checked`);
 
-  await page.evaluate(() => globalThis.RankedCoachBroadcastPreview?.playPostgame?.());
+  const openedReport = await page.evaluate(() => {
+    const profile = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0] || {};
+    const match = (profile.matches || []).find(item => item.id === "feed-layout-match");
+    return Boolean(globalThis.RankedCoachMatchSummary?.open?.(match));
+  });
+  assert.equal(openedReport, true, `${name}: seeded match report should open through the app report renderer`);
   await page.waitForSelector("#matchSummaryModal.active", { timeout: 15000 });
+  progress(`[match-summary-smoke] ${name}: match report opened`);
   await page.locator('[data-match-summary-tab="weapons"]').click({ force: true });
   await page.evaluate(() => document.querySelector('[data-match-summary-tab="weapons"]')?.click());
   await page.waitForSelector('[data-match-summary-panel="weapons"]:not([hidden]) .match-summary-eco-chip', { timeout: 15000 });
@@ -270,19 +362,26 @@ async function verifyViewport(browser, viewport, name) {
   await page.locator(".match-summary-stat-pill").first().click({ force: true });
   await page.waitForSelector(".match-summary-stat-trend:not([hidden]) .match-summary-stat-bar i", { timeout: 15000 });
   const statChartLayout = await page.locator(".match-summary-stat-trend:not([hidden]) .match-summary-stat-plot").first().evaluate(plot => {
-    const bar = plot.querySelector(".match-summary-stat-bar i")?.getBoundingClientRect();
-    const label = plot.querySelector(".match-summary-stat-bar em")?.getBoundingClientRect();
-    const plotRect = plot.getBoundingClientRect();
-    const labelSpace = parseFloat(getComputedStyle(plot).getPropertyValue("--match-stat-label-space")) || 30;
-    const axisY = plotRect.bottom - labelSpace;
+    const graph = plot.querySelector(".match-summary-stat-graph");
+    const bars = Array.from(plot.querySelectorAll(".match-summary-stat-bar i")).map(node => node.getBoundingClientRect());
+    const label = plot.querySelector(".match-summary-stat-label em")?.getBoundingClientRect();
+    const graphRect = graph?.getBoundingClientRect();
+    const axisY = graphRect?.bottom || 0;
+    const heights = bars.map(rect => Math.round(rect.height));
     return {
-      barBottom: bar?.bottom || 0,
+      barBottoms: bars.map(rect => rect.bottom),
       axisY,
-      labelTop: label?.top || 0
+      labelTop: label?.top || 0,
+      heights,
+      uniqueHeights: new Set(heights).size,
+      barCount: bars.length
     };
   });
-  assert.ok(Math.abs(statChartLayout.barBottom - statChartLayout.axisY) <= 3, `${name}: stat bars should grow from the x-axis ${JSON.stringify(statChartLayout)}`);
+  assert.ok(statChartLayout.barCount >= 4, `${name}: stat chart should include small/mid/near-max/current points ${JSON.stringify(statChartLayout)}`);
+  assert.ok(statChartLayout.barBottoms.every(bottom => Math.abs(bottom - statChartLayout.axisY) <= 3), `${name}: all stat bars should grow from the x-axis ${JSON.stringify(statChartLayout)}`);
   assert.ok(statChartLayout.labelTop > statChartLayout.axisY + 3, `${name}: x-axis labels should sit below the x-axis ${JSON.stringify(statChartLayout)}`);
+  assert.ok(statChartLayout.uniqueHeights >= 3, `${name}: stat bar heights should scale across different values ${JSON.stringify(statChartLayout)}`);
+  progress(`[match-summary-smoke] ${name}: stat chart checked`);
 
   await page.locator('[data-match-summary-tab="economy"]').click({ force: true });
   await page.evaluate(() => document.querySelector('[data-match-summary-tab="economy"]')?.click());
@@ -328,6 +427,7 @@ async function verifyViewport(browser, viewport, name) {
   assert.ok(tooltipOpacity >= 0.9, `${name}: economy tooltip should open on click`);
   assert.match(tooltipState.text, /Credits:/, `${name}: economy tooltip should show the credit count`);
   assert.match(tooltipState.color, /168,\s*85,\s*247|a855f7/i, `${name}: selected economy diamond should become purple`);
+  progress(`[match-summary-smoke] ${name}: economy checked`);
 
   await page.screenshot({ path: path.resolve(__dirname, `match-summary-feed-layout-${name}.png`), fullPage: true });
   assert.deepEqual(issues, [], `${name}: console/page errors should be empty`);
@@ -335,6 +435,9 @@ async function verifyViewport(browser, viewport, name) {
 }
 
 async function run() {
+  try {
+    fs.unlinkSync(progressLogPath);
+  } catch (_error) {}
   const server = await startServer();
   const browser = await chromium.launch();
   try {

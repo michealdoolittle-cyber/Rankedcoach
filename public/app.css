@@ -60638,40 +60638,75 @@ body.is-mobile-layout #page-logging .log-role-impact-chip{
 }
 
 #matchSummaryModal .match-summary-stat-y-axis{
-  padding-bottom:31px !important;
+  padding:5px 0 34px !important;
 }
 
 #matchSummaryModal .match-summary-stat-plot{
-  --match-stat-label-space:30px;
+  --match-stat-label-space:34px;
   height:150px !important;
   min-height:150px !important;
+  display:grid !important;
+  grid-template-rows:minmax(0, 1fr) var(--match-stat-label-space) !important;
+  grid-template-columns:none !important;
+  gap:0 !important;
+  align-items:stretch !important;
   overflow:visible !important;
   border:0 !important;
-  padding:0 0 var(--match-stat-label-space) 4px !important;
-  background:
-    linear-gradient(rgba(248,250,252,.9), rgba(248,250,252,.9)) left top / 2px calc(100% - var(--match-stat-label-space)) no-repeat,
-    linear-gradient(90deg, rgba(248,250,252,.9), rgba(248,250,252,.9)) left calc(100% - var(--match-stat-label-space)) / 100% 2px no-repeat !important;
+  padding:0 !important;
+  background:none !important;
 }
 
-#matchSummaryModal .match-summary-stat-plot::before{
+#matchSummaryModal .match-summary-stat-plot::before,
+#matchSummaryModal .match-summary-stat-plot::after{
+  content:none !important;
+  display:none !important;
+}
+
+#matchSummaryModal .match-summary-stat-graph{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(var(--stat-count, 4), minmax(0, 1fr));
+  align-items:end;
+  gap:9px;
+  min-height:0;
+  padding-left:4px;
+  overflow:visible;
+  border-left:2px solid rgba(248,250,252,.92);
+  border-bottom:2px solid rgba(248,250,252,.92);
+}
+
+#matchSummaryModal .match-summary-stat-graph::before,
+#matchSummaryModal .match-summary-stat-graph::after{
+  content:"";
+  position:absolute;
+  left:4px;
+  right:0;
+  height:1px;
+  pointer-events:none;
+}
+
+#matchSummaryModal .match-summary-stat-graph::before{
   top:5px !important;
   background:rgba(148,163,184,.18) !important;
 }
 
-#matchSummaryModal .match-summary-stat-plot::after{
-  top:calc((100% - var(--match-stat-label-space)) / 2) !important;
+#matchSummaryModal .match-summary-stat-graph::after{
+  top:50% !important;
   background:rgba(148,163,184,.14) !important;
 }
 
 #matchSummaryModal .match-summary-stat-chart svg{
-  inset:5px 0 var(--match-stat-label-space) 4px !important;
+  inset:0 0 0 4px !important;
   width:calc(100% - 4px) !important;
-  height:calc(100% - var(--match-stat-label-space) - 5px) !important;
+  height:100% !important;
 }
 
 #matchSummaryModal .match-summary-stat-bar{
-  height:150px !important;
-  display:block !important;
+  height:100% !important;
+  min-height:0 !important;
+  display:flex !important;
+  align-items:flex-end !important;
+  justify-content:center !important;
   position:relative !important;
   grid-template-rows:none !important;
   padding-bottom:0 !important;
@@ -60679,34 +60714,46 @@ body.is-mobile-layout #page-logging .log-role-impact-chip{
 }
 
 #matchSummaryModal .match-summary-stat-bar i{
-  position:absolute !important;
-  left:50%;
-  bottom:var(--match-stat-label-space) !important;
-  transform:translateX(-50%);
-  height:calc((100% - var(--match-stat-label-space)) * var(--bar-ratio, .1)) !important;
+  position:relative !important;
+  left:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  height:calc(100% * var(--bar-ratio, .1)) !important;
   border-radius:2px 2px 0 0 !important;
   box-shadow:0 0 0 1px rgba(94,234,212,.22), 0 8px 14px rgba(8,145,178,.16);
 }
 
-#matchSummaryModal .match-summary-stat-bar b{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:16px;
-  margin:0;
+#matchSummaryModal .match-summary-stat-labels{
+  display:grid;
+  grid-template-columns:repeat(var(--stat-count, 4), minmax(0, 1fr));
+  gap:9px;
+  padding-left:4px;
+  min-width:0;
+}
+
+#matchSummaryModal .match-summary-stat-label{
+  display:grid;
+  justify-items:center;
+  align-content:start;
+  gap:2px;
+  min-width:0;
+  padding-top:5px;
   text-align:center;
 }
 
-#matchSummaryModal .match-summary-stat-bar em{
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:2px;
-  min-height:22px;
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
-  text-align:center;
+#matchSummaryModal .match-summary-stat-label b,
+#matchSummaryModal .match-summary-stat-label em{
+  color:var(--text-main, #f8fafc);
+  font:900 10px/1 var(--font-display, "Rajdhani", sans-serif);
+  font-style:normal;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:normal;
+}
+
+#matchSummaryModal .match-summary-stat-label em{
+  color:var(--text-muted, #a8b3c7);
 }
 
 #matchSummaryModal .match-summary-credit-diamond,

@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-unified-sync-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-unified-sync-followup-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -12618,6 +12618,7 @@ function updateAuthUI(user = null) {
   updateProfileDropdownMenu?.();
   refreshRiotProfilePrompt?.();
   refreshThemeBuilderAccess();
+  publishRankedCoachSyncDiagnostics?.("auth-ui");
 }
 
 function syncProfileSwitcherAccessState() {
@@ -14909,9 +14910,20 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
   const midpoint = max / 2;
   const polyline = points.map((entry, index) => {
     const x = points.length <= 1 ? 50 : (index / (points.length - 1)) * 100;
-    const y = 100 - ((Number(entry.value) / max) * 92);
-    return `${x.toFixed(2)},${Math.max(4, Math.min(98, y)).toFixed(2)}`;
+    const y = 100 - (Math.max(0, Math.min(1, Number(entry.value) / max)) * 100);
+    return `${x.toFixed(2)},${Math.max(0, Math.min(100, y)).toFixed(2)}`;
   }).join(" ");
+  const pointMarkup = points.map(entry => {
+    const rawRatio = max > 0 ? Number(entry.value) / max : 0;
+    const ratio = Math.max(0.08, Math.min(1, rawRatio));
+    const height = Math.round(ratio * 100);
+    const value = escapeHtml(formatMatchSummaryStatValue(item.key, entry.value));
+    const label = escapeHtml(entry.label);
+    return {
+      bar: `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%;--bar-ratio:${ratio.toFixed(4)}"><i></i></span>`,
+      label: `<span class="match-summary-stat-label"><b>${value}</b><em>${label}</em></span>`
+    };
+  });
   return `
     <div class="match-summary-stat-trend" data-match-summary-stat-panel="${escapeHtml(item.key)}" hidden>
       <div class="match-summary-stat-trend-head">
@@ -14922,12 +14934,13 @@ function renderMatchSummaryStatTrendPanel(match = {}, record = getMatchSummaryRe
         <div class="match-summary-stat-chart" style="--stat-count:${points.length}">
           <div class="match-summary-stat-y-axis" aria-hidden="true"><span>${escapeHtml(formatMatchSummaryStatValue(item.key, max))}</span><span>${escapeHtml(formatMatchSummaryStatValue(item.key, midpoint))}</span><span>0${["hs", "kast", "role-impact"].includes(item.key) ? "%" : ""}</span></div>
           <div class="match-summary-stat-plot">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
-            ${points.map(entry => {
-            const ratio = Math.max(0.08, Math.min(1, Number(entry.value) / max));
-            const height = Math.round(ratio * 100);
-            return `<span class="match-summary-stat-bar${entry.current ? " is-current" : ""}" style="--bar-height:${height}%;--bar-ratio:${ratio.toFixed(4)}"><i></i><b>${escapeHtml(formatMatchSummaryStatValue(item.key, entry.value))}</b><em>${escapeHtml(entry.label)}</em></span>`;
-            }).join("")}
+            <div class="match-summary-stat-graph">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(polyline)}"></polyline></svg>
+              ${pointMarkup.map(entry => entry.bar).join("")}
+            </div>
+            <div class="match-summary-stat-labels">
+              ${pointMarkup.map(entry => entry.label).join("")}
+            </div>
           </div>
         </div>
       </div>
@@ -15263,6 +15276,11 @@ function openMatchSummaryModal(match = {}, options = {}) {
   showModalById(modal.id);
   return true;
 }
+
+globalThis.RankedCoachMatchSummary = Object.freeze({
+  open: openMatchSummaryModal,
+  render: renderMatchSummaryModal
+});
 
 function createMatchSummaryPreviewRecord() {
   const loadout = chooseBroadcastPreviewLoadout?.() || getBroadcastRollData?.({}) || {};
@@ -19251,6 +19269,7 @@ function teardownPersistentAccountRealtime() {
       console.warn("Supabase realtime unsubscribe failed", error);
     }
   }
+  publishRankedCoachSyncDiagnostics?.("realtime-disconnected");
 }
 
 function notifyPersistentAccountRealtimeIssue(status = "") {
@@ -19262,6 +19281,84 @@ function notifyPersistentAccountRealtimeIssue(status = "") {
     variant: "warning",
     durationMs: 4200
   });
+}
+
+const STORAGE_KEY_GUEST_SYNC_NOTICE = "rankedcoach_guest_sync_notice_v1";
+
+function getRankedCoachSyncDiagnostics() {
+  const profile = getActiveProfile?.();
+  const signedIn = Boolean(currentAuthUser?.id);
+  const activeUserId = String(currentAuthUser?.id || "").trim();
+  const realtimeSubscribed = Boolean(
+    signedIn
+    && persistentAccountRealtimeChannel
+    && persistentAccountRealtimeUserId
+    && persistentAccountRealtimeUserId === activeUserId
+  );
+  const hasRiotId = Boolean(String(profile?.riotId || "").trim());
+  return {
+    mode: signedIn ? "signed-in" : "guest",
+    signedIn,
+    guestMode: !signedIn,
+    activeUserId,
+    activeProfileId: String(profile?.id || activeProfileId || "").trim(),
+    riotId: String(profile?.riotId || "").trim(),
+    hasRiotId,
+    realtimeSubscribed,
+    crossDeviceRealtimeAvailable: Boolean(signedIn && realtimeSubscribed),
+    crossDeviceSyncRequiresSignIn: Boolean(!signedIn && hasRiotId),
+    backendSavePending: Boolean(backendSyncState.savePromise || backendSyncState.saveTimer),
+    lastBackendSync: (() => {
+      try {
+        return localStorage.getItem(STORAGE_KEY_LAST_BACKEND_SYNC) || "";
+      } catch (_error) {
+        return "";
+      }
+    })()
+  };
+}
+
+function publishRankedCoachSyncDiagnostics(reason = "state") {
+  const diagnostics = getRankedCoachSyncDiagnostics();
+  diagnostics.reason = reason;
+  diagnostics.updatedAt = nowISO();
+  globalThis.RankedCoachSyncDiagnosticsState = diagnostics;
+  globalThis.RankedCoachSyncDiagnostics = {
+    getMode: getRankedCoachSyncDiagnostics,
+    refresh: publishRankedCoachSyncDiagnostics
+  };
+  const root = document.documentElement;
+  const body = document.body;
+  if (root) {
+    root.dataset.syncMode = diagnostics.mode;
+    root.dataset.syncRealtime = diagnostics.realtimeSubscribed ? "active" : "inactive";
+  }
+  if (body) {
+    body.dataset.syncMode = diagnostics.mode;
+    body.dataset.syncRealtime = diagnostics.realtimeSubscribed ? "active" : "inactive";
+  }
+  return diagnostics;
+}
+
+function maybeShowGuestCrossDeviceSyncNotice(options = {}) {
+  const diagnostics = publishRankedCoachSyncDiagnostics("guest-riot-sync-check");
+  if (!diagnostics.crossDeviceSyncRequiresSignIn) return false;
+  if (options.silent) return true;
+
+  const key = `${STORAGE_KEY_GUEST_SYNC_NOTICE}:${diagnostics.activeProfileId || diagnostics.riotId || "profile"}`;
+  try {
+    if (sessionStorage.getItem(key)) return true;
+    sessionStorage.setItem(key, "1");
+  } catch (_error) {
+    // A blocked sessionStorage should never block Riot sync.
+  }
+
+  showToast("This Riot profile can refresh on this device in Guest mode. Sign in to keep desktop and mobile live-synced.", {
+    title: "Guest sync is local",
+    variant: "warning",
+    durationMs: 5600
+  });
+  return true;
 }
 
 function schedulePersistentAccountRealtimeReload(payload = {}) {
@@ -19306,7 +19403,10 @@ function schedulePersistentAccountRealtimeReload(payload = {}) {
 
 function subscribePersistentAccountRealtime(user = currentAuthUser) {
   const userId = String(user?.id || "").trim();
-  if (!userId || !supabaseClient?.channel) return;
+  if (!userId || !supabaseClient?.channel) {
+    publishRankedCoachSyncDiagnostics?.(userId ? "realtime-unavailable" : "guest-mode");
+    return;
+  }
   if (persistentAccountRealtimeChannel && persistentAccountRealtimeUserId === userId) return;
   teardownPersistentAccountRealtime();
   persistentAccountRealtimeUserId = userId;
@@ -19323,8 +19423,10 @@ function subscribePersistentAccountRealtime(user = currentAuthUser) {
     channel.subscribe(status => {
       if (status === "SUBSCRIBED") {
         persistentAccountRealtimeNoticeShown = false;
+        publishRankedCoachSyncDiagnostics?.("realtime-subscribed");
       } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
         notifyPersistentAccountRealtimeIssue(status);
+        publishRankedCoachSyncDiagnostics?.(`realtime-${String(status || "").toLowerCase()}`);
       }
     });
   } catch (error) {
@@ -47661,19 +47763,36 @@ const PREMIUM_PROFILE_BORDER_STYLES = [
 ];
 
 const PROFILE_AMBIENT_BORDER_STYLE_VALUES = Object.freeze(PREMIUM_PROFILE_BORDER_STYLES.map(style => style.value));
+const PROFILE_BASE_ANIMATED_BORDER_STYLE_VALUES = Object.freeze([
+  "standard",
+  "halo",
+  "double",
+  "split",
+  "notched",
+  "hex",
+  "diamond",
+  "shield",
+  "crown",
+  "blade",
+  "pulse",
+  "arc",
+  "spike",
+  "crosshair",
+  "vanguard"
+]);
 
 function isProfileAmbientBorderStyle(borderStyle = "standard") {
   return PROFILE_AMBIENT_BORDER_STYLE_VALUES.includes(String(borderStyle || "").trim().toLowerCase());
 }
 
-function isProfileBaseBorderStyle(borderStyle = "standard") {
-  const normalized = String(borderStyle || "standard").trim().toLowerCase();
-  return PROFILE_BORDER_STYLES.some(style => style.value === normalized);
+function isProfileBorderAnimatedByDefault(borderStyle = "standard") {
+  const normalized = normalizeProfileBorderStyle(borderStyle);
+  return isProfileAmbientBorderStyle(normalized) || PROFILE_BASE_ANIMATED_BORDER_STYLE_VALUES.includes(normalized);
 }
 
 function shouldAnimateProfileBorderStyle(borderStyle = "standard", profile = getActiveProfile()) {
   const normalized = normalizeProfileBorderStyle(borderStyle);
-  return Boolean(profile?.profileBorderRotate) || isProfileAmbientBorderStyle(normalized) || isProfileBaseBorderStyle(normalized);
+  return Boolean(profile?.profileBorderRotate) || isProfileBorderAnimatedByDefault(normalized);
 }
 
 const PROFILE_BANNER_STYLES = [
@@ -55417,6 +55536,11 @@ function refreshProfileSyncCountdown() {
       return;
     }
 
+    if (!currentAuthUser) {
+      setProfileSyncStatus("", "counting", "Manual Riot sync is available on this device. Sign in for desktop/mobile live sync.", false);
+      return;
+    }
+
     setProfileSyncStatus("", "counting", "Manual sync available. Auto sync will resume after the next schedule.", false);
     return;
   }
@@ -55567,6 +55691,8 @@ async function performRiotSync(options = {}) {
     clearRiotAutoSyncTimer();
     return null;
   }
+
+  maybeShowGuestCrossDeviceSyncNotice({ silent });
 
   if (!isRiotSyncFeatureEnabled() && !canUseDemoFallback) {
     setProfileSyncStatus("", "needs-setup", "Riot match sync is temporarily unavailable", false);
