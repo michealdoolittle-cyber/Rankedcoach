@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-data-integrity-editor-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-ranked-economy-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -4397,10 +4397,14 @@ function getMatchCore(match = {}) {
       : (window.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null);
   if (record) {
     const agent = record.agent || "Unknown";
+    const queueInfo = getMatchQueueInfo(match);
     return {
       agent,
       role: record.role || agentRoles?.[agent] || "Unknown",
       map: record.map || "Unknown",
+      queueId: queueInfo.id,
+      queueName: queueInfo.name,
+      queueModeType: queueInfo.modeType,
       result: record.result || "draw",
       kills: safeNumber(record.stats?.kills, safeNumber(match?.kills)),
       deaths: safeNumber(record.stats?.deaths, safeNumber(match?.deaths)),
@@ -4422,6 +4426,7 @@ function getMatchCore(match = {}) {
   const agent = metadata.agent || match.agent || "Unknown";
   const map = metadata.mapName || match.map || "Unknown";
   const result = metadata.result || match.result || "draw";
+  const queueInfo = getMatchQueueInfo(match);
   const kills = safeNumber(stats.kills?.value, safeNumber(match?.kills));
   const deaths = safeNumber(stats.deaths?.value, safeNumber(match?.deaths));
   const assists = safeNumber(stats.assists?.value, safeNumber(match?.assists));
@@ -4433,6 +4438,9 @@ function getMatchCore(match = {}) {
     agent,
     role: agentRoles?.[agent] || "Unknown",
     map,
+    queueId: queueInfo.id,
+    queueName: queueInfo.name,
+    queueModeType: queueInfo.modeType,
     result,
     kills,
     deaths,
@@ -4458,6 +4466,77 @@ function createPerformanceBucket(label) {
     hsTotal: 0,
     hsCount: 0
   };
+}
+
+function normalizeMatchQueueText(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+}
+
+function getMatchQueueInfo(match = {}) {
+  const record = match?.schemaVersion
+    ? match
+    : match?.matchRecord?.schemaVersion
+      ? match.matchRecord
+      : null;
+  const metadata = match?.metadata || {};
+  const recordQueue = record?.queue || {};
+  const metadataQueue = metadata?.queue || {};
+  const topQueue = match?.queue || {};
+  const id = normalizeMatchQueueText(
+    recordQueue?.id
+    || record?.queueId
+    || metadataQueue?.id
+    || metadata?.queueId
+    || metadata?.queueID
+    || topQueue?.id
+    || match?.queueId
+    || match?.queueID
+    || record?.mode
+    || metadata?.mode
+    || match?.mode
+    || ""
+  );
+  const name = normalizeMatchQueueText(
+    recordQueue?.name
+    || record?.queueName
+    || metadataQueue?.name
+    || metadata?.queueName
+    || topQueue?.name
+    || match?.queueName
+    || ""
+  );
+  const modeType = normalizeMatchQueueText(
+    recordQueue?.modeType
+    || record?.queueModeType
+    || metadataQueue?.modeType
+    || metadataQueue?.mode_type
+    || metadata?.queueModeType
+    || topQueue?.modeType
+    || topQueue?.mode_type
+    || match?.queueModeType
+    || match?.modeType
+    || ""
+  );
+  return {
+    id,
+    name,
+    modeType,
+    explicit: Boolean(id || name || modeType)
+  };
+}
+
+function isRankedPerformanceMatch(match = {}) {
+  if (shouldSuppressDemoFixtureStats(match)) return false;
+  const queue = getMatchQueueInfo(match);
+  if (!queue.explicit) return true;
+  return queue.id === "competitive"
+    || queue.name === "competitive"
+    || queue.id === "ranked"
+    || queue.name === "ranked";
 }
 
 function finalizePerformanceBucket(bucket = {}) {
@@ -8910,8 +8989,12 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     : Array.isArray(profile?.matches)
       ? profile.matches
       : (matches || []);
-  const derivedActs = getMatchSeasonLabels(sourceMatches, profile);
-  const latestMatchAct = getNewestRealMatchSeasonLabel(sourceMatches, profile);
+  const rankedOnly = options?.rankedOnly !== false;
+  const rankedPerformanceMatches = rankedOnly
+    ? sourceMatches.filter(isRankedPerformanceMatch)
+    : sourceMatches;
+  const derivedActs = getMatchSeasonLabels(rankedPerformanceMatches, profile);
+  const latestMatchAct = getNewestRealMatchSeasonLabel(rankedPerformanceMatches, profile);
   const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [])
     .map(normalizeValorantSeasonLabel)
     .filter(label => !isPlaceholderStatsActLabel(label));
@@ -8930,8 +9013,8 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     ? options.logs
     : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
   const actMatches = (shouldFilterByAct
-    ? sourceMatches.filter((match) => matchBelongsToSelectedStatsAct(match, selectedAct))
-    : sourceMatches).map(hydrateMatchDerivedData);
+    ? rankedPerformanceMatches.filter((match) => matchBelongsToSelectedStatsAct(match, selectedAct))
+    : rankedPerformanceMatches).map(hydrateMatchDerivedData);
   const actLogs = shouldFilterByAct
     ? sourceLogs.filter((entry) => normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedAct)
     : sourceLogs;
@@ -15165,16 +15248,22 @@ function renderMatchSummaryEconomyTab(record = {}) {
     }).join(" ");
   return `
     <section class="match-summary-panel">
-      <div class="match-summary-economy-average">Average ${Math.round(averageCredits).toLocaleString()} credits</div>
+      <div class="match-summary-economy-head">
+        <div class="match-summary-economy-average">Average ${Math.round(averageCredits).toLocaleString()} credits</div>
+        <div class="match-summary-economy-toggles" aria-label="Economy chart layers">
+          <button type="button" data-match-economy-toggle="bars" aria-pressed="true">Bars</button>
+          <button type="button" data-match-economy-toggle="trend" aria-pressed="true">Trend</button>
+        </div>
+      </div>
       <div class="match-summary-scroll-frame match-summary-economy-scroll">
         <div class="match-summary-economy-chart" aria-label="Round economy chart" data-economy-scale="${max}" style="--economy-round-count:${Math.max(1, creditLine.length)}">
           <div class="match-summary-economy-y-axis" aria-hidden="true"><span>${max.toLocaleString()}</span><span>${mid.toLocaleString()}</span><span>0</span></div>
           ${linePoints ? `<svg class="match-summary-economy-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="${escapeHtml(linePoints)}"></polyline></svg>` : ""}
-          ${creditLine.map(item => {
+          ${creditLine.map((item, index) => {
             const ratio = Number.isFinite(item.value) ? Math.min(max, Math.max(0, item.value)) / max : 0;
             const height = Number.isFinite(item.value) ? Math.max(6, Math.round(ratio * 100)) : 3;
             const creditLabel = Number.isFinite(item.value) ? `Credits: ${Math.round(item.value).toLocaleString()}` : "Credits: untracked";
-            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%" data-credit-tooltip="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
+            return `<span class="match-summary-credit-bar ${item.won ? "is-win" : "is-loss"}" style="--bar-height:${height}%;--economy-bar-index:${index}" data-credit-tooltip="${escapeHtml(creditLabel)}"><i><button type="button" class="match-summary-credit-diamond" aria-label="${escapeHtml(creditLabel)}" data-credit-tooltip="${escapeHtml(creditLabel)}"></button></i><em>${item.roundNum}</em></span>`;
           }).join("") || `<p class="match-summary-empty">No round economy values are available for this match.</p>`}
         </div>
       </div>
@@ -15237,7 +15326,7 @@ function renderMatchSummaryTimelineGroup(group = {}) {
                 <div class="match-summary-round-kills">${item.kills.length ? item.kills.slice(0, 5).map(() => renderMatchSummarySkullIcon("kill")).join("") : ""}</div>
                 <div class="match-summary-round-deaths">${item.deaths.length ? renderMatchSummarySkullIcon("death") : ""}</div>
               </div>
-              <em>${item.roundNum}</em>
+              <em class="match-summary-round-number ${item.empty ? "is-empty" : item.won ? "is-win" : "is-loss"}">${item.roundNum}</em>
             </div>
           `).join("")}
         </div>
@@ -15289,6 +15378,21 @@ function ensureMatchSummaryModal() {
       setMatchSummaryStat(stat.dataset.matchSummaryStat || "");
       return;
     }
+    const economyToggle = event.target.closest?.("[data-match-economy-toggle]");
+    if (economyToggle) {
+      event.preventDefault();
+      event.stopPropagation();
+      const chart = economyToggle.closest(".match-summary-tab-panel")?.querySelector(".match-summary-economy-chart")
+        || modal.querySelector(".match-summary-economy-chart");
+      const layer = economyToggle.dataset.matchEconomyToggle || "";
+      const isPressed = economyToggle.getAttribute("aria-pressed") !== "false";
+      const nextPressed = !isPressed;
+      economyToggle.setAttribute("aria-pressed", nextPressed ? "true" : "false");
+      economyToggle.classList.toggle("is-off", !nextPressed);
+      if (chart && layer === "bars") chart.classList.toggle("is-economy-bars-hidden", !nextPressed);
+      if (chart && layer === "trend") chart.classList.toggle("is-economy-trend-hidden", !nextPressed);
+      return;
+    }
     const creditDiamond = event.target.closest?.(".match-summary-credit-diamond");
     if (creditDiamond) {
       event.preventDefault();
@@ -15329,6 +15433,14 @@ function setMatchSummaryTab(tabName = "stats") {
   modal.querySelectorAll("[data-match-summary-panel]").forEach(panel => {
     panel.hidden = panel.dataset.matchSummaryPanel !== next;
   });
+  if (next === "economy" && !document.body.classList.contains("access-reduced-motion")) {
+    const chart = modal.querySelector(".match-summary-economy-chart");
+    if (chart) {
+      chart.classList.remove("is-economy-animating");
+      void chart.offsetWidth;
+      chart.classList.add("is-economy-animating");
+    }
+  }
 }
 
 function setMatchSummaryStat(statKey = "") {
@@ -15602,11 +15714,12 @@ function onMatchSaved(record, options = {}) {
 }
 
 function getCanonicalMatchRecordCount() {
-  return window.RankedCoachMatchRecord?.getRuntimeRecords?.({
+  const records = window.RankedCoachMatchRecord?.getRuntimeRecords?.({
     matches,
     logEntries: getProfileLogEntries(activeProfileId, { authoredOnly: true }),
     profile: getActiveProfile()
-  })?.length || 0;
+  }) || [];
+  return records.filter(isRankedPerformanceMatch).length;
 }
 
 const COACH_READINESS_UNLOCKS = [
@@ -15622,8 +15735,9 @@ function getCoachReadinessModel() {
   const authoredLogCount = getProfileLogEntries(activeProfileId, { authoredOnly: true }).length;
   const profileMatches = Array.isArray(profile?.matches) ? profile.matches : [];
   const currentSeasonLabel = normalizeValorantSeasonLabel(profile?.trackerAnalytics?.currentAct || CURRENT_VALORANT_SEASON_LABEL);
-  const currentSeasonMatchCount = profileMatches.filter(match => matchBelongsToSelectedStatsAct(match, currentSeasonLabel)).length;
-  const recentMatches = getSortedMatches(profileMatches).slice(-20);
+  const rankedProfileMatches = profileMatches.filter(isRankedPerformanceMatch);
+  const currentSeasonMatchCount = rankedProfileMatches.filter(match => matchBelongsToSelectedStatsAct(match, currentSeasonLabel)).length;
+  const recentMatches = getSortedMatches(rankedProfileMatches).slice(-20);
   const completeMatches = recentMatches.filter(match => {
     const core = getMatchCore(match);
     return core.map && core.map !== "Unknown"
@@ -49223,8 +49337,9 @@ function getNewestRealMatchSeasonLabel(matchList = [], profile = getActiveProfil
 
 function getStatsSelectedActLabel(profile = getActiveProfile(), options = {}) {
   const analytics = profile?.trackerAnalytics || null;
-  const derivedActs = getMatchSeasonLabels(profile?.matches || [], profile);
-  const latestMatchAct = getNewestRealMatchSeasonLabel(profile?.matches || [], profile);
+  const rankedMatches = (Array.isArray(profile?.matches) ? profile.matches : []).filter(isRankedPerformanceMatch);
+  const derivedActs = getMatchSeasonLabels(rankedMatches, profile);
+  const latestMatchAct = getNewestRealMatchSeasonLabel(rankedMatches, profile);
   const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : [])
     .map(normalizeValorantSeasonLabel)
     .filter(label => !isPlaceholderStatsActLabel(label));
@@ -57530,6 +57645,7 @@ function renderStatsRoleProgress() {
     ? matches
     : (Array.isArray(activeProfile?.matches) ? activeProfile.matches : []);
   getSortedMatches(sourceMatches)
+    .filter(isRankedPerformanceMatch)
     .filter(match => !selectedAct || matchBelongsToSelectedStatsAct(match, selectedAct))
     .forEach((match) => {
     const core = getMatchCore(match);

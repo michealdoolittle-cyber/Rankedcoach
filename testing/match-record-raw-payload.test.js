@@ -29,7 +29,8 @@ const henrikPayload = {
       match_id: "raw-henrik-match-1",
       started_at: "2026-08-03T01:23:45.000Z",
       season: { id: "season-2026-act-4", short: "E11A4" },
-      map: { name: "Lotus" }
+      map: { name: "Lotus" },
+      queue: { id: "competitive", name: "Competitive", mode_type: "Standard" }
     },
     players: [
       {
@@ -107,14 +108,19 @@ assert.equal(record.source, "henrik_sync");
 assert.deepEqual(record.rawHenrikPayload, henrikPayload, "raw Henrik payload should be stored intact");
 assert.equal(record.rawPayloadComplete, true, "complete raw payload should be marked complete");
 assert.equal(Math.round(record.stats.hsPercent), 33, "HS percent should be derived from shot-location stats");
+assert.equal(record.queue.id, "competitive", "Henrik queue id should be captured on normalized records");
+assert.equal(record.queue.name, "Competitive", "Henrik queue name should be captured on normalized records");
+assert.equal(record.queue.modeType, "Standard", "Henrik queue mode type should be captured on normalized records");
 
 const staleRecord = {
   ...record,
   stats: { ...record.stats, hsPercent: null },
+  queue: { id: null, name: null, modeType: null },
   rawHenrikPayload: record.rawHenrikPayload
 };
 const rederived = MatchRecord.rederiveFromStoredRawHenrikPayload(staleRecord, { puuid });
 assert.equal(Math.round(rederived.stats.hsPercent), 33, "rederive should recover HS from stored raw payload without a network fetch");
+assert.equal(rederived.queue.id, "competitive", "raw-payload rederive should backfill missing queue id");
 assert.equal(rederived.rawPayloadComplete, true);
 
 const legacy = MatchRecord.toLegacyMatch(MatchRecord.emptyRecord({

@@ -37,6 +37,26 @@
     return RESULT_VALUES.has(text) ? text : "unknown";
   }
 
+  function normalizeQueueInfo(...sources) {
+    const output = {
+      id: null,
+      name: null,
+      modeType: null
+    };
+    sources.forEach((source) => {
+      if (!source) return;
+      if (typeof source === "string") {
+        output.id ||= cleanString(source);
+        return;
+      }
+      if (typeof source !== "object") return;
+      output.id ||= cleanString(source.id || source.queueId || source.queueID || source.mode || source.modeId || source.uuid);
+      output.name ||= cleanString(source.name || source.queueName || source.displayName || source.localizedName);
+      output.modeType ||= cleanString(source.modeType || source.mode_type || source.queueModeType || source.type);
+    });
+    return output;
+  }
+
   function formatHenrikActLabel(value = "") {
     const label = cleanString(value, "");
     const normalized = label.toLowerCase();
@@ -215,6 +235,15 @@
   function emptyRecord(overrides = {}) {
     const createdAt = cleanString(overrides.createdAt, nowISO());
     const playedAt = cleanString(overrides.playedAt, createdAt);
+    const queue = normalizeQueueInfo(
+      overrides.queue,
+      overrides.metadata?.queue,
+      {
+        id: overrides.queueId || overrides.queueID || overrides.mode || overrides.modeId,
+        name: overrides.queueName,
+        modeType: overrides.queueModeType || overrides.modeType
+      }
+    );
     return {
       schemaVersion: SCHEMA_VERSION,
       id: cleanString(overrides.id, uuid()),
@@ -227,6 +256,7 @@
       agent: cleanString(overrides.agent),
       role: cleanString(overrides.role),
       map: cleanString(overrides.map),
+      queue,
       result: normalizeResult(overrides.result),
       isPlacementMatch: overrides.isPlacementMatch === true,
       stats: {
@@ -359,6 +389,11 @@
       agent: metadata.agent || match.agent,
       map: metadata.mapName || match.map,
       result: metadata.result || match.result,
+      queue: canonical.queue || match.queue || metadata.queue || {
+        id: canonical.queueId || match.queueId || match.queueID || metadata.queueId || metadata.queueID || canonical.mode || match.mode || metadata.mode,
+        name: canonical.queueName || match.queueName || metadata.queueName,
+        modeType: canonical.queueModeType || match.queueModeType || metadata.queueModeType || canonical.modeType || match.modeType || metadata.modeType
+      },
       isPlacementMatch: match.isPlacementMatch === true
         || metadata.isPlacementMatch === true
         || canonical.isPlacementMatch === true,
@@ -451,6 +486,11 @@
       agent: match.agent,
       role: match.role,
       map: match.map || match.mapName,
+      queue: match.queue || match.metadata?.queue || {
+        id: match.queueId || match.queueID || match.mode || match.modeId,
+        name: match.queueName,
+        modeType: match.queueModeType || match.modeType
+      },
       result: match.result,
       isPlacementMatch: match.isPlacementMatch === true,
       stats: {
@@ -616,6 +656,9 @@
       agent: context.agent || parsedPlayer.character || player.characterId,
       role: context.role,
       map: context.map || parsed.metadata?.map || raw.matchInfo?.mapId,
+      queue: parsed.metadata?.queue || {
+        id: raw.matchInfo?.queueID || raw.matchInfo?.queueId || parsed.metadata?.mode
+      },
       result: team.won === true ? "win" : team.won === false ? "loss" : "unknown",
       kills: player.stats?.kills,
       deaths: player.stats?.deaths,
@@ -784,6 +827,11 @@
       act: formatHenrikActLabel(seasonShort),
       agent: player.agent?.name,
       map: match.metadata?.map?.name,
+      queue: {
+        id: match.metadata?.queue?.id,
+        name: match.metadata?.queue?.name,
+        modeType: match.metadata?.queue?.mode_type
+      },
       result: team.won === true ? "win" : team.won === false ? "loss" : "unknown",
       isPlacementMatch,
       kills: stats.kills,
@@ -879,6 +927,10 @@
       createdAt: normalized.playedAt || normalized.createdAt,
       agent: normalized.agent || "Unknown",
       map: normalized.map || "Unknown",
+      queue: normalized.queue,
+      queueId: normalized.queue?.id,
+      queueName: normalized.queue?.name,
+      queueModeType: normalized.queue?.modeType,
       matchRecord: normalized,
       rawPayloadComplete: normalized.rawPayloadComplete === true,
       rawPayloadStoredAt: normalized.rawPayloadStoredAt,
@@ -895,6 +947,10 @@
         source: normalized.source,
         season: normalized.season,
         act: normalized.act,
+        queue: normalized.queue,
+        queueId: normalized.queue?.id,
+        queueName: normalized.queue?.name,
+        queueModeType: normalized.queue?.modeType,
         isPlacementMatch: normalized.isPlacementMatch === true,
         rank: normalized.rank.rank,
         rrVerified: normalized.rank.verified === true,

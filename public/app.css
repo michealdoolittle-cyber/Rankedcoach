@@ -59487,6 +59487,33 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   font-style:normal;
 }
 
+#matchSummaryModal .match-summary-round-number{
+  display:inline-grid;
+  place-items:center;
+  min-width:18px;
+  height:17px;
+  padding:0 4px;
+  border-radius:999px;
+  color:var(--text-main, #f8fafc);
+  background:rgba(15,23,42,.76);
+}
+
+#matchSummaryModal .match-summary-round-number.is-win{
+  background:rgba(34,197,94,.82);
+  color:#ecfdf5;
+}
+
+#matchSummaryModal .match-summary-round-number.is-loss{
+  background:rgba(255,70,85,.86);
+  color:#fff1f2;
+}
+
+#matchSummaryModal .match-summary-round-number.is-empty{
+  opacity:.38;
+  background:rgba(71,85,105,.35);
+  color:rgba(226,232,240,.74);
+}
+
 #matchSummaryModal .match-summary-skull{
   display:inline-grid;
   place-items:center;
@@ -59890,6 +59917,45 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   text-transform:uppercase;
 }
 
+#matchSummaryModal .match-summary-economy-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#matchSummaryModal .match-summary-economy-toggles{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+#matchSummaryModal .match-summary-economy-toggles button{
+  min-height:28px;
+  padding:0 10px;
+  border:1px solid rgba(94,234,212,.42);
+  border-radius:999px;
+  background:rgba(8,145,178,.24);
+  color:var(--gamesense-cool, #5eead4);
+  font:900 9px/1 var(--font-display, "Rajdhani", sans-serif);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+#matchSummaryModal .match-summary-economy-toggles button[aria-pressed="true"]{
+  border-color:rgba(255,70,85,.9);
+  background:linear-gradient(135deg, rgba(255,70,85,.72), rgba(8,145,178,.44));
+  color:#fff;
+  box-shadow:0 0 14px rgba(255,70,85,.22);
+}
+
+#matchSummaryModal .match-summary-economy-toggles button.is-off,
+#matchSummaryModal .match-summary-economy-toggles button[aria-pressed="false"]{
+  border-color:rgba(148,163,184,.25);
+  background:rgba(15,23,42,.72);
+  color:var(--text-muted, #a8b3c7);
+}
+
 #matchSummaryModal .match-summary-economy-y-axis{
   position:absolute;
   left:10px;
@@ -59929,23 +59995,23 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
   flex:1 1 0;
   min-width:10px;
   height:100%;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  align-items:center;
-  gap:4px;
+  display:block;
+  overflow:visible;
 }
 
 #matchSummaryModal .match-summary-credit-bar i{
-  position:relative;
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
   display:block;
   width:100%;
   height:var(--bar-height, 8%);
   min-height:8px;
   max-height:100%;
-  flex:0 0 var(--bar-height, 8%);
   border-radius:2px 2px 0 0;
   background:linear-gradient(180deg, rgba(34,197,94,.9), rgba(16,185,129,.38));
+  transform-origin:50% 100%;
 }
 
 #matchSummaryModal .match-summary-credit-bar.is-loss i{
@@ -59953,9 +60019,36 @@ body.access-reduced-motion :is(.profile-avatar-ring,.mobile-bottom-avatar-btn).h
 }
 
 #matchSummaryModal .match-summary-credit-bar em{
+  position:absolute;
+  left:50%;
+  top:calc(100% + 9px);
+  transform:translateX(-50%);
   color:var(--text-muted, #a8b3c7);
   font:900 9px/1 var(--font-display, "Rajdhani", sans-serif);
   font-style:normal;
+}
+
+#matchSummaryModal .match-summary-economy-chart.is-economy-bars-hidden .match-summary-credit-bar i{
+  opacity:0;
+  pointer-events:none;
+}
+
+#matchSummaryModal .match-summary-economy-chart.is-economy-bars-hidden .match-summary-credit-diamond{
+  display:none;
+}
+
+#matchSummaryModal .match-summary-economy-chart.is-economy-trend-hidden .match-summary-economy-line{
+  opacity:0;
+}
+
+body:not(.access-reduced-motion) #matchSummaryModal.active .match-summary-economy-chart.is-economy-animating .match-summary-credit-bar i{
+  animation:match-summary-economy-grow .42s cubic-bezier(.2,.85,.2,1) both;
+  animation-delay:calc(var(--economy-bar-index, 0) * 48ms);
+}
+
+@keyframes match-summary-economy-grow{
+  from{transform:scaleY(0);opacity:.35;}
+  to{transform:scaleY(1);opacity:1;}
 }
 
 #matchSummaryModal .match-summary-credit-diamond{
@@ -60800,6 +60893,14 @@ body.is-mobile-layout #matchSummaryModal .match-summary-credit-diamond:active,
 body.is-mobile-layout #matchSummaryModal .match-summary-credit-diamond:focus-visible{
   transform:translate(-50%, -50%) !important;
   animation:none !important;
+}
+
+/* Keep split/notched live avatar containers still; their SVG frame strokes are
+   the only animated painter. This prevents old parent-ring keyframes from
+   overriding the canonical mobile/desktop SVG frame parity rules. */
+html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated:is(.border-split,.border-notched){
+  animation:none !important;
+  animation-name:none !important;
 }
 
 @media (max-width:760px){
