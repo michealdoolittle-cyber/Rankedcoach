@@ -96,4 +96,24 @@ assert.equal("roundByRound" in compacted[0].matches[0].matchRecord, false);
 assert.equal(compacted[0].matches.length, 1);
 assert.equal(policy.compactProfilesForLocalCache(compacted, 3)[0].matches.length, 0);
 
-console.log("Persistence policy checks passed: scoped IDs, archive IDs, row deduplication, bounded batches, profile consolidation, and compact local caches.");
+const fullCloudCandidate = [{
+  id: "cloud-profile",
+  themeKey: "radiant-focus",
+  matches: Array.from({ length: 3 }, (_item, index) => ({
+    id: `match-${index}`,
+    matchRecord: {
+      rawHenrikPayload: { payload: "x".repeat(2500) },
+      roundByRound: [{ round: 1, kills: [{ weapon: "Vandal" }] }]
+    }
+  }))
+}];
+const cloudCompacted = policy.compactProfilesForCloudAccountState(fullCloudCandidate);
+assert.equal(cloudCompacted[0].themeKey, "radiant-focus");
+assert.deepEqual(cloudCompacted[0].matches, []);
+assert.equal(JSON.stringify(cloudCompacted).includes("rawHenrikPayload"), false);
+assert.ok(
+  policy.measureJsonPayloadBytes(fullCloudCandidate) > policy.measureJsonPayloadBytes(cloudCompacted),
+  "cloud account state should be smaller than full match-bearing profiles"
+);
+
+console.log("Persistence policy checks passed: scoped IDs, archive IDs, row deduplication, bounded batches, profile consolidation, compact local caches, and lightweight cloud account state.");

@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-data-integrity-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-vip-save-fix-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -19090,6 +19090,8 @@ const backendSyncState = {
   pendingSaveReason: "",
   lastSaveReason: "",
   lastError: null,
+  lastSaveMetrics: null,
+  lastSaveFailures: [],
   lastLocalSaveAt: 0
 };
 
@@ -19097,6 +19099,8 @@ let persistentAccountRealtimeChannel = null;
 let persistentAccountRealtimeUserId = "";
 let persistentAccountRealtimeReloadTimer = 0;
 let persistentAccountRealtimeNoticeShown = false;
+let persistentAccountSaveNoticeLastShownAt = 0;
+let persistentAccountSaveRetryTimer = 0;
 let rankedCoachAppUpdateCheckTimer = 0;
 let rankedCoachAppUpdateCheckInFlight = false;
 let rankedCoachAppUpdateNoticeShown = false;
@@ -19325,17 +19329,163 @@ function saveLogEntries(options = {}) {
   }
 }
 
-function serializePersistentAccountState() {
+function compactProfilesForCloudAccountState(source = []) {
+  const normalized = (Array.isArray(source) ? source : []).map(normalizeProfileRecord);
+  return globalThis.RankedCoachPersistencePolicy?.compactProfilesForCloudAccountState?.(normalized)
+    || normalized.map(profile => ({ ...profile, matches: [] }));
+}
+
+function serializePersistentAccountState(options = {}) {
+  const normalizedProfiles = (profiles || []).map(normalizeProfileRecord);
   return {
     schemaVersion: 1,
     savedAt: nowISO(),
     activeProfileId,
-    profiles: (profiles || []).map(normalizeProfileRecord),
+    profiles: options.cloudAccountState ? compactProfilesForCloudAccountState(normalizedProfiles) : normalizedProfiles,
     logEntries: logEntries || [],
     insightFeedbackEntries: insightFeedbackEntries || [],
     themeBuilderState: THEME_BUILDER_LAUNCH_LOCKED ? {} : (typeof themeBuilderState !== "undefined" ? themeBuilderState : {}),
     themeBuilderUiState: THEME_BUILDER_LAUNCH_LOCKED ? {} : (typeof themeBuilderUiState !== "undefined" ? themeBuilderUiState : {}),
     currentThemeKey: getActiveProfile()?.themeKey || getCurrentThemeBuilderThemeKey?.() || "default"
+  };
+}
+
+function measurePersistentJsonPayloadBytes(value) {
+  const policyMeasure = globalThis.RankedCoachPersistencePolicy?.measureJsonPayloadBytes;
+  if (typeof policyMeasure === "function") return policyMeasure(value);
+  let json = "";
+  try {
+    json = JSON.stringify(value ?? null);
+  } catch (_error) {
+    return 0;
+  }
+  if (typeof TextEncoder === "function") {
+    try {
+      return new TextEncoder().encode(json).length;
+    } catch (_error) {
+      return json.length;
+    }
+  }
+  return json.length;
+}
+
+function summarizePersistentAccountSaveMetrics(input = {}) {
+  const state = input.state || {};
+  const fullState = input.fullState || state;
+  const activeProfile = input.activeProfile || null;
+  const compactActiveProfile = input.compactActiveProfile || null;
+  const logRows = Array.isArray(input.logRows) ? input.logRows : [];
+  const matchRows = Array.isArray(input.matchRows) ? input.matchRows : [];
+  const fullProfilesBytes = measurePersistentJsonPayloadBytes(fullState.profiles || []);
+  const cloudProfilesBytes = measurePersistentJsonPayloadBytes(state.profiles || []);
+  return {
+    reason: input.reason || "state",
+    profiles: Array.isArray(state.profiles) ? state.profiles.length : 0,
+    logRows: logRows.length,
+    matchRows: matchRows.length,
+    fullProfilesBytes,
+    cloudProfilesBytes,
+    cloudProfilesReductionBytes: Math.max(0, fullProfilesBytes - cloudProfilesBytes),
+    activeProfileBytes: measurePersistentJsonPayloadBytes(activeProfile || {}),
+    compactActiveProfileBytes: measurePersistentJsonPayloadBytes(compactActiveProfile || {}),
+    appStatePayloadBytes: measurePersistentJsonPayloadBytes({
+      active_profile_id: activeProfileId || null,
+      profiles_json: state.profiles || [],
+      log_entries_json: state.logEntries || [],
+      theme_builder_json: state.themeBuilderState || {},
+      theme_builder_ui_json: state.themeBuilderUiState || {},
+      current_theme_key: state.currentThemeKey || "default"
+    }),
+    logRowsPayloadBytes: measurePersistentJsonPayloadBytes(logRows),
+    matchRowsPayloadBytes: measurePersistentJsonPayloadBytes(matchRows)
+  };
+}
+
+function getPersistentSupabaseErrorDetails(error, extra = {}) {
+  const normalized = error && typeof error === "object" ? error : {};
+  return {
+    ...extra,
+    name: normalized.name || "",
+    code: normalized.code || normalized.statusCode || "",
+    message: normalized.message || String(error || "Unknown Supabase error"),
+    details: normalized.details || "",
+    hint: normalized.hint || "",
+    status: normalized.status || normalized.statusCode || normalized.cause?.status || "",
+    statusText: normalized.statusText || normalized.cause?.statusText || ""
+  };
+}
+
+function notifyPersistentAccountSaveIssue(details = {}) {
+  const now = Date.now();
+  if (now - persistentAccountSaveNoticeLastShownAt < 30000) return;
+  persistentAccountSaveNoticeLastShownAt = now;
+  showToast("RankedCoach kept your changes locally and will keep retrying cloud save in the background.", {
+    title: "Cloud save delayed",
+    variant: "warning",
+    durationMs: 4800
+  });
+}
+
+function schedulePersistentAccountSaveRetry(reason = "cloud-save-retry") {
+  if (persistentAccountSaveRetryTimer) return;
+  persistentAccountSaveRetryTimer = window.setTimeout(() => {
+    persistentAccountSaveRetryTimer = 0;
+    queuePersistentAccountSave(reason);
+  }, 12000);
+}
+
+function reportPersistentAccountSaveFailure(label, error, extra = {}) {
+  const details = getPersistentSupabaseErrorDetails(error, extra);
+  backendSyncState.lastError = error || details;
+  backendSyncState.lastSaveFailures = [
+    ...(Array.isArray(backendSyncState.lastSaveFailures) ? backendSyncState.lastSaveFailures : []),
+    details
+  ].slice(-12);
+  console.warn(label, details);
+  notifyPersistentAccountSaveIssue(details);
+  publishRankedCoachSyncDiagnostics?.("cloud-save-failed");
+  return details;
+}
+
+function mergePersistentRowsById(left = [], right = []) {
+  const merged = new Map();
+  [...(Array.isArray(left) ? left : []), ...(Array.isArray(right) ? right : [])].forEach((item, index) => {
+    if (!item || typeof item !== "object") return;
+    const key = String(item.id || item.matchId || item.metadata?.matchId || `row-${index}`).trim();
+    merged.set(key, item);
+  });
+  return [...merged.values()];
+}
+
+function mergePersistentAccountStateWithNormalizedTables(appState = {}, normalizedState = null) {
+  if (!normalizedState || typeof normalizedState !== "object") return appState;
+  const appProfiles = Array.isArray(appState.profiles) ? appState.profiles : [];
+  const normalizedProfiles = Array.isArray(normalizedState.profiles) ? normalizedState.profiles : [];
+  const normalizedById = new Map(normalizedProfiles.map(profile => [String(profile?.id || ""), profile]));
+  const seenProfileIds = new Set();
+  const mergedProfiles = appProfiles.map(profile => {
+    const profileId = String(profile?.id || "");
+    seenProfileIds.add(profileId);
+    const recovered = normalizedById.get(profileId);
+    if (!recovered) return profile;
+    const recoveredMatches = Array.isArray(recovered.matches) ? recovered.matches : [];
+    const appMatches = Array.isArray(profile.matches) ? profile.matches : [];
+    return {
+      ...recovered,
+      ...profile,
+      matches: recoveredMatches.length ? recoveredMatches : appMatches
+    };
+  });
+  normalizedProfiles.forEach(profile => {
+    const profileId = String(profile?.id || "");
+    if (!profileId || seenProfileIds.has(profileId)) return;
+    mergedProfiles.push(profile);
+  });
+  return {
+    ...appState,
+    activeProfileId: appState.activeProfileId || normalizedState.activeProfileId,
+    profiles: mergedProfiles.length ? mergedProfiles : normalizedProfiles,
+    logEntries: mergePersistentRowsById(appState.logEntries, normalizedState.logEntries)
   };
 }
 
@@ -19585,6 +19735,10 @@ function getRankedCoachSyncDiagnostics() {
     crossDeviceRealtimeAvailable: Boolean(signedIn && realtimeSubscribed),
     crossDeviceSyncRequiresSignIn: Boolean(!signedIn && hasRiotId),
     backendSavePending: Boolean(backendSyncState.savePromise || backendSyncState.saveTimer),
+    lastBackendSaveMetrics: backendSyncState.lastSaveMetrics || null,
+    lastBackendSaveFailures: Array.isArray(backendSyncState.lastSaveFailures)
+      ? backendSyncState.lastSaveFailures.slice(-4)
+      : [],
     lastBackendSync: (() => {
       try {
         return localStorage.getItem(STORAGE_KEY_LAST_BACKEND_SYNC) || "";
@@ -19816,41 +19970,73 @@ async function performPersistentAccountStateSave(reason = "state") {
   });
 
   const state = serializePersistentAccountState();
+  const cloudState = serializePersistentAccountState({ cloudAccountState: true });
   const active = getActiveProfile();
+  const compactActiveProfile = active ? compactProfilesForCloudAccountState([active])[0] || null : null;
+  const logRows = buildLogRowsForSupabase(user.id);
+  const matchRows = buildMatchRowsForSupabase(user.id);
+  const saveMetrics = summarizePersistentAccountSaveMetrics({
+    reason,
+    fullState: state,
+    state: cloudState,
+    activeProfile: active,
+    compactActiveProfile,
+    logRows,
+    matchRows
+  });
+  backendSyncState.lastSaveMetrics = saveMetrics;
+  backendSyncState.lastSaveFailures = [];
+  let allWritesSaved = true;
 
   const { error: appStateError } = await supabaseClient
     .from("vip_app_state")
     .upsert({
       user_id: user.id,
       active_profile_id: activeProfileId || null,
-      profiles_json: state.profiles,
-      log_entries_json: state.logEntries,
-      theme_builder_json: state.themeBuilderState,
-      theme_builder_ui_json: state.themeBuilderUiState,
-      current_theme_key: state.currentThemeKey,
+      profiles_json: cloudState.profiles,
+      log_entries_json: cloudState.logEntries,
+      theme_builder_json: cloudState.themeBuilderState,
+      theme_builder_ui_json: cloudState.themeBuilderUiState,
+      current_theme_key: cloudState.currentThemeKey,
       last_save_reason: reason,
       updated_at: nowISO()
     }, { onConflict: "user_id" });
 
   if (appStateError) {
-    backendSyncState.lastError = appStateError;
-    console.warn("Supabase app-state save failed", appStateError);
-    return;
+    allWritesSaved = false;
+    reportPersistentAccountSaveFailure("Supabase app-state save failed", appStateError, {
+      table: "vip_app_state",
+      operation: "upsert",
+      reason,
+      appStatePayloadBytes: saveMetrics.appStatePayloadBytes,
+      cloudProfilesBytes: saveMetrics.cloudProfilesBytes,
+      fullProfilesBytes: saveMetrics.fullProfilesBytes,
+      cloudProfilesReductionBytes: saveMetrics.cloudProfilesReductionBytes
+    });
   }
 
   if (active) {
-    await supabaseClient
+    const { error: profileError } = await supabaseClient
       .from("users_profiles")
       .upsert({
         user_id: user.id,
         riot_id: active.riotId || null,
         region: active.region || "NA",
-        profile_json: active,
+        profile_json: compactActiveProfile || active,
         updated_at: nowISO()
       }, { onConflict: "user_id" });
+    if (profileError) {
+      allWritesSaved = false;
+      reportPersistentAccountSaveFailure("Supabase profile save failed", profileError, {
+        table: "users_profiles",
+        operation: "upsert",
+        reason,
+        profilePayloadBytes: saveMetrics.compactActiveProfileBytes,
+        fullProfilePayloadBytes: saveMetrics.activeProfileBytes
+      });
+    }
   }
 
-  const logRows = buildLogRowsForSupabase(user.id);
   let logRowsSaved = true;
   if (logRows.length) {
     const { error } = await supabaseClient
@@ -19858,24 +20044,46 @@ async function performPersistentAccountStateSave(reason = "state") {
       .upsert(logRows, { onConflict: "id" });
     if (error) {
       logRowsSaved = false;
-      console.warn("Supabase log save failed", error);
+      allWritesSaved = false;
+      reportPersistentAccountSaveFailure("Supabase log save failed", error, {
+        table: "reflection_logs",
+        operation: "upsert",
+        reason,
+        rowCount: logRows.length,
+        logRowsPayloadBytes: saveMetrics.logRowsPayloadBytes
+      });
     }
   }
   if (logRowsSaved) await reconcilePersistentLogRows(user.id, logRows);
 
-  const matchRows = buildMatchRowsForSupabase(user.id);
-  const matchRowsSaved = await upsertPersistentMatchRows(matchRows);
+  const matchRowsSaved = await upsertPersistentMatchRows(matchRows, {
+    reason,
+    matchRowsPayloadBytes: saveMetrics.matchRowsPayloadBytes
+  });
   if (!matchRowsSaved) {
-    return;
+    allWritesSaved = false;
   }
   // match_snapshots is the permanent archive. Do not prune older rows just
   // because the current client profile window got compacted or Henrik's
   // rolling retention stopped returning a match later.
 
+  if (!allWritesSaved) {
+    publishRankedCoachSyncDiagnostics?.("cloud-save-partial");
+    schedulePersistentAccountSaveRetry("cloud-save-retry");
+    return false;
+  }
+
+  if (persistentAccountSaveRetryTimer) {
+    window.clearTimeout(persistentAccountSaveRetryTimer);
+    persistentAccountSaveRetryTimer = 0;
+  }
   localStorage.setItem(STORAGE_KEY_LAST_BACKEND_SYNC, nowISO());
   backendSyncState.lastError = null;
+  backendSyncState.lastSaveFailures = [];
   backendSyncState.lastLocalSaveAt = Date.now();
   markAccountStateLoadComplete();
+  publishRankedCoachSyncDiagnostics?.("cloud-save-complete");
+  return true;
 }
 
 async function deletePersistentLogEntry(id) {
@@ -19892,7 +20100,7 @@ async function deletePersistentLogEntry(id) {
   if (error) console.warn("Supabase log delete failed", error);
 }
 
-async function upsertPersistentMatchRows(rows = []) {
+async function upsertPersistentMatchRows(rows = [], diagnostics = {}) {
   const batches = globalThis.RankedCoachPersistencePolicy?.chunkRows?.(rows, 6)
     || (rows.length ? [rows] : []);
   for (let index = 0; index < batches.length; index += 1) {
@@ -19900,15 +20108,13 @@ async function upsertPersistentMatchRows(rows = []) {
       .from("match_snapshots")
       .upsert(batches[index], { onConflict: "id" });
     if (error) {
-      backendSyncState.lastError = error;
-      console.warn("Supabase match save failed", {
+      reportPersistentAccountSaveFailure("Supabase match save failed", error, {
+        table: "match_snapshots",
+        operation: "upsert",
         batch: index + 1,
         batchCount: batches.length,
         rowCount: batches[index].length,
-        code: error.code || "",
-        message: error.message || "",
-        details: error.details || "",
-        hint: error.hint || ""
+        ...diagnostics
       });
       return false;
     }
@@ -20047,33 +20253,43 @@ async function loadNormalizedPersistentAccountState(user) {
 async function loadPersistentAccountState(user) {
   if (!user || !supabaseClient) return { shouldSave: false, loadedRemote: false };
 
-  const { data, error } = await supabaseClient
+  const appStatePromise = supabaseClient
     .from("vip_app_state")
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
+  const normalizedStatePromise = loadNormalizedPersistentAccountState(user).catch(normalizedError => {
+    backendSyncState.lastError = normalizedError;
+    console.warn("Supabase normalized account recovery failed", getPersistentSupabaseErrorDetails(normalizedError, {
+      table: "normalized_account_state",
+      operation: "select"
+    }));
+    return null;
+  });
+
+  const [{ data, error }, normalizedState] = await Promise.all([appStatePromise, normalizedStatePromise]);
 
   if (error) {
     backendSyncState.lastError = error;
-    console.warn("Supabase app-state load failed", error);
+    console.warn("Supabase app-state load failed", getPersistentSupabaseErrorDetails(error, {
+      table: "vip_app_state",
+      operation: "select"
+    }));
   }
 
   if (data) {
-    applyPersistentAccountState({
+    const mergedState = mergePersistentAccountStateWithNormalizedTables({
       activeProfileId: data.active_profile_id,
       profiles: data.profiles_json,
       logEntries: Array.isArray(data.log_entries_json) ? data.log_entries_json : [],
       themeBuilderState: data.theme_builder_json,
       themeBuilderUiState: data.theme_builder_ui_json
-    });
+    }, normalizedState);
+    applyPersistentAccountState(mergedState);
     return { shouldSave: true, loadedRemote: true, reason: "auth-merge" };
   }
 
-  const recoveredState = await loadNormalizedPersistentAccountState(user).catch(normalizedError => {
-    backendSyncState.lastError = normalizedError;
-    console.warn("Supabase normalized account recovery failed", normalizedError);
-    return null;
-  });
+  const recoveredState = normalizedState;
   if (recoveredState) {
     applyPersistentAccountState(recoveredState);
     return { shouldSave: true, loadedRemote: true, reason: "auth-normalized-recovery" };

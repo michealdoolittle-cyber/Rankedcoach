@@ -176,6 +176,30 @@
     });
   }
 
+  // Cloud account state is only the lightweight account/profile shell. Match
+  // rows live in match_snapshots, so keeping full match payloads here duplicates
+  // Henrik raw payloads and can make a single vip_app_state upsert too large.
+  function compactProfilesForCloudAccountState(source = []) {
+    return compactProfilesForLocalCache(source, 3);
+  }
+
+  function measureJsonPayloadBytes(value) {
+    let json = "";
+    try {
+      json = JSON.stringify(value ?? null);
+    } catch (_error) {
+      return 0;
+    }
+    if (typeof TextEncoder === "function") {
+      try {
+        return new TextEncoder().encode(json).length;
+      } catch (_error) {
+        return json.length;
+      }
+    }
+    return json.length;
+  }
+
   globalThis.RankedCoachPersistencePolicy = Object.freeze({
     buildScopedMatchRowId,
     buildMatchArchiveRowId,
@@ -185,6 +209,8 @@
     normalizeWatchedPlaylistVideos,
     mergeWatchedPlaylistVideos,
     compactMatchForLocalCache,
-    compactProfilesForLocalCache
+    compactProfilesForLocalCache,
+    compactProfilesForCloudAccountState,
+    measureJsonPayloadBytes
   });
 })();

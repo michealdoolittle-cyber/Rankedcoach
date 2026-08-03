@@ -27,7 +27,7 @@ function startServer() {
   });
 }
 
-function supabaseStub() {
+function supabaseStub(options = {}) {
   const cloudProfile = {
     id: "cloud-profile",
     name: "Cloud Canonical",
@@ -59,6 +59,7 @@ function supabaseStub() {
     rating: 4,
     notes: "Cloud reflection"
   };
+  const failAppStateSave = options.failAppStateSave === true;
   return `
     globalThis.__cloudWrites = [];
     globalThis.supabase = {
@@ -85,6 +86,16 @@ function supabaseStub() {
             upsert(payload) {
               const rows = Array.isArray(payload) ? payload : [payload];
               globalThis.__cloudWrites.push({ table, rows: structuredClone(rows) });
+              if (table === "vip_app_state" && ${JSON.stringify(failAppStateSave)}) {
+                return Promise.resolve({ data: null, error: {
+                  name: "PostgrestError",
+                  code: "PGRST500",
+                  message: "vip_app_state forced test failure",
+                  details: "Simulated upstream save failure",
+                  hint: "Continue normalized saves",
+                  status: 500
+                } });
+              }
               return Promise.resolve({ data: null, error: null });
             },
             insert() { return Promise.resolve({ data: null, error: null }); },
@@ -113,12 +124,12 @@ function supabaseStub() {
   `;
 }
 
-async function openDevice(browser, { staleLocal = false, quotaLimited = false } = {}) {
+async function openDevice(browser, { staleLocal = false, quotaLimited = false, failAppStateSave = false } = {}) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   const consoleErrors = [];
   page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
   page.on("pageerror", error => consoleErrors.push(error.message));
-  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub() }));
+  await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2", route => route.fulfill({ contentType: "text/javascript", body: supabaseStub({ failAppStateSave }) }));
   await page.addInitScript(({ hasStaleLocal, quotaLimited }) => {
     localStorage.clear();
     localStorage.setItem("valtracker_entry_choice_v1", "account");
@@ -158,6 +169,7 @@ async function openDevice(browser, { staleLocal = false, quotaLimited = false } 
     profiles: JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]").map(profile => ({ id: profile.id, name: profile.name, themeKey: profile.themeKey, profileBorder: profile.profileBorder })),
     logs: JSON.parse(localStorage.getItem("valtracker_log_entries_v2:cross-device-user") || "[]").map(entry => ({ id: entry.id, profileId: entry.profileId, notes: entry.notes })),
     writes: globalThis.__cloudWrites,
+    diagnostics: globalThis.RankedCoachSyncDiagnosticsState,
     activeId: localStorage.getItem("valtracker_active_profile_id"),
     localCacheHasDuplicateRounds: Boolean(JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]?.matches?.[0]?.matchRecord?.roundByRound)
   }));
@@ -186,10 +198,21 @@ async function run() {
 
     const quota = await openDevice(browser, { quotaLimited: true });
     assert.equal(quota.state.localCacheHasDuplicateRounds, false);
-    assert.equal(quota.state.writes.some(write => write.table === "vip_app_state" && JSON.stringify(write.rows).includes("ROUND_PAYLOAD_MARKER")), true);
+    assert.equal(quota.state.writes.some(write => write.table === "vip_app_state" && JSON.stringify(write.rows).includes("ROUND_PAYLOAD_MARKER")), false);
+    assert.equal(quota.state.writes.some(write => write.table === "match_snapshots" && JSON.stringify(write.rows).includes("ROUND_PAYLOAD_MARKER")), true);
     assert.deepEqual(quota.consoleErrors, []);
     await quota.page.close();
-    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, quota-limited local caches compact safely, and complete cloud writes continue without console errors.");
+
+    const partial = await openDevice(browser, { failAppStateSave: true });
+    const partialTables = partial.state.writes.map(write => write.table);
+    assert.equal(partialTables.includes("vip_app_state"), true);
+    assert.equal(partialTables.includes("users_profiles"), true);
+    assert.equal(partialTables.includes("reflection_logs"), true);
+    assert.equal(partialTables.includes("match_snapshots"), true);
+    assert.equal(partial.state.diagnostics.lastBackendSaveFailures.some(item => item.table === "vip_app_state" && item.status === 500), true);
+    assert.deepEqual(partial.consoleErrors, []);
+    await partial.page.close();
+    console.log("Cross-device persistence passed: cloud hydration wins over stale local state, quota-limited local caches compact safely, app-state payloads stay lightweight, and normalized saves continue after app-state failure.");
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

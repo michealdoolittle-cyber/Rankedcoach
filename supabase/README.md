@@ -13,7 +13,7 @@ Open your Supabase project, go to SQL Editor, and run:
 The schema creates:
 
 - `users_profiles`: active Riot profile/account metadata.
-- `vip_app_state`: full app state for cross-device restore.
+- `vip_app_state`: lightweight account/UI state for cross-device restore; bulky logs and matches stay in normalized tables.
 - `reflection_logs`: normalized long-term logging history for coaching/ML.
 - `match_snapshots`: normalized imported/demo match history for coaching/ML.
 - `bug_reports`: in-app bug reports with account/guest context for review in Supabase Table Editor.
@@ -44,7 +44,7 @@ localStorage.setItem("vip_supabase_anon_key", "YOUR_SUPABASE_ANON_KEY");
 
 After signup/login, the app saves:
 
-- profiles and active profile
+- profiles and active profile shell
 - Riot ID and region
 - reflection logs
 - imported/demo match snapshots
