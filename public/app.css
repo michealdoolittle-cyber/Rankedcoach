@@ -48950,6 +48950,33 @@ html.is-mobile-layout body.is-mobile-layout .border-card:is(.border-card-hex,.bo
   clip-path:none !important;
 }
 
+/* Split/notched parity: these base animated borders must survive the mobile footer painter locks. */
+html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-split{
+  border-style:dashed !important;
+  border-color:var(--profile-ring-border,#ff4655) !important;
+  animation:profileBorderSplitFlicker 2.2s steps(4) infinite !important;
+}
+
+html body:not(.access-reduced-motion) :is(#profileAvatarWrap,.profile-avatar-ring,.mobile-bottom-avatar-btn).border-animated.border-notched{
+  border-style:solid !important;
+  border-color:var(--profile-ring-border,#ff4655) !important;
+  border-radius:34% 66% 38% 62% / 60% 34% 66% 40% !important;
+  animation:profileBorderNotchBreathe 3.4s ease-in-out infinite !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-split{
+  border-radius:999px !important;
+  border-style:dashed !important;
+  animation:profileBorderSplitFlicker 2.2s steps(4) infinite !important;
+}
+
+html.is-mobile-layout body.is-mobile-layout #mobileBottomShell#mobileBottomShell .mobile-bottom-avatar-btn.mobile-bottom-avatar-btn.border-animated.border-notched{
+  --rc-footer-frame-radius:34% 66% 38% 62% / 60% 34% 66% 40%;
+  border-radius:var(--rc-footer-frame-radius) !important;
+  border-style:solid !important;
+  animation:profileBorderNotchBreathe 3.4s ease-in-out infinite !important;
+}
+
 /* Diamond/blade footer correction: true preview geometry and painter-only animation. */
 @keyframes rcFooterDiamondBreathe{
   0%,100%{transform:translate(-50%,-50%) rotate(45deg) scale(1);box-shadow:0 0 0 2px color-mix(in srgb,var(--profile-ring-border,#ff4655) 18%,transparent),0 0 13px color-mix(in srgb,var(--profile-ring-border,#ff4655) 30%,transparent);}

@@ -431,7 +431,7 @@ async function run() {
       naturalWidth: image.naturalWidth
     })));
     assert.equal(agentOverviewImages.length, 4, JSON.stringify(agentOverviewImages));
-    assert.ok(agentOverviewImages.every(image => /\/assets\/library\/agents\/[a-z-]+\/portrait-card\.png$/i.test(image.currentSrc) && image.loading === "lazy" && image.fetchPriority === "low" && image.complete && image.naturalWidth > 0 && image.naturalWidth <= 400), JSON.stringify(agentOverviewImages));
+    assert.ok(agentOverviewImages.every(image => /\/assets\/library\/agents\/[a-z-]+\/portrait-card\.png$/i.test(image.currentSrc) && image.loading === "eager" && image.fetchPriority === "high" && image.complete && image.naturalWidth > 0 && image.naturalWidth <= 400), JSON.stringify(agentOverviewImages));
     const mapTopicCollageState = await desktop.locator('[data-gamesense-topic="maps"] .gamesense-topic-collage').evaluate(collage => {
       const images = [...collage.querySelectorAll("img")];
       const wide = images[12];
@@ -1073,7 +1073,7 @@ async function run() {
     assert.ok(await desktop.locator(".gamesense-weapon-suggestion").count() > 0, "Weapon suggestions should remain available for Ascent even when a fresh map-specific sample is sparse.");
 
     await desktop.click('.nav-btn[data-page="stats"]');
-    await desktop.click('[data-gamesense-open="agents"]');
+    await desktop.click('#page-stats .stats-agents-card [data-gamesense-open="agents"]');
     await desktop.locator("#page-library.active").waitFor({ state: "visible" });
     await desktop.locator('.gamesense-entry-grid-agents [data-gamesense-item]').first().waitFor({ state: "visible" });
     await desktop.waitForFunction(() => !document.documentElement.dataset.gamesenseTransition);

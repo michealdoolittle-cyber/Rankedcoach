@@ -139,6 +139,11 @@
       ? { ...match.matchRecord }
       : null;
 
+    // The canonical matchRecord is the single raw-payload owner. Older cached
+    // legacy rows may have duplicated the same Henrik payload at top level,
+    // which turns localStorage fallback saves into quota trouble for no benefit.
+    delete compact.rawHenrikPayload;
+
     // The legacy match shape already carries the projected round metrics used by
     // the UI. Keeping the canonical round list here stores the same rounds twice.
     if (canonical) {

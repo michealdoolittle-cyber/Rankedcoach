@@ -125,6 +125,7 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
   const pageSize = Math.min(10, historyLimit);
   const known = new Set((options.knownMatchIds || []).map(String));
   const refresh = new Set((options.refreshMatchIds || []).map(String));
+  const includeKnownMatches = options.includeKnownMatches === true;
   let puuid = String(options.puuid || "").trim();
   let account = null;
   if (!puuid) {
@@ -203,7 +204,7 @@ async function pullRiotMatches(options = {}, matchRecordAdapter = globalThis.Ran
   const failures = [...refreshSearchFailures];
   for (const parsedMatch of parsedMatches) {
     const matchId = String(parsedMatch?.metadata?.match_id || parsedMatch?.metadata?.matchid || "");
-    if (!matchId || (known.has(matchId) && !refresh.has(matchId))) continue;
+    if (!matchId || (known.has(matchId) && !refresh.has(matchId) && !includeKnownMatches)) continue;
     try {
       records.push(mapHenrikMatchToCanonicalRecord(parsedMatch, {
         puuid,

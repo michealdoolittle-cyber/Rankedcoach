@@ -75,6 +75,56 @@
     return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, item]));
   }
 
+  function cloneJsonValue(value) {
+    if (value === null || value === undefined) return null;
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (error) {
+      console.warn?.("Unable to clone raw Henrik payload", error);
+      return null;
+    }
+  }
+
+  function getHenrikV4MatchData(payload = {}) {
+    return payload?.data?.metadata?.match_id ? payload.data : payload;
+  }
+
+  function assessHenrikV4PayloadCompleteness(payload = {}, puuid = "") {
+    const match = getHenrikV4MatchData(payload);
+    const trackedPuuid = cleanString(puuid);
+    const players = Array.isArray(match?.players) ? match.players : [];
+    const player = players.find(entry => getV4PlayerId(entry) === trackedPuuid) || null;
+    const stats = player?.stats || {};
+    const missing = [];
+    const requireNumber = (label, value) => {
+      if (readNumber(value) === null) missing.push(label);
+    };
+
+    if (!match?.metadata?.match_id) missing.push("metadata.match_id");
+    if (!trackedPuuid) missing.push("context.puuid");
+    if (!player) missing.push("players.trackedPlayer");
+    requireNumber("stats.kills", stats.kills);
+    requireNumber("stats.deaths", stats.deaths);
+    requireNumber("stats.assists", stats.assists);
+    requireNumber("stats.score", stats.score);
+    requireNumber("stats.damage.dealt", stats.damage?.dealt);
+    requireNumber("stats.headshots", stats.headshots);
+    requireNumber("stats.bodyshots", stats.bodyshots);
+    requireNumber("stats.legshots", stats.legshots);
+    if (!Array.isArray(match?.rounds) || !match.rounds.length) missing.push("rounds");
+
+    return {
+      complete: missing.length === 0,
+      missing,
+      checkedAt: nowISO(),
+      source: "henrik-v4"
+    };
+  }
+
+  function isHenrikV4PayloadComplete(payload = {}, puuid = "") {
+    return assessHenrikV4PayloadCompleteness(payload, puuid).complete === true;
+  }
+
   function normalizeKillEvent(kill = {}) {
     const weapon = kill.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
     const finishingDamage = kill.finishingDamage && typeof kill.finishingDamage === "object" ? kill.finishingDamage : {};
@@ -226,6 +276,10 @@
       },
       confidence: confidenceMap(overrides.confidence?.fields, overrides.confidence?.overall),
       pendingVerification: Boolean(overrides.pendingVerification),
+      rawHenrikPayload: cloneJsonValue(overrides.rawHenrikPayload),
+      rawPayloadComplete: overrides.rawPayloadComplete === true,
+      rawPayloadStoredAt: cleanString(overrides.rawPayloadStoredAt),
+      rawPayloadCompleteness: copyPlainObject(overrides.rawPayloadCompleteness),
       importMeta: {
         imageId: cleanString(overrides.importMeta?.imageId),
         imageName: cleanString(overrides.importMeta?.imageName),
@@ -336,6 +390,10 @@
       },
       confidence: match.matchRecord?.confidence || { overall: "high", fields: {} },
       pendingVerification: Boolean(match.pendingVerification),
+      rawHenrikPayload: match.rawHenrikPayload || canonical.rawHenrikPayload,
+      rawPayloadComplete: match.rawPayloadComplete === true || canonical.rawPayloadComplete === true,
+      rawPayloadStoredAt: match.rawPayloadStoredAt || canonical.rawPayloadStoredAt,
+      rawPayloadCompleteness: match.rawPayloadCompleteness || canonical.rawPayloadCompleteness,
       manualLogId: metadata.manualLogId || match.manualLogId,
       legacyMatchId: match.matchId || match.id
     });
@@ -420,6 +478,10 @@
       },
       confidence: { overall: "high", fields: {} },
       pendingVerification: false,
+      rawHenrikPayload: match.rawHenrikPayload,
+      rawPayloadComplete: match.rawPayloadComplete === true,
+      rawPayloadStoredAt: match.rawPayloadStoredAt,
+      rawPayloadCompleteness: match.rawPayloadCompleteness,
       legacyMatchId: match.matchId || match.id
     });
   }
@@ -630,7 +692,7 @@
   }
 
   function fromHenrikV4Match(payload = {}, context = {}) {
-    const match = payload?.data?.metadata?.match_id ? payload.data : payload;
+    const match = getHenrikV4MatchData(payload);
     const puuid = cleanString(context.puuid);
     if (!puuid) throw new Error("Henrik match mapping requires the tracked player's PUUID.");
 
@@ -710,6 +772,7 @@
       && readNumber(stats.deaths) !== null
       && readNumber(stats.assists) !== null;
     const isPlacementMatch = playerTierId === 0 && hasCompletedMatchData;
+    const rawPayloadCompleteness = assessHenrikV4PayloadCompleteness(payload, puuid);
 
     return fromRiotMatch({
       id: match.metadata?.match_id,
@@ -747,8 +810,47 @@
         opponentPuuids,
         behaviorFactors: player.behavior
       },
-      roundByRound
+      roundByRound,
+      rawHenrikPayload: cloneJsonValue(payload),
+      rawPayloadComplete: rawPayloadCompleteness.complete === true,
+      rawPayloadStoredAt: nowISO(),
+      rawPayloadCompleteness
     }, context);
+  }
+
+  function getStoredRawHenrikPayload(record = {}) {
+    return record?.rawHenrikPayload || record?.matchRecord?.rawHenrikPayload || null;
+  }
+
+  function rederiveFromStoredRawHenrikPayload(record = {}, context = {}) {
+    const existing = record?.schemaVersion === SCHEMA_VERSION ? record : fromLegacyMatch(record);
+    const rawPayload = getStoredRawHenrikPayload(existing);
+    const puuid = cleanString(context.puuid || existing.trackedPlayer?.puuid);
+    if (!rawPayload || !puuid) return existing;
+
+    const derived = fromHenrikV4Match(rawPayload, { ...context, puuid });
+    return emptyRecord({
+      ...existing,
+      ...derived,
+      id: existing.id || derived.id,
+      legacyMatchId: existing.legacyMatchId || derived.legacyMatchId || derived.id,
+      matchNumber: existing.matchNumber ?? derived.matchNumber,
+      rank: {
+        ...(derived.rank || {}),
+        ...(existing.rank || {})
+      },
+      reflection: existing.reflection,
+      manualLogId: existing.manualLogId,
+      importMeta: {
+        ...(existing.importMeta || {}),
+        ...(derived.importMeta || {}),
+        rawPayloadRederivedAt: nowISO()
+      },
+      rawHenrikPayload: cloneJsonValue(rawPayload),
+      rawPayloadComplete: derived.rawPayloadComplete === true,
+      rawPayloadStoredAt: existing.rawPayloadStoredAt || derived.rawPayloadStoredAt,
+      rawPayloadCompleteness: derived.rawPayloadCompleteness
+    });
   }
 
   function toLegacyMatch(record = {}) {
@@ -778,6 +880,9 @@
       agent: normalized.agent || "Unknown",
       map: normalized.map || "Unknown",
       matchRecord: normalized,
+      rawPayloadComplete: normalized.rawPayloadComplete === true,
+      rawPayloadStoredAt: normalized.rawPayloadStoredAt,
+      rawPayloadCompleteness: normalized.rawPayloadCompleteness,
       roundMetrics: projectedRoundMetrics,
       metadata: {
         id: matchId,
@@ -805,7 +910,7 @@
           assists: { value: readNumber(normalized.stats.assists, 0) },
           scorePerRound: { value: readNumber(normalized.stats.acs, 0) },
           damagePerRound: { value: readNumber(normalized.stats.adr, 0) },
-          headshotsPercentage: { value: readNumber(normalized.stats.hsPercent, 0) }
+          headshotsPercentage: { value: readNumber(normalized.stats.hsPercent) }
         }
       }],
       manualReport: normalized.source === "manual" ? {
@@ -853,6 +958,9 @@
     fromRiotMatch,
     fromHenrikRawMatch,
     fromHenrikV4Match,
+    getStoredRawHenrikPayload,
+    isHenrikV4PayloadComplete,
+    rederiveFromStoredRawHenrikPayload,
     formatHenrikActLabel,
     toLegacyMatch,
     getRuntimeRecords,

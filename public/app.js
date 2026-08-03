@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-home-unranked-session-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-data-integrity-editor-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -4407,12 +4407,12 @@ function getMatchCore(match = {}) {
       assists: safeNumber(record.stats?.assists, safeNumber(match?.assists)),
       acs: safeNumber(record.stats?.acs, safeNumber(match?.acs ?? match?.adr)),
       adr: safeNumber(record.stats?.adr, safeNumber(match?.adr)),
-      hs: safeNumber(firstFiniteNumber(
+      hs: firstFiniteNumber(
         match?.segments?.[0]?.stats?.headshotsPercentage?.value,
         record.stats?.hsPercent,
         match?.hsPercent,
         match?.hs
-      )),
+      ),
       createdAt: record.playedAt || record.createdAt || nowISO()
     };
   }
@@ -4427,7 +4427,7 @@ function getMatchCore(match = {}) {
   const assists = safeNumber(stats.assists?.value, safeNumber(match?.assists));
   const acs = safeNumber(stats.scorePerRound?.value, safeNumber(match?.acs ?? match?.adr));
   const adr = safeNumber(stats.damagePerRound?.value, safeNumber(match?.adr));
-  const hs = safeNumber(firstFiniteNumber(stats.headshotsPercentage?.value, match?.hsPercent, match?.hs));
+  const hs = firstFiniteNumber(stats.headshotsPercentage?.value, match?.hsPercent, match?.hs);
 
   return {
     agent,
@@ -4455,7 +4455,8 @@ function createPerformanceBucket(label) {
     assists: 0,
     acsTotal: 0,
     adrTotal: 0,
-    hsTotal: 0
+    hsTotal: 0,
+    hsCount: 0
   };
 }
 
@@ -4474,7 +4475,7 @@ function finalizePerformanceBucket(bucket = {}) {
     kd: deaths ? safeNumber(bucket.kills) / deaths : safeNumber(bucket.kills),
     acs: matchesPlayed ? safeNumber(bucket.acsTotal) / matchesPlayed : 0,
     adr: matchesPlayed ? safeNumber(bucket.adrTotal) / matchesPlayed : 0,
-    hs: matchesPlayed ? safeNumber(bucket.hsTotal) / matchesPlayed : 0
+    hs: safeNumber(bucket.hsCount) ? safeNumber(bucket.hsTotal) / safeNumber(bucket.hsCount) : NaN
   };
 }
 
@@ -5220,7 +5221,7 @@ function polishCoachingInsight(insight = {}, context = {}) {
   }
 
   if (title.endsWith("benchmark check")) {
-    output.preview = `${output.benchmark?.rankLabel || "Rank"} check: ${Number(safeNumber(overview.kd)).toFixed(2)} K/D, ${Math.round(safeNumber(overview.adr))} ADR, ${Math.round(safeNumber(overview.hs))}% HS in this window.`;
+    output.preview = `${output.benchmark?.rankLabel || "Rank"} check: ${Number(safeNumber(overview.kd)).toFixed(2)} K/D, ${Math.round(safeNumber(overview.adr))} ADR, ${formatPercent(overview.hs)} HS in this window.`;
     output.what = output.what || "The current match window has one rank-relative gap worth watching.";
     output.why = "The rank sample is context, not a verdict. Agent, map, weapon, and round decisions still decide what the number means.";
   }
@@ -6946,6 +6947,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   let totalAcs = 0;
   let totalAdr = 0;
   let totalHs = 0;
+  let totalHsCount = 0;
   let wins = 0;
   let losses = 0;
 
@@ -6978,7 +6980,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       bucket.assists += core.assists;
       bucket.acsTotal += core.acs;
       bucket.adrTotal += core.adr;
-      bucket.hsTotal += core.hs;
+      const coreHs = Number(core.hs);
+      if (Number.isFinite(coreHs)) {
+        bucket.hsTotal += coreHs;
+        bucket.hsCount += 1;
+      }
       if (core.result === "win") bucket.matchesWon += 1;
       if (core.result === "loss") bucket.matchesLost += 1;
     });
@@ -6988,7 +6994,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     totalAssists += core.assists;
     totalAcs += core.acs;
     totalAdr += core.adr;
-    totalHs += core.hs;
+    const coreHs = Number(core.hs);
+    if (Number.isFinite(coreHs)) {
+      totalHs += coreHs;
+      totalHsCount += 1;
+    }
     if (core.result === "win") wins += 1;
     if (core.result === "loss") losses += 1;
   });
@@ -7007,7 +7017,8 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     matchesLost: losses || safeNumber(importedAnalytics?.overview?.matchesLost),
     kd: orderedMatches.length ? (totalDeaths ? totalKills / totalDeaths : totalKills) : safeNumber(importedAnalytics?.overview?.kd),
     adr: orderedMatches.length ? totalAdr / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.adr),
-    hs: orderedMatches.length ? totalHs / Math.max(1, orderedMatches.length) : safeNumber(importedAnalytics?.overview?.hs),
+    hs: totalHsCount ? totalHs / totalHsCount : firstFiniteNumber(importedAnalytics?.overview?.hs),
+    hsSampleCount: totalHsCount,
     assists: orderedMatches.length ? totalAssists / Math.max(1, orderedMatches.length) : 0,
     winrate: orderedMatches.length ? (wins / Math.max(1, orderedMatches.length)) * 100 : safeNumber(importedAnalytics?.overview?.winrate),
     attackKAST: roundMetrics?.attack?.totalRounds
@@ -7114,7 +7125,11 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       bucket.assists += core.assists;
       bucket.acsTotal += core.acs;
       bucket.adrTotal += core.adr;
-      bucket.hsTotal += core.hs;
+      const coreHs = Number(core.hs);
+      if (Number.isFinite(coreHs)) {
+        bucket.hsTotal += coreHs;
+        bucket.hsCount += 1;
+      }
       if (core.result === "win") bucket.matchesWon += 1;
       if (core.result === "loss") bucket.matchesLost += 1;
     });
@@ -7669,9 +7684,9 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
   const roleAcsTotal = safeNumber(roleTrendBucket?.acsTotal, totalAcs);
   const roleMatches = safeNumber(roleTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
   const roleSubject = roleTrendBucket?.role || currentSignalRole || "Current Role";
-  const agentHs = safeNumber(agentTrendBucket?.hs, safeNumber(overview.hs));
+  const agentHs = firstFiniteNumber(agentTrendBucket?.hs, overview.hs);
   const agentHsTotal = safeNumber(agentTrendBucket?.hsTotal, totalHs);
-  const agentHsMatches = safeNumber(agentTrendBucket?.matchesPlayed, safeNumber(overview.matchesPlayed));
+  const agentHsMatches = safeNumber(agentTrendBucket?.hsCount, safeNumber(overview.hsSampleCount));
   const roleAssists = safeNumber(roleTrendBucket?.assists, totalAssists);
   const roleAssistsPerMatch = roleMatches ? safeDivide(roleAssists, roleMatches) : assistsPerMatch;
   const roleDeaths = safeNumber(roleTrendBucket?.deaths, totalDeaths);
@@ -7781,17 +7796,19 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
     },
     {
       id: "precision_signal",
-      selectionScore: !hasMatchData ? 18 : agentHs < mechanicsAdjustment.adjustedWatchHs ? 90 : mechanicsAdjustment.hasAdjustment ? 76 : agentHs >= mechanicsAdjustment.adjustedPositiveHs ? 66 : 58,
-      tone: agentHs >= mechanicsAdjustment.adjustedPositiveHs ? "up" : agentHs >= mechanicsAdjustment.adjustedWatchHs ? "warn" : "down",
+      selectionScore: !hasMatchData || !agentHsMatches ? 18 : agentHs < mechanicsAdjustment.adjustedWatchHs ? 90 : mechanicsAdjustment.hasAdjustment ? 76 : agentHs >= mechanicsAdjustment.adjustedPositiveHs ? 66 : 58,
+      tone: !agentHsMatches ? "warn" : agentHs >= mechanicsAdjustment.adjustedPositiveHs ? "up" : agentHs >= mechanicsAdjustment.adjustedWatchHs ? "warn" : "down",
       label: "Agent Mechanics",
       kicker: fightSubject || "Aim Baseline",
-      value: agentHsMatches ? `${Math.round(agentHs || 0)}% HS` : "No data",
+      value: agentHsMatches ? `${formatPercent(agentHs)} HS` : "No data",
       detail: agentHsMatches
         ? mechanicsAdjustment.hasAdjustment
           ? "This uses Riot headshot percentage data, and how we calculate this accounts for weapon mix."
           : "This uses Riot headshot percentage data to estimate your agent-based mechanical accuracy."
         : "No data",
-      read: agentHs >= mechanicsAdjustment.adjustedWatchHs
+      read: !agentHsMatches
+        ? "No headshot sample is available for this read yet."
+        : agentHs >= mechanicsAdjustment.adjustedWatchHs
         ? mechanicsAdjustment.hasAdjustment
           ? `This is being read with context: ${evidenceLayer.metricWeights.headshot.presumption}`
           : "Your precision is stable enough that RankedCoach can look beyond aim alone."
@@ -7799,14 +7816,14 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           ? `Your HS% is below the adjusted target, but it is ${evidenceLayer.metricWeights.headshot.label.toLowerCase()} here. Check whether fights, damage timing, and round conversion are also slipping before making aim the whole issue.`
           : "Your accuracy is below target, which can lead to harder fights that could provide an advantage to the enemy team.",
       sourceLabel: `Based on ${agentHsMatches || 0} ${fightSubject} matches from ${seasonLabel} using Riot headshot percentage.`,
-      formula: `${fightSubject} headshot percent total / matches = ${Math.round(agentHsTotal)} / ${Math.max(1, agentHsMatches)} = ${agentHsMatches ? Math.round(agentHs || 0) : "--"}%`,
+      formula: `${fightSubject} headshot percent total / matches = ${Math.round(agentHsTotal)} / ${Math.max(1, agentHsMatches)} = ${agentHsMatches ? formatPercent(agentHs) : "--"}`,
       benchmark: mechanicsAdjustment.hasAdjustment
         ? `Adjusted for agent and weapon context: positive above ${Math.round(mechanicsAdjustment.adjustedPositiveHs)}% HS, watch at ${Math.round(mechanicsAdjustment.adjustedWatchHs)}-${Math.round(mechanicsAdjustment.adjustedPositiveHs - 1)}%, regression below ${Math.round(mechanicsAdjustment.adjustedWatchHs)}%.`
         : "Positive above 22% HS, watch at 18-21%, regression below 18%.",
       mediaType: "agent",
       mediaValue: fightSubject,
       proofItems: [
-        statItem("Headshot %", agentHsMatches ? `${Math.round(agentHs || 0)}%` : "--", `Average headshot percentage from ${fightSubject} matches.`),
+        statItem("Headshot %", agentHsMatches ? formatPercent(agentHs) : "--", `Average headshot percentage from ${fightSubject} matches.`),
         statItem("Current Agent", fightSubject || "Unknown", "Agent tied to this read's displayed stat."),
         statItem("HS Weight", evidenceLayer.metricWeights.headshot.label, evidenceLayer.metricWeights.headshot.presumption),
         statItem("Sample", evidenceLayer.sample.label, evidenceLayer.sample.explanation),
@@ -8411,7 +8428,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
       aim: {
         title: "Aim",
         weighting: [
-          statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Headshot percentage from your imported matches."),
+          statItem("Headshot %", formatPercent(overview.hs), "Headshot percentage from your imported matches."),
           statItem("K/D", overview.kd ? overview.kd.toFixed(2) : "--", "How often your fights end in a kill instead of a death."),
           statItem("Average ADR", `${Math.round(safeNumber(overview.adr))}`, "Your average damage per round in the imported matches.")
         ],
@@ -8419,7 +8436,7 @@ function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null
           statItem("Coaching Score", `${aimScore}/100`, "Your aim read on the same 0-100 scale as the other categories."),
           statItem("Category Balance", `${Math.round(safeNumber(compassShares.aim))}%`, "How much Aim contributes when the four coaching categories are compared."),
           statItem("Matches Used", compassSourceLabel, "Uses the newest imported act available for this profile."),
-          statItem("Headshot %", `${Math.round(safeNumber(overview.hs))}%`, "Headshot percentage from your imported matches."),
+          statItem("Headshot %", formatPercent(overview.hs), "Headshot percentage from your imported matches."),
           statItem("Fight Value", overview.kd ? overview.kd.toFixed(2) : "--", "Better fights raise the aim score.")
         ]
       },
@@ -10282,9 +10299,15 @@ function getSideMetricsFromMaps(mapEntries = [], side = "attack") {
 function getWeaponRoundRates(rounds = []) {
   const buckets = new Map();
   rounds.forEach(round => {
-    const key = String(round?.weapon || "").trim();
-    if (!key) return;
-    const current = buckets.get(key) || { weapon: key, rounds: 0, wins: 0 };
+    const rawWeapon = String(round?.weapon || "").trim();
+    if (!rawWeapon) return;
+    const meta = getMatchSummaryWeaponMeta(rawWeapon);
+    const fallbackLabel = /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(rawWeapon)
+      ? `Weapon ${rawWeapon.slice(0, 8)}`
+      : rawWeapon;
+    const label = meta?.label || fallbackLabel;
+    const key = meta?.uuid || normalizeMatchSummaryKey(label) || rawWeapon.toLowerCase();
+    const current = buckets.get(key) || { weapon: label, rawWeapon, rounds: 0, wins: 0 };
     current.rounds += 1;
     current.wins += round?.roundWon ? 1 : 0;
     buckets.set(key, current);
@@ -11695,7 +11718,7 @@ function openStatsDetailModal(kind, value) {
     items.push(["Win Rate", agent ? `${Math.round(safeNumber(agent.matchesWon) / Math.max(1, safeNumber(agent.matchesPlayed)) * 100)}%` : "--"]);
     items.push(["K/D", agent ? Number(agent.kd || 0).toFixed(2) : "--"]);
     items.push(["ADR", agent ? `${Math.round(agent.adr || 0)}` : "--"]);
-    items.push(["Headshot %", agent ? `${Math.round(agent.hs || 0)}%` : "--"]);
+    items.push(["Headshot %", agent ? formatPercent(agent.hs) : "--"]);
     items.push(["Kills", agent ? `${Math.round(agent.kills || 0)}` : "--"]);
     items.push(["Deaths", agent ? `${Math.round(agent.deaths || 0)}` : "--"]);
     roundExamples.slice(0, 2).forEach(round => {
@@ -11741,7 +11764,7 @@ function openStatsDetailModal(kind, value) {
     items.push(["Win Rate", role ? `${Math.round(safeNumber(role.matchesWon) / Math.max(1, safeNumber(role.matchesPlayed)) * 100)}%` : "--"]);
     items.push(["K/D", role ? Number(role.kd || 0).toFixed(2) : "--"]);
     items.push(["ADR", role ? `${Math.round(role.adr || 0)}` : "--"]);
-    items.push(["Headshot %", role ? `${Math.round(role.hs || 0)}%` : "--"]);
+    items.push(["Headshot %", role ? formatPercent(role.hs) : "--"]);
     items.push(["Context", "Act-level role view modeled after the homepage impact pill."]);
   }
 
@@ -14455,10 +14478,109 @@ function markHsBackfillUnavailable(matchList = [], matchIds = []) {
   });
 }
 
-function getMatchSummaryRecord(match = {}) {
+function getDirectMatchSummaryRecord(match = {}) {
   if (match?.schemaVersion) return match;
   if (match?.matchRecord?.schemaVersion) return match.matchRecord;
   return globalThis.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null;
+}
+
+function rederiveMatchSummaryRecordFromStoredRaw(record = {}) {
+  if (!record || typeof record !== "object") return null;
+  const matchRecordApi = globalThis.RankedCoachMatchRecord;
+  if (typeof matchRecordApi?.rederiveFromStoredRawHenrikPayload !== "function") return record;
+  const rawPayload = typeof matchRecordApi?.getStoredRawHenrikPayload === "function"
+    ? matchRecordApi.getStoredRawHenrikPayload(record)
+    : record?.rawHenrikPayload;
+  if (!rawPayload) return record;
+  if (!matchRecordNeedsHsBackfill(record) && !matchRecordNeedsWeaponBackfill(record)) return record;
+  try {
+    const rederived = matchRecordApi.rederiveFromStoredRawHenrikPayload(record);
+    return rederived || record;
+  } catch (error) {
+    console.warn("Stored Henrik payload re-derive failed", error);
+    return record;
+  }
+}
+
+function getMatchSummaryRecord(match = {}) {
+  return rederiveMatchSummaryRecordFromStoredRaw(getDirectMatchSummaryRecord(match));
+}
+
+function rederiveMatchFromStoredRawPayload(match = {}) {
+  const directRecord = getDirectMatchSummaryRecord(match);
+  const rederivedRecord = rederiveMatchSummaryRecordFromStoredRaw(directRecord);
+  if (!rederivedRecord || rederivedRecord === directRecord) return match;
+  const legacy = globalThis.RankedCoachMatchRecord?.toLegacyMatch?.(rederivedRecord);
+  if (!legacy) return { ...match, matchRecord: rederivedRecord };
+  return {
+    ...match,
+    ...legacy,
+    metadata: {
+      ...(match.metadata || {}),
+      ...(legacy.metadata || {}),
+      rawPayloadRederivedAt: nowISO()
+    },
+    matchRecord: rederivedRecord,
+    rawPayloadComplete: rederivedRecord.rawPayloadComplete === true,
+    rawPayloadStoredAt: rederivedRecord.rawPayloadStoredAt,
+    rawPayloadCompleteness: rederivedRecord.rawPayloadCompleteness
+  };
+}
+
+function rederiveMatchesFromStoredRawPayloads(matchList = []) {
+  return (Array.isArray(matchList) ? matchList : []).map(rederiveMatchFromStoredRawPayload);
+}
+
+function mergeImportedMatchWithExisting(existing = {}, imported = {}) {
+  if (!existing) return imported;
+  if (!imported) return existing;
+  const existingRecord = getDirectMatchSummaryRecord(existing);
+  const importedRecord = getDirectMatchSummaryRecord(imported);
+  if (!existingRecord || !importedRecord || typeof globalThis.RankedCoachMatchRecord?.toLegacyMatch !== "function") {
+    return {
+      ...existing,
+      ...imported,
+      metadata: {
+        ...(existing.metadata || {}),
+        ...(imported.metadata || {})
+      }
+    };
+  }
+
+  const mergedRank = importedRecord.rank?.verified === true
+    ? importedRecord.rank
+    : {
+        ...(importedRecord.rank || {}),
+        ...(existingRecord.rank || {})
+      };
+  const mergedRecord = {
+    ...importedRecord,
+    id: existingRecord.id || importedRecord.id,
+    legacyMatchId: existingRecord.legacyMatchId || importedRecord.legacyMatchId || importedRecord.id,
+    matchNumber: existingRecord.matchNumber ?? importedRecord.matchNumber,
+    reflection: existingRecord.reflection || importedRecord.reflection,
+    manualLogId: existingRecord.manualLogId || importedRecord.manualLogId,
+    rank: mergedRank,
+    importMeta: {
+      ...(existingRecord.importMeta || {}),
+      ...(importedRecord.importMeta || {}),
+      mergedFromRetainedHenrikRawAt: nowISO()
+    }
+  };
+  const legacy = globalThis.RankedCoachMatchRecord.toLegacyMatch(mergedRecord);
+  return {
+    ...existing,
+    ...legacy,
+    metadata: {
+      ...(existing.metadata || {}),
+      ...(legacy.metadata || {}),
+      manualLogId: mergedRecord.manualLogId || existing.metadata?.manualLogId || legacy.metadata?.manualLogId
+    },
+    matchRecord: mergedRecord,
+    rawPayloadComplete: mergedRecord.rawPayloadComplete === true,
+    rawPayloadStoredAt: mergedRecord.rawPayloadStoredAt,
+    rawPayloadCompleteness: mergedRecord.rawPayloadCompleteness
+  };
 }
 
 function getMatchSummaryIdentity(match = {}) {
@@ -14754,12 +14876,11 @@ function getMatchSummaryKastValue(match = {}, record = getMatchSummaryRecord(mat
     match?.stats?.kast,
     record?.stats?.kast
   ];
-  const value = candidates.map(Number).find(Number.isFinite);
-  return Number.isFinite(value) ? value : NaN;
+  return firstFiniteNumber(...candidates);
 }
 
 function getMatchSummaryHsValue(match = {}, record = getMatchSummaryRecord(match)) {
-  const candidates = [
+  return firstFiniteNumber(
     match?.segments?.[0]?.stats?.headshotsPercentage?.value,
     record?.stats?.hsPercent,
     record?.matchRecord?.stats?.hsPercent,
@@ -14768,9 +14889,7 @@ function getMatchSummaryHsValue(match = {}, record = getMatchSummaryRecord(match
     match?.stats?.headshotsPercentage,
     match?.hsPercent,
     match?.hs
-  ];
-  const value = candidates.map(Number).find(Number.isFinite);
-  return Number.isFinite(value) ? value : NaN;
+  );
 }
 
 const MATCH_SUMMARY_STAT_INFO = Object.freeze({
@@ -17934,7 +18053,7 @@ let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
 const HENRIK_HISTORY_BACKFILL_SIZE = 100;
-const HENRIK_HISTORY_BACKFILL_VERSION = 2;
+const HENRIK_HISTORY_BACKFILL_VERSION = 3;
 const HENRIK_HISTORY_MAX_START = 1000;
 const HENRIK_HISTORY_MAX_BATCHES = 11;
 let crestPreviewTimer = null;
@@ -53950,13 +54069,13 @@ function initStatsPage(){
     const k = Number(seg.kills?.value || 0);
     const d = Number(seg.deaths?.value || 0);
     const adr = Number(seg.scorePerRound?.value || 0);
-    const hs = Number(seg.headshotsPercentage?.value || 0);
+    const hs = firstFiniteNumber(seg.headshotsPercentage?.value);
 
     kills += k;
     deaths += d;
     adrTotal += adr;
 
-    if(hs){
+    if(Number.isFinite(hs)){
       hsTotal += hs;
       hsCount++;
     }
@@ -53974,7 +54093,7 @@ function initStatsPage(){
   const kd = deaths ? (kills / deaths) : kills;
   const wr = total ? (wins / total) * 100 : 0;
   const adrAvg = total ? (adrTotal / total) : 0;
-  const hsAvg = hsCount ? (hsTotal / hsCount) : 0;
+  const hsAvg = hsCount ? (hsTotal / hsCount) : NaN;
 
   // ========================
   // APPLY
@@ -53983,7 +54102,7 @@ function initStatsPage(){
   kdEl.textContent  = kd.toFixed(2);
   wrEl.textContent  = Math.round(wr) + "%";
   adrEl.textContent = Math.round(adrAvg);
-  hsEl.textContent  = Math.round(hsAvg) + "%";
+  hsEl.textContent  = Number.isFinite(hsAvg) ? `${Math.round(hsAvg)}%` : "--";
 }
 
 // ========================
@@ -55420,12 +55539,14 @@ function applyImportedMatches(matchList = [], options = {}){
   const sessionDateKey = getCurrentSessionDateKey();
   const importSource = options.source || "riot";
   const isRealSyncImport = ["riot", "henrik"].includes(importSource);
-  const baselineMatches = isRealSyncImport ? purgeDemoFixtureMatches(matches || []) : (matches || []);
+  const baselineMatches = isRealSyncImport
+    ? rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(matches || []))
+    : (matches || []);
 
   const previousTotal = baselineMatches.reduce((sum, match) => sum + safeNumber(match?.rr), 0);
   const previousSessionTotal = sumRRForSession(baselineMatches, sessionDateKey);
 
-  const normalized = (isRealSyncImport ? purgeDemoFixtureMatches(matchList) : (matchList || []))
+  const normalized = (isRealSyncImport ? rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(matchList)) : (matchList || []))
     .filter(Boolean)
     .map(normalizeImportedMatchEntry);
   normalized.sort((a, b) =>
@@ -55571,7 +55692,7 @@ async function importActiveProfileMatches(options = {}){
   }
 
   try {
-    const existingMatches = purgeDemoFixtureMatches(Array.isArray(profile.matches) ? profile.matches : []);
+    const existingMatches = rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(Array.isArray(profile.matches) ? profile.matches : []));
     if (existingMatches.length !== (Array.isArray(profile.matches) ? profile.matches.length : 0)) {
       profile.matches = existingMatches.slice();
       matches = existingMatches.slice();
@@ -55606,8 +55727,10 @@ async function importActiveProfileMatches(options = {}){
       knownMatchIds,
       refreshMatchIds,
       refreshSearchLimit: 1000,
-      // Historical backfill remains aggregate-only. New matches after that
-      // one-time import receive raw round detail for verified coaching signals.
+      includeKnownMatches: needsHistoryVersionUpgrade,
+      // Versioned history migrations intentionally revisit known retained
+      // matches once so their raw Henrik payload can be stored for future
+      // offline re-derives/backfills.
       hydrateRoundData: !needsHistoryBackfill
     });
     profile.puuid = pullResult?.puuid || profile.puuid || "";
@@ -55694,7 +55817,11 @@ async function importActiveProfileMatches(options = {}){
       return id && !existingMatchIds.has(id);
     });
     const mergedById = new Map(existingMatches.map(match => [String(match?.matchId || match?.id || ""), match]));
-    importedMatches.forEach(match => mergedById.set(String(match?.matchId || match?.id || ""), match));
+    importedMatches.forEach(match => {
+      const id = String(match?.matchId || match?.id || "").trim();
+      if (!id) return;
+      mergedById.set(id, mergeImportedMatchWithExisting(mergedById.get(id), match));
+    });
     const mergedMatches = Array.from(mergedById.values()).filter(Boolean);
     let matchList = typeof enrichMmr === "function"
       ? enrichMmr(mergedMatches, mmrHistory)
@@ -56761,7 +56888,7 @@ function initStatsPageModel() {
   kdEl.textContent = overview.matchesPlayed ? overview.kd.toFixed(2) : "--";
   wrEl.textContent = overview.matchesPlayed ? `${Math.round(overview.winrate)}%` : "--";
   adrEl.textContent = overview.matchesPlayed ? `${Math.round(overview.adr)}` : "--";
-  hsEl.textContent = overview.matchesPlayed ? `${Math.round(overview.hs)}%` : "--";
+  hsEl.textContent = overview.matchesPlayed && Number.isFinite(Number(overview.hs)) ? `${Math.round(overview.hs)}%` : "--";
   if (firstBloodsEl) firstBloodsEl.textContent = overview.matchesPlayed ? `${Math.round(firstBloods)}` : "--";
   if (damagePerRoundEl) damagePerRoundEl.textContent = overview.matchesPlayed ? `${Math.round(overview.adr)}` : "--";
 }

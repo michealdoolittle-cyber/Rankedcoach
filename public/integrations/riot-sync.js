@@ -342,6 +342,7 @@
     const pageSize = Math.min(10, historyLimit);
     const knownMatchIds = new Set((options.knownMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
     const refreshMatchIds = new Set((options.refreshMatchIds || []).map(value => String(value || "").trim()).filter(Boolean));
+    const includeKnownMatches = options.includeKnownMatches === true;
     let puuid = String(options.puuid || "").trim();
     let account = null;
 
@@ -461,7 +462,7 @@
     const hydrateRoundData = options.hydrateRoundData === true;
     const pendingMatches = parsedMatches.filter(match => {
       const matchId = getParsedMatchId(match);
-      return matchId && (!knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
+      return matchId && (includeKnownMatches || !knownMatchIds.has(matchId) || refreshMatchIds.has(matchId));
     });
     const records = [];
     const failures = [

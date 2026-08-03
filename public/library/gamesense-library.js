@@ -34,6 +34,12 @@
     exportText: "",
     drafts: new Map()
   };
+  const dossierTextEditor = {
+    activeType: "",
+    activeId: "",
+    exportText: "",
+    drafts: new Map()
+  };
   const PLAYLIST_LIVE_FILTER = "Live";
   const PLAYLIST_AUTOPLAY_STORAGE_PREFIX = "rankedcoach:playlist-autoplay:";
   const topicCollageShuffleSalt = Math.random().toString(36).slice(2);
@@ -578,6 +584,82 @@
     const role = String(user?.app_metadata?.role || user?.user_metadata?.role || "").trim().toLowerCase();
     const email = String(user?.email || "").trim().toLowerCase();
     return Boolean(["owner", "admin"].includes(role) || email === "michealdoolittle@gmail.com");
+  }
+
+  function canUseDossierTextEditor() {
+    return canUsePlantSpotEditor();
+  }
+
+  function getDossierTextDraftKey(type = "", id = "") {
+    return `${String(type || "").trim()}:${String(id || "").trim()}`;
+  }
+
+  function getDossierTextDraft(type = "", id = "") {
+    const key = getDossierTextDraftKey(type, id);
+    if (!key.includes(":") || key.endsWith(":")) return {};
+    if (!dossierTextEditor.drafts.has(key)) dossierTextEditor.drafts.set(key, {});
+    return dossierTextEditor.drafts.get(key);
+  }
+
+  function isDossierTextEditorActive(type = "", id = "") {
+    return Boolean(
+      canUseDossierTextEditor()
+      && dossierTextEditor.activeType === type
+      && dossierTextEditor.activeId === id
+    );
+  }
+
+  function getDossierTextValue(type, id, path, fallback = "") {
+    const draft = getDossierTextDraft(type, id);
+    return Object.prototype.hasOwnProperty.call(draft, path) ? draft[path] : fallback;
+  }
+
+  function setDossierTextDraftValue(type, id, path, value) {
+    if (!canUseDossierTextEditor() || !type || !id || !path) return;
+    const draft = getDossierTextDraft(type, id);
+    draft[path] = String(value ?? "");
+    dossierTextEditor.exportText = "";
+  }
+
+  function renderDossierTextEditorControls(type, id) {
+    if (!canUseDossierTextEditor() || !type || !id) return "";
+    const active = isDossierTextEditorActive(type, id);
+    return `<div class="gamesense-dossier-text-editor-bar">
+      <button type="button" data-gamesense-dossier-text-toggle="${escapeHtml(type)}:${escapeHtml(id)}" class="${active ? "active" : ""}" aria-pressed="${active ? "true" : "false"}">${active ? "Exit Text Edit" : "Edit Dossier Text"}</button>
+      ${active ? `<button type="button" data-gamesense-dossier-text-export="${escapeHtml(type)}:${escapeHtml(id)}">Export Corrections</button>` : ""}
+    </div>`;
+  }
+
+  function renderDossierTextField({ type, id, path, label, value, rows = 3 }) {
+    const current = getDossierTextValue(type, id, path, value || "");
+    return `<label class="gamesense-dossier-text-field">
+      <span>${escapeHtml(label)}</span>
+      <textarea data-gamesense-dossier-text-field="${escapeHtml(type)}:${escapeHtml(id)}:${escapeHtml(path)}" rows="${rows}">${escapeHtml(current)}</textarea>
+    </label>`;
+  }
+
+  function buildDossierTextExport(type = dossierTextEditor.activeType, id = dossierTextEditor.activeId) {
+    const draft = getDossierTextDraft(type, id);
+    const cleanDraft = Object.fromEntries(Object.entries(draft).filter(([, value]) => String(value ?? "").trim()));
+    return { [type]: { [id]: cleanDraft } };
+  }
+
+  function renderDossierTextEditorExport(type, id) {
+    if (!isDossierTextEditorActive(type, id)) return "";
+    const text = dossierTextEditor.exportText || "";
+    return `<section class="gamesense-dossier-text-export" ${text ? "" : "hidden"}>
+      <strong>Copyable dossier text corrections JSON</strong>
+      <textarea readonly data-gamesense-dossier-text-export-output rows="10">${escapeHtml(text || JSON.stringify(buildDossierTextExport(type, id), null, 2))}</textarea>
+    </section>`;
+  }
+
+  function parseDossierTextToken(value = "") {
+    const [type = "", id = "", ...pathParts] = String(value || "").split(":");
+    return {
+      type: String(type || "").trim(),
+      id: String(id || "").trim(),
+      path: pathParts.join(":").trim()
+    };
   }
 
   function isPlantSpotEditorActive(map) {
@@ -2642,6 +2724,7 @@
     const isPlants = state.mapView === "plants";
     const heatmap = getMapHeatmap(map);
     const editorActive = isPlantSpotEditorActive(map);
+    const textEditorActive = isDossierTextEditorActive("maps", map?.id || "");
     const plantSpots = isPlants ? getPlantSpotsForRender(map) : [];
     const showPlantHeatmapFallback = false;
     const markers = isPlants
@@ -2682,7 +2765,10 @@
             <div class="gamesense-tactical-stage${isHeatmap || showPlantHeatmapFallback ? " gamesense-heatmap-stage" : ""}" data-gamesense-map-stage data-gamesense-map-id="${escapeHtml(map.id)}" style="--map-zoom:${state.mapZoom};--map-width:${state.mapZoom * 100}%">
               <img src="${escapeHtml(displayedMapImage)}" alt="${escapeHtml(displayedMapAlt)}" loading="eager" draggable="false" referrerpolicy="${isHeatmap || showPlantHeatmapFallback ? "no-referrer" : ""}">
               ${markers.map((callout, index) => {
-                if (!isPlants) return `<span class="gamesense-callout" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(callout.label)}</span>`;
+                if (!isPlants) {
+                  const label = getDossierTextValue("maps", map.id, `callouts.${callout.id}.label`, callout.label || "");
+                  return `<span class="gamesense-callout${textEditorActive ? " is-text-editable" : ""}" data-gamesense-callout-id="${escapeHtml(callout.id)}" style="--callout-x:${Number(callout.x)}%;--callout-y:${Number(callout.y)}%">${escapeHtml(label)}</span>`;
+                }
                 const siteIndex = markers.slice(0, index).filter(item => item.site === callout.site).length;
                 const offset = markerOffsets[siteIndex % markerOffsets.length];
                 const direction = callout.site === "B" ? -1 : 1;
@@ -2714,6 +2800,18 @@
           </aside>` : ""}
           ${isHeatmap ? renderMapHeatmapMeta(map, heatmap) : ""}
         </div>
+        ${textEditorActive && !isPlants ? `<section class="gamesense-dossier-callout-editor">
+          <strong>Callout text corrections</strong>
+          <div>${(map.callouts || []).map(callout => {
+            const label = getDossierTextValue("maps", map.id, `callouts.${callout.id}.label`, callout.label || "");
+            const sourceLabel = getDossierTextValue("maps", map.id, `callouts.${callout.id}.sourceLabel`, callout.sourceLabel || "");
+            return `<article>
+              <span>${escapeHtml(callout.id)}</span>
+              ${renderDossierTextField({ type: "maps", id: map.id, path: `callouts.${callout.id}.label`, label: "Label", value: label, rows: 1 })}
+              ${renderDossierTextField({ type: "maps", id: map.id, path: `callouts.${callout.id}.sourceLabel`, label: "Source label", value: sourceLabel, rows: 1 })}
+            </article>`;
+          }).join("")}</div>
+        </section>${renderDossierTextEditorExport("maps", map.id)}` : ""}
       </section>`;
   }
 
@@ -3035,7 +3133,7 @@
       return `
         <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
           <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2></div>
-          <div class="gamesense-map-detail-actions"><span class="gamesense-patch">Reference map art</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
+          <div class="gamesense-map-detail-actions"><span class="gamesense-patch">Reference map art</span>${renderDossierTextEditorControls("maps", map.id)}<button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
         </div>
         <section class="gamesense-note-block gamesense-map-shell-note">
           <h3>${escapeHtml(map.label)} dossier pending</h3>
@@ -3053,7 +3151,7 @@
     return `
       <div class="gamesense-detail-head gamesense-map-detail-head" style="--map-detail-image:url('${escapeHtml(map.cardImage || getMapArtwork(map.label))}')">
         <div><span>Map Dossier</span><h2>${escapeHtml(map.label)}</h2>${map.dataStatus === "in-review" ? `<small class="gamesense-map-data-status gamesense-map-data-status--caution">Data Still In Review</small>` : ""}${map.inCompetitivePool === false ? `<small class="gamesense-map-season-status">Out of Season</small>` : ""}</div>
-        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">${escapeHtml(mapDataPeriodLabel)}</span><button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
+        <div class="gamesense-map-detail-actions"><span class="gamesense-patch">${escapeHtml(mapDataPeriodLabel)}</span>${renderDossierTextEditorControls("maps", map.id)}<button class="gamesense-back" type="button" data-gamesense-back="maps">Back to maps</button></div>
       </div>
       <div class="gamesense-detail-grid">
         ${renderMapTips(map)}
@@ -3098,13 +3196,23 @@
 
   function renderAbilityDetail(agent, ability, { includeVideo = true } = {}) {
     if (!ability) return "";
+    const editActive = isDossierTextEditorActive("agents", agent?.id || "");
+    const summary = getDossierTextValue("agents", agent?.id || "", `abilities.${ability.id}.summary`, ability.summary || "");
+    const purpose = getDossierTextValue("agents", agent?.id || "", `abilities.${ability.id}.purpose`, ability.purpose || "");
+    const setup = getDossierTextValue("agents", agent?.id || "", `abilities.${ability.id}.setup`, ability.setup || "");
     return `
       <article class="gamesense-fact-panel gamesense-ability-panel">
         <div class="gamesense-fact-panel-head"><img src="${escapeHtml(ability.icon)}" alt=""><div><span>${escapeHtml(ability.slot)}</span><h3>${escapeHtml(ability.name)}</h3></div></div>
-        <p>${escapeHtml(ability.summary)}</p>
+        ${editActive
+          ? renderDossierTextField({ type: "agents", id: agent.id, path: `abilities.${ability.id}.summary`, label: "Summary", value: summary, rows: 5 })
+          : `<p>${escapeHtml(summary)}</p>`}
         ${renderStatChips(ability.stats)}
         ${includeVideo ? renderAbilityVideo(ability.video) : ""}
-        <div class="gamesense-fact-read"><section><span>Round purpose</span><p>${escapeHtml(ability.purpose)}</p></section><section><span>Setup and difficulty</span><p>${escapeHtml(ability.setup)}</p></section></div>
+        <div class="gamesense-fact-read"><section><span>Round purpose</span>${editActive
+          ? renderDossierTextField({ type: "agents", id: agent.id, path: `abilities.${ability.id}.purpose`, label: "Purpose", value: purpose, rows: 3 })
+          : `<p>${escapeHtml(purpose)}</p>`}</section><section><span>Setup and difficulty</span>${editActive
+          ? renderDossierTextField({ type: "agents", id: agent.id, path: `abilities.${ability.id}.setup`, label: "Setup", value: setup, rows: 3 })
+          : `<p>${escapeHtml(setup)}</p>`}</section></div>
       </article>`;
   }
 
@@ -3141,7 +3249,7 @@
     return `
       <div class="gamesense-detail-head gamesense-agent-detail-head">
         <div><span>${escapeHtml(agent.role)} Field Guide</span><h2>${escapeHtml(agent.label)}</h2></div>
-        <div class="gamesense-agent-detail-actions"><span class="gamesense-patch">Active season</span><button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button></div>
+        <div class="gamesense-agent-detail-actions"><span class="gamesense-patch">Active season</span>${renderDossierTextEditorControls("agents", agent.id)}<button class="gamesense-back" type="button" data-gamesense-back="agents">Back to agents</button></div>
       </div>
       <section class="gamesense-agent-hero">
         <div class="gamesense-agent-portrait-wrap">
@@ -3164,6 +3272,7 @@
           ${renderAbilityVideoSlot(selected)}
         </div>
         ${renderAbilityDetail(agent, selected, { includeVideo: false })}
+        ${renderDossierTextEditorExport("agents", agent.id)}
       </section>
       <section class="gamesense-comp-card gamesense-map-fit">
         <div><span>Map Fit</span><strong>${escapeHtml(mapFitSource)}</strong></div>
@@ -3260,9 +3369,12 @@
 
   function renderWeaponFact(weapon) {
     if (!weapon) return "";
-    const focus = weapon.focus || "Canonical weapon facts are available. Tactical guidance is still in review.";
-    const whenToUse = (weapon.whenToUse || []).length ? weapon.whenToUse : ["No verified use-case guidance is published yet."];
-    const howToUse = (weapon.howToUse || []).length ? weapon.howToUse : ["No verified handling guidance is published yet."];
+    const editActive = isDossierTextEditorActive("weapons", weapon.id);
+    const focus = getDossierTextValue("weapons", weapon.id, "focus", weapon.focus || "Canonical weapon facts are available. Tactical guidance is still in review.");
+    const whenToUseSource = (weapon.whenToUse || []).length ? weapon.whenToUse : ["No verified use-case guidance is published yet."];
+    const howToUseSource = (weapon.howToUse || []).length ? weapon.howToUse : ["No verified handling guidance is published yet."];
+    const whenToUse = whenToUseSource.map((item, index) => getDossierTextValue("weapons", weapon.id, `whenToUse.${index}`, item));
+    const howToUse = howToUseSource.map((item, index) => getDossierTextValue("weapons", weapon.id, `howToUse.${index}`, item));
     const patchHistory = sortPatchHistoryNewestFirst(weapon.patchHistory || []);
     const globalRateMarkup = weapon.libraryOnly ? `
       <div class="gamesense-global-rate is-library-only">
@@ -3278,17 +3390,22 @@
     return `
       <article class="gamesense-fact-panel gamesense-weapon-panel">
         <div class="gamesense-weapon-panel-art"><img src="${escapeHtml(weapon.image)}" alt="${escapeHtml(weapon.label)}"></div>
-        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3>${globalRateMarkup}<p>${escapeHtml(focus)}</p></div>
+        <div class="gamesense-weapon-panel-copy"><span>Weapon Analysis</span><h3>${escapeHtml(weapon.label)}</h3>${globalRateMarkup}${editActive ? renderDossierTextField({ type: "weapons", id: weapon.id, path: "focus", label: "Focus copy", value: focus, rows: 4 }) : `<p>${escapeHtml(focus)}</p>`}</div>
         ${renderStatChips({ Cost: formatWeaponCost(weapon), Magazine: `${weapon.magazine}`, "Fire rate": weapon.fireRate, Penetration: weapon.penetration })}
         ${renderDamageTable(weapon)}
         <div class="gamesense-weapon-guidance">
-          <section><span>When to use it</span><ul>${whenToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
-          <section><span>How to use it</span><ul>${howToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul></section>
+          <section><span>When to use it</span>${editActive
+            ? whenToUse.map((item, index) => renderDossierTextField({ type: "weapons", id: weapon.id, path: `whenToUse.${index}`, label: `Use case ${index + 1}`, value: item, rows: 3 })).join("")
+            : `<ul>${whenToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`}</section>
+          <section><span>How to use it</span>${editActive
+            ? howToUse.map((item, index) => renderDossierTextField({ type: "weapons", id: weapon.id, path: `howToUse.${index}`, label: `Handling ${index + 1}`, value: item, rows: 3 })).join("")
+            : `<ul>${howToUse.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`}</section>
         </div>
         <details class="gamesense-patch-history gamesense-weapon-history">
           <summary>Patch history</summary>
           <ol>${patchHistory.length ? patchHistory.map(item => `<li><span>${escapeHtml(item.patch.startsWith("Patch") ? item.patch : `Patch ${item.patch}`)}</span><p>${escapeHtml(item.note)}</p>${item.source ? `<a href="${escapeHtml(item.source)}" target="_blank" rel="noopener noreferrer">Riot source</a>` : ""}</li>`).join("") : `<li><span>No melee-specific patch note attached</span><p>No sourced melee-specific balance patch is attached to this dossier yet.</p></li>`}</ol>
         </details>
+        ${renderDossierTextEditorExport("weapons", weapon.id)}
       </article>`;
   }
 
@@ -3370,7 +3487,7 @@
     return `
       <div class="gamesense-detail-head gamesense-weapon-detail-head">
         <div><span>Weapon Dossier</span><h2>${escapeHtml(group.label)}</h2></div>
-        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(getReference().season?.patch || "Current")}</span><button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
+        <div class="gamesense-weapon-detail-actions"><span class="gamesense-patch">As of Patch ${escapeHtml(getReference().season?.patch || "Current")}</span>${renderDossierTextEditorControls("weapons", selected?.id || "")}<button class="gamesense-back" type="button" data-gamesense-back="weapons">Back to weapons</button></div>
       </div>
       <section class="gamesense-selector-section">
         <div class="gamesense-section-heading"><span>Arsenal</span><strong>Select a weapon</strong></div>
@@ -4214,6 +4331,53 @@
     });
   }
 
+  function isValidDossierTextTarget(type = "", id = "") {
+    if (!canUseDossierTextEditor() || !type || !id) return false;
+    if (type === "agents") return getReference().agents?.some(item => item.id === id);
+    if (type === "maps") return getMaps().some(item => item.id === id);
+    if (type === "weapons") {
+      return getReference().weapons?.some(group => (group.weapons || []).some(weapon => weapon.id === id));
+    }
+    return false;
+  }
+
+  function toggleDossierTextEditor(tokenValue = "") {
+    const { type, id } = parseDossierTextToken(tokenValue);
+    if (!isValidDossierTextTarget(type, id)) return;
+    if (dossierTextEditor.activeType === type && dossierTextEditor.activeId === id) {
+      dossierTextEditor.activeType = "";
+      dossierTextEditor.activeId = "";
+      dossierTextEditor.exportText = "";
+    } else {
+      dossierTextEditor.activeType = type;
+      dossierTextEditor.activeId = id;
+      dossierTextEditor.exportText = "";
+      getDossierTextDraft(type, id);
+    }
+    render({ direction: "replace" });
+  }
+
+  function updateDossierTextEditorField(field) {
+    if (!canUseDossierTextEditor() || !field) return false;
+    const { type, id, path } = parseDossierTextToken(field.dataset.gamesenseDossierTextField || "");
+    if (!path || !isDossierTextEditorActive(type, id)) return false;
+    setDossierTextDraftValue(type, id, path, field.value);
+    return true;
+  }
+
+  function exportDossierTextCorrections(tokenValue = "") {
+    const { type, id } = parseDossierTextToken(tokenValue);
+    if (!isDossierTextEditorActive(type, id)) return;
+    dossierTextEditor.exportText = JSON.stringify(buildDossierTextExport(type, id), null, 2);
+    render({ direction: "replace" });
+    window.requestAnimationFrame(() => {
+      const textarea = document.querySelector("[data-gamesense-dossier-text-export-output]");
+      textarea?.focus?.();
+      textarea?.select?.();
+      navigator.clipboard?.writeText?.(dossierTextEditor.exportText).catch(() => {});
+    });
+  }
+
   function startPlantSpotDrag(marker, event) {
     if (!canUsePlantSpotEditor() || !marker?.closest(".gamesense-map-canvas-row.is-plant-editing")) return false;
     const map = getPlantEditorMap(marker.closest("[data-gamesense-map-id]")?.dataset?.gamesenseMapId || "");
@@ -4924,6 +5088,20 @@
       selectCompRole(compRole);
       return;
     }
+    const dossierTextToggle = event.target.closest?.("[data-gamesense-dossier-text-toggle]");
+    if (dossierTextToggle) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleDossierTextEditor(dossierTextToggle.dataset.gamesenseDossierTextToggle || "");
+      return;
+    }
+    const dossierTextExport = event.target.closest?.("[data-gamesense-dossier-text-export]");
+    if (dossierTextExport) {
+      event.preventDefault();
+      event.stopPropagation();
+      exportDossierTextCorrections(dossierTextExport.dataset.gamesenseDossierTextExport || "");
+      return;
+    }
     const plantEditorToggle = event.target.closest?.("[data-gamesense-plant-editor-toggle]");
     if (plantEditorToggle) {
       event.preventDefault();
@@ -5069,16 +5247,26 @@
   }, true);
 
   document.addEventListener("input", event => {
+    const dossierTextField = event.target.closest?.("[data-gamesense-dossier-text-field]");
+    if (dossierTextField) {
+      updateDossierTextEditorField(dossierTextField);
+      return;
+    }
     const field = event.target.closest?.("[data-gamesense-plant-editor-field]");
-    if (!field) return;
-    updatePlantEditorField(field);
+    if (field) updatePlantEditorField(field);
   });
 
   document.addEventListener("change", event => {
+    const dossierTextField = event.target.closest?.("[data-gamesense-dossier-text-field]");
+    if (dossierTextField) {
+      if (updateDossierTextEditorField(dossierTextField)) render({ direction: "replace" });
+      return;
+    }
     const field = event.target.closest?.("[data-gamesense-plant-editor-field]");
-    if (!field) return;
-    updatePlantEditorField(field);
-    render({ direction: "replace" });
+    if (field) {
+      updatePlantEditorField(field);
+      render({ direction: "replace" });
+    }
   });
 
   document.addEventListener("pointerdown", event => {

@@ -79,15 +79,19 @@ const compacted = policy.compactProfilesForLocalCache([{
   id: "profile-with-history",
   matches: [{
     id: "match-1",
+    rawHenrikPayload: { duplicated: true },
     roundMetrics: [{ round: 1, won: true }],
     matchRecord: {
       rank: { rank: "Diamond 2", rr: 64 },
+      rawHenrikPayload: { durable: true },
       roundByRound: [{ round: 1, kills: [{ weapon: "Vandal" }] }]
     }
   }]
 }], 1);
 assert.deepEqual(compacted[0].matches[0].roundMetrics, [{ round: 1, won: true }]);
 assert.deepEqual(compacted[0].matches[0].matchRecord.rank, { rank: "Diamond 2", rr: 64 });
+assert.equal("rawHenrikPayload" in compacted[0].matches[0], false);
+assert.deepEqual(compacted[0].matches[0].matchRecord.rawHenrikPayload, { durable: true });
 assert.equal("roundByRound" in compacted[0].matches[0].matchRecord, false);
 assert.equal(compacted[0].matches.length, 1);
 assert.equal(policy.compactProfilesForLocalCache(compacted, 3)[0].matches.length, 0);
