@@ -1,6 +1,7 @@
 "use strict";
 
 const CURRENT_ACT = "Season 2026 Act 4";
+const CURRENT_SEASON_ID = "season-2026-act-4";
 const TRACKED_PUUID = "rankedcoach-integrity-puuid";
 const ENEMY_PUUID = "rankedcoach-integrity-enemy";
 const TEAMMATE_PUUID = "rankedcoach-integrity-teammate";
@@ -116,6 +117,7 @@ function makeMatchRecord(config = {}) {
     source: config.source || "henrik_sync",
     playedAt,
     createdAt: playedAt,
+    season: config.season || CURRENT_SEASON_ID,
     act: CURRENT_ACT,
     agent: config.agent || "Skye",
     role: config.role || "Initiator",
@@ -167,6 +169,7 @@ function toLegacyMatch(record, overrides = {}) {
     lastSyncSource: record.source,
     createdAt: record.playedAt,
     playedAt: record.playedAt,
+    season: record.season,
     act: record.act,
     agent: record.agent,
     role: record.role,
@@ -195,6 +198,7 @@ function toLegacyMatch(record, overrides = {}) {
       source: record.source,
       matchId: record.id,
       playedAt: record.playedAt,
+      season: record.season,
       act: record.act,
       agent: record.agent,
       mapName: record.map,

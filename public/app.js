@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-stats-logging-parity-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-season-identity-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -7006,10 +7006,15 @@ function getRecentMatchContinuityNote(matchWindow = [], { minimumGapDays = 45 } 
 
 function buildPlayerModel(matchList = [], logList = [], importedAnalytics = null) {
   const orderedMatches = getSortedMatches(matchList);
-  const derivedActs = getMatchSeasonLabels(orderedMatches);
-  const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : []).map(normalizeValorantSeasonLabel);
-  const actOptions = [...new Set([...(importedActs.length ? importedActs : derivedActs), ...derivedActs].filter(Boolean))];
-  const currentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct) || derivedActs[0] || "Current Window";
+  const actDescriptors = getStatsActOptionDescriptors(getActiveProfile(), {
+    matches: orderedMatches,
+    analytics: importedAnalytics
+  });
+  const actOptions = actDescriptors.map(descriptor => descriptor.label);
+  const currentAct = getNewestRealMatchSeasonLabel(orderedMatches)
+    || getStatsFallbackSeasonLabel(getActiveProfile(), { analytics: importedAnalytics })
+    || actOptions[0]
+    || "Current Window";
   const recentMatches = orderedMatches.slice(-8);
   const recentWindow = orderedMatches.slice(-5);
   const recentContinuity = getRecentMatchContinuityNote(recentMatches);
@@ -8994,33 +8999,32 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const rankedPerformanceMatches = rankedOnly
     ? sourceMatches.filter(isRankedPerformanceMatch)
     : sourceMatches;
-  const derivedActs = getMatchSeasonLabels(rankedPerformanceMatches, profile);
-  const latestMatchAct = getNewestRealMatchSeasonLabel(rankedPerformanceMatches, profile);
-  const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [])
-    .map(normalizeValorantSeasonLabel)
-    .filter(label => !isPlaceholderStatsActLabel(label));
-  const importedCurrentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct);
-  const currentImportedAct = !isPlaceholderStatsActLabel(importedCurrentAct) ? importedCurrentAct : "";
-  const actOptions = [...new Set([latestMatchAct, CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
-  const selectedAct = String(
-    Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
-      ? options.actLabel || CURRENT_VALORANT_SEASON_LABEL
-      : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
-        ? activeStatsActLabel
-        : latestMatchAct || currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL
-  ).trim();
-  const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
+  const actDescriptors = getStatsActOptionDescriptors(profile, {
+    ...options,
+    matches: rankedPerformanceMatches,
+    analytics: importedAnalytics
+  });
+  const selectedDescriptor = getStatsSelectedActDescriptor(profile, {
+    ...options,
+    matches: rankedPerformanceMatches,
+    analytics: importedAnalytics,
+    actOptions: actDescriptors
+  });
+  const selectedAct = selectedDescriptor?.label || "";
+  const selectedActKey = selectedDescriptor?.key || "";
+  const actOptions = actDescriptors.map(descriptor => descriptor.label);
+  const shouldFilterByAct = Boolean(selectedActKey && actDescriptors.some(descriptor => descriptor.key === selectedActKey));
   const sourceLogs = Array.isArray(options?.logs)
     ? options.logs
     : getProfileLogEntries(profile?.id || activeProfileId, { authoredOnly: true });
   const actMatches = (shouldFilterByAct
-    ? rankedPerformanceMatches.filter((match) => matchBelongsToSelectedStatsAct(match, selectedAct))
+    ? rankedPerformanceMatches.filter((match) => matchBelongsToSelectedStatsAct(match, selectedActKey, { profile, actOptions: actDescriptors }))
     : rankedPerformanceMatches).map(hydrateMatchDerivedData);
   const actLogs = shouldFilterByAct
     ? sourceLogs.filter((entry) => normalizeValorantSeasonLabel(entry?.demoAct || entry?.act || entry?.metadata?.demoAct || entry?.metadata?.act) === selectedAct)
     : sourceLogs;
   const scopedLogs = shouldFilterByAct && actLogs.length ? actLogs : sourceLogs;
-  const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || CURRENT_VALORANT_SEASON_LABEL, actOptions);
+  const derivedRoundAnalytics = buildRoundDerivedAnalytics(actMatches, selectedAct || getStatsFallbackSeasonLabel(profile, { analytics: importedAnalytics }), actOptions);
   const scopedAnalytics = {
     ...(importedAnalytics || {}),
     ...derivedRoundAnalytics,
@@ -9028,7 +9032,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
       ...(importedAnalytics?.overview || {}),
       ...(derivedRoundAnalytics.overview || {})
     },
-    currentAct: selectedAct || importedCurrentAct || derivedActs[0] || "Current Window",
+    currentAct: selectedAct || getStatsFallbackSeasonLabel(profile, { analytics: importedAnalytics }) || "Current Window",
     acts: actOptions
   };
   return {
@@ -15768,9 +15772,11 @@ function getCoachReadinessModel() {
   const matchCount = getCanonicalMatchRecordCount();
   const authoredLogCount = getProfileLogEntries(activeProfileId, { authoredOnly: true }).length;
   const profileMatches = Array.isArray(profile?.matches) ? profile.matches : [];
-  const currentSeasonLabel = normalizeValorantSeasonLabel(profile?.trackerAnalytics?.currentAct || CURRENT_VALORANT_SEASON_LABEL);
   const rankedProfileMatches = profileMatches.filter(isRankedPerformanceMatch);
-  const currentSeasonMatchCount = rankedProfileMatches.filter(match => matchBelongsToSelectedStatsAct(match, currentSeasonLabel)).length;
+  const currentSeasonKey = getStatsSelectedActKey(profile, { ignoreActiveSelection: true, matches: rankedProfileMatches });
+  const currentSeasonMatchCount = currentSeasonKey
+    ? rankedProfileMatches.filter(match => matchBelongsToSelectedStatsAct(match, currentSeasonKey, { profile })).length
+    : 0;
   const recentMatches = getSortedMatches(rankedProfileMatches).slice(-20);
   const completeMatches = recentMatches.filter(match => {
     const core = getMatchCore(match);
@@ -18327,6 +18333,7 @@ let tooltip = null;
 let crosshair = null;
 let selectedChartTooltipRaf = 0;
 let activeStatsActLabel = "";
+let activeStatsActKey = "";
 
 // ========================
 // LOG SYNC STATE
@@ -18798,7 +18805,7 @@ function getChartSourceEntries(size = currentSize) {
   });
 
   let seasonEntries = canFilterBySeason
-    ? allEntries.filter((entry) => matchBelongsToSelectedStatsAct(entry.match, selectedSeasonLabel))
+    ? allEntries.filter((entry) => matchBelongsToSelectedStatsAct(entry.match, selectedSeasonLabel, { profile }))
     : allEntries;
   if (canFilterBySeason && !seasonEntries.length && allEntries.some(entry => (
     isHenrikSyncMatch(entry?.match)
@@ -21671,19 +21678,20 @@ function buildLifetimeRankSeries(entries = []) {
 
 function getLifetimeSeasonTransitions(entries = []) {
   const transitions = [];
-  let previousSeason = "";
+  let previousSeasonKey = "";
   (entries || []).forEach((entry) => {
-    const season = getMatchSeasonLabel(entry?.match || {});
-    if (!season) return;
-    if (!previousSeason || season !== previousSeason) {
+    const identity = getMatchSeasonIdentity(entry?.match || {});
+    if (!identity?.key) return;
+    if (!previousSeasonKey || identity.key !== previousSeasonKey) {
       transitions.push({
         index: Number(entry?.index),
-        season,
-        isFirst: !previousSeason,
+        season: identity.label,
+        seasonKey: identity.key,
+        isFirst: !previousSeasonKey,
         isPlacementMatch: isPlacementRankedMatch(entry?.match)
       });
     }
-    previousSeason = season;
+    previousSeasonKey = identity.key;
   });
   return transitions;
 }
@@ -46609,7 +46617,7 @@ let loggingDebriefPulseTimer = 0;
 let lastLoggingDebriefSignature = "";
 const pendingLoggingEntryRevealIds = new Set();
 const pendingLoggingSyncedRevealIds = new Set();
-const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 4";
+const FALLBACK_VALORANT_SEASON_LABEL = "Season 2026 Act 4";
 
 function isLoggingPageActive() {
   return getActivePageElement()?.id === "page-logging";
@@ -49740,6 +49748,7 @@ function setActiveProfile(id){
   activeProfileId = id;
   if (switchingProfile) resetSessionCoachingProfile();
   activeStatsActLabel = "";
+  activeStatsActKey = "";
 
   const next = getActiveProfile();
 
@@ -50069,32 +50078,57 @@ function closeProfileDropdown(){
   profileDropdown.style.transform = "";
 }
 
-function getNewestRealMatchSeasonLabel(matchList = [], profile = getActiveProfile()) {
+function getNewestRealMatchSeasonIdentity(matchList = [], profile = getActiveProfile()) {
   const newest = getSortedMatches(matchList)
     .slice()
     .reverse()
     .find(match => {
       if (shouldSuppressDemoFixtureStats(match, profile)) return false;
-      return Boolean(getMatchSeasonLabel(match));
+      return Boolean(getMatchSeasonKey(match));
     });
-  return newest ? getMatchSeasonLabel(newest) : "";
+  return newest ? getMatchSeasonIdentity(newest) : null;
+}
+
+function getNewestRealMatchSeasonLabel(matchList = [], profile = getActiveProfile()) {
+  return getNewestRealMatchSeasonIdentity(matchList, profile)?.label || "";
+}
+
+function getNewestRealMatchSeasonKey(matchList = [], profile = getActiveProfile()) {
+  return getNewestRealMatchSeasonIdentity(matchList, profile)?.key || "";
+}
+
+function getStatsSelectedActDescriptor(profile = getActiveProfile(), options = {}) {
+  const descriptors = Array.isArray(options?.actOptions)
+    ? options.actOptions
+    : getStatsActOptionDescriptors(profile, options);
+  const findSelection = (value = "") => findStatsActDescriptorBySelection(value, descriptors);
+  const selectedByOption = Object.prototype.hasOwnProperty.call(options || {}, "actKey")
+    ? findSelection(options.actKey || "")
+    : Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
+      ? findSelection(options.actLabel || "")
+      : null;
+  if (selectedByOption) return selectedByOption;
+  if (!options?.ignoreActiveSelection) {
+    const selectedByKey = activeStatsActKey ? findSelection(activeStatsActKey) : null;
+    if (selectedByKey) return selectedByKey;
+    const selectedByLabel = activeStatsActLabel ? findSelection(activeStatsActLabel) : null;
+    if (selectedByLabel) return selectedByLabel;
+  }
+  const rankedMatches = getStatsActSourceMatches(profile, options);
+  const latest = getNewestRealMatchSeasonIdentity(rankedMatches, profile);
+  if (latest) return latest;
+  const fallbackLabel = getStatsFallbackSeasonLabel(profile, options);
+  return descriptors[0] || (fallbackLabel
+    ? makeStatsActDescriptor(`fallback-season:${normalizeSeasonDescriptorValue(fallbackLabel)}`, fallbackLabel, { source: "fallback" })
+    : null);
 }
 
 function getStatsSelectedActLabel(profile = getActiveProfile(), options = {}) {
-  const analytics = profile?.trackerAnalytics || null;
-  const rankedMatches = (Array.isArray(profile?.matches) ? profile.matches : []).filter(isRankedPerformanceMatch);
-  const derivedActs = getMatchSeasonLabels(rankedMatches, profile);
-  const latestMatchAct = getNewestRealMatchSeasonLabel(rankedMatches, profile);
-  const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : [])
-    .map(normalizeValorantSeasonLabel)
-    .filter(label => !isPlaceholderStatsActLabel(label));
-  const importedCurrentAct = normalizeValorantSeasonLabel(analytics?.currentAct);
-  const currentImportedAct = !isPlaceholderStatsActLabel(importedCurrentAct) ? importedCurrentAct : "";
-  const actOptions = [...new Set([latestMatchAct, CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
-  const selectedAct = !options?.ignoreActiveSelection && activeStatsActLabel && actOptions.includes(activeStatsActLabel)
-    ? activeStatsActLabel
-    : latestMatchAct || currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL;
-  return selectedAct && actOptions.includes(selectedAct) ? selectedAct : "";
+  return getStatsSelectedActDescriptor(profile, options)?.label || "";
+}
+
+function getStatsSelectedActKey(profile = getActiveProfile(), options = {}) {
+  return getStatsSelectedActDescriptor(profile, options)?.key || "";
 }
 
 function isPlaceholderStatsActLabel(value = "") {
@@ -50105,6 +50139,100 @@ function isPlaceholderStatsActLabel(value = "") {
 function normalizeValorantSeasonLabel(value = "") {
   const label = String(value || "").trim();
   return globalThis.RankedCoachMatchRecord?.formatHenrikActLabel?.(label) || label;
+}
+
+function normalizeSeasonDescriptorValue(value = "") {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isStructuralValorantSeasonToken(value = "") {
+  const text = String(value || "").trim();
+  if (!text || /\s/.test(text)) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)
+    || /^e\d+a\d+$/i.test(text)
+    || /^v\d+a\d+$/i.test(text)
+    || /^season-[a-z0-9_-]+$/i.test(text);
+}
+
+function getStoredRawHenrikPayloadForSeason(match = {}) {
+  return match?.rawHenrikPayload
+    || match?.matchRecord?.rawHenrikPayload
+    || null;
+}
+
+function getRawHenrikSeasonMetadata(match = {}) {
+  const raw = getStoredRawHenrikPayloadForSeason(match);
+  const data = raw?.data && typeof raw.data === "object" ? raw.data : raw;
+  return data?.metadata || raw?.metadata || {};
+}
+
+function firstStructuralSeasonToken(values = []) {
+  for (const value of values) {
+    if (!value) continue;
+    if (typeof value === "object") {
+      const nested = firstStructuralSeasonToken([value.id, value.seasonId, value.uuid, value.short]);
+      if (nested) return nested;
+      continue;
+    }
+    const text = String(value || "").trim();
+    if (isStructuralValorantSeasonToken(text)) return text;
+  }
+  return "";
+}
+
+function firstCleanSeasonString(values = []) {
+  for (const value of values) {
+    if (!value) continue;
+    if (typeof value === "object") {
+      const nested = firstCleanSeasonString([value.label, value.displayName, value.name, value.short]);
+      if (nested) return nested;
+      continue;
+    }
+    const text = String(value || "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function getMatchSeasonId(match = {}) {
+  const metadata = match?.metadata || {};
+  const record = match?.matchRecord || {};
+  const recordMetadata = record?.metadata || {};
+  const rawMetadata = getRawHenrikSeasonMetadata(match);
+  return normalizeSeasonDescriptorValue(firstStructuralSeasonToken([
+    match?.season,
+    match?.seasonId,
+    metadata?.seasonId,
+    metadata?.season?.id,
+    metadata?.season,
+    record?.season,
+    record?.seasonId,
+    recordMetadata?.seasonId,
+    recordMetadata?.season?.id,
+    recordMetadata?.season,
+    rawMetadata?.season?.id,
+    rawMetadata?.season_id,
+    rawMetadata?.seasonId,
+    getStoredRawHenrikPayloadForSeason(match)?.matchInfo?.seasonId
+  ]));
+}
+
+function getMatchSeasonShort(match = {}) {
+  const metadata = match?.metadata || {};
+  const record = match?.matchRecord || {};
+  const recordMetadata = record?.metadata || {};
+  const rawMetadata = getRawHenrikSeasonMetadata(match);
+  return normalizeSeasonDescriptorValue(firstStructuralSeasonToken([
+    match?.seasonShort,
+    metadata?.seasonShort,
+    metadata?.season?.short,
+    record?.seasonShort,
+    recordMetadata?.seasonShort,
+    recordMetadata?.season?.short,
+    rawMetadata?.season?.short,
+    rawMetadata?.season_short,
+    rawMetadata?.seasonShort
+  ]));
 }
 
 function getDemoStatsActLabel(label = "") {
@@ -50144,9 +50272,13 @@ function getMatchSeasonLabel(match = {}) {
     || match?.metadata?.act
     || match?.act
     || match?.matchRecord?.act
+    || match?.matchRecord?.metadata?.act
+    || getRawHenrikSeasonMetadata(match)?.season?.short
+    || getMatchSeasonShort(match)
     || ""
   ).trim();
-  return normalizeValorantSeasonLabel(value);
+  const label = normalizeValorantSeasonLabel(value);
+  return isDemo ? getDemoStatsActLabel(label) : label;
 }
 
 function isHenrikSyncMatch(match = {}) {
@@ -50158,37 +50290,134 @@ function isHenrikSyncMatch(match = {}) {
   ).trim().toLowerCase() === "henrik_sync";
 }
 
-function isCurrentValorantStatsLabel(label = "") {
-  return normalizeValorantSeasonLabel(label) === CURRENT_VALORANT_SEASON_LABEL;
+function getMatchSeasonIdentity(match = {}) {
+  const label = getMatchSeasonLabel(match);
+  if (isDemoFixtureMatch(match)) {
+    return label
+      ? makeStatsActDescriptor(`demo-season:${normalizeSeasonDescriptorValue(label)}`, label, { source: "demo" })
+      : null;
+  }
+  const seasonId = getMatchSeasonId(match);
+  if (seasonId) {
+    return makeStatsActDescriptor(`season:${seasonId}`, label || seasonId, { source: "riot", seasonId });
+  }
+  const seasonShort = getMatchSeasonShort(match);
+  if (seasonShort) {
+    return makeStatsActDescriptor(`season-short:${seasonShort}`, label || normalizeValorantSeasonLabel(seasonShort) || seasonShort, { source: "riot-short", seasonShort });
+  }
+  return label
+    ? makeStatsActDescriptor(`legacy-season:${normalizeSeasonDescriptorValue(label)}`, label, { source: "legacy" })
+    : null;
 }
 
-function matchBelongsToSelectedStatsAct(match = {}, selectedAct = "") {
+function getMatchSeasonKey(match = {}) {
+  return getMatchSeasonIdentity(match)?.key || "";
+}
+
+function makeStatsActDescriptor(key = "", label = "", metadata = {}) {
+  const normalizedLabel = normalizeValorantSeasonLabel(label);
+  return {
+    key: String(key || "").trim(),
+    label: normalizedLabel || String(label || "").trim(),
+    ...metadata
+  };
+}
+
+function getStatsActSourceMatches(profile = getActiveProfile(), options = {}) {
+  const sourceMatches = Array.isArray(options?.matches)
+    ? options.matches
+    : Array.isArray(profile?.matches)
+      ? profile.matches
+      : (Array.isArray(matches) ? matches : []);
+  return (sourceMatches || []).filter(isRankedPerformanceMatch);
+}
+
+function getStatsFallbackSeasonLabel(profile = getActiveProfile(), options = {}) {
+  const analytics = options?.analytics || profile?.trackerAnalytics || null;
+  const importedCurrentAct = normalizeValorantSeasonLabel(analytics?.currentAct);
+  if (importedCurrentAct && !isPlaceholderStatsActLabel(importedCurrentAct)) return importedCurrentAct;
+  return FALLBACK_VALORANT_SEASON_LABEL;
+}
+
+function getStatsActOptionDescriptors(profile = getActiveProfile(), options = {}) {
+  const analytics = options?.analytics || profile?.trackerAnalytics || null;
+  const rankedMatches = getStatsActSourceMatches(profile, options);
+  const descriptors = [];
+  const push = (descriptor) => {
+    if (!descriptor?.key || !descriptor?.label) return;
+    if (descriptors.some(item => item.key === descriptor.key)) return;
+    descriptors.push(descriptor);
+  };
+  getMatchSeasonIdentities(rankedMatches, profile).forEach(push);
+  const derivedLabels = new Set(descriptors.map(item => normalizeSeasonDescriptorValue(item.label)));
+  (Array.isArray(analytics?.acts) ? analytics.acts : [])
+    .map(normalizeValorantSeasonLabel)
+    .filter(label => label && !isPlaceholderStatsActLabel(label))
+    .forEach(label => {
+      if (!derivedLabels.has(normalizeSeasonDescriptorValue(label))) {
+        push(makeStatsActDescriptor(`imported-season:${normalizeSeasonDescriptorValue(label)}`, label, { source: "imported" }));
+      }
+    });
+  const fallbackLabel = getStatsFallbackSeasonLabel(profile, options);
+  if (!descriptors.length && fallbackLabel) {
+    push(makeStatsActDescriptor(`fallback-season:${normalizeSeasonDescriptorValue(fallbackLabel)}`, fallbackLabel, { source: "fallback" }));
+  }
+  return descriptors;
+}
+
+function findStatsActDescriptorBySelection(selection = "", descriptors = getStatsActOptionDescriptors()) {
+  const value = String(selection || "").trim();
+  if (!value) return null;
+  const normalized = normalizeSeasonDescriptorValue(value);
+  return (descriptors || []).find(descriptor => descriptor.key === value)
+    || (descriptors || []).find(descriptor => normalizeSeasonDescriptorValue(descriptor.key) === normalized)
+    || (descriptors || []).find(descriptor => normalizeSeasonDescriptorValue(descriptor.label) === normalizeSeasonDescriptorValue(normalizeValorantSeasonLabel(value)))
+    || null;
+}
+
+function getStatsActSelectionKey(selection = "", profile = getActiveProfile(), options = {}) {
+  const descriptors = options?.actOptions || getStatsActOptionDescriptors(profile, options);
+  return findStatsActDescriptorBySelection(selection, descriptors)?.key || "";
+}
+
+function matchBelongsToSelectedStatsAct(match = {}, selectedAct = "", options = {}) {
   if (shouldSuppressDemoFixtureStats(match)) return false;
-  const matchSeason = getMatchSeasonLabel(match);
-  if (matchSeason) return matchSeason === selectedAct;
-  return isHenrikSyncMatch(match) && isCurrentValorantStatsLabel(selectedAct);
+  const matchSeasonKey = getMatchSeasonKey(match);
+  if (!matchSeasonKey) return false;
+  const selectedKey = getStatsActSelectionKey(selectedAct, options?.profile || getActiveProfile(), options);
+  return Boolean(selectedKey && matchSeasonKey === selectedKey);
+}
+
+function getMatchSeasonIdentities(matchList = [], profile = getActiveProfile()) {
+  const newestFirst = getSortedMatches(matchList).slice().reverse();
+  const descriptors = [];
+  newestFirst
+    .filter(match => !shouldSuppressDemoFixtureStats(match, profile))
+    .map(getMatchSeasonIdentity)
+    .filter(Boolean)
+    .forEach(descriptor => {
+      if (!descriptors.some(item => item.key === descriptor.key)) descriptors.push(descriptor);
+    });
+  return descriptors;
 }
 
 function getMatchSeasonLabels(matchList = [], profile = getActiveProfile()) {
-  const newestFirst = getSortedMatches(matchList).slice().reverse();
-  return [...new Set(newestFirst
-    .filter(match => !shouldSuppressDemoFixtureStats(match, profile))
-    .map(getMatchSeasonLabel)
-    .filter(Boolean))];
+  return getMatchSeasonIdentities(matchList, profile).map(descriptor => descriptor.label);
 }
 
 function computePeakProfileProgress(profile = getActiveProfile(), options = {}) {
   const safeOptions = options || {};
   const profileStart = safeNumber(profile?.startingRR);
   const matchList = Array.isArray(profile?.matches) ? profile.matches : [];
-  const selectedAct = String(
-    Object.prototype.hasOwnProperty.call(safeOptions, "actLabel")
-      ? safeOptions.actLabel || ""
-      : getStatsSelectedActLabel(profile)
-  ).trim();
-  const selectedIndexes = selectedAct
+  const selectedDescriptor = getStatsSelectedActDescriptor(profile, {
+    ...safeOptions,
+    matches: matchList
+  });
+  const selectedAct = selectedDescriptor?.label || "";
+  const selectedActKey = selectedDescriptor?.key || "";
+  const selectedIndexes = selectedActKey
     ? matchList
-        .map((match, index) => matchBelongsToSelectedStatsAct(match, selectedAct) ? index : -1)
+        .map((match, index) => matchBelongsToSelectedStatsAct(match, selectedActKey, { profile }) ? index : -1)
         .filter(index => index >= 0)
     : [];
   const useSeasonScope = Boolean(selectedAct && selectedIndexes.length);
@@ -56656,6 +56885,7 @@ async function importDemoMatches(options = {}){
   if (options.preferBuiltIn) {
     const matchList = buildClientTutorialDemoMatches(750);
     activeStatsActLabel = getDemoStatsActLabel("Season 2026 Act 3");
+    activeStatsActKey = "";
     applyImportedMatches(matchList, {
       source: "demo-fixture",
       analytics: buildClientTutorialDemoAnalytics()
@@ -56693,6 +56923,7 @@ async function importDemoMatches(options = {}){
     console.warn("Demo endpoint unavailable; using built-in tutorial fixture.", error);
     const matchList = buildClientTutorialDemoMatches(750);
     activeStatsActLabel = getDemoStatsActLabel("Season 2026 Act 3");
+    activeStatsActKey = "";
     applyImportedMatches(matchList, {
       source: "demo-fixture",
       analytics: buildClientTutorialDemoAnalytics()
@@ -56750,7 +56981,7 @@ async function importActiveProfileMatches(options = {}){
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
     const metadataRefreshMatchIds = existingMatches
-      .filter(match => !getMatchSeasonLabel(match))
+      .filter(match => !getMatchSeasonKey(match))
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
       .filter(Boolean);
     const weaponBackfillMatchIds = getWeaponBackfillMatchIds(existingMatches);
@@ -58359,7 +58590,12 @@ function renderStatsWeaponsModel() {
 let statsActMobileMenu = null;
 
 function applyStatsActSelection(nextLabel = "") {
-  activeStatsActLabel = String(nextLabel || "").trim();
+  const descriptor = getStatsSelectedActDescriptor(getActiveProfile(), {
+    actKey: nextLabel,
+    matches: Array.isArray(getActiveProfile()?.matches) ? getActiveProfile().matches : []
+  }) || findStatsActDescriptorBySelection(nextLabel);
+  activeStatsActKey = descriptor?.key || String(nextLabel || "").trim();
+  activeStatsActLabel = descriptor?.label || String(nextLabel || "").trim();
   initStatsPage();
   renderStatsAgents();
   renderStatsMaps();
@@ -58435,13 +58671,15 @@ function closeStatsActMobileMenu() {
   trigger?.setAttribute("aria-expanded", "false");
 }
 
-function openStatsActMobileMenu(options = [], selectedLabel = "") {
+function openStatsActMobileMenu(options = [], selectedKey = "", selectedLabel = "") {
   const menu = ensureStatsActMobileMenu();
   const list = menu.querySelector(".stats-act-mobile-menu-list");
-  list.innerHTML = options.map((label) => {
-    const isSelected = label === selectedLabel;
+  list.innerHTML = options.map((option) => {
+    const label = typeof option === "object" ? option.label : String(option || "");
+    const value = typeof option === "object" ? option.key : String(option || "");
+    const isSelected = value === selectedKey || label === selectedLabel;
     return `
-      <button class="stats-act-mobile-option ${isSelected ? "is-selected" : ""}" type="button" role="option" aria-selected="${isSelected ? "true" : "false"}" data-stats-act-option="${escapeHtml(label)}">
+      <button class="stats-act-mobile-option ${isSelected ? "is-selected" : ""}" type="button" role="option" aria-selected="${isSelected ? "true" : "false"}" data-stats-act-option="${escapeHtml(value)}">
         <span>${escapeHtml(label)}</span>
         <span class="stats-act-mobile-option-mark" aria-hidden="true">${isSelected ? "Selected" : ""}</span>
       </button>
@@ -58464,26 +58702,28 @@ function renderStatsSummaryMetaModel() {
   if (label) label.textContent = "Season Stats For";
 
   const model = getPlayerModel();
-  const fallbackSeasonLabel = CURRENT_VALORANT_SEASON_LABEL;
-  const normalizeSeasonLabel = (label = "") => {
-    const value = String(label || "").trim();
-    if (isPlaceholderStatsActLabel(value)) {
-      return fallbackSeasonLabel;
-    }
-    return value;
-  };
-  const currentLabel = normalizeSeasonLabel(activeStatsActLabel || model?.currentAct);
-  const options = [...new Set((model?.acts?.length ? model.acts : [currentLabel]).map(normalizeSeasonLabel))];
+  const profile = getActiveProfile();
+  const profileMatches = rederiveMatchesFromStoredRawPayloads(Array.isArray(profile?.matches) ? profile.matches : [])
+    .filter(isRankedPerformanceMatch);
+  const descriptors = getStatsActOptionDescriptors(profile, {
+    matches: profileMatches,
+    analytics: profile?.trackerAnalytics || null
+  });
+  const selectedDescriptor = getStatsSelectedActDescriptor(profile, { actOptions: descriptors });
+  const currentKey = selectedDescriptor?.key || descriptors[0]?.key || "";
+  const currentLabel = selectedDescriptor?.label || descriptors[0]?.label || model?.currentAct || getStatsFallbackSeasonLabel(profile);
 
   selector.innerHTML = "";
-  options.forEach((label) => {
+  descriptors.forEach((descriptor) => {
     const option = document.createElement("option");
-    option.value = label;
-    option.textContent = label;
+    option.value = descriptor.key;
+    option.textContent = descriptor.label;
     selector.appendChild(option);
   });
-  selector.value = options.includes(currentLabel) ? currentLabel : options[0] || currentLabel;
-  activeStatsActLabel = selector.value || activeStatsActLabel || currentLabel;
+  selector.value = descriptors.some(descriptor => descriptor.key === currentKey) ? currentKey : descriptors[0]?.key || currentKey;
+  const resolvedDescriptor = findStatsActDescriptorBySelection(selector.value, descriptors) || selectedDescriptor || descriptors[0];
+  activeStatsActKey = resolvedDescriptor?.key || selector.value || activeStatsActKey || "";
+  activeStatsActLabel = resolvedDescriptor?.label || currentLabel || activeStatsActLabel || "";
   selector.onchange = () => applyStatsActSelection(selector.value || "");
 
   const mobileTrigger = document.getElementById("statsActMobileTrigger");
@@ -58491,9 +58731,9 @@ function renderStatsSummaryMetaModel() {
   if (mobileTrigger) {
     mobileTrigger.hidden = false;
     mobileTrigger.setAttribute("aria-expanded", "false");
-    mobileTrigger.onclick = () => openStatsActMobileMenu(options, selector.value || currentLabel);
+    mobileTrigger.onclick = () => openStatsActMobileMenu(descriptors, selector.value || activeStatsActKey, activeStatsActLabel || currentLabel);
   }
-  if (mobileValue) mobileValue.textContent = selector.value || currentLabel;
+  if (mobileValue) mobileValue.textContent = activeStatsActLabel || currentLabel;
 
   selector.disabled = false;
   renderStatsHistoryBoundaryNote();
@@ -58575,13 +58815,13 @@ function renderStatsRoleProgress() {
     return matchesPlayed ? safeDivide(getRoleMatchesWon(entry) * 100, matchesPlayed) : 0;
   };
   const sessionDateKey = getCurrentSessionDateKey();
-  const selectedAct = getStatsSelectedActLabel(activeProfile);
+  const selectedActKey = getStatsSelectedActKey(activeProfile);
   const sourceMatches = (Array.isArray(matches) && matches.length)
     ? matches
     : (Array.isArray(activeProfile?.matches) ? activeProfile.matches : []);
   getSortedMatches(sourceMatches)
     .filter(isRankedPerformanceMatch)
-    .filter(match => !selectedAct || matchBelongsToSelectedStatsAct(match, selectedAct))
+    .filter(match => !selectedActKey || matchBelongsToSelectedStatsAct(match, selectedActKey, { profile: activeProfile }))
     .forEach((match) => {
     const core = getMatchCore(match);
     const roleKey = getCompassRoleKey(core.role);

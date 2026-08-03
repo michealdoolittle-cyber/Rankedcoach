@@ -49,12 +49,13 @@ function startServer() {
 }
 
 function seedMixedModeProfile() {
-  const makeMatch = ({ id, agent, map, result, queueId, queueName, kills, deaths, assists, acs, adr, hsPercent }) => ({
+  const makeMatch = ({ id, agent, map, result, queueId, queueName, kills, deaths, assists, acs, adr, hsPercent, season = "season-2026-act-4" }) => ({
     id,
     matchId: id,
     source: "henrik_sync",
     createdAt: "2026-08-03T16:00:00.000Z",
     playedAt: "2026-08-03T16:00:00.000Z",
+    season,
     act: "Season 2026 Act 4",
     agent,
     map,
@@ -70,6 +71,7 @@ function seedMixedModeProfile() {
       matchId: id,
       source: "henrik_sync",
       playedAt: "2026-08-03T16:00:00.000Z",
+      season,
       act: "Season 2026 Act 4",
       agent,
       mapName: map,
@@ -81,6 +83,7 @@ function seedMixedModeProfile() {
       id,
       source: "henrik_sync",
       playedAt: "2026-08-03T16:00:00.000Z",
+      season,
       act: "Season 2026 Act 4",
       agent,
       map,
