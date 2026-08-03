@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-vip-save-fix-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-auth-timeout-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -12900,7 +12900,15 @@ async function logoutOrOpenAuthFromUI() {
   }
   try {
     if (supabaseClient?.auth) {
-      await supabaseClient.auth.signOut();
+      await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.signOut(),
+        {
+          label: "Logout",
+          reason: "logout",
+          timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+          playerMessage: "Logout is taking too long. RankedCoach is returning this device to guest mode."
+        }
+      );
     }
   } catch (error) {
     console.warn("Logout failed", error);
@@ -16589,10 +16597,18 @@ async function startSecurityTotpEnrollment() {
   }
 
   clearSecurityTotpEnrollment();
-  const { data, error } = await supabaseClient.auth.mfa.enroll({
-    factorType: "totp",
-    friendlyName: "RankedCoach"
-  });
+  const { data, error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName: "RankedCoach"
+    }),
+    {
+      label: "MFA enrollment",
+      reason: "mfa-enroll",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble starting authenticator setup right now. Try again in a moment."
+    }
+  );
   if (error) {
     if (mfaInput) mfaInput.checked = false;
     throw error;
@@ -16617,24 +16633,40 @@ async function verifySecurityTotpEnrollment() {
   if (!factorId) throw new Error("Start MFA setup first so RankedCoach can create the QR code.");
   if (!code) throw new Error("Enter the 6-digit code from your authenticator app.");
 
-  const { error } = await supabaseClient.auth.mfa.challengeAndVerify({
-    factorId,
-    code
-  });
+  const { error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.mfa.challengeAndVerify({
+      factorId,
+      code
+    }),
+    {
+      label: "MFA enrollment verification",
+      reason: "mfa-enroll-verify",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble verifying the authenticator code right now. Try again in a moment."
+    }
+  );
   if (error) throw error;
 
   const mfaInput = document.getElementById("securityMfaEnabled");
   const recoveryEmail = document.getElementById("securityRecoveryEmailInput")?.value?.trim() || "";
   const recoveryPhone = document.getElementById("securityRecoveryPhoneInput")?.value?.trim() || "";
   if (mfaInput) mfaInput.checked = true;
-  const { data, error: updateError } = await supabaseClient.auth.updateUser({
-    data: {
-      ...getAccountSecurityMetadata(),
-      mfa_requested: false,
-      mfa_enabled: true,
-      mfa_method: "totp"
+  const { data, error: updateError } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.updateUser({
+      data: {
+        ...getAccountSecurityMetadata(),
+        mfa_requested: false,
+        mfa_enabled: true,
+        mfa_method: "totp"
+      }
+    }),
+    {
+      label: "MFA profile update",
+      reason: "mfa-profile-update",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble saving account security right now. Try again in a moment."
     }
-  });
+  );
   if (updateError) throw updateError;
   currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
   await saveSecurityPreferenceRecord({
@@ -16656,17 +16688,33 @@ async function disableSecurityTotpMfa() {
   for (const factor of factors) {
     const factorId = getMfaFactorId(factor);
     if (!factorId || !supabaseClient?.auth?.mfa?.unenroll) continue;
-    const { error } = await supabaseClient.auth.mfa.unenroll({ factorId });
+    const { error } = await runAuthRequestWithTimeout(
+      () => supabaseClient.auth.mfa.unenroll({ factorId }),
+      {
+        label: "MFA disable",
+        reason: "mfa-disable",
+        timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+        playerMessage: "Having trouble disabling authenticator MFA right now. Try again in a moment."
+      }
+    );
     if (error) throw error;
   }
-  const { data, error } = await supabaseClient.auth.updateUser({
-    data: {
-      ...getAccountSecurityMetadata(),
-      mfa_requested: false,
-      mfa_enabled: false,
-      mfa_method: null
+  const { data, error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.updateUser({
+      data: {
+        ...getAccountSecurityMetadata(),
+        mfa_requested: false,
+        mfa_enabled: false,
+        mfa_method: null
+      }
+    }),
+    {
+      label: "MFA disable profile update",
+      reason: "mfa-disable-profile-update",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble saving account security right now. Try again in a moment."
     }
-  });
+  );
   if (error) throw error;
   currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
   await saveSecurityPreferenceRecord({
@@ -16720,17 +16768,25 @@ async function saveSecuritySettingsModal() {
       return;
     }
 
-    const { data, error } = await supabaseClient.auth.updateUser({
-      data: {
-        ...getAccountSecurityMetadata(),
-        account_name: username,
-        recovery_email: recoveryEmail || null,
-        recovery_phone: recoveryPhone || null,
-        mfa_requested: false,
-        mfa_enabled: mfaEnabled,
-        mfa_method: mfaEnabled ? "totp" : null
+    const { data, error } = await runAuthRequestWithTimeout(
+      () => supabaseClient.auth.updateUser({
+        data: {
+          ...getAccountSecurityMetadata(),
+          account_name: username,
+          recovery_email: recoveryEmail || null,
+          recovery_phone: recoveryPhone || null,
+          mfa_requested: false,
+          mfa_enabled: mfaEnabled,
+          mfa_method: mfaEnabled ? "totp" : null
+        }
+      }),
+      {
+        label: "Security settings account update",
+        reason: "security-settings",
+        timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+        playerMessage: "Having trouble saving account security right now. Try again in a moment."
       }
-    });
+    );
     if (error) throw error;
     currentAuthUser = data?.user || (await getSupabaseUser()) || currentAuthUser;
 
@@ -18069,8 +18125,12 @@ globalThis.RankedCoachAuthBridge = Object.freeze({
     if (currentAuthUser) return currentAuthUser;
     if (!supabaseClient?.auth?.getUser) return null;
     try {
-      const { data: { user } = {} } = await supabaseClient.auth.getUser();
-      return user || null;
+      return await getSupabaseUser({
+        label: "Owner tool auth check",
+        reason: "owner-tools",
+        timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+        silent: true
+      });
     } catch (_error) {
       return null;
     }
@@ -19081,6 +19141,8 @@ const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 const STORAGE_KEY_PENDING_LOADOUT_ROLLS = "rankedcoach_pending_loadout_rolls_v1";
 const STORAGE_KEY_LAST_SEEN_APP_BUILD = "rankedcoach_last_seen_app_build_v1";
 const RIOT_SYNC_TIMEOUT_MS = 45 * 1000;
+const AUTH_INIT_TIMEOUT_MS = Math.max(800, Number(globalThis.RANKEDCOACH_AUTH_INIT_TIMEOUT_MS) || 3500);
+const AUTH_ACTION_TIMEOUT_MS = Math.max(1200, Number(globalThis.RANKEDCOACH_AUTH_ACTION_TIMEOUT_MS) || 6500);
 
 const backendSyncState = {
   applyingRemote: false,
@@ -19101,12 +19163,128 @@ let persistentAccountRealtimeReloadTimer = 0;
 let persistentAccountRealtimeNoticeShown = false;
 let persistentAccountSaveNoticeLastShownAt = 0;
 let persistentAccountSaveRetryTimer = 0;
+let authReachabilityNoticeLastShownAt = 0;
 let rankedCoachAppUpdateCheckTimer = 0;
 let rankedCoachAppUpdateCheckInFlight = false;
 let rankedCoachAppUpdateNoticeShown = false;
 let rankedCoachLastAppUpdateCheckAt = 0;
 
 let insightFeedbackEntries = readInsightFeedbackEntries();
+
+function createAuthTimeoutError(label = "Auth request", timeoutMs = AUTH_ACTION_TIMEOUT_MS) {
+  const seconds = Math.max(1, Math.round(timeoutMs / 1000));
+  const error = new Error(`${label} did not respond within ${seconds} seconds.`);
+  error.name = "RankedCoachAuthTimeoutError";
+  error.code = "AUTH_TIMEOUT";
+  error.timeoutMs = timeoutMs;
+  error.playerMessage = "Having trouble reaching your account right now — continuing with your local data.";
+  return error;
+}
+
+function isAuthTimeoutError(error = {}) {
+  return error?.name === "RankedCoachAuthTimeoutError" || error?.code === "AUTH_TIMEOUT";
+}
+
+function notifyAuthReachabilityIssue(message = "", options = {}) {
+  if (options.silent) return;
+  const now = Date.now();
+  if (now - authReachabilityNoticeLastShownAt < 30000) return;
+  authReachabilityNoticeLastShownAt = now;
+  showToast(message || "Having trouble reaching your account right now — continuing with your local data.", {
+    title: options.title || "Account check delayed",
+    variant: "warning",
+    durationMs: options.durationMs || 5000
+  });
+}
+
+function getPlayerFacingAuthErrorMessage(error = {}, fallback = "Unable to reach the account service. Please try again.") {
+  if (isAuthTimeoutError(error)) {
+    return error.playerMessage || fallback;
+  }
+  return error?.message || fallback;
+}
+
+function withAuthRequestTimeout(request, options = {}) {
+  const timeoutMs = Math.max(250, Number(options.timeoutMs) || AUTH_ACTION_TIMEOUT_MS);
+  const label = options.label || "Auth request";
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(createAuthTimeoutError(label, timeoutMs));
+    }, timeoutMs);
+    Promise.resolve()
+      .then(typeof request === "function" ? request : () => request)
+      .then(value => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(error => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
+async function runAuthRequestWithTimeout(request, options = {}) {
+  try {
+    return await withAuthRequestTimeout(request, options);
+  } catch (error) {
+    if (isAuthTimeoutError(error)) {
+      console.warn(`${options.label || "Auth request"} timed out`, {
+        timeoutMs: error.timeoutMs,
+        reason: options.reason || ""
+      });
+      notifyAuthReachabilityIssue(options.playerMessage || error.playerMessage, options);
+    }
+    throw error;
+  }
+}
+
+async function getSupabaseUser(options = {}) {
+  if (!supabaseClient?.auth?.getUser) return null;
+  const result = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.getUser(),
+    {
+      label: options.label || "Supabase auth user check",
+      reason: options.reason || "get-user",
+      timeoutMs: options.timeoutMs || AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: options.playerMessage || "Having trouble reaching your account right now — continuing with your local data.",
+      silent: options.silent === true
+    }
+  );
+  const error = result?.error || null;
+  if (error) {
+    backendSyncState.lastError = error;
+    return null;
+  }
+  return result?.data?.user || null;
+}
+
+async function getSupabaseSession(options = {}) {
+  if (!supabaseClient?.auth?.getSession) return null;
+  const result = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.getSession(),
+    {
+      label: options.label || "Supabase cached session check",
+      reason: options.reason || "get-session",
+      timeoutMs: options.timeoutMs || AUTH_INIT_TIMEOUT_MS,
+      playerMessage: options.playerMessage || "Having trouble reaching your account right now — continuing with your local data.",
+      silent: options.silent === true
+    }
+  );
+  const error = result?.error || null;
+  if (error) {
+    backendSyncState.lastError = error;
+    return null;
+  }
+  return result?.data?.session || null;
+}
 
 function readInsightFeedbackEntries() {
   try {
@@ -19597,16 +19775,6 @@ function applyPersistentAccountState(state = {}) {
   if (shouldPersistMergedPlaylistWatchHistory) {
     queuePersistentAccountSave("playlist-watch-history-merge");
   }
-}
-
-async function getSupabaseUser() {
-  if (!supabaseClient?.auth) return null;
-  const { data: { user } = {}, error } = await supabaseClient.auth.getUser();
-  if (error) {
-    backendSyncState.lastError = error;
-    return null;
-  }
-  return user || null;
 }
 
 function getLoadedRankedCoachScriptVersion() {
@@ -54313,7 +54481,12 @@ async function initUserSession(initialSessionUser = null){
     );
   } else {
     try {
-      const { data: { session } = {} } = await supabaseClient.auth.getSession();
+      const session = await getSupabaseSession({
+        label: "Startup cached auth session",
+        reason: "startup-session",
+        timeoutMs: AUTH_INIT_TIMEOUT_MS,
+        playerMessage: "Having trouble reaching your account right now — continuing with your local data."
+      });
       cachedSessionUser = session?.user || null;
     } catch (error) {
       console.warn("Unable to read cached auth session", error);
@@ -54322,8 +54495,12 @@ async function initUserSession(initialSessionUser = null){
 
   let user = null;
   try {
-    const result = await supabaseClient.auth.getUser();
-    user = result?.data?.user || null;
+    user = await getSupabaseUser({
+      label: "Startup auth verification",
+      reason: "startup-user",
+      timeoutMs: AUTH_INIT_TIMEOUT_MS,
+      playerMessage: "Having trouble reaching your account right now — continuing with your local data."
+    });
   } catch (error) {
     console.warn("Unable to verify auth session", error);
   }
@@ -55059,14 +55236,30 @@ function renderMfaChallengePanel(factors = []) {
 
 async function getVerifiedMfaFactors() {
   if (!supabaseClient?.auth?.mfa?.listFactors) return [];
-  const { data, error } = await supabaseClient.auth.mfa.listFactors();
+  const { data, error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.mfa.listFactors(),
+    {
+      label: "MFA factor check",
+      reason: "mfa-list-factors",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble reaching account security right now. Try again in a moment."
+    }
+  );
   if (error) throw error;
   return getVerifiedMfaFactorsFromData(data || {});
 }
 
 async function shouldRequireMfaChallenge() {
   if (!supabaseClient?.auth?.mfa?.getAuthenticatorAssuranceLevel) return false;
-  const { data, error } = await supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel();
+  const { data, error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.mfa.getAuthenticatorAssuranceLevel(),
+    {
+      label: "MFA assurance check",
+      reason: "mfa-assurance",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble reaching account security right now. Try again in a moment."
+    }
+  );
   if (error) throw error;
   return data?.nextLevel === "aal2" && data?.currentLevel !== "aal2";
 }
@@ -55093,10 +55286,18 @@ async function verifyPendingMfaChallenge() {
   if (!factorId) throw new Error("No verified 2-factor method was found for this account.");
   if (!code) throw new Error("Enter your 2-factor code.");
 
-  const { error } = await supabaseClient.auth.mfa.challengeAndVerify({
-    factorId,
-    code
-  });
+  const { error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.mfa.challengeAndVerify({
+      factorId,
+      code
+    }),
+    {
+      label: "MFA challenge verification",
+      reason: "mfa-challenge",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble verifying 2-factor right now. Try again in a moment."
+    }
+  );
   if (error) throw error;
 
   const stillRequiresMfa = await shouldRequireMfaChallenge();
@@ -55270,20 +55471,36 @@ function startAuthResetCountdown() {
 
 async function requestPasswordRecoveryCode(email = "") {
   if (!supabaseClient?.auth) throw new Error("RankedCoach auth is not connected yet.");
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.href
-  });
+  const { error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href
+    }),
+    {
+      label: "Password recovery request",
+      reason: "password-recovery",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble sending the recovery email right now. Try again in a moment."
+    }
+  );
   if (error) throw error;
 }
 
 async function verifyPasswordRecoveryCode(email = "", code = "") {
   if (!supabaseClient?.auth) throw new Error("RankedCoach auth is not connected yet.");
   authRecoveryInProgress = true;
-  const { error } = await supabaseClient.auth.verifyOtp({
-    email,
-    token: String(code || "").replace(/\D/g, ""),
-    type: "recovery"
-  });
+  const { error } = await runAuthRequestWithTimeout(
+    () => supabaseClient.auth.verifyOtp({
+      email,
+      token: String(code || "").replace(/\D/g, ""),
+      type: "recovery"
+    }),
+    {
+      label: "Password recovery code verification",
+      reason: "password-recovery-code",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Having trouble verifying the recovery code right now. Try again in a moment."
+    }
+  );
   if (error) throw error;
 }
 
@@ -55420,10 +55637,18 @@ document.addEventListener("click", async (e) => {
     let signInError = null;
     let signInRequestFailed = false;
     try {
-      ({ error: signInError } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password: pass
-      }));
+      ({ error: signInError } = await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.signInWithPassword({
+          email,
+          password: pass
+        }),
+        {
+          label: "Password sign-in",
+          reason: "password-login",
+          timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+          playerMessage: "Having trouble reaching sign-in right now. Try again in a moment."
+        }
+      ));
     } catch (requestError) {
       signInRequestFailed = true;
       signInError = requestError || new Error("Unable to reach the sign-in service.");
@@ -55433,7 +55658,9 @@ document.addEventListener("click", async (e) => {
       authPasswordLoginInProgress = false;
       dismissLoginInitializationOverlay();
       restoreButton();
-      alert(signInRequestFailed ? "Unable to reach the sign-in service. Please try again." : "Invalid username or password.");
+      alert(signInRequestFailed
+        ? getPlayerFacingAuthErrorMessage(signInError, "Unable to reach the sign-in service. Please try again.")
+        : "Invalid username or password.");
       return;
     }
 
@@ -55446,13 +55673,21 @@ document.addEventListener("click", async (e) => {
       authPasswordLoginInProgress = false;
       setAppEntryChoice("auth");
       closeAuthModal();
-      const signedInUser = (await supabaseClient.auth.getUser()).data?.user || null;
+      const signedInUser = await getSupabaseUser({
+        label: "Post-login account verification",
+        reason: "password-login-user",
+        timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+        playerMessage: "Signed in, but account verification is slow. Try again in a moment."
+      });
       if (!signedInUser) throw new Error("Your signed-in account could not be loaded. Please try again.");
       await initializeSignedInAccount(signedInUser, { reason: "password-login" });
     } catch (mfaError) {
       authPasswordLoginInProgress = false;
       dismissLoginInitializationOverlay();
-      await supabaseClient.auth.signOut();
+      await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.signOut(),
+        { label: "Failed-login sign out", reason: "password-login-cleanup", timeoutMs: AUTH_ACTION_TIMEOUT_MS, silent: true }
+      ).catch(() => {});
       alert(mfaError?.message || "Unable to check 2-factor authentication for this account.");
     } finally {
       restoreButton();
@@ -55476,11 +55711,23 @@ document.addEventListener("click", async (e) => {
       alert("RankedCoach auth is not connected yet.");
       return;
     }
-    const { error } = await supabaseClient.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.href }
-    });
-    if(error) alert(error.message);
+    try {
+      const { error } = await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: window.location.href }
+        }),
+        {
+          label: "Google sign-in",
+          reason: "google-login",
+          timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+          playerMessage: "Having trouble opening Google sign-in right now. Try again in a moment."
+        }
+      );
+      if(error) alert(error.message);
+    } catch (error) {
+      alert(getPlayerFacingAuthErrorMessage(error, "Unable to open Google sign-in right now. Try again."));
+    }
   }
 
   // SIGNUP
@@ -55520,24 +55767,38 @@ document.addEventListener("click", async (e) => {
     }
 
     const restoreButton = setAuthButtonLoading(e.target, "Creating...");
-    const { error } = await supabaseClient.auth.signUp({
-      email,
-      password: pass,
-      options: {
-        data: {
-          account_name: accountName,
-          recovery_email: recoveryEmail || null,
-          recovery_phone: recoveryPhone || null,
-          mfa_requested: mfaEnabled,
-          mfa_enabled: false,
-          mfa_method: mfaEnabled ? "totp" : null
+    let signupResult = null;
+    try {
+      signupResult = await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.signUp({
+          email,
+          password: pass,
+          options: {
+            data: {
+              account_name: accountName,
+              recovery_email: recoveryEmail || null,
+              recovery_phone: recoveryPhone || null,
+              mfa_requested: mfaEnabled,
+              mfa_enabled: false,
+              mfa_method: mfaEnabled ? "totp" : null
+            }
+          }
+        }),
+        {
+          label: "Account signup",
+          reason: "signup",
+          timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+          playerMessage: "Having trouble creating the account right now. Try again in a moment."
         }
-      }
-    });
+      );
+    } catch (requestError) {
+      signupResult = { error: requestError || new Error("Unable to reach the account service.") };
+    }
     restoreButton();
 
+    const error = signupResult?.error || null;
     if(error){
-      setAuthStatus("authSignupStatus", error.message);
+      setAuthStatus("authSignupStatus", getPlayerFacingAuthErrorMessage(error, "Unable to create the account right now. Try again."));
       return;
     }
 
@@ -55548,7 +55809,15 @@ document.addEventListener("click", async (e) => {
       ? "Account created. Open Security Settings after login to scan your authenticator QR code."
       : "Account created. Please confirm your email if Supabase asks for verification."
     );
-    const signedUpUser = (await supabaseClient.auth.getUser()).data?.user || null;
+    const signedUpUser = signupResult?.data?.user || await getSupabaseUser({
+      label: "Post-signup account verification",
+      reason: "signup-user",
+      timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+      playerMessage: "Account created, but account verification is slow. Try again in a moment."
+    }).catch(error => {
+      setAuthStatus("authSignupStatus", getPlayerFacingAuthErrorMessage(error, "Account created, but RankedCoach could not load it yet. Try signing in."));
+      return null;
+    });
     if (signedUpUser) {
       const active = getActiveProfile();
       if (active) {
@@ -55645,10 +55914,23 @@ document.addEventListener("click", async (e) => {
       if (!authRecoverySessionReady) {
         throw new Error("Verify the recovery code before changing the password.");
       }
-      const { error } = await supabaseClient.auth.updateUser({ password });
+      const { error } = await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.updateUser({ password }),
+        {
+          label: "Password update",
+          reason: "password-reset-update",
+          timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+          playerMessage: "Having trouble changing the password right now. Try again in a moment."
+        }
+      );
       if(error) throw error;
       rememberPasswordFingerprint(email, password);
-      const { data: { user } = {} } = await supabaseClient.auth.getUser();
+      const user = await getSupabaseUser({
+        label: "Post-password-reset account verification",
+        reason: "password-reset-user",
+        timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+        playerMessage: "Password changed, but account verification is slow. Try again in a moment."
+      });
       if (user) {
         await safeUpsertAccountSecurityPreferences({
           user_id: user.id,
@@ -55659,7 +55941,10 @@ document.addEventListener("click", async (e) => {
       }
       authRecoveryInProgress = false;
       authRecoverySessionReady = false;
-      await supabaseClient.auth.signOut();
+      await runAuthRequestWithTimeout(
+        () => supabaseClient.auth.signOut(),
+        { label: "Password reset sign out", reason: "password-reset-signout", timeoutMs: AUTH_ACTION_TIMEOUT_MS, silent: true }
+      ).catch(() => {});
       enterGuestModeAfterLogout?.();
       alert("Password changed. Please log in with your new password.");
       resetPasswordRecoveryPanel();
@@ -55774,7 +56059,12 @@ if (!window.__vt_riotProfileSaveBound) {
       }
 
       if (supabaseClient?.auth) {
-        const { data: { user } = {} } = await supabaseClient.auth.getUser();
+        const user = await getSupabaseUser({
+          label: "Riot profile account verification",
+          reason: "riot-profile-save",
+          timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+          playerMessage: "Riot profile saved locally, but account sync is slow right now. RankedCoach will keep retrying."
+        }).catch(() => null);
 
         if(user){
           const { error } = await supabaseClient
