@@ -52,7 +52,7 @@
   "roundConversion": "Available by buy type",
   "uuid": "42da8ccc-40d5-affc-beec-15aa47b42eda",
   "source": "https://valorant-api.com/v1/weapons/42da8ccc-40d5-affc-beec-15aa47b42eda?language=en-US",
-  "lastReviewed": "2026-08-02",
+  "lastReviewed": "2026-08-03",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -61,7 +61,7 @@
     "entityName": "Shorty",
     "operation": "merge",
     "groupId": "shotguns",
-    "generatedAt": "2026-08-03T04:04:09.625Z",
+    "generatedAt": "2026-08-03T10:10:54.935Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-03"

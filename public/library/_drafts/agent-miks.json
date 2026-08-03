@@ -112,7 +112,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/7c8a4701-4de6-9355-b254-e09bc2a34b72?language=en-US",
   "uuid": "7c8a4701-4de6-9355-b254-e09bc2a34b72",
-  "lastReviewed": "2026-08-02",
+  "lastReviewed": "2026-08-03",
   "patchVersion": "13.02",
   "pickRate": 4.211,
   "pickRateRank": 19,
@@ -190,7 +190,7 @@
     "entityName": "Miks",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-03T04:04:09.625Z",
+    "generatedAt": "2026-08-03T10:10:54.935Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-03"

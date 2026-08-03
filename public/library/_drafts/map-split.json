@@ -854,7 +854,7 @@
   "coordinates": "35°41'CD'N,139°41'WX'E",
   "source": "https://valorant-api.com/v1/maps/d960549e-485c-e861-8d71-aa9d1aed12a2?language=en-US",
   "dataStatus": "verified",
-  "lastReviewed": "2026-08-02",
+  "lastReviewed": "2026-08-03",
   "patchVersion": "13.02",
   "tacticalMapSource": "https://overgear.com/guides/valorant/maps-list/",
   "statsSource": {
@@ -1553,7 +1553,7 @@
     "entityName": "Split",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-03T04:04:09.625Z",
+    "generatedAt": "2026-08-03T10:10:54.935Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-03"

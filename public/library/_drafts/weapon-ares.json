@@ -22,7 +22,7 @@
     }
   ],
   "source": "https://valorant-api.com/v1/weapons/55d8a0f4-4274-ca67-fe2c-06ab45efdf58?language=en-US",
-  "lastReviewed": "2026-08-02",
+  "lastReviewed": "2026-08-03",
   "patchVersion": "13.02",
   "_meta": {
     "schemaVersion": 1,
@@ -31,7 +31,7 @@
     "entityName": "Ares",
     "operation": "merge",
     "groupId": "machine-guns",
-    "generatedAt": "2026-08-03T04:04:09.625Z",
+    "generatedAt": "2026-08-03T10:10:54.935Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-03"

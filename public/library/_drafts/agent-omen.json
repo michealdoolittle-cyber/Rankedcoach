@@ -129,7 +129,7 @@
   ],
   "uuid": "8e253930-4c05-31dd-1b6c-968525494517",
   "source": "https://valorant-api.com/v1/agents/8e253930-4c05-31dd-1b6c-968525494517?language=en-US",
-  "lastReviewed": "2026-08-02",
+  "lastReviewed": "2026-08-03",
   "patchVersion": "13.02",
   "pickRate": 15.8372,
   "pickRateRank": 11,
@@ -225,7 +225,7 @@
     "entityName": "Omen",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-03T04:04:09.625Z",
+    "generatedAt": "2026-08-03T10:10:54.935Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-03"

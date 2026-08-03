@@ -136,7 +136,7 @@
   ],
   "source": "https://valorant-api.com/v1/agents/601dbbe7-43ce-be57-2a40-4abd24953621?language=en-US",
   "uuid": "601dbbe7-43ce-be57-2a40-4abd24953621",
-  "lastReviewed": "2026-08-02",
+  "lastReviewed": "2026-08-03",
   "patchVersion": "13.02",
   "pickRate": 2.0988,
   "pickRateRank": 27,
@@ -232,7 +232,7 @@
     "entityName": "KAY/O",
     "operation": "merge",
     "groupId": "",
-    "generatedAt": "2026-08-03T04:04:09.625Z",
+    "generatedAt": "2026-08-03T10:10:54.935Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
     "lastReviewed": "2026-08-03"
