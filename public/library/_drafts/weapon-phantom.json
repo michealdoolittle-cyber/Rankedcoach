@@ -55,10 +55,10 @@
     "entityName": "Phantom",
     "operation": "merge",
     "groupId": "rifles",
-    "generatedAt": "2026-08-02T19:40:26.853Z",
+    "generatedAt": "2026-08-03T04:04:09.625Z",
     "generationReason": "Scheduled canonical refresh",
     "patchVersion": "13.02",
-    "lastReviewed": "2026-08-02"
+    "lastReviewed": "2026-08-03"
   },
   "_fieldMeta": {
     "id": {
