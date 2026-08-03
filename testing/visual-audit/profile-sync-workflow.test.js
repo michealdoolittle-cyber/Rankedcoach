@@ -40,6 +40,12 @@ function startServer() {
 
 function supabaseStub() {
   return `
+    const rankedCoachProfileSyncUser = {
+      id: "profile-sync-user",
+      email: "profile-sync@example.com",
+      user_metadata: { account_name: "ProfileSync" },
+      app_metadata: {}
+    };
     globalThis.supabase = {
       createClient() {
         const query = {
@@ -52,10 +58,10 @@ function supabaseStub() {
         };
         return {
           auth: {
-            getSession: async () => ({ data: { session: null }, error: null }),
-            getUser: async () => ({ data: { user: null }, error: null }),
+            getSession: async () => ({ data: { session: { user: rankedCoachProfileSyncUser } }, error: null }),
+            getUser: async () => ({ data: { user: rankedCoachProfileSyncUser }, error: null }),
             onAuthStateChange(callback) {
-              setTimeout(() => callback("INITIAL_SESSION", null), 0);
+              setTimeout(() => callback("INITIAL_SESSION", { user: rankedCoachProfileSyncUser }), 0);
               return { data: { subscription: { unsubscribe() {} } } };
             },
             signOut: async () => ({ error: null })
@@ -130,7 +136,7 @@ async function run() {
     });
     await page.addInitScript(() => {
       localStorage.clear();
-      localStorage.setItem("valtracker_entry_choice_v1", "guest");
+      localStorage.setItem("valtracker_entry_choice_v1", "auth");
     });
 
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
@@ -169,9 +175,13 @@ async function run() {
     const state = await page.evaluate(() => {
       const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
       const profile = profiles.find(item => item.name === "Workflow Test");
-      const logs = JSON.parse(localStorage.getItem("valtracker_log_entries_v2:guest") || "[]");
+      const logKey = Object.keys(localStorage)
+        .filter(key => key.startsWith("valtracker_log_entries_v2:"))
+        .find(key => key !== "valtracker_log_entries_v2:guest") || "valtracker_log_entries_v2:guest";
+      const logs = JSON.parse(localStorage.getItem(logKey) || "[]");
       const latestLog = logs.find(entry => entry.matchId === "profile-sync-0");
       return {
+        logKey,
         profile: profile && { matchCount: profile.matches.length, cursor: profile.henrikHistoryCursor, complete: Boolean(profile.henrikHistoryBackfillCompleteAt), dailySync: profile.lastDailyProfileSyncDate },
         latestLog: latestLog && { rr: latestLog.rr, agent: latestLog.agent, map: latestLog.map },
         formAgent: document.getElementById("logAgentDisplay")?.textContent?.trim(),

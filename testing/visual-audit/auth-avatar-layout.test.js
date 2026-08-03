@@ -244,7 +244,7 @@ async function run() {
         scrollWidth: document.documentElement.scrollWidth,
         clientWidth: document.documentElement.clientWidth
       }))), 0);
-      if (profile.profileBorderRotate) {
+      if (profile.profileBorderRotate || profile.profileBorder === "notched") {
         assert.notEqual(mainAnimation, "none");
         assert.equal(await page.locator("#mobileHeaderProfileBtn .mobile-header-rank-icon").getAttribute("alt"), "Diamond 2");
         assert.equal(await page.locator("#navCurrentTierText").innerText(), "Diamond 2");

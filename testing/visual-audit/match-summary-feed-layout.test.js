@@ -179,6 +179,7 @@ function seedState() {
   localStorage.clear();
   localStorage.setItem("valtracker_entry_choice_v1", "guest");
   localStorage.setItem("valtracker_active_profile_id", profileId);
+  sessionStorage.setItem(`rankedcoach_guest_riot_link_prompt_v1:${profileId}`, "1");
   localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
     id: profileId,
     name: "Feed Layout",

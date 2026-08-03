@@ -36,6 +36,12 @@ function startServer() {
 
 function supabaseStub() {
   return `
+    const rankedCoachRiotSyncUser = {
+      id: "riot-sync-user",
+      email: "riot-sync@example.com",
+      user_metadata: { account_name: "RiotSync" },
+      app_metadata: {}
+    };
     globalThis.supabase = {
       createClient() {
         const query = {
@@ -48,10 +54,10 @@ function supabaseStub() {
         };
         return {
           auth: {
-            getSession: async () => ({ data: { session: null }, error: null }),
-            getUser: async () => ({ data: { user: null }, error: null }),
+            getSession: async () => ({ data: { session: { user: rankedCoachRiotSyncUser } }, error: null }),
+            getUser: async () => ({ data: { user: rankedCoachRiotSyncUser }, error: null }),
             onAuthStateChange(callback) {
-              setTimeout(() => callback("INITIAL_SESSION", null), 0);
+              setTimeout(() => callback("INITIAL_SESSION", { user: rankedCoachRiotSyncUser }), 0);
               return { data: { subscription: { unsubscribe() {} } } };
             },
             signOut: async () => ({ error: null })
@@ -128,7 +134,7 @@ async function run() {
         henrikHistoryBackfillVersion: 2,
         henrikHistoryBackfillCompleteAt: "2026-07-13T00:00:00.000Z"
       };
-      localStorage.setItem("valtracker_entry_choice_v1", "guest");
+      localStorage.setItem("valtracker_entry_choice_v1", "auth");
       localStorage.setItem("valtracker_active_profile_id", profile.id);
       localStorage.setItem("valtracker_profiles_v1", JSON.stringify([profile]));
     });
@@ -137,6 +143,8 @@ async function run() {
     await dismissWarmup(page);
     await page.waitForFunction(() => !document.documentElement.classList.contains("app-booting"), null, { timeout: 15000 });
     await page.locator("#profileSyncBtn").waitFor({ state: "visible" });
+    const accountRequestsBeforeManualSync = accountRequests;
+    const competitiveRequestsBeforeManualSync = competitiveMatchRequests;
     await page.click("#profileSyncBtn");
     const toast = page.locator(".app-toast.is-visible").filter({ hasText: "Riot's data provider is busy right now" });
     await toast.waitFor({ state: "visible", timeout: 12000 }).catch(async error => {
@@ -158,8 +166,8 @@ async function run() {
     fs.mkdirSync(path.join(__dirname, "tmp"), { recursive: true });
     await toast.screenshot({ path: path.join(__dirname, "tmp", "riot-sync-rate-limit-toast.png") });
     assert.deepEqual(dialogs, []);
-    assert.equal(accountRequests, 1);
-    assert.equal(competitiveMatchRequests, 3);
+    assert.equal(accountRequests, accountRequestsBeforeManualSync || 1);
+    assert.equal(competitiveMatchRequests, competitiveRequestsBeforeManualSync + 3);
     assert.deepEqual(consoleErrors, []);
 
     const storedAfterFailure = await page.evaluate(() => JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]")[0]);
@@ -168,6 +176,8 @@ async function run() {
     assert.ok(storedAfterFailure.lastSyncErrorAt);
 
     failureMode = false;
+    const competitiveRequestsAfterFailure = competitiveMatchRequests;
+    await dismissWarmup(page);
     await page.click("#profileSyncBtn");
     await page.waitForFunction(() => {
       const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
@@ -175,7 +185,7 @@ async function run() {
     }, null, { timeout: 12000 });
     await page.waitForTimeout(300);
     assert.equal(accountRequests, 1, "The saved PUUID should prevent a second account lookup.");
-    assert.equal(competitiveMatchRequests, 4);
+    assert.equal(competitiveMatchRequests, competitiveRequestsAfterFailure + 1);
     assert.ok(dialogs.some(message => /already up to date/i.test(message)), JSON.stringify(dialogs));
 
     console.log("Riot sync browser check passed: friendly toast, no raw alert, persisted PUUID, no repeated account lookup, and zero console errors.");
