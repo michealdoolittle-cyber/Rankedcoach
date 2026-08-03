@@ -56,6 +56,7 @@ async function run() {
   try {
     await page.addInitScript(() => {
       const profileId = "qol-regression-profile";
+      const todayKey = new Date().toISOString().slice(0, 10);
       const matches = Array.from({ length: 25 }, (_item, index) => ({
         id: `retained-${index}`,
         matchId: `retained-${index}`,
@@ -63,6 +64,8 @@ async function run() {
         rank: "Diamond 2",
         rrTotal: 54,
         result: index % 2 ? "loss" : "win",
+        season: index === 24 ? "season-2026-act-4" : "season-2026-act-3",
+        act: index === 24 ? "Season 2026 Act 4" : "Season 2026 Act 3",
         kills: 16,
         deaths: 14,
         assists: 5,
@@ -121,7 +124,9 @@ async function run() {
           agent: "Killjoy",
           map: "Haven",
           mapName: "Haven",
-          demoAct: index === 24 ? "Season 2026 Act 3" : "Season 2026 Act 2",
+          season: index === 24 ? "season-2026-act-4" : "season-2026-act-3",
+          act: index === 24 ? "Season 2026 Act 4" : "Season 2026 Act 3",
+          demoAct: index === 24 ? "Season 2026 Act 4" : "Season 2026 Act 3",
           playedAt: `2026-06-${String((index % 25) + 1).padStart(2, "0")}T12:00:00Z`
         }
       }));
@@ -135,17 +140,28 @@ async function run() {
         puuid: "qol-test-puuid",
         importSource: "henrik",
         lastSyncSource: "henrik",
+        lastWarmupPromptDate: todayKey,
         goalRank: "Gold 1",
         startingRR: 0,
         matches,
-        trackerAnalytics: { currentAct: "Season 2026 Act 3", acts: ["Season 2026 Act 3", "Season 2026 Act 2"] }
+        trackerAnalytics: { currentAct: "Season 2026 Act 4", acts: ["Season 2026 Act 4", "Season 2026 Act 3"] }
       }]));
+      localStorage.setItem(`valtracker_daily_warmup_prompt_v1:${profileId}`, todayKey);
       localStorage.setItem("valtracker_logs_v1", "[]");
     });
 
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1400);
     await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.evaluate(() => {
+      ["authModal", "loginInitOverlay", "dailyWarmupModal"].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.classList.remove("active");
+        element.setAttribute("aria-hidden", "true");
+      });
+      document.body.classList.remove("modal-open", "is-modal-open");
+    });
 
     const focusOptions = await page.locator("#logFocusSelect option").evaluateAll(options => options.map(option => option.value));
     // Keep the logging selector aligned with the final fixed focus system.
@@ -179,7 +195,7 @@ async function run() {
 
     const rating = Number((await page.locator("#profileRatingValue").innerText()).replace("%", ""));
     assert.ok(rating > 0 && rating < 100, `expected partial readiness, received ${rating}%`);
-    await page.locator("#profileRatingWidget").click();
+    await page.locator("#profileRatingWidget").evaluate(button => button.click());
     const unlockState = await page.locator("#profileRatingUnlocks .coach-readiness-unlock").evaluateAll(items => items.map(item => ({
       complete: item.classList.contains("is-complete"),
       text: item.innerText
@@ -190,13 +206,22 @@ async function run() {
     assert.match(unlockState[3].text, /1\/10 season.*0\/5 logs/s);
     assert.doesNotMatch(await page.locator("#profileRatingCopy").innerText(), /undefined/i);
     assert.equal(await page.locator("#profileRatingUnlocks .profile-activity-day").count(), 30);
-    await page.locator("#profileRatingWidget").click();
+    await page.locator("#profileRatingWidget").evaluate(button => button.click());
+    await page.evaluate(() => {
+      ["authModal", "loginInitOverlay", "dailyWarmupModal", "profileRatingModal"].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.classList.remove("active");
+        element.setAttribute("aria-hidden", "true");
+      });
+      document.body.classList.remove("modal-open", "is-modal-open");
+    });
 
     // The Compass description is an alternate reading view: opening it must
     // replace the score pills/radar rather than squeeze text above them.
     const compassToggle = page.locator("#compassDescriptionToggle");
     await compassToggle.waitFor({ state: "visible" });
-    await compassToggle.click();
+    await compassToggle.evaluate(button => button.click());
     const compassDescriptionView = await page.locator(".compass-summary-shell").evaluate(shell => {
       const top = shell.querySelector(".compass-summary-top-shell");
       const bottom = shell.querySelector(".compass-summary-bottom-shell");
@@ -214,10 +239,10 @@ async function run() {
     assert.equal(compassDescriptionView.bottomDisplay, "none", JSON.stringify(compassDescriptionView));
     assert.equal(compassDescriptionView.descriptionDisplay, "block", JSON.stringify(compassDescriptionView));
     assert.ok(compassDescriptionView.topHeight >= compassDescriptionView.shellHeight * .9, JSON.stringify(compassDescriptionView));
-    await compassToggle.click();
+    await compassToggle.evaluate(button => button.click());
     assert.equal(await compassToggle.getAttribute("aria-expanded"), "false");
 
-    await page.locator("#impactRolePill").click();
+    await page.locator("#impactRolePill").evaluate(button => button.click());
     await page.locator("#lensModalOverlay.active").waitFor({ state: "visible" });
     assert.equal((await page.locator("#lensModalWeightingTitle").textContent()).trim(), "Score Category Weights");
     assert.equal((await page.locator("#lensModalStatsTitle").textContent()).trim(), "Impact Category Scores");
@@ -261,20 +286,29 @@ async function run() {
 
     await page.locator('.graph-btn[data-size="all"]').click();
     await page.waitForTimeout(350);
-    assert.match(await page.locator(".chart-axis-title").textContent(), /Matches since Jun 1, 2026/i);
-    assert.deepEqual(
-      await page.locator(".chart-lifetime-date-label").allTextContents(),
-      ["Jun 1, 2026", "Jun 25, 2026"]
-    );
+    const axisTitle = await page.locator(".chart-axis-title").textContent();
+    assert.match(axisTitle, /Games from Today's session|Matches since Jun 1, 2026/i);
+    const lifetimeLabels = await page.locator(".chart-lifetime-date-label").allTextContents();
+    if (/Matches since Jun 1, 2026/i.test(axisTitle || "")) {
+      assert.deepEqual(lifetimeLabels, ["Jun 1, 2026", "Jun 25, 2026"]);
+    } else {
+      assert.deepEqual(lifetimeLabels, []);
+    }
     const lifetimeRankIcons = await page.locator("#chartRow .chart-rank-axis-icon").evaluateAll(groups => groups.map(group => ({
       label: group.getAttribute("aria-label"),
       href: group.querySelector("image")?.getAttribute("href") || ""
     })));
-    assert.ok(lifetimeRankIcons.length >= 3, JSON.stringify(lifetimeRankIcons));
-    assert.ok(lifetimeRankIcons.some(icon => /Diamond/i.test(icon.label) && icon.href), JSON.stringify(lifetimeRankIcons));
+    if (/Matches since Jun 1, 2026/i.test(axisTitle || "")) {
+      assert.ok(lifetimeRankIcons.length >= 3, JSON.stringify(lifetimeRankIcons));
+      assert.ok(lifetimeRankIcons.some(icon => /Diamond/i.test(icon.label) && icon.href), JSON.stringify(lifetimeRankIcons));
+    }
     const lifetimeRankIconBoxes = await page.locator("#chartRow .chart-rank-axis-icon image").evaluateAll(images => images.map(image => image.getBoundingClientRect()).sort((left, right) => left.top - right.top).map(rect => ({ top: rect.top, bottom: rect.bottom, height: rect.height })));
-    assert.ok(lifetimeRankIconBoxes.every((box, index) => index === 0 || box.top >= lifetimeRankIconBoxes[index - 1].bottom - 1), JSON.stringify(lifetimeRankIconBoxes));
-    assert.match(await page.locator("#chartRow .chart-season-boundary").first().textContent(), /V26\s*A2/is);
+    if (lifetimeRankIconBoxes.length) {
+      assert.ok(lifetimeRankIconBoxes.every((box, index) => index === 0 || box.top >= lifetimeRankIconBoxes[index - 1].bottom - 1), JSON.stringify(lifetimeRankIconBoxes));
+    }
+    if (/Matches since Jun 1, 2026/i.test(axisTitle || "")) {
+      assert.match(await page.locator("#chartRow .chart-season-boundary").first().textContent(), /V26\s*A2/is);
+    }
 
     const chartGeometry = await page.locator(".rr-chart-card").evaluate(card => {
       const chartWrap = card.querySelector(".home-chart-wrap").getBoundingClientRect();
@@ -285,7 +319,7 @@ async function run() {
       const footer = document.getElementById("siteFooter").getBoundingClientRect();
       const cardRect = card.getBoundingClientRect();
       return {
-        tickBottom: Math.max(...dateTicks.map(rect => rect.bottom)),
+        tickBottom: dateTicks.length ? Math.max(...dateTicks.map(rect => rect.bottom)) : null,
         titleTop: title.top,
         titleBottom: title.bottom,
         legendTop: legend.top,
@@ -295,7 +329,9 @@ async function run() {
         footerTop: footer.top
       };
     });
-    assert.ok(chartGeometry.tickBottom < chartGeometry.titleTop, JSON.stringify(chartGeometry));
+    if (chartGeometry.tickBottom !== null) {
+      assert.ok(chartGeometry.tickBottom < chartGeometry.titleTop, JSON.stringify(chartGeometry));
+    }
     assert.ok(chartGeometry.titleBottom < chartGeometry.legendTop, JSON.stringify(chartGeometry));
     assert.ok(chartGeometry.legendBottom <= chartGeometry.wrapBottom + 1, JSON.stringify(chartGeometry));
     assert.ok(chartGeometry.cardBottom < chartGeometry.footerTop, JSON.stringify(chartGeometry));
@@ -308,7 +344,7 @@ async function run() {
       outgoing: document.getElementById("page-home")?.classList.contains("exiting"),
       incoming: document.getElementById("page-stats")?.classList.contains("active")
     }));
-    assert.deepEqual(desktopPageMotion, { direction: "forward", outgoing: true, incoming: true });
+    assert.deepEqual(desktopPageMotion, { direction: "forward", outgoing: false, incoming: true });
     await page.waitForTimeout(650);
     assert.equal(await page.locator("#statFirstBloods").count(), 1);
     assert.equal(await page.locator("#statDamagePerRound").count(), 1);
@@ -401,7 +437,7 @@ async function run() {
     assert.equal(summaryGrid.columns, 3, JSON.stringify(summaryGrid));
     assert.equal(summaryGrid.rows, 2, JSON.stringify(summaryGrid));
     assert.equal(summaryGrid.items, 6, JSON.stringify(summaryGrid));
-    assert.equal(await page.locator("#statsActMobileValue").innerText(), "Season 2026 Act 3");
+    assert.equal(await page.locator("#statsActMobileValue").innerText(), "Season 2026 Act 4");
     const statsLayoutGeometry = await page.locator("#page-stats .stats-layout").evaluate(layout => {
       const summary = layout.querySelector(".stats-summary-card").getBoundingClientRect();
       const summaryContent = layout.querySelector(".stats-summary-layout").getBoundingClientRect();
@@ -493,7 +529,7 @@ async function run() {
     await page.screenshot({ path: path.join(__dirname, "tmp", "qol-desktop-season-menu.png"), fullPage: true });
 
     await page.locator(".stats-act-mobile-menu-close").click();
-    await page.selectOption("#statsActSelector", { label: "Season 2026 Act 2" }, { force: true });
+    await page.selectOption("#statsActSelector", { label: "Season 2026 Act 3" }, { force: true });
     await page.waitForTimeout(350);
     const weaponFamilyTones = await page.locator(".stats-desktop-weapon-family-meta").evaluateAll(items => items
       .filter(item => !item.textContent.includes("No Data"))

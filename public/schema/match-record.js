@@ -145,6 +145,20 @@
     return assessHenrikV4PayloadCompleteness(payload, puuid).complete === true;
   }
 
+  function normalizeParticipantId(value) {
+    if (value && typeof value === "object") {
+      return cleanString(
+        value.puuid
+        || value.subject
+        || value.id
+        || value.uuid
+        || value.playerId
+        || value.player_id
+      );
+    }
+    return cleanString(value);
+  }
+
   function normalizeKillEvent(kill = {}) {
     const weapon = kill.weapon && typeof kill.weapon === "object" ? kill.weapon : {};
     const finishingDamage = kill.finishingDamage && typeof kill.finishingDamage === "object" ? kill.finishingDamage : {};
@@ -162,9 +176,9 @@
     );
     const weaponType = cleanString(kill.weaponType || weapon.type || finishingDamage.damageType);
     return {
-      killer: cleanString(kill.killer),
-      victim: cleanString(kill.victim),
-      assistants: cleanStringArray(kill.assistants),
+      killer: normalizeParticipantId(kill.killer || kill.killerPuuid || kill.killer_puuid || kill.killerId || kill.killer_id),
+      victim: normalizeParticipantId(kill.victim || kill.victimPuuid || kill.victim_puuid || kill.victimId || kill.victim_id),
+      assistants: cleanStringArray((Array.isArray(kill.assistants) ? kill.assistants : []).map(normalizeParticipantId)),
       roundTime: readNumber(kill.roundTime),
       weapon: weaponName,
       weaponId,
@@ -310,12 +324,31 @@
       rawPayloadComplete: overrides.rawPayloadComplete === true,
       rawPayloadStoredAt: cleanString(overrides.rawPayloadStoredAt),
       rawPayloadCompleteness: copyPlainObject(overrides.rawPayloadCompleteness),
+      storedRawRehydrateVersion: readNumber(
+        overrides.storedRawRehydrateVersion
+        ?? overrides.importMeta?.storedRawRehydrateVersion
+        ?? overrides.importMeta?.rawPayloadRehydrateVersion
+      ),
+      storedRawRehydrateCheckedAt: cleanString(
+        overrides.storedRawRehydrateCheckedAt
+        ?? overrides.importMeta?.storedRawRehydrateCheckedAt
+      ),
       importMeta: {
         imageId: cleanString(overrides.importMeta?.imageId),
         imageName: cleanString(overrides.importMeta?.imageName),
         screenshotType: cleanString(overrides.importMeta?.screenshotType),
         parseWarnings: Array.isArray(overrides.importMeta?.parseWarnings) ? overrides.importMeta.parseWarnings.slice() : [],
-        rawText: cleanString(overrides.importMeta?.rawText)
+        rawText: cleanString(overrides.importMeta?.rawText),
+        storedRawRehydrateVersion: readNumber(
+          overrides.importMeta?.storedRawRehydrateVersion
+          ?? overrides.storedRawRehydrateVersion
+          ?? overrides.importMeta?.rawPayloadRehydrateVersion
+        ),
+        storedRawRehydrateCheckedAt: cleanString(
+          overrides.importMeta?.storedRawRehydrateCheckedAt
+          ?? overrides.storedRawRehydrateCheckedAt
+        ),
+        rawPayloadRederivedAt: cleanString(overrides.importMeta?.rawPayloadRederivedAt)
       },
       legacyMatchId: cleanString(overrides.legacyMatchId),
       manualLogId: cleanString(overrides.manualLogId)
@@ -429,6 +462,30 @@
       rawPayloadComplete: match.rawPayloadComplete === true || canonical.rawPayloadComplete === true,
       rawPayloadStoredAt: match.rawPayloadStoredAt || canonical.rawPayloadStoredAt,
       rawPayloadCompleteness: match.rawPayloadCompleteness || canonical.rawPayloadCompleteness,
+      storedRawRehydrateVersion: canonical.storedRawRehydrateVersion
+        ?? match.storedRawRehydrateVersion
+        ?? metadata.storedRawRehydrateVersion
+        ?? canonical.importMeta?.storedRawRehydrateVersion
+        ?? match.importMeta?.storedRawRehydrateVersion,
+      storedRawRehydrateCheckedAt: canonical.storedRawRehydrateCheckedAt
+        ?? match.storedRawRehydrateCheckedAt
+        ?? metadata.storedRawRehydrateCheckedAt
+        ?? canonical.importMeta?.storedRawRehydrateCheckedAt
+        ?? match.importMeta?.storedRawRehydrateCheckedAt,
+      importMeta: {
+        ...(canonical.importMeta || {}),
+        ...(match.importMeta || {}),
+        storedRawRehydrateVersion: canonical.storedRawRehydrateVersion
+          ?? match.storedRawRehydrateVersion
+          ?? metadata.storedRawRehydrateVersion
+          ?? canonical.importMeta?.storedRawRehydrateVersion
+          ?? match.importMeta?.storedRawRehydrateVersion,
+        storedRawRehydrateCheckedAt: canonical.storedRawRehydrateCheckedAt
+          ?? match.storedRawRehydrateCheckedAt
+          ?? metadata.storedRawRehydrateCheckedAt
+          ?? canonical.importMeta?.storedRawRehydrateCheckedAt
+          ?? match.importMeta?.storedRawRehydrateCheckedAt
+      },
       manualLogId: metadata.manualLogId || match.manualLogId,
       legacyMatchId: match.matchId || match.id
     });
@@ -522,6 +579,9 @@
       rawPayloadComplete: match.rawPayloadComplete === true,
       rawPayloadStoredAt: match.rawPayloadStoredAt,
       rawPayloadCompleteness: match.rawPayloadCompleteness,
+      storedRawRehydrateVersion: match.storedRawRehydrateVersion ?? match.importMeta?.storedRawRehydrateVersion,
+      storedRawRehydrateCheckedAt: match.storedRawRehydrateCheckedAt ?? match.importMeta?.storedRawRehydrateCheckedAt,
+      importMeta: match.importMeta,
       legacyMatchId: match.matchId || match.id
     });
   }
@@ -935,6 +995,8 @@
       rawPayloadComplete: normalized.rawPayloadComplete === true,
       rawPayloadStoredAt: normalized.rawPayloadStoredAt,
       rawPayloadCompleteness: normalized.rawPayloadCompleteness,
+      storedRawRehydrateVersion: normalized.storedRawRehydrateVersion,
+      storedRawRehydrateCheckedAt: normalized.storedRawRehydrateCheckedAt,
       roundMetrics: projectedRoundMetrics,
       metadata: {
         id: matchId,
@@ -956,7 +1018,9 @@
         rrVerified: normalized.rank.verified === true,
         rankElo: readNumber(normalized.rank.elo),
         rankDataSource: normalized.rank.source,
-        rankCapturedAt: normalized.rank.capturedAt
+        rankCapturedAt: normalized.rank.capturedAt,
+        storedRawRehydrateVersion: normalized.storedRawRehydrateVersion,
+        storedRawRehydrateCheckedAt: normalized.storedRawRehydrateCheckedAt
       },
       segments: [{
         type: "overview",

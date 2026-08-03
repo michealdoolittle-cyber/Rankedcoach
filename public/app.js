@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-season-identity-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-stats-rederive-perf-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -8994,7 +8994,7 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     : Array.isArray(profile?.matches)
       ? profile.matches
       : (matches || []);
-  const sourceMatches = rederiveMatchesFromStoredRawPayloads(rawSourceMatches);
+  const sourceMatches = rawSourceMatches;
   const rankedOnly = options?.rankedOnly !== false;
   const rankedPerformanceMatches = rankedOnly
     ? sourceMatches.filter(isRankedPerformanceMatch)
@@ -13048,16 +13048,52 @@ function installMobileHomePullToRefresh() {
   mobilePullRefreshState = { installed: true };
 }
 
+let loggingPageEntryAnimationRaf = 0;
+let loggingPageEntryAnimationTimer = 0;
+
 function playLoggingPageEntryAnimation() {
   if (shouldSkipLoggingMotion?.()) return;
   const page = document.getElementById("page-logging");
   if (!page) return;
+  if (loggingPageEntryAnimationRaf) {
+    cancelAnimationFrame(loggingPageEntryAnimationRaf);
+    loggingPageEntryAnimationRaf = 0;
+  }
+  if (loggingPageEntryAnimationTimer) {
+    window.clearTimeout(loggingPageEntryAnimationTimer);
+    loggingPageEntryAnimationTimer = 0;
+  }
   page.classList.remove("logging-page-entry-animate");
-  void page.offsetWidth;
-  page.classList.add("logging-page-entry-animate");
-  window.setTimeout(() => {
-    page.classList.remove("logging-page-entry-animate");
-  }, 980);
+  const startAfterSettledPaint = (framesRemaining = 3) => {
+    loggingPageEntryAnimationRaf = requestAnimationFrame(() => {
+      loggingPageEntryAnimationRaf = 0;
+      if (!page.isConnected || getActivePageElement()?.id !== "page-logging") return;
+      if (framesRemaining > 1) {
+        startAfterSettledPaint(framesRemaining - 1);
+        return;
+      }
+      page.classList.add("logging-page-entry-animate");
+      loggingPageEntryAnimationTimer = window.setTimeout(() => {
+        loggingPageEntryAnimationTimer = 0;
+        page.classList.remove("logging-page-entry-animate");
+      }, 980);
+    });
+  };
+  startAfterSettledPaint();
+}
+
+let loggingPageActivationWorkRaf = 0;
+
+function scheduleLoggingPageActivationWork() {
+  if (loggingPageActivationWorkRaf) cancelAnimationFrame(loggingPageActivationWorkRaf);
+  loggingPageActivationWorkRaf = requestAnimationFrame(() => {
+    loggingPageActivationWorkRaf = requestAnimationFrame(() => {
+      loggingPageActivationWorkRaf = 0;
+      if (getActivePageElement()?.id !== "page-logging") return;
+      scheduleLoggingFeedRender();
+      playLoggingPageEntryAnimation();
+    });
+  });
 }
 
 function ensureManualSessionStartModal() {
@@ -14485,10 +14521,6 @@ function matchRecordNeedsHsBackfill(record = {}) {
 
 function matchRecordNeedsQueueBackfill(record = {}) {
   if (!record || typeof record !== "object") return false;
-  const rawPayload = typeof globalThis.RankedCoachMatchRecord?.getStoredRawHenrikPayload === "function"
-    ? globalThis.RankedCoachMatchRecord.getStoredRawHenrikPayload(record)
-    : record?.rawHenrikPayload;
-  if (!rawPayload) return false;
   const queue = record.queue || {};
   const hasExplicitQueue = [
     queue.id,
@@ -14498,13 +14530,71 @@ function matchRecordNeedsQueueBackfill(record = {}) {
     record.queueName,
     record.queueModeType
   ].some(value => String(value || "").trim());
-  return !hasExplicitQueue;
+  if (hasExplicitQueue) return false;
+  const rawPayload = typeof globalThis.RankedCoachMatchRecord?.getStoredRawHenrikPayload === "function"
+    ? globalThis.RankedCoachMatchRecord.getStoredRawHenrikPayload(record)
+    : record?.rawHenrikPayload;
+  return Boolean(rawPayload);
 }
 
-function matchRecordNeedsStoredRawRehydrate(record = {}) {
-  return matchRecordNeedsHsBackfill(record)
+function getStoredRawRehydrateVersion(record = {}) {
+  return Math.max(0, safeNumber(
+    record?.storedRawRehydrateVersion
+    ?? record?.importMeta?.storedRawRehydrateVersion
+    ?? record?.importMeta?.rawPayloadRehydrateVersion
+    ?? 0
+  ));
+}
+
+function recordHasStoredRawPayload(record = {}) {
+  return Boolean(
+    typeof globalThis.RankedCoachMatchRecord?.getStoredRawHenrikPayload === "function"
+      ? globalThis.RankedCoachMatchRecord.getStoredRawHenrikPayload(record)
+      : record?.rawHenrikPayload
+  );
+}
+
+function markStoredRawRehydrateCurrent(record = {}, options = {}) {
+  if (!record || typeof record !== "object") return record;
+  const checkedAt = options.checkedAt || nowISO();
+  return {
+    ...record,
+    storedRawRehydrateVersion: STORED_RAW_REHYDRATE_VERSION,
+    storedRawRehydrateCheckedAt: checkedAt,
+    importMeta: {
+      ...(record.importMeta || {}),
+      storedRawRehydrateVersion: STORED_RAW_REHYDRATE_VERSION,
+      storedRawRehydrateCheckedAt: checkedAt,
+      ...(options.rederived ? { rawPayloadRederivedAt: checkedAt } : {})
+    }
+  };
+}
+
+function notifyStoredRawRehydrateProbe(payload = {}) {
+  try {
+    globalThis.__rankedCoachRawRehydrateProbe?.(payload);
+  } catch (error) {
+    console.warn?.("Stored raw rehydrate probe failed", error);
+  }
+}
+
+function matchRecordNeedsStoredRawRehydrate(record = {}, options = {}) {
+  if (!record || typeof record !== "object") return false;
+  const hasStoredRaw = recordHasStoredRawPayload(record);
+  if (!hasStoredRaw) return false;
+  const currentVersion = getStoredRawRehydrateVersion(record) >= STORED_RAW_REHYDRATE_VERSION;
+  if (currentVersion && options.force !== true) return false;
+  return options.force === true
+    || matchRecordNeedsHsBackfill(record)
     || matchRecordNeedsWeaponBackfill(record)
-    || matchRecordNeedsQueueBackfill(record);
+    || matchRecordNeedsQueueBackfill(record)
+    || !currentVersion;
+}
+
+function profileNeedsStoredRawRehydrate(profile = {}) {
+  if (!profile || typeof profile !== "object") return false;
+  const matchList = Array.isArray(profile.matches) ? profile.matches : [];
+  return matchList.some(match => matchRecordNeedsStoredRawRehydrate(getDirectMatchSummaryRecord(match)));
 }
 
 function getMatchWeaponBackfillUnavailable(record = {}) {
@@ -14605,7 +14695,7 @@ function getDirectMatchSummaryRecord(match = {}) {
   return globalThis.RankedCoachMatchRecord?.fromLegacyMatch?.(match) || null;
 }
 
-function rederiveMatchSummaryRecordFromStoredRaw(record = {}) {
+function rederiveMatchSummaryRecordFromStoredRaw(record = {}, options = {}) {
   if (!record || typeof record !== "object") return null;
   const matchRecordApi = globalThis.RankedCoachMatchRecord;
   if (typeof matchRecordApi?.rederiveFromStoredRawHenrikPayload !== "function") return record;
@@ -14613,10 +14703,13 @@ function rederiveMatchSummaryRecordFromStoredRaw(record = {}) {
     ? matchRecordApi.getStoredRawHenrikPayload(record)
     : record?.rawHenrikPayload;
   if (!rawPayload) return record;
-  if (!matchRecordNeedsStoredRawRehydrate(record)) return record;
+  if (!matchRecordNeedsStoredRawRehydrate(record, options)) return record;
   try {
+    notifyStoredRawRehydrateProbe({ phase: "start", id: record.id || record.legacyMatchId || "" });
     const rederived = matchRecordApi.rederiveFromStoredRawHenrikPayload(record);
-    return rederived || record;
+    const stamped = markStoredRawRehydrateCurrent(rederived || record, { rederived: true });
+    notifyStoredRawRehydrateProbe({ phase: "complete", id: stamped.id || stamped.legacyMatchId || "" });
+    return stamped;
   } catch (error) {
     console.warn("Stored Henrik payload re-derive failed", error);
     return record;
@@ -14624,12 +14717,12 @@ function rederiveMatchSummaryRecordFromStoredRaw(record = {}) {
 }
 
 function getMatchSummaryRecord(match = {}) {
-  return rederiveMatchSummaryRecordFromStoredRaw(getDirectMatchSummaryRecord(match));
+  return getDirectMatchSummaryRecord(match);
 }
 
-function rederiveMatchFromStoredRawPayload(match = {}) {
+function rederiveMatchFromStoredRawPayload(match = {}, options = {}) {
   const directRecord = getDirectMatchSummaryRecord(match);
-  const rederivedRecord = rederiveMatchSummaryRecordFromStoredRaw(directRecord);
+  const rederivedRecord = rederiveMatchSummaryRecordFromStoredRaw(directRecord, options);
   if (!rederivedRecord || rederivedRecord === directRecord) return match;
   const legacy = globalThis.RankedCoachMatchRecord?.toLegacyMatch?.(rederivedRecord);
   if (!legacy) return { ...match, matchRecord: rederivedRecord };
@@ -14648,8 +14741,122 @@ function rederiveMatchFromStoredRawPayload(match = {}) {
   };
 }
 
-function rederiveMatchesFromStoredRawPayloads(matchList = []) {
-  return (Array.isArray(matchList) ? matchList : []).map(rederiveMatchFromStoredRawPayload);
+function projectMatchRecordToLegacyMatch(match = {}, record = {}) {
+  if (!record || typeof record !== "object") return match;
+  const legacy = globalThis.RankedCoachMatchRecord?.toLegacyMatch?.(record);
+  if (!legacy) return { ...match, matchRecord: record };
+  return {
+    ...match,
+    ...legacy,
+    metadata: {
+      ...(match.metadata || {}),
+      ...(legacy.metadata || {})
+    },
+    matchRecord: record,
+    rawPayloadComplete: record.rawPayloadComplete === true,
+    rawPayloadStoredAt: record.rawPayloadStoredAt,
+    rawPayloadCompleteness: record.rawPayloadCompleteness
+  };
+}
+
+function markMatchStoredRawRehydrateCurrent(match = {}, options = {}) {
+  const record = getDirectMatchSummaryRecord(match);
+  if (!record || !recordHasStoredRawPayload(record)) return match;
+  if (getStoredRawRehydrateVersion(record) >= STORED_RAW_REHYDRATE_VERSION && options.force !== true) return match;
+  return projectMatchRecordToLegacyMatch(match, markStoredRawRehydrateCurrent(record, options));
+}
+
+function rederiveMatchesFromStoredRawPayloads(matchList = [], options = {}) {
+  const list = Array.isArray(matchList) ? matchList : [];
+  const candidates = new Set(list
+    .map((match, index) => ({ match, index, record: getDirectMatchSummaryRecord(match) }))
+    .filter(item => matchRecordNeedsStoredRawRehydrate(item.record, options))
+    .map(item => item.index));
+  const total = candidates.size;
+  let processed = 0;
+  if (!total) return list;
+  return list.map((match, index) => {
+    if (!candidates.has(index)) return match;
+    processed += 1;
+    const nextMatch = rederiveMatchFromStoredRawPayload(match, options);
+    options.onProgress?.({
+      processed,
+      total,
+      percent: total ? Math.round((processed / total) * 100) : 100,
+      message: `Updating retained match data ${processed}/${total}...`
+    });
+    return nextMatch;
+  });
+}
+
+function completeProfileStoredRawRehydrate(profile = {}, matchList = []) {
+  if (!profile || typeof profile !== "object") return;
+  profile.storedRawRehydrateVersion = STORED_RAW_REHYDRATE_VERSION;
+  profile.storedRawRehydrateCompleteAt = nowISO();
+  if (Array.isArray(matchList)) profile.matches = matchList;
+}
+
+function prepareProfileStoredRawRehydrate(profile = {}, options = {}) {
+  const originalMatches = Array.isArray(profile?.matches) ? profile.matches : [];
+  const cleanedMatches = options.purgeDemo === false
+    ? originalMatches
+    : purgeDemoFixtureMatches(originalMatches);
+  const needsRehydrate = options.force === true || profileNeedsStoredRawRehydrate({ ...profile, matches: cleanedMatches });
+  const removedDemoCount = Math.max(0, originalMatches.length - cleanedMatches.length);
+
+  if (!needsRehydrate) {
+    if (safeNumber(profile?.storedRawRehydrateVersion) < STORED_RAW_REHYDRATE_VERSION || removedDemoCount) {
+      completeProfileStoredRawRehydrate(profile, cleanedMatches);
+      return {
+        matches: cleanedMatches,
+        changed: removedDemoCount > 0 || originalMatches !== cleanedMatches,
+        rederived: 0,
+        checked: cleanedMatches.length
+      };
+    }
+    return {
+      matches: cleanedMatches,
+      changed: removedDemoCount > 0,
+      rederived: 0,
+      checked: cleanedMatches.length
+    };
+  }
+
+  let rederivedCount = 0;
+  const previousProfileVersion = safeNumber(profile?.storedRawRehydrateVersion);
+  const nextMatches = rederiveMatchesFromStoredRawPayloads(cleanedMatches, {
+    force: options.force === true,
+    onProgress: (progress) => {
+      rederivedCount = Math.max(rederivedCount, safeNumber(progress.processed));
+      options.onProgress?.({
+        ...progress,
+        checked: cleanedMatches.length,
+        message: progress.message || `Updating retained match data ${progress.processed}/${progress.total}...`
+      });
+    }
+  });
+  completeProfileStoredRawRehydrate(profile, nextMatches);
+  const changed = removedDemoCount > 0 || nextMatches.some((match, index) => match !== cleanedMatches[index]);
+  return {
+    matches: nextMatches,
+    changed: changed || rederivedCount > 0 || previousProfileVersion < STORED_RAW_REHYDRATE_VERSION,
+    rederived: rederivedCount,
+    checked: cleanedMatches.length
+  };
+}
+
+if (globalThis.__rankedCoachEnablePerfTestHooks) {
+  globalThis.RankedCoachPerfTestHooks = {
+    prepareActiveProfileStoredRawRehydrate(options = {}) {
+      return prepareProfileStoredRawRehydrate(getActiveProfile?.(), options);
+    },
+    getActiveProfileStoredRawVersion() {
+      return safeNumber(getActiveProfile?.()?.storedRawRehydrateVersion);
+    },
+    getScopedStatsMatchCount() {
+      return getScopedStatsData(getActiveProfile?.()).matches.length;
+    }
+  };
 }
 
 function mergeImportedMatchWithExisting(existing = {}, imported = {}) {
@@ -15498,15 +15705,33 @@ function setMatchSummaryStat(statKey = "") {
   });
 }
 
+function resolveCurrentMatchSummaryMatch(match = {}) {
+  const matchId = getMatchSummaryStableId(match);
+  if (!matchId) return match;
+  const candidateLists = [
+    getActiveProfile?.()?.matches,
+    matches
+  ];
+  for (const candidateList of candidateLists) {
+    const found = (Array.isArray(candidateList) ? candidateList : [])
+      .find(candidate => getMatchSummaryStableId(candidate) === matchId);
+    if (found) return found;
+  }
+  return match;
+}
+
 function renderMatchSummaryModal(match = {}, options = {}) {
   const modal = ensureMatchSummaryModal();
   const content = modal.querySelector(".match-summary-content");
   if (!content) return null;
-  const { record, core } = getMatchSummaryIdentity(match);
+  const sourceMatch = resolveCurrentMatchSummaryMatch(match);
+  const identity = getMatchSummaryIdentity(sourceMatch);
+  const record = globalThis.RankedCoachMatchRecord?.emptyRecord?.(identity.record) || identity.record;
+  const core = identity.core;
   if (!record) return null;
   const result = String(record.result || core.result || "draw").toLowerCase();
-  const rankLabel = record.rank?.rank || match?.rank || match?.metadata?.rank || "";
-  const duration = formatMatchSummaryDuration(match, record);
+  const rankLabel = record.rank?.rank || sourceMatch?.rank || sourceMatch?.metadata?.rank || "";
+  const duration = formatMatchSummaryDuration(sourceMatch, record);
   const scoreline = [record.rounds?.won, record.rounds?.lost].every(Number.isFinite)
     ? `${record.rounds.won} - ${record.rounds.lost}`
     : (result ? result.toUpperCase() : "Score unavailable");
@@ -15533,14 +15758,14 @@ function renderMatchSummaryModal(match = {}, options = {}) {
     <section class="match-summary-timeline-panel">
       <h3>Round Timeline</h3>
       ${renderMatchSummaryTimeline(record)}
-      <p class="match-summary-kda-line">K / D / A&nbsp; <strong>${escapeHtml(getMatchSummaryKdaText(match, record))}</strong></p>
+      <p class="match-summary-kda-line">K / D / A&nbsp; <strong>${escapeHtml(getMatchSummaryKdaText(sourceMatch, record))}</strong></p>
     </section>
     <nav class="match-summary-tabs" aria-label="Match report tabs">
       <button type="button" class="active" data-match-summary-tab="stats" aria-selected="true">Stats</button>
       <button type="button" data-match-summary-tab="weapons" aria-selected="false">Weapons + Rounds</button>
       <button type="button" data-match-summary-tab="economy" aria-selected="false">Economy</button>
     </nav>
-    <section class="match-summary-tab-panel" data-match-summary-panel="stats">${renderMatchSummaryStatsTab(match, record)}</section>
+    <section class="match-summary-tab-panel" data-match-summary-panel="stats">${renderMatchSummaryStatsTab(sourceMatch, record)}</section>
     <section class="match-summary-tab-panel" data-match-summary-panel="weapons" hidden>${renderMatchSummaryWeaponsTab(record)}</section>
     <section class="match-summary-tab-panel" data-match-summary-panel="economy" hidden>${renderMatchSummaryEconomyTab(record)}</section>
     <div class="match-summary-live-banner" aria-hidden="true">Match Report</div>
@@ -16291,6 +16516,7 @@ function releaseInitialAppBootGuard() {
   // covers the application.  Releasing the guard first lets a fast tab click
   // race the queued prewarm and makes the first Stats visit feel stuck.
   scheduleDesktopStatsPagePrewarm({ immediate: true });
+  scheduleDesktopLoggingPagePrewarm({ immediate: true });
   document.documentElement?.classList.remove("app-booting");
   document.getElementById("loginInitOverlay")?.classList.remove("app-boot-overlay");
 }
@@ -18352,6 +18578,7 @@ const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
 const HENRIK_HISTORY_BACKFILL_SIZE = 100;
 const HENRIK_HISTORY_BACKFILL_VERSION = 3;
+const STORED_RAW_REHYDRATE_VERSION = 1;
 const HENRIK_HISTORY_MAX_START = 1000;
 const HENRIK_HISTORY_MAX_BATCHES = 11;
 let crestPreviewTimer = null;
@@ -20917,7 +21144,7 @@ async function initializeSignedInAccount(user, options = {}) {
       await syncProfileRetainedHistory({
         mode: "refresh",
         onProgress: progress => setLoginInitializationProgress(
-          Math.min(86, 70 + Math.max(0, progress.batch - 1) * 3),
+          Math.min(86, 70 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 16)),
           progress.message,
           "Riot history",
           "RankedCoach is finishing the retained competitive history before opening your dashboard."
@@ -21124,10 +21351,10 @@ const agentRoles = {
   Gekko:"initiator",Kayo:"initiator",Tejo:"initiator",
 
   Brimstone:"controller",Omen:"controller",Viper:"controller",
-  Astra:"controller",Harbor:"controller",Clove:"controller",Miks:"controller",Veto:"sentinel",
+  Astra:"controller",Harbor:"controller",Clove:"controller",Miks:"controller",
 
   Killjoy:"sentinel",Sage:"sentinel",Cypher:"sentinel",
-  Chamber:"sentinel",Deadlock:"sentinel",Vyse:"sentinel"
+  Chamber:"sentinel",Deadlock:"sentinel",Vyse:"sentinel",Veto:"sentinel"
 };
 
 const ROLE_ICON_MAP = {
@@ -44697,6 +44924,15 @@ function bindEvents(){
     syncCompassDescriptionToggleState(!shell.classList.contains("is-expanded"));
   });
   document.addEventListener("click", (e) => {
+    const button = e.target?.closest?.("#compassDescriptionToggle");
+    if (!button) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const shell = document.querySelector(".compass-summary-shell");
+    if (!shell) return;
+    syncCompassDescriptionToggleState(!shell.classList.contains("is-expanded"));
+  });
+  document.addEventListener("click", (e) => {
     const menu = document.getElementById("logQuickMenu");
     const shell = document.getElementById("loggingNotesShell");
     if (!menu || menu.hidden || !shell) return;
@@ -45851,7 +46087,6 @@ function applyAgentToHome(agent){
 
   activeAgent = agent;
   activeRole = role;
-  activeRoleFilter = role;
 
   if(agentPlaceholder){
     agentPlaceholder.style.display = "none";
@@ -49232,6 +49467,8 @@ function normalizeProfileRecord(profile = {}) {
     henrikHistoryBackfillTargetVersion: Math.max(0, safeNumber(profile.henrikHistoryBackfillTargetVersion)),
     henrikHistoryBackfillCompleteAt: String(profile.henrikHistoryBackfillCompleteAt || ""),
     henrikHistoryReachedLimit: profile.henrikHistoryReachedLimit === true,
+    storedRawRehydrateVersion: Math.max(0, safeNumber(profile.storedRawRehydrateVersion)),
+    storedRawRehydrateCompleteAt: String(profile.storedRawRehydrateCompleteAt || ""),
     lastDailyProfileSyncDate: String(profile.lastDailyProfileSyncDate || ""),
     goalRank: profile.goalRank || null,
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
@@ -49276,18 +49513,15 @@ function loadProfiles(){
     profiles = [];
   }
 
-  let repairedStoredRawPayloads = false;
   profiles = (profiles || []).map(profile => {
     const normalized = normalizeProfileRecord(profile);
-    if (Array.isArray(normalized.matches) && normalized.matches.length) {
-      const rederivedMatches = rederiveMatchesFromStoredRawPayloads(normalized.matches);
-      if (rederivedMatches.some((match, index) => match !== normalized.matches[index])) {
-        repairedStoredRawPayloads = true;
-      }
-      normalized.matches = rederivedMatches;
-    }
     hydratePendingLoadoutRoll(normalized);
     return normalized;
+  });
+  let storedRawProfileMigrationChanged = false;
+  profiles.forEach(profile => {
+    const prep = prepareProfileStoredRawRehydrate(profile);
+    if (prep?.changed) storedRawProfileMigrationChanged = true;
   });
   activeProfileId =
     localStorage.getItem(STORAGE_KEY_ACTIVE_ID);
@@ -49346,9 +49580,7 @@ function loadProfiles(){
 
   logEntries = readLocalLogEntries({ profileId: activeProfileId });
   repairStatsLoggingParityForProfiles(profiles, { skipBackend: true });
-  if (repairedStoredRawPayloads) {
-    window.setTimeout(() => saveProfiles?.(), 0);
-  }
+  if (storedRawProfileMigrationChanged) saveProfiles();
 
 }
 
@@ -52740,6 +52972,9 @@ let libraryPageActivationToken = 0;
 let desktopStatsPagePrewarmScheduled = false;
 let desktopStatsPagePrewarmFrame = 0;
 let desktopStatsPagePrewarmed = false;
+let desktopLoggingPagePrewarmScheduled = false;
+let desktopLoggingPagePrewarmFrame = 0;
+let desktopLoggingPagePrewarmed = false;
 const LIBRARY_STABLE_HYDRATION_DELAY_MS = 1800;
 
 function scheduleDesktopStatsPagePrewarm(options = {}) {
@@ -52979,6 +53214,7 @@ function activatePage(pageId, options = {}){
   if (pageId === "home" && !mobileFastHandoff) {
     scheduleLoadoutValueTextFit();
     scheduleDesktopStatsPagePrewarm();
+    scheduleDesktopLoggingPagePrewarm();
   }
 
   document
@@ -52993,8 +53229,8 @@ function activatePage(pageId, options = {}){
   const targetId = "page-" + pageId;
   const nextPage = document.getElementById(targetId);
   const currentPage = getActivePageElement();
-  if (nextPage && currentPage && nextPage !== currentPage) {
-    pausePremiumSceneForPageSwitch(isMobileLayoutViewport() ? 260 : 180);
+  if (nextPage && currentPage && nextPage !== currentPage && isMobileLayoutViewport()) {
+    pausePremiumSceneForPageSwitch(260);
   }
   const currentPageId = currentPage?.id?.replace("page-", "") || pageId;
   const pageOrder = Array.isArray(MOBILE_PAGE_SWIPE_ORDER)
@@ -53064,37 +53300,19 @@ function activatePage(pageId, options = {}){
       scheduleActivatedMobilePageHydration(pageId, token, { immediate: true, followUpDelay: 72 });
     }
   } else if (nextPage && currentPage !== nextPage) {
-    const token = ++pageTransitionToken;
+    ++pageTransitionToken;
     if (pageTransitionTimer) {
       window.clearTimeout(pageTransitionTimer);
       pageTransitionTimer = 0;
     }
 
     document.querySelectorAll(".page").forEach(page => {
-      if (page === nextPage) return;
-      page.classList.remove("entering");
-      if (page === currentPage) {
-        page.classList.add("exiting");
-      } else {
-        page.classList.remove("active", "exiting");
-      }
+      page.classList.remove("entering", "exiting");
+      if (page !== nextPage) page.classList.remove("active");
     });
 
-    nextPage.classList.remove("exiting");
-    nextPage.classList.add("active", "entering");
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        if (token !== pageTransitionToken || !nextPage.isConnected) return;
-        nextPage.classList.remove("entering");
-      });
-    });
-
-    if (currentPage) {
-      pageTransitionTimer = window.setTimeout(() => {
-        if (token !== pageTransitionToken || !currentPage.isConnected) return;
-        currentPage.classList.remove("active", "exiting");
-      }, 240);
-    }
+    nextPage.classList.remove("exiting", "entering");
+    nextPage.classList.add("active");
   } else if (nextPage) {
     nextPage.classList.add("active");
     nextPage.classList.remove("entering", "exiting");
@@ -53119,8 +53337,7 @@ function activatePage(pageId, options = {}){
       const activePageId = getActivePageElement()?.id?.replace("page-", "") || "";
       if (activePageId !== pageId) return;
       if (pageId === "logging") {
-        scheduleLoggingFeedRender();
-        playLoggingPageEntryAnimation();
+        scheduleLoggingPageActivationWork();
       }
       if (pageId === "home" && pendingAgentFromLog) {
         const queuedAgent = pendingAgentFromLog;
@@ -53179,8 +53396,7 @@ function activatePage(pageId, options = {}){
     }
 
     if (pageId === "logging") {
-      scheduleLoggingFeedRender();
-      playLoggingPageEntryAnimation();
+      scheduleLoggingPageActivationWork();
     }
 
     // A page switch does not change a text node's baseline font. Reuse the
@@ -55065,6 +55281,65 @@ async function restoreCachedSignedInLocalState(user, options = {}) {
   return true;
 }
 
+function scheduleDesktopLoggingPagePrewarm(options = {}) {
+  const immediate = Boolean(options?.immediate);
+  if (desktopLoggingPagePrewarmed || isMobileLayoutViewport?.()) return;
+
+  const warmLoggingPage = () => {
+    desktopLoggingPagePrewarmFrame = 0;
+    desktopLoggingPagePrewarmScheduled = false;
+    if (desktopLoggingPagePrewarmed || isMobileLayoutViewport?.()) return;
+
+    const loggingPage = document.getElementById("page-logging");
+    if (!loggingPage || loggingPage.classList.contains("active")) return;
+
+    const previous = {
+      visibility: loggingPage.style.visibility,
+      opacity: loggingPage.style.opacity,
+      pointerEvents: loggingPage.style.pointerEvents,
+      transform: loggingPage.style.transform,
+      willChange: loggingPage.style.willChange
+    };
+    loggingPage.style.contentVisibility = "visible";
+    loggingPage.style.visibility = "visible";
+    loggingPage.style.opacity = "0.001";
+    loggingPage.style.pointerEvents = "none";
+    loggingPage.style.transform = "translate3d(0,0,0) scale(1)";
+    loggingPage.style.willChange = "opacity, transform";
+
+    const layoutRoots = loggingPage.querySelectorAll(
+      ".logging-layout, .logging-card, .logging-form, .logging-hero, .logging-row, .notes-row, .logging-actions, .logging-feed-card"
+    );
+    void loggingPage.getBoundingClientRect().height;
+    layoutRoots.forEach(root => { void root.getBoundingClientRect().height; });
+    void loggingPage.offsetHeight;
+    desktopLoggingPagePrewarmed = true;
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (!loggingPage.isConnected) return;
+        loggingPage.style.visibility = previous.visibility;
+        loggingPage.style.opacity = previous.opacity;
+        loggingPage.style.pointerEvents = previous.pointerEvents;
+        loggingPage.style.transform = previous.transform;
+        loggingPage.style.willChange = previous.willChange;
+      });
+    });
+  };
+
+  if (immediate) {
+    if (desktopLoggingPagePrewarmFrame) {
+      window.cancelAnimationFrame(desktopLoggingPagePrewarmFrame);
+      desktopLoggingPagePrewarmFrame = 0;
+    }
+    warmLoggingPage();
+    return;
+  }
+  if (desktopLoggingPagePrewarmScheduled) return;
+  desktopLoggingPagePrewarmScheduled = true;
+  desktopLoggingPagePrewarmFrame = window.requestAnimationFrame(warmLoggingPage);
+}
+
 
 
 async function initUserSession(initialSessionUser = null){
@@ -56816,15 +57091,16 @@ function applyImportedMatches(matchList = [], options = {}){
   const importSource = options.source || "riot";
   const isRealSyncImport = ["riot", "henrik"].includes(importSource);
   const baselineMatches = isRealSyncImport
-    ? rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(matches || []))
+    ? purgeDemoFixtureMatches(matches || [])
     : (matches || []);
 
   const previousTotal = baselineMatches.reduce((sum, match) => sum + safeNumber(match?.rr), 0);
   const previousSessionTotal = sumRRForSession(baselineMatches, sessionDateKey);
 
-  const normalized = (isRealSyncImport ? rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(matchList)) : (matchList || []))
+  const normalized = (isRealSyncImport ? purgeDemoFixtureMatches(matchList) : (matchList || []))
     .filter(Boolean)
-    .map(normalizeImportedMatchEntry);
+    .map(normalizeImportedMatchEntry)
+    .map(match => isRealSyncImport ? markMatchStoredRawRehydrateCurrent(match) : match);
   normalized.sort((a, b) =>
     new Date(a?.createdAt || a?.metadata?.playedAt || 0).getTime() -
     new Date(b?.createdAt || b?.metadata?.playedAt || 0).getTime()
@@ -56848,6 +57124,10 @@ function applyImportedMatches(matchList = [], options = {}){
 
   profile.importSource = importSource;
   profile.lastSyncAt = nowISO();
+  if (isRealSyncImport) {
+    profile.storedRawRehydrateVersion = STORED_RAW_REHYDRATE_VERSION;
+    profile.storedRawRehydrateCompleteAt = nowISO();
+  }
 
   if(options.analytics){
     profile.trackerAnalytics = options.analytics;
@@ -56969,13 +57249,17 @@ async function importActiveProfileMatches(options = {}){
   }
 
   try {
-    const existingMatches = rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(Array.isArray(profile.matches) ? profile.matches : []));
-    if (existingMatches.length !== (Array.isArray(profile.matches) ? profile.matches.length : 0)) {
+    const storedRawPrep = prepareProfileStoredRawRehydrate(profile, {
+      onProgress: options.onRehydrateProgress
+    });
+    const existingMatches = storedRawPrep.matches;
+    if (storedRawPrep.changed) {
       commitProfileMatchesWithLoggingParity(profile, existingMatches, {
         source: "henrik",
         animatePlaceholders: false,
         skipBackend: true
       });
+      saveProfiles();
     }
     const knownMatchIds = existingMatches
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
@@ -57081,6 +57365,7 @@ async function importActiveProfileMatches(options = {}){
         checked: safeNumber(pullResult?.checked),
         source: "henrik",
         historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
+        rehydrated: storedRawPrep.rederived,
         failures: pullResult?.failures || [],
         syncError: matchSyncError,
         partial: Boolean(matchSyncError)
@@ -57146,6 +57431,7 @@ async function importActiveProfileMatches(options = {}){
       checked: safeNumber(pullResult?.checked),
       source: "henrik",
       historyBackfilled: needsHistoryBackfill && Boolean(pullResult?.historyWindowComplete),
+      rehydrated: storedRawPrep.rederived,
       failures: pullResult?.failures || [],
       syncError: matchSyncError,
       partial: Boolean(matchSyncError)
@@ -57161,7 +57447,8 @@ async function importActiveProfileMatches(options = {}){
 async function syncActiveProfileMatches(options = {}){
   const result = await importActiveProfileMatches({
     allowDemoFallback: options.allowDemoFallback !== false,
-    mode: options.mode || "sync"
+    mode: options.mode || "sync",
+    onRehydrateProgress: options.onRehydrateProgress
   });
   refreshActiveProfileDataSurfaces?.({
     chartAnimationMode: result?.count ? CHART_ANIMATION_MODE_LATEST_ONLY : null,
@@ -57439,17 +57726,22 @@ async function performRiotSync(options = {}) {
       percent: 8,
       eventBanner: "game"
     });
-    let progress = 14;
-    syncLoadingTimer = window.setInterval(() => {
-      progress = Math.min(86, progress + 8);
-      setAppLoadingVeilProgress(progress, "Checking retained competitive history...");
-    }, 900);
+    setAppLoadingVeilProgress(16, "Checking retained competitive history...");
   }
 
   try {
-    if (showSyncLoading) setAppLoadingVeilProgress(32, "Resolving Riot match data...");
+    if (showSyncLoading) setAppLoadingVeilProgress(28, "Resolving Riot match data...");
     const result = await withRiotSyncTimeout(
-      syncActiveProfileMatches({ mode, allowDemoFallback: canUseDemoFallback }),
+      syncActiveProfileMatches({
+        mode,
+        allowDemoFallback: canUseDemoFallback,
+        onRehydrateProgress: progress => {
+          options.onRehydrateProgress?.(progress);
+          if (!showSyncLoading) return;
+          const pct = 30 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 32);
+          setAppLoadingVeilProgress(pct, progress.message || "Updating retained match data...");
+        }
+      }),
       RIOT_SYNC_TIMEOUT_MS
     );
     if (showSyncLoading) setAppLoadingVeilProgress(82, "Refreshing your coaching pages...");
@@ -57521,6 +57813,10 @@ async function syncProfileRetainedHistory(options = {}) {
     return { success: false, totalImported: 0, playerError: getPlayerFacingRiotSyncError({ message: "Add a Riot ID before syncing." }) };
   }
   const maxBatches = Math.max(1, Math.min(HENRIK_HISTORY_MAX_BATCHES, safeNumber(options.maxBatches, HENRIK_HISTORY_MAX_BATCHES)));
+  const estimatedHistoryWindow = Math.max(
+    HENRIK_HISTORY_BACKFILL_SIZE,
+    Math.min(HENRIK_HISTORY_MAX_START, maxBatches * HENRIK_HISTORY_BACKFILL_SIZE)
+  );
   let totalImported = 0;
   let totalChecked = 0;
   let lastResult = null;
@@ -57528,21 +57824,36 @@ async function syncProfileRetainedHistory(options = {}) {
   for (let batch = 0; batch < maxBatches; batch += 1) {
     const current = getActiveProfile();
     const retainedCount = Array.isArray(current?.matches) ? current.matches.length : 0;
+    const batchStartPercent = Math.min(88, 12 + Math.round((Math.min(totalChecked, estimatedHistoryWindow) / estimatedHistoryWindow) * 72));
     options.onProgress?.({
       batch: batch + 1,
       maxBatches,
       retainedCount,
-      percent: Math.min(88, 12 + Math.round((batch / maxBatches) * 76)),
+      checked: totalChecked,
+      estimatedTotal: estimatedHistoryWindow,
+      percent: batchStartPercent,
       message: batch === 0
         ? "Resolving the Riot account and checking competitive history..."
-        : `Importing retained competitive history... ${retainedCount} matches ready`
+        : `Importing retained competitive history... ${retainedCount} matches ready, ${totalChecked} checked`
     });
     const result = await performRiotSync({
       silent: true,
       mode: options.mode || (batch === 0 ? "refresh" : "import"),
       allowDemoFallback: false,
       verifyWarmup: false,
-      prefillReflection: false
+      prefillReflection: false,
+      onRehydrateProgress: progress => {
+        const rehydratePercent = 8 + Math.round((Math.max(0, Math.min(100, safeNumber(progress.percent))) / 100) * 8);
+        options.onProgress?.({
+          batch: batch + 1,
+          maxBatches,
+          retainedCount,
+          checked: totalChecked,
+          estimatedTotal: estimatedHistoryWindow,
+          percent: rehydratePercent,
+          message: progress.message || "Updating retained match data..."
+        });
+      }
     });
     if (!result) {
       const latestProfile = getActiveProfile();
@@ -57555,6 +57866,16 @@ async function syncProfileRetainedHistory(options = {}) {
     lastResult = result;
     totalImported += safeNumber(result.count);
     totalChecked += safeNumber(result.checked);
+    const batchCompletePercent = Math.min(88, 12 + Math.round((Math.min(totalChecked, estimatedHistoryWindow) / estimatedHistoryWindow) * 76));
+    options.onProgress?.({
+      batch: batch + 1,
+      maxBatches,
+      retainedCount: Array.isArray(getActiveProfile()?.matches) ? getActiveProfile().matches.length : retainedCount,
+      checked: totalChecked,
+      estimatedTotal: estimatedHistoryWindow,
+      percent: batchCompletePercent,
+      message: `Checked ${totalChecked} retained competitive ${totalChecked === 1 ? "match" : "matches"} so far.`
+    });
     const latestProfile = getActiveProfile();
     if (result.syncError) {
       prefillLatestImportedReflection();
@@ -58703,7 +59024,7 @@ function renderStatsSummaryMetaModel() {
 
   const model = getPlayerModel();
   const profile = getActiveProfile();
-  const profileMatches = rederiveMatchesFromStoredRawPayloads(Array.isArray(profile?.matches) ? profile.matches : [])
+  const profileMatches = (Array.isArray(profile?.matches) ? profile.matches : [])
     .filter(isRankedPerformanceMatch);
   const descriptors = getStatsActOptionDescriptors(profile, {
     matches: profileMatches,

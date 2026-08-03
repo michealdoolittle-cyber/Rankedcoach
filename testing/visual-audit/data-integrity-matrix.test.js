@@ -234,11 +234,12 @@ async function openAndReadMatchSummary(page, fixture) {
     const recordApi = globalThis.RankedCoachMatchRecord;
     const record = match?.matchRecord || match;
     const rederived = recordApi?.rederiveFromStoredRawHenrikPayload?.(record, { puuid }) || record;
-    const kast = globalThis.RankedCoachRoundMetrics?.computeMatchKast?.(rederived)?.overall?.percentage;
+    const canonical = recordApi?.emptyRecord?.(rederived) || rederived;
+    const kast = globalThis.RankedCoachRoundMetrics?.computeMatchKast?.(canonical)?.overall?.percentage;
     return {
-      hs: hasFiniteNumber(rederived?.stats?.hsPercent) ? `${Math.round(Number(rederived.stats.hsPercent))}%` : "--",
-      acs: hasFiniteNumber(rederived?.stats?.acs) ? String(Math.round(Number(rederived.stats.acs))) : "--",
-      queueId: String(rederived?.queue?.id || ""),
+      hs: hasFiniteNumber(canonical?.stats?.hsPercent) ? `${Math.round(Number(canonical.stats.hsPercent))}%` : "--",
+      acs: hasFiniteNumber(canonical?.stats?.acs) ? String(Math.round(Number(canonical.stats.acs))) : "--",
+      queueId: String(canonical?.queue?.id || ""),
       kast: hasFiniteNumber(kast) ? `${Math.round(Number(kast))}%` : "--"
     };
   }, { match: fixture.primaryMatch, puuid: TRACKED_PUUID });
