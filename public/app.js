@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-guest-tutorial-only-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-home-unranked-session-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -4371,9 +4371,21 @@ function average(values = []) {
   return nums.reduce((sum, value) => sum + value, 0) / nums.length;
 }
 
+function getMatchSortTimestamp(match = {}) {
+  const rawDate =
+    match?.metadata?.playedAt ||
+    match?.matchRecord?.playedAt ||
+    match?.playedAt ||
+    match?.createdAt ||
+    match?.metadata?.createdAt ||
+    "";
+  const date = new Date(rawDate);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
 function getSortedMatches(matchList = []) {
   return (matchList || []).slice().sort((a, b) =>
-    new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime()
+    getMatchSortTimestamp(a) - getMatchSortTimestamp(b)
   );
 }
 
@@ -4428,7 +4440,7 @@ function getMatchCore(match = {}) {
     acs,
     adr,
     hs,
-    createdAt: match?.createdAt || metadata.playedAt || nowISO()
+    createdAt: metadata.playedAt || match?.playedAt || match?.createdAt || metadata.createdAt || nowISO()
   };
 }
 
@@ -8881,19 +8893,20 @@ function getScopedStatsData(profile = getActiveProfile(), options = {}) {
     : Array.isArray(profile?.matches)
       ? profile.matches
       : (matches || []);
-  const derivedActs = getMatchSeasonLabels(sourceMatches);
+  const derivedActs = getMatchSeasonLabels(sourceMatches, profile);
+  const latestMatchAct = getNewestRealMatchSeasonLabel(sourceMatches, profile);
   const importedActs = (Array.isArray(importedAnalytics?.acts) ? importedAnalytics.acts : [])
     .map(normalizeValorantSeasonLabel)
     .filter(label => !isPlaceholderStatsActLabel(label));
   const importedCurrentAct = normalizeValorantSeasonLabel(importedAnalytics?.currentAct);
   const currentImportedAct = !isPlaceholderStatsActLabel(importedCurrentAct) ? importedCurrentAct : "";
-  const actOptions = [...new Set([CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
+  const actOptions = [...new Set([latestMatchAct, CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
   const selectedAct = String(
     Object.prototype.hasOwnProperty.call(options || {}, "actLabel")
       ? options.actLabel || CURRENT_VALORANT_SEASON_LABEL
       : activeStatsActLabel && actOptions.includes(activeStatsActLabel)
         ? activeStatsActLabel
-        : currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL
+        : latestMatchAct || currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL
   ).trim();
   const shouldFilterByAct = Boolean(selectedAct && actOptions.includes(selectedAct));
   const sourceLogs = Array.isArray(options?.logs)
@@ -18199,7 +18212,7 @@ function normalizeChartWindowSize(size = currentSize) {
 }
 
 function getChartSelectedSeasonLabel(profile = getActiveProfile?.()) {
-  const explicit = getStatsSelectedActLabel?.(profile);
+  const explicit = getStatsSelectedActLabel?.(profile, { ignoreActiveSelection: true });
   if (explicit) return explicit;
   const analytics = profile?.trackerAnalytics || null;
   return String(analytics?.currentAct || activeStatsActLabel || "Current Season").trim();
@@ -20991,7 +21004,8 @@ function buildChartPoints(slice, y, visibleEntries = null) {
       ? Number(scopedEntry.index)
       : startMatchIndex + index - 1;
     const match = scopedEntry?.match || matches[matchIndex] || null;
-    const snapshot = findImpactSnapshotForMatch(match, matchIndex, impactSnapshots);
+    const snapshot = findImpactSnapshotForMatch(match, matchIndex, impactSnapshots)
+      || buildImpactPanelSnapshotFromMatch(match, matchIndex);
 
     return {
       x: PAD_LEFT + index * step,
@@ -45651,7 +45665,7 @@ let loggingDebriefPulseTimer = 0;
 let lastLoggingDebriefSignature = "";
 const pendingLoggingEntryRevealIds = new Set();
 const pendingLoggingSyncedRevealIds = new Set();
-const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 3";
+const CURRENT_VALORANT_SEASON_LABEL = "Season 2026 Act 4";
 
 function isLoggingPageActive() {
   return getActivePageElement()?.id === "page-logging";
@@ -49077,18 +49091,30 @@ function closeProfileDropdown(){
   profileDropdown.style.transform = "";
 }
 
-function getStatsSelectedActLabel(profile = getActiveProfile()) {
+function getNewestRealMatchSeasonLabel(matchList = [], profile = getActiveProfile()) {
+  const newest = getSortedMatches(matchList)
+    .slice()
+    .reverse()
+    .find(match => {
+      if (shouldSuppressDemoFixtureStats(match, profile)) return false;
+      return Boolean(getMatchSeasonLabel(match));
+    });
+  return newest ? getMatchSeasonLabel(newest) : "";
+}
+
+function getStatsSelectedActLabel(profile = getActiveProfile(), options = {}) {
   const analytics = profile?.trackerAnalytics || null;
   const derivedActs = getMatchSeasonLabels(profile?.matches || [], profile);
+  const latestMatchAct = getNewestRealMatchSeasonLabel(profile?.matches || [], profile);
   const importedActs = (Array.isArray(analytics?.acts) ? analytics.acts : [])
     .map(normalizeValorantSeasonLabel)
     .filter(label => !isPlaceholderStatsActLabel(label));
   const importedCurrentAct = normalizeValorantSeasonLabel(analytics?.currentAct);
   const currentImportedAct = !isPlaceholderStatsActLabel(importedCurrentAct) ? importedCurrentAct : "";
-  const actOptions = [...new Set([CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
-  const selectedAct = activeStatsActLabel && actOptions.includes(activeStatsActLabel)
+  const actOptions = [...new Set([latestMatchAct, CURRENT_VALORANT_SEASON_LABEL, ...derivedActs, ...importedActs, currentImportedAct].filter(Boolean))];
+  const selectedAct = !options?.ignoreActiveSelection && activeStatsActLabel && actOptions.includes(activeStatsActLabel)
     ? activeStatsActLabel
-    : currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL;
+    : latestMatchAct || currentImportedAct || derivedActs[0] || CURRENT_VALORANT_SEASON_LABEL;
   return selectedAct && actOptions.includes(selectedAct) ? selectedAct : "";
 }
 

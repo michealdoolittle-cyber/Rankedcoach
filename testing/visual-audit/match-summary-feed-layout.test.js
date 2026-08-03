@@ -61,10 +61,17 @@ function startServer() {
   });
 }
 
+function isoAtDaysAgo(daysAgo = 0, minutesOffset = 15) {
+  const date = new Date();
+  date.setDate(date.getDate() - Math.max(0, Number(daysAgo) || 0));
+  date.setHours(20, minutesOffset, 0, 0);
+  return date.toISOString();
+}
+
 function buildMatch(overrides = {}) {
   const puuid = "feed-layout-player";
   const matchId = overrides.id || "feed-layout-match";
-  const playedAt = overrides.createdAt || "2026-08-02T20:15:00.000Z";
+  const playedAt = overrides.createdAt || isoAtDaysAgo(0);
   const acs = overrides.acs ?? 231;
   const kast = overrides.kast ?? 73;
   const roleImpact = overrides.roleImpact ?? 76;
@@ -142,7 +149,7 @@ function seedState() {
   const profileId = "feed-layout-profile";
   const previousLow = buildMatch({
     id: "feed-layout-prev-low",
-    createdAt: "2026-07-25T20:15:00.000Z",
+    createdAt: isoAtDaysAgo(9),
     acs: 12,
     adr: 24,
     hsPercent: 4,
@@ -151,7 +158,7 @@ function seedState() {
   });
   const previousMid = buildMatch({
     id: "feed-layout-prev-mid",
-    createdAt: "2026-07-28T20:15:00.000Z",
+    createdAt: isoAtDaysAgo(6),
     acs: 178,
     adr: 118,
     hsPercent: 33,
@@ -160,7 +167,7 @@ function seedState() {
   });
   const previousNearMax = buildMatch({
     id: "feed-layout-prev-near-max",
-    createdAt: "2026-07-31T20:15:00.000Z",
+    createdAt: isoAtDaysAgo(3),
     acs: 338,
     adr: 198,
     hsPercent: 74,
@@ -169,7 +176,7 @@ function seedState() {
   });
   const match = buildMatch({
     id: "feed-layout-match",
-    createdAt: "2026-08-02T20:15:00.000Z",
+    createdAt: isoAtDaysAgo(0),
     acs: 244,
     adr: 152,
     hsPercent: 22,
@@ -202,7 +209,7 @@ function seedState() {
     profileId,
     matchId: "feed-layout-match",
     source: "henrik-match-placeholder",
-    createdAt: "2026-08-02T20:15:00.000Z",
+    createdAt: isoAtDaysAgo(0),
     result: "win",
     agent: "Sova",
     role: "Initiator",
@@ -248,7 +255,7 @@ async function verifyViewport(browser, viewport, name) {
     if (message.type() === "error") issues.push(`[console] ${message.text()}`);
     if (message.text().includes("INIT COMPLETE")) resolveInitComplete();
   });
-  await page.addInitScript({ content: `const buildMatch = ${buildMatch.toString()};(${seedState.toString()})();` });
+  await page.addInitScript({ content: `const isoAtDaysAgo = ${isoAtDaysAgo.toString()}; const buildMatch = ${buildMatch.toString()};(${seedState.toString()})();` });
   progress(`[match-summary-smoke] ${name}: seed installed`);
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: "domcontentloaded" });
   progress(`[match-summary-smoke] ${name}: domcontentloaded`);
