@@ -1,0 +1,48 @@
+name: Data integrity suite
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rankedcoach-data-integrity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fixture-surface-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install browser test dependencies
+        working-directory: testing/visual-audit
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Syntax checks
+        run: |
+          node --check public/app.js
+          node --check public/schema/match-record.js
+          node --check testing/fixtures/data-integrity-fixtures.js
+          node --check testing/visual-audit/data-integrity-matrix.test.js
+
+      - name: Focused prerequisite regressions
+        run: |
+          node testing/match-record-raw-payload.test.js
+          node testing/demo-purge-regression.test.js
+          node testing/visual-audit/stats-ranked-mode-filter.test.js
+          node testing/visual-audit/home-unranked-session-regression.test.js
+
+      - name: Fixture by surface data-integrity matrix
+        run: node testing/visual-audit/data-integrity-matrix.test.js

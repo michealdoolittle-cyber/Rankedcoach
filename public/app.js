@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-ranked-economy-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-data-integrity-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -8984,11 +8984,12 @@ function buildRoundDerivedAnalytics(matchList = [], currentAct = "Current Window
 
 function getScopedStatsData(profile = getActiveProfile(), options = {}) {
   const importedAnalytics = profile?.trackerAnalytics || null;
-  const sourceMatches = Array.isArray(options?.matches)
+  const rawSourceMatches = Array.isArray(options?.matches)
     ? options.matches
     : Array.isArray(profile?.matches)
       ? profile.matches
       : (matches || []);
+  const sourceMatches = rederiveMatchesFromStoredRawPayloads(rawSourceMatches);
   const rankedOnly = options?.rankedOnly !== false;
   const rankedPerformanceMatches = rankedOnly
     ? sourceMatches.filter(isRankedPerformanceMatch)
@@ -14469,6 +14470,30 @@ function matchRecordNeedsHsBackfill(record = {}) {
   return hasCoreStats && missingHs;
 }
 
+function matchRecordNeedsQueueBackfill(record = {}) {
+  if (!record || typeof record !== "object") return false;
+  const rawPayload = typeof globalThis.RankedCoachMatchRecord?.getStoredRawHenrikPayload === "function"
+    ? globalThis.RankedCoachMatchRecord.getStoredRawHenrikPayload(record)
+    : record?.rawHenrikPayload;
+  if (!rawPayload) return false;
+  const queue = record.queue || {};
+  const hasExplicitQueue = [
+    queue.id,
+    queue.name,
+    queue.modeType,
+    record.queueId,
+    record.queueName,
+    record.queueModeType
+  ].some(value => String(value || "").trim());
+  return !hasExplicitQueue;
+}
+
+function matchRecordNeedsStoredRawRehydrate(record = {}) {
+  return matchRecordNeedsHsBackfill(record)
+    || matchRecordNeedsWeaponBackfill(record)
+    || matchRecordNeedsQueueBackfill(record);
+}
+
 function getMatchWeaponBackfillUnavailable(record = {}) {
   return Boolean(
     record?.weaponBackfillUnavailable === true
@@ -14575,7 +14600,7 @@ function rederiveMatchSummaryRecordFromStoredRaw(record = {}) {
     ? matchRecordApi.getStoredRawHenrikPayload(record)
     : record?.rawHenrikPayload;
   if (!rawPayload) return record;
-  if (!matchRecordNeedsHsBackfill(record) && !matchRecordNeedsWeaponBackfill(record)) return record;
+  if (!matchRecordNeedsStoredRawRehydrate(record)) return record;
   try {
     const rederived = matchRecordApi.rederiveFromStoredRawHenrikPayload(record);
     return rederived || record;
@@ -48535,8 +48560,16 @@ function loadProfiles(){
     profiles = [];
   }
 
+  let repairedStoredRawPayloads = false;
   profiles = (profiles || []).map(profile => {
     const normalized = normalizeProfileRecord(profile);
+    if (Array.isArray(normalized.matches) && normalized.matches.length) {
+      const rederivedMatches = rederiveMatchesFromStoredRawPayloads(normalized.matches);
+      if (rederivedMatches.some((match, index) => match !== normalized.matches[index])) {
+        repairedStoredRawPayloads = true;
+      }
+      normalized.matches = rederivedMatches;
+    }
     hydratePendingLoadoutRoll(normalized);
     return normalized;
   });
@@ -48596,6 +48629,9 @@ function loadProfiles(){
   }
 
   logEntries = readLocalLogEntries({ profileId: activeProfileId });
+  if (repairedStoredRawPayloads) {
+    window.setTimeout(() => saveProfiles?.(), 0);
+  }
 
 }
 
