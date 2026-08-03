@@ -114,10 +114,9 @@ function setStatus(message, tone = "") {
 }
 
 async function accessToken() {
-  const client = globalThis.RankedCoachAuthBridge?.getClient?.();
-  const { data: { session } = {} } = await client?.auth?.getSession?.() || {};
-  if (!session?.access_token) throw new Error("Sign in again before opening the research queue.");
-  return session.access_token;
+  const token = await globalThis.RankedCoachAuthBridge?.getAccessToken?.();
+  if (!token) throw new Error("Sign in again before opening the research queue.");
+  return token;
 }
 
 async function request(path, options = {}) {
@@ -727,7 +726,8 @@ async function load(options = {}) {
   const force = options.force === true;
   if (pendingProposalIds.size && options.allowDuringProposalAction !== true) return;
   if (loading && !force) return;
-  const user = await globalThis.RankedCoachAuthBridge?.getFreshUser?.();
+  const bridge = globalThis.RankedCoachAuthBridge;
+  const user = bridge?.getUser?.() || await bridge?.getFreshUser?.();
   if (!isOwner(user)) return;
   const proposalOffset = Math.max(0, Number(options.proposalOffset || 0));
   const sourceOffset = Math.max(0, Number(options.sourceOffset || 0));
@@ -1407,5 +1407,8 @@ if (accountSupportModal && typeof MutationObserver === "function") {
     attributeFilter: ["class", "aria-hidden"]
   });
 }
-syncAccess(globalThis.RankedCoachAuthBridge?.getUser?.());
-globalThis.RankedCoachAuthBridge?.getFreshUser?.().then(syncAccess).catch(() => {});
+const initialBridgeUser = globalThis.RankedCoachAuthBridge?.getUser?.();
+syncAccess(initialBridgeUser);
+if (initialBridgeUser) {
+  globalThis.RankedCoachAuthBridge?.getFreshUser?.().then(syncAccess).catch(() => {});
+}

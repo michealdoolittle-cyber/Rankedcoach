@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-auth-timeout-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-auth-abort-fallback-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -12913,6 +12913,7 @@ async function logoutOrOpenAuthFromUI() {
   } catch (error) {
     console.warn("Logout failed", error);
   }
+  clearLastKnownAuthUser();
   enterGuestModeAfterLogout();
 }
 
@@ -17902,6 +17903,67 @@ function maybeOpenInitialAuthGate() {
 // ========================
 
 let supabaseClient = null;
+let rankedCoachSupabaseAuthOrigin = "";
+const rankedCoachAuthAbortSignalStack = [];
+const rankedCoachActiveAuthControllers = new Set();
+
+function getRankedCoachSupabaseAuthOrigin(value = "") {
+  try {
+    return new URL(String(value || "")).origin;
+  } catch (_error) {
+    return "";
+  }
+}
+
+function getRankedCoachFetchUrl(input = "") {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.href;
+  return String(input?.url || input || "");
+}
+
+function isRankedCoachSupabaseAuthRequest(input = "") {
+  const url = getRankedCoachFetchUrl(input);
+  if (!url) return false;
+  try {
+    const parsed = new URL(url, window.location.href);
+    return parsed.origin === rankedCoachSupabaseAuthOrigin && parsed.pathname.includes("/auth/v1/");
+  } catch (_error) {
+    return rankedCoachSupabaseAuthOrigin && url.includes(rankedCoachSupabaseAuthOrigin) && url.includes("/auth/v1/");
+  }
+}
+
+function getActiveRankedCoachAuthAbortSignal() {
+  for (let index = rankedCoachAuthAbortSignalStack.length - 1; index >= 0; index -= 1) {
+    const signal = rankedCoachAuthAbortSignalStack[index];
+    if (signal && !signal.aborted) return signal;
+  }
+  return null;
+}
+
+function abortRankedCoachActiveAuthControllers(reason = null) {
+  rankedCoachActiveAuthControllers.forEach(controller => {
+    if (!controller || controller.signal?.aborted) return;
+    try {
+      controller.abort(reason || undefined);
+    } catch (_error) {
+      try {
+        controller.abort();
+      } catch (_ignoredError) {
+        // Ignore abort failures.
+      }
+    }
+  });
+}
+
+function rankedCoachSupabaseFetch(input, init = {}) {
+  const nativeFetch = window.fetch?.bind(window);
+  if (!nativeFetch) return Promise.reject(new Error("Fetch is not available."));
+  const activeSignal = getActiveRankedCoachAuthAbortSignal();
+  if (activeSignal && isRankedCoachSupabaseAuthRequest(input)) {
+    return nativeFetch(input, { ...(init || {}), signal: init?.signal || activeSignal });
+  }
+  return nativeFetch(input, init);
+}
 
 if (window.supabase) {
   const supabaseConfig = window.VIP_SUPABASE_CONFIG || {};
@@ -17915,9 +17977,24 @@ if (window.supabase) {
     || (legacySupabaseUrls.has(storedSupabaseUrl) ? "" : storedSupabaseUrl)
     || defaultSupabaseUrl;
 
+  rankedCoachSupabaseAuthOrigin = getRankedCoachSupabaseAuthOrigin(resolvedSupabaseUrl);
+  const configuredSupabaseOptions = supabaseConfig.options && typeof supabaseConfig.options === "object"
+    ? supabaseConfig.options
+    : {};
+  const configuredGlobalOptions = configuredSupabaseOptions.global && typeof configuredSupabaseOptions.global === "object"
+    ? configuredSupabaseOptions.global
+    : {};
+
   supabaseClient = supabase.createClient(
     resolvedSupabaseUrl,
-    supabaseConfig.anonKey || storedSupabaseAnonKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnNqYWF4dGR4Zm1wYnRydXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MTIxNzUsImV4cCI6MjA5MDM4ODE3NX0.1wKi5VOBCvGJeVDIgHBO503MBj1tSp4GE775l0dpjOQ"
+    supabaseConfig.anonKey || storedSupabaseAnonKey || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxcnNqYWF4dGR4Zm1wYnRydXBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MTIxNzUsImV4cCI6MjA5MDM4ODE3NX0.1wKi5VOBCvGJeVDIgHBO503MBj1tSp4GE775l0dpjOQ",
+    {
+      ...configuredSupabaseOptions,
+      global: {
+        ...configuredGlobalOptions,
+        fetch: rankedCoachSupabaseFetch
+      }
+    }
   );
 } else {
   console.warn("Supabase not loaded -- skipping init");
@@ -18123,6 +18200,7 @@ globalThis.RankedCoachAuthBridge = Object.freeze({
   },
   async getFreshUser() {
     if (currentAuthUser) return currentAuthUser;
+    if (isAuthReachabilityOfflineCooldownActive?.()) return null;
     if (!supabaseClient?.auth?.getUser) return null;
     try {
       return await getSupabaseUser({
@@ -18133,6 +18211,20 @@ globalThis.RankedCoachAuthBridge = Object.freeze({
       });
     } catch (_error) {
       return null;
+    }
+  },
+  async getAccessToken() {
+    if (isAuthReachabilityOfflineCooldownActive?.()) return "";
+    try {
+      const session = await getSupabaseSession({
+        label: "Owner tool session check",
+        reason: "owner-tools-session",
+        timeoutMs: AUTH_ACTION_TIMEOUT_MS,
+        silent: true
+      });
+      return session?.access_token || "";
+    } catch (_error) {
+      return "";
     }
   },
   promptSignIn(message = "Sign in to save this RankedCoach action.") {
@@ -19140,6 +19232,7 @@ const STORAGE_KEY_LAST_BACKEND_SYNC = "valtracker_last_backend_sync_v1";
 const STORAGE_KEY_INSIGHT_FEEDBACK = "rankedcoach_insight_feedback_v1";
 const STORAGE_KEY_PENDING_LOADOUT_ROLLS = "rankedcoach_pending_loadout_rolls_v1";
 const STORAGE_KEY_LAST_SEEN_APP_BUILD = "rankedcoach_last_seen_app_build_v1";
+const STORAGE_KEY_LAST_AUTH_USER = "rankedcoach_last_auth_user_v1";
 const RIOT_SYNC_TIMEOUT_MS = 45 * 1000;
 const AUTH_INIT_TIMEOUT_MS = Math.max(800, Number(globalThis.RANKEDCOACH_AUTH_INIT_TIMEOUT_MS) || 3500);
 const AUTH_ACTION_TIMEOUT_MS = Math.max(1200, Number(globalThis.RANKEDCOACH_AUTH_ACTION_TIMEOUT_MS) || 6500);
@@ -19164,6 +19257,7 @@ let persistentAccountRealtimeNoticeShown = false;
 let persistentAccountSaveNoticeLastShownAt = 0;
 let persistentAccountSaveRetryTimer = 0;
 let authReachabilityNoticeLastShownAt = 0;
+let authReachabilityOfflineUntil = 0;
 let rankedCoachAppUpdateCheckTimer = 0;
 let rankedCoachAppUpdateCheckInFlight = false;
 let rankedCoachAppUpdateNoticeShown = false;
@@ -19185,16 +19279,33 @@ function isAuthTimeoutError(error = {}) {
   return error?.name === "RankedCoachAuthTimeoutError" || error?.code === "AUTH_TIMEOUT";
 }
 
+function isAbortError(error = {}) {
+  return error?.name === "AbortError" || error?.code === "ABORT_ERR";
+}
+
 function notifyAuthReachabilityIssue(message = "", options = {}) {
   if (options.silent) return;
   const now = Date.now();
-  if (now - authReachabilityNoticeLastShownAt < 30000) return;
+  if (!options.force && now - authReachabilityNoticeLastShownAt < 30000) return;
   authReachabilityNoticeLastShownAt = now;
   showToast(message || "Having trouble reaching your account right now — continuing with your local data.", {
     title: options.title || "Account check delayed",
     variant: "warning",
     durationMs: options.durationMs || 5000
   });
+}
+
+function markAuthReachabilityOffline(timeoutMs = AUTH_ACTION_TIMEOUT_MS) {
+  const cooldownMs = Math.max(15000, Math.min(60000, Number(timeoutMs || AUTH_ACTION_TIMEOUT_MS) * 4));
+  authReachabilityOfflineUntil = Math.max(authReachabilityOfflineUntil, Date.now() + cooldownMs);
+}
+
+function isAuthReachabilityOfflineCooldownActive() {
+  return Date.now() < authReachabilityOfflineUntil;
+}
+
+function shouldSkipAuthRequestForOfflineCooldown(options = {}) {
+  return options.allowDuringAuthCooldown !== true && isAuthReachabilityOfflineCooldownActive();
 }
 
 function getPlayerFacingAuthErrorMessage(error = {}, fallback = "Unable to reach the account service. Please try again.") {
@@ -19204,28 +19315,136 @@ function getPlayerFacingAuthErrorMessage(error = {}, fallback = "Unable to reach
   return error?.message || fallback;
 }
 
+function normalizeCachedAuthUser(user = {}) {
+  if (!user || typeof user !== "object") return null;
+  const id = String(user.id || user.sub || "").trim();
+  const email = String(user.email || "").trim();
+  if (!id && !email) return null;
+  return {
+    ...user,
+    id: id || email,
+    email,
+    user_metadata: user.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : {},
+    app_metadata: user.app_metadata && typeof user.app_metadata === "object" ? user.app_metadata : {}
+  };
+}
+
+function extractCachedAuthUserFromPayload(payload = {}) {
+  if (!payload || typeof payload !== "object") return null;
+  const direct = normalizeCachedAuthUser(payload.user);
+  if (direct) return direct;
+  const candidates = [
+    payload.currentSession?.user,
+    payload.session?.user,
+    payload.data?.session?.user,
+    payload.data?.user
+  ];
+  for (const candidate of candidates) {
+    const user = normalizeCachedAuthUser(candidate);
+    if (user) return user;
+  }
+  return null;
+}
+
+function getSupabaseAuthLocalStorageKeys() {
+  const keys = [];
+  const ref = rankedCoachSupabaseAuthOrigin
+    ? rankedCoachSupabaseAuthOrigin.replace(/^https?:\/\//, "").split(".")[0]
+    : "";
+  if (ref) keys.push(`sb-${ref}-auth-token`);
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index) || "";
+      if (!key || keys.includes(key)) continue;
+      if (/^sb-[a-z0-9]+-auth-token$/i.test(key) || key.includes("-auth-token")) keys.push(key);
+    }
+  } catch (_error) {
+    // Local storage may be unavailable in hardened/private contexts.
+  }
+  return keys;
+}
+
+function readCachedAuthUserFromLocalStorage() {
+  const keys = [STORAGE_KEY_LAST_AUTH_USER, ...getSupabaseAuthLocalStorageKeys()];
+  for (const key of keys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      const user = key === STORAGE_KEY_LAST_AUTH_USER
+        ? extractCachedAuthUserFromPayload(parsed) || normalizeCachedAuthUser(parsed)
+        : extractCachedAuthUserFromPayload(parsed);
+      if (user) return { user, source: key };
+    } catch (_error) {
+      // Ignore stale or non-JSON values and keep checking other known keys.
+    }
+  }
+  return null;
+}
+
+function cacheLastKnownAuthUser(user = null) {
+  const normalized = normalizeCachedAuthUser(user);
+  if (!normalized) return;
+  try {
+    localStorage.setItem(STORAGE_KEY_LAST_AUTH_USER, JSON.stringify({
+      user: normalized,
+      cachedAt: nowISO()
+    }));
+  } catch (_error) {
+    // Auth cache is a convenience fallback; never block real auth on it.
+  }
+}
+
+function clearLastKnownAuthUser() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_LAST_AUTH_USER);
+  } catch (_error) {
+    // Ignore local storage failures.
+  }
+}
+
 function withAuthRequestTimeout(request, options = {}) {
   const timeoutMs = Math.max(250, Number(options.timeoutMs) || AUTH_ACTION_TIMEOUT_MS);
   const label = options.label || "Auth request";
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const abortSignal = controller?.signal || null;
+  if (controller) rankedCoachActiveAuthControllers.add(controller);
   return new Promise((resolve, reject) => {
     let settled = false;
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      if (controller) rankedCoachActiveAuthControllers.delete(controller);
+    };
     const timer = window.setTimeout(() => {
       if (settled) return;
       settled = true;
-      reject(createAuthTimeoutError(label, timeoutMs));
+      const timeoutError = createAuthTimeoutError(label, timeoutMs);
+      abortRankedCoachActiveAuthControllers(timeoutError);
+      cleanup();
+      reject(timeoutError);
     }, timeoutMs);
+    const runRequest = () => {
+      const runner = typeof request === "function" ? request : () => request;
+      if (!abortSignal) return runner({});
+      rankedCoachAuthAbortSignalStack.push(abortSignal);
+      try {
+        return runner({ signal: abortSignal, abortSignal, controller });
+      } finally {
+        rankedCoachAuthAbortSignalStack.pop();
+      }
+    };
     Promise.resolve()
-      .then(typeof request === "function" ? request : () => request)
+      .then(runRequest)
       .then(value => {
         if (settled) return;
         settled = true;
-        window.clearTimeout(timer);
+        cleanup();
         resolve(value);
       })
       .catch(error => {
         if (settled) return;
         settled = true;
-        window.clearTimeout(timer);
+        cleanup();
         reject(error);
       });
   });
@@ -19235,7 +19454,11 @@ async function runAuthRequestWithTimeout(request, options = {}) {
   try {
     return await withAuthRequestTimeout(request, options);
   } catch (error) {
+    if (isAbortError(error) && isAuthReachabilityOfflineCooldownActive()) {
+      return { data: null, error: null };
+    }
     if (isAuthTimeoutError(error)) {
+      markAuthReachabilityOffline(error.timeoutMs);
       console.warn(`${options.label || "Auth request"} timed out`, {
         timeoutMs: error.timeoutMs,
         reason: options.reason || ""
@@ -19248,6 +19471,7 @@ async function runAuthRequestWithTimeout(request, options = {}) {
 
 async function getSupabaseUser(options = {}) {
   if (!supabaseClient?.auth?.getUser) return null;
+  if (shouldSkipAuthRequestForOfflineCooldown(options)) return null;
   const result = await runAuthRequestWithTimeout(
     () => supabaseClient.auth.getUser(),
     {
@@ -19268,6 +19492,7 @@ async function getSupabaseUser(options = {}) {
 
 async function getSupabaseSession(options = {}) {
   if (!supabaseClient?.auth?.getSession) return null;
+  if (shouldSkipAuthRequestForOfflineCooldown(options)) return null;
   const result = await runAuthRequestWithTimeout(
     () => supabaseClient.auth.getSession(),
     {
@@ -20107,6 +20332,11 @@ function buildMatchRowsForSupabase(userId) {
 }
 
 async function savePersistentAccountState(reason = "state") {
+  if (isAuthReachabilityOfflineCooldownActive()) {
+    backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
+    schedulePersistentAccountSaveRetry?.("auth-offline-cooldown");
+    return null;
+  }
   if (backendSyncState.savePromise) {
     backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
     return backendSyncState.savePromise;
@@ -20121,13 +20351,23 @@ async function savePersistentAccountState(reason = "state") {
     const pendingReason = backendSyncState.pendingSaveReason;
     backendSyncState.pendingSaveReason = "";
     if (pendingReason) {
-      queueMicrotask(() => void savePersistentAccountState(pendingReason));
+      if (isAuthReachabilityOfflineCooldownActive()) {
+        backendSyncState.pendingSaveReason = pendingReason;
+        schedulePersistentAccountSaveRetry?.("auth-offline-cooldown");
+      } else {
+        queueMicrotask(() => void savePersistentAccountState(pendingReason));
+      }
     }
   }
 }
 
 async function performPersistentAccountStateSave(reason = "state") {
   if (backendSyncState.applyingRemote || backendSyncState.hydratingUserId || !currentAuthUser?.id || !supabaseClient?.auth) return;
+  if (isAuthReachabilityOfflineCooldownActive()) {
+    backendSyncState.pendingSaveReason = reason || backendSyncState.pendingSaveReason || "state";
+    schedulePersistentAccountSaveRetry?.("auth-offline-cooldown");
+    return;
+  }
 
   const user = await getSupabaseUser();
   if (!user) return;
@@ -20472,6 +20712,7 @@ async function handleSignedInUser(user) {
   backendSyncState.saveTimer = null;
   currentAuthUser = user || null;
   if (user) {
+    cacheLastKnownAuthUser(user);
     logEntries = readLocalLogEntries({
       user,
       signedIn: true,
@@ -20481,6 +20722,7 @@ async function handleSignedInUser(user) {
   }
   updateAuthUI(user || null);
   if (!user) {
+    clearLastKnownAuthUser();
     backendSyncState.hydratingUserId = "";
     lastAccountStateLoadAt = 0;
     stopPersistentAccountAutoRefresh();
@@ -20532,6 +20774,7 @@ function startPersistentAccountAutoRefresh() {
 
 async function refreshPersistentAccountStateOnFocus(reason = "focus") {
   if (!currentAuthUser?.id || !supabaseClient?.auth) return;
+  if (isAuthReachabilityOfflineCooldownActive()) return;
   if (backendSyncState.hydratingUserId || backendSyncState.applyingRemote) return;
   if (backendSyncState.saveTimer || backendSyncState.savePromise) return;
   if (shouldSkipRecentAccountStateReload(currentAuthUser)) return;
@@ -54464,6 +54707,36 @@ function randomizeInitialReel(){
 
  }
 
+async function restoreCachedSignedInLocalState(user, options = {}) {
+  if (!user?.id) return false;
+  cacheLastKnownAuthUser(user);
+  currentAuthUser = user;
+  setAppEntryChoice("auth");
+  closeAuthModal?.();
+  updateAuthUI?.(user);
+
+  logEntries = readLocalLogEntries({
+    user,
+    signedIn: true,
+    profileId: activeProfileId
+  });
+
+  refreshActiveProfileDataSurfaces?.({ renderChart: true, refreshInsights: true });
+  rebuildProfileListUI?.();
+  updateProfileHeaderUI?.();
+  renderLogFeed?.({ force: true });
+  renderCoachReadinessUI?.();
+  refreshRiotProfilePrompt?.();
+  markAccountStateLoadComplete?.();
+  startPersistentAccountAutoRefresh?.();
+  notifyAuthReachabilityIssue(
+    options.message || "Having trouble reaching your account right now — continuing with your local data.",
+    { title: "Using saved account", reason: options.reason || "cached-auth-fallback", force: true }
+  );
+  hideLoginInitializationOverlay?.();
+  return true;
+}
+
 
 
 async function initUserSession(initialSessionUser = null){
@@ -54474,6 +54747,7 @@ async function initUserSession(initialSessionUser = null){
   }
 
   let cachedSessionUser = initialSessionUser || null;
+  let startupAuthTimedOut = false;
   if (cachedSessionUser) {
     showLoginInitializationOverlay(
       "Restoring your saved session.",
@@ -54489,6 +54763,7 @@ async function initUserSession(initialSessionUser = null){
       });
       cachedSessionUser = session?.user || null;
     } catch (error) {
+      if (isAuthTimeoutError(error)) startupAuthTimedOut = true;
       console.warn("Unable to read cached auth session", error);
     }
   }
@@ -54502,6 +54777,7 @@ async function initUserSession(initialSessionUser = null){
       playerMessage: "Having trouble reaching your account right now — continuing with your local data."
     });
   } catch (error) {
+    if (isAuthTimeoutError(error)) startupAuthTimedOut = true;
     console.warn("Unable to verify auth session", error);
   }
   const resolvedUser = user || cachedSessionUser || null;
@@ -54510,6 +54786,21 @@ async function initUserSession(initialSessionUser = null){
     setAppEntryChoice("auth");
     await initializeSignedInAccount(resolvedUser, { reason: "session-restore" });
     return;
+  }
+
+  if (startupAuthTimedOut) {
+    const cachedAuth = readCachedAuthUserFromLocalStorage();
+    if (cachedAuth?.user) {
+      console.warn("Auth verification timed out; restoring cached signed-in local state", {
+        source: cachedAuth.source,
+        userId: cachedAuth.user.id
+      });
+      await restoreCachedSignedInLocalState(cachedAuth.user, {
+        reason: "startup-auth-timeout",
+        message: "Having trouble reaching your account right now — continuing with your saved local data."
+      });
+      return;
+    }
   }
 
   await handleSignedInUser(null);
