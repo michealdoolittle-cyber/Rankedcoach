@@ -9,6 +9,7 @@ const { chromium } = require("playwright");
 const root = path.resolve(__dirname, "..", "..", "public");
 const port = 41813;
 const progressLogPath = path.resolve(__dirname, "test-results", "match-summary-smoke-progress.log");
+const galaxyS20UserAgent = "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
 const types = {
   ".css": "text/css",
   ".html": "text/html",
@@ -225,7 +226,14 @@ async function dismissStartupUi(page) {
 
 async function verifyViewport(browser, viewport, name) {
   progress(`[match-summary-smoke] ${name}: starting`);
-  const page = await browser.newPage({ viewport });
+  const isMobileViewport = viewport.width <= 760;
+  const page = await browser.newPage({
+    viewport: { width: viewport.width, height: viewport.height },
+    isMobile: isMobileViewport,
+    hasTouch: isMobileViewport,
+    deviceScaleFactor: isMobileViewport ? 3 : 1,
+    userAgent: isMobileViewport ? galaxyS20UserAgent : undefined
+  });
   progress(`[match-summary-smoke] ${name}: page created`);
   const issues = [];
   const logs = [];
@@ -252,25 +260,56 @@ async function verifyViewport(browser, viewport, name) {
   progress(`[match-summary-smoke] ${name}: app loaded`);
   await page.waitForFunction(() => Boolean(globalThis.RankedCoachSyncDiagnostics?.getMode), null, { timeout: 15000 });
   const syncAndBorderState = await page.evaluate((isMobile) => {
-    const target = isMobile
-      ? (document.querySelector("#mobileHeaderProfileBtn.mobile-bottom-avatar-btn")
-        || document.querySelector("#mobileBottomShell .mobile-bottom-avatar-btn"))
-      : document.querySelector(".profile-avatar-ring");
+    const readTarget = (target) => {
+      const frame = target?.querySelector?.('.rc-mobile-avatar-frame[data-mobile-frame="notched"]')
+        || target?.querySelector?.(".rc-mobile-avatar-frame");
+      const main = frame?.querySelector?.(".rc-mobile-frame-main");
+      const glint = frame?.querySelector?.(".rc-mobile-frame-glint");
+      const targetStyle = target ? getComputedStyle(target) : null;
+      const mainStyle = main ? getComputedStyle(main) : null;
+      const glintStyle = glint ? getComputedStyle(glint) : null;
+      return {
+        targetClassName: target?.className || "",
+        hasAnimatedClass: Boolean(target?.classList?.contains("border-animated")),
+        hasNotchedClass: Boolean(target?.classList?.contains("border-notched")),
+        frame: frame?.getAttribute("data-mobile-frame") || "",
+        targetAnimationName: targetStyle?.animationName || "",
+        mainAnimationName: mainStyle?.animationName || "",
+        glintAnimationName: glintStyle?.animationName || "",
+        mainStrokeDasharray: mainStyle?.strokeDasharray || ""
+      };
+    };
+    const profileTarget = document.querySelector(".profile-avatar-ring");
+    const mobileHeaderTarget = isMobile ? document.querySelector("#mobileHeaderProfileBtn.mobile-bottom-avatar-btn") : null;
+    const mobileBottomTarget = isMobile ? document.querySelector("#mobileBottomShell .mobile-bottom-avatar-btn") : null;
+    const mobileTarget = mobileHeaderTarget || mobileBottomTarget;
+    const target = mobileTarget || profileTarget;
     return {
-      targetClassName: target?.className || "",
-      hasAnimatedClass: Boolean(target?.classList?.contains("border-animated")),
-      hasNotchedClass: Boolean(target?.classList?.contains("border-notched")),
-      frame: target?.querySelector?.(".rc-mobile-avatar-frame")?.getAttribute("data-mobile-frame") || "",
+      target: readTarget(target),
+      profileTarget: readTarget(profileTarget),
+      mobileHeaderTarget: readTarget(mobileHeaderTarget),
+      mobileBottomTarget: readTarget(mobileBottomTarget),
       diagnostics: globalThis.RankedCoachSyncDiagnostics.getMode()
     };
-  }, viewport.width <= 760);
+  }, isMobileViewport);
   assert.equal(syncAndBorderState.diagnostics.mode, "guest", `${name}: seeded session should report guest mode`);
   assert.equal(syncAndBorderState.diagnostics.crossDeviceRealtimeAvailable, false, `${name}: guest mode should not claim cross-device realtime`);
   assert.equal(syncAndBorderState.diagnostics.crossDeviceSyncRequiresSignIn, true, `${name}: guest Riot profile should disclose sign-in requirement`);
-  assert.ok(syncAndBorderState.hasAnimatedClass, `${name}: notched border should receive .border-animated in live DOM ${JSON.stringify(syncAndBorderState)}`);
-  assert.ok(syncAndBorderState.hasNotchedClass || syncAndBorderState.frame === "notched", `${name}: live profile border should be notched ${JSON.stringify(syncAndBorderState)}`);
+  assert.ok(syncAndBorderState.target.hasAnimatedClass, `${name}: notched border should receive .border-animated in live DOM ${JSON.stringify(syncAndBorderState)}`);
+  assert.ok(syncAndBorderState.target.hasNotchedClass || syncAndBorderState.target.frame === "notched", `${name}: live profile border should be notched ${JSON.stringify(syncAndBorderState)}`);
+  assert.match(syncAndBorderState.target.mainAnimationName, /rcMobileSvgFrame(Sweep|Trace)|rcMobileSvgFrameGlowBeat/, `${name}: visible notched frame stroke should animate ${JSON.stringify(syncAndBorderState)}`);
+  assert.match(syncAndBorderState.target.glintAnimationName, /rcMobileSvgFrame(ReverseSweep|Trace)|rcMobileSvgGlintTravel/, `${name}: visible notched frame glint should animate ${JSON.stringify(syncAndBorderState)}`);
+  assert.doesNotMatch(syncAndBorderState.target.targetAnimationName, /profileBorder(NotchBreathe|SplitFlicker)/, `${name}: parent avatar should not use old notched/split animation ${JSON.stringify(syncAndBorderState)}`);
+  if (isMobileViewport) {
+    assert.ok(syncAndBorderState.mobileHeaderTarget.hasAnimatedClass, `${name}: mobile header avatar should receive .border-animated ${JSON.stringify(syncAndBorderState)}`);
+    assert.match(syncAndBorderState.mobileHeaderTarget.mainAnimationName, /rcMobileSvgFrame(Sweep|Trace)|rcMobileSvgFrameGlowBeat/, `${name}: mobile header notched SVG frame should animate ${JSON.stringify(syncAndBorderState)}`);
+    if (syncAndBorderState.mobileBottomTarget.targetClassName) {
+      assert.ok(syncAndBorderState.mobileBottomTarget.hasAnimatedClass, `${name}: mobile bottom-shell avatar should receive .border-animated ${JSON.stringify(syncAndBorderState)}`);
+      assert.match(syncAndBorderState.mobileBottomTarget.mainAnimationName, /rcMobileSvgFrame(Sweep|Trace)|rcMobileSvgFrameGlowBeat/, `${name}: mobile bottom-shell notched SVG frame should animate ${JSON.stringify(syncAndBorderState)}`);
+    }
+  }
   progress(`[match-summary-smoke] ${name}: diagnostics and border checked`);
-  const navSelector = viewport.width <= 760 ? '[data-mobile-page="logging"]' : '.nav-btn[data-page="logging"]';
+  const navSelector = isMobileViewport ? '[data-mobile-page="logging"]' : '.nav-btn[data-page="logging"]';
   await page.locator(navSelector).first().click({ force: true });
   await page.evaluate(selector => document.querySelector(selector)?.click(), navSelector);
   await page.waitForFunction(() => document.querySelector("#page-logging")?.classList.contains("is-current-page") || document.querySelector("#page-logging")?.classList.contains("active"), null, { timeout: 15000 }).catch(async error => {
@@ -287,7 +326,7 @@ async function verifyViewport(browser, viewport, name) {
     }));
     throw new Error(`${name}: logging navigation did not activate ${JSON.stringify({ debug, logs })}: ${error.message}`);
   });
-  if (viewport.width <= 760) {
+  if (isMobileViewport) {
     await page.locator('[data-mobile-logging-view="feed"]').click({ force: true });
     await page.evaluate(() => document.querySelector('[data-mobile-logging-view="feed"]')?.click());
   }
@@ -397,7 +436,7 @@ async function verifyViewport(browser, viewport, name) {
       height: Math.round(diamond.height)
     };
   });
-  if (viewport.width > 760) {
+  if (!isMobileViewport) {
     await page.locator(".match-summary-credit-diamond").first().hover();
   }
   await page.evaluate(() => document.querySelector(".match-summary-credit-diamond")?.click());
