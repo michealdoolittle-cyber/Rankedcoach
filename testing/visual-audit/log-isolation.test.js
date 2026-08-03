@@ -56,6 +56,8 @@ async function run() {
   await page.addInitScript(() => {
     const profileId = "profile-log-test";
     const playedAt = new Date().toISOString();
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     localStorage.setItem("valtracker_entry_choice_v1", "guest");
     localStorage.setItem("valtracker_active_profile_id", profileId);
     localStorage.setItem("valtracker_profiles_v1", JSON.stringify([{
@@ -66,6 +68,7 @@ async function run() {
       region: "NA",
       importSource: "henrik",
       lastSyncSource: "henrik",
+      lastWarmupPromptDate: todayKey,
       matches: [{
         id: "match-1",
         matchId: "match-1",
@@ -133,6 +136,18 @@ async function run() {
     await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(900);
     await page.click("#dailyWarmupSkip").catch(() => {});
+    await page.evaluate(() => {
+      ["authModal", "loginInitOverlay", "dailyWarmupModal"].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.classList.remove("active", "is-opening");
+        element.setAttribute("aria-hidden", "true");
+        element.hidden = true;
+        element.style.display = "none";
+        element.style.pointerEvents = "none";
+      });
+      document.body.classList.remove("modal-open", "is-modal-open", "has-active-modal", "mobile-modal-open", "daily-entrance-motion-active");
+    });
     await page.click('[data-mobile-page="logging"]');
     await page.waitForFunction(() => document.getElementById("page-logging")?.classList.contains("is-current-page"));
     const debriefMeta = await page.locator("#loggingLiveMeta").innerText();

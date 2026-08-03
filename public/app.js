@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260803-auth-abort-fallback-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260803-stats-logging-parity-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -12923,7 +12923,7 @@ function refreshActiveProfileDataSurfaces(options = {}) {
     matches = profile.matches.slice();
   }
 
-  if (profile?.lastSyncSource === "henrik" || profile?.importSource === "henrik") {
+  if (shouldSyncStatsLoggingParityForProfile?.(profile)) {
     syncRankedMatchPlaceholderLogs?.(matches, profile, {
       animate: options.animatePlaceholders !== false,
       skipBackend: true
@@ -19640,13 +19640,18 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
   if (!policy?.syncMatchPlaceholders || !profileId) return 0;
   const existingEntryIds = new Set((logEntries || []).map(entry => String(entry?.id || "")).filter(Boolean));
 
-  const placeholderMatches = (Array.isArray(matchList) ? matchList : []).map(match => {
+  const placeholderMatches = (Array.isArray(matchList) ? matchList : [])
+    .filter(isRankedPerformanceMatch)
+    .map(match => {
     const core = getMatchCore(match);
+    const placeholderRr = isVerifiedHenrikRrMatch(match)
+      ? getOptionalFiniteNumber(match?.verifiedRrDelta ?? match?.matchRecord?.rank?.rrDelta ?? match?.rr)
+      : getOptionalFiniteNumber(match?.rr);
     return {
       id: match?.matchId || match?.id || match?.metadata?.matchId || "",
       createdAt: core.createdAt || match?.createdAt || match?.metadata?.playedAt || "",
       result: core.result || match?.result || match?.metadata?.result || "",
-      rr: match?.rr,
+      rr: Number.isFinite(placeholderRr) ? placeholderRr : null,
       isPlacementMatch: isPlacementRankedMatch(match),
       agent: core.agent,
       role: core.role,
@@ -19669,6 +19674,54 @@ function syncRankedMatchPlaceholderLogs(matchList = [], profile = getActiveProfi
     saveLogEntries({ skipBackend: options.skipBackend === true });
   }
   return synced.added;
+}
+
+function shouldSyncStatsLoggingParityForProfile(profile = {}, options = {}) {
+  if (!profile || typeof profile !== "object") return false;
+  if (options.syncPlaceholders === false) return false;
+  const source = [options.source, profile.lastSyncSource, profile.importSource]
+    .map(value => String(value || "").toLowerCase())
+    .join(" ");
+  if (source.includes("demo")) return false;
+  if (profile.isDemoProfile === true || profile.demoProfile === true) return false;
+  return Boolean(String(profile.id || "").trim());
+}
+
+function commitProfileMatchesWithLoggingParity(profile, nextMatches = [], options = {}) {
+  if (!profile || typeof profile !== "object") return [];
+  const committed = (Array.isArray(nextMatches) ? nextMatches : []).filter(Boolean);
+  profile.matches = committed.slice();
+  if (String(profile.id || "") === String(activeProfileId || "")) {
+    matches = committed.slice();
+  }
+  if (shouldSyncStatsLoggingParityForProfile(profile, options)) {
+    syncRankedMatchPlaceholderLogs(committed, profile, {
+      animate: options.animatePlaceholders !== false,
+      skipBackend: options.skipBackend === true,
+      skipSave: options.skipLogSave === true
+    });
+  }
+  return committed;
+}
+
+function repairStatsLoggingParityForProfiles(profileList = profiles, options = {}) {
+  if (!Array.isArray(profileList) || !profileList.length) return 0;
+  const beforeRepair = options.skipSave === true ? "" : JSON.stringify(logEntries || []);
+  let added = 0;
+  profileList.forEach(profile => {
+    if (!shouldSyncStatsLoggingParityForProfile(profile, options)) return;
+    const profileMatches = Array.isArray(profile?.matches) ? profile.matches : [];
+    if (!profileMatches.length) return;
+    added += syncRankedMatchPlaceholderLogs(profileMatches, profile, {
+      animate: false,
+      skipSave: true
+    }) || 0;
+  });
+  const changed = options.skipSave !== true && (added > 0 || beforeRepair !== JSON.stringify(logEntries || []));
+  if (changed) {
+    saveLogEntries({ skipBackend: options.skipBackend === true });
+  }
+  return added;
 }
 
 function hasPlayerReflectionDraft() {
@@ -19969,12 +20022,10 @@ function applyPersistentAccountState(state = {}) {
       }
     }
 
-    profiles.forEach(profile => {
-      if (profile?.lastSyncSource === "henrik" || profile?.importSource === "henrik") {
-        syncRankedMatchPlaceholderLogs(profile.matches, profile, { skipSave: true });
-      }
+    repairStatsLoggingParityForProfiles(profiles, {
+      source: "remote-state",
+      skipBackend: true
     });
-    saveLogEntries({ skipBackend: true });
 
     const active = getActiveProfile();
     matches = active?.matches ? active.matches.slice() : [];
@@ -44586,6 +44637,14 @@ function bindEvents(){
       return;
     }
 
+    const allButton = e.target.closest?.("[data-log-all]");
+    if (allButton) {
+      activeLogSessionFilter = "all";
+      setLogCalendarOpen(false);
+      renderLogFeed({ force: true });
+      return;
+    }
+
     const day = e.target.closest?.("[data-log-date]");
     if (!day) return;
     activeLogSessionFilter = day.dataset.logDate || formatLocalDateKey(new Date());
@@ -47258,10 +47317,16 @@ function getLogAverageSummary() {
 
 function renderLogFeedFootnote() {
   const summary = getLogAverageSummary();
+  const totalEntries = getProfileLogEntries().length;
+  const sessionCount = getLogSessions().length;
+  const scopeCopy = activeLogSessionFilter === "all" && totalEntries
+    ? ` Showing all ${totalEntries} synced log${totalEntries === 1 ? "" : "s"} across ${sessionCount} session${sessionCount === 1 ? "" : "s"}.`
+    : "";
   return `
     <div class="log-feed-footnote">
       Weekly average: ${summary.weeklyAverage.toFixed(1)} game logs/day from ${summary.weeklyCount} log${summary.weeklyCount === 1 ? "" : "s"} this week.
       Monthly average: ${summary.monthlyAverage.toFixed(1)} game logs/day from ${summary.monthlyCount} log${summary.monthlyCount === 1 ? "" : "s"} this month.
+      ${scopeCopy}
     </div>
   `;
 }
@@ -47335,7 +47400,9 @@ function getLogCountByDate() {
 function setLogCountBadge(dateKey = activeLogSessionFilter, countMap = getLogCountByDate(), options = {}) {
   const badge = document.getElementById("logSessionCountBadge");
   if (!badge) return;
-  const count = countMap.get(dateKey) || 0;
+  const count = dateKey === "all"
+    ? [...countMap.values()].reduce((sum, value) => sum + safeNumber(value), 0)
+    : countMap.get(dateKey) || 0;
   const streakDays = Math.max(0, Number(options.forceStreak ? Math.max(2, getLoggingStreakDays()) : getLoggingStreakDays()) || 0);
   badge.hidden = false;
   badge.innerHTML = `
@@ -47361,6 +47428,7 @@ function setLogCountBadge(dateKey = activeLogSessionFilter, countMap = getLogCou
 }
 
 function formatCurrentSessionLabel(dateKey = activeLogSessionFilter) {
+  if (dateKey === "all") return "All History";
   const todayKey = formatLocalDateKey(new Date());
   const label = formatDateLabel(dateKey);
   return dateKey === todayKey ? `Today / ${label}` : label;
@@ -47447,6 +47515,12 @@ function renderLogCalendarPopover(countMap = getLogCountByDate()) {
       <div class="logging-calendar-title">${escapeHtml(monthLabel)}</div>
       <button class="logging-calendar-nav" type="button" data-calendar-nav="1" aria-label="Next month">â€º</button>
     </div>
+    <button
+      class="logging-calendar-all${activeLogSessionFilter === "all" ? " is-selected" : ""}"
+      type="button"
+      data-log-all="true"
+      aria-pressed="${activeLogSessionFilter === "all" ? "true" : "false"}"
+    >All History</button>
     <div class="logging-calendar-grid">
       ${dayNames.map(day => `<div class="logging-calendar-dow">${day}</div>`).join("")}
       ${days.join("")}
@@ -47467,13 +47541,16 @@ function renderLogSessionSelector() {
 
   const sessions = getLogSessions();
   const countMap = getLogCountByDate();
-  const todayKey = formatLocalDateKey(new Date());
-  if (activeLogSessionFilter === "all") {
-    activeLogSessionFilter = todayKey;
-  }
+  const normalizedFilter = String(activeLogSessionFilter || "").trim();
+  activeLogSessionFilter = normalizedFilter || "all";
 
   if (select) {
     select.innerHTML = "";
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.dataset.count = String([...countMap.values()].reduce((sum, value) => sum + safeNumber(value), 0));
+    allOption.textContent = `All History (${allOption.dataset.count})`;
+    select.appendChild(allOption);
 
     sessions.forEach((session) => {
       const option = document.createElement("option");
@@ -47484,13 +47561,17 @@ function renderLogSessionSelector() {
     });
   }
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(activeLogSessionFilter)) {
-    activeLogSessionFilter = todayKey;
+  if (activeLogSessionFilter !== "all" && !/^\d{4}-\d{2}-\d{2}$/.test(activeLogSessionFilter)) {
+    activeLogSessionFilter = "all";
   }
 
   if (select) select.value = activeLogSessionFilter;
+  const label = document.querySelector("#page-logging .logging-session-label");
+  if (label) label.textContent = activeLogSessionFilter === "all" ? "Log History" : "Current Session";
   trigger.textContent = formatCurrentSessionLabel(activeLogSessionFilter);
-  trigger.setAttribute("aria-label", `Current session: ${formatCurrentSessionLabel(activeLogSessionFilter)}`);
+  trigger.setAttribute("aria-label", activeLogSessionFilter === "all"
+    ? "Showing all logging history"
+    : `Current session: ${formatCurrentSessionLabel(activeLogSessionFilter)}`);
   setLogCountBadge(activeLogSessionFilter, countMap);
   renderLogCalendarPopover(countMap);
 }
@@ -49256,6 +49337,7 @@ function loadProfiles(){
   }
 
   logEntries = readLocalLogEntries({ profileId: activeProfileId });
+  repairStatsLoggingParityForProfiles(profiles, { skipBackend: true });
   if (repairedStoredRawPayloads) {
     window.setTimeout(() => saveProfiles?.(), 0);
   }
@@ -49663,7 +49745,7 @@ function setActiveProfile(id){
 
   // restore matches
   matches = next?.matches ? next.matches.slice() : [];
-  if (next?.lastSyncSource === "henrik" || next?.importSource === "henrik") {
+  if (shouldSyncStatsLoggingParityForProfile(next)) {
     syncRankedMatchPlaceholderLogs(matches, next);
   }
   activeLogSessionFilter = "all";
@@ -51259,6 +51341,23 @@ body[data-theme] #page-insights .insights-action-card .insight-focus-detail{
 body[data-theme] #page-insights .insights-action-card{
   background:linear-gradient(135deg, var(--surface-card), var(--surface-card-2)) !important;
   border-color:color-mix(in srgb, var(--accent) 34%, var(--border-soft)) !important;
+}
+body[data-theme] .logging-calendar-all{
+  width:100%;
+  min-height:36px;
+  margin:0 0 10px;
+  border:1px solid color-mix(in srgb, var(--accent) 36%, var(--border-soft));
+  border-radius:10px;
+  background:linear-gradient(145deg, color-mix(in srgb, var(--surface-card) 82%, var(--accent) 18%), var(--surface-card-2));
+  color:var(--text-main);
+  font:900 11px/1 var(--font-display,"Rajdhani",sans-serif);
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+body[data-theme] .logging-calendar-all.is-selected{
+  border-color:var(--accent);
+  color:var(--accent-2);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent), 0 10px 22px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 `;
 
@@ -56518,7 +56617,6 @@ function applyImportedMatches(matchList = [], options = {}){
     writeRRTotalAnimationPayload(previousSessionTotal, nextSessionTotal);
   }
 
-  profile.matches = normalized.slice();
   profile.importSource = importSource;
   profile.lastSyncAt = nowISO();
 
@@ -56536,11 +56634,11 @@ function applyImportedMatches(matchList = [], options = {}){
     saveLogEntries();
   }
 
-  matches = normalized.slice();
-
-  if (importSource === "henrik") {
-    syncRankedMatchPlaceholderLogs(matches, profile);
-  }
+  commitProfileMatchesWithLoggingParity(profile, normalized, {
+    source: importSource,
+    animatePlaceholders: options.animatePlaceholders !== false,
+    skipBackend: options.skipBackend === true
+  });
 
   saveProfiles();
   let chartAnimationMode = null;
@@ -56642,8 +56740,11 @@ async function importActiveProfileMatches(options = {}){
   try {
     const existingMatches = rederiveMatchesFromStoredRawPayloads(purgeDemoFixtureMatches(Array.isArray(profile.matches) ? profile.matches : []));
     if (existingMatches.length !== (Array.isArray(profile.matches) ? profile.matches.length : 0)) {
-      profile.matches = existingMatches.slice();
-      matches = existingMatches.slice();
+      commitProfileMatchesWithLoggingParity(profile, existingMatches, {
+        source: "henrik",
+        animatePlaceholders: false,
+        skipBackend: true
+      });
     }
     const knownMatchIds = existingMatches
       .map(match => match?.matchId || match?.id || match?.metadata?.matchId)
@@ -56732,10 +56833,11 @@ async function importActiveProfileMatches(options = {}){
       if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markHsBackfillUnavailable(enrichedExisting, unrecoveredHsBackfillIds);
       }
-      profile.matches = enrichedExisting.slice();
-      matches = enrichedExisting.slice();
       profile.lastSyncAt = nowISO();
-      syncRankedMatchPlaceholderLogs(enrichedExisting, profile);
+      commitProfileMatchesWithLoggingParity(profile, enrichedExisting, {
+        source: "henrik",
+        animatePlaceholders: options.mode === "refresh"
+      });
       saveProfiles();
       refreshActiveProfileDataSurfaces({
         chartAnimationMode: options.mode === "refresh"

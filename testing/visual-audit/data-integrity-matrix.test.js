@@ -191,6 +191,18 @@ async function readHomeChartSurface(page) {
   }));
 }
 
+async function readLoggingFeedSurface(page) {
+  await page.click('.nav-btn[data-page="logging"]');
+  await page.waitForSelector("#logFeed", { timeout: 15000 });
+  await page.waitForTimeout(250);
+  return page.evaluate(() => ({
+    trigger: document.getElementById("logCalendarTrigger")?.textContent?.trim() || "",
+    label: document.querySelector("#page-logging .logging-session-label")?.textContent?.trim() || "",
+    entries: document.querySelectorAll("#logFeed .log-entry").length,
+    footnote: document.querySelector("#logFeed .log-feed-footnote")?.textContent?.replace(/\s+/g, " ").trim() || ""
+  }));
+}
+
 async function openAndReadMatchSummary(page, fixture) {
   await dismissFixtureBlockingModals(page);
   const opened = await page.evaluate(match => {
@@ -247,11 +259,53 @@ async function readStoredProfile(page) {
       && value !== undefined
       && String(value).trim?.() !== ""
       && Number.isFinite(Number(value));
+    const clean = value => String(value || "").trim().toLowerCase();
+    const isDemoMatch = match => {
+      const sources = [
+        match?.source,
+        match?.importSource,
+        match?.lastSyncSource,
+        match?.metadata?.source,
+        match?.matchRecord?.source,
+        match?.metadata?.demoAct,
+        match?.matchRecord?.importMeta?.fixture && clean(match?.source).includes("demo") ? "demo" : ""
+      ].map(clean).join(" ");
+      return sources.includes("demo");
+    };
+    const getQueueInfo = match => {
+      const record = match?.matchRecord || {};
+      const metadata = match?.metadata || {};
+      const recordQueue = record?.queue || {};
+      const metadataQueue = metadata?.queue || {};
+      const topQueue = match?.queue || {};
+      return {
+        id: clean(recordQueue?.id || record?.queueId || metadataQueue?.id || metadata?.queueId || topQueue?.id || match?.queueId || ""),
+        name: clean(recordQueue?.name || record?.queueName || metadataQueue?.name || metadata?.queueName || topQueue?.name || match?.queueName || "")
+      };
+    };
+    const isRankedPerformanceMatch = match => {
+      if (isDemoMatch(match)) return false;
+      const queue = getQueueInfo(match);
+      if (!queue.id && !queue.name) return true;
+      return queue.id === "competitive" || queue.id === "ranked" || queue.name === "competitive" || queue.name === "ranked";
+    };
+    const parseJson = raw => {
+      try {
+        return raw ? JSON.parse(raw) : [];
+      } catch (_error) {
+        return [];
+      }
+    };
     const profiles = JSON.parse(localStorage.getItem("valtracker_profiles_v1") || "[]");
     const profile = profiles[0] || {};
+    const logEntries = Object.keys(localStorage)
+      .filter(key => key.startsWith("valtracker_log_entries_v2:"))
+      .flatMap(key => parseJson(localStorage.getItem(key)));
     return {
+      profileId: profile.id || "",
       matches: (profile.matches || []).map(match => ({
         id: match.id || match.matchId,
+        ranked: isRankedPerformanceMatch(match),
         source: match.source || match.metadata?.source || match.matchRecord?.source,
         queueId: match.queue?.id || match.queueId || match.metadata?.queue?.id || match.matchRecord?.queue?.id || "",
         hsPercent: hasFiniteNumber(match.matchRecord?.stats?.hsPercent)
@@ -260,6 +314,14 @@ async function readStoredProfile(page) {
             ? Number(match.hsPercent)
             : null,
         rawPayloadRederivedAt: match.metadata?.rawPayloadRederivedAt || match.matchRecord?.importMeta?.rawPayloadRederivedAt || ""
+      })),
+      logs: logEntries.map(entry => ({
+        id: entry?.id || "",
+        matchId: entry?.matchId || entry?.riotMatchId || "",
+        profileId: entry?.profileId || "",
+        source: entry?.source || "",
+        isMatchPlaceholder: entry?.isMatchPlaceholder === true,
+        isPlayerAuthored: entry?.isPlayerAuthored === true
       }))
     };
   });
@@ -336,6 +398,44 @@ async function assertFixture(page, fixture, rows) {
     });
   }
 
+  const stored = await readStoredProfile(page);
+  const rankedMatchIds = stored.matches
+    .filter(match => match.ranked)
+    .map(match => String(match.id || "").trim())
+    .filter(Boolean)
+    .sort();
+  const logMatchIds = stored.logs
+    .filter(entry => !stored.profileId || String(entry.profileId || "") === String(stored.profileId))
+    .map(entry => String(entry.matchId || "").trim())
+    .filter(Boolean)
+    .sort();
+  const missingLogs = rankedMatchIds.filter(matchId => !logMatchIds.includes(matchId));
+  const extraLogs = logMatchIds.filter(matchId => !rankedMatchIds.includes(matchId));
+  const duplicateLogs = logMatchIds.filter((matchId, index) => logMatchIds.indexOf(matchId) !== index);
+  addMatrixResult(rows, {
+    fixture: fixture.id,
+    surface: "Stats vs Logging parity",
+    fact: "ranked match IDs have exactly one Logging entry path",
+    expected: "0 missing / 0 extra / 0 duplicates",
+    actual: `${missingLogs.length} missing / ${extraLogs.length} extra / ${duplicateLogs.length} duplicates`
+  });
+
+  const loggingFeed = await readLoggingFeedSurface(page);
+  addMatrixResult(rows, {
+    fixture: fixture.id,
+    surface: "Logging feed",
+    fact: "default scope",
+    expected: "All History",
+    actual: loggingFeed.trigger
+  });
+  addMatrixResult(rows, {
+    fixture: fixture.id,
+    surface: "Logging feed",
+    fact: "visible ranked match log count",
+    expected: String(rankedMatchIds.length),
+    actual: String(loggingFeed.entries)
+  });
+
   const summary = await openAndReadMatchSummary(page, fixture);
   if (fixture.expected.matchSummary?.acs) {
     addMatrixResult(rows, {
@@ -381,7 +481,6 @@ async function assertFixture(page, fixture, rows) {
   }
 
   if (fixture.expected.rederivedQueueId) {
-    const stored = await readStoredProfile(page);
     const storedMatch = stored.matches.find(match => match.id === fixture.primaryMatch.id || match.id === fixture.primaryMatch.matchId) || stored.matches[0] || {};
     const storedHs = storedMatch.hsPercent !== null
       && storedMatch.hsPercent !== undefined
