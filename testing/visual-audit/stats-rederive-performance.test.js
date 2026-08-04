@@ -124,7 +124,7 @@ function makeCurrentMatch(index) {
     adr: 130 + (index % 45),
     hsPercent,
     queue: { id: "competitive", name: "Competitive", modeType: "Standard" },
-    storedRawRehydrateVersion: 1,
+    storedRawRehydrateVersion: 2,
     storedRawRehydrateCheckedAt: "2026-08-03T00:00:00.000Z",
     metadata: {
       matchId: id,
@@ -136,7 +136,7 @@ function makeCurrentMatch(index) {
       mapName: index % 2 ? "Lotus" : "Haven",
       result,
       queue: { id: "competitive", name: "Competitive", modeType: "Standard" },
-      storedRawRehydrateVersion: 1,
+      storedRawRehydrateVersion: 2,
       storedRawRehydrateCheckedAt: "2026-08-03T00:00:00.000Z"
     },
     matchRecord: {
@@ -158,9 +158,9 @@ function makeCurrentMatch(index) {
       rank: { rank: "Platinum 3", rr: 50, rrDelta: result === "win" ? 16 : -15, verified: true },
       rawHenrikPayload,
       rawPayloadComplete: true,
-      storedRawRehydrateVersion: 1,
+      storedRawRehydrateVersion: 2,
       storedRawRehydrateCheckedAt: "2026-08-03T00:00:00.000Z",
-      importMeta: { storedRawRehydrateVersion: 1, storedRawRehydrateCheckedAt: "2026-08-03T00:00:00.000Z" }
+      importMeta: { storedRawRehydrateVersion: 2, storedRawRehydrateCheckedAt: "2026-08-03T00:00:00.000Z" }
     }
   };
 }
@@ -325,7 +325,7 @@ async function run() {
     );
     assert.equal(explicitEvents.filter(event => event.phase === "complete").length, 0, JSON.stringify(explicitEvents));
     assert.deepEqual(explicitProgress, []);
-    assert.equal(await page.evaluate(() => window.RankedCoachPerfTestHooks.getActiveProfileStoredRawVersion()), 1);
+    assert.equal(await page.evaluate(() => window.RankedCoachPerfTestHooks.getActiveProfileStoredRawVersion()), 2);
 
     await page.evaluate(() => { window.__rankedCoachRawRehydrateEvents = []; });
     await dismissBlockingOverlays(page);
@@ -335,9 +335,37 @@ async function run() {
     await page.click('.nav-btn[data-page="stats"]');
     await page.waitForSelector("#statsRoleProgressRow .stats-role-pill", { timeout: 15000 });
     assert.equal(await page.evaluate(() => window.__rankedCoachRawRehydrateEvents.length), 0, "Stats should stay read-only after explicit migration too");
+
+    const versionInvalidation = await page.evaluate(() => {
+      const profile = window.RankedCoachPerfTestHooks.getActiveProfileForStoredRawTest();
+      profile.storedRawRehydrateVersion = 1;
+      return window.RankedCoachPerfTestHooks.prepareActiveProfileStoredRawRehydrate();
+    });
+    assert.equal(versionInvalidation.skipped, false, "A raw-rehydrate version bump must invalidate the profile confirmation cache.");
+    assert.equal(await page.evaluate(() => window.RankedCoachPerfTestHooks.getActiveProfileStoredRawVersion()), 2);
+
+    const missingPayloadResult = await page.evaluate(() => {
+      const profile = window.RankedCoachPerfTestHooks.getActiveProfileForStoredRawTest();
+      const copied = JSON.parse(JSON.stringify(profile.matches[0]));
+      copied.id = "perf-missing-stored-payload";
+      copied.matchId = copied.id;
+      copied.metadata.matchId = copied.id;
+      copied.matchRecord.id = copied.id;
+      copied.matchRecord.legacyMatchId = copied.id;
+      delete copied.matchRecord.rawHenrikPayload;
+      copied.matchRecord.rawPayloadComplete = false;
+      copied.matchRecord.storedRawRehydrateVersion = 0;
+      copied.matchRecord.importMeta = {};
+      profile.matches.push(copied);
+      return window.RankedCoachPerfTestHooks.prepareActiveProfileStoredRawRehydrate();
+    });
+    assert.equal(missingPayloadResult.fetchMatchIds.includes("perf-missing-stored-payload"), true,
+      `Records without a stored raw payload must be routed to Henrik backfill: ${JSON.stringify(missingPayloadResult)}`);
+    assert.notEqual(await page.evaluate(() => window.RankedCoachPerfTestHooks.getActiveProfileStoredRawVersion()), 2,
+      "A profile with a missing raw payload must not be stamped as fully rehydrated.");
     assert.deepEqual(issues, []);
 
-    console.log(`Stats rederive performance passed: profile load rehydrated 1 stale record, repeated Stats opens did 0 raw rehydrates, first open ${firstStatsOpenMs.toFixed(1)}ms, and repeat migration no-opped.`);
+    console.log(`Stats rederive performance passed: profile load rehydrated 1 stale record, repeated Stats opens did 0 raw rehydrates, first open ${firstStatsOpenMs.toFixed(1)}ms, repeat migration no-opped, and a no-payload record was routed to Henrik backfill.`);
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

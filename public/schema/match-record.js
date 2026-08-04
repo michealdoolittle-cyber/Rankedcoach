@@ -23,6 +23,9 @@
     "63e6c2b6-4a8e-869c-3d4c-e38355226584": "Odin",
     "c4883e50-4494-202c-3ec3-6b8a9284f00b": "Marshal",
     "a03b24d3-4319-996d-0f8c-94bbfba1dfc7": "Operator",
+    // Agent weapons are reported by the raw match feed as weapon UUIDs too.
+    // Keep them readable rather than exposing their internal equip IDs.
+    "856d9a7e-4b06-dc37-15dc-9d809c37cb90": "Headhunter",
     "2f59173c-4bed-b6c3-2191-dea9b58be9c7": "Melee"
   });
   const VALORANT_WEAPON_NAME_LABELS = Object.freeze(Object.fromEntries(
@@ -232,7 +235,7 @@
       || weapon.uuid
       || (finishingDamage.damageType === "Weapon" || finishingDamage.damageType === "Ability" ? finishingDamage.damageItem : "")
     );
-    const weaponName = resolveKillWeaponLabel(
+    const resolvedWeaponName = resolveKillWeaponLabel(
       kill.weaponName,
       kill.damageWeapon,
       weapon.name,
@@ -241,7 +244,11 @@
       typeof kill.weapon === "string" ? kill.weapon : "",
       weaponId
     );
-    const weaponType = resolveKillWeaponType(kill.weaponType || weapon.type || finishingDamage.damageType, weaponName, weaponId);
+    const weaponType = resolveKillWeaponType(kill.weaponType || weapon.type || finishingDamage.damageType, resolvedWeaponName, weaponId);
+    // Never surface an internal equip UUID as a player-facing weapon name.
+    // Keep an unrecognised real weapon explicit until its canonical label can
+    // be added, rather than guessing at what it was.
+    const weaponName = resolvedWeaponName || (weaponType === "Weapon" && weaponId ? "Unidentified weapon" : "");
     return {
       killer: normalizeParticipantId(kill.killer || kill.killerPuuid || kill.killer_puuid || kill.killerId || kill.killer_id),
       victim: normalizeParticipantId(kill.victim || kill.victimPuuid || kill.victim_puuid || kill.victimId || kill.victim_id),
@@ -391,6 +398,8 @@
       rawPayloadComplete: overrides.rawPayloadComplete === true,
       rawPayloadStoredAt: cleanString(overrides.rawPayloadStoredAt),
       rawPayloadCompleteness: copyPlainObject(overrides.rawPayloadCompleteness),
+      rawPayloadBackfillUnavailable: overrides.rawPayloadBackfillUnavailable === true,
+      rawPayloadBackfillCheckedAt: cleanString(overrides.rawPayloadBackfillCheckedAt),
       storedRawRehydrateVersion: readNumber(
         overrides.storedRawRehydrateVersion
         ?? overrides.importMeta?.storedRawRehydrateVersion
@@ -529,6 +538,8 @@
       rawPayloadComplete: match.rawPayloadComplete === true || canonical.rawPayloadComplete === true,
       rawPayloadStoredAt: match.rawPayloadStoredAt || canonical.rawPayloadStoredAt,
       rawPayloadCompleteness: match.rawPayloadCompleteness || canonical.rawPayloadCompleteness,
+      rawPayloadBackfillUnavailable: match.rawPayloadBackfillUnavailable === true || canonical.rawPayloadBackfillUnavailable === true || metadata.rawPayloadBackfillUnavailable === true,
+      rawPayloadBackfillCheckedAt: match.rawPayloadBackfillCheckedAt || canonical.rawPayloadBackfillCheckedAt || metadata.rawPayloadBackfillCheckedAt,
       storedRawRehydrateVersion: canonical.storedRawRehydrateVersion
         ?? match.storedRawRehydrateVersion
         ?? metadata.storedRawRehydrateVersion
@@ -646,6 +657,8 @@
       rawPayloadComplete: match.rawPayloadComplete === true,
       rawPayloadStoredAt: match.rawPayloadStoredAt,
       rawPayloadCompleteness: match.rawPayloadCompleteness,
+      rawPayloadBackfillUnavailable: match.rawPayloadBackfillUnavailable === true,
+      rawPayloadBackfillCheckedAt: match.rawPayloadBackfillCheckedAt,
       storedRawRehydrateVersion: match.storedRawRehydrateVersion ?? match.importMeta?.storedRawRehydrateVersion,
       storedRawRehydrateCheckedAt: match.storedRawRehydrateCheckedAt ?? match.importMeta?.storedRawRehydrateCheckedAt,
       importMeta: match.importMeta,
@@ -707,7 +720,12 @@
     const player = players.find(entry => cleanString(entry?.subject) === puuid);
     if (!player) throw new Error("Tracked player was not found in the Henrik Raw match.");
 
-    const parsedPlayers = Array.isArray(parsed?.players?.all_players) ? parsed.players.all_players : [];
+    // Henrik V4 returns `players` as an array.  The older parsed response used
+    // `players.all_players`; accept it too so a raw-round hydration never drops
+    // the aggregate shot-location fields supplied by the paired V4 payload.
+    const parsedPlayers = Array.isArray(parsed?.players)
+      ? parsed.players
+      : (Array.isArray(parsed?.players?.all_players) ? parsed.players.all_players : []);
     const parsedPlayer = parsedPlayers.find(entry => cleanString(entry?.puuid) === puuid) || {};
     const teamBySubject = new Map(players.map(entry => [cleanString(entry?.subject), cleanString(entry?.teamId)]));
     const teamIds = cleanStringArray(players.map(entry => entry?.teamId));
@@ -772,6 +790,15 @@
       .reduce((total, value) => total + (readNumber(value, 0) || 0), 0);
     const roundsWon = readNumber(team.roundsWon, 0) || 0;
     const roundsLost = Math.max(0, readNumber(team.roundsPlayed, rawRounds.length) - roundsWon);
+    // The Raw endpoint supplies detailed round snapshots, while the V4 match
+    // payload is the canonical source for aggregate player stats and can be
+    // re-derived offline. Keep that V4 payload when both paths are used.
+    const storedV4Payload = context.parsedMatch && typeof context.parsedMatch === "object"
+      ? cloneJsonValue(context.parsedMatch)
+      : null;
+    const rawPayloadCompleteness = storedV4Payload
+      ? assessHenrikV4PayloadCompleteness(storedV4Payload, puuid)
+      : { complete: false, missing: ["parsed-match-payload"], checkedAt: nowISO(), source: "henrik-v4" };
 
     return fromRiotMatch({
       id: raw.matchInfo?.matchId,
@@ -779,7 +806,8 @@
       source: "henrik_sync",
       createdAt: raw.matchInfo?.gameStartMillis ? new Date(raw.matchInfo.gameStartMillis).toISOString() : nowISO(),
       playedAt: raw.matchInfo?.gameStartMillis ? new Date(raw.matchInfo.gameStartMillis).toISOString() : nowISO(),
-      season: raw.matchInfo?.seasonId,
+      season: parsed.metadata?.season?.id || raw.matchInfo?.seasonId,
+      act: formatHenrikActLabel(parsed.metadata?.season?.short),
       agent: context.agent || parsedPlayer.character || player.characterId,
       role: context.role,
       map: context.map || parsed.metadata?.map || raw.matchInfo?.mapId,
@@ -812,7 +840,11 @@
         opponentPuuids,
         behaviorFactors: player.behaviorFactors
       },
-      roundByRound
+      roundByRound,
+      rawHenrikPayload: storedV4Payload,
+      rawPayloadComplete: rawPayloadCompleteness.complete === true,
+      rawPayloadStoredAt: nowISO(),
+      rawPayloadCompleteness
     }, context);
   }
 
@@ -1064,6 +1096,8 @@
       rawPayloadComplete: normalized.rawPayloadComplete === true,
       rawPayloadStoredAt: normalized.rawPayloadStoredAt,
       rawPayloadCompleteness: normalized.rawPayloadCompleteness,
+      rawPayloadBackfillUnavailable: normalized.rawPayloadBackfillUnavailable === true,
+      rawPayloadBackfillCheckedAt: normalized.rawPayloadBackfillCheckedAt,
       storedRawRehydrateVersion: normalized.storedRawRehydrateVersion,
       storedRawRehydrateCheckedAt: normalized.storedRawRehydrateCheckedAt,
       roundMetrics: projectedRoundMetrics,
@@ -1088,6 +1122,8 @@
         rankElo: readNumber(normalized.rank.elo),
         rankDataSource: normalized.rank.source,
         rankCapturedAt: normalized.rank.capturedAt,
+        rawPayloadBackfillUnavailable: normalized.rawPayloadBackfillUnavailable === true,
+        rawPayloadBackfillCheckedAt: normalized.rawPayloadBackfillCheckedAt,
         storedRawRehydrateVersion: normalized.storedRawRehydrateVersion,
         storedRawRehydrateCheckedAt: normalized.storedRawRehydrateCheckedAt
       },

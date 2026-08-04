@@ -123,6 +123,37 @@ assert.equal(Math.round(rederived.stats.hsPercent), 33, "rederive should recover
 assert.equal(rederived.queue.id, "competitive", "raw-payload rederive should backfill missing queue id");
 assert.equal(rederived.rawPayloadComplete, true);
 
+const rawRoundPayload = {
+  data: {
+    matchInfo: {
+      matchId: "raw-round-match-1",
+      gameStartMillis: Date.parse("2026-08-03T01:23:45.000Z"),
+      seasonId: "season-2026-act-4",
+      queueID: "competitive"
+    },
+    players: [{
+      subject: puuid,
+      teamId: "Blue",
+      characterId: "skye-agent-id",
+      competitiveTier: 0,
+      stats: { kills: 2, deaths: 1, assists: 3, score: 4800, roundsPlayed: 2 },
+      roundDamage: [{ damage: 2600 }]
+    }],
+    teams: [{ teamId: "Blue", won: true, roundsWon: 2, roundsPlayed: 2 }],
+    roundResults: []
+  }
+};
+const rawMapped = MatchRecord.fromHenrikRawMatch(rawRoundPayload, {
+  puuid,
+  parsedMatch: henrikPayload,
+  agent: "Skye",
+  map: "Lotus"
+});
+assert.deepEqual(rawMapped.rawHenrikPayload, henrikPayload,
+  "hydrated sync records must retain their original V4 payload for offline re-derivation");
+assert.equal(rawMapped.rawPayloadComplete, true,
+  "hydrated sync records must preserve V4 completeness state");
+
 const legacy = MatchRecord.toLegacyMatch(MatchRecord.emptyRecord({
   source: "henrik_sync",
   id: "null-hs-match",

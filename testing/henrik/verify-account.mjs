@@ -15,7 +15,9 @@ function parseArgs(argv = process.argv.slice(2)) {
     region: "na",
     count: 10,
     start: 0,
-    baseUrl: process.env.HENRIK_BASE_URL || "https://www.rankedcoach.gg"
+    baseUrl: process.env.HENRIK_BASE_URL || "https://www.rankedcoach.gg",
+    storedProfilePath: "",
+    storedRawVersion: 2
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -24,6 +26,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     else if (arg === "--count") options.count = Number(argv[++index]) || options.count;
     else if (arg === "--start") options.start = Number(argv[++index]) || options.start;
     else if (arg === "--base" || arg === "--base-url") options.baseUrl = argv[++index] || options.baseUrl;
+    else if (arg === "--stored-profile" || arg === "--profile-file") options.storedProfilePath = argv[++index] || "";
+    else if (arg === "--stored-raw-version") options.storedRawVersion = Number(argv[++index]) || options.storedRawVersion;
     else if (!arg.startsWith("--") && !options.riotId) options.riotId = arg;
   }
   options.riotId = options.riotId || process.env.RANKEDCOACH_VERIFY_RIOT_ID || "";
@@ -31,6 +35,8 @@ function parseArgs(argv = process.argv.slice(2)) {
   options.count = Math.max(1, Math.min(100, Math.floor(Number(options.count) || 10)));
   options.start = Math.max(0, Math.min(1000, Math.floor(Number(options.start) || 0)));
   options.baseUrl = String(options.baseUrl || "https://www.rankedcoach.gg").replace(/\/$/, "");
+  options.storedProfilePath = String(options.storedProfilePath || "").trim();
+  options.storedRawVersion = Math.max(1, Math.floor(Number(options.storedRawVersion) || 2));
   return options;
 }
 
@@ -169,9 +175,71 @@ function trackedWeaponLabels(record = {}) {
     .filter(kill => cleanString(kill?.killer) === me)
     .map(kill => ({
       weapon: cleanString(kill?.weapon),
-      weaponId: cleanString(kill?.weaponId)
+      weaponId: cleanString(kill?.weaponId),
+      weaponType: cleanString(kill?.weaponType)
     }))
+    // Ability eliminations are intentionally not part of a gun-label check.
+    // The match report's weapon section only counts actual weapon kills.
+    .filter(entry => entry.weaponType === "Weapon")
     .filter(entry => entry.weapon || entry.weaponId);
+}
+
+function getStoredProfileMatchId(match = {}) {
+  return cleanString(match?.matchId || match?.id || match?.metadata?.matchId || match?.matchRecord?.id);
+}
+
+function getStoredProfileRecord(match = {}) {
+  return match?.matchRecord && typeof match.matchRecord === "object" ? match.matchRecord : match;
+}
+
+function loadStoredProfileSnapshot(filePath, riotId = "") {
+  if (!filePath) return null;
+  const parsed = JSON.parse(fs.readFileSync(path.resolve(filePath), "utf8"));
+  const candidates = Array.isArray(parsed)
+    ? parsed
+    : (Array.isArray(parsed?.profiles) ? parsed.profiles : [parsed]);
+  const normalizedRiotId = cleanString(riotId).toLowerCase();
+  const profile = candidates.find(entry => cleanString(entry?.riotId).toLowerCase() === normalizedRiotId)
+    || candidates.find(entry => Array.isArray(entry?.matches));
+  if (!profile || !Array.isArray(profile.matches)) {
+    throw new Error(`No profile with stored matches was found in ${filePath}`);
+  }
+  return profile;
+}
+
+function verifyStoredProfileSnapshot(reporter, profile, expectedMatches, options) {
+  if (!profile) {
+    console.log("SKIP stored-profile persistence verification (pass --stored-profile <exported-profile.json> to inspect an actual saved account).");
+    return;
+  }
+  const storedById = new Map((profile.matches || []).map(match => [getStoredProfileMatchId(match), match]));
+  reporter.check(
+    "stored profile raw-rehydrate version",
+    Number(profile?.storedRawRehydrateVersion) >= options.storedRawVersion
+      && Number(profile?.storedRawRehydrateMatchCount) === (profile.matches || []).length,
+    `v${profile?.storedRawRehydrateVersion || 0}, ${profile?.storedRawRehydrateMatchCount || 0}/${(profile.matches || []).length} matches confirmed`
+  );
+  expectedMatches.forEach(expected => {
+    const stored = storedById.get(expected.id);
+    const record = getStoredProfileRecord(stored);
+    reporter.check(`stored match ${expected.id} exists`, Boolean(stored));
+    if (!stored) return;
+    reporter.check(
+      `stored match ${expected.id} raw payload`,
+      Boolean(record?.rawHenrikPayload) && record?.rawPayloadComplete === true,
+      record?.rawPayloadComplete === true ? "complete V4 payload retained" : "missing or incomplete payload"
+    );
+    reporter.check(
+      `stored match ${expected.id} raw-rehydrate version`,
+      Number(record?.storedRawRehydrateVersion) >= options.storedRawVersion,
+      `v${record?.storedRawRehydrateVersion || 0}`
+    );
+    reporter.check(
+      `stored match ${expected.id} HS%`,
+      closeEnough(record?.stats?.hsPercent ?? stored?.hsPercent, expected.hsPercent),
+      `${Number(record?.stats?.hsPercent ?? stored?.hsPercent).toFixed(2)} vs ${expected.hsPercent.toFixed(2)}`
+    );
+  });
 }
 
 function looksLikeRawUuid(value = "") {
@@ -216,7 +284,7 @@ async function fetchRawMatches({ baseUrl, puuid, region, count, start }) {
 async function main() {
   const options = parseArgs();
   if (!options.riotId || !options.riotId.includes("#")) {
-    throw new Error("Usage: node testing/henrik/verify-account.mjs Name#Tag [--region na] [--count 20] [--base https://www.rankedcoach.gg]");
+    throw new Error("Usage: node testing/henrik/verify-account.mjs Name#Tag [--region na] [--count 20] [--base https://www.rankedcoach.gg] [--stored-profile exported-profile.json]");
   }
 
   loadBrowserScript("public/schema/match-record.js");
@@ -242,7 +310,10 @@ async function main() {
     historyLimit: options.count,
     historyStart: options.start,
     includeKnownMatches: true,
-    hydrateRoundData: false,
+    // This is the production sync path: it combines V4 aggregate data with
+    // Henrik Raw round snapshots. Verifying it catches loss of the retained
+    // V4 payload that a V4-only normalization test cannot see.
+    hydrateRoundData: true,
     baseUrl: options.baseUrl,
     waitForRetry: () => {}
   });
@@ -270,6 +341,11 @@ async function main() {
     reporter.check(`match ${expected.id} ACS`, closeEnough(record.stats?.acs, expected.acs), `${Number(record.stats?.acs).toFixed(2)} vs ${expected.acs.toFixed(2)}`);
     reporter.check(`match ${expected.id} ADR`, closeEnough(record.stats?.adr, expected.adr), `${Number(record.stats?.adr).toFixed(2)} vs ${expected.adr.toFixed(2)}`);
     reporter.check(`match ${expected.id} HS%`, closeEnough(record.stats?.hsPercent, expected.hsPercent), `${Number(record.stats?.hsPercent).toFixed(2)} vs ${expected.hsPercent.toFixed(2)}`);
+    reporter.check(
+      `match ${expected.id} retained raw payload`,
+      Boolean(record?.rawHenrikPayload) && record?.rawPayloadComplete === true,
+      record?.rawPayloadComplete === true ? "complete V4 payload retained through hydrated sync" : "payload missing or incomplete"
+    );
 
     const manualKast = manualKastFromRecord(record);
     const appKast = globalThis.RankedCoachRoundMetrics.computeMatchKast(record);
@@ -296,6 +372,9 @@ async function main() {
     closeEnough(actualAggregateKast?.overall?.percentage, manualAggregateKast),
     `${Number(actualAggregateKast?.overall?.percentage).toFixed(2)} vs manual ${Number(manualAggregateKast).toFixed(2)}`
   );
+
+  const storedProfile = loadStoredProfileSnapshot(options.storedProfilePath, options.riotId);
+  verifyStoredProfileSnapshot(reporter, storedProfile, expectedRanked, options);
 
   const failures = reporter.print();
   if (failures) process.exitCode = 1;

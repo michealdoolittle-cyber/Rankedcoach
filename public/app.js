@@ -1,7 +1,7 @@
 ﻿// Animated agent frame FX are retired; production keeps only static frame art.
 
 console.log("SCRIPT START");
-const RANKEDCOACH_APP_BUILD_ID = "20260804-stats-pipeline-perf-01";
+const RANKEDCOACH_APP_BUILD_ID = "20260804-raw-rehydrate-gate-01";
 globalThis.RankedCoachBuild = Object.freeze({ id: RANKEDCOACH_APP_BUILD_ID });
 
 // ========================
@@ -14626,8 +14626,24 @@ function recordHasStoredRawPayload(record = {}) {
   );
 }
 
+function isHenrikSyncRecord(record = {}) {
+  return String(record?.source || record?.matchRecord?.source || "").trim().toLowerCase() === "henrik_sync";
+}
+
+function recordHasCompleteStoredRawPayload(record = {}) {
+  return recordHasStoredRawPayload(record) && record?.rawPayloadComplete === true;
+}
+
+function getMatchStoredRawBackfillUnavailable(record = {}) {
+  return Boolean(
+    record?.rawPayloadBackfillUnavailable === true
+    || record?.importMeta?.rawPayloadBackfillUnavailable === true
+  );
+}
+
 function markStoredRawRehydrateCurrent(record = {}, options = {}) {
   if (!record || typeof record !== "object") return record;
+  if (!recordHasCompleteStoredRawPayload(record)) return record;
   const checkedAt = options.checkedAt || nowISO();
   return {
     ...record,
@@ -14652,10 +14668,13 @@ function notifyStoredRawRehydrateProbe(payload = {}) {
 
 function matchRecordNeedsStoredRawRehydrate(record = {}, options = {}) {
   if (!record || typeof record !== "object") return false;
+  if (!isHenrikSyncRecord(record)) return false;
   const hasStoredRaw = recordHasStoredRawPayload(record);
-  if (!hasStoredRaw) return false;
+  const rawPayloadComplete = record?.rawPayloadComplete === true;
   const currentVersion = getStoredRawRehydrateVersion(record) >= STORED_RAW_REHYDRATE_VERSION;
-  if (currentVersion && options.force !== true) return false;
+  const backfillUnavailable = getMatchStoredRawBackfillUnavailable(record);
+  if (backfillUnavailable && currentVersion && options.force !== true) return false;
+  if (!hasStoredRaw || !rawPayloadComplete) return true;
   return options.force === true
     || matchRecordNeedsHsBackfill(record)
     || matchRecordNeedsWeaponBackfill(record)
@@ -14663,10 +14682,57 @@ function matchRecordNeedsStoredRawRehydrate(record = {}, options = {}) {
     || !currentVersion;
 }
 
-function profileNeedsStoredRawRehydrate(profile = {}) {
+function inspectProfileStoredRawRehydrate(profile = {}, matchList = [], options = {}) {
+  const list = Array.isArray(matchList) ? matchList : [];
+  const profileVersion = safeNumber(profile?.storedRawRehydrateVersion);
+  const confirmedCount = Math.max(0, safeNumber(profile?.storedRawRehydrateMatchCount));
+  const isConfirmed = options.force !== true
+    && profileVersion >= STORED_RAW_REHYDRATE_VERSION
+    && confirmedCount === list.length;
+
+  if (isConfirmed) {
+    notifyStoredRawRehydrateProbe({ phase: "profile-skip", checked: 0, total: list.length });
+    return {
+      needsRehydrate: false,
+      checked: 0,
+      skipped: true,
+      rederiveMatchIds: [],
+      fetchMatchIds: []
+    };
+  }
+
+  const rederiveMatchIds = [];
+  const fetchMatchIds = [];
+  list.forEach(match => {
+    const record = getDirectMatchSummaryRecord(match);
+    if (!matchRecordNeedsStoredRawRehydrate(record, options)) return;
+    const matchId = getMatchSummaryStableId(match) || String(record?.id || record?.legacyMatchId || "").trim();
+    if (!matchId) return;
+    if (recordHasCompleteStoredRawPayload(record)) rederiveMatchIds.push(matchId);
+    else if (!getMatchStoredRawBackfillUnavailable(record) || options.force === true) fetchMatchIds.push(matchId);
+  });
+  const uniqueRedriveIds = [...new Set(rederiveMatchIds)];
+  const uniqueFetchIds = [...new Set(fetchMatchIds)];
+  notifyStoredRawRehydrateProbe({
+    phase: "profile-scan",
+    checked: list.length,
+    total: list.length,
+    rederive: uniqueRedriveIds.length,
+    fetch: uniqueFetchIds.length
+  });
+  return {
+    needsRehydrate: uniqueRedriveIds.length > 0 || uniqueFetchIds.length > 0,
+    checked: list.length,
+    skipped: false,
+    rederiveMatchIds: uniqueRedriveIds,
+    fetchMatchIds: uniqueFetchIds
+  };
+}
+
+function profileNeedsStoredRawRehydrate(profile = {}, options = {}) {
   if (!profile || typeof profile !== "object") return false;
   const matchList = Array.isArray(profile.matches) ? profile.matches : [];
-  return matchList.some(match => matchRecordNeedsStoredRawRehydrate(getDirectMatchSummaryRecord(match)));
+  return inspectProfileStoredRawRehydrate(profile, matchList, options).needsRehydrate;
 }
 
 function getMatchWeaponBackfillUnavailable(record = {}) {
@@ -14833,16 +14899,57 @@ function projectMatchRecordToLegacyMatch(match = {}, record = {}) {
 
 function markMatchStoredRawRehydrateCurrent(match = {}, options = {}) {
   const record = getDirectMatchSummaryRecord(match);
-  if (!record || !recordHasStoredRawPayload(record)) return match;
+  if (!record || !recordHasCompleteStoredRawPayload(record)) return match;
   if (getStoredRawRehydrateVersion(record) >= STORED_RAW_REHYDRATE_VERSION && options.force !== true) return match;
   return projectMatchRecordToLegacyMatch(match, markStoredRawRehydrateCurrent(record, options));
+}
+
+function markStoredRawPayloadBackfillUnavailable(matchList = [], matchIds = []) {
+  const targets = new Set((Array.isArray(matchIds) ? matchIds : [])
+    .map(value => String(value || "").trim())
+    .filter(Boolean));
+  if (!targets.size) return Array.isArray(matchList) ? matchList : [];
+  return (Array.isArray(matchList) ? matchList : []).map(match => {
+    const matchId = getMatchSummaryStableId(match);
+    if (!targets.has(matchId)) return match;
+    const record = getDirectMatchSummaryRecord(match);
+    if (!record || !isHenrikSyncRecord(record) || recordHasCompleteStoredRawPayload(record)) return match;
+    const checkedAt = nowISO();
+    const nextRecord = {
+      ...record,
+      rawPayloadBackfillUnavailable: true,
+      rawPayloadBackfillCheckedAt: checkedAt,
+      storedRawRehydrateVersion: STORED_RAW_REHYDRATE_VERSION,
+      storedRawRehydrateCheckedAt: checkedAt,
+      importMeta: {
+        ...(record.importMeta || {}),
+        rawPayloadBackfillUnavailable: true,
+        rawPayloadBackfillCheckedAt: checkedAt,
+        storedRawRehydrateVersion: STORED_RAW_REHYDRATE_VERSION,
+        storedRawRehydrateCheckedAt: checkedAt
+      }
+    };
+    return projectMatchRecordToLegacyMatch(match, nextRecord);
+  });
+}
+
+function getMissingStoredRawPayloadMatchIds(matchList = []) {
+  return [...new Set((Array.isArray(matchList) ? matchList : [])
+    .filter(match => {
+      const record = getDirectMatchSummaryRecord(match);
+      return isHenrikSyncRecord(record)
+        && !recordHasStoredRawPayload(record)
+        && !getMatchStoredRawBackfillUnavailable(record);
+    })
+    .map(getMatchSummaryStableId)
+    .filter(Boolean))];
 }
 
 function rederiveMatchesFromStoredRawPayloads(matchList = [], options = {}) {
   const list = Array.isArray(matchList) ? matchList : [];
   const candidates = new Set(list
     .map((match, index) => ({ match, index, record: getDirectMatchSummaryRecord(match) }))
-    .filter(item => matchRecordNeedsStoredRawRehydrate(item.record, options))
+    .filter(item => matchRecordNeedsStoredRawRehydrate(item.record, options) && recordHasCompleteStoredRawPayload(item.record))
     .map(item => item.index));
   const total = candidates.size;
   let processed = 0;
@@ -14865,6 +14972,7 @@ function completeProfileStoredRawRehydrate(profile = {}, matchList = []) {
   if (!profile || typeof profile !== "object") return;
   profile.storedRawRehydrateVersion = STORED_RAW_REHYDRATE_VERSION;
   profile.storedRawRehydrateCompleteAt = nowISO();
+  profile.storedRawRehydrateMatchCount = Array.isArray(matchList) ? matchList.length : 0;
   if (Array.isArray(matchList)) profile.matches = matchList;
 }
 
@@ -14873,24 +14981,33 @@ function prepareProfileStoredRawRehydrate(profile = {}, options = {}) {
   const cleanedMatches = options.purgeDemo === false
     ? originalMatches
     : purgeDemoFixtureMatches(originalMatches);
-  const needsRehydrate = options.force === true || profileNeedsStoredRawRehydrate({ ...profile, matches: cleanedMatches });
   const removedDemoCount = Math.max(0, originalMatches.length - cleanedMatches.length);
+  const initialInspection = inspectProfileStoredRawRehydrate(profile, cleanedMatches, options);
 
-  if (!needsRehydrate) {
-    if (safeNumber(profile?.storedRawRehydrateVersion) < STORED_RAW_REHYDRATE_VERSION || removedDemoCount) {
+  if (!initialInspection.needsRehydrate) {
+    const confirmationNeedsUpdate = safeNumber(profile?.storedRawRehydrateVersion) < STORED_RAW_REHYDRATE_VERSION
+      || safeNumber(profile?.storedRawRehydrateMatchCount) !== cleanedMatches.length;
+    if (
+      confirmationNeedsUpdate
+      || removedDemoCount
+    ) {
       completeProfileStoredRawRehydrate(profile, cleanedMatches);
       return {
         matches: cleanedMatches,
-        changed: removedDemoCount > 0 || originalMatches !== cleanedMatches,
+        changed: confirmationNeedsUpdate || removedDemoCount > 0 || originalMatches !== cleanedMatches,
         rederived: 0,
-        checked: cleanedMatches.length
+        checked: initialInspection.checked,
+        skipped: initialInspection.skipped,
+        fetchMatchIds: []
       };
     }
     return {
       matches: cleanedMatches,
       changed: removedDemoCount > 0,
       rederived: 0,
-      checked: cleanedMatches.length
+      checked: initialInspection.checked,
+      skipped: initialInspection.skipped,
+      fetchMatchIds: []
     };
   }
 
@@ -14907,13 +15024,25 @@ function prepareProfileStoredRawRehydrate(profile = {}, options = {}) {
       });
     }
   });
-  completeProfileStoredRawRehydrate(profile, nextMatches);
+  const finalInspection = rederivedCount
+    ? inspectProfileStoredRawRehydrate({ ...profile, matches: nextMatches }, nextMatches, options)
+    : initialInspection;
+  if (!finalInspection.needsRehydrate) {
+    completeProfileStoredRawRehydrate(profile, nextMatches);
+  } else if (Array.isArray(nextMatches)) {
+    profile.matches = nextMatches;
+    profile.storedRawRehydrateVersion = 0;
+    profile.storedRawRehydrateCompleteAt = "";
+    profile.storedRawRehydrateMatchCount = 0;
+  }
   const changed = removedDemoCount > 0 || nextMatches.some((match, index) => match !== cleanedMatches[index]);
   return {
     matches: nextMatches,
-    changed: changed || rederivedCount > 0 || previousProfileVersion < STORED_RAW_REHYDRATE_VERSION,
+    changed: changed || rederivedCount > 0 || (!finalInspection.needsRehydrate && previousProfileVersion < STORED_RAW_REHYDRATE_VERSION),
     rederived: rederivedCount,
-    checked: cleanedMatches.length
+    checked: Math.max(initialInspection.checked, finalInspection.checked),
+    skipped: initialInspection.skipped,
+    fetchMatchIds: finalInspection.fetchMatchIds
   };
 }
 
@@ -14924,6 +15053,13 @@ if (globalThis.__rankedCoachEnablePerfTestHooks) {
     },
     getActiveProfileStoredRawVersion() {
       return safeNumber(getActiveProfile?.()?.storedRawRehydrateVersion);
+    },
+    getActiveProfileStoredRawRehydrateState() {
+      const profile = getActiveProfile?.();
+      return inspectProfileStoredRawRehydrate(profile, profile?.matches || []);
+    },
+    getActiveProfileForStoredRawTest() {
+      return getActiveProfile?.() || null;
     },
     getScopedStatsMatchCount() {
       return getScopedStatsData(getActiveProfile?.()).matches.length;
@@ -18770,8 +18906,10 @@ let totalRRAnimFrame = null;
 const RIOT_AUTO_SYNC_MS = 120000;
 const RIOT_SYNC_FETCH_TIMEOUT_MS = 8000;
 const HENRIK_HISTORY_BACKFILL_SIZE = 100;
-const HENRIK_HISTORY_BACKFILL_VERSION = 3;
-const STORED_RAW_REHYDRATE_VERSION = 1;
+const HENRIK_HISTORY_BACKFILL_VERSION = 4;
+const STORED_RAW_REHYDRATE_VERSION = 2;
+const RIOT_INCOMPLETE_RAW_RETRY_MS = 45000;
+const RIOT_INCOMPLETE_RAW_RETRY_LIMIT = 2;
 const HENRIK_HISTORY_MAX_START = 1000;
 const HENRIK_HISTORY_MAX_BATCHES = 11;
 let crestPreviewTimer = null;
@@ -49666,6 +49804,8 @@ function normalizeProfileRecord(profile = {}) {
     henrikHistoryReachedLimit: profile.henrikHistoryReachedLimit === true,
     storedRawRehydrateVersion: Math.max(0, safeNumber(profile.storedRawRehydrateVersion)),
     storedRawRehydrateCompleteAt: String(profile.storedRawRehydrateCompleteAt || ""),
+    storedRawRehydrateMatchCount: Math.max(0, safeNumber(profile.storedRawRehydrateMatchCount)),
+    storedRawIncompleteRetryCount: Math.max(0, safeNumber(profile.storedRawIncompleteRetryCount)),
     lastDailyProfileSyncDate: String(profile.lastDailyProfileSyncDate || ""),
     goalRank: profile.goalRank || null,
     goalRR: Number.isFinite(Number(profile.goalRR)) ? Number(profile.goalRR) : null,
@@ -57321,10 +57461,6 @@ function applyImportedMatches(matchList = [], options = {}){
 
   profile.importSource = importSource;
   profile.lastSyncAt = nowISO();
-  if (isRealSyncImport) {
-    profile.storedRawRehydrateVersion = STORED_RAW_REHYDRATE_VERSION;
-    profile.storedRawRehydrateCompleteAt = nowISO();
-  }
 
   if(options.analytics){
     profile.trackerAnalytics = options.analytics;
@@ -57469,7 +57605,6 @@ async function importActiveProfileMatches(options = {}){
       .filter(Boolean);
     const weaponBackfillMatchIds = getWeaponBackfillMatchIds(existingMatches);
     const hsBackfillMatchIds = getHsBackfillMatchIds(existingMatches);
-    const refreshMatchIds = [...new Set([...metadataRefreshMatchIds, ...weaponBackfillMatchIds, ...hsBackfillMatchIds])];
     const needsHistoryVersionUpgrade = safeNumber(profile.henrikHistoryBackfillVersion) < HENRIK_HISTORY_BACKFILL_VERSION;
     const beginsNewHistoryVersion = needsHistoryVersionUpgrade
       && safeNumber(profile.henrikHistoryBackfillTargetVersion) !== HENRIK_HISTORY_BACKFILL_VERSION;
@@ -57481,6 +57616,19 @@ async function importActiveProfileMatches(options = {}){
     const needsHistoryBackfill = needsHistoryVersionUpgrade || !profile.henrikHistoryBackfillCompleteAt;
     const historyStart = needsHistoryBackfill ? Math.max(0, safeNumber(profile.henrikHistoryCursor)) : 0;
     const historyLimit = needsHistoryBackfill ? HENRIK_HISTORY_BACKFILL_SIZE : 10;
+    // A versioned history pass revisits retained records in chronological
+    // pages, so sending every missing-payload id to the targeted search would
+    // turn one migration into a redundant 1,000-match search. Outside that
+    // pass, target the outstanding records directly.
+    const storedRawRefreshMatchIds = needsHistoryBackfill
+      ? []
+      : (storedRawPrep.fetchMatchIds || []).slice(0, 12);
+    const refreshMatchIds = [...new Set([
+      ...metadataRefreshMatchIds,
+      ...weaponBackfillMatchIds,
+      ...hsBackfillMatchIds,
+      ...storedRawRefreshMatchIds
+    ])];
     const pullResult = await globalThis.RankedCoachRiotSync.pullMatches({
       riotId: profile.riotId,
       puuid: profile.puuid,
@@ -57527,6 +57675,8 @@ async function importActiveProfileMatches(options = {}){
         profile.henrikHistoryReachedLimit = reachedProviderWindow && !pullResult?.historyWindowComplete;
       }
     }
+    const historyMigrationFinished = needsHistoryBackfill
+      && (pullResult?.historyWindowComplete || profile.henrikHistoryReachedLimit === true);
 
     const canonicalRecords = Array.isArray(pullResult?.records) ? pullResult.records : [];
     const mmrHistory = Array.isArray(pullResult?.mmrHistory) ? pullResult.mmrHistory : [];
@@ -57537,6 +57687,9 @@ async function importActiveProfileMatches(options = {}){
     const unrecoveredHsBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
       .map(value => String(value || "").trim())
       .filter(value => hsBackfillMatchIds.includes(value));
+    const unrecoveredStoredRawBackfillIds = (Array.isArray(pullResult?.unresolvedRefreshMatchIds) ? pullResult.unresolvedRefreshMatchIds : [])
+      .map(value => String(value || "").trim())
+      .filter(value => storedRawRefreshMatchIds.includes(value));
     if (!canonicalRecords.length) {
       let enrichedExisting = typeof enrichMmr === "function"
         ? enrichMmr(existingMatches, mmrHistory)
@@ -57547,11 +57700,30 @@ async function importActiveProfileMatches(options = {}){
       if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
         enrichedExisting = markHsBackfillUnavailable(enrichedExisting, unrecoveredHsBackfillIds);
       }
+      if (unrecoveredStoredRawBackfillIds.length && pullResult?.refreshSearchComplete) {
+        enrichedExisting = markStoredRawPayloadBackfillUnavailable(enrichedExisting, unrecoveredStoredRawBackfillIds);
+      }
+      if (historyMigrationFinished) {
+        enrichedExisting = markStoredRawPayloadBackfillUnavailable(
+          enrichedExisting,
+          getMissingStoredRawPayloadMatchIds(enrichedExisting)
+        );
+      }
       profile.lastSyncAt = nowISO();
       commitProfileMatchesWithLoggingParity(profile, enrichedExisting, {
         source: "henrik",
         animatePlaceholders: options.mode === "refresh"
       });
+      if (!needsHistoryBackfill || historyMigrationFinished) {
+        const finalStoredRawPrep = prepareProfileStoredRawRehydrate(profile, { purgeDemo: false });
+        if (finalStoredRawPrep.changed) {
+          commitProfileMatchesWithLoggingParity(profile, finalStoredRawPrep.matches, {
+            source: "henrik",
+            animatePlaceholders: false,
+            skipBackend: true
+          });
+        }
+      }
       saveProfiles();
       if (options.deferSurfaceRefresh !== true) {
         refreshActiveProfileDataSurfaces({
@@ -57599,14 +57771,59 @@ async function importActiveProfileMatches(options = {}){
     if (unrecoveredHsBackfillIds.length && pullResult?.refreshSearchComplete) {
       matchList = markHsBackfillUnavailable(matchList, unrecoveredHsBackfillIds);
     }
+    if (unrecoveredStoredRawBackfillIds.length && pullResult?.refreshSearchComplete) {
+      matchList = markStoredRawPayloadBackfillUnavailable(matchList, unrecoveredStoredRawBackfillIds);
+    }
 
     applyImportedMatches(matchList, {
       source: "henrik",
       deferSurfaceRefresh: options.deferSurfaceRefresh === true,
       animationMode: options.mode === "refresh"
         ? CHART_ANIMATION_MODE_LATEST_ONLY
-        : null
+      : null
     });
+
+    if (historyMigrationFinished) {
+      const unavailableRawPayloadIds = getMissingStoredRawPayloadMatchIds(profile.matches);
+      if (unavailableRawPayloadIds.length) {
+        const markedMatches = markStoredRawPayloadBackfillUnavailable(profile.matches, unavailableRawPayloadIds);
+        commitProfileMatchesWithLoggingParity(profile, markedMatches, {
+          source: "henrik",
+          animatePlaceholders: false,
+          skipBackend: true
+        });
+      }
+    }
+
+    const hasIncompleteFreshPayload = canonicalRecords.some(record => (
+      isHenrikSyncRecord(record)
+      && recordHasStoredRawPayload(record)
+      && record?.rawPayloadComplete !== true
+    ));
+    if (hasIncompleteFreshPayload) {
+      profile.storedRawIncompleteRetryCount = Math.min(
+        RIOT_INCOMPLETE_RAW_RETRY_LIMIT,
+        Math.max(0, safeNumber(profile.storedRawIncompleteRetryCount)) + 1
+      );
+    } else if (canonicalRecords.length) {
+      profile.storedRawIncompleteRetryCount = 0;
+    }
+
+    // A completed regular sync can immediately stamp the confirmed profile
+    // cache. During the paginated history migration we do this only on the
+    // final page so the app does not repeat a full-history scan per batch.
+    if (!needsHistoryBackfill || historyMigrationFinished) {
+      const finalStoredRawPrep = prepareProfileStoredRawRehydrate(profile, { purgeDemo: false });
+      if (finalStoredRawPrep.changed) {
+        commitProfileMatchesWithLoggingParity(profile, finalStoredRawPrep.matches, {
+          source: "henrik",
+          animatePlaceholders: false,
+          skipBackend: true
+        });
+      }
+      saveProfiles();
+    }
+    scheduleRiotAutoSync();
 
     if (!needsHistoryBackfill && newlyImportedMatches.length && options.deferSurfaceRefresh !== true) {
       refreshActiveProfileDataSurfaces({
@@ -58159,7 +58376,13 @@ function scheduleRiotAutoSync() {
     return;
   }
 
-  riotAutoSyncDeadline = Date.now() + RIOT_AUTO_SYNC_MS;
+  const profile = getActiveProfile();
+  const hasIncompleteRawPayloadRetry = Math.max(0, safeNumber(profile?.storedRawIncompleteRetryCount)) > 0
+    && Math.max(0, safeNumber(profile?.storedRawIncompleteRetryCount)) < RIOT_INCOMPLETE_RAW_RETRY_LIMIT;
+  const nextSyncDelay = hasIncompleteRawPayloadRetry
+    ? RIOT_INCOMPLETE_RAW_RETRY_MS
+    : RIOT_AUTO_SYNC_MS;
+  riotAutoSyncDeadline = Date.now() + nextSyncDelay;
   startRiotAutoSyncCountdown();
 
   if (!hasSyncableRiotProfile()) {
@@ -58172,7 +58395,7 @@ function scheduleRiotAutoSync() {
       mode: "refresh",
       allowDemoFallback: false
     });
-  }, RIOT_AUTO_SYNC_MS);
+  }, nextSyncDelay);
 }
 
 // ========================
