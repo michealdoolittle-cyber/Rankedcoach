@@ -53,6 +53,97 @@
     return globalThis.RankedCoachMatchRecord.fromHenrikV4Match(match, context);
   }
 
+  function getRawHydrationConcurrency(options = {}) {
+    const requested = Number(options.rawHydrationConcurrency ?? options.rawMatchConcurrency);
+    // Raw match payloads are substantially heavier than summary history. Keep
+    // a modest, bounded pool so a backlog does not serialize into minutes of
+    // waiting, without overwhelming Henrik or the Worker.
+    return Math.max(1, Math.min(8, Math.floor(Number.isFinite(requested) ? requested : 6)));
+  }
+
+  function getRawHydrationTimeoutMs(options = {}) {
+    const requested = Number(options.rawMatchTimeoutMs ?? options.rawHydrationTimeoutMs);
+    // A historical round payload is optional: preserve the aggregate V4 record
+    // when it is slow rather than holding the entire sync for 50 seconds.
+    return Math.max(3000, Math.min(10000, Number.isFinite(requested) ? requested : 9000));
+  }
+
+  function getRawHydrationRetryDelays(options = {}) {
+    if (Array.isArray(options.rawMatchRetryDelaysMs)) return options.rawMatchRetryDelaysMs;
+    // One short retry handles brief 429/5xx responses without multiplying the
+    // delay of a full historical batch.
+    return [450];
+  }
+
+  async function hydratePendingHenrikMatch(parsedMatch = {}, context = {}) {
+    const matchId = getParsedMatchId(parsedMatch);
+    try {
+      const v4Record = mapHenrikV4Match(parsedMatch, {
+        puuid: context.puuid,
+        mmrSnapshot: context.mmrByMatchId?.get(matchId) || null
+      });
+      if (!context.hydrateRoundData) return { record: v4Record, failure: null };
+
+      try {
+        const rawPayload = await requestJsonWithRetry("/api/henrik/raw", { matchId, region: context.region }, {
+          ...context.options,
+          matchTimeoutMs: context.rawMatchTimeoutMs,
+          matchRetryDelaysMs: context.rawMatchRetryDelaysMs
+        });
+        return {
+          record: mapHenrikRawMatch(rawPayload, {
+            puuid: context.puuid,
+            parsedMatch,
+            agent: v4Record.agent,
+            role: v4Record.role,
+            map: v4Record.map,
+            rank: v4Record.rank?.rank,
+            rr: v4Record.rank?.rr,
+            rrDelta: v4Record.rank?.rrDelta,
+            rankElo: v4Record.rank?.elo,
+            rrVerified: v4Record.rank?.verified === true,
+            rankDataSource: v4Record.rank?.source,
+            rankCapturedAt: v4Record.rank?.capturedAt,
+            isPlacementMatch: v4Record.isPlacementMatch === true
+          }),
+          failure: null
+        };
+      } catch (error) {
+        return {
+          record: v4Record,
+          failure: {
+            matchId,
+            stage: "raw-round-data",
+            error: error?.message || "Round detail could not be loaded."
+          }
+        };
+      }
+    } catch (error) {
+      return {
+        record: null,
+        failure: { matchId, error: error?.message || "Match mapping failed." }
+      };
+    }
+  }
+
+  async function hydratePendingHenrikMatches(pendingMatches = [], context = {}) {
+    const source = Array.isArray(pendingMatches) ? pendingMatches : [];
+    const hydrated = new Array(source.length);
+    let nextIndex = 0;
+    const workerCount = Math.min(source.length, getRawHydrationConcurrency(context.options));
+
+    async function worker() {
+      while (nextIndex < source.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        hydrated[index] = await hydratePendingHenrikMatch(source[index], context);
+      }
+    }
+
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    return hydrated;
+  }
+
   function createSyncRequestError(message, details = {}) {
     const error = new Error(String(message || "Match sync failed."));
     error.name = "RiotSyncRequestError";
@@ -469,52 +560,22 @@
       ...refreshSearchFailures,
       ...(matchSyncError ? [{ stage: "matches", ...matchSyncError }] : [])
     ];
-
-    for (const parsedMatch of pendingMatches) {
-      const matchId = getParsedMatchId(parsedMatch);
-      try {
-        const v4Record = mapHenrikV4Match(parsedMatch, {
-          puuid,
-          mmrSnapshot: mmrByMatchId.get(matchId) || null
-        });
-        if (!hydrateRoundData) {
-          records.push(v4Record);
-          continue;
-        }
-
-        try {
-          const rawPayload = await requestJsonWithRetry("/api/henrik/raw", { matchId, region }, {
-            ...options,
-            matchTimeoutMs: 50000,
-            matchRetryDelaysMs: options.rawMatchRetryDelaysMs || [1200, 2500]
-          });
-          records.push(mapHenrikRawMatch(rawPayload, {
-            puuid,
-            parsedMatch,
-            agent: v4Record.agent,
-            role: v4Record.role,
-            map: v4Record.map,
-            rank: v4Record.rank?.rank,
-            rr: v4Record.rank?.rr,
-            rrDelta: v4Record.rank?.rrDelta,
-            rankElo: v4Record.rank?.elo,
-            rrVerified: v4Record.rank?.verified === true,
-            rankDataSource: v4Record.rank?.source,
-            rankCapturedAt: v4Record.rank?.capturedAt,
-            isPlacementMatch: v4Record.isPlacementMatch === true
-          }));
-        } catch (error) {
-          records.push(v4Record);
-          failures.push({
-            matchId,
-            stage: "raw-round-data",
-            error: error?.message || "Round detail could not be loaded."
-          });
-        }
-      } catch (error) {
-        failures.push({ matchId, error: error?.message || "Match mapping failed." });
-      }
-    }
+    const rawHydrationConcurrency = getRawHydrationConcurrency(options);
+    const rawMatchTimeoutMs = getRawHydrationTimeoutMs(options);
+    const rawMatchRetryDelaysMs = getRawHydrationRetryDelays(options);
+    const hydratedPendingMatches = await hydratePendingHenrikMatches(pendingMatches, {
+      puuid,
+      region,
+      mmrByMatchId,
+      hydrateRoundData,
+      rawMatchTimeoutMs,
+      rawMatchRetryDelaysMs,
+      options
+    });
+    hydratedPendingMatches.forEach(result => {
+      if (result?.record) records.push(result.record);
+      if (result?.failure) failures.push(result.failure);
+    });
 
     if (pendingMatches.length && !records.length) {
       throw new Error(failures[0]?.error || "Recent competitive matches could not be loaded.");
@@ -537,6 +598,8 @@
       unresolvedRefreshMatchIds,
       refreshSearchChecked,
       refreshSearchComplete,
+      rawHydrationConcurrency: hydrateRoundData ? rawHydrationConcurrency : 0,
+      rawMatchTimeoutMs: hydrateRoundData ? rawMatchTimeoutMs : 0,
       mmrHistory,
       mmrHistoryError: Object.entries(mmrHistoryErrors)
         .filter(([, message]) => message)
